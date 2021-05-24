@@ -106,7 +106,7 @@ public class NodeHeightToRatiosFullTransformDelegate extends NodeHeightToRatiosT
 
         @Override
         public void setParameterValueQuietly(int dim, double value) {
-            tree.setNodeHeight(tree.getRoot(), getRootHeight(value));
+            tree.setNodeHeightQuietly(tree.getRoot(), getRootHeight(value));
         }
 
         @Override
@@ -197,7 +197,7 @@ public class NodeHeightToRatiosFullTransformDelegate extends NodeHeightToRatiosT
 
     @Override
     public double[] inverse(double[] values) {
-        this.heightParameter.setParameterValue(0, values[0]);
+        this.heightParameter.setParameterValueQuietly(0, values[0]);
         double[] ratioValues = separateRatios(values);
         return super.inverse(ratioValues);
     }

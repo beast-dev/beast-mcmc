@@ -25,7 +25,11 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
+import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.inference.model.*;
 
 import java.util.List;
@@ -33,7 +37,8 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  */
-public class ContinuousTraitDataModel extends AbstractModel implements ContinuousTraitPartialsProvider {
+public class ContinuousTraitDataModel extends AbstractModel implements ContinuousTraitPartialsProvider,
+        ModelExtensionProvider {
 
     private final CompoundParameter parameter;
     private final boolean[] originalMissingIndicators;
@@ -253,6 +258,17 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         }
 
         return data;
+    }
+
+    @Override
+    public ContinuousExtensionDelegate getExtensionDelegate(ContinuousDataLikelihoodDelegate delegate,
+                                                            TreeTrait treeTrait, Tree tree) {
+        return new ContinuousExtensionDelegate.NullExtensionDelegate(delegate, this, treeTrait, tree);
+    }
+
+    @Override
+    public double[] transformTreeTraits(double[] treeTraits) {
+        return treeTraits;
     }
 
     /*

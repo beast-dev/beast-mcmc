@@ -23,10 +23,12 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
     public NoUTurnOperator(ReversibleHMCProvider hmcProvider,
                            boolean adaptiveStepsize,
+                           int adaptiveDelay,
                            double weight) {
 
         this.hmcProvider = hmcProvider;
         this.adaptiveStepsize = adaptiveStepsize;
+        this.adaptiveDelay = adaptiveDelay;
         if (hmcProvider instanceof SplitHamiltonianMonteCarloOperator) {
             this.splitHMCmultiplier = ((SplitHamiltonianMonteCarloOperator) hmcProvider).travelTimeMultipler;
             this.splitHMCinner = ((SplitHamiltonianMonteCarloOperator) hmcProvider).inner;
@@ -51,6 +53,10 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         }
 
         final double[] initialPosition = hmcProvider.getInitialPosition();
+
+        if(updatePreconditioning){ //todo: should preconditioning, use a schedular
+            hmcProvider.providerUpdatePreconditioning();
+        }
 
         if (stepSizeInformation == null) {
             stepSizeInformation = findReasonableStepSize(initialPosition,
@@ -89,8 +95,9 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
                 trajectoryTree.flagContinue = false;
             }
         }
-        if (adaptiveStepsize) {
+        if (adaptiveStepsize && getCount() > adaptiveDelay) {
             stepSizeInformation.update(m, trajectoryTree.cumAcceptProb, trajectoryTree.numAcceptProbStates);
+            if (printStepsize) System.err.println("step size is " + stepSizeInformation.getStepSize());
         }
         return endPosition;
     }
@@ -423,6 +430,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
     private ReversibleHMCProvider hmcProvider;
     private StepSize stepSizeInformation;
     private boolean adaptiveStepsize;
+    private int adaptiveDelay;
     private int numBaseCalls;
     private int numBoundaryEvents;
     private int numGradientEvents;
@@ -430,5 +438,8 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
     private SplitHMCtravelTimeMultiplier splitHMCmultiplier = null;
     private ReversibleHMCProvider splitHMCinner = null;
     private ReversibleHMCProvider splitHMCouter = null;
+
+    private final boolean updatePreconditioning = false;
+    private final boolean printStepsize = false;
 }
 

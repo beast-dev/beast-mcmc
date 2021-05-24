@@ -1,7 +1,6 @@
 package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
@@ -17,6 +16,8 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
 import org.ejml.interfaces.decomposition.CholeskyDecomposition;
 import org.ejml.ops.CommonOps;
+
+import java.util.ArrayList;
 
 public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarloOperator implements Reportable {
 
@@ -90,18 +91,153 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
         private final int nRows;
         private final int nCols;
 
+        private final int[] subRows;
+        private final int[] subColumns;
+
 
         GeodesicLeapFrogEngine(Parameter parameter, HamiltonianMonteCarloOperator.InstabilityHandler instabilityHandler,
                                MassPreconditioner preconditioning, double[] mask) {
             super(parameter, instabilityHandler, preconditioning, mask);
             this.matrixParameter = (MatrixParameterInterface) parameter;
-            this.nRows = matrixParameter.getRowDimension();
-            this.nCols = matrixParameter.getColumnDimension();
+
+
+            this.subRows = parseSubRowsFromMask();
+            this.subColumns = parseSubColumnsFromMask();
+            if (mask != null) checkMask(subRows, subColumns);
+
+            this.nRows = subRows.length;
+            this.nCols = subColumns.length;
             this.positionMatrix = new DenseMatrix64F(nCols, nRows);
             this.innerProduct = new DenseMatrix64F(nCols, nCols);
             this.innerProduct2 = new DenseMatrix64F(nCols, nCols);
             this.projection = new DenseMatrix64F(nCols, nRows);
             this.momentumMatrix = new DenseMatrix64F(nCols, nRows);
+        }
+
+        private int[] parseSubColumnsFromMask() {
+
+            int originalRows = matrixParameter.getRowDimension();
+            int originalColumns = matrixParameter.getColumnDimension();
+
+            ArrayList<Integer> subArray = new ArrayList<Integer>();
+
+            for (int col = 0; col < originalColumns; col++) {
+                int offset = col * originalRows;
+                for (int row = 0; row < originalRows; row++) {
+                    int ind = offset + row;
+                    if (mask == null || mask[ind] == 1.0) {
+                        subArray.add(col);
+                        break;
+                    }
+                }
+            }
+
+            int[] subColumns = new int[subArray.size()];
+            for (int i = 0; i < subColumns.length; i++) {
+                subColumns[i] = subArray.get(i);
+            }
+
+            return subColumns;
+        }
+
+        private int[] parseSubRowsFromMask() {
+            int originalRows = matrixParameter.getRowDimension();
+            int originalColumns = matrixParameter.getColumnDimension();
+
+            ArrayList<Integer> subArray = new ArrayList<Integer>();
+
+            for (int row = 0; row < originalRows; row++) {
+                for (int col = 0; col < originalColumns; col++) {
+                    int ind = col * originalRows + row;
+                    if (mask == null || mask[ind] == 1.0) {
+                        subArray.add(row);
+                        break;
+                    }
+                }
+            }
+
+            int[] subRows = new int[subArray.size()];
+            for (int i = 0; i < subRows.length; i++) {
+                subRows[i] = subArray.get(i);
+            }
+
+            return subRows;
+        }
+
+        private void checkMask(int[] rows, int[] cols) {
+            int originalRows = matrixParameter.getRowDimension();
+            int originalColumns = matrixParameter.getColumnDimension();
+
+            int subRowInd = 0;
+            int subColInd = 0;
+
+            Boolean isSubRow;
+            Boolean isSubCol;
+
+            for (int row = 0; row < originalRows; row++) {
+                if (row == rows[subRowInd]) {
+                    isSubRow = true;
+                    subRowInd++;
+                } else {
+                    isSubRow = false;
+                }
+
+                subColInd = 0;
+
+                for (int col = 0; col < originalColumns; col++) {
+                    if (col == cols[subColInd]) {
+                        isSubCol = true;
+                        subColInd++;
+                    } else {
+                        isSubCol = false;
+                    }
+
+                    int ind = originalRows * col + row;
+
+                    if (isSubCol && isSubRow) {
+                        if (mask[ind] != 1.0) {
+                            throw new RuntimeException("mask is incompatible with " +
+                                    GeodesicHamiltonianMonteCarloOperatorParser.OPERATOR_NAME +
+                                    ". All elements in sub-matrix must be set to 1.");
+                        }
+                    } else {
+                        if (mask[ind] != 0.0) {
+                            throw new RuntimeException("mask is incompatible with " +
+                                    GeodesicHamiltonianMonteCarloOperatorParser.OPERATOR_NAME +
+                                    ". All elements outside of sub-matrix must be set to 0.");
+                        }
+                    }
+
+                }
+            }
+        }
+
+        private void setSubMatrix(double[] src, int srcOffset, DenseMatrix64F dest) {
+            int nRowsOriginal = matrixParameter.getRowDimension();
+            for (int row = 0; row < subRows.length; row++) {
+                for (int col = 0; col < subColumns.length; col++) {
+                    int ind = nRowsOriginal * subColumns[col] + subRows[row] + srcOffset;
+                    dest.set(col, row, src[ind]);
+                }
+            }
+        }
+
+        private void setSubMatrix(double[] src, DenseMatrix64F dest) {
+            setSubMatrix(src, 0, dest);
+        }
+
+        private void unwrapSubMatrix(DenseMatrix64F src, double[] dest, int destOffset) {
+            int nRowsOriginal = matrixParameter.getRowDimension();
+            for (int row = 0; row < nRows; row++) {
+                for (int col = 0; col < nCols; col++) {
+                    int ind = nRowsOriginal * subColumns[col] + subRows[row] + destOffset;
+                    dest[ind] = src.get(col, row);
+                }
+            }
+        }
+
+        private void unwrapSubMatrix(DenseMatrix64F src, double[] dest) {
+            unwrapSubMatrix(src, dest, 0);
         }
 
         @Override
@@ -116,8 +252,10 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
         public void updatePosition(double[] position, WrappedVector momentum,
                                    double functionalStepSize) throws HamiltonianMonteCarloOperator.NumericInstabilityException {
 
-            positionMatrix.setData(position);
-            System.arraycopy(momentum.getBuffer(), momentum.getOffset(), momentumMatrix.data, 0, momentum.getDim());
+//            positionMatrix.setData(position);
+            setSubMatrix(position, positionMatrix);
+            setSubMatrix(momentum.getBuffer(), momentum.getOffset(), momentumMatrix);
+//            System.arraycopy(momentum.getBuffer(), momentum.getOffset(), momentumMatrix.data, 0, momentum.getDim());
             CommonOps.multTransB(positionMatrix, momentumMatrix, innerProduct);
             CommonOps.multTransB(momentumMatrix, momentumMatrix, innerProduct2);
 
@@ -185,25 +323,29 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
             CommonOps.mult(innerProduct, positionMatrix, projection);
             System.arraycopy(projection.data, 0, positionMatrix.data, 0, positionMatrix.data.length);
 
-            System.arraycopy(positionMatrix.data, 0, position, 0, position.length);
-            System.arraycopy(momentumMatrix.data, 0, momentum.getBuffer(), momentum.getOffset(), momentum.getDim());
+            unwrapSubMatrix(positionMatrix, position);
+            unwrapSubMatrix(momentumMatrix, momentum.getBuffer(), momentum.getOffset());
+//            System.arraycopy(positionMatrix.data, 0, position, 0, position.length);
+//            System.arraycopy(momentumMatrix.data, 0, momentum.getBuffer(), momentum.getOffset(), momentum.getDim());
 
             matrixParameter.setAllParameterValuesQuietly(position, 0);
             matrixParameter.fireParameterChangedEvent();
-
-
         }
 
         @Override
         public void projectMomentum(double[] momentum, double[] position) {
-            positionMatrix.setData(position);
-            momentumMatrix.setData(momentum);
+            setSubMatrix(position, positionMatrix);
+            setSubMatrix(momentum, momentumMatrix);
+//            positionMatrix.setData(position);
+//            momentumMatrix.setData(momentum);
 
             CommonOps.multTransB(positionMatrix, momentumMatrix, innerProduct);
             EJMLUtils.addWithTransposed(innerProduct);
 
             CommonOps.mult(0.5, innerProduct, positionMatrix, projection);
             CommonOps.subtractEquals(momentumMatrix, projection);
+
+            unwrapSubMatrix(momentumMatrix, momentum);
         }
     }
 }

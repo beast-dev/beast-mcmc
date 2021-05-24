@@ -33,6 +33,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightGradientForDiscreteTrait;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -85,7 +86,10 @@ public class NodeHeightGradientParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TRAIT_NAME),
-            new ElementRule(TreeDataLikelihood.class),
+            new XORRule(
+                    new ElementRule(TreeDataLikelihood.class),
+                    new ElementRule(CompoundLikelihood.class)
+            ),
     };
 
     @Override

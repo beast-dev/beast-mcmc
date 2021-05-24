@@ -32,7 +32,7 @@ public class TraitValidationProvider implements CrossValidationProvider, Reporta
 
 
     public TraitValidationProvider(Parameter trueTraits,
-                                   ContinuousTraitPartialsProvider dataModel,
+                                   ModelExtensionProvider dataModel,
                                    Tree treeModel,
                                    String id,
                                    Parameter missingParameter,
@@ -50,17 +50,11 @@ public class TraitValidationProvider implements CrossValidationProvider, Reporta
 
         TreeTrait treeTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + inferredValuesName);
 
-        if (dataModel instanceof ModelExtensionProvider) {
-            this.extensionDelegate = ((ModelExtensionProvider) dataModel).getExtensionDelegate(
-                    (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate(),
-                    treeTrait,
-                    treeModel);
-        } else { //Simply returns the tree traits
-            this.extensionDelegate = new ContinuousExtensionDelegate(
-                    (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate(),
-                    treeTrait,
-                    treeModel);
-        }
+        this.extensionDelegate = dataModel.getExtensionDelegate(
+                (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate(),
+                treeTrait,
+                treeModel);
+
 
         this.dimNames = new String[nMissing];
         setupDimNames(treeModel, id);

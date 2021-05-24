@@ -968,7 +968,11 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
     }
 
     private Taxon getTaxonByTreeIndex(int index) {
-        return ancestors.get(index - treeExternalCount).getTaxon();
+        if (index >= externalCount ) {
+            return null;
+        } else {
+            return ancestors.get(index - treeExternalCount).getTaxon();
+        }
     }
 
     private void setupClamps() {

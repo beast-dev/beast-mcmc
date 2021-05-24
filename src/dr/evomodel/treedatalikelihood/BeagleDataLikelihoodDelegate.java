@@ -84,7 +84,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
 
-    private static int instanceCount = 0;
+    public static int instanceCount = 0;
     private static List<Integer> resourceOrder = null;
     private static List<Integer> preferredOrder = null;
     private static List<Integer> requiredOrder = null;

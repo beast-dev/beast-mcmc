@@ -35,6 +35,10 @@ public interface MassPreconditioner {
 
     void updateMass();
 
+    WrappedVector getMass();
+
+    void updateVariance(WrappedVector position);
+
     ReadableVector doCollision(int[] indices, ReadableVector momentum);
 
     int getDimension();
@@ -55,7 +59,9 @@ public interface MassPreconditioner {
         DIAGONAL("diagonal") {
             @Override
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
-                return new DiagonalHessianPreconditioning((HessianWrtParameterProvider) gradient, transform, options.preconditioningMemory());
+                return new DiagonalHessianPreconditioning((HessianWrtParameterProvider) gradient, transform,
+                        options.preconditioningMemory(),
+                        options.preconditioningEigenLowerBound(), options.preconditioningEigenUpperBound());
             }
         },
         ADAPTIVE_DIAGONAL("adaptiveDiagonal") {
@@ -223,6 +229,16 @@ public interface MassPreconditioner {
         }
 
         @Override
+        public WrappedVector getMass() {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+            // Do nothing
+        }
+
+        @Override
         public int getDimension() {
             return dim;
         }
@@ -273,6 +289,18 @@ public interface MassPreconditioner {
             updatedMomentum.set(indices[0], momentum.get(indices[1]));
             updatedMomentum.set(indices[1], momentum.get(indices[0]));
             return updatedMomentum;
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            double[] mass = new double[dim];
+            Arrays.fill(mass, 1.0);
+            return new WrappedVector.Raw(mass);
+        }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+            // Do nothing
         }
 
         @Override
@@ -438,15 +466,29 @@ public interface MassPreconditioner {
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
             // Do nothing
         }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+            // Do nothing
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            throw new RuntimeException("Not yet implemented!");
+        }
     }
 
     class DiagonalHessianPreconditioning extends DiagonalPreconditioning {
 
         final protected HessianWrtParameterProvider hessian;
+        final private Parameter lowerBound;
+        final private Parameter upperBound;
 
         DiagonalHessianPreconditioning(HessianWrtParameterProvider hessian,
                                        Transform transform,
-                                       int memorySize) {
+                                       int memorySize,
+                                       Parameter lowerBound,
+                                       Parameter upperBound) {
             super(hessian.getDimension(), transform);
             this.hessian = hessian;
             if (memorySize > 0) {
@@ -454,6 +496,8 @@ public interface MassPreconditioner {
             } else {
                 this.adaptiveDiagonal = new AdaptableVector.Default(hessian.getDimension());
             }
+            this.lowerBound = lowerBound;
+            this.upperBound = upperBound;
         }
 
         @Override
@@ -479,30 +523,48 @@ public interface MassPreconditioner {
 
         private double[] boundMassInverse(double[] diagonalHessian) {
 
-            double sum = 0.0;
-            final double lowerBound = 1E-2; //TODO bad magic numbers
-            final double upperBound = 1E2;
-            double[] boundedMassInverse = new double[dim];
+            double[] boundedMassInverse = diagonalHessian.clone();
+
+            normalizeL1(boundedMassInverse, dim);
 
             for (int i = 0; i < dim; i++) {
-                boundedMassInverse[i] = -1.0 / diagonalHessian[i];
-                if (boundedMassInverse[i] < lowerBound) {
-                    boundedMassInverse[i] = lowerBound;
-                } else if (boundedMassInverse[i] > upperBound) {
-                    boundedMassInverse[i] = upperBound;
+                boundedMassInverse[i] = 1.0 / boundedMassInverse[i];
+                if (boundedMassInverse[i] < lowerBound.getParameterValue(0)) {
+                    boundedMassInverse[i] = lowerBound.getParameterValue(0);
+                } else if (boundedMassInverse[i] > upperBound.getParameterValue(0)) {
+                    boundedMassInverse[i] = upperBound.getParameterValue(0);
                 }
-                sum += 1.0 / boundedMassInverse[i];
             }
-            final double mean = sum / dim;
-            for (int i = 0; i < dim; i++) {
-                boundedMassInverse[i] = boundedMassInverse[i] * mean;
-            }
+
+            normalizeL1(boundedMassInverse, dim);
+
             return boundedMassInverse;
+        }
+
+        private void normalizeL1(double[] vector, double norm) {
+            double sum = 0.0;
+            for (int i = 0; i < vector.length; i++) {
+                sum += Math.abs(vector[i]);
+            }
+            final double multiplier = norm / sum;
+            for (int i = 0; i < vector.length; i++) {
+                vector[i] = vector[i] * multiplier;
+            }
         }
 
         @Override
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
             // Do nothing
+        }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            throw new RuntimeException("Not yet implemented!");
         }
 
     }
@@ -606,6 +668,20 @@ public interface MassPreconditioner {
         @Override
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
              variance.update(position);
+        }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+            variance.update(position);
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            double[] mass = new double[dim];
+            for (int i = 0; i < dim; i++) {
+                mass[i] = 1 / inverseMass[i];
+            }
+            return new WrappedVector.Raw(mass);
         }
     }
 
@@ -773,6 +849,16 @@ public interface MassPreconditioner {
         @Override
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
             // Do nothing
+        }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            throw new RuntimeException("Not yet implemented!");
         }
 
         @Override

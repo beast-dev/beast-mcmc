@@ -148,35 +148,35 @@
         <geodesicHamiltonianMonteCarloOperator weight="1.0" nSteps="10" stepSize="0.05" drawVariance="1.0"
                                                autoOptimize="true"
                                                gradientCheckCount="100" gradientCheckTolerance="1e-2">
-            <jointGradient>
+            <scaledMatrixGradient component="matrix">
                 <!--                <gradient>-->
                 <!--                    <distributionLikelihood idref="L.prior"/>-->
                 <!--                    <matrixParameter idref="L"/>-->
                 <!--                </gradient>-->
-                <normalizedIntegratedLoadingsGradient>
+                <integratedFactorAnalysisLoadingsGradient>
                     <integratedFactorModel idref="factorModel"/>
                     <traitDataLikelihood idref="traitLikelihood"/>
-                </normalizedIntegratedLoadingsGradient>
-            </jointGradient>
+                </integratedFactorAnalysisLoadingsGradient>
+            </scaledMatrixGradient>
             <matrixParameter idref="U"/>
         </geodesicHamiltonianMonteCarloOperator>
         <hamiltonianMonteCarloOperator weight="1.0" nSteps="10" stepSize="0.05" drawVariance="1.0"
                                        autoOptimize="true"
-                                       gradientCheckCount="100" gradientCheckTolerance="1e-1">
-            <jointGradient>
+                                       gradientCheckCount="100" gradientCheckTolerance="1e-2">
+            <scaledMatrixGradient component="scale">
                 <!--                <gradient>-->
                 <!--                    <distributionLikelihood idref="L.prior"/>-->
                 <!--                    <matrixParameter idref="L"/>-->
                 <!--                </gradient>-->
-                <scaleIntegratedLoadingsGradient>
+                <integratedFactorAnalysisLoadingsGradient>
                     <integratedFactorModel idref="factorModel"/>
                     <traitDataLikelihood idref="traitLikelihood"/>
-                </scaleIntegratedLoadingsGradient>
-            </jointGradient>
+                </integratedFactorAnalysisLoadingsGradient>
+            </scaledMatrixGradient>
             <matrixParameter idref="scale"/>
         </hamiltonianMonteCarloOperator>
     </operators>
-    <mcmc id="mcmc" chainLength="100" autoOptimize="true">
+    <mcmc id="mcmc" chainLength="200" autoOptimize="true">
         <posterior id="posterior">
             <prior id="prior">
                 <!--                <distributionLikelihood idref="L.prior"/>-->

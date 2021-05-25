@@ -5,4 +5,5 @@ mkdir build
 cd build
 echo $PWD
 cmake -DBUILD_CUDA=OFF -DBUILD_OPENCL=OFF ..
-make DESTDIR=$BEAGLE_DIR
+make DESTDIR=$BEAGLE_DIR install
+export export LD_LIBRARY_PATH=${BEAGLE_LIB}

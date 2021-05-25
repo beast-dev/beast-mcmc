@@ -30,7 +30,7 @@ import dr.evomodel.branchratemodel.BranchRateGradientWrtIncrements;
 import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
 import dr.evomodel.treedatalikelihood.discrete.BranchRateGradientForDiscreteTrait;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.hmc.JointGradient;
+import dr.inference.hmc.JointBranchRateGradient;
 import dr.xml.*;
 
 public class BranchRateGradientWrtIncrementsParser extends AbstractXMLObjectParser {
@@ -49,18 +49,12 @@ public class BranchRateGradientWrtIncrementsParser extends AbstractXMLObjectPars
         GradientWrtParameterProvider rateProvider = (GradientWrtParameterProvider)
                 xo.getChild(GradientWrtParameterProvider.class);
 
-        //check if parsed a joint gradient of branch rate gradients
-        if (rateProvider instanceof JointGradient) {
-            if (!(((JointGradient) rateProvider).checkJointBranchRateGradient())) {
-                throw new XMLParseException("Joint gradient must be a joint branch rate gradient");
+        if (!(rateProvider instanceof JointBranchRateGradient)) {
+            if (!(rateProvider instanceof BranchRateGradient) &&
+                    !(rateProvider instanceof BranchRateGradientForDiscreteTrait)) {
+                throw new XMLParseException("Must provide a branch rate gradient");
             }
         }
-        //otherwise check if parsed a branch rate gradient
-        else if (!(rateProvider instanceof BranchRateGradient) &&
-                !(rateProvider instanceof BranchRateGradientForDiscreteTrait)) {
-            throw new XMLParseException("Must provide a branch rate gradient");
-        }
-
         return new BranchRateGradientWrtIncrements(rateProvider, priorProvider);
     }
 
@@ -87,7 +81,7 @@ public class BranchRateGradientWrtIncrementsParser extends AbstractXMLObjectPars
                     new ElementRule(BranchRateGradient.class),
                     new XORRule(
                             new ElementRule(BranchRateGradientForDiscreteTrait.class),
-                            new ElementRule(JointGradient.class)
+                            new ElementRule(JointBranchRateGradient.class)
                     )
             ),
     };

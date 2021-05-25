@@ -25,9 +25,10 @@
 
 package dr.inference.hmc;
 
-import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
-import dr.evomodel.treedatalikelihood.discrete.BranchRateGradientForDiscreteTrait;
-import dr.inference.model.*;
+import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.DerivativeOrder;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Parameter;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
@@ -44,24 +45,16 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
     private final int dimension;
     private final Likelihood likelihood;
     private final Parameter parameter;
-    private boolean jointBranchRateGradient;
 
     private final List<GradientWrtParameterProvider> derivativeList;
 
     private final List<DerivativeWrtParameterProvider> newDerivativeList;
     private final DerivativeOrder highestOrder;
 
-    public JointGradient(List<GradientWrtParameterProvider> derivativeList) {
+    public JointGradient(List<GradientWrtParameterProvider> derivativeList){
 
         this.derivativeList = derivativeList;
-        this.jointBranchRateGradient = true;
-        for (int i = 0; i < derivativeList.size(); i++) {
-            if (!(derivativeList.get(i) instanceof BranchRateGradient)) {
-                if (!(derivativeList.get(i) instanceof BranchRateGradientForDiscreteTrait)) {
-                    this.jointBranchRateGradient = false;
-                }
-            }
-        }
+
         GradientWrtParameterProvider first = derivativeList.get(0);
         dimension = first.getDimension();
         parameter = first.getParameter();
@@ -75,7 +68,7 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
                 if (grad.getDimension() != dimension) {
                     throw new RuntimeException("Unequal parameter dimensions");
                 }
-                if (!Arrays.equals(grad.getParameter().getParameterValues(), parameter.getParameterValues())) {
+                if (!Arrays.equals(grad.getParameter().getParameterValues(), parameter.getParameterValues())){
                     throw new RuntimeException("Unequal parameter values");
                 }
                 for (Likelihood likelihood : grad.getLikelihood().getLikelihoodSet()) {
@@ -208,10 +201,6 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
         return derivative;
     }
 
-    public boolean checkJointBranchRateGradient() {
-        return jointBranchRateGradient;
-    }
-
     @Override
     public double[] getGradientLogDensity() {
         return getDerivativeLogDensity(DerivativeType.GRADIENT);
@@ -222,10 +211,10 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
 
     @Override
     public String getReport() {
-        return "jointGradient." + parameter.getParameterName() + "\n" +
+        return  "jointGradient." + parameter.getParameterName() + "\n" +
                 GradientWrtParameterProvider.getReportAndCheckForError(this,
-                        Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
-                        GradientWrtParameterProvider.TOLERANCE);
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
+                GradientWrtParameterProvider.TOLERANCE);
     }
 
     private enum DerivativeType {

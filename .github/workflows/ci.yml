@@ -25,4 +25,4 @@ jobs:
       - run: cd $BEAGLE_DIR
       - run: mkdir build
       - run: cd build
-      - run: cmake DBUILD_CUDA=OFF -DBUILD_OPENCL=OFF ..
+      - run: cmake -DBUILD_CUDA=OFF -DBUILD_OPENCL=OFF ..

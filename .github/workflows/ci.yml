@@ -6,7 +6,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      BEAGLE_DIR: env.GITHUB_WORKSPACE/beagle-lib
+      BEAGLE_DIR: beagle-lib
       BEAGLE_LIB: beagle-lib/usr/local/lib
       BEAGLE_BRANCH: v4_release
 
@@ -21,10 +21,12 @@ jobs:
       - name: Setup cmake
         uses: lukka/get-cmake@latest
       #      - name: Build BEAGLE
-      - run: git clone -b $BEAGLE_BRANCH --depth 1 https://github.com/beagle-dev/beagle-lib.git $BEAGLE_DIR
-      - run: cd $BEAGLE_DIR
-      - run: mkdir build
-      - run: cd build
-      - run: echo $PWD
-      - run: cmake -DBUILD_CUDA=OFF -DBUILD_OPENCL=OFF ..
-      - run: make DESTDIR=BEAGLE_DIR
+#      - run: git clone -b $BEAGLE_BRANCH --depth 1 https://github.com/beagle-dev/beagle-lib.git $BEAGLE_DIR
+#      - run: cd $BEAGLE_DIR
+#      - run: mkdir build
+#      - run: cd build
+#      - run: echo $PWD
+#      - run: cmake -DBUILD_CUDA=OFF -DBUILD_OPENCL=OFF ..
+#      - run: make DESTDIR=BEAGLE_DIR
+      - run: chmod +x ci/build_beagle.sh
+      - run: ci/build_beagle.sh

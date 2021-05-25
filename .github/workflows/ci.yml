@@ -28,6 +28,9 @@ jobs:
 #      - run: echo $PWD
 #      - run: cmake -DBUILD_CUDA=OFF -DBUILD_OPENCL=OFF ..
 #      - run: make DESTDIR=BEAGLE_DIR
-      - name: Setup BEAGLE
-        run: chmod +x ci/build_beagle.sh
-        run: ci/build_beagle.sh
+#      - run: chmod +x ci/build_beagle.sh
+      - run: ci/build_beagle.sh
+      - run: ant dist
+      - run: ci/test.sh
+      - run: ci/test_with_load_state.sh
+      - run: ant -Djava.library.path=${BEAGLE_LIB} junit

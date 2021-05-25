@@ -20,9 +20,9 @@ jobs:
           distribution: 'adopt'
       - name: Setup cmake
         uses: lukka/get-cmake@latest
-      - name: Build BEAGLE
-        - run: git clone -b $BEAGLE_BRANCH -depth 0 https://github.com/beagle-dev/beagle-lib.git $BEAGLE_DIR
-        - run: cd $BEAGLE_DIR
-        - run: mkdir build
-        - run: cd build
-        - run: cmake DBUILD_CUDA=OFF -DBUILD_OPENCL=OFF ..
+#      - name: Build BEAGLE
+      - run: git clone -b $BEAGLE_BRANCH -depth 0 https://github.com/beagle-dev/beagle-lib.git $BEAGLE_DIR
+      - run: cd $BEAGLE_DIR
+      - run: mkdir build
+      - run: cd build
+      - run: cmake DBUILD_CUDA=OFF -DBUILD_OPENCL=OFF ..

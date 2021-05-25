@@ -1,0 +1,28 @@
+name: BEAST CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      BEAGLE_DIR: beagle-lib
+      BEAGLE_LIB: beagle-lib/usr/local/lib
+      BEAGLE_BRANCH: v4_release
+
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 8
+        uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'adopt'
+      - name: Setup cmake
+        uses: lukka/get-cmake@latest
+      #      - name: Build BEAGLE
+      - run: git clone -b $BEAGLE_BRANCH --depth 1 https://github.com/beagle-dev/beagle-lib.git $BEAGLE_DIR
+      - run: cd $BEAGLE_DIR
+      - run: mkdir build
+      - run: cd build
+      - run: cmake DBUILD_CUDA=OFF -DBUILD_OPENCL=OFF ..

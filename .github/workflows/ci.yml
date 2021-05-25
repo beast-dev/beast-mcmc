@@ -6,7 +6,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      BEAGLE_DIR: beagle-lib
+      BEAGLE_DIR: env.GITHUB_WORKSPACE/beagle-lib
       BEAGLE_LIB: beagle-lib/usr/local/lib
       BEAGLE_BRANCH: v4_release
 
@@ -25,4 +25,6 @@ jobs:
       - run: cd $BEAGLE_DIR
       - run: mkdir build
       - run: cd build
+      - run: echo $PWD
       - run: cmake -DBUILD_CUDA=OFF -DBUILD_OPENCL=OFF ..
+      - run: make DESTDIR=BEAGLE_DIR

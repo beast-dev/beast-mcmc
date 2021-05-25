@@ -114,6 +114,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                                         BranchModel branchModel,
                                         SiteRateModel siteRateModel,
                                         boolean useAmbiguities,
+                                        boolean preferGPU,
                                         PartialsRescalingScheme rescalingScheme,
                                         boolean delayRescalingUntilUnderflow,
                                         PreOrderSettings settings) {
@@ -239,6 +240,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 if (resourceList[0] > 0) {
                     preferenceFlags |= BeagleFlag.PROCESSOR_GPU.getMask(); // Add preference weight against CPU
                 }
+            }
+            if (preferGPU) {
+                preferenceFlags |= BeagleFlag.PROCESSOR_GPU.getMask(); // Add preference weight against CPU
             }
 
             if (preferredOrder.size() > 0) {
@@ -1078,7 +1082,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.AYRES_2012_BEAGLE);
+        return Collections.singletonList(CommonCitations.AYRES_2019_BEAGLE);
     }
 
     // **************************************************************

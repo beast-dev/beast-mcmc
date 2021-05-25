@@ -197,7 +197,7 @@ public class BEAUTiImporter {
         SimpleAlignment alignment = null;
         List<Tree> trees = new ArrayList<Tree>();
         PartitionSubstitutionModel model = null;
-        List<NexusApplicationImporter.CharSet> charSets = new ArrayList<NexusApplicationImporter.CharSet>();
+        List<CharSet> charSets = new ArrayList<CharSet>();
         List<NexusApplicationImporter.TaxSet> taxSets = new ArrayList<NexusApplicationImporter.TaxSet>();
 
         try {
@@ -569,7 +569,7 @@ public class BEAUTiImporter {
 
     // for Alignment
     private void setData(String fileName, TaxonList taxonList, Alignment alignment,
-                         List<NexusApplicationImporter.CharSet> charSets,
+                         List<CharSet> charSets,
                          List<NexusApplicationImporter.TaxSet> taxSets,
                          PartitionSubstitutionModel model,
                          List<TraitData> traits, List<Tree> trees) throws ImportException, IllegalArgumentException {
@@ -653,7 +653,7 @@ public class BEAUTiImporter {
         if (taxSets != null) {
             for (NexusApplicationImporter.TaxSet taxSet : taxSets) {
                 Taxa taxa = new Taxa(taxSet.getName());
-                for (NexusApplicationImporter.CharSetBlock block : taxSet.getBlocks()) {
+                for (CharSetBlock block : taxSet.getBlocks()) {
                     for (int i = block.getFromSite(); i <= block.getToSite(); i++) {
                         taxa.addTaxon(taxonList.getTaxon(i - 1));
                     }
@@ -668,13 +668,13 @@ public class BEAUTiImporter {
     }
 
     private void addAlignment(Alignment alignment,
-                              List<NexusApplicationImporter.CharSet> charSets,
+                              List<CharSet> charSets,
                               PartitionSubstitutionModel model,
                               String fileName, String fileNameStem) {
         if (alignment != null) {
             List<AbstractPartitionData> partitions = new ArrayList<AbstractPartitionData>();
             if (charSets != null && charSets.size() > 0) {
-                for (NexusApplicationImporter.CharSet charSet : charSets) {
+                for (CharSet charSet : charSets) {
                     partitions.add(new PartitionData(options, charSet.name, fileName,
                             charSet.constructCharSetAlignment(alignment)));
                 }

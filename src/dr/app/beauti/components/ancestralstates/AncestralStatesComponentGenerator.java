@@ -32,6 +32,7 @@ import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
@@ -427,7 +428,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         writer.writeOpenTag(TreeLoggerParser.LOG_TREE, attributes);
 
-        writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, tree.getPrefix() + DefaultTreeModel.TREE_MODEL);
 
         String historyLoggerId = partition.getPrefix() + "treeLikelihood";
         writer.writeIDref(MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD, historyLoggerId);

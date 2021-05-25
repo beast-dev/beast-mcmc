@@ -231,6 +231,7 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
             }
         };
 
+        @SuppressWarnings("unused")
         private String type;
 
         DerivativeType(String type) {

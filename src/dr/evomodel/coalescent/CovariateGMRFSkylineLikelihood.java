@@ -25,6 +25,7 @@
 
 package dr.evomodel.coalescent;
 
+import dr.evolution.coalescent.IntervalList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.MatrixParameter;
@@ -43,14 +44,14 @@ public class CovariateGMRFSkylineLikelihood extends GMRFSkyrideLikelihood {
 	private Parameter covariateData;
 	private Parameter covariateTimes;
 
-	private ArrayList<CoalescentIntervalWithData> intervals;
-	private ArrayList<CoalescentIntervalWithData> storedIntervals;
+	//private ArrayList<CoalescentIntervalWithData> intervals;
+	//private ArrayList<CoalescentIntervalWithData> storedIntervals;
 
 
-	public CovariateGMRFSkylineLikelihood(Tree tree, Parameter popParameter, Parameter precParameter,
+	public CovariateGMRFSkylineLikelihood(IntervalList intervalList, Parameter popParameter, Parameter precParameter,
 	                                      Parameter lambda, Parameter beta, MatrixParameter dMatrix,
 	                                      Parameter data, Parameter times) {
-		super(tree, popParameter, null, precParameter, lambda, beta, dMatrix, false, true);
+		super(intervalList, popParameter, null, precParameter, lambda, beta, dMatrix, false, true);
 
 		covariateData = data;
 		covariateTimes = times;
@@ -62,6 +63,7 @@ public class CovariateGMRFSkylineLikelihood extends GMRFSkyrideLikelihood {
 	}
 
 	//	@Override
+    /*
 	public void sSetupIntervals() {
 
 		intervals.clear();
@@ -94,23 +96,24 @@ public class CovariateGMRFSkylineLikelihood extends GMRFSkyrideLikelihood {
 		intervalsKnown = true;
 
 	}
+*/
 
 	public void setupGMRFWeights() {
 		super.setupGMRFWeights();
 	}
 
 	public void storeState() {
-		storedIntervals = new ArrayList<CoalescentIntervalWithData>(intervals.size());
+	    /*		storedIntervals = new ArrayList<CoalescentIntervalWithData>(intervals.size());
 		for (CoalescentIntervalWithData interval : intervals) {
 			storedIntervals.add(interval.clone());
-		}
+		} */
 	}
 
 	public void restoreState() {
-		intervals = storedIntervals;
-		storedIntervals.clear();
+		//intervals = storedIntervals;
+		//storedIntervals.clear();
 	}
-
+/*
 	private class CoalescentIntervalWithData implements Comparable<CoalescentIntervalWithData>, Cloneable {
 		public final CoalescentEventType type;
 		public double length;
@@ -142,6 +145,6 @@ public class CovariateGMRFSkylineLikelihood extends GMRFSkyrideLikelihood {
 			return new CoalescentIntervalWithData(length, datum, type);
 		}
 
-	}
+	} */
 
 }

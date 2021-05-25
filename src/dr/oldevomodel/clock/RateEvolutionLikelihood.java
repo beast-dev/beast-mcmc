@@ -59,13 +59,13 @@ public abstract class RateEvolutionLikelihood extends AbstractBranchRateModel {
         addModel(treeModel);
 
         this.ratesParameter = new TreeParameterModel(treeModel, ratesParameter, false);
-        Parameter.DefaultBounds bound = new Parameter.DefaultBounds(Double.MAX_VALUE, 0, ratesParameter.getDimension());
+        Parameter.DefaultBounds bound = new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0, ratesParameter.getDimension());
         ratesParameter.addBounds(bound);
 
         addModel(this.ratesParameter);
 
         this.rootRateParameter = rootRateParameter;
-        rootRateParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0, 1));
+        rootRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0, 1));
         addVariable(rootRateParameter);
 
         if (rootRateParameter.getDimension() != 1) {

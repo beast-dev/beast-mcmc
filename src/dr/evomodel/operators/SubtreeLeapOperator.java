@@ -33,7 +33,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.SubtreeLeapOperatorParser;
 import dr.evomodelxml.operators.TipLeapOperatorParser;
 import dr.inference.distribution.CauchyDistribution;
-import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
 import dr.math.MathUtils;
 import dr.math.distributions.Distribution;
@@ -260,9 +259,10 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
                 tree.addChild(jParent, parent);
             }
         }
-        tree.endTreeEdit();
 
         tree.setNodeHeight(parent, newHeight);
+
+        tree.endTreeEdit();
 
         if (tree.getParent(parent) != null && newHeight > tree.getNodeHeight(tree.getParent(parent))) {
             throw new IllegalArgumentException("height error");

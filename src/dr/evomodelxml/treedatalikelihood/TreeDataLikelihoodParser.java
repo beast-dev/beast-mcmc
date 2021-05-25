@@ -26,6 +26,7 @@
 package dr.evomodelxml.treedatalikelihood;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
@@ -64,6 +65,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     public static final String TREE_DATA_LIKELIHOOD = "treeDataLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     public static final String INSTANCE_COUNT = "instanceCount";
+    public static final String PREFER_GPU = "preferGPU";
     public static final String SCALING_SCHEME = "scalingScheme";
     public static final String DELAY_SCALING = "delayScaling";
     public static final String USE_PREORDER = "usePreOrder";
@@ -79,10 +81,11 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     protected Likelihood createTreeDataLikelihood(List<PatternList> patternLists,
                                                   List<BranchModel> branchModels,
                                                   List<SiteRateModel> siteRateModels,
-                                                  TreeModel treeModel,
+                                                  Tree treeModel,
                                                   BranchRateModel branchRateModel,
                                                   TipStatesModel tipStatesModel,
                                                   boolean useAmbiguities,
+                                                  boolean preferGPU,
                                                   PartialsRescalingScheme scalingScheme,
                                                   boolean delayRescalingUntilUnderflow,
                                                   PreOrderSettings settings) throws XMLParseException {
@@ -179,6 +182,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     branchModels.get(i),
                     siteRateModels.get(i),
                     useAmbiguities,
+                    preferGPU,
                     scalingScheme,
                     delayRescalingUntilUnderflow,
                     settings);
@@ -292,7 +296,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Either a single set of patterns should be given or multiple 'partitions' elements within DataTreeLikelihood: "+xo.getId());
         }
 
-        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        Tree treeModel = (Tree) xo.getChild(Tree.class);
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
         if (branchRateModel == null) {
@@ -302,8 +306,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
         TipStatesModel tipStatesModel = (TipStatesModel) xo.getChild(TipStatesModel.class);
 
+        final boolean preferGPU = xo.getAttribute(PREFER_GPU, false);
+
         PartialsRescalingScheme scalingScheme = PartialsRescalingScheme.DEFAULT;
-        boolean delayScaling = true;
         if (xo.hasAttribute(SCALING_SCHEME)) {
             scalingScheme = PartialsRescalingScheme.parseFromString(xo.getStringAttribute(SCALING_SCHEME));
             if (scalingScheme == null)
@@ -311,9 +316,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                         "TreeDataLikelihood object '"+xo.getId());
 
         }
-        if (xo.hasAttribute(DELAY_SCALING)) {
-            delayScaling = xo.getBooleanAttribute(DELAY_SCALING);
-        }
+
+        final boolean delayScaling = xo.getAttribute(DELAY_SCALING, true);
 
         if (tipStatesModel != null) {
             throw new XMLParseException("BEAGLE_INSTANCES option cannot be used with a TipStateModel (i.e., a sequence error model).");
@@ -327,6 +331,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 branchRateModel,
                 null,
                 useAmbiguities,
+                preferGPU,
                 scalingScheme,
                 delayScaling,
                 settings);
@@ -346,6 +351,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
+            AttributeRule.newBooleanRule(PREFER_GPU, true),
             AttributeRule.newStringRule(SCALING_SCHEME,true),
 
             // really it should be this set of elements or the PARTITION elements
@@ -363,7 +369,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     }, 1, Integer.MAX_VALUE)),
 
             new ElementRule(BranchRateModel.class, true),
-            new ElementRule(TreeModel.class),
+            new ElementRule(Tree.class),
             new ElementRule(TipStatesModel.class, true)
     };
 

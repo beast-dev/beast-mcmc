@@ -33,7 +33,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;

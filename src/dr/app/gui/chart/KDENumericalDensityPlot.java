@@ -114,7 +114,14 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot {
             x -= frequency.getBinSize();
             extraEdgeCount += 1;
         }
-        xData.add(x);
+        // take the raw X min
+        double rawXMin = Double.parseDouble(raw.getMin().toString());
+        // here sometime final x < lowerBoundary from above loop
+        // rawXMin >= lowerBoundary to ignore the negative X, e.g. likelihoods
+        if (rawXMin >= lowerBoundary && x < lowerBoundary)
+            xData.add(lowerBoundary); // set min x to lowerBoundary
+        else
+            xData.add(x);
         yData.add(0.0);
         x += frequency.getBinSize();
         int count = 0;

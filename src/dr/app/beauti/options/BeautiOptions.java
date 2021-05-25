@@ -69,6 +69,9 @@ public class BeautiOptions extends ModelOptions {
     // Switches to a dirichlet prior & delta exchange on state frequencies
     private static final boolean FREQUENCIES_DIRICHLET_PRIOR = true;
 
+    // Switches to a gamma prior on population size parameters
+    private static final boolean POPSIZE_GAMMA_PRIOR = true;
+
     private static final long serialVersionUID = -3676802825545741012L;
 
     public BeautiOptions() {
@@ -108,7 +111,7 @@ public class BeautiOptions extends ModelOptions {
         taxonSetsIncludeStem.clear();
         taxonSetsTreeModel.clear();
 
-//        meanDistance = 1.0;
+        // meanDistance = 1.0;
         datesUnits = DateUnitsType.YEARS;
         datesDirection = DateUnitsType.FORWARDS;
         maximumTipHeight = 0.0;
@@ -116,16 +119,16 @@ public class BeautiOptions extends ModelOptions {
 
         dataPartitions.clear();
         traits.clear();
-//        partitionModels.clear();
-//        partitionTreeModels.clear();
-//        partitionTreePriors.clear();
-//        partitionClockTreeLinks.clear();
-//        activedSameTreePrior = null;
-//        shareSameTreePrior = true;
+        // partitionModels.clear();
+        // partitionTreeModels.clear();
+        // partitionTreePriors.clear();
+        // partitionClockTreeLinks.clear();
+        // activedSameTreePrior = null;
+        // shareSameTreePrior = true;
         userTrees.clear();
 
-//        rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
-//        meanSubstitutionRate = 1.0;
+        // rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
+        // meanSubstitutionRate = 1.0;
         unlinkPartitionRates = true;
 
         units = Units.Type.SUBSTITUTIONS;
@@ -286,6 +289,9 @@ public class BeautiOptions extends ModelOptions {
         treeModelOptions.selectParameters(parameters);
 
         for (PartitionTreePrior prior : getPartitionTreePriors()) {
+            //refresh prior choices
+            prior.alternatePopulationSizePriors();
+
             prior.selectParameters(parameters);
         }
 
@@ -1227,7 +1233,7 @@ public class BeautiOptions extends ModelOptions {
     // ++++++++++++++++++++ message bar +++++++++++++++++
 
     public String statusMessage() {
-//        String message = "<html><p>";
+        // String message = "<html><p>";
         String message = "";
         if (hasData()) {
             message += "Data: " + taxonList.getTaxonCount() + " taxa, ";
@@ -1238,11 +1244,11 @@ public class BeautiOptions extends ModelOptions {
                         (userTrees.size() > 1 ? " trees" : " tree");
             }
 
-//            if (hasPhylogeographic()) {
-//                message += ";    Phylogeographic Analysis";
-//            }
+            // if (hasPhylogeographic()) {
+            //      message += ";    Phylogeographic Analysis";
+            // }
 
-//            message += "; " + clockModelOptions.statusMessageClockModel();
+            // message += "; " + clockModelOptions.statusMessageClockModel();
 
         } else if (userTrees.size() > 0) { // TODO
             message += "Trees only : " + userTrees.size() +
@@ -1253,7 +1259,7 @@ public class BeautiOptions extends ModelOptions {
         } else {
             message += "No data loaded - select 'Import Data...' from the 'File' menu.";
         }
-//        message += "</p></html>";
+        // message += "</p></html>";
         return message;
     }
 
@@ -1302,10 +1308,10 @@ public class BeautiOptions extends ModelOptions {
 
 
     public DateGuesser dateGuesser = new DateGuesser();
-//    public TraitGuesser traitGuesser = new TraitGuesser();
-//
-//    public List<String> selecetedTraits = new ArrayList<String>();
-//    public Map<String, TraitGuesser.TraitType> traitTypes = new HashMap<String, TraitGuesser.TraitType>();
+    // public TraitGuesser traitGuesser = new TraitGuesser();
+    //
+    // public List<String> selecetedTraits = new ArrayList<String>();
+    // public Map<String, TraitGuesser.TraitType> traitTypes = new HashMap<String, TraitGuesser.TraitType>();
 
     // Data
     public List<AbstractPartitionData> dataPartitions = new ArrayList<AbstractPartitionData>();
@@ -1343,8 +1349,8 @@ public class BeautiOptions extends ModelOptions {
     public String demographicLogFileName = null;
 
     public boolean allowOverwriteLog = false;
-    //    public boolean mapTreeLog = false;
-    //    public String mapTreeFileName = null;
+    // public boolean mapTreeLog = false;
+    // public String mapTreeFileName = null;
     public List<String> treeFileName = new ArrayList<String>();
     public boolean substTreeLog = false;
     public List<String> substTreeFileName = new ArrayList<String>();
@@ -1365,6 +1371,10 @@ public class BeautiOptions extends ModelOptions {
 
     public boolean useNuRelativeRates() {
         return !useClassicOperatorsAndPriors() || !NEW_RELATIVE_RATE_PARAMETERIZATION;
+    }
+
+    public boolean useGammaPriorPopSize() {
+        return !useClassicOperatorsAndPriors() || !POPSIZE_GAMMA_PRIOR;
     }
 
     public boolean useNewGTR() {

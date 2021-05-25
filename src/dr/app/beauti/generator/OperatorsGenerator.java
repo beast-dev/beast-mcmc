@@ -31,7 +31,7 @@ import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
-import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser;
 import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
@@ -425,7 +425,7 @@ public class OperatorsGenerator extends Generator {
     private void writeTreeBitMoveOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(TreeBitMoveOperatorParser.BIT_MOVE_OPERATOR,
                 getWeightAttribute(operator.getWeight()));
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(TreeBitMoveOperatorParser.BIT_MOVE_OPERATOR);
     }
 
@@ -448,21 +448,21 @@ public class OperatorsGenerator extends Generator {
     private void writeNarrowExchangeOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(ExchangeOperatorParser.NARROW_EXCHANGE,
                 getWeightAttribute(operator.getWeight()));
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(ExchangeOperatorParser.NARROW_EXCHANGE);
     }
 
     private void writeWideExchangeOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(ExchangeOperatorParser.WIDE_EXCHANGE,
                 getWeightAttribute(operator.getWeight()));
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(ExchangeOperatorParser.WIDE_EXCHANGE);
     }
 
     private void writeWilsonBaldingOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(WilsonBaldingParser.WILSON_BALDING,
                 getWeightAttribute(operator.getWeight()));
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(WilsonBaldingParser.WILSON_BALDING);
     }
 
@@ -532,7 +532,7 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.getWeight())
                 }
         );
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(SubtreeLeapOperatorParser.SUBTREE_LEAP);
     }
 
@@ -542,7 +542,7 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.getWeight())
                 }
         );
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(FixedHeightSubtreePruneRegraftOperatorParser.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT);
     }
 
@@ -554,7 +554,7 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.getWeight())
                 }
         );
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(SubtreeJumpOperatorParser.SUBTREE_JUMP);
     }
 
@@ -566,7 +566,7 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.getWeight())
                 }
         );
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(SubtreeSlideOperatorParser.SUBTREE_SLIDE);
     }
 

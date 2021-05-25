@@ -5,6 +5,7 @@ import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
@@ -161,7 +162,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             @Override
             Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood) {
                 if (parameter == null) {
-                    TreeModel treeModel = (TreeModel) likelihood.getTree(0);
+                    DefaultTreeModel treeModel = (DefaultTreeModel) likelihood.getTree(0);
                     parameter = treeModel.createNodeHeightsParameter(true, true, false);
                 }
                 return parameter;

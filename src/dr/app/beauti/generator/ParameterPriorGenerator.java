@@ -31,6 +31,7 @@ import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.tree.CTMCScalePriorParser;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
@@ -313,7 +314,7 @@ public class ParameterPriorGenerator extends Generator {
                     }
                 }
 
-                writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
                 writer.writeCloseTag(CTMCScalePriorParser.MODEL_NAME);
                 break;
             case NORMAL_HPM_PRIOR:

@@ -27,6 +27,9 @@ package dr.evomodelxml.operators;
 
 import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainedTreeModel;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainedTreeOperator;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.UniformSubtreePruneRegraft;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
 
@@ -47,7 +50,13 @@ public class WilsonBaldingParser extends AbstractXMLObjectParser {
 
         final TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
-        return new WilsonBalding(treeModel, weight);
+        WilsonBalding op = new WilsonBalding(treeModel,weight);
+        if(treeModel instanceof ConstrainedTreeModel){
+            return new ConstrainedTreeOperator((ConstrainedTreeModel) treeModel, weight, op);
+        }else{
+            return op;
+        }
+        
     }
 
     //************************************************************************

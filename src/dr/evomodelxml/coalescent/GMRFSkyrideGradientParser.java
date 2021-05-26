@@ -47,6 +47,8 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
     private static final String COALESCENT_INTERVAL = "coalescentInterval";
     private static final String NODE_HEIGHTS = "nodeHeights";
 
+    private static final String IGNORE_WARNING = "ignoreWarning";
+
     private static final String TOLERANCE = HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_TOLERANCE;
 
     @Override
@@ -60,9 +62,13 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
 
         double tolerance = xo.getAttribute(TOLERANCE, 1E-4);
 
+        boolean ignoreWarning = xo.getAttribute(IGNORE_WARNING, false);
+
         GMRFGradient.WrtParameter type = GMRFGradient.WrtParameter.factory(wrtParameterCase);
         if (type != null) {
-            type.getWarning((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood);
+            if (!ignoreWarning) {
+                type.getWarning((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood);
+            }
             return new GMRFGradient((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood, type, tolerance);
         }
 
@@ -97,6 +103,7 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
             new ElementRule(OldGMRFSkyrideLikelihood.class),
             new ElementRule(NodeHeightTransform.class, true),
             AttributeRule.newDoubleRule(TOLERANCE, true),
+            AttributeRule.newBooleanRule(IGNORE_WARNING, true),
     };
 
     @Override

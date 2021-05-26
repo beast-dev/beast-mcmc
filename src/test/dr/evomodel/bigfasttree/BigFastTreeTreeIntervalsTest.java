@@ -4,21 +4,19 @@ import dr.evolution.coalescent.IntervalList;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.bigfasttree.BigFastTreeModel;
-import dr.evomodel.bigfasttree.constrainedtree.CladeAwareSubtreePruneRegraft;
-import dr.evomodel.bigfasttree.constrainedtree.CladeNodeModel;
 import dr.evomodel.coalescent.TreeIntervals;
-import dr.evomodel.operators.NodeHeightOperator;
+import dr.evomodel.operators.ScaleNodeHeightOperator;
+import dr.evomodel.operators.UniformNodeHeightOperator;
 import dr.evomodel.operators.SubtreeLeapOperator;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.operators.NodeHeightOperatorParser;
 import dr.inference.operators.AdaptationMode;
 import dr.math.MathUtils;
 import junit.framework.TestCase;
-
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -149,8 +147,8 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
         BigFastTreeIntervals bigFastTreeIntervals = new BigFastTreeIntervals(tree);
 
         SubtreeLeapOperator op = new SubtreeLeapOperator (tree,1,0.0001,SubtreeLeapOperator.DistanceKernelType.NORMAL,AdaptationMode.ADAPTATION_OFF,0.2);
-        NodeHeightOperator nh = new NodeHeightOperator(tree,1,1, NodeHeightOperator.OperatorType.UNIFORM, AdaptationMode.ADAPTATION_OFF,0.25);
-        NodeHeightOperator root = new NodeHeightOperator(tree,1,0.75, NodeHeightOperator.OperatorType.SCALEROOT, AdaptationMode.ADAPTATION_OFF,0.25);
+        UniformNodeHeightOperator nh = new UniformNodeHeightOperator(tree,1);
+        ScaleNodeHeightOperator root = new ScaleNodeHeightOperator(tree,1,0.75, NodeHeightOperatorParser.OperatorType.SCALEROOT,AdaptationMode.ADAPTATION_OFF,0.25);
         boolean pass = true;
 
         MathUtils.setSeed(2);

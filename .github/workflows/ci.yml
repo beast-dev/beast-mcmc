@@ -35,7 +35,7 @@ jobs:
       - run: ls ${BEAGLE_LIB}
       - run: java -jar -Djava.library.path=${BEAGLE_LIB} build/dist/beast.jar -beagle_info
       - run: chmod +x ci/test.sh
-#      - run: ci/test.sh
-      - run: chmod +x ci/test_with_load_state.sh
-      - run: ci/test_with_load_state.sh
+      - run: ci/test.sh
+#      - run: chmod +x ci/test_with_load_state.sh
+#      - run: ci/test_with_load_state.sh
       - run: ant -Djava.library.path=${BEAGLE_LIB} junit

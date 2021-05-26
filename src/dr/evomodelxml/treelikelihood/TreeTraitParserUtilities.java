@@ -420,6 +420,7 @@ public class TreeTraitParserUtilities {
 
             // Find missing values
             double[] allValues = traitParameter.getParameterValues();
+
             missingIndicators = new boolean[allValues.length];
             for (int i = 0; i < allValues.length; i++) {
                 if ((new Double(allValues[i])).isNaN()) {
@@ -511,6 +512,18 @@ public class TreeTraitParserUtilities {
         return new TraitsAndMissingIndices(traitParameter, missingIndicators, traitName,
                 sampleMissingParameter, useMissingIndices);
     }
+
+    public static List<Integer> parseMissingIndices(Parameter traitParameter, double[] allValues) {
+        List<Integer> missingIndices = new ArrayList<Integer>();
+        for (int i = 0; i < allValues.length; i++) {
+            if ((new Double(allValues[i])).isNaN()) {
+                traitParameter.setParameterValue(i, 0); // Here, missings are set to zero
+                missingIndices.add(i);
+            }
+        }
+        return missingIndices;
+    }
+
 
     private Parameter getTraitParameterByName(CompoundParameter traits, String name) {
 

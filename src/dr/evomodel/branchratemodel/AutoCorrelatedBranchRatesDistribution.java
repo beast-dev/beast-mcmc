@@ -153,7 +153,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
     BranchVarianceScaling getScaling() { return scaling; }
 
-    DifferentiableBranchRates getBranchRateModel() { return branchRateModel; }
+    public DifferentiableBranchRates getBranchRateModel() { return branchRateModel; }
 
     private void rescaleGradientWrtIncrements(double[] gradientWrtIncrements) {
         for (int i = 0; i < dim; i++) {

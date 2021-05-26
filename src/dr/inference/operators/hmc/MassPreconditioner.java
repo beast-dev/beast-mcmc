@@ -67,6 +67,7 @@ public interface MassPreconditioner {
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
                 int dimension = transform instanceof Transform.MultivariableTransform ?
                         ((Transform.MultivariableTransform) transform).getDimension() : gradient.getDimension();
+
                 return new AdaptiveDiagonalPreconditioning(dimension, gradient, transform, options.preconditioningDelay());
             }
         },
@@ -562,10 +563,26 @@ public interface MassPreconditioner {
         AdaptiveDiagonalPreconditioning(int dim,
                                         GradientWrtParameterProvider gradient,
                                         Transform transform, int preconditioningDelay) {
+            this(dim, gradient, transform, preconditioningDelay, false);
+        }
+
+        AdaptiveDiagonalPreconditioning(int dim,
+                                        GradientWrtParameterProvider gradient,
+                                        Transform transform, int preconditioningDelay,
+                                        boolean guessInitialMass) {
             super(dim, transform);
             this.variance = new AdaptableVector.AdaptableVariance(dim);
             this.minimumUpdates = preconditioningDelay;
             this.gradient = gradient;
+            if (guessInitialMass) {
+                setInitialMass();
+            } else {
+                super.initializeMass();
+            }
+        }
+
+        @Override
+        protected void initializeMass() {
         }
 
         private void setInitialMass() {
@@ -594,7 +611,28 @@ public interface MassPreconditioner {
                 gradient.getParameter().setParameterValueQuietly(i, storedValues[i]);
             }
             gradient.getParameter().fireParameterChangedEvent();
+            fillZeros(values);
             inverseMass = normalizeVector(new WrappedVector.Raw(values), dim);
+        }
+
+        private void fillZeros(double[] positives) {
+            double sum = 0.0;
+            double min = Double.POSITIVE_INFINITY;
+
+            for (int i = 0; i < positives.length; i++) {
+                sum += positives[i];
+                if (min > positives[i] && positives[i] > 0.0) min = positives[i];
+            }
+
+            if (sum == 0.0) {
+                Arrays.fill(positives, 1.0);
+            } else {
+                for (int i = 0; i < positives.length; i++) {
+                    if (positives[i] == 0.0) {
+                        positives[i] = min;
+                    }
+                }
+            }
         }
 
         @Override

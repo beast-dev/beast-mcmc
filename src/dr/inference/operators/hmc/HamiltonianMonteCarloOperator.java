@@ -122,7 +122,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         return "VanillaHMC(" + parameter.getParameterName() + ")";
     }
 
-    private static double[] buildMask(Parameter maskParameter) {
+    protected double[] buildMask(Parameter maskParameter) {
 
         if (maskParameter == null) return null;
 
@@ -310,7 +310,9 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
         if (mask != null) {
             for (int i = 0; i < vector.length; ++i) {
-                vector[i] *= mask[i];
+                if (mask[i] == 0.0) {
+                    vector[i] = 0.0;
+                }
             }
         }
 
@@ -323,7 +325,9 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
         if (mask != null) {
             for (int i = 0; i < vector.getDim(); ++i) {
-                vector.set(i, vector.get(i) * mask[i]);
+                if (mask[i] == 0.0) {
+                    vector.set(i, 0.0);
+                }
             }
         }
 
@@ -337,11 +341,8 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         final double initialStepSize;
         final int nSteps;
         final double randomStepCountFraction;
-        final int preconditioningUpdateFrequency;
-        final int preconditioningMaxUpdate;
-        final int preconditioningDelay;
-        final int preconditioningMemory;
         final int gradientCheckCount;
+        final MassPreconditioningOptions preconditioningOptions;
         final double gradientCheckTolerance;
         final int checkStepSizeMaxIterations;
         final double checkStepSizeReductionFactor;
@@ -349,43 +350,40 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         final InstabilityHandler instabilityHandler;
 
         public Options(double initialStepSize, int nSteps, double randomStepCountFraction,
-                       int preconditioningUpdateFrequency, int preconditioningMaxUpdate, int preconditioningDelay, int preconditioningMemory,
+                       MassPreconditioningOptions preconditioningOptions,
                        int gradientCheckCount, double gradientCheckTolerance,
                        int checkStepSizeMaxIterations, double checkStepSizeReductionFactor,
                        double targetAcceptanceProbability, InstabilityHandler instabilityHandler) {
             this.initialStepSize = initialStepSize;
             this.nSteps = nSteps;
             this.randomStepCountFraction = randomStepCountFraction;
-            this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
-            this.preconditioningMaxUpdate = preconditioningMaxUpdate;
-            this.preconditioningDelay = preconditioningDelay;
-            this.preconditioningMemory = preconditioningMemory;
             this.gradientCheckCount = gradientCheckCount;
             this.gradientCheckTolerance = gradientCheckTolerance;
             this.checkStepSizeMaxIterations = checkStepSizeMaxIterations;
             this.checkStepSizeReductionFactor = checkStepSizeReductionFactor;
             this.targetAcceptanceProbability = targetAcceptanceProbability;
             this.instabilityHandler = instabilityHandler;
+            this.preconditioningOptions = preconditioningOptions;
         }
 
         @Override
         public int preconditioningUpdateFrequency() {
-            return preconditioningUpdateFrequency;
+            return preconditioningOptions.preconditioningUpdateFrequency();
         }
 
         @Override
         public int preconditioningDelay() {
-            return preconditioningDelay;
+            return preconditioningOptions.preconditioningDelay();
         }
 
         @Override
         public int preconditioningMaxUpdate() {
-            return preconditioningMaxUpdate;
+            return preconditioningOptions.preconditioningMaxUpdate();
         }
 
         @Override
         public int preconditioningMemory() {
-            return preconditioningMemory;
+            return preconditioningOptions.preconditioningMemory();
         }
     }
 
@@ -423,6 +421,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
     }
 
     protected double leapFrogGivenMomentum(WrappedVector momentum) throws NumericInstabilityException {
+        leapFrogEngine.updateMask();
         final double[] position = leapFrogEngine.getInitialPosition();
         leapFrogEngine.projectMomentum(momentum.getBuffer(), position); //if momentum restricted to subspace
 
@@ -621,6 +620,8 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
         void projectMomentum(double[] momentum, double[] position);
 
+        void updateMask();
+
         class Default implements LeapFrogEngine {
 
             final protected Parameter parameter;
@@ -667,6 +668,11 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
             }
 
             @Override
+            public void updateMask() {
+                // do nothing
+            }
+
+            @Override
             public void updateMomentum(double[] position, double[] momentum, double[] gradient,
                                        double functionalStepSize) throws NumericInstabilityException {
 
@@ -700,13 +706,13 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
         class WithTransform extends Default {
 
-            final private Transform transform;
+            final protected Transform transform;
             double[] unTransformedPosition;
 
-            private WithTransform(Parameter parameter, Transform transform,
-                                  InstabilityHandler instabilityHandler,
-                                  MassPreconditioner preconditioning,
-                                  double[] mask) {
+            WithTransform(Parameter parameter, Transform transform,
+                          InstabilityHandler instabilityHandler,
+                          MassPreconditioner preconditioning,
+                          double[] mask) {
                 super(parameter, instabilityHandler, preconditioning, mask);
                 this.transform = transform;
             }

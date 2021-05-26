@@ -124,15 +124,24 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
         DETERMINISTIC_SKYGRID("deterministicSkygrid") {
             @Override
             Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood) {
-                MatrixVectorProductParameter product = (MatrixVectorProductParameter) likelihood.getPopSizeParameter();
-                return product.getVector();
+                Parameter popSizes = likelihood.getPopSizeParameter();
+                if (popSizes instanceof MatrixVectorProductParameter) {
+                    return ((MatrixVectorProductParameter) popSizes).getVector();
+                } else {
+                    return popSizes;
+                }
             }
 
             @Override
             double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
-                return multiplyMatrixByDifferential(
-                        likelihood.getGradientWrtLogPopulationSize(),
-                        (MatrixVectorProductParameter) likelihood.getPopSizeParameter());
+                Parameter popSizes = likelihood.getPopSizeParameter();
+                if (popSizes instanceof MatrixVectorProductParameter) {
+                    return multiplyMatrixByDifferential(
+                            likelihood.getGradientWrtLogPopulationSize(),
+                            (MatrixVectorProductParameter) likelihood.getPopSizeParameter());
+                } else {
+                    return likelihood.getGradientWrtLogPopulationSize();
+                }
             }
 
             @Override

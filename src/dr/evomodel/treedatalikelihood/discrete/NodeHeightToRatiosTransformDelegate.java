@@ -161,6 +161,33 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         return ratios.getParameterValues();
     }
 
+    public double[] setMaskByHeightDifference(double threshold) {
+        double[] tooSmall = new double[ratios.getDimension()];
+        for (int i = tree.getExternalNodeCount(); i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
+            if (!tree.isRoot(node)) {
+                final double distance = tree.getNodeHeight(node) - nodeEpochMap.get(node.getNumber()).getAnchorTipHeight();
+                if (distance < threshold) {
+                    tooSmall[i - tree.getExternalNodeCount()] = 0.0;
+                } else {
+                    tooSmall[i - tree.getExternalNodeCount()] = 1.0;
+                }
+            }
+        }
+        return tooSmall;
+    }
+
+    @Override
+    public double[] setMaskByRatio(double threshold) {
+        double[] maskByRatio = new double[ratios.getDimension()];
+        for (int i = 0; i < ratios.getDimension(); i++) {
+            if (ratios.getParameterValue(i) > threshold && ratios.getParameterValue(i) < 1.0 - threshold) {
+                maskByRatio[i] = 1.0;
+            }
+        }
+        return maskByRatio;
+    }
+
     @Override
     public void setNodeHeights(double[] nodeHeights) {
         super.setNodeHeights(nodeHeights);
@@ -300,6 +327,8 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         return -logJacobian;
     }
 
+    private boolean DEBUG = false;
+
     protected int getNodeHeightGradientIndex(NodeRef node) {
         return node.getNumber() - tree.getExternalNodeCount();
     }
@@ -358,8 +387,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     }
 
     private double getNodePartial(NodeRef node) {
-        final int nodeIndex = getRatiosIndex(node);
-        return (tree.getNodeHeight(node) - nodeEpochMap.get(node.getNumber()).getAnchorTipHeight()) / ratios.getParameterValue(nodeIndex);
+        return tree.getNodeHeight(tree.getParent(node)) - nodeEpochMap.get(node.getNumber()).getAnchorTipHeight();
     }
 
     private double getEpochGradientAddition(NodeRef node, NodeRef child, double[] ratiosGradientUnweightedLogDensity) {

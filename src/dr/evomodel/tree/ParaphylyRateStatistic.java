@@ -36,11 +36,12 @@ public class ParaphylyRateStatistic extends TreeStatistic {
     private int dim;
     private BranchWeighting branchWeighting;
 
-    public ParaphylyRateStatistic(String name, DifferentiableBranchRates branchRateModel, List<Taxa> paraphylySet, BranchWeighting branchWeighting, int dim) {
+    public ParaphylyRateStatistic(String name, DifferentiableBranchRates branchRateModel, TreeModel tree, List<Taxa> paraphylySet, BranchWeighting branchWeighting, int dim) {
         super(name);
         this.branchRateModel = branchRateModel;
         this.paraphylySet = paraphylySet;
-        this.tree = branchRateModel.getTree();
+//        this.tree = branchRateModel.getTree();
+        this.tree = tree;
         this.branchWeighting = branchWeighting;
         this.dim = dim;
         this.MRCANodeList = new ArrayList<NodeRef>(dim);
@@ -93,7 +94,6 @@ public class ParaphylyRateStatistic extends TreeStatistic {
 
     private double recurseToAccumulateRate(NodeRef node, List<NodeRef> complement) {
         double total = 0.0;
-        // curent default behavior includes "stem" of MRCA
         if (!tree.isExternal(node)) {
             if (!complement.contains(node)) {
                 total += recurseToAccumulateRate(tree.getChild(node, 0), complement);
@@ -101,8 +101,8 @@ public class ParaphylyRateStatistic extends TreeStatistic {
             }
         }
 
-        //ensures you don't add a root stem
-        if (!complement.contains(node) && !tree.isRoot(node)) {
+// curent default behavior does NOT include "stem" of MRCA
+        if (!MRCANodeList.contains(node) && !tree.isRoot(node)) {
             total += branchWeighting.getBranchRate(branchRateModel, tree, node);
             this.totalTime += branchWeighting.getDenominator(tree, node);
         }
@@ -177,6 +177,8 @@ public class ParaphylyRateStatistic extends TreeStatistic {
 
             DifferentiableBranchRates branchRateModel = (DifferentiableBranchRates) xo.getChild(DifferentiableBranchRates.class);
 
+            TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+
             List<Taxa> paraphylySet = new ArrayList<>();
 
             Taxa paraphyly;
@@ -193,7 +195,7 @@ public class ParaphylyRateStatistic extends TreeStatistic {
 
             BranchWeighting branchWeighting = parseWeighting(xo);
 
-            ParaphylyRateStatistic paraphylyRateStatistic = new ParaphylyRateStatistic(name, branchRateModel, paraphylySet, branchWeighting, dim);
+            ParaphylyRateStatistic paraphylyRateStatistic = new ParaphylyRateStatistic(name, branchRateModel, tree, paraphylySet, branchWeighting, dim);
             return paraphylyRateStatistic;
         }
 
@@ -223,6 +225,7 @@ public class ParaphylyRateStatistic extends TreeStatistic {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(DifferentiableBranchRates.class),
+                new ElementRule(TreeModel.class),
                 new ElementRule(PARAPHYLY_LIST, new XMLSyntaxRule[]{
                         new ElementRule(Taxa.class, 1, Integer.MAX_VALUE),
                 }),

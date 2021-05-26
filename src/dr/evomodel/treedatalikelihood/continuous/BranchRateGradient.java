@@ -28,8 +28,8 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.preorder.BranchConditionalDistributionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
@@ -65,7 +65,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
     private final int nTraits;
 //    private final int dim;
     private final Parameter rateParameter;
-    private final ArbitraryBranchRates branchRateModel;
+    private final DifferentiableBranchRates branchRateModel;
     private final ContinuousTraitGradientForBranch branchProvider;
 
 //    private final DenseMatrix64F matrix0;
@@ -84,7 +84,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         this.rateParameter = rateParameter;
 
         BranchRateModel brm = treeDataLikelihood.getBranchRateModel();
-        this.branchRateModel = (brm instanceof ArbitraryBranchRates) ? (ArbitraryBranchRates) brm : null;
+        this.branchRateModel = (brm instanceof DifferentiableBranchRates) ? (DifferentiableBranchRates) brm : null;
 
         // TODO Move into different constructor / parser
         String bcdName = BranchConditionalDistributionDelegate.getName(traitName);

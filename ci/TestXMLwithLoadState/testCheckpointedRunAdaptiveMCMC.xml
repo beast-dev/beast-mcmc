@@ -977,7 +977,7 @@
 		<message>
 			Check log joint density after 5000 iterations, having resumed from testAdaptiveMCMC.chkpt
 		</message>
-		<actual regex="log joint density = \s+(.*)\n">
+		<actual regex="posterior log-likelihood\s*=\s*(.*)\n">
 			<posterior idref="posterior"/>
 		</actual>
 		<expected>

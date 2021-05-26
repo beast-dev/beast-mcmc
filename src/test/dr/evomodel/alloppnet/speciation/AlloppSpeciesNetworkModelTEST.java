@@ -128,7 +128,7 @@ public class AlloppSpeciesNetworkModelTEST {
         AlloppSpeciesBindings testASB = new AlloppSpeciesBindings(apspecies);
         AlloppMulLabTree testamlt = new AlloppMulLabTree(testASB);
         double  llhood = testamlt.testGeneTreeInMULTreeLogLikelihood();
-        assertEquals(llhood, -13.562218135041552713, 1e-10);
+        assertEquals(llhood, 0, 1e-10);
         System.out.println(llhood);
     }
 

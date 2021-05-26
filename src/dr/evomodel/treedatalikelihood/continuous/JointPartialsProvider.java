@@ -110,7 +110,7 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
 
     @Override
     public int getTraitCount() {
-        return providers[0].getTraitCount(); //TODO: make sure all have same trait count in parser
+        return providers[0].getTraitCount();
     }
 
     @Override
@@ -214,12 +214,12 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
 
     @Override
     public List<Integer> getMissingIndices() {
-        return missingIndices; //TODO: how to merge missing indices
+        return missingIndices;
     }
 
     @Override
     public boolean[] getDataMissingIndicators() {
-        return missingIndicators; //TODO: see above
+        return missingIndicators;
     }
 
     @Override
@@ -335,6 +335,14 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
 
             for (int i = 0; i < providersList.size(); i++) {
                 providers[i] = providersList.get(i);
+            }
+
+            int traitCount = providers[0].getTraitCount();
+            for (int i = 1; i < providers.length; i++) {
+                if (providers[i].getTraitCount() != traitCount) {
+                    throw new XMLParseException("all partials providers must have the same trait count");
+                }
+
             }
             return new JointPartialsProvider(PARSER_NAME, providers);
         }

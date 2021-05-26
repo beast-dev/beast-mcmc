@@ -71,9 +71,6 @@ public class HiddenMarkovRatesTest extends TraceCorrelationAssert {
 
     public void testHiddenRates() {
 
-        assertEquals("a", 1, 2);
-
-
         final int index = 0;
 
         double[] freqs = getBinaryFreqs(index);

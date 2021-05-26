@@ -6,8 +6,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      BEAGLE_DIR: ${GITHUB_WORKSPACE}/beagle-lib
-      BEAGLE_LIB: ${BEAGLE_DIR}/usr/local/lib
+      BEAGLE_DIR: beagle-lib
+      BEAGLE_LIB: beagle-lib/usr/local/lib
       BEAGLE_BRANCH: v4_release
 
 

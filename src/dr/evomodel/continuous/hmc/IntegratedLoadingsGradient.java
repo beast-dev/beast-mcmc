@@ -2,9 +2,9 @@ package dr.evomodel.continuous.hmc;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
@@ -16,7 +16,6 @@ import dr.math.matrixAlgebra.*;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.util.StopWatch;
 import dr.util.TaskPool;
-import dr.evomodelxml.continuous.hmc.TaskPoolParser;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 
@@ -35,8 +34,10 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
     private final TreeTrait<List<WrappedNormalSufficientStatistics>> fullConditionalDensity;
     private final IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood;
+    private final ContinuousTraitPartialsProvider partialsProvider;
     protected final int dimTrait;
     protected final int dimFactors;
+    protected final int dimPartials;
     private final Tree tree;
     private final Likelihood likelihood;
     private final double[] data;
@@ -48,12 +49,14 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     public IntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
                                       ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                       IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
+                                      ContinuousTraitPartialsProvider partialsProvider,
                                       TaskPool taskPool,
                                       ThreadUseProvider threadUseProvider,
                                       RemainderCompProvider remainderCompProvider) {
 
 
         this.factorAnalysisLikelihood = factorAnalysisLikelihood;
+        this.partialsProvider = partialsProvider;
 
         String traitName = factorAnalysisLikelihood.getModelName();
 
@@ -68,6 +71,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
         this.dimTrait = factorAnalysisLikelihood.getDataDimension();
         this.dimFactors = factorAnalysisLikelihood.getNumberOfFactors();
+        this.dimPartials = partialsProvider.getTraitDimension();
 
         Parameter dataParameter = factorAnalysisLikelihood.getParameter();
         this.data = dataParameter.getParameterValues();
@@ -148,8 +152,8 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         return variance;
     }
 
-    private WrappedNormalSufficientStatistics getWeightedAverage(ReadableVector m1, ReadableMatrix p1,
-                                                                 ReadableVector m2, ReadableMatrix p2) {
+    private static WrappedNormalSufficientStatistics getWeightedAverage(ReadableVector m1, ReadableMatrix p1,
+                                                                        ReadableVector m2, ReadableMatrix p2) {
 
         assert (m1.getDim() == m2.getDim());
         assert (p1.getDim() == p2.getDim());
@@ -157,9 +161,11 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         assert (m1.getDim() == p1.getMinorDim());
         assert (m1.getDim() == p1.getMajorDim());
 
-        final WrappedVector m12 = new WrappedVector.Raw(new double[m1.getDim()], 0, dimFactors);
-        final DenseMatrix64F p12 = new DenseMatrix64F(dimFactors, dimFactors);
-        final DenseMatrix64F v12 = new DenseMatrix64F(dimFactors, dimFactors);
+        int dim = m1.getDim();
+
+        final WrappedVector m12 = new WrappedVector.Raw(new double[m1.getDim()], 0, dim);
+        final DenseMatrix64F p12 = new DenseMatrix64F(dim, dim);
+        final DenseMatrix64F v12 = new DenseMatrix64F(dim, dim);
 
         final WrappedMatrix wP12 = new WrappedMatrix.WrappedDenseMatrix(p12);
         final WrappedMatrix wV12 = new WrappedMatrix.WrappedDenseMatrix(v12);
@@ -167,7 +173,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         MissingOps.add(p1, p2, wP12);
         safeInvert2(p12, v12, false);
 
-        weightedAverage(m1, p1, m2, p2, m12, wV12, dimFactors);
+        weightedAverage(m1, p1, m2, p2, m12, wV12, dim);
 
         return new WrappedNormalSufficientStatistics(m12, wP12, wV12);
     }
@@ -285,9 +291,11 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
             System.err.println("FV" + taxon + " : " + varianceFactor);
         }
 
-        final WrappedNormalSufficientStatistics convolution = getWeightedAverage(
+        WrappedNormalSufficientStatistics convolution = getWeightedAverage(
                 meanFactor, precisionFactor,
                 meanKernel, precisionKernel);
+
+        convolution = partialsProvider.partitionNormalStatistics(convolution, factorAnalysisLikelihood);
 
         final ReadableVector mean = convolution.getMean();
 //            final ReadableMatrix precision = convolution.getPrecision();
@@ -366,8 +374,8 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 //    }
 
     private WrappedNormalSufficientStatistics getTipKernel(int taxonIndex) {
-        double[] buffer = factorAnalysisLikelihood.getTipPartial(taxonIndex, false);
-        return new WrappedNormalSufficientStatistics(buffer, 0, dimFactors, null, PrecisionType.FULL);
+        double[] buffer = partialsProvider.getTipPartial(taxonIndex, false);
+        return new WrappedNormalSufficientStatistics(buffer, 0, dimPartials, null, PrecisionType.FULL);
     }
 
     public enum ThreadUseProvider {

@@ -2,11 +2,14 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.WrappedMatrix;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
 import java.util.List;
 
@@ -190,10 +193,10 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
                 double subDet = subPartial[precisionType.getDeterminantOffset(subDim)];
 
                 if (!precisionType.isMissingDeterminantValue(subDet)) {
-
-                    DenseMatrix64F prec = MissingOps.wrap(subPartial, precisionOffset, subDim, subDim);
-                    DenseMatrix64F var = new DenseMatrix64F(subDim, subDim);
-                    subDet = MissingOps.safeInvert2(prec, var, true).getLogDeterminant();
+                    //TODO: what was I trying to do here?
+//                    DenseMatrix64F prec = MissingOps.wrap(subPartial, precisionOffset, subDim, subDim);
+//                    DenseMatrix64F var = new DenseMatrix64F(subDim, subDim);
+//                    subDet = MissingOps.safeInvert2(prec, var, true).getLogDeterminant();
                 }
 
                 partial[detDim] += subDet;
@@ -276,6 +279,45 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
         for (ContinuousTraitPartialsProvider provider : providers) {
             provider.addTreeAndRateModel(treeModel, rateTransformation);
         }
+    }
+
+    @Override
+    public WrappedNormalSufficientStatistics partitionNormalStatistics(WrappedNormalSufficientStatistics statistic,
+                                                                       ContinuousTraitPartialsProvider provider) {
+
+        int traitOffset = 0;
+        for (ContinuousTraitPartialsProvider potentialProvider : providers) {
+            if (provider == potentialProvider) {
+                break;
+            } else {
+                traitOffset += potentialProvider.getTraitDimension();
+            }
+        }
+
+        int traitDim = provider.getTraitDimension();
+
+        WrappedVector originalMean = statistic.getMean();
+        WrappedVector newMean = new WrappedVector.View(originalMean, traitOffset, traitDim);
+
+        int[] varianceIndices = new int[traitDim];
+        for (int i = 0; i < traitDim; i++) {
+            varianceIndices[i] = i + traitOffset;
+        }
+
+        WrappedMatrix originalVariance = statistic.getVariance();
+        DenseMatrix64F newVariance = new DenseMatrix64F(traitDim, traitDim);
+
+        for (int i = 0; i < traitDim; i++) {
+            for (int j = 0; j < traitDim; j++) {
+                newVariance.set(i, j, originalVariance.get(varianceIndices[i], varianceIndices[j]));
+            }
+        }
+
+        DenseMatrix64F newPrecision = new DenseMatrix64F(traitDim, traitDim);
+        CommonOps.invert(newVariance, newPrecision); //TODO: cholesky
+
+        return new WrappedNormalSufficientStatistics(newMean, new WrappedMatrix.WrappedDenseMatrix(newPrecision),
+                new WrappedMatrix.WrappedDenseMatrix(newVariance));
     }
 
 

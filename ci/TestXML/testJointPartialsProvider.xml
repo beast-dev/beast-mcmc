@@ -95,10 +95,10 @@
     <multivariateDiffusionModel id="diffusionModel">
         <precisionMatrix>
             <matrixParameter id="diff.precision">
-                <parameter value="1.1066860553718856 0.34540468889369336 0.16524325694106465 0.05731631315279658"/>
-                <parameter value="0.3454046888936935 2.2757219458459614 0.5404300401743574 0.44503138944572823"/>
-                <parameter value="0.16524325694106468 0.5404300401743571 0.25612906095114724 0.09774344033287849"/>
-                <parameter value="0.0573163131527966 0.4450313894457282 0.09774344033287849 0.4583806163148265"/>
+                <parameter value="1.5122701657811688 -0.7549357796580546 0.2219966100416516 0.5143022672844946"/>
+                <parameter value="-0.7549357796580547 3.2735051249369462 0.3167935192018614 -1.0446281435605165"/>
+                <parameter value="0.22199661004165158 0.3167935192018614 0.45338811816915103 0.06385308635911083"/>
+                <parameter value="0.5143022672844947 -1.0446281435605165 0.06385308635911087 0.5871425784742659"/>
             </matrixParameter>
         </precisionMatrix>
     </multivariateDiffusionModel>
@@ -114,9 +114,9 @@
 
     <multivariateDiffusionModel id="diffusionModelRes">
         <precisionMatrix>
-            <matrixParameter>
-                <parameter value="0.12122095449756931 -0.007133491788667379"/>
-                <parameter value="-0.007133491788667379 0.37125273695164396"/>
+            <matrixParameter id="diff.res.precision">
+                <parameter value="0.357672936598025 0.10466657004194628"/>
+                <parameter value="0.10466657004194628 0.19793079691684323"/>
             </matrixParameter>
         </precisionMatrix>
     </multivariateDiffusionModel>
@@ -124,9 +124,9 @@
 
     <matrixParameter id="L">
         <parameter id="L.1"
-                   value="0.18809554990388103 -0.5664543137678593 -0.3588585707563652 0.20093590646835074 1.08075219284944"/>
+                   value="0.9247905179016628 -0.33921029582132534 0.5584156892793313 0.3131380271405006 -1.3830823737436915"/>
         <parameter id="L.2"
-                   value="-1.2383211793167312 -0.9981245809135479 -0.34942164457979624 -0.3617494203082053 -1.3680772995699344"/>
+                   value="-1.032474009627882 -0.5424164961392062 -0.7720274902578971 0.16523232493297793 0.6057788313870089"/>
     </matrixParameter>
 
     <distributionLikelihood id="L.prior">
@@ -145,13 +145,13 @@
         </distribution>
     </distributionLikelihood>
 
-    <integratedFactorModel id="factorModel" traitName="tFac" nugget="0" standardize="false">
+    <integratedFactorModel id="factorModel" traitName="tFac" standardize="false">
         <loadings>
             <matrixParameter idref="L"/>
         </loadings>
         <precision>
             <parameter id="fac.precision"
-                       value="7.163452840684904 22.945625583201895 2.097729887626677 5.7925005829521306 4.6267597314467555"/>
+                       value="7.6897114774781805 2.447408007560504 5.624132942250213 2.575119059444284 18.984513296012224"/>
         </precision>
         <treeModel idref="treeModel"/>
         <traitParameter>
@@ -166,8 +166,8 @@
         </traitParameter>
         <samplingPrecision>
             <matrixParameter id="res.precision">
-                <parameter value="1.754697922759223 -0.9340885079176993"/>
-                <parameter value="-0.9340885079176993 0.7967048033077442"/>
+                <parameter value="1.1581387102693723 -2.7727491148364294"/>
+                <parameter value="-2.7727491148364294 50.964907383980645"/>
             </matrixParameter>
         </samplingPrecision>
     </repeatedMeasuresModel>
@@ -178,7 +178,7 @@
 
         <multivariateDiffusionModel idref="diffusionModel"/>
         <treeModel idref="treeModel"/>
-        <jointPartialsProvider>
+        <jointPartialsProvider id="jointModel">
             <integratedFactorModel idref="factorModel"/>
             <repeatedMeasuresModel idref="repeatedMeasures"/>
         </jointPartialsProvider>
@@ -284,7 +284,7 @@
             <likelihood idref="likelihood"/>
         </actual>
         <expected>
-            -100.22471627319682
+            -92.83480728956839
         </expected>
     </assertEqual>
 
@@ -296,7 +296,7 @@
             <likelihood idref="likelihoodRes"/>
         </actual>
         <expected>
-            -36.73488439033143
+            -34.55739075783681
         </expected>
     </assertEqual>
 
@@ -308,32 +308,307 @@
             <likelihood idref="likelihoodFac"/>
         </actual>
         <expected>
-            -65.00935647098959
+            -60.18281026197038
+        </expected>
+    </assertEqual>
+
+    <mcmc id="mcmc" chainLength="20" autoOptimize="true">
+        <posterior id="posterior">
+            <!--            <prior id="prior">-->
+            <!--                <distributionLikelihood idref="L.prior"/>-->
+            <!--                    <gammaPrior idref="gammaPrior"/>-->
+            <!--            </prior>-->
+            <likelihood idref="likelihood"/>
+
+        </posterior>
+        <operators>
+            <fireParameterChanged weight="1"
+                                  value="-0.23254822291008614 -1.2927625166974928 -1.0522592080935753 0.01263320120183234 0.5389539373026143 -0.22302716201797146 -0.8951262847408578 -1.9577310143838644 0.09209259075348984 -0.24057917474724655">
+                <parameter idref="L"/>
+            </fireParameterChanged>
+            <fireParameterChanged weight="1"
+                                  value="3.039494274527367 2.7299966129031525 39.98850149194019 8.71952104996566 3.734681945992005">
+                <parameter idref="fac.precision"/>
+            </fireParameterChanged>
+            <fireParameterChanged weight="1"
+                                  value="1.4511399240683187 0.7580906791073765 -0.17682014149300304 -1.6541232803487287 0.7580906791073766 2.4006806867211967 -0.19676710706706965 -2.8991527281106353 -0.17682014149300304 -0.19676710706706962 0.14873974990230288 0.5536669027551969 -1.6541232803487287 -2.8991527281106353 0.5536669027551969 6.1776921509683485">
+                <parameter idref="diff.precision"/>
+            </fireParameterChanged>
+            <fireParameterChanged weight="1"
+                                  value="0.192238797380201 -0.04557218575662228 -0.04557218575662228 0.3529939349055643">
+                <parameter idref="res.precision"/>
+            </fireParameterChanged>
+            <fireParameterChanged weight="1"
+                                  value="0.192238797380201 -0.04557218575662228 -0.04557218575662228 0.3529939349055643">
+                <parameter idref="res.precision"/>
+            </fireParameterChanged>
+            <fireParameterChanged weight="1"
+                                  value="0.12175790143718619 0.2461371724118265 0.2461371724118265 2.2263355818823816">
+                <parameter idref="diff.res.precision"/>
+            </fireParameterChanged>
+        </operators>
+        <log id="screenLog" logEvery="1000">
+            <column label="posterior" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+            <!--            <column label="prior" dp="4" width="12">-->
+            <!--                <prior idref="prior"/>-->
+            <!--            </column>-->
+            <!--            <column label="likelihood" dp="4" width="12">-->
+            <!--                <likelihood idref="likelihood"/>-->
+            <!--            </column>-->
+        </log>
+    </mcmc>
+
+    <assertEqual tolerance="1e-4" toleranceType="absolute" verbose="true">
+        <message>
+            Check log likelihood of joint model (with correlation):
+        </message>
+        <actual regex="likelihood:\s+(.*)\n">
+            <likelihood idref="likelihood"/>
+        </actual>
+        <expected>
+            -104.76448987237042
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-4" toleranceType="absolute" verbose="true">
+        <message>
+            Check log likelihood of residual model only:
+        </message>
+        <actual regex="likelihood:\s+(.*)\n">
+            <likelihood idref="likelihoodRes"/>
+        </actual>
+        <expected>
+            -35.65645117578014
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-4" toleranceType="absolute" verbose="true">
+        <message>
+            Check log likelihood of factor model only:
+        </message>
+        <actual regex="likelihood:\s+(.*)\n">
+            <likelihood idref="likelihoodFac"/>
+        </actual>
+        <expected>
+            -70.13809042542833
         </expected>
     </assertEqual>
 
 
-    <!--    <mcmc id="mcmc" chainLength="10" autoOptimize="true">-->
-    <!--        <posterior id="posterior">-->
-    <!--            <prior id="prior">-->
-    <!--                <distributionLikelihood idref="L.prior"/>-->
-    <!--                <gammaPrior idref="gammaPrior"/>-->
-    <!--            </prior>-->
-    <!--            <likelihood idref="likelihood"/>-->
-    <!--        </posterior>-->
-    <!--        <operators idref="operators"/>-->
-    <!--        <log id="screenLog" logEvery="1000">-->
-    <!--            <column label="posterior" dp="4" width="12">-->
-    <!--                <posterior idref="posterior"/>-->
-    <!--            </column>-->
-    <!--            <column label="prior" dp="4" width="12">-->
-    <!--                <prior idref="prior"/>-->
-    <!--            </column>-->
-    <!--            <column label="likelihood" dp="4" width="12">-->
-    <!--                <likelihood idref="likelihood"/>-->
-    <!--            </column>-->
-    <!--        </log>-->
-    <!--    </mcmc>-->
+    <operators id="operators">
+        <hamiltonianMonteCarloOperator weight="1.0" nSteps="10" stepSize="0.05" drawVariance="1.0" autoOptimize="true"
+                                       gradientCheckCount="100" gradientCheckTolerance="1e-3">
+            <jointGradient>
+                <!--                <gradient>-->
+                <!--                    <distributionLikelihood idref="L.prior"/>-->
+                <!--                    <matrixParameter idref="L"/>-->
+                <!--                </gradient>-->
+                <integratedFactorAnalysisLoadingsGradient>
+                    <integratedFactorModel idref="factorModel"/>
+                    <traitDataLikelihood idref="traitLikelihood"/>
+                    <jointPartialsProvider idref="jointModel"/>
+                    <!--                    <jointPartialsProvider>-->
+                    <!--                        <integratedFactorModel idref="factorModel"/>-->
+                    <!--                    </jointPartialsProvider>-->
+                </integratedFactorAnalysisLoadingsGradient>
+            </jointGradient>
+            <matrixParameter idref="L"/>
+        </hamiltonianMonteCarloOperator>
+    </operators>
+
+
+    <mcmc id="mcmc2" chainLength="100" autoOptimize="true">
+        <posterior id="posterior2">
+            <!--            <prior id="prior">-->
+            <!--                <distributionLikelihood idref="L.prior"/>-->
+            <!--                    <gammaPrior idref="gammaPrior"/>-->
+            <!--            </prior>-->
+            <likelihood idref="likelihood"/>
+            <!--            <likelihood idref="likelihoodFac"/>-->
+
+        </posterior>
+        <operators idref="operators"/>
+        <log id="screenLog2" logEvery="1000">
+            <column label="posterior" dp="4" width="12">
+                <posterior idref="posterior2"/>
+            </column>
+            <!--            <column label="prior" dp="4" width="12">-->
+            <!--                <prior idref="prior"/>-->
+            <!--            </column>-->
+            <!--            <column label="likelihood" dp="4" width="12">-->
+            <!--                <likelihood idref="likelihood"/>-->
+            <!--            </column>-->
+        </log>
+    </mcmc>
+
+    <multivariateDiffusionModel id="traits.diffusionModel">
+        <precisionMatrix>
+            <cachedMatrixInverse id="traits.precision.matrix">
+                <compoundSymmetricMatrix id="traits.variance.matrix" asCorrelation="true" isCholesky="true">
+                    <diagonal>
+                        <parameter id="traits.variance.diagonal" value="1 1 1 1" lower="0 0 0 0"/>
+                    </diagonal>
+                    <offDiagonal>
+                        <parameter id="traits.variance.offDiagonal" value="0 0 0 0 0 0"/>
+                    </offDiagonal>
+                </compoundSymmetricMatrix>
+            </cachedMatrixInverse>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+
+    <traitDataLikelihood id="traits.traitLikelihood" traitName="X"
+                         useTreeLength="false" scaleByTime="true"
+                         forceFullPrecision="true" allowSingular="true"
+                         reportAsMultivariate="true" integrateInternalTraits="true">
+        <multivariateDiffusionModel idref="traits.diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <jointPartialsProvider idref="jointModel"/>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0 0 0 0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001"/> <!-- 1 is probably a good number -->
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+
+    <LKJCorrelationPrior id="traits.variance.offDiagonal.prior" shapeParameter="1.0" dimension="4">
+        <data>
+            <parameter idref="traits.variance.offDiagonal"/>
+        </data>
+    </LKJCorrelationPrior>
+    <halfTPrior id="traits.variance.diagonal.prior" df="1" scale="2.5">
+        <parameter idref="traits.variance.diagonal"/>
+    </halfTPrior>
+
+
+    <diffusionGradient id="traitLikelihood.gradient">
+        <precisionGradient parameter="both" traitName="joint">
+            <traitDataLikelihood idref="traits.traitLikelihood"/>
+            <cachedMatrixInverse idref="traits.precision.matrix"/>
+        </precisionGradient>
+        <!--        <meanGradient parameter="root" traitName="traits">-->
+        <!--            <traitDataLikelihood idref="traits.traitLikelihood"/>-->
+        <!--            <parameter idref="traits.meanParameter"/>-->
+        <!--        </meanGradient>-->
+    </diffusionGradient>
+
+    <report>
+        <diffusionGradient idref="traitLikelihood.gradient"/>
+    </report>
+
+    <compoundGradient id="prior.gradient">
+        <gradient>
+            <halfTPrior idref="traits.variance.diagonal.prior"/>
+            <parameter idref="traits.variance.diagonal"/>
+        </gradient>
+        <gradient>
+            <LKJCorrelationPrior idref="traits.variance.offDiagonal.prior"/>
+        </gradient>
+        <!--        <gradient>-->
+        <!--            <distributionLikelihood idref="traits.meanParameter.prior"/>-->
+        <!--            <parameter idref="traits.meanParameter"/>-->
+        <!--        </gradient>-->
+    </compoundGradient>
+
+    <jointGradient id="posterior.gradient">
+        <diffusionGradient idref="traitLikelihood.gradient"/>
+        <compoundGradient idref="prior.gradient"/>
+    </jointGradient>
+
+    <!-- END Multivariate diffusion model                                        -->
+
+
+    <!-- Likelihood for tree given sequence data                                 -->
+
+
+    <!-- Define operators                                                        -->
+    <operators id="operators2" optimizationSchedule="log">
+        <!-- START Multivariate diffusion model                                      -->
+        <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
+                                       drawVariance="1.0" gradientCheckCount="100" gradientCheckTolerance="0.01">
+
+            <gradient idref="posterior.gradient"/>
+
+            <compoundParameter id="traits.compound.parameter">
+                <parameter idref="traits.variance.diagonal"/>
+                <parameter idref="traits.variance.offDiagonal"/>
+                <!--                <parameter idref="traits.meanParameter"/>-->
+            </compoundParameter>
+            <multivariateCompoundTransform id="traits.compound.transform">
+                <transform type="log" dim="4"/>
+                <LKJTransform dimension="4"/>
+                <!--                <transform type="none" dim="3"/>-->
+            </multivariateCompoundTransform>
+            <mask>
+                <parameter value="1 1 1 1 0 1 1 1 1 1"/>
+            </mask>
+        </hamiltonianMonteCarloOperator>
+        <!-- END Multivariate diffusion model                                        -->
+    </operators>
+
+    <mcmc chainLength="100" autoOptimize="true">
+        <joint id="joint2">
+            <prior id="prior2">
+
+                <!-- START Multivariate diffusion model                                      -->
+                <LKJCorrelationPrior idref="traits.variance.offDiagonal.prior"/>
+                <halfTPrior idref="traits.variance.diagonal.prior"/>
+
+                <!-- END Multivariate diffusion model                                        -->
+
+            </prior>
+            <likelihood id="likelihood2">
+
+                <!-- START Multivariate diffusion model                                      -->
+                <traitDataLikelihood idref="traits.traitLikelihood"/>
+                <integratedFactorModel idref="factorModel"/>
+
+                <!-- END Multivariate diffusion model                                        -->
+
+            </likelihood>
+        </joint>
+        <operators idref="operators2"/>
+
+        <!-- write log to screen                                                     -->
+        <log logEvery="1000">
+            <column label="Joint" dp="4" width="12">
+                <joint idref="joint2"/>
+            </column>
+            <column label="Prior" dp="4" width="12">
+                <prior idref="prior2"/>
+            </column>
+            <column label="Likelihood" dp="4" width="12">
+                <likelihood idref="likelihood2"/>
+            </column>
+        </log>
+
+        <!-- write log to file                                                       -->
+        <log logEvery="10" fileName="testJointPartialsProvider.log" overwrite="false">
+            <joint idref="joint2"/>
+            <prior idref="prior2"/>
+            <likelihood idref="likelihood2"/>
+
+            <!-- START Multivariate diffusion model                                      -->
+            <matrixParameter idref="traits.precision.matrix"/>
+            <matrixParameter idref="traits.variance.matrix"/>
+            <matrixParameter idref="traits.variance.diagonal"/>
+            <matrixParameter idref="traits.variance.offDiagonal"/>
+
+            <!-- END Multivariate diffusion model                                        -->
+
+
+            <!-- START Multivariate diffusion model                                      -->
+            <traitDataLikelihood idref="traits.traitLikelihood"/>
+
+            <!-- END Multivariate diffusion model                                        -->
+
+        </log>
+
+    </mcmc>
 
 
 </beast>

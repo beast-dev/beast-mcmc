@@ -1,7 +1,5 @@
 #!/bin/bash
 
-java -jar -Djava.library.path=${BEAGLE_LIB} build/dist/beast.jar -beagle_info
-
 
 for file in ci/TestXMLwithLoadState/*\.xml
 do

@@ -5,7 +5,5 @@ mkdir build
 cd build
 echo $PWD
 cmake -DBUILD_CUDA=OFF -DBUILD_OPENCL=OFF ..
-make DESTDIR=${BEAGLE_DIR} install
+make DESTDIR=${GITHUB_WORKSPACE}/${BEAGLE_DIR} install
 #export LD_LIBRARY_PATH=${BEAGLE_LIB}
-cd ${BEAGLE_LIB}
-ls

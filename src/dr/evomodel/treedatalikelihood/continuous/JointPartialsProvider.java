@@ -35,6 +35,10 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
 
     private String tipTraitName;
 
+    private final CompoundParameter jointDataParameter;
+
+    private static final Boolean DEBUG = false;
+
     public JointPartialsProvider(String name, ContinuousTraitPartialsProvider[] providers) {
         super(name);
         this.name = name;
@@ -60,6 +64,16 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
             if (provider instanceof Model) {
                 addModel((Model) provider);
             }
+        }
+
+        CompoundParameter[] parameters = new CompoundParameter[providers.length];
+        for (int i = 0; i < parameters.length; i++) {
+            parameters[i] = providers[i].getParameter();
+        }
+
+        this.jointDataParameter = CompoundParameter.mergeParameters(parameters);
+        if (DEBUG) {
+            CompoundParameter.checkParametersMerged(jointDataParameter, parameters);
         }
     }
 
@@ -207,8 +221,7 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
 
     @Override
     public CompoundParameter getParameter() {
-        System.err.println("Warning: This is broken. (JointPartialsProvider.getParameter())");
-        return providers[0].getParameter(); //TODO: This is going to be the real problem, I think
+        return jointDataParameter;
     }
 
     @Override

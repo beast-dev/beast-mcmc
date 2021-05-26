@@ -8,6 +8,7 @@ jobs:
     env:
       BEAGLE_DIR: beagle-lib
       BEAGLE_LIB: beagle-lib/usr/local/lib
+      LD_LIBRARY_PATH: beagle-lib/usr/local/lib
       BEAGLE_BRANCH: v4_release
 
 
@@ -31,6 +32,7 @@ jobs:
       - run: chmod +x ci/build_beagle.sh
       - run: ci/build_beagle.sh
       - run: ant dist
+      - run: ls ${BEAGLE_LIB}
       - run: java -jar -Djava.library.path=${BEAGLE_LIB} build/dist/beast.jar -beagle_info
 #      - run: chmod +x ci/test.sh
 #      - run: ci/test.sh

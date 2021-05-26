@@ -5,7 +5,7 @@ java -jar -Djava.library.path=${BEAGLE_LIB} build/dist/beast.jar -beagle_info
 
 for file in ci/TestXMLwithLoadState/*\.xml
 do
-  checkpoint=ci/TestXMLWithLoadState/$(basename $file .xml).chkpt
+  checkpoint=ci/TestXMLwithLoadState/$(basename $file .xml).chkpt
   if java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state $checkpoint -overwrite $file; then
     echo $file passed
   else

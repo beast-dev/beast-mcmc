@@ -5,7 +5,7 @@ BEAGLE_FILES=${GITHUB_WORKSPACE}/${BEAGLE_LIB}
 echo $BEAGLE_FILES
 ls $BEAGLE_FILES
 
-java -jar -Djava.library.path=${BEAGLE_FILES} build/dist/beast.jar -beagle_info
+java -jar -Djava.library.path=${BEAGLE_FILES} ../build/dist/beast.jar -beagle_info
 
 
 for file in TestXMLwithLoadState/*\.xml

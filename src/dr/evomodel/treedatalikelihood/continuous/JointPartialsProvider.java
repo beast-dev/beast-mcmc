@@ -23,7 +23,6 @@ import static dr.math.matrixAlgebra.WrappedMatrix.Utils.wrapBlockDiagonalMatrix;
 
 public class JointPartialsProvider extends AbstractModel implements ContinuousTraitPartialsProvider {
 
-    private final String name;
     private final ContinuousTraitPartialsProvider[] providers;
     private final int traitDim;
     private final int dataDim;
@@ -44,7 +43,6 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
 
     public JointPartialsProvider(String name, ContinuousTraitPartialsProvider[] providers) {
         super(name);
-        this.name = name;
         this.providers = providers;
 
         int traitDim = 0;

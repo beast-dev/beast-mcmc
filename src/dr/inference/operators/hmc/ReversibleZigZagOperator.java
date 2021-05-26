@@ -186,7 +186,8 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                                            WrappedVector gradient,
                                            WrappedVector momentum) {
 
-        final MinimumTravelInformation firstBounce;
+        MinimumTravelInformation firstBounce;
+        MinimumTravelInformationBinary firstBounceBinary;
 
         if (TIMING) {
             timer.startTimer("getNext");
@@ -195,13 +196,16 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
         if (taskPool != null) {
 
             firstBounce = getNextBounceParallel(position, velocity, action, gradient, momentum);
+            firstBounceBinary = null;
 
         } else {
 
             if (nativeCodeOptions.useNativeFindNextBounce) {
-                firstBounce = getNextBounceNative(position, velocity, action, gradient, momentum);
+                firstBounceBinary = getNextBounceNative(position, velocity, action, gradient, momentum);
+                firstBounce = new MinimumTravelInformation(firstBounceBinary.time, firstBounceBinary.index, firstBounceBinary.type);
             } else {
                 firstBounce = getNextBounceSerial(position, velocity, action, gradient, momentum);
+                firstBounceBinary = null;
             }
         }
 
@@ -210,7 +214,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
         }
 
         if (nativeCodeOptions.testNativeFindNextBounce) {
-            testNative(firstBounce, position, velocity, action, gradient, momentum);
+            testNative(firstBounceBinary, position, velocity, action, gradient, momentum);
         }
 
         return firstBounce;
@@ -333,7 +337,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
         }
     }
 
-    private void testNative(MinimumTravelInformation firstBounce,
+    private void testNative(MinimumTravelInformationBinary firstBounce,
                             WrappedVector position,
                             WrappedVector velocity,
                             WrappedVector action,
@@ -344,7 +348,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
             timer.startTimer("getNextC++");
         }
 
-        final MinimumTravelInformation mti = nativeZigZag.getNextReversibleEvent(position.getBuffer(), velocity.getBuffer(),
+        final MinimumTravelInformationBinary mti = nativeZigZag.getNextReversibleEvent(position.getBuffer(), velocity.getBuffer(),
                 action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
 
         if (TIMING) {
@@ -357,7 +361,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
         }
     }
 
-    private MinimumTravelInformation getNextBounceNative(
+    private MinimumTravelInformationBinary getNextBounceNative(
             WrappedVector position,
             WrappedVector velocity,
             WrappedVector action,
@@ -368,7 +372,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
             timer.startTimer("getNextC++");
         }
 
-        final MinimumTravelInformation mti = nativeZigZag.getNextReversibleEvent(position.getBuffer(), velocity.getBuffer(),
+        final MinimumTravelInformationBinary mti = nativeZigZag.getNextReversibleEvent(position.getBuffer(), velocity.getBuffer(),
                 action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
 
         if (TIMING) {
@@ -537,7 +541,6 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                     column.getBuffer(), eventTime, eventIndex);
 
         } else {
-            System.exit(-1);//todo: fix native zigzag for category traits
             nativeZigZag.updateReversibleDynamics(position.getBuffer(), velocity.getBuffer(),
                     action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
                     column.getBuffer(), eventTime, eventIndex[0], eventType.ordinal());

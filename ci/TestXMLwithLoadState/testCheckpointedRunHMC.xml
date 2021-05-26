@@ -971,11 +971,11 @@
 		</logTree>
 	</mcmc>
 
-	<assertEqual tolerance="1e-6" toleranceType="absolute" verbose="true">
+	<assertEqual tolerance="1e-4" toleranceType="absolute" verbose="true">
 		<message>
 			Check log joint density after 1000 iterations, having resumed from testCheckpointHMC.chkpt
 		</message>
-		<actual regex="log joint density = \s+(.*)\n">
+		<actual regex="posterior log-likelihood = (.*)\n">
 			<posterior idref="posterior"/>
 		</actual>
 		<expected>

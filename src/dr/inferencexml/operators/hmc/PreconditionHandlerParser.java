@@ -79,7 +79,7 @@ public class PreconditionHandlerParser extends AbstractXMLObjectParser {
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
 
         Parameter eigenLowerBound, eigenUpperBound;
-        if (xo.hasAttribute(BOUNDS)) {
+        if (xo.hasChildNamed(BOUNDS)) {
             eigenLowerBound = xo.getChild(BOUNDS).getAllChildren(Parameter.class).get(0);
             eigenUpperBound = xo.getChild(BOUNDS).getAllChildren(Parameter.class).get(1);
         } else {

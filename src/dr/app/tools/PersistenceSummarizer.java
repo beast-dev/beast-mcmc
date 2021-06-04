@@ -87,6 +87,11 @@ public class PersistenceSummarizer extends BaseTreeTool {
                     NodeRef originalNode = tree.getNode(i);
 
                     String nodeState = (String) tree.getNodeAttribute(node, nodeStateAnnotation);
+                    if (nodeState == null) {
+                        throw new RuntimeException("Could not locate node state annotation '" + nodeStateAnnotation +
+                                "' for node " + node.getNumber());
+                    }
+
                     String currentState = nodeState;
                     String ancestralState = nodeState;
                     double currentStateTime = 0;

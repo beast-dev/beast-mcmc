@@ -189,7 +189,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
                     double independenceTime = getIndependenceTime(tree,nodes,originalNode,evaluationTime,currentState,nodeStateAnnotation);
                     nodes.add(originalNode);
 
-                    Row row = new Row(treeId, evaluationTime, ancestralTime, currentState, ancestralState, currentStateTime, independenceTime,
+                    Row row = new Row(treeId, evaluationTime, ancestralTime, originalNode.getNumber(), node.getNumber(), currentState, ancestralState, currentStateTime, independenceTime,
                             nodeDescendants.size(),getSameStateDescendants(nodeDescendants,tree,currentState,nodeStateAnnotation, 0),
                             totalEventDescendents.size(),getSameStateDescendants(totalEventDescendents,tree,currentState,nodeStateAnnotation, 0),
                             nodesAfterEvalTime(totalEventDescendents, tree, evaluationTime),getSameStateDescendants(totalEventDescendents,tree,currentState,nodeStateAnnotation, evaluationTime));
@@ -303,6 +303,8 @@ public class PersistenceSummarizer extends BaseTreeTool {
         String treeId;
         double evaluationTime;
         double ancestralTime;
+        int startNodeID;
+        int endNodeID;
         String startLocation;
         String endLocation;
         double time;
@@ -317,6 +319,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
         private static final String DELIMITER = ",";
 
         private Row(String treeId, double evaluationTime, double ancestralTime,
+                    int startNodeID, int endNodeID,
                     String startLocation, String endLocation,
                     double time, double independenceTime, int numberOfDescendants, int numberOfDescendantsOfSameState,
                     int totalNumberOfDescendantsFromUniqueEvent, int totalnumberOfDescendantsFromUniqueEventAndSameState,
@@ -324,8 +327,11 @@ public class PersistenceSummarizer extends BaseTreeTool {
         ) {
             this.treeId = treeId;
             this.evaluationTime = evaluationTime;
+            this.startNodeID = startNodeID;
+            this.endNodeID = endNodeID;
             this.ancestralTime = ancestralTime;
-            this.startLocation = startLocation; this.endLocation = endLocation;
+            this.startLocation = startLocation;
+            this.endLocation = endLocation;
             this.time = time;
             this.independenceTime = independenceTime;
             this.numberOfDescendants = numberOfDescendants;
@@ -338,6 +344,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
 
         public String toString() {
             return treeId + DELIMITER + evaluationTime + DELIMITER + ancestralTime + DELIMITER
+                    + startNodeID + DELIMITER + endNodeID + DELIMITER
                     + startLocation + DELIMITER + endLocation + DELIMITER
                     + time + DELIMITER + independenceTime + DELIMITER + numberOfDescendants + DELIMITER + numberOfDescendantsOfSameState
                     + DELIMITER + totalNumberOfDescendantsFromUniqueEvent + DELIMITER + totalnumberOfDescendantsFromUniqueEventAndSameState
@@ -365,7 +372,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
 
     protected PrintStream openOutputFile(String outputFileName) {
         PrintStream ps = super.openOutputFile(outputFileName);
-        ps.println("treeId,evaluationTime,ancestralTime,stateAtEvaluationTime,ancestralState,persistenceTime,independenceTime,descendants,descendantsOfSameState,totalDescendantsFromUnique,totalDescendantsFromUniqueOfSameState,descendantsFromUniqueAfterEvalTime,descendantsFromUniqueOfSameStateAfterEvalTime");
+        ps.println("treeId,evaluationTime,ancestralTime,evaluationNodeID,ancestralNodeID,stateAtEvaluationTime,ancestralState,persistenceTime,independenceTime,descendants,descendantsOfSameState,totalDescendantsFromUnique,totalDescendantsFromUniqueOfSameState,descendantsFromUniqueAfterEvalTime,descendantsFromUniqueOfSameStateAfterEvalTime");
         return ps;
     }
 

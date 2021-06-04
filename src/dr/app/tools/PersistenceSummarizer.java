@@ -33,27 +33,33 @@ public class PersistenceSummarizer extends BaseTreeTool {
                                   String nodeStateAnnotation
     ) throws IOException {
 
-        List<Tree> trees = new ArrayList<>();
+//        List<Tree> trees = new ArrayList<>();
 
-        readTrees(trees, inputFileName, burnIn);
+//        readTrees(trees, inputFileName, burnIn);
 
- //       this.mrsd = mrsd;
-//        this.evaluationTime = evaluationTime;
-//        this.ancestryTime = ancestryTime;
+        SequentialTreeReader treeReader = new SequentialTreeReader(inputFileName, burnIn);
+        //       this.mrsd = mrsd;
+        //        this.evaluationTime = evaluationTime;
+        //        this.ancestryTime = ancestryTime;
 
         this.ps = openOutputFile(outputFileName);
         //processTrees(trees, burnIn, evaluationTime, ancestryTime, nodeStateAnnotation);
-        processTrees(trees, burnIn, evaluationTime, ancestralTime, nodeStateAnnotation);
+        processTrees(treeReader, burnIn, evaluationTime, ancestralTime, nodeStateAnnotation);
         closeOutputFile(ps);
     }
 
-    private void processTrees(List<Tree> trees, int burnIn, double evaluationTime, double ancestralTime, String nodeStateAnnotation) {
+    private void processTrees(SequentialTreeReader treeReader, int burnIn, double evaluationTime, double ancestralTime, String nodeStateAnnotation) throws IOException {
         if (burnIn < 0) {
             burnIn = 0;
         }
-        for (int i = burnIn; i < trees.size(); ++i) {
-            Tree tree = trees.get(i);
+
+        int index = burnIn;
+        Tree tree;
+
+        while (treeReader.getTree(index) != null) {
+            tree = treeReader.getTree(index);
             processOneTree(tree, evaluationTime, ancestralTime, nodeStateAnnotation);
+            index++;
         }
     }
 

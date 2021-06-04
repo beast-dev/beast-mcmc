@@ -27,8 +27,8 @@ public class PersistenceSummarizer extends BaseTreeTool {
     private PersistenceSummarizer(String inputFileName,
                                   String outputFileName,
                                   int burnIn,
-                                  double evaluationTime,
-                                  double ancestralTime,
+                                  double[] evaluationTimes,
+                                  double[] ancestralTimes,
 //                                         double mrsd,
                                   String nodeStateAnnotation
     ) throws IOException {
@@ -44,11 +44,11 @@ public class PersistenceSummarizer extends BaseTreeTool {
 
         this.ps = openOutputFile(outputFileName);
         //processTrees(trees, burnIn, evaluationTime, ancestryTime, nodeStateAnnotation);
-        processTrees(treeReader, burnIn, evaluationTime, ancestralTime, nodeStateAnnotation);
+        processTrees(treeReader, burnIn, evaluationTimes, ancestralTimes, nodeStateAnnotation);
         closeOutputFile(ps);
     }
 
-    private void processTrees(SequentialTreeReader treeReader, int burnIn, double evaluationTime, double ancestralTime, String nodeStateAnnotation) throws IOException {
+    private void processTrees(SequentialTreeReader treeReader, int burnIn, double[] evaluationTimes, double[] ancestralTimes, String nodeStateAnnotation) throws IOException {
         if (burnIn < 0) {
             burnIn = 0;
         }
@@ -58,7 +58,9 @@ public class PersistenceSummarizer extends BaseTreeTool {
 
         while (treeReader.getTree(index) != null) {
             tree = treeReader.getTree(index);
-            processOneTree(tree, evaluationTime, ancestralTime, nodeStateAnnotation);
+            for (int i = 0; i < evaluationTimes.length; i++) {
+                processOneTree(tree, evaluationTimes[i], ancestralTimes[i], nodeStateAnnotation);
+            }
             index++;
         }
     }
@@ -418,8 +420,8 @@ public class PersistenceSummarizer extends BaseTreeTool {
     public static void main(String[] args) throws IOException, Arguments.ArgumentException {
 
         int burnIn = -1;
-        double evaluationTime = 0;
-        double ancestralTime = Double.MAX_VALUE;
+        double[] evaluationTimes = new double[1];
+        double[] ancestralTimes = new double[]{Double.MAX_VALUE};
         String nodeStateAnnotation = null;
 
         printTitle();
@@ -428,9 +430,9 @@ public class PersistenceSummarizer extends BaseTreeTool {
                 new Arguments.Option[]{
                         new Arguments.IntegerOption(BURN_IN, "the number of states to be considered as 'burn-in' [default = 0]"),
 //                        new Arguments.RealOption("mrsd", "The most recent sampling time to convert heights to times [default=MAX_VALUE]"),
-                        new Arguments.RealOption(EVALUATION_TIME, "The time at which the ancestral persistence of lineages is evaluated"),
+                        new Arguments.RealArrayOption(EVALUATION_TIME, -1, "The time(s) at which the ancestral persistence of lineages is evaluated"),
 //                        new Arguments.RealOption("independenceTime", "The time for which a lineage should not share a common ancestor with another lineage to be called a unique persistence/introduction  [default=MAX_VALUE]"),
-                        new Arguments.RealOption(ANCESTRAL_TIME, "The time in the past until which the the ancestral persistence of lineages is evaluated [default=MAX_VALUE]"),
+                        new Arguments.RealArrayOption(ANCESTRAL_TIME, -1, "The time(s) in the past until which the the ancestral persistence of lineages is evaluated [default=MAX_VALUE]"),
                         new Arguments.StringOption(NODE_STATE_ANNOTATION, "String", "use node state annotations as poor proxy to MJs based on a annotation string for the discrete trait"),
                         new Arguments.Option("help", "option to print this message"),
                 });
@@ -443,11 +445,17 @@ public class PersistenceSummarizer extends BaseTreeTool {
 //        }
 
         if (arguments.hasOption(EVALUATION_TIME)) {
-            evaluationTime = arguments.getRealOption(EVALUATION_TIME);
+            evaluationTimes = arguments.getRealArrayOption(EVALUATION_TIME);
         }
 
         if (arguments.hasOption(ANCESTRAL_TIME)) {
-            ancestralTime = arguments.getRealOption(ANCESTRAL_TIME);
+            ancestralTimes = arguments.getRealArrayOption(ANCESTRAL_TIME);
+        }
+
+        if (evaluationTimes.length != ancestralTimes.length) {
+            throw new Arguments.ArgumentException("The number of " + EVALUATION_TIME + " arguments (" +
+                    evaluationTimes.length + ") must equal the number of " + ANCESTRAL_TIME +
+                    " arguments (" + ancestralTimes.length + ")");
         }
 
         if (arguments.hasOption(BURN_IN)) {
@@ -466,8 +474,8 @@ public class PersistenceSummarizer extends BaseTreeTool {
 
         new PersistenceSummarizer(fileNames[0], fileNames[1], burnIn,
  //               mrsd,
-                evaluationTime,
-                ancestralTime,
+                evaluationTimes,
+                ancestralTimes,
                 nodeStateAnnotation
         );
         System.exit(0);

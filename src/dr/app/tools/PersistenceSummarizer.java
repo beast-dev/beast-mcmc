@@ -392,8 +392,12 @@ public class PersistenceSummarizer extends BaseTreeTool {
         progressStream.println();
     }
 
+    private static final String EVALUATION_TIME = "evaluationTime";
+    private static final String ANCESTRAL_TIME = "ancestralTime";
+    private static final String NODE_STATE_ANNOTATION = "nodeStateAnnotation";
+
     //Main method
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, Arguments.ArgumentException {
 
         int burnIn = -1;
         double evaluationTime = 0;
@@ -405,11 +409,11 @@ public class PersistenceSummarizer extends BaseTreeTool {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.IntegerOption(BURN_IN, "the number of states to be considered as 'burn-in' [default = 0]"),
-                        new Arguments.RealOption("mrsd", "The most recent sampling time to convert heights to times [default=MAX_VALUE]"),
-                        new Arguments.RealOption("evaluationTime", "The time at which the ancestral persistence of lineages is evaluated"),
-                        new Arguments.RealOption("independenceTime", "The time for which a lineage should not share a common ancestor with another lineage to be called a unique persistence/introduction  [default=MAX_VALUE]"),
-                        new Arguments.RealOption("ancestralTime", "The time in the past until which the the ancestral persistence of lineages is evaluated [default=MAX_VALUE]"),
-                        new Arguments.StringOption("nodeStateAnnotation", "String", "use node state annotations as poor proxy to MJs based on a annotation string for the discrete trait"),
+//                        new Arguments.RealOption("mrsd", "The most recent sampling time to convert heights to times [default=MAX_VALUE]"),
+                        new Arguments.RealOption(EVALUATION_TIME, "The time at which the ancestral persistence of lineages is evaluated"),
+//                        new Arguments.RealOption("independenceTime", "The time for which a lineage should not share a common ancestor with another lineage to be called a unique persistence/introduction  [default=MAX_VALUE]"),
+                        new Arguments.RealOption(ANCESTRAL_TIME, "The time in the past until which the the ancestral persistence of lineages is evaluated [default=MAX_VALUE]"),
+                        new Arguments.StringOption(NODE_STATE_ANNOTATION, "String", "use node state annotations as poor proxy to MJs based on a annotation string for the discrete trait"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 
@@ -420,12 +424,12 @@ public class PersistenceSummarizer extends BaseTreeTool {
 //            mrsd = arguments.getRealOption("mrsd");
 //        }
 
-        if (arguments.hasOption("evaluationTime")) {
-            evaluationTime = arguments.getRealOption("evaluationTime");
+        if (arguments.hasOption(EVALUATION_TIME)) {
+            evaluationTime = arguments.getRealOption(EVALUATION_TIME);
         }
 
-        if (arguments.hasOption("ancestralTime")) {
-            ancestralTime = arguments.getRealOption("ancestralTime");
+        if (arguments.hasOption(ANCESTRAL_TIME)) {
+            ancestralTime = arguments.getRealOption(ANCESTRAL_TIME);
         }
 
         if (arguments.hasOption(BURN_IN)) {
@@ -433,8 +437,11 @@ public class PersistenceSummarizer extends BaseTreeTool {
             System.err.println("Ignoring a burn-in of " + burnIn + " trees.");
         }
 
-        if (arguments.hasOption("nodeStateAnnotation")) {
-            nodeStateAnnotation = arguments.getStringOption("nodeStateAnnotation");
+        if (arguments.hasOption(NODE_STATE_ANNOTATION)) {
+            nodeStateAnnotation = arguments.getStringOption(NODE_STATE_ANNOTATION);
+        } else {
+            throw new Arguments.ArgumentException("Must include state annotation name via argument " +
+                    NODE_STATE_ANNOTATION + " (e.g. -" + NODE_STATE_ANNOTATION + " yourStateName)");
         }
 
         String[] fileNames = getInputOutputFileNames(arguments, PersistenceSummarizer::printUsage);

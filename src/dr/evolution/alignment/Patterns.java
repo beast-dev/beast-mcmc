@@ -384,6 +384,8 @@ public class Patterns implements PatternList {
                 if (comparePatterns(patterns[i], pattern)) {
 
                     weights[i] += weight;
+                    assert(comparePatterns(arrayListPatterns.get(i), pattern));
+                    arrayListWeights.set(i, arrayListWeights.get(i) + weight);
                     return;
                 }
             }

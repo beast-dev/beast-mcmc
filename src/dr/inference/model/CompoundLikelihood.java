@@ -488,6 +488,13 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
                 }
                 index++;
             }
+            message += "\n\n";
+            for (int i = 0; i < indent; i++) {
+                message += " ";
+            }
+            message += this.getId() + " log-likelihood = " + this.getLogLikelihood();
+
+            if (indent == 0) message += "\n\n";
 
         } else {
             message += "No evaluation timer report available";

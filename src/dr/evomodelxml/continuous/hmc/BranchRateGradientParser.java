@@ -34,6 +34,7 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegat
 import dr.evomodel.treedatalikelihood.discrete.BranchRateGradientForDiscreteTrait;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.JointBranchRateGradient;
 import dr.inference.hmc.JointGradient;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
@@ -88,14 +89,14 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
 
             checkBranchRateModels(providers);
 
-            return new JointGradient(providers);
+            return new JointBranchRateGradient(providers);
         }
     }
 
     static void checkBranchRateModels(List<GradientWrtParameterProvider> providers) throws XMLParseException {
-        BranchRateModel rateModel = ((TreeDataLikelihood)providers.get(0).getLikelihood()).getBranchRateModel();
+        BranchRateModel rateModel = ((TreeDataLikelihood) providers.get(0).getLikelihood()).getBranchRateModel();
         for (GradientWrtParameterProvider provider : providers) {
-            if (rateModel != ((TreeDataLikelihood)provider.getLikelihood()).getBranchRateModel()) {
+            if (rateModel != ((TreeDataLikelihood) provider.getLikelihood()).getBranchRateModel()) {
                 throw new XMLParseException("All TreeDataLikelihoods must use the same BranchRateModel");
             }
         }
@@ -106,12 +107,11 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
                                                                  boolean useHessian) throws XMLParseException {
 
 
-
         BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
 
         if (branchRateModel instanceof DifferentiableBranchRates) {
 
-            Parameter branchRates = ((DifferentiableBranchRates)branchRateModel).getRateParameter();
+            Parameter branchRates = ((DifferentiableBranchRates) branchRateModel).getRateParameter();
 
             DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
 

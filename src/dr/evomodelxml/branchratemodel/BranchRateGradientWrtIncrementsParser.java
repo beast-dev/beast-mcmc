@@ -30,6 +30,7 @@ import dr.evomodel.branchratemodel.BranchRateGradientWrtIncrements;
 import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
 import dr.evomodel.treedatalikelihood.discrete.BranchRateGradientForDiscreteTrait;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.JointBranchRateGradient;
 import dr.xml.*;
 
 public class BranchRateGradientWrtIncrementsParser extends AbstractXMLObjectParser {
@@ -48,11 +49,12 @@ public class BranchRateGradientWrtIncrementsParser extends AbstractXMLObjectPars
         GradientWrtParameterProvider rateProvider = (GradientWrtParameterProvider)
                 xo.getChild(GradientWrtParameterProvider.class);
 
-        if (!(rateProvider instanceof BranchRateGradient) &&
-                !(rateProvider instanceof BranchRateGradientForDiscreteTrait)) {
-            throw new XMLParseException("Must provide a branch rate gradient");
+        if (!(rateProvider instanceof JointBranchRateGradient)) {
+            if (!(rateProvider instanceof BranchRateGradient) &&
+                    !(rateProvider instanceof BranchRateGradientForDiscreteTrait)) {
+                throw new XMLParseException("Must provide a branch rate gradient");
+            }
         }
-
         return new BranchRateGradientWrtIncrements(rateProvider, priorProvider);
     }
 
@@ -76,8 +78,11 @@ public class BranchRateGradientWrtIncrementsParser extends AbstractXMLObjectPars
     private final XMLSyntaxRule[] rules = {
             new ElementRule(AutoCorrelatedGradientWrtIncrements.class),
             new XORRule(
-                new ElementRule(BranchRateGradient.class),
-                new ElementRule(BranchRateGradientForDiscreteTrait.class)
+                    new ElementRule(BranchRateGradient.class),
+                    new XORRule(
+                            new ElementRule(BranchRateGradientForDiscreteTrait.class),
+                            new ElementRule(JointBranchRateGradient.class)
+                    )
             ),
     };
 }

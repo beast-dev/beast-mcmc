@@ -2,6 +2,7 @@ package dr.evomodel.operators;
 
 import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.operators.hmc.MinimumTravelInformation;
+import dr.inference.operators.hmc.MinimumTravelInformationBinary;
 
 public class NativeZigZag {
 
@@ -96,12 +97,12 @@ public class NativeZigZag {
                        double[] momentum,
                        double time);
 
-    native MinimumTravelInformation getNextEvent(int instanceNumber,
-                                                 double[] position,
-                                                 double[] velocity,
-                                                 double[] action,
-                                                 double[] gradient,
-                                                 double[] momentum);
+    native MinimumTravelInformationBinary getNextEvent(int instanceNumber,
+                                                       double[] position,
+                                                       double[] velocity,
+                                                       double[] action,
+                                                       double[] gradient,
+                                                       double[] momentum);
 
     native int enterCriticalRegion(int instanceNumber,
                                    double[] position,

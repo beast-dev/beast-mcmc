@@ -481,6 +481,8 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         final static String TIME_EFFECT = "timeEffect";
         final static String GLM_COEFFICIENTS = "glmCoefficients";
         final static String HAS_INTERCEPT = "hasIntercept";
+        final static String GLM_VARIABLES = "traitExplanatoryVariable";
+        final static String GLM_VARIABLE_TRAIT = "traits";
 
         public String getParserName() {
             return HAWKES_LIKELIHOOD;
@@ -550,7 +552,20 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                     for (int i = 0; i < times.length; i++) {
                         orderedHeights[i] = mostRecentTipHeight + times[i];
                     }
-                    rateProvider = new HawkesRateProvider.GLM(rates, coefficients, tree, indices, orderedHeights, onTree, timeEffect, hasIntercept);
+
+                    String[] traitNames = null;
+                    if (dxo.getChild(GLM_COEFFICIENTS).hasChildNamed(GLM_VARIABLES)) {
+                        XMLObject exo = dxo.getChild(GLM_COEFFICIENTS).getChild(GLM_VARIABLES);
+
+                        StringTokenizer st = new StringTokenizer((String) exo.getAttribute(GLM_VARIABLE_TRAIT));
+                        traitNames = new String[st.countTokens()];
+                        for (int i = 0; i < st.countTokens(); i++) {
+                            traitNames[i] = st.nextToken();
+                        }
+                    }
+                    MatrixParameterInterface designMatrixParameter = parseDesignMatrix(taxaOnTree, timeTraitName, traitNames, tree, timeEffect, mostRecentTipHeight, hasIntercept);
+                    checkDimension(designMatrixParameter, coefficients);
+                    rateProvider = new HawkesRateProvider.GLM(rates, coefficients, indices, onTree, designMatrixParameter);
                 } else {
                     rateProvider = new HawkesRateProvider.Default(rates, indices, onTree);
                 }
@@ -565,6 +580,12 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
         }
 
+        private void checkDimension(MatrixParameterInterface designMatrixParameter, Parameter coefficients) {
+            if (designMatrixParameter.getRowDimension() != coefficients.getDimension() || coefficients.getDimension() == 0) {
+                throw new RuntimeException("Design matrix row dimension mismatches the dimension of the coefficient vector!");
+            }
+        }
+
         private double mapRandomRates(Taxa timeTaxa, String timeTraitName, Taxa taxaOnTree, TreeModel tree, boolean[] onTree, int[] indices) {
             double[] times = new double[timeTaxa.getTaxonCount()];
             for (int i = 0; i < timeTaxa.getTaxonCount(); i++) {
@@ -575,14 +596,10 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
             Map<Taxon, Integer> onTreeParameterIndexMap = new HashMap<>();
             int parameterIndex = 0;
-            Double mostRecentTip = Double.POSITIVE_INFINITY;
             for (int i = 0; i < tree.getExternalNodeCount(); i++) {
                 Taxon currentTip = tree.getTaxon(i);
                 if (taxaOnTree.contains(currentTip)) {
                     onTreeParameterIndexMap.put(currentTip, parameterIndex);
-                    if (mostRecentTip > tree.getNodeHeight(tree.getNode(i))) {
-                        mostRecentTip = tree.getNodeHeight(tree.getNode(i));
-                    }
                     parameterIndex++;
                 }
             }
@@ -599,7 +616,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                     offTreeParameterIndex++;
                 }
             }
-            return mostRecentTip;
+            return times[timeIndices[0]];
         }
 
         private double[] parseTimes(Taxa taxa, String timeTraitName, MatrixParameterInterface locationsParameter, String locationName) {
@@ -622,6 +639,39 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             }
 
             return orderedTimes;
+        }
+
+        private MatrixParameterInterface parseDesignMatrix(Taxa taxaOnTree, String timeTraitName, String[] traitNames,
+                                                    TreeModel tree, boolean timeEffect, Double mostRecentTipTime, boolean hasIntercept) {
+
+            final int traitDim = traitNames == null ? 0 : traitNames.length;
+            int rowDim = traitDim;
+            if (timeEffect) rowDim++;
+            if (hasIntercept) rowDim++;
+            MatrixParameterInterface designMatrixParameter = new FastMatrixParameter("Hawkes.GLM.Design", rowDim, taxaOnTree.getTaxonCount(), 0.0);
+
+            int parameterIndex = 0;
+            for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+                Taxon currentTaxon = tree.getTaxon(i);
+                if (taxaOnTree.contains(currentTaxon)) {
+                    designMatrixParameter.getParameter(parameterIndex).setId(tree.getTaxonId(i));
+                    Parameter singleLocation = designMatrixParameter.getParameter(parameterIndex);
+                    int idx = 0;
+                    if (hasIntercept) {
+                        singleLocation.setParameterValue(idx, 1.0);
+                        idx++;
+                    }
+                    for (int j = 0; j < traitDim; j++) {
+                        singleLocation.setParameterValue(j + idx, Double.valueOf((String) currentTaxon.getAttribute(traitNames[j])));
+                    }
+                    if (timeEffect && mostRecentTipTime != null) {
+                        singleLocation.setParameterValue(traitDim + idx,  Double.valueOf((String) currentTaxon.getAttribute(timeTraitName)));
+                    }
+                    parameterIndex++;
+                }
+            }
+
+            return designMatrixParameter;
         }
 
         //************************************************************************

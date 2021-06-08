@@ -25,12 +25,7 @@
 
 package dr.inference.hawkes;
 
-import dr.evomodel.branchratemodel.ContinuousBranchValueProvider;
-import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 
 /**
  * @author Andrew Holbrook
@@ -170,27 +165,17 @@ public interface HawkesRateProvider {
     class GLM extends Default {
 
         private Parameter coefficients;
-        private TreeModel tree;
-        private double[] nodeTimes;
-        private boolean timeEffect;
-        private boolean intercept;
-        private ContinuousBranchValueProvider branchValueProvider;
-        private final Options options;
         private boolean[] onTreeByNode;
+        private MatrixParameterInterface designMatrixParameter;
 
-        GLM(Parameter rate, Parameter coefficients, TreeModel tree, int[] indices, double[] orderedTimes,
-            boolean[] onTree, boolean timeEffect, boolean intercept) {
+        GLM(Parameter rate, Parameter coefficients, int[] indices,
+            boolean[] onTree, MatrixParameterInterface designMatrixParameter) {
 
             super(rate, indices, onTree);
 
             this.coefficients = coefficients;
-            this.tree = tree;
-            this.timeEffect = timeEffect;
-            this.intercept = intercept;
-            this.nodeTimes = orderByNodeIndex(orderedTimes);
-            this.branchValueProvider = new ContinuousBranchValueProvider.MidPoint();
-            this.options = new Options(intercept, timeEffect);
             this.onTreeByNode = orderByNodeIndex(onTreeByTime);
+            this.designMatrixParameter = designMatrixParameter;
 
             addVariable(coefficients);
         }
@@ -206,23 +191,14 @@ public interface HawkesRateProvider {
 
         private double getRateByNodeIndex(int nodeIndex, double[] residues, boolean[] onTreeByNode) {
             if (onTreeByNode[nodeIndex]) {
-                return Math.exp(getIntercept() + getTimeEffect(nodeIndex) + residues[nodeIndex]);
+                double rate = residues[nodeIndex];
+                Parameter design = designMatrixParameter.getParameter(nodeIndex);
+                for (int i = 0; i < coefficients.getDimension(); i++) {
+                    rate += coefficients.getParameterValue(i) * design.getParameterValue(i);
+                }
+                return Math.exp(rate);
             } else {
                 return residues[nodeIndex];
-            }
-        }
-
-        private double getIntercept() {
-            if (intercept) return coefficients.getParameterValue(options.getInterceptIndex());
-            else return 0.0;
-        }
-
-        private double getTimeEffect(int nodeIndex) {
-            if (timeEffect) {
-
-                return coefficients.getParameterValue(options.getTimeEffectIndex()) * nodeTimes[nodeIndex];
-            } else {
-                return 0.0;
             }
         }
 
@@ -251,36 +227,6 @@ public interface HawkesRateProvider {
             for (int i = 0; i < gradient.length; i++) {
                 result[i] = gradient[i] * chainSecondDerivative[i] + hessian[i] * chainGradient[i] * chainGradient[i];
             }
-        }
-
-        private class Options {
-
-            private final int interceptIndex;
-            private final int timeEffectIndex;
-
-            Options (boolean hasIntercept, boolean hasTimeEffect) {
-                if (hasTimeEffect) {
-                    if (hasIntercept) timeEffectIndex = 1;
-                    else timeEffectIndex = 0;
-                } else {
-                    timeEffectIndex = -1;
-                }
-
-                if (hasIntercept) {
-                    interceptIndex = 0;
-                } else {
-                    interceptIndex = -1;
-                }
-            }
-
-            int getTimeEffectIndex() {
-                return timeEffectIndex;
-            }
-
-            int getInterceptIndex() {
-                return interceptIndex;
-            }
-
         }
     }
 

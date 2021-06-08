@@ -81,15 +81,15 @@ public interface HawkesRateProvider {
 
         protected Parameter rate;
         protected int[] indices;
-        private boolean[] onTree;
+        protected boolean[] onTreeByTime;
 
         Default(Parameter rate,
                 int[] indices,
-                boolean[] onTree) {
+                boolean[] onTreeByTime) {
             super("HawkesRateProvider$Default");
             this.rate = rate;
             this.indices = indices;
-            this.onTree = onTree;
+            this.onTreeByTime = onTreeByTime;
             addVariable(rate);
         }
 
@@ -112,6 +112,14 @@ public interface HawkesRateProvider {
 
         public double[] orderByNodeIndex(double[] orderByTime) {
             double[] nodeOrdered = new double[orderByTime.length];
+            for (int i = 0; i < orderByTime.length; i++) {
+                nodeOrdered[indices[i]] = orderByTime[i];
+            }
+            return nodeOrdered;
+        }
+
+        public boolean[] orderByNodeIndex(boolean[] orderByTime) {
+            boolean[] nodeOrdered = new boolean[orderByTime.length];
             for (int i = 0; i < orderByTime.length; i++) {
                 nodeOrdered[indices[i]] = orderByTime[i];
             }
@@ -168,6 +176,7 @@ public interface HawkesRateProvider {
         private boolean intercept;
         private ContinuousBranchValueProvider branchValueProvider;
         private final Options options;
+        private boolean[] onTreeByNode;
 
         GLM(Parameter rate, Parameter coefficients, TreeModel tree, int[] indices, double[] orderedTimes,
             boolean[] onTree, boolean timeEffect, boolean intercept) {
@@ -181,6 +190,7 @@ public interface HawkesRateProvider {
             this.nodeTimes = orderByNodeIndex(orderedTimes);
             this.branchValueProvider = new ContinuousBranchValueProvider.MidPoint();
             this.options = new Options(intercept, timeEffect);
+            this.onTreeByNode = orderByNodeIndex(onTreeByTime);
 
             addVariable(coefficients);
         }
@@ -189,9 +199,17 @@ public interface HawkesRateProvider {
             double[] residues = super.getRatesByNodes();
             double[] rates = new double[rate.getDimension()];
             for (int i = 0; i < rate.getDimension(); i++) {
-                rates[i] = Math.exp(getIntercept() + getTimeEffect(i) + residues[i]);
+                rates[i] = getRateByNodeIndex(i, residues, onTreeByNode);
             }
             return rates;
+        }
+
+        private double getRateByNodeIndex(int nodeIndex, double[] residues, boolean[] onTreeByNode) {
+            if (onTreeByNode[nodeIndex]) {
+                return Math.exp(getIntercept() + getTimeEffect(nodeIndex) + residues[nodeIndex]);
+            } else {
+                return residues[nodeIndex];
+            }
         }
 
         private double getIntercept() {

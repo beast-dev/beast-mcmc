@@ -29,18 +29,10 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.BranchSpecificGradient;
 import dr.evomodel.treedatalikelihood.continuous.BranchSpecificOptimaGradient;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
-import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
-import dr.evomodel.treedatalikelihood.hmc.DiffusionParametersGradient;
-import dr.evomodel.treedatalikelihood.hmc.PrecisionGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.hmc.CompoundDerivative;
-import dr.inference.hmc.CompoundGradient;
-import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.CompoundParameter;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -85,38 +77,6 @@ public class BranchSpecificOptimaGradientParser extends AbstractXMLObjectParser 
                                 Arrays.asList(ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_BRANCH_SPECIFIC_DRIFT)
                         ));
 
-//        List<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter> derivationParametersList
-//                = new ArrayList<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter>();
-//
-//        CompoundParameter compoundParameter = new CompoundParameter(null);
-//        List<GradientWrtParameterProvider> derivativeList = new ArrayList<GradientWrtParameterProvider>();
-
-//        List<AbstractDiffusionGradient> diffGradients = xo.getAllChildren(AbstractDiffusionGradient.class);
-//        if (diffGradients != null) {
-//            for (AbstractDiffusionGradient grad : diffGradients) {
-//                derivationParametersList.add(grad.getDerivationParameter());
-//                compoundParameter.addParameter(grad.getRawParameter());
-//                derivativeList.add(grad);
-//            }
-//        }
-
-//        CompoundGradient parametersGradients = new CompoundDerivative(derivativeList);
-//
-//        TreeDataLikelihood treeDataLikelihood = ((TreeDataLikelihood) diffGradients.get(0).getLikelihood());
-//        DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
-//        int dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
-//        Tree tree = treeDataLikelihood.getTree();
-//
-//        ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
-//        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
-//                new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
-//                        dim, tree, continuousData,
-//                        derivationParametersList);
-//        BranchSpecificGradient branchSpecificGradient =
-//                new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, compoundParameter);
-//
-//        return new DiffusionParametersGradient(branchSpecificGradient, parametersGradients);
-
         return new BranchSpecificOptimaGradient(traitName, treeDataLikelihood, continuousData, traitGradient, optimaBranchRates);
     }
 
@@ -126,9 +86,8 @@ public class BranchSpecificOptimaGradientParser extends AbstractXMLObjectParser 
     }
 
     private final XMLSyntaxRule[] rules = {
-//            new ElementRule(AbstractDiffusionGradient.class, 1, Integer.MAX_VALUE),
             new ElementRule(TreeDataLikelihood.class),
-            new ElementRule(ArbitraryBranchRates.class),
+            new ElementRule(ArbitraryBranchRates.class, 1, Integer.MAX_VALUE),
     };
 
     @Override

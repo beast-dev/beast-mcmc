@@ -45,7 +45,7 @@ import java.util.List;
 /**
  * @author Alexander Fisher
  */
-
+//todo: decide if gradient list should be [p1 gradients, p2 gradients, ...] or [p11, p21, p31, ..., p1n, p2n, ...]
 public class BranchSpecificOptimaGradient implements Reportable {
 
     private TreeDataLikelihood treeDataLikelihood;
@@ -55,6 +55,7 @@ public class BranchSpecificOptimaGradient implements Reportable {
     private final int numTraits;
     private final Tree tree;
     private List<Parameter> optimaParameter;// = new ArrayList<Parameter>();
+    private static final boolean DEBUG = false;
 
     public BranchSpecificOptimaGradient(String traitName, TreeDataLikelihood treeDataLikelihood, ContinuousDataLikelihoodDelegate likelihoodDelegate, ContinuousTraitGradientForBranch branchProvider, List<ArbitraryBranchRates> optimaBranchRates) {
         this.branchProvider = branchProvider;
@@ -108,11 +109,28 @@ public class BranchSpecificOptimaGradient implements Reportable {
 
     private MultivariateFunction numeric1 = new MultivariateFunction() {
         @Override
+        // pass full argument (i.e. trait dim 1 optimum, trait dim 2 optimum)
         public double evaluate(double[] argument) {
 
-            for (int i = 0; i < argument.length; ++i) {
-                optimaParameter.get(0).setParameterValue(i, argument[i]);
+            int count = 0;
+            for (int i = 0; i < numBranches; i++) {
+                for (int j = 0; j < numTraits; j++) {
+                    optimaParameter.get(j).setParameterValue(i, argument[(numBranches * j) + i]);
+                    if (DEBUG == true) {
+                        System.out.println("SETTING param " + j + " dim " + i + " to " + argument[(numBranches * j) + i]);
+                        count = count + 1;
+                    }
+                }
             }
+
+//            for (int j = 0; j < numTraits; j++) {
+//                for (int i = 0; i < argument.length; ++i) {
+//                    optimaParameter.get(j).setParameterValue(i % numBranches, argument[i]);
+//                    System.out.println("SETTING param " + j + " dim " + i % numBranches + " to " + argument[i]);
+//                }
+////                optimaParameter.get(0).setParameterValue(i, argument[i]);
+//            }
+//                optimaParameter.get(0).setParameterValue(i, argument[i]);
 
             treeDataLikelihood.makeDirty();
             return treeDataLikelihood.getLogLikelihood();
@@ -120,7 +138,7 @@ public class BranchSpecificOptimaGradient implements Reportable {
 
         @Override
         public int getNumArguments() {
-            return optimaParameter.get(0).getDimension();
+            return optimaParameter.get(0).getDimension() * numTraits;
         }
 
         @Override
@@ -136,9 +154,20 @@ public class BranchSpecificOptimaGradient implements Reportable {
 
     public double[] getNumericalGradient() {
         double[] savedValues = optimaParameter.get(0).getParameterValues();
-        double[] testGradient = NumericalDerivative.gradient(numeric1, optimaParameter.get(0).getParameterValues());
+        double[] savedValues2 = optimaParameter.get(1).getParameterValues();
+        double[] parameterValues = new double[numBranches * numTraits];
+        for (int i = 0; i < numTraits; i++) {
+            for (int j = 0; j < numBranches; j++) {
+                parameterValues[i * numBranches + j] = optimaParameter.get(i).getParameterValue(j);
+            }
+//            parameterValues.add(optimaParameter.get(i).getParameterValues());
+        }
+        double[] testGradient = NumericalDerivative.gradient(numeric1, parameterValues);
+//        double[] testGradient = NumericalDerivative.gradient(numeric1, optimaParameter.get(0).getParameterValues());
+
         for (int i = 0; i < savedValues.length; ++i) {
             optimaParameter.get(0).setParameterValue(i, savedValues[i]);
+            optimaParameter.get(1).setParameterValue(i, savedValues2[i]);
         }
 
         return testGradient;

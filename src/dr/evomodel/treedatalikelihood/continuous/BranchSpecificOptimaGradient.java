@@ -34,7 +34,6 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.preorder.BranchConditionalDistributionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.inference.model.Parameter;
-import dr.inference.operators.hmc.NumericalHessianFromGradient;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.xml.Reportable;
@@ -45,7 +44,6 @@ import java.util.List;
 /**
  * @author Alexander Fisher
  */
-//todo: decide if gradient list should be [p1 gradients, p2 gradients, ...] or [p11, p21, p31, ..., p1n, p2n, ...]
 public class BranchSpecificOptimaGradient implements Reportable {
 
     private TreeDataLikelihood treeDataLikelihood;
@@ -97,11 +95,9 @@ public class BranchSpecificOptimaGradient implements Reportable {
             final NodeRef node = tree.getNode(i);
             List<BranchSufficientStatistics> statisticsForNode = treeTraitProvider.getTrait(tree, node);
             gradientAtBranchI = branchProvider.getGradientForBranch(statisticsForNode.get(0), node);
-//           int end = start + numTraits;
-            for (int j = 0; j < numTraits; j++) {
-                gradient[index] = gradientAtBranchI[j];
+            for (int traitDim = 0; traitDim < numTraits; traitDim++) {
+                gradient[i + (numBranches * traitDim)] = gradientAtBranchI[traitDim];
                 index = index + 1;
-                // load gradient i --> i + j with gradient at branch j?
             }
         }
         return gradient;
@@ -112,13 +108,11 @@ public class BranchSpecificOptimaGradient implements Reportable {
         // pass full argument (i.e. trait dim 1 optimum, trait dim 2 optimum)
         public double evaluate(double[] argument) {
 
-            int count = 0;
             for (int i = 0; i < numBranches; i++) {
                 for (int j = 0; j < numTraits; j++) {
                     optimaParameter.get(j).setParameterValue(i, argument[(numBranches * j) + i]);
                     if (DEBUG == true) {
                         System.out.println("SETTING param " + j + " dim " + i + " to " + argument[(numBranches * j) + i]);
-                        count = count + 1;
                     }
                 }
             }
@@ -153,6 +147,7 @@ public class BranchSpecificOptimaGradient implements Reportable {
     };
 
     public double[] getNumericalGradient() {
+        //todo: don't hardcode cache
         double[] savedValues = optimaParameter.get(0).getParameterValues();
         double[] savedValues2 = optimaParameter.get(1).getParameterValues();
         double[] parameterValues = new double[numBranches * numTraits];

@@ -52,7 +52,7 @@ public class BranchSpecificOptimaGradient implements Reportable {
     private final int numBranches;
     private final int numTraits;
     private final Tree tree;
-    private List<Parameter> optimaParameter;// = new ArrayList<Parameter>();
+    private List<Parameter> optimaParameter;
     private static final boolean DEBUG = false;
 
     public BranchSpecificOptimaGradient(String traitName, TreeDataLikelihood treeDataLikelihood, ContinuousDataLikelihoodDelegate likelihoodDelegate, ContinuousTraitGradientForBranch branchProvider, List<ArbitraryBranchRates> optimaBranchRates) {
@@ -63,7 +63,6 @@ public class BranchSpecificOptimaGradient implements Reportable {
         List<Parameter> parameters = new ArrayList<Parameter>();
         for (int i = 0; i < numTraits; i++) {
             parameters.add(optimaBranchRates.get(i).getRateParameter());
-//        this.optimaParameter.add(optimaBranchRates.get(i).getRateParameter());
         }
         this.optimaParameter = parameters;
         if (optimaParameter.get(0) != null) {
@@ -112,19 +111,10 @@ public class BranchSpecificOptimaGradient implements Reportable {
                 for (int j = 0; j < numTraits; j++) {
                     optimaParameter.get(j).setParameterValue(i, argument[(numBranches * j) + i]);
                     if (DEBUG == true) {
-                        System.out.println("SETTING param " + j + " dim " + i + " to " + argument[(numBranches * j) + i]);
+                        System.out.println("setting param " + j + " dim " + i + " to " + argument[(numBranches * j) + i]);
                     }
                 }
             }
-
-//            for (int j = 0; j < numTraits; j++) {
-//                for (int i = 0; i < argument.length; ++i) {
-//                    optimaParameter.get(j).setParameterValue(i % numBranches, argument[i]);
-//                    System.out.println("SETTING param " + j + " dim " + i % numBranches + " to " + argument[i]);
-//                }
-////                optimaParameter.get(0).setParameterValue(i, argument[i]);
-//            }
-//                optimaParameter.get(0).setParameterValue(i, argument[i]);
 
             treeDataLikelihood.makeDirty();
             return treeDataLikelihood.getLogLikelihood();
@@ -147,22 +137,22 @@ public class BranchSpecificOptimaGradient implements Reportable {
     };
 
     public double[] getNumericalGradient() {
-        //todo: don't hardcode cache
-        double[] savedValues = optimaParameter.get(0).getParameterValues();
-        double[] savedValues2 = optimaParameter.get(1).getParameterValues();
         double[] parameterValues = new double[numBranches * numTraits];
         for (int i = 0; i < numTraits; i++) {
             for (int j = 0; j < numBranches; j++) {
-                parameterValues[i * numBranches + j] = optimaParameter.get(i).getParameterValue(j);
+                parameterValues[(i * numBranches) + j] = optimaParameter.get(i).getParameterValue(j);
             }
-//            parameterValues.add(optimaParameter.get(i).getParameterValues());
         }
-        double[] testGradient = NumericalDerivative.gradient(numeric1, parameterValues);
-//        double[] testGradient = NumericalDerivative.gradient(numeric1, optimaParameter.get(0).getParameterValues());
+        double[] savedValues = parameterValues;
 
-        for (int i = 0; i < savedValues.length; ++i) {
-            optimaParameter.get(0).setParameterValue(i, savedValues[i]);
-            optimaParameter.get(1).setParameterValue(i, savedValues2[i]);
+        double[] testGradient = NumericalDerivative.gradient(numeric1, parameterValues);
+
+        int index = 0;
+        for (int j = 0; j < numTraits; j++) {
+            for (int i = 0; i < numBranches; i++) {
+                optimaParameter.get(j).setParameterValue(i, savedValues[index]);
+                index = index + 1;
+            }
         }
 
         return testGradient;
@@ -173,7 +163,7 @@ public class BranchSpecificOptimaGradient implements Reportable {
         double[] testGradient = getNumericalGradient();
 
         StringBuilder sb = new StringBuilder();
-        sb.append("Peeling: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity()));
+        sb.append("peeling: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity()));
         sb.append("\n");
         sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
         sb.append("\n");

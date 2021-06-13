@@ -40,7 +40,7 @@ import java.util.List;
  */
 
 public class MultipleParameterGradient implements GradientWrtParameterProvider {
-//todo: include parameter order check with gradient order
+    //todo: include parameter order check with gradient order
     private final int dimension;
     private final Likelihood likelihood;
     private final Parameter parameter;
@@ -50,12 +50,12 @@ public class MultipleParameterGradient implements GradientWrtParameterProvider {
         this.derivativeList = derivativeList;
         int listSize = derivativeList.size();
         int totalDim = 0;
-        // todo: move into parser
+        // todo: remove since it's redundant
         for (int i = 0; i < listSize; i++) {
             totalDim = totalDim + derivativeList.get(i).getDimension();
-            if(totalDim != parameter.getDimension()) {
-                throw new RuntimeException("Parameter dimension mismatch");
-            }
+        }
+        if (totalDim != parameter.getDimension()) {
+            throw new RuntimeException("Parameter dimension mismatch");
         }
         this.dimension = totalDim;
         // todo: check for same likelihood across derivativeList in parser
@@ -87,7 +87,8 @@ public class MultipleParameterGradient implements GradientWrtParameterProvider {
 //                }
 //            }
 //            likelihood = new CompoundLikelihood(likelihoodList);
-        }
+    }
+
     @Override
     public Likelihood getLikelihood() {
         return likelihood;
@@ -108,7 +109,7 @@ public class MultipleParameterGradient implements GradientWrtParameterProvider {
         return new double[0];
     }
 
-    public double getParameterGradientLogDensity(int i){
+    public double getParameterGradientLogDensity(int i) {
         return 2.0;
     }
 }

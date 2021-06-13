@@ -27,6 +27,7 @@ package dr.inference.hmc;
 
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 
@@ -39,22 +40,27 @@ import java.util.List;
  */
 
 public class MultipleParameterGradient implements GradientWrtParameterProvider {
-//todo: include order check
+//todo: include parameter order check with gradient order
     private final int dimension;
     private final Likelihood likelihood;
     private final Parameter parameter;
     private final List<GradientWrtParameterProvider> derivativeList;
 
-    public MultipleParameterGradient(List<GradientWrtParameterProvider> derivativeList) {
+    public MultipleParameterGradient(List<GradientWrtParameterProvider> derivativeList, Parameter parameter) {
         this.derivativeList = derivativeList;
         int listSize = derivativeList.size();
         int totalDim = 0;
+        // todo: move into parser
         for (int i = 0; i < listSize; i++) {
             totalDim = totalDim + derivativeList.get(i).getDimension();
+            if(totalDim != parameter.getDimension()) {
+                throw new RuntimeException("Parameter dimension mismatch");
+            }
         }
         this.dimension = totalDim;
+        // todo: check for same likelihood across derivativeList in parser
         this.likelihood = null;
-        this.parameter = null;
+        this.parameter = parameter;
 
 //        this.derivativeList = derivativeList;
 //
@@ -84,17 +90,17 @@ public class MultipleParameterGradient implements GradientWrtParameterProvider {
         }
     @Override
     public Likelihood getLikelihood() {
-        return null;
+        return likelihood;
     }
 
     @Override
     public Parameter getParameter() {
-        return null;
+        return parameter;
     }
 
     @Override
     public int getDimension() {
-        return 0;
+        return dimension;
     }
 
     @Override

@@ -25,14 +25,9 @@
 
 package dr.inference.hmc;
 
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -51,46 +46,12 @@ public class MultipleParameterGradient implements GradientWrtParameterProvider {
     public MultipleParameterGradient(List<GradientWrtParameterProvider> derivativeList, Parameter parameter) {
         this.derivativeList = derivativeList;
         this.derivativeListSize = derivativeList.size();
-//        int totalDim = 0;
-//        // todo: remove since it's redundant
-//        for (int i = 0; i < listSize; i++) {
-//            totalDim = totalDim + derivativeList.get(i).getDimension();
-//        }
-//        if (totalDim != parameter.getDimension()) {
-//            throw new RuntimeException("Parameter dimension mismatch");
-//        }
         this.dimension = parameter.getDimension();
         this.smallDim = dimension / derivativeListSize;
 
-        // todo: check for same likelihood across derivativeList in parser
+        // todo: 'likelihood' = prior, need to combine priors properly
         this.likelihood = derivativeList.get(0).getLikelihood();
         this.parameter = parameter;
-
-//        this.derivativeList = derivativeList;
-//
-//        GradientWrtParameterProvider first = derivativeList.get(0);
-//        dimension = first.getDimension();
-//        parameter = first.getParameter();
-//
-//        if (derivativeList.size() == 1) {
-//            likelihood = first.getLikelihood();
-//        } else {
-//            List<Likelihood> likelihoodList = new ArrayList<>();
-//
-//            for (GradientWrtParameterProvider grad : derivativeList) {
-//                if (grad.getDimension() != dimension) {
-//                    throw new RuntimeException("Unequal parameter dimensions");
-//                }
-//                if (!Arrays.equals(grad.getParameter().getParameterValues(), parameter.getParameterValues())){
-//                    throw new RuntimeException("Unequal parameter values");
-//                }
-//                for (Likelihood likelihood : grad.getLikelihood().getLikelihoodSet()) {
-//                    if (!(likelihoodList.contains(likelihood))) {
-//                        likelihoodList.add(likelihood);
-//                    }
-//                }
-//            }
-//            likelihood = new CompoundLikelihood(likelihoodList);
     }
 
     @Override
@@ -111,8 +72,8 @@ public class MultipleParameterGradient implements GradientWrtParameterProvider {
     @Override
     public double[] getGradientLogDensity() {
         double[] fullDerivative = new double[dimension];
-        for (int i = 0; i < derivativeListSize; i++){
-           System.arraycopy(getParameterGradientLogDensity(i), 0 , fullDerivative, i * smallDim, smallDim);
+        for (int i = 0; i < derivativeListSize; i++) {
+            System.arraycopy(getParameterGradientLogDensity(i), 0, fullDerivative, i * smallDim, smallDim);
         }
         return fullDerivative;
     }

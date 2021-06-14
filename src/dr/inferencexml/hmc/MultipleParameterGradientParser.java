@@ -25,11 +25,7 @@
 
 package dr.inferencexml.hmc;
 
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.hmc.JointGradient;
 import dr.inference.hmc.MultipleParameterGradient;
 import dr.inference.model.CompoundParameter;
 import dr.xml.*;
@@ -55,16 +51,10 @@ public class MultipleParameterGradientParser extends AbstractXMLObjectParser {
 
         if (gradients != null) {
             for (GradientWrtParameterProvider grad : gradients) {
-//                derivationParametersList.add(grad.getDerivationParameter());
                 compoundParameter.addParameter(grad.getParameter());
                 derivativeList.add(grad);
             }
         }
-
-//        for (int i = 0; i < xo.getChildCount(); i++) {
-//            GradientWrtParameterProvider grad = (GradientWrtParameterProvider) xo.getChild(i);
-//            derivativeList.add(grad);
-//        }
 
         return new MultipleParameterGradient(derivativeList, compoundParameter);
     }
@@ -75,23 +65,12 @@ public class MultipleParameterGradientParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-//            new ElementRule(TreeDataLikelihood.class),
-//            new ElementRule(ArbitraryBranchRates.class, 1, Integer.MAX_VALUE),
             new ElementRule(GradientWrtParameterProvider.class, 1, Integer.MAX_VALUE),
     };
-//
-//    @Override
-//    public XMLSyntaxRule[] getSyntaxRules() {
-//        return rules;
-//    }
-//
-//    private final XMLSyntaxRule[] rules = {
-//            new ElementRule(AbstractDiffusionGradient.class, 1, Integer.MAX_VALUE),
-//    };
 
     @Override
     public String getParserDescription() {
-        return null;
+        return "Concatenates gradients on separate parameters.";
     }
 
     @Override

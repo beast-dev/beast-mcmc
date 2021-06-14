@@ -33,6 +33,8 @@ import dr.evomodel.treedatalikelihood.continuous.BranchSpecificOptimaGradient;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.CompoundParameter;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -62,7 +64,14 @@ public class BranchSpecificOptimaGradientParser extends AbstractXMLObjectParser 
         TreeDataLikelihood treeDataLikelihood = ((TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class));
 
         List<ArbitraryBranchRates> optimaBranchRates = xo.getAllChildren(ArbitraryBranchRates.class);
-//        ArbitraryBranchRates optimaBranchRates = (ArbitraryBranchRates) xo.getChild(ArbitraryBranchRates.class);
+
+        CompoundParameter compoundParameter = new CompoundParameter(null);
+
+        if (optimaBranchRates != null) {
+            for (ArbitraryBranchRates brm : optimaBranchRates) {
+                compoundParameter.addParameter(brm.getRateParameter());
+            }
+        }
 
         DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
         int dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
@@ -77,7 +86,7 @@ public class BranchSpecificOptimaGradientParser extends AbstractXMLObjectParser 
                                 Arrays.asList(ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_BRANCH_SPECIFIC_DRIFT)
                         ));
 
-        return new BranchSpecificOptimaGradient(traitName, treeDataLikelihood, continuousData, traitGradient, optimaBranchRates);
+        return new BranchSpecificOptimaGradient(traitName, treeDataLikelihood, continuousData, traitGradient, compoundParameter);
     }
 
     @Override

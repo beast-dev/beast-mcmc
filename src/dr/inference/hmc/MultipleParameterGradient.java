@@ -44,22 +44,26 @@ public class MultipleParameterGradient implements GradientWrtParameterProvider {
     private final int dimension;
     private final Likelihood likelihood;
     private final Parameter parameter;
+    private final int derivativeListSize;
     private final List<GradientWrtParameterProvider> derivativeList;
+    private final int smallDim;
 
     public MultipleParameterGradient(List<GradientWrtParameterProvider> derivativeList, Parameter parameter) {
         this.derivativeList = derivativeList;
-        int listSize = derivativeList.size();
-        int totalDim = 0;
-        // todo: remove since it's redundant
-        for (int i = 0; i < listSize; i++) {
-            totalDim = totalDim + derivativeList.get(i).getDimension();
-        }
-        if (totalDim != parameter.getDimension()) {
-            throw new RuntimeException("Parameter dimension mismatch");
-        }
-        this.dimension = totalDim;
+        this.derivativeListSize = derivativeList.size();
+//        int totalDim = 0;
+//        // todo: remove since it's redundant
+//        for (int i = 0; i < listSize; i++) {
+//            totalDim = totalDim + derivativeList.get(i).getDimension();
+//        }
+//        if (totalDim != parameter.getDimension()) {
+//            throw new RuntimeException("Parameter dimension mismatch");
+//        }
+        this.dimension = parameter.getDimension();
+        this.smallDim = dimension / derivativeListSize;
+
         // todo: check for same likelihood across derivativeList in parser
-        this.likelihood = null;
+        this.likelihood = derivativeList.get(0).getLikelihood();
         this.parameter = parameter;
 
 //        this.derivativeList = derivativeList;
@@ -106,10 +110,14 @@ public class MultipleParameterGradient implements GradientWrtParameterProvider {
 
     @Override
     public double[] getGradientLogDensity() {
-        return new double[0];
+        double[] fullDerivative = new double[dimension];
+        for (int i = 0; i < derivativeListSize; i++){
+           System.arraycopy(getParameterGradientLogDensity(i), 0 , fullDerivative, i * smallDim, smallDim);
+        }
+        return fullDerivative;
     }
 
-    public double getParameterGradientLogDensity(int i) {
-        return 2.0;
+    public double[] getParameterGradientLogDensity(int i) {
+        return derivativeList.get(i).getGradientLogDensity();
     }
 }

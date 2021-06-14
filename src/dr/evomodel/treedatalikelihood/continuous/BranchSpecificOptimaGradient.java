@@ -56,7 +56,6 @@ public class BranchSpecificOptimaGradient implements GradientWrtParameterProvide
     private final int numTraits;
     private final Tree tree;
     private final int dimension;
-    private static final boolean DEBUG = false;
     private Parameter parameter;
 
     public BranchSpecificOptimaGradient(String traitName, TreeDataLikelihood treeDataLikelihood, ContinuousDataLikelihoodDelegate likelihoodDelegate, ContinuousTraitGradientForBranch branchProvider, CompoundParameter optimaParameter) {

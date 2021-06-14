@@ -25,9 +25,11 @@
 
 package dr.inference.hmc;
 
+import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -37,7 +39,8 @@ import java.util.List;
 public class MultipleParameterGradient implements GradientWrtParameterProvider {
     //todo: include parameter order check with gradient order
     private final int dimension;
-    private final Likelihood likelihood;
+    private List<Likelihood> likelihoodList = new ArrayList<>();
+    private final CompoundLikelihood compoundLikelihood;
     private final Parameter parameter;
     private final int derivativeListSize;
     private final List<GradientWrtParameterProvider> derivativeList;
@@ -48,15 +51,18 @@ public class MultipleParameterGradient implements GradientWrtParameterProvider {
         this.derivativeListSize = derivativeList.size();
         this.dimension = parameter.getDimension();
         this.smallDim = dimension / derivativeListSize;
-
-        // todo: 'likelihood' = prior, need to combine priors properly
-        this.likelihood = derivativeList.get(0).getLikelihood();
+        
+        for (int i = 0; i < derivativeListSize; i++){
+            this.likelihoodList.add(derivativeList.get(i).getLikelihood());
+        }
+        this.compoundLikelihood = new CompoundLikelihood(likelihoodList);
+//        this.likelihood = derivativeList.get(0).getLikelihood();
         this.parameter = parameter;
     }
 
     @Override
     public Likelihood getLikelihood() {
-        return likelihood;
+        return compoundLikelihood;
     }
 
     @Override

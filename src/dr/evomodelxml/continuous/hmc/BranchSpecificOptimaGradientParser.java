@@ -33,7 +33,6 @@ import dr.evomodel.treedatalikelihood.continuous.BranchSpecificOptimaGradient;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.CompoundParameter;
 import dr.xml.*;
 

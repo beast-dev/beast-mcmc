@@ -77,7 +77,7 @@ class LeastEigenvalueRatioSCM implements SplitHMCtravelTimeMultiplier {
     public double getMultiplier() {
         double minEigenInner = getMinEigValueLanczos(adaptableCovarianceInner, maskVectorInner);
         double minEigenOuter = getMinEigValueLanczos(adaptableCovarianceOuter, maskVectorOuter);
-        return Math.sqrt(minEigenInner) / Math.sqrt(minEigenOuter);
+        return Math.sqrt(minEigenInner / minEigenOuter);
     }
 
     static ReadableMatrix subsetByMask(ReadableMatrix adaptableCov, double[] mask) {

@@ -107,6 +107,8 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
 //            }
             this.treeModel = tree;
 
+            addVariable(categoryParameter);
+
             categoryCount = 1;
         }
 

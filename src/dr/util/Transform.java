@@ -945,7 +945,7 @@ public interface Transform {
             this.power = 2;
         }
 
-        PowerTransform(double power){
+        public PowerTransform(double power){
             this.power = power;
         }
 
@@ -1011,6 +1011,59 @@ public interface Transform {
         @Override
         public double getLogJacobian(double value) {
             throw new RuntimeException("not implemented yet");
+        }
+    }
+
+    class ReciprocalTransform extends UnivariableTransform {
+
+        @Override
+        public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
+            return 0;
+        }
+
+        @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
+            return 0;
+        }
+
+        @Override
+        public String getTransformName() {
+            return "reciprocal transform";
+        }
+
+        @Override
+        public double transform(double value) {
+            return 1.0 / value;
+        }
+
+        @Override
+        public double inverse(double value) {
+            return 1.0 / value;
+        }
+
+        @Override
+        public double gradientInverse(double value) {
+            throw new RuntimeException("not yet implemented");
+        }
+
+        @Override
+        protected double getGradientLogJacobianInverse(double value) {
+            throw new RuntimeException("not yet implemented");
+        }
+
+        @Override
+        public double gradient(double value) {
+            throw new RuntimeException("not yet implemented");
+        }
+
+        @Override
+        public double getLogJacobian(double value) {
+            throw new RuntimeException("not yet implemented");
+        }
+
+        @Override
+        public boolean isInInteriorDomain(double value) {
+            throw new RuntimeException("not yet implemented");
         }
     }
 
@@ -2246,7 +2299,7 @@ public interface Transform {
         public List<Parameter> parameters = null;
 
         public ParsedTransform() {
-            
+
         }
 
         public ParsedTransform(Transform transform, int start, int end) {

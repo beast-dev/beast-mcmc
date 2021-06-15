@@ -925,6 +925,7 @@ public class TreeAnnotator {
                                         if (minValueArray[k] < maxValueArray[k]) {
                                             annotateMedianAttribute(tree, node, name + (k + 1) + "_median", valuesArray[k]);
                                             annotateRangeAttribute(tree, node, name + (k + 1) + "_range", valuesArray[k]);
+                                            annotatePositiveProbability(tree, node, name + (k + 1) + "_positiveProb", valuesArray[k]);
                                             if (!want2d)
                                                 annotateHPDAttribute(tree, node, name + (k + 1) + "_95%_HPD", 0.95, valuesArray[k]);
                                         }
@@ -1023,6 +1024,12 @@ public class TreeAnnotator {
             double negativePortion = DiscreteStatistics.negativeProbability(values);
             double positivePortion = 1 - negativePortion;
             tree.setNodeAttribute(node, label, new Object[]{negativePortion, positivePortion});
+        }
+
+        private void annotatePositiveProbability(MutableTree tree, NodeRef node, String label, double[] values) {
+            double negativePortion = DiscreteStatistics.negativeProbability(values);
+            double positivePortion = 1 - negativePortion;
+            tree.setNodeAttribute(node, label, positivePortion);
         }
 
         private void annotateRangeAttribute(MutableTree tree, NodeRef node, String label, double[] values) {

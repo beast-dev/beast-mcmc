@@ -4,8 +4,10 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
+import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CrossValidationProvider;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.TraitValidationProvider;
 import dr.xml.*;
@@ -37,6 +39,13 @@ public class TraitValidationProviderParser extends AbstractXMLObjectParser {
                 (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate();
 
         ContinuousTraitPartialsProvider dataModel = delegate.getDataModel();
+        final ModelExtensionProvider extensionProvider;
+        if (dataModel instanceof ModelExtensionProvider) {
+            extensionProvider = (ModelExtensionProvider) dataModel;
+        } else {
+            throw new XMLParseException("Tree likelihood delegate does must implement ModelExtensionProvider");
+        }
+
         Tree treeModel = treeLikelihood.getTree();
 
 
@@ -58,7 +67,7 @@ public class TraitValidationProviderParser extends AbstractXMLObjectParser {
         String id = xo.getId();
 
 
-        TraitValidationProvider provider = new TraitValidationProvider(trueParameter, dataModel, treeModel, id,
+        TraitValidationProvider provider = new TraitValidationProvider(trueParameter, extensionProvider, treeModel, id,
                 missingParameter, treeLikelihood, inferredValuesName, trueMissing);
 
         return provider;

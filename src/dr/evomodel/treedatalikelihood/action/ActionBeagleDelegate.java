@@ -28,6 +28,7 @@ package dr.evomodel.treedatalikelihood.action;
 import beagle.Beagle;
 import beagle.InstanceDetails;
 import org.newejml.data.DMatrixSparseCSC;
+import org.newejml.simple.SimpleMatrix;
 
 /**
  * @author Xiang Ji
@@ -53,7 +54,7 @@ public class ActionBeagleDelegate implements Beagle {
     protected double[] categoryRates;
     protected double[] categoryWeights;
     protected double[] patternWeights;
-    protected double[][] partials;
+    protected SimpleMatrix partials;
     protected int[][] scalingFactorCounts;
     protected double[][] matrices;
     double[] tmpPartials;
@@ -79,10 +80,7 @@ public class ActionBeagleDelegate implements Beagle {
         this.categoryWeights = new double[categoryCount];
         this.categoryRates = new double[categoryCount];
         this.patternWeights = new double[patternCount];
-        partials = new double[partialsBufferCount][];
-        for (int i = 0; i < partialsBufferCount; i++) {
-            partials[i] = new double[partialsSize];
-        }
+        partials = new SimpleMatrix(partialsBufferCount, partialsSize);
         this.instantaneousMatrices = instantaneousMatrices;
     }
 
@@ -121,14 +119,12 @@ public class ActionBeagleDelegate implements Beagle {
     public void setTipPartials(int i, double[] doubles) {
         assert(i >= 0 && i < tipCount);
         assert(doubles.length == partialsSize);
-        if (this.partials[i] == null) {
-            this.partials[i] = new double[partialsSize];
+        if (this.partials == null) {
+            this.partials = new SimpleMatrix(partialsBufferCount, partialsSize);
         }
 
-        int partialIndex = 0;
-        for (int category = 0; category < categoryCount; category++) {
-            System.arraycopy(doubles, 0, partials[i], partialIndex, doubles.length);
-            partialIndex += doubles.length;
+        for (int j = 0; j < partialsSize; j++) {
+            partials.set(i, j, doubles[j]);
         }
     }
 //
@@ -143,14 +139,20 @@ public class ActionBeagleDelegate implements Beagle {
 
     @Override
     public void setPartials(int i, double[] doubles) { //TODO: check for double buffering by XJ
-        assert this.partials[i] != null;
+        assert this.partials != null;
 
-        System.arraycopy(doubles, 0, this.partials[i], 0, this.partialsSize);
+        for (int j = 0; j < partialsSize; j++) {
+            partials.set(i, j, doubles[j]);
+        }
+//        System.arraycopy(doubles, 0, this.partials[i], 0, this.partialsSize);
     }
 
     @Override
     public void getPartials(int i, int i1, double[] doubles) {
-        System.arraycopy(this.partials[i], 0, doubles, 0, this.partialsSize);
+        for (int j = 0; j < partialsSize; j++) {
+            doubles[j] = partials.get(i, j);
+        }
+//        System.arraycopy(this.partials[i], 0, doubles, 0, this.partialsSize);
     }
 
     @Override
@@ -250,7 +252,30 @@ public class ActionBeagleDelegate implements Beagle {
 
     @Override
     public void updatePartials(int[] ints, int i, int i1) {
+        final int destinationPartialIndex = ints[0];
+        final int firstChildPartialIndex = ints[3];
+        final int firstChildSubstitutionMatrixIndex = ints[4];
+        final int secondChildPartialIndex = ints[5];
+        final int secondChildSubstitutionMatrixIndex = ints[6];
 
+
+        SimpleMatrix leftPartial = partials.extractVector(true, firstChildPartialIndex);
+        SimpleMatrix rightPartial = partials.extractVector(true, secondChildPartialIndex);
+
+        DMatrixSparseCSC leftGeneratorMatrix = instantaneousMatrices[firstChildSubstitutionMatrixIndex];
+        DMatrixSparseCSC rightGeneratorMatrix = instantaneousMatrices[secondChildSubstitutionMatrixIndex];
+
+
+
+
+
+
+
+    }
+
+    private SimpleMatrix simpleAction(DMatrixSparseCSC matrix, SimpleMatrix vector) {
+        //todo: implement Al-Mohy and Higham algorithm here
+        return null;
     }
 
     @Override

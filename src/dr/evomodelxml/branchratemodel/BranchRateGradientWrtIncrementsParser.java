@@ -28,10 +28,15 @@ package dr.evomodelxml.branchratemodel;
 import dr.evomodel.branchratemodel.AutoCorrelatedGradientWrtIncrements;
 import dr.evomodel.branchratemodel.BranchRateGradientWrtIncrements;
 import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
+import dr.evomodel.treedatalikelihood.continuous.BranchSpecificOptimaGradient;
 import dr.evomodel.treedatalikelihood.discrete.BranchRateGradientForDiscreteTrait;
+import dr.inference.hmc.CompoundGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.JointBranchRateGradient;
 import dr.xml.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class BranchRateGradientWrtIncrementsParser extends AbstractXMLObjectParser {
 
@@ -43,13 +48,35 @@ public class BranchRateGradientWrtIncrementsParser extends AbstractXMLObjectPars
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        AutoCorrelatedGradientWrtIncrements priorProvider = (AutoCorrelatedGradientWrtIncrements)
+
+        List<AutoCorrelatedGradientWrtIncrements> priorProvider = new ArrayList<AutoCorrelatedGradientWrtIncrements>();
+
+        AutoCorrelatedGradientWrtIncrements onePriorProvider = (AutoCorrelatedGradientWrtIncrements)
                 xo.getChild(AutoCorrelatedGradientWrtIncrements.class);
+        if (onePriorProvider != null) {
+            priorProvider.add(onePriorProvider);
+        } else {
+            CompoundGradient cxo = (CompoundGradient) xo.getChild(CompoundGradient.class);
+            for (GradientWrtParameterProvider gradientChild : cxo.getDerivativeList()) {
+                if (gradientChild instanceof AutoCorrelatedGradientWrtIncrements) {
+                    priorProvider.add((AutoCorrelatedGradientWrtIncrements) gradientChild);
+                } else {
+                    throw new XMLParseException("Compound gradient must only contain AutoCorrelatedGradientWrtIncrements and not " + (gradientChild.getClass()));
+                }
+            }
+        }
 
-        GradientWrtParameterProvider rateProvider = (GradientWrtParameterProvider)
-                xo.getChild(GradientWrtParameterProvider.class);
+        //        BranchSpecificOptimaGradient rateProvider = (BranchSpecificOptimaGradient) xo.getChild(BranchSpecificOptimaGradient.class);
 
-        if (!(rateProvider instanceof JointBranchRateGradient)) {
+        GradientWrtParameterProvider rateProvider = null;
+
+        for (GradientWrtParameterProvider gradientProvider : xo.getAllChildren(GradientWrtParameterProvider.class)) {
+            if (!(gradientProvider instanceof AutoCorrelatedGradientWrtIncrements) && !(gradientProvider instanceof CompoundGradient)) {
+                rateProvider = gradientProvider;
+            }
+        }
+
+        if (!(rateProvider instanceof JointBranchRateGradient) && !(rateProvider instanceof BranchSpecificOptimaGradient)) {
             if (!(rateProvider instanceof BranchRateGradient) &&
                     !(rateProvider instanceof BranchRateGradientForDiscreteTrait)) {
                 throw new XMLParseException("Must provide a branch rate gradient");
@@ -76,9 +103,15 @@ public class BranchRateGradientWrtIncrementsParser extends AbstractXMLObjectPars
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(AutoCorrelatedGradientWrtIncrements.class),
             new XORRule(
-                    new ElementRule(BranchRateGradient.class),
+                    new ElementRule(AutoCorrelatedGradientWrtIncrements.class),
+                    new ElementRule(CompoundGradient.class)
+            ),
+            new XORRule(
+                    new XORRule(
+                            new ElementRule(BranchRateGradient.class),
+                            new ElementRule(BranchSpecificOptimaGradient.class)
+                    ),
                     new XORRule(
                             new ElementRule(BranchRateGradientForDiscreteTrait.class),
                             new ElementRule(JointBranchRateGradient.class)

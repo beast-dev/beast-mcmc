@@ -17,10 +17,13 @@ public class ActionBeagleTest extends MathTestCase {
     private int categoryCount = 1;
     private int matrixBufferCount = 4;
     private int partialsSize;
+    private int partialsBufferCount;
 
     public void setUp() throws Exception {
 
-        this.partialsSize = patternCount * stateCount * categoryCount;
+        this.partialsSize = stateCount;
+        this.partialsBufferCount = (2 * tipCount - 2) * 2 * patternCount * categoryCount;
+
 
         this.stationaryFrequency = new double[]{0.1, 0.3, 0.2, 0.4};
 
@@ -39,7 +42,7 @@ public class ActionBeagleTest extends MathTestCase {
 
     public void testQsetup() {
         DMatrixSparseCSC Qc = DConvertMatrixStruct.convert(Q, (DMatrixSparseCSC) null);
-        this.beagle = new ActionBeagleDelegate(tipCount, (2 * tipCount - 2) * 2, patternCount,
+        this.beagle = new ActionBeagleDelegate(tipCount, partialsBufferCount, patternCount,
                 stateCount, categoryCount, matrixBufferCount, partialsSize, new DMatrixSparseCSC[]{Qc.copy(), Qc.copy(), Qc.copy(), Qc.copy()});
 
         beagle.setPartials(0, new double[]{

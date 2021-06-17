@@ -11,7 +11,7 @@ public class ActionBeagleTest extends MathTestCase {
     private double[] stationaryFrequency;
     private DMatrixSparseTriplet Q;
 
-    private int patternCount = 2;
+    private int patternCount = 5;
     private int tipCount = 3;
     private int stateCount = 4;
     private int categoryCount = 1;
@@ -21,8 +21,8 @@ public class ActionBeagleTest extends MathTestCase {
 
     public void setUp() throws Exception {
 
-        this.partialsSize = stateCount;
-        this.partialsBufferCount = (2 * tipCount - 2) * 2 * patternCount * categoryCount;
+        this.partialsSize = stateCount * patternCount * categoryCount;
+        this.partialsBufferCount = (2 * tipCount - 2) * 2 ;
 
 
         this.stationaryFrequency = new double[]{0.1, 0.3, 0.2, 0.4};

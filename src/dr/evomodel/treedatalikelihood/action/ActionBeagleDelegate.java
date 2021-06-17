@@ -60,7 +60,7 @@ public class ActionBeagleDelegate implements Beagle {
     protected double[] categoryRates;
     protected double[] categoryWeights;
     protected double[] patternWeights;
-    protected DMatrixRMaj partials;
+    protected DMatrixRMaj[] partials;
     protected int[][] scalingFactorCounts;
     protected double[][] matrices;
     double[] tmpPartials;
@@ -86,7 +86,10 @@ public class ActionBeagleDelegate implements Beagle {
         this.categoryWeights = new double[categoryCount];
         this.categoryRates = new double[categoryCount];
         this.patternWeights = new double[patternCount];
-        partials = new DMatrixRMaj(partialsSize, partialsBufferCount);
+        this.partials = new DMatrixRMaj[partialsBufferCount];
+        for (int i = 0; i < partialsBufferCount; i++) {
+            partials[i] = new DMatrixRMaj(patternCount * categoryCount, stateCount);
+        }
         this.instantaneousMatrices = instantaneousMatrices;
     }
 
@@ -125,13 +128,11 @@ public class ActionBeagleDelegate implements Beagle {
     public void setTipPartials(int i, double[] doubles) {
         assert(i >= 0 && i < tipCount);
         assert(doubles.length == partialsSize);
-        if (this.partials == null) {
-            this.partials = new DMatrixRMaj(partialsBufferCount, partialsSize);
+        if (partials[i] == null) {
+            partials[i] = new DMatrixRMaj(patternCount * categoryCount, stateCount);
         }
 
-        for (int j = 0; j < partialsSize; j++) {
-            partials.set(j, i, doubles[j]);
-        }
+        partials[i].set(patternCount * categoryCount, stateCount, true, doubles);
     }
 //
 //    private int getPartialIndex(int i) {  // TODO: use BufferIndexHelper by XJ
@@ -146,19 +147,19 @@ public class ActionBeagleDelegate implements Beagle {
     @Override
     public void setPartials(int i, double[] doubles) { //TODO: check for double buffering by XJ
         assert this.partials != null;
+        assert(doubles.length == partialsSize);
 
-        for (int j = 0; j < partialsSize; j++) {
-            partials.set(j, i, doubles[j]);
+        if (partials[i] == null) {
+            partials[i] = new DMatrixRMaj(stateCount, patternCount * categoryCount);
         }
-//        System.arraycopy(doubles, 0, this.partials[i], 0, this.partialsSize);
+
+        partials[i].set(patternCount * categoryCount, stateCount, true, doubles);
+
     }
 
     @Override
     public void getPartials(int i, int i1, double[] doubles) {
-        for (int j = 0; j < partialsSize; j++) {
-            doubles[j] = partials.get(j, i);
-        }
-//        System.arraycopy(this.partials[i], 0, doubles, 0, this.partialsSize);
+        System.arraycopy(partials[i].getData(), 0, doubles, 0, partialsSize);
     }
 
     @Override
@@ -265,8 +266,11 @@ public class ActionBeagleDelegate implements Beagle {
         final int secondChildSubstitutionMatrixIndex = ints[6];
 
 
-        DMatrixRMaj leftPartial = CommonOps_DDRM.extractColumn(partials, firstChildPartialIndex, null);
-        DMatrixRMaj rightPartial = CommonOps_DDRM.extractColumn(partials, secondChildPartialIndex, null);
+//        DMatrixRMaj leftPartial = CommonOps_DDRM.extractColumn(partials, firstChildPartialIndex, null);
+//        DMatrixRMaj rightPartial = CommonOps_DDRM.extractColumn(partials, secondChildPartialIndex, null);
+
+        DMatrixRMaj leftPartial = partials[firstChildPartialIndex];
+        DMatrixRMaj rightPartial = partials[secondChildPartialIndex];
 
         DMatrixSparseCSC leftGeneratorMatrix = instantaneousMatrices[firstChildSubstitutionMatrixIndex];
         DMatrixSparseCSC rightGeneratorMatrix = instantaneousMatrices[secondChildSubstitutionMatrixIndex];
@@ -277,19 +281,21 @@ public class ActionBeagleDelegate implements Beagle {
 
 
 
-
-
-
     }
 
-    private DMatrixRMaj simpleAction(DMatrixSparseCSC matrix, DMatrixRMaj B) {
+    private DMatrixRMaj simpleAction(DMatrixSparseCSC matrix, DMatrixRMaj partials) {
         // Algorithm 3.2 in Al-Mohy and Higham (2011), balance = false, t = 1.0
         assert(matrix.numCols == matrix.numRows);
-        assert(B.numCols == 1);
+
+        DMatrixRMaj B = CommonOps_DDRM.transpose(partials, null);
+        assert(matrix.numCols == B.numRows);
+
         final double tol = Math.pow(2, -53);
         final double t = 1.0;
+        final int nCol = B.getNumCols();
         final double mu = CommonOps_DSCC.trace(matrix)/((double) matrix.numCols);
         final DMatrixSparseCSC identity = CommonOps_DSCC.identity(matrix.numRows);
+
         DMatrixSparseCSC A = CommonOps_DSCC.add(1.0, matrix, -mu, identity, null, null, null);
 
         final double A1Norm = normP1(A);
@@ -298,7 +304,7 @@ public class ActionBeagleDelegate implements Beagle {
             m = 0;
             s = 1;
         } else {
-            TaylorSeriesStatistics taylorSeriesStatistics = new TaylorSeriesStatistics(A1Norm, A, t);
+            TaylorSeriesStatistics taylorSeriesStatistics = new TaylorSeriesStatistics(A1Norm, A, t, nCol);
             m = taylorSeriesStatistics.getM();
             s = taylorSeriesStatistics.getS();
         }
@@ -322,7 +328,7 @@ public class ActionBeagleDelegate implements Beagle {
             B = F.copy();
         }
 
-        return F;
+        return CommonOps_DDRM.transpose(F, null);
     }
 
     private class TaylorSeriesStatistics {
@@ -330,7 +336,7 @@ public class ActionBeagleDelegate implements Beagle {
         private int s;
         private final int mMax = 55;
 
-        TaylorSeriesStatistics(double A1Norm, DMatrixSparseCSC A, double t) {
+        TaylorSeriesStatistics(double A1Norm, DMatrixSparseCSC A, double t, int nCol) {
             this.thetaConstants = new HashMap<>();
             this.d = new HashMap<>();
             this.powerMatrices = new HashMap<>();
@@ -342,7 +348,7 @@ public class ActionBeagleDelegate implements Beagle {
                 m = 0;
                 s = 1;
             } else {
-                setStatistics(A1Norm, A, t);
+                setStatistics(A1Norm, A, t, nCol);
             }
         }
 
@@ -354,12 +360,15 @@ public class ActionBeagleDelegate implements Beagle {
             return m;
         }
 
-        private void setStatistics(double A1Norm, DMatrixSparseCSC A, double t) {
+        private void setStatistics(double A1Norm, DMatrixSparseCSC A, double t, int nCol) {
             // Code fragment 3.1 in Al-Mohy and Higham
+            if (t != 1.0) {
+                System.err.println("Not yet implemented!");
+//                CommonOps_DSCC.scale(t, A, null);  // TODO: make sure the where the scaling happens, should be at updateMatrix()
+            }
             int bestM = Integer.MAX_VALUE;
             int bestS = Integer.MAX_VALUE;
             final int mMax = 55;
-            final int nCol = 1;
             if (conditionFragment313(A1Norm, nCol, mMax)) {
                 for (int thisM : thetaConstants.keySet()) {
                     final double thisS = Math.ceil(A1Norm/thetaConstants.get(thisM));

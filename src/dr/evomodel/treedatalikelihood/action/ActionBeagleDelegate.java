@@ -323,7 +323,7 @@ public class ActionBeagleDelegate implements Beagle {
                 c1 = c2;
             }
             CommonOps_DDRM.scale(eta, F);
-            B = F.copy();
+            B.setTo(F);
         }
 
         return CommonOps_DDRM.transpose(F, null);

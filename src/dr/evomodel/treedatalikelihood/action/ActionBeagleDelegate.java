@@ -306,6 +306,9 @@ public class ActionBeagleDelegate implements Beagle {
 
         TaylorSeriesStatistics(double A1Norm, DMatrixSparseCSC A, double t) {
             this.thetaConstants = new HashMap<>();
+            this.d = new HashMap<>();
+            this.powerMatrices = new HashMap<>();
+            powerMatrices.put(1, A);
             setThetaConstants();
 
 
@@ -319,9 +322,11 @@ public class ActionBeagleDelegate implements Beagle {
 
         private void setStatistics(double A1Norm, DMatrixSparseCSC A, double t) {
             // Code fragment 3.1 in Al-Mohy and Higham
-            if (conditionFragment313(A1Norm, 1, 55)) {
-                int bestM = Integer.MAX_VALUE;
-                int bestS = Integer.MAX_VALUE;
+            int bestM = Integer.MAX_VALUE;
+            int bestS = Integer.MAX_VALUE;
+            final int mMax = 55;
+            final int nCol = 1;
+            if (conditionFragment313(A1Norm, nCol, mMax)) {
                 for (int thisM : thetaConstants.keySet()) {
                     final double thisS = Math.ceil(A1Norm/thetaConstants.get(thisM));
                     if (bestM == Integer.MAX_VALUE || ((double) thisM) * thisS < bestM * bestS) {
@@ -330,12 +335,52 @@ public class ActionBeagleDelegate implements Beagle {
                     }
                 }
                 this.s = bestS;
-                this.m = bestM;
             } else {
-
+                final int pMax = (int) getPMax(mMax);
+                for (int p = 2; p < pMax; p++) {
+                    for (int thisM = p * (p - 1) - 1; thisM < mMax + 1; thisM++) {
+                        if (thetaConstants.containsKey(thisM)) {
+                            // part of equation 3.10
+                            final double thisS = Math.ceil(getAlpha(p) / thetaConstants.get(thisM));
+                            if (bestM == Integer.MAX_VALUE || ((double) thisM) * thisS < bestM * bestS) {
+                                bestS = (int) thisS;
+                                bestM = thisM;
+                            }
+                        }
+                    }
+                }
+                this.s = Math.max(bestS, 1);
             }
-
+            this.m = bestM;
         }
+
+        private double getAlpha(int p) {
+            // equation 3.7 in Al-Mohy and Higham
+            return Math.max(getDValue(p), getDValue(p + 1));
+        }
+
+
+
+        private double getDValue(int p) {
+            // equation 3.7 in Al-Mohy and Higham
+            if (!d.containsKey(p)) {
+                if (highestPower < p) {
+                    for (int i = highestPower; i < p; i++) {
+                        DMatrixSparseCSC currentPowerMatrix = powerMatrices.get(highestPower);
+                        DMatrixSparseCSC nextPowerMatrix = CommonOps_DSCC.mult(currentPowerMatrix, powerMatrices.get(1), null);
+                        powerMatrices.put(i + 1, nextPowerMatrix);
+                        highestPower++;
+                    }
+                }
+                DMatrixSparseCSC powerPMatrix = powerMatrices.get(p);
+                d.put(p, Math.pow(normP1(powerPMatrix), 1.0 / ((double) p)));
+            }
+            return d.get(p);
+        }
+
+        private final Map<Integer, Double> d;
+        private final Map<Integer, DMatrixSparseCSC> powerMatrices;
+        private int highestPower;
 
         private boolean conditionFragment313(double A1Norm, int nCol, int mMax) {
             // using l = 1 as in equation 3.13

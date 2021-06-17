@@ -27,8 +27,14 @@ package dr.evomodel.treedatalikelihood.action;
 
 import beagle.Beagle;
 import beagle.InstanceDetails;
+import org.newejml.data.DMatrixRMaj;
 import org.newejml.data.DMatrixSparseCSC;
+import org.newejml.dense.row.CommonOps_DDRM;
 import org.newejml.simple.SimpleMatrix;
+import org.newejml.sparse.csc.CommonOps_DSCC;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Xiang Ji
@@ -274,8 +280,131 @@ public class ActionBeagleDelegate implements Beagle {
     }
 
     private SimpleMatrix simpleAction(DMatrixSparseCSC matrix, SimpleMatrix vector) {
-        //todo: implement Al-Mohy and Higham algorithm here
+        // Algorithm 3.2 in Al-Mohy and Higham (2011), balance = false, t = 1.0
+        assert(matrix.numCols == matrix.numRows);
+        final double t = 1.0;
+        final double mu = CommonOps_DSCC.trace(matrix)/((double) matrix.numCols);
+        final DMatrixSparseCSC identity = CommonOps_DSCC.identity(matrix.numRows);
+        DMatrixSparseCSC A = CommonOps_DSCC.add(1.0, matrix, -mu, identity, null, null, null);
+
+        final double A1Norm = normP1(A);
+        int m, s;
+        if (t * A1Norm == 0.0) {
+            m = 0;
+            s = 1;
+        } else {
+
+        }
+
         return null;
+    }
+
+    private class TaylorSeriesStatistics {
+        private int m;
+        private int s;
+        private final int mMax = 55;
+
+        TaylorSeriesStatistics(double A1Norm, DMatrixSparseCSC A, double t) {
+            this.thetaConstants = new HashMap<>();
+            setThetaConstants();
+
+
+            if (t * A1Norm == 0.0) {
+                m = 0;
+                s = 1;
+            } else {
+                setStatistics(A1Norm, A, t);
+            }
+        }
+
+        private void setStatistics(double A1Norm, DMatrixSparseCSC A, double t) {
+            // Code fragment 3.1 in Al-Mohy and Higham
+            if (conditionFragment313(A1Norm, 1, 55)) {
+                int bestM = Integer.MAX_VALUE;
+                int bestS = Integer.MAX_VALUE;
+                for (int thisM : thetaConstants.keySet()) {
+                    final double thisS = Math.ceil(A1Norm/thetaConstants.get(thisM));
+                    if (bestM == Integer.MAX_VALUE || ((double) thisM) * thisS < bestM * bestS) {
+                        bestS = (int) thisS;
+                        bestM = thisM;
+                    }
+                }
+                this.s = bestS;
+                this.m = bestM;
+            } else {
+
+            }
+
+        }
+
+        private boolean conditionFragment313(double A1Norm, int nCol, int mMax) {
+            // using l = 1 as in equation 3.13
+            double pMax = getPMax(mMax);
+            final double theta = thetaConstants.get(mMax);
+
+            return A1Norm <= 2.0 * theta / ((double) nCol * mMax) * pMax * (pMax + 3);
+        }
+        private double getPMax(int mMax) {
+            // pMax is the largest positive integer such that p*(p-1) <= mMax + 1
+            final double pMax = Math.floor(0.5 + 0.5 * Math.sqrt(5.0 + 4.0 * mMax));
+
+            return pMax;
+        }
+
+
+        private final Map<Integer, Double> thetaConstants;
+        private void setThetaConstants() {
+            //The first 30 values are from table A.3 of  Computing Matrix Functions.
+            // For double precision, tol = 2^(-53)
+            // TODO: maybe calculate this
+            thetaConstants.put(1, 2.29E-16);
+            thetaConstants.put(2, 2.58E-8);
+            thetaConstants.put(3, 1.39E-5);
+            thetaConstants.put(4, 3.40E-4);
+            thetaConstants.put(5, 2.40E-3);
+            thetaConstants.put(6, 9.07E-3);
+            thetaConstants.put(7, 2.38E-2);
+            thetaConstants.put(8, 5.00E-2);
+            thetaConstants.put(9, 8.96E-2);
+            thetaConstants.put(10, 1.44E-1);
+            thetaConstants.put(11, 2.14E-1);
+            thetaConstants.put(12, 3.00E-1);
+            thetaConstants.put(13, 4.00E-1);
+            thetaConstants.put(14, 5.14E-1);
+            thetaConstants.put(15, 6.41E-1);
+            thetaConstants.put(16, 7.81E-1);
+            thetaConstants.put(17, 9.31E-1);
+            thetaConstants.put(18, 1.09);
+            thetaConstants.put(19, 1.26);
+            thetaConstants.put(20, 1.44);
+            thetaConstants.put(21, 1.62);
+            thetaConstants.put(22, 1.82);
+            thetaConstants.put(23, 2.01);
+            thetaConstants.put(24, 2.22);
+            thetaConstants.put(25, 2.43);
+            thetaConstants.put(26, 2.64);
+            thetaConstants.put(27, 2.86);
+            thetaConstants.put(28, 3.08);
+            thetaConstants.put(29, 3.31);
+            thetaConstants.put(30, 3.54);
+            //The rest are from table 3.1 of Computing the Action of the Matrix Exponential.
+            thetaConstants.put(35, 4.7);
+            thetaConstants.put(40, 6.0);
+            thetaConstants.put(45, 7.2);
+            thetaConstants.put(50, 8.5);
+            thetaConstants.put(55, 9.9);
+        }
+
+    }
+
+    private double normP1( DMatrixSparseCSC A ) {
+        DMatrixSparseCSC absA = A.copy();
+        for (int i = 0; i < absA.numCols; i++) {
+            absA.set(i, i, Math.abs(absA.get(i, i)));
+        }
+        DMatrixRMaj colSums = CommonOps_DSCC.sumCols(absA, null);
+
+        return CommonOps_DDRM.elementMax(colSums);
     }
 
     @Override

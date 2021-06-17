@@ -398,20 +398,28 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
     @Override
     public LogColumn[] getColumns() {
-        LogColumn[] columns = new LogColumn[3];
+        LogColumn[] columns = new LogColumn[4];
         columns[0] = new NumberColumn("base calls") {
             @Override
             public double getDoubleValue() {
                 return numBaseCalls;
             }
         };
-        columns[1] = new NumberColumn("gradient events") {
+        columns[1] = new NumberColumn("step size") {
+            @Override
+
+            public double getDoubleValue() {
+                if(stepSizeInformation != null) return stepSizeInformation.getStepSize();
+                else return 0;
+            }
+        };
+        columns[2] = new NumberColumn("gradient events") {
             @Override
             public double getDoubleValue() {
                 return numGradientEvents;
             }
         };
-        columns[2] = new NumberColumn("boundary events") {
+        columns[3] = new NumberColumn("boundary events") {
             @Override
             public double getDoubleValue() {
                 return numBoundaryEvents;

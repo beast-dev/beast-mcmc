@@ -497,6 +497,39 @@ public interface ContinuousTraitGradientForBranch {
                     return dim;
                 }
             },
+
+            WRT_BRANCH_SPECIFIC_DRIFT {
+
+                @Override
+                public double[] chainRule(ContinuousDiffusionIntegrator cdi,
+                                          DiffusionProcessDelegate diffusionProcessDelegate,
+                                          ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                          BranchSufficientStatistics statistics, NodeRef node,
+                                          final DenseMatrix64F gradQInv, final DenseMatrix64F gradN) {
+
+                    double[] drift = WRT_CONSTANT_DRIFT.chainRule(cdi, diffusionProcessDelegate, likelihoodDelegate, statistics, node, gradQInv, gradN);
+//                    double[] root = WRT_ROOT_MEAN.chainRule(cdi, diffusionProcessDelegate, likelihoodDelegate, statistics, node, gradQInv, gradN);
+//                    for (int i = 0; i < root.length; i++) {
+//                        root[i] += drift[i];
+//                    }
+                    // return root
+                    return drift;
+                }
+
+                @Override
+                public double[] chainRuleRoot(ContinuousDiffusionIntegrator cdi,
+                                              DiffusionProcessDelegate diffusionProcessDelegate,
+                                              ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                              BranchSufficientStatistics statistics, NodeRef node,
+                                              final DenseMatrix64F gradQInv, final DenseMatrix64F gradN) {
+                    return WRT_ROOT_MEAN.chainRuleRoot(cdi, diffusionProcessDelegate, likelihoodDelegate, statistics, node, gradQInv, gradN);
+                }
+
+                @Override
+                public int getDimension(int dim) {
+                    return dim;
+                }
+            },
             WRT_SAMPLING_VARIANCE {
                 @Override
                 public double[] chainRule(ContinuousDiffusionIntegrator cdi,

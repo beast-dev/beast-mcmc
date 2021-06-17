@@ -692,6 +692,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                                         new Attribute.Default<String>("parameterColumn", model.getPrefix() + PartitionSubstitutionModel.GTR_RATES),
                                                         new Attribute.Default<Integer>("dimension", 6),
+                                                        new Attribute.Default<Double>("upperLimit", 6.0),
                                                         new Attribute.Default<String>("parameterNames", customNames),
                                                         new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
                                                 });

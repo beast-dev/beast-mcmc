@@ -257,30 +257,28 @@ public class ActionBeagleDelegate implements Beagle {
         throw new RuntimeException("Not yet implemented");
     }
 
+    final int operationSize = 7;
+
     @Override
     public void updatePartials(int[] ints, int i, int i1) {
-        final int destinationPartialIndex = ints[0];
-        final int firstChildPartialIndex = ints[3];
-        final int firstChildSubstitutionMatrixIndex = ints[4];
-        final int secondChildPartialIndex = ints[5];
-        final int secondChildSubstitutionMatrixIndex = ints[6];
+        for (int operation = 0; operation < i; operation ++) {
+            final int destinationPartialIndex = ints[operation * operationSize];
+            final int firstChildPartialIndex = ints[operation * operationSize + 3];
+            final int firstChildSubstitutionMatrixIndex = ints[operation * operationSize + 4];
+            final int secondChildPartialIndex = ints[operation * operationSize + 5];
+            final int secondChildSubstitutionMatrixIndex = ints[operation * operationSize + 6];
 
+            DMatrixRMaj leftPartial = partials[firstChildPartialIndex];
+            DMatrixRMaj rightPartial = partials[secondChildPartialIndex];
 
-//        DMatrixRMaj leftPartial = CommonOps_DDRM.extractColumn(partials, firstChildPartialIndex, null);
-//        DMatrixRMaj rightPartial = CommonOps_DDRM.extractColumn(partials, secondChildPartialIndex, null);
+            DMatrixSparseCSC leftGeneratorMatrix = instantaneousMatrices[firstChildSubstitutionMatrixIndex];
+            DMatrixSparseCSC rightGeneratorMatrix = instantaneousMatrices[secondChildSubstitutionMatrixIndex];
 
-        DMatrixRMaj leftPartial = partials[firstChildPartialIndex];
-        DMatrixRMaj rightPartial = partials[secondChildPartialIndex];
+            DMatrixRMaj parentLeftPostPartial = simpleAction(leftGeneratorMatrix, leftPartial);
+            DMatrixRMaj parentRightPostPartial = simpleAction(rightGeneratorMatrix, rightPartial);
 
-        DMatrixSparseCSC leftGeneratorMatrix = instantaneousMatrices[firstChildSubstitutionMatrixIndex];
-        DMatrixSparseCSC rightGeneratorMatrix = instantaneousMatrices[secondChildSubstitutionMatrixIndex];
-
-        DMatrixRMaj parentLeftPostPartial = simpleAction(leftGeneratorMatrix, leftPartial);
-        DMatrixRMaj parentRightPostPartial = simpleAction(rightGeneratorMatrix, rightPartial);
-
-
-
-
+            CommonOps_DDRM.elementMult(parentLeftPostPartial, parentRightPostPartial, partials[destinationPartialIndex]);
+        }
     }
 
     private DMatrixRMaj simpleAction(DMatrixSparseCSC matrix, DMatrixRMaj partials) {

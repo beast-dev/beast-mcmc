@@ -518,19 +518,18 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                     final NodeRef originalNode = treeChangedEvent.getNode();
                     final ShadowNode shadow = nodes[mapOriginalToShadowNumber(originalNode.getNumber())];
 
-                    if (treeChangedEvent.isOnlyHeightChanged()) {
+                    fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow), index);
 
-                        fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow), index);
+                    if (shadow.child0 != null) {
                         fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow.child0), index);
+                    }
+
+                    if (shadow.child1 != null) {
                         fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow.child1), index);
+                    }
 
-                    } else {
-
-                        fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow), index);
-
-                        if (originalNode != treeModel.getRoot()) {
-                            validShadowTree = false;
-                        }
+                    if (!treeChangedEvent.isOnlyHeightChanged() && originalNode != treeModel.getRoot()) {
+                        validShadowTree = false;
                     }
 
                     return; // Early exit

@@ -545,6 +545,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                 int[] indices = new int[rates.getDimension()];
                 double mostRecentTipHeight = mapRandomRates(taxa, timeTraitName, taxaOnTree, tree, onTree, indices);
                 if (dxo.hasChildNamed(GLM_COEFFICIENTS)) {
+                    Taxa designTaxa = taxaOnTree;
                     boolean hasIntercept = dxo.getAttribute(HAS_INTERCEPT, false);
                     boolean timeEffect = dxo.getAttribute(TIME_EFFECT, false);
                     Parameter coefficients = (Parameter) dxo.getChild(GLM_COEFFICIENTS).getChild(Parameter.class);
@@ -554,6 +555,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                     }
 
                     String[] traitNames = null;
+                    boolean onTreeOnly = true;
                     if (dxo.getChild(GLM_COEFFICIENTS).hasChildNamed(GLM_VARIABLES)) {
                         XMLObject exo = dxo.getChild(GLM_COEFFICIENTS).getChild(GLM_VARIABLES);
 
@@ -562,8 +564,13 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                         for (int i = 0; i < st.countTokens(); i++) {
                             traitNames[i] = st.nextToken();
                         }
+
+                        if (exo.getChild(Taxa.class) != null) {
+                            designTaxa = (Taxa) exo.getChild(Taxa.class);
+                            onTreeOnly = exo.getBooleanAttribute("onTreeOnly");
+                        }
                     }
-                    MatrixParameterInterface designMatrixParameter = parseDesignMatrix(taxaOnTree, timeTraitName, traitNames, tree, timeEffect, mostRecentTipHeight, hasIntercept);
+                    MatrixParameterInterface designMatrixParameter = parseDesignMatrix(designTaxa, timeTraitName, traitNames, tree, timeEffect, mostRecentTipHeight, hasIntercept, onTreeOnly, indices);
                     checkDimension(designMatrixParameter, coefficients);
                     rateProvider = new HawkesRateProvider.GLM(rates, coefficients, indices, onTree, designMatrixParameter);
                 } else {
@@ -641,37 +648,52 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             return orderedTimes;
         }
 
-        private MatrixParameterInterface parseDesignMatrix(Taxa taxaOnTree, String timeTraitName, String[] traitNames,
-                                                    TreeModel tree, boolean timeEffect, Double mostRecentTipTime, boolean hasIntercept) {
+        private MatrixParameterInterface parseDesignMatrix(Taxa taxa, String timeTraitName, String[] traitNames,
+                                                           TreeModel tree, boolean timeEffect, Double mostRecentTipTime,
+                                                           boolean hasIntercept, boolean onTreeOnly, int[] timeIndices) {
 
             final int traitDim = traitNames == null ? 0 : traitNames.length;
             int rowDim = traitDim;
             if (timeEffect) rowDim++;
             if (hasIntercept) rowDim++;
-            MatrixParameterInterface designMatrixParameter = new FastMatrixParameter("Hawkes.GLM.Design", rowDim, taxaOnTree.getTaxonCount(), 0.0);
+            MatrixParameterInterface designMatrixParameter = new FastMatrixParameter("Hawkes.GLM.Design", rowDim, taxa.getTaxonCount(), 0.0);
 
             int parameterIndex = 0;
-            for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-                Taxon currentTaxon = tree.getTaxon(i);
-                if (taxaOnTree.contains(currentTaxon)) {
-                    designMatrixParameter.getParameter(parameterIndex).setId(tree.getTaxonId(i));
-                    Parameter singleLocation = designMatrixParameter.getParameter(parameterIndex);
-                    int idx = 0;
-                    if (hasIntercept) {
-                        singleLocation.setParameterValue(idx, 1.0);
-                        idx++;
+            if (onTreeOnly) {
+                for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+                    Taxon currentTaxon = tree.getTaxon(i);
+                    if (taxa.contains(currentTaxon)) {
+                        designMatrixParameter.getParameter(parameterIndex).setId(tree.getTaxonId(i));
+                        Parameter singleLocation = designMatrixParameter.getParameter(parameterIndex);
+                        setDesignRow(singleLocation, hasIntercept, currentTaxon, traitNames, timeEffect, timeTraitName);
+                        parameterIndex++;
                     }
-                    for (int j = 0; j < traitDim; j++) {
-                        singleLocation.setParameterValue(j + idx, Double.valueOf((String) currentTaxon.getAttribute(traitNames[j])));
-                    }
-                    if (timeEffect && mostRecentTipTime != null) {
-                        singleLocation.setParameterValue(traitDim + idx,  Double.valueOf((String) currentTaxon.getAttribute(timeTraitName)));
-                    }
-                    parameterIndex++;
+                }
+            } else {
+                for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                    Taxon currentTaxon = taxa.getTaxon(i);
+                    Parameter singleDesignRow = designMatrixParameter.getParameter(i);
+                    singleDesignRow.setId(currentTaxon.getId());
+                    setDesignRow(singleDesignRow, hasIntercept, currentTaxon, traitNames, timeEffect, timeTraitName);
                 }
             }
 
             return designMatrixParameter;
+        }
+
+        private void setDesignRow(Parameter rowParameter, boolean hasIntercept, Taxon currentTaxon, String[] traitNames, boolean timeEffect, String timeTraitName) {
+            int idx = 0;
+            final int traitDim = traitNames == null ? 0 : traitNames.length;
+            if (hasIntercept) {
+                rowParameter.setParameterValue(idx, 1.0);
+                idx++;
+            }
+            for (int j = 0; j < traitDim; j++) {
+                rowParameter.setParameterValue(j + idx, Double.valueOf((String) currentTaxon.getAttribute(traitNames[j])));
+            }
+            if (timeEffect) {
+                rowParameter.setParameterValue(traitDim + idx, Double.valueOf((String) currentTaxon.getAttribute(timeTraitName)));
+            }
         }
 
         //************************************************************************

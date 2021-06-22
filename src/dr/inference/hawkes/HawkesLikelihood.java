@@ -571,8 +571,9 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                         }
                     }
                     MatrixParameterInterface designMatrixParameter = parseDesignMatrix(designTaxa, timeTraitName, traitNames, tree, timeEffect, mostRecentTipHeight, hasIntercept, onTreeOnly, indices);
+                    HawkesRateProvider.GLM.UnSequencedRate unSequencedRate = onTreeOnly ? HawkesRateProvider.GLM.UnSequencedRate.FIXED : HawkesRateProvider.GLM.UnSequencedRate.IMPUTE;
                     checkDimension(designMatrixParameter, coefficients);
-                    rateProvider = new HawkesRateProvider.GLM(rates, coefficients, indices, onTree, designMatrixParameter);
+                    rateProvider = new HawkesRateProvider.GLM(rates, coefficients, indices, onTree, designMatrixParameter, unSequencedRate);
                 } else {
                     rateProvider = new HawkesRateProvider.Default(rates, indices, onTree);
                 }

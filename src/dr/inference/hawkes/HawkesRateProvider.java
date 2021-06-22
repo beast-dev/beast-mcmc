@@ -167,15 +167,18 @@ public interface HawkesRateProvider {
         private Parameter coefficients;
         private boolean[] onTreeByNode;
         private MatrixParameterInterface designMatrixParameter;
+        private final UnSequencedRate unSequencedRate;
 
         GLM(Parameter rate, Parameter coefficients, int[] indices,
-            boolean[] onTree, MatrixParameterInterface designMatrixParameter) {
+            boolean[] onTree, MatrixParameterInterface designMatrixParameter,
+            UnSequencedRate unSequencedRate) {
 
             super(rate, indices, onTree);
 
             this.coefficients = coefficients;
             this.onTreeByNode = orderByNodeIndex(onTreeByTime);
             this.designMatrixParameter = designMatrixParameter;
+            this.unSequencedRate = unSequencedRate;
 
             addVariable(coefficients);
         }
@@ -190,16 +193,43 @@ public interface HawkesRateProvider {
         }
 
         private double getRateByNodeIndex(int nodeIndex, double[] residues, boolean[] onTreeByNode) {
-            if (onTreeByNode[nodeIndex]) {
-                double rate = residues[nodeIndex];
-                Parameter design = designMatrixParameter.getParameter(nodeIndex);
-                for (int i = 0; i < coefficients.getDimension(); i++) {
-                    rate += coefficients.getParameterValue(i) * design.getParameterValue(i);
+            return unSequencedRate.getRateByNodeIndex(designMatrixParameter, coefficients, nodeIndex, residues, onTreeByNode);
+        }
+
+        enum UnSequencedRate {
+
+            FIXED {
+                @Override
+                public double getRateByNodeIndex(MatrixParameterInterface designMatrixParameter,
+                                                 Parameter coefficients,
+                                                 int nodeIndex, double[] residues, boolean[] onTreeByNode) {
+                    if (onTreeByNode[nodeIndex]) {
+                        double rate = residues[nodeIndex];
+                        Parameter design = designMatrixParameter.getParameter(nodeIndex);
+                        for (int i = 0; i < coefficients.getDimension(); i++) {
+                            rate += coefficients.getParameterValue(i) * design.getParameterValue(i);
+                        }
+                        return Math.exp(rate);
+                    } else {
+                        return residues[nodeIndex];
+                    }
                 }
-                return Math.exp(rate);
-            } else {
-                return residues[nodeIndex];
-            }
+            },
+            IMPUTE {
+                @Override
+                public double getRateByNodeIndex(MatrixParameterInterface designMatrixParameter, Parameter coefficients, int nodeIndex, double[] residues, boolean[] onTreeByNode) {
+                    double rate = residues[nodeIndex];
+                    Parameter design = designMatrixParameter.getParameter(nodeIndex);
+                    for (int i = 0; i < coefficients.getDimension(); i++) {
+                        rate += coefficients.getParameterValue(i) * design.getParameterValue(i);
+                    }
+                    return Math.exp(rate);
+                }
+            };
+
+            public abstract double getRateByNodeIndex(MatrixParameterInterface designMatrixParameter,
+                                                      Parameter coefficients,
+                                                      int nodeIndex, double[] residues, boolean[] onTreeByNode);
         }
 
         public double[] getChainSecondDerivative() {

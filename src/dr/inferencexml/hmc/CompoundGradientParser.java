@@ -29,6 +29,7 @@ import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.hmc.CompoundDerivative;
 import dr.inference.hmc.CompoundGradient;
+import dr.inference.hmc.CompoundPriorPreconditioner;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 import dr.xml.*;
@@ -43,6 +44,7 @@ public class CompoundGradientParser extends AbstractXMLObjectParser {
 
     public final static String SUM_DERIVATIVE = "appendedPotentialDerivative";
     public static final String SUM_DERIVATIVE2 = "compoundGradient";
+    public static final String COMPOUND_PRIOR_PRECONDITIONER = "compoundPriorPreconditioner";
 
     @Override
     public String getParserName() {
@@ -51,7 +53,7 @@ public class CompoundGradientParser extends AbstractXMLObjectParser {
 
     @Override
     public String[] getParserNames() {
-        return new String[] { SUM_DERIVATIVE, SUM_DERIVATIVE2 };
+        return new String[]{SUM_DERIVATIVE, SUM_DERIVATIVE2, COMPOUND_PRIOR_PRECONDITIONER};
     }
 
     @Override
@@ -98,6 +100,9 @@ public class CompoundGradientParser extends AbstractXMLObjectParser {
             likelihoodList.add(likelihood);
         }
 
+        if (xo.getName() == COMPOUND_PRIOR_PRECONDITIONER) {
+            return new CompoundPriorPreconditioner(gradList);
+        }
         return new CompoundDerivative(gradList);
     }
 

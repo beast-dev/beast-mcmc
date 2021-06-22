@@ -650,7 +650,13 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
         private MatrixParameterInterface parseDesignMatrix(Taxa taxa, String timeTraitName, String[] traitNames,
                                                            TreeModel tree, boolean timeEffect, Double mostRecentTipTime,
-                                                           boolean hasIntercept, boolean onTreeOnly, int[] timeIndices) {
+                                                           boolean hasIntercept, boolean onTreeOnly, int[] onTreeOffTreeIndices) {
+            double[] times = new double[taxa.getTaxonCount()];
+            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                times[i] = Double.valueOf((String) taxa.getTaxon(i).getAttribute(timeTraitName));
+            }
+            int[] timeIndices = new int[times.length];
+            HeapSort.sort(times, timeIndices);
 
             final int traitDim = traitNames == null ? 0 : traitNames.length;
             int rowDim = traitDim;
@@ -671,8 +677,8 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                 }
             } else {
                 for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                    Taxon currentTaxon = taxa.getTaxon(i);
-                    Parameter singleDesignRow = designMatrixParameter.getParameter(i);
+                    Taxon currentTaxon = taxa.getTaxon(timeIndices[i]);
+                    Parameter singleDesignRow = designMatrixParameter.getParameter(onTreeOffTreeIndices[i]);
                     singleDesignRow.setId(currentTaxon.getId());
                     setDesignRow(singleDesignRow, hasIntercept, currentTaxon, traitNames, timeEffect, timeTraitName);
                 }

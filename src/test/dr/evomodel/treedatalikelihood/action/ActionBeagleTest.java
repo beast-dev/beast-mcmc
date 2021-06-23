@@ -66,9 +66,15 @@ public class ActionBeagleTest extends MathTestCase {
                 1., 0., 0., 0.
         });
         int[] operations = new int[]{
-                3, 0, 0, 0, 0, 1, 1
+                3, 0, 0, 0, 0, 1, 1,
+                4, 0, 0, 3, 3, 2, 2
         };
-        beagle.updatePartials(operations, 1, 0);
+        beagle.updatePartials(operations, 2, 0);
+
+        double[] seePartials = new double[partialsSize];
+        beagle.getPartials(4, 0, seePartials);
+
+        System.err.println("here");
 
 
 

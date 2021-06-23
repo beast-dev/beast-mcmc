@@ -27,28 +27,29 @@ package dr.inference.hmc;
 
 import dr.inference.model.PriorPreconditioningProvider;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Alexander Fisher
  */
 
-public class CompoundPriorPreconditioner extends CompoundGradient implements PriorPreconditioningProvider {
+public class CompoundPriorPreconditioner implements PriorPreconditioningProvider {
 
     private final int smallDim;
+    private final int totalDim;
     private List<PriorPreconditioningProvider> priorPreconditionerList;
 
-    public CompoundPriorPreconditioner(List<GradientWrtParameterProvider> derivativeList) {
-        super(derivativeList);
-        this.smallDim = derivativeList.get(0).getDimension();
-        priorPreconditionerList = new ArrayList<>();
-        for (GradientWrtParameterProvider gradientProvider : derivativeList) {
-            if (gradientProvider instanceof PriorPreconditioningProvider) {
-                priorPreconditionerList.add((PriorPreconditioningProvider) gradientProvider);
-            } else {
-                throw new RuntimeException("CompoundPriorPreconditioner can only take a PriorPreconditioner");
-            }
+    public CompoundPriorPreconditioner(List<PriorPreconditioningProvider> priorPreconditionerList) {
+        this.smallDim = priorPreconditionerList.get(0).getDimension();
+        this.totalDim = smallDim * priorPreconditionerList.size();
+        this.priorPreconditionerList = priorPreconditionerList;
+
+        int tempDim = 0;
+        for (int i = 0; i < priorPreconditionerList.size(); i++) {
+            tempDim += priorPreconditionerList.get(i).getDimension();
+        }
+        if (tempDim != totalDim) {
+            throw new RuntimeException("Prior preconditioners of variable dimension not yet implemented");
         }
     }
 
@@ -57,5 +58,10 @@ public class CompoundPriorPreconditioner extends CompoundGradient implements Pri
         int derivativeIndex = (int) Math.floor(index / smallDim);
         int standardDeviationIndex = index % smallDim;
         return priorPreconditionerList.get(derivativeIndex).getStandardDeviation(standardDeviationIndex);
+    }
+
+    @Override
+    public int getDimension() {
+        return totalDim;
     }
 }

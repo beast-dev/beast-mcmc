@@ -52,7 +52,7 @@ public class CoalescentTreeRejectionSampler extends SimpleMCMCOperator implement
     }
     @Override
     public String getOperatorName() {
-        return "IterativeGibbsIndependentCoalescentOperator";
+        return "CoalescentTreeRejectionSampler";
     }
     public int getStepCount() {
         return 1;

@@ -672,7 +672,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                     if (taxa.contains(currentTaxon)) {
                         designMatrixParameter.getParameter(parameterIndex).setId(tree.getTaxonId(i));
                         Parameter singleLocation = designMatrixParameter.getParameter(parameterIndex);
-                        setDesignRow(singleLocation, hasIntercept, currentTaxon, traitNames, timeEffect, timeTraitName);
+                        setDesignRow(singleLocation, hasIntercept, currentTaxon, traitNames, timeEffect, timeTraitName, mostRecentTipTime);
                         parameterIndex++;
                     }
                 }
@@ -681,14 +681,15 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                     Taxon currentTaxon = taxa.getTaxon(timeIndices[i]);
                     Parameter singleDesignRow = designMatrixParameter.getParameter(onTreeOffTreeIndices[i]);
                     singleDesignRow.setId(currentTaxon.getId());
-                    setDesignRow(singleDesignRow, hasIntercept, currentTaxon, traitNames, timeEffect, timeTraitName);
+                    setDesignRow(singleDesignRow, hasIntercept, currentTaxon, traitNames, timeEffect, timeTraitName, mostRecentTipTime);
                 }
             }
 
             return designMatrixParameter;
         }
 
-        private void setDesignRow(Parameter rowParameter, boolean hasIntercept, Taxon currentTaxon, String[] traitNames, boolean timeEffect, String timeTraitName) {
+        private void setDesignRow(Parameter rowParameter, boolean hasIntercept, Taxon currentTaxon, String[] traitNames,
+                                  boolean timeEffect, String timeTraitName, double mostRecentTipTime) {
             int idx = 0;
             final int traitDim = traitNames == null ? 0 : traitNames.length;
             if (hasIntercept) {
@@ -699,7 +700,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                 rowParameter.setParameterValue(j + idx, Double.valueOf((String) currentTaxon.getAttribute(traitNames[j])));
             }
             if (timeEffect) {
-                rowParameter.setParameterValue(traitDim + idx, Double.valueOf((String) currentTaxon.getAttribute(timeTraitName)));
+                rowParameter.setParameterValue(traitDim + idx, Double.valueOf((String) currentTaxon.getAttribute(timeTraitName)) - mostRecentTipTime);
             }
         }
 

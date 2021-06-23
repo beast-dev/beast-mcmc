@@ -104,7 +104,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                     ") must be the same dimensions as the parameter (" + parameter.getDimension() + ")");
         }
 
-        if (preconditionHandler.getMassPreconditioner().getDimension() != derivative.getDimension()) {
+        if (preconditionHandler.getMassPreconditioner().getDimension() != parameter.getDimension()) {
             throw new XMLParseException("preconditioner dimension mismatch." + preconditionHandler.getMassPreconditioner().getDimension() + " != " + derivative.getDimension());
         }
 

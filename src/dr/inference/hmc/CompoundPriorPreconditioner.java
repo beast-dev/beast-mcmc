@@ -34,7 +34,7 @@ import java.util.List;
  */
 
 public class CompoundPriorPreconditioner implements PriorPreconditioningProvider {
-
+// todo: look at refactoring into MassPreconditioner.CompoundPreconditioning
     private final int smallDim;
     private final int totalDim;
     private List<PriorPreconditioningProvider> priorPreconditionerList;

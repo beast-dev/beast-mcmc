@@ -35,6 +35,8 @@ import dr.app.gui.components.RealNumberField;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.PloidyType;
+import dr.evolution.io.FastaImporter;
+import dr.evolution.io.Importer;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import jam.panels.OptionsPanel;
@@ -45,9 +47,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 
 /**
  * @author Andrew Rambaut
@@ -278,10 +278,23 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         File[] files = parent.selectImportFiles("Import Trees File...", false, new FileNameExtensionFilter[]{
                 new FileNameExtensionFilter("Nexus files or text files containing newick trees", "txt", "nex", "nexus", "nwk")});
 
+        BEAUTiImporter beautiImporter = new BEAUTiImporter(parent, options);
+
         if (files != null && files.length != 0) {
+
+            File file = files[0];
+
             try {
-                BEAUTiImporter beautiImporter = new BEAUTiImporter(parent, options);
-                beautiImporter.importNewickFile(files[0]);
+
+                String line = beautiImporter.findFirstLine(file);
+
+                if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
+                    // is a NEXUS file
+                    beautiImporter.importNexusFile(file);
+                } else {
+                    beautiImporter.importNewickFile(files[0]);
+                }
+
             } catch (FileNotFoundException fnfe) {
                 JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
                         "Unable to open file",

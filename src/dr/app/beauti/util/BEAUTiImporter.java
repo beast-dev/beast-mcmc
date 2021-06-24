@@ -76,13 +76,7 @@ public class BEAUTiImporter {
 
     public void importFromFile(File file) throws IOException, ImportException, JDOMException {
         try {
-            Reader reader = new FileReader(file);
-
-            BufferedReader bufferedReader = new BufferedReader(reader);
-            String line = bufferedReader.readLine();
-            while (line != null && line.length() == 0) {
-                line = bufferedReader.readLine();
-            }
+            String line = findFirstLine(file);
 
             if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
                 // is a NEXUS file
@@ -103,10 +97,22 @@ public class BEAUTiImporter {
                 throw new ImportException("Unrecognized format for imported file.");
             }
 
-            bufferedReader.close();
         } catch (IOException e) {
             throw new IOException(e.getMessage());
         }
+    }
+
+    public String findFirstLine(File file) throws IOException {
+        Reader reader = new FileReader(file);
+
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        String line = bufferedReader.readLine();
+        while (line != null && line.length() == 0) {
+            line = bufferedReader.readLine();
+        }
+
+        bufferedReader.close();
+        return line;
     }
 
     // micro-sat
@@ -193,7 +199,7 @@ public class BEAUTiImporter {
     }
 
     // nexus
-    private void importNexusFile(File file) throws IOException, ImportException {
+    public void importNexusFile(File file) throws IOException, ImportException {
         TaxonList taxa = null;
         SimpleAlignment alignment = null;
         List<Tree> trees = new ArrayList<Tree>();

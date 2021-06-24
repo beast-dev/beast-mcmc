@@ -264,7 +264,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
     private class ImportTreeAction extends AbstractAction {
         public ImportTreeAction() {
-            super("Import additional trees ...");
+            super("Import additional tree(s) from file ...");
             setToolTipText("Import newick-formatted trees from a file. These trees can be used as a starting tree.");
         }
 
@@ -283,6 +283,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         if (files != null && files.length != 0) {
 
             File file = files[0];
+            int nTreesBefore = options.userTrees.size();
 
             try {
 
@@ -312,6 +313,14 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                         JOptionPane.ERROR_MESSAGE);
                 ex.printStackTrace();
                 return false;
+            }
+
+            int nTreesAfter = options.userTrees.size();
+            if (nTreesAfter == nTreesBefore) {
+                JOptionPane.showMessageDialog(this,
+                        "Did not find any trees in file '" + file.getName() + "'",
+                        "No trees found",
+                        JOptionPane.ERROR_MESSAGE);
             }
         } else {
             return false;

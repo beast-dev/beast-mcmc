@@ -723,12 +723,25 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         writer.writeCloseTag("productStatistic");
         */
 
-        writer.writeOpenTag("matrixInverse",
-                new Attribute[]{
-                        new Attribute.Default<String>("id", prefix + "varCovar")
-                });
-        writer.writeIDref("matrixParameter", precisionMatrixId);
-        writer.writeCloseTag("matrixInverse");
+        GeneratorHelper.writeMatrixInverse(writer, prefix + "varCovar", precisionMatrixId);
+        PartitionSubstitutionModel model = partitionData.getPartitionSubstitutionModel();
+        String modelName = model.getName();
+        switch (partitionData.getPartitionSubstitutionModel().getContinuousExtensionType()) {
+            case RESIDUAL:
+                GeneratorHelper.writeMatrixInverse(writer,
+                        repeatedMeasuresTraitDataModelParser.getBeautiParameterIDProvider(
+                                RepeatedMeasuresTraitDataModelParser.EXTENSION_VARIANCE).getId(modelName),
+                        repeatedMeasuresTraitDataModelParser.getBeautiParameterIDProvider(
+                                RepeatedMeasuresTraitDataModelParser.EXTENSION_PRECISION).getId(modelName)
+                );
+                break;
+            case LATENT_FACTORS:
+            case NONE:
+                // do nothing
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown extension type");
+        }
 
         writer.writeOpenTag(TreeDataContinuousDiffusionStatistic.CONTINUOUS_DIFFUSION_STATISTIC, (partitionData.getPartitionSubstitutionModel().isLatitudeLongitude() ?
                 new Attribute[]{
@@ -854,6 +867,10 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                     writer.writeIDref("matrixParameter",
                             repeatedMeasuresTraitDataModelParser.getBeautiParameterIDProvider(
                                     "extensionPrecision").getId(model.getName()));
+                    writer.writeIDref("matrixInverse",
+                            repeatedMeasuresTraitDataModelParser.getBeautiParameterIDProvider(
+                                    RepeatedMeasuresTraitDataModelParser.EXTENSION_VARIANCE).getId(model.getName())
+                    );
                     break;
                 case LATENT_FACTORS:
                     //TODO

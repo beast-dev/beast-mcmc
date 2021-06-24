@@ -73,4 +73,13 @@ public class GeneratorHelper {
         writer.writeCloseTag("matrixParameter");
     }
 
+    public static void writeMatrixInverse(XMLWriter writer, String id, String matrixId) {
+        writer.writeOpenTag("matrixInverse",
+                new Attribute[]{
+                        new Attribute.Default<String>("id", id)
+                });
+        writer.writeIDref("matrixParameter", matrixId);
+        writer.writeCloseTag("matrixInverse");
+    }
+
 }

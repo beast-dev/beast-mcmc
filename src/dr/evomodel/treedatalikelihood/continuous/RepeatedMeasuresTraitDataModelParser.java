@@ -165,12 +165,21 @@ public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParse
 
     private static final String PRECISION_ID = "samplingPrecision";
 
-    private final BeautiParameterIDProvider extensionPrecisionIDProvider = new BeautiParameterIDProvider("extensionPrecision");
+    public static final String EXTENSION_PRECISION = "extensionPrecision";
+    public static final String EXTENSION_VARIANCE = "extensionVarCovar";
+
+    private static final String[] ALLOWABLE_PARAMETERS = new String[]{EXTENSION_PRECISION, EXTENSION_VARIANCE};
+
+//    private final BeautiParameterIDProvider extensionPrecisionIDProvider = new BeautiParameterIDProvider(EXTENSION_PRECISION);
+//    private final BeautiParameterIDProvider extensionPrecisionIDProvider = new BeautiParameterIDProvider(EXTENSION_PRECISION);
+
 
     public BeautiParameterIDProvider getBeautiParameterIDProvider(String parameterKey) {
-        assert parameterKey.equals("extensionPrecision")
-                : "Only the 'extensionPrecision' parameter is implemented for the 'repeatedMeasuresModel'.";
-
-        return extensionPrecisionIDProvider;
+        for (int i = 0; i < ALLOWABLE_PARAMETERS.length; i++) {
+            if (parameterKey.equalsIgnoreCase(ALLOWABLE_PARAMETERS[i])) {
+                return new BeautiParameterIDProvider(parameterKey);
+            }
+        }
+        throw new IllegalArgumentException("Unrecognized parameter key '" + parameterKey + "'");
     }
 }

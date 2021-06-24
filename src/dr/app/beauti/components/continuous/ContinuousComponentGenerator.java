@@ -266,7 +266,8 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
             if (extensionType != ContinuousModelExtensionType.NONE) {
 
-                String precisionId = repeatedMeasuresTraitDataModelParser.getBeautiParameterIDProvider("extensionPrecision").getId(model.getName());
+                String precisionId = repeatedMeasuresTraitDataModelParser.getBeautiParameterIDProvider(
+                        "extensionPrecision").getId(model.getName());
                 String treeModelId = partitionData.getPartitionTreeModel().getPrefix() + "treeModel";
 
                 if (first) {
@@ -782,12 +783,17 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
         String wrapperName;
 
+        String priorId;
         switch (extensionType) {
             case NONE:
                 wrapperName = WishartStatisticsWrapper.PARSER_NAME;
+                priorId = partitionData.getPartitionSubstitutionModel().getName() + ".precisionPrior";
                 break;
             case RESIDUAL:
                 wrapperName = RepeatedMeasuresWishartStatistics.RM_WISHART_STATISTICS;
+                PartitionSubstitutionModel model = partitionData.getPartitionSubstitutionModel();
+
+                priorId = repeatedMeasuresTraitDataModelParser.getBeautiParameterIDProvider("extensionPrecision").getPriorId(model.getName());
                 break;
             default:
                 throw new IllegalArgumentException("Unknown or unsupported extension type");
@@ -811,7 +817,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         }
 
         writer.writeCloseTag(wrapperName);
-        writer.writeIDref("multivariateWishartPrior", partitionData.getPartitionSubstitutionModel().getName() + ".precisionPrior");
+        writer.writeIDref("multivariateWishartPrior", priorId);
         writer.writeCloseTag(ContinuousComponentOptions.PRECISION_GIBBS_OPERATOR);
 
     }
@@ -841,6 +847,21 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
             if (component.useLambda(model)) {
                 writer.writeIDref("parameter", model.getName() + "." + ContinuousComponentOptions.LAMBDA);
+            }
+
+            switch (partitionData.getPartitionSubstitutionModel().getContinuousExtensionType()) {
+                case RESIDUAL:
+                    writer.writeIDref("matrixParameter",
+                            repeatedMeasuresTraitDataModelParser.getBeautiParameterIDProvider(
+                                    "extensionPrecision").getId(model.getName()));
+                    break;
+                case LATENT_FACTORS:
+                    //TODO
+                    throw new IllegalArgumentException("Not yet implemented");
+                case NONE:
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown extension type");
             }
         }
     }

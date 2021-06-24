@@ -36,6 +36,7 @@ import dr.evolution.datatype.*;
 import dr.evolution.io.FastaImporter;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.MicroSatImporter;
+import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.NexusImporter.MissingBlockException;
 import dr.evolution.io.NexusImporter.NexusBlock;
@@ -423,6 +424,12 @@ public class BEAUTiImporter {
 
         setData(file.getName(), taxa, dummyAlignment, null, null, null, null, null);
 
+    }
+
+    public void importNewickFile(final File file) throws Exception {
+        NewickImporter importer = new NewickImporter(new FileReader(file));
+        Tree[] trees = importer.importTrees(options.taxonList);
+        addTrees(Arrays.asList(trees));
     }
 
     public boolean importPredictors(final File file, final TraitData trait) throws Exception {

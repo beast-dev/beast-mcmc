@@ -29,6 +29,7 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.types.StartingTreeType;
+import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
 import dr.app.util.OSType;
@@ -39,10 +40,14 @@ import dr.evolution.tree.Tree;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 /**
  * @author Andrew Rambaut
@@ -61,12 +66,13 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private JRadioButton randomTreeRadio = new JRadioButton("Random starting tree");
     private JRadioButton upgmaTreeRadio = new JRadioButton("UPGMA starting tree");
     private JRadioButton userTreeRadio = new JRadioButton("User-specified starting tree");
-
+    private ImportTreeAction importTreeAction = new ImportTreeAction();
+    private JButton importTreeButton = new JButton(importTreeAction);
     private JLabel userTreeLabel = new JLabel("Select user-specified tree:");
     private JComboBox userTreeCombo = new JComboBox();
 
     private JLabel treeFormatLabel = new JLabel("Export format for tree:");
-    private JComboBox treeFormatCombo = new JComboBox(new String[] {"Newick", "XML"});
+    private JComboBox treeFormatCombo = new JComboBox(new String[]{"Newick", "XML"});
 
     private JLabel userTreeInfo = new JLabel("<html>" +
             "Import user-specified starting trees from <b>NEXUS</b><br>" +
@@ -170,7 +176,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                 partitionTreeModel.setUserStartingTree(seleTree);
             } else {
                 JOptionPane.showMessageDialog(parent, "The selected user-specified starting tree " +
-                        "is not fully bifurcating.\nBEAST requires rooted, bifurcating (binary) trees.",
+                                "is not fully bifurcating.\nBEAST requires rooted, bifurcating (binary) trees.",
                         "Illegal user-specified starting tree",
                         JOptionPane.ERROR_MESSAGE);
 
@@ -211,6 +217,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
             addComponents(treeFormatLabel, treeFormatCombo);
             addComponent(userTreeInfo);
+            addComponent(importTreeButton);
 
         }
 
@@ -253,6 +260,54 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             }
         }
         return null;
+    }
+
+    private class ImportTreeAction extends AbstractAction {
+        public ImportTreeAction() {
+            super("Import additional trees ...");
+            setToolTipText("Import newick-formatted trees from a file. These trees can be used as a starting tree.");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            doImportTrees();
+        }
+    }
+
+    private final boolean doImportTrees() {
+        File[] files = parent.selectImportFiles("Import Trees File...", false, new FileNameExtensionFilter[]{
+                new FileNameExtensionFilter("Nexus files or text files containing newick trees", "txt", "nex", "nexus", "nwk")});
+
+        if (files != null && files.length != 0) {
+            try {
+                BEAUTiImporter beautiImporter = new BEAUTiImporter(parent, options);
+                beautiImporter.importNewickFile(files[0]);
+            } catch (FileNotFoundException fnfe) {
+                JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
+                        "Unable to open file",
+                        JOptionPane.ERROR_MESSAGE);
+                return false;
+            } catch (IOException ioe) {
+                JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
+                        "Unable to read file",
+                        JOptionPane.ERROR_MESSAGE);
+                return false;
+            } catch (Exception ex) {
+                ex.printStackTrace(System.err);
+                JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
+                        "Error reading file",
+                        JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+                return false;
+            }
+        } else {
+            return false;
+        }
+
+        setupPanel();
+        setOptions();
+
+        return true;
     }
 
 }

@@ -35,8 +35,6 @@ import dr.app.gui.components.RealNumberField;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.PloidyType;
-import dr.evolution.io.FastaImporter;
-import dr.evolution.io.Importer;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import jam.panels.OptionsPanel;

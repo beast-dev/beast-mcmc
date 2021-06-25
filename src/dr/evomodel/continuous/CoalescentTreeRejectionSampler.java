@@ -17,13 +17,14 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * An independent iterative coalescent sampler especially for trees with constraints, based on the coalescent simulator parser code.
+ * An independent coalescent sampler that rejects samples if they do not comply with any specified monophyletic constraints, based on the coalescent simulator code.
+ * This sampler draws from the coalescent prior and accepts each draw with probability 1, and hence should not be used for posterior inference.
  *
  * @author Kanika Nahata (knahata15@gmail.com)
  *
  */
 
-public class IterativeGibbsIndependentCoalescentOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class CoalescentTreeRejectionSampler extends SimpleMCMCOperator implements GibbsOperator {
     public static final String OPERATOR_NAME = "IterativeGibbsIndependentCoalescentOperator";
     public static final String HEIGHT = "height";
     private DefaultTreeModel treeModel;
@@ -32,7 +33,7 @@ public class IterativeGibbsIndependentCoalescentOperator extends SimpleMCMCOpera
     private List<Set> subtree_nodes;
     private final CoalescentSimulator simulator = new CoalescentSimulator();
 
-    public IterativeGibbsIndependentCoalescentOperator(TaxonList allTaxa, List<Set> subtree_nodes, DefaultTreeModel treeModel, DemographicModel demoModel, double weight) {
+    public CoalescentTreeRejectionSampler(TaxonList allTaxa, List<Set> subtree_nodes, DefaultTreeModel treeModel, DemographicModel demoModel, double weight) {
 
         this.allTaxa = allTaxa;
         this.subtree_nodes = subtree_nodes;
@@ -51,7 +52,7 @@ public class IterativeGibbsIndependentCoalescentOperator extends SimpleMCMCOpera
     }
     @Override
     public String getOperatorName() {
-        return "IterativeGibbsIndependentCoalescentOperator";
+        return "CoalescentTreeRejectionSampler";
     }
     public int getStepCount() {
         return 1;
@@ -118,7 +119,7 @@ public class IterativeGibbsIndependentCoalescentOperator extends SimpleMCMCOpera
                 System.out.println(subtree_nodes.get(i));
             }
 
-            return new IterativeGibbsIndependentCoalescentOperator(allTaxa.get(0), subtree_nodes, treeModel, demoModel, weight);
+            return new CoalescentTreeRejectionSampler(allTaxa.get(0), subtree_nodes, treeModel, demoModel, weight);
 
         }
 

@@ -10,6 +10,7 @@ public interface MassPreconditioningOptions {
     int preconditioningMemory();
     Parameter preconditioningEigenLowerBound();
     Parameter preconditioningEigenUpperBound();
+    Parameter preconditioningAddedConstant();
 
     class Default implements MassPreconditioningOptions {
         final int preconditioningUpdateFrequency;
@@ -19,10 +20,12 @@ public interface MassPreconditioningOptions {
         final boolean guessInitialMass;
         final Parameter preconditioningEigenLowerBound;
         final Parameter preconditioningEigenUpperBound;
+        final Parameter preconditioningAddedConstant;
 
         public Default(int preconditioningUpdateFrequency, int preconditioningMaxUpdate,
                        int preconditioningDelay, int preconditioningMemory, boolean guessInitialMass,
-                       Parameter eigenLowerBound, Parameter eigenUpperBound) {
+                       Parameter eigenLowerBound, Parameter eigenUpperBound,
+                       Parameter preconditioningAddedConstant) {
             this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
             this.preconditioningMaxUpdate = preconditioningMaxUpdate;
             this.preconditioningDelay = preconditioningDelay;
@@ -30,6 +33,7 @@ public interface MassPreconditioningOptions {
             this.guessInitialMass = guessInitialMass;
             this.preconditioningEigenLowerBound = eigenLowerBound;
             this.preconditioningEigenUpperBound = eigenUpperBound;
+            this.preconditioningAddedConstant = preconditioningAddedConstant;
         }
 
         @Override
@@ -60,6 +64,11 @@ public interface MassPreconditioningOptions {
         @Override
         public Parameter preconditioningEigenUpperBound() {
             return preconditioningEigenUpperBound;
+        }
+
+        @Override
+        public Parameter preconditioningAddedConstant() {
+            return preconditioningAddedConstant;
         }
     }
 }

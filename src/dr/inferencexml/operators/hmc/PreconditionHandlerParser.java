@@ -52,6 +52,7 @@ public class PreconditionHandlerParser extends AbstractXMLObjectParser {
     private final static String PRECONDITIONER = "preconditioner";
     private final static String PRECONDITIONING_GUESS_INIT_MASS = "guessInitialMass";
     private final static String BOUNDS = "bounds";
+    private final static String CONSTANT = "constant";
 
     public static PreconditionHandler parsePreconditionHandler(XMLObject xo) throws XMLParseException {
         MassPreconditioner.Type preconditioningType;
@@ -87,9 +88,16 @@ public class PreconditionHandlerParser extends AbstractXMLObjectParser {
             eigenUpperBound = new Parameter.Default(1E2);
         }
 
+        Parameter preconditioningAddedConstant;
+        if (xo.hasChildNamed(CONSTANT)) {
+            preconditioningAddedConstant = (Parameter) xo.getChild(CONSTANT).getChild(Parameter.class);
+        } else {
+            preconditioningAddedConstant = new Parameter.Default(0.0);
+        }
+
         MassPreconditioningOptions preconditioningOptions =
                 new MassPreconditioningOptions.Default(preconditioningUpdateFrequency, preconditioningMaxUpdate,
-                        preconditioningDelay, preconditioningMemory, guessInitialMass, eigenLowerBound, eigenUpperBound);
+                        preconditioningDelay, preconditioningMemory, guessInitialMass, eigenLowerBound, eigenUpperBound, preconditioningAddedConstant);
 
         MassPreconditioner preconditioner;
 
@@ -134,6 +142,8 @@ public class PreconditionHandlerParser extends AbstractXMLObjectParser {
             new ElementRule(BOUNDS, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class, 2, 2)
             }, true),
+
+            new ElementRule(CONSTANT, Parameter.class, "A small constant added to the diagonal of the preconditioning mass matrix."),
 
     };
 

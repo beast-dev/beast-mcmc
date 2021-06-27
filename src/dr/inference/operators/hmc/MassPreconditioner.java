@@ -61,7 +61,7 @@ public interface MassPreconditioner {
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
                 return new DiagonalHessianPreconditioning((HessianWrtParameterProvider) gradient, transform,
                         options.preconditioningMemory(),
-                        options.preconditioningEigenLowerBound(), options.preconditioningEigenUpperBound());
+                        options.preconditioningEigenLowerBound(), options.preconditioningEigenUpperBound(), options.preconditioningAddedConstant());
             }
         },
         ADAPTIVE_DIAGONAL("adaptiveDiagonal") {
@@ -483,12 +483,14 @@ public interface MassPreconditioner {
         final protected HessianWrtParameterProvider hessian;
         final private Parameter lowerBound;
         final private Parameter upperBound;
+        final private Parameter addedConstant;
 
         DiagonalHessianPreconditioning(HessianWrtParameterProvider hessian,
                                        Transform transform,
                                        int memorySize,
                                        Parameter lowerBound,
-                                       Parameter upperBound) {
+                                       Parameter upperBound,
+                                       Parameter addedConstant) {
             super(hessian.getDimension(), transform);
             this.hessian = hessian;
             if (memorySize > 0) {
@@ -498,6 +500,7 @@ public interface MassPreconditioner {
             }
             this.lowerBound = lowerBound;
             this.upperBound = upperBound;
+            this.addedConstant = addedConstant;
         }
 
         @Override
@@ -537,6 +540,10 @@ public interface MassPreconditioner {
             }
 
             normalizeL1(boundedMassInverse, dim);
+
+            for (int i = 0; i < dim; i++) {
+                boundedMassInverse[i] += addedConstant.getParameterValue(0);
+            }
 
             return boundedMassInverse;
         }

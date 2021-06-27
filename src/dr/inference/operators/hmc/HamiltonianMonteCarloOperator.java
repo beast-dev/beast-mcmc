@@ -395,6 +395,11 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         public Parameter preconditioningEigenUpperBound() {
             throw new RuntimeException("Not yet implemented.");
         }
+
+        @Override
+        public Parameter preconditioningAddedConstant() {
+            throw new RuntimeException("Not yet implemented.");
+        }
     }
 
     public static class NumericInstabilityException extends Exception {

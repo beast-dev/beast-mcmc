@@ -555,7 +555,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                     }
 
                     String[] traitNames = null;
-                    boolean onTreeOnly = true;
+                    boolean onTreeOnly = dxo.getChild(GLM_COEFFICIENTS).getAttribute("onTreeOnly", true);
                     if (dxo.getChild(GLM_COEFFICIENTS).hasChildNamed(GLM_VARIABLES)) {
                         XMLObject exo = dxo.getChild(GLM_COEFFICIENTS).getChild(GLM_VARIABLES);
 
@@ -564,11 +564,9 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                         for (int i = 0; i < st.countTokens(); i++) {
                             traitNames[i] = st.nextToken();
                         }
-
-                        if (exo.getChild(Taxa.class) != null) {
-                            designTaxa = (Taxa) exo.getChild(Taxa.class);
-                            onTreeOnly = exo.getBooleanAttribute("onTreeOnly");
-                        }
+                    }
+                    if (dxo.getChild(GLM_COEFFICIENTS).getChild(Taxa.class) != null) {
+                        designTaxa = (Taxa) dxo.getChild(GLM_COEFFICIENTS).getChild(Taxa.class);
                     }
                     MatrixParameterInterface designMatrixParameter = parseDesignMatrix(designTaxa, timeTraitName, traitNames, tree, timeEffect, mostRecentTipHeight, hasIntercept, onTreeOnly, indices);
                     HawkesRateProvider.GLM.UnSequencedRate unSequencedRate = onTreeOnly ? HawkesRateProvider.GLM.UnSequencedRate.FIXED : HawkesRateProvider.GLM.UnSequencedRate.IMPUTE;

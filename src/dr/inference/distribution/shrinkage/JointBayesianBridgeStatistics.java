@@ -36,56 +36,52 @@ import java.util.List;
 
 public class JointBayesianBridgeStatistics implements BayesianBridgeStatisticsProvider {
 
-    private List<AutoCorrelatedBranchRatesDistribution> incProviderList;
-    private BayesianBridgeDistributionModel bayesianBridgeDistribution;
+    private final List<BayesianBridgeStatisticsProvider> providers;
 
-    private final int dim;
+    public JointBayesianBridgeStatistics(List<BayesianBridgeStatisticsProvider> providers) {
 
-    private double[] branchSpecificFunction;
+        this.providers = providers;
 
-    public JointBayesianBridgeStatistics(List<AutoCorrelatedBranchRatesDistribution> incProviderList) {
-        this.incProviderList = incProviderList;
-        this.bayesianBridgeDistribution = (BayesianBridgeDistributionModel) incProviderList.get(0).getPrior();
-
-        dim = incProviderList.get(0).getDimension();
-
-        this.branchSpecificFunction = new double[dim];
-        computeBranchSpecificFunction();
-    }
-
-    private void computeBranchSpecificFunction() {
-        double totalIncSquared;
-        for (int i = 0; i < dim; i++) {
-            totalIncSquared = 0;
-            for (int j = 0; j < incProviderList.size(); j++) {
-                totalIncSquared += Math.pow(incProviderList.get(j).getIncrement(i), 2);
+        BayesianBridgeStatisticsProvider base = providers.get(0);
+        for (int i = 1; i < providers.size(); ++i) {
+            BayesianBridgeStatisticsProvider next = providers.get(i);
+            if (base.getDimension() != next.getDimension() ||
+                    base.getExponent() != next.getExponent() ||
+                    base.getGlobalScale() != next.getGlobalScale() ||
+                    base.getLocalScale() != next.getLocalScale()) {
+                throw new IllegalArgumentException("All Bayesian bridges must be the same");
             }
-            branchSpecificFunction[i] = Math.sqrt(totalIncSquared);
         }
     }
 
     @Override
     public double getCoefficient(int i) {
-        return branchSpecificFunction[i];
+
+        double squaredSum = 0.0;
+        for (BayesianBridgeStatisticsProvider p : providers) {
+            squaredSum += p.getCoefficient(i) * p.getCoefficient(i);
+        }
+
+        return Math.sqrt(squaredSum);
     }
 
     @Override
     public Parameter getGlobalScale() {
-        return bayesianBridgeDistribution.getGlobalScale();
+        return providers.get(0).getGlobalScale();
     }
 
     @Override
     public Parameter getLocalScale() {
-        return bayesianBridgeDistribution.getLocalScale();
+        return providers.get(0).getLocalScale();
     }
 
     @Override
     public Parameter getExponent() {
-        return bayesianBridgeDistribution.getExponent();
+        return providers.get(0).getExponent();
     }
 
     @Override
     public int getDimension() {
-        return dim;
+        return providers.get(0).getDimension();
     }
 }

@@ -26,51 +26,39 @@ package dr.inferencexml.distribution.shrinkage;
 
 import dr.evomodel.branchratemodel.AutoCorrelatedBranchRatesDistribution;
 import dr.inference.distribution.shrinkage.BayesianBridgeDistributionModel;
+import dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider;
 import dr.inference.distribution.shrinkage.JointBayesianBridgeStatistics;
 import dr.xml.*;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider.equivalent;
 
 /**
  * @author Alexander Fisher
  */
 
 public class JointBayesianBridgeStatisticsParser extends AbstractXMLObjectParser {
+
     private static final String JOINT_BAYESIAN_BRIDGE_STATISTICS = "jointBayesianBridgeStatistics";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        List<AutoCorrelatedBranchRatesDistribution> incProviderList;
+        List<BayesianBridgeStatisticsProvider> providers =
+                xo.getAllChildren(BayesianBridgeStatisticsProvider.class);
 
-        incProviderList = xo.getAllChildren(AutoCorrelatedBranchRatesDistribution.class);
-        BayesianBridgeDistributionModel prior;
-        BayesianBridgeDistributionModel previousPrior;
-        for (int i = 0; i < incProviderList.size(); i++) {
-            if (!(incProviderList.get(i).getPrior() instanceof BayesianBridgeDistributionModel)) {
-                throw new XMLParseException("Must supply rates model with a BayesianBridgeDistributionModel prior");
-            }
+        BayesianBridgeStatisticsProvider base = providers.get(0);
+        for (int i = 1; i < providers.size(); ++i) {
+            BayesianBridgeStatisticsProvider next = providers.get(i);
 
-            prior = (BayesianBridgeDistributionModel) incProviderList.get(i).getPrior();
-            if (i > 0) {
-                previousPrior = (BayesianBridgeDistributionModel) incProviderList.get(i - 1).getPrior();
-                if (!(bayesianBridgePriorsEqual(prior, previousPrior))) {
-                    throw new XMLParseException("Bayesian bridge prior must be identical across rate models.");
+            if (!equivalent(base, next)) {
+                    throw new XMLParseException("Bayesian bridge prior must be identical across providers.");
                 }
             }
 
-        }
-
-        return new JointBayesianBridgeStatistics(incProviderList);
-    }
-
-    private boolean bayesianBridgePriorsEqual(BayesianBridgeDistributionModel prior, BayesianBridgeDistributionModel previousPrior) {
-        boolean globalScaleEqual = (prior.getGlobalScale() == previousPrior.getGlobalScale());
-        boolean localScaleEqual = (prior.getLocalScale() == previousPrior.getLocalScale());
-        boolean exponentEqual = (prior.getExponent() == previousPrior.getExponent());
-        boolean slabEqual = (prior.getSlabWidth() == previousPrior.getSlabWidth());
-
-        return (globalScaleEqual && localScaleEqual && exponentEqual && slabEqual);
+        return new JointBayesianBridgeStatistics(providers);
     }
 
     @Override
@@ -79,7 +67,7 @@ public class JointBayesianBridgeStatisticsParser extends AbstractXMLObjectParser
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(AutoCorrelatedBranchRatesDistribution.class, 1, Integer.MAX_VALUE),
+            new ElementRule(BayesianBridgeStatisticsProvider.class, 1, Integer.MAX_VALUE),
     };
 
     @Override

@@ -66,4 +66,9 @@ public class BayesianBridgeAutoCorrelatedBranchRates extends AutoCorrelatedBranc
     public Parameter getExponent() {
         return distribution.getExponent();
     }
+
+    @Override
+    public Parameter getSlabWidth() {
+        return distribution.getSlabWidth();
+    }
 }

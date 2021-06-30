@@ -25,7 +25,6 @@
 
 package dr.inference.distribution.shrinkage;
 
-import dr.evomodel.branchratemodel.AutoCorrelatedBranchRatesDistribution;
 import dr.inference.model.Parameter;
 
 import java.util.List;
@@ -45,10 +44,7 @@ public class JointBayesianBridgeStatistics implements BayesianBridgeStatisticsPr
         BayesianBridgeStatisticsProvider base = providers.get(0);
         for (int i = 1; i < providers.size(); ++i) {
             BayesianBridgeStatisticsProvider next = providers.get(i);
-            if (base.getDimension() != next.getDimension() ||
-                    base.getExponent() != next.getExponent() ||
-                    base.getGlobalScale() != next.getGlobalScale() ||
-                    base.getLocalScale() != next.getLocalScale()) {
+            if (!BayesianBridgeStatisticsProvider.equivalent(base, next)) {
                 throw new IllegalArgumentException("All Bayesian bridges must be the same");
             }
         }
@@ -78,6 +74,11 @@ public class JointBayesianBridgeStatistics implements BayesianBridgeStatisticsPr
     @Override
     public Parameter getExponent() {
         return providers.get(0).getExponent();
+    }
+
+    @Override
+    public Parameter getSlabWidth() {
+        return providers.get(0).getSlabWidth();
     }
 
     @Override

@@ -309,7 +309,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == ratios) {
-            updateNodeHeights();
+            epochKnown = false;
         } else if (variable == nodeHeights) {
             ratiosKnown = false;
         }

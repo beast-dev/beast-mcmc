@@ -83,7 +83,7 @@ public class NodeHeightProxyParameter extends Parameter.Proxy {
 
     @Override
     public void fireParameterChangedEvent() {
-        tree.pushTreeChangedEvent(TreeChangedEvent.create(false, true));
+        tree.pushTreeChangedEvent(TreeChangedEvent.create(true, true));
     }
 
     @Override

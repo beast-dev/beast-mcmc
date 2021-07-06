@@ -44,6 +44,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
 
     public void makeDirty() {
         dirty = true;
+        intervalsKnown=false;
     }
 
     @Override
@@ -318,6 +319,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
                 } else if (treeChangedEvent.isTreeChanged()) {
                     if (!treeChangedEvent.isNodeOrderChanged()) {
                         onlyUpdateTimes = true;
+                        intervalsKnown=false;
                     } else {
                         // Full tree events result in a complete updating of the tree likelihood
                         // This event type is now used for EmpiricalTreeDistributions.

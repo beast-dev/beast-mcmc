@@ -75,6 +75,7 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
         }
 
         updateNode = new boolean[treeModel.getNodeCount()];
+        storedUpdateNode = new boolean[treeModel.getNodeCount()];
         Arrays.fill(updateNode, true);
 
         branchLogL = new double[treeModel.getNodeCount()];
@@ -225,6 +226,7 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
         storedCachedRootChild2 = cachedRootChild2;
 
         System.arraycopy(branchLogL, 0, storedBranchLogL, 0, branchLogL.length);
+        System.arraycopy(updateNode, 0, storedUpdateNode, 0, updateNode.length);
     }
 
     /**
@@ -238,7 +240,15 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
         cachedRoot = storedCachedRoot;
         cachedRootChild1 = storedCachedRootChild1;
         cachedRootChild2 = storedCachedRootChild2;
-        System.arraycopy(storedBranchLogL, 0, branchLogL, 0, branchLogL.length);
+
+        double[] tmp = storedBranchLogL;
+        storedBranchLogL=branchLogL;
+        branchLogL=tmp;
+
+        boolean[] tmp1 = storedUpdateNode;
+        storedUpdateNode = updateNode;
+        updateNode= tmp1;
+//        System.arraycopy(storedBranchLogL, 0, branchLogL, 0, branchLogL.length);
     }
 
     protected void acceptState() {
@@ -468,6 +478,7 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
      * Flags to specify which nodes are to be updated
      */
     protected boolean[] updateNode;
+    protected boolean[] storedUpdateNode;
 
     private double logLikelihood;
     private double storedLogLikelihood;

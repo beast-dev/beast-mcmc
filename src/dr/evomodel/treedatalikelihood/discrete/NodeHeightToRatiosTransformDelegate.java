@@ -54,7 +54,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
 
     private boolean ratiosKnown = false;
     protected boolean epochKnown = false;
-    protected boolean heightsKnown = false;
+    protected boolean heightsKnown = true;
 
     public NodeHeightToRatiosTransformDelegate(TreeModel treeModel,
                   Parameter nodeHeights,
@@ -84,7 +84,6 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     public void modelRestored(Model model) {
         epochKnown = false;
         ratiosKnown = false;
-        heightsKnown = false;
     }
 
 
@@ -99,6 +98,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     }
 
     protected void constructEpochs() {
+        assert(heightsKnown);
         nodeEpochMap.clear();
         epochs.clear();
 
@@ -332,6 +332,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     @Override
     double[] inverse(double[] values) {
         setRatios(values);
+        heightsKnown = false;
         updateNodeHeights();
         return getNodeHeights().getParameterValues();
     }

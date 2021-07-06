@@ -392,6 +392,12 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                     addVariable(betaParam);
                 }
             }
+
+            if (deltaList != null) {
+                for (Parameter dParam : deltaList) {
+                    addVariable(dParam);
+                }
+            }
             if (lastObservedIndexParameter != null || firstObservedIndexParameter != null) {
                 setupGMRFWeightsForMissingCov();
                 skygridHelper = new SkygridMissingCovariateHelper();
@@ -1022,15 +1028,15 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         for (int k = 0; k < beta.getDimension(); k++) {
 
             double gradient = // numGridPoints / 2
-                    + currentPrec * (gamma[0]             - gamma[1]                ) * getCovariateValue(covk, 0, k, transposed) //covk.getParameterValue(k,0)
-                    + currentPrec * (gamma[numGridPoints] - gamma[numGridPoints - 1]) * getCovariateValue(covk, numGridPoints, k, transposed) //covk.getParameterValue(k, numGridPoints)
+                    +currentPrec * (gamma[0] - gamma[1]) * getCovariateValue(covk, 0, k, transposed) //covk.getParameterValue(k,0)
+                            + currentPrec * (gamma[numGridPoints] - gamma[numGridPoints - 1]) * getCovariateValue(covk, numGridPoints, k, transposed) //covk.getParameterValue(k, numGridPoints)
 //                    - 0.5 * currentPrec * (gamma[1] - gamma[0]) * (gamma[1] - gamma[0])
                     ;
 
             for (int i = 1; i < numGridPoints; i++) {
                 gradient +=
 //                        -0.5 * currentPrec * (gamma[i + 1] - gamma[i]) * (gamma[i + 1] - gamma[i])
-                        + currentPrec * (-gamma[i - 1] + 2 * gamma[i] -gamma[i + 1]) * getCovariateValue(covk, i, k, transposed); //covk.getParameterValue(k, i);
+                        +currentPrec * (-gamma[i - 1] + 2 * gamma[i] - gamma[i + 1]) * getCovariateValue(covk, i, k, transposed); //covk.getParameterValue(k, i);
             }
 
             gradLogDens[k] = gradient;
@@ -1057,23 +1063,23 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         for (int k = 0; k < beta.getDimension(); k++) {
 
             double h = // numGridPoints / 2
-                    - currentPrec * (
+                    -currentPrec * (
                             getCovariateValue(covk, 0, k, transposed) //covk.getParameterValue(k, 0)
-                            - getCovariateValue(covk, 1, k, transposed)) //covk.getParameterValue(k,1))
+                                    - getCovariateValue(covk, 1, k, transposed)) //covk.getParameterValue(k,1))
                             * getCovariateValue(covk, 0, k, transposed) //covk.getParameterValue(k,0)
-                    - currentPrec * (
+                            - currentPrec * (
                             getCovariateValue(covk, numGridPoints, k, transposed) //covk.getParameterValue(k, numGridPoints)
-                            - getCovariateValue(covk,numGridPoints - 1, k, transposed)) //covk.getParameterValue(k, numGridPoints - 1))
+                                    - getCovariateValue(covk, numGridPoints - 1, k, transposed)) //covk.getParameterValue(k, numGridPoints - 1))
                             * getCovariateValue(covk, numGridPoints, k, transposed) //covk.getParameterValue(k, numGridPoints)
                     ;
 
-            for(int i = 1; i < numGridPoints; i++){
-                h += - currentPrec * (
+            for (int i = 1; i < numGridPoints; i++) {
+                h += -currentPrec * (
                         -getCovariateValue(covk, i - 1, k, transposed) //covk.getParameterValue(k, i - 1)
                                 + 2 * getCovariateValue(covk, i, k, transposed) //covk.getParameterValue(k, i)
                                 - getCovariateValue(covk, i + 1, k, transposed)) //covk.getParameterValue(k, i + 1))
                         * getCovariateValue(covk, i, k, transposed) //covk.getParameterValue(k, i)
-                        ;
+                ;
 
             }
 
@@ -1254,7 +1260,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
                         for (int i = 0; i < N; ++i) {
                             for (int j = 0; j < J; ++j) {
-                                update[i] += covariate.getParameterValue(j, i) * b.getParameterValue(j) * d.getParameterValue(j);
+                                update[i] += getCovariateValue(covariate, i, j, transposed) * b.getParameterValue(j) *
+                                        d.getParameterValue(j);
                             }
                         }
                     }
@@ -1309,7 +1316,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
             return false;
         } else {
             throw new RuntimeException("Incorrect dimensions in " + matrix.getId() + " (r=" + matrix.getRowDimension() +
-                    ",c=" + matrix.getColumnDimension()+ ")");
+                    ",c=" + matrix.getColumnDimension() + ")");
         }
     }
 

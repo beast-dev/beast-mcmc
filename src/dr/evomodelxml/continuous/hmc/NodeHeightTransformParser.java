@@ -29,7 +29,6 @@ package dr.evomodelxml.continuous.hmc;
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.TreeIntervalList;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
@@ -64,6 +63,7 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
         Parameter ratioParameter = null;
         if (xo.hasChildNamed(RATIO)) {
             ratioParameter = (Parameter) xo.getChild(RATIO).getChild(Parameter.class);
+            ratioParameter.setId("ratio(" + tree.getId() + ")");
         }
 
         if (ratioParameter != null) {

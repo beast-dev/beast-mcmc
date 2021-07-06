@@ -209,7 +209,7 @@ public class LogCombiner {
                         line = reader.readLine();
                     }
 
-                    Pattern pattern = Pattern.compile("tree STATE_(\\d+)\\s(.*)");
+                    Pattern pattern = Pattern.compile("tree STATE_(\\d+)(\\s.*)");
 
                     while (line != null) {
                         Matcher m = pattern.matcher(line);

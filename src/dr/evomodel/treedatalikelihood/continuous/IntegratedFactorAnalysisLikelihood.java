@@ -402,7 +402,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     @Override
     public ContinuousExtensionDelegate getExtensionDelegate(ContinuousDataLikelihoodDelegate delegate,
                                                             TreeTrait treeTrait, Tree tree) {
-        return new ContinuousExtensionDelegate.MultivariateNormalExtensionDelegate(delegate, treeTrait,
+        return new ContinuousExtensionDelegate.IndependentNormalExtensionDelegate(delegate, treeTrait,
                 this, tree);
     }
 

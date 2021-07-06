@@ -71,7 +71,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private double[] increments;
     private double[] savedIncrements;
 
-    public boolean wrtIncrements;
+    boolean wrtIncrements;
 
     public AutoCorrelatedBranchRatesDistribution(String name,
                                                  DifferentiableBranchRates  branchRateModel,

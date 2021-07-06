@@ -34,10 +34,7 @@ import dr.inference.distribution.NormalStatisticsProvider;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
-import dr.inference.operators.factorAnalysis.LoadingsGibbsOperator;
-import dr.inference.operators.factorAnalysis.LoadingsGibbsTruncatedOperator;
-import dr.inference.operators.factorAnalysis.FactorAnalysisOperatorAdaptor;
-import dr.inference.operators.factorAnalysis.NewLoadingsGibbsOperator;
+import dr.inference.operators.factorAnalysis.*;
 import dr.math.distributions.Distribution;
 import dr.math.distributions.NormalDistribution;
 import dr.util.Attribute;
@@ -59,7 +56,6 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
     private final static String MODE = "newMode";
     private final static String CONSTRAINT = "constraint";
     private final static String SPARSITY_CONSTRAINT = "sparsity";
-    private final static String USE_CACHE = "cacheInnerProducts";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -114,15 +110,8 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
         if (prior != null) {
             if (useNewMode) {
 
-                final FactorAnalysisOperatorAdaptor adaptor;
-                if (LFM != null) {
-                    adaptor = new FactorAnalysisOperatorAdaptor.SampledFactors(LFM);
-                } else {
-                    IntegratedFactorAnalysisLikelihood integratedLikelihood = (IntegratedFactorAnalysisLikelihood)
-                            xo.getChild(IntegratedFactorAnalysisLikelihood.class);
-                    TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-                    adaptor = new FactorAnalysisOperatorAdaptor.IntegratedFactors(integratedLikelihood, treeLikelihood);
-                }
+                FactorAnalysisStatisticsProvider statisticsProvider =
+                        LoadingsOperatorParserUtilities.parseAdaptorAndStatistics(xo);
 
                 NewLoadingsGibbsOperator.ConstrainedSampler sampler = NewLoadingsGibbsOperator.ConstrainedSampler.parse(
                         xo.getAttribute(CONSTRAINT, NewLoadingsGibbsOperator.ConstrainedSampler.NONE.getName())
@@ -133,16 +122,8 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
                                 NewLoadingsGibbsOperator.ColumnDimProvider.UPPER_TRIANGULAR.getName())
                         );
 
-                NewLoadingsGibbsOperator.CacheProvider cacheProvider;
-                boolean useCache = xo.getAttribute(USE_CACHE, false);
-                if (useCache) {
-                    cacheProvider = NewLoadingsGibbsOperator.CacheProvider.USE_CACHE;
-                } else {
-                    cacheProvider = NewLoadingsGibbsOperator.CacheProvider.NO_CACHE;
-                }
-
-                return new NewLoadingsGibbsOperator(adaptor, prior, weight, randomScan, WorkingPrior,
-                        multiThreaded, numThreads, sampler, dimProvider, cacheProvider);
+                return new NewLoadingsGibbsOperator(statisticsProvider, prior, weight, randomScan, WorkingPrior,
+                        multiThreaded, numThreads, sampler, dimProvider);
             } else {
 //                return new LoadingsGibbsOperator(LFM, prior, weight, randomScan, WorkingPrior, multiThreaded, numThreads);
                 return null;
@@ -154,17 +135,10 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
-        return rules;
+        return XMLSyntaxRule.Utils.concatenate(LoadingsOperatorParserUtilities.statisticsProviderRules, newRules);
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new XORRule(
-                    new ElementRule(LatentFactorModel.class),
-                    new AndRule(
-                            new ElementRule(IntegratedFactorAnalysisLikelihood.class),
-                            new ElementRule(TreeDataLikelihood.class)
-                    )
-            ),
+    private XMLSyntaxRule[] newRules = new XMLSyntaxRule[]{
             new XORRule(
                     new XMLSyntaxRule[]{
                             new ElementRule(DistributionLikelihood.class),
@@ -181,7 +155,6 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(MODE, true),
             AttributeRule.newStringRule(CONSTRAINT, true),
             AttributeRule.newStringRule(SPARSITY_CONSTRAINT, true),
-            AttributeRule.newBooleanRule(USE_CACHE, true),
             new ElementRule(WORKING_PRIOR, new XMLSyntaxRule[]{
                     new ElementRule(DistributionLikelihood.class)
             }, true),

@@ -7,8 +7,7 @@ import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.Algebra;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
-import dr.inference.model.Parameter;
-import dr.inference.model.PriorPreconditioningProvider;
+import dr.inference.model.*;
 import dr.math.*;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.ReadableVector;
@@ -35,6 +34,10 @@ public interface MassPreconditioner {
 
     void updateMass();
 
+    WrappedVector getMass();
+
+    void updateVariance(WrappedVector position);
+
     ReadableVector doCollision(int[] indices, ReadableVector momentum);
 
     int getDimension();
@@ -55,7 +58,9 @@ public interface MassPreconditioner {
         DIAGONAL("diagonal") {
             @Override
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
-                return new DiagonalHessianPreconditioning((HessianWrtParameterProvider) gradient, transform, options.preconditioningMemory());
+                return new DiagonalHessianPreconditioning((HessianWrtParameterProvider) gradient, transform,
+                        options.preconditioningMemory(),
+                        options.preconditioningEigenLowerBound(), options.preconditioningEigenUpperBound());
             }
         },
         ADAPTIVE_DIAGONAL("adaptiveDiagonal") {
@@ -223,6 +228,16 @@ public interface MassPreconditioner {
         }
 
         @Override
+        public WrappedVector getMass() {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+            // Do nothing
+        }
+
+        @Override
         public int getDimension() {
             return dim;
         }
@@ -276,6 +291,18 @@ public interface MassPreconditioner {
         }
 
         @Override
+        public WrappedVector getMass() {
+            double[] mass = new double[dim];
+            Arrays.fill(mass, 1.0);
+            return new WrappedVector.Raw(mass);
+        }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+            // Do nothing
+        }
+
+        @Override
         public int getDimension() {
             return dim;
         }
@@ -283,22 +310,25 @@ public interface MassPreconditioner {
 
 
 
-    abstract class AbstractMassPreconditioning implements MassPreconditioner {
+    abstract class AbstractMassPreconditioning extends AbstractModel implements MassPreconditioner {
         final protected int dim;
         final protected Transform transform;
-        double[] inverseMass;
+        protected Parameter inverseMass;
+        private static final String PRECONDITIONING = "MassPreconditioning";
+        protected static final String MASSNAME = "InverseMass";
 
         protected AbstractMassPreconditioning(int dim, Transform transform) {
+            super(PRECONDITIONING);
             this.dim = dim;
             this.transform = transform;
         }
 
         abstract protected void initializeMass();
 
-        abstract protected double[] computeInverseMass();
+        abstract protected void computeInverseMass();
 
         public void updateMass() {
-            this.inverseMass = computeInverseMass();
+            computeInverseMass();
         }
 
         @Override
@@ -307,6 +337,37 @@ public interface MassPreconditioner {
         }
 
         abstract public void storeSecant(ReadableVector gradient, ReadableVector position);
+
+        protected void setInverseMassFromArray(double[] inverseMassArray) {
+            for (int i = 0; i < inverseMassArray.length; i++) {
+                inverseMass.setParameterValue(i, inverseMassArray[i]);
+            }
+        }
+
+        @Override
+        protected void handleModelChangedEvent(Model model, Object object, int index) {
+
+        }
+
+        @Override
+        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+
+        }
+
+        @Override
+        protected void storeState() {
+
+        }
+
+        @Override
+        protected void restoreState() {
+
+        }
+
+        @Override
+        protected void acceptState() {
+
+        }
 
     }
 
@@ -343,7 +404,9 @@ public interface MassPreconditioner {
         protected DiagonalPreconditioning(int dim, Transform transform) {
             super(dim, transform);
             this.adaptiveDiagonal = new AdaptableVector.Default(dim);
+            this.inverseMass = new Parameter.Default(MASSNAME, dim);
             initializeMass();
+            addVariable(inverseMass);
         }
 
         @Override
@@ -351,7 +414,8 @@ public interface MassPreconditioner {
 
             double[] result = new double[dim];
             Arrays.fill(result, 1.0);
-            inverseMass = normalizeVector(new WrappedVector.Raw(result), dim);
+            double[] normalizedResult = normalizeVector(new WrappedVector.Raw(result), dim);
+            setInverseMassFromArray(normalizedResult);
         }
 
         protected double[] normalizeVector(ReadableVector values, double targetSum) {
@@ -373,7 +437,7 @@ public interface MassPreconditioner {
             double[] momentum = new double[dim];
 
             for (int i = 0; i < dim; i++) {
-                momentum[i] = MathUtils.nextGaussian() * Math.sqrt(1.0 / inverseMass[i]);
+                momentum[i] = MathUtils.nextGaussian() * Math.sqrt(1.0 / inverseMass.getParameterValue(i));
             }
 
             return new WrappedVector.Raw(momentum);
@@ -381,7 +445,7 @@ public interface MassPreconditioner {
 
         @Override
         public double getVelocity(int i, ReadableVector momentum) {
-            return momentum.get(i) * inverseMass[i];
+            return momentum.get(i) * inverseMass.getParameterValue(i);
         }
 
         @Override
@@ -398,10 +462,10 @@ public interface MassPreconditioner {
 
             final int index1 = indices[0];
             final int index2 = indices[1];
-            final double updatedMomentum1 = ((inverseMass[index2] - inverseMass[index1]) * momentum.get(index1)
-                    + 2.0 * inverseMass[index2] * momentum.get(index2)) / (inverseMass[index1] + inverseMass[index2]);
-            final double updatedMomentum2 = ((inverseMass[index1] - inverseMass[index2]) * momentum.get(index2)
-                    + 2.0 * inverseMass[index1] * momentum.get(index1)) / (inverseMass[index1] + inverseMass[index2]);
+            final double updatedMomentum1 = ((inverseMass.getParameterValue(index2) - inverseMass.getParameterValue(index1)) * momentum.get(index1)
+                    + 2.0 * inverseMass.getParameterValue(index2) * momentum.get(index2)) / (inverseMass.getParameterValue(index1) + inverseMass.getParameterValue(index2));
+            final double updatedMomentum2 = ((inverseMass.getParameterValue(index1) - inverseMass.getParameterValue(index2)) * momentum.get(index2)
+                    + 2.0 * inverseMass.getParameterValue(index1) * momentum.get(index1)) / (inverseMass.getParameterValue(index1) + inverseMass.getParameterValue(index2));
 
             updatedMomentum.set(index1, updatedMomentum1);
             updatedMomentum.set(index2, updatedMomentum2);
@@ -416,7 +480,7 @@ public interface MassPreconditioner {
         public PriorPreconditioner(PriorPreconditioningProvider priorDistribution, Transform transform){
             super(priorDistribution.getDimension(), transform);
             this.priorDistribution = priorDistribution;
-            inverseMass = computeInverseMass();
+            computeInverseMass();
         }
 
         public MassPreconditioner factory(PriorPreconditioningProvider priorDistribution, Transform transform) {
@@ -424,29 +488,42 @@ public interface MassPreconditioner {
         }
 
         @Override
-        protected double[] computeInverseMass() {
-            double diagonal[] = new double[(priorDistribution.getDimension())];
+        protected void computeInverseMass() {
 
             for (int i = 0; i < priorDistribution.getDimension(); i++){
                 double stDev = priorDistribution.getStandardDeviation(i);
-                diagonal[i] = stDev * stDev;
+                inverseMass.setParameterValue(i, stDev * stDev);
             }
-            return diagonal;
+
         }
 
         @Override
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
             // Do nothing
         }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+            // Do nothing
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            throw new RuntimeException("Not yet implemented!");
+        }
     }
 
     class DiagonalHessianPreconditioning extends DiagonalPreconditioning {
 
         final protected HessianWrtParameterProvider hessian;
+        final private Parameter lowerBound;
+        final private Parameter upperBound;
 
         DiagonalHessianPreconditioning(HessianWrtParameterProvider hessian,
                                        Transform transform,
-                                       int memorySize) {
+                                       int memorySize,
+                                       Parameter lowerBound,
+                                       Parameter upperBound) {
             super(hessian.getDimension(), transform);
             this.hessian = hessian;
             if (memorySize > 0) {
@@ -454,10 +531,12 @@ public interface MassPreconditioner {
             } else {
                 this.adaptiveDiagonal = new AdaptableVector.Default(hessian.getDimension());
             }
+            this.lowerBound = lowerBound;
+            this.upperBound = upperBound;
         }
 
         @Override
-        protected double[] computeInverseMass() {
+        protected void computeInverseMass() {
 
             double[] newDiagonalHessian = hessian.getDiagonalHessianLogDensity();
 
@@ -474,35 +553,54 @@ public interface MassPreconditioner {
 
             adaptiveDiagonal.update(new WrappedVector.Raw(newDiagonalHessian));
 
-            return boundMassInverse(((WrappedVector) adaptiveDiagonal.getMean()).getBuffer());
+            double[] boundedDiagonal = boundMassInverse(((WrappedVector) adaptiveDiagonal.getMean()).getBuffer());
+            setInverseMassFromArray(boundedDiagonal);
         }
 
         private double[] boundMassInverse(double[] diagonalHessian) {
 
-            double sum = 0.0;
-            final double lowerBound = 1E-2; //TODO bad magic numbers
-            final double upperBound = 1E2;
-            double[] boundedMassInverse = new double[dim];
+            double[] boundedMassInverse = diagonalHessian.clone();
+
+            normalizeL1(boundedMassInverse, dim);
 
             for (int i = 0; i < dim; i++) {
-                boundedMassInverse[i] = -1.0 / diagonalHessian[i];
-                if (boundedMassInverse[i] < lowerBound) {
-                    boundedMassInverse[i] = lowerBound;
-                } else if (boundedMassInverse[i] > upperBound) {
-                    boundedMassInverse[i] = upperBound;
+                boundedMassInverse[i] = 1.0 / boundedMassInverse[i];
+                if (boundedMassInverse[i] < lowerBound.getParameterValue(0)) {
+                    boundedMassInverse[i] = lowerBound.getParameterValue(0);
+                } else if (boundedMassInverse[i] > upperBound.getParameterValue(0)) {
+                    boundedMassInverse[i] = upperBound.getParameterValue(0);
                 }
-                sum += 1.0 / boundedMassInverse[i];
             }
-            final double mean = sum / dim;
-            for (int i = 0; i < dim; i++) {
-                boundedMassInverse[i] = boundedMassInverse[i] * mean;
-            }
+
+            normalizeL1(boundedMassInverse, dim);
+
             return boundedMassInverse;
+        }
+
+        private void normalizeL1(double[] vector, double norm) {
+            double sum = 0.0;
+            for (int i = 0; i < vector.length; i++) {
+                sum += Math.abs(vector[i]);
+            }
+            final double multiplier = norm / sum;
+            for (int i = 0; i < vector.length; i++) {
+                vector[i] = vector[i] * multiplier;
+            }
         }
 
         @Override
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
             // Do nothing
+        }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            throw new RuntimeException("Not yet implemented!");
         }
 
     }
@@ -566,7 +664,7 @@ public interface MassPreconditioner {
             }
             gradient.getParameter().fireParameterChangedEvent();
             fillZeros(values);
-            inverseMass = normalizeVector(new WrappedVector.Raw(values), dim);
+            setInverseMassFromArray(normalizeVector(new WrappedVector.Raw(values), dim));
         }
 
         private void fillZeros(double[] positives) {
@@ -590,15 +688,13 @@ public interface MassPreconditioner {
         }
 
         @Override
-        protected double[] computeInverseMass() {
+        protected void computeInverseMass() {
 
             if (variance.getUpdateCount() > minimumUpdates) {
                 double[] newVariance = variance.getVariance();
 //                adaptiveDiagonal.update(new WrappedVector.Raw(newVariance));
 //                return normalizeVector(adaptiveDiagonal.getMean(), dim);
-                return normalizeVector(new WrappedVector.Raw(newVariance), dim);
-            } else {
-                return inverseMass;
+                setInverseMassFromArray(normalizeVector(new WrappedVector.Raw(newVariance), dim));
             }
 
         }
@@ -606,6 +702,20 @@ public interface MassPreconditioner {
         @Override
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
              variance.update(position);
+        }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+            variance.update(position);
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            double[] mass = new double[dim];
+            for (int i = 0; i < dim; i++) {
+                mass[i] = 1 / inverseMass.getParameterValue(i);
+            }
+            return new WrappedVector.Raw(mass);
         }
     }
 
@@ -618,6 +728,8 @@ public interface MassPreconditioner {
 
         FullHessianPreconditioning(HessianWrtParameterProvider hessian, Transform transform, int dim) {
             super(hessian, transform, dim);
+            this.inverseMass = new Parameter.Default(MASSNAME, dim * dim);
+            addVariable(inverseMass);
         }
 
         @Override
@@ -627,7 +739,6 @@ public interface MassPreconditioner {
             for (int i = 0; i < dim; i++) {
                 result[i * dim + i] = 1.0;
             }
-            inverseMass = result;
 
         }
 
@@ -763,11 +874,11 @@ public interface MassPreconditioner {
         }
 
         @Override
-        protected double[] computeInverseMass() {
+        protected void computeInverseMass() {
             //TODO: change to ReadableMatrix
             WrappedMatrix.ArrayOfArray hessianMatrix = new WrappedMatrix.ArrayOfArray(hessian.getHessianLogDensity());
 
-            return computeInverseMass(hessianMatrix, hessian, PDTransformMatrix.Invert);
+            setInverseMassFromArray(computeInverseMass(hessianMatrix, hessian, PDTransformMatrix.Invert));
         }
 
         @Override
@@ -776,10 +887,20 @@ public interface MassPreconditioner {
         }
 
         @Override
+        public void updateVariance(WrappedVector position) {
+
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
         public WrappedVector drawInitialMomentum() {
 
             MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(
-                    new double[dim], toArray(inverseMass, dim, dim)
+                    new double[dim], toArray(inverseMass.getParameterValues(), dim, dim)
             );
 
             return new WrappedVector.Raw(mvn.nextMultivariateNormal());
@@ -790,7 +911,7 @@ public interface MassPreconditioner {
             double velocity = 0.0;
 
             for (int j = 0; j < dim; ++j) {
-                velocity += inverseMass[i * dim + j] * momentum.get(j);
+                velocity += inverseMass.getParameterValue(i * dim + j) * momentum.get(j);
             }
 
             return velocity;
@@ -846,7 +967,7 @@ public interface MassPreconditioner {
         }
 
         @Override
-        protected double[] computeInverseMass() {
+        protected void computeInverseMass() {
 
             if (adaptableCovariance.getUpdateCount() > minimumUpdates) {
                 WrappedMatrix.ArrayOfArray covariance = (WrappedMatrix.ArrayOfArray) adaptableCovariance.getCovariance();
@@ -862,9 +983,7 @@ public interface MassPreconditioner {
 
                 cacheAverageCovariance(normalizeCovariance((WrappedVector.Raw) averageCovariance.getMean()));
 
-                return inverseMassBuffer;
-            } else {
-                return inverseMass;
+                setInverseMassFromArray(inverseMassBuffer);
             }
         }
 

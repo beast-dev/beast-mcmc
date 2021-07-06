@@ -27,6 +27,7 @@ package dr.evomodelxml.branchratemodel;
 
 import dr.evomodel.branchratemodel.*;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
+import dr.inference.distribution.shrinkage.BayesianBridgeDistributionModel;
 import dr.xml.*;
 
 /**
@@ -55,9 +56,15 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
 
         boolean operateOnIncrements = xo.getAttribute(OPERATE_ON_INCREMENTS, false);
 
+        if (distribution instanceof BayesianBridgeDistributionModel) {
+            return new BayesianBridgeAutoCorrelatedBranchRates(xo.getId(), branchRates,
+                    (BayesianBridgeDistributionModel) distribution, scaling, log, operateOnIncrements);
+        } else {
+
         // TODO Change parser to accept Tree and then pass to ACBRD
-        return new AutoCorrelatedBranchRatesDistribution(xo.getId(), branchRates, distribution,
-                scaling, log, operateOnIncrements);
+            return new AutoCorrelatedBranchRatesDistribution(xo.getId(), branchRates, distribution,
+                    scaling, log, operateOnIncrements);
+        }
     }
 
     //************************************************************************

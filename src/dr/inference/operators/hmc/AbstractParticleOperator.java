@@ -58,8 +58,10 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     AbstractParticleOperator(GradientWrtParameterProvider gradientProvider,
                              PrecisionMatrixVectorProductProvider multiplicationProvider,
                              PrecisionColumnProvider columnProvider,
-                             double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, boolean refreshVelocity, Parameter mask,
-                             MassPreconditioner massPreconditioner, MassPreconditionScheduler.Type preconditionSchedulerType) {
+                             double weight, Options runtimeOptions, NativeCodeOptions nativeOptions,
+                             boolean refreshVelocity, Parameter mask, Parameter categoryClass,
+                             MassPreconditioner massPreconditioner,
+                             MassPreconditionScheduler.Type preconditionSchedulerType) {
 
         this.gradientProvider = gradientProvider;
         this.productProvider = multiplicationProvider;
@@ -80,6 +82,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         setWeight(weight);
         this.observedDataMask = getObservedDataMask();
+        this.categoryClasses = getCategoryClasses(categoryClass);
         checkParameterBounds(parameter);
 
         long flags = 128;
@@ -122,16 +125,35 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return observed;
     }
 
+    private int[] getCategoryClasses(Parameter categoryVector) {
+        int dim = parameter.getDimension();
+        int[] categoryClasses = new int[dim];
+
+        if (categoryVector != null) {
+            int[] category = new int[categoryVector.getDimension()];
+            for (int i = 0; i < category.length; i++) {
+                category[i] = (int) categoryVector.getParameterValues()[i];
+            }
+
+            int L = categoryVector.getDimension();
+            int n = dim / L;
+            for (int i = 0; i < n; i++) {
+                System.arraycopy(category, 0, categoryClasses, i * L, L);
+            }
+        }
+        return categoryClasses;
+    }
+
     @Override
     public double doOperation() {
-
-        if (shouldUpdatePreconditioning()) {
-            preconditioning = setupPreconditioning();
-        }
 
         WrappedVector position = getInitialPosition();
 
         WrappedVector momentum = drawInitialMomentum();
+
+        if (preconditionScheduler.shouldUpdatePreconditioning()){
+            updatePreconditioning(position);
+        }
 
         double hastingsRatio = integrateTrajectory(position, momentum);
 
@@ -285,7 +307,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
     }
 
-    boolean headingTowardsBoundary(double velocity, int positionIndex) {
+    boolean headingTowardsBinaryBoundary(double velocity, int positionIndex) {
         return observedDataMask[positionIndex] * parameterSign[positionIndex] * velocity < 0.0;
     }
 
@@ -319,31 +341,32 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         );
     }
 
-    private boolean shouldUpdatePreconditioning() {
-        return runtimeOptions.preconditioningUpdateFrequency > 0
-                && (getCount() % runtimeOptions.preconditioningUpdateFrequency == 0);
+    void updatePreconditioning(WrappedVector position) {
+        massPreconditioning.updateVariance(position);
+        massPreconditioning.updateMass();
+        preconditioning.mass = massPreconditioning.getMass();
     }
 
-    void initializeNumEvent(){
+    void initializeNumEvent() {
         numEvents = 0;
         numBoundaryEvents = 0;
         numGradientEvents = 0;
     }
 
-    void recordOneMoreEvent(){
+    void recordOneMoreEvent() {
         numEvents++;
     }
 
-    void recordEvents(Type eventType){
+    void recordEvents(Type eventType) {
         numEvents++;
-        if (eventType == Type.BOUNDARY){
+        if (eventType == Type.BINARY_BOUNDARY || eventType == Type.CATE_BOUNDARY) {
             numBoundaryEvents++;
-        } else if (eventType == Type.GRADIENT){
+        } else if (eventType == Type.GRADIENT) {
             numGradientEvents++;
         }
     }
 
-    void storeVelocity(WrappedVector velocity){
+    void storeVelocity(WrappedVector velocity) {
         storedVelocity = velocity;
     }
 
@@ -371,7 +394,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return mean;
     }
 
-    public static class Options implements MassPreconditioningOptions{
+    public static class Options implements MassPreconditioningOptions {
 
         final double randomTimeWidth;
         final int preconditioningUpdateFrequency;
@@ -391,10 +414,14 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
 
         @Override
-        public int preconditioningUpdateFrequency() { return preconditioningUpdateFrequency; }
+        public int preconditioningUpdateFrequency() {
+            return preconditioningUpdateFrequency;
+        }
 
         @Override
-        public int preconditioningDelay() { return preconditioningDelay; }
+        public int preconditioningDelay() {
+            return preconditioningDelay;
+        }
 
         @Override
         public int preconditioningMaxUpdate() {
@@ -405,6 +432,16 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         public int preconditioningMemory() {
             return 0;
         }
+
+        @Override
+        public Parameter preconditioningEigenLowerBound() {
+            throw new RuntimeException("Not yet implemented.");
+        }
+
+        @Override
+        public Parameter preconditioningEigenUpperBound() {
+            throw new RuntimeException("Not yet implemented.");
+        }
     }
 
     public static class NativeCodeOptions {
@@ -412,7 +449,8 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         final boolean useNativeFindNextBounce;
         final boolean useNativeUpdateDynamics;
 
-        public NativeCodeOptions(boolean testNativeFindNextBounce, boolean useNativeFindNextBounce, boolean useNativeUpdateDynamics){
+        public NativeCodeOptions(boolean testNativeFindNextBounce, boolean useNativeFindNextBounce,
+                                 boolean useNativeUpdateDynamics) {
             this.testNativeFindNextBounce = testNativeFindNextBounce;
             this.useNativeFindNextBounce = useNativeFindNextBounce;
             this.useNativeUpdateDynamics = useNativeUpdateDynamics;
@@ -421,7 +459,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     protected class Preconditioning {
 
-        final WrappedVector mass;
+        WrappedVector mass;
         double totalTravelTime;
 
         private Preconditioning(WrappedVector mass, double totalTravelTime) {
@@ -459,7 +497,8 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     enum Type {
         NONE,
-        BOUNDARY,
+        BINARY_BOUNDARY,
+        CATE_BOUNDARY,
         GRADIENT,
         REFRESHMENT;
 
@@ -467,9 +506,11 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
             if (i == 0) {
                 return NONE;
             } else if (i == 1) {
-                return BOUNDARY;
+                return BINARY_BOUNDARY;
             } else if (i == 2) {
                 return GRADIENT;
+            } else if (i > 2) {
+                return CATE_BOUNDARY;
             } else {
                 throw new RuntimeException("Unknown type");
             }
@@ -498,9 +539,10 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     Preconditioning preconditioning;
     protected final MassPreconditioner massPreconditioning;
     protected final MassPreconditionScheduler preconditionScheduler;
-    final private double[] observedDataMask;
+    final protected double[] observedDataMask;
     private final double[] meanVector;
 
+    protected final int[] categoryClasses;
     final static boolean TIMING = true;
     BenchmarkTimer timer = new BenchmarkTimer();
 

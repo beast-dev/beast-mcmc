@@ -28,7 +28,6 @@ package dr.inference.hmc;
 import dr.inference.model.GradientProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.hmc.NumericalHessianFromGradient;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
@@ -200,7 +199,7 @@ public interface GradientWrtParameterProvider {
         if (checkValues) {
             for (int i = 0; i < analytic.length; ++i) {
                 double relativeDifference = 2 * (analytic[i] - numeric[i]) / (analytic[i] + numeric[i]);
-                if (Math.abs(relativeDifference) > tolerance && Math.abs(analytic[i]) > smallNumberThreshold && Math.abs(numeric[i]) > smallNumberThreshold) {
+                if (Math.abs(relativeDifference) > tolerance && Math.abs(analytic[i]) > smallNumberThreshold) {
                     sb.append("\nDifference @ ").append(i + 1).append(": ")
                             .append(analytic[i]).append(" ").append(numeric[i])
                             .append(" ").append(relativeDifference).append("\n");

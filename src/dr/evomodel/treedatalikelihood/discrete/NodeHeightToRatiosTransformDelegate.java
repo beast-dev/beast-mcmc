@@ -54,6 +54,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
 
     private boolean ratiosKnown = false;
     protected boolean epochKnown = false;
+    protected boolean heightsKnown = true;
 
     public NodeHeightToRatiosTransformDelegate(TreeModel treeModel,
                   Parameter nodeHeights,
@@ -97,6 +98,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     }
 
     protected void constructEpochs() {
+        assert(heightsKnown);
         nodeEpochMap.clear();
         epochs.clear();
 
@@ -200,6 +202,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     @Override
     public void setNodeHeights(double[] nodeHeights) {
         super.setNodeHeights(nodeHeights);
+        heightsKnown = true;
         ratiosKnown = false;
     }
 
@@ -212,6 +215,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     }
 
     protected void updateRatios() {
+        assert(heightsKnown);
         if (!ratiosKnown) {
             if (!epochKnown) {
                 constructEpochs();
@@ -262,8 +266,11 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
 //                nodeHeights.setParameterValueQuietly(getNodeHeightIndex(node), nodeHeight);
 //            }
 //        }
-        preOrderUpdateNodeHeights(tree, tree.getRoot(), null);
-        tree.pushTreeChangedEvent(TreeChangedEvent.create());
+        if (!heightsKnown) {
+            preOrderUpdateNodeHeights(tree, tree.getRoot(), null);
+            tree.pushTreeChangedEvent(TreeChangedEvent.create());
+            heightsKnown = true;
+        }
     }
 
     private void preOrderUpdateNodeHeights(final Tree tree, final NodeRef node, final NodeRef parent) {
@@ -309,7 +316,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == ratios) {
-            updateNodeHeights();
+            heightsKnown = false;
         } else if (variable == nodeHeights) {
             ratiosKnown = false;
         }
@@ -325,6 +332,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     @Override
     double[] inverse(double[] values) {
         setRatios(values);
+        heightsKnown = false;
         updateNodeHeights();
         return getNodeHeights().getParameterValues();
     }

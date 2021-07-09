@@ -554,10 +554,22 @@ public interface MassPreconditioner {
                 );
             }
 
-            adaptiveDiagonal.update(new WrappedVector.Raw(newDiagonalHessian));
+            WrappedVector wrappedNewDiagonalHessian = new WrappedVector.Raw(newDiagonalHessian);
+
+            replaceNans(wrappedNewDiagonalHessian);
+
+            adaptiveDiagonal.update(wrappedNewDiagonalHessian);
 
             double[] boundedDiagonal = boundMassInverse(((WrappedVector) adaptiveDiagonal.getMean()).getBuffer());
             setInverseMassFromArray(boundedDiagonal);
+        }
+
+        private void replaceNans(WrappedVector newDiagonalHessian) {
+            for (int i = 0; i < newDiagonalHessian.getDim(); i++) {
+                if (Double.isNaN(newDiagonalHessian.get(i))) {
+                    newDiagonalHessian.set(i, inverseMass.getParameterValue(i));
+                }
+            }
         }
 
         private double[] boundMassInverse(double[] diagonalHessian) {

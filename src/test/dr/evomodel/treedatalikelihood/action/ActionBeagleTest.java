@@ -14,7 +14,7 @@ public class ActionBeagleTest extends MathTestCase {
     private int patternCount = 5;
     private int tipCount = 3;
     private int stateCount = 4;
-    private int categoryCount = 1;
+    private int categoryCount = 2;
     private int matrixBufferCount = 4;
     private int partialsSize;
     private int partialsBufferCount;
@@ -45,13 +45,45 @@ public class ActionBeagleTest extends MathTestCase {
         this.beagle = new ActionBeagleDelegate(tipCount, partialsBufferCount, patternCount,
                 stateCount, categoryCount, matrixBufferCount, partialsSize, new DMatrixSparseCSC[]{Qc.copy(), Qc.copy(), Qc.copy(), Qc.copy()});
 
+        // nCategory = 1;
+//        beagle.setPartials(0, new double[]{
+//                1., 0., 0., 0.,
+//                1., 0., 0., 0.,
+//                1., 0., 0., 0.,
+//                0., 0., 0., 1.,
+//                0., 1., 0., 0.});
+//        beagle.setPartials(1, new double[]{
+//                0., 0., 1., 0.,
+//                1., 0., 0., 0.,
+//                0., 0., 1., 0.,
+//                0., 0., 0., 1.,
+//                1., 0., 0., 0.
+//        });
+//        beagle.setPartials(2, new double[]{
+//                0., 0., 1., 0.,
+//                1., 0., 0., 0.,
+//                0., 0., 1., 0.,
+//                0., 0., 1., 0.,
+//                1., 0., 0., 0.
+//        });
+        // nCategory = 2;
         beagle.setPartials(0, new double[]{
+                1., 0., 0., 0.,
+                1., 0., 0., 0.,
+                1., 0., 0., 0.,
+                0., 0., 0., 1.,
+                0., 1., 0., 0.,
                 1., 0., 0., 0.,
                 1., 0., 0., 0.,
                 1., 0., 0., 0.,
                 0., 0., 0., 1.,
                 0., 1., 0., 0.});
         beagle.setPartials(1, new double[]{
+                0., 0., 1., 0.,
+                1., 0., 0., 0.,
+                0., 0., 1., 0.,
+                0., 0., 0., 1.,
+                1., 0., 0., 0.,
                 0., 0., 1., 0.,
                 1., 0., 0., 0.,
                 0., 0., 1., 0.,
@@ -63,8 +95,15 @@ public class ActionBeagleTest extends MathTestCase {
                 1., 0., 0., 0.,
                 0., 0., 1., 0.,
                 0., 0., 1., 0.,
+                1., 0., 0., 0.,
+                0., 0., 1., 0.,
+                1., 0., 0., 0.,
+                0., 0., 1., 0.,
+                0., 0., 1., 0.,
                 1., 0., 0., 0.
         });
+        double[] cateogoryWeights = new double[]{0.2, 0.8};
+        beagle.setCategoryWeights(0, cateogoryWeights);
         int[] operations = new int[]{
                 3, 0, 0, 0, 0, 1, 1,
                 4, 0, 0, 3, 3, 2, 2
@@ -74,7 +113,14 @@ public class ActionBeagleTest extends MathTestCase {
         double[] seePartials = new double[partialsSize];
         beagle.getPartials(4, 0, seePartials);
 
-        System.err.println("here");
+        beagle.setStateFrequencies(0, stationaryFrequency);
+        int rootIndex = 4;
+        double[] sumLogLikelihoods = new double[1];
+        beagle.calculateRootLogLikelihoods(new int[]{rootIndex}, new int[]{0}, new int[]{0},
+                new int[]{0}, 1, sumLogLikelihoods);
+
+        double logL = sumLogLikelihoods[0];
+
 
 
 

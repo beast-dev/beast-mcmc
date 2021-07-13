@@ -30,6 +30,11 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
     }
 
     @Override
+    public double getCoefficient(int i) {
+        return 0;
+    }
+
+    @Override
     public Parameter getLocalScale() { return localScale; }
 
     @Override

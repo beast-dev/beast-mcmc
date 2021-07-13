@@ -19,6 +19,11 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
     }
 
     @Override
+    public double getCoefficient(int i) {
+        return 0;
+    }
+
+    @Override
     public Parameter getLocalScale() {
         return null;
     }

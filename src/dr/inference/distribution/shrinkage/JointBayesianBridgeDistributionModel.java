@@ -31,7 +31,7 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
 
     @Override
     public double getCoefficient(int i) {
-        return 0;
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override

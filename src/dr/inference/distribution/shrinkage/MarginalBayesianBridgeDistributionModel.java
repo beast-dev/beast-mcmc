@@ -20,7 +20,7 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
 
     @Override
     public double getCoefficient(int i) {
-        return 0;
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override

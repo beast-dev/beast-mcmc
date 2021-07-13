@@ -33,6 +33,7 @@ import org.newejml.dense.row.CommonOps_DDRM;
 import org.newejml.dense.row.NormOps_DDRM;
 import org.newejml.sparse.csc.CommonOps_DSCC;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,7 +57,7 @@ public class ActionBeagleDelegate implements Beagle {
     protected int partialsSize;
     protected int matrixSize;
     protected double[][] cMatrices;
-    protected double[][] stateFrequencies;
+    protected double[] stateFrequencies;
     protected double[] categoryRates;
     protected double[] categoryWeights;
     protected double[] patternWeights;
@@ -86,6 +87,7 @@ public class ActionBeagleDelegate implements Beagle {
         this.categoryWeights = new double[categoryCount];
         this.categoryRates = new double[categoryCount];
         this.patternWeights = new double[patternCount];
+        this.stateFrequencies = new double[stateCount];
         this.partials = new DMatrixRMaj[partialsBufferCount];
         for (int i = 0; i < partialsBufferCount; i++) {
             partials[i] = new DMatrixRMaj(patternCount * categoryCount, stateCount);
@@ -174,12 +176,12 @@ public class ActionBeagleDelegate implements Beagle {
 
     @Override
     public void setStateFrequencies(int i, double[] doubles) {
-        System.arraycopy(doubles, 0, this.stateFrequencies[i], 0, this.stateCount);
+        System.arraycopy(doubles, 0, this.stateFrequencies, 0, this.stateCount);
     }
 
     @Override
     public void setCategoryWeights(int i, double[] doubles) {
-        System.arraycopy(doubles, 0, this.categoryWeights[i], 0, this.categoryCount);
+        System.arraycopy(doubles, 0, this.categoryWeights, 0, this.categoryCount);
     }
 
     @Override
@@ -535,12 +537,25 @@ public class ActionBeagleDelegate implements Beagle {
 
     @Override
     public void calculateRootLogLikelihoods(int[] ints, int[] ints1, int[] ints2, int[] ints3, int i, double[] doubles) {
+        DMatrixRMaj partial = new DMatrixRMaj(stateCount, patternCount * categoryCount);
+        DMatrixRMaj rootPartial = CommonOps_DDRM.transpose(partials[ints[0]], null);
+        // prepare patternCount-expanded weight vector
+        double[] weights = new double[patternCount * categoryCount];
+        for (int j = 0; j < categoryCount; j++) {
+            Arrays.fill(weights, patternCount * j, patternCount * (j + 1), categoryWeights[j]);
+        }
 
+        CommonOps_DDRM.multCols(rootPartial, weights);
+        CommonOps_DDRM.multRows(stateFrequencies, rootPartial);
+        rootPartial.reshape(categoryCount * stateCount, patternCount, true);
+        DMatrixRMaj colSums = CommonOps_DDRM.sumCols(rootPartial, null);
+        DMatrixRMaj siteLogL = CommonOps_DDRM.elementLog(colSums, null);
+        doubles[0] = CommonOps_DDRM.elementSum(siteLogL);
     }
 
     @Override
     public void calculateRootLogLikelihoodsByPartition(int[] ints, int[] ints1, int[] ints2, int[] ints3, int[] ints4, int i, int i1, double[] doubles, double[] doubles1) {
-
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override

@@ -33,7 +33,6 @@ import org.newejml.dense.row.CommonOps_DDRM;
 import org.newejml.dense.row.NormOps_DDRM;
 import org.newejml.sparse.csc.CommonOps_DSCC;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,7 +60,7 @@ public class ActionBeagleDelegate implements Beagle {
     protected double[] categoryRates;
     protected double[] categoryWeights;
     protected double[] patternWeights;
-    protected DMatrixRMaj[] partials;
+    protected DMatrixRMaj[][] partials;
     protected int[][] scalingFactorCounts;
     protected double[][] matrices;
     double[] tmpPartials;
@@ -89,9 +88,11 @@ public class ActionBeagleDelegate implements Beagle {
         this.categoryRates = new double[categoryCount];
         this.patternWeights = new double[patternCount];
         this.stateFrequencies = new double[stateCount];
-        this.partials = new DMatrixRMaj[partialsBufferCount];
+        this.partials = new DMatrixRMaj[partialsBufferCount][categoryCount];
         for (int i = 0; i < partialsBufferCount; i++) {
-            partials[i] = new DMatrixRMaj(patternCount * categoryCount, stateCount);
+            for (int j = 0; j < categoryCount; j++) {
+                partials[i][j] = new DMatrixRMaj(patternCount, stateCount);
+            }
         }
         this.instantaneousMatrices = instantaneousMatrices;
         this.evolutionaryProcessDelegate = evolutionaryProcessDelegate;
@@ -133,10 +134,17 @@ public class ActionBeagleDelegate implements Beagle {
         assert(i >= 0 && i < tipCount);
         assert(doubles.length == partialsSize);
         if (partials[i] == null) {
-            partials[i] = new DMatrixRMaj(patternCount * categoryCount, stateCount);
+            for (int j = 0; j < categoryCount; j++) {
+                partials[i][j] = new DMatrixRMaj(patternCount, stateCount);
+            }
         }
 
-        partials[i].set(patternCount * categoryCount, stateCount, true, doubles);
+        double[] categoryData = new double[patternCount * stateCount];
+        for (int j = 0; j < categoryCount; j++) {
+            System.arraycopy(doubles, j * patternCount * stateCount, categoryData, 0, patternCount * stateCount);
+            partials[i][j].set(patternCount, stateCount, true, categoryData);
+        }
+
     }
 //
 //    private int getPartialIndex(int i) {  // TODO: use BufferIndexHelper by XJ
@@ -154,16 +162,24 @@ public class ActionBeagleDelegate implements Beagle {
         assert(doubles.length == partialsSize);
 
         if (partials[i] == null) {
-            partials[i] = new DMatrixRMaj(stateCount, patternCount * categoryCount);
+            for (int j = 0; j < categoryCount; j++) {
+                partials[i][j] = new DMatrixRMaj(patternCount, stateCount);
+            }
         }
 
-        partials[i].set(patternCount * categoryCount, stateCount, true, doubles);
+        double[] categoryData = new double[patternCount * stateCount];
+        for (int j = 0; j < categoryCount; j++) {
+            System.arraycopy(doubles, j * patternCount * stateCount, categoryData, 0, patternCount * stateCount);
+            partials[i][j].set(patternCount, stateCount, true, categoryData);
+        }
 
     }
 
     @Override
     public void getPartials(int i, int i1, double[] doubles) {
-        System.arraycopy(partials[i].getData(), 0, doubles, 0, partialsSize);
+        for (int j = 0; j < categoryCount; j++) {
+            System.arraycopy(partials[i][j].getData(), 0, doubles, j * patternCount * stateCount, patternCount * stateCount);
+        }
     }
 
     @Override
@@ -272,19 +288,22 @@ public class ActionBeagleDelegate implements Beagle {
             final int secondChildPartialIndex = ints[operation * operationSize + 5];
             final int secondChildSubstitutionMatrixIndex = ints[operation * operationSize + 6];
 
-            DMatrixRMaj leftPartial = partials[firstChildPartialIndex];
-            DMatrixRMaj rightPartial = partials[secondChildPartialIndex];
 
 //            DMatrixSparseCSC leftGeneratorMatrix = instantaneousMatrices[firstChildSubstitutionMatrixIndex];
 //            DMatrixSparseCSC rightGeneratorMatrix = instantaneousMatrices[secondChildSubstitutionMatrixIndex];
 
-            DMatrixSparseCSC leftGeneratorMatrix = evolutionaryProcessDelegate.getScaledInstantaneousMatrix(firstChildSubstitutionMatrixIndex);
-            DMatrixSparseCSC rightGeneratorMatrix = evolutionaryProcessDelegate.getScaledInstantaneousMatrix(secondChildSubstitutionMatrixIndex);
+            for (int j = 0; j < categoryCount; j++) {
+                DMatrixRMaj leftPartial = partials[firstChildPartialIndex][j];
+                DMatrixRMaj rightPartial = partials[secondChildPartialIndex][j];
 
-            DMatrixRMaj parentLeftPostPartial = simpleAction(leftGeneratorMatrix, leftPartial);
-            DMatrixRMaj parentRightPostPartial = simpleAction(rightGeneratorMatrix, rightPartial);
+                DMatrixSparseCSC leftGeneratorMatrix = evolutionaryProcessDelegate.getScaledInstantaneousMatrix(firstChildSubstitutionMatrixIndex);
+                DMatrixSparseCSC rightGeneratorMatrix = evolutionaryProcessDelegate.getScaledInstantaneousMatrix(secondChildSubstitutionMatrixIndex);
 
-            CommonOps_DDRM.elementMult(parentLeftPostPartial, parentRightPostPartial, partials[destinationPartialIndex]);
+                DMatrixRMaj parentLeftPostPartial = simpleAction(leftGeneratorMatrix, leftPartial);
+                DMatrixRMaj parentRightPostPartial = simpleAction(rightGeneratorMatrix, rightPartial);
+
+                CommonOps_DDRM.elementMult(parentLeftPostPartial, parentRightPostPartial, partials[destinationPartialIndex][j]);
+            }
         }
     }
 
@@ -542,17 +561,16 @@ public class ActionBeagleDelegate implements Beagle {
 
     @Override
     public void calculateRootLogLikelihoods(int[] ints, int[] ints1, int[] ints2, int[] ints3, int i, double[] doubles) {
-        DMatrixRMaj rootPartial = CommonOps_DDRM.transpose(partials[ints[0]], null);
-        // prepare patternCount-expanded weight vector
-        double[] weights = new double[patternCount * categoryCount];
+        DMatrixRMaj colSums = new DMatrixRMaj(1, patternCount, true, new double[patternCount]);
         for (int j = 0; j < categoryCount; j++) {
-            Arrays.fill(weights, patternCount * j, patternCount * (j + 1), categoryWeights[j]);
-        }
+            DMatrixRMaj rootPartial = CommonOps_DDRM.transpose(partials[ints[0]][j], null);
 
-        CommonOps_DDRM.multCols(rootPartial, weights);
-        CommonOps_DDRM.multRows(stateFrequencies, rootPartial);
-        rootPartial.reshape(categoryCount * stateCount, patternCount, true);
-        DMatrixRMaj colSums = CommonOps_DDRM.sumCols(rootPartial, null);
+            CommonOps_DDRM.scale(categoryWeights[j], rootPartial);
+
+            CommonOps_DDRM.multRows(stateFrequencies, rootPartial);
+            DMatrixRMaj singleCategoryColSum = CommonOps_DDRM.sumCols(rootPartial, null);
+            colSums = CommonOps_DDRM.add(singleCategoryColSum, colSums, null);
+        }
         DMatrixRMaj siteLogL = CommonOps_DDRM.elementLog(colSums, null);
         doubles[0] = CommonOps_DDRM.elementSum(siteLogL);
     }

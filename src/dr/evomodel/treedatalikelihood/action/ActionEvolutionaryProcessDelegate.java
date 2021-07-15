@@ -33,5 +33,5 @@ import org.newejml.data.DMatrixSparseCSC;
  * @author Marc Suchard
  */
 public interface ActionEvolutionaryProcessDelegate extends EvolutionaryProcessDelegate {
-    DMatrixSparseCSC getScaledInstantaneousMatrix(int nodeIndex);
+    DMatrixSparseCSC getScaledInstantaneousMatrix(int nodeIndex, double categoryRate);
 }

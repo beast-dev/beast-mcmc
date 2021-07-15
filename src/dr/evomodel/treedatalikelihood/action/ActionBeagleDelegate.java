@@ -288,16 +288,12 @@ public class ActionBeagleDelegate implements Beagle {
             final int secondChildPartialIndex = ints[operation * operationSize + 5];
             final int secondChildSubstitutionMatrixIndex = ints[operation * operationSize + 6];
 
-
-//            DMatrixSparseCSC leftGeneratorMatrix = instantaneousMatrices[firstChildSubstitutionMatrixIndex];
-//            DMatrixSparseCSC rightGeneratorMatrix = instantaneousMatrices[secondChildSubstitutionMatrixIndex];
-
             for (int j = 0; j < categoryCount; j++) {
                 DMatrixRMaj leftPartial = partials[firstChildPartialIndex][j];
                 DMatrixRMaj rightPartial = partials[secondChildPartialIndex][j];
 
-                DMatrixSparseCSC leftGeneratorMatrix = evolutionaryProcessDelegate.getScaledInstantaneousMatrix(firstChildSubstitutionMatrixIndex);
-                DMatrixSparseCSC rightGeneratorMatrix = evolutionaryProcessDelegate.getScaledInstantaneousMatrix(secondChildSubstitutionMatrixIndex);
+                DMatrixSparseCSC leftGeneratorMatrix = evolutionaryProcessDelegate.getScaledInstantaneousMatrix(firstChildSubstitutionMatrixIndex, categoryRates[j]);
+                DMatrixSparseCSC rightGeneratorMatrix = evolutionaryProcessDelegate.getScaledInstantaneousMatrix(secondChildSubstitutionMatrixIndex, categoryRates[j]);
 
                 DMatrixRMaj parentLeftPostPartial = simpleAction(leftGeneratorMatrix, leftPartial);
                 DMatrixRMaj parentRightPostPartial = simpleAction(rightGeneratorMatrix, rightPartial);

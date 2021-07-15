@@ -53,9 +53,9 @@ public class HomogeneousActionSubstitutionModelDelegate implements ActionEvoluti
 
 
     @Override
-    public DMatrixSparseCSC getScaledInstantaneousMatrix(int nodeIndex) {
+    public DMatrixSparseCSC getScaledInstantaneousMatrix(int nodeIndex, double categoryRate) {
         DMatrixSparseCSC scaledQ = DConvertMatrixStruct.convert(sparseQ, (DMatrixSparseCSC) null);
-        CommonOps_DSCC.scale(branchLengths[nodeIndex], scaledQ, scaledQ);
+        CommonOps_DSCC.scale(branchLengths[nodeIndex] * categoryRate, scaledQ, scaledQ);
         return scaledQ;
     }
 

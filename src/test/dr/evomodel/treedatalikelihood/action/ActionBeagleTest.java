@@ -1,6 +1,12 @@
 package test.dr.evomodel.treedatalikelihood.action;
 
+import dr.evolution.datatype.Nucleotides;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.treedatalikelihood.action.ActionBeagleDelegate;
+import dr.evomodel.treedatalikelihood.action.ActionEvolutionaryProcessDelegate;
+import dr.evomodel.treedatalikelihood.action.HomogeneousActionSubstitutionModelDelegate;
+import dr.inference.model.Parameter;
 import org.newejml.data.DMatrixSparseCSC;
 import org.newejml.data.DMatrixSparseTriplet;
 import org.newejml.ops.DConvertMatrixStruct;
@@ -40,10 +46,17 @@ public class ActionBeagleTest extends MathTestCase {
         }
     }
 
+
     public void testQsetup() {
         DMatrixSparseCSC Qc = DConvertMatrixStruct.convert(Q, (DMatrixSparseCSC) null);
+        Parameter kappa = new Parameter.Default(3.0);
+        Parameter pi = new Parameter.Default(new double[]{0.1, 0.3, 0.2, 0.4});
+        FrequencyModel frequencyModel = new FrequencyModel(Nucleotides.INSTANCE, pi);
+        HKY hky = new HKY(kappa, frequencyModel);
+        ActionEvolutionaryProcessDelegate evolutionaryProcessDelegate = new HomogeneousActionSubstitutionModelDelegate(hky, 5);
         this.beagle = new ActionBeagleDelegate(tipCount, partialsBufferCount, patternCount,
-                stateCount, categoryCount, matrixBufferCount, partialsSize, new DMatrixSparseCSC[]{Qc.copy(), Qc.copy(), Qc.copy(), Qc.copy()});
+                stateCount, categoryCount, matrixBufferCount, partialsSize, evolutionaryProcessDelegate);
+        evolutionaryProcessDelegate.updateSubstitutionModels(beagle, false);
 
         // nCategory = 1;
 //        beagle.setPartials(0, new double[]{
@@ -102,8 +115,15 @@ public class ActionBeagleTest extends MathTestCase {
                 0., 0., 1., 0.,
                 1., 0., 0., 0.
         });
-        double[] cateogoryWeights = new double[]{0.2, 0.8};
-        beagle.setCategoryWeights(0, cateogoryWeights);
+        double[] categoryWeights = new double[]{0.2, 0.8};
+        beagle.setCategoryWeights(0, categoryWeights);
+        double[] categoryRates = new double[]{1.2, 0.5};
+        beagle.setCategoryRates(categoryRates);
+        evolutionaryProcessDelegate.updateTransitionMatrices(beagle,
+                new int[]{0, 1, 2, 3},
+                new double[]{0.1, 0.1, 0.2, 0.3},
+                4,
+                false);
         int[] operations = new int[]{
                 3, 0, 0, 0, 0, 1, 1,
                 4, 0, 0, 3, 3, 2, 2

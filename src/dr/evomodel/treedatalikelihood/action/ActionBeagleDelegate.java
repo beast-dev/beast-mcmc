@@ -68,6 +68,7 @@ public class ActionBeagleDelegate implements Beagle {
     protected double[] scalingFactors;
     protected double[] logScalingFactors;
     protected DMatrixSparseCSC[] instantaneousMatrices;
+    private final ActionEvolutionaryProcessDelegate evolutionaryProcessDelegate;
 
     public ActionBeagleDelegate(int tipCount,
                                 int partialsBufferCount,
@@ -76,7 +77,7 @@ public class ActionBeagleDelegate implements Beagle {
                                 int categoryCount,
                                 int matrixBufferCount,
                                 int partialsSize,
-                                DMatrixSparseCSC[] instantaneousMatrices) {
+                                ActionEvolutionaryProcessDelegate evolutionaryProcessDelegate) {
         this.tipCount = tipCount;
         this.partialsBufferCount = partialsBufferCount;
         this.patternCount = patternCount;
@@ -93,6 +94,7 @@ public class ActionBeagleDelegate implements Beagle {
             partials[i] = new DMatrixRMaj(patternCount * categoryCount, stateCount);
         }
         this.instantaneousMatrices = instantaneousMatrices;
+        this.evolutionaryProcessDelegate = evolutionaryProcessDelegate;
     }
 
     @Override
@@ -273,8 +275,11 @@ public class ActionBeagleDelegate implements Beagle {
             DMatrixRMaj leftPartial = partials[firstChildPartialIndex];
             DMatrixRMaj rightPartial = partials[secondChildPartialIndex];
 
-            DMatrixSparseCSC leftGeneratorMatrix = instantaneousMatrices[firstChildSubstitutionMatrixIndex];
-            DMatrixSparseCSC rightGeneratorMatrix = instantaneousMatrices[secondChildSubstitutionMatrixIndex];
+//            DMatrixSparseCSC leftGeneratorMatrix = instantaneousMatrices[firstChildSubstitutionMatrixIndex];
+//            DMatrixSparseCSC rightGeneratorMatrix = instantaneousMatrices[secondChildSubstitutionMatrixIndex];
+
+            DMatrixSparseCSC leftGeneratorMatrix = evolutionaryProcessDelegate.getScaledInstantaneousMatrix(firstChildSubstitutionMatrixIndex);
+            DMatrixSparseCSC rightGeneratorMatrix = evolutionaryProcessDelegate.getScaledInstantaneousMatrix(secondChildSubstitutionMatrixIndex);
 
             DMatrixRMaj parentLeftPostPartial = simpleAction(leftGeneratorMatrix, leftPartial);
             DMatrixRMaj parentRightPostPartial = simpleAction(rightGeneratorMatrix, rightPartial);
@@ -537,7 +542,6 @@ public class ActionBeagleDelegate implements Beagle {
 
     @Override
     public void calculateRootLogLikelihoods(int[] ints, int[] ints1, int[] ints2, int[] ints3, int i, double[] doubles) {
-        DMatrixRMaj partial = new DMatrixRMaj(stateCount, patternCount * categoryCount);
         DMatrixRMaj rootPartial = CommonOps_DDRM.transpose(partials[ints[0]], null);
         // prepare patternCount-expanded weight vector
         double[] weights = new double[patternCount * categoryCount];

@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.action;
 
 import beagle.Beagle;
 import beagle.InstanceDetails;
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import org.newejml.data.DMatrixRMaj;
 import org.newejml.data.DMatrixSparseCSC;
 import org.newejml.dense.row.CommonOps_DDRM;
@@ -68,6 +69,9 @@ public class ActionBeagleDelegate implements Beagle {
     protected double[] logScalingFactors;
     protected DMatrixSparseCSC[] instantaneousMatrices;
     private final ActionEvolutionaryProcessDelegate evolutionaryProcessDelegate;
+    private final PartialsRescalingScheme rescalingScheme;
+    private final boolean[] activeScalingFactors;
+    private final DMatrixRMaj[] autoScalingBuffers;
 
     public ActionBeagleDelegate(int tipCount,
                                 int partialsBufferCount,
@@ -76,6 +80,7 @@ public class ActionBeagleDelegate implements Beagle {
                                 int categoryCount,
                                 int matrixBufferCount,
                                 int partialsSize,
+                                PartialsRescalingScheme rescalingScheme,
                                 ActionEvolutionaryProcessDelegate evolutionaryProcessDelegate) {
         this.tipCount = tipCount;
         this.partialsBufferCount = partialsBufferCount;
@@ -90,14 +95,18 @@ public class ActionBeagleDelegate implements Beagle {
         this.stateFrequencies = new double[stateCount];
         this.partials = new DMatrixRMaj[partialsBufferCount][categoryCount];
         this.scalingFactors = new DMatrixRMaj[partialsBufferCount];
+        this.autoScalingBuffers = new DMatrixRMaj[partialsBufferCount];
+        this.activeScalingFactors = new boolean[partialsBufferCount];
         for (int i = 0; i < partialsBufferCount; i++) {
             for (int j = 0; j < categoryCount; j++) {
                 partials[i][j] = new DMatrixRMaj(patternCount, stateCount);
             }
             scalingFactors[i] = new DMatrixRMaj(1, patternCount);
+            autoScalingBuffers[i] = new DMatrixRMaj(1, patternCount);
         }
         this.instantaneousMatrices = instantaneousMatrices;
         this.evolutionaryProcessDelegate = evolutionaryProcessDelegate;
+        this.rescalingScheme = rescalingScheme;
     }
 
     @Override
@@ -548,9 +557,29 @@ public class ActionBeagleDelegate implements Beagle {
         throw new RuntimeException("Not yet implemented");
     }
 
-    @Override
-    public void accumulateScaleFactors(int[] ints, int i, int i1) {
+    private static final double kLn2 = Math.log(2);
 
+    @Override
+    public void accumulateScaleFactors(int[] scalingIndices, int count, int cumulativeScalingIndex) {
+        if (rescalingScheme == PartialsRescalingScheme.AUTO) {
+            DMatrixRMaj cumulativeScaleBuffer = scalingFactors[0];
+            cumulativeScaleBuffer.fill(0.0);
+            for (int j = 0; j < count; j++) {
+                final int sIndex = scalingIndices[j] - tipCount;
+                if (activeScalingFactors[sIndex]) {
+                    DMatrixRMaj scaleBuffer = autoScalingBuffers[sIndex];
+                    cumulativeScaleBuffer = CommonOps_DDRM.add(cumulativeScaleBuffer, kLn2, scaleBuffer);
+                }
+            }
+            throw new RuntimeException("Not tested yet.");
+        } else {
+            DMatrixRMaj cumulativeScaleBuffer = scalingFactors[cumulativeScalingIndex];
+            for (int j = 0; j < count; j++) {
+                DMatrixRMaj scaleBuffer = scalingFactors[scalingIndices[j]];
+                //TODO: enable BEAGLE_FLAG_SCALERS_LOG switch
+                cumulativeScaleBuffer = CommonOps_DDRM.add(cumulativeScaleBuffer, scaleBuffer, null);
+            }
+        }
     }
 
     @Override
@@ -575,7 +604,7 @@ public class ActionBeagleDelegate implements Beagle {
 
     @Override
     public void resetScaleFactors(int i) {
-
+        scalingFactors[i].fill(0.0);
     }
 
     @Override

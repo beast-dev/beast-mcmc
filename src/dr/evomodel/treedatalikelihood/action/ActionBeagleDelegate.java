@@ -59,12 +59,12 @@ public class ActionBeagleDelegate implements Beagle {
     protected double[] stateFrequencies;
     protected double[] categoryRates;
     protected double[] categoryWeights;
-    protected double[] patternWeights;
+    protected DMatrixRMaj patternWeights;
     protected DMatrixRMaj[][] partials;
     protected int[][] scalingFactorCounts;
     protected double[][] matrices;
     double[] tmpPartials;
-    protected double[][] scalingFactors;
+    protected DMatrixRMaj[] scalingFactors;
     protected double[] logScalingFactors;
     protected DMatrixSparseCSC[] instantaneousMatrices;
     private final ActionEvolutionaryProcessDelegate evolutionaryProcessDelegate;
@@ -86,17 +86,18 @@ public class ActionBeagleDelegate implements Beagle {
         this.partialsSize = partialsSize;
         this.categoryWeights = new double[categoryCount];
         this.categoryRates = new double[categoryCount];
-        this.patternWeights = new double[patternCount];
+        this.patternWeights = new DMatrixRMaj(1, patternCount);
         this.stateFrequencies = new double[stateCount];
         this.partials = new DMatrixRMaj[partialsBufferCount][categoryCount];
+        this.scalingFactors = new DMatrixRMaj[partialsBufferCount];
         for (int i = 0; i < partialsBufferCount; i++) {
             for (int j = 0; j < categoryCount; j++) {
                 partials[i][j] = new DMatrixRMaj(patternCount, stateCount);
             }
+            scalingFactors[i] = new DMatrixRMaj(1, patternCount);
         }
         this.instantaneousMatrices = instantaneousMatrices;
         this.evolutionaryProcessDelegate = evolutionaryProcessDelegate;
-        this.scalingFactors = new double[partialsBufferCount][patternCount];
     }
 
     @Override
@@ -112,7 +113,7 @@ public class ActionBeagleDelegate implements Beagle {
     @Override
     public void setPatternWeights(double[] doubles) {
         assert(doubles.length == patternCount);
-        System.arraycopy(doubles, 0, patternWeights, 0, doubles.length);
+        patternWeights.setData(doubles);
     }
 
     @Override
@@ -281,6 +282,7 @@ public class ActionBeagleDelegate implements Beagle {
     @Override
     public void calculateRootLogLikelihoods(int[] ints, int[] ints1, int[] ints2, int[] ints3, int i, double[] doubles) {
         DMatrixRMaj colSums = new DMatrixRMaj(1, patternCount, true, new double[patternCount]);
+        final int cumulateScaleBufferIndex = ints3[0];
         for (int j = 0; j < categoryCount; j++) {
             DMatrixRMaj rootPartial = CommonOps_DDRM.transpose(partials[ints[0]][j], null);
 
@@ -291,6 +293,13 @@ public class ActionBeagleDelegate implements Beagle {
             colSums = CommonOps_DDRM.add(singleCategoryColSum, colSums, null);
         }
         DMatrixRMaj siteLogL = CommonOps_DDRM.elementLog(colSums, null);
+
+        if (cumulateScaleBufferIndex >= 0) {
+            DMatrixRMaj cumulativeScaleFactors = scalingFactors[cumulateScaleBufferIndex];
+            siteLogL = CommonOps_DDRM.add(siteLogL, cumulativeScaleFactors, null);
+        }
+
+        siteLogL = CommonOps_DDRM.elementMult(siteLogL, patternWeights, null);
         doubles[0] = CommonOps_DDRM.elementSum(siteLogL);
     }
 

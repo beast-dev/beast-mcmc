@@ -6,6 +6,7 @@ import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.treedatalikelihood.action.ActionBeagleDelegate;
 import dr.evomodel.treedatalikelihood.action.ActionEvolutionaryProcessDelegate;
 import dr.evomodel.treedatalikelihood.action.HomogeneousActionSubstitutionModelDelegate;
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.Parameter;
 import org.newejml.data.DMatrixSparseCSC;
 import org.newejml.data.DMatrixSparseTriplet;
@@ -53,9 +54,11 @@ public class ActionBeagleTest extends MathTestCase {
         Parameter pi = new Parameter.Default(new double[]{0.1, 0.3, 0.2, 0.4});
         FrequencyModel frequencyModel = new FrequencyModel(Nucleotides.INSTANCE, pi);
         HKY hky = new HKY(kappa, frequencyModel);
+        PartialsRescalingScheme rescalingScheme = PartialsRescalingScheme.AUTO;
         ActionEvolutionaryProcessDelegate evolutionaryProcessDelegate = new HomogeneousActionSubstitutionModelDelegate(hky, 5);
         this.beagle = new ActionBeagleDelegate(tipCount, partialsBufferCount, patternCount,
-                stateCount, categoryCount, matrixBufferCount, partialsSize, evolutionaryProcessDelegate);
+                stateCount, categoryCount, matrixBufferCount, partialsSize,
+                rescalingScheme, evolutionaryProcessDelegate);
         evolutionaryProcessDelegate.updateSubstitutionModels(beagle, false);
 
         // nCategory = 1;
@@ -115,6 +118,8 @@ public class ActionBeagleTest extends MathTestCase {
                 0., 0., 1., 0.,
                 1., 0., 0., 0.
         });
+        double[] patternWeights = new double[]{1.0, 1.0, 1.0, 1.0, 1.0};
+        beagle.setPatternWeights(patternWeights);
         double[] categoryWeights = new double[]{0.2, 0.8};
         beagle.setCategoryWeights(0, categoryWeights);
         double[] categoryRates = new double[]{1.2, 0.5};

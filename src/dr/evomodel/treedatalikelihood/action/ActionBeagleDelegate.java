@@ -64,7 +64,7 @@ public class ActionBeagleDelegate implements Beagle {
     protected int[][] scalingFactorCounts;
     protected double[][] matrices;
     double[] tmpPartials;
-    protected double[] scalingFactors;
+    protected double[][] scalingFactors;
     protected double[] logScalingFactors;
     protected DMatrixSparseCSC[] instantaneousMatrices;
     private final ActionEvolutionaryProcessDelegate evolutionaryProcessDelegate;
@@ -96,6 +96,7 @@ public class ActionBeagleDelegate implements Beagle {
         }
         this.instantaneousMatrices = instantaneousMatrices;
         this.evolutionaryProcessDelegate = evolutionaryProcessDelegate;
+        this.scalingFactors = new double[partialsBufferCount][patternCount];
     }
 
     @Override
@@ -277,12 +278,30 @@ public class ActionBeagleDelegate implements Beagle {
         throw new RuntimeException("Not yet implemented");
     }
 
-    final int operationSize = 7;
+    @Override
+    public void calculateRootLogLikelihoods(int[] ints, int[] ints1, int[] ints2, int[] ints3, int i, double[] doubles) {
+        DMatrixRMaj colSums = new DMatrixRMaj(1, patternCount, true, new double[patternCount]);
+        for (int j = 0; j < categoryCount; j++) {
+            DMatrixRMaj rootPartial = CommonOps_DDRM.transpose(partials[ints[0]][j], null);
+
+            CommonOps_DDRM.scale(categoryWeights[j], rootPartial);
+
+            CommonOps_DDRM.multRows(stateFrequencies, rootPartial);
+            DMatrixRMaj singleCategoryColSum = CommonOps_DDRM.sumCols(rootPartial, null);
+            colSums = CommonOps_DDRM.add(singleCategoryColSum, colSums, null);
+        }
+        DMatrixRMaj siteLogL = CommonOps_DDRM.elementLog(colSums, null);
+        doubles[0] = CommonOps_DDRM.elementSum(siteLogL);
+    }
+
+    final private int operationSize = 7;
 
     @Override
     public void updatePartials(int[] ints, int i, int i1) {
         for (int operation = 0; operation < i; operation ++) {
             final int destinationPartialIndex = ints[operation * operationSize];
+            final int writeScaleIndex = ints[operation * operationSize + 1];
+            final int readScaleIndex = ints[operation * operationSize + 2];
             final int firstChildPartialIndex = ints[operation * operationSize + 3];
             final int firstChildSubstitutionMatrixIndex = ints[operation * operationSize + 4];
             final int secondChildPartialIndex = ints[operation * operationSize + 5];
@@ -553,22 +572,6 @@ public class ActionBeagleDelegate implements Beagle {
     @Override
     public void resetScaleFactorsByPartition(int i, int i1) {
 
-    }
-
-    @Override
-    public void calculateRootLogLikelihoods(int[] ints, int[] ints1, int[] ints2, int[] ints3, int i, double[] doubles) {
-        DMatrixRMaj colSums = new DMatrixRMaj(1, patternCount, true, new double[patternCount]);
-        for (int j = 0; j < categoryCount; j++) {
-            DMatrixRMaj rootPartial = CommonOps_DDRM.transpose(partials[ints[0]][j], null);
-
-            CommonOps_DDRM.scale(categoryWeights[j], rootPartial);
-
-            CommonOps_DDRM.multRows(stateFrequencies, rootPartial);
-            DMatrixRMaj singleCategoryColSum = CommonOps_DDRM.sumCols(rootPartial, null);
-            colSums = CommonOps_DDRM.add(singleCategoryColSum, colSums, null);
-        }
-        DMatrixRMaj siteLogL = CommonOps_DDRM.elementLog(colSums, null);
-        doubles[0] = CommonOps_DDRM.elementSum(siteLogL);
     }
 
     @Override

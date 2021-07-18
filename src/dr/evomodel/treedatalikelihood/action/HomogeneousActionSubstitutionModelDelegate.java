@@ -137,7 +137,7 @@ public class HomogeneousActionSubstitutionModelDelegate implements ActionEvoluti
 
     @Override
     public int getMatrixIndex(int branchIndex) {
-        throw new RuntimeException("Not yet implemented.");
+        return branchIndex;
     }
 
     @Override

@@ -22,7 +22,6 @@ public class ActionBeagleTest extends MathTestCase {
     private int tipCount = 3;
     private int stateCount = 4;
     private int categoryCount = 2;
-    private int matrixBufferCount = 4;
     private int partialsSize;
     private int partialsBufferCount;
 
@@ -57,7 +56,7 @@ public class ActionBeagleTest extends MathTestCase {
         PartialsRescalingScheme rescalingScheme = PartialsRescalingScheme.AUTO;
         ActionEvolutionaryProcessDelegate evolutionaryProcessDelegate = new HomogeneousActionSubstitutionModelDelegate(hky, 5);
         this.beagle = new ActionBeagleDelegate(tipCount, partialsBufferCount, patternCount,
-                stateCount, categoryCount, matrixBufferCount, partialsSize,
+                stateCount, categoryCount, partialsSize,
                 rescalingScheme, evolutionaryProcessDelegate);
         evolutionaryProcessDelegate.updateSubstitutionModels(beagle, false);
 

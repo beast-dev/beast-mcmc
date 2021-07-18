@@ -34,6 +34,7 @@ import org.newejml.dense.row.CommonOps_DDRM;
 import org.newejml.dense.row.NormOps_DDRM;
 import org.newejml.sparse.csc.CommonOps_DSCC;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,7 +53,6 @@ public class ActionBeagleDelegate implements Beagle {
     protected final int partialsBufferCount;
     protected final int stateCount;
     protected final int patternCount;
-    protected final int matrixBufferCount;
     protected final int categoryCount;
     protected int partialsSize;
     protected int matrixSize;
@@ -78,7 +78,6 @@ public class ActionBeagleDelegate implements Beagle {
                                 int patternCount,
                                 int stateCount,
                                 int categoryCount,
-                                int matrixBufferCount,
                                 int partialsSize,
                                 PartialsRescalingScheme rescalingScheme,
                                 ActionEvolutionaryProcessDelegate evolutionaryProcessDelegate) {
@@ -87,7 +86,6 @@ public class ActionBeagleDelegate implements Beagle {
         this.patternCount = patternCount;
         this.stateCount = stateCount;
         this.categoryCount = categoryCount;
-        this.matrixBufferCount = matrixBufferCount;
         this.partialsSize = partialsSize;
         this.categoryWeights = new double[categoryCount];
         this.categoryRates = new double[categoryCount];
@@ -132,7 +130,18 @@ public class ActionBeagleDelegate implements Beagle {
 
     @Override
     public void setTipStates(int i, int[] ints) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        double[] translatedTipPartials = new double[ints.length * stateCount * categoryCount];
+        for (int category = 0; category < categoryCount; category++) {
+            for (int j = 0; j < ints.length; j++) {
+                if (ints[j] < stateCount) {
+                    translatedTipPartials[category * stateCount * patternCount + stateCount * j + ints[j]] = 1.0;
+                } else {
+                    Arrays.fill(translatedTipPartials, category * stateCount * patternCount + stateCount * j,
+                            category * stateCount * patternCount + stateCount * (j + 1), 1.0);
+                }
+            }
+        }
+        setTipPartials(i, translatedTipPartials);
     }
 
     @Override

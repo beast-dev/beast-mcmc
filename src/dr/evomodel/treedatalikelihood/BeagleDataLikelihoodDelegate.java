@@ -184,6 +184,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
                 if (branchModel.getSubstitutionModels().size() == 1) {
                     evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
+//                    evolutionaryProcessDelegate = new HomogeneousActionSubstitutionModelDelegate(branchModel.getSubstitutionModels().get(0), nodeCount);
                 } else {
                     // use a more general delegate that allows different substitution models on different branches and
                     // can do matrix convolution.
@@ -413,6 +414,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     requirementFlags
             );
 
+//            beagle = new ActionBeagleDelegate(tipCount, numPartials, patternCount,
+//                    stateCount, categoryCount, stateCount * patternCount * categoryCount,
+//                    rescalingScheme, (ActionEvolutionaryProcessDelegate) evolutionaryProcessDelegate);
             InstanceDetails instanceDetails = beagle.getDetails();
             ResourceDetails resourceDetails = null;
 
@@ -440,6 +444,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             }
 
             instanceFlags = instanceDetails.getFlags();
+//            instanceFlags = 1209043542;
 
             if (IS_THREAD_COUNT_COMPATIBLE() && threadCount > 1) {
                 beagle.setCPUThreadCount(threadCount);

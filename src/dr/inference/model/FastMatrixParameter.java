@@ -186,7 +186,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         }
 
         @Override
-        public void fireParameterChangedEvent(int index, ChangeType type){
+        public void fireParameterChangedEvent(int index, ChangeType type) {
             matrix.fireParameterChangedEvent(index + column * getDimension(), type);
             super.fireParameterChangedEvent(index, ChangeType.VALUE_CHANGED);
         }
@@ -299,11 +299,11 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         return super.getParameter(0);
     }
 
-    public void addBounds(Bounds<Double> boundary){
+    public void addBounds(Bounds<Double> boundary) {
         singleParameter.addBounds(boundary);
     }
 
-    public Bounds<Double> getBounds(){
+    public Bounds<Double> getBounds() {
         return singleParameter.getBounds();
     }
 

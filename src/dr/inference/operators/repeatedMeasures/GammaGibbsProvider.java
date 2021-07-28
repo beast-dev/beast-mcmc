@@ -116,6 +116,7 @@ public interface GammaGibbsProvider {
         private final boolean[] missingVector;
 
         private double[] tipValues;
+        private boolean hasCheckedDimension = false;
 
         public NormalExtensionGibbsProvider(ModelExtensionProvider.NormalExtensionProvider dataModel,
                                             TreeDataLikelihood treeLikelihood) {
@@ -146,6 +147,14 @@ public interface GammaGibbsProvider {
 
             final int taxonCount = treeLikelihood.getTree().getExternalNodeCount();
             final int traitDim = dataModel.getDataDimension();
+
+            if (!hasCheckedDimension) { //TODO: actually check that this works
+                if (taxonCount * traitDim != tipValues.length) {
+                    throw new RuntimeException("dimensions are incompatible");
+                }
+                hasCheckedDimension = true;
+            }
+
             int missingCount = 0;
 
             double SSE = 0;

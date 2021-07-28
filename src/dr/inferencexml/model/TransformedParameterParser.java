@@ -25,8 +25,6 @@
 
 package dr.inferencexml.model;
 
-import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.MatrixTransformedParameter;
 import dr.inference.model.Parameter;
 import dr.inference.model.TransformedParameter;
 import dr.util.Transform;
@@ -39,23 +37,12 @@ public class TransformedParameterParser extends AbstractXMLObjectParser {
 
     public static final String TRANSFORMED_PARAMETER = "transformedParameter";
     public static final String INVERSE = "inverse";
-    public static final String AS_MATRIX = "asMatrix";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
         final Transform.ParsedTransform parsedTransform = (Transform.ParsedTransform) xo.getChild(Transform.ParsedTransform.class);
         final boolean inverse = xo.getAttribute(INVERSE, false);
-
-        final boolean asMatrix = xo.getAttribute(AS_MATRIX, false);
-        if (asMatrix) {
-            if (parameter instanceof MatrixParameterInterface) {
-                return new MatrixTransformedParameter((MatrixParameterInterface) parameter, parsedTransform.transform, inverse);
-            } else {
-                throw new XMLParseException("'asMatrix' is 'true' but the supplied parameter is not a matrix. " +
-                        "Not currently implemented.");
-            }
-        }
 
         TransformedParameter transformedParameter = new TransformedParameter(parameter, parsedTransform.transform, inverse);
         return transformedParameter;
@@ -69,7 +56,7 @@ public class TransformedParameterParser extends AbstractXMLObjectParser {
             new ElementRule(Parameter.class),
             new ElementRule(Transform.ParsedTransform.class),
             AttributeRule.newBooleanRule(INVERSE, true),
-            AttributeRule.newBooleanRule(AS_MATRIX, true)
+
     };
 
     public String getParserDescription() {

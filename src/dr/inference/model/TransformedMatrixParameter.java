@@ -3,12 +3,12 @@ package dr.inference.model;
 import dr.util.Transform;
 
 
-public class MatrixTransformedParameter extends TransformedMultivariateParameter implements MatrixParameterInterface {
+public class TransformedMatrixParameter extends TransformedMultivariateParameter implements MatrixParameterInterface {
 
     private final int rowDim;
     private final int colDim;
 
-    public MatrixTransformedParameter(Parameter parameter, Transform.MultivariableTransform transform,
+    public TransformedMatrixParameter(Parameter parameter, Transform.MultivariableTransform transform,
                                       Boolean inverse, int rowDim, int colDim) {
         super(parameter, transform, inverse);
         this.rowDim = rowDim;
@@ -16,7 +16,7 @@ public class MatrixTransformedParameter extends TransformedMultivariateParameter
     }
 
 
-    public MatrixTransformedParameter(MatrixParameterInterface parameter, Transform.MultivariableTransform transform,
+    public TransformedMatrixParameter(MatrixParameterInterface parameter, Transform.MultivariableTransform transform,
                                       Boolean inverse) {
         this(parameter, transform, inverse, parameter.getRowDimension(), parameter.getColumnDimension());
     }

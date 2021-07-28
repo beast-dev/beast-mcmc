@@ -47,7 +47,7 @@ public class TransformedMultivariateParameterParser extends AbstractXMLObjectPar
         final boolean asMatrix = xo.getAttribute(AS_MATRIX, false);
         if (asMatrix) {
             if (parameter instanceof MatrixParameterInterface) {
-                transformedParameter = new MatrixTransformedParameter((MatrixParameterInterface) parameter, transform, inverse);
+                transformedParameter = new TransformedMatrixParameter((MatrixParameterInterface) parameter, transform, inverse);
             } else {
                 throw new XMLParseException("'asMatrix' is 'true' but the supplied parameter is not a matrix. " +
                         "Not currently implemented.");

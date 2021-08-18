@@ -21,7 +21,10 @@ import java.util.ArrayList;
 
 public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarloOperator implements Reportable {
 
-    public GeodesicHamiltonianMonteCarloOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider, Parameter parameter, Transform transform, Parameter maskParameter, Options runtimeOptions, MassPreconditioner preconditioner) {
+    public GeodesicHamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
+                                                 GradientWrtParameterProvider gradientProvider, Parameter parameter,
+                                                 Transform transform, Parameter maskParameter, Options runtimeOptions,
+                                                 MassPreconditioner preconditioner) {
         super(mode, weight, gradientProvider, parameter, transform, maskParameter, runtimeOptions, preconditioner);
         this.leapFrogEngine = new GeodesicLeapFrogEngine(parameter, getDefaultInstabilityHandler(), preconditioning, mask);
     }
@@ -79,6 +82,10 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
         return sb.toString();
     }
 
+    public void setOrthogonalityStructure(ArrayList<int[]> oldOrthogonalityStructure) {
+        ((GeodesicLeapFrogEngine) leapFrogEngine).setOrthogonalityStructure(oldOrthogonalityStructure);
+    }
+
 
     public static class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFrogEngine.Default {
 
@@ -93,6 +100,7 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
 
         private final int[] subRows;
         private final int[] subColumns;
+        private final ArrayList<int[]> orthogonalityStructure;
 
 
         GeodesicLeapFrogEngine(Parameter parameter, HamiltonianMonteCarloOperator.InstabilityHandler instabilityHandler,
@@ -100,10 +108,12 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
             super(parameter, instabilityHandler, preconditioning, mask);
             this.matrixParameter = (MatrixParameterInterface) parameter;
 
-
             this.subRows = parseSubRowsFromMask();
             this.subColumns = parseSubColumnsFromMask();
             if (mask != null) checkMask(subRows, subColumns);
+
+            this.orthogonalityStructure = new ArrayList<>();
+            orthogonalityStructure.add(subRows);
 
             this.nRows = subRows.length;
             this.nCols = subColumns.length;
@@ -112,6 +122,38 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
             this.innerProduct2 = new DenseMatrix64F(nCols, nCols);
             this.projection = new DenseMatrix64F(nCols, nRows);
             this.momentumMatrix = new DenseMatrix64F(nCols, nRows);
+        }
+
+        public void setOrthogonalityStructure(ArrayList<int[]> oldOrthogonalityStructure) {
+            orthogonalityStructure.clear();
+
+            ArrayList<Integer> subRowList = new ArrayList<>();
+            for (int i : subRows) {
+                subRowList.add(i);
+            }
+
+            //check that orthogonalityStructure is consistent with the subRows
+            ArrayList<Integer> alreadyOrthogonal = new ArrayList<>();
+
+            for (int i = 0; i < oldOrthogonalityStructure.size(); i++) {
+                for (int j = 0; j < oldOrthogonalityStructure.get(i).length; j++) {
+                    if (!subRowList.contains(oldOrthogonalityStructure.get(i)[j])) { //TODO: check that we're doing this by row (or allow to do by row or column)
+                        throw new RuntimeException("Cannot enforce orthogonality structure.");
+                    }
+                    if (alreadyOrthogonal.contains(oldOrthogonalityStructure.get(i)[j])) {
+                        throw new RuntimeException("Orthogonal blocks must be non-overlapping");
+                    }
+                    alreadyOrthogonal.add(oldOrthogonalityStructure.get(i)[j]);
+                    orthogonalityStructure.add(oldOrthogonalityStructure.get(i));
+                }
+            }
+
+            for (int i = 0; i < subRows.length; i++) {
+                if (!alreadyOrthogonal.contains(subRows[i])) {
+                    orthogonalityStructure.add(new int[]{subRows[i]});
+                }
+            }
+
         }
 
         private int[] parseSubColumnsFromMask() {
@@ -212,18 +254,19 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
             }
         }
 
-        private void setSubMatrix(double[] src, int srcOffset, DenseMatrix64F dest) {
+        private void setOrthogonalSubMatrix(double[] src, int srcOffset, int block, DenseMatrix64F dest) {
             int nRowsOriginal = matrixParameter.getRowDimension();
-            for (int row = 0; row < subRows.length; row++) {
+            int[] blockRows = orthogonalityStructure.get(block);
+            for (int row = 0; row < blockRows.length; row++) {
                 for (int col = 0; col < subColumns.length; col++) {
-                    int ind = nRowsOriginal * subColumns[col] + subRows[row] + srcOffset;
+                    int ind = nRowsOriginal * subColumns[col] + blockRows[row] + srcOffset;
                     dest.set(col, row, src[ind]);
                 }
             }
         }
 
-        private void setSubMatrix(double[] src, DenseMatrix64F dest) {
-            setSubMatrix(src, 0, dest);
+        private void setOrthogonalSubMatrix(double[] src, int block, DenseMatrix64F dest) {
+            setOrthogonalSubMatrix(src, 0, block, dest);
         }
 
         private void unwrapSubMatrix(DenseMatrix64F src, double[] dest, int destOffset) {
@@ -252,81 +295,84 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
         public void updatePosition(double[] position, WrappedVector momentum,
                                    double functionalStepSize) throws HamiltonianMonteCarloOperator.NumericInstabilityException {
 
+            for (int block = 0; block < orthogonalityStructure.size(); block++) {
+
 //            positionMatrix.setData(position);
-            setSubMatrix(position, positionMatrix);
-            setSubMatrix(momentum.getBuffer(), momentum.getOffset(), momentumMatrix);
+                setOrthogonalSubMatrix(position, block, positionMatrix);
+                setOrthogonalSubMatrix(momentum.getBuffer(), momentum.getOffset(), block, momentumMatrix);
 //            System.arraycopy(momentum.getBuffer(), momentum.getOffset(), momentumMatrix.data, 0, momentum.getDim());
-            CommonOps.multTransB(positionMatrix, momentumMatrix, innerProduct);
-            CommonOps.multTransB(momentumMatrix, momentumMatrix, innerProduct2);
+                CommonOps.multTransB(positionMatrix, momentumMatrix, innerProduct);
+                CommonOps.multTransB(momentumMatrix, momentumMatrix, innerProduct2);
 
-            double[][] VtV = new double[2 * nCols][2 * nCols];
+                double[][] VtV = new double[2 * nCols][2 * nCols];
 
-            for (int i = 0; i < nCols; i++) {
-                VtV[i + nCols][i] = 1;
-                for (int j = 0; j < nCols; j++) {
-                    VtV[i][j] = innerProduct.get(i, j);
-                    VtV[i + nCols][j + nCols] = innerProduct.get(i, j);
-                    VtV[i][j + nCols] = -innerProduct2.get(j, i);
+                for (int i = 0; i < nCols; i++) {
+                    VtV[i + nCols][i] = 1;
+                    for (int j = 0; j < nCols; j++) {
+                        VtV[i][j] = innerProduct.get(i, j);
+                        VtV[i + nCols][j + nCols] = innerProduct.get(i, j);
+                        VtV[i][j + nCols] = -innerProduct2.get(j, i);
+                    }
                 }
-            }
 
-            double[] expBuffer = new double[nCols * nCols];
-            CommonOps.scale(-functionalStepSize, innerProduct);
-            SkewSymmetricMatrixExponential matExp1 = new SkewSymmetricMatrixExponential(nCols);
-            matExp1.exponentiate(innerProduct.data, expBuffer);
+                double[] expBuffer = new double[nCols * nCols];
+                CommonOps.scale(-functionalStepSize, innerProduct);
+                SkewSymmetricMatrixExponential matExp1 = new SkewSymmetricMatrixExponential(nCols);
+                matExp1.exponentiate(innerProduct.data, expBuffer);
 
-            double[] expBuffer2 = new double[nCols * nCols * 4];
-            SkewSymmetricMatrixExponential matExp2 = new SkewSymmetricMatrixExponential(nCols * 2); //TODO: better matrix exponential
-            DenseMatrix64F VtVmat = new DenseMatrix64F(VtV);
-            CommonOps.scale(functionalStepSize, VtVmat);
-            matExp2.exponentiate(VtVmat.data, expBuffer2);
+                double[] expBuffer2 = new double[nCols * nCols * 4];
+                SkewSymmetricMatrixExponential matExp2 = new SkewSymmetricMatrixExponential(nCols * 2); //TODO: better matrix exponential
+                DenseMatrix64F VtVmat = new DenseMatrix64F(VtV);
+                CommonOps.scale(functionalStepSize, VtVmat);
+                matExp2.exponentiate(VtVmat.data, expBuffer2);
 
-            DenseMatrix64F X = new DenseMatrix64F(nCols * 2, nCols * 2);
-            DenseMatrix64F Y = new DenseMatrix64F(nCols * 2, nCols * 2);
+                DenseMatrix64F X = new DenseMatrix64F(nCols * 2, nCols * 2);
+                DenseMatrix64F Y = new DenseMatrix64F(nCols * 2, nCols * 2);
 
-            for (int i = 0; i < nCols; i++) {
-                for (int j = 0; j < nCols; j++) {
-                    X.set(i, j, expBuffer[i * nCols + j]);
-                    X.set(i + nCols, j + nCols, expBuffer[i * nCols + j]);
+                for (int i = 0; i < nCols; i++) {
+                    for (int j = 0; j < nCols; j++) {
+                        X.set(i, j, expBuffer[i * nCols + j]);
+                        X.set(i + nCols, j + nCols, expBuffer[i * nCols + j]);
+                    }
                 }
-            }
-            Y.setData(expBuffer2);
+                Y.setData(expBuffer2);
 
-            DenseMatrix64F Z = new DenseMatrix64F(nCols * 2, nCols * 2);
+                DenseMatrix64F Z = new DenseMatrix64F(nCols * 2, nCols * 2);
 
-            CommonOps.mult(Y, X, Z);
+                CommonOps.mult(Y, X, Z);
 
-            DenseMatrix64F PM = new DenseMatrix64F(nCols * 2, nRows);
-            for (int i = 0; i < nRows; i++) {
-                for (int j = 0; j < nCols; j++) {
-                    PM.set(j, i, positionMatrix.get(j, i));
-                    PM.set(j + nCols, i, momentumMatrix.get(j, i));
+                DenseMatrix64F PM = new DenseMatrix64F(nCols * 2, nRows);
+                for (int i = 0; i < nRows; i++) {
+                    for (int j = 0; j < nCols; j++) {
+                        PM.set(j, i, positionMatrix.get(j, i));
+                        PM.set(j + nCols, i, momentumMatrix.get(j, i));
+                    }
                 }
-            }
 
-            DenseMatrix64F W = new DenseMatrix64F(2 * nCols, nRows);
-            CommonOps.transpose(Z);
-            CommonOps.mult(Z, PM, W);
+                DenseMatrix64F W = new DenseMatrix64F(2 * nCols, nRows);
+                CommonOps.transpose(Z);
+                CommonOps.mult(Z, PM, W);
 
-            for (int i = 0; i < nRows; i++) {
-                for (int j = 0; j < nCols; j++) {
-                    positionMatrix.set(j, i, W.get(j, i));
-                    momentumMatrix.set(j, i, W.get(j + nCols, i));
+                for (int i = 0; i < nRows; i++) {
+                    for (int j = 0; j < nCols; j++) {
+                        positionMatrix.set(j, i, W.get(j, i));
+                        momentumMatrix.set(j, i, W.get(j + nCols, i));
+                    }
                 }
-            }
 
-            //TODO: only run chunk below occasionally
-            CommonOps.multTransB(positionMatrix, positionMatrix, innerProduct);
-            CholeskyDecomposition cholesky = DecompositionFactory.chol(nCols, true);
-            cholesky.decompose(innerProduct);
-            TriangularSolver.invertLower(innerProduct.data, nCols);
-            CommonOps.mult(innerProduct, positionMatrix, projection);
-            System.arraycopy(projection.data, 0, positionMatrix.data, 0, positionMatrix.data.length);
+                //TODO: only run chunk below occasionally
+                CommonOps.multTransB(positionMatrix, positionMatrix, innerProduct);
+                CholeskyDecomposition cholesky = DecompositionFactory.chol(nCols, true);
+                cholesky.decompose(innerProduct);
+                TriangularSolver.invertLower(innerProduct.data, nCols);
+                CommonOps.mult(innerProduct, positionMatrix, projection);
+                System.arraycopy(projection.data, 0, positionMatrix.data, 0, positionMatrix.data.length);
 
-            unwrapSubMatrix(positionMatrix, position);
-            unwrapSubMatrix(momentumMatrix, momentum.getBuffer(), momentum.getOffset());
+                unwrapSubMatrix(positionMatrix, position);
+                unwrapSubMatrix(momentumMatrix, momentum.getBuffer(), momentum.getOffset());
 //            System.arraycopy(positionMatrix.data, 0, position, 0, position.length);
 //            System.arraycopy(momentumMatrix.data, 0, momentum.getBuffer(), momentum.getOffset(), momentum.getDim());
+            }
 
             matrixParameter.setAllParameterValuesQuietly(position, 0);
             matrixParameter.fireParameterChangedEvent();
@@ -334,18 +380,20 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
 
         @Override
         public void projectMomentum(double[] momentum, double[] position) {
-            setSubMatrix(position, positionMatrix);
-            setSubMatrix(momentum, momentumMatrix);
+            for (int block = 0; block < orthogonalityStructure.size(); block++) {
+                setOrthogonalSubMatrix(position, block, positionMatrix);
+                setOrthogonalSubMatrix(momentum, block, momentumMatrix);
 //            positionMatrix.setData(position);
 //            momentumMatrix.setData(momentum);
 
-            CommonOps.multTransB(positionMatrix, momentumMatrix, innerProduct);
-            EJMLUtils.addWithTransposed(innerProduct);
+                CommonOps.multTransB(positionMatrix, momentumMatrix, innerProduct);
+                EJMLUtils.addWithTransposed(innerProduct);
 
-            CommonOps.mult(0.5, innerProduct, positionMatrix, projection);
-            CommonOps.subtractEquals(momentumMatrix, projection);
+                CommonOps.mult(0.5, innerProduct, positionMatrix, projection);
+                CommonOps.subtractEquals(momentumMatrix, projection);
 
-            unwrapSubMatrix(momentumMatrix, momentum);
+                unwrapSubMatrix(momentumMatrix, momentum);
+            }
         }
     }
 }

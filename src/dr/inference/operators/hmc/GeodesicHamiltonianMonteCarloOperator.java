@@ -144,8 +144,8 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
                         throw new RuntimeException("Orthogonal blocks must be non-overlapping");
                     }
                     alreadyOrthogonal.add(oldOrthogonalityStructure.get(i)[j]);
-                    orthogonalityStructure.add(oldOrthogonalityStructure.get(i));
                 }
+                orthogonalityStructure.add(oldOrthogonalityStructure.get(i));
             }
 
             for (int i = 0; i < subRows.length; i++) {

@@ -40,7 +40,7 @@ public abstract class AbstractPrecisionGradient extends AbstractDiffusionGradien
 
     private final GradientWrtPrecisionProvider gradientWrtPrecisionProvider;
     //    final Likelihood likelihood;
-    final CompoundSymmetricMatrix compoundSymmetricMatrix;
+    protected final CompoundSymmetricMatrix compoundSymmetricMatrix;
     private final int dim;
     private Parametrization parametrization;
 
@@ -146,12 +146,16 @@ public abstract class AbstractPrecisionGradient extends AbstractDiffusionGradien
         return ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_VARIANCE;
     }
 
-    int getDimensionCorrelation() {
+    protected int getDimensionCorrelation() {
         return dim * (dim - 1) / 2;
     }
 
-    int getDimensionDiagonal() {
+    protected int getDimensionDiagonal() {
         return dim;
+    }
+
+    protected int getDimensionFull() {
+        return dim * dim;
     }
 
     @Override

@@ -137,6 +137,24 @@ public class CompoundSymmetricMatrix extends AbstractTransformedCompoundMatrix {
         return updateGradientCorrelation(vechuGradient);
     }
 
+    public double[] updateGradientFullOffDiagonal(double[] gradient) {
+        assert gradient.length == dim * dim;
+
+        double[] diagQ = diagonalParameter.getParameterValues();
+
+        double[] offDiagGradient = new double[gradient.length];
+
+        int k = 0;
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                offDiagGradient[k] = gradient[i * dim + j] * Math.sqrt(diagQ[i] * diagQ[j]);
+                ++k;
+            }
+        }
+
+        return offDiagGradient;
+    }
+
     public double[] updateGradientCorrelation(double[] gradient) {
         if (!isCholesky) {
             return gradient;

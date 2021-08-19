@@ -56,6 +56,7 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
     private final static String PRECISION_DIAGONAL = "diagonal";
     private final static String PRECISION_DIAGONAL_OLD = "precisionDiagonal";
     private final static String PRECISION_BOTH = "both";
+    private final static String PRECISION_CORRELATION_DECOMPOSED = "decomposedCorrelation";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
 
     @Override
@@ -71,6 +72,8 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
             mode = ParameterMode.WRT_CORRELATION;
         } else if (parameterString.compareTo(PRECISION_DIAGONAL) == 0 || parameterString.compareToIgnoreCase(PRECISION_DIAGONAL_OLD) == 0) {
             mode = ParameterMode.WRT_DIAGONAL;
+        } else if (parameterString.equalsIgnoreCase(PRECISION_CORRELATION_DECOMPOSED)) {
+            mode = ParameterMode.WRT_CORRELATION_DECOMPOSED;
         }
         return mode;
     }
@@ -98,6 +101,14 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
                                                      TreeDataLikelihood treeDataLikelihood,
                                                      MatrixParameterInterface parameter) {
                 return new DiagonalPrecisionGradient(gradientWrtPrecisionProvider, treeDataLikelihood, parameter);
+            }
+        },
+        WRT_CORRELATION_DECOMPOSED {
+            @Override
+            public AbstractPrecisionGradient factory(GradientWrtPrecisionProvider gradientWrtPrecisionProvider,
+                                                     TreeDataLikelihood treeDataLikelihood,
+                                                     MatrixParameterInterface parameter) {
+                return new FullCorrelationPrecisionGradient(gradientWrtPrecisionProvider, treeDataLikelihood, parameter);
             }
         };
 

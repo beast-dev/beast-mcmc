@@ -209,6 +209,10 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         }
     }
 
+    public Transform getTransform() {
+        return transform;
+    }
+
     protected final Parameter parameter;
     protected final Transform transform;
     protected final boolean inverse;

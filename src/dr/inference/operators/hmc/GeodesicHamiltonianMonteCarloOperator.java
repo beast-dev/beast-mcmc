@@ -95,8 +95,8 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
 //        private final DenseMatrix64F innerProduct2;
 //        private final DenseMatrix64F projection;
 //        private final DenseMatrix64F momentumMatrix;
-//        private final int nRows;
-        private final int nCols;
+        private final int nRows;
+//        private final int nCols;
 
         private final int[] subRows;
         private final int[] subColumns;
@@ -113,10 +113,10 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
             if (mask != null) checkMask(subRows, subColumns);
 
             this.orthogonalityStructure = new ArrayList<>();
-            orthogonalityStructure.add(subRows);
+            orthogonalityStructure.add(subColumns);
 
-//            this.nRows = subRows.length;
-            this.nCols = subColumns.length;
+            this.nRows = subRows.length;
+//            this.nCols = subColumns.length;
 //            this.positionMatrix = new DenseMatrix64F(nCols, nRows);
 //            this.innerProduct = new DenseMatrix64F(nCols, nCols);
 //            this.innerProduct2 = new DenseMatrix64F(nCols, nCols);
@@ -127,9 +127,9 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
         public void setOrthogonalityStructure(ArrayList<int[]> oldOrthogonalityStructure) {
             orthogonalityStructure.clear();
 
-            ArrayList<Integer> subRowList = new ArrayList<>();
-            for (int i : subRows) {
-                subRowList.add(i);
+            ArrayList<Integer> subColList = new ArrayList<>();
+            for (int i : subColumns) {
+                subColList.add(i);
             }
 
             //check that orthogonalityStructure is consistent with the subRows
@@ -137,7 +137,7 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
 
             for (int i = 0; i < oldOrthogonalityStructure.size(); i++) {
                 for (int j = 0; j < oldOrthogonalityStructure.get(i).length; j++) {
-                    if (!subRowList.contains(oldOrthogonalityStructure.get(i)[j])) { //TODO: check that we're doing this by row (or allow to do by row or column)
+                    if (!subColList.contains(oldOrthogonalityStructure.get(i)[j])) { //TODO: check that we're doing this by row (or allow to do by row or column)
                         throw new RuntimeException("Cannot enforce orthogonality structure.");
                     }
                     if (alreadyOrthogonal.contains(oldOrthogonalityStructure.get(i)[j])) {
@@ -255,13 +255,16 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
         }
 
         private DenseMatrix64F setOrthogonalSubMatrix(double[] src, int srcOffset, int block) {
-            DenseMatrix64F dest = new DenseMatrix64F(nCols, orthogonalityStructure.get(block).length);
 
             int nRowsOriginal = matrixParameter.getRowDimension();
-            int[] blockRows = orthogonalityStructure.get(block);
-            for (int row = 0; row < blockRows.length; row++) {
-                for (int col = 0; col < subColumns.length; col++) {
-                    int ind = nRowsOriginal * subColumns[col] + blockRows[row] + srcOffset;
+            int[] blockCols = orthogonalityStructure.get(block);
+            int nCols = blockCols.length;
+
+            DenseMatrix64F dest = new DenseMatrix64F(nCols, nRows);
+
+            for (int row = 0; row < nRows; row++) {
+                for (int col = 0; col < nCols; col++) {
+                    int ind = nRowsOriginal * blockCols[col] + subRows[row] + srcOffset;
                     dest.set(col, row, src[ind]);
                 }
             }
@@ -275,10 +278,10 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
 
         private void unwrapSubMatrix(DenseMatrix64F src, int block, double[] dest, int destOffset) {
             int nRowsOriginal = matrixParameter.getRowDimension();
-            int[] blockRows = orthogonalityStructure.get(block);
-            for (int row = 0; row < blockRows.length; row++) {
-                for (int col = 0; col < nCols; col++) {
-                    int ind = nRowsOriginal * subColumns[col] + blockRows[row] + destOffset;
+            int[] blockCols = orthogonalityStructure.get(block);
+            for (int row = 0; row < nRows; row++) {
+                for (int col = 0; col < blockCols.length; col++) {
+                    int ind = nRowsOriginal * blockCols[col] + subRows[row] + destOffset;
                     dest[ind] = src.get(col, row);
                 }
             }
@@ -302,7 +305,7 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
 
             for (int block = 0; block < orthogonalityStructure.size(); block++) {
 
-                int nRows = orthogonalityStructure.get(block).length;
+                int nCols = orthogonalityStructure.get(block).length;
 
 //            positionMatrix.setData(position);
                 DenseMatrix64F positionMatrix = setOrthogonalSubMatrix(position, block);
@@ -397,6 +400,8 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
             for (int block = 0; block < orthogonalityStructure.size(); block++) {
                 DenseMatrix64F positionMatrix = setOrthogonalSubMatrix(position, block);
                 DenseMatrix64F momentumMatrix = setOrthogonalSubMatrix(momentum, block);
+
+                int nCols = orthogonalityStructure.get(block).length;
 //            positionMatrix.setData(position);
 //            momentumMatrix.setData(momentum);
 
@@ -405,7 +410,7 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
                 CommonOps.multTransB(positionMatrix, momentumMatrix, innerProduct);
                 EJMLUtils.addWithTransposed(innerProduct);
 
-                DenseMatrix64F projection = new DenseMatrix64F(nCols, orthogonalityStructure.get(block).length);
+                DenseMatrix64F projection = new DenseMatrix64F(nCols, nRows);
 
                 CommonOps.mult(0.5, innerProduct, positionMatrix, projection);
                 CommonOps.subtractEquals(momentumMatrix, projection);

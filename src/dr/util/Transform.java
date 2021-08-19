@@ -473,6 +473,27 @@ public interface Transform {
         }
     }
 
+    abstract class MatrixVariateTransform extends MultivariateTransform {
+
+        protected final int rowDimension;
+        protected final int columnDimension;
+
+        public MatrixVariateTransform(int inputDimension, int outputRowDimension, int outputColumnDimension) {
+            super(inputDimension, outputRowDimension * outputColumnDimension);
+            this.rowDimension = outputRowDimension;
+            this.columnDimension = outputColumnDimension;
+        }
+
+
+        public int getRowDimension() {
+            return rowDimension;
+        }
+
+        public int getColumnDimension() {
+            return columnDimension;
+        }
+    }
+
     class LogTransform extends UnivariableTransform {
 
         public double transform(double value) {

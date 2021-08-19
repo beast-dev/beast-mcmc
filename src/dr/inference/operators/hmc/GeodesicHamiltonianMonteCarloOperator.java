@@ -372,15 +372,14 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
                 }
 
                 //TODO: only run chunk below occasionally
-                innerProduct = new DenseMatrix64F(nRows, nRows);
-                CommonOps.multTransA(positionMatrix, positionMatrix, innerProduct);
+                CommonOps.multTransB(positionMatrix, positionMatrix, innerProduct);
                 CholeskyDecomposition cholesky = DecompositionFactory.chol(nCols, true);
                 cholesky.decompose(innerProduct);
-                TriangularSolver.invertLower(innerProduct.data, nRows);
+                TriangularSolver.invertLower(innerProduct.data, nCols);
 
                 DenseMatrix64F projection = new DenseMatrix64F(nCols, nRows);
 
-                CommonOps.mult(positionMatrix, innerProduct, projection);
+                CommonOps.mult(innerProduct, positionMatrix, projection);
                 System.arraycopy(projection.data, 0, positionMatrix.data, 0, positionMatrix.data.length);
 
                 unwrapSubMatrix(positionMatrix, block, position);

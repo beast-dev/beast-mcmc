@@ -50,6 +50,31 @@
         </distribution>
     </distributionLikelihood>
 
+    <matrixParameter id="X3">
+        <parameter
+                value="0.5170523005299762 0.23732366357993848 0.3453201355115805 0.04915517940112536 -0.265357459849146 0.3877319257922349 -0.16575576503762185 -0.24572329021078543 0.0192436747046259 0.495677630907889"/>
+        <parameter
+                value="-0.18131376369077135 0.6806906099816249 -0.1319248395701776 0.26777361095477786 0.271192411212245 0.20281371743479965 -0.061698345415977233 0.36758362239123293 0.3966321606011005 0.06130692114673059"/>
+        <parameter
+                value="-0.4669411561978223 -0.11974189388470466 -0.44089423727448873 -0.20295731229198558 -0.5076572274011091 0.2137837737714987 -0.20977566438445855 -0.15805216851859444 0.29187498169914133 0.27285848287912046"/>
+    </matrixParameter>
+
+    <distributionLikelihood id="X3.prior">
+        <data>
+            <matrixParameter idref="X3"/>
+        </data>
+        <distribution>
+            <normalDistributionModel>
+                <mean>
+                    <parameter value="1"/>
+                </mean>
+                <stdev>
+                    <parameter value="1e-1"/>
+                </stdev>
+            </normalDistributionModel>
+        </distribution>
+    </distributionLikelihood>
+
     <operators id="operators">
         <geodesicHamiltonianMonteCarloOperator id="geodesicHMC" weight="1.0" nSteps="5" stepSize="0.05"
                                                drawVariance="1.0"
@@ -85,6 +110,25 @@
                                   0 1 1 1 1 1 1 1 1 1
                                   0 1 1 1 1 1 1 1 1 1"/>
             </mask>
+        </geodesicHamiltonianMonteCarloOperator>
+
+        <geodesicHamiltonianMonteCarloOperator id="structuredGeodesicHMC" weight="1.0" nSteps="5" stepSize="0.05"
+                                               drawVariance="1.0"
+                                               autoOptimize="false"
+                                               gradientCheckCount="100" gradientCheckTolerance="1e-2">
+            <gradient>
+                <distributionLikelihood idref="X3.prior"/>
+                <matrixParameter idref="X3"/>
+            </gradient>
+
+            <matrixParameter idref="X3"/>
+            <graphicalParameterBounds>
+                <parameter value="0"/>
+            </graphicalParameterBounds>
+            <orthogonalityStructure>
+                <x rows="1 2"/>
+            </orthogonalityStructure>
+
         </geodesicHamiltonianMonteCarloOperator>
     </operators>
 
@@ -170,6 +214,47 @@
         </expected>
     </assertEqual>
 
+    <cachedReport id="gdHMCstructured">
+        <geodesicHamiltonianMonteCarloOperator idref="structuredGeodesicHMC"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="gdHMCstructured"/>
+    </report>
+
+    <assertEqual verbose="true" tolerance="1e-4" charactersToStrip="{}">
+        <message>
+            check geodesic leapfrog position
+        </message>
+        <actual regex="(?s)final position:\s*(.*?)\n\n">
+            <cachedReport idref="gdHMCstructured"/>
+        </actual>
+        <expected>
+            -0.38482093085762703	0.025532145855234056	-0.47524352258225555
+            -0.16143910221998026	0.7325336366554922	    -0.18234052725410338
+            -0.15833080607533787	-0.010559139462760325	-0.4621442194403536
+            0.04468814415719696	    0.3353640677552862	    -0.2628674991877096
+            0.23164750963293373	    0.37313155882177257	    -0.5285731992066846
+            0.09764476238442396	    0.04647869140091962	    0.08501541243930114
+            0.34796492729763856	    -0.05209210160484462	-0.2825403364803621
+            0.48181029964268246	    0.2485572959205083  	-0.24282884394633733
+            0.48037324907816614	    0.12245643738398809	    0.1381010939300122
+            0.38937168724293414	    -0.35956182072618714	0.11719588758032286
+        </expected>
+    </assertEqual>
+
+    <assertEqual verbose="true" tolerance="1e-4" charactersToStrip="{}">
+        <message>
+            check geodesic leapfrog ratio
+        </message>
+        <actual regex="hastings ratio:\s*(.*)\n">
+            <cachedReport idref="gdHMCstructured"/>
+        </actual>
+        <expected>
+            -102.79492338116779
+        </expected>
+    </assertEqual>
+
 
     <!--    <mcmc id="mcmc" chainLength="10000" autoOptimize="true">-->
     <!--        <posterior id="posterior">-->
@@ -190,10 +275,9 @@
     <!--    </mcmc>-->
 </beast>
 
-<!--JULIA CODE BELOW-->
+        <!--JULIA CODE BELOW-->
 
-<!--
-
+        <!--
 using Distributions, LinearAlgebra, Random
 
 Random.seed!(666)
@@ -202,27 +286,53 @@ function project!(M::AbstractMatrix{Float64}, L::AbstractMatrix{Float64})
     M .-= 0.5 * L * (L' * M + M' * L)
 end
 
+function project!(M::AbstractMatrix{Float64}, L::AbstractMatrix{Float64},
+                  ortho_structure::Vector{<:AbstractArray{Int}})
+    for cols in ortho_structure
+        M_sub = @view M[:, cols]
+        L_sub = @view L[:, cols]
+        project!(M_sub, L_sub)
+    end
+end
+
 function geo_hmc(X::Matrix{Float64}, V::Matrix{Float64},
                  x_dist::MultivariateDistribution,
                  n_steps::Int,
                  step_size::Float64,
                  k::Int,
-                 p::Int)
-    project!(V, X)
+                 p::Int;
+                 ortho_structure::Vector{<:AbstractArray{Int}} = [1:k])
+    project!(V, X, ortho_structure)
+
     h = 0.5 * sum([v * v for v in V])
     for i = 1:n_steps
-        V += 0.5 * step_size * reshape(gradlogpdf(x_dist, vec(X)), p, k)
-        display(V)
-        project!(V, X)
-        geodesic!(X, V, step_size)
-        V += 0.5 * step_size * reshape(gradlogpdf(x_dist, vec(X)), p, k)
-        project!(V, X)
+        grad = reshape(gradlogpdf(x_dist, vec(X)), p, k)
+        for cols in ortho_structure
+            V_sub = @view V[:, cols]
+            X_sub = @view X[:, cols]
+            grad_sub = @view grad[:, cols]
+
+            V_sub .+= 0.5 * step_size * grad_sub
+
+            project!(V_sub, X_sub)
+            geodesic!(X_sub, V_sub, step_size)
+        end
+
+        grad = reshape(gradlogpdf(x_dist, vec(X)), p, k)
+        for cols in ortho_structure
+            V_sub = @view V[:, cols]
+            grad_sub = @view grad[:, cols]
+            V_sub .+= 0.5 * step_size * grad_sub
+        end
+
+        project!(V, X, ortho_structure)
+
     end
     h2 = 0.5 * sum([v * v for v in V])
     return h, h2, X
 end
 
-function geodesic!(X::Matrix{Float64}, V::Matrix{Float64}, t::Float64)
+function geodesic!(X::AbstractMatrix{Float64}, V::AbstractMatrix{Float64}, t::Float64)
     A = X' * V
     S = V' * V
     exptA = exp(-t * A)
@@ -283,4 +393,25 @@ hastings_ratio2 = h - h2
 Xsub = copy(X02)
 Xsub[keep_rows, keep_cols] .= X2_new
 
--->
+
+X3 = randn(p, k)
+X3 = svd(X).U
+X03 = copy(X3)
+h, h2, X3_new = geo_hmc(X3, copy(M), dist, 5, 0.05, k, p, ortho_structure = [[1, 2], [3]])
+hastings_ratio = h - h2
+
+function pretty(x::Vector)
+    s = join(x, ' ')
+    clipboard(s)
+    return s
+end
+
+function pretty(x::Matrix)
+    n, p = size(x)
+    rows = [join(x[i, :], '\t') for i = 1:n]
+    s = join(rows, '\n')
+    clipboard(s)
+    return s
+end
+
+        -->

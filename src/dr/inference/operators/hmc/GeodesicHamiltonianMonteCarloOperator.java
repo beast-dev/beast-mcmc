@@ -148,9 +148,9 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
                 orthogonalityStructure.add(oldOrthogonalityStructure.get(i));
             }
 
-            for (int i = 0; i < subRows.length; i++) {
-                if (!alreadyOrthogonal.contains(subRows[i])) {
-                    orthogonalityStructure.add(new int[]{subRows[i]});
+            for (int i = 0; i < subColumns.length; i++) {
+                if (!alreadyOrthogonal.contains(subColumns[i])) {
+                    orthogonalityStructure.add(new int[]{subColumns[i]});
                 }
             }
 

@@ -61,7 +61,7 @@ public class FullCorrelationPrecisionGradient extends CorrelationPrecisionGradie
         DenseMatrix64F decompMat = DenseMatrix64F.wrap(dim, dim, decomposedMatrix.getParameterValues());
         DenseMatrix64F decompGradMat = DenseMatrix64F.wrap(dim, dim, decomposedGradient);
 
-        CommonOps.mult(decompMat, corGradMat, decompGradMat);
+        CommonOps.multTransA(corGradMat, decompMat, decompGradMat);
 
         CommonOps.scale(2.0, decompGradMat);
 

@@ -37,6 +37,8 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
     final Parameter diagonalParameter;
     final Parameter offDiagonalParameter;
 
+    protected boolean isStrictlyUpperTriangular = true;
+
     final CompoundParameter untransformedCompoundParameter;
 
     protected final int dim;
@@ -59,7 +61,7 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
         diagonalParameter = diagonals;
         dim = diagonalParameter.getDimension();
         offDiagonalParameter =
-                (transform == null) ? offDiagonal: new TransformedMultivariateParameter(offDiagonal, transform, inverse);
+                (transform == null) ? offDiagonal : new TransformedMultivariateParameter(offDiagonal, transform, inverse);
         addParameter(diagonalParameter);
         addParameter(offDiagonalParameter);
 
@@ -149,7 +151,7 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
         return offDiagonalParameter;
     }
 
-    public CompoundParameter getUntransformedCompoundParameter(){
+    public CompoundParameter getUntransformedCompoundParameter() {
         return untransformedCompoundParameter;
     }
 
@@ -185,7 +187,6 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
     }
 
     int getUpperTriangularIndex(int i, int j) {
-        assert i != j;
         if (i < j) {
             return upperTriangularTransformation(i, j);
         } else {
@@ -194,6 +195,22 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
     }
 
     private int upperTriangularTransformation(int i, int j) {
+        if (isStrictlyUpperTriangular) {
+            assert i != j;
+            return strictlyUpperTriangularTransformation(i, j);
+        }
+        return weaklyUpperTriangularTransformatino(i, j);
+    }
+
+    private int strictlyUpperTriangularTransformation(int i, int j) {
         return i * (2 * dim - i - 1) / 2 + (j - i - 1);
+    }
+
+    private int weaklyUpperTriangularTransformatino(int i, int j) {
+        return i * (2 * dim - i + 1) / 2 + (j - i);
+    }
+
+    public void setStrictlyUpperTriangular(boolean b) {
+        this.isStrictlyUpperTriangular = b;
     }
 }

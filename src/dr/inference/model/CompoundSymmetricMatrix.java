@@ -74,8 +74,11 @@ public class CompoundSymmetricMatrix extends AbstractTransformedCompoundMatrix {
                         Math.sqrt(diagonalParameter.getParameterValue(row) * diagonalParameter.getParameterValue(col));
             }
             return offDiagonalParameter.getParameterValue(getUpperTriangularIndex(row, col));
+        } else if (isStrictlyUpperTriangular) {
+            return diagonalParameter.getParameterValue(row);
         }
-        return diagonalParameter.getParameterValue(row);
+        return diagonalParameter.getParameterValue(row) *
+                offDiagonalParameter.getParameterValue(getUpperTriangularIndex(row, row));
     }
 
     @Override

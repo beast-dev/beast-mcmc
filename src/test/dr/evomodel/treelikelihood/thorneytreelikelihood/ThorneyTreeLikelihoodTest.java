@@ -31,8 +31,8 @@ public class ThorneyTreeLikelihoodTest extends TestCase {
         thorneyTreeLikelihood = new ThorneyTreeLikelihood("testLikelihood",constrainedTreeModel,constrainedTreeBranchLengthProvider, thorneyBranchLengthLikelihoodDelegate);
 
         expectedLL= 0;
-        double[] expectations = {1d,1d,1.1,2d,0.1};
-        double[] mutations = {1d, 1d, 1.0, 2d, 0}; // time
+        double[] expectations = {1d,1d,1.1,1.0,1.0,0.1};
+        double[] mutations = {1d, 1d, 1.0, 1.0,1.0, 0}; // time
         for (int i = 0; i < expectations.length; i++) {
             PoissonDistribution p = new PoissonDistribution(expectations[i]);
             expectedLL += p.logPdf(mutations[i]);

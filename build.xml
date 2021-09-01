@@ -248,6 +248,7 @@
                 <include name="dr/evolution/coalescent/*.class"/>
                 <include name="dr/evolution/util/*.class"/>
                 <include name="dr/inference/trace/*.class"/>
+                <include name="dr/inference/model/**/*.class"/>
                 <include name="dr/math/**/*.class"/>
                 <include name="dr/stats/**/*.class"/>
                 <include name="dr/util/**/*.class"/>

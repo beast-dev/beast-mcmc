@@ -67,7 +67,7 @@ public interface Units extends Serializable {
 
     // array of unit names
     // second dimension is to allow synonyms -- first element is default
-    final public String[][] UNIT_NAMES = {{"substitutions", "mutations"}, {"generations"}, {"days"}, {"months"}, {"years"}};
+    final public String[][] UNIT_NAMES = {{"substitutions", "mutations"}, {"generations"}, {"days"}, {"weeks"}, {"months"}, {"years"}};
 
     public class Utils {
 

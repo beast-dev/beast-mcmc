@@ -1,7 +1,7 @@
 /*
  * PartitionTreePrior.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2021 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -90,21 +90,56 @@ public class PartitionTreePrior extends PartitionOptions {
         initModelParametersAndOpererators();
     }
 
+    public void alternatePopulationSizePriors() {
+        String[] parameterNames = {"constant.popSize", "exponential.popSize", "logistic.popSize", "expansion.popSize"};
+
+        for (String param : parameterNames) {
+            Parameter popSizeParameter = getParameter(param);
+            if (options.useGammaPriorPopSize()) {
+                if (popSizeParameter.priorType == PriorType.ONE_OVER_X_PRIOR) {
+                    popSizeParameter.priorType = PriorType.GAMMA_PRIOR;
+                    popSizeParameter.scale = 0.001;
+                    popSizeParameter.shape = 1000;
+                    popSizeParameter.scaleType = PriorScaleType.NONE;
+                    popSizeParameter.isPriorFixed = true;
+                }
+            } else {
+                popSizeParameter.priorType = PriorType.ONE_OVER_X_PRIOR;
+                popSizeParameter.scaleType = PriorScaleType.TIME_SCALE;
+            }
+        }
+    }
+
     @Override
     public void initModelParametersAndOpererators() {
 
-        createParameterOneOverXPrior("constant.popSize", "coalescent population size parameter",
-                PriorScaleType.TIME_SCALE, 1.0);
+        if (options.useGammaPriorPopSize()) {
+            createParameterGammaPrior("constant.popSize", "coalescent population size parameter",
+                    PriorScaleType.NONE, 1.0, 0.001, 1000, true);
+        } else {
+            createParameterOneOverXPrior("constant.popSize", "coalescent population size parameter",
+                    PriorScaleType.TIME_SCALE, 1.0);
+        }
 
-        createParameterOneOverXPrior("exponential.popSize", "coalescent population size parameter",
-                PriorScaleType.TIME_SCALE, 1.0);
+        if (options.useGammaPriorPopSize()) {
+            createParameterGammaPrior("exponential.popSize", "coalescent population size parameter",
+                    PriorScaleType.NONE, 1.0, 0.001, 1000, true);
+        } else {
+            createParameterOneOverXPrior("exponential.popSize", "coalescent population size parameter",
+                    PriorScaleType.TIME_SCALE, 1.0);
+        }
         createParameterLaplacePrior("exponential.growthRate", "coalescent growth rate parameter",
                 PriorScaleType.GROWTH_RATE_SCALE, 0.0, 0.0, 1.0);
         createParameterGammaPrior("exponential.doublingTime", "coalescent doubling time parameter",
                 PriorScaleType.NONE, 100.0, 0.001, 1000, true);
 
-        createParameterOneOverXPrior("logistic.popSize", "coalescent population size parameter",
-                PriorScaleType.TIME_SCALE, 1.0);
+        if (options.useGammaPriorPopSize()) {
+            createParameterGammaPrior("logistic.popSize", "coalescent population size parameter",
+                    PriorScaleType.NONE, 1.0, 0.001, 1000, true);
+        } else {
+            createParameterOneOverXPrior("logistic.popSize", "coalescent population size parameter",
+                    PriorScaleType.TIME_SCALE, 1.0);
+        }
         createParameterLaplacePrior("logistic.growthRate", "coalescent logistic growth rate parameter",
                 PriorScaleType.GROWTH_RATE_SCALE, 0.1, 0.0, 1.0);
         createParameterGammaPrior("logistic.doublingTime", "coalescent doubling time parameter",
@@ -112,8 +147,13 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameterGammaPrior("logistic.t50", "logistic shape parameter",
                 PriorScaleType.NONE, 1.0, 0.001, 1000, true);
 
-        createParameterOneOverXPrior("expansion.popSize", "coalescent population size parameter",
-                PriorScaleType.TIME_SCALE, 1.0);
+        if (options.useGammaPriorPopSize()) {
+            createParameterGammaPrior("expansion.popSize", "coalescent population size parameter",
+                    PriorScaleType.NONE, 1.0, 0.001, 1000, true);
+        } else {
+            createParameterOneOverXPrior("expansion.popSize", "coalescent population size parameter",
+                    PriorScaleType.TIME_SCALE, 1.0);
+        }
         createParameterLaplacePrior("expansion.growthRate", "coalescent expansion growth rate parameter",
                 PriorScaleType.GROWTH_RATE_SCALE, 0.1, 0.0, 1.0);
         createParameterGammaPrior("expansion.doublingTime", "coalescent doubling time parameter",

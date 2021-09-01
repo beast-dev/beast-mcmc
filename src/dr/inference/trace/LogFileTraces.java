@@ -344,7 +344,8 @@ public class LogFileTraces extends AbstractTraceList {
         if (stepSize < 0 && lastState > 0)
             stepSize = lastState;
 
-        validateTraceType(lastLine);
+        tokens = reader.getStringTokenizer(lastLine);
+        validateTraceType(tokens);
         validateUniqueValues();
     }
     public static final int MIN_SAMPLE = 5; // used in StatisticsModel
@@ -369,15 +370,20 @@ public class LogFileTraces extends AbstractTraceList {
     // validate TraceType at the last value of trace,
     // in case integer is logged for double values in the first (even several) row.
     // it must use original line, because the data type of values in traces are changed
-    private void validateTraceType(String lastLine) throws TraceException {
-        String[] values = lastLine.split("\\t");
-        // the 1st is state
-        for (int i=1; i < values.length; i++) {
-            int traceId = i-1;
-            Trace trace = getTrace(traceId);
-            // avoid to assign integer to double incorrectly
-            if (trace.getTraceType().isInteger() && NumberUtils.hasDecimalPoint(values[i]))
-                changeTraceType(traceId, TraceType.REAL);
+    private void validateTraceType(StringTokenizer tokens) throws TraceException {
+        for (int i = 0; i < getTraceCount(); i++) {
+            if (tokens.hasMoreTokens()) {
+                String value = tokens.nextToken();
+
+                Trace trace = getTrace(i);
+                // avoid assigning integer to double incorrectly
+                if (trace.getTraceType().isInteger() && NumberUtils.hasDecimalPoint(value))
+                    changeTraceType(i, TraceType.REAL);
+
+            } else {
+                throw new TraceException("Incorrect trace index " + i +
+                        ", token count " + tokens.countTokens());
+            }
         }
     }
 
@@ -385,6 +391,7 @@ public class LogFileTraces extends AbstractTraceList {
      * Auto assign INTEGER or CATEGORICAL type to traces
      * according their values in the first line.
      * Default type is REAL.
+     * Any leading and trailing whitespaces will be removed.
      *
      * @param traceIndex
      * @param value
@@ -393,14 +400,14 @@ public class LogFileTraces extends AbstractTraceList {
         Trace trace = getTrace(traceIndex);
 
         TraceType type = trace.getTraceType();
-
+        // remove any leading and trailing whitespaces
+        value = value.trim();
+        
         if (type != TraceType.CATEGORICAL) {
             // once categorical, always categorical
-
             if (NumberUtils.isNumber(value)) {
                 if (type != TraceType.REAL) {
                     // once real, always real (unless categorical)
-
                     if (NumberUtils.hasDecimalPoint(value)) { // Real
                         // if a single number has a decimal point then switch to real
                         type = TraceType.REAL;

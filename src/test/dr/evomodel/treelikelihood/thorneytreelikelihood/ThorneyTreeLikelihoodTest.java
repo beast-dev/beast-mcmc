@@ -27,7 +27,7 @@ public class ThorneyTreeLikelihoodTest extends TestCase {
 
         constrainedTreeModel = new ConstrainedTreeModel("testTree",baseTreeModel,tree);
         BranchLengthProvider constrainedTreeBranchLengthProvider = new ConstrainedTreeBranchLengthProvider(constrainedTreeModel,tree);
-        ThorneyBranchLengthLikelihoodDelegate thorneyBranchLengthLikelihoodDelegate = new StrictClockBranchLengthLikelihoodDelegate("strictClockDelegate",new Parameter.Default(1.0),1.0);
+        ThorneyBranchLengthLikelihoodDelegate thorneyBranchLengthLikelihoodDelegate = new PoissonBranchLengthLikelihoodDelegate("strictClockDelegate",new StrictClockBranchRates(new Parameter.Default(1.0)),1.0);
         thorneyTreeLikelihood = new ThorneyTreeLikelihood("testLikelihood",constrainedTreeModel,constrainedTreeBranchLengthProvider, thorneyBranchLengthLikelihoodDelegate);
 
         expectedLL= 0;

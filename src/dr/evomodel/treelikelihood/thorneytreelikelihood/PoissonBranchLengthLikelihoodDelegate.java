@@ -1,28 +1,32 @@
 package dr.evomodel.treelikelihood.thorneytreelikelihood;
 
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.*;
 import org.apache.commons.math.special.Gamma;
 import org.apache.commons.math.util.FastMath;
 
-public class StrictClockBranchLengthLikelihoodDelegate extends AbstractModel implements ThorneyBranchLengthLikelihoodDelegate {
-    private final Parameter rate;
+public class PoissonBranchLengthLikelihoodDelegate extends AbstractModel implements ThorneyBranchLengthLikelihoodDelegate {
+    private final BranchRateModel branchRateModel;
     private final double scale;
 
-    public StrictClockBranchLengthLikelihoodDelegate(String name, Parameter rate, double scale){
+    public PoissonBranchLengthLikelihoodDelegate(String name, BranchRateModel branchRateModel, double scale){
         super(name);
-        this.rate = rate;
-        addVariable(rate);
+        this.branchRateModel = branchRateModel;
+        addModel(branchRateModel);
         this.scale = scale;
     }
 
     @Override
-    public double getLogLikelihood(double mutations, double time) {
-        return SaddlePointExpansion.logPoissonProbability(time*rate.getValue(0)*scale, (int) Math.round(mutations));
+    public double getLogLikelihood(double mutations, double time, Tree tree , NodeRef node) {
+        double rate = this.branchRateModel.getBranchRate(tree, node);
+        return SaddlePointExpansion.logPoissonProbability(time*rate*scale, (int) Math.round(mutations));
     }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-
+        fireModelChanged(this,index);
     }
 
     /**

@@ -26,10 +26,9 @@ public class ThorneyTreeLikelihoodParser extends AbstractXMLObjectParser {
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
-        BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class); // can be null
         BranchLengthProvider branchLengthProvider = (BranchLengthProvider) xo.getChild(BranchLengthProvider.class);
         ThorneyBranchLengthLikelihoodDelegate thorneyBranchLengthLikelihoodDelegate = (ThorneyBranchLengthLikelihoodDelegate) xo.getChild(ThorneyBranchLengthLikelihoodDelegate.class);
-        return new ThorneyTreeLikelihood(TREE_LIKELIHOOD, treeModel,branchLengthProvider, thorneyBranchLengthLikelihoodDelegate, branchRateModel);
+        return new ThorneyTreeLikelihood(TREE_LIKELIHOOD, treeModel,branchLengthProvider, thorneyBranchLengthLikelihoodDelegate);
     }
 
     //************************************************************************

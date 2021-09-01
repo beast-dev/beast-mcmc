@@ -1,13 +1,13 @@
 package dr.evomodelxml.treelikelihood.thorneytreelikelihood;
 
-import dr.evomodel.treelikelihood.thorneytreelikelihood.BranchLengthProvider;
-import dr.evomodel.treelikelihood.thorneytreelikelihood.StrictClockBranchLengthLikelihoodDelegate;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.PoissonBranchLengthLikelihoodDelegate;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-public class StrictClockBranchLengthLikelihoodParser extends AbstractXMLObjectParser {
+public class PoissonBranchLengthLikelihoodParser extends AbstractXMLObjectParser {
 
-    public static final String STRICT_CLOCK_BRANCHLENGTH_LIKELIHOOD = "strictClockBranchLengthLikelihood";
+    public static final String STRICT_CLOCK_BRANCHLENGTH_LIKELIHOOD = "poissonBranchLengthLikelihood";
     public static final String DATA_TREE = "dataTree";
 
     public String getParserName() {
@@ -17,9 +17,9 @@ public class StrictClockBranchLengthLikelihoodParser extends AbstractXMLObjectPa
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         double scale = xo.getAttribute("scale",1.0);
 
-        Parameter mutationRate = (Parameter)xo.getChild(Parameter.class);
+        BranchRateModel branchRateModel = (BranchRateModel)xo.getChild(BranchRateModel.class);
 
-        return new StrictClockBranchLengthLikelihoodDelegate(STRICT_CLOCK_BRANCHLENGTH_LIKELIHOOD,mutationRate,scale);
+        return new PoissonBranchLengthLikelihoodDelegate(STRICT_CLOCK_BRANCHLENGTH_LIKELIHOOD,branchRateModel,scale);
     }
 
     //************************************************************************
@@ -31,11 +31,11 @@ public class StrictClockBranchLengthLikelihoodParser extends AbstractXMLObjectPa
     }
 
     public Class getReturnType() {
-        return StrictClockBranchLengthLikelihoodDelegate.class;
+        return PoissonBranchLengthLikelihoodDelegate.class;
     }
 
     public static final XMLSyntaxRule[] rules = {
-            new ElementRule(Parameter.class),
+            new ElementRule(BranchRateModel.class),
             AttributeRule.newDoubleRule("scale",true,"a scale factor to muliply by the rate such as sequence length. default is 1"),
 
     };

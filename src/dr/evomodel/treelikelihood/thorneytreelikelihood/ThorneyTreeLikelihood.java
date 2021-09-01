@@ -51,7 +51,7 @@ import java.util.Arrays;
 
 public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Reportable {
 
-    public ThorneyTreeLikelihood(String name, TreeModel treeModel, BranchLengthProvider branchLengthProvider, ThorneyBranchLengthLikelihoodDelegate thorneyBranchLengthLikelihoodDelegate, BranchRateModel branchRateModel) {
+    public ThorneyTreeLikelihood(String name, TreeModel treeModel, BranchLengthProvider branchLengthProvider, ThorneyBranchLengthLikelihoodDelegate thorneyBranchLengthLikelihoodDelegate) {
 
         super(name);
 
@@ -59,20 +59,10 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
         addModel(treeModel);
         this.thorneyBranchLengthLikelihoodDelegate = thorneyBranchLengthLikelihoodDelegate;
         this.branchLengthProvider = branchLengthProvider;
-        this.branchRateModel = branchRateModel;
+         assert thorneyBranchLengthLikelihoodDelegate instanceof Model;
+         addModel((Model) thorneyBranchLengthLikelihoodDelegate);
 
-        if(this.thorneyBranchLengthLikelihoodDelegate instanceof Model & this.branchRateModel!=null){
-            throw new IllegalArgumentException("Can't use a branch rate likelihood with a rate parameter in combination with a branch rate model. Please remove either the parameter or the model");
-        }
-        if(this.branchRateModel!=null){
-            this.likelihoodDelegate=new branchRateModelLikelihood();
-            addModel(this.branchRateModel);
-        }else{
-            this.likelihoodDelegate=new additiveRateLikelihood();
-            assert thorneyBranchLengthLikelihoodDelegate instanceof Model;
-            addModel((Model) thorneyBranchLengthLikelihoodDelegate);
 
-        }
 
         updateNode = new boolean[treeModel.getNodeCount()];
         Arrays.fill(updateNode, true);
@@ -85,9 +75,7 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
         cachedRootChild1 = treeModel.getChild(treeModel.getRoot(), 0).getNumber();
         cachedRootChild2 = treeModel.getChild(treeModel.getRoot(), 1).getNumber();
     }
-    public ThorneyTreeLikelihood(String name, TreeModel treeModel, BranchLengthProvider branchLengthProvider, ThorneyBranchLengthLikelihoodDelegate thorneyBranchLengthLikelihoodDelegate) {
-        this(name,  treeModel,  branchLengthProvider,  thorneyBranchLengthLikelihoodDelegate, null);
-    }
+
 
 
     /**
@@ -201,13 +189,9 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
         } else if (model == thorneyBranchLengthLikelihoodDelegate) {
             if (index == -1) {
                 updateAllNodes();
-            }
-        } else if (model == branchRateModel) {
-            if (index == -1) {
-                updateAllNodes();
-            } else {
-                updateNode(treeModel.getNode(index));
-            }
+            }  else {
+            updateNode(treeModel.getNode(index));
+        }
         }
         else{
             throw new RuntimeException("Unknown componentChangedEvent");
@@ -250,41 +234,36 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
     // **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************
-//    private double calculateLogLikelihood(NodeRef node, int root, int rootChild1, int rootChild2) {
-//        int nodeIndex = node.getNumber();
-//
-//        if (updateNode[nodeIndex]) {
-//            double logL;
-//            if(nodeIndex==root || nodeIndex==rootChild2){
-//                logL=0;
-//            }else{
-//                double time = treeModel.getBranchLength(node);
-//                double mutations = branchLengthProvider.getBranchLength(treeModel, node);
-//
-//                if (nodeIndex == rootChild1) {
-//                    // sum the branches on both sides of the root
-//                    NodeRef node2 = treeModel.getNode(rootChild2);
-//                    time += treeModel.getBranchLength(node2);
-//                    mutations += branchLengthProvider.getBranchLength(treeModel, node2);
-//                }
-////                gamma.setScale(1.0);
-////                branchLogL[i] = gamma.logPdf(x);
-//                if(this.branchRateModel!=null) {
-//                    logL = thorneyBranchLengthLikelihoodDelegate.getLogLikelihood(mutations, time); //SaddlePointExpansion.logBinomialProbability((int)x, sequenceLength, expected, 1.0D - expected);
-//                }else{
-//                    logL = thorneyBranchLengthLikelihoodDelegate.getLogLikelihood(mutations, time); //SaddlePointExpansion.logBinomialProbability((int)x, sequenceLength, expected, 1.0D - expected);
-//
-//                }
-//            }
-//
-//            for (int i = 0; i < treeModel.getChildCount(node); i++) {
-//                logL += calculateLogLikelihood(treeModel.getChild(node, i),root,rootChild1,rootChild2);
-//            }
-//            branchLogL[nodeIndex] = logL;
-//            updateNode[nodeIndex] = false;
-//        }
-//        return branchLogL[nodeIndex];
-//    }
+    public double calculateLogLikelihood(NodeRef node, int root, int rootChild1, int rootChild2) {
+        int nodeIndex = node.getNumber();
+
+        if (updateNode[nodeIndex]) {
+            double logL;
+            if(nodeIndex==root){
+                logL=0;
+            }else{
+                double time = treeModel.getBranchLength(node);
+                double mutations = branchLengthProvider.getBranchLength(treeModel, node);
+
+//                    if (nodeIndex == rootChild1) {
+//                        // sum the branches on both sides of the root
+//                        NodeRef node2 = treeModel.getNode(rootChild2);
+//                        time += treeModel.getBranchLength(node2);
+//                        mutations += branchLengthProvider.getBranchLength(treeModel, node2);
+//                    }
+//                gamma.setScale(1.0);
+//                branchLogL[i] = gamma.logPdf(x);
+                logL = thorneyBranchLengthLikelihoodDelegate.getLogLikelihood(mutations, time,treeModel,node); //SaddlePointExpansion.logBinomialProbability((int)x, sequenceLength, expected, 1.0D - expected);
+
+            }
+            for (int i = 0; i < treeModel.getChildCount(node); i++) {
+                logL += this.calculateLogLikelihood(treeModel.getChild(node, i),root,rootChild1,rootChild2);
+            }
+            branchLogL[nodeIndex] = logL;
+            updateNode[nodeIndex] = false;
+        }
+        return branchLogL[nodeIndex];
+    }
     private double calculateLogLikelihoodLinear() {
 
 //        makeDirty();
@@ -301,25 +280,25 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
 
         double logL = 0.0;
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
-            if (updateNode[i] && i != root && i != rootChild2) {
+            if (updateNode[i] && i != root) {
                 NodeRef node = treeModel.getNode(i);
                 // skip the root and the second child of the root (this is added to the first child)
 
                 double time = treeModel.getBranchLength(node);
                 double mutations = branchLengthProvider.getBranchLength(treeModel, node);
 
-                if (i == rootChild1) {
-                    // sum the branches on both sides of the root
-                    NodeRef node2 = treeModel.getNode(rootChild2);
-                    time += treeModel.getBranchLength(node2);
-                    mutations += branchLengthProvider.getBranchLength(treeModel, node2);
-                }
-//                double mean = expected * sequenceLength;
+//                if (i == rootChild1) {
+//                    // sum the branches on both sides of the root
+//                    NodeRef node2 = treeModel.getNode(rootChild2);
+//                    time += treeModel.getBranchLength(node2);
+//                    mutations += branchLengthProvider.getBranchLength(treeModel, node2);
+//                }
+////                double mean = expected * sequenceLength;
+//
+////                gamma.setScale(1.0);
+////                branchLogL[i] = gamma.logPdf(x);
 
-//                gamma.setScale(1.0);
-//                branchLogL[i] = gamma.logPdf(x);
-
-                branchLogL[i] = thorneyBranchLengthLikelihoodDelegate.getLogLikelihood(mutations,time);
+                branchLogL[i] = thorneyBranchLengthLikelihoodDelegate.getLogLikelihood(mutations,time,treeModel,node);
             //SaddlePointExpansion.logPoissonProbability(mean,(int)x); //SaddlePointExpansion.logBinomialProbability((int)x, sequenceLength, expected, 1.0D - expected);
             }
             updateNode[i] = false;
@@ -337,7 +316,7 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
         updateNode[rootChild1] = updateNode[rootChild1] || updateNode[rootChild2] ;
         assert updateNode[root];
 
-        return likelihoodDelegate.calculateLogLikelihood(treeModel.getRoot(), root, rootChild1, rootChild2);
+        return calculateLogLikelihood(treeModel.getRoot(), root, rootChild1, rootChild2);
 
     }
     public final Model getModel() {
@@ -375,57 +354,23 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
 
             if (updateNode[nodeIndex]) {
                 double logL;
-                if(nodeIndex==root || nodeIndex==rootChild2){
+                if(nodeIndex==root){
                     logL=0;
                 }else{
                     double time = treeModel.getBranchLength(node);
                     double mutations = branchLengthProvider.getBranchLength(treeModel, node);
 
-                    if (nodeIndex == rootChild1) {
-                        // sum the branches on both sides of the root
-                        NodeRef node2 = treeModel.getNode(rootChild2);
-                        time += treeModel.getBranchLength(node2);
-                        mutations += branchLengthProvider.getBranchLength(treeModel, node2);
-                    }
+//                    if (nodeIndex == rootChild1) {
+//                        // sum the branches on both sides of the root
+//                        NodeRef node2 = treeModel.getNode(rootChild2);
+//                        time += treeModel.getBranchLength(node2);
+//                        mutations += branchLengthProvider.getBranchLength(treeModel, node2);
+//                    }
 //                gamma.setScale(1.0);
 //                branchLogL[i] = gamma.logPdf(x);
-                        logL = thorneyBranchLengthLikelihoodDelegate.getLogLikelihood(mutations, time); //SaddlePointExpansion.logBinomialProbability((int)x, sequenceLength, expected, 1.0D - expected);
+                        logL = thorneyBranchLengthLikelihoodDelegate.getLogLikelihood(mutations, time,treeModel,node); //SaddlePointExpansion.logBinomialProbability((int)x, sequenceLength, expected, 1.0D - expected);
 
                 }
-
-                for (int i = 0; i < treeModel.getChildCount(node); i++) {
-                    logL += this.calculateLogLikelihood(treeModel.getChild(node, i),root,rootChild1,rootChild2);
-                }
-                branchLogL[nodeIndex] = logL;
-                updateNode[nodeIndex] = false;
-            }
-            return branchLogL[nodeIndex];
-        }
-    }
-    private class branchRateModelLikelihood implements LikelihoodDelegate{
-
-        public double calculateLogLikelihood(NodeRef node, int root, int rootChild1, int rootChild2) {
-            int nodeIndex = node.getNumber();
-
-            if (updateNode[nodeIndex]) {
-                double logL;
-                if(nodeIndex==root || nodeIndex==rootChild2){
-                    logL=0;
-                }else{
-                    double expectation = treeModel.getBranchLength(node) * branchRateModel.getBranchRate(treeModel, node);
-                    double mutations = branchLengthProvider.getBranchLength(treeModel, node);
-
-                    if (nodeIndex == rootChild1) {
-                        // sum the branches on both sides of the root
-                        NodeRef node2 = treeModel.getNode(rootChild2);
-                        expectation += treeModel.getBranchLength(node2)*branchRateModel.getBranchRate(treeModel, node2);
-                        mutations += branchLengthProvider.getBranchLength(treeModel, node2);
-                    }
-//                gamma.setScale(1.0);
-//                branchLogL[i] = gamma.logPdf(x);
-                    logL = thorneyBranchLengthLikelihoodDelegate.getLogLikelihood(mutations, expectation); //SaddlePointExpansion.logBinomialProbability((int)x, sequenceLength, expected, 1.0D - expected);
-                }
-
                 for (int i = 0; i < treeModel.getChildCount(node); i++) {
                     logL += this.calculateLogLikelihood(treeModel.getChild(node, i),root,rootChild1,rootChild2);
                 }
@@ -447,7 +392,7 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
 
     private final ThorneyBranchLengthLikelihoodDelegate thorneyBranchLengthLikelihoodDelegate;
     private final BranchLengthProvider branchLengthProvider;
-    private final BranchRateModel branchRateModel;
+
 
     //private final double[][] distanceMatrix;
 

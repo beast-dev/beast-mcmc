@@ -71,7 +71,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private JLabel userTreeInfo = new JLabel("<html>" +
             "Import user-specified starting trees from <b>NEXUS</b><br>" +
             "format  data files using the 'Import Data' menu option.<br>" +
-            "Trees must be rooted and strictly bifurcating (binary).</html>");
+            "Starting trees that are not rooted and strictly bifurcating <br>" +
+            " (binary) will be randomly resolved.</html>");
 
     private RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY, "Init root height");
 
@@ -166,17 +167,18 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private void setUserSpecifiedStartingTree() {
         if (userTreeCombo.getSelectedItem() != null && (!userTreeCombo.getSelectedItem().toString().equalsIgnoreCase(NO_TREE))) {
             Tree seleTree = getSelectedUserTree();
-            if (seleTree == null || isBifurcatingTree(seleTree, seleTree.getRoot())) {
+            if (seleTree != null) {
                 partitionTreeModel.setUserStartingTree(seleTree);
-            } else {
-                JOptionPane.showMessageDialog(parent, "The selected user-specified starting tree " +
-                        "is not fully bifurcating.\nBEAST requires rooted, bifurcating (binary) trees.",
-                        "Illegal user-specified starting tree",
-                        JOptionPane.ERROR_MESSAGE);
-
-                userTreeCombo.setSelectedItem(NO_TREE);
-                partitionTreeModel.setUserStartingTree(null);
             }
+//            else {
+//                JOptionPane.showMessageDialog(parent, "The selected user-specified starting tree " +
+//                        "is not fully bifurcating.\nBEAST requires rooted, bifurcating (binary) trees.",
+//                        "Illegal user-specified starting tree",
+//                        JOptionPane.ERROR_MESSAGE);
+//
+//                userTreeCombo.setSelectedItem(NO_TREE);
+//                partitionTreeModel.setUserStartingTree(null);
+//            }
         }
     }
 

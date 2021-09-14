@@ -19,8 +19,9 @@ public class PoissonBranchLengthLikelihoodDelegate extends AbstractModel impleme
     }
 
     @Override
-    public double getLogLikelihood(double mutations, double time, Tree tree , NodeRef node) {
+    public double getLogLikelihood(double mutations, Tree tree , NodeRef node) {
         double rate = this.branchRateModel.getBranchRate(tree, node);
+        double time = tree.getBranchLength(node);
         return SaddlePointExpansion.logPoissonProbability(time*rate*scale, (int) Math.round(mutations));
     }
 

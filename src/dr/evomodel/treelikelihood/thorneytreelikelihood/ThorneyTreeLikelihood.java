@@ -253,7 +253,7 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
 //                    }
 //                gamma.setScale(1.0);
 //                branchLogL[i] = gamma.logPdf(x);
-                logL = thorneyBranchLengthLikelihoodDelegate.getLogLikelihood(mutations, time,treeModel,node); //SaddlePointExpansion.logBinomialProbability((int)x, sequenceLength, expected, 1.0D - expected);
+                logL = thorneyBranchLengthLikelihoodDelegate.getLogLikelihood(mutations, treeModel,node); //SaddlePointExpansion.logBinomialProbability((int)x, sequenceLength, expected, 1.0D - expected);
 
             }
             for (int i = 0; i < treeModel.getChildCount(node); i++) {
@@ -298,7 +298,7 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
 ////                gamma.setScale(1.0);
 ////                branchLogL[i] = gamma.logPdf(x);
 
-                branchLogL[i] = thorneyBranchLengthLikelihoodDelegate.getLogLikelihood(mutations,time,treeModel,node);
+                branchLogL[i] = thorneyBranchLengthLikelihoodDelegate.getLogLikelihood(mutations,treeModel,node);
             //SaddlePointExpansion.logPoissonProbability(mean,(int)x); //SaddlePointExpansion.logBinomialProbability((int)x, sequenceLength, expected, 1.0D - expected);
             }
             updateNode[i] = false;
@@ -368,7 +368,7 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
 //                    }
 //                gamma.setScale(1.0);
 //                branchLogL[i] = gamma.logPdf(x);
-                        logL = thorneyBranchLengthLikelihoodDelegate.getLogLikelihood(mutations, time,treeModel,node); //SaddlePointExpansion.logBinomialProbability((int)x, sequenceLength, expected, 1.0D - expected);
+                        logL = thorneyBranchLengthLikelihoodDelegate.getLogLikelihood(mutations, treeModel,node); //SaddlePointExpansion.logBinomialProbability((int)x, sequenceLength, expected, 1.0D - expected);
 
                 }
                 for (int i = 0; i < treeModel.getChildCount(node); i++) {

@@ -5,6 +5,6 @@ import dr.evolution.tree.Tree;
 
 
 public interface ThorneyBranchLengthLikelihoodDelegate  {
-     double getLogLikelihood(double observed, double expected, Tree tree, NodeRef node);
+     double getLogLikelihood(double mutations, Tree tree, NodeRef node);
 
 }

@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainableTreeOperator;
 import dr.evomodelxml.operators.SubtreeJumpOperatorParser;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
@@ -45,7 +46,7 @@ import java.util.List;
  * @author Luiz Max Carvalho
  * @version $Id$
  */
-public class SubtreeJumpOperator extends AbstractTreeOperator {
+public class SubtreeJumpOperator extends AbstractTreeOperator implements ConstrainableTreeOperator {
 
     private double size = 1.0;
     private double accP = 0.234;
@@ -71,12 +72,14 @@ public class SubtreeJumpOperator extends AbstractTreeOperator {
         this.mode = mode;
 
     }
+
+
     /**
      * Do a subtree jump move.
      *
      * @return the log-transformed hastings ratio
      */
-    public double doOperation() {
+    public double doOperation(TreeModel tree) {
         double logq;
 
         final NodeRef root = tree.getRoot();
@@ -163,6 +166,9 @@ public class SubtreeJumpOperator extends AbstractTreeOperator {
         return logq;
     }
 
+    public double doOperation(){
+        return doOperation(tree);
+    }
     /**
      * Gets a list of edges that subtend the given height
      * @param tree
@@ -281,6 +287,8 @@ public class SubtreeJumpOperator extends AbstractTreeOperator {
     public AdaptationMode getMode() {
         return mode;
     }
+
+
 
     public String getOperatorName() {
         return SubtreeJumpOperatorParser.SUBTREE_JUMP + "(" + tree.getId() + ")";

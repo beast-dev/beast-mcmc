@@ -39,6 +39,11 @@ public class AURCBranchLengthLikelihoodDelegate extends AbstractBranchRateModel 
     }
 
     @Override
+    public double getGradientWrtTime(double mutations, double time) {
+        throw new RuntimeException("Not implemented!");
+    }
+
+    @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
     }

@@ -28,6 +28,8 @@ package dr.evomodelxml.operators;
 import dr.evomodel.operators.FixedHeightSubtreePruneRegraftOperator;
 import dr.evomodel.operators.SubtreeJumpOperator;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainedTreeModel;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainedTreeOperator;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
@@ -77,6 +79,9 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
         SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, weight, size, targetAcceptance, uniform, mode);
 //        operator.setTargetAcceptanceProbability(targetAcceptance);
 
+        if(treeModel instanceof ConstrainedTreeModel){
+            return ConstrainedTreeOperator.parse((ConstrainedTreeModel) treeModel, weight, operator,xo);
+        }
         return operator;
     }
 

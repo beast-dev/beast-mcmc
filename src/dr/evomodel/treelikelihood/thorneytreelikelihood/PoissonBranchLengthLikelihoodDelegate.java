@@ -3,6 +3,7 @@ package dr.evomodel.treelikelihood.thorneytreelikelihood;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.inference.model.*;
 import org.apache.commons.math.special.Gamma;
 import org.apache.commons.math.util.FastMath;
@@ -29,7 +30,11 @@ public class PoissonBranchLengthLikelihoodDelegate extends AbstractModel impleme
 
     @Override
     public double getGradientWrtTime(double mutations, double time) { // TODO: better chain rule handling
-        return SaddlePointExpansion.logPoissonMeanDerivative(time * rate.getValue(0) * scale, (int) Math.round(mutations)) * rate.getValue(0) * scale;
+        if (!(this.branchRateModel instanceof StrictClockBranchRates)){
+            throw new RuntimeException("gradients are only implemented for a strict clock model");
+        }
+        double rate = (double) branchRateModel.getVariable(0).getValue(0);
+        return SaddlePointExpansion.logPoissonMeanDerivative(time * rate * scale, (int) Math.round(mutations)) * rate * scale;
     }
 
     @Override

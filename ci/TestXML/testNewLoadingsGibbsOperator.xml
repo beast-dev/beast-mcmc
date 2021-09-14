@@ -1,0 +1,837 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    <taxa>
+        <taxon id="taxon_1">
+            <attr name="factors">0.0076177742633394985 0.04658821120386576 -0.454549337998158</attr>
+            <attr name="traits">0.6516453793311435 -0.30672526997380434 -1.0662258001632197 NA NA 1.0862726198933823
+            </attr>
+            <attr name="factors2">-1.2133058518108453 1.2531943267046417 0.7026469551990844</attr>
+            <attr name="traits2">-0.9981245809135479 0.5981434436348021 -0.7513706746192048 NA NA -1.3090333377056513
+            </attr>
+        </taxon>
+        <taxon id="taxon_2">
+            <attr name="factors">0.05702524809146323 1.0015698840090395 -1.5146279580725215</attr>
+            <attr name="traits">0.6325785236662933 2.1458418845262095 -4.02252759844451 -2.199839091348439
+                0.29503380579945926 1.6022530940653703
+            </attr>
+            <attr name="factors2">-0.4259398152867588 -0.2726079993066857 -1.5066848335126473</attr>
+            <attr name="traits2">-0.3588585707563652 0.1951535693812173 1.323610525039952 -2.198680996374538
+                1.5747971740619042 -1.0803414235418347
+            </attr>
+        </taxon>
+        <taxon id="taxon_3">
+            <attr name="factors">-0.5484010117038763 -0.42898479922720356 0.6436374468251037</attr>
+            <attr name="traits">0.06710387175615268 -0.6551615290007992 -0.1558341260039633 0.9809281618519776 NA
+                2.2757398638433024
+            </attr>
+            <attr name="factors2">-0.3056748246811895 0.7928486212836258 -0.21993623046215738</attr>
+            <attr name="traits2">-0.34942164457979624 -1.8935763502158398 -0.6325563176821224 1.195693054757052 NA
+                0.05984407853281771
+            </attr>
+        </taxon>
+        <taxon id="taxon_4">
+            <attr name="factors">0.3515255484089337 0.09104086929644847 -1.426378176957026</attr>
+            <attr name="traits">1.8381550901151866 0.7100323532823356 -0.46336620339680973 0.6929385483268955
+                1.4246416564479647 0.7978312892852549
+            </attr>
+            <attr name="factors2">0.053360625039842756 1.0962404721739925 0.586584145794969</attr>
+            <attr name="traits2">0.20093590646835074 -0.5670979818747811 -1.7337551994192786 -0.5995189410545666
+                0.5332496241742802 1.7116708610850269
+            </attr>
+        </taxon>
+        <taxon id="taxon_5">
+            <attr name="factors">-0.784929798992992 -0.8970245252413375 1.5439602691637375</attr>
+            <attr name="traits">0.0316690080373222 -1.7576226586590344 1.1840692291157067 NA NA -1.1147162532561403
+            </attr>
+            <attr name="factors2">0.7783785332321066 -1.8578771649532833 -1.4377678637493523</attr>
+            <attr name="traits2">-0.3617494203082053 -1.059606585292308 0.2962825104489853 NA NA 1.2358808984285405
+            </attr>
+        </taxon>
+        <taxon id="taxon_6">
+            <attr name="factors">0.24501763591278475 0.4270454816694809 -0.16450480870919917</attr>
+            <attr name="traits">-1.5117818459617285 0.6142497294867271 -1.0719594995347204 0.17717747134170958
+                0.25141001101997984 2.5713722001003765
+            </attr>
+            <attr name="factors2">0.73212543842529 -0.5711454771973 0.9860958511733682</attr>
+            <attr name="traits2">1.08075219284944 -0.0741492631166799 -0.785751053817025 -0.377439339210243
+                0.7101052243517899 -0.2344683483229183
+            </attr>
+        </taxon>
+        <taxon id="taxon_7">
+            <attr name="factors">0.30611493207760276 -0.8920557774375898 -0.16240458275087258</attr>
+            <attr name="traits">2.376998869152794 -1.288954973667512 1.9653139535393538 2.2591172651509472
+                0.7033139566852135 -2.0051988957891833
+            </attr>
+            <attr name="factors2">1.7028612291142875 -1.9605857513657532 0.272136147887169</attr>
+            <attr name="traits2">-1.3680772995699344 0.8041697215406823 0.4749217262040388 -2.3258826838462836
+                -0.5377523342088854 0.272951846601472
+            </attr>
+        </taxon>
+        <taxon id="taxon_8">
+            <attr name="factors">-1.0304943902767967 -0.8909827170981991 -0.39339506737983243</attr>
+            <attr name="traits">3.7489584330186037 -1.6120214352492708 1.229095829253043 -0.9461771288238325
+                -0.5414270188384662 0.1963933988118387
+            </attr>
+            <attr name="factors2">1.309748664652013 -0.15185628853771327 1.6929389068113967</attr>
+            <attr name="traits2">-0.32634538196221996 -1.09940921171389 0.6994853382044979 1.8869428321199109
+                0.4977991912544602 -0.19249978477171675
+            </attr>
+        </taxon>
+        <taxon id="taxon_9">
+            <attr name="factors">-0.21629784327601548 -0.11560476062111587 0.8655080462439241</attr>
+            <attr name="traits">0.1098051185822364 -0.8354209207733001 -0.9408605927811101 -0.6052366430815324 NA
+                -1.899585962165238
+            </attr>
+            <attr name="factors2">-0.7359420461875775 0.6540950962355229 0.2334121811823706</attr>
+            <attr name="traits2">-0.09811198697843115 -0.8616370616558601 -0.23236243995649072 0.9581424818529855 NA
+                0.04248585714628226
+            </attr>
+        </taxon>
+        <taxon id="taxon_10">
+            <attr name="factors">-2.132446790112065 -0.7122666957434696 -0.17865180808229236</attr>
+            <attr name="traits">2.6838414469174605 -2.1315965518222804 2.0018397831496473 -0.07311489093054435
+                0.007730702344034168 -0.6319030277655954
+            </attr>
+            <attr name="factors2">0.6703690576290524 2.1639793658561226 0.20995842143610133</attr>
+            <attr name="traits2">-1.8879064540962252 0.3404372250993941 0.1844449916003127 -1.0406957527381338
+                -0.4446642765092675 1.4673190222185502
+            </attr>
+        </taxon>
+        <taxon id="taxon_11">
+            <attr name="factors">-0.3930227002265834 -0.8666572905938715 -0.5001246338040305</attr>
+            <attr name="traits">2.837040489149912 -1.8973050606685875 2.3271956919825123 NA 0.7746748939419622
+                -1.3995208334770814
+            </attr>
+            <attr name="factors2">1.5409081543409757 -0.6318572850407939 -0.37508901827554525</attr>
+            <attr name="traits2">-0.32630421730109477 0.9975507049607159 -0.07096521254343297 NA -0.9936791858197841
+                1.3232942754731285
+            </attr>
+        </taxon>
+        <taxon id="taxon_12">
+            <attr name="factors">1.712948337244973 2.3897801345872987 0.8960512885879615</attr>
+            <attr name="traits">NA 4.011276726695137 -6.033559189872468 -3.9124036703618366 -1.50713519850089
+                2.789226659002523
+            </attr>
+            <attr name="factors2">-0.21910826729514443 1.7803008936510245 -0.9407953600719968</attr>
+            <attr name="traits2">NA 0.07988203196594053 -1.9737902929363504 -0.07029864112047372 -1.6857578876727803
+                0.49730948900832006
+            </attr>
+        </taxon>
+        <taxon id="taxon_13">
+            <attr name="factors">-0.05945162267545193 -0.3440100523685048 -0.09729958495856225</attr>
+            <attr name="traits">0.6139922543514983 -0.3984400274642017 1.1097378876612587 NA -0.7645437571511162
+                0.28866471489805057
+            </attr>
+            <attr name="factors2">-0.884732156688886 1.9472754710845195 -2.0241255989792486</attr>
+            <attr name="traits2">1.1718015725579902 -0.02535452224481301 -0.7623255206702356 NA 0.20956781199950203
+                -0.6020119659013258
+            </attr>
+        </taxon>
+        <taxon id="taxon_14">
+            <attr name="factors">0.2079912019698792 0.38443026317349643 -0.7790116303715932</attr>
+            <attr name="traits">0.09090853479382373 0.33378743492916796 -0.25188477261553754 -1.4767322764008375
+                0.3961425149247593 0.903095688374252
+            </attr>
+            <attr name="factors2">-0.908492078896604 1.332217470795558 0.31264802326118707</attr>
+            <attr name="traits2">1.718050723742728 -1.7135270227271688 0.25009505164097723 -0.12985853692457772
+                2.2415459222608085 0.42449164730984534
+            </attr>
+        </taxon>
+        <taxon id="taxon_15">
+            <attr name="factors">1.4061412930408388 0.7619824434342454 0.09081342420693704</attr>
+            <attr name="traits">NA 1.4511796734070117 -1.7486590133121946 -1.7382795735252825 NA NA</attr>
+            <attr name="factors2">1.1319205607675884 -0.16613722234936917 0.5150091671235774</attr>
+            <attr name="traits2">NA -0.24873143796379724 0.8084047625956468 0.3339311437326493 NA NA</attr>
+        </taxon>
+        <taxon id="taxon_16">
+            <attr name="factors">-0.8161262390971513 -0.6230781939110783 -0.4456292313690999</attr>
+            <attr name="traits">2.300332409879507 -1.1865786532505138 -0.20560024628492068 1.3710415643252687
+                0.37780528147873366 -0.9037082410134097
+            </attr>
+            <attr name="factors2">-0.540876737598856 -1.27919320231522 1.5306753164709703</attr>
+            <attr name="traits2">0.6226474307475715 0.2813056556276766 -0.20092798377805954 -1.8934986794262336
+                0.11664527607617502 0.3270248190260732
+            </attr>
+        </taxon>
+        <taxon id="taxon_17">
+            <attr name="factors">-1.0144436604293505 1.478607059857378 -0.6908795858187</attr>
+            <attr name="traits">-2.3900164996797697 NA -1.27266097686219 -1.6641744157778198 1.3218772342891496
+                3.639739152464377
+            </attr>
+            <attr name="factors2">-0.8530272179341484 1.045832431389519 0.4136817728340274</attr>
+            <attr name="traits2">1.454151808172188 NA 0.43231508809394403 -0.10065000560648601 0.7556042225334672
+                -1.71285386862642
+            </attr>
+        </taxon>
+        <taxon id="taxon_18">
+            <attr name="factors">1.056873733132347 1.1873505039550996 1.066150616149452</attr>
+            <attr name="traits">-4.741021089331722 2.7334348360574556 -3.425732392281707 -3.245630095163677 NA
+                -1.0398483118192028
+            </attr>
+            <attr name="factors2">0.5268638272696512 -0.9763418164860428 1.1340483630341385</attr>
+            <attr name="traits2">-1.1031430408308445 1.0821474474888186 -0.3880748220629019 0.9013768876292776 NA
+                0.06979992249293204
+            </attr>
+        </taxon>
+        <taxon id="taxon_19">
+            <attr name="factors">-0.2221684856569227 0.41571346596533654 0.10898633050895852</attr>
+            <attr name="traits">-1.7590141534663633 1.700159530679466 -1.1222330860200174 -1.9725089485759364
+                -0.0034474695593829513 0.8864456543432668
+            </attr>
+            <attr name="factors2">1.1401589934254803 -0.6889751511190905 1.0273087350841408</attr>
+            <attr name="traits2">-0.650361438870187 0.11988887960348402 -0.001551025159085228 -0.6957989809881509
+                0.335057288933828 -0.6947407763297914
+            </attr>
+        </taxon>
+        <taxon id="taxon_20">
+            <attr name="factors">-0.17438164408909365 -0.44738267923159963 0.23315524522158199</attr>
+            <attr name="traits">0.699825235901709 -1.0273030546022055 0.0907239153037932 0.7087459046154488
+                1.018207622643108 0.08337659484405302
+            </attr>
+            <attr name="factors2">-1.5623915611149461 1.4679956241608012 -0.033597626739283515</attr>
+            <attr name="traits2">0.013639868527778974 -0.5829372153188221 0.9879042788549894 0.12110307673505301
+                -0.36811105082880624 -0.1459745173489141
+            </attr>
+        </taxon>
+    </taxa>
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+        (((((taxon_1:0.34769126656992577,taxon_13:0.34769126656992577):0.38875916604224636,((taxon_3:0.5007872109882292,((taxon_6:0.003931676764071745,taxon_18:0.003931676764071579):0.2875857461700743,taxon_15:0.29151742293414595):0.20926978805408314):0.1454502295470716,taxon_9:0.6462374405353007):0.0902129920768714):0.18585872649337928,taxon_5:0.9223091591055514):0.06582215481694292,((taxon_7:0.2362964387491202,taxon_8:0.2362964387491202):0.5826806291497661,taxon_19:0.8189770678988864):0.16915424602360798):0.01186868607750566,((taxon_2:0.547275897884007,((((taxon_10:0.3910596013771078,taxon_16:0.3910596013771077):0.01617059432106932,taxon_17:0.4072301956981771):0.019508384542838896,taxon_12:0.42673858024101596):0.0823508576929864,taxon_11:0.5090894379340024):0.038186459950004595):0.23663811228161777,(taxon_4:0.269355054484828,(taxon_14:0.18966872798342788,taxon_20:0.18966872798342793):0.07968632650140012):0.5145589556807968):0.21608598983437521);;
+    </newick>
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="false" traitDimension="6"
+                    name="traits">
+            <parameter id="leafTraits"/>
+        </nodeTraits>
+
+        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="true" traitDimension="6"
+                    name="traits2">
+            <parameter id="leafTraits2"/>
+        </nodeTraits>
+        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="true" traitDimension="3"
+                    name="factors2">
+            <parameter id="leafFactors2"/>
+        </nodeTraits>
+    </treeModel>
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+            <DiagonalMatrix>
+                <parameter value="1.0 1.0 1.0"/>
+            </DiagonalMatrix>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+    <multivariateTraitLikelihood allowIdentical="true" standardize="false" cacheBranches="true"
+                                 integrateInternalTraits="true" id="traitLikelihood" traitName="factors"
+                                 useTreeLength="false" scaleByTime="true" reportAsMultivariate="true">
+        <multivariateDiffusionModel idref="diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter id="traitParameter"/>
+        </traitParameter>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </multivariateTraitLikelihood>
+    <matrixParameter id="L">
+        <parameter value="1.0 1.0 1.0 1.0 1.0 1.0"/>
+        <parameter value="0.0 1.0 1.0 1.0 1.0 1.0"/>
+        <parameter value="0.0 0.0 1.0 1.0 1.0 1.0"/>
+    </matrixParameter>
+    <independentNormalDistributionModel id="L.prior">
+        <data>
+            <matrixParameter idref="L"/>
+        </data>
+        <mean>
+            <parameter
+                    value="-1.2823400033912142 2.1809090222419747 0.06721844474197673 1.0653777279457868 0.8773181883810632 1.8786634137305687 -0.1427515249906789 -0.76494589666848 -0.7753036091755111 0.06407218628880325 0.05507223762229884 -0.17103119940289752 -0.2052922205523524 -1.320689790676592 0.18739305920640129 1.857641004164723 -0.10928634493525792 0.5191793798458271"/>
+        </mean>
+        <variance>
+            <parameter
+                    value="1.8828939598817676 0.41420875350275466 0.6810698903527725 2.5471000020296253 2.780837692892736 2.4155726812616254 1.838104209091946 0.4610623166531363 0.37672575573321243 2.4415081646856898 0.5320316471526403 0.26878593965065706 0.3088637289550328 5.54113550014943 0.9505411793361329 2.7796657446781596 0.21915581002987947 1.261329708041159"/>
+        </variance>
+    </independentNormalDistributionModel>
+
+    <latentFactorModel id="latentFactorModel" factorNumber="3" traitName="traits" scaleData="false">
+        <factors>
+            <parameter idref="traitParameter"/>
+        </factors>
+        <data>
+            <dataAndMissingFromTreeTips traitName="traits">
+                <treeModel idref="treeModel"/>
+                <traitParameter>
+                    <parameter idref="leafTraits"/>
+                </traitParameter>
+            </dataAndMissingFromTreeTips>
+        </data>
+        <treeModel idref="treeModel"/>
+        <loadings>
+            <matrixParameter idref="L"/>
+        </loadings>
+        <rowPrecision>
+            <DiagonalMatrix>
+                <parameter value="1" dimension="6"/>
+            </DiagonalMatrix>
+        </rowPrecision>
+        <columnPrecision>
+            <DiagonalMatrix>
+                <parameter id="factorPrecision"
+                           value="5.303946837041417 6.102849481866849 0.6288334214918883 0.4712883673025561 1.1687294260119294 1.037762993437785"/>
+            </DiagonalMatrix>
+        </columnPrecision>
+        <!--        <missingIndicator>-->
+        <!--            <parameter-->
+        <!--                    value="0.0 0.0 0.0 1.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>-->
+        <!--        </missingIndicator>-->
+    </latentFactorModel>
+    <gammaPrior id="factorPrecision.prior" scale="1.0" shape="1.0">
+        <parameter idref="factorPrecision"/>
+    </gammaPrior>
+
+    <loadingsGibbsOperator id="loadingsOp" weight="1.0" randomScan="false"
+                           newMode="true"
+                           constraint="none" sparsity="none">
+        <latentFactorModel idref="latentFactorModel"/>
+        <normalPrior idref="L.prior"/>
+    </loadingsGibbsOperator>
+
+    <loadingsGibbsOperator id="cachedLoadingsOp" weight="1.0" randomScan="false"
+                           newMode="true"
+                           constraint="none" sparsity="none" cacheInnerProducts="true">
+        <latentFactorModel idref="latentFactorModel"/>
+        <normalPrior idref="L.prior"/>
+    </loadingsGibbsOperator>
+
+    <loadingsGibbsOperator id="multiLoadingsOp" weight="1.0" randomScan="false"
+                           newMode="true"
+                           constraint="none" sparsity="none" multiThreaded="true">
+        <latentFactorModel idref="latentFactorModel"/>
+        <normalPrior idref="L.prior"/>
+    </loadingsGibbsOperator>
+
+
+    <loadingsGibbsOperator id="triLoadingsOp" weight="1.0" randomScan="false"
+                           newMode="true"
+                           constraint="none" sparsity="upperTriangular">
+        <latentFactorModel idref="latentFactorModel"/>
+        <normalPrior idref="L.prior"/>
+    </loadingsGibbsOperator>
+
+    <loadingsGibbsOperator id="cachedTriLoadingsOp" weight="1.0" randomScan="false"
+                           newMode="true"
+                           constraint="none" sparsity="upperTriangular" cacheInnerProducts="true">
+        <latentFactorModel idref="latentFactorModel"/>
+        <normalPrior idref="L.prior"/>
+    </loadingsGibbsOperator>
+
+    <loadingsGibbsOperator id="multiTriLoadingsOp" weight="1.0" randomScan="false"
+                           newMode="true"
+                           constraint="none" sparsity="upperTriangular" multiThreaded="true">
+        <latentFactorModel idref="latentFactorModel"/>
+        <normalPrior idref="L.prior"/>
+    </loadingsGibbsOperator>
+
+
+    <!--    <cachedReport id="unconstrainedReport">-->
+    <!--        <loadingsGibbsOperator idref="unconstrainedLoadingsOp"/>-->
+    <!--    </cachedReport>-->
+
+    <!--    <report>-->
+    <!--        <cachedReport idref="unconstrainedReport"/>-->
+    <!--    </report>-->
+
+    <!--    <cachedReport id="triReport">-->
+    <!--        <loadingsGibbsOperator idref="triLoadingsOp"/>-->
+    <!--    </cachedReport>-->
+
+    <!--    <report>-->
+    <!--        <cachedReport idref="triReport"/>-->
+    <!--    </report>-->
+    <cachedReport id="lo">
+        <loadingsGibbsOperator idref="loadingsOp"/>
+    </cachedReport>
+
+    <cachedReport id="clo">
+        <loadingsGibbsOperator idref="cachedLoadingsOp"/>
+    </cachedReport>
+
+    <cachedReport id="mlo">
+        <loadingsGibbsOperator idref="multiLoadingsOp"/>
+    </cachedReport>
+
+
+    <cachedReport id="tlo">
+        <loadingsGibbsOperator idref="triLoadingsOp"/>
+    </cachedReport>
+
+    <cachedReport id="ctlo">
+        <loadingsGibbsOperator idref="cachedTriLoadingsOp"/>
+    </cachedReport>
+
+    <cachedReport id="mtlo">
+        <loadingsGibbsOperator idref="multiTriLoadingsOp"/>
+    </cachedReport>
+
+    <assertEqual tolerance="1e-2" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check unconstrained loadings mean
+        </message>
+        <actual regex="Loadings mean:\s+(.*)\n">
+            <cachedReport idref="lo"/>
+            <cachedReport idref="clo"/>
+            <cachedReport idref="mlo"/>
+        </actual>
+        <expected>
+            -0.3721665664840462 0.48001788993686695 -0.34886569662988637 0.2915078879991332 -0.10091700602930198
+            -0.31415199927621096 -2.3884331810214676 1.4849101564580578 -1.7038907684395337 -1.6692350718773161
+            -0.09114521475759652 1.0644914784924318 -1.4629205281009046 -0.10761097309593033 -0.09163219006876919
+            -0.10718108191461742 -0.49226000993882457 -0.4356048068181444
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" toleranceType="absolute" verbose="true" charactersToStrip="{},">
+        <message>
+            Check unconstrained loadings covariance
+        </message>
+        <actual regex="(?s)Loadings covariance:\s+(.*?)\n\n">
+            <cachedReport idref="lo"/>
+            <cachedReport idref="clo"/>
+            <cachedReport idref="mlo"/>
+        </actual>
+        <expected>
+            0.022956497717568157 0.0 0.0 0.0 0.0 0.0 -0.010108096203461554 0.0 0.0 0.0 0.0 0.0 -0.0029661092487266753
+            0.0 0.0 0.0 0.0 0.0 0.0 0.026825130345080984 0.0 0.0 0.0 0.0 0.0 -0.020149104488406365 0.0 0.0 0.0 0.0 0.0
+            -0.0017390949677874516 0.0 0.0 0.0 0.0 0.0 0.0 0.12558214981824967 0.0 0.0 0.0 0.0 0.0 -0.05714232051538788
+            0.0 0.0 0.0 0.0 0.0 -0.020374369525908334 0.0 0.0 0.0 0.0 0.0 0.0 0.21608658926548263 0.0 0.0 0.0 0.0 0.0
+            -0.11208573253563628 0.0 0.0 0.0 0.0 0.0 -0.06017157127665279 0.0 0.0 0.0 0.0 0.0 0.0 0.10501600920958745
+            0.0 0.0 0.0 0.0 0.0 -0.041728009659973156 0.0 0.0 0.0 0.0 0.0 -0.024313147898191903 0.0 0.0 0.0 0.0 0.0 0.0
+            0.10179450447440216 0.0 0.0 0.0 0.0 0.0 -0.0436018124111958 0.0 0.0 0.0 0.0 0.0 -0.01691635027130539
+            -0.010108096203461554 0.0 0.0 0.0 0.0 0.0 0.024637070065998076 0.0 0.0 0.0 0.0 0.0 0.005188929149595344 0.0
+            0.0 0.0 0.0 0.0 0.0 -0.020149104488406365 0.0 0.0 0.0 0.0 0.0 0.026801001032409996 0.0 0.0 0.0 0.0 0.0
+            0.0003002502061093998 0.0 0.0 0.0 0.0 0.0 0.0 -0.05714232051538789 0.0 0.0 0.0 0.0 0.0 0.10479515111869853
+            0.0 0.0 0.0 0.0 0.0 0.009478818520723808 0.0 0.0 0.0 0.0 0.0 0.0 -0.11208573253563628 0.0 0.0 0.0 0.0 0.0
+            0.19893349110474873 0.0 0.0 0.0 0.0 0.0 0.018221660239732002 0.0 0.0 0.0 0.0 0.0 0.0 -0.041728009659973156
+            0.0 0.0 0.0 0.0 0.0 0.0753497614237646 0.0 0.0 0.0 0.0 0.0 0.007439331827843698 0.0 0.0 0.0 0.0 0.0 0.0
+            -0.0436018124111958 0.0 0.0 0.0 0.0 0.0 0.06948687227583128 0.0 0.0 0.0 0.0 0.0 0.007668017248087877
+            -0.002966109248726675 0.0 0.0 0.0 0.0 0.0 0.005188929149595344 0.0 0.0 0.0 0.0 0.0 0.017274554051013625 0.0
+            0.0 0.0 0.0 0.0 0.0 -0.0017390949677874514 0.0 0.0 0.0 0.0 0.0 0.0003002502061093998 0.0 0.0 0.0 0.0 0.0
+            0.014533709618737005 0.0 0.0 0.0 0.0 0.0 0.0 -0.020374369525908338 0.0 0.0 0.0 0.0 0.0 0.009478818520723808
+            0.0 0.0 0.0 0.0 0.0 0.1206502716847969 0.0 0.0 0.0 0.0 0.0 0.0 -0.06017157127665279 0.0 0.0 0.0 0.0 0.0
+            0.018221660239732 0.0 0.0 0.0 0.0 0.0 0.23463839507031478 0.0 0.0 0.0 0.0 0.0 0.0 -0.024313147898191903 0.0
+            0.0 0.0 0.0 0.0 0.007439331827843698 0.0 0.0 0.0 0.0 0.0 0.08432306426034182 0.0 -0.0 -0.0 -0.0 -0.0 -0.0
+            -0.01691635027130539 -0.0 -0.0 -0.0 -0.0 -0.0 0.007668017248087878 -0.0 -0.0 -0.0 -0.0 -0.0
+            0.07908168435891982
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check upper triangular loadings mean
+        </message>
+        <actual regex="Loadings mean:\s+(.*)\n">
+            <cachedReport idref="tlo"/>
+            <cachedReport idref="ctlo"/>
+            <cachedReport idref="mtlo"/>
+        </actual>
+        <expected>
+            -1.401754437093048 0.46714122549955267 -0.34886569662988637 0.2915078879991332 -0.10091700602930198
+            -0.31415199927621096 0.0 1.4871332789573564 -1.7038907684395337 -1.6692350718773161 -0.09114521475759652
+            1.0644914784924318 0.0 0.0 -0.09163219006876919 -0.10718108191461742 -0.49226000993882457
+            -0.4356048068181444
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" toleranceType="absolute" verbose="true" charactersToStrip="{},">
+        <message>
+            Check upper triangular loadings covariance
+        </message>
+        <actual regex="(?s)Loadings covariance:\s+(.*?)\n\n">
+            <cachedReport idref="tlo"/>
+            <cachedReport idref="ctlo"/>
+            <cachedReport idref="mtlo"/>
+        </actual>
+        <expected>
+            0.01876603420710843 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+            0.02661703128528661 0.0 0.0 0.0 0.0 0.0 -0.020113176728996006 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+            0.0 0.12558214981824967 0.0 0.0 0.0 0.0 0.0 -0.05714232051538788 0.0 0.0 0.0 0.0 0.0 -0.020374369525908334
+            0.0 0.0 0.0 0.0 0.0 0.0 0.21608658926548263 0.0 0.0 0.0 0.0 0.0 -0.11208573253563628 0.0 0.0 0.0 0.0 0.0
+            -0.06017157127665279 0.0 0.0 0.0 0.0 0.0 0.0 0.10501600920958745 0.0 0.0 0.0 0.0 0.0 -0.041728009659973156
+            0.0 0.0 0.0 0.0 0.0 -0.024313147898191903 0.0 0.0 0.0 0.0 0.0 0.0 0.10179450447440216 0.0 0.0 0.0 0.0 0.0
+            -0.0436018124111958 0.0 0.0 0.0 0.0 0.0 -0.01691635027130539 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+            0.0 0.0 0.0 0.0 0.0 0.0 0.0 -0.020113176728996006 0.0 0.0 0.0 0.0 0.0 0.026794798198540762 0.0 0.0 0.0 0.0
+            0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 -0.05714232051538789 0.0 0.0 0.0 0.0 0.0 0.10479515111869853 0.0 0.0 0.0 0.0
+            0.0 0.009478818520723808 0.0 0.0 0.0 0.0 0.0 0.0 -0.11208573253563628 0.0 0.0 0.0 0.0 0.0
+            0.19893349110474873 0.0 0.0 0.0 0.0 0.0 0.018221660239732002 0.0 0.0 0.0 0.0 0.0 0.0 -0.041728009659973156
+            0.0 0.0 0.0 0.0 0.0 0.0753497614237646 0.0 0.0 0.0 0.0 0.0 0.007439331827843698 0.0 0.0 0.0 0.0 0.0 0.0
+            -0.0436018124111958 0.0 0.0 0.0 0.0 0.0 0.06948687227583128 0.0 0.0 0.0 0.0 0.0 0.007668017248087877 0.0 0.0
+            0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+            0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 -0.020374369525908338 0.0 0.0 0.0 0.0 0.0 0.009478818520723808 0.0 0.0
+            0.0 0.0 0.0 0.1206502716847969 0.0 0.0 0.0 0.0 0.0 0.0 -0.06017157127665279 0.0 0.0 0.0 0.0 0.0
+            0.018221660239732 0.0 0.0 0.0 0.0 0.0 0.23463839507031478 0.0 0.0 0.0 0.0 0.0 0.0 -0.024313147898191903 0.0
+            0.0 0.0 0.0 0.0 0.007439331827843698 0.0 0.0 0.0 0.0 0.0 0.08432306426034182 0.0 -0.0 -0.0 -0.0 -0.0 -0.0
+            -0.01691635027130539 0.0 -0.0 -0.0 -0.0 -0.0 0.007668017248087878 0.0 0.0 -0.0 -0.0 -0.0 0.07908168435891982
+        </expected>
+    </assertEqual>
+
+    <operators id="operators">
+
+        <fireParameterChanged weight="1"
+                              value="1.0033085551537342 0.465262517639481 0.5821803084361797 1.2069488336852376 0.28987045018371155 0.5675341735287075">
+            <parameter idref="factorPrecision"/>
+        </fireParameterChanged>
+
+        <fireParameterChanged weight="1">
+            <parameter idref="traitParameter"/>
+            <copyFrom>
+                <dataFromTreeTips traitName="factors2">
+                    <treeModel idref="treeModel"/>
+                    <traitParameter>
+                        <parameter idref="leafFactors2"/>
+                    </traitParameter>
+                </dataFromTreeTips>
+            </copyFrom>
+        </fireParameterChanged>
+
+        <fireParameterChanged weight="1">
+            <parameter idref="leafTraits"/>
+            <copyFrom>
+                <dataFromTreeTips traitName="traits2">
+                    <treeModel idref="treeModel"/>
+                    <traitParameter>
+                        <parameter idref="leafTraits2"/>
+                    </traitParameter>
+                </dataFromTreeTips>
+            </copyFrom>
+        </fireParameterChanged>
+
+        <!--        <randomWalkOperator weight="1" windowSize="0.5">-->
+        <!--            <parameter idref="leafTraits"/>-->
+        <!--        </randomWalkOperator>-->
+    </operators>
+
+
+    <mcmc id="mcmc" chainLength="10" autoOptimize="true">
+        <posterior id="posterior">
+            <prior id="prior">
+                <distributionLikelihood idref="L.prior"/>
+                <gammaPrior idref="factorPrecision.prior"/>
+            </prior>
+            <likelihood id="likelihood">
+                <multivariateTraitLikelihood idref="traitLikelihood"/>
+                <latentFactorModel idref="latentFactorModel"/>
+            </likelihood>
+        </posterior>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="10">
+            <column label="posterior" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+            <column label="prior" dp="4" width="12">
+                <prior idref="prior"/>
+            </column>
+            <column label="likelihood" dp="4" width="12">
+                <likelihood idref="likelihood"/>
+            </column>
+        </log>
+        <log id="fileLog" logEvery="1" fileName="testNewLoadingsGibbsOperator.log" overwrite="true">
+            <posterior idref="posterior"/>
+            <prior idref="prior"/>
+            <likelihood idref="likelihood"/>
+            <matrixParameter idref="L"/>
+            <parameter idref="factorPrecision"/>
+        </log>
+    </mcmc>
+
+
+    <cachedReport id="lo2">
+        <loadingsGibbsOperator idref="loadingsOp"/>
+    </cachedReport>
+
+    <cachedReport id="clo2">
+        <loadingsGibbsOperator idref="cachedLoadingsOp"/>
+    </cachedReport>
+
+    <cachedReport id="mlo2">
+        <loadingsGibbsOperator idref="multiLoadingsOp"/>
+    </cachedReport>
+
+
+    <cachedReport id="tlo2">
+        <loadingsGibbsOperator idref="triLoadingsOp"/>
+    </cachedReport>
+
+    <cachedReport id="ctlo2">
+        <loadingsGibbsOperator idref="cachedTriLoadingsOp"/>
+    </cachedReport>
+
+    <cachedReport id="mtlo2">
+        <loadingsGibbsOperator idref="multiTriLoadingsOp"/>
+    </cachedReport>
+
+    <assertEqual tolerance="1e-2" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check unconstrained loadings mean
+        </message>
+        <actual regex="Loadings mean:\s+(.*)\n">
+            <cachedReport idref="lo2"/>
+            <cachedReport idref="clo2"/>
+            <cachedReport idref="mlo2"/>
+        </actual>
+        <expected>
+            -0.5624212060691973 0.6686957665052548 -0.12883363489801392 -0.028483503802251994 -0.20245004154707416
+            0.5727800946633681 -0.1177869727015475 -0.03557128301763026 -0.3402971236017539 0.30078836060143443
+            -0.020476521372923114 0.134604155411238 -0.03372109032875503 -0.16741994314436884 -0.032031678146118236
+            0.34725416185170455 0.049927738575763006 -0.07642808814316454
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" toleranceType="absolute" verbose="true" charactersToStrip="{},">
+        <message>
+            Check unconstrained loadings covariance
+        </message>
+        <actual regex="(?s)Loadings covariance:\s+(.*?)\n\n">
+            <cachedReport idref="lo2"/>
+            <cachedReport idref="clo2"/>
+            <cachedReport idref="mlo2"/>
+        </actual>
+        <expected>
+            0.08803970967622086 0.0 0.0 0.0 0.0 0.0 0.040605661836838614 0.0 0.0 0.0 0.0 0.0 -0.009469075019579965 0.0 0.0 0.0 0.0 -0.0
+            0.0 0.12089784134469783 0.0 0.0 0.0 0.0 0.0 0.043260909413843876 0.0 0.0 0.0 0.0 0.0 -0.018297043577826837 0.0 0.0 0.0 -0.0
+            0.0 0.0 0.11153283305107019 0.0 0.0 0.0 0.0 0.0 0.04212822716959542 0.0 0.0 0.0 0.0 0.0 -0.014098153013201426 0.0 0.0 -0.0
+            0.0 0.0 0.0 0.08582481389392971 0.0 0.0 0.0 0.0 0.0 0.027455796487154772 0.0 0.0 0.0 0.0 0.0 -0.024845920247952066 0.0 -0.0
+            0.0 0.0 0.0 0.0 0.27977207983092856 0.0 0.0 0.0 0.0 0.0 0.08224709737563185 0.0 0.0 0.0 0.0 0.0 -0.029771148193074533 -0.0
+            0.0 0.0 0.0 0.0 0.0 0.1371235747620005 0.0 0.0 0.0 0.0 0.0 0.04878566885325399 0.0 0.0 0.0 0.0 0.0 -0.01493038794966022
+            0.040605661836838614 0.0 0.0 0.0 0.0 0.0 0.05353151790013937 0.0 0.0 0.0 0.0 0.0 0.0004438882549903646 0.0 0.0 0.0 0.0 -0.0
+            0.0 0.04326090941384388 0.0 0.0 0.0 0.0 0.0 0.07885273284354316 0.0 0.0 0.0 0.0 0.0 0.010058127486914432 0.0 0.0 0.0 -0.0
+            0.0 0.0 0.04212822716959542 0.0 0.0 0.0 0.0 0.0 0.06469741539526433 0.0 0.0 0.0 0.0 0.0 0.005520105049981629 0.0 0.0 -0.0
+            0.0 0.0 0.0 0.02745579648715477 0.0 0.0 0.0 0.0 0.0 0.0478396775389428 0.0 0.0 0.0 0.0 0.0 0.005794111051803379 0.0 -0.0
+            0.0 0.0 0.0 0.0 0.08224709737563185 0.0 0.0 0.0 0.0 0.0 0.14106328889737874 0.0 0.0 0.0 0.0 0.0 0.017895904257632208 -0.0
+            0.0 0.0 0.0 0.0 0.0 0.04878566885325399 0.0 0.0 0.0 0.0 0.0 0.06474540508658512 0.0 0.0 0.0 0.0 0.0 0.0053707194303965365
+            -0.009469075019579965 0.0 0.0 0.0 0.0 0.0 0.0004438882549903646 0.0 0.0 0.0 0.0 0.0 0.04771280225108551 0.0 0.0 0.0 0.0 -0.0
+            0.0 -0.01829704357782684 0.0 0.0 0.0 0.0 0.0 0.01005812748691443 0.0 0.0 0.0 0.0 0.0 0.11570616133393503 0.0 0.0 0.0 -0.0
+            0.0 0.0 -0.014098153013201426 0.0 0.0 0.0 0.0 0.0 0.005520105049981629 0.0 0.0 0.0 0.0 0.0 0.08451835250398308 0.0 0.0 -0.0
+            0.0 0.0 0.0 -0.02484592024795207 0.0 0.0 0.0 0.0 0.0 0.005794111051803378 0.0 0.0 0.0 0.0 0.0 0.07538932198375622 0.0 -0.0
+            0.0 0.0 0.0 0.0 -0.029771148193074533 0.0 0.0 0.0 0.0 0.0 0.01789590425763221 0.0 0.0 0.0 0.0 0.0 0.12015802369143767 -0.0
+            0.0 0.0 0.0 0.0 0.0 -0.01493038794966022 0.0 0.0 0.0 0.0 0.0 0.0053707194303965365 0.0 0.0 0.0 0.0 0.0 0.0891191772188431
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check upper triangular loadings mean
+        </message>
+        <actual regex="Loadings mean:\s+(.*)\n">
+            <cachedReport idref="tlo2"/>
+            <cachedReport idref="ctlo2"/>
+            <cachedReport idref="mtlo2"/>
+        </actual>
+        <expected>
+            -0.47980541485547296 0.6422210311912988 -0.12883363489801392 -0.028483503802251994 -0.20245004154707416 0.5727800946633681 0.0 -0.02101776994119088 -0.3402971236017539 0.30078836060143443 -0.020476521372923114 0.134604155411238 0.0 0.0 -0.032031678146118236 0.34725416185170455 0.049927738575763006 -0.07642808814316454
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" toleranceType="absolute" verbose="true" charactersToStrip="{},">
+        <message>
+            Check upper triangular loadings covariance
+        </message>
+        <actual regex="(?s)Loadings covariance:\s+(.*?)\n\n">
+            <cachedReport idref="tlo2"/>
+            <cachedReport idref="ctlo2"/>
+            <cachedReport idref="mtlo2"/>
+        </actual>
+        <expected>
+            0.055223386049666416 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 -0.0
+            0.0 0.1180044621172711 0.0 0.0 0.0 0.0 0.0 0.04485143834348556 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 -0.0
+            0.0 0.0 0.11153283305107019 0.0 0.0 0.0 0.0 0.0 0.04212822716959542 0.0 0.0 0.0 0.0 0.0 -0.014098153013201426 0.0 0.0 -0.0
+            0.0 0.0 0.0 0.08582481389392971 0.0 0.0 0.0 0.0 0.0 0.027455796487154772 0.0 0.0 0.0 0.0 0.0 -0.024845920247952066 0.0 -0.0
+            0.0 0.0 0.0 0.0 0.27977207983092856 0.0 0.0 0.0 0.0 0.0 0.08224709737563185 0.0 0.0 0.0 0.0 0.0 -0.029771148193074533 -0.0
+            0.0 0.0 0.0 0.0 0.0 0.1371235747620005 0.0 0.0 0.0 0.0 0.0 0.04878566885325399 0.0 0.0 0.0 0.0 0.0 -0.01493038794966022
+            0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+            0.0 0.04485143834348557 0.0 0.0 0.0 0.0 0.0 0.07797839799934198 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 -0.0
+            0.0 0.0 0.04212822716959542 0.0 0.0 0.0 0.0 0.0 0.06469741539526433 0.0 0.0 0.0 0.0 0.0 0.005520105049981629 0.0 0.0 -0.0
+            0.0 0.0 0.0 0.02745579648715477 0.0 0.0 0.0 0.0 0.0 0.0478396775389428 0.0 0.0 0.0 0.0 0.0 0.005794111051803379 0.0 -0.0
+            0.0 0.0 0.0 0.0 0.08224709737563185 0.0 0.0 0.0 0.0 0.0 0.14106328889737874 0.0 0.0 0.0 0.0 0.0 0.017895904257632208 -0.0
+            0.0 0.0 0.0 0.0 0.0 0.04878566885325399 0.0 0.0 0.0 0.0 0.0 0.06474540508658512 0.0 0.0 0.0 0.0 0.0 0.0053707194303965365
+            0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+            0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+            0.0 0.0 -0.014098153013201426 0.0 0.0 0.0 0.0 0.0 0.005520105049981629 0.0 0.0 0.0 0.0 0.0 0.08451835250398308 0.0 0.0 -0.0
+            0.0 0.0 0.0 -0.02484592024795207 0.0 0.0 0.0 0.0 0.0 0.005794111051803378 0.0 0.0 0.0 0.0 0.0 0.07538932198375622 0.0 -0.0
+            0.0 0.0 0.0 0.0 -0.029771148193074533 0.0 0.0 0.0 0.0 0.0 0.01789590425763221 0.0 0.0 0.0 0.0 0.0 0.12015802369143767 -0.0
+            0.0 0.0 0.0 0.0 0.0 -0.01493038794966022 0.0 0.0 0.0 0.0 0.0 0.0053707194303965365 0.0 0.0 0.0 0.0 0.0 0.0891191772188431
+        </expected>
+    </assertEqual>
+</beast>
+
+<!--
+# JULIA CODE FOR CALCULATING "EXPECTED" VALUES
+
+using LinearAlgebra, Random
+
+Random.seed!(666)
+
+
+function get_loadings_stats(Y::Matrix{Float64}, # data matrix
+                            F::Matrix{Float64}, # factor matrix
+                            λ::Vector{Float64}, # residual precision
+                            μ_prior::Vector{Float64}, # prior mean
+                            Σ_prior::AbstractMatrix{Float64}; # prior variance
+                            upperTriangular::Bool = false)
+
+    n, p = size(Y)
+    n2, k = size(F)
+    p2 = length(λ)
+
+    @assert n == n2 && p == p2
+
+    # calculate likelihood-based information
+    μ = zeros(k * p)
+    P = zeros(k * p, k * p)
+    FtF = zeros(k, k)
+    FtY = zeros(k)
+    for j = 1:p
+        inds = j:p:(k * p)
+        fill!(FtY, 0.0)
+        fill!(FtF, 0.0)
+        for i = 1:n
+            if !isnan(Y[i, j])
+                fi = F[i, :]
+                FtF .+= fi * fi'
+                FtY .+= fi * Y[i, j]
+            end
+        end
+
+        Pj = FtF * λ[j]
+        u = inv(FtF) * FtY
+
+        μ[inds] .= u
+        P[inds, inds] .= Pj
+    end
+
+
+    # add prior information
+    P_full = P + inv(Σ_prior)
+    Σ_full = inv(P_full)
+    μ_full = Σ_full * (P * μ + inv(Σ_prior) * μ_prior)
+
+    # pivot if applying upper triangular constraint
+    if upperTriangular
+        pivot_mat = zeros(Int, p, k)
+        for i = 1:k
+            for j = (i + 1):k
+                pivot_mat[i, j] = 1
+            end
+        end
+
+        sample_inds = findall(isequal(0), vec(pivot_mat))
+        fixed_inds = setdiff(1:(k * p), sample_inds)
+
+        l = zeros(k * p)
+
+        μ_full[sample_inds] .= pivot_mean(l, Σ_full,  μ_full, sample_inds)
+        μ_full[fixed_inds] .= 0.0
+
+        Σ_full[sample_inds, sample_inds] .=pivot_cov(Σ_full, sample_inds)
+        Σ_full[fixed_inds, :] .= 0.0
+        Σ_full[:, fixed_inds] .= 0.0
+    end
+
+    return μ_full, Σ_full
+end
+
+function pivot_cov(M::Matrix{Float64}, dims::Vector{Int};
+        obs_dims::Vector{Int} = setdiff(1:size(M, 1), dims))
+
+    Mmm = M[dims, dims]
+    Mmo = M[dims, obs_dims]
+    Moo = M[obs_dims, obs_dims]
+    @show size(Moo)
+    @show size(Mmo)
+    display(Moo)
+
+    return Mmm - Mmo * inv(Moo) * Mmo'
+end
+
+function pivot_mean(Y::AbstractArray{Float64, 1}, M::Matrix{Float64},
+        μ::Vector{Float64}, dims::Vector{Int};
+        obs_dims::Vector{Int} = setdiff(1:size(M, 1), dims))
+
+    μm = μ[dims]
+    Mmo = M[dims, obs_dims]
+    Moo = M[obs_dims, obs_dims]
+    deviation = Y[obs_dims] - μ[obs_dims]
+    return μm + Mmo * (inv(Moo) * deviation)
+end
+
+function format_values(x::Vector{Float64})
+    return join(x, " ")
+end
+
+function format_values(x::Matrix{Float64})
+    return join([join(x[i, :], ' ') for i = 1:size(x, 1)], '\n')
+end
+
+
+n = 20
+p = 6
+k = 3
+
+F = randn(n, k)
+L = randn(k, p)
+λ = exp.(randn(p))
+
+E = randn(n, p) * Diagonal(λ.^(-0.5))
+
+Y = F * L + E
+
+
+
+# add missing data
+for i = 1:length(Y)
+    if rand() < 0.1
+        Y[i] = NaN
+    end
+end
+
+# priors
+
+μ_prior = randn(k * p)
+Σ_prior = Diagonal(exp.(randn(k * p)))
+
+# means and variances
+
+## these are the
+μ, Σ = get_loadings_stats(Y, F, λ, μ_prior, Σ_prior)
+μ_tri, Σ_tri = get_loadings_stats(Y, F, λ, μ_prior, Σ_prior, upperTriangular=true)
+
+println("Unconstrained mean:\n" * format_values(μ))
+println("Unconstrained variance:\n" * format_values(Σ))
+println("Constrained mean:\n" * format_values(μ_tri))
+println("Constrained variance:\n"* format_values(Σ_tri))
+
+#change parameter values
+F2 = randn(n, k)
+λ2 = exp.(randn(p))
+Y2 = randn(n, p)
+Y2[findall(isnan, Y)] .= NaN
+
+μ2, Σ2 = get_loadings_stats(Y2, F2, λ2, μ_prior, Σ_prior)
+μ2_tri, Σ2_tri = get_loadings_stats(Y2, F2, λ2, μ_prior, Σ_prior, upperTriangular=true)
+
+println("Unconstrained mean 2:\n" * format_values(μ2))
+println("Unconstrained variance 2:\n" * format_values(Σ2))
+println("Constrained mean 2:\n" * format_values(μ2_tri))
+println("Constrained variance 2:\n"* format_values(Σ2_tri))
+-->

@@ -25,6 +25,10 @@
 
 package dr.evomodel.coalescent;
 
+import dr.evolution.coalescent.IntervalList;
+import dr.evolution.coalescent.IntervalType;
+import dr.evolution.coalescent.TreeIntervalList;
+import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
@@ -42,19 +46,23 @@ import dr.xml.Reportable;
  */
 public class GMRFSkyrideGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable {
 
-    private final OldGMRFSkyrideLikelihood skyrideLikelihood;
+    private final GMRFSkyrideLikelihood skyrideLikelihood;
     private final WrtParameter wrtParameter;
     private final Parameter parameter;
-    private final OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping;
+    private final TreeIntervalList intervalNodeMapping;
     private final NodeHeightTransform nodeHeightTransform;
 
-    public GMRFSkyrideGradient(OldGMRFSkyrideLikelihood gmrfSkyrideLikelihood,
+
+    public GMRFSkyrideGradient(GMRFSkyrideLikelihood gmrfSkyrideLikelihood,
                                WrtParameter wrtParameter,
                                TreeModel tree,
                                NodeHeightTransform nodeHeightTransform) {
 
         this.skyrideLikelihood = gmrfSkyrideLikelihood;
-        this.intervalNodeMapping = skyrideLikelihood.getIntervalNodeMapping();
+        //Casting is guaranteed by the parser
+        TreeIntervalList intervalList = (TreeIntervalList) skyrideLikelihood.getIntervalList();
+        intervalList.setBuildIntervalNodeMapping(true);
+        this.intervalNodeMapping =intervalList;
         this.wrtParameter = wrtParameter;
         this.nodeHeightTransform = nodeHeightTransform;
         if (nodeHeightTransform == null) {
@@ -158,8 +166,8 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
 
         COALESCENT_INTERVAL {
             @Override
-            double[] getGradientLogDensity(OldGMRFSkyrideLikelihood skyrideLikelihood,
-                                           OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping) {
+            double[] getGradientLogDensity(GMRFSkyrideLikelihood skyrideLikelihood,
+                                           TreeIntervalList intervalNodeMapping) {
                 double[] unSortedNodeHeightGradient = super.getGradientLogDensityWrtUnsortedNodeHeight(skyrideLikelihood);
                 double[] intervalGradient = new double[unSortedNodeHeightGradient.length];
                 double accumulatedGradient = 0.0;
@@ -178,8 +186,8 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
 
         NODE_HEIGHTS {
             @Override
-            double[] getGradientLogDensity(OldGMRFSkyrideLikelihood skyrideLikelihood,
-                                           OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping) {
+            double[] getGradientLogDensity(GMRFSkyrideLikelihood skyrideLikelihood,
+                                           TreeIntervalList intervalNodeMapping) {
                 double[] unSortedNodeHeightGradient = getGradientLogDensityWrtUnsortedNodeHeight(skyrideLikelihood);
                 return intervalNodeMapping.sortByNodeNumbers(unSortedNodeHeightGradient);
             }
@@ -190,21 +198,23 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
             }
         };
 
-        abstract double[] getGradientLogDensity(OldGMRFSkyrideLikelihood skyrideLikelihood,
-                                                OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping);
+        abstract double[] getGradientLogDensity(GMRFSkyrideLikelihood skyrideLikelihood,
+                                                TreeIntervalList intervalNodeMapping);
 
         abstract void update(NodeHeightTransform nodeHeightTransform, double[] values);
 
-        double[] getGradientLogDensityWrtUnsortedNodeHeight(OldGMRFSkyrideLikelihood skyrideLikelihood) {
+        double[] getGradientLogDensityWrtUnsortedNodeHeight(GMRFSkyrideLikelihood skyrideLikelihood) {
             double[] unSortedNodeHeightGradient = new double[skyrideLikelihood.getCoalescentIntervalDimension()];
             double[] gamma = skyrideLikelihood.getPopSizeParameter().getParameterValues();
+            IntervalList intervals =  skyrideLikelihood.getIntervalList();
+
 
             int index = 0;
-            for (int i = 0; i < skyrideLikelihood.getIntervalCount(); i++) {
-                if (skyrideLikelihood.getIntervalType(i) == OldAbstractCoalescentLikelihood.CoalescentEventType.COALESCENT) {
-                    double weight = -Math.exp(-gamma[index]) * skyrideLikelihood.getLineageCount(i) * (skyrideLikelihood.getLineageCount(i) - 1);
-                    if (index < skyrideLikelihood.getCoalescentIntervalDimension() - 1 && i < skyrideLikelihood.getIntervalCount() - 1) {
-                        weight -= -Math.exp(-gamma[index + 1]) * skyrideLikelihood.getLineageCount(i + 1) * (skyrideLikelihood.getLineageCount(i + 1) - 1);
+            for (int i = 0; i < intervals.getIntervalCount(); i++) {
+                if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
+                    double weight = -Math.exp(-gamma[index]) * intervals.getLineageCount(i) * (intervals.getLineageCount(i) - 1);
+                    if (index < skyrideLikelihood.getCoalescentIntervalDimension() - 1 && i < intervals.getIntervalCount() - 1) {
+                        weight -= -Math.exp(-gamma[index + 1]) * intervals.getLineageCount(i + 1) * (intervals.getLineageCount(i + 1) - 1);
                     }
                     unSortedNodeHeightGradient[index] = weight / 2.0;
                     index++;

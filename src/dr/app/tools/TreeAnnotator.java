@@ -905,6 +905,7 @@ public class TreeAnnotator {
                                     annotateMedianAttribute(tree, node, attributeName + "_median", values);
                                     annotateHPDAttribute(tree, node, attributeName + "_95%_HPD", 0.95, values);
                                     annotateRangeAttribute(tree, node, attributeName + "_range", values);
+                                    annotateSignAttribute(tree, node, attributeName + "_signDistribution", values);
                                     if (computeESS == true) {
                                         annotateESSAttribute(tree, node, attributeName + "_ESS", values);
                                     }
@@ -924,6 +925,7 @@ public class TreeAnnotator {
                                         if (minValueArray[k] < maxValueArray[k]) {
                                             annotateMedianAttribute(tree, node, name + (k + 1) + "_median", valuesArray[k]);
                                             annotateRangeAttribute(tree, node, name + (k + 1) + "_range", valuesArray[k]);
+                                            annotatePositiveProbability(tree, node, name + (k + 1) + "_positiveProb", valuesArray[k]);
                                             if (!want2d)
                                                 annotateHPDAttribute(tree, node, name + (k + 1) + "_95%_HPD", 0.95, valuesArray[k]);
                                         }
@@ -1016,6 +1018,18 @@ public class TreeAnnotator {
 
             tree.setNodeAttribute(node, label + ".set", name);
             tree.setNodeAttribute(node, label + ".set.prob", freq);
+        }
+
+        private void annotateSignAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
+            double negativePortion = DiscreteStatistics.negativeProbability(values);
+            double positivePortion = 1 - negativePortion;
+            tree.setNodeAttribute(node, label, new Object[]{negativePortion, positivePortion});
+        }
+
+        private void annotatePositiveProbability(MutableTree tree, NodeRef node, String label, double[] values) {
+            double negativePortion = DiscreteStatistics.negativeProbability(values);
+            double positivePortion = 1 - negativePortion;
+            tree.setNodeAttribute(node, label, positivePortion);
         }
 
         private void annotateRangeAttribute(MutableTree tree, NodeRef node, String label, double[] values) {

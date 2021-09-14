@@ -7,4 +7,5 @@ import dr.evolution.tree.Tree;
 public interface ThorneyBranchLengthLikelihoodDelegate  {
      double getLogLikelihood(double mutations, Tree tree, NodeRef node);
 
+     double getGradientWrtTime(double mutations, double time);
 }

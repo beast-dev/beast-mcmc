@@ -39,6 +39,8 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
+//Deprecated as we should be using the model version in coalescent likelihoods
+@Deprecated
 public class TreeIntervals implements IntervalList {
 
     /**
@@ -175,8 +177,10 @@ public class TreeIntervals implements IntervalList {
         if (getIntervalType(interval) == IntervalType.COALESCENT) {
             if (lineagesRemoved[interval] != null) {
                 if (lineagesAdded[interval].size() == 1) {
-                    return lineagesAdded[interval].get(0);
-                } else throw new IllegalArgumentException("multiple lineages lost over this interval!");
+                    return tree.getNode(lineagesAdded[interval].get(0));
+                } else {
+                    throw new IllegalArgumentException("multiple lineages lost over this interval!");
+                }
             } else throw new IllegalArgumentException("Inconsistent: no lineages lost over this interval!");
         } else throw new IllegalArgumentException("Interval " + interval + " is not a coalescent interval.");
     }
@@ -343,13 +347,15 @@ public class TreeIntervals implements IntervalList {
     }
 
     private void addLineage(int interval, NodeRef node) {
-        if (lineagesAdded[interval] == null) lineagesAdded[interval] = new ArrayList<NodeRef>();
-        lineagesAdded[interval].add(node);
+        if (lineagesAdded[interval] == null) lineagesAdded[interval] = new ArrayList<Integer>();
+        if (!lineagesAdded[interval].contains(node.getNumber())) {
+            lineagesAdded[interval].add(node.getNumber());
+        }
     }
 
     private void removeLineage(int interval, NodeRef node) {
-        if (lineagesRemoved[interval] == null) lineagesRemoved[interval] = new ArrayList<NodeRef>();
-        lineagesRemoved[interval].add(node);
+        if (lineagesRemoved[interval] == null) lineagesRemoved[interval] = new ArrayList<Integer>();
+        lineagesRemoved[interval].add(node.getNumber());
     }
 
     /**
@@ -481,8 +487,8 @@ public class TreeIntervals implements IntervalList {
     /**
      * The lineages in each interval (stored by node ref).
      */
-    private List<NodeRef>[] lineagesAdded;
-    private List<NodeRef>[] lineagesRemoved;
+    private List<Integer>[] lineagesAdded;
+    private List<Integer>[] lineagesRemoved;
     private List[] lineages;
 
     private int intervalCount = 0;

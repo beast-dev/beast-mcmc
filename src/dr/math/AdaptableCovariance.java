@@ -25,9 +25,9 @@ public class AdaptableCovariance {
 
         updates = 0;
         counts = 0;
-        for (int i = 0; i < dim; i++) {
-            empirical[i][i] = 1.0;
-        }
+//        for (int i = 0; i < dim; i++) {
+//            empirical[i][i] = 1.0;
+//        }
     }
 
     public int getUpdateCount() { return updates; }

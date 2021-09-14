@@ -106,7 +106,7 @@ public class NodeHeightToRatiosFullTransformDelegate extends NodeHeightToRatiosT
 
         @Override
         public void setParameterValueQuietly(int dim, double value) {
-            tree.setNodeHeight(tree.getRoot(), getRootHeight(value));
+            tree.setNodeHeightQuietly(tree.getRoot(), getRootHeight(value));
         }
 
         @Override
@@ -159,6 +159,22 @@ public class NodeHeightToRatiosFullTransformDelegate extends NodeHeightToRatiosT
         return updatedGradient;
     }
 
+    public double[] setMaskByHeightDifference(double threshold) {
+        return addOne(super.setMaskByHeightDifference(threshold));
+    }
+
+    private double[] addOne(double[] array) {
+        double[] newArray = new double[array.length + 1];
+        newArray[0] = 1.0;
+        System.arraycopy(array, 0, newArray, 1, array.length);
+        return newArray;
+    }
+
+    @Override
+    public double[] setMaskByRatio(double threshold) {
+        return addOne(super.setMaskByRatio(threshold));
+    }
+
     @Override
     public double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
         double[] gradientUnWeightedLogDensityWrtRatios = super.updateGradientUnWeightedLogDensity(gradient, value, from, to);
@@ -181,7 +197,7 @@ public class NodeHeightToRatiosFullTransformDelegate extends NodeHeightToRatiosT
 
     @Override
     public double[] inverse(double[] values) {
-        this.heightParameter.setParameterValue(0, values[0]);
+        this.heightParameter.setParameterValueQuietly(0, values[0]);
         double[] ratioValues = separateRatios(values);
         return super.inverse(ratioValues);
     }

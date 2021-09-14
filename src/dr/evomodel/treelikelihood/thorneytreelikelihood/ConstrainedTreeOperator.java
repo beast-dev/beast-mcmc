@@ -14,18 +14,25 @@ public class ConstrainedTreeOperator extends AbstractAdaptableTreeOperator {
     public static final String FIXED_COUNT = "fixedCount";
 
     public static ConstrainedTreeOperator parse(ConstrainedTreeModel tree, double weight, ConstrainableTreeOperator op, XMLObject xo) throws XMLParseException {
-        AdaptationMode mode = AdaptationMode.parseMode(xo);
+         AdaptationMode mode = AdaptationMode.parseMode(xo);
+        //I don't trust the multiple move operator. It may very well be correct. Will revisit later
 
-        int count = xo.getAttribute(FIXED_COUNT,1);
+        mode=AdaptationMode.ADAPTATION_OFF;
+        
+        //int count = xo.getAttribute(FIXED_COUNT,1);
         double nonShiftedMean = xo.getAttribute(MEAN_COUNT, 1.0);
         double targetAcceptanceProbability = xo.getAttribute("targetAcceptance", 0.234D);
-        if(!xo.hasAttribute(MEAN_COUNT)){
-            mode=AdaptationMode.ADAPTATION_OFF;
+        if(xo.hasAttribute(MEAN_COUNT)){
+            throw new XMLParseException("Constrained operator with id " + op.getOperatorName()+":  meanCount  is not supported");
+        }
+        if(xo.hasAttribute(FIXED_COUNT)){
+            throw new XMLParseException("Constrained operator with id " + op.getOperatorName()+":  fixedCount  is not supported");
         }
         if(xo.hasAttribute(MEAN_COUNT) && xo.hasAttribute(FIXED_COUNT)){
             throw new XMLParseException("Constrained operator with id " + op.getOperatorName()+":  meanCount and fixedCount are mutually exclusive");
         }
-        return new ConstrainedTreeOperator(tree,weight,op,nonShiftedMean,count,mode,targetAcceptanceProbability);
+       // return new ConstrainedTreeOperator(tree,weight,op,nonShiftedMean,count,mode,targetAcceptanceProbability);
+       return new ConstrainedTreeOperator(tree,weight,op,nonShiftedMean,1,mode,targetAcceptanceProbability);
     }
 
     public ConstrainedTreeOperator(ConstrainedTreeModel tree, double weight, ConstrainableTreeOperator operator,double nonshiftedMean,int count,AdaptationMode mode, double targetAcceptanceProbability) {
@@ -39,7 +46,8 @@ public class ConstrainedTreeOperator extends AbstractAdaptableTreeOperator {
                     "constraints tree.");
         }
         subtreeSizes = new double [tree.getSubtreeCount()];
-        maxOperations=0;
+        //maxOperations=0;
+        int maxOperations=1;
         for (int i = 0; i < tree.getSubtreeCount(); i++) {
             subtreeSizes[i] =  (double) tree.getSubtree(i).getInternalNodeCount()-1; // don't choose subtrees with only 1 internal node. There's no topology to sample.
             if(subtreeSizes[i]>0){
@@ -64,7 +72,7 @@ public class ConstrainedTreeOperator extends AbstractAdaptableTreeOperator {
     @Override
     public double doOperation() {
 
-        int operations = getOperationCount();
+        int operations = 1; //getOperationCount();
         double[] selectionSizes = new double[subtreeSizes.length];
         System.arraycopy(subtreeSizes,0,selectionSizes,0,subtreeSizes.length);
         int[] selected = new int[operations];

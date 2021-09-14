@@ -497,6 +497,8 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         @Override public boolean isNodeParameterChanged() { return event.isNodeParameterChanged(); }
 
         @Override public boolean isHeightChanged() { return event.isHeightChanged(); }
+
+        @Override public boolean isOnlyHeightChanged() { return event.isOnlyHeightChanged(); }
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -509,6 +511,29 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
             if (object instanceof TreeChangedEvent) {
                 final TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
+
+
+                if (ancestors.size() == 1 && ancestors.get(0).isAtRoot()) {
+
+                    final NodeRef originalNode = treeChangedEvent.getNode();
+                    final ShadowNode shadow = nodes[mapOriginalToShadowNumber(originalNode.getNumber())];
+
+                    fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow), index);
+
+                    if (shadow.child0 != null) {
+                        fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow.child0), index);
+                    }
+
+                    if (shadow.child1 != null) {
+                        fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow.child1), index);
+                    }
+
+                    if (!treeChangedEvent.isOnlyHeightChanged() && originalNode != treeModel.getRoot()) {
+                        validShadowTree = false;
+                    }
+
+                    return; // Early exit
+                }
 
                 if (treeChangedEvent.isTreeChanged()) {
 
@@ -968,7 +993,11 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
     }
 
     private Taxon getTaxonByTreeIndex(int index) {
-        return ancestors.get(index - treeExternalCount).getTaxon();
+        if (index >= externalCount ) {
+            return null;
+        } else {
+            return ancestors.get(index - treeExternalCount).getTaxon();
+        }
     }
 
     private void setupClamps() {

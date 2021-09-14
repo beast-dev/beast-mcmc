@@ -25,8 +25,10 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
+import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -50,7 +52,7 @@ public class NodeHeightProxyParameter extends Parameter.Proxy {
     }
 
     private int getNodeNumber(int index) {
-        return indexHelper.getNodeNumberFromParameterIndex(index) + tree.getExternalNodeCount();
+        return indexHelper.getNodeNumberFromParameterIndex(index + tree.getExternalNodeCount());
     }
 
     @Override
@@ -61,11 +63,27 @@ public class NodeHeightProxyParameter extends Parameter.Proxy {
     @Override
     public void setParameterValue(int dim, double value) {
         tree.setNodeHeight(tree.getNode(getNodeNumber(dim)), value);
+        tree.pushTreeChangedEvent(tree.getNode(getNodeNumber(dim)));
     }
 
     @Override
     public void setParameterValueQuietly(int dim, double value) {
         tree.setNodeHeightQuietly(tree.getNode(getNodeNumber(dim)), value);
+    }
+
+    public String toString() {
+        StringBuilder buffer = new StringBuilder(String.valueOf(getParameterValue(0)));
+        Bounds bounds = null;
+
+        for (int i = 1; i < getDimension(); i++) {
+            buffer.append("\t").append(String.valueOf(getParameterValue(i)));
+        }
+        return buffer.toString();
+    }
+
+    @Override
+    public void fireParameterChangedEvent() {
+        tree.pushTreeChangedEvent(TreeChangedEvent.create(true, true));
     }
 
     @Override

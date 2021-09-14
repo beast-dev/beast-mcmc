@@ -234,7 +234,7 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
 
     //MCMCOperator INTERFACE
     public final String getOperatorName() {
-        return parameter.getParameterName();
+        return RandomWalkOperatorParser.RANDOM_WALK_OPERATOR + "(" + parameter.getParameterName() + ")";
     }
 
     @Override

@@ -95,7 +95,7 @@ public interface ContinuousTraitGradientForBranch {
         double[] getGradientForBranch(BranchSufficientStatistics statistics, NodeRef node,
                                       boolean getGradientQ, boolean getGradientN) {
 
-            getSufficientStatistics(statistics);
+            getSufficientStatistics(statistics, node);
 
             DenseMatrix64F Qi = matrixQ;
             DenseMatrix64F Wi = matrixW;
@@ -114,7 +114,7 @@ public interface ContinuousTraitGradientForBranch {
             }
         }
 
-        void getSufficientStatistics(BranchSufficientStatistics statistics) {
+        void getSufficientStatistics(BranchSufficientStatistics statistics, NodeRef node) {
             // Joint Statistics
             final NormalSufficientStatistics below = statistics.getBelow();
             final NormalSufficientStatistics above = statistics.getAbove();
@@ -497,6 +497,39 @@ public interface ContinuousTraitGradientForBranch {
                     return dim;
                 }
             },
+
+            WRT_BRANCH_SPECIFIC_DRIFT {
+
+                @Override
+                public double[] chainRule(ContinuousDiffusionIntegrator cdi,
+                                          DiffusionProcessDelegate diffusionProcessDelegate,
+                                          ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                          BranchSufficientStatistics statistics, NodeRef node,
+                                          final DenseMatrix64F gradQInv, final DenseMatrix64F gradN) {
+
+                    double[] drift = WRT_CONSTANT_DRIFT.chainRule(cdi, diffusionProcessDelegate, likelihoodDelegate, statistics, node, gradQInv, gradN);
+//                    double[] root = WRT_ROOT_MEAN.chainRule(cdi, diffusionProcessDelegate, likelihoodDelegate, statistics, node, gradQInv, gradN);
+//                    for (int i = 0; i < root.length; i++) {
+//                        root[i] += drift[i];
+//                    }
+                    // return root
+                    return drift;
+                }
+
+                @Override
+                public double[] chainRuleRoot(ContinuousDiffusionIntegrator cdi,
+                                              DiffusionProcessDelegate diffusionProcessDelegate,
+                                              ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                              BranchSufficientStatistics statistics, NodeRef node,
+                                              final DenseMatrix64F gradQInv, final DenseMatrix64F gradN) {
+                    return WRT_ROOT_MEAN.chainRuleRoot(cdi, diffusionProcessDelegate, likelihoodDelegate, statistics, node, gradQInv, gradN);
+                }
+
+                @Override
+                public int getDimension(int dim) {
+                    return dim;
+                }
+            },
             WRT_SAMPLING_VARIANCE {
                 @Override
                 public double[] chainRule(ContinuousDiffusionIntegrator cdi,
@@ -560,15 +593,17 @@ public interface ContinuousTraitGradientForBranch {
                 return new double[getDimension()]; // 0 if not a tip
             }
 
-            return getGradientForBranch(statistics, node, true, false);
+            double[] gradient = getGradientForBranch(statistics, node, true, false);
+            dataModel.chainRuleWrtVariance(gradient, node);
+            return gradient;
         }
 
-        void getSufficientStatistics(BranchSufficientStatistics statistics) {
+        void getSufficientStatistics(BranchSufficientStatistics statistics, NodeRef node) {
             final NormalSufficientStatistics below = statistics.getBelow();
             final NormalSufficientStatistics above = statistics.getAbove();
 
             // Sampling Parameters: Statistic data model
-            DenseMatrix64F samplingVariance = dataModel.getExtensionVariance();
+            DenseMatrix64F samplingVariance = dataModel.getExtensionVariance(node);
 
             // One more pre-order step
             // TODO This is just one more pre-order step. Should maybe be moved elsewhere ?

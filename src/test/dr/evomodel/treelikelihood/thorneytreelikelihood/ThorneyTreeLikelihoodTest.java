@@ -9,6 +9,7 @@ import dr.evomodel.treelikelihood.thorneytreelikelihood.*;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.BranchLengthProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
 import dr.math.distributions.PoissonDistribution;

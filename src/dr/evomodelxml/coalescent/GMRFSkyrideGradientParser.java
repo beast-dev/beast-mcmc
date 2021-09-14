@@ -26,12 +26,16 @@
 package dr.evomodelxml.coalescent;
 
 
-import dr.evomodel.coalescent.GMRFSkyrideGradient;
+import dr.evolution.coalescent.IntervalList;
+import dr.evolution.coalescent.TreeIntervalList;
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
-import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.GMRFSkyrideGradient;
+import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.coalescent.hmc.GMRFGradient;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
+import dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser;
 import dr.xml.*;
 
 /**
@@ -44,21 +48,33 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
     private static final String WRT_PARAMETER = "wrtParameter";
 
     private static final String COALESCENT_INTERVAL = "coalescentInterval";
-    private static final String NODE_HEIGHT = "nodeHeight";
+    private static final String NODE_HEIGHTS = "nodeHeights";
+
+    private static final String IGNORE_WARNING = "ignoreWarning";
+
+    private static final String TOLERANCE = HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_TOLERANCE;
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 //        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-        OldGMRFSkyrideLikelihood skyrideLikelihood = (OldGMRFSkyrideLikelihood) xo.getChild(OldGMRFSkyrideLikelihood.class);
+        GMRFSkyrideLikelihood skyrideLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
+
+        checkIntervals(skyrideLikelihood);
 
         String wrtParameterCase = (String) xo.getAttribute(WRT_PARAMETER);
 
+        double tolerance = xo.getAttribute(TOLERANCE, 1E-4);
+
+        boolean ignoreWarning = xo.getAttribute(IGNORE_WARNING, false);
+
         GMRFGradient.WrtParameter type = GMRFGradient.WrtParameter.factory(wrtParameterCase);
         if (type != null) {
-            type.getWarning((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood);
-            return new GMRFGradient((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood, type);
+            if (!ignoreWarning) {
+                type.getWarning((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood);
+            }
+            return new GMRFGradient((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood, type, tolerance);
         }
 
         // Old behaviour
@@ -73,12 +89,41 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
     private GMRFSkyrideGradient.WrtParameter setupWrtParameter(String wrtParameterCase) {
         if (wrtParameterCase.equalsIgnoreCase(COALESCENT_INTERVAL)) {
             return GMRFSkyrideGradient.WrtParameter.COALESCENT_INTERVAL;
-        } else if (wrtParameterCase.equalsIgnoreCase(NODE_HEIGHT)) {
+        } else if (wrtParameterCase.equalsIgnoreCase(NODE_HEIGHTS)) {
             return GMRFSkyrideGradient.WrtParameter.NODE_HEIGHTS;
         }
         else {
             throw new RuntimeException("Not yet implemented!");
         }
+    }
+
+    /**
+     * Check the intervals in the likelihood are tree intervals and have an interval-node mapping
+     * @param likelihood the skygrid likelihood
+     */
+    private void checkIntervals(GMRFSkyrideLikelihood likelihood){
+
+        if(likelihood instanceof GMRFMultilocusSkyrideLikelihood){
+            for (int i = 0; i < ((GMRFMultilocusSkyrideLikelihood)likelihood).getNumTrees(); i++) {
+                IntervalList intervalList= ((GMRFMultilocusSkyrideLikelihood)likelihood).getIntervalList(i);
+                if(!(intervalList instanceof TreeIntervalList)){
+                    throw new IllegalArgumentException("Skygrid likelihood does not have intervals which map to "+
+                            "the underlying tree. This is needed for gradient calculations");
+                }
+                if(intervalList instanceof TreeIntervals) {
+                    if (!((TreeIntervals) intervalList).getBuildIntervalNodeMapping()) {
+                        ((TreeIntervals) intervalList).setBuildIntervalNodeMapping(true);
+                    }
+                }
+            }
+        }else{
+            IntervalList intervalList= likelihood.getIntervalList();
+            if(!(intervalList instanceof TreeIntervalList)){
+                throw new IllegalArgumentException("Skyride likelihood does not have intervals which map to "+
+                        "the underlying tree. This is needed for gradient calculations");
+            }
+        }
+
     }
 
     @Override
@@ -89,8 +134,10 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(WRT_PARAMETER),
             new ElementRule(TreeModel.class, true),
-            new ElementRule(OldGMRFSkyrideLikelihood.class),
+            new ElementRule(GMRFSkyrideLikelihood.class),
             new ElementRule(NodeHeightTransform.class, true),
+            AttributeRule.newDoubleRule(TOLERANCE, true),
+            AttributeRule.newBooleanRule(IGNORE_WARNING, true),
     };
 
     @Override

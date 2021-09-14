@@ -117,6 +117,10 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
      */
     double getThreshold();
 
+    double getIntensityGradient(double finishTime);
+
+    double getLogDemographicGradient(double finishTime);
+
     public abstract class Abstract implements DemographicFunction
 	{
        // private static final double LARGE_POSITIVE_NUMBER = 1.0e50;
@@ -154,6 +158,14 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 		public double getIntegral(double start, double finish)
 		{
 			return getIntensity(finish) - getIntensity(start);
+		}
+
+		public double getIntensityGradient(double finishTime) {
+			throw new RuntimeException("not yet implemented!");
+		}
+
+		public double getLogDemographicGradient(double finishTime) {
+			throw new RuntimeException("not yet implemented!");
 		}
 
         /**

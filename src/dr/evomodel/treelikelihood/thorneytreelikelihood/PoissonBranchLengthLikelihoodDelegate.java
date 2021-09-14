@@ -6,6 +6,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.*;
 import org.apache.commons.math.special.Gamma;
 import org.apache.commons.math.util.FastMath;
+import org.apache.commons.math.util.MathUtils;
 
 public class PoissonBranchLengthLikelihoodDelegate extends AbstractModel implements ThorneyBranchLengthLikelihoodDelegate {
     private final BranchRateModel branchRateModel;
@@ -23,6 +24,12 @@ public class PoissonBranchLengthLikelihoodDelegate extends AbstractModel impleme
         double rate = this.branchRateModel.getBranchRate(tree, node);
         double time = tree.getBranchLength(node);
         return SaddlePointExpansion.logPoissonProbability(time*rate*scale, (int) Math.round(mutations));
+    }
+
+
+    @Override
+    public double getGradientWrtTime(double mutations, double time) { // TODO: better chain rule handling
+        return SaddlePointExpansion.logPoissonMeanDerivative(time * rate.getValue(0) * scale, (int) Math.round(mutations)) * rate.getValue(0) * scale;
     }
 
     @Override
@@ -153,17 +160,35 @@ final class SaddlePointExpansion {
     }
 
     static public double logPoissonProbability(double mean,int x) {
-        double ret;
-        if (x >= 0 && x != 2147483647) {
+//        double ret;
+//        if (x >= 0 && x != Integer.MAX_VALUE) {
+//            if (x == 0) {
+//                ret = FastMath.exp(-mean);
+//            } else {
+//                ret = FastMath.exp(-getStirlingError((double)x) - getDeviancePart((double)x, mean)) / FastMath.sqrt(6.283185307179586D * (double)x);
+//            }
+//        } else {
+//            ret = 0.0D;
+//        }
+//        ret = Math.log(ret);
+
+        double result;
+        if (x >= 0 && x != Integer.MAX_VALUE) {
             if (x == 0) {
-                ret = FastMath.exp(-mean);
+                result = -mean;
             } else {
-                ret = FastMath.exp(-getStirlingError((double)x) - getDeviancePart((double)x, mean)) / FastMath.sqrt(6.283185307179586D * (double)x);
+                result = -getStirlingError((double)x) - getDeviancePart((double)x, mean) - Math.log(MathUtils.TWO_PI * (double)x) * 0.5;
             }
         } else {
-            ret = 0.0D;
+            result = Double.NEGATIVE_INFINITY;
         }
 
-        return Math.log(ret);
+        return result;
+    }
+
+    static public double logPoissonMeanDerivative(double mean, int x) {
+        final double result = x == 0 ? -1.0 : (double) x / mean - 1.0;
+
+        return result;
     }
 }

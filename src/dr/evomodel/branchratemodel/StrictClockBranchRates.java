@@ -78,7 +78,7 @@ public class StrictClockBranchRates extends AbstractBranchRateModel implements D
 
     @Override
     public double getBranchRateDifferential(Tree tree, NodeRef node) {
-        return getBranchRate(tree, node);
+        return 1.0;
     }
 
     @Override

@@ -210,7 +210,7 @@
 	</siteModel>
 
 	<!-- Likelihood for tree given sequence data                                 -->
-	<treeDataLikelihood id="treeLikelihood" useAmbiguities="false">
+	<treeDataLikelihood id="treeLikelihood" useAmbiguities="false" usePreOrder="true">
 		<patterns idref="patterns"/>
 		<treeModel idref="treeModel"/>
 		<siteModel idref="siteModel"/>
@@ -232,10 +232,10 @@
     		Check gradient
     	</message>
     	<actual regex="analytic:(.*?)\n">
-	    	<report idref="scaledGradientReport"/>
+	    	<report idref="gradientReport"/>
     	</actual>
     	<expected regex="numeric :(.*?)\n">
-			<report idref="scaledGradientReport"/>
+			<report idref="gradientReport"/>
     	</expected>
     </assertEqual>
 </beast>

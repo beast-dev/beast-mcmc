@@ -101,11 +101,6 @@ public class RandomLocalClockRateWrapper implements DifferentiableBranchRates {
     }
 
     @Override
-    public double getPriorRateAsIncrement(Tree tree) {
-        return 0;
-    }
-
-    @Override
     public double getBranchRate(Tree tree, NodeRef node) {
         return 0;
     }

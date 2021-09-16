@@ -61,6 +61,4 @@ public interface DifferentiableBranchRates  extends BranchRates {
     double mapReduceOverRates(NodeRateMap map, DoubleBinaryOperator reduce, double initial);
 
     void forEachOverRates(NodeRateMap map);
-
-    double getPriorRateAsIncrement(Tree tree);
 }

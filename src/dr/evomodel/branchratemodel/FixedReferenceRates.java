@@ -165,11 +165,6 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
     }
 
     @Override
-    public double getPriorRateAsIncrement(Tree tree) {
-        return 0;
-    }
-
-    @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == differentiableBranchRateModel) {
             fireModelChanged();

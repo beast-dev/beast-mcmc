@@ -113,14 +113,4 @@ public class StrictClockBranchRates extends AbstractBranchRateModel implements D
                                                     double[] value, int from, int to) {
         throw new RuntimeException("Not yet implemented");
     }
-
-    @Override
-    public double mapReduceOverRates(NodeRateMap map, DoubleBinaryOperator reduce, double initial) {
-        throw new RuntimeException("Not yet implemented");
-    }
-
-    @Override
-    public void forEachOverRates(NodeRateMap map) {
-        throw new RuntimeException("Not yet implemented");
-    }
 }

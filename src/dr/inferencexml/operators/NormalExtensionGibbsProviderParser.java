@@ -12,7 +12,6 @@ import dr.xml.*;
 
 public class NormalExtensionGibbsProviderParser extends AbstractXMLObjectParser {
 
-    private static final String TREE_TRAIT_NAME = "treeTraitName";
     private static final String NORMAL_EXTENSION = "normalExtension";
 
 

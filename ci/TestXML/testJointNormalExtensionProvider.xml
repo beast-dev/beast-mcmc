@@ -1,0 +1,443 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    <taxa>
+        <taxon id="taxon1">
+            <attr name="trait1">0.009384774731272527 -2.2489794932795935 0.21352181534425757 -0.9271419643920304
+                0.8908861115024072
+            </attr>
+            <attr name="trait2">-0.6626058145275399 -1.1376289492948137 0.5516715218486571 -1.3542281106636904
+                0.3425038907927388 1.9765519199971684
+            </attr>
+            <attr name="trait3">-2.4815614340693783 1.1715540851082962 -2.39142491538794 -0.27989415293453157</attr>
+        </taxon>
+        <taxon id="taxon2">
+            <attr name="trait1">0.23114357993799609 0.013952561858756735 -0.5715417064973886 -0.4990804301056488
+                0.15801526456903897
+            </attr>
+            <attr name="trait2">4.612640226355059 -2.270688683027667 0.06636421634789397 -2.3625614660756753
+                -0.8862427605874439 0.128866505745016
+            </attr>
+            <attr name="trait3">0.5874473809484401 -1.063856568127724 2.337606463609135 -0.07230648327331456</attr>
+        </taxon>
+        <taxon id="taxon3">
+            <attr name="trait1">1.4187251180998413 -0.8170425382025268 0.07892424466259318 -0.3143517014495449
+                -0.5472602804707967
+            </attr>
+            <attr name="trait2">-0.2728961572270844 2.309402233426405 -0.23416506480699462 0.9735063577970848
+                0.7151577438330944 -0.2347586744790381
+            </attr>
+            <attr name="trait3">-1.38029611269419 1.2045730316000665 -2.2938521607202462 -0.509902784415168</attr>
+        </taxon>
+        <taxon id="taxon4">
+            <attr name="trait1">-0.28339647175256877 -0.9419386451678324 0.26650579966179655 -0.6755373526537636
+                -0.274877664411792
+            </attr>
+            <attr name="trait2">1.1287595908409713 -3.1116614928659736 -0.06491592308086552 1.164874512948666
+                -1.5336645088386092 -0.20428682533763876
+            </attr>
+            <attr name="trait3">-0.7828258802650758 -0.2182636672376014 0.6182103263813437 -0.9187485631673218</attr>
+        </taxon>
+        <taxon id="taxon5">
+            <attr name="trait1">-0.023499282722710884 0.9994051565722422 0.9578990579896408 0.8112526922930889
+                -2.6974732014859786
+            </attr>
+            <attr name="trait2">3.143509232145515 -3.366997883122405 0.1885442249025096 1.6584275614560118
+                -2.66345546086915 -0.590589928945624
+            </attr>
+            <attr name="trait3">-3.421283834293406 1.5709096082117868 -2.4315878382033373 -0.2740496928659121</attr>
+        </taxon>
+        <taxon id="taxon6">
+            <attr name="trait1">-0.36284138795968407 1.214692899789406 0.4272574497473184 0.042273981909662195
+                0.4670760468843862
+            </attr>
+            <attr name="trait2">0.6358323758485376 1.0193852357944098 -0.06189221405150272 1.3515630490382535
+                -0.84387472620449 -0.14804040300618612
+            </attr>
+            <attr name="trait3">0.1747727600285431 -0.4182716110970156 -0.7131407512876877 0.972963830403999</attr>
+        </taxon>
+        <taxon id="taxon7">
+            <attr name="trait1">0.3988882987788642 -3.5925427617821164 -0.44162891549217226 -0.028944636921210878
+                -1.1717821176724494
+            </attr>
+            <attr name="trait2">-0.22158862440099492 3.8444687603027385 1.4126292387163153 -2.928646472046473
+                0.04954047312222701 -2.7504755938766206
+            </attr>
+            <attr name="trait3">0.021643414180460174 -0.4321387164642869 1.2959001126066132 -0.42378024950560955</attr>
+        </taxon>
+        <taxon id="taxon8">
+            <attr name="trait1">0.549188719359929 -0.11646287269704525 0.12678272760083498 2.3916555239378905
+                1.0747211613241887
+            </attr>
+            <attr name="trait2">1.0743759617094972 1.9818670093948083 1.348126601620159 -3.314507305497285
+                -0.2006444474345116 -0.9088558225552659
+            </attr>
+            <attr name="trait3">0.2630370864114636 -0.8181174721922079 -0.7089288142035404 1.6537379221433017</attr>
+        </taxon>
+        <taxon id="taxon9">
+            <attr name="trait1">1.533349801858807 -0.8042394873096373 -0.01143188542494187 0.27028387196740455
+                -0.5971074429239394
+            </attr>
+            <attr name="trait2">0.5863288191090735 0.42370418900515106 -0.26783621859956946 0.04133111427212976
+                0.35876892318386006 -0.1964572683557873
+            </attr>
+            <attr name="trait3">2.1152692357575718 0.276819521004338 0.2564027788580229 -0.40434147564812495</attr>
+        </taxon>
+        <taxon id="taxon10">
+            <attr name="trait1">0.8023272733249729 0.042684825645238955 0.39572262698333827 -0.9915802597590105
+                -0.8267974999597728
+            </attr>
+            <attr name="trait2">1.9537056424001604 0.5925477606958199 -0.0497984821438642 -0.9489121452722484
+                -0.7291919934293225 -1.7306473188245368
+            </attr>
+            <attr name="trait3">2.1802316612653865 -0.2655432401198189 -0.5372409702155931 -1.1318047301845096</attr>
+        </taxon>
+    </taxa>
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+        (taxon9:0.008348686686952765,((((taxon6:0.016572492255427156,taxon8:0.1693267472384557):0.11628259080566952,(taxon2:0.25890343887261164,((taxon3:0.0208741196691072,taxon10:0.017517882286128703):0.01551427131818077,taxon7:0.4845369967448872):0.12609158351609934):0.17835201769192324):0.11681134995255121,taxon4:0.30670476579014777):0.006431542969055358,(taxon1:0.04588745970630809,taxon5:0.15083832568450478):0.09255924641281718):0.08777650912548374);
+    </newick>
+    <treeModel id="treeModel">
+        <newick idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true" rootNode="false">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits name="trait1" traitDimension="5" internalNodes="false" rootNode="false" leafNodes="true"
+                    asMatrix="true">
+            <parameter id="trait1.leafTraits"/>
+        </nodeTraits>
+        <nodeTraits name="trait2" traitDimension="6" internalNodes="false" rootNode="false" leafNodes="true"
+                    asMatrix="true">
+            <parameter id="trait2.leafTraits"/>
+        </nodeTraits>
+        <nodeTraits name="trait3" traitDimension="4" internalNodes="false" rootNode="false" leafNodes="true"
+                    asMatrix="true">
+            <parameter id="trait3.leafTraits"/>
+        </nodeTraits>
+    </treeModel>
+    <matrixParameter id="corr.decomp">
+        <parameter id="corr.decomp.1" value="1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
+        <parameter id="corr.decomp.2" value="0.3164046031299633 0.9486243340322714 0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
+        <parameter id="corr.decomp.3"
+                   value="-0.1960327281345795 -0.41760270683163364 0.8872311698463973 0.0 0.0 0.0 0.0 0.0 0.0"/>
+        <parameter id="corr.decomp.4"
+                   value="0.04304932160089695 0.14239055839080764 0.1492822296909793 0.9775410480840927 0.0 0.0 0.0 0.0 0.0"/>
+        <parameter id="corr.decomp.5"
+                   value="-0.5709765240082426 0.18366450018067526 0.13416772905851201 0.014461620649761213 0.7886970536348616 0.0 0.0 0.0 0.0"/>
+        <parameter id="corr.decomp.6"
+                   value="0.465983639750503 0.37894213982290076 0.5918238540336994 0.3468166009280351 0.30388400567238955 0.27636820433117854 0.0 0.0 0.0"/>
+        <parameter id="corr.decomp.7"
+                   value="-0.04632925504539468 -0.06619171050933587 -0.3924107576596794 0.6202371440963318 -0.0339750767764575 0.030881663210298064 0.6728179226048968 0.0 0.0"/>
+        <parameter id="corr.decomp.8"
+                   value="-0.03825269086194307 0.33279406277773965 0.17160109939480073 -0.34096291455973554 0.26368864428605765 0.20475098883113108 -0.48404587626355233 0.629545167658872 0.0"/>
+        <parameter id="corr.decomp.9"
+                   value="0.26175208665467786 0.5537845359677203 0.6998998548236314 0.12062937573855144 0.09408462227673808 0.08541764305339632 -0.2137029440291553 -0.16971030245654337 0.1725649293493679"/>
+    </matrixParameter>
+    <determinantPrior id="corr.decomp.prior" shapeParameter="2.0">
+        <matrixParameter idref="corr.decomp"/>
+    </determinantPrior>
+    <compoundSymmetricMatrix id="variance" asCorrelation="true" isCholesky="false" isStrictlyUpperTriangular="false">
+        <diagonal>
+            <parameter id="variance.diagonal"
+                       value="0.15813253231154578 1.1607465278466957 1.1811819038543214 0.9212494106393119 0.8698117726864457 1.0295042260187297 0.5187454156318654 1.3179365460607797 1.801542862299853"
+                       lower="0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
+
+        </diagonal>
+        <offDiagonal>
+            <maskedParameter id="corr.upper">
+                <transformedMultivariateParameter id="corr.full" asMatrix="true">
+                    <matrixParameter idref="corr.decomp"/>
+                    <matrixInnerProductTransform>
+                        <matrixParameter idref="corr.decomp"/>
+                    </matrixInnerProductTransform>
+                </transformedMultivariateParameter>
+                <mask>
+                    <parameter
+                            value="1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 0 0 1 1 1 1 1 1 1 0 0 0 1 1 1 1 1 1 0 0 0 0 1 1 1 1 1 0 0 0 0 0 1 1 1 1 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 1"/>
+                </mask>
+            </maskedParameter>
+        </offDiagonal>
+    </compoundSymmetricMatrix>
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+            <cachedMatrixInverse id="mbd.precision">
+                <compoundSymmetricMatrix idref="variance"/>
+            </cachedMatrixInverse>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+    <matrixParameter id="trait1.L">
+        <parameter id="trait1.L.1"
+                   value="-1.8060540060698846 0.5597699778692606 -0.6826622976482264 -0.5646935029266467 0.3639485794658061"/>
+        <parameter id="trait1.L.2"
+                   value="-0.02624856048756797 0.4045809103381752 0.4144826276534708 0.5008455762443038 -0.15650200805691916"/>
+    </matrixParameter>
+    <parameter id="trait1.factorPrecision"
+               value="1.1258443955042625 0.840338821087598 2.7682445587977385 1.0571244386184107 0.46619505651953524"
+               lower="0.0 0.0 0.0 0.0 0.0"/>
+    <integratedFactorModel id="trait1..factormodel" traitName="trait1" standardize="false">
+        <loadings>
+            <matrixParameter idref="trait1.L"/>
+        </loadings>
+        <precision>
+            <parameter idref="trait1.factorPrecision"/>
+        </precision>
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="trait1.leafTraits"/>
+        </traitParameter>
+    </integratedFactorModel>
+    <distributionLikelihood id="trait1.L.prior">
+        <data>
+            <matrixParameter idref="trait1.L"/>
+        </data>
+        <distribution>
+            <normalDistributionModel>
+                <mean>
+                    <parameter value="0"/>
+                </mean>
+                <stdev>
+                    <parameter value="1" lower="0"/>
+                </stdev>
+            </normalDistributionModel>
+        </distribution>
+    </distributionLikelihood>
+    <gammaPrior id="trait1.factorPrecision.prior" scale="1.0" shape="1.0">
+        <parameter idref="trait1.factorPrecision"/>
+    </gammaPrior>
+    <matrixParameter id="trait2.L">
+        <parameter id="trait2.L.1"
+                   value="-0.4867068424833901 0.7413228810719085 -0.04606932579575479 -0.15311867593978212 0.98891728183422 -0.9074491524604641"/>
+        <parameter id="trait2.L.2"
+                   value="-1.4328572442438379 -0.34432524987405644 -0.21640901814813276 0.4869078645553214 0.7712146037059044 0.5008719644615444"/>
+        <parameter id="trait2.L.3"
+                   value="-0.9256414557685698 2.5291949543260133 1.2361086648163893 -1.3519769992639588 0.8083445046602228 -0.9820630842195388"/>
+    </matrixParameter>
+    <parameter id="trait2.factorPrecision"
+               value="1.4913406545627261 1.0719426493388877 2.346592384391178 0.33013965664992223 0.9906912903606 1.4552216901763115"
+               lower="0.0 0.0 0.0 0.0 0.0 0.0"/>
+    <integratedFactorModel id="trait2..factormodel" traitName="trait2" standardize="false">
+        <loadings>
+            <matrixParameter idref="trait2.L"/>
+        </loadings>
+        <precision>
+            <parameter idref="trait2.factorPrecision"/>
+        </precision>
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="trait2.leafTraits"/>
+        </traitParameter>
+    </integratedFactorModel>
+    <distributionLikelihood id="trait2.L.prior">
+        <data>
+            <matrixParameter idref="trait2.L"/>
+        </data>
+        <distribution>
+            <normalDistributionModel>
+                <mean>
+                    <parameter value="0"/>
+                </mean>
+                <stdev>
+                    <parameter value="1" lower="0"/>
+                </stdev>
+            </normalDistributionModel>
+        </distribution>
+    </distributionLikelihood>
+    <gammaPrior id="trait2.factorPrecision.prior" scale="1.0" shape="1.0">
+        <parameter idref="trait2.factorPrecision"/>
+    </gammaPrior>
+    <repeatedMeasuresModel id="trait3.residualModel" traitName="trait3">
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="trait3.leafTraits"/>
+        </traitParameter>
+        <samplingPrecision>
+            <matrixParameter id="trait3.residualPrecision">
+                <parameter id="trait3.residualPrecision.1"
+                           value="1.0804468562422371 1.250702016113977 -0.22907702178861508 6.65565744929"/>
+                <parameter id="trait3.residualPrecision.2"
+                           value="1.250702016113977 3.566045903898993 0.7396671568436144 7.818216147617668"/>
+                <parameter id="trait3.residualPrecision.3"
+                           value="-0.22907702178861514 0.7396671568436144 1.2626183467305783 -2.5986178162168296"/>
+                <parameter id="trait3.residualPrecision.4"
+                           value="6.6556574492900005 7.818216147617669 -2.5986178162168287 63.92237227987408"/>
+            </matrixParameter>
+        </samplingPrecision>
+    </repeatedMeasuresModel>
+    <traitDataLikelihood id="trait1.trait2.trait3.joint.likelihood" allowIdentical="true" standardize="false"
+                         cacheBranches="true" useTreeLength="false" scaleByTime="false" reportAsMultivariate="true"
+                         allowSingular="true" traitName="trait1.trait2.trait3.joint">
+        <treeModel idref="treeModel"/>
+        <multivariateDiffusionModel idref="diffusionModel"/>
+        <jointPartialsProvider id="jointModel">
+            <integratedFactorModel idref="trait1..factormodel"/>
+            <integratedFactorModel idref="trait2..factormodel"/>
+            <repeatedMeasuresModel idref="trait3.residualModel"/>
+        </jointPartialsProvider>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="Infinity"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+
+
+        <report>
+            <cachedReport id="r1">
+                <treeTraitReporter>
+                    <integratedFactorModel idref="trait1..factormodel"/>
+                    <traitDataLikelihood idref="trait1.trait2.trait3.joint.likelihood"/>
+                </treeTraitReporter>
+            </cachedReport>
+        </report>
+
+        <assertEqual tolerance="1e-1" verbose="true" charactersToStrip="{}">
+            <message>
+                Check 1
+            </message>
+            <actual regex="(?s)tree trait values:\s*(.*?)\n\n">
+                <cachedReport idref="r1"/>
+            </actual>
+            <expected>
+                -0.0112659 -0.0421795
+                0.0423912 0.687461
+                -0.0149849 1.01539
+                0.149458 0.229179
+                -0.217187 -0.525185
+                -0.220403 -0.65122
+                -0.423775 -0.904478
+                0.00605764 -0.270155
+                -0.036566 0.0716805
+                0.0792544 0.46777
+            </expected>
+        </assertEqual>
+
+        <assertEqual tolerance="1e-1" verbose="true" charactersToStrip="{}">
+            <message>
+                Check 1
+            </message>
+            <actual regex="(?s)transformed trait values:\s*(.*?)\n\n">
+                <cachedReport idref="r1"/>
+            </actual>
+            <expected>
+                0.021454     -0.0233714   -0.00979186  -0.0147636   0.00250097
+                -0.0946056     0.301863     0.256002     0.320374   -0.0921609
+                0.000410885   0.40242      0.431092     0.517016   -0.164365
+                -0.275944      0.176384    -0.0070383    0.0303856   0.0185279
+                0.406037     -0.334055    -0.0694146   -0.140392    0.00314756
+                0.415154     -0.386846    -0.119458    -0.2017      0.0217018
+                0.789103     -0.603151    -0.085595    -0.213701   -0.0126798
+                -0.00384924   -0.105909    -0.11611     -0.138727    0.0444845
+                0.0641586     0.00853202   0.0546726    0.0565494  -0.0245263
+                -0.155416      0.233615     0.139778     0.189526   -0.0443623
+            </expected>
+        </assertEqual>
+
+    <report>
+        <cachedReport id="r2">
+            <treeTraitReporter>
+                <integratedFactorModel idref="trait2..factormodel"/>
+                <traitDataLikelihood idref="trait1.trait2.trait3.joint.likelihood"/>
+            </treeTraitReporter>
+        </cachedReport>
+    </report>
+
+    <assertEqual tolerance="1e-1" verbose="true" charactersToStrip="{}">
+        <message>
+            Check 2
+        </message>
+        <actual regex="(?s)tree trait values:\s*(.*?)\n\n">
+            <cachedReport idref="r2"/>
+        </actual>
+        <expected>
+            -0.0135582  -0.0214845   0.00397748
+            0.0757335  -0.560984    0.0827329
+            0.253474   -0.720004    0.481433
+            -0.204286   -1.51033    -0.578873
+            0.436107   -0.707736    0.203309
+            0.302863   -0.897516    0.114378
+            0.923331   -0.996767    0.999364
+            -0.484098   -0.499524   -0.538314
+            -0.370085   -0.0871457  -0.180858
+            -0.764123   -0.666975   -0.595591
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-1" verbose="true" charactersToStrip="{}">
+        <message>
+            Check 2
+        </message>
+        <actual regex="(?s)transformed trait values:\s*(.*?)\n\n">
+            <cachedReport idref="r2"/>
+        </actual>
+        <expected>
+            0.0337014   0.00740647   0.0101907  -0.0137624  -0.026762   -0.00236374
+            0.69037     0.458552     0.22018    -0.396597   -0.290869   -0.430955
+            0.462661    1.65346      0.739242   -1.04027     0.0845515  -1.06344
+            2.79935    -1.09548     -0.379289    0.0785096  -1.83474    -0.00261458
+            0.613637    1.0812       0.384381   -0.686247    0.0498013  -0.949892
+            1.03273     0.822841     0.321661   -0.638018   -0.300214   -0.8367
+            0.0537815   3.55528      1.40849    -1.97783     0.952206   -2.31857
+            1.44965    -1.54838     -0.535011    0.558691   -1.29912     0.717755
+            0.4724     -0.701772    -0.187652    0.258751   -0.579387    0.469799
+            1.87889    -1.84317     -0.556674    0.597472   -1.75148     0.944242
+        </expected>
+    </assertEqual>
+
+    <report>
+        <cachedReport id="r3">
+            <treeTraitReporter>
+                <repeatedMeasuresModel idref="trait3.residualModel"/>
+                <traitDataLikelihood idref="trait1.trait2.trait3.joint.likelihood"/>
+            </treeTraitReporter>
+        </cachedReport>
+    </report>
+
+    <assertEqual tolerance="1e-1" verbose="true" charactersToStrip="{}">
+        <message>
+            Check 3
+        </message>
+        <actual regex="(?s)tree trait values:\s*(.*?)\n\n">
+            <cachedReport idref="r3"/>
+        </actual>
+        <expected>
+            -0.0518822 0.013655 -0.0107688 -0.078494
+            0.286926 -0.446739 0.0625993 0.979948
+            0.554231 -0.720789 0.328392 1.61218
+            -0.439069 -0.62909 0.483508 -0.118281
+            -0.476466 -0.0590634 -0.270876 -0.421286
+            -0.722599 -0.054492 -0.290839 -0.760727
+            -0.458698 -0.328729 0.403096 -0.431089
+            -0.782394 0.0796499 -0.264029 -0.968578
+            -0.341454 0.202061 -0.53683 -0.303807
+            -0.557268 -0.0127222 -0.439181 -0.31635
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-1" verbose="true" charactersToStrip="{}">
+        <message>
+            Check 3
+        </message>
+        <actual regex="(?s)transformed trait values:\s*(.*?)\n\n">
+            <cachedReport idref="r3"/>
+        </actual>
+        <expected>
+            -0.0518822 0.013655 -0.0107688 -0.078494
+            0.286926 -0.446739 0.0625993 0.979948
+            0.554231 -0.720789 0.328392 1.61218
+            -0.439069 -0.62909 0.483508 -0.118281
+            -0.476466 -0.0590634 -0.270876 -0.421286
+            -0.722599 -0.054492 -0.290839 -0.760727
+            -0.458698 -0.328729 0.403096 -0.431089
+            -0.782394 0.0796499 -0.264029 -0.968578
+            -0.341454 0.202061 -0.53683 -0.303807
+            -0.557268 -0.0127222 -0.439181 -0.31635
+        </expected>
+    </assertEqual>
+</beast>

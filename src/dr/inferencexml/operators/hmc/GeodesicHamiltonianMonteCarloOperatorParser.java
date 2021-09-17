@@ -29,14 +29,17 @@ public class GeodesicHamiltonianMonteCarloOperatorParser extends HamiltonianMont
         GeodesicHamiltonianMonteCarloOperator hmc = (GeodesicHamiltonianMonteCarloOperator) super.parseXMLObject(xo);
         if (xo.hasChildNamed(ORTHOGONALITY_STRUCTURE)) {
             XMLObject cxo = xo.getChild(ORTHOGONALITY_STRUCTURE);
-            ArrayList<int[]> orthogonalityStructure = new ArrayList<>();
+            ArrayList<ArrayList<Integer>> orthogonalityStructure = new ArrayList<>();
             for (int i = 0; i < cxo.getChildCount(); i++) {
                 XMLObject group = (XMLObject) cxo.getChild(i);
                 int[] rows = group.getIntegerArrayAttribute(ROWS);
+                ArrayList<Integer> rowList = new ArrayList<>();
+
                 for (int j = 0; j < rows.length; j++) {
-                    rows[j]--;
+                    rowList.add(rows[j] - 1);
                 }
-                orthogonalityStructure.add(rows);
+
+                orthogonalityStructure.add(rowList);
             }
 
             hmc.setOrthogonalityStructure(orthogonalityStructure);

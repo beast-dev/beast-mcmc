@@ -18,6 +18,7 @@ import org.ejml.interfaces.decomposition.CholeskyDecomposition;
 import org.ejml.ops.CommonOps;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarloOperator implements Reportable {
 
@@ -82,7 +83,7 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
         return sb.toString();
     }
 
-    public void setOrthogonalityStructure(ArrayList<int[]> oldOrthogonalityStructure) {
+    public void setOrthogonalityStructure(ArrayList<ArrayList<Integer>> oldOrthogonalityStructure) {
         ((GeodesicLeapFrogEngine) leapFrogEngine).setOrthogonalityStructure(oldOrthogonalityStructure);
     }
 
@@ -95,12 +96,13 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
 //        private final DenseMatrix64F innerProduct2;
 //        private final DenseMatrix64F projection;
 //        private final DenseMatrix64F momentumMatrix;
-        private final int nRows;
+//        private final int nRows;
 //        private final int nCols;
 
-        private final int[] subRows;
-        private final int[] subColumns;
-        private final ArrayList<int[]> orthogonalityStructure;
+        //        private final int[] subRows;
+//        private final int[] subColumns;
+        private final ArrayList<ArrayList<Integer>> orthogonalityStructure;
+        private final ArrayList<ArrayList<Integer>> orthogonalityBlockRows;
 
 
         GeodesicLeapFrogEngine(Parameter parameter, HamiltonianMonteCarloOperator.InstabilityHandler instabilityHandler,
@@ -108,14 +110,33 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
             super(parameter, instabilityHandler, preconditioning, mask);
             this.matrixParameter = (MatrixParameterInterface) parameter;
 
-            this.subRows = parseSubRowsFromMask();
-            this.subColumns = parseSubColumnsFromMask();
-            if (mask != null) checkMask(subRows, subColumns);
+
+//            this.subRows = parseSubRowsFromMask();
+//            this.subColumns = parseSubColumnsFromMask();
+
 
             this.orthogonalityStructure = new ArrayList<>();
-            orthogonalityStructure.add(subColumns);
+            this.orthogonalityBlockRows = new ArrayList<>();
 
-            this.nRows = subRows.length;
+            if (mask == null) {
+                ArrayList<Integer> rows = new ArrayList<>();
+                for (int i = 0; i < matrixParameter.getRowDimension(); i++) {
+                    rows.add(i);
+                }
+                ArrayList<Integer> cols = new ArrayList<>();
+                for (int i = 0; i < matrixParameter.getColumnDimension(); i++) {
+                    cols.add(i);
+                }
+                orthogonalityStructure.add(cols);
+                orthogonalityBlockRows.add(rows);
+            } else {
+                parseStructureFromMask(mask);
+            }
+//            orthogonalityStructure.add(subColumns);
+
+//            this.nRows = subRows.length;
+
+//            if (mask != null) checkMask(subRows, subColumns);
 //            this.nCols = subColumns.length;
 //            this.positionMatrix = new DenseMatrix64F(nCols, nRows);
 //            this.innerProduct = new DenseMatrix64F(nCols, nCols);
@@ -124,147 +145,246 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
 //            this.momentumMatrix = new DenseMatrix64F(nCols, nRows);
         }
 
-        public void setOrthogonalityStructure(ArrayList<int[]> oldOrthogonalityStructure) {
-            orthogonalityStructure.clear();
+        private void parseStructureFromMask(double[] mask) {
+            int nRows = matrixParameter.getRowDimension();
+            int nCols = matrixParameter.getColumnDimension();
 
-            ArrayList<Integer> subColList = new ArrayList<>();
-            for (int i : subColumns) {
-                subColList.add(i);
-            }
+            ArrayList<Integer> colRows = new ArrayList<>();
 
-            //check that orthogonalityStructure is consistent with the subRows
-            ArrayList<Integer> alreadyOrthogonal = new ArrayList<>();
-
-            for (int i = 0; i < oldOrthogonalityStructure.size(); i++) {
-                for (int j = 0; j < oldOrthogonalityStructure.get(i).length; j++) {
-                    if (!subColList.contains(oldOrthogonalityStructure.get(i)[j])) { //TODO: check that we're doing this by row (or allow to do by row or column)
-                        throw new RuntimeException("Cannot enforce orthogonality structure.");
-                    }
-                    if (alreadyOrthogonal.contains(oldOrthogonalityStructure.get(i)[j])) {
-                        throw new RuntimeException("Orthogonal blocks must be non-overlapping");
-                    }
-                    alreadyOrthogonal.add(oldOrthogonalityStructure.get(i)[j]);
-                }
-                orthogonalityStructure.add(oldOrthogonalityStructure.get(i));
-            }
-
-            for (int i = 0; i < subColumns.length; i++) {
-                if (!alreadyOrthogonal.contains(subColumns[i])) {
-                    orthogonalityStructure.add(new int[]{subColumns[i]});
-                }
-            }
-
-        }
-
-        private int[] parseSubColumnsFromMask() {
-
-            int originalRows = matrixParameter.getRowDimension();
-            int originalColumns = matrixParameter.getColumnDimension();
-
-            ArrayList<Integer> subArray = new ArrayList<Integer>();
-
-            for (int col = 0; col < originalColumns; col++) {
-                int offset = col * originalRows;
-                for (int row = 0; row < originalRows; row++) {
-                    int ind = offset + row;
-                    if (mask == null || mask[ind] == 1.0) {
-                        subArray.add(col);
-                        break;
+            for (int i = 0; i < nCols; i++) {
+                colRows.clear();
+                int offset = i * nRows;
+                for (int j = 0; j < nRows; j++) {
+                    if (mask[offset + j] == 1) {
+                        colRows.add(j);
                     }
                 }
-            }
 
-            int[] subColumns = new int[subArray.size()];
-            for (int i = 0; i < subColumns.length; i++) {
-                subColumns[i] = subArray.get(i);
-            }
-
-            return subColumns;
-        }
-
-        private int[] parseSubRowsFromMask() {
-            int originalRows = matrixParameter.getRowDimension();
-            int originalColumns = matrixParameter.getColumnDimension();
-
-            ArrayList<Integer> subArray = new ArrayList<Integer>();
-
-            for (int row = 0; row < originalRows; row++) {
-                for (int col = 0; col < originalColumns; col++) {
-                    int ind = col * originalRows + row;
-                    if (mask == null || mask[ind] == 1.0) {
-                        subArray.add(row);
-                        break;
-                    }
-                }
-            }
-
-            int[] subRows = new int[subArray.size()];
-            for (int i = 0; i < subRows.length; i++) {
-                subRows[i] = subArray.get(i);
-            }
-
-            return subRows;
-        }
-
-        private void checkMask(int[] rows, int[] cols) {
-            int originalRows = matrixParameter.getRowDimension();
-            int originalColumns = matrixParameter.getColumnDimension();
-
-            int subRowInd = 0;
-            int subColInd = 0;
-
-            Boolean isSubRow;
-            Boolean isSubCol;
-
-            for (int row = 0; row < originalRows; row++) {
-                if (row == rows[subRowInd]) {
-                    isSubRow = true;
-                    subRowInd++;
-                } else {
-                    isSubRow = false;
-                }
-
-                subColInd = 0;
-
-                for (int col = 0; col < originalColumns; col++) {
-                    if (col == cols[subColInd]) {
-                        isSubCol = true;
-                        subColInd++;
+                if (!colRows.isEmpty()) {
+                    int matchingInd = findMatchingArray(orthogonalityBlockRows, colRows);
+                    if (matchingInd == -1) {
+                        ArrayList<Integer> newBlock = new ArrayList<>();
+                        newBlock.add(i);
+                        orthogonalityStructure.add(newBlock);
+                        orthogonalityBlockRows.add(new ArrayList<>(colRows));
                     } else {
-                        isSubCol = false;
+                        orthogonalityStructure.get(matchingInd).add(i);
                     }
+                }
+            }
+        }
 
-                    int ind = originalRows * col + row;
-
-                    if (isSubCol && isSubRow) {
-                        if (mask[ind] != 1.0) {
-                            throw new RuntimeException("mask is incompatible with " +
-                                    GeodesicHamiltonianMonteCarloOperatorParser.OPERATOR_NAME +
-                                    ". All elements in sub-matrix must be set to 1.");
-                        }
-                    } else {
-                        if (mask[ind] != 0.0) {
-                            throw new RuntimeException("mask is incompatible with " +
-                                    GeodesicHamiltonianMonteCarloOperatorParser.OPERATOR_NAME +
-                                    ". All elements outside of sub-matrix must be set to 0.");
+        private int findMatchingArray(ArrayList<ArrayList<Integer>> listOfLists, ArrayList<Integer> list) {
+            int nLists = listOfLists.size();
+            for (int i = 0; i < nLists; i++) {
+                ArrayList<Integer> subList = listOfLists.get(i);
+                boolean matching = true;
+                if (list.size() == subList.size()) {
+                    for (int j = 0; j < list.size(); j++) {
+                        if (list.get(j) != subList.get(j)) {
+                            matching = false;
+                            break;
                         }
                     }
 
+                    if (matching) {
+                        return i;
+                    }
                 }
             }
+
+            return -1;
         }
+
+        private int findSubArray(ArrayList<ArrayList<Integer>> listOfLists, ArrayList<Integer> list, ArrayList<Integer> remainingList) { //assumes both are sorted
+            remainingList.clear();
+            int nLists = listOfLists.size();
+            for (int i = 0; i < nLists; i++) {
+                ArrayList<Integer> subList = listOfLists.get(i);
+                if (list.size() <= subList.size()) {
+                    int currentInd = 0;
+                    for (int j = 0; j < subList.size(); j++) {
+
+                        if (currentInd < list.size() && subList.get(j) == list.get(currentInd)) {
+                            currentInd += 1;
+                        } else {
+                            remainingList.add(subList.get(j));
+                        }
+                    }
+
+                    if (currentInd == list.size()) {
+                        return i;
+                    }
+
+                }
+            }
+
+            return -1;
+        }
+
+
+        public void setOrthogonalityStructure(ArrayList<ArrayList<Integer>> newOrthogonalColumns) {
+
+            for (int i = 0; i < newOrthogonalColumns.size(); i++) {
+                ArrayList<Integer> remainingList = new ArrayList<>();
+                ArrayList<Integer> cols = newOrthogonalColumns.get(i);
+                Collections.sort(cols);
+                int matchingCol = findSubArray(orthogonalityStructure, cols, remainingList);
+                if (matchingCol == -1) {
+                    throw new RuntimeException("Orthogonality structure incompatible with itself or mask.");
+                }
+
+                ArrayList<Integer> existingCols = orthogonalityStructure.get(matchingCol);
+
+
+                if (remainingList.size() > 0) {
+                    orthogonalityStructure.set(matchingCol, remainingList);
+                    orthogonalityStructure.add(cols);
+                    orthogonalityBlockRows.add(orthogonalityBlockRows.get(matchingCol));
+
+                }
+
+            }
+//            ArrayList<Integer> subColList = new ArrayList<>();
+//            for (int i : subColumns) {
+//                subColList.add(i);
+//            }
+//
+//            //check that orthogonalityStructure is consistent with the subRows
+//            ArrayList<Integer> alreadyOrthogonal = new ArrayList<>();
+//
+//            for (int i = 0; i < newOrthogonalColumns.size(); i++) {
+//                for (int j = 0; j < newOrthogonalColumns.get(i).length; j++) {
+//                    if (!subColList.contains(newOrthogonalColumns.get(i)[j])) { //TODO: check that we're doing this by row (or allow to do by row or column)
+//                        throw new RuntimeException("Cannot enforce orthogonality structure.");
+//                    }
+//                    if (alreadyOrthogonal.contains(newOrthogonalColumns.get(i)[j])) {
+//                        throw new RuntimeException("Orthogonal blocks must be non-overlapping");
+//                    }
+//                    alreadyOrthogonal.add(newOrthogonalColumns.get(i)[j]);
+//                }
+//                orthogonalityStructure.add(newOrthogonalColumns.get(i));
+//            }
+//
+//            for (int i = 0; i < subColumns.length; i++) {
+//                if (!alreadyOrthogonal.contains(subColumns[i])) {
+//                    orthogonalityStructure.add(new int[]{subColumns[i]});
+//                }
+//            }
+
+        }
+
+//        private int[] parseSubColumnsFromMask() {
+//
+//            int originalRows = matrixParameter.getRowDimension();
+//            int originalColumns = matrixParameter.getColumnDimension();
+//
+//            ArrayList<Integer> subArray = new ArrayList<Integer>();
+//
+//            for (int col = 0; col < originalColumns; col++) {
+//                int offset = col * originalRows;
+//                for (int row = 0; row < originalRows; row++) {
+//                    int ind = offset + row;
+//                    if (mask == null || mask[ind] == 1.0) {
+//                        subArray.add(col);
+//                        break;
+//                    }
+//                }
+//            }
+//
+//            int[] subColumns = new int[subArray.size()];
+//            for (int i = 0; i < subColumns.length; i++) {
+//                subColumns[i] = subArray.get(i);
+//            }
+//
+//            return subColumns;
+//        }
+//
+//        private int[] parseSubRowsFromMask() {
+//            int originalRows = matrixParameter.getRowDimension();
+//            int originalColumns = matrixParameter.getColumnDimension();
+//
+//            ArrayList<Integer> subArray = new ArrayList<Integer>();
+//
+//            for (int row = 0; row < originalRows; row++) {
+//                for (int col = 0; col < originalColumns; col++) {
+//                    int ind = col * originalRows + row;
+//                    if (mask == null || mask[ind] == 1.0) {
+//                        subArray.add(row);
+//                        break;
+//                    }
+//                }
+//            }
+//
+//            int[] subRows = new int[subArray.size()];
+//            for (int i = 0; i < subRows.length; i++) {
+//                subRows[i] = subArray.get(i);
+//            }
+//
+//            return subRows;
+//        }
+
+//        private void checkMask(int[] rows, int[] cols) {
+//            int originalRows = matrixParameter.getRowDimension();
+//            int originalColumns = matrixParameter.getColumnDimension();
+//
+//            int subRowInd = 0;
+//            int subColInd = 0;
+//
+//            Boolean isSubRow;
+//            Boolean isSubCol;
+//
+//            for (int row = 0; row < originalRows; row++) {
+//                if (subRowInd < rows.length && row == rows[subRowInd]) {
+//                    isSubRow = true;
+//                    subRowInd++;
+//                } else {
+//                    isSubRow = false;
+//                }
+//
+//                subColInd = 0;
+//
+//                for (int col = 0; col < originalColumns; col++) {
+//                    if (subColInd < cols.length && col == cols[subColInd]) {
+//                        isSubCol = true;
+//                        subColInd++;
+//                    } else {
+//                        isSubCol = false;
+//                    }
+//
+//                    int ind = originalRows * col + row;
+//
+//                    if (isSubCol && isSubRow) {
+//                        if (mask[ind] != 1.0) {
+//                            throw new RuntimeException("mask is incompatible with " +
+//                                    GeodesicHamiltonianMonteCarloOperatorParser.OPERATOR_NAME +
+//                                    ". All elements in sub-matrix must be set to 1.");
+//                        }
+//                    } else {
+//                        if (mask[ind] != 0.0) {
+//                            throw new RuntimeException("mask is incompatible with " +
+//                                    GeodesicHamiltonianMonteCarloOperatorParser.OPERATOR_NAME +
+//                                    ". All elements outside of sub-matrix must be set to 0.");
+//                        }
+//                    }
+//
+//                }
+//            }
+//        }
 
         private DenseMatrix64F setOrthogonalSubMatrix(double[] src, int srcOffset, int block) {
 
             int nRowsOriginal = matrixParameter.getRowDimension();
-            int[] blockCols = orthogonalityStructure.get(block);
-            int nCols = blockCols.length;
+            ArrayList<Integer> blockCols = orthogonalityStructure.get(block);
+            ArrayList<Integer> blockRows = orthogonalityBlockRows.get(block);
+            int nCols = blockCols.size();
+            int nRows = blockRows.size();
 
             DenseMatrix64F dest = new DenseMatrix64F(nCols, nRows);
 
             for (int row = 0; row < nRows; row++) {
                 for (int col = 0; col < nCols; col++) {
-                    int ind = nRowsOriginal * blockCols[col] + subRows[row] + srcOffset;
+                    int ind = nRowsOriginal * blockCols.get(col) + blockRows.get(row) + srcOffset;
                     dest.set(col, row, src[ind]);
                 }
             }
@@ -278,10 +398,12 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
 
         private void unwrapSubMatrix(DenseMatrix64F src, int block, double[] dest, int destOffset) {
             int nRowsOriginal = matrixParameter.getRowDimension();
-            int[] blockCols = orthogonalityStructure.get(block);
-            for (int row = 0; row < nRows; row++) {
-                for (int col = 0; col < blockCols.length; col++) {
-                    int ind = nRowsOriginal * blockCols[col] + subRows[row] + destOffset;
+            ArrayList<Integer> blockCols = orthogonalityStructure.get(block);
+            ArrayList<Integer> blockRows = orthogonalityBlockRows.get(block);
+
+            for (int row = 0; row < blockRows.size(); row++) {
+                for (int col = 0; col < blockCols.size(); col++) {
+                    int ind = nRowsOriginal * blockCols.get(col) + blockRows.get(row) + destOffset;
                     dest[ind] = src.get(col, row);
                 }
             }
@@ -305,7 +427,8 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
 
             for (int block = 0; block < orthogonalityStructure.size(); block++) {
 
-                int nCols = orthogonalityStructure.get(block).length;
+                int nCols = orthogonalityStructure.get(block).size();
+                int nRows = orthogonalityBlockRows.get(block).size();
 
 //            positionMatrix.setData(position);
                 DenseMatrix64F positionMatrix = setOrthogonalSubMatrix(position, block);
@@ -383,6 +506,19 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
                 DenseMatrix64F projection = new DenseMatrix64F(nCols, nRows);
 
                 CommonOps.mult(innerProduct, positionMatrix, projection);
+
+                double sse = 0;
+                for (int i = 0; i < positionMatrix.data.length; i++) {
+                    double diff = projection.data[i] - positionMatrix.data[i];
+                    sse += diff * diff;
+                }
+
+                if (sse > 1e-3) {
+                    System.err.println("unstable"); //TODO: REMOVE
+                    throw new NumericInstabilityException();
+                }
+
+
                 System.arraycopy(projection.data, 0, positionMatrix.data, 0, positionMatrix.data.length);
 
                 unwrapSubMatrix(positionMatrix, block, position);
@@ -401,7 +537,8 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
                 DenseMatrix64F positionMatrix = setOrthogonalSubMatrix(position, block);
                 DenseMatrix64F momentumMatrix = setOrthogonalSubMatrix(momentum, block);
 
-                int nCols = orthogonalityStructure.get(block).length;
+                int nCols = orthogonalityStructure.get(block).size();
+                int nRows = orthogonalityBlockRows.get(block).size();
 //            positionMatrix.setData(position);
 //            momentumMatrix.setData(momentum);
 

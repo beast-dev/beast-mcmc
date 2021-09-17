@@ -48,7 +48,6 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -60,7 +59,6 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     private final String traitName;
     private final MatrixParameterInterface samplingPrecisionParameter;
     private boolean diagonalOnly = false;
-    //    private DenseMatrix64F samplingVariance;
     private boolean variableChanged = true;
     private boolean varianceKnown = false;
 
@@ -254,11 +252,6 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     public MatrixParameterInterface getExtensionPrecision() {
         checkVariableChanged();
         return samplingPrecisionParameter;
-    }
-
-    @Override
-    public double[] transformTreeTraits(double[] treeTraits) {
-        return treeTraits;
     }
 
     @Override

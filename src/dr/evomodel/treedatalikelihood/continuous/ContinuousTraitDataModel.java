@@ -268,7 +268,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     @Override
     public double[] transformTreeTraits(double[] treeTraits) {
-        return treeTraits;
+        return treeTraits.clone();
     }
 
     /*

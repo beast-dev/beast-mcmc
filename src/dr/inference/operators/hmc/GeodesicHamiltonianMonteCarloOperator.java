@@ -513,7 +513,7 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
                     sse += diff * diff;
                 }
 
-                if (sse > 1e-3) {
+                if (sse / position.length > 1e-2) { //TODO: actually figure out if I want this
                     System.err.println("unstable"); //TODO: REMOVE
                     throw new NumericInstabilityException();
                 }

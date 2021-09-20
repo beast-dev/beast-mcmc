@@ -896,9 +896,10 @@
     <halfTPrior id="variance.diagonal.prior" scale="2.5" df="1">
         <parameter idref="variance.diagonal"/>
     </halfTPrior>
-    <normalPrior id="corr.decomposed.prior" mean="0.0" stdev="2.0">
+
+    <determinantPrior id="corr.decomposed.prior" shapeParameter="2">
         <parameter idref="corr.decomposed"/>
-    </normalPrior>
+    </determinantPrior>
 
     <operators id="operators">
 
@@ -923,7 +924,7 @@
             </orthogonalityStructure>
         </geodesicHamiltonianMonteCarloOperator>
     </operators>
-    <mcmc id="mcmc" chainLength="100" autoOptimize="true">
+    <mcmc id="mcmc" chainLength="10" autoOptimize="true">
         <joint id="joint">
             <likelihood id="likelihood">
                 <integratedFactorModel idref="trait1..factormodel"/>
@@ -940,7 +941,7 @@
             </prior>
         </joint>
         <operators idref="operators"/>
-        <log logEvery="100">
+        <log logEvery="1">
             <joint idref="joint"/>
             <likelihood idref="likelihood"/>
             <prior idref="prior"/>

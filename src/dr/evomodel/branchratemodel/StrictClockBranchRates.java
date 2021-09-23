@@ -32,7 +32,6 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
-import java.util.function.DoubleBinaryOperator;
 
 /**
  * @author Alexei Drummond

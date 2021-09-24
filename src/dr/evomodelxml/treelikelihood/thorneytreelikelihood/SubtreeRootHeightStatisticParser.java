@@ -1,16 +1,29 @@
 package dr.evomodelxml.treelikelihood.thorneytreelikelihood;
 
 
+import dr.evolution.util.TaxonList;
 import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainedTreeModel;
 import dr.evomodel.treelikelihood.thorneytreelikelihood.SubtreeRootHeightStatistic;
+import dr.inference.model.Statistic;
 import dr.xml.*;
 
 public class SubtreeRootHeightStatisticParser extends AbstractXMLObjectParser {
     public final static String SUBTREE_ROOT_HEIGHT_STATISTIC = "subtreeRootHeightStatistic";
+    public static final String ABSOLUTE = "absolute";
+    public static final String MRCA = "mrca";
+
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         ConstrainedTreeModel tree = (ConstrainedTreeModel) xo.getChild(ConstrainedTreeModel.class);
-        return new SubtreeRootHeightStatistic(tree);
+
+        TaxonList taxa = null;
+
+        if (xo.hasChildNamed(MRCA)) {
+            taxa = (TaxonList) xo.getElementFirstChild(MRCA);
+        }
+        boolean isAbsolute = xo.getAttribute(ABSOLUTE, false);
+        String name = xo.getAttribute(Statistic.NAME, xo.getId());
+        return new SubtreeRootHeightStatistic(name,tree,taxa,isAbsolute);
     }
 
     /**

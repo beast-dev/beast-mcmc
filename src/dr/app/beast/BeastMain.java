@@ -145,15 +145,8 @@ public class BeastMain {
             messageHandler.setLevel(Level.WARNING);
             errorLogger.addHandler(messageHandler);
 
-            for (String pluginName : PluginLoader.getAvailablePlugins()) {
-                Plugin plugin = PluginLoader.loadPlugin(pluginName);
-                if (plugin != null) {
-                    Set<XMLObjectParser> parserSet = plugin.getParsers();
-                    for (XMLObjectParser pluginParser : parserSet) {
-                        parser.addXMLObjectParser(pluginParser);
-                    }
-                }
-            }
+
+            PluginLoader.loadPlugins(parser);
 
             // Install the checkpointer. This creates a factory that returns
             // appropriate savers and loaders according to the user's options.
@@ -382,6 +375,7 @@ public class BeastMain {
                         new Arguments.Option("force_resume", "Force resuming from a saved state"),
 
                         new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
+                        new Arguments.StringOption("plugins_dir", "FILENAME", "Specify a directory to load plugins from, multiple can be separated with ':' "),
 
                         new Arguments.Option("version", "Print the version and credits and stop"),
                         new Arguments.Option("help", "Print this information and stop"),
@@ -643,6 +637,11 @@ public class BeastMain {
             System.setProperty("adaptation_target",
                     Double.toString(arguments.getRealOption("mcmc.adaptation_target")));
         }
+        if (arguments.hasOption("plugins_dir")) {
+            System.setProperty("beast.plugins.dir",
+                     arguments.getStringOption("plugins_dir")+":"+System.getProperty("beast.plugins.dir"));
+        }
+
 
         if (!usingSMC) {
             // ignore these other options

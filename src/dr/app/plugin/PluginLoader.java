@@ -24,95 +24,110 @@
  */
 
 package dr.app.plugin;
+import dr.xml.XMLObjectParser;
+import dr.xml.XMLParser;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
-public class PluginLoader {	 
+public class PluginLoader {
 
-		public static File getPluginFolder() {
-			String pluginFolderFromProperty = null;
+	private static class PluginPath{
+		public final String name;
+		public final String absolutePath;
+		PluginPath(String name,String absolutePath){
+			this.name= name;
+			this.absolutePath=absolutePath;
+		}
+	}
+		public static List<File> getPluginFolders() {
+			List<File> fileList = new ArrayList<>();
 			try {
-				pluginFolderFromProperty =  java.lang.System.getProperty("beast.plugins.dir");
+				List<File> files =  Arrays.stream(System.getProperty("beast.plugins.dir").split(":")).map(File::new).collect(Collectors.toList());
+				fileList.addAll(files);
 			} catch (Exception ex) {
+				Logger.getLogger("dr.app.plugin").warning(ex.getMessage());
                 //
-			}
-			if (pluginFolderFromProperty != null) {
-				return new File(pluginFolderFromProperty);
 			}
 			final String PLUGIN_FOLDER = "plugins";
 			final File PLUGIN_FILE = new File(PLUGIN_FOLDER);
-			return PLUGIN_FILE;
+			fileList.add(PLUGIN_FILE);
+			return fileList;
 
 	   }
 
-	   public static List<String> getAvailablePlugins(){
 
-	       List<String> plugins = new ArrayList<String> ();
-	       File pluginFile = PluginLoader.getPluginFolder();
+	   public static List<PluginPath> getAvailablePlugins(){
 
-	       Logger.getLogger("dr.app.plugin").info("Looking for plugins in " + pluginFile.getAbsolutePath());
+		   List<PluginPath> plugins = new ArrayList<>();
+	       List<File> pluginFolders = PluginLoader.getPluginFolders();
 
-           File[] classFolderFiles = pluginFile.listFiles(new FileFilter() {
-	           public boolean accept(File pathname) {
-	               String name = pathname.getName();
-	               if(!pathname.isDirectory() || name.endsWith("CVS") || name.endsWith(".classes"))
-	                   return false;
-	               File[] directoryContents = pathname.listFiles(new FileFilter() {
-	                   public boolean accept(File pathname) {
-	                       String name = pathname.getName();
-	                       return name.endsWith(".jar");
-	                   }
-	               });
-	               return directoryContents.length != 0;
-	           }
-	       });
+		   for(File pluginFolder : pluginFolders) {
+			   String absolutePath = pluginFolder.getAbsolutePath();
+			   Logger.getLogger("dr.app.plugin").info("Looking for plugins in " + absolutePath);
 
-	       if (classFolderFiles != null) {
-	           for (File folder : classFolderFiles) {
-	               plugins.add(folder.getName());
-	           }
-	       }
+			   File[] classFolderFiles = pluginFolder.listFiles(new FileFilter() {
+				   public boolean accept(File pathname) {
+					   String name = pathname.getName();
+					   if (!pathname.isDirectory() || name.endsWith("CVS") || name.endsWith(".classes"))
+						   return false;
+					   File[] directoryContents = pathname.listFiles(new FileFilter() {
+						   public boolean accept(File pathname) {
+							   String name = pathname.getName();
+							   return name.endsWith(".jar");
+						   }
+					   });
+					   return directoryContents.length != 0;
+				   }
+			   });
 
-	       File[] pluginJarFiles = pluginFile.listFiles(new FileFilter() {
-	           public boolean accept(File pathname) {
-	               return !pathname.isDirectory() && pathname.getAbsolutePath().endsWith(".jar");
-	           }
-	       });
+			   if (classFolderFiles != null) {
+				   for (File folder : classFolderFiles) {
+					   plugins.add(new PluginPath(folder.getName(), absolutePath));
+				   }
+			   }
 
-	       if (pluginJarFiles != null) {
-	           for (File jarFile : pluginJarFiles) {
-	               String name = jarFile.getName();
-	               name =name.substring(0, name.length()- 4);
-	               if(! plugins.contains(name))
-	                   plugins.add(name);
-	           }
-	       }
+			   File[] pluginJarFiles = pluginFolder.listFiles(new FileFilter() {
+				   public boolean accept(File pathname) {
+					   return !pathname.isDirectory() && pathname.getAbsolutePath().endsWith(".jar");
+				   }
+			   });
 
+			   if (pluginJarFiles != null) {
+				   for (File jarFile : pluginJarFiles) {
+					   String name = jarFile.getName();
+					   name = name.substring(0, name.length() - 4);
+					   if (!plugins.stream().map(d -> d.name).collect(Collectors.toList()).contains(name)) {
+						   plugins.add(new PluginPath(name, absolutePath));
+					   }
+				   }
+			   }
+		   }
 	       return plugins;
 	   }
 
-	  public static Plugin loadPlugin(final String pluginName/*, boolean pluginEnabled*/) {
+	  public static Plugin loadPlugin(final PluginPath pluginPath/*, boolean pluginEnabled*/) {
           //the class loader must still be assigned if the plugin isnt enabled so
 	      //documents from that plugin can still be displayed.
           final String loggerName = "dr.app.plugin";
-          Logger.getLogger(loggerName).info("Loading plugin " + pluginName);
-	      File pluginDir = PluginLoader.getPluginFolder();
-	      File file = new File(pluginDir, pluginName);
+          Logger.getLogger(loggerName).info("Loading plugin " + pluginPath.name);
+
+	      File file = new File(pluginPath.absolutePath, pluginPath.name);
 
 	      try {
 	          URL[] urls;
 	          if (!file.exists()) {
 	        	  Logger.getLogger(loggerName).info("Loading jar file");
-	              file = new File(pluginDir, pluginName + ".jar");
+	              file = new File(pluginPath.absolutePath, pluginPath.name + ".jar");
 	              urls = new URL[]{file.toURL()};
 	          }
 	          else {
-	              File classFiles = new File(pluginDir, "classes");
+	              File classFiles = new File(pluginPath.absolutePath, "classes");
 	              final boolean classesExist = classFiles.exists();
 
 	              File[] files = file.listFiles(new FileFilter() {
@@ -120,7 +135,7 @@ public class PluginLoader {
 	                      String name = pathname.getName();
 	                      if(!name.endsWith(".jar")) return false;
 	                      name = name.substring(0, name.length()- 4);
-	                      return !(name.equals(pluginName) && classesExist);
+	                      return !(name.equals(pluginPath.name) && classesExist);
 	                  }
 	              });
 	              if(files == null) files = new File[0];
@@ -147,7 +162,7 @@ public class PluginLoader {
 	        	  Logger.getLogger(loggerName).info("URL from loader: " + url.toString() + "\n");
 	          }
 
-	          final Class myClass = classLoader.loadClass(pluginName);
+	          final Class myClass = classLoader.loadClass(pluginPath.name);
 
 	          final Object plugin = myClass.newInstance();
 
@@ -162,4 +177,16 @@ public class PluginLoader {
 	      }
 	      return null;
 	  }
+
+	public static void loadPlugins(XMLParser parser) {
+		for (PluginPath pluginPath : PluginLoader.getAvailablePlugins()) {
+			Plugin plugin = PluginLoader.loadPlugin(pluginPath);
+			if (plugin != null) {
+				Set<XMLObjectParser> parserSet = plugin.getParsers();
+				for (XMLObjectParser pluginParser : parserSet) {
+					parser.addXMLObjectParser(pluginParser);
+				}
+			}
+		}
+	}
 }

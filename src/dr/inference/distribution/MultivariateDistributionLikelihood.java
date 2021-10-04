@@ -784,7 +784,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
         @Override
         public String getParserDescription() {
-            return "Calculates p(X) ∝ det(X)^a";
+            return "Calculates p(X) = c * det(X)^a (currently omits normalization constant c)";
         }
 
         @Override

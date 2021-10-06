@@ -39,7 +39,7 @@ import java.util.List;
 
 public class AminoAcidMixtureParser extends AbstractXMLObjectParser {
 
-    public static final String GLM_SUBSTITUTION_MODEL = "magicClass";
+    public static final String GLM_SUBSTITUTION_MODEL = "aminoAcidMixtureModel";
 
 
     public String getParserName() {
@@ -62,7 +62,7 @@ public class AminoAcidMixtureParser extends AbstractXMLObjectParser {
     //************************************************************************
 
     public String getParserDescription() {
-        return "A general model of sequence substitution for any data type where the rates come from the generalized linear model.";
+        return "Rates from named amino acid models for use by GLM substitution models.";
     }
 
     public Class getReturnType() {

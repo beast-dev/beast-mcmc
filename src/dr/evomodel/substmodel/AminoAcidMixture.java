@@ -18,10 +18,16 @@ public class AminoAcidMixture extends DesignMatrix {
         for (int i = 0; i < p.length; ++i) {
 
             EmpiricalAminoAcidModel model = rateMatrix.get(i);
-            double[] rates = model.getEmpiricalRateMatrix().getEmpiricalRates(); // this is flat and includes diaganoal elements
-            // we want flattened upper triangular ordered, then flatten lower triangular order
-            p[i] = new Parameter.Default(rates); // this is wrong, because we need to permute the elements in rates
+            // this is a flat representation of the lower triangular order
+            double[] rates = model.getEmpiricalRateMatrix().getEmpiricalRates();
 
+            // We need upper and lower triangular rates, both logged
+            double[] ratesUpperLower = new double[2*rates.length];
+            for ( int j = 0; j < rates.length; j++ ) {
+                ratesUpperLower[i] = ratesUpperLower[rates.length + 1] = Math.log(rates[i]);
+            }
+
+            p[i] = new Parameter.Default(ratesUpperLower);
 
             // TODO
         }

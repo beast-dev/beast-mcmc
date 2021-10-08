@@ -171,7 +171,8 @@
 		<treeDataLikelihood idref="treeLikelihood"/>
 	</likelihood>
 
-	<bayesianBridgeDistribution id="bbDistribution">
+	<bayesianBridge id="mixtureCoefficientPrior">
+		<parameter idref="mixture.coefficient"/>
 		<globalScale>
 			<parameter id="globalScale" value="0.1" lower="0"/>
 		</globalScale>
@@ -181,20 +182,10 @@
 		<localScale>
 			<parameter id="localScale" value="0.1" dimension="5"/>
 		</localScale>
-	</bayesianBridgeDistribution>
-
-	<!-- Doesn't crash XML, doesn't enable Gibbs sampler
-	<bayesianBridgeDistribution id="bbDistribution">
-		<globalScale>
-			<parameter id="globalScale" value="1" lower="0"/>
-		</globalScale>
-		<exponent>
-			<parameter id="exponent" value="0.25"/>
-		</exponent>
-		<localScale>
-			<parameter id="localScale" value="1.0" dimension="5"/>
-		</localScale>
-	</bayesianBridgeDistribution> -->
+		<slabWidth>
+			<parameter value="2.0"/>
+		</slabWidth>
+	</bayesianBridge>
 
 	<gammaPrior id="globalScalePrior" shape="1" scale="2">
  		<parameter idref="globalScale"/>
@@ -208,15 +199,6 @@
 		 <parameter id="mixture.coefficient.stdev" value="1.0" lower="0.0"/>
 	 </stdev>
  </normalDistributionModel> -->
-
-	<multivariateDistributionLikelihood id="mixtureCoefficientPrior">
-		 <data>
-			 <parameter idref="mixture.coefficient"/>
-		 </data>
-		 <distribution>
-			 <bayesianBridgeDistributionModel idref="bbDistribution"/>
-		 </distribution>
-	</multivariateDistributionLikelihood>
 
 	<!-- Numerical gradients instead of approximate, disable numericalHessian wrapper for approximate -->
 	<numericalHessian id="numericalGlmAaGradient">
@@ -248,19 +230,15 @@
 		                 drawVariance="1.0" autoOptimize="true" targetAcceptanceProbability="0.5"
 		                 preconditioning="adaptiveDiagonal" preconditioningDelay="200" preconditioningUpdateFrequency="10">
 			<jointGradient>
-				<gradient>
-					<multivariateDistributionLikelihood idref="mixtureCoefficientPrior"/>
-					<parameter idref="mixture.coefficient"/>
-				</gradient>
+				<bayesianBridge idref="mixtureCoefficientPrior"/>
 				<numericalHessian idref="numericalGlmAaGradient"/>
 				<!-- <glmSubstitutionModelGradient idref="glm.aa.gradient"/> -->
 			</jointGradient>
 		</hamiltonianMonteCarloOperator>
 
 		<bayesianBridgeGibbsOperator weight="5">
-			<bayesianBridgeDistribution idref="bbDistribution"/>
+			<bayesianBridge idref="mixtureCoefficientPrior"/>
 		</bayesianBridgeGibbsOperator>
-
 
 		<scaleOperator scaleFactor="0.75" weight="1">
 			<parameter idref="alpha"/>
@@ -309,6 +287,7 @@
 				</logNormalPrior>
 				<coalescentLikelihood idref="coalescent"/>
 
+				<bayesianBridge idref="mixtureCoefficientPrior"/> <!-- DO NOT FORGET THIS -->
 
 				<strictClockBranchRates idref="branchRates"/>
 			</prior>

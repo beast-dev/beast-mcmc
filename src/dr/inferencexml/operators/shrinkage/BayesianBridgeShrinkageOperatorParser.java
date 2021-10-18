@@ -50,10 +50,7 @@ public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectPars
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newDoubleRule(WEIGHT),
-            new XORRule(
-                    new ElementRule(BayesianBridgeStatisticsProvider.class),
-                    new ElementRule(AutoCorrelatedBranchRatesDistribution.class)
-            ),
+            new ElementRule(BayesianBridgeStatisticsProvider.class),
             new ElementRule(DistributionLikelihood.class, true),
             new ElementRule(MASK, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class),

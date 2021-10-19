@@ -2,38 +2,47 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeUtils;
-import dr.evolution.util.Taxon;
-import dr.evolution.util.TaxonList;
-import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.tree.TreeStatistic;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.Statistic;
-import dr.math.matrixAlgebra.Vector;
-import dr.oldevomodel.sitemodel.SiteModel;
+import dr.inference.operators.hmc.MassPreconditioner;
 import dr.xml.Reportable;
 
-import java.util.Arrays;
-import java.util.Set;
-
 /**
- * A statistic that tracks the time of MRCA of a set of taxa
+ * A statistic that computes the maximum likelihood estimates between sequences based on a SubstitutionModel CTMC
  *
- * @author Alexei Drummond
- * @author Andrew Rambaut
- * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
+ * @author Andy Magee
+ * @author Marc A. Suchard
  */
 public class SequenceDistanceStatistic extends Statistic.Abstract implements Reportable {
 
-    public SequenceDistanceStatistic(TreeDataLikelihood treeLike, SubstitutionModel subsModel, PatternList patterns, boolean treeSeqAncestral, boolean reportDists) {
+    public enum DistanceType {
+        MAXIMIZED_DISTANCE("distance", "distanceTo"),
+        LOG_LIKELIHOOD("likelihood", "lnL");
+
+        DistanceType(String name, String label) {
+            this.name = name;
+            this.label = label;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getLabel() { return label; }
+
+        private String name;
+        private String label;
+    }
+
+    public SequenceDistanceStatistic(TreeDataLikelihood treeLike, SubstitutionModel subsModel, PatternList patterns,
+                                     boolean treeSeqAncestral, DistanceType type) {
         this.treeDataLikelihood = treeLike;
         this.substitutionModel = subsModel;
         this.patternList = patterns;
-        treeSequenceIsAncestral = treeSeqAncestral;
-        reportDistances = reportDists;
+        this.treeSequenceIsAncestral = treeSeqAncestral;
+        this.type = type;
     }
 //    public void setTree(Tree tree) {
 //        this.tree = tree;
@@ -48,15 +57,12 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     }
 
     public String getDimensionName(int i) {
-        String dimname = "";
-        if ( reportDistances ) {
-            dimname += "distanceTo(";
-        } else {
-            dimname += "lnL(";
-        }
-        dimname += patternList.getTaxon(i);
-        dimname += ")";
-        return dimname;
+        StringBuffer sb = new StringBuffer();
+        sb.append(type.getLabel());
+        sb.append("(");
+        sb.append(patternList.getTaxonId(i));
+        sb.append(")");
+        return sb.toString();
     }
 
     public String getStatisticName() {
@@ -117,6 +123,6 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     private PatternList patternList = null;
     private SubstitutionModel substitutionModel = null;
     boolean treeSequenceIsAncestral;
-    boolean reportDistances;
+    private DistanceType type;
 
 }

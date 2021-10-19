@@ -40,6 +40,10 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 
         public String getLabel() { return label; }
 
+        public double getResultForType( double[] results ) {
+            return name == "distance" ? results[0] : results[1];
+        }
+
         private String name;
         private String label;
     }
@@ -84,16 +88,6 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
      * @return the statistic
      */
     public double getStatisticValue(int dim) {
-        NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
-//
-//        int[] rootState = asrLikelihood.getStatesForNode(tree, node);
-//
-//        for (int s : rootState) {
-//            System.err.println(s);
-//        }
-//
-//        //asrLikelihood.getPatternsList().getTaxonIndex(taxa[dim]) should work when/if we have taxon list in our input
-
         return optimizeBranchLength(dim);
     }
 
@@ -138,9 +132,10 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     }
 
     private double optimizeBranchLength(int taxonIndex) {
+        NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
 
         // Eventually we may want to enable this for other node
-        int[] rootState = asrLikelihood.getStatesForNode(asrLikelihood.getTreeModel(),asrLikelihood.getTreeModel().getRoot());
+        int[] nodeState = asrLikelihood.getStatesForNode(tree,node);
 
         //asrLikelihood.getPatternsList().getTaxonIndex(taxa[dim]) should work when/if we have taxon list in our input
 
@@ -165,10 +160,18 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 
                 int from,to = -1;
                 double lnL = 0;
-                for (int i=0; i<rootState.length; i++) {
-                    from = rootState[i];
-                    to = asrLikelihood.getPatternsList().getPatternState(0,i);
-                    lnL += tpm[from][to];
+                if ( treeSequenceIsAncestral ) {
+                    for (int i=0; i<nodeState.length; i++) {
+                        from = nodeState[i];
+                        to = asrLikelihood.getPatternsList().getPatternState(0,i);
+                        lnL += tpm[from][to];
+                    }
+                } else {
+                    for (int i=0; i<nodeState.length; i++) {
+                        to = nodeState[i];
+                        from = asrLikelihood.getPatternsList().getPatternState(0,i);
+                        lnL += tpm[from][to];
+                    }
                 }
                 return -lnL;
             }
@@ -189,15 +192,10 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 
         double x = minimum.findMinimum(f);
 
-        double val;
+        double results[] = {minimum.minx,-minimum.fminx};
 
-        if ( type.getName() == "likelihood" ) {
-            val = -minimum.fminx;
-        } else {
-            val = minimum.minx;
-        }
         System.err.println("Used " + minimum.numFun + " evaluations to find minimum at " + minimum.minx + " with function value " + minimum.fminx + " and curvature " + minimum.f2minx);
-        return val;
+        return type.getResultForType(results);
     }
 
     private AncestralStateBeagleTreeLikelihood asrLikelihood = null;

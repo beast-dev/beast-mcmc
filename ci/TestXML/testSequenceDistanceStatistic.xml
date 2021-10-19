@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    <taxa id="taxa">
+        <taxon id="taxon_1">
+        </taxon>
+        <taxon id="taxon_2">
+        </taxon>
+        <taxon id="taxon_3">
+        </taxon>
+        <taxon id="taxon_4">
+        </taxon>
+        <taxon id="taxon_5">
+        </taxon>
+        <taxon id="taxon_6">
+        </taxon>
+        <taxon id="taxon_7">
+        </taxon>
+        <taxon id="taxon_8">
+        </taxon>
+        <taxon id="taxon_9">
+        </taxon>
+        <taxon id="taxon_10">
+        </taxon>
+    </taxa>
+    <alignment id="alignment" dataType="nucleotide">
+  		<sequence>
+  			<taxon idref="taxon_1"/>
+        AGAA
+  		</sequence>
+      <sequence>
+  			<taxon idref="taxon_2"/>
+        ATAA
+  		</sequence>
+      <sequence>
+  			<taxon idref="taxon_3"/>
+        CGAA
+  		</sequence>
+      <sequence>
+  			<taxon idref="taxon_4"/>
+        CTAA
+  		</sequence>
+    </alignment>
+
+  	<patterns id="patterns" from="1" strip="false">
+  		<alignment idref="alignment"/>
+  	</patterns>
+
+    <taxa id="putativeRootTaxa">
+      <taxon id="putative_root_1"/>
+      <taxon id="putative_root_2"/>
+      <taxon id="putative_root_3"/>
+      <taxon id="putative_root_4"/>
+    </taxa>
+
+    <alignment id="putativeRootSequenceAlignment" dataType="nucleotide">
+      <sequence>
+        <taxon idref="putative_root_1"/>
+        AAAA
+      </sequence>
+      <sequence>
+        <taxon idref="putative_root_2"/>
+        AAAC
+      </sequence>
+      <sequence>
+        <taxon idref="putative_root_3"/>
+        AAAG
+      </sequence>
+      <sequence>
+        <taxon idref="putative_root_4"/>
+        AAAT
+      </sequence>
+    </alignment>
+
+    <patterns id="putativeRootPatterns" from="1" strip="false">
+      <alignment idref="putativeRootSequenceAlignment"/>
+    </patterns>
+
+
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+<!--
+        (taxon_6:0.6599920953,((((taxon_8:0.08050441416,taxon_4:0.1993587138):0.06120663346,taxon_7:0.4556825075):0.1431224649,taxon_10:0.5471037512):0.8189234324,((taxon_1:0.739103453,(taxon_2:0.3068418624,taxon_5:0.7002265998):0.6723836821):0.4476448677,(taxon_9:0.16993984,taxon_3:0.2669664454):0.9823498076):0.9481884362):0.3653106997);;
+ -->
+      ((taxon_1:1.0,taxon_2:1.0):1.0,(taxon_3:1.0,taxon_4:1.0):1.0);
+    </newick>
+
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+	<strictClockBranchRates id="branchRates">
+		<rate>
+			<parameter id="clock.rate" value="1E-4" lower="0.0"/>
+		</rate>
+	</strictClockBranchRates>
+
+  	<HKYModel id="hky">
+  		<frequencies>
+  			<frequencyModel dataType="nucleotide">
+  				<frequencies>
+  					<parameter id="frequencies" value="0.1 0.3 0.2 0.4"/>
+  				</frequencies>
+  			</frequencyModel>
+  		</frequencies>
+  		<kappa>
+  			<parameter id="kappa" value="1.0" lower="0.0"/>
+  		</kappa>
+  	</HKYModel>
+
+
+  	<siteModel id="siteModel">
+  		<substitutionModel>
+  			<HKYModel idref="hky"/>
+  		</substitutionModel>
+  	</siteModel>
+
+    <treeDataLikelihood id="treeLikelihood" useAmbiguities="true" usePreOrder="true"
+    		branchInfinitesimalDerivative="true"
+    		scalingScheme="never" delayScaling="false">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <ancestralTreeLikelihood id="asrLikelihood" useAmbiguities="false" stateTagName="states">
+        <alignment idref="alignment"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </ancestralTreeLikelihood>
+
+    <sequenceDistanceStatistic id="dstat" treeSequenceIsAncestral="false">
+      <ancestralTreeLikelihood idref="asrLikelihood"/>
+      <HKYModel idref="hky"/>
+      <alignment idref="putativeRootSequenceAlignment"/>
+<!--      <patterns idref="putativeRootPatterns"/>-->
+    </sequenceDistanceStatistic>
+
+    <report>
+      <sequenceDistanceStatistic idref="dstat"/>
+    </report>
+
+</beast>

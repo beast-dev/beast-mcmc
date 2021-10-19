@@ -66,6 +66,10 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
 
         PatternList patternList = (PatternList)xo.getChild(PatternList.class);
 
+        if (patternList.areUnique()) {
+            throw new XMLParseException("Sequences being compared to tree nodes cannot be compressed (unique) patterns.");
+        }
+
         // If true, sequence at given tree node is taken to be ancestral to user-supplied sequence
         // Otherwise, user-defined sequence is taken to be ancestral to sequence at tree node
         boolean treeSequenceIsAncestral = xo.getAttribute(TREE_SEQUENCE_IS_ANCESTRAL, false);

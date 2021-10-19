@@ -68,12 +68,10 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     }
 
     public String getDimensionName(int i) {
-        StringBuffer sb = new StringBuffer();
-        sb.append(type.getLabel());
-        sb.append("(");
-        sb.append(patternList.getTaxonId(i));
-        sb.append(")");
-        return sb.toString();
+        return type.getLabel() +
+                "(" +
+                patternList.getTaxonId(i) +
+                ")";
     }
 
     public String getStatisticName() {
@@ -84,7 +82,6 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
      * @return the statistic
      */
     public double getStatisticValue(int dim) {
-        NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
 //
 //        int[] rootState = asrLikelihood.getStatesForNode(tree, node);
 //
@@ -139,8 +136,8 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 
     private double optimizeBranchLength(int taxonIndex) {
 
-        // Eventually we may want to enable this for other node
-        int[] rootState = asrLikelihood.getStatesForNode(asrLikelihood.getTreeModel(),asrLikelihood.getTreeModel().getRoot());
+        NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
+        int[] rootState = asrLikelihood.getStatesForNode(tree, node);
 
         //asrLikelihood.getPatternsList().getTaxonIndex(taxa[dim]) should work when/if we have taxon list in our input
 
@@ -166,8 +163,8 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
                 int from,to = -1;
                 double lnL = 0;
                 for (int i=0; i<rootState.length; i++) {
-                    from = rootState[i];
-                    to = asrLikelihood.getPatternsList().getPatternState(0,i);
+                    from = rootState[i]; // MAS: should be `from` given sequence, no?  These are irreversible models, so it matters.
+                    to = asrLikelihood.getPatternsList().getPatternState(taxonIndex, i); // MAS: should be `to` ASR, no?
                     lnL += tpm[from][to];
                 }
                 return -lnL;

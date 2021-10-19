@@ -152,7 +152,7 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
                     int to = getToState(taxonIndex, i, nodeState, patternList);
                     lnL += tpm[from][to];
                 }
-                
+
                 return -lnL;
             }
 
@@ -182,7 +182,7 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 
     private int getFromState(int taxonIndex, int siteIndex, int[] nodeState, PatternList patternList) {
         if (treeSequenceIsAncestral) {
-            return nodeState[i];
+            return nodeState[siteIndex];
         } else {
             return patternList.getPatternState(taxonIndex, siteIndex);
         }

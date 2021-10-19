@@ -188,7 +188,7 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 
         double val;
 
-        if ( type.getName() == "likelihood" ) {
+        if ( type.getName() == "likelihood" ) {  // MAS: should delegate via something like: val = type.getReturnValue(minimum);
             val = -minimum.fminx;
         } else {
             val = minimum.minx;

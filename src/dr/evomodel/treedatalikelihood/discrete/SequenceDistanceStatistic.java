@@ -103,8 +103,9 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 //
 //        System.err.println("treeDataLikelihood.getTreeTraits().length = " + asrLikelihood.getTreeTraits().length);
 
-        sb.append(getStatisticValue(0));
-
+        for (int i=0; i < patternList.getTaxonCount(); i++) {
+            sb.append("distance to taxon " + patternList.getTaxonId(i) + " is " + getStatisticValue(i) + "\n");
+        }
         sb.append("\n\n");
 
 //        sb.append(patternList.getPatternWeights().length);
@@ -159,13 +160,13 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
                 if ( treeSequenceIsAncestral ) {
                     for (int i=0; i<nodeState.length; i++) {
                         from = nodeState[i];
-                        to = asrLikelihood.getPatternsList().getPatternState(0,i);
+                        to = patternList.getPatternState(taxonIndex,i);
                         lnL += tpm[from][to];
                     }
                 } else {
                     for (int i=0; i<nodeState.length; i++) {
                         to = nodeState[i];
-                        from = asrLikelihood.getPatternsList().getPatternState(0,i);
+                        from = patternList.getPatternState(taxonIndex,i);
                         lnL += tpm[from][to];
                     }
                 }

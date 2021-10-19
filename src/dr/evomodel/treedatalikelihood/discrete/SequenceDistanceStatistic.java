@@ -2,22 +2,12 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeUtils;
-import dr.evolution.util.Taxon;
-import dr.evolution.util.TaxonList;
-import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.tree.TreeStatistic;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.inference.model.Statistic;
-import dr.math.matrixAlgebra.Vector;
-import dr.oldevomodel.sitemodel.SiteModel;
 import dr.xml.Reportable;
-
-import java.util.Arrays;
-import java.util.Set;
 
 /**
  * A statistic that tracks the time of MRCA of a set of taxa
@@ -28,8 +18,8 @@ import java.util.Set;
  */
 public class SequenceDistanceStatistic extends Statistic.Abstract implements Reportable {
 
-    public SequenceDistanceStatistic(TreeDataLikelihood treeLike, SubstitutionModel subsModel, PatternList patterns, boolean treeSeqAncestral, boolean reportDists) {
-        this.treeDataLikelihood = treeLike;
+    public SequenceDistanceStatistic(AncestralStateBeagleTreeLikelihood asrLike, SubstitutionModel subsModel, PatternList patterns, boolean treeSeqAncestral, boolean reportDists) {
+        this.asrLikelihood = asrLike;
         this.substitutionModel = subsModel;
         this.patternList = patterns;
         treeSequenceIsAncestral = treeSeqAncestral;
@@ -67,53 +57,68 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
      * @return the statistic
      */
     public double getStatisticValue(int dim) {
-        // Eventually we may want to enable this for other nodes
-        NodeRef node = treeDataLikelihood.getTree().getRoot();
+        // Eventually we may want to enable this for other node
+        int[] rootState = asrLikelihood.getStatesForNode(asrLikelihood.getTreeModel(),asrLikelihood.getTreeModel().getRoot());
 
-        return 42;
+        for (int s : rootState) {
+            System.err.println(s);
+        }
+
+        //asrLikelihood.getPatternsList().getTaxonIndex(taxa[dim]) should work when/if we have taxon list in our input
+
+        int nStates = substitutionModel.getFrequencyModel().getFrequencyCount();
+
+        double[] tpmFlat = new double[nStates*nStates];
+        substitutionModel.getTransitionProbabilities(1, tpmFlat);
+
+        // Make indexing easier in likelihood computation
+        // This is really ln(P) and not P
+        double[][] tpm = new double[nStates][nStates];
+        for (int i=0; i < nStates; i++) {
+            for (int j=0; j < nStates; j++) {
+                tpm[i][j] = Math.log(tpmFlat[i*nStates+j]);
+            }
+        }
+
+
+        int from,to = -1;
+        double lnL = 0;
+        for (int i=0; i<rootState.length; i++) {
+            from = rootState[i];
+            to = asrLikelihood.getPatternsList().getPatternState(0,i);
+            lnL += tpm[from][to];
+        }
+
+        return lnL;
     }
 
     @Override
     public String getReport() {
 
-        NodeRef node = treeDataLikelihood.getTree().getRoot();
-
         StringBuilder sb = new StringBuilder("sequenceDistanceStatistic Report\n\n");
 
-        TreeTrait[] traits = treeDataLikelihood.getTreeTraits();
-        for (TreeTrait trait : traits) {
-            System.err.println(trait.getTraitName().toString());
-        }
+//        TreeTrait[] traits = asrLikelihood.getTreeTraits();
+//        for (TreeTrait trait : traits) {
+//            System.err.println(trait.getTraitName().toString());
+//        }
+//
+//        System.err.println("treeDataLikelihood.getTreeTraits().length = " + asrLikelihood.getTreeTraits().length);
 
-        System.err.println("treeDataLikelihood.getTreeTraits().length = " + treeDataLikelihood.getTreeTraits().length);
-
-        sb.append("42");
-
-        sb.append("\n\n");
-
-        sb.append(patternList.getPatternWeights().length);
+        sb.append(getStatisticValue(1));
 
         sb.append("\n\n");
 
-        sb.append(treeDataLikelihood.getTreeTraits().length);
-
-        sb.append("\n\n");
-
-        sb.append(treeDataLikelihood.getDataLikelihoodDelegate().getModelCount());
-
-        sb.append("\n\n");
-
-        double[] mat = new double[substitutionModel.getFrequencyModel().getFrequencyCount()*substitutionModel.getFrequencyModel().getFrequencyCount()];
-        substitutionModel.getTransitionProbabilities(1, mat);
-        sb.append(mat);
-
-        treeDataLikelihood.getTreeTraits();
-        sb.append("\n\n");
+//        double[] mat = new double[substitutionModel.getFrequencyModel().getFrequencyCount()*substitutionModel.getFrequencyModel().getFrequencyCount()];
+//        substitutionModel.getTransitionProbabilities(1, mat);
+//        sb.append(mat);
+//
+//        asrLikelihood.getTreeTraits();
+//        sb.append("\n\n");
 
         return sb.toString();
     }
 
-    private TreeDataLikelihood treeDataLikelihood = null;
+    private AncestralStateBeagleTreeLikelihood asrLikelihood = null;
     private PatternList patternList = null;
     private SubstitutionModel substitutionModel = null;
     boolean treeSequenceIsAncestral;

@@ -32,6 +32,7 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.SequenceDistanceStatistic;
+import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.inference.model.Statistic;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.xml.*;
@@ -53,13 +54,13 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
 
 //        System.err.println("Got name = " + name);
 
-        TreeDataLikelihood treeLike = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+        AncestralStateBeagleTreeLikelihood asrLike = (AncestralStateBeagleTreeLikelihood) xo.getChild(AncestralStateBeagleTreeLikelihood.class);
 
         SubstitutionModel subsModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 
-        if ( treeLike.getModelCount() != 1 && subsModel == null ) {
-            throw new RuntimeException("There are " + treeLike.getBranchRateModel().getModelName() + " substitution models. Partitioning not implemented, if using substitution model for tree data dataset must be unpartitioned.");
-        }
+//        if ( treeLike.getModelCount() != 1 && subsModel == null ) {
+//            throw new RuntimeException("There are " + treeLike.getBranchRateModel().getModelName() + " substitution models. Partitioning not implemented, if using substitution model for tree data dataset must be unpartitioned.");
+//        }
 
         PatternList patternList = (PatternList)xo.getChild(PatternList.class);
 
@@ -70,7 +71,7 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
         // If true, distance between node and sequence are reported, if false the maximized likelihood
         boolean reportDistance = xo.getAttribute(REPORT_DISTANCE, true);
 
-        SequenceDistanceStatistic seqDistStatistic = new SequenceDistanceStatistic(treeLike,subsModel,patternList,treeSequenceIsAncestral,reportDistance);
+        SequenceDistanceStatistic seqDistStatistic = new SequenceDistanceStatistic(asrLike,subsModel,patternList,treeSequenceIsAncestral,reportDistance);
 
         return seqDistStatistic;
     }
@@ -89,7 +90,7 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
 //            new StringAttributeRule(Statistic.NAME, "A name for this statistic primarily for the purposes of logging", true),
-            new ElementRule(TreeDataLikelihood.class, false),
+            new ElementRule(AncestralStateBeagleTreeLikelihood.class, false),
             new ElementRule(SubstitutionModel.class, true),
             new ElementRule(PatternList.class, false),
             AttributeRule.newBooleanRule(TREE_SEQUENCE_IS_ANCESTRAL, true),

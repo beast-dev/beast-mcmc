@@ -23,22 +23,22 @@
         </taxon>
     </taxa>
     <alignment id="alignment" dataType="nucleotide">
-  		<sequence>
-  			<taxon idref="taxon_1"/>
-        AGAA
-  		</sequence>
-      <sequence>
-  			<taxon idref="taxon_2"/>
-        ATAA
-  		</sequence>
-      <sequence>
-  			<taxon idref="taxon_3"/>
-        CGAA
-  		</sequence>
-      <sequence>
-  			<taxon idref="taxon_4"/>
-        CTAA
-  		</sequence>
+        <sequence>
+            <taxon idref="taxon_1"/>
+            AAAAAAAAAA
+        </sequence>
+        <sequence>
+            <taxon idref="taxon_2"/>
+            AAAAAAAAAA
+        </sequence>
+        <sequence>
+            <taxon idref="taxon_3"/>
+            AAAAAAAAAA
+        </sequence>
+        <sequence>
+            <taxon idref="taxon_4"/>
+            AAAAAAAAAA
+        </sequence>
     </alignment>
 
   	<patterns id="patterns" from="1" strip="false">
@@ -55,19 +55,19 @@
     <alignment id="putativeRootSequenceAlignment" dataType="nucleotide">
       <sequence>
         <taxon idref="putative_root_1"/>
-        AAAA
+          AAAAAAAAAA
       </sequence>
       <sequence>
         <taxon idref="putative_root_2"/>
-        AAAC
+          AAAAAAAAAC
       </sequence>
       <sequence>
         <taxon idref="putative_root_3"/>
-        AAAG
+          AAAAAAAACC
       </sequence>
       <sequence>
         <taxon idref="putative_root_4"/>
-        AAAT
+          AAAAAAACCC
       </sequence>
     </alignment>
 
@@ -106,7 +106,7 @@
   		<frequencies>
   			<frequencyModel dataType="nucleotide">
   				<frequencies>
-  					<parameter id="frequencies" value="0.1 0.3 0.2 0.4"/>
+  					<parameter id="frequencies" value="0.25 0.25 0.25 0.25"/>
   				</frequencies>
   			</frequencyModel>
   		</frequencies>

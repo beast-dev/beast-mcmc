@@ -146,22 +146,13 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
                     }
                 }
 
-
-                int from,to = -1;
                 double lnL = 0;
-                if ( treeSequenceIsAncestral ) {
-                    for (int i=0; i<nodeState.length; i++) {
-                        from = nodeState[i];
-                        to = patternList.getPatternState(taxonIndex,i);
-                        lnL += tpm[from][to];
-                    }
-                } else {
-                    for (int i=0; i<nodeState.length; i++) {
-                        to = nodeState[i];
-                        from = patternList.getPatternState(taxonIndex,i);
-                        lnL += tpm[from][to];
-                    }
+                for (int i = 0; i < nodeState.length; ++i) {
+                    int from = getFromState(taxonIndex, i, nodeState, patternList);
+                    int to = getToState(taxonIndex, i, nodeState, patternList);
+                    lnL += tpm[from][to];
                 }
+                
                 return -lnL;
             }
 
@@ -188,6 +179,23 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 
         return results;
     }
+
+    private int getFromState(int taxonIndex, int siteIndex, int[] nodeState, PatternList patternList) {
+        if (treeSequenceIsAncestral) {
+            return nodeState[i];
+        } else {
+            return patternList.getPatternState(taxonIndex, siteIndex);
+        }
+    }
+
+    private int getToState(int taxonIndex, int siteIndex, int[] nodeState, PatternList patternList) {
+        if (treeSequenceIsAncestral) {
+            return patternList.getPatternState(taxonIndex, siteIndex);
+        } else {
+            return nodeState[siteIndex];
+        }
+    }
+
 
     private AncestralStateBeagleTreeLikelihood asrLikelihood = null;
     private BranchRateModel branchRates = null;

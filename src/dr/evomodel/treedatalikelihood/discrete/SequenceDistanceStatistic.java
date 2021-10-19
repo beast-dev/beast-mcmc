@@ -72,12 +72,10 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     }
 
     public String getDimensionName(int i) {
-        StringBuffer sb = new StringBuffer();
-        sb.append(type.getLabel());
-        sb.append("(");
-        sb.append(patternList.getTaxonId(i));
-        sb.append(")");
-        return sb.toString();
+        return type.getLabel() +
+                "(" +
+                patternList.getTaxonId(i) +
+                ")";
     }
 
     public String getStatisticName() {
@@ -133,8 +131,6 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 
     private double optimizeBranchLength(int taxonIndex) {
         NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
-
-        // Eventually we may want to enable this for other node
         int[] nodeState = asrLikelihood.getStatesForNode(tree,node);
 
         //asrLikelihood.getPatternsList().getTaxonIndex(taxa[dim]) should work when/if we have taxon list in our input
@@ -192,9 +188,11 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 
         double x = minimum.findMinimum(f);
 
+        // MAS: should delegate via something like: val = type.getReturnValue(minimum);
         double results[] = {minimum.minx,-minimum.fminx};
 
         System.err.println("Used " + minimum.numFun + " evaluations to find minimum at " + minimum.minx + " with function value " + minimum.fminx + " and curvature " + minimum.f2minx);
+
         return type.getResultForType(results);
     }
 

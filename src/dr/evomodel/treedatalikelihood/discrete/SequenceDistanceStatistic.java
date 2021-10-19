@@ -3,6 +3,7 @@ package dr.evomodel.treedatalikelihood.discrete;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
@@ -76,6 +77,15 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
      * @return the statistic
      */
     public double getStatisticValue(int dim) {
+//        NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
+//
+//        int[] rootState = asrLikelihood.getStatesForNode(tree, node);
+//
+//        for (int s : rootState) {
+//            System.err.println(s);
+//        }
+//
+//        //asrLikelihood.getPatternsList().getTaxonIndex(taxa[dim]) should work when/if we have taxon list in our input
 
         return optimizeBranchLength(dim);
     }

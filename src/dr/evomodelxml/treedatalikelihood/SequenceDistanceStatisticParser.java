@@ -30,6 +30,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.SequenceDistanceStatistic;
@@ -57,6 +58,10 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
 //        System.err.println("Got name = " + name);
 
         AncestralStateBeagleTreeLikelihood asrLike = (AncestralStateBeagleTreeLikelihood) xo.getChild(AncestralStateBeagleTreeLikelihood.class);
+
+        if ( asrLike.getBranchModel() instanceof StrictClockBranchRates) {
+            throw new XMLParseException("Clock models other than StrictClockBranchRates not currently supported.");
+        }
 
         SubstitutionModel subsModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 

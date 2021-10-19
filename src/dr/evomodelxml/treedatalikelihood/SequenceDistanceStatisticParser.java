@@ -1,7 +1,7 @@
 /*
  * SequenceDistanceStatisticParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2021 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -58,8 +58,8 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
 
         SubstitutionModel subsModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 
-//        if ( treeLike.getModelCount() != 1 && subsModel == null ) {
-//            throw new RuntimeException("There are " + treeLike.getBranchRateModel().getModelName() + " substitution models. Partitioning not implemented, if using substitution model for tree data dataset must be unpartitioned.");
+//        if ( asrLike.getModelCount() != 1 && subsModel == null ) {
+//            throw new RuntimeException("There are " + asrLike.getBranchRateModel().getModelName() + " substitution models. Partitioning not implemented, if using substitution model for tree data dataset must be unpartitioned.");
 //        }
 
         PatternList patternList = (PatternList)xo.getChild(PatternList.class);
@@ -69,11 +69,23 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
         boolean treeSequenceIsAncestral = xo.getAttribute(TREE_SEQUENCE_IS_ANCESTRAL, false);
 
         // If true, distance between node and sequence are reported, if false the maximized likelihood
-        boolean reportDistance = xo.getAttribute(REPORT_DISTANCE, true);
+//        boolean reportDistance = xo.getAttribute(REPORT_DISTANCE, true);
+        SequenceDistanceStatistic.DistanceType type = parseFromString(xo.getAttribute(REPORT_DISTANCE,
+                SequenceDistanceStatistic.DistanceType.MAXIMIZED_DISTANCE.getName()));
 
-        SequenceDistanceStatistic seqDistStatistic = new SequenceDistanceStatistic(asrLike,subsModel,patternList,treeSequenceIsAncestral,reportDistance);
+        SequenceDistanceStatistic seqDistStatistic = new SequenceDistanceStatistic(asrLike,subsModel,
+                patternList,treeSequenceIsAncestral,type);
 
         return seqDistStatistic;
+    }
+
+    public  SequenceDistanceStatistic.DistanceType parseFromString(String text) throws XMLParseException {
+        for (SequenceDistanceStatistic.DistanceType type : SequenceDistanceStatistic.DistanceType.values()) {
+            if (type.getName().toLowerCase().compareToIgnoreCase(text) == 0) {
+                return type;
+            }
+        }
+        throw new XMLParseException("Unknown type '" + text + "'");
     }
 
     //************************************************************************

@@ -7,23 +7,43 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.inference.model.Statistic;
+import dr.inference.operators.hmc.MassPreconditioner;
 import dr.xml.Reportable;
 
 /**
- * A statistic that tracks the time of MRCA of a set of taxa
+ * A statistic that computes the maximum likelihood estimates between sequences based on a SubstitutionModel CTMC
  *
- * @author Alexei Drummond
- * @author Andrew Rambaut
- * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
+ * @author Andy Magee
+ * @author Marc A. Suchard
  */
 public class SequenceDistanceStatistic extends Statistic.Abstract implements Reportable {
 
-    public SequenceDistanceStatistic(AncestralStateBeagleTreeLikelihood asrLike, SubstitutionModel subsModel, PatternList patterns, boolean treeSeqAncestral, boolean reportDists) {
+    public enum DistanceType {
+        MAXIMIZED_DISTANCE("distance", "distanceTo"),
+        LOG_LIKELIHOOD("likelihood", "lnL");
+
+        DistanceType(String name, String label) {
+            this.name = name;
+            this.label = label;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getLabel() { return label; }
+
+        private String name;
+        private String label;
+    }
+
+    public SequenceDistanceStatistic(AncestralStateBeagleTreeLikelihood asrLike, SubstitutionModel subsModel, PatternList patterns,
+                                     boolean treeSeqAncestral, DistanceType type) {
         this.asrLikelihood = asrLike;
         this.substitutionModel = subsModel;
         this.patternList = patterns;
-        treeSequenceIsAncestral = treeSeqAncestral;
-        reportDistances = reportDists;
+        this.treeSequenceIsAncestral = treeSeqAncestral;
+        this.type = type;
     }
 //    public void setTree(Tree tree) {
 //        this.tree = tree;
@@ -38,15 +58,12 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     }
 
     public String getDimensionName(int i) {
-        String dimname = "";
-        if ( reportDistances ) {
-            dimname += "distanceTo(";
-        } else {
-            dimname += "lnL(";
-        }
-        dimname += patternList.getTaxon(i);
-        dimname += ")";
-        return dimname;
+        StringBuffer sb = new StringBuffer();
+        sb.append(type.getLabel());
+        sb.append("(");
+        sb.append(patternList.getTaxonId(i));
+        sb.append(")");
+        return sb.toString();
     }
 
     public String getStatisticName() {
@@ -59,7 +76,7 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     public double getStatisticValue(int dim) {
         // Eventually we may want to enable this for other node
         int[] rootState = asrLikelihood.getStatesForNode(asrLikelihood.getTreeModel(),asrLikelihood.getTreeModel().getRoot());
-
+        // Eventually we may want to enable this for other nodes
         for (int s : rootState) {
             System.err.println(s);
         }
@@ -95,8 +112,10 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     @Override
     public String getReport() {
 
+//        NodeRef node = asrLikelihood.getTree().getRoot();
+//
         StringBuilder sb = new StringBuilder("sequenceDistanceStatistic Report\n\n");
-
+//
 //        TreeTrait[] traits = asrLikelihood.getTreeTraits();
 //        for (TreeTrait trait : traits) {
 //            System.err.println(trait.getTraitName().toString());
@@ -104,10 +123,22 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 //
 //        System.err.println("treeDataLikelihood.getTreeTraits().length = " + asrLikelihood.getTreeTraits().length);
 
-        sb.append(getStatisticValue(1));
+        sb.append(getStatisticValue(0));
 
         sb.append("\n\n");
 
+//        sb.append(patternList.getPatternWeights().length);
+//
+//        sb.append("\n\n");
+//
+//        sb.append(asrLikelihood.getTreeTraits().length);
+//
+//        sb.append("\n\n");
+//
+//        sb.append(asrLikelihood.getDataLikelihoodDelegate().getModelCount());
+//
+//        sb.append("\n\n");
+//
 //        double[] mat = new double[substitutionModel.getFrequencyModel().getFrequencyCount()*substitutionModel.getFrequencyModel().getFrequencyCount()];
 //        substitutionModel.getTransitionProbabilities(1, mat);
 //        sb.append(mat);
@@ -122,6 +153,6 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     private PatternList patternList = null;
     private SubstitutionModel substitutionModel = null;
     boolean treeSequenceIsAncestral;
-    boolean reportDistances;
+    private DistanceType type;
 
 }

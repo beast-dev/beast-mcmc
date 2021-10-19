@@ -46,7 +46,6 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
 
     public static String REPORT_DISTANCE = "reportDistance";
     public static String SEQUENCE_DISTANCE_STATISTIC = "sequenceDistanceStatistic";
-    public static final String COMPUTE_DISTANCES_FOR = "computeDistancesFor";
     private static final String MRCA = "mrca";
     public static final String TAXA = "taxa";
     public static final String TREE_SEQUENCE_IS_ANCESTRAL = "treeSequenceIsAncestral";
@@ -84,15 +83,10 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
             mrcaTaxa = (TaxonList) xo.getElementFirstChild(MRCA);
         }
 
-        TaxonList distTaxa = null;
-        if (xo.hasChildNamed(COMPUTE_DISTANCES_FOR)) {
-            distTaxa = (TaxonList) xo.getElementFirstChild(COMPUTE_DISTANCES_FOR);
-        }
-
         SequenceDistanceStatistic seqDistStatistic = null;
         try {
             seqDistStatistic = new SequenceDistanceStatistic(asrLike,subsModel,branchRates,
-                    patternList,treeSequenceIsAncestral, distTaxa, mrcaTaxa, type);
+                    patternList,treeSequenceIsAncestral, mrcaTaxa, type);
         } catch (TreeUtils.MissingTaxonException e) {
             throw new XMLParseException("Unable to find taxon-set");
         }
@@ -130,8 +124,6 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(REPORT_DISTANCE, true),
             new ElementRule(MRCA,
                     new XMLSyntaxRule[]{new ElementRule(Taxa.class)}, true),
-            new ElementRule(COMPUTE_DISTANCES_FOR,
-                    new XMLSyntaxRule[]{new ElementRule(Taxa.class)}, false),
     };
 
 }

@@ -56,7 +56,6 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
                                      BranchRateModel branchRates,
                                      PatternList patterns,
                                      boolean treeSeqAncestral,
-                                     TaxonList distTaxa,
                                      TaxonList mrcaTaxa,
                                      DistanceType type) throws TreeUtils.MissingTaxonException {
         this.asrLikelihood = asrLike;
@@ -66,7 +65,6 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         this.treeSequenceIsAncestral = treeSeqAncestral;
         this.type = type;
         this.tree = asrLikelihood.getTreeModel();
-        this.distanceTaxa = mrcaTaxa;
         this.leafSet = (mrcaTaxa != null) ? TreeUtils.getLeavesForTaxa(tree, mrcaTaxa) : null;
     }
 //    public void setTree(Tree tree) {
@@ -121,12 +119,9 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
         int[] nodeState = asrLikelihood.getStatesForNode(tree,node);
 
-        //asrLikelihood.getPatternsList().getTaxonIndex(taxa[dim]) should work when/if we have taxon list in our input
-
         int nStates = substitutionModel.getFrequencyModel().getFrequencyCount();
 
         // could consider getting from asrLikelihood, probably, at the cost of an additional taxon list but removing need for patterns argument
-        // TODO: scale by (assumed fixed) branch rate (second-order todo: what branch rate to use if not fixed? throw error in mean time)
         UnivariateFunction f = new UnivariateFunction() {
             @Override
             public double evaluate(double argument) {
@@ -191,7 +186,6 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     private PatternList patternList = null;
     private SubstitutionModel substitutionModel = null;
     boolean treeSequenceIsAncestral;
-    private final TaxonList distanceTaxa;
     private final Set<String> leafSet;
     private final Tree tree;
     private final DistanceType type;

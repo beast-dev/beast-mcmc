@@ -30,6 +30,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -65,15 +66,13 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
 
         SubstitutionModel subsModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 
-//        if ( asrLike.getModelCount() != 1 && subsModel == null ) {
-//            throw new RuntimeException("There are " + asrLike.getBranchRateModel().getModelName() + " substitution models. Partitioning not implemented, if using substitution model for tree data dataset must be unpartitioned.");
-//        }
-
         PatternList patternList = (PatternList)xo.getChild(PatternList.class);
 
         if (patternList.areUnique()) {
             throw new XMLParseException("Sequences being compared to tree nodes cannot be compressed (unique) patterns.");
         }
+
+        BranchRateModel branchRates = (BranchRateModel)xo.getChild(BranchRateModel.class);
 
         // If true, sequence at given tree node is taken to be ancestral to user-supplied sequence
         // Otherwise, user-defined sequence is taken to be ancestral to sequence at tree node
@@ -91,7 +90,7 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
 
         SequenceDistanceStatistic seqDistStatistic = null;
         try {
-            seqDistStatistic = new SequenceDistanceStatistic(asrLike,subsModel,
+            seqDistStatistic = new SequenceDistanceStatistic(asrLike,subsModel,branchRates,
                     patternList,treeSequenceIsAncestral, taxa, type);
         } catch (TreeUtils.MissingTaxonException e) {
             throw new XMLParseException("Unable to find taxon-set");
@@ -126,6 +125,7 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
             new ElementRule(AncestralStateBeagleTreeLikelihood.class, false),
             new ElementRule(SubstitutionModel.class, true),
             new ElementRule(PatternList.class, false),
+            new ElementRule(BranchRateModel.class, false),
             AttributeRule.newBooleanRule(TREE_SEQUENCE_IS_ANCESTRAL, true),
             AttributeRule.newBooleanRule(REPORT_DISTANCE, true),
             new ElementRule(MRCA,

@@ -138,15 +138,26 @@
         <strictClockBranchRates idref="branchRates"/>
     </ancestralTreeLikelihood>
 
-    <sequenceDistanceStatistic id="dstat" treeSequenceIsAncestral="false">
+    <sequenceDistanceStatistic id="distanceTaxonToRoot" treeSequenceIsAncestral="false">
       <ancestralTreeLikelihood idref="asrLikelihood"/>
       <HKYModel idref="hky"/>
       <alignment idref="putativeRootSequenceAlignment"/>
-<!--      <patterns idref="putativeRootPatterns"/>-->
+      <strictClockBranchRates idref="branchRates"/>
+    </sequenceDistanceStatistic>
+
+    <sequenceDistanceStatistic id="distanceRootToTaxon" treeSequenceIsAncestral="true">
+        <ancestralTreeLikelihood idref="asrLikelihood"/>
+        <HKYModel idref="hky"/>
+        <alignment idref="putativeRootSequenceAlignment"/>
+        <strictClockBranchRates idref="branchRates"/>
     </sequenceDistanceStatistic>
 
     <report>
-      <sequenceDistanceStatistic idref="dstat"/>
+      <sequenceDistanceStatistic idref="distanceTaxonToRoot"/>
+    </report>
+
+    <report>
+        <sequenceDistanceStatistic idref="distanceRootToTaxon"/>
     </report>
 
 </beast>

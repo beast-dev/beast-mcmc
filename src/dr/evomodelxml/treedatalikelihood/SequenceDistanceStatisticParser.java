@@ -46,25 +46,24 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
 
     public static String REPORT_DISTANCE = "reportDistance";
     public static String SEQUENCE_DISTANCE_STATISTIC = "sequenceDistanceStatistic";
-    public static final String TAXA = "taxa";
+    public static final String COMPUTE_DISTANCES_FOR = "computeDistancesFor";
     private static final String MRCA = "mrca";
+    public static final String TAXA = "taxa";
     public static final String TREE_SEQUENCE_IS_ANCESTRAL = "treeSequenceIsAncestral";
 
     public String getParserName() { return SEQUENCE_DISTANCE_STATISTIC; }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-//        String name = xo.getAttribute(Statistic.NAME, xo.getId());
-
-//        System.err.println("Got name = " + name);
-
         AncestralStateBeagleTreeLikelihood asrLike = (AncestralStateBeagleTreeLikelihood) xo.getChild(AncestralStateBeagleTreeLikelihood.class);
 
-        if ( asrLike.getBranchModel() instanceof StrictClockBranchRates) {
+        SubstitutionModel subsModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
+
+        BranchRateModel branchRates = (BranchRateModel)xo.getChild(BranchRateModel.class);
+
+        if ( !(branchRates instanceof  StrictClockBranchRates)) {
             throw new XMLParseException("Clock models other than StrictClockBranchRates not currently supported.");
         }
-
-        SubstitutionModel subsModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 
         PatternList patternList = (PatternList)xo.getChild(PatternList.class);
 
@@ -72,26 +71,28 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Sequences being compared to tree nodes cannot be compressed (unique) patterns.");
         }
 
-        BranchRateModel branchRates = (BranchRateModel)xo.getChild(BranchRateModel.class);
-
         // If true, sequence at given tree node is taken to be ancestral to user-supplied sequence
         // Otherwise, user-defined sequence is taken to be ancestral to sequence at tree node
         boolean treeSequenceIsAncestral = xo.getAttribute(TREE_SEQUENCE_IS_ANCESTRAL, false);
 
         // If true, distance between node and sequence are reported, if false the maximized likelihood
-//        boolean reportDistance = xo.getAttribute(REPORT_DISTANCE, true);
         SequenceDistanceStatistic.DistanceType type = parseFromString(xo.getAttribute(REPORT_DISTANCE,
                 SequenceDistanceStatistic.DistanceType.MAXIMIZED_DISTANCE.getName()));
 
-        TaxonList taxa = null;
+        TaxonList mrcaTaxa = null;
         if (xo.hasChildNamed(MRCA)) {
-            taxa = (TaxonList) xo.getElementFirstChild(MRCA);
+            mrcaTaxa = (TaxonList) xo.getElementFirstChild(MRCA);
+        }
+
+        TaxonList distTaxa = null;
+        if (xo.hasChildNamed(COMPUTE_DISTANCES_FOR)) {
+            distTaxa = (TaxonList) xo.getElementFirstChild(COMPUTE_DISTANCES_FOR);
         }
 
         SequenceDistanceStatistic seqDistStatistic = null;
         try {
             seqDistStatistic = new SequenceDistanceStatistic(asrLike,subsModel,branchRates,
-                    patternList,treeSequenceIsAncestral, taxa, type);
+                    patternList,treeSequenceIsAncestral, distTaxa, mrcaTaxa, type);
         } catch (TreeUtils.MissingTaxonException e) {
             throw new XMLParseException("Unable to find taxon-set");
         }
@@ -121,15 +122,16 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-//            new StringAttributeRule(Statistic.NAME, "A name for this statistic primarily for the purposes of logging", true),
             new ElementRule(AncestralStateBeagleTreeLikelihood.class, false),
             new ElementRule(SubstitutionModel.class, true),
-            new ElementRule(PatternList.class, false),
+            new ElementRule(PatternList.class, true),
             new ElementRule(BranchRateModel.class, false),
             AttributeRule.newBooleanRule(TREE_SEQUENCE_IS_ANCESTRAL, true),
             AttributeRule.newBooleanRule(REPORT_DISTANCE, true),
             new ElementRule(MRCA,
                     new XMLSyntaxRule[]{new ElementRule(Taxa.class)}, true),
+            new ElementRule(COMPUTE_DISTANCES_FOR,
+                    new XMLSyntaxRule[]{new ElementRule(Taxa.class)}, false),
     };
 
 }

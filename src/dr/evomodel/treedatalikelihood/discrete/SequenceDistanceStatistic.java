@@ -29,8 +29,18 @@ import java.util.Set;
 public class SequenceDistanceStatistic extends Statistic.Abstract implements Reportable {
 
     public enum DistanceType {
-        MAXIMIZED_DISTANCE("distance", "distanceTo"),
-        LOG_LIKELIHOOD("likelihood", "lnL");
+        MAXIMIZED_DISTANCE("distance", "distanceTo") {
+            
+            public double extractResultForType(double[] results) {
+                return results[0];
+            }
+        },
+        LOG_LIKELIHOOD("likelihood", "lnL") {
+
+            public double extractResultForType(double[] results) {
+                return results[1];
+            }
+        };
 
         DistanceType(String name, String label) {
             this.name = name;
@@ -43,9 +53,7 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 
         public String getLabel() { return label; }
 
-        public double extractResultForType( double[] results ) {
-            return name == "distance" ? results[0] : results[1];
-        }
+        public abstract double extractResultForType(double[] results);
 
         private String name;
         private String label;

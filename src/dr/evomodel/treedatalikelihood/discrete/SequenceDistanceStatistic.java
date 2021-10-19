@@ -2,13 +2,18 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.inference.model.Statistic;
 import dr.inference.operators.hmc.MassPreconditioner;
 import dr.xml.Reportable;
+
+import java.util.Set;
 
 /**
  * A statistic that computes the maximum likelihood estimates between sequences based on a SubstitutionModel CTMC
@@ -38,13 +43,18 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     }
 
     public SequenceDistanceStatistic(AncestralStateBeagleTreeLikelihood asrLike, SubstitutionModel subsModel, PatternList patterns,
-                                     boolean treeSeqAncestral, DistanceType type) {
+                                     boolean treeSeqAncestral,
+                                     TaxonList mrcaTaxa, DistanceType type) throws TreeUtils.MissingTaxonException {
         this.asrLikelihood = asrLike;
         this.substitutionModel = subsModel;
         this.patternList = patterns;
         this.treeSequenceIsAncestral = treeSeqAncestral;
         this.type = type;
+        this.tree = asrLikelihood.getTreeModel();
+        this.leafSet = (mrcaTaxa != null) ?
+                TreeUtils.getLeavesForTaxa(tree, mrcaTaxa) : null;
     }
+
 //    public void setTree(Tree tree) {
 //        this.tree = tree;
 //    }
@@ -74,9 +84,11 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
      * @return the statistic
      */
     public double getStatisticValue(int dim) {
-        // Eventually we may want to enable this for other node
-        int[] rootState = asrLikelihood.getStatesForNode(asrLikelihood.getTreeModel(),asrLikelihood.getTreeModel().getRoot());
-        // Eventually we may want to enable this for other nodes
+
+        NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
+
+        int[] rootState = asrLikelihood.getStatesForNode(tree, node);
+        
         for (int s : rootState) {
             System.err.println(s);
         }
@@ -153,6 +165,8 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     private PatternList patternList = null;
     private SubstitutionModel substitutionModel = null;
     boolean treeSequenceIsAncestral;
-    private DistanceType type;
+    private final DistanceType type;
+    private final Set<String> leafSet;
+    private final Tree tree;
 
 }

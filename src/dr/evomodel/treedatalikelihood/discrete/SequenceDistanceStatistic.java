@@ -8,6 +8,8 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.inference.model.Statistic;
 import dr.inference.operators.hmc.MassPreconditioner;
+import dr.math.UnivariateFunction;
+import dr.math.UnivariateMinimum;
 import dr.xml.Reportable;
 
 /**
@@ -74,39 +76,8 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
      * @return the statistic
      */
     public double getStatisticValue(int dim) {
-        // Eventually we may want to enable this for other node
-        int[] rootState = asrLikelihood.getStatesForNode(asrLikelihood.getTreeModel(),asrLikelihood.getTreeModel().getRoot());
-        // Eventually we may want to enable this for other nodes
-        for (int s : rootState) {
-            System.err.println(s);
-        }
 
-        //asrLikelihood.getPatternsList().getTaxonIndex(taxa[dim]) should work when/if we have taxon list in our input
-
-        int nStates = substitutionModel.getFrequencyModel().getFrequencyCount();
-
-        double[] tpmFlat = new double[nStates*nStates];
-        substitutionModel.getTransitionProbabilities(1, tpmFlat);
-
-        // Make indexing easier in likelihood computation
-        // This is really ln(P) and not P
-        double[][] tpm = new double[nStates][nStates];
-        for (int i=0; i < nStates; i++) {
-            for (int j=0; j < nStates; j++) {
-                tpm[i][j] = Math.log(tpmFlat[i*nStates+j]);
-            }
-        }
-
-
-        int from,to = -1;
-        double lnL = 0;
-        for (int i=0; i<rootState.length; i++) {
-            from = rootState[i];
-            to = asrLikelihood.getPatternsList().getPatternState(0,i);
-            lnL += tpm[from][to];
-        }
-
-        return lnL;
+        return optimizeBranchLength(dim);
     }
 
     @Override
@@ -147,6 +118,69 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 //        sb.append("\n\n");
 
         return sb.toString();
+    }
+
+    private double optimizeBranchLength(int taxonIndex) {
+
+        // Eventually we may want to enable this for other node
+        int[] rootState = asrLikelihood.getStatesForNode(asrLikelihood.getTreeModel(),asrLikelihood.getTreeModel().getRoot());
+
+        //asrLikelihood.getPatternsList().getTaxonIndex(taxa[dim]) should work when/if we have taxon list in our input
+
+        int nStates = substitutionModel.getFrequencyModel().getFrequencyCount();
+
+        UnivariateFunction f = new UnivariateFunction() {
+            @Override
+            public double evaluate(double argument) {
+
+                double[] tpmFlat = new double[nStates*nStates];
+                substitutionModel.getTransitionProbabilities(argument, tpmFlat);
+
+                // Make indexing easier in likelihood computation
+                // This is really ln(P) and not P
+                double[][] tpm = new double[nStates][nStates];
+                for (int i=0; i < nStates; i++) {
+                    for (int j=0; j < nStates; j++) {
+                        tpm[i][j] = Math.log(tpmFlat[i*nStates+j]);
+                    }
+                }
+
+
+                int from,to = -1;
+                double lnL = 0;
+                for (int i=0; i<rootState.length; i++) {
+                    from = rootState[i];
+                    to = asrLikelihood.getPatternsList().getPatternState(0,i);
+                    lnL += tpm[from][to];
+                }
+                return -lnL;
+            }
+
+            @Override
+            public double getLowerBound() {
+                return 0;
+            }
+
+            @Override
+            public double getUpperBound() {
+                // TODO: should use some constant times the tree length in substitutions
+                return 10.0;
+            }
+        };
+
+        UnivariateMinimum minimum = new UnivariateMinimum();
+
+        double x = minimum.findMinimum(f);
+
+        double val;
+
+        if ( type.getName() == "likelihood" ) {
+            val = -minimum.fminx;
+        } else {
+            val = minimum.minx;
+        }
+        System.err.println("Used " + minimum.numFun + " evaluations to find minimum at " + minimum.minx + " with function value " + minimum.fminx + " and curvature " + minimum.f2minx);
+        return val;
     }
 
     private AncestralStateBeagleTreeLikelihood asrLikelihood = null;

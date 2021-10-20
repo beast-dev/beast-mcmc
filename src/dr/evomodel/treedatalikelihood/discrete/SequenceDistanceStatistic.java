@@ -126,7 +126,7 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         return sb.toString();
     }
 
-    private double computeLogLikelihood(double distance, NodeRef node, int taxonIndex, int[] nodeState) {
+    private double computeLogLikelihood(double distance, int[] nodeState, int[] taxonState) {
         // could consider getting from asrLikelihood, probably, at the cost of an additional taxon list but removing need for patterns argument
         int nStates = dataType.getStateCount();
 
@@ -142,8 +142,8 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         double lnL = 0.0;
         double sum;
         for (int s=0; s<nodeState.length; s++) {
-            from = dataType.getStates(getFromState(taxonIndex,s,nodeState,patternList));
-            to = dataType.getStates(getToState(taxonIndex,s,nodeState,patternList));
+            from = dataType.getStates(getFromState(s,nodeState,taxonState));
+            to = dataType.getStates(getToState(s,nodeState,taxonState));
             sum = 0.0;
             if ( from.length == 1 && to.length == 1) {
                 lnL += logTpm[from[0]][to[0]];
@@ -180,11 +180,15 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
 
         int[] nodeState = asrLikelihood.getStatesForNode(tree,node);
+        int[] taxonState = new int[nodeState.length];
+        for (int i=0; i<nodeState.length; i++) {
+            taxonState[i] = patternList.getPatternState(taxonIndex,i);
+        }
 
         UnivariateFunction f = new UnivariateFunction() {
             @Override
             public double evaluate(double argument) {
-                double lnL = computeLogLikelihood(argument, node, taxonIndex, nodeState);
+                double lnL = computeLogLikelihood(argument, nodeState, taxonState);
 
                 return -lnL;
             }
@@ -213,17 +217,17 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         return results;
     }
 
-    private int getFromState(int taxonIndex, int siteIndex, int[] nodeState, PatternList patternList) {
+    private int getFromState(int siteIndex, int[] nodeState, int[] taxonState) {
         if (treeSequenceIsAncestral) {
             return nodeState[siteIndex];
         } else {
-            return patternList.getPatternState(taxonIndex, siteIndex);
+            return taxonState[siteIndex];
         }
     }
 
-    private int getToState(int taxonIndex, int siteIndex, int[] nodeState, PatternList patternList) {
+    private int getToState(int siteIndex, int[] nodeState, int[] taxonState) {
         if (treeSequenceIsAncestral) {
-            return patternList.getPatternState(taxonIndex, siteIndex);
+            return taxonState[siteIndex];
         } else {
             return nodeState[siteIndex];
         }

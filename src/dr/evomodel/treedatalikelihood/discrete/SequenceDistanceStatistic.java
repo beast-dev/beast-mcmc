@@ -132,6 +132,12 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         int nStates = dataType.getStateCount();
 
         double[][] tpm = getTPM(distance);
+        double[][] logTpm = tpm;
+        for (int i=0; i<nStates; i++) {
+            for (int j=0; j<nStates; j++) {
+                logTpm[i][j] = Math.log(tpm[i][j]);
+            }
+        }
 
         int[] from,to;
         double lnL = 0.0;
@@ -140,12 +146,16 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
             from = dataType.getStates(getFromState(taxonIndex,s,nodeState,patternList));
             to = dataType.getStates(getToState(taxonIndex,s,nodeState,patternList));
             sum = 0.0;
-            for (int i : from) {
-                for (int j : to) {
-                    sum += tpm[i][j];
+            if ( from.length == 1 && to.length == 1) {
+                lnL += logTpm[from[0]][to[0]];
+            } else {
+                for (int i : from) {
+                    for (int j : to) {
+                        sum += tpm[i][j];
+                    }
                 }
+                lnL += Math.log(sum);
             }
-            lnL += Math.log(sum);
         }
         return lnL;
     }

@@ -1,6 +1,8 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
@@ -70,6 +72,7 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         this.substitutionModel = subsModel;
         this.branchRates = branchRates;
         this.patternList = patterns;
+        this.dataType = patternList.getDataType();
         this.treeSequenceIsAncestral = treeSeqAncestral;
         this.type = type;
         this.tree = asrLikelihood.getTreeModel();
@@ -123,45 +126,83 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         return sb.toString();
     }
 
+    private double computeLogLikelihood(double distance, NodeRef node, int taxonIndex) {
+        // could consider getting from asrLikelihood, probably, at the cost of an additional taxon list but removing need for patterns argument
+        int[] nodeState = asrLikelihood.getStatesForNode(tree,node);
+        int nStates = dataType.getStateCount();
+
+        double[][] tpm = getTPM(distance);
+        double[][] logTpm = tpm;
+        for (int i=0; i<nStates; i++) {
+            for (int j=0; j<nStates; j++) {
+                logTpm[i][j] = Math.log(tpm[i][j]);
+            }
+        }
+
+        int[] from,to;
+        double lnL = 0.0;
+        double sum;
+        if ( treeSequenceIsAncestral ) {
+            for (int s=0; s<nodeState.length; s++) {
+                from = dataType.getStates(nodeState[s]);
+                to = dataType.getStates(patternList.getPatternState(taxonIndex,s));
+                if ( from.length == 1 && to.length == 1 ) {
+                    lnL += logTpm[from[0]][to[0]];
+                } else {
+                    sum = 0.0;
+                    for (int i : from) {
+                        for (int j : to) {
+                            sum += tpm[i][j];
+                        }
+                    }
+                    lnL += Math.log(sum);
+                }
+            }
+        } else {
+            for (int s=0; s<nodeState.length; s++) {
+                to = dataType.getStates(nodeState[s]);
+                from = dataType.getStates(patternList.getPatternState(taxonIndex,s));
+                if ( from.length == 1 && to.length == 1 ) {
+                    lnL += logTpm[from[0]][to[0]];
+                } else {
+                    sum = 0.0;
+                    for (int i : from) {
+                        for (int j : to) {
+                            sum += tpm[i][j];
+                        }
+                    }
+                    lnL += Math.log(sum);
+                }
+            }
+        }
+        return lnL;
+    }
+
+    private double[][] getTPM(double distance) {
+        int nStates = dataType.getStateCount();
+        double[] tpmFlat = new double[nStates*nStates];
+        substitutionModel.getTransitionProbabilities(distance, tpmFlat);
+
+        // Make indexing easier in likelihood computation
+        // This is really ln(P) and not P
+        double[][] tpm = new double[nStates][nStates];
+        for (int i=0; i < nStates; i++) {
+            for (int j=0; j < nStates; j++) {
+                tpm[i][j] = tpmFlat[i*nStates+j];
+            }
+        }
+
+        return tpm;
+    }
+
     private double[] optimizeBranchLength(int taxonIndex) {
         NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
-        int[] nodeState = asrLikelihood.getStatesForNode(tree,node);
 
-        int nStates = substitutionModel.getFrequencyModel().getFrequencyCount();
-
-        // could consider getting from asrLikelihood, probably, at the cost of an additional taxon list but removing need for patterns argument
         UnivariateFunction f = new UnivariateFunction() {
             @Override
             public double evaluate(double argument) {
+                double lnL = computeLogLikelihood(argument, node, taxonIndex);
 
-                double[] tpmFlat = new double[nStates*nStates];
-                substitutionModel.getTransitionProbabilities(argument, tpmFlat);
-
-                // Make indexing easier in likelihood computation
-                // This is really ln(P) and not P
-                double[][] tpm = new double[nStates][nStates];
-                for (int i=0; i < nStates; i++) {
-                    for (int j=0; j < nStates; j++) {
-                        tpm[i][j] = Math.log(tpmFlat[i*nStates+j]);
-                    }
-                }
-
-
-                int from,to = -1;
-                double lnL = 0;
-                if ( treeSequenceIsAncestral ) {
-                    for (int i=0; i<nodeState.length; i++) {
-                        from = nodeState[i];
-                        to = patternList.getPatternState(taxonIndex,i);
-                        lnL += tpm[from][to];
-                    }
-                } else {
-                    for (int i=0; i<nodeState.length; i++) {
-                        to = nodeState[i];
-                        from = patternList.getPatternState(taxonIndex,i);
-                        lnL += tpm[from][to];
-                    }
-                }
                 return -lnL;
             }
 
@@ -197,4 +238,5 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     private final Set<String> leafSet;
     private final Tree tree;
     private final DistanceType type;
+    private final DataType dataType;
 }

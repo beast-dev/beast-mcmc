@@ -26,6 +26,7 @@
 package dr.evomodelxml.treedatalikelihood;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
@@ -53,7 +54,6 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
     public String getParserName() { return SEQUENCE_DISTANCE_STATISTIC; }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
         AncestralStateBeagleTreeLikelihood asrLike = (AncestralStateBeagleTreeLikelihood) xo.getChild(AncestralStateBeagleTreeLikelihood.class);
 
         SubstitutionModel subsModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
@@ -66,7 +66,7 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
 
         PatternList patternList = (PatternList)xo.getChild(PatternList.class);
 
-        if (patternList.areUnique()) {
+        if ( patternList.areUnique() ) {
             throw new XMLParseException("Sequences being compared to tree nodes cannot be compressed (unique) patterns.");
         }
 

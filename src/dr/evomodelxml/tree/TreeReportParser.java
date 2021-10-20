@@ -79,37 +79,8 @@ public class TreeReportParser extends LoggerParser {
         List<TreeTraitProvider> ttps2 = new ArrayList<>();
 
         for (int i = 0; i < xo.getChildCount(); i++) {
-            Object cxo = xo.getChild(i);
 
-            // This needs to be refactored into using a TreeTrait if Colouring is resurrected...
-//            if (cxo instanceof TreeColouringProvider) {
-//                final TreeColouringProvider colouringProvider = (TreeColouringProvider) cxo;
-//                baps.add(new BranchAttributeProvider() {
-//
-//                    public String getBranchAttributeLabel() {
-//                        return "deme";
-//                    }
-//
-//                    public String getAttributeForBranch(Tree tree, NodeRef node) {
-//                        TreeColouring colouring = colouringProvider.getTreeColouring(tree);
-//                        BranchColouring bcol = colouring.getBranchColouring(node);
-//                        StringBuilder buffer = new StringBuilder();
-//                        if (bcol != null) {
-//                            buffer.append("{");
-//                            buffer.append(bcol.getChildColour());
-//                            for (int i = 1; i <= bcol.getNumEvents(); i++) {
-//                                buffer.append(",");
-//                                buffer.append(bcol.getBackwardTime(i));
-//                                buffer.append(",");
-//                                buffer.append(bcol.getBackwardColourAbove(i));
-//                            }
-//                            buffer.append("}");
-//                        }
-//                        return buffer.toString();
-//                    }
-//                });
-//
-//            } else
+            Object cxo = xo.getChild(i);
 
             if (cxo instanceof TreeTraitProvider) {
                 if (xo.hasAttribute(FILTER_TRAITS)) {
@@ -214,37 +185,8 @@ public class TreeReportParser extends LoggerParser {
                     }
                 }
             }
-            // Without this next block, branch rates get ignored :-(
-            // BranchRateModels are now TreeTraitProviders so this is not needed.
-//            if (cxo instanceof TreeTrait) {
-//                final TreeTrait trait = (TreeTrait)cxo;
-//                TreeTraitProvider ttp = new TreeTraitProvider() {
-//                    public TreeTrait[] getTreeTraits() {
-//                        return new TreeTrait[]  { trait };
-//                    }
-//
-//                    public TreeTrait getTreeTrait(String key) {
-//                        if (key.equals(trait.getTraitName())) {
-//                            return trait;
-//                        }
-//                        return null;
-//                    }
-//                };
-//                ttps.add(ttp);
-//            }
-            //}
-
         }
-
-        // if we don't have any of the newer trait elements but we do have some tree trait providers
-        // included directly then assume the user wanted to log these as tree traits (it may be an older
-        // form XML).
-//        if (ttps.size() == 0 && ttps2.size() > 0) {
-//            ttps.addAll(ttps2);
-//        }
-
-        // The above code destroyed the logging of complete histories - which need to be logged by direct
-        // inclusion of the codon partitioned robust counting TTP...
+        
         if (ttps2.size() > 0) {
             ttps.addAll(ttps2);
         }

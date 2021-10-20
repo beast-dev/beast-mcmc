@@ -117,7 +117,7 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         StringBuilder sb = new StringBuilder("sequenceDistanceStatistic Report\n\n");
 
         for (int i=0; i < patternList.getTaxonCount(); i++) {
-            String source = treeSequenceIsAncestral ? "node " + node.getNumber() : "taxon" + patternList.getTaxonId(i);
+            String source = treeSequenceIsAncestral ? "node " + node.getNumber() : "taxon " + patternList.getTaxonId(i);
             String target = treeSequenceIsAncestral ? "taxon " + patternList.getTaxonId(i) : "node " + node.getNumber();
             sb.append("distance (in calendar time) from " + source + " to " + target + " is " + getStatisticValue(i) + "\n");
         }
@@ -138,7 +138,7 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         double sum;
         for (int s=0; s<nodeState.length; s++) {
             from = dataType.getStates(getFromState(taxonIndex,s,nodeState,patternList));
-            to = dataType.getStates(getFromState(taxonIndex,s,nodeState,patternList));
+            to = dataType.getStates(getToState(taxonIndex,s,nodeState,patternList));
             sum = 0.0;
             for (int i : from) {
                 for (int j : to) {

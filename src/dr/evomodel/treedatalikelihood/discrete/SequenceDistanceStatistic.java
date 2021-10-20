@@ -126,9 +126,8 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         return sb.toString();
     }
 
-    private double computeLogLikelihood(double distance, NodeRef node, int taxonIndex) {
+    private double computeLogLikelihood(double distance, NodeRef node, int taxonIndex, int[] nodeState) {
         // could consider getting from asrLikelihood, probably, at the cost of an additional taxon list but removing need for patterns argument
-        int[] nodeState = asrLikelihood.getStatesForNode(tree,node);
         int nStates = dataType.getStateCount();
 
         double[][] tpm = getTPM(distance);
@@ -180,10 +179,12 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     private double[] optimizeBranchLength(int taxonIndex) {
         NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
 
+        int[] nodeState = asrLikelihood.getStatesForNode(tree,node);
+
         UnivariateFunction f = new UnivariateFunction() {
             @Override
             public double evaluate(double argument) {
-                double lnL = computeLogLikelihood(argument, node, taxonIndex);
+                double lnL = computeLogLikelihood(argument, node, taxonIndex, nodeState);
 
                 return -lnL;
             }

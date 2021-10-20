@@ -132,48 +132,20 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         int nStates = dataType.getStateCount();
 
         double[][] tpm = getTPM(distance);
-        double[][] logTpm = tpm;
-        for (int i=0; i<nStates; i++) {
-            for (int j=0; j<nStates; j++) {
-                logTpm[i][j] = Math.log(tpm[i][j]);
-            }
-        }
 
         int[] from,to;
         double lnL = 0.0;
         double sum;
-        if ( treeSequenceIsAncestral ) {
-            for (int s=0; s<nodeState.length; s++) {
-                from = dataType.getStates(nodeState[s]);
-                to = dataType.getStates(patternList.getPatternState(taxonIndex,s));
-                if ( from.length == 1 && to.length == 1 ) {
-                    lnL += logTpm[from[0]][to[0]];
-                } else {
-                    sum = 0.0;
-                    for (int i : from) {
-                        for (int j : to) {
-                            sum += tpm[i][j];
-                        }
-                    }
-                    lnL += Math.log(sum);
+        for (int s=0; s<nodeState.length; s++) {
+            from = dataType.getStates(getFromState(taxonIndex,s,nodeState,patternList));
+            to = dataType.getStates(getFromState(taxonIndex,s,nodeState,patternList));
+            sum = 0.0;
+            for (int i : from) {
+                for (int j : to) {
+                    sum += tpm[i][j];
                 }
             }
-        } else {
-            for (int s=0; s<nodeState.length; s++) {
-                to = dataType.getStates(nodeState[s]);
-                from = dataType.getStates(patternList.getPatternState(taxonIndex,s));
-                if ( from.length == 1 && to.length == 1 ) {
-                    lnL += logTpm[from[0]][to[0]];
-                } else {
-                    sum = 0.0;
-                    for (int i : from) {
-                        for (int j : to) {
-                            sum += tpm[i][j];
-                        }
-                    }
-                    lnL += Math.log(sum);
-                }
-            }
+            lnL += Math.log(sum);
         }
         return lnL;
     }
@@ -229,6 +201,23 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 
         return results;
     }
+
+    private int getFromState(int taxonIndex, int siteIndex, int[] nodeState, PatternList patternList) {
+        if (treeSequenceIsAncestral) {
+            return nodeState[siteIndex];
+        } else {
+            return patternList.getPatternState(taxonIndex, siteIndex);
+        }
+    }
+
+    private int getToState(int taxonIndex, int siteIndex, int[] nodeState, PatternList patternList) {
+        if (treeSequenceIsAncestral) {
+            return patternList.getPatternState(taxonIndex, siteIndex);
+        } else {
+            return nodeState[siteIndex];
+        }
+    }
+
 
     private AncestralStateBeagleTreeLikelihood asrLikelihood = null;
     private BranchRateModel branchRates = null;

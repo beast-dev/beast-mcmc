@@ -35,10 +35,8 @@ import dr.inferencexml.loggers.LoggerParser;
 import dr.xml.*;
 
 import java.io.PrintWriter;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * @author Karthik Gangavarapu
@@ -49,8 +47,6 @@ public class TreeReportParser extends LoggerParser {
     private static final String REPORT_TREE = "reportTree";
     private static final String BRANCH_LENGTHS = "branchLengths";
     private static final String SUBSTITUTIONS = "substitutions";
-    private static final String SORT_TRANSLATION_TABLE = "sortTranslationTable";
-    private static final String DECIMAL_PLACES = "dp";
     private static final String ALLOW_OVERWRITE_LOG = "overwrite";
     private static final String FILTER_TRAITS = "traitFilter";
     private static final String TREE_TRAIT = "trait";
@@ -66,7 +62,7 @@ public class TreeReportParser extends LoggerParser {
                                  String[] matches) {
 
         TreeTrait[] traits = ttp.getTreeTraits();
-        List<TreeTrait> filteredTraits = new ArrayList<TreeTrait>();
+        List<TreeTrait> filteredTraits = new ArrayList<>();
         for (String match : matches) {
             for (TreeTrait trait : traits) {
                 if (trait.getTraitName().startsWith(match)) {
@@ -79,13 +75,11 @@ public class TreeReportParser extends LoggerParser {
         }
     }
 
-    private String parseXMLParameters(XMLObject xo) throws XMLParseException {
+    private String printTreeWithAttributes(XMLObject xo) throws XMLParseException {
         // reset this every time...
-        branchRates = null;
+        BranchRates branchRates = null;
 
-        tree = (Tree) xo.getChild(Tree.class);
-
-        sortTranslationTable = xo.getAttribute(SORT_TRANSLATION_TABLE, true);
+        Tree tree = (Tree) xo.getChild(Tree.class);
 
         boolean substitutions = xo.getAttribute(BRANCH_LENGTHS, "").equals(SUBSTITUTIONS);
 
@@ -192,18 +186,7 @@ public class TreeReportParser extends LoggerParser {
             throw new XMLParseException("To log trees in units of substitutions a BranchRateModel must be provided");
         }
 
-        // decimal places
-        final int dp = xo.getAttribute(DECIMAL_PLACES, -1);
-        if (dp != -1) {
-            format = NumberFormat.getNumberInstance(Locale.ENGLISH);
-            format.setMaximumFractionDigits(dp);
-        }
-
-        final PrintWriter pw = getLogFile(xo, getParserName());
-
-        formatter = new TabDelimitedFormatter(pw);
-
-        treeTraitProviders = ttps.toArray(new TreeTraitProvider[ttps.size()]);
+        TreeTraitProvider[] treeTraitProviders = ttps.toArray(new TreeTraitProvider[0]);
 
         return TreeUtils.newick(tree, treeTraitProviders);
     }
@@ -212,22 +195,15 @@ public class TreeReportParser extends LoggerParser {
      * @return an object based on the XML element it was passed.
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        String report = parseXMLParameters(xo);
 
-        formatter.logLine(report);
+        String tree = printTreeWithAttributes(xo);
+        final PrintWriter pw = getLogFile(xo, getParserName());
+
+        LogFormatter formatter = new TabDelimitedFormatter(pw);
+        formatter.logLine(tree);
 
         return null;
     }
-
-    protected Tree tree;
-    protected String title;
-    protected boolean nexusFormat;
-    protected boolean sortTranslationTable;
-    protected BranchRates branchRates;
-    protected NumberFormat format = null;
-    protected TreeLogger.LogUpon condition;
-    protected LogFormatter formatter;
-    protected TreeTraitProvider[] treeTraitProviders;
 
     //************************************************************************
     // AbstractXMLObjectParser implementation

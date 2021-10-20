@@ -1,7 +1,7 @@
 /*
  * TreeLoggerParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2021 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,9 +27,7 @@ package dr.evomodelxml.tree;
 
 import dr.evolution.tree.*;
 import dr.evomodel.tree.TreeLogger;
-import dr.inference.loggers.Columns;
 import dr.inference.loggers.LogFormatter;
-import dr.inference.loggers.Loggable;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
@@ -43,30 +41,27 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * @author Alexei Drummond
- * @author Andrew Rambaut
  * @author Karthik Gangavarapu
+ * @author Marc A. Suchard
  */
 public class TreeReportParser extends LoggerParser {
 
-    public static final String REPORT_TREE = "reportTree";
-    public static final String BRANCH_LENGTHS = "branchLengths";
-    public static final String SUBSTITUTIONS = "substitutions";
-    public static final String SORT_TRANSLATION_TABLE = "sortTranslationTable";
-    public static final String DECIMAL_PLACES = "dp";
-    public static final String ALLOW_OVERWRITE_LOG = "overwrite";
-
-    public static final String FILTER_TRAITS = "traitFilter";
-    public static final String TREE_TRAIT = "trait";
-    public static final String NAME = "name";
-    public static final String TAG = "tag";
+    private static final String REPORT_TREE = "reportTree";
+    private static final String BRANCH_LENGTHS = "branchLengths";
+    private static final String SUBSTITUTIONS = "substitutions";
+    private static final String SORT_TRANSLATION_TABLE = "sortTranslationTable";
+    private static final String DECIMAL_PLACES = "dp";
+    private static final String ALLOW_OVERWRITE_LOG = "overwrite";
+    private static final String FILTER_TRAITS = "traitFilter";
+    private static final String TREE_TRAIT = "trait";
+    private static final String NAME = "name";
+    private static final String TAG = "tag";
 
     public String getParserName() {
         return REPORT_TREE;
     }
 
-    protected String parseXMLParameters(XMLObject xo) throws XMLParseException
-    {
+    private String parseXMLParameters(XMLObject xo) throws XMLParseException {
         // reset this every time...
         branchRates = null;
 
@@ -76,12 +71,12 @@ public class TreeReportParser extends LoggerParser {
 
         boolean substitutions = xo.getAttribute(BRANCH_LENGTHS, "").equals(SUBSTITUTIONS);
 
-        List<TreeTraitProvider> ttps = new ArrayList<TreeTraitProvider>();
+        List<TreeTraitProvider> ttps = new ArrayList<>();
 
         // ttps2 are for TTPs that are not specified within a Trait element. These are only
         // included if not already added through a trait element to avoid duplication of
         // (in particular) the BranchRates which is required for substitution trees.
-        List<TreeTraitProvider> ttps2 = new ArrayList<TreeTraitProvider>();
+        List<TreeTraitProvider> ttps2 = new ArrayList<>();
 
         for (int i = 0; i < xo.getChildCount(); i++) {
             Object cxo = xo.getChild(i);

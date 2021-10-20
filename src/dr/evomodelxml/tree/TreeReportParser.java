@@ -61,6 +61,24 @@ public class TreeReportParser extends LoggerParser {
         return REPORT_TREE;
     }
 
+    private void AddFilterTraits(TreeTraitProvider ttp,
+                                 List<TreeTraitProvider> ttpList,
+                                 String[] matches) {
+
+        TreeTrait[] traits = ttp.getTreeTraits();
+        List<TreeTrait> filteredTraits = new ArrayList<TreeTrait>();
+        for (String match : matches) {
+            for (TreeTrait trait : traits) {
+                if (trait.getTraitName().startsWith(match)) {
+                    filteredTraits.add(trait);
+                }
+            }
+        }
+        if (filteredTraits.size() > 0) {
+            ttpList.add(new TreeTraitProvider.Helper(filteredTraits));
+        }
+    }
+
     private String parseXMLParameters(XMLObject xo) throws XMLParseException {
         // reset this every time...
         branchRates = null;
@@ -86,19 +104,7 @@ public class TreeReportParser extends LoggerParser {
                 if (xo.hasAttribute(FILTER_TRAITS)) {
                     String[] matches = ((String) xo.getAttribute(FILTER_TRAITS)).split("[\\s,]+");
                     TreeTraitProvider ttp = (TreeTraitProvider) cxo;
-                    TreeTrait[] traits = ttp.getTreeTraits();
-                    List<TreeTrait> filteredTraits = new ArrayList<TreeTrait>();
-                    for (String match : matches) {
-                        for (TreeTrait trait : traits) {
-                            if (trait.getTraitName().startsWith(match)) {
-                                filteredTraits.add(trait);
-                            }
-                        }
-                    }
-                    if (filteredTraits.size() > 0) {
-                        ttps2.add(new TreeTraitProvider.Helper(filteredTraits));
-                    }
-
+                    AddFilterTraits(ttp, ttps2, matches);
                 } else {
                     // Add all of them
                     ttps2.add((TreeTraitProvider) cxo);
@@ -166,19 +172,7 @@ public class TreeReportParser extends LoggerParser {
                         // string
 
                         String[] matches = ((String) xo.getAttribute(FILTER_TRAITS)).split("[\\s,]+");
-                        TreeTrait[] traits = ttp.getTreeTraits();
-                        List<TreeTrait> filteredTraits = new ArrayList<TreeTrait>();
-                        for (String match : matches) {
-                            for (TreeTrait trait : traits) {
-                                if (trait.getTraitName().startsWith(match)) {
-                                    filteredTraits.add(trait);
-                                }
-                            }
-                        }
-                        if (filteredTraits.size() > 0) {
-                            ttps.add(new TreeTraitProvider.Helper(filteredTraits));
-                        }
-
+                        AddFilterTraits(ttp, ttps2, matches);
                     } else {
                         // neither named or filtered traits so just add them all
                         ttps.add(ttp);
@@ -186,7 +180,7 @@ public class TreeReportParser extends LoggerParser {
                 }
             }
         }
-        
+
         if (ttps2.size() > 0) {
             ttps.addAll(ttps2);
         }

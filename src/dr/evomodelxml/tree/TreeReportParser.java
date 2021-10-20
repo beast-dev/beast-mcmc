@@ -77,18 +77,17 @@ public class TreeReportParser extends LoggerParser {
 
     private String printTreeWithAttributes(XMLObject xo) throws XMLParseException {
         // reset this every time...
-        BranchRates branchRates = null;
 
         Tree tree = (Tree) xo.getChild(Tree.class);
 
         boolean substitutions = xo.getAttribute(BRANCH_LENGTHS, "").equals(SUBSTITUTIONS);
 
-        List<TreeTraitProvider> ttps = new ArrayList<>();
+        List<TreeTraitProvider> ttpList = new ArrayList<>();
 
         // ttps2 are for TTPs that are not specified within a Trait element. These are only
         // included if not already added through a trait element to avoid duplication of
         // (in particular) the BranchRates which is required for substitution trees.
-        List<TreeTraitProvider> ttps2 = new ArrayList<>();
+        List<TreeTraitProvider> ttpList2 = new ArrayList<>();
 
         for (int i = 0; i < xo.getChildCount(); i++) {
 
@@ -98,10 +97,10 @@ public class TreeReportParser extends LoggerParser {
                 if (xo.hasAttribute(FILTER_TRAITS)) {
                     String[] matches = ((String) xo.getAttribute(FILTER_TRAITS)).split("[\\s,]+");
                     TreeTraitProvider ttp = (TreeTraitProvider) cxo;
-                    AddFilterTraits(ttp, ttps2, matches);
+                    AddFilterTraits(ttp, ttpList2, matches);
                 } else {
                     // Add all of them
-                    ttps2.add((TreeTraitProvider) cxo);
+                    ttpList2.add((TreeTraitProvider) cxo);
                 }
             }
             if (cxo instanceof XMLObject) {
@@ -135,7 +134,7 @@ public class TreeReportParser extends LoggerParser {
                             tag = name;
                         }
 
-                        ttps.add(new TreeTraitProvider.Helper(tag, new TreeTrait() {
+                        ttpList.add(new TreeTraitProvider.Helper(tag, new TreeTrait() {
 
                             public String getTraitName() {
                                 return tag;
@@ -166,19 +165,20 @@ public class TreeReportParser extends LoggerParser {
                         // string
 
                         String[] matches = ((String) xo.getAttribute(FILTER_TRAITS)).split("[\\s,]+");
-                        AddFilterTraits(ttp, ttps2, matches);
+                        AddFilterTraits(ttp, ttpList2, matches);
                     } else {
                         // neither named or filtered traits so just add them all
-                        ttps.add(ttp);
+                        ttpList.add(ttp);
                     }
                 }
             }
         }
 
-        if (ttps2.size() > 0) {
-            ttps.addAll(ttps2);
+        if (ttpList2.size() > 0) {
+            ttpList.addAll(ttpList2);
         }
 
+        BranchRates branchRates = null;
         if (substitutions) {
             branchRates = (BranchRates) xo.getChild(BranchRates.class);
         }
@@ -186,7 +186,7 @@ public class TreeReportParser extends LoggerParser {
             throw new XMLParseException("To log trees in units of substitutions a BranchRateModel must be provided");
         }
 
-        TreeTraitProvider[] treeTraitProviders = ttps.toArray(new TreeTraitProvider[0]);
+        TreeTraitProvider[] treeTraitProviders = ttpList.toArray(new TreeTraitProvider[0]);
 
         return TreeUtils.newick(tree, treeTraitProviders);
     }

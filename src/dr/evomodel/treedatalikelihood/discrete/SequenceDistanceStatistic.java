@@ -126,7 +126,7 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         return sb.toString();
     }
 
-    private double computeLogLikelihood(double distance, int[] fromStates, int[] toStates) {
+    private double computeLogLikelihood(double distance, int[][] fromStates, int[][] toStates) {
         // could consider getting from asrLikelihood, probably, at the cost of an additional taxon list but removing need for patterns argument
         int nStates = dataType.getStateCount();
 
@@ -138,18 +138,18 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
             }
         }
 
-        int[] from,to;
+//        int[] from,to;
         double lnL = 0.0;
         double sum;
         for (int s=0; s<fromStates.length; s++) {
-            from = dataType.getStates(fromStates[s]);
-            to = dataType.getStates(toStates[s]);
+//            from = dataType.getStates(fromStates[s]);
+//            to = dataType.getStates(toStates[s]);
             sum = 0.0;
-            if ( from.length == 1 && to.length == 1) {
-                lnL += logTpm[from[0]][to[0]];
+            if ( fromStates[s].length == 1 && toStates[s].length == 1) {
+                lnL += logTpm[fromStates[s][0]][toStates[s][0]];
             } else {
-                for (int i : from) {
-                    for (int j : to) {
+                for (int i : fromStates[s]) {
+                    for (int j : toStates[s]) {
                         sum += tpm[i][j];
                     }
                 }
@@ -179,13 +179,15 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     private double[] optimizeBranchLength(int taxonIndex) {
         NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
 
-        int[] nodeStates = asrLikelihood.getStatesForNode(tree,node);
-        int[] taxonStates = new int[nodeStates.length];
-        for (int i=0; i<nodeStates.length; i++) {
-            taxonStates[i] = patternList.getPatternState(taxonIndex,i);
+        int[] nodeStatesAmbiguities = asrLikelihood.getStatesForNode(tree,node);
+        int[][] taxonStates = new int[nodeStatesAmbiguities.length][];
+        int[][] nodeStates = new int[nodeStatesAmbiguities.length][];
+        for (int i=0; i<nodeStatesAmbiguities.length; i++) {
+            taxonStates[i] = dataType.getStates(patternList.getPatternState(taxonIndex,i));
+            nodeStates[i] = dataType.getStates(nodeStatesAmbiguities[i]);
         }
 
-        int[] fromStates,toStates;
+        int[][] fromStates,toStates;
         if ( treeSequenceIsAncestral ) {
             fromStates = nodeStates;
             toStates = taxonStates;

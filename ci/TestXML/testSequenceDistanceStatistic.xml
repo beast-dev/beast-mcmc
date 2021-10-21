@@ -80,7 +80,7 @@
 <!--
         (taxon_6:0.6599920953,((((taxon_8:0.08050441416,taxon_4:0.1993587138):0.06120663346,taxon_7:0.4556825075):0.1431224649,taxon_10:0.5471037512):0.8189234324,((taxon_1:0.739103453,(taxon_2:0.3068418624,taxon_5:0.7002265998):0.6723836821):0.4476448677,(taxon_9:0.16993984,taxon_3:0.2669664454):0.9823498076):0.9481884362):0.3653106997);;
  -->
-      ((taxon_1:1.0,taxon_2:1.0):1.0,(taxon_3:1.0,taxon_4:1.0):1.0);
+      ((taxon_1:0.0000001,taxon_2:0.0000001):0.0000001,(taxon_3:0.0000001,taxon_4:0.0000001):0.0000001);
     </newick>
 
     <treeModel id="treeModel" fixHeights="true">
@@ -98,7 +98,7 @@
 
 	<strictClockBranchRates id="branchRates">
 		<rate>
-			<parameter id="clock.rate" value="1E-4" lower="0.0"/>
+			<parameter id="clock.rate" value="1.0" lower="0.0"/>
 		</rate>
 	</strictClockBranchRates>
 

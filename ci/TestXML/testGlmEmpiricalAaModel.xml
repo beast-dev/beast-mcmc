@@ -124,46 +124,27 @@
 		<strictClockBranchRates idref="branchRates"/>
 	</rateStatistic>
 
-
-	<!-- The WAG substitution model                                              -->
-	<aminoAcidModel id="aa" type="WAG"/>
-
-	<!-- site model                                                              -->
-	<siteModel id="siteModel">
-		<substitutionModel>
-			<aminoAcidModel idref="aa"/>
-		</substitutionModel>
-		<gammaShape gammaCategories="4">
-			<parameter id="alpha" value="0.5" lower="0.0"/>
-		</gammaShape>
-	</siteModel>
-
-	<!--                                                                         -->
-	<statistic id="mu" name="mu">
-		<siteModel idref="siteModel"/>
-	</statistic>
-
-
-	<!-- Likelihood for tree given sequence data                                 -->
-	<treeDataLikelihood id="treeLikelihood" useAmbiguities="false">
-		<partition>
-			<patterns idref="patterns"/>
-			<siteModel idref="siteModel"/>
-		</partition>
-		<treeModel idref="treeModel"/>
-		<strictClockBranchRates idref="branchRates"/>
-	</treeDataLikelihood>
-
-<!--
-	<glmSubstitutionModel id="glm.aa" normalize="true">
-		<generalDataType idref="loc.dataType"/>
+	<glmSubstitutionModel id="glm.aa" normalize="true" dataType="amino acid">
 		<rootFrequencies>
-			<!~~ Need to figure this out ~~>
+			<!-- <!~~ Need to figure this out ~~> -->
+			<!-- For now, using empirical frequenceies -->
+			<frequencyModel dataType="amino acid">
+				<alignment idref="alignment"/>
+				<frequencies>
+					<parameter id="frequencies" dimension="20"/>
+				</frequencies>
+			</frequencyModel>
 		</rootFrequencies>
 		<glmModel family="logLinear" checkIdentifiability="true">
 			<independentVariables>
-				<parameter id="coefficient" value="1.0"/>
-				<!~~ add in stuff here ~~>
+				<parameter id="mixture.coefficient" value="0.0"/>
+				<aminoAcidMixtureModel id="aa">
+					<aminoAcidModel type="WAG"/>
+					<aminoAcidModel type="LG"/>
+					<aminoAcidModel type="FLU"/>
+					<aminoAcidModel type="dayhoff"/>
+					<aminoAcidModel type="blosum62"/>
+				</aminoAcidMixtureModel>
 			</independentVariables>
 		</glmModel>
 	</glmSubstitutionModel>
@@ -173,11 +154,11 @@
 			<glmSubstitutionModel idref="glm.aa"/>
 		</substitutionModel>
 		<gammaShape gammaCategories="4">
-			<parameter id="alpha.glm" value="0.5" lower="0.0"/>
+			<parameter id="alpha" value="0.5" lower="0.0"/>
 		</gammaShape>
 	</siteModel>
 
-	<treeDataLikelihood id="treeLikelihood.glm" useAmbiguities="false">
+	<treeDataLikelihood id="treeLikelihood" useAmbiguities="false">
 		<partition>
 			<patterns idref="patterns"/>
 			<siteModel idref="siteModel.glm"/>
@@ -185,13 +166,16 @@
 		<treeModel idref="treeModel"/>
 		<strictClockBranchRates idref="branchRates"/>
 	</treeDataLikelihood>
- -->
+
 
 <!-- Check that old and new likelihoods are the same -->
 
 
 	<!-- Define operators                                                        -->
 	<operators id="operators" optimizationSchedule="power">
+		<randomWalkOperator windowSize="0.75" weight="1">
+			<parameter idref="mixture.coefficient"/>
+		</randomWalkOperator>
 		<scaleOperator scaleFactor="0.75" weight="1">
 			<parameter idref="alpha"/>
 		</scaleOperator>
@@ -223,9 +207,14 @@
 
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true" operatorAnalysis="PV.ops">
+	<mcmc id="mcmc" chainLength="1000" autoOptimize="true" operatorAnalysis="PV.ops">
+	<!-- <mcmc id="mcmc" chainLength="1" autoOptimize="true" operatorAnalysis="PV.ops"> --> -->
 		<joint id="joint">
 			<prior id="prior">
+				<normalPrior mean="0.0" stdev="1.0">
+					<parameter idref="mixture.coefficient"/>
+				</normalPrior>
+
 				<exponentialPrior mean="0.5" offset="0.0">
 					<parameter idref="alpha"/>
 				</exponentialPrior>
@@ -267,6 +256,7 @@
 			<parameter idref="treeModel.rootHeight"/>
 			<treeLengthStatistic idref="treeLength"/>
 			<parameter idref="constant.popSize"/>
+			<parameter idref="mixture.coefficient"/>
 			<parameter idref="alpha"/>
 			<parameter idref="clock.rate"/>
 			<rateStatistic idref="meanRate"/>

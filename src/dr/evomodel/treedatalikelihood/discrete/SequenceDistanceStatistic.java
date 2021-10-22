@@ -2,20 +2,14 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.branchratemodel.AbstractBranchRateModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.inference.model.Statistic;
-import dr.inference.operators.hmc.MassPreconditioner;
 import dr.math.UnivariateFunction;
 import dr.math.UnivariateMinimum;
 import dr.xml.Reportable;
@@ -32,13 +26,11 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 
     public enum DistanceType {
         MAXIMIZED_DISTANCE("distance", "distanceTo") {
-            
             public double extractResultForType(double[] results) {
                 return results[0];
             }
         },
         LOG_LIKELIHOOD("likelihood", "lnL") {
-
             public double extractResultForType(double[] results) {
                 return results[1];
             }
@@ -53,7 +45,9 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
             return name;
         }
 
-        public String getLabel() { return label; }
+        public String getLabel() {
+            return label;
+        }
 
         public abstract double extractResultForType(double[] results);
 
@@ -112,11 +106,11 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     @Override
     public String getReport() {
 
-        NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
+        NodeRef node = (leafSet != null) ? TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
 
         StringBuilder sb = new StringBuilder("sequenceDistanceStatistic Report\n\n");
 
-        for (int i=0; i < patternList.getTaxonCount(); i++) {
+        for (int i = 0; i < patternList.getTaxonCount(); i++) {
             String source = treeSequenceIsAncestral ? "node " + node.getNumber() : "taxon " + patternList.getTaxonId(i);
             String target = treeSequenceIsAncestral ? "taxon " + patternList.getTaxonId(i) : "node " + node.getNumber();
             sb.append("distance (in calendar time) from " + source + " to " + target + " is " + getStatisticValue(i) + "\n");
@@ -132,8 +126,8 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 
         double[][] tpm = getTPM(distance);
         double[][] logTpm = tpm;
-        for (int i=0; i<nStates; i++) {
-            for (int j=0; j<nStates; j++) {
+        for (int i = 0; i < nStates; i++) {
+            for (int j = 0; j < nStates; j++) {
                 logTpm[i][j] = Math.log(tpm[i][j]);
             }
         }
@@ -141,11 +135,11 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 //        int[] from,to;
         double lnL = 0.0;
         double sum;
-        for (int s=0; s<fromStates.length; s++) {
+        for (int s = 0; s < fromStates.length; s++) {
 //            from = dataType.getStates(fromStates[s]);
 //            to = dataType.getStates(toStates[s]);
             sum = 0.0;
-            if ( fromStates[s].length == 1 && toStates[s].length == 1) {
+            if (fromStates[s].length == 1 && toStates[s].length == 1) {
                 lnL += logTpm[fromStates[s][0]][toStates[s][0]];
             } else {
                 for (int i : fromStates[s]) {
@@ -161,15 +155,15 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 
     private double[][] getTPM(double distance) {
         int nStates = dataType.getStateCount();
-        double[] tpmFlat = new double[nStates*nStates];
+        double[] tpmFlat = new double[nStates * nStates];
         substitutionModel.getTransitionProbabilities(distance, tpmFlat);
 
         // Make indexing easier in likelihood computation
         // This is really ln(P) and not P
         double[][] tpm = new double[nStates][nStates];
-        for (int i=0; i < nStates; i++) {
-            for (int j=0; j < nStates; j++) {
-                tpm[i][j] = tpmFlat[i*nStates+j];
+        for (int i = 0; i < nStates; i++) {
+            for (int j = 0; j < nStates; j++) {
+                tpm[i][j] = tpmFlat[i * nStates + j];
             }
         }
 
@@ -177,18 +171,18 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     }
 
     private double[] optimizeBranchLength(int taxonIndex) {
-        NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
+        NodeRef node = (leafSet != null) ? TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
 
-        int[] nodeStatesAmbiguities = asrLikelihood.getStatesForNode(tree,node);
+        int[] nodeStatesAmbiguities = asrLikelihood.getStatesForNode(tree, node);
         int[][] taxonStates = new int[nodeStatesAmbiguities.length][];
         int[][] nodeStates = new int[nodeStatesAmbiguities.length][];
-        for (int i=0; i<nodeStatesAmbiguities.length; i++) {
-            taxonStates[i] = dataType.getStates(patternList.getPatternState(taxonIndex,i));
+        for (int i = 0; i < nodeStatesAmbiguities.length; i++) {
+            taxonStates[i] = dataType.getStates(patternList.getPatternState(taxonIndex, i));
             nodeStates[i] = dataType.getStates(nodeStatesAmbiguities[i]);
         }
 
-        int[][] fromStates,toStates;
-        if ( treeSequenceIsAncestral ) {
+        int[][] fromStates, toStates;
+        if (treeSequenceIsAncestral) {
             fromStates = nodeStates;
             toStates = taxonStates;
         } else {
@@ -221,7 +215,7 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         double x = minimum.findMinimum(f);
 
         // MAS: should delegate via something like: val = type.getReturnValue(minimum);
-        double results[] = {minimum.minx/branchRates.getBranchRate(tree,node),-minimum.fminx};
+        double results[] = {minimum.minx / branchRates.getBranchRate(tree, node), -minimum.fminx};
 
 //        System.err.println("Used " + minimum.numFun + " evaluations to find minimum at " + minimum.minx + " with function value " + minimum.fminx + " and curvature " + minimum.f2minx);
 

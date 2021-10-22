@@ -125,7 +125,7 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         int nStates = dataType.getStateCount();
 
         double[][] tpm = getTPM(distance);
-        double[][] logTpm = tpm;
+        double[][] logTpm = tpm;  // MAS Do you really want an alias?  no, try new double[dim][dim]
         for (int i = 0; i < nStates; i++) {
             for (int j = 0; j < nStates; j++) {
                 logTpm[i][j] = Math.log(tpm[i][j]);
@@ -144,7 +144,7 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
             } else {
                 for (int i : fromStates[s]) {
                     for (int j : toStates[s]) {
-                        sum += tpm[i][j];
+                        sum += tpm[i][j]; // MAS How does this work?  These values are already in log-space
                     }
                 }
                 lnL += Math.log(sum);

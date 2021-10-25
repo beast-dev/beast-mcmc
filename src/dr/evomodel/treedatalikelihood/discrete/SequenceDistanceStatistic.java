@@ -126,12 +126,11 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         // could consider getting from asrLikelihood, probably, at the cost of an additional taxon list but removing need for patterns argument
         int nStates = dataType.getStateCount();
 
-        double[][] tpm = getTPM(distance);
-        double[][] logTpm = tpm;
-        for (int i=0; i<nStates; i++) {
-            for (int j=0; j<nStates; j++) {
-                logTpm[i][j] = Math.log(tpm[i][j]);
-            }
+        double[] tpm = new double[nStates*nStates];
+        substitutionModel.getTransitionProbabilities(distance, tpm);
+        double[] logTpm = tpm;
+        for (int i=0; i<nStates*nStates; i++) {
+            logTpm[i] = Math.log(tpm[i]);
         }
 
         double lnL = 0.0;
@@ -139,11 +138,11 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         for (int s=0; s<taxonStates.length; s++) {
             sum = 0.0;
             if ( taxonStatesAreKnown[s] ) {
-                lnL += logTpm[taxonStates[s]][nodeStates[s]];
+                lnL += logTpm[taxonStates[s]*nStates+nodeStates[s]];
             } else {
                 for (int i=0; i<nStates; i++) {
                     // TODO: weight by stationary frequencies
-                    sum += tpm[i][nodeStates[s]];
+                    sum += tpm[i*nStates+nodeStates[s]];
                 }
                 lnL += Math.log(sum);
             }
@@ -151,22 +150,22 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         return lnL;
     }
 
-    private double[][] getTPM(double distance) {
-        int nStates = dataType.getStateCount();
-        double[] tpmFlat = new double[nStates*nStates];
-        substitutionModel.getTransitionProbabilities(distance, tpmFlat);
-
-        // Make indexing easier in likelihood computation
-        // This is really ln(P) and not P
-        double[][] tpm = new double[nStates][nStates];
-        for (int i=0; i < nStates; i++) {
-            for (int j=0; j < nStates; j++) {
-                tpm[i][j] = tpmFlat[i*nStates+j];
-            }
-        }
-
-        return tpm;
-    }
+//    private double[][] getTPM(double distance) {
+//        int nStates = dataType.getStateCount();
+//        double[] tpmFlat = new double[nStates*nStates];
+//        substitutionModel.getTransitionProbabilities(distance, tpmFlat);
+//
+//        // Make indexing easier in likelihood computation
+//        // This is really ln(P) and not P
+//        double[][] tpm = new double[nStates][nStates];
+//        for (int i=0; i < nStates; i++) {
+//            for (int j=0; j < nStates; j++) {
+//                tpm[i][j] = tpmFlat[i*nStates+j];
+//            }
+//        }
+//
+//        return tpm;
+//    }
 
     private double[] optimizeBranchLength(int taxonIndex) {
         NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();

@@ -65,7 +65,6 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
                                      SubstitutionModel subsModel,
                                      BranchRateModel branchRates,
                                      PatternList patterns,
-                                     boolean treeSeqAncestral,
                                      TaxonList mrcaTaxa,
                                      DistanceType type) throws TreeUtils.MissingTaxonException {
         this.asrLikelihood = asrLike;
@@ -73,7 +72,6 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         this.branchRates = branchRates;
         this.patternList = patterns;
         this.dataType = patternList.getDataType();
-        this.treeSequenceIsAncestral = treeSeqAncestral;
         this.type = type;
         this.tree = asrLikelihood.getTreeModel();
         this.leafSet = (mrcaTaxa != null) ? TreeUtils.getLeavesForTaxa(tree, mrcaTaxa) : null;
@@ -117,16 +115,14 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         StringBuilder sb = new StringBuilder("sequenceDistanceStatistic Report\n\n");
 
         for (int i=0; i < patternList.getTaxonCount(); i++) {
-            String source = treeSequenceIsAncestral ? "node " + node.getNumber() : "taxon " + patternList.getTaxonId(i);
-            String target = treeSequenceIsAncestral ? "taxon " + patternList.getTaxonId(i) : "node " + node.getNumber();
-            sb.append("distance (in calendar time) from " + source + " to " + target + " is " + getStatisticValue(i) + "\n");
+            sb.append("distance (in calendar time) from " + "taxon " + patternList.getTaxonId(i) + " to " + "node " + node.getNumber() + " is " + getStatisticValue(i) + "\n");
         }
         sb.append("\n\n");
 
         return sb.toString();
     }
 
-    private double computeLogLikelihood(double distance, int[][] fromStates, int[][] toStates) {
+    private double computeLogLikelihood(double distance, int[] taxonStates, int[] nodeStates, boolean[] taxonStatesAreKnown) {
         // could consider getting from asrLikelihood, probably, at the cost of an additional taxon list but removing need for patterns argument
         int nStates = dataType.getStateCount();
 
@@ -138,20 +134,16 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
             }
         }
 
-//        int[] from,to;
         double lnL = 0.0;
         double sum;
-        for (int s=0; s<fromStates.length; s++) {
-//            from = dataType.getStates(fromStates[s]);
-//            to = dataType.getStates(toStates[s]);
+        for (int s=0; s<taxonStates.length; s++) {
             sum = 0.0;
-            if ( fromStates[s].length == 1 && toStates[s].length == 1) {
-                lnL += logTpm[fromStates[s][0]][toStates[s][0]];
+            if ( taxonStatesAreKnown[s] ) {
+                lnL += logTpm[taxonStates[s]][nodeStates[s]];
             } else {
-                for (int i : fromStates[s]) {
-                    for (int j : toStates[s]) {
-                        sum += tpm[i][j];
-                    }
+                for (int i=0; i<nStates; i++) {
+                    // TODO: weight by stationary frequencies
+                    sum += tpm[i][nodeStates[s]];
                 }
                 lnL += Math.log(sum);
             }
@@ -179,27 +171,19 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     private double[] optimizeBranchLength(int taxonIndex) {
         NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
 
-        int[] nodeStatesAmbiguities = asrLikelihood.getStatesForNode(tree,node);
-        int[][] taxonStates = new int[nodeStatesAmbiguities.length][];
-        int[][] nodeStates = new int[nodeStatesAmbiguities.length][];
-        for (int i=0; i<nodeStatesAmbiguities.length; i++) {
-            taxonStates[i] = dataType.getStates(patternList.getPatternState(taxonIndex,i));
-            nodeStates[i] = dataType.getStates(nodeStatesAmbiguities[i]);
-        }
+        int[] nodeStates = asrLikelihood.getStatesForNode(tree,node);
+        int[] taxonStates = new int[nodeStates.length];
+        boolean[] taxonStatesAreKnown = new boolean[nodeStates.length];
 
-        int[][] fromStates,toStates;
-        if ( treeSequenceIsAncestral ) {
-            fromStates = nodeStates;
-            toStates = taxonStates;
-        } else {
-            toStates = nodeStates;
-            fromStates = taxonStates;
+        for (int i=0; i<nodeStates.length; i++) {
+            taxonStates[i] = patternList.getPatternState(taxonIndex,i);
+            taxonStatesAreKnown[i] = !dataType.isAmbiguousState(taxonStates[i]);
         }
 
         UnivariateFunction f = new UnivariateFunction() {
             @Override
             public double evaluate(double argument) {
-                double lnL = computeLogLikelihood(argument, fromStates, toStates);
+                double lnL = computeLogLikelihood(argument, taxonStates, nodeStates, taxonStatesAreKnown);
 
                 return -lnL;
             }
@@ -228,28 +212,10 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         return results;
     }
 
-//    private int getFromState(int siteIndex, int[] nodeState, int[] taxonState) {
-//        if (treeSequenceIsAncestral) {
-//            return nodeState[siteIndex];
-//        } else {
-//            return taxonState[siteIndex];
-//        }
-//    }
-//
-//    private int getToState(int siteIndex, int[] nodeState, int[] taxonState) {
-//        if (treeSequenceIsAncestral) {
-//            return taxonState[siteIndex];
-//        } else {
-//            return nodeState[siteIndex];
-//        }
-//    }
-
-
     private AncestralStateBeagleTreeLikelihood asrLikelihood = null;
     private BranchRateModel branchRates = null;
     private PatternList patternList = null;
     private SubstitutionModel substitutionModel = null;
-    boolean treeSequenceIsAncestral;
     private final Set<String> leafSet;
     private final Tree tree;
     private final DistanceType type;

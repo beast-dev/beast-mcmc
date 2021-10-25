@@ -133,6 +133,8 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
             logTpm[i] = Math.log(tpm[i]);
         }
 
+        double[] pi = substitutionModel.getFrequencyModel().getFrequencies();
+
         double lnL = 0.0;
         double sum;
         for (int s=0; s<taxonStates.length; s++) {
@@ -141,8 +143,7 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
                 lnL += logTpm[taxonStates[s]*nStates+nodeStates[s]];
             } else {
                 for (int i=0; i<nStates; i++) {
-                    // TODO: weight by stationary frequencies
-                    sum += tpm[i*nStates+nodeStates[s]];
+                    sum += tpm[i*nStates+nodeStates[s]] * pi[i];
                 }
                 lnL += Math.log(sum);
             }

@@ -2,20 +2,14 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.branchratemodel.AbstractBranchRateModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.inference.model.Statistic;
-import dr.inference.operators.hmc.MassPreconditioner;
 import dr.math.UnivariateFunction;
 import dr.math.UnivariateMinimum;
 import dr.xml.Reportable;
@@ -32,13 +26,11 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 
     public enum DistanceType {
         MAXIMIZED_DISTANCE("distance", "distanceTo") {
-            
             public double extractResultForType(double[] results) {
                 return results[0];
             }
         },
         LOG_LIKELIHOOD("likelihood", "lnL") {
-
             public double extractResultForType(double[] results) {
                 return results[1];
             }
@@ -53,7 +45,9 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
             return name;
         }
 
-        public String getLabel() { return label; }
+        public String getLabel() {
+            return label;
+        }
 
         public abstract double extractResultForType(double[] results);
 
@@ -110,11 +104,11 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
     @Override
     public String getReport() {
 
-        NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
+        NodeRef node = (leafSet != null) ? TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
 
         StringBuilder sb = new StringBuilder("sequenceDistanceStatistic Report\n\n");
 
-        for (int i=0; i < patternList.getTaxonCount(); i++) {
+        for (int i = 0; i < patternList.getTaxonCount(); i++) {
             sb.append("distance (in calendar time) from " + "taxon " + patternList.getTaxonId(i) + " to " + "node " + node.getNumber() + " is " + getStatisticValue(i) + "\n");
         }
         sb.append("\n\n");
@@ -126,10 +120,10 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         // could consider getting from asrLikelihood, probably, at the cost of an additional taxon list but removing need for patterns argument
         int nStates = dataType.getStateCount();
 
-        double[] tpm = new double[nStates*nStates];
+        double[] tpm = new double[nStates * nStates];
         substitutionModel.getTransitionProbabilities(distance, tpm);
-        double[] logTpm = tpm;
-        for (int i=0; i<nStates*nStates; i++) {
+        double[] logTpm = new double[nStates * nStates];
+        for (int i = 0; i < nStates * nStates; i++) {
             logTpm[i] = Math.log(tpm[i]);
         }
 
@@ -137,13 +131,13 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 
         double lnL = 0.0;
         double sum;
-        for (int s=0; s<taxonStates.length; s++) {
+        for (int s = 0; s < taxonStates.length; s++) {
             sum = 0.0;
             if ( taxonStatesAreKnown[s] ) {
-                lnL += logTpm[taxonStates[s]*nStates+nodeStates[s]];
+                lnL += logTpm[taxonStates[s] * nStates + nodeStates[s]];
             } else {
-                for (int i=0; i<nStates; i++) {
-                    sum += tpm[i*nStates+nodeStates[s]] * pi[i];
+                for (int i = 0; i < nStates; i++) {
+                    sum += tpm[i * nStates + nodeStates[s]] * pi[i]; // MAS How does this work? These values are already in log-space
                 }
                 lnL += Math.log(sum);
             }
@@ -153,15 +147,15 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 
 //    private double[][] getTPM(double distance) {
 //        int nStates = dataType.getStateCount();
-//        double[] tpmFlat = new double[nStates*nStates];
+//        double[] tpmFlat = new double[nStates * nStates];
 //        substitutionModel.getTransitionProbabilities(distance, tpmFlat);
 //
 //        // Make indexing easier in likelihood computation
 //        // This is really ln(P) and not P
 //        double[][] tpm = new double[nStates][nStates];
-//        for (int i=0; i < nStates; i++) {
-//            for (int j=0; j < nStates; j++) {
-//                tpm[i][j] = tpmFlat[i*nStates+j];
+//        for (int i = 0; i < nStates; i++) {
+//            for (int j = 0; j < nStates; j++) {
+//                tpm[i][j] = tpmFlat[i * nStates + j];
 //            }
 //        }
 //
@@ -169,13 +163,13 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
 //    }
 
     private double[] optimizeBranchLength(int taxonIndex) {
-        NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
+        NodeRef node = (leafSet != null) ? TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
 
         int[] nodeStates = asrLikelihood.getStatesForNode(tree,node);
         int[] taxonStates = new int[nodeStates.length];
         boolean[] taxonStatesAreKnown = new boolean[nodeStates.length];
 
-        for (int i=0; i<nodeStates.length; i++) {
+        for (int i = 0; i < nodeStates.length; i++) {
             taxonStates[i] = patternList.getPatternState(taxonIndex,i);
             taxonStatesAreKnown[i] = !dataType.isAmbiguousState(taxonStates[i]);
         }
@@ -205,7 +199,7 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         double x = minimum.findMinimum(f);
 
         // MAS: should delegate via something like: val = type.getReturnValue(minimum);
-        double results[] = {minimum.minx/branchRates.getBranchRate(tree,node),-minimum.fminx};
+        double results[] = {minimum.minx / branchRates.getBranchRate(tree, node), -minimum.fminx};
 
 //        System.err.println("Used " + minimum.numFun + " evaluations to find minimum at " + minimum.minx + " with function value " + minimum.fminx + " and curvature " + minimum.f2minx);
 

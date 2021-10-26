@@ -353,7 +353,7 @@
 			<prior idref="prior"/>
 			<likelihood idref="likelihood"/>
 			<parameter idref="treeModel.rootHeight"/>
-			<!-- <sequenceDistanceStatistic idref="distanceTaxonToRoot"/> -->
+			<sequenceDistanceStatistic idref="distanceTaxonToRoot"/>
 			<tmrcaStatistic idref="age(root)"/>
 			<treeLengthStatistic idref="treeLength"/>
 			<parameter idref="pInv"/>

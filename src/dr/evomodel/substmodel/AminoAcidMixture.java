@@ -9,14 +9,24 @@ import java.util.List;
 public class AminoAcidMixture extends DesignMatrix {
 
     public AminoAcidMixture(List<EmpiricalAminoAcidModel> rateMatrix) {
-        super("name", getParameters(rateMatrix), false);
+        super(getName(rateMatrix), getParameters(rateMatrix), false);
+    }
+
+    private static String getName(List<EmpiricalAminoAcidModel> rateMatrix) {
+        StringBuilder sb = new StringBuilder("designMatrix");
+        for (EmpiricalAminoAcidModel matrix : rateMatrix) {
+            String id = matrix.getId();
+            if (id != null && id.length() > 0) {
+                sb.append(".").append(id);
+            }
+        }
+        return sb.toString();
     }
 
     private static Parameter[] getParameters(List<EmpiricalAminoAcidModel> rateMatrix) {
         Parameter[] p = new Parameter[rateMatrix.size()];
 
         for (int i = 0; i < p.length; ++i) {
-            System.err.println("AminoAcidMixture::getParameters()");
             EmpiricalAminoAcidModel model = rateMatrix.get(i);
             // this is a flat representation of the lower triangular order
             double[] rates = model.getEmpiricalRateMatrix().getEmpiricalRates();
@@ -27,10 +37,7 @@ public class AminoAcidMixture extends DesignMatrix {
                 ratesUpperLower[j] = ratesUpperLower[rates.length + j] = Math.log(rates[j]);
             }
             p[i] = new Parameter.Default(ratesUpperLower);
-
         }
         return p;
     }
-
-
 }

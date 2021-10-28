@@ -194,4 +194,19 @@
 		<treeDataLikelihood idref="treeLikelihood.WAG"/>
 	</report>
 
+	<assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
+		<message>
+			Check log-likelihood, mixture vs AA model
+		</message>
+		<actual regex="dr.evomodel.treedatalikelihood.TreeDataLikelihood\((.*?)\)">
+			<report>
+				<treeDataLikelihood idref="treeLikelihood.glm"/>
+			</report>
+		</actual>
+		<expected regex="dr.evomodel.treedatalikelihood.TreeDataLikelihood\((.*?)\)">
+			<report>
+				<treeDataLikelihood idref="treeLikelihood.WAG"/>
+			</report>
+		</expected>
+	</assertEqual>
 </beast>

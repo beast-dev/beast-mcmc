@@ -35,12 +35,12 @@ import java.util.List;
 
 /**
  * @author Marc A. Suchard
+ * @author Andy Magee
  */
 
 public class AminoAcidMixtureParser extends AbstractXMLObjectParser {
 
-    public static final String GLM_SUBSTITUTION_MODEL = "aminoAcidMixtureModel";
-
+    private static final String GLM_SUBSTITUTION_MODEL = "aminoAcidMixtureModel";
 
     public String getParserName() {
         return GLM_SUBSTITUTION_MODEL;
@@ -76,5 +76,4 @@ public class AminoAcidMixtureParser extends AbstractXMLObjectParser {
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(EmpiricalAminoAcidModel.class, 1, Integer.MAX_VALUE),
     };
-
 }

@@ -50,6 +50,7 @@
       <taxon id="putative_root_2"/>
       <taxon id="putative_root_3"/>
       <taxon id="putative_root_4"/>
+      <taxon id="putative_root_5"/>
     </taxa>
 
     <alignment id="putativeRootSequenceAlignment" dataType="nucleotide">
@@ -63,11 +64,15 @@
       </sequence>
       <sequence>
         <taxon idref="putative_root_3"/>
-          AAAAAAAACC
+          AAAAAAAAAG
       </sequence>
       <sequence>
         <taxon idref="putative_root_4"/>
-          AAAAAAACCC
+          AAAAAAAAAT
+      </sequence>
+      <sequence>
+        <taxon idref="putative_root_5"/>
+          AAAAAAACGT
       </sequence>
     </alignment>
 
@@ -80,7 +85,7 @@
 <!--
         (taxon_6:0.6599920953,((((taxon_8:0.08050441416,taxon_4:0.1993587138):0.06120663346,taxon_7:0.4556825075):0.1431224649,taxon_10:0.5471037512):0.8189234324,((taxon_1:0.739103453,(taxon_2:0.3068418624,taxon_5:0.7002265998):0.6723836821):0.4476448677,(taxon_9:0.16993984,taxon_3:0.2669664454):0.9823498076):0.9481884362):0.3653106997);;
  -->
-      ((taxon_1:1.0,taxon_2:1.0):1.0,(taxon_3:1.0,taxon_4:1.0):1.0);
+      ((taxon_1:0.0000000001,taxon_2:0.0000000001):0.0000000001,(taxon_3:0.0000000001,taxon_4:0.0000000001):0.0000000001);
     </newick>
 
     <treeModel id="treeModel" fixHeights="true">
@@ -98,27 +103,48 @@
 
 	<strictClockBranchRates id="branchRates">
 		<rate>
-			<parameter id="clock.rate" value="1E-4" lower="0.0"/>
+			<parameter id="clock.rate" value="1.0" lower="0.0"/>
 		</rate>
 	</strictClockBranchRates>
 
-  	<HKYModel id="hky">
-  		<frequencies>
-  			<frequencyModel dataType="nucleotide">
-  				<frequencies>
-  					<parameter id="frequencies" value="0.25 0.25 0.25 0.25"/>
-  				</frequencies>
-  			</frequencyModel>
-  		</frequencies>
-  		<kappa>
-  			<parameter id="kappa" value="1.0" lower="0.0"/>
-  		</kappa>
-  	</HKYModel>
+    <HKYModel id="HKY">
+        <frequencies>
+            <frequencyModel dataType="nucleotide">
+                <frequencies>
+                    <parameter id="HKY.frequencies" value="0.1 0.2 0.3 0.4"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <kappa>
+            <parameter id="kappa" value="2.0" lower="0.0"/>
+        </kappa>
+    </HKYModel>
 
+    <glmSubstitutionModel id="GLM" dataType="nucleotide">
+        <rootFrequencies>
+            <frequencyModel dataType="nucleotide">
+                <frequencies>
+                    <parameter id="GLM.frequencies" value="0.3 0.20 0.20 0.30"/>
+                </frequencies>
+            </frequencyModel>
+        </rootFrequencies>
 
-  	<siteModel id="siteModel">
+        <glmModel family="logLinear" checkIdentifiability="true">
+            <independentVariables>
+                <parameter id="log.kappa" value="1.7"/>
+                <designMatrix id="hky.designMatrix">
+                    <parameter id="kappa.design" value="0 1 0 0 1 0	0 1 0 0 1 0"/>
+                </designMatrix>
+            </independentVariables>
+            <randomEffects>
+                <parameter id="glmRandCoefficients" dimension="12" value="0.5"/>
+            </randomEffects>
+        </glmModel>
+    </glmSubstitutionModel>
+
+    <siteModel id="siteModel">
   		<substitutionModel>
-  			<HKYModel idref="hky"/>
+  			<HKYModel idref="HKY"/>
   		</substitutionModel>
   	</siteModel>
 
@@ -138,26 +164,71 @@
         <strictClockBranchRates idref="branchRates"/>
     </ancestralTreeLikelihood>
 
-    <sequenceDistanceStatistic id="distanceTaxonToRoot" treeSequenceIsAncestral="false">
-      <ancestralTreeLikelihood idref="asrLikelihood"/>
-      <HKYModel idref="hky"/>
-      <alignment idref="putativeRootSequenceAlignment"/>
-      <strictClockBranchRates idref="branchRates"/>
-    </sequenceDistanceStatistic>
-
-    <sequenceDistanceStatistic id="distanceRootToTaxon" treeSequenceIsAncestral="true">
+    <sequenceDistanceStatistic id="SDS.HKY">
         <ancestralTreeLikelihood idref="asrLikelihood"/>
-        <HKYModel idref="hky"/>
+        <HKYModel idref="HKY"/>
         <alignment idref="putativeRootSequenceAlignment"/>
         <strictClockBranchRates idref="branchRates"/>
     </sequenceDistanceStatistic>
 
-    <report>
-      <sequenceDistanceStatistic idref="distanceTaxonToRoot"/>
-    </report>
+    <sequenceDistanceStatistic id="SDS.HKY.logLik" reportDistance="likelihood">
+        <ancestralTreeLikelihood idref="asrLikelihood"/>
+        <HKYModel idref="HKY"/>
+        <alignment idref="putativeRootSequenceAlignment"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </sequenceDistanceStatistic>
+
+    <sequenceDistanceStatistic id="SDS.GLM">
+        <ancestralTreeLikelihood idref="asrLikelihood"/>
+        <HKYModel idref="GLM"/>
+        <alignment idref="putativeRootSequenceAlignment"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </sequenceDistanceStatistic>
+
 
     <report>
-        <sequenceDistanceStatistic idref="distanceRootToTaxon"/>
+      <sequenceDistanceStatistic idref="SDS.HKY"/>
     </report>
+
+<!--    <report>-->
+<!--        <sequenceDistanceStatistic idref="SDS.HKY.logLik"/>-->
+<!--    </report>-->
+
+    <report>
+        <sequenceDistanceStatistic idref="SDS.GLM"/>
+    </report>
+
+    <cachedReport id="hkyReport">
+        <sequenceDistanceStatistic idref="SDS.HKY"/>
+    </cachedReport>
+
+    <cachedReport id="glmReport">
+        <sequenceDistanceStatistic idref="SDS.GLM"/>
+    </cachedReport>
+
+    <assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\]:\n">
+        <message>
+            Check HKY distances
+        </message>
+        <actual regex="values:\s*(.*)\n">
+            <cachedReport idref="hkyReport"/>
+        </actual>
+        <expected>
+            0.0000000000 0.08257860470038939 0.08008257963215630 0.08257860342578459 0.28470756232992495
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\]:\n">
+        <message>
+            Check GLM distances
+        </message>
+        <actual regex="values:\s*(.*)\n">
+            <cachedReport idref="glmReport"/>
+        </actual>
+        <expected>
+            0.0000000000 0.13364876344401530 0.12118225005187222 0.13364876345082352 0.54862644157267826
+        </expected>
+    </assertEqual>
+
 
 </beast>

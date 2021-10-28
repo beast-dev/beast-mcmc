@@ -124,46 +124,23 @@
 		<strictClockBranchRates idref="branchRates"/>
 	</rateStatistic>
 
-
-	<!-- The WAG substitution model                                              -->
-	<aminoAcidModel id="aa" type="WAG"/>
-
-	<!-- site model                                                              -->
-	<siteModel id="siteModel">
-		<substitutionModel>
-			<aminoAcidModel idref="aa"/>
-		</substitutionModel>
-		<gammaShape gammaCategories="4">
-			<parameter id="alpha" value="0.5" lower="0.0"/>
-		</gammaShape>
-	</siteModel>
-
-	<!--                                                                         -->
-	<statistic id="mu" name="mu">
-		<siteModel idref="siteModel"/>
-	</statistic>
-
-
-	<!-- Likelihood for tree given sequence data                                 -->
-	<treeDataLikelihood id="treeLikelihood" useAmbiguities="false">
-		<partition>
-			<patterns idref="patterns"/>
-			<siteModel idref="siteModel"/>
-		</partition>
-		<treeModel idref="treeModel"/>
-		<strictClockBranchRates idref="branchRates"/>
-	</treeDataLikelihood>
-
-<!--
-	<glmSubstitutionModel id="glm.aa" normalize="true">
-		<generalDataType idref="loc.dataType"/>
+	<glmSubstitutionModel id="glm.aa" normalize="true" dataType="amino acid">
 		<rootFrequencies>
-			<!~~ Need to figure this out ~~>
+			<!-- <!~~ Need to figure this out ~~> -->
+			<!-- For now, using empirical frequenceies -->
+			<frequencyModel dataType="amino acid">
+<!--				<alignment idref="alignment"/>-->
+				<frequencies>
+					<parameter id="frequencies" dimension="20" value="0.08660000000000002 0.019300000000000008 0.05700000000000002 0.05810000000000002 0.03840000000000001 0.08330000000000003 0.02440000000000001 0.048500000000000015 0.06200000000000002 0.08620000000000003 0.019500000000000007 0.03910000000000002 0.045800000000000014 0.03670000000000002 0.04400000000000001 0.06950000000000003 0.06100000000000002 0.07090000000000003 0.014400000000000005 0.03530000000000001"/>
+				</frequencies>
+			</frequencyModel>
 		</rootFrequencies>
 		<glmModel family="logLinear" checkIdentifiability="true">
 			<independentVariables>
-				<parameter id="coefficient" value="1.0"/>
-				<!~~ add in stuff here ~~>
+				<parameter id="mixture.coefficient" value="1.0"/>
+				<aminoAcidMixtureModel id="aamm">
+					<aminoAcidModel type="WAG"/>
+				</aminoAcidMixtureModel>
 			</independentVariables>
 		</glmModel>
 	</glmSubstitutionModel>
@@ -172,9 +149,23 @@
 		<substitutionModel>
 			<glmSubstitutionModel idref="glm.aa"/>
 		</substitutionModel>
-		<gammaShape gammaCategories="4">
-			<parameter id="alpha.glm" value="0.5" lower="0.0"/>
-		</gammaShape>
+	</siteModel>
+
+	<!-- The WAG substitution model                                              -->
+	<aminoAcidModel id="aa" type="WAG"/>
+<!--		<frequencyModel dataType="amino acid">-->
+<!--			<alignment idref="alignment"/>-->
+<!--			<frequencies>-->
+<!--				<parameter id="frequencies2" dimension="20"/>-->
+<!--			</frequencies>-->
+<!--		</frequencyModel>-->
+<!--	</aminoAcidModel>-->
+
+	<!-- site model                                                              -->
+	<siteModel id="siteModel.WAG">
+		<substitutionModel>
+			<aminoAcidModel idref="aa"/>
+		</substitutionModel>
 	</siteModel>
 
 	<treeDataLikelihood id="treeLikelihood.glm" useAmbiguities="false">
@@ -185,111 +176,37 @@
 		<treeModel idref="treeModel"/>
 		<strictClockBranchRates idref="branchRates"/>
 	</treeDataLikelihood>
- -->
 
-<!-- Check that old and new likelihoods are the same -->
-
-
-	<!-- Define operators                                                        -->
-	<operators id="operators" optimizationSchedule="power">
-		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="alpha"/>
-		</scaleOperator>
-		<scaleOperator scaleFactor="0.75" scaleAll="true" ignoreBounds="true" weight="3">
-			<parameter idref="treeModel.allInternalNodeHeights"/>
-		</scaleOperator>
-		<subtreeSlide size="1.0" gaussian="true" weight="30">
-			<treeModel idref="treeModel"/>
-		</subtreeSlide>
-		<narrowExchange weight="30">
-			<treeModel idref="treeModel"/>
-		</narrowExchange>
-		<wideExchange weight="3">
-			<treeModel idref="treeModel"/>
-		</wideExchange>
-		<wilsonBalding weight="3">
-			<treeModel idref="treeModel"/>
-		</wilsonBalding>
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="treeModel.rootHeight"/>
-		</scaleOperator>
-		<uniformOperator weight="30">
-			<parameter idref="treeModel.internalNodeHeights"/>
-		</uniformOperator>
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="constant.popSize"/>
-		</scaleOperator>
-	</operators>
-
-
-	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true" operatorAnalysis="PV.ops">
-		<joint id="joint">
-			<prior id="prior">
-				<exponentialPrior mean="0.5" offset="0.0">
-					<parameter idref="alpha"/>
-				</exponentialPrior>
-				<logNormalPrior mu="2.0" sigma="10.0" offset="0.0">
-					<parameter idref="constant.popSize"/>
-				</logNormalPrior>
-				<coalescentLikelihood idref="coalescent"/>
-
-
-				<strictClockBranchRates idref="branchRates"/>
-			</prior>
-			<likelihood id="likelihood">
-				<treeDataLikelihood idref="treeLikelihood"/>
-			</likelihood>
-		</joint>
-		<operators idref="operators"/>
-
-		<!-- write log to screen                                                     -->
-		<log id="screenLog" logEvery="1000">
-			<column label="Joint" dp="4" width="12">
-				<joint idref="joint"/>
-			</column>
-			<column label="Prior" dp="4" width="12">
-				<prior idref="prior"/>
-			</column>
-			<column label="Likelihood" dp="4" width="12">
-				<likelihood idref="likelihood"/>
-			</column>
-			<column label="rootHeight" sf="6" width="12">
-				<parameter idref="treeModel.rootHeight"/>
-			</column>
-		</log>
-
-		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="1000" fileName="PV.log" overwrite="false">
-			<joint idref="joint"/>
-			<prior idref="prior"/>
-			<likelihood idref="likelihood"/>
-			<parameter idref="treeModel.rootHeight"/>
-			<treeLengthStatistic idref="treeLength"/>
-			<parameter idref="constant.popSize"/>
-			<parameter idref="alpha"/>
-			<parameter idref="clock.rate"/>
-			<rateStatistic idref="meanRate"/>
-			<treeDataLikelihood idref="treeLikelihood"/>
-			<strictClockBranchRates idref="branchRates"/>
-			<coalescentLikelihood idref="coalescent"/>
-
-		</log>
-
-		<!-- write tree log to file                                                  -->
-		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="PV.trees" sortTranslationTable="true">
-			<treeModel idref="treeModel"/>
-			<trait name="rate" tag="rate">
-				<strictClockBranchRates idref="branchRates"/>
-			</trait>
-			<joint idref="joint"/>
-		</logTree>
-	</mcmc>
+	<treeDataLikelihood id="treeLikelihood.WAG" useAmbiguities="false">
+		<partition>
+			<patterns idref="patterns"/>
+			<siteModel idref="siteModel.WAG"/>
+		</partition>
+		<treeModel idref="treeModel"/>
+		<strictClockBranchRates idref="branchRates"/>
+	</treeDataLikelihood>
 
 	<report>
-		<property name="timer">
-			<mcmc idref="mcmc"/>
-		</property>
+		<treeDataLikelihood idref="treeLikelihood.glm"/>
 	</report>
 
+	<report>
+		<treeDataLikelihood idref="treeLikelihood.WAG"/>
+	</report>
+
+	<assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
+		<message>
+			Check log-likelihood, mixture vs AA model
+		</message>
+		<actual regex="dr.evomodel.treedatalikelihood.TreeDataLikelihood\((.*?)\)">
+			<report>
+				<treeDataLikelihood idref="treeLikelihood.glm"/>
+			</report>
+		</actual>
+		<expected regex="dr.evomodel.treedatalikelihood.TreeDataLikelihood\((.*?)\)">
+			<report>
+				<treeDataLikelihood idref="treeLikelihood.WAG"/>
+			</report>
+		</expected>
+	</assertEqual>
 </beast>

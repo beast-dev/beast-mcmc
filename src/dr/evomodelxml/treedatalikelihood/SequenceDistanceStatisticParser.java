@@ -49,7 +49,6 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
     public static String SEQUENCE_DISTANCE_STATISTIC = "sequenceDistanceStatistic";
     private static final String MRCA = "mrca";
     public static final String TAXA = "taxa";
-    public static final String TREE_SEQUENCE_IS_ANCESTRAL = "treeSequenceIsAncestral";
 
     public String getParserName() { return SEQUENCE_DISTANCE_STATISTIC; }
 
@@ -70,10 +69,6 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Sequences being compared to tree nodes cannot be compressed (unique) patterns.");
         }
 
-        // If true, sequence at given tree node is taken to be ancestral to user-supplied sequence
-        // Otherwise, user-defined sequence is taken to be ancestral to sequence at tree node
-        boolean treeSequenceIsAncestral = xo.getAttribute(TREE_SEQUENCE_IS_ANCESTRAL, false);
-
         // If true, distance between node and sequence are reported, if false the maximized likelihood
         SequenceDistanceStatistic.DistanceType type = parseFromString(xo.getAttribute(REPORT_DISTANCE,
                 SequenceDistanceStatistic.DistanceType.MAXIMIZED_DISTANCE.getName()));
@@ -83,12 +78,16 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
             mrcaTaxa = (TaxonList) xo.getElementFirstChild(MRCA);
         }
 
+        if ( patternList.getPatternCount() != asrLike.getPatternCount()) {
+            throw new XMLParseException("Alignments are of different sizes.");
+        }
+
         SequenceDistanceStatistic seqDistStatistic = null;
         try {
             seqDistStatistic = new SequenceDistanceStatistic(asrLike,subsModel,branchRates,
-                    patternList,treeSequenceIsAncestral, mrcaTaxa, type);
+                    patternList, mrcaTaxa, type);
         } catch (TreeUtils.MissingTaxonException e) {
-            throw new XMLParseException("Unable to find taxon-set");
+            throw new XMLParseException("Unable to find taxon-set.");
         }
 
         return seqDistStatistic;
@@ -120,8 +119,7 @@ public class SequenceDistanceStatisticParser extends AbstractXMLObjectParser {
             new ElementRule(SubstitutionModel.class, true),
             new ElementRule(PatternList.class, true),
             new ElementRule(BranchRateModel.class, false),
-            AttributeRule.newBooleanRule(TREE_SEQUENCE_IS_ANCESTRAL, true),
-            AttributeRule.newBooleanRule(REPORT_DISTANCE, true),
+            AttributeRule.newStringRule(REPORT_DISTANCE, true),
             new ElementRule(MRCA,
                     new XMLSyntaxRule[]{new ElementRule(Taxa.class)}, true),
     };

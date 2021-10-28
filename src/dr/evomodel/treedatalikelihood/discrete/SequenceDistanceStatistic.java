@@ -2,22 +2,17 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.branchratemodel.AbstractBranchRateModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.inference.model.Statistic;
-import dr.inference.operators.hmc.MassPreconditioner;
 import dr.math.UnivariateFunction;
 import dr.math.UnivariateMinimum;
+import dr.math.matrixAlgebra.Vector;
 import dr.xml.Reportable;
 
 import java.util.Set;
@@ -31,16 +26,14 @@ import java.util.Set;
 public class SequenceDistanceStatistic extends Statistic.Abstract implements Reportable {
 
     public enum DistanceType {
-        MAXIMIZED_DISTANCE("distance", "distanceTo") {
-            
-            public double extractResultForType(double[] results) {
-                return results[0];
+        MAXIMIZED_DISTANCE("distance", "distanceFrom") {
+            public double extractResultForType(UnivariateMinimum results, double rate) {
+                return results.minx / rate;
             }
         },
         LOG_LIKELIHOOD("likelihood", "lnL") {
-
-            public double extractResultForType(double[] results) {
-                return results[1];
+            public double extractResultForType(UnivariateMinimum results, double rate) {
+                return -results.fminx;
             }
         };
 
@@ -53,9 +46,11 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
             return name;
         }
 
-        public String getLabel() { return label; }
+        public String getLabel() {
+            return label;
+        }
 
-        public abstract double extractResultForType(double[] results);
+        public abstract double extractResultForType(UnivariateMinimum results, double rate);
 
         private String name;
         private String label;
@@ -65,7 +60,6 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
                                      SubstitutionModel subsModel,
                                      BranchRateModel branchRates,
                                      PatternList patterns,
-                                     boolean treeSeqAncestral,
                                      TaxonList mrcaTaxa,
                                      DistanceType type) throws TreeUtils.MissingTaxonException {
         this.asrLikelihood = asrLike;
@@ -73,18 +67,11 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         this.branchRates = branchRates;
         this.patternList = patterns;
         this.dataType = patternList.getDataType();
-        this.treeSequenceIsAncestral = treeSeqAncestral;
         this.type = type;
         this.tree = asrLikelihood.getTreeModel();
         this.leafSet = (mrcaTaxa != null) ? TreeUtils.getLeavesForTaxa(tree, mrcaTaxa) : null;
+
     }
-//    public void setTree(Tree tree) {
-//        this.tree = tree;
-//    }
-//
-//    public Tree getTree() {
-//        return tree;
-//    }
 
     public int getDimension() {
         return patternList.getTaxonCount();
@@ -105,53 +92,58 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
      * @return the statistic
      */
     public double getStatisticValue(int dim) {
-        double[] optimized = optimizeBranchLength(dim);
-        return type.extractResultForType(optimized);
+        UnivariateMinimum optimized = optimizeBranchLength(dim);
+        return type.extractResultForType(optimized, branchRates.getBranchRate(tree, getNode()));
     }
 
     @Override
     public String getReport() {
 
-        NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
-
         StringBuilder sb = new StringBuilder("sequenceDistanceStatistic Report\n\n");
 
-        for (int i=0; i < patternList.getTaxonCount(); i++) {
-            String source = treeSequenceIsAncestral ? "node " + node.getNumber() : "taxon " + patternList.getTaxonId(i);
-            String target = treeSequenceIsAncestral ? "taxon " + patternList.getTaxonId(i) : "node " + node.getNumber();
-            sb.append("distance (in calendar time) from " + source + " to " + target + " is " + getStatisticValue(i) + "\n");
+        sb.append("dimension names: ");
+
+        int n = getDimension();
+
+        double[] values = new double[n];
+        for (int i = 0; i < n; i++) {
+            sb.append(getDimensionName(i));
+            if (i != n - 1) {
+                sb.append(" ");
+            }
+            values[i] = getStatisticValue(i);
         }
+        sb.append("\n\n");
+        sb.append("values: ");
+        sb.append(new Vector(values));
         sb.append("\n\n");
 
         return sb.toString();
     }
 
-    private double computeLogLikelihood(double distance, int[] fromStates, int[] toStates) {
+    private double computeLogLikelihood(double distance, int[] taxonStates, int[] nodeStates) {
         // could consider getting from asrLikelihood, probably, at the cost of an additional taxon list but removing need for patterns argument
         int nStates = dataType.getStateCount();
 
-        double[][] tpm = getTPM(distance);
-        double[][] logTpm = tpm;
-        for (int i=0; i<nStates; i++) {
-            for (int j=0; j<nStates; j++) {
-                logTpm[i][j] = Math.log(tpm[i][j]);
-            }
+        double[] tpm = new double[nStates * nStates];
+        substitutionModel.getTransitionProbabilities(distance, tpm);
+        double[] logTpm = new double[nStates * nStates];
+        for (int i = 0; i < nStates * nStates; i++) {
+            logTpm[i] = Math.log(tpm[i]);
         }
 
-        int[] from,to;
+        double[] pi = substitutionModel.getFrequencyModel().getFrequencies();
+
         double lnL = 0.0;
-        double sum;
-        for (int s=0; s<fromStates.length; s++) {
-            from = dataType.getStates(fromStates[s]);
-            to = dataType.getStates(toStates[s]);
-            sum = 0.0;
-            if ( from.length == 1 && to.length == 1) {
-                lnL += logTpm[from[0]][to[0]];
+        for (int s = 0; s < taxonStates.length; s++) {
+            double sum = 0.0;
+            int taxonState = taxonStates[s];
+            int nodeState = nodeStates[s];
+            if ( taxonState < nStates ) {
+                lnL += logTpm[taxonState * nStates + nodeState];
             } else {
-                for (int i : from) {
-                    for (int j : to) {
-                        sum += tpm[i][j];
-                    }
+                for (int i = 0; i < nStates; i++) {
+                    sum += tpm[i * nStates + nodeState] * pi[i];
                 }
                 lnL += Math.log(sum);
             }
@@ -159,45 +151,24 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         return lnL;
     }
 
-    private double[][] getTPM(double distance) {
-        int nStates = dataType.getStateCount();
-        double[] tpmFlat = new double[nStates*nStates];
-        substitutionModel.getTransitionProbabilities(distance, tpmFlat);
-
-        // Make indexing easier in likelihood computation
-        // This is really ln(P) and not P
-        double[][] tpm = new double[nStates][nStates];
-        for (int i=0; i < nStates; i++) {
-            for (int j=0; j < nStates; j++) {
-                tpm[i][j] = tpmFlat[i*nStates+j];
-            }
-        }
-
-        return tpm;
+    private NodeRef getNode() {
+        return (leafSet != null) ? TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
     }
 
-    private double[] optimizeBranchLength(int taxonIndex) {
-        NodeRef node = (leafSet != null) ?  TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
+    private UnivariateMinimum optimizeBranchLength(int taxonIndex) { // MAS: note that function says nothing about branch-rates, so moved elsewhere
 
-        int[] nodeStates = asrLikelihood.getStatesForNode(tree,node);
+        NodeRef node = getNode();
+        int[] nodeStates = asrLikelihood.getStatesForNode(tree, node);
         int[] taxonStates = new int[nodeStates.length];
-        for (int i=0; i<nodeStates.length; i++) {
-            taxonStates[i] = patternList.getPatternState(taxonIndex,i);
-        }
 
-        int[] fromStates,toStates;
-        if ( treeSequenceIsAncestral ) {
-            fromStates = nodeStates;
-            toStates = taxonStates;
-        } else {
-            toStates = nodeStates;
-            fromStates = taxonStates;
+        for (int i = 0; i < nodeStates.length; i++) {
+            taxonStates[i] = patternList.getPatternState(taxonIndex,i);
         }
 
         UnivariateFunction f = new UnivariateFunction() {
             @Override
             public double evaluate(double argument) {
-                double lnL = computeLogLikelihood(argument, fromStates, toStates);
+                double lnL = computeLogLikelihood(argument, taxonStates, nodeStates);
 
                 return -lnL;
             }
@@ -215,39 +186,15 @@ public class SequenceDistanceStatistic extends Statistic.Abstract implements Rep
         };
 
         UnivariateMinimum minimum = new UnivariateMinimum();
+        minimum.findMinimum(f);
 
-        double x = minimum.findMinimum(f);
-
-        // MAS: should delegate via something like: val = type.getReturnValue(minimum);
-        double results[] = {minimum.minx/branchRates.getBranchRate(tree,node),-minimum.fminx};
-
-//        System.err.println("Used " + minimum.numFun + " evaluations to find minimum at " + minimum.minx + " with function value " + minimum.fminx + " and curvature " + minimum.f2minx);
-
-        return results;
+        return minimum;
     }
 
-//    private int getFromState(int siteIndex, int[] nodeState, int[] taxonState) {
-//        if (treeSequenceIsAncestral) {
-//            return nodeState[siteIndex];
-//        } else {
-//            return taxonState[siteIndex];
-//        }
-//    }
-//
-//    private int getToState(int siteIndex, int[] nodeState, int[] taxonState) {
-//        if (treeSequenceIsAncestral) {
-//            return taxonState[siteIndex];
-//        } else {
-//            return nodeState[siteIndex];
-//        }
-//    }
-
-
-    private AncestralStateBeagleTreeLikelihood asrLikelihood = null;
-    private BranchRateModel branchRates = null;
-    private PatternList patternList = null;
-    private SubstitutionModel substitutionModel = null;
-    boolean treeSequenceIsAncestral;
+    private AncestralStateBeagleTreeLikelihood asrLikelihood;
+    private BranchRateModel branchRates;
+    private PatternList patternList;
+    private SubstitutionModel substitutionModel;
     private final Set<String> leafSet;
     private final Tree tree;
     private final DistanceType type;

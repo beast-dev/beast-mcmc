@@ -51,6 +51,12 @@ public class AminoAcidMixtureParser extends AbstractXMLObjectParser {
         List<EmpiricalAminoAcidModel> modeList = new ArrayList<>();
         for (int i = 0; i < xo.getChildCount(); ++i) {
             EmpiricalAminoAcidModel model = (EmpiricalAminoAcidModel) xo.getChild(i);
+            double[] rates = model.getEmpiricalRateMatrix().getEmpiricalRates();
+            for (int j = 0; j < rates.length; j++) {
+                if ( rates[j] < Double.MIN_VALUE ) {
+                    throw new XMLParseException("Entry " + j + " in rate-vector for mixture component " + i + " is 0.0. AminoAcidMixtureModel cannot be used for rate matrices which have entries which are 0.0.");
+                }
+            }
             modeList.add(model);
         }
 

@@ -123,73 +123,72 @@
 		<strictClockBranchRates idref="branchRates"/>
 	</rateStatistic>
 
-<!--	<glmSubstitutionModel id="glm.aa" normalize="true" dataType="amino acid">-->
-<!--		<rootFrequencies>-->
-<!--			&lt;!&ndash; <!~~ Need to figure this out ~~> &ndash;&gt;-->
-<!--			&lt;!&ndash; For now, using empirical frequenceies &ndash;&gt;-->
-<!--			<frequencyModel dataType="amino acid">-->
-<!--				<alignment idref="alignment"/>-->
-<!--				<frequencies>-->
-<!--					<parameter id="frequencies" dimension="20"/>-->
-<!--				</frequencies>-->
-<!--			</frequencyModel>-->
-<!--		</rootFrequencies>-->
-<!--		<glmModel family="logLinear" checkIdentifiability="true">-->
-<!--			<independentVariables>-->
-<!--				<parameter id="mixture.coefficient" value="1.0"/>-->
-<!--				<aminoAcidMixtureModel id="aa">-->
-<!--					<aminoAcidModel type="WAG"/>-->
-<!--					<aminoAcidModel type="LG"/>-->
-<!--					<aminoAcidModel type="FLU"/>-->
-<!--					<aminoAcidModel type="dayhoff"/>-->
-<!--					<aminoAcidModel type="blosum62"/>-->
-<!--				</aminoAcidMixtureModel>-->
-<!--			</independentVariables>-->
-<!--		</glmModel>-->
-<!--	</glmSubstitutionModel>-->
+	<glmSubstitutionModel id="glm.aa" normalize="true" dataType="amino acid">
+		<rootFrequencies>
+			<!-- <!~~ Need to figure this out ~~> -->
+			<!-- For now, using empirical frequenceies -->
+			<frequencyModel dataType="amino acid">
+				<alignment idref="alignment"/>
+				<frequencies>
+					<parameter id="frequencies" dimension="20"/>
+				</frequencies>
+			</frequencyModel>
+		</rootFrequencies>
+		<glmModel family="logLinear" checkIdentifiability="true">
+			<independentVariables>
+				<parameter id="mixture.coefficient" value="1.0"/>
+				<aminoAcidMixtureModel id="aa">
+					<aminoAcidModel type="WAG"/>
+					<aminoAcidModel type="LG"/>
+					<aminoAcidModel type="dayhoff"/>
+					<aminoAcidModel type="blosum62"/>
+				</aminoAcidMixtureModel>
+			</independentVariables>
+		</glmModel>
+	</glmSubstitutionModel>
 
-<!--	<siteModel id="siteModel.glm">-->
-<!--		<substitutionModel>-->
-<!--			<glmSubstitutionModel idref="glm.aa"/>-->
-<!--		</substitutionModel>-->
-<!--		<gammaShape gammaCategories="4">-->
-<!--			<parameter id="alpha" value="0.5" lower="0.0"/>-->
-<!--		</gammaShape>-->
-<!--	</siteModel>-->
+	<siteModel id="siteModel.glm">
+		<substitutionModel>
+			<glmSubstitutionModel idref="glm.aa"/>
+		</substitutionModel>
+		<gammaShape gammaCategories="4">
+			<parameter id="alpha" value="0.5" lower="0.0"/>
+		</gammaShape>
+	</siteModel>
 
-<!--	<treeDataLikelihood id="treeLikelihood" useAmbiguities="true" usePreOrder="true" branchInfinitesimalDerivative="true" scalingScheme="never" delayScaling="false">-->
-<!--		<partition>-->
-<!--			<patterns idref="patterns"/>-->
-<!--			<siteModel idref="siteModel.glm"/>-->
-<!--		</partition>-->
-<!--		<treeModel idref="treeModel"/>-->
-<!--		<strictClockBranchRates idref="branchRates"/>-->
-<!--	</treeDataLikelihood>-->
+	<treeDataLikelihood id="treeLikelihood" useAmbiguities="true" usePreOrder="true" branchInfinitesimalDerivative="true" scalingScheme="never" delayScaling="false">
+		<partition>
+			<patterns idref="patterns"/>
+			<siteModel idref="siteModel.glm"/>
+		</partition>
+		<treeModel idref="treeModel"/>
+		<strictClockBranchRates idref="branchRates"/>
+	</treeDataLikelihood>
 
 	<!-- This needs to be here so we can reference it in the gradient, or does it? -->
-<!--	<likelihood id="likelihood">-->
-<!--		<treeDataLikelihood idref="treeLikelihood"/>-->
-<!--	</likelihood>-->
+	<likelihood id="likelihood">
+		<treeDataLikelihood idref="treeLikelihood"/>
+	</likelihood>
 
-<!--	<bayesianBridge id="bbDistribution">-->
-<!--		<parameter idref="mixture.coefficient"/>-->
-<!--		<globalScale>-->
-<!--			<parameter id="globalScale" value="0.1" lower="0"/>-->
-<!--		</globalScale>-->
-<!--		<exponent>-->
-<!--			<parameter id="exponent" value="0.25"/>-->
-<!--		</exponent>-->
-<!--		<localScale>-->
-<!--			<parameter id="localScale" value="0.1" dimension="5"/>-->
-<!--		</localScale>-->
-<!--		<slabWidth>-->
-<!--			<parameter value="2.0"/>-->
-<!--		</slabWidth>-->
-<!--	</bayesianBridge>-->
+	<bayesianBridge id="bbDistribution">
+		<parameter idref="mixture.coefficient"/>
+		<globalScale>
+			<parameter id="globalScale" value="0.1" lower="0"/>
+		</globalScale>
+		<exponent>
+			<parameter id="exponent" value="0.25"/>
+		</exponent>
+		<localScale>
+			<parameter id="localScale" value="0.1" dimension="5"/>
+		</localScale>
+		<slabWidth>
+			<parameter value="2.0"/>
+		</slabWidth>
+	</bayesianBridge>
 
-<!--	<gammaPrior id="globalScalePrior" shape="1" scale="2">-->
-<!-- 		<parameter idref="globalScale"/>-->
-<!-- 	</gammaPrior>-->
+	<gammaPrior id="globalScalePrior" shape="1" scale="2">
+ 		<parameter idref="globalScale"/>
+ 	</gammaPrior>
 
  <!-- <normalDistributionModel id="test">
 	 <mean>
@@ -201,12 +200,12 @@
  </normalDistributionModel> -->
 
 	<!-- Numerical gradients instead of approximate, disable numericalHessian wrapper for approximate -->
-<!--	<numericalHessian id="numericalGlmAaGradient">-->
-<!--		<glmSubstitutionModelGradient id="glm.aa.gradient" effects="fixed" useHessian="false">-->
-<!--			<treeDataLikelihood idref="treeLikelihood"/>-->
-<!--			<glmSubstitutionModel idref="glm.aa"/>-->
-<!--		</glmSubstitutionModelGradient>-->
-<!--  </numericalHessian>-->
+	<numericalHessian id="numericalGlmAaGradient">
+		<glmSubstitutionModelGradient id="glm.aa.gradient" effects="fixed" useHessian="false">
+			<treeDataLikelihood idref="treeLikelihood"/>
+			<glmSubstitutionModel idref="glm.aa"/>
+		</glmSubstitutionModelGradient>
+  </numericalHessian>
 
 	<!-- <report id="gradientReport">
 			<glmSubstitutionModelGradient idref="numericalGlmAaGradient"/>
@@ -223,126 +222,126 @@
 	</report> -->
 
 	<!-- Define operators                                                        -->
-<!--	<operators id="operators" optimizationSchedule="power">-->
+	<operators id="operators" optimizationSchedule="power">
 
-<!--		<hamiltonianMonteCarloOperator weight="1" nSteps="4" stepSize="1E-2" mode="vanilla"-->
-<!--		                 drawVariance="1.0" autoOptimize="true" targetAcceptanceProbability="0.7"-->
-<!--		                 preconditioningUpdateFrequency="1">-->
-<!--			<jointGradient>-->
-<!--				<bayesianBridge idref="bbDistribution"/>-->
-<!--				<numericalHessian idref="numericalGlmAaGradient"/>-->
-<!--			</jointGradient>-->
-<!--			<preconditioner>-->
-<!--				<compoundPriorPreconditioner>-->
-<!--					<bayesianBridgeDistribution idref="bbDistribution"/>-->
-<!--				</compoundPriorPreconditioner>-->
-<!--			</preconditioner>-->
-<!--		</hamiltonianMonteCarloOperator>-->
+		<hamiltonianMonteCarloOperator weight="1" nSteps="4" stepSize="1E-2" mode="vanilla"
+		                 drawVariance="1.0" autoOptimize="true" targetAcceptanceProbability="0.7"
+		                 preconditioningUpdateFrequency="1">
+			<jointGradient>
+				<bayesianBridge idref="bbDistribution"/>
+				<numericalHessian idref="numericalGlmAaGradient"/>
+			</jointGradient>
+			<preconditioner>
+				<compoundPriorPreconditioner>
+					<bayesianBridgeDistribution idref="bbDistribution"/>
+				</compoundPriorPreconditioner>
+			</preconditioner>
+		</hamiltonianMonteCarloOperator>
 
-<!--		<bayesianBridgeGibbsOperator weight="5">-->
-<!--			<bayesianBridge idref="bbDistribution"/>-->
-<!--			<gammaPrior idref="globalScalePrior"/>-->
-<!--		</bayesianBridgeGibbsOperator>-->
+		<bayesianBridgeGibbsOperator weight="5">
+			<bayesianBridge idref="bbDistribution"/>
+			<gammaPrior idref="globalScalePrior"/>
+		</bayesianBridgeGibbsOperator>
 
-<!--		<scaleOperator scaleFactor="0.75" weight="1">-->
-<!--			<parameter idref="alpha"/>-->
-<!--		</scaleOperator>-->
-<!--		<scaleOperator scaleFactor="0.75" scaleAll="true" ignoreBounds="true" weight="3">-->
-<!--			<parameter idref="treeModel.allInternalNodeHeights"/>-->
-<!--		</scaleOperator>-->
-<!--		<subtreeSlide size="1.0" gaussian="true" weight="30">-->
-<!--			<treeModel idref="treeModel"/>-->
-<!--		</subtreeSlide>-->
-<!--		<narrowExchange weight="30">-->
-<!--			<treeModel idref="treeModel"/>-->
-<!--		</narrowExchange>-->
-<!--		<wideExchange weight="3">-->
-<!--			<treeModel idref="treeModel"/>-->
-<!--		</wideExchange>-->
-<!--		<wilsonBalding weight="3">-->
-<!--			<treeModel idref="treeModel"/>-->
-<!--		</wilsonBalding>-->
-<!--		<scaleOperator scaleFactor="0.75" weight="3">-->
-<!--			<parameter idref="treeModel.rootHeight"/>-->
-<!--		</scaleOperator>-->
-<!--		<uniformOperator weight="30">-->
-<!--			<parameter idref="treeModel.internalNodeHeights"/>-->
-<!--		</uniformOperator>-->
-<!--		<scaleOperator scaleFactor="0.75" weight="3">-->
-<!--			<parameter idref="constant.popSize"/>-->
-<!--		</scaleOperator>-->
-<!--	</operators>-->
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="alpha"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.75" scaleAll="true" ignoreBounds="true" weight="3">
+			<parameter idref="treeModel.allInternalNodeHeights"/>
+		</scaleOperator>
+		<subtreeSlide size="1.0" gaussian="true" weight="30">
+			<treeModel idref="treeModel"/>
+		</subtreeSlide>
+		<narrowExchange weight="30">
+			<treeModel idref="treeModel"/>
+		</narrowExchange>
+		<wideExchange weight="3">
+			<treeModel idref="treeModel"/>
+		</wideExchange>
+		<wilsonBalding weight="3">
+			<treeModel idref="treeModel"/>
+		</wilsonBalding>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="treeModel.rootHeight"/>
+		</scaleOperator>
+		<uniformOperator weight="30">
+			<parameter idref="treeModel.internalNodeHeights"/>
+		</uniformOperator>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="constant.popSize"/>
+		</scaleOperator>
+	</operators>
 
 
 	<!-- Define MCMC                                                             -->
-<!--	<mcmc id="mcmc" chainLength="1000" autoOptimize="true" operatorAnalysis="PV.ops">-->
-<!--		<joint id="joint">-->
-<!--			<prior id="prior">-->
-<!--				<exponentialPrior mean="0.5" offset="0.0">-->
-<!--					<parameter idref="alpha"/>-->
-<!--				</exponentialPrior>-->
-<!--				<logNormalPrior mu="2.0" sigma="10.0" offset="0.0">-->
-<!--					<parameter idref="constant.popSize"/>-->
-<!--				</logNormalPrior>-->
-<!--				<coalescentLikelihood idref="coalescent"/>-->
+	<mcmc id="mcmc" chainLength="10" autoOptimize="true" operatorAnalysis="PV.ops">
+		<joint id="joint">
+			<prior id="prior">
+				<exponentialPrior mean="0.5" offset="0.0">
+					<parameter idref="alpha"/>
+				</exponentialPrior>
+				<logNormalPrior mu="2.0" sigma="10.0" offset="0.0">
+					<parameter idref="constant.popSize"/>
+				</logNormalPrior>
+				<coalescentLikelihood idref="coalescent"/>
 
-<!--				<bayesianBridge idref="bbDistribution"/> &lt;!&ndash; DO NOT FORGET THIS &ndash;&gt;-->
+				<bayesianBridge idref="bbDistribution"/> <!-- DO NOT FORGET THIS -->
 
-<!--				<strictClockBranchRates idref="branchRates"/>-->
-<!--			</prior>-->
-<!--			<likelihood idref="likelihood"/>-->
-<!--		</joint>-->
-<!--		<operators idref="operators"/>-->
+				<strictClockBranchRates idref="branchRates"/>
+			</prior>
+			<likelihood idref="likelihood"/>
+		</joint>
+		<operators idref="operators"/>
 
 		<!-- write log to screen                                                     -->
-<!--		<log id="screenLog" logEvery="1000">-->
-<!--			<column label="Joint" dp="4" width="12">-->
-<!--				<joint idref="joint"/>-->
-<!--			</column>-->
-<!--			<column label="Prior" dp="4" width="12">-->
-<!--				<prior idref="prior"/>-->
-<!--			</column>-->
-<!--			<column label="Likelihood" dp="4" width="12">-->
-<!--				<likelihood idref="likelihood"/>-->
-<!--			</column>-->
-<!--			<column label="rootHeight" sf="6" width="12">-->
-<!--				<parameter idref="treeModel.rootHeight"/>-->
-<!--			</column>-->
-<!--		</log>-->
+		<log id="screenLog" logEvery="1000">
+			<column label="Joint" dp="4" width="12">
+				<joint idref="joint"/>
+			</column>
+			<column label="Prior" dp="4" width="12">
+				<prior idref="prior"/>
+			</column>
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood"/>
+			</column>
+			<column label="rootHeight" sf="6" width="12">
+				<parameter idref="treeModel.rootHeight"/>
+			</column>
+		</log>
 
 		<!-- write log to file                                                       -->
-<!--		<log id="fileLog" logEvery="100" fileName="PV.log" overwrite="false">-->
-<!--			<joint idref="joint"/>-->
-<!--			<prior idref="prior"/>-->
-<!--			<likelihood idref="likelihood"/>-->
-<!--			<parameter idref="treeModel.rootHeight"/>-->
-<!--			<treeLengthStatistic idref="treeLength"/>-->
-<!--			<parameter idref="constant.popSize"/>-->
-<!--			<parameter idref="mixture.coefficient"/>-->
-<!--			<parameter idref="globalScale"/>-->
-<!--			<parameter idref="alpha"/>-->
-<!--			<parameter idref="clock.rate"/>-->
-<!--			<rateStatistic idref="meanRate"/>-->
-<!--			<treeDataLikelihood idref="treeLikelihood"/>-->
-<!--			<strictClockBranchRates idref="branchRates"/>-->
-<!--			<coalescentLikelihood idref="coalescent"/>-->
+		<log id="fileLog" logEvery="100" fileName="PV.log" overwrite="false">
+			<joint idref="joint"/>
+			<prior idref="prior"/>
+			<likelihood idref="likelihood"/>
+			<parameter idref="treeModel.rootHeight"/>
+			<treeLengthStatistic idref="treeLength"/>
+			<parameter idref="constant.popSize"/>
+			<parameter idref="mixture.coefficient"/>
+			<parameter idref="globalScale"/>
+			<parameter idref="alpha"/>
+			<parameter idref="clock.rate"/>
+			<rateStatistic idref="meanRate"/>
+			<treeDataLikelihood idref="treeLikelihood"/>
+			<strictClockBranchRates idref="branchRates"/>
+			<coalescentLikelihood idref="coalescent"/>
 
-<!--		</log>-->
+		</log>
 
 		<!-- write tree log to file                                                  -->
-<!--		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="PV.trees" sortTranslationTable="true">-->
-<!--			<treeModel idref="treeModel"/>-->
-<!--			<trait name="rate" tag="rate">-->
-<!--				<strictClockBranchRates idref="branchRates"/>-->
-<!--			</trait>-->
-<!--			<joint idref="joint"/>-->
-<!--		</logTree>-->
-<!--	</mcmc>-->
+		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="PV.trees" sortTranslationTable="true">
+			<treeModel idref="treeModel"/>
+			<trait name="rate" tag="rate">
+				<strictClockBranchRates idref="branchRates"/>
+			</trait>
+			<joint idref="joint"/>
+		</logTree>
+	</mcmc>
 
-<!--	<report>-->
-<!--		<property name="timer">-->
-<!--			<mcmc idref="mcmc"/>-->
-<!--		</property>-->
-<!--	</report>-->
+	<report>
+		<property name="timer">
+			<mcmc idref="mcmc"/>
+		</property>
+	</report>
 
 </beast>

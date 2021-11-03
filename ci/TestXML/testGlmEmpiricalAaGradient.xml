@@ -207,12 +207,17 @@
 <!--		</glmSubstitutionModelGradient>-->
 <!--	</numericalHessian>-->
 
-	<purelyNumericalHessian id="numericalGlmAaGradient">
-		<glmSubstitutionModelGradient id="glm.aa.gradient" effects="fixed" useHessian="false">
-			<treeDataLikelihood idref="treeLikelihood"/>
-			<glmSubstitutionModel idref="glm.aa"/>
-		</glmSubstitutionModelGradient>
-	</purelyNumericalHessian>
+	<numericalGradient id="numGrad">
+		<parameter idref="mixture.coefficient"/>
+		<treeDataLikelihood idref="treeLikelihood"/>
+	</numericalGradient>
+
+<!--	<purelyNumericalHessian id="numericalGlmAaGradient">-->
+<!--		<glmSubstitutionModelGradient id="glm.aa.gradient" effects="fixed" useHessian="false">-->
+<!--			<treeDataLikelihood idref="treeLikelihood"/>-->
+<!--			<glmSubstitutionModel idref="glm.aa"/>-->
+<!--		</glmSubstitutionModelGradient>-->
+<!--	</purelyNumericalHessian>-->
 
 	<!-- <report id="gradientReport">
 			<glmSubstitutionModelGradient idref="numericalGlmAaGradient"/>
@@ -236,7 +241,7 @@
 		                 preconditioningUpdateFrequency="1">
 			<jointGradient>
 				<bayesianBridge idref="bbDistribution"/>
-				<purelyNumericalHessian idref="numericalGlmAaGradient"/>
+				<numericalGradient idref="numGrad"/>
 			</jointGradient>
 			<preconditioner>
 				<compoundPriorPreconditioner>
@@ -301,7 +306,7 @@
 		<operators idref="operators"/>
 
 		<!-- write log to screen                                                     -->
-		<log id="screenLog" logEvery="1000">
+		<log id="screenLog" logEvery="100">
 			<column label="Joint" dp="4" width="12">
 				<joint idref="joint"/>
 			</column>

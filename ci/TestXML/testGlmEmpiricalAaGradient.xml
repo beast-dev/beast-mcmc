@@ -200,12 +200,19 @@
  </normalDistributionModel> -->
 
 	<!-- Numerical gradients instead of approximate, disable numericalHessian wrapper for approximate -->
-	<numericalHessian id="numericalGlmAaGradient">
+<!--	<numericalHessian id="numericalGlmAaGradient">-->
+<!--		<glmSubstitutionModelGradient id="glm.aa.gradient" effects="fixed" useHessian="false">-->
+<!--			<treeDataLikelihood idref="treeLikelihood"/>-->
+<!--			<glmSubstitutionModel idref="glm.aa"/>-->
+<!--		</glmSubstitutionModelGradient>-->
+<!--	</numericalHessian>-->
+
+	<purelyNumericalHessian id="numericalGlmAaGradient">
 		<glmSubstitutionModelGradient id="glm.aa.gradient" effects="fixed" useHessian="false">
 			<treeDataLikelihood idref="treeLikelihood"/>
 			<glmSubstitutionModel idref="glm.aa"/>
 		</glmSubstitutionModelGradient>
-  </numericalHessian>
+	</purelyNumericalHessian>
 
 	<!-- <report id="gradientReport">
 			<glmSubstitutionModelGradient idref="numericalGlmAaGradient"/>
@@ -229,7 +236,7 @@
 		                 preconditioningUpdateFrequency="1">
 			<jointGradient>
 				<bayesianBridge idref="bbDistribution"/>
-				<numericalHessian idref="numericalGlmAaGradient"/>
+				<purelyNumericalHessian idref="numericalGlmAaGradient"/>
 			</jointGradient>
 			<preconditioner>
 				<compoundPriorPreconditioner>

@@ -27,6 +27,7 @@ package dr.inferencexml.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
+import dr.inference.hmc.NumericalGradient;
 import dr.inference.operators.hmc.NumericalHessianFromGradient;
 import dr.inference.operators.hmc.PurelyNumericalHessian;
 import dr.xml.*;
@@ -42,8 +43,8 @@ public class PurelyNumericalHessianParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        GradientWrtParameterProvider gradient =
-                (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
+        NumericalGradient gradient =
+                (NumericalGradient) xo.getChild(NumericalGradient.class);
 
         return new PurelyNumericalHessian(gradient);
     }
@@ -55,7 +56,7 @@ public class PurelyNumericalHessianParser extends AbstractXMLObjectParser {
     }
 
     private static final XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            new ElementRule(GradientWrtParameterProvider.class),
+            new ElementRule(NumericalGradient.class),
     };
 
     @Override

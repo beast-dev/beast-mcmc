@@ -2,6 +2,7 @@ package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
+import dr.inference.hmc.NumericalGradient;
 import dr.inference.model.HessianProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
@@ -15,16 +16,16 @@ import dr.xml.Reportable;
  */
 public class PurelyNumericalHessian implements HessianWrtParameterProvider, Reportable {
 
-    private final GradientWrtParameterProvider gradientProvider;
+    private final NumericalGradient numericalGradient;
 
-    public PurelyNumericalHessian(GradientWrtParameterProvider gradientWrtParameterProvider) {
-        this.gradientProvider = gradientWrtParameterProvider;
+    public PurelyNumericalHessian(NumericalGradient numericalGradient) {
+        this.numericalGradient = numericalGradient;
     }
 
     @Override
     public double[] getDiagonalHessianLogDensity() {
 
-        final int dim = gradientProvider.getDimension();
+        final int dim = numericalGradient.getDimension();
         double[][] numericalHessian = getNumericalHessianCentral(); //todo: no need to get the full hessian if only need the diagonals
         double[] numericalHessianDiag = new double[dim];
 
@@ -41,53 +42,30 @@ public class PurelyNumericalHessian implements HessianWrtParameterProvider, Repo
 
     @Override
     public Likelihood getLikelihood() {
-        return gradientProvider.getLikelihood();
+        return numericalGradient.getLikelihood();
     }
 
     @Override
     public Parameter getParameter() {
-        return gradientProvider.getParameter();
+        return numericalGradient.getParameter();
     }
 
     @Override
     public int getDimension() {
-        return gradientProvider.getDimension();
+        return numericalGradient.getDimension();
     }
 
     @Override
     public double[] getGradientLogDensity() {
-        final int dim = gradientProvider.getDimension();
-        double[] gradient = new double[dim];
-
-        final double[] oldValues = gradientProvider.getParameter().getParameterValues();
-
-        double[] likelihoodPlus = new double[dim];
-        double[] likelihoodMinus = new double[dim];
-
-        double[] h = new double[dim];
-        for (int i = 0; i < dim; i++) {
-            h[i] = MachineAccuracy.SQRT_SQRT_EPSILON * (Math.abs(oldValues[i]) + 1.0);
-            gradientProvider.getParameter().setParameterValue(i, oldValues[i] + h[i]);
-            likelihoodPlus[i] = gradientProvider.getLikelihood().getLogLikelihood();
-
-            gradientProvider.getParameter().setParameterValue(i, oldValues[i] - h[i]);
-            likelihoodMinus[i] = gradientProvider.getLikelihood().getLogLikelihood();
-            gradientProvider.getParameter().setParameterValue(i, oldValues[i]);
-        }
-
-        for (int i = 0; i < dim; i++) {
-            gradient[i] = (likelihoodPlus[i] - likelihoodMinus[i]) / (2.0 * h[i]);
-        }
-
-        return gradient;
+        return numericalGradient.getGradientLogDensity();
     }
 
     private double[][] getNumericalHessianCentral() {
 
-        final int dim = gradientProvider.getDimension();
+        final int dim = numericalGradient.getDimension();
         double[][] hessian = new double[dim][dim];
 
-        final double[] oldValues = gradientProvider.getParameter().getParameterValues();
+        final double[] oldValues = numericalGradient.getParameter().getParameterValues();
 
         double[][] gradientPlus = new double[dim][dim];
         double[][] gradientMinus = new double[dim][dim];
@@ -95,12 +73,12 @@ public class PurelyNumericalHessian implements HessianWrtParameterProvider, Repo
         double[] h = new double[dim];
         for (int i = 0; i < dim; i++) {
             h[i] = MachineAccuracy.SQRT_SQRT_EPSILON * (Math.abs(oldValues[i]) + 1.0);
-            gradientProvider.getParameter().setParameterValue(i, oldValues[i] + h[i]);
-            gradientPlus[i] = gradientProvider.getGradientLogDensity();
+            numericalGradient.getParameter().setParameterValue(i, oldValues[i] + h[i]);
+            gradientPlus[i] = numericalGradient.getGradientLogDensity();
 
-            gradientProvider.getParameter().setParameterValue(i, oldValues[i] - h[i]);
-            gradientMinus[i] = gradientProvider.getGradientLogDensity();
-            gradientProvider.getParameter().setParameterValue(i, oldValues[i]);
+            numericalGradient.getParameter().setParameterValue(i, oldValues[i] - h[i]);
+            gradientMinus[i] = numericalGradient.getGradientLogDensity();
+            numericalGradient.getParameter().setParameterValue(i, oldValues[i]);
         }
 
         for (int i = 0; i < dim; i++) {

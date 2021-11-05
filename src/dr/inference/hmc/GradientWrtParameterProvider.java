@@ -166,7 +166,7 @@ public interface GradientWrtParameterProvider {
             parameter.fireParameterChangedEvent();
         }
 
-        private double[] getNumericalGradient() {
+        public double[] getNumericalGradient() {
 
             double[] savedValues = parameter.getParameterValues();
             double[] testGradient = NumericalDerivative.gradient(numeric, parameter.getParameterValues());

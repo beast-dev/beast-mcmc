@@ -7,7 +7,7 @@ import dr.math.MachineAccuracy;
 /**
  * @author Andy Magee
  */
-public class NumericalGradient implements GradientWrtParameterProvider {
+    public class NumericalGradient implements GradientWrtParameterProvider {
 
     public NumericalGradient(Likelihood likelihood, Parameter parameter) {
         this.parameter = parameter;
@@ -31,30 +31,11 @@ public class NumericalGradient implements GradientWrtParameterProvider {
 
     @Override
     public double[] getGradientLogDensity() {
-        final int dim = parameter.getDimension();
-        double[] gradient = new double[dim];
-
-        final double[] oldValues = parameter.getParameterValues();
-
-        double[] likelihoodPlus = new double[dim];
-        double[] likelihoodMinus = new double[dim];
-
-        double[] h = new double[dim];
-        for (int i = 0; i < dim; i++) {
-            h[i] = MachineAccuracy.SQRT_SQRT_EPSILON * (Math.abs(oldValues[i]) + 1.0);
-            parameter.setParameterValue(i, oldValues[i] + h[i]);
-            likelihoodPlus[i] = likelihood.getLogLikelihood();
-
-            parameter.setParameterValue(i, oldValues[i] - h[i]);
-            likelihoodMinus[i] = likelihood.getLogLikelihood();
-            parameter.setParameterValue(i, oldValues[i]);
-        }
-
-        for (int i = 0; i < dim; i++) {
-            gradient[i] = (likelihoodPlus[i] - likelihoodMinus[i]) / (2.0 * h[i]);
-        }
-
-        return gradient;
+        return new CheckGradientNumerically(this,
+                Double.NEGATIVE_INFINITY,
+                Double.POSITIVE_INFINITY,
+                0.0,
+                0.0).getNumericalGradient();
     }
 
     private Likelihood likelihood = null;

@@ -215,7 +215,7 @@ public class TreeTraitParserUtilities {
 
             CompoundParameter cParameter = (CompoundParameter) trait;
             int offset = 0;
-            for (int i = 0; i < cParameter.getParameterCount(); i += dim) {
+            for (int i = 0; i < cParameter.getParameterCount(); ++i) {
                 String name = cParameter.getParameter(i).getParameterName();
                 if (!includedTaxonNames.contains(name)) {
                     update[offset] = false;

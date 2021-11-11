@@ -28,7 +28,6 @@ package dr.inference.hmc;
 import dr.inference.model.GradientProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.hmc.NumericalHessianFromGradient;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
@@ -128,7 +127,7 @@ public interface GradientWrtParameterProvider {
             this.checkValues = nullableTolerance != null;
             this.tolerance = checkValues ? nullableTolerance : 0.0;
 
-            this.smallThreshold = nullableSmallNumberThreshold != null ? nullableSmallNumberThreshold : 0.0;
+            this.smallThreshold = nullableSmallNumberThreshold != null ? nullableSmallNumberThreshold : -0.1;
         }
 
 

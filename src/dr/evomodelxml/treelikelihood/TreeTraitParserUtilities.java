@@ -205,7 +205,7 @@ public class TreeTraitParserUtilities {
         if (taxonList != null) {
 
             if (!(trait instanceof CompoundParameter)) {
-                throw new IllegalArgumentException("Currently unable to match taxon names with a FastMatrixParamter");
+                throw new IllegalArgumentException("Currently unable to match taxon names with a FastMatrixParameter");
             }
 
             Set<String> includedTaxonNames = new HashSet<>();
@@ -219,6 +219,10 @@ public class TreeTraitParserUtilities {
                 String name = cParameter.getParameter(i).getParameterName();
                 if (!includedTaxonNames.contains(name)) {
                     update[offset] = false;
+                    if (verbose) {
+                        Logger.getLogger("dr.evomodel.continuous").info(
+                                "  Excluding taxon '" + name + "' from jitter.");
+                    }
                 }
                 ++offset;
             }

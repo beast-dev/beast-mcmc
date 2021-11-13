@@ -165,7 +165,7 @@ public interface GradientWrtParameterProvider {
             parameter.fireParameterChangedEvent();
         }
 
-        private double[] getNumericalGradient() {
+        public double[] getNumericalGradient() {
 
             double[] savedValues = parameter.getParameterValues();
             double[] testGradient = NumericalDerivative.gradient(numeric, parameter.getParameterValues());
@@ -199,7 +199,11 @@ public interface GradientWrtParameterProvider {
         if (checkValues) {
             for (int i = 0; i < analytic.length; ++i) {
                 double relativeDifference = 2 * (analytic[i] - numeric[i]) / (analytic[i] + numeric[i]);
-                if (Math.abs(relativeDifference) > tolerance && Math.abs(analytic[i]) > smallNumberThreshold) {
+                boolean testFailed = Math.abs(relativeDifference) > tolerance &&
+                        Math.abs(analytic[i]) > smallNumberThreshold && Math.abs(numeric[i]) > smallNumberThreshold ||
+                        ((analytic[i] == 0.0 || numeric[i] == 0.0) && Math.abs(analytic[i] + numeric[i]) > tolerance);
+
+                if (testFailed) {
                     sb.append("\nDifference @ ").append(i + 1).append(": ")
                             .append(analytic[i]).append(" ").append(numeric[i])
                             .append(" ").append(relativeDifference).append("\n");

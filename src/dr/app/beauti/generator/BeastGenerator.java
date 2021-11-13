@@ -37,6 +37,8 @@ import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -305,6 +307,23 @@ public class BeastGenerator extends Generator {
         }
 
 
+    }
+    public boolean checkUserTreeIsBifurcating(){
+        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+            if(model.getStartingTreeType()==StartingTreeType.USER){
+                if(!(isBifurcatingTree(model.getUserStartingTree(),model.getUserStartingTree().getRoot()))){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    public boolean isBifurcatingTree(Tree tree, NodeRef node) {
+        if (tree.getChildCount(node) > 2) return false;
+        for (int i = 0; i < tree.getChildCount(node); i++) {
+            if (!isBifurcatingTree(tree, tree.getChild(node, i))) return false;
+        }
+        return true;
     }
 
     /**

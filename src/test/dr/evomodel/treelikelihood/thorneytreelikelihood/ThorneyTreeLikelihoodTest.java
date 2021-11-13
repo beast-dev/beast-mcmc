@@ -9,7 +9,6 @@ import dr.evomodel.treelikelihood.thorneytreelikelihood.*;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.thorneytreelikelihood.BranchLengthProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
 import dr.math.distributions.PoissonDistribution;
@@ -28,12 +27,12 @@ public class ThorneyTreeLikelihoodTest extends TestCase {
 
         constrainedTreeModel = new ConstrainedTreeModel("testTree",baseTreeModel,tree);
         BranchLengthProvider constrainedTreeBranchLengthProvider = new ConstrainedTreeBranchLengthProvider(constrainedTreeModel,tree);
-        ThorneyBranchLengthLikelihoodDelegate thorneyBranchLengthLikelihoodDelegate = new StrictClockBranchLengthLikelihoodDelegate("strictClockDelegate",new Parameter.Default(1.0),1.0);
+        ThorneyBranchLengthLikelihoodDelegate thorneyBranchLengthLikelihoodDelegate = new PoissonBranchLengthLikelihoodDelegate("strictClockDelegate",new StrictClockBranchRates(new Parameter.Default(1.0)),1.0);
         thorneyTreeLikelihood = new ThorneyTreeLikelihood("testLikelihood",constrainedTreeModel,constrainedTreeBranchLengthProvider, thorneyBranchLengthLikelihoodDelegate);
 
         expectedLL= 0;
-        double[] expectations = {1d,1d,1.1,2d,0.1};
-        double[] mutations = {1d, 1d, 1.0, 2d, 0}; // time
+        double[] expectations = {1d,1d,1.1,1.0,1.0,0.1};
+        double[] mutations = {1d, 1d, 1.0, 1.0,1.0, 0}; // time
         for (int i = 0; i < expectations.length; i++) {
             PoissonDistribution p = new PoissonDistribution(expectations[i]);
             expectedLL += p.logPdf(mutations[i]);

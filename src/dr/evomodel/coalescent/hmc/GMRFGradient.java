@@ -308,26 +308,41 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                 int currentGridIndex = 0;
                 //Loop over all intervals and get the nodes that ends each coalescent interval. We can never start
                 // with a coalescent interval so this is ok
-                for (int i = 0; i < intervals.getIntervalCount(); i++) {
+                int i = 0;
+                while (i < intervals.getIntervalCount()) {
                     if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
+                        int numSameIntervalTime = 1;
+                        while (i + numSameIntervalTime + 1 < intervals.getIntervalCount() &&
+                                intervals.getIntervalType(i + numSameIntervalTime + 1) == IntervalType.COALESCENT &&
+                                intervals.getIntervalTime(i + numSameIntervalTime + 1) == intervals.getIntervalTime(i + 1)) {
+                            numSameIntervalTime++;
+                        }
+                        double derivativeSum = 0;
                         NodeRef node = intervals.getCoalescentNode(i);
                         double height = tree.getNodeHeight(node);
                         while (currentGridIndex < grids.length && height > grids[currentGridIndex]) {
                             currentGridIndex++;
                         }
-                        final int heightIndex = getNodeHeightParameterIndex(node, tree);
                         final int numLineage = intervals.getLineageCount(i);
                         final double currentPopSize = Math.exp(-currentGamma[currentGridIndex]);
-                        gradient[heightIndex] += -currentPopSize * numLineage * (numLineage - 1);
+
+                        derivativeSum += -currentPopSize * numLineage * (numLineage - 1);
                         if (!tree.isRoot(node)) {
-                            final int nextNumLineage = intervals.getLineageCount(i + 1);
-                            gradient[heightIndex] += currentPopSize * nextNumLineage * (nextNumLineage - 1);
+                            final int nextNumLineage = intervals.getLineageCount(i + numSameIntervalTime);
+                            derivativeSum += currentPopSize * nextNumLineage * (nextNumLineage - 1);
                         }
+                        for (int j = 0; j < numSameIntervalTime; j++) {
+                            final int heightIndex = getNodeHeightParameterIndex(intervals.getCoalescentNode(i + j), tree);
+                            gradient[heightIndex] = derivativeSum / numSameIntervalTime;
+                        }
+                        i += numSameIntervalTime;
+                    } else {
+                        i++;
                     }
                 }
 
                 final double multiplier = 0.5 * ploidyFactor;
-                for (int i = 0; i < gradient.length; i++) {
+                for (i = 0; i < gradient.length; i++) {
                     gradient[i] *= multiplier;
                 }
 

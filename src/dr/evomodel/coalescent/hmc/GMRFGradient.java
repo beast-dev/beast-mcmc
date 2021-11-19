@@ -313,6 +313,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                     if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
                         int numSameIntervalTime = 1;
                         while (i + numSameIntervalTime + 1 < intervals.getIntervalCount() &&
+                                intervals.getIntervalType(i + numSameIntervalTime) == IntervalType.COALESCENT &&
                                 intervals.getIntervalType(i + numSameIntervalTime + 1) == IntervalType.COALESCENT &&
                                 intervals.getIntervalTime(i + numSameIntervalTime + 1) == intervals.getIntervalTime(i + 1)) {
                             numSameIntervalTime++;

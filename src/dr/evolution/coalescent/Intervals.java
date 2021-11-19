@@ -62,12 +62,7 @@ public class Intervals implements IntervalList {
         intervalCount = source.intervalCount;
         startTime = source.startTime;
 
-        //don't copy the actual events..
-        /*
-          for (int i = 0; i < events.length; i++) {
-              events[i].time = source.events[i].time;
-              events[i].type = source.events[i].type;
-          }*/
+        System.arraycopy(source.events, 0, events, 0, events.length);
 
         if (intervalsKnown) {
             System.arraycopy(source.intervals, 0, intervals, 0, intervals.length);

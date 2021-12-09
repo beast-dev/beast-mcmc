@@ -5,7 +5,6 @@ import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
-import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -300,7 +299,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
                 double ploidyFactor = 1 / likelihood.getPopulationFactor(0);
 
-                final TreeIntervals intervals = (TreeIntervals) likelihood.getIntervalList(0);
+                final TreeIntervalList intervals = (TreeIntervalList) likelihood.getIntervalList(0);
 
                 int[] gridIndices = new int[tree.getInternalNodeCount()];
 

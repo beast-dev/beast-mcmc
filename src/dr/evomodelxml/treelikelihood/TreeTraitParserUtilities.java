@@ -549,13 +549,15 @@ public class TreeTraitParserUtilities {
     }
 
     public static TreeTrait getTreeTraitFromDataLikelihood(TreeDataLikelihood dataLikelihood) {
+        return dataLikelihood.getTreeTrait(getTipTraitNameFromDataLikelihood(dataLikelihood));
+    }
+
+    public static String getTipTraitNameFromDataLikelihood(TreeDataLikelihood dataLikelihood) {
         ContinuousDataLikelihoodDelegate delegate =
                 (ContinuousDataLikelihoodDelegate) dataLikelihood.getDataLikelihoodDelegate();
 
         ContinuousTraitPartialsProvider dataModel = delegate.getDataModel();
         String traitName = dataModel.getTipTraitName();
-//        String realizedTraitName = getTipTraitName(traitName);
-
-        return dataLikelihood.getTreeTrait(traitName);
+        return traitName;
     }
 }

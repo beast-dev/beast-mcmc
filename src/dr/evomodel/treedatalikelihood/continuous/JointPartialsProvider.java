@@ -318,6 +318,20 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
                 new WrappedMatrix.WrappedDenseMatrix(newVariance));
     }
 
+    @Override
+    public ContinuousTraitPartialsProvider getProviderForTrait(String trait) {
+        if (trait.equals(getTipTraitName())) {
+            return this;
+        }
+        for (ContinuousTraitPartialsProvider submodel : providers) {
+            System.out.println(submodel.getTipTraitName());
+            if (trait.equals(submodel.getTipTraitName())) {
+                return submodel;
+            }
+        }
+        throw new RuntimeException("Partials provider does not have trait '" + trait + "', nor did any of its sub-models");
+    }
+
 
     public static final AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
         private static final String PARSER_NAME = "jointPartialsProvider";

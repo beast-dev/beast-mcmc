@@ -95,6 +95,13 @@ public interface ContinuousTraitPartialsProvider {
                 "a provider other than itself.");
     }
 
+    default ContinuousTraitPartialsProvider getProviderForTrait(String trait) {
+        if (trait.equals(getTipTraitName())) {
+            return this;
+        }
+        throw new RuntimeException("Partials provider does not have trait '" + trait + "'");
+    }
+
     static boolean[] indicesToIndicator(List<Integer> indices, int n) {
 
         if (indices == null) {

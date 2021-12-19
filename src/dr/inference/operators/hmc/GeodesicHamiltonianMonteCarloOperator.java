@@ -197,10 +197,11 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
         }
 
         private int findSubArray(ArrayList<ArrayList<Integer>> listOfLists, ArrayList<Integer> list, ArrayList<Integer> remainingList) { //assumes both are sorted
-            remainingList.clear();
             int nLists = listOfLists.size();
             for (int i = 0; i < nLists; i++) {
                 ArrayList<Integer> subList = listOfLists.get(i);
+                remainingList.clear();
+
                 if (list.size() <= subList.size()) {
                     int currentInd = 0;
                     for (int j = 0; j < subList.size(); j++) {

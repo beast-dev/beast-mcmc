@@ -1,5 +1,9 @@
 package dr.inference.operators.rejection;
 
+import dr.math.matrixAlgebra.CholeskyDecomposition;
+import dr.math.matrixAlgebra.IllegalDimension;
+import dr.math.matrixAlgebra.Matrix;
+
 public interface AcceptCondition {
 
     boolean satisfiesCondition(double[] values);
@@ -40,6 +44,21 @@ public interface AcceptCondition {
                     }
                 }
                 return true;
+            }
+        },
+
+        PositiveDefinite("positiveDefinite") {
+            @Override
+            public boolean satisfiesCondition(double[] values) {
+                int n = (int) Math.sqrt(values.length);
+                Matrix M = new Matrix(values, n, n);
+                CholeskyDecomposition chol;
+                try {
+                    chol = new CholeskyDecomposition(M);
+                } catch (IllegalDimension illegalDimension) {
+                    throw new RuntimeException("Matrix must be square");
+                }
+                return chol.isSPD();
             }
         };
 

@@ -12,7 +12,8 @@ public class SmoothSkygridLikelihoodParser extends AbstractXMLObjectParser {
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        return new SmoothSkygridLikelihood(null, null);
+        return new SmoothSkygridLikelihood(null, null,
+                null , null);
     }
 
     @Override

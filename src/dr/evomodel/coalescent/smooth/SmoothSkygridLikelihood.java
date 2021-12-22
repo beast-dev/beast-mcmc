@@ -1,5 +1,6 @@
 package dr.evomodel.coalescent.smooth;
 
+import com.sun.istack.internal.NotNull;
 import dr.evolution.coalescent.IntervalList;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.inference.model.Model;
@@ -27,7 +28,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
     private Type units;
 
     private final static RombergIntegrator integrator = new RombergIntegrator();
-    private final static double tolerance = 1E-16;
+    private final static boolean USE_LINEAR_ANALYTIC_SOLUTION = true;
 
     public SmoothSkygridLikelihood(String name, List<IntervalList> intervalList,
                                    Parameter logPopSizeParameter,
@@ -119,22 +120,28 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         return null;
     }
 
-    public static double getIntensityInInterval(double time,
+    public static double getIntensityInInterval(double time1, double time2,
                                                 double startTime, double endTime,
                                                 double startValue, double endValue,
-                                                double beta) {
+                                                double beta) throws Exception {
+
+        if (USE_LINEAR_ANALYTIC_SOLUTION && beta == 1) {
+            return getAnalyticIntensityForLinearModel(time1, time2, startTime, endTime, startValue, endValue);
+        }
 
         UnivariateRealFunction f = v -> getReciprocalPopSizeInInterval(v, startTime, endTime,
                 startValue, endValue, beta);
 
-        double integral = 0.0;
-        try {
-            integral = integrator.integrate(f, startTime + tolerance, time);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        return integrator.integrate(f, time1, time2);
+    }
 
-        return integral;
+    private static double getAnalyticIntensityForLinearModel(double time1, double time2,
+                                                             double startTime, double endTime,
+                                                             double startValue, double endValue) {
+        double slope = (endValue - startValue) / (endTime - startTime);
+        double e1 = Math.exp(-slope * time1 - startValue);
+        double e2 = Math.exp(-slope * time2 - startValue);
+        return (e1 - e2) / slope;
     }
 
     public static double getReciprocalPopSizeInInterval(double time,
@@ -155,18 +162,18 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
                                                  double startTime, double endTime,
                                                  double startValue, double endValue,
                                                  double beta) {
+        assert time >= startTime;
+        assert time <= endTime;
 
-//        double proportion = 1.0 / (1.0 + getScaledOdds(time, startTime, endTime, beta));
-//        return startValue + (endValue - startValue) * proportion;
+        if (time == startTime) { // Avoid divide-by-zero
+            return startValue;
+        }
 
         double scaledOdds = getScaledOdds(time, startTime, endTime, beta);
-        return (endValue + startValue * scaledOdds) / (1.0 + scaledOdds);
+        return startValue + (endValue - startValue) / (1.0 + scaledOdds);
     }
 
     private static double getScaledOdds(double time, double startTime, double endTime, double beta) {
-        assert time > startTime;
-        assert time <= endTime;
-
         double timeOdds = (endTime - time) / (time - startTime);
         return Math.pow(timeOdds, beta);
     }

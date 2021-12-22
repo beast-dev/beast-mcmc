@@ -37,7 +37,7 @@ import junit.framework.TestCase;
  */
 public class SmoothSkygridTest extends TestCase {
 
-    public void testSmoothSkyrideIntegrals() {
+    public void testSmoothSkyrideIntegrals() throws Exception {
 
 
         double x = 0.0;
@@ -51,9 +51,9 @@ public class SmoothSkygridTest extends TestCase {
 
         System.err.println(x);
 
-        x = SmoothSkygridLikelihood.getIntensityInInterval(0.6,
+        x = SmoothSkygridLikelihood.getIntensityInInterval(0.01, 0.6,
                 0, 1,
-                Math.log(5), Math.log(10), 10.0);
+                Math.log(5), Math.log(10), 1.0);
 
         System.err.println(x);
 

@@ -45,14 +45,14 @@ public class SmoothSkygridTest extends TestCase {
 
 //        x = SmoothSkygridLikelihood.getLogPopSizeInInterval(0.1, 0, 1, 2.0);
 
-        x = SmoothSkygridLikelihood.getPopSizeInInterval(0.6,
-                0, 1,
+        x = SmoothSkygridLikelihood.getPopSizeInInterval(1.6,
+                1, 2,
                 Math.log(5), Math.log(10), 10.0);
 
         System.err.println(x);
 
-        x = SmoothSkygridLikelihood.getIntensityInInterval(0.01, 0.6,
-                0, 1,
+        x = SmoothSkygridLikelihood.getIntensityInInterval(1.1, 1.6,
+                1, 2,
                 Math.log(5), Math.log(10), 1.0);
 
         System.err.println(x);

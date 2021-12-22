@@ -1,6 +1,5 @@
 package dr.evomodel.coalescent.smooth;
 
-import com.sun.istack.internal.NotNull;
 import dr.evolution.coalescent.IntervalList;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.inference.model.Model;
@@ -138,7 +137,12 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
     private static double getAnalyticIntensityForLinearModel(double time1, double time2,
                                                              double startTime, double endTime,
                                                              double startValue, double endValue) {
+        assert time1 >= startTime && time2 >= startTime;
+        assert time1 <= endTime && time2 <= endTime;
+
         double slope = (endValue - startValue) / (endTime - startTime);
+        time1 -= startTime;
+        time2 -= startTime;
         double e1 = Math.exp(-slope * time1 - startValue);
         double e2 = Math.exp(-slope * time2 - startValue);
         return (e1 - e2) / slope;

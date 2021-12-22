@@ -123,20 +123,26 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
                                                 double startTime, double endTime,
                                                 double startValue, double endValue,
                                                 double beta) throws Exception {
-
         if (USE_LINEAR_ANALYTIC_SOLUTION && beta == 1) {
             return getAnalyticIntensityForLinearModel(time1, time2, startTime, endTime, startValue, endValue);
+        } else {
+            return getNumericIntensityInInterval(time1, time2, startTime, endTime, startValue, endValue, beta);
         }
+    }
 
+    public static double getNumericIntensityInInterval(double time1, double time2,
+                                                       double startTime, double endTime,
+                                                       double startValue, double endValue,
+                                                       double beta) throws Exception {
         UnivariateRealFunction f = v -> getReciprocalPopSizeInInterval(v, startTime, endTime,
                 startValue, endValue, beta);
 
         return integrator.integrate(f, time1, time2);
     }
 
-    private static double getAnalyticIntensityForLinearModel(double time1, double time2,
-                                                             double startTime, double endTime,
-                                                             double startValue, double endValue) {
+    public static double getAnalyticIntensityForLinearModel(double time1, double time2,
+                                                            double startTime, double endTime,
+                                                            double startValue, double endValue) {
         assert time1 >= startTime && time2 >= startTime;
         assert time1 <= endTime && time2 <= endTime;
 

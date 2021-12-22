@@ -1,7 +1,7 @@
 /*
- * MultiEpochExponentialTest.java
+ * SmoothSkygridTest.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2021 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,10 +25,6 @@
 
 package test.dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.ExponentialExponential;
-import dr.evolution.coalescent.ExponentialGrowth;
-import dr.evolution.coalescent.MultiEpochExponential;
-import dr.evolution.util.Units;
 import dr.evomodel.coalescent.smooth.SmoothSkygridLikelihood;
 import junit.framework.TestCase;
 
@@ -38,27 +34,34 @@ import junit.framework.TestCase;
 public class SmoothSkygridTest extends TestCase {
 
     public void testSmoothSkyrideIntegrals() throws Exception {
+        double x;
+        double y;
 
-
-        double x = 0.0;
-
-
-//        x = SmoothSkygridLikelihood.getLogPopSizeInInterval(0.1, 0, 1, 2.0);
-
-        x = SmoothSkygridLikelihood.getPopSizeInInterval(1.6,
-                1, 2,
-                Math.log(5), Math.log(10), 10.0);
-
-        System.err.println(x);
-
-        x = SmoothSkygridLikelihood.getIntensityInInterval(1.1, 1.6,
+        // Linear model case
+        x = SmoothSkygridLikelihood.getNumericIntensityInInterval(1.1, 1.6,
                 1, 2,
                 Math.log(5), Math.log(10), 1.0);
+        y = SmoothSkygridLikelihood.getAnalyticIntensityForLinearModel(1.1, 1.6,
+                1,2,
+                Math.log(5), Math.log(10));
+        System.err.println(x + " " + y);
+        assertEquals(x, y, tolerance);
 
+        // Approximated step function
+        x = SmoothSkygridLikelihood.getPopSizeInInterval(1.6,
+                1, 2,
+                Math.log(5), Math.log(10), 100.0);
         System.err.println(x);
+        y = 10;
+        assertEquals(x, y, tolerance);
 
+        x = SmoothSkygridLikelihood.getIntensityInInterval(1, 2,
+                1, 2,
+                Math.log(5), Math.log(10), 100.0);
+        System.err.println(x);
+        y = 0.5 * 1 / 5 + 0.5 * 1 / 10;
+        assertEquals(x, y, tolerance);
     }
 
-    private final static double tolerance1 = 1E-10;
-    private final static double tolerance2 = 1E-5;
+    private final static double tolerance = 1E-4;
 }

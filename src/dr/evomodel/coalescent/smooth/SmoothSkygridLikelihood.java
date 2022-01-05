@@ -32,6 +32,9 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
     private final Parameter logPopSizeParameter;
     private final Parameter gridPointParameter;
     private final double[] gridPoints;
+    private final int numGridIntervals;
+
+
 
     private Type units;
 
@@ -53,6 +56,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         this.logPopSizeParameter = logPopSizeParameter;
         this.gridPointParameter = gridPointParameter;
         this.gridPoints = gridPointParameter.getParameterValues();
+        this.numGridIntervals = gridPoints.length + 2;
 
         addVariable(logPopSizeParameter);
         addVariable(gridPointParameter);
@@ -127,35 +131,39 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         return 0;
     }
 
+    class Event {
+        double integratedIntensity;
+        double logReciprocalPopSize;
+        int lineages;
+    }
+    
     private void computeSufficientStatistics() {
 
         for (IntervalList intervals : intervalList) {
 
+            // Find first grid-interval for tree
             double previousIntervalTimeOnTime = intervals.getStartTime();
-            int currentIndex = 0;
-            while (previousIntervalTimeOnTime < gridPoints[currentIndex]) {
-                ++currentIndex;
+            int currentGridIndex = 0;
+            while (previousIntervalTimeOnTime > gridPoints[currentGridIndex]) {
+                ++currentGridIndex;
             }
-            
+
+            // Interate over tree-intervals in time-order
             for (int j = 0; j < intervals.getIntervalCount() - 1; ++j) {
                 double currentIntervalTimeOnTree = intervals.getIntervalTime(j);
                 int currentIntervalLineageCount = intervals.getLineageCount(j);
 
-                while(intervals.getIntervalTime(j + 1) > gridPoints[currentIndex]) {
+                while(intervals.getIntervalTime(j + 1) > gridPoints[currentGridIndex]) {
                     // Do somethimg until end of internval
                 }
                 // Do something with last bit of time
 
                 
             }
-//            int currentInterval = 0;
-//            while (currentInterval < intervals.getIntervalCount()) {
-//                double intervalStartTime = intervals.getIntervalTime(0);
-//                System.err.println(intervals.getStartTime());
-//                ++currentInterval;
-//            }
-        }
 
+            // Handle last tree-interval here
+
+        }
 
         throw new RuntimeException("Not yet implemented");
     }

@@ -3,6 +3,7 @@ package test.dr.evomodel.treedatalikelihood.action;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.treedatalikelihood.action.ActionBeagleDelegate;
 import dr.evomodel.treedatalikelihood.action.ActionEvolutionaryProcessDelegate;
 import dr.evomodel.treedatalikelihood.action.HomogeneousActionSubstitutionModelDelegate;
@@ -55,7 +56,7 @@ public class ActionBeagleTest extends MathTestCase {
         HKY hky = new HKY(kappa, frequencyModel);
         PartialsRescalingScheme rescalingScheme = PartialsRescalingScheme.AUTO;
         ActionEvolutionaryProcessDelegate evolutionaryProcessDelegate = new HomogeneousActionSubstitutionModelDelegate(hky, 5);
-        this.beagle = new ActionBeagleDelegate(tipCount, partialsBufferCount, patternCount,
+        this.beagle = new ActionBeagleDelegate(new DefaultTreeModel("void tree"), partialsBufferCount, patternCount,
                 stateCount, categoryCount, partialsSize,
                 rescalingScheme, evolutionaryProcessDelegate);
         evolutionaryProcessDelegate.updateSubstitutionModels(beagle, false);
@@ -144,6 +145,7 @@ public class ActionBeagleTest extends MathTestCase {
                 new int[]{0}, 1, sumLogLikelihoods);
 
         double logL = sumLogLikelihoods[0];
+        System.err.println(logL);
 
 
 

@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.action;
 
 import beagle.Beagle;
 import beagle.InstanceDetails;
+import dr.evolution.tree.Tree;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import org.newejml.data.DMatrixRMaj;
 import org.newejml.data.DMatrixSparseCSC;
@@ -72,8 +73,9 @@ public class ActionBeagleDelegate implements Beagle {
     private final PartialsRescalingScheme rescalingScheme;
     private final boolean[] activeScalingFactors;
     private final DMatrixRMaj[] autoScalingBuffers;
+    private final Tree treeModel;
 
-    public ActionBeagleDelegate(int tipCount,
+    public ActionBeagleDelegate(Tree treeModel,
                                 int partialsBufferCount,
                                 int patternCount,
                                 int stateCount,
@@ -81,7 +83,8 @@ public class ActionBeagleDelegate implements Beagle {
                                 int partialsSize,
                                 PartialsRescalingScheme rescalingScheme,
                                 ActionEvolutionaryProcessDelegate evolutionaryProcessDelegate) {
-        this.tipCount = tipCount;
+        this.treeModel = treeModel;
+        this.tipCount = treeModel.getExternalNodeCount();
         this.partialsBufferCount = partialsBufferCount;
         this.patternCount = patternCount;
         this.stateCount = stateCount;
@@ -407,6 +410,7 @@ public class ActionBeagleDelegate implements Beagle {
             this.d = new HashMap<>();
             this.powerMatrices = new HashMap<>();
             powerMatrices.put(1, A);
+            highestPower = 1;
             setThetaConstants();
 
 

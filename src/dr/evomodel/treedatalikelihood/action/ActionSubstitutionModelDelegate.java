@@ -1,7 +1,7 @@
 /*
- * HomogeneousActionSubstitutionModelDelegate.java
+ * ActionSubstitutionModelDelegate.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,6 +26,7 @@
 package dr.evomodel.treedatalikelihood.action;
 
 import beagle.Beagle;
+import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.PreOrderSettings;
 import org.newejml.data.DMatrixSparseCSC;
@@ -37,29 +38,24 @@ import org.newejml.sparse.csc.CommonOps_DSCC;
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public class HomogeneousActionSubstitutionModelDelegate implements ActionEvolutionaryProcessDelegate {
+public class ActionSubstitutionModelDelegate implements ActionEvolutionaryProcessDelegate{
 
-    private final SubstitutionModel substitutionModel;
     private final double[] branchLengths;
-    private DMatrixSparseTriplet sparseQ;
+    private DMatrixSparseTriplet[] sparseQs;
+    private final BranchModel branchModel;
+    private final int nodeCount;
     private final int stateCount;
 
-    public HomogeneousActionSubstitutionModelDelegate(SubstitutionModel substitutionModel,
-                                                      int nodeCount) {
-//        assert(branchModel.getSubstitutionModels().size() == 1) : "this delegate should only be used with simple branch models";
-//        this.substitutionModel = branchModel.getRootSubstitutionModel();
-        this.substitutionModel = substitutionModel;
+    public ActionSubstitutionModelDelegate(BranchModel branchModel,
+                                           int nodeCount) {
         this.branchLengths = new double[nodeCount];
-        this.stateCount = substitutionModel.getFrequencyModel().getFrequencyCount();
-        sparseQ = new DMatrixSparseTriplet(stateCount, stateCount, stateCount * stateCount);
-    }
-
-
-    @Override
-    public DMatrixSparseCSC getScaledInstantaneousMatrix(int nodeIndex, double categoryRate) {
-        DMatrixSparseCSC scaledQ = DConvertMatrixStruct.convert(sparseQ, (DMatrixSparseCSC) null);
-        CommonOps_DSCC.scale(branchLengths[nodeIndex] * categoryRate, scaledQ, scaledQ);
-        return scaledQ;
+        this.branchModel = branchModel;
+        this.nodeCount = nodeCount;
+        this.stateCount = branchModel.getRootSubstitutionModel().getFrequencyModel().getFrequencyCount();
+        this.sparseQs = new DMatrixSparseTriplet[nodeCount];
+        for (int i = 0; i < nodeCount; i++) {
+            sparseQs[i] = new DMatrixSparseTriplet(stateCount, stateCount, 10 * stateCount);
+        }
     }
 
     @Override
@@ -74,27 +70,27 @@ public class HomogeneousActionSubstitutionModelDelegate implements ActionEvoluti
 
     @Override
     public int getMatrixBufferCount() {
-        return 1;
+        return 2 * nodeCount - 2;
     }
 
     @Override
     public int getInfinitesimalMatrixBufferIndex(int branchIndex) {
-        return 1;
+        return branchIndex;
     }
 
     @Override
     public int getInfinitesimalSquaredMatrixBufferIndex(int branchIndex) {
-        return 1;
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
     public int getFirstOrderDifferentialMatrixBufferIndex(int branchIndex) {
-        return 1;
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
     public int getSecondOrderDifferentialMatrixBufferIndex(int branchIndex) {
-        return 1;
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
@@ -104,33 +100,32 @@ public class HomogeneousActionSubstitutionModelDelegate implements ActionEvoluti
 
     @Override
     public void cacheInfinitesimalSquaredMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
-        throw new RuntimeException("Not yet implemented.");
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
     public void cacheFirstOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[] differentialMassMatrix) {
-        throw new RuntimeException("Not yet implemented.");
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
     public int getCachedMatrixBufferCount(PreOrderSettings settings) {
-        throw new RuntimeException("Not yet implemented.");
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
     public int getSubstitutionModelCount() {
-        return 1;
+        return branchModel.getSubstitutionModels().size();
     }
 
     @Override
     public SubstitutionModel getSubstitutionModel(int index) {
-        assert(index == 0);
-        return substitutionModel;
+        return branchModel.getSubstitutionModels().get(index);
     }
 
     @Override
     public SubstitutionModel getSubstitutionModelForBranch(int branchIndex) {
-        return substitutionModel;
+        return getSubstitutionModel(branchIndex);
     }
 
     @Override
@@ -145,18 +140,25 @@ public class HomogeneousActionSubstitutionModelDelegate implements ActionEvoluti
 
     @Override
     public double[] getRootStateFrequencies() {
-        return substitutionModel.getFrequencyModel().getFrequencies();
+        return branchModel.getRootFrequencyModel().getFrequencies();
     }
 
     @Override
     public void updateSubstitutionModels(Beagle beagle, boolean flipBuffers) {
-        final int stateCount = substitutionModel.getFrequencyModel().getFrequencyCount();
-        sparseQ.reshape(stateCount, stateCount);
-        double[] Q = new double[stateCount * stateCount];
-        substitutionModel.getInfinitesimalMatrix(Q);
-        for (int i = 0; i < stateCount; i++) {
+        final int stateCount = branchModel.getRootSubstitutionModel().getFrequencyModel().getFrequencyCount();
+        for (int i = 0; i < branchModel.getSubstitutionModels().size(); i++) {
+            DMatrixSparseTriplet sparseQ = sparseQs[i];
+            SubstitutionModel substitutionModel = getSubstitutionModel(i);
+            sparseQ.reshape(stateCount, stateCount);
+            double[] Q = new double[stateCount * stateCount];
+            substitutionModel.getInfinitesimalMatrix(Q);
             for (int j = 0; j < stateCount; j++) {
-                sparseQ.addItem(i, j, Q[i * stateCount + j]);
+                for (int k = 0; k < stateCount; k++) {
+                    final double entryValue = Q[j * stateCount + k];
+                    if (entryValue != 0.0) {
+                        sparseQ.addItem(j, k, Q[j * stateCount + k]);
+                    }
+                }
             }
         }
     }
@@ -181,5 +183,12 @@ public class HomogeneousActionSubstitutionModelDelegate implements ActionEvoluti
     @Override
     public void restoreState() {
 
+    }
+
+    @Override
+    public DMatrixSparseCSC getScaledInstantaneousMatrix(int nodeIndex, double categoryRate) {
+        DMatrixSparseCSC scaledQ = DConvertMatrixStruct.convert(sparseQs[nodeIndex], (DMatrixSparseCSC) null);
+        CommonOps_DSCC.scale(branchLengths[nodeIndex] * categoryRate, scaledQ, scaledQ);
+        return scaledQ;
     }
 }

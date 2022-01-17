@@ -64,8 +64,35 @@
             description="Clean and Build all run-time stuff with unit test">
     </target>
 
+<!--    https://stackoverflow.com/questions/2974106/how-to-lookup-the-latest-git-commit-hash-from-an-ant-build-script-->
+    <available file=".git" type="dir" property="git.present"/>
+    <target name="git.commit" description="Store git revision in ${repository.commit}" if="git.present">
+        <exec executable="git" outputproperty="git.commit" failifexecutionfails="true" errorproperty="">
+            <arg value="describe"/>
+            <arg value="--always"/>
+            <arg value="--dirty"/>
+        </exec>
+        <condition property="repository.commit" value="${git.commit}" else="git-commit-unavailable">
+            <and>
+                <isset property="git.commit"/>
+                <length string="${git.commit}" trim="yes" length="0" when="greater"/>
+            </and>
+        </condition>
+    </target>
+
+    <target name="revision" depends="git.commit" description="build revision.txt from template">
+        <copy file="revision.txt.template" tofile="src/revision.txt" overwrite="yes">
+            <filterchain>
+                <replacetokens>
+                    <token key="repository.commit" value="${repository.commit}" />
+                </replacetokens>
+            </filterchain>
+        </copy>
+    </target>
+
+
     <!-- compile Java source code -->
-    <target name="compile-all" depends="init">
+    <target name="compile-all" depends="init,revision">
         <mkdir dir="${build}"/>
 
         <!-- Compile the java code from ${src} into ${build} /bin -->
@@ -159,6 +186,7 @@
             </fileset>
             <fileset dir="${src}">
                 <include name="dr/**/*.png"/>
+                <include name="revision.txt"/>
                 <include name="org/virion/jam/**/*.png"/>
                 <include name="dr/**/*.properties"/>
             </fileset>

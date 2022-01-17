@@ -30,8 +30,14 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.Version;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * This class provides a mechanism for returning the version number of the
@@ -58,15 +64,12 @@ public class BeastVersion implements Version, Citable {
 
     private static final boolean IS_PRERELEASE = true;
 
-    // this is now being manually updated since the move to GitHub. 7 digits of GitHub hash.
-    private static final String REVISION = "23570d1";
-
     public String getVersion() {
         return VERSION;
     }
 
     public String getVersionString() {
-        return "v" + VERSION + (IS_PRERELEASE ? " Prerelease #" + REVISION : "");
+        return "v" + VERSION + (IS_PRERELEASE ? " Prerelease #" + getRevision() : "");
     }
 
     public String getDateString() {
@@ -129,7 +132,7 @@ public class BeastVersion implements Version, Citable {
     }
 
     public String getBuildString() {
-        return "https://github.com/beast-dev/beast-mcmc/commit/" + REVISION;
+        return "https://github.com/beast-dev/beast-mcmc/commit/" + getRevision();
     }
 
     @Override
@@ -175,5 +178,22 @@ public class BeastVersion implements Version, Citable {
 //                    29, 1969, 1973,
 //                    "10.1093/molbev/mss075")
     };
+    public static void main(String[] args) {
+        System.out.println(getRevision());
+    }
+    public static String getRevision() {
+        try {
+            try (InputStream in = BeastVersion.class.getResourceAsStream("/revision.txt")) {
+                assert in != null;
 
+                List<String> lines =  new BufferedReader(
+                        new InputStreamReader(in, StandardCharsets.UTF_8))
+                        .lines()
+                        .collect(Collectors.toList());
+                return lines.get(1); //"commit-dirty" -dirty is only output if there are uncommited changes
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("No revision file found. Try running `ant revision` to make it");
+        }
+    }
 }

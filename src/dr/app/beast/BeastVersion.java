@@ -25,14 +25,16 @@
 
 package dr.app.beast;
 
-import dr.util.Author;
-import dr.util.Citable;
-import dr.util.Citation;
-import dr.util.Version;
+import dr.util.*;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * This class provides a mechanism for returning the version number of the
@@ -53,7 +55,7 @@ public class BeastVersion implements Version, Citable {
     /**
      * Version string: assumed to be in format x.x.x
      */
-    private static final String VERSION = "1.10.5";
+//    private static final String VERSION = "1.10.5";
 
     private static final String DATE_STRING = "2002-2019";
 
@@ -63,11 +65,12 @@ public class BeastVersion implements Version, Citable {
     private static final String REVISION = "23570d1";
 
     public String getVersion() {
-        return VERSION;
+        //TODO update with BEAUTI version too
+        return readVersion().get("tag").replace("v",""); // remove the first v if present
     }
 
     public String getVersionString() {
-        return "v" + VERSION + (IS_PRERELEASE ? " Prerelease #" + REVISION : "");
+        return readVersion().get("tag") + " commit: " + readVersion().get("commit");
     }
 
     public String getDateString() {
@@ -130,7 +133,8 @@ public class BeastVersion implements Version, Citable {
     }
 
     public String getBuildString() {
-        return "https://github.com/beast-dev/beast-mcmc/commit/" + REVISION;
+
+        return "https://github.com/beast-dev/beast-mcmc/commit/" + readVersion().get("commit");
     }
 
     @Override
@@ -176,5 +180,28 @@ public class BeastVersion implements Version, Citable {
 //                    29, 1969, 1973,
 //                    "10.1093/molbev/mss075")
     };
+    public static void main(String[] args) {
+        System.out.println(readVersion());
+    }
+    public static Map<String,String> readVersion() {
+        Map<String, String> version = new HashMap<>();
+        try {
+            try (InputStream in = BeastVersion.class.getResourceAsStream("/version.txt")) {
+                assert in != null;
 
+                List<String> lines =  new BufferedReader(
+                        new InputStreamReader(in, StandardCharsets.UTF_8))
+                        .lines()
+                        .collect(Collectors.toList());
+                version.put("tag",lines.get(1).replaceAll("-\\d+-g[a-zA-Z0-9]+","")); //"tag-commit" -commit is not provided if at tag
+                version.put("commit",lines.get(2)); //"commit-dirty" -dirty is only output if there are uncommited changes
+            }
+            return version;
+        } catch (IOException e) {
+            Logger.getLogger("dr.apps.beast").warning("Cannot report the present tag and commit. No version file found. Try running `ant version` to make it");
+            version.put("tag", "unknown");
+            version.put("commit", "unknown");
+            return version;
+        }
+    }
 }

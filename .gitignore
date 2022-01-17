@@ -16,3 +16,5 @@ out/
 !ci/**/*.xml
 
 zig_zag
+
+src/version.txt

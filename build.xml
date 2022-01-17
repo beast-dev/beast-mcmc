@@ -64,8 +64,51 @@
             description="Clean and Build all run-time stuff with unit test">
     </target>
 
+<!--    https://stackoverflow.com/questions/2974106/how-to-lookup-the-latest-git-commit-hash-from-an-ant-build-script-->
+    <available file=".git" type="dir" property="git.present"/>
+    <target name="git.tag" description="Store git revision in ${repository.tag}" if="git.present">
+        <exec executable="git" outputproperty="git.tag" failifexecutionfails="true" errorproperty="">
+            <arg value="describe"/>
+            <arg value="--tags"/>
+        </exec>
+        <condition property="repository.tag" value="${git.tag}" else="unknown">
+            <and>
+                <isset property="git.tag"/>
+                <length string="${git.tag}" trim="yes" length="0" when="greater"/>
+            </and>
+        </condition>
+    </target>
+    <target name="git.commit" description="Store git revision in ${repository.commit}" if="git.present">
+        <exec executable="git" outputproperty="git.commit" failifexecutionfails="true" errorproperty="">
+            <arg value="describe"/>
+            <arg value="--always"/>
+            <arg value="--dirty"/>
+        </exec>
+        <condition property="repository.commit" value="${git.commit}" else="unknown">
+            <and>
+                <isset property="git.commit"/>
+                <length string="${git.commit}" trim="yes" length="0" when="greater"/>
+            </and>
+        </condition>
+    </target>
+
+
+    <target name="version" depends="git.tag,git.commit" description="build version.txt from template">
+        <copy file="version.txt.template" tofile="src/version.txt" overwrite="yes">
+            <filterchain>
+                <replacetokens>
+                    <token key="repository.tag" value="${repository.tag}" />
+                </replacetokens>
+                <replacetokens>
+                    <token key="repository.commit" value="${repository.commit}" />
+                </replacetokens>
+            </filterchain>
+        </copy>
+    </target>
+
+
     <!-- compile Java source code -->
-    <target name="compile-all" depends="init">
+    <target name="compile-all" depends="init,version">
         <mkdir dir="${build}"/>
 
         <!-- Compile the java code from ${src} into ${build} /bin -->
@@ -159,6 +202,7 @@
             </fileset>
             <fileset dir="${src}">
                 <include name="dr/**/*.png"/>
+                <include name="version.txt"/>
                 <include name="org/virion/jam/**/*.png"/>
                 <include name="dr/**/*.properties"/>
             </fileset>

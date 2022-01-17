@@ -411,6 +411,7 @@ public class ActionBeagleDelegate implements Beagle {
         private int m;
         private int s;
         private final int mMax = 55;
+        private final double pMax;
 
         TaylorSeriesStatistics(double A1Norm, DMatrixSparseCSC A, double t, int nCol) {
             this.thetaConstants = new HashMap<>();
@@ -418,7 +419,8 @@ public class ActionBeagleDelegate implements Beagle {
             this.powerMatrices = new HashMap<>();
             powerMatrices.put(1, A);
             highestPower = 1;
-            cachePowerSeries((int) getPMax(mMax));
+            this.pMax = getPMax(mMax);
+            cachePowerSeries((int) pMax);
             setThetaConstants();
 
 
@@ -446,7 +448,6 @@ public class ActionBeagleDelegate implements Beagle {
             }
             int bestM = Integer.MAX_VALUE;
             int bestS = Integer.MAX_VALUE;
-            final int mMax = 55;
             if (conditionFragment313(A1Norm, nCol, mMax)) {
                 for (int thisM : thetaConstants.keySet()) {
                     final double thisS = Math.ceil(A1Norm/thetaConstants.get(thisM));
@@ -457,7 +458,6 @@ public class ActionBeagleDelegate implements Beagle {
                 }
                 this.s = bestS;
             } else {
-                final int pMax = (int) getPMax(mMax);
                 for (int p = 2; p < pMax; p++) {
                     for (int thisM = p * (p - 1) - 1; thisM < mMax + 1; thisM++) {
                         if (thetaConstants.containsKey(thisM)) {
@@ -509,7 +509,6 @@ public class ActionBeagleDelegate implements Beagle {
 
         private boolean conditionFragment313(double A1Norm, int nCol, int mMax) {
             // using l = 1 as in equation 3.13
-            double pMax = getPMax(mMax);
             final double theta = thetaConstants.get(mMax);
 
             return A1Norm <= 2.0 * theta / ((double) nCol * mMax) * pMax * (pMax + 3);

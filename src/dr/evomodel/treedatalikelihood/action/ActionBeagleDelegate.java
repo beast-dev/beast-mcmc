@@ -34,6 +34,7 @@ import org.newejml.data.DMatrixSparseCSC;
 import org.newejml.dense.row.CommonOps_DDRM;
 import org.newejml.dense.row.NormOps_DDRM;
 import org.newejml.sparse.csc.CommonOps_DSCC;
+import org.newejml.sparse.csc.misc.ImplCommonOps_DSCC;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -108,6 +109,8 @@ public class ActionBeagleDelegate implements Beagle {
         this.instantaneousMatrices = instantaneousMatrices;
         this.evolutionaryProcessDelegate = evolutionaryProcessDelegate;
         this.rescalingScheme = rescalingScheme;
+        this.identity = CommonOps_DSCC.identity(stateCount);
+        this.A = new DMatrixSparseCSC(stateCount, stateCount);
     }
 
     @Override
@@ -311,16 +314,16 @@ public class ActionBeagleDelegate implements Beagle {
 
             CommonOps_DDRM.multRows(stateFrequencies, rootPartial);
             DMatrixRMaj singleCategoryColSum = CommonOps_DDRM.sumCols(rootPartial, null);
-            colSums = CommonOps_DDRM.add(singleCategoryColSum, colSums, null);
+            CommonOps_DDRM.add(singleCategoryColSum, colSums, colSums);
         }
         DMatrixRMaj siteLogL = CommonOps_DDRM.elementLog(colSums, null);
 
         if (cumulateScaleBufferIndex >= 0) {
             DMatrixRMaj cumulativeScaleFactors = scalingFactors[cumulateScaleBufferIndex];
-            siteLogL = CommonOps_DDRM.add(siteLogL, cumulativeScaleFactors, null);
+            CommonOps_DDRM.add(siteLogL, cumulativeScaleFactors, siteLogL);
         }
 
-        siteLogL = CommonOps_DDRM.elementMult(siteLogL, patternWeights, null);
+        CommonOps_DDRM.elementMult(siteLogL, patternWeights, siteLogL);
         doubles[0] = CommonOps_DDRM.elementSum(siteLogL);
     }
 
@@ -352,7 +355,11 @@ public class ActionBeagleDelegate implements Beagle {
         }
     }
 
+    private final DMatrixSparseCSC identity;
+    private final DMatrixSparseCSC A;
+
     private DMatrixRMaj simpleAction(DMatrixSparseCSC matrix, DMatrixRMaj partials) {
+
         // Algorithm 3.2 in Al-Mohy and Higham (2011), balance = false, t = 1.0
         assert(matrix.numCols == matrix.numRows);
 
@@ -363,9 +370,9 @@ public class ActionBeagleDelegate implements Beagle {
         final double t = 1.0;
         final int nCol = B.getNumCols();
         final double mu = CommonOps_DSCC.trace(matrix)/((double) matrix.numCols);
-        final DMatrixSparseCSC identity = CommonOps_DSCC.identity(matrix.numRows);
 
-        DMatrixSparseCSC A = CommonOps_DSCC.add(1.0, matrix, -mu, identity, null, null, null);
+//        CommonOps_DSCC.add(1.0, matrix, -mu, identity, A, null, null);
+        ImplCommonOps_DSCC.add(1.0, matrix, -mu, identity, A, null, null);
 
         final double A1Norm = normP1(A);
         int m, s;
@@ -387,7 +394,7 @@ public class ActionBeagleDelegate implements Beagle {
                 B = CommonOps_DSCC.mult(A, B, null);
                 CommonOps_DDRM.scale(t / ((double) s * j), B);
                 c2 = NormOps_DDRM.normPInf(B);
-                F = CommonOps_DDRM.add(F, B, null);
+                CommonOps_DDRM.add(F, B, F);
                 if (c1 + c2 <= tol * NormOps_DDRM.normPInf(F)) {
                     break;
                 }
@@ -411,6 +418,7 @@ public class ActionBeagleDelegate implements Beagle {
             this.powerMatrices = new HashMap<>();
             powerMatrices.put(1, A);
             highestPower = 1;
+            cachePowerSeries((int) getPMax(mMax));
             setThetaConstants();
 
 
@@ -477,18 +485,22 @@ public class ActionBeagleDelegate implements Beagle {
         private double getDValue(int p) {
             // equation 3.7 in Al-Mohy and Higham
             if (!d.containsKey(p)) {
-                if (highestPower < p) {
-                    for (int i = highestPower; i < p; i++) {
-                        DMatrixSparseCSC currentPowerMatrix = powerMatrices.get(highestPower);
-                        DMatrixSparseCSC nextPowerMatrix = CommonOps_DSCC.mult(currentPowerMatrix, powerMatrices.get(1), null);
-                        powerMatrices.put(i + 1, nextPowerMatrix);
-                        highestPower++;
-                    }
-                }
+                cachePowerSeries(p);
                 DMatrixSparseCSC powerPMatrix = powerMatrices.get(p);
                 d.put(p, Math.pow(normP1(powerPMatrix), 1.0 / ((double) p)));
             }
             return d.get(p);
+        }
+
+        private void cachePowerSeries(int p) {
+            if (highestPower < p) {
+                for (int i = highestPower; i < p; i++) {
+                    DMatrixSparseCSC currentPowerMatrix = powerMatrices.get(highestPower);
+                    DMatrixSparseCSC nextPowerMatrix = CommonOps_DSCC.mult(currentPowerMatrix, powerMatrices.get(1), null);
+                    powerMatrices.put(i + 1, nextPowerMatrix);
+                    highestPower++;
+                }
+            }
         }
 
         private final Map<Integer, Double> d;
@@ -581,7 +593,7 @@ public class ActionBeagleDelegate implements Beagle {
                 final int sIndex = scalingIndices[j] - tipCount;
                 if (activeScalingFactors[sIndex]) {
                     DMatrixRMaj scaleBuffer = autoScalingBuffers[sIndex];
-                    cumulativeScaleBuffer = CommonOps_DDRM.add(cumulativeScaleBuffer, kLn2, scaleBuffer);
+                    CommonOps_DDRM.add(scaleBuffer, kLn2, cumulativeScaleBuffer);
                 }
             }
             throw new RuntimeException("Not tested yet.");
@@ -590,7 +602,7 @@ public class ActionBeagleDelegate implements Beagle {
             for (int j = 0; j < count; j++) {
                 DMatrixRMaj scaleBuffer = scalingFactors[scalingIndices[j]];
                 //TODO: enable BEAGLE_FLAG_SCALERS_LOG switch
-                cumulativeScaleBuffer = CommonOps_DDRM.add(cumulativeScaleBuffer, scaleBuffer, null);
+                CommonOps_DDRM.add(cumulativeScaleBuffer, scaleBuffer, cumulativeScaleBuffer);
             }
         }
     }

@@ -37,7 +37,7 @@ import dr.inference.model.Parameter;
 
 public abstract class AbstractCovarionModel extends BaseSubstitutionModel {
 
-    AbstractCovarionModel(String name, DataType dataType, Parameter frequencies, Parameter hiddenFrequencies) {
+    protected AbstractCovarionModel(String name, DataType dataType, Parameter frequencies, Parameter hiddenFrequencies) {
         super(name, dataType, new CovarionFrequencyModel(dataType, frequencies, hiddenFrequencies));
     }
 

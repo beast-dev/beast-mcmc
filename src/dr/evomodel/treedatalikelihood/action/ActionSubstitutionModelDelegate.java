@@ -26,6 +26,7 @@
 package dr.evomodel.treedatalikelihood.action;
 
 import beagle.Beagle;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.PreOrderSettings;
@@ -41,20 +42,23 @@ import org.newejml.sparse.csc.CommonOps_DSCC;
 public class ActionSubstitutionModelDelegate implements ActionEvolutionaryProcessDelegate{
 
     private final double[] branchLengths;
-    private DMatrixSparseTriplet[] sparseQs;
+    private DMatrixSparseCSC[] sparseQs;
+    private Tree tree;
     private final BranchModel branchModel;
     private final int nodeCount;
     private final int stateCount;
 
-    public ActionSubstitutionModelDelegate(BranchModel branchModel,
+    public ActionSubstitutionModelDelegate(Tree tree,
+                                           BranchModel branchModel,
                                            int nodeCount) {
         this.branchLengths = new double[nodeCount];
+        this.tree = tree;
         this.branchModel = branchModel;
         this.nodeCount = nodeCount;
         this.stateCount = branchModel.getRootSubstitutionModel().getFrequencyModel().getFrequencyCount();
-        this.sparseQs = new DMatrixSparseTriplet[nodeCount];
+        this.sparseQs = new DMatrixSparseCSC[nodeCount];
         for (int i = 0; i < nodeCount; i++) {
-            sparseQs[i] = new DMatrixSparseTriplet(stateCount, stateCount, 10 * stateCount);
+            sparseQs[i] = new DMatrixSparseCSC(stateCount, stateCount, 10 * stateCount);
         }
     }
 
@@ -125,7 +129,14 @@ public class ActionSubstitutionModelDelegate implements ActionEvolutionaryProces
 
     @Override
     public SubstitutionModel getSubstitutionModelForBranch(int branchIndex) {
-        return getSubstitutionModel(branchIndex);
+        BranchModel.Mapping mapping = branchModel.getBranchModelMapping(tree.getNode(branchIndex));
+        int[] order = mapping.getOrder();
+
+        if (order.length > 1) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        return getSubstitutionModel(order[0]);
     }
 
     @Override
@@ -146,17 +157,17 @@ public class ActionSubstitutionModelDelegate implements ActionEvolutionaryProces
     @Override
     public void updateSubstitutionModels(Beagle beagle, boolean flipBuffers) {
         final int stateCount = branchModel.getRootSubstitutionModel().getFrequencyModel().getFrequencyCount();
-        for (int i = 0; i < branchModel.getSubstitutionModels().size(); i++) {
-            DMatrixSparseTriplet sparseQ = sparseQs[i];
-            SubstitutionModel substitutionModel = getSubstitutionModel(i);
-            sparseQ.reshape(stateCount, stateCount);
+        for (int i = 0; i < nodeCount; i++) {
+            DMatrixSparseCSC sparseQ = sparseQs[i];
+            SubstitutionModel substitutionModel = getSubstitutionModelForBranch(i);
+            sparseQ.zero();
             double[] Q = new double[stateCount * stateCount];
             substitutionModel.getInfinitesimalMatrix(Q);
             for (int j = 0; j < stateCount; j++) {
                 for (int k = 0; k < stateCount; k++) {
                     final double entryValue = Q[j * stateCount + k];
                     if (entryValue != 0.0) {
-                        sparseQ.addItem(j, k, Q[j * stateCount + k]);
+                        sparseQ.set(j, k, Q[j * stateCount + k]);
                     }
                 }
             }
@@ -187,8 +198,7 @@ public class ActionSubstitutionModelDelegate implements ActionEvolutionaryProces
 
     @Override
     public DMatrixSparseCSC getScaledInstantaneousMatrix(int nodeIndex, double categoryRate) {
-        DMatrixSparseCSC scaledQ = DConvertMatrixStruct.convert(sparseQs[nodeIndex], (DMatrixSparseCSC) null);
-        CommonOps_DSCC.scale(branchLengths[nodeIndex] * categoryRate, scaledQ, scaledQ);
-        return scaledQ;
+        CommonOps_DSCC.scale(branchLengths[nodeIndex] * categoryRate, sparseQs[nodeIndex], sparseQs[nodeIndex]);
+        return sparseQs[nodeIndex];
     }
 }

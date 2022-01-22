@@ -1,7 +1,7 @@
 /*
  * UniqueTopologyCounter.java
  *
- * Copyright (c) 2002-2021 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -85,6 +85,7 @@ public class UniqueTopologyCounter {
                 System.out.println(s + " : " + treeCounter.get(s));
             }
         } catch (FileNotFoundException fnfe) {
+            System.err.println("burninTrees = " + burninTrees);
             fnfe.printStackTrace();
         } catch (IOException io) {
             io.printStackTrace();
@@ -96,7 +97,7 @@ public class UniqueTopologyCounter {
     public static void printUsage(Arguments arguments) {
         arguments.printUsage("UniqueTopologyCounter", "<input-file-name>");
         System.out.println();
-        System.out.println("  Example: UniqueTopologyCounter test.trees");
+        System.out.println("  Example: UniqueTopologyCounter -burninTrees 1000 test.trees");
         System.out.println();
     }
 
@@ -125,9 +126,14 @@ public class UniqueTopologyCounter {
             burninTrees = arguments.getIntegerOption("burninTrees");
         }
 
-        String inputFileName = args[0];
+        String[] args2 = arguments.getLeftoverArguments();
 
-        new UniqueTopologyCounter(inputFileName, burninTrees);
+        if (args2.length == 1) {
+            String inputFileName = args2[0];
+            new UniqueTopologyCounter(inputFileName, burninTrees);
+        } else {
+            throw new RuntimeException("Incorrect number of arguments.");
+        }
 
         System.exit(0);
 

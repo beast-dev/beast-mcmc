@@ -269,7 +269,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
             NodeRef currentNode = (NodeRef)iter.next();
             String nodeState = (String) tree.getNodeAttribute(currentNode, nodeStateAnnotation);
             if (nodeState.equalsIgnoreCase(state)){
-                descendents ++;
+                descendents++;
             }
         }
         return descendents;
@@ -297,9 +297,12 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                 Integer count = map.containsKey(childNodeState) ? map.get(childNodeState) : 0;
                 count += 1;
                 map.put(childNodeState, count);
-            }
-            if(!childNodeState.equalsIgnoreCase(annotationState))
+            } else if(!childNodeState.equalsIgnoreCase(annotationState)) {
+                Integer count = map.containsKey(childNodeState) ? map.get(childNodeState) : 0;
+                count += 1;
+                map.put(childNodeState, count);
                 continue;
+            }
             // Only traverse path if childNode is in same state as annotationState
             getPersistentDescendantStateCounts(tree, childNode, nodeStateAnnotation, annotationState, map);
         }

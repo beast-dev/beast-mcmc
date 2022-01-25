@@ -72,6 +72,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
         String sourceLocation;
         String currentLocation;
         double introductionTime;
+        int numberOfBranches;
         int numberOfDescendants;
         int numberOfDescendantsOfSameState;
         int numberOfPersistentDescendantsOfSameState;
@@ -88,6 +89,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                 "sourceLocation\t"+
                 "currentLocation\t"+
                 "introductionTime\t"+
+                "numberOfBranches\t"+
                 "numberOfDescendants\t"+
                 "numberOfDescendantsOfSameState\t"+
                 "numberOfPersistentDescendantsOfSameState\t"+
@@ -103,6 +105,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                 String sourceLocation,
                 String currentLocation,
                 double introductionTime,
+                int numberOfBranches,
                 int numberOfDescendants,
                 int numberOfDescendantsOfSameState,
                 int numberOfPersistentDescendantsOfSameState,
@@ -117,6 +120,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
             this.sourceLocation = sourceLocation;
             this.currentLocation = currentLocation;
             this.introductionTime = introductionTime;
+            this.numberOfBranches = numberOfBranches;
             this.numberOfDescendants = numberOfDescendants;
             this.numberOfDescendantsOfSameState = numberOfDescendantsOfSameState;
             this.numberOfPersistentDescendantsOfSameState = numberOfPersistentDescendantsOfSameState;
@@ -135,6 +139,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                     sourceLocation,
                     currentLocation,
                     String.valueOf(introductionTime),
+                    String.valueOf(numberOfBranches),
                     String.valueOf(numberOfDescendants),
                     String.valueOf(numberOfDescendantsOfSameState),
                     String.valueOf(numberOfPersistentDescendantsOfSameState),
@@ -225,8 +230,9 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                     ancestralState,
                     currentState,
                     introductionTime,
+                    getNumberOfBranches(tree, node, currentState, nodeStateAnnotation),
                     nodeDescendants.size(),
-                    getSameStateDescendants(nodeDescendants,tree,currentState,nodeStateAnnotation),
+                    getSameStateDescendants(nodeDescendants, tree, currentState, nodeStateAnnotation),
                     persistentDescendants.size(),
                     (tree.getNodeHeight(node) - heightOfTransmissionChain)/rootHeight,
                     rootHeight,
@@ -280,6 +286,21 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
             }
         }
         return descendents;
+    }
+
+    // Get number of persistent branches i.e., number of branches of the transmission chain in the same state
+    private int getNumberOfBranches(Tree tree, NodeRef node, String state, String nodeStateAnnotation){
+        int childCount = tree.getChildCount(node);
+        int numberOfBranches = childCount;
+        for (int i = 0; i < childCount; i++) {
+            NodeRef childNode = tree.getChild(node, i);
+            String nodeState = (String) tree.getNodeAttribute(childNode, nodeStateAnnotation);
+            if (!nodeState.equalsIgnoreCase(state)){
+                continue;
+            }
+            numberOfBranches += getNumberOfBranches(tree, childNode, state, nodeStateAnnotation);
+        }
+        return numberOfBranches;
     }
 
 

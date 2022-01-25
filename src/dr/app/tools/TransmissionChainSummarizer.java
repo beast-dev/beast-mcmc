@@ -204,17 +204,20 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
             Set<NodeRef> persistentDescendants = new HashSet<NodeRef>();
             // Count of each immediate jump from a transmission chain into a different state
             HashMap<String, Integer> map = new HashMap<String, Integer>();
+            // Length of persistence of transmission chain in same state
+            double heightOfTransmissionChain = Double.MAX_VALUE;
 
-            traversePersistentChain(
+            heightOfTransmissionChain = traversePersistentChain(
                     tree,
                     node,
                     nodeStateAnnotation,
                     nodeState,
                     persistentDescendants,
-                    map
+                    map,
+                    heightOfTransmissionChain
             );
 
-
+            double rootHeight = tree.getNodeHeight(tree.getRoot());
             Row row = new Row(
                     treeId,
                     parentNode.getNumber(),
@@ -225,8 +228,8 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                     nodeDescendants.size(),
                     getSameStateDescendants(nodeDescendants,tree,currentState,nodeStateAnnotation),
                     persistentDescendants.size(),
-                    getLengthOfTransmissionChain(tree, node, nodeState, persistentDescendants),
-                    tree.getNodeHeight(tree.getRoot()),
+                    (tree.getNodeHeight(node) - heightOfTransmissionChain)/rootHeight,
+                    rootHeight,
                     tree.isExternal(node),
                     convertToJson(map)
                 );
@@ -280,36 +283,76 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
     }
 
 
-    private void traversePersistentChain(
+    private double traversePersistentChain(
             Tree tree,
             NodeRef node,
             String nodeStateAnnotation,
             String annotationState,
             Set<NodeRef> persistentDescendants,
-            HashMap<String, Integer> jumpsToDifferentState) {
+            HashMap<String, Integer> jumpsToDifferentState,
+            double minHeight) {
         Integer count = 0;
+        double currHeight = 0;
         for (int i = 0; i < tree.getChildCount(node); i++) {
             NodeRef childNode = tree.getChild(node, i);
             String childNodeState = (String) tree.getNodeAttribute(childNode, nodeStateAnnotation);
             if(tree.isExternal(childNode)) {
                 if (childNodeState.equalsIgnoreCase(annotationState)){
+                    // If node is external and is in same state as chain, add to persistent descendants
                     persistentDescendants.add(childNode);
+                    // If node is external and is in same state as chain, update minimum height as required
+                    currHeight = tree.getNodeHeight(childNode);
+                    if(currHeight < minHeight){
+                        minHeight = currHeight;
+                    }
                 } else {
                     // If a leaf has different state, increment count of jumps out of transmission chain to a different state
                     count = jumpsToDifferentState.containsKey(childNodeState) ? jumpsToDifferentState.get(childNodeState) : 0;
                     count += 1;
                     jumpsToDifferentState.put(childNodeState, count);
+                    // If node is external and is in different state as chain, check MJs to update minimum height as required
+                    Object[] jumps = readCJH(childNode, tree);
+                    Object[] earliestJump;
+                    if(jumps != null){
+                        earliestJump = getEarliestJump(jumps);
+                        if(!annotationState.equalsIgnoreCase((String) earliestJump[1])){
+                            throw new RuntimeException("Persistent chain state, "+annotationState+" and source of earliest jump"+(String) earliestJump[1]+" do not match!");
+                        }
+                        currHeight = (Double) earliestJump[0];
+                    }
+                    if(currHeight < minHeight){
+                        minHeight = currHeight;
+                    }
                 }
             } else {
-                // If state of internal node doesn't match state of transmission chain, increment count of jumps out of transmission chain to a different state
                 if(!childNodeState.equalsIgnoreCase(annotationState)){
+                    // If state of internal node doesn't match state of transmission chain, increment count of jumps out of transmission chain to a different state
                     count = jumpsToDifferentState.containsKey(childNodeState) ? jumpsToDifferentState.get(childNodeState) : 0;
                     count += 1;
                     jumpsToDifferentState.put(childNodeState, count);
+
+                    // If node is internal and is in different state as chain, check MJs to update minimum height as required
+                    Object[] jumps = readCJH(childNode, tree);
+                    Object[] earliestJump;
+                    if(jumps != null){
+                        earliestJump = getEarliestJump(jumps);
+                        if(!annotationState.equalsIgnoreCase((String) earliestJump[1])){
+                            throw new RuntimeException("Persistent chain state, "+annotationState+" and source of earliest jump, "+(String) earliestJump[1]+" do not match!");
+                        }
+                        currHeight = (Double) earliestJump[0];
+                    } else {
+                        // If Mjs are null use nodeHeight
+                        currHeight = tree.getNodeHeight(childNode);
+                    }
+                    if(currHeight < minHeight){
+                        minHeight = currHeight;
+                    }
+                    continue;
                 }
             }
-            traversePersistentChain(tree, childNode, nodeStateAnnotation, annotationState, persistentDescendants, jumpsToDifferentState);
+            minHeight = traversePersistentChain(tree, childNode, nodeStateAnnotation, annotationState, persistentDescendants, jumpsToDifferentState, minHeight);
         }
+        return minHeight;
     }
 
     // Length of the longest persisting path in clade as a proportion of rootHeight

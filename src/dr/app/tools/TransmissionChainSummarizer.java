@@ -169,13 +169,10 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
             if(!annotationStates.contains(nodeState))
                 continue;
 
-            double nodeHeight = tree.getNodeHeight(node);
             NodeRef parentNode = tree.getParent(node);
             double parentNodeHeight = tree.getNodeHeight(parentNode);
 
             Set nodeDescendants = TreeUtils.getExternalNodes(tree, node);
-            Set totalEventDescendants = null;
-
             if (nodeState == null) {
                 throw new RuntimeException("Could not locate node state annotation '" + nodeStateAnnotation +
                         "' for node " + node.getNumber());
@@ -194,7 +191,6 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
             //When no jumps are found, record height of parent node
             if (jumps == null) {
                 // Unclear if this is even required here
-                totalEventDescendants = TreeUtils.getExternalNodes(tree, node);
                 introductionTime = parentNodeHeight;
             } else {
                 // If jumps are found, record the most recent jump
@@ -202,14 +198,21 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                 ancestralState = (String) recentJump[1];
                 currentState = (String) recentJump[2];
                 introductionTime = (Double) recentJump[0];
-                totalEventDescendants = TreeUtils.getExternalNodes(tree, node);
             }
 
+            // External nodes in a transmission chain that persist within a given state
             Set<NodeRef> persistentDescendants = new HashSet<NodeRef>();
-            getPersistentDescendants(tree, node, nodeStateAnnotation, nodeState, persistentDescendants);
-
+            // Count of each immediate jump from a transmission chain into a different state
             HashMap<String, Integer> map = new HashMap<String, Integer>();
-            getPersistentDescendantStateCounts(tree, node, nodeStateAnnotation,  nodeState, map);
+
+            traversePersistentChain(
+                    tree,
+                    node,
+                    nodeStateAnnotation,
+                    nodeState,
+                    persistentDescendants,
+                    map
+            );
 
 
             Row row = new Row(
@@ -219,7 +222,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                     ancestralState,
                     currentState,
                     introductionTime,
-                    totalEventDescendants.size(),
+                    nodeDescendants.size(),
                     getSameStateDescendants(nodeDescendants,tree,currentState,nodeStateAnnotation),
                     persistentDescendants.size(),
                     getLengthOfTransmissionChain(tree, node, nodeState, persistentDescendants),
@@ -262,6 +265,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
         return recentJump;
     }
 
+    // Get all descendants in the same state regardless of persistence
     private int getSameStateDescendants(Set leafs, Tree tree, String state, String nodeStateAnnotation){
         int descendents = 0;
         Iterator iter = leafs.iterator();
@@ -275,36 +279,36 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
         return descendents;
     }
 
-    // Get all nodes in a transmission chain that persists within a given state
-    private void getPersistentDescendants(Tree tree, NodeRef node, String nodeStateAnnotation, String annotationState, Set<NodeRef> set){
-        for (int i = 0; i < tree.getChildCount(node); i++) {
-            NodeRef childNode = tree.getChild(node, i);
-            String childNodeState = (String) tree.getNodeAttribute(childNode, nodeStateAnnotation);
-            if(!childNodeState.equalsIgnoreCase(annotationState))
-                continue;
-            if(tree.isExternal(childNode))
-                set.add(childNode);
-            getPersistentDescendants(tree, childNode, nodeStateAnnotation, annotationState, set);
-        }
-    }
 
-    // Get count of states of each immediate jump from a transmission chain in a different state
-    private void getPersistentDescendantStateCounts(Tree tree, NodeRef node, String nodeStateAnnotation, String annotationState, HashMap<String, Integer> map){
+    private void traversePersistentChain(
+            Tree tree,
+            NodeRef node,
+            String nodeStateAnnotation,
+            String annotationState,
+            Set<NodeRef> persistentDescendants,
+            HashMap<String, Integer> jumpsToDifferentState) {
+        Integer count = 0;
         for (int i = 0; i < tree.getChildCount(node); i++) {
             NodeRef childNode = tree.getChild(node, i);
             String childNodeState = (String) tree.getNodeAttribute(childNode, nodeStateAnnotation);
             if(tree.isExternal(childNode)) {
-                Integer count = map.containsKey(childNodeState) ? map.get(childNodeState) : 0;
-                count += 1;
-                map.put(childNodeState, count);
-            } else if(!childNodeState.equalsIgnoreCase(annotationState)) {
-                Integer count = map.containsKey(childNodeState) ? map.get(childNodeState) : 0;
-                count += 1;
-                map.put(childNodeState, count);
-                continue;
+                if (childNodeState.equalsIgnoreCase(annotationState)){
+                    persistentDescendants.add(childNode);
+                } else {
+                    // If a leaf has different state, increment count of jumps out of transmission chain to a different state
+                    count = jumpsToDifferentState.containsKey(childNodeState) ? jumpsToDifferentState.get(childNodeState) : 0;
+                    count += 1;
+                    jumpsToDifferentState.put(childNodeState, count);
+                }
+            } else {
+                // If state of internal node doesn't match state of transmission chain, increment count of jumps out of transmission chain to a different state
+                if(!childNodeState.equalsIgnoreCase(annotationState)){
+                    count = jumpsToDifferentState.containsKey(childNodeState) ? jumpsToDifferentState.get(childNodeState) : 0;
+                    count += 1;
+                    jumpsToDifferentState.put(childNodeState, count);
+                }
             }
-            // Only traverse path if childNode is in same state as annotationState
-            getPersistentDescendantStateCounts(tree, childNode, nodeStateAnnotation, annotationState, map);
+            traversePersistentChain(tree, childNode, nodeStateAnnotation, annotationState, persistentDescendants, jumpsToDifferentState);
         }
     }
 

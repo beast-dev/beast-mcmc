@@ -33,7 +33,7 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
     private final boolean defaultAllowSingular;
     private final Boolean computeDeterminant; // TODO: Maybe pass as argument?
 
-    private static final PrecisionType precisionType = PrecisionType.FULL; //TODO: base on child precisionTypes (make sure they're all the same)
+    private final PrecisionType precisionType; //TODO: base on child precisionTypes (make sure they're all the same)
 
     private String tipTraitName;
 
@@ -41,9 +41,10 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
 
     private static final Boolean DEBUG = false;
 
-    public JointPartialsProvider(String name, ContinuousTraitPartialsProvider[] providers) {
+    public JointPartialsProvider(String name, ContinuousTraitPartialsProvider[] providers, PrecisionType precisionType) {
         super(name);
         this.providers = providers;
+        this.precisionType = precisionType;
 
         int traitDim = 0;
         int dataDim = 0;
@@ -356,7 +357,19 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
                 }
 
             }
-            return new JointPartialsProvider(PARSER_NAME, providers);
+
+            PrecisionType precisionType = providers[0].getPrecisionType();
+            for (int i = 1; i < providers.length; i++) {
+                if (providers[i].getPrecisionType() != precisionType) {
+                    throw new XMLParseException("all partials providers must have the same precision type. " +
+                            "Provider for model " + providers[0].getModelName() + " has precision type '" + precisionType +
+                            "', while provider for model " + providers[i].getModelName() + " has precision type '" +
+                            providers[i].getPrecisionType() + "'.");
+                }
+            }
+
+
+            return new JointPartialsProvider(PARSER_NAME, providers, precisionType);
         }
 
         @Override

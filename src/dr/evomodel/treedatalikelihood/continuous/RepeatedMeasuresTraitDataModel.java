@@ -306,16 +306,6 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 
 
             String traitName = returnValue.traitName;
-            //TODO diffusionModel was only used for the dimension.
-            // But this should be the same as the samplingPrecision dimension ?
-//            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
-//                    xo.getChild(MultivariateDiffusionModel.class);
-
-            //TODO: This was never used.
-//            final boolean[] missingIndicators = new boolean[returnValue.traitParameter.getDimension()];
-//            for (int i : missingIndices) {
-//                missingIndicators[i] = true;
-//            }
 
             boolean scaleByTipHeight = xo.getAttribute(SCALE_BY_TIP_HEIGHT, false);
 

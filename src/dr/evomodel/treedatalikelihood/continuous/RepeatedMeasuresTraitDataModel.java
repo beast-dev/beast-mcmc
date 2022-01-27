@@ -33,6 +33,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
+import dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
@@ -77,10 +78,10 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                                           boolean[] missindIndicators,
                                           boolean useMissingIndices,
                                           final int dimTrait,
-                                          MatrixParameterInterface samplingPrecision) {
+                                          MatrixParameterInterface samplingPrecision,
+                                          PrecisionType precisionType) {
 
-        super(name, parameter, missindIndicators, useMissingIndices, dimTrait,
-                dimTrait == 1 ? PrecisionType.SCALAR : PrecisionType.FULL); //TODO: Not sure this is the best way to do this.
+        super(name, parameter, missindIndicators, useMissingIndices, dimTrait, precisionType);
 
         this.traitName = name;
         this.samplingPrecisionParameter = samplingPrecision;
@@ -309,6 +310,15 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 
             boolean scaleByTipHeight = xo.getAttribute(SCALE_BY_TIP_HEIGHT, false);
 
+            int dimTrait = samplingPrecision.getColumnDimension();
+            final PrecisionType precisionType;
+            if (xo.getAttribute(ContinuousDataLikelihoodParser.FORCE_FULL_PRECISION, false) ||
+                    dimTrait > 1) {
+                precisionType = PrecisionType.FULL;
+            } else {
+                precisionType = PrecisionType.SCALAR;
+            }
+
             if (!scaleByTipHeight) {
                 return new RepeatedMeasuresTraitDataModel(
                         traitName,
@@ -316,9 +326,10 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                         missingIndicators,
 //                    missingIndicators,
                         true,
-                        samplingPrecision.getColumnDimension(),
+                        dimTrait,
 //                    diffusionModel.getPrecisionParameter().getRowDimension(),
-                        samplingPrecision
+                        samplingPrecision,
+                        precisionType
                 );
             } else {
                 return new TreeScaledRepeatedMeasuresTraitDataModel(
@@ -326,8 +337,9 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                         traitParameter,
                         missingIndicators,
                         true,
-                        samplingPrecision.getColumnDimension(),
-                        samplingPrecision
+                        dimTrait,
+                        samplingPrecision,
+                        precisionType
                 );
             }
         }

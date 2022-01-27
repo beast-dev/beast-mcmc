@@ -31,6 +31,7 @@ import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.*;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.Vector;
@@ -147,14 +148,16 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
 //                new boolean[3],
                 true,
                 dimTrait,
-                samplingPrecisionParameter);
+                samplingPrecisionParameter,
+                PrecisionType.FULL);
 
         dataModelRepeatedMeasuresFull = new RepeatedMeasuresTraitDataModel("dataModelRepeatedMeasures",
                 traitParameter,
                 missingIndicators,
                 true,
                 dimTrait,
-                samplingPrecisionParameterFull);
+                samplingPrecisionParameterFull,
+                PrecisionType.FULL);
 
     }
 

@@ -39,7 +39,7 @@ public class ExtendedLatentLiabilityGibbsOperator extends SimpleMCMCOperator imp
         this.latentLiabilityLikelihood = latentLiabilityLikelihood;
         this.dataModel = dataModel;
 
-        if (!dataModel.diagonalVariance()) {
+        if (!dataModel.diagonalVariance() && dataModel.getDataDimension() > 1) {
             throw new RuntimeException(EXTENDED_LATENT_GIBBS +
                     " is only valid for extended models with diagonal variance.");
         }

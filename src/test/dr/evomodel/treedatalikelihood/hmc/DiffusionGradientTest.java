@@ -207,14 +207,16 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
                 missingIndicators,
                 true,
                 dimTrait,
-                samplingPrecision);
+                samplingPrecision,
+                PrecisionType.FULL);
 
         dataModelRepeatedMeasuresInv = new RepeatedMeasuresTraitDataModel("dataModelRepeatedMeasuresInv",
                 traitParameter,
                 missingIndicators,
                 true,
                 dimTrait,
-                samplingPrecisionInv);
+                samplingPrecisionInv,
+                PrecisionType.FULL);
 
     }
 

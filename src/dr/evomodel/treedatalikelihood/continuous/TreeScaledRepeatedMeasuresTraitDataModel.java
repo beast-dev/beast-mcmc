@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
 import org.ejml.data.DenseMatrix64F;
@@ -48,8 +49,9 @@ public class TreeScaledRepeatedMeasuresTraitDataModel extends RepeatedMeasuresTr
                                                     boolean[] missingIndicators,
                                                     boolean useMissingIndices,
                                                     final int dimTrait,
-                                                    MatrixParameterInterface samplingPrecision) {
-        super(name, parameter, missingIndicators, useMissingIndices, dimTrait, samplingPrecision);
+                                                    MatrixParameterInterface samplingPrecision,
+                                                    PrecisionType precisionType) {
+        super(name, parameter, missingIndicators, useMissingIndices, dimTrait, samplingPrecision, precisionType);
     }
 
     @Override

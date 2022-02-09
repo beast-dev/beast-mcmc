@@ -28,7 +28,7 @@ package dr.app.gui.chart;
 
 /**
  * Same behavior as LinearAxis,
- * except to remove the improper handling small ranged values.
+ * except to remove the improper handling very small range.
  * Tracer issue #167
  * @author Walter Xie
  */
@@ -48,7 +48,7 @@ public class LinearAxis2 extends LinearAxis {
 
 
 	/**
-	 * Plotting small ranged values (range < 1.0E-30) is messed up by
+	 * Plotting small-range values (range < 1.0E-30) is messed up by
 	 * the code in its parent method,
 	 * but not sure why {@link Axis.AbstractAxis#calibrate()} needs it.
 	 * So create a 2nd LinearAxis to overwrite this method.

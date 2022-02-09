@@ -179,7 +179,7 @@ public class HistogramPlot extends Plot.AbstractPlot {
             }
         }
 
-        // LinearAxis2 can handle small ranged values (range < 1E-30) correctly, but LinearAxis cannot
+        // LinearAxis2 can handle small range (range < 1E-30) correctly, but LinearAxis cannot
         Axis axis = new LinearAxis2(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK);
         if (minimumBinCount <= 0) {
             axis = new LinearAxis2(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS);

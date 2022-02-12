@@ -468,7 +468,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
     private final boolean printStepsize = false;
 
 
-    final private boolean randomFlg = false;
+    final private boolean randomFlg = true;
     private int count;
 }
 

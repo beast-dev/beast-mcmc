@@ -50,11 +50,15 @@ public class NStoAAannotator extends BaseTreeTool {
     private static final String NS = "all_N";
     private static final String BURN_IN = "burnIn";
     private static final String AA_ANNOT = "aa_";
+    private static final String JOINTSTATE = "jointState";
+    private static final String AA_JOINT = "aa_joint";
+    private static final String[] falseTrue = {"false", "true"};
 
     private NStoAAannotator(String inputFileName,
                             String outputFileName,
                             String[] sitesToAnnotate,
-                            int burnIn
+                            int burnIn,
+                            boolean jointState
     ) throws IOException {
 
         List<Tree> trees = new ArrayList<>();
@@ -62,6 +66,9 @@ public class NStoAAannotator extends BaseTreeTool {
         outputTrees = new Tree[trees.size()-burnIn];
 
         processTrees(trees, sitesToAnnotate, burnIn);
+        if (jointState){
+            annotateJointState(sitesToAnnotate);
+        }
 
         NexusExporter exporter = new NexusExporter(new PrintStream(outputFileName));
         exporter.exportTrees(outputTrees);
@@ -129,6 +136,26 @@ public class NStoAAannotator extends BaseTreeTool {
                     }
                 }
             }
+        }
+        return tree;
+    }
+
+    private void annotateJointState(String[] sitesToAnnotate) {
+        for (int i = 0; i < outputTrees.length; ++i) {
+            Tree tree = outputTrees[i];
+            FlexibleTree treeToAnnotate = annotateJointStateOneTree(new FlexibleTree(tree, true), sitesToAnnotate);
+            outputTrees[i] = treeToAnnotate;
+        }
+    }
+    private FlexibleTree annotateJointStateOneTree(FlexibleTree tree, String[] sitesToAnnotate){
+        for (int i = 0; i < tree.getNodeCount(); ++i) {
+            FlexibleNode flexNode = (FlexibleNode)tree.getExternalNode(i);
+            String jointState = "";
+            for (int j = 0; j < sitesToAnnotate.length; ++j) {
+                char siteState = (Character) tree.getNodeAttribute(flexNode, AA_ANNOT+sitesToAnnotate[j]);
+                jointState = jointState + siteState;
+            }
+            tree.setNodeAttribute(flexNode,AA_JOINT, jointState);
         }
         return tree;
     }
@@ -257,6 +284,7 @@ public class NStoAAannotator extends BaseTreeTool {
 
         String[] sitesToAnnotate = null;
         int burnIn = -1;
+        boolean annotateJointState = false;
 
         printTitle();
 
@@ -264,6 +292,8 @@ public class NStoAAannotator extends BaseTreeTool {
                 new Arguments.Option[]{
                         new Arguments.IntegerOption(BURN_IN, "the number of states to be considered as 'burn-in' [default = 0]"),
                         new Arguments.StringOption("sitesToAnnotate", "list", "a list of sites to annotate"),
+                        new Arguments.StringOption(JOINTSTATE, falseTrue, false,
+                                "annotate the joint State for the sites [default = false])"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 
@@ -278,9 +308,13 @@ public class NStoAAannotator extends BaseTreeTool {
             System.err.println("Ignoring a burn-in of " + burnIn + " trees.");
         }
 
+        String jointStateString = arguments.getStringOption(JOINTSTATE);
+        if (jointStateString != null && jointStateString.compareToIgnoreCase("true") == 0)
+            annotateJointState = true;
+
         String[] fileNames = getInputOutputFileNames(arguments, NStoAAannotator::printUsage);
 
-        new NStoAAannotator(fileNames[0], fileNames[1], sitesToAnnotate, burnIn);
+        new NStoAAannotator(fileNames[0], fileNames[1], sitesToAnnotate, burnIn, annotateJointState);
 
         System.exit(0);
     }

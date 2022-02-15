@@ -65,7 +65,11 @@ public class NStoAAannotator extends BaseTreeTool {
         readTrees(trees, inputFileName, burnIn);
         outputTrees = new Tree[trees.size()-burnIn];
 
+        //TODO: go throught the first tree to collect all sites that entertain NS and use this site list in case no site selection is provided
+
         processTrees(trees, sitesToAnnotate, burnIn);
+
+        //joint state allows adding a state annotation that combines all aa states (for studying co-evolution)
         if (jointState){
             annotateJointState(sitesToAnnotate);
         }
@@ -112,7 +116,7 @@ public class NStoAAannotator extends BaseTreeTool {
                                         System.err.println("current 'to State' does not match 'to State' in NS");
                                     }
                                     tree.setNodeAttribute(flexNode,AA_ANNOT+site, codonToAA(singleNS[3].toString()));
-                                    //we re-set the 'recentState' to the 'from state' of the NS on this brance, which will be subsequently used if there are no NS in the ancestral brancehs
+                                    //we re-set the 'recentState' to the 'from state' of the NS on this branch, which will be subsequently used if there are no NS in the ancestral branches
                                     recentState = singleNS[2].toString();
                                     NSatSite = true;
                                 }
@@ -169,9 +173,9 @@ public class NStoAAannotator extends BaseTreeTool {
     }
 
     private static Object[] readNS(NodeRef node, Tree treeTime) {
-        if(treeTime.isRoot(node)){
-            System.err.println("root node!");
-        }
+//        if(treeTime.isRoot(node)){
+//            System.err.println("root node!");
+//        }
         if (treeTime.getNodeAttribute(node, NS) != null) {
             return (Object[]) treeTime.getNodeAttribute(node, NS);
         } else {

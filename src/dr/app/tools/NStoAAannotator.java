@@ -49,6 +49,7 @@ public class NStoAAannotator extends BaseTreeTool {
 
     private static final String NS = "all_N";
     private static final String BURN_IN = "burnIn";
+    private static final String AA_ANNOT = "aa_";
 
     private NStoAAannotator(String inputFileName,
                             String outputFileName,
@@ -79,23 +80,52 @@ public class NStoAAannotator extends BaseTreeTool {
     }
 
     private FlexibleTree annotateOneTree(FlexibleTree tree, String[] sitesToAnnotate) {
-
-        //TODO: annotate all nodes and not justt the ones for a branch with a NS substitution
-        for (int i = 0; i < tree.getNodeCount(); i++) {
-            FlexibleNode flexNode = (FlexibleNode)tree.getNode(i);
-            Object[] NS = readNS(flexNode, tree);
-            if (NS != null) {
-                for (int j = 0; j < NS.length; j ++) {
-                    Object[] singleNS = (Object[]) NS[j];
-                    for (int k = 0; k < sitesToAnnotate.length; k ++) {
-                        if (sitesToAnnotate[k].equalsIgnoreCase(singleNS[0].toString())){
-//                           tree.setNodeAttribute(flexNode,"codon"+sitesToAnnotate[k], singleNS[3]);
-//                            tree.setNodeAttribute(flexNode.getParent(),
-//                                    "codon"+sitesToAnnotate[k], singleNS[2]);
-                            tree.setNodeAttribute(flexNode,"aa_"+sitesToAnnotate[k], codonToAA((String)singleNS[3]));
-                            tree.setNodeAttribute(flexNode.getParent(),
-                                    "aa_"+sitesToAnnotate[k], codonToAA((String)singleNS[3]));
+        for (int i = 0; i < sitesToAnnotate.length; i++) {
+            String site = sitesToAnnotate[i];
+            String rootState = findRootCodonState(tree, site);
+            if (rootState == null){
+                System.err.println("no nonsynonymous changes find for site "+site+"!!");
+            }
+            tree.setNodeAttribute(tree.getRoot(),AA_ANNOT+site, codonToAA(rootState));
+            for (int j = 0; j < tree.getExternalNodeCount(); ++j) {
+                FlexibleNode flexNode = (FlexibleNode)tree.getExternalNode(j);
+                boolean annotated = hasAttribute(flexNode,AA_ANNOT+site);
+                if(hasNSatSiteInPath(tree, flexNode, site)){
+                    // as we have set the root state, the root should always be annotated
+                    //first get the recentState from the most recent NS and propagate if no NS or NS at relevant site. modify recentState according to NS encountered
+                    String recentState = findYoungestNSrecentState(tree,flexNode,site);
+                    while(!annotated) {
+                        Object[] NS = readNS(flexNode, tree);
+                        if (NS != null) {
+                            boolean NSatSite =  false;
+                            for (int k = 0; k < NS.length; k++) {
+                                Object[] singleNS = (Object[]) NS[k];
+                                if (site.equalsIgnoreCase(singleNS[0].toString())) {
+                                    if(!recentState.equalsIgnoreCase(singleNS[3].toString())) {
+                                        System.err.println("current 'to State' does not match 'to State' in NS");
+                                    }
+                                    tree.setNodeAttribute(flexNode,AA_ANNOT+site, codonToAA(singleNS[3].toString()));
+                                    //we re-set the 'recentState' to the 'from state' of the NS on this brance, which will be subsequently used if there are no NS in the ancestral brancehs
+                                    recentState = singleNS[2].toString();
+                                    NSatSite = true;
+                                }
+                            }
+                            //if none of the NS are at the correct site
+                            if(!NSatSite){
+                                tree.setNodeAttribute(flexNode,AA_ANNOT+site, codonToAA(recentState));
+                            }
+                        //if there are no NS
+                        } else {
+                            tree.setNodeAttribute(flexNode,AA_ANNOT+site, codonToAA(recentState));
                         }
+                        flexNode = (FlexibleNode)tree.getParent(flexNode);
+                        annotated = hasAttribute(flexNode,AA_ANNOT+site);
+                    }
+                } else {
+                     while(!annotated) {
+                        tree.setNodeAttribute(flexNode,AA_ANNOT+site, codonToAA(rootState));
+                        flexNode = (FlexibleNode)tree.getParent(flexNode);
+                        annotated = hasAttribute(flexNode,AA_ANNOT+site);
                     }
                 }
             }
@@ -103,7 +133,18 @@ public class NStoAAannotator extends BaseTreeTool {
         return tree;
     }
 
+    private boolean hasAttribute(FlexibleNode flexNode, String annotation){
+        if (flexNode.getAttribute(annotation) != null) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     private static Object[] readNS(NodeRef node, Tree treeTime) {
+        if(treeTime.isRoot(node)){
+            System.err.println("root node!");
+        }
         if (treeTime.getNodeAttribute(node, NS) != null) {
             return (Object[]) treeTime.getNodeAttribute(node, NS);
         } else {
@@ -118,6 +159,75 @@ public class NStoAAannotator extends BaseTreeTool {
         int codonInt =  (nuc1Int * 16) + (nuc2Int * 4) + nuc3Int;
         int aaInt = geneticCode.getAminoAcidState(codons.getCanonicalState(codonInt));
         return AminoAcids.INSTANCE.getChar(aaInt);
+    }
+
+    private String findRootCodonState(Tree tree, String site){
+        String codonState = null;
+        for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
+            NodeRef extNode = tree.getExternalNode(i);
+            if(hasNSatSiteInPath(tree,extNode,site)){
+                codonState = findOldestNSfromState(tree,extNode,site);
+            }
+        }
+        return codonState;
+    }
+
+    private boolean hasNSatSiteInPath(Tree tree, NodeRef extNode, String site){
+        boolean hasNS = false;
+        while(!hasNS && !tree.isRoot(extNode)) {
+            Object[] NS = readNS(extNode, tree);
+            if (NS != null) {
+                for (int i = 0; i < NS.length; i ++) {
+                    Object[] singleNS = (Object[]) NS[i];
+                    if(site.equalsIgnoreCase(singleNS[0].toString())){
+                        hasNS = true;
+                    }
+                }
+            }
+            extNode = tree.getParent(extNode);
+        }
+        return hasNS;
+    }
+
+    private String findOldestNSfromState(Tree tree, NodeRef extNode, String site){
+        String fromState = null;
+        double NStime = 0;
+        while(!tree.isRoot(extNode)) {
+            Object[] NS = readNS(extNode, tree);
+            if (NS != null) {
+                for (int i = 0; i < NS.length; i++) {
+                    Object[] singleNS = (Object[]) NS[i];
+                    if (site.equalsIgnoreCase(singleNS[0].toString())) {
+                        double singleNStime = Double.parseDouble(singleNS[1].toString());
+                        if(singleNStime > NStime){
+                            NStime = singleNStime;
+                            fromState = singleNS[2].toString();
+                        }
+                    }
+                }
+            }
+            extNode = tree.getParent(extNode);
+        }
+        return fromState;
+    }
+
+    private String findYoungestNSrecentState(Tree tree, NodeRef extNode, String site){
+        String recentState = null;
+        boolean NSfound = false;
+        while(!NSfound && !tree.isRoot(extNode)) {
+            Object[] NS = readNS(extNode, tree);
+            if (NS != null) {
+                for (int i = 0; i < NS.length; i++) {
+                    Object[] singleNS = (Object[]) NS[i];
+                    if (site.equalsIgnoreCase(singleNS[0].toString())) {
+                        recentState = singleNS[3].toString();
+                        NSfound = true;
+                    }
+                }
+            }
+            extNode = tree.getParent(extNode);
+        }
+        return recentState;
     }
 
     private Tree[] outputTrees;

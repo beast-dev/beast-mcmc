@@ -45,7 +45,6 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
-import static dr.inference.model.Likelihood.FULL_LIKELIHOOD_SET;
 
 /**
  * BeagleDataLikelihoodDelegate
@@ -1099,7 +1098,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     }
 
     public static void releaseAllBeagleInstances() throws Throwable {
-        for (Likelihood likelihood : FULL_LIKELIHOOD_SET) {
+        for (Likelihood likelihood : dr.inference.model.Likelihood.FULL_LIKELIHOOD_SET) {
             if (likelihood instanceof TreeDataLikelihood) {
                 TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) likelihood;
                 DataLikelihoodDelegate likelihoodDelegate = treeDataLikelihood.getDataLikelihoodDelegate();

@@ -88,7 +88,7 @@ public class GeneralizedHarmonicMeanAnalysis implements Reportable {
         }
         double firstPart = exponentialParts.get(0);
 
-        double internalSum = 0.0;
+        double internalSum = 1.0;
         for (int i = 1; i < exponentialParts.size(); i++) {
             internalSum += Math.exp(exponentialParts.get(i) - firstPart);
             System.out.println("internalSum = " + internalSum);

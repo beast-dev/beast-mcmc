@@ -42,6 +42,7 @@ public class LogFileTraces extends AbstractTraceList {
     public LogFileTraces(String name, File file) {
         this.name = name;
         this.file = file;
+        System.out.println("Loading log " + file.getAbsolutePath() + " ...");
     }
 
     /**

@@ -26,6 +26,50 @@ public class ConstrainedTreeModel extends TreeModel {
         this(CONSTRAINED_TREE_MODEL, tree, false, false, constraintsTree);
     }
 
+    public ConstrainedTreeModel(ConstrainedTreeModel baseTree){
+        super(CONSTRAINED_TREE_MODEL,baseTree.isVariable());
+        internalNodeCount = baseTree.getInternalNodeCount();
+        externalNodeCount = baseTree.getExternalNodeCount();
+
+        nodeCount = internalNodeCount + externalNodeCount;
+
+        nodes = new NodeRef[nodeCount];
+        for (int i = 0; i < nodeCount; i++) {
+            NodeRef node = baseTree.getNode(i);
+            if (baseTree.isExternal(node)) {
+                nodes[i] = new Node(i, baseTree.getNodeTaxon(node));
+            }else{
+                nodes[i]= new Node(i);
+            }
+        }
+
+        root = baseTree.getRoot().getNumber();
+
+        edges = new int[nodeCount * 3];
+        System.arraycopy(baseTree.edges,0,edges,0,nodeCount*3);
+
+        storedEdges = new int[nodeCount * 3];
+
+        heights = new double[nodeCount];
+        System.arraycopy(baseTree.heights,0,heights,0,nodeCount);
+
+        storedHeights = new double[nodeCount];
+
+        //Now copy subtrees
+        subtrees = new ArrayList<>();
+        for (int i = 0; i < baseTree.getSubtreeCount(); i++) {
+            WrappingSubtree baseSubtree = (WrappingSubtree) baseTree.getSubtree(i);
+            HashSet<NodeRef> tips = new HashSet<>();
+            for(int j=0; j<baseSubtree.getExternalNodeCount();j++){
+                WrappingSubtree.Node baseSubtreeNode = (WrappingSubtree.Node) baseSubtree.getExternalNode(j);
+                NodeRef myNode = nodes[baseSubtreeNode.getBaseNodeNumber()];
+                tips.add(myNode);
+            }
+            WrappingSubtree subtree = new WrappingSubtree(this, tips, i);
+            subtrees.add(subtree);
+        }
+    }
+
     public ConstrainedTreeModel(String name, Tree tree, Tree constraintsTree) {
         this(name, tree, false, false, constraintsTree);
     }
@@ -108,7 +152,7 @@ public class ConstrainedTreeModel extends TreeModel {
         }
 
 
-        this.subtrees = new ArrayList<WrappedSubtree>();
+        this.subtrees = new ArrayList<WrappingSubtree>();
         for (int i = 0; i < constraintsTree.getInternalNodeCount(); i++) {
             NodeRef constraintsTreeInternalNode = constraintsTree.getInternalNode(i);
             Set<NodeRef> tips = new HashSet<>();
@@ -116,7 +160,7 @@ public class ConstrainedTreeModel extends TreeModel {
                 NodeRef child = constraintsTree.getChild(constraintsTreeInternalNode, j);
                 tips.add(constraintsNodeToTreeNode.get(child));
             }
-            WrappedSubtree subtree = new WrappedSubtree(this, tips, subtrees.size());
+            WrappingSubtree subtree = new WrappingSubtree(this, tips, subtrees.size());
             subtrees.add(subtree);
         }
 
@@ -169,6 +213,14 @@ public class ConstrainedTreeModel extends TreeModel {
         return subtrees.get(((Node) node).getSubtreeNumber(context));
     }
 
+
+    public void copyEdgesAndHeights(ConstrainedTreeModel baseTree){
+        // this assumes the two trees have the same subtrees
+        System.arraycopy(baseTree.heights,0,heights,0,nodeCount);
+        System.arraycopy(baseTree.edges,0,edges,0,nodeCount*3);
+
+
+    }
     /**
      * This is a short cut function to return the subtree of node.
      * It defaults to the root context which returns the subtree that contains the node as a root if it is both
@@ -194,7 +246,7 @@ public class ConstrainedTreeModel extends TreeModel {
     }
 
     private NodeRef getNodeInSubtree(Tree tree, NodeRef nodeRef,SubtreeContext context) {
-       return ((WrappedSubtree)tree).getWrappingNode(nodeRef,context);
+       return ((WrappingSubtree)tree).getWrappingNode(nodeRef,context);
     }
     public NodeRef getNodeInSubtree(Tree tree, NodeRef nodeRef) {
         return getNodeInSubtree( tree, nodeRef,SubtreeContext.IncludeRoot) ;
@@ -392,6 +444,9 @@ public class ConstrainedTreeModel extends TreeModel {
         edges[(nodeNumber * 3) + i + 1] = childNumber;
     }
 
+    public void endTreeEditQuietly(){
+        inEdit = false;
+    }
     // *****************************************************************
     // Interface MutableTree
     // *****************************************************************
@@ -414,7 +469,12 @@ public class ConstrainedTreeModel extends TreeModel {
     }
 
     private void addChildByForce(NodeRef p, NodeRef c) {
+        addChildQuietlyByForce(p,c);
+        pushTreeChangedEvent(TreeChangedEvent.create(p, false));
+        pushTreeChangedEvent(TreeChangedEvent.create(c, false));
+    }
 
+    private void addChildQuietlyByForce(NodeRef p, NodeRef c){
         if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 
         int parent = p.getNumber();
@@ -428,9 +488,6 @@ public class ConstrainedTreeModel extends TreeModel {
             throw new IllegalArgumentException("Node already has two children");
         }
         setParent(child, parent);
-
-        pushTreeChangedEvent(TreeChangedEvent.create(p, false));
-        pushTreeChangedEvent(TreeChangedEvent.create(c, false));
     }
 
 
@@ -439,8 +496,7 @@ public class ConstrainedTreeModel extends TreeModel {
         throw new RuntimeException("Cannot directly change the toplogy of a constrained tree! Please use a compatible operator");
     }
 
-    public void removeChildByForce(NodeRef p, NodeRef c) {
-
+    private void removeChildQuietlyByForce(NodeRef p, NodeRef c){
         if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 
         int parent = p.getNumber();
@@ -460,11 +516,16 @@ public class ConstrainedTreeModel extends TreeModel {
             throw new IllegalArgumentException("Child not in node");
         }
         setParent(child, -1);
-
+    }
+    private void removeChildByForce(NodeRef p, NodeRef c) {
+        removeChildQuietlyByForce(p, c);
         pushTreeChangedEvent(TreeChangedEvent.create(p, false));
         pushTreeChangedEvent(TreeChangedEvent.create(c, false));
     }
 
+    protected void clearTopology(){
+        Arrays.fill(edges, -1);
+    }
     @Override
     public void replaceChild(NodeRef node, NodeRef child, NodeRef newChild) {
         throw new RuntimeException("Unimplemented");
@@ -691,7 +752,7 @@ public class ConstrainedTreeModel extends TreeModel {
     // Private members
     // ***********************************************************************
 
-    private final List<WrappedSubtree> subtrees;
+    private final List<WrappingSubtree> subtrees;
     /**
      * root node
      */
@@ -829,7 +890,7 @@ public class ConstrainedTreeModel extends TreeModel {
      * context. In these cases a node in the base tree that is in two subtrees belongs to the tree where it is
      * the root.
      */
-    private enum SubtreeContext {
+    protected enum SubtreeContext {
         IncludeRoot,
         IncludeTips
     }
@@ -840,11 +901,11 @@ public class ConstrainedTreeModel extends TreeModel {
      * the constrained tree is constant and final. The topology of these subtrees can be operated on which changes
      * the topology in the constrained tree, without breaking any constraints.
      */
-    private class WrappedSubtree extends TreeModel {
+    protected class WrappingSubtree extends TreeModel {
 
         public static final String WRAPPED_TREE_MODEL = "wrappedTreeModel";
 
-        public WrappedSubtree(String name, ConstrainedTreeModel tree, Set<NodeRef> externalNodes,int number) {
+        public WrappingSubtree(String name, ConstrainedTreeModel tree, Set<NodeRef> externalNodes, int number) {
             super(name, tree.isVariable());
             setId(name);
 
@@ -887,7 +948,7 @@ public class ConstrainedTreeModel extends TreeModel {
 
         }
 
-        public WrappedSubtree(ConstrainedTreeModel tree, Set<NodeRef> externalNodes, int number) {
+        public WrappingSubtree(ConstrainedTreeModel tree, Set<NodeRef> externalNodes, int number) {
             this(WRAPPED_TREE_MODEL, tree, externalNodes,number);
         }
 
@@ -942,6 +1003,17 @@ public class ConstrainedTreeModel extends TreeModel {
             wrappedTree.addChildByForce(wrappedParent, wrappedChild);
         }
 
+        public void addChildQuietly(NodeRef parent, NodeRef child) {
+            NodeRef wrappedParent = getNodeInWrappedTree(parent);
+            NodeRef wrappedChild = getNodeInWrappedTree(child);
+
+            if (isRoot(child)) {
+                NodeRef rootParent = wrappedTree.getParent(wrappedChild);
+                wrappedTree.removeChildQuietlyByForce(rootParent, wrappedChild);
+            }
+            wrappedTree.addChildQuietlyByForce(wrappedParent, wrappedChild);
+        }
+
         /**
          * Removes child from the children of parent.
          *
@@ -955,7 +1027,11 @@ public class ConstrainedTreeModel extends TreeModel {
             NodeRef wrappedChild = getNodeInWrappedTree(child);
             wrappedTree.removeChildByForce(wrappedParent, wrappedChild);
         }
-
+        public void removeChildQuietly(NodeRef parent, NodeRef child) {
+            NodeRef wrappedParent = getNodeInWrappedTree(parent);
+            NodeRef wrappedChild = getNodeInWrappedTree(child);
+            wrappedTree.removeChildQuietlyByForce(wrappedParent, wrappedChild);
+        }
         /**
          * Replace child with another
          *
@@ -982,6 +1058,7 @@ public class ConstrainedTreeModel extends TreeModel {
             NodeRef wrappedNode = getNodeInWrappedTree(node);
             wrappedTree.setNodeHeight(wrappedNode, height);
         }
+
 
         /**
          * set the rate of the ith node in the tree (where the first n are internal).

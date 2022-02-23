@@ -3,12 +3,12 @@ package test.dr.evomodel.treelikelihood.thorneytreelikelihood;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.Tree;
 
-import dr.evomodel.bigfasttree.*;
+import dr.evomodel.bigfasttree.BigFastTreeModel;
 import dr.evomodel.operators.ExchangeOperator;
-import dr.evomodel.treelikelihood.thorneytreelikelihood.*;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.*;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
 import dr.math.distributions.PoissonDistribution;

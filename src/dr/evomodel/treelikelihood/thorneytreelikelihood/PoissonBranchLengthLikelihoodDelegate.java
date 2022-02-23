@@ -37,6 +37,14 @@ public class PoissonBranchLengthLikelihoodDelegate extends AbstractModel impleme
         return SaddlePointExpansion.logPoissonMeanDerivative(time * rate * scale, (int) Math.round(mutations)) * rate * scale;
     }
 
+    public BranchRateModel getBranchRateModel(){
+        return this.branchRateModel;
+    }
+
+    public double getScale() {
+        return scale;
+    }
+
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         fireModelChanged(this,index);

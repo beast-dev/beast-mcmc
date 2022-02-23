@@ -31,7 +31,6 @@ import dr.util.Citation;
 import dr.util.Version;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**

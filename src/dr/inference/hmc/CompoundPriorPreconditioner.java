@@ -29,6 +29,7 @@ import dr.inference.model.PriorPreconditioningProvider;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.Reportable;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -41,26 +42,41 @@ public class CompoundPriorPreconditioner implements PriorPreconditioningProvider
     private final int smallDim;
     private final int totalDim;
     private List<PriorPreconditioningProvider> priorPreconditionerList;
+    private int[] iMap;
+    private int[] jMap;
 
     public CompoundPriorPreconditioner(List<PriorPreconditioningProvider> priorPreconditionerList) {
         this.smallDim = priorPreconditionerList.get(0).getDimension();
-        this.totalDim = smallDim * priorPreconditionerList.size();
         this.priorPreconditionerList = priorPreconditionerList;
 
         int tempDim = 0;
         for (int i = 0; i < priorPreconditionerList.size(); i++) {
             tempDim += priorPreconditionerList.get(i).getDimension();
         }
-        if (tempDim != totalDim) {
-            throw new RuntimeException("Prior preconditioners of variable dimension not yet implemented");
+        this.totalDim = tempDim;
+
+        int[] mapI = new int[totalDim];
+        int[] mapJ = new int[totalDim];
+        int k = 0;
+        for (int i = 0; i < priorPreconditionerList.size(); i++) {
+            for (int j = 0; j < priorPreconditionerList.get(i).getDimension(); j++) {
+                mapI[k] = i;
+                mapJ[k] = j;
+                k++;
+            }
         }
+        this.iMap = mapI;
+        this.jMap = mapJ;
     }
 
     @Override
     public double getStandardDeviation(int index) {
-        int derivativeIndex = (int) Math.floor(index / smallDim);
-        int standardDeviationIndex = index % smallDim;
-        return priorPreconditionerList.get(derivativeIndex).getStandardDeviation(standardDeviationIndex);
+//        int derivativeIndex = (int) Math.floor(index / smallDim);
+//        int standardDeviationIndex = index % smallDim;
+//        return priorPreconditionerList.get(derivativeIndex).getStandardDeviation(standardDeviationIndex);
+        int i = iMap[index];
+        int j = jMap[index];
+        return priorPreconditionerList.get(i).getStandardDeviation(j);
     }
 
     @Override

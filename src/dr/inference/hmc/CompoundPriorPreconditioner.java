@@ -26,14 +26,17 @@
 package dr.inference.hmc;
 
 import dr.inference.model.PriorPreconditioningProvider;
+import dr.math.matrixAlgebra.Vector;
+import dr.xml.Reportable;
 
 import java.util.List;
 
 /**
  * @author Alexander Fisher
+ * @author Andy Magee
  */
 
-public class CompoundPriorPreconditioner implements PriorPreconditioningProvider {
+public class CompoundPriorPreconditioner implements PriorPreconditioningProvider, Reportable {
 // todo: look at refactoring into MassPreconditioner.CompoundPreconditioning
     private final int smallDim;
     private final int totalDim;
@@ -63,5 +66,29 @@ public class CompoundPriorPreconditioner implements PriorPreconditioningProvider
     @Override
     public int getDimension() {
         return totalDim;
+    }
+
+    public String getReport() {
+
+        StringBuilder sb = new StringBuilder("compoundPriorPreconditioner Report\n\n");
+
+        sb.append("totalDim: " + totalDim + "\n\n");
+
+        sb.append("priorPreconditionerList size: " + priorPreconditionerList.size() + "\n\n");
+
+        int n = 0;
+        for (int i = 0; i < priorPreconditionerList.size(); i++) {
+            n += priorPreconditionerList.get(i).getDimension();
+        }
+
+        double[] values = new double[n];
+        for (int i = 0; i < n; i++) {
+            values[i] = getStandardDeviation(i);
+        }
+        sb.append("Prior SDs: ");
+        sb.append(new Vector(values));
+        sb.append("\n\n");
+
+        return sb.toString();
     }
 }

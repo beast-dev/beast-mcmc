@@ -205,6 +205,7 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
     private final Parameter epochTimes;
 
     public void setRootFrequencyModel(FrequencyModel rootFreqModel) {
+        addModel(rootFreqModel);
         this.rootFrequencyModel = rootFreqModel;
     }
 

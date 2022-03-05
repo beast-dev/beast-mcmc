@@ -206,7 +206,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
             if (extraBufferOrder.size() > 0) {
                 extraBufferCount = extraBufferOrder.get(instanceCount % extraBufferOrder.size());
             }
-            substitutionModelDelegate = new SubstitutionModelDelegate(treeModel, branchModel, extraBufferCount);
+            substitutionModelDelegate = new SubstitutionModelDelegate(treeModel, branchModel, branchRateModel, extraBufferCount);
 
             // first set the rescaling scheme to use from the parser
             this.rescalingScheme = rescalingScheme;

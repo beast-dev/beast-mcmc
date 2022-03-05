@@ -288,6 +288,20 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
             return getRawBranchRate(tree, node);
         }
     }
+    
+    @Override
+    public Mapping getBranchRateModelMapping(final Tree tree, final NodeRef node) {
+        
+        return new Mapping() {
+            public double[] getRates() {
+                return new double[] { getBranchRate(tree, node) };
+            }
+
+            public double[] getWeights() {
+                return new double[] { 1.0 };
+            }
+        };
+    }
 
     // produce weighted mean of rate for a branch
     // rate = absRate * branchWeight[0] * relativeRates[0] + absRate * branchWeight[1] * relativeRates[1]

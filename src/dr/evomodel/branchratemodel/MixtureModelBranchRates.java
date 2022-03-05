@@ -233,6 +233,20 @@ public class MixtureModelBranchRates extends AbstractBranchRateModel {
         //int rateCategory = (int) Math.round(rateCategories.getNodeValue(tree, node));
         return rates[node.getNumber()] * scaleFactor;
     }
+    
+    @Override
+    public Mapping getBranchRateModelMapping(final Tree tree, final NodeRef node) {
+        
+        return new Mapping() {
+            public double[] getRates() {
+                return new double[] { getBranchRate(tree, node) };
+            }
+
+            public double[] getWeights() {
+                return new double[] { 1.0 };
+            }
+        };
+    }
 
     /**
      * Calculates the actual rates corresponding to the category indices.

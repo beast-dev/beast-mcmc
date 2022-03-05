@@ -157,6 +157,20 @@ public class LocalBranchRates extends ArbitraryBranchRates implements Reportable
     public double getBranchRate(final Tree tree, final NodeRef node) {
         return transform.transform(branchRates.getNodeValue(tree, node), tree, node);
     }
+    
+    @Override
+    public Mapping getBranchRateModelMapping(final Tree tree, final NodeRef node) {
+        
+        return new Mapping() {
+            public double[] getRates() {
+                return new double[] { getBranchRate(tree, node) };
+            }
+
+            public double[] getWeights() {
+                return new double[] { 1.0 };
+            }
+        };
+    }
 
     @Override
     public void setBranchRate(Tree tree, NodeRef node, double value) {

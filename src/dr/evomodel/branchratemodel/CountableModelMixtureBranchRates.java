@@ -198,6 +198,20 @@ public class CountableModelMixtureBranchRates extends AbstractBranchRateModel im
         }
         return effect;
     }
+    
+    @Override
+    public Mapping getBranchRateModelMapping(final Tree tree, final NodeRef node) {
+        
+        return new Mapping() {
+            public double[] getRates() {
+                return new double[] { getBranchRate(tree, node) };
+            }
+
+            public double[] getWeights() {
+                return new double[] { 1.0 };
+            }
+        };
+    }
 
     private final CountableBranchCategoryProvider rateCategories;
     private final boolean modelInLogSpace;

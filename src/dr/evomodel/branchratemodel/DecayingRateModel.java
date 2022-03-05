@@ -129,6 +129,20 @@ public class DecayingRateModel extends AbstractBranchRateModel {
 
         return rates[node.getNumber()];
     }
+    
+    @Override
+    public Mapping getBranchRateModelMapping(final Tree tree, final NodeRef node) {
+        
+        return new Mapping() {
+            public double[] getRates() {
+                return new double[] { getBranchRate(tree, node) };
+            }
+
+            public double[] getWeights() {
+                return new double[] { 1.0 };
+            }
+        };
+    }
 
     /**
      * Traverse the tree calculating partial likelihoods.

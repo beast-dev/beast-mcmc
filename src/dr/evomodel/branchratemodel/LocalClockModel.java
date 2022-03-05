@@ -273,6 +273,20 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
 
         return rate;
     }
+    
+    @Override
+    public Mapping getBranchRateModelMapping(final Tree tree, final NodeRef node) {
+        
+        return new Mapping() {
+            public double[] getRates() {
+                return new double[] { getBranchRate(tree, node) };
+            }
+
+            public double[] getWeights() {
+                return new double[] { 1.0 };
+            }
+        };
+    }
 
     /**
      * Set up the map from node to clock.

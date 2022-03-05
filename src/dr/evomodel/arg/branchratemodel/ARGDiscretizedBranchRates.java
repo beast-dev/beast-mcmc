@@ -224,6 +224,20 @@ ParametricDistributionModel model) {
 //	    System.err.println("rate = "+rates[rateCategory]+" : "+rateCategory);
         return rates[rateCategory];
     }
+    
+    @Override
+    public Mapping getBranchRateModelMapping(final Tree tree, final NodeRef node) {
+        
+        return new Mapping() {
+            public double[] getRates() {
+                return new double[] { getBranchRate(tree, node) };
+            }
+
+            public double[] getWeights() {
+                return new double[] { 1.0 };
+            }
+        };
+    }
 
     /**
      * Calculates the actual rates corresponding to the category indices.

@@ -93,6 +93,20 @@ public class ARGRelaxedClock extends AbstractBranchRateModel {
 
         return globalRateParameter.getParameterValue(0) * argNode.getRate(partition);
     }
+    
+    @Override
+    public Mapping getBranchRateModelMapping(final Tree tree, final NodeRef node) {
+        
+        return new Mapping() {
+            public double[] getRates() {
+                return new double[] { getBranchRate(tree, node) };
+            }
+
+            public double[] getWeights() {
+                return new double[] { 1.0 };
+            }
+        };
+    }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 

@@ -61,6 +61,20 @@ public class AncestralTraitBranchRateModel extends AbstractBranchRateModel {
             return 1.0;
         }
     }
+    
+    @Override
+    public Mapping getBranchRateModelMapping(final Tree tree, final NodeRef node) {
+        
+        return new Mapping() {
+            public double[] getRates() {
+                return new double[] { getBranchRate(tree, node) };
+            }
+
+            public double[] getWeights() {
+                return new double[] { 1.0 };
+            }
+        };
+    }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {

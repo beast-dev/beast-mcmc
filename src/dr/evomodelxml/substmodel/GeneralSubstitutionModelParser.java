@@ -82,10 +82,16 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
 //            }
 //        }
 
-        if (dataType == null) dataType = freqModel.getDataType();
+        if (dataType == null && freqModel != null) {
+            dataType = freqModel.getDataType(); 
+        } else if (freqModel != null) {
+           if (dataType != freqModel.getDataType()) {
+                throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its frequencyModel.");
+            }
+        }
 
-        if (dataType != freqModel.getDataType()) {
-            throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its frequencyModel.");
+        if (dataType == null) {
+            throw new XMLParseException("Data type of " + getParserName() + " element can not be found.");
         }
 
         XMLObject cxo = xo.getChild(RATES);
@@ -223,7 +229,9 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
                             DataType.getRegisteredDataTypeNames(), false),
                     new ElementRule(DataType.class)
                     , true),
-            new ElementRule(FREQUENCIES, FrequencyModel.class),
+            new ElementRule(FREQUENCIES, 
+                    new XMLSyntaxRule[]{
+                            new ElementRule(FrequencyModel.class)}, true),
             new ElementRule(RATES,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)}

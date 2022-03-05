@@ -27,6 +27,7 @@ package dr.evomodelxml.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.evomodel.substmodel.*;
+import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -67,14 +68,18 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
         Parameter ratesParameter;
 
         XMLObject cxo;
+        FrequencyModel freqModel = null;
         if (xo.hasChildNamed(FREQUENCIES)) {
             cxo = xo.getChild(FREQUENCIES);
-        } else {
+            freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
+        } else if (xo.hasChildNamed(ROOT_FREQUENCIES)){
             cxo = xo.getChild(ROOT_FREQUENCIES);
+            freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
         }
-        FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
+//        FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
+//        DataType dataType = freqModel.getDataType();
 
-        DataType dataType = freqModel.getDataType();
+        DataType dataType = DataTypeUtils.getDataType(xo);
 
         cxo = xo.getChild(RATES);
 
@@ -197,7 +202,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(RANDOMIZE, true),
             new XORRule(
                     new ElementRule(FREQUENCIES, FrequencyModel.class),
-                    new ElementRule(ROOT_FREQUENCIES, FrequencyModel.class)),
+                    new ElementRule(ROOT_FREQUENCIES, FrequencyModel.class), true),
             new ElementRule(RATES,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class, true)}

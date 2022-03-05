@@ -96,9 +96,10 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
 
         // find the epoch that the parent height is in...
         while (epoch < epochCount && parentHeight >= transitionTimes[epoch]) {
-            // insert each epoch to the list so that it is ordered from parent to child
+            // insert each epoch that this branch overlaps with to the list so that 
+            // it is ordered from parent (rootward) to child (tipward)
             // as the transition probability matrix of a given branch is the product
-            // of matrices multiplying from parent to child
+            // of matrices multiplying from parent to child (Eq. 7 of Bielejec et al., 2014)
             weightList.add( 0, transitionTimes[epoch] - currentHeight );
             orderList.add(0, epoch);
 

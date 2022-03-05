@@ -43,7 +43,7 @@ import java.util.List;
 public interface BranchModel extends Model  {
     /**
      * Returns a mapping of substitution models to the given branch. The Mapping
-     * contains a list of substitution models in order from tipward to rootward
+     * contains a list of substitution models in order from rootward to tipward
      * and a set of relative weights for each (may be times or proportions).
      *
      * @param branch the branch

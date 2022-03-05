@@ -98,68 +98,71 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
         }
 
         boolean checkConditioning = xo.getAttribute(CHECK_CONDITIONING, true);
+        
+        ComplexSubstitutionModel model;
 
         if (!xo.hasChildNamed(INDICATOR)) {
             if (!checkConditioning) {
-                return new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter) {
+                model = new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter) {
                     protected EigenSystem getDefaultEigenSystem(int stateCount) {
                         return new ComplexColtEigenSystem(stateCount, false, ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
                     }
                 };
             } else {
-                return new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter);
+                model = new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter);
             }
-        }
-
-        cxo = xo.getChild(INDICATOR);
-
-        Parameter indicatorParameter = (Parameter) cxo.getChild(Parameter.class);
-        if (indicatorParameter == null || ratesParameter == null || indicatorParameter.getDimension() != ratesParameter.getDimension())
-            throw new XMLParseException("Rates and indicator parameters in " + getParserName() + " element must be the same dimension.");
-
-        if (xo.hasAttribute(BSSVS_TOLERANCE)) {
-            double tolerance = xo.getAttribute(BSSVS_TOLERANCE,
-                    BayesianStochasticSearchVariableSelection.Utils.getTolerance());
-            if (tolerance > BayesianStochasticSearchVariableSelection.Utils.getTolerance()) {
-                // Only increase smallest allowed tolerance
-                BayesianStochasticSearchVariableSelection.Utils.setTolerance(tolerance);
-                Logger.getLogger("dr.app.beagle.evomodel").info("\tIncreasing BSSVS tolerance to " + tolerance);
-            }
-        }
-
-        if (xo.hasAttribute(BSSVS_SCALAR)) {
-            double scalar = xo.getAttribute(BSSVS_SCALAR,
-                    BayesianStochasticSearchVariableSelection.Utils.getScalar());
-            if (scalar < BayesianStochasticSearchVariableSelection.Utils.getScalar()) {
-                BayesianStochasticSearchVariableSelection.Utils.setScalar(scalar);
-                Logger.getLogger("dr.app.beagle.evomodel").info("\tDecreasing BSSVS scalar to " + scalar);
-            }
-        }
-
-        SVSComplexSubstitutionModel model;
-        if (!checkConditioning) {
-            model = new SVSComplexSubstitutionModel(SVS_COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter, indicatorParameter) {
-                protected EigenSystem getDefaultEigenSystem(int stateCount) {
-                    return new ComplexColtEigenSystem(stateCount, false, ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
-                }
-            };
         } else {
-            model = new SVSComplexSubstitutionModel(SVS_COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter, indicatorParameter);
-        }
-        boolean randomize = xo.getAttribute(RANDOMIZE, false);
-        if (randomize) {
-            // Randomization may need multiple tries
-            int tries = 0;
-            boolean valid = false;
+            
+            cxo = xo.getChild(INDICATOR);
 
-            while (!valid && tries < maxRandomizationTries) {
-                BayesianStochasticSearchVariableSelection.Utils.randomize(indicatorParameter,
-                        dataType.getStateCount(), false);
-                valid = !Double.isInfinite(model.getLogLikelihood());
-                tries++;
+            Parameter indicatorParameter = (Parameter) cxo.getChild(Parameter.class);
+            if (indicatorParameter == null || ratesParameter == null || indicatorParameter.getDimension() != ratesParameter.getDimension())
+                throw new XMLParseException("Rates and indicator parameters in " + getParserName() + " element must be the same dimension.");
+
+            if (xo.hasAttribute(BSSVS_TOLERANCE)) {
+                double tolerance = xo.getAttribute(BSSVS_TOLERANCE,
+                        BayesianStochasticSearchVariableSelection.Utils.getTolerance());
+                if (tolerance > BayesianStochasticSearchVariableSelection.Utils.getTolerance()) {
+                    // Only increase smallest allowed tolerance
+                    BayesianStochasticSearchVariableSelection.Utils.setTolerance(tolerance);
+                    Logger.getLogger("dr.app.beagle.evomodel").info("\tIncreasing BSSVS tolerance to " + tolerance);
+                }
             }
-            Logger.getLogger("dr.app.beagle.evomodel").info("\tRandomization attempts: " + tries);
+
+            if (xo.hasAttribute(BSSVS_SCALAR)) {
+                double scalar = xo.getAttribute(BSSVS_SCALAR,
+                        BayesianStochasticSearchVariableSelection.Utils.getScalar());
+                if (scalar < BayesianStochasticSearchVariableSelection.Utils.getScalar()) {
+                    BayesianStochasticSearchVariableSelection.Utils.setScalar(scalar);
+                    Logger.getLogger("dr.app.beagle.evomodel").info("\tDecreasing BSSVS scalar to " + scalar);
+                }
+            }
+
+            if (!checkConditioning) {
+                model = new SVSComplexSubstitutionModel(SVS_COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter, indicatorParameter) {
+                    protected EigenSystem getDefaultEigenSystem(int stateCount) {
+                        return new ComplexColtEigenSystem(stateCount, false, ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
+                    }
+                };
+            } else {
+                model = new SVSComplexSubstitutionModel(SVS_COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter, indicatorParameter);
+            }
+            boolean randomize = xo.getAttribute(RANDOMIZE, false);
+            if (randomize) {
+                // Randomization may need multiple tries
+                int tries = 0;
+                boolean valid = false;
+
+                while (!valid && tries < maxRandomizationTries) {
+                    BayesianStochasticSearchVariableSelection.Utils.randomize(indicatorParameter,
+                            dataType.getStateCount(), false);
+                    valid = !Double.isInfinite(model.getLogLikelihood());
+                    tries++;
+                }
+                Logger.getLogger("dr.app.beagle.evomodel").info("\tRandomization attempts: " + tries);
+            }
         }
+
         if (!xo.getAttribute(NORMALIZED, true)) {
             model.setNormalization(false);
             Logger.getLogger("dr.app.beagle.evomodel").info("\tNormalization: false");

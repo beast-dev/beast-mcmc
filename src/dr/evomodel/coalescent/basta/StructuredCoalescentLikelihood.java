@@ -72,6 +72,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
 
     //private static final boolean USE_BEAGLE = false;
     private static final boolean ASSOC_MULTIPLICATION = true;
+    private static final boolean USE_TRANSPOSE = false;
 
     public StructuredCoalescentLikelihood(Tree tree, BranchRateModel branchRateModel, Parameter popSizes, PatternList patternList,
                                           DataType dataType, String tag, GeneralSubstitutionModel generalSubstitutionModel, int subIntervals,
@@ -579,6 +580,18 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
         }
     }
 
+    private static void transpose(double[] matrix, int dim) {
+        for (int i = 0; i  < dim; ++i) {
+            for (int j = i + 1; j < dim; ++j) {
+                final int ij = i * dim + j;
+                final int ji = j * dim + i;
+                double tmp = matrix[ij];
+                matrix[ij] = matrix[ji];
+                matrix[ji] = tmp;
+            }
+        }
+    }
+
     /**
      * When a lineage/branch has not been fully processed/computed towards the log likelihood, increase
      * all the branch lengths of those lineages still active.
@@ -596,6 +609,9 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
         }
         if (!matricesKnown) {
             generalSubstitutionModel.getTransitionProbabilities(branchRate * increment, migrationMatrices[this.currentCoalescentInterval]);
+            if (USE_TRANSPOSE) {
+                transpose(migrationMatrices[this.currentCoalescentInterval], demes);
+            }
 
             if (MATRIX_DEBUG) {
                 System.out.println("-----------");
@@ -742,6 +758,9 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                         System.out.println("updating transition probability matrix for coalescent interval length " + newLengths[i] + " at index " + matrixIndex);
                     }
                     generalSubstitutionModel.getTransitionProbabilities(branchRate * newLengths[i], migrationMatrices[matrixIndex]);
+                    if (USE_TRANSPOSE) {
+                        transpose(migrationMatrices[matrixIndex], demes);
+                    }
                     matrixIndex++;
                 } else {
                     if (MATRIX_DEBUG) {
@@ -1190,7 +1209,9 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                         value += this.startLineageProbs[l] * migrationMatrix[l*demes+k];
                     }
                     this.endLineageProbs[k] = value;*/
-                this.endLineageProbs[k] = rdot(demes, startLineageProbs, 0, 1, migrationMatrix, k, demes);
+                this.endLineageProbs[k] = USE_TRANSPOSE ?
+                        rdot(demes, startLineageProbs, 0, 1, migrationMatrix, k * demes, 1) :
+                        rdot(demes, startLineageProbs, 0, 1, migrationMatrix, k, demes);
             }
             //}
 

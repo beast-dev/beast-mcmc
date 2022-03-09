@@ -885,7 +885,7 @@ public class GWishartLikelihood extends AbstractModelLikelihood  implements Mult
     					psi[i][j] = - sumPsiH;
 
     					//-------------------------------------------------------------------------------------------------SOMA #2
-    					if(i > 0)                     //------------------------SEGUNDA PARTE DO CÁLCULO, SÓ PARA AS DEMAIS LINHAS
+    					if(i > 0)
     						for(int r = 0; r < i; r++){
     							
     							sumPsiHi = 0.0;

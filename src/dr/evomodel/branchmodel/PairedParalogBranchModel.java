@@ -27,18 +27,18 @@ package dr.evomodel.branchmodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.Taxa;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.tree.AncestralTraitTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Xiang Ji
@@ -47,83 +47,77 @@ import java.util.Map;
  */
 public class PairedParalogBranchModel extends AbstractModel implements BranchModel {
 
-    private final Tree tree;
+    private final AncestralTraitTreeModel tree;
+    private final SubstitutionModel baseModel;
+    private final SubstitutionModel geneConversionModel;
+    private final Taxa postDuplicationTaxa;
     private final List<SubstitutionModel> substitutionModels;
-    private final int[][] assignments;
-    private final List<Parameter> timeToDuplicationProportion;
-    Map<Integer, Parameter> nodeDuplicationParameterMap = new HashMap<Integer, Parameter>();
+    private final Map<Integer, SubstitutionModel> branchModelMap;
 
     public PairedParalogBranchModel(String name,
-                                    List<SubstitutionModel> substitutionModels,
-                                    int[][] assignments,
-                                    List<Parameter> timeToDuplicationProportions,
-                                    Tree tree) {
+                                    SubstitutionModel baseModel,
+                                    SubstitutionModel geneConversionModel,
+                                    AncestralTraitTreeModel tree,
+                                    Taxa postDuplicationTaxa) {
         super(name);
-        this.substitutionModels = substitutionModels;
-        this.tree = tree;
-        this.assignments = assignments;
-        this.timeToDuplicationProportion = timeToDuplicationProportions;
-        this.nodeDuplicationParameterMap = constructNodeDuplicationTimeMapping();
 
-        for (SubstitutionModel substitutionModel : substitutionModels) {
-            addModel(substitutionModel);
+        this.tree = tree;
+        this.baseModel = baseModel;
+        this.geneConversionModel = geneConversionModel;
+        this.postDuplicationTaxa = postDuplicationTaxa;
+        this.substitutionModels = new ArrayList<>();
+        substitutionModels.add(baseModel);
+        substitutionModels.add(geneConversionModel);
+        this.branchModelMap = new HashMap<>();
+
+        buildBranchModelMapping();
+
+        addModel(baseModel);
+        addModel(geneConversionModel);
+
+    }
+
+    private void buildBranchModelMapping() {
+        int[] nodes = new int[postDuplicationTaxa.getTaxonCount()];
+
+        for (int i = 0; i < nodes.length; i++) {
+            nodes[i] = tree.getShadowTaxonIndex(postDuplicationTaxa.getTaxon(i));
         }
-        for (Parameter timeProportion : timeToDuplicationProportions) {
-            addVariable(timeProportion);
+
+        NodeRef duplicationNode = TreeUtils.getCommonAncestor(tree, nodes);
+
+        buildBranchModelMappingRecursively(tree, tree.getRoot(), duplicationNode, branchModelMap, duplicationNode == tree.getRoot());
+    }
+
+    private void buildBranchModelMappingRecursively(Tree tree, NodeRef node, NodeRef duplicationNode,
+                                                    Map<Integer, SubstitutionModel> map, boolean postDuplication) {
+        if (postDuplication) {
+            map.put(node.getNumber(), geneConversionModel);
+        } else {
+            map.put(node.getNumber(), baseModel);
         }
+        if (node == duplicationNode) {
+            postDuplication = true;
+        }
+        for (int i = 0; i < tree.getChildCount(node); i++) {
+            buildBranchModelMappingRecursively(tree, tree.getChild(node, i), duplicationNode, map, postDuplication);
+        }
+    }
+
+    private int getSubstitutionModelIndex(SubstitutionModel substitutionModel) {
+        return substitutionModel == baseModel ? 0 : 1;
     }
 
     @Override
     public Mapping getBranchModelMapping(NodeRef branch) {
-        int[] modelIndices = assignments[branch.getNumber()];
-        double[] weights = new double[modelIndices.length];
-        double residue = 1.0;
-        for (int i = 0; i < weights.length - 1; i++) {
-            weights[i] = residue * nodeDuplicationParameterMap.get(branch.getNumber()).getParameterValue(i);
-            residue *= 1.0 - weights[i];
-        }
-        weights[weights.length - 1] = residue;
         return new BranchModel.Mapping() {
-            public int[] getOrder() {return modelIndices.clone();}
+            public int[] getOrder() {return new int[]{getSubstitutionModelIndex(branchModelMap.get(branch.getNumber()))};}
 
             @Override
             public double[] getWeights() {
-                return weights;
+                return new double[]{1.0};
             }
         };
-    }
-
-    private Map<Integer, Parameter> constructNodeDuplicationTimeMapping() {
-        Map<Integer, Parameter> map = new HashMap<>();
-        int j = 0;
-        for (int i = 0; i < tree.getNodeCount(); i++) {
-            if (assignments[i].length > 1) {
-                map.put(i, timeToDuplicationProportion.get(j));
-                j++;
-            }
-        }
-        return map;
-    }
-
-    public static int[] parseAssignmentString(String assignmentString) {
-        List<Integer> modelList = new ArrayList<>();
-        int start = 0; int end = 0;
-        while(end < assignmentString.length()) {
-            Character character = assignmentString.charAt(end);
-            if( character.equals('+')) {
-                final int modelIndex = Integer.valueOf(assignmentString.substring(start, end));
-                modelList.add(modelIndex);
-                start = end + 1;
-            }
-            end++;
-        }
-        final int modelIndex = Integer.valueOf(assignmentString.substring(start, end));
-        modelList.add(modelIndex);
-        int[] assignment = new int[modelList.size()];
-        for (int j = 0; j < modelList.size(); j++) {
-            assignment[j] = modelList.get(j);
-        }
-        return assignment;
     }
 
     @Override
@@ -133,7 +127,7 @@ public class PairedParalogBranchModel extends AbstractModel implements BranchMod
 
     @Override
     public SubstitutionModel getRootSubstitutionModel() {
-        return substitutionModels.get(assignments[tree.getRoot().getNumber()][0]);
+        return branchModelMap.get(tree.getRoot().getNumber());
     }
 
     @Override

@@ -28,9 +28,11 @@ package dr.evomodelxml.branchmodel;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.FlexibleTree;
+import dr.evolution.util.Taxa;
 import dr.evomodel.branchmodel.PairedParalogBranchModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.geneconversion.PairedParalogGeneConversionSubstitutionModel;
+import dr.evomodel.tree.AncestralTraitTreeModel;
 import dr.inference.model.Parameter;
 import dr.util.FileHelpers;
 import dr.xml.*;
@@ -50,53 +52,19 @@ import java.util.List;
 public class PairedParalogBranchModelParser extends AbstractXMLObjectParser {
 
     private final String NAME = "pairedParalogBranchModel";
-    private final String SUBSTITUTION_NEXUS_FILE = "substAssignFile";
+    private final String BASE = "base";
+    private final String GENE_CONVERSION = "geneConversion";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        List<SubstitutionModel> substitutionModels = new ArrayList<>();
 
-        for (PairedParalogGeneConversionSubstitutionModel geneConversionSubstitutionModel : xo.getAllChildren(PairedParalogGeneConversionSubstitutionModel.class)) {
-            substitutionModels.add(geneConversionSubstitutionModel);
-        }
+        SubstitutionModel baseModel = (SubstitutionModel) xo.getChild(BASE).getChild(SubstitutionModel.class);
+        SubstitutionModel geneConversionModel = (SubstitutionModel) xo.getChild(GENE_CONVERSION).getChild(SubstitutionModel.class);
 
-        String nexusFileName = xo.getStringAttribute(SUBSTITUTION_NEXUS_FILE);
-        final File file = FileHelpers.getFile(nexusFileName);
-        NexusImporter importer;
-        int[][] substitutionModelAssignment;
-        FlexibleTree attributeTree;
+        AncestralTraitTreeModel treeModel = (AncestralTraitTreeModel) xo.getChild(AncestralTraitTreeModel.class);
+        Taxa postDuplicationTaxa = (Taxa) xo.getChild(Taxa.class);
 
-        try {
-            importer = new NexusImporter(new FileReader(file));
-            attributeTree = (FlexibleTree) importer.importNextTree();
-            attributeTree.resolveTree();
-            substitutionModelAssignment = new int[attributeTree.getNodeCount()][];
-            for (int i = 0; i < attributeTree.getNodeCount(); i++) {
-                Object attribute = attributeTree.getNodeAttribute(attributeTree.getNode(i), "model");
-                if (attribute instanceof Integer) {
-                    substitutionModelAssignment[i] = new int[]{(int) attribute};
-                } else if (attribute instanceof String) {
-                    substitutionModelAssignment[i] = PairedParalogBranchModel.parseAssignmentString((String) attribute);
-                } else {
-                    throw new RuntimeException("Unrecognized assignment format");
-                }
-            }
-        } catch (FileNotFoundException e) {
-            throw new XMLParseException(e.getMessage());
-        } catch (Importer.ImportException e) {
-            throw new XMLParseException(e.getMessage());
-        } catch (IOException e) {
-            throw new XMLParseException(e.getMessage());
-        }
-
-
-        if (substitutionModelAssignment.length != attributeTree.getNodeCount()) {
-            throw new RuntimeException("Please specify the substitution model for every branch.");
-        }
-
-        List<Parameter> timeToDuplicaitonProportion = xo.getAllChildren(Parameter.class);
-
-        return new PairedParalogBranchModel(NAME, substitutionModels, substitutionModelAssignment, timeToDuplicaitonProportion, attributeTree);
+        return new PairedParalogBranchModel(NAME, baseModel, geneConversionModel, treeModel, postDuplicationTaxa);
     }
 
 
@@ -105,9 +73,10 @@ public class PairedParalogBranchModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(PairedParalogGeneConversionSubstitutionModel.class, 2, 2),
-            new ElementRule(Parameter.class, "proportion of time until the duplication event on the duplication branch."),
-            AttributeRule.newStringArrayRule(SUBSTITUTION_NEXUS_FILE),
+            new ElementRule(BASE, PairedParalogGeneConversionSubstitutionModel.class, "Base substitution model", false),
+            new ElementRule(GENE_CONVERSION, PairedParalogGeneConversionSubstitutionModel.class, "Gene conversion substitution model", false),
+            new ElementRule(Taxa.class, "All post duplication taxa (including duplication taxon)."),
+            new ElementRule(AncestralTraitTreeModel.class, "An ancestralTraitTreeModel that tracks duplication node"),
     };
 
     @Override

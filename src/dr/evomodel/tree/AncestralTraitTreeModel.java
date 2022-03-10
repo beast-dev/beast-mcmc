@@ -924,6 +924,13 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         }
     }
 
+    public int getShadowTaxonIndex(Taxon taxon) {
+        for (int i = 0; i < getExternalNodeCount(); i++) {
+            if (getTaxon(i) == taxon) return i;
+        }
+        return -1;
+    }
+
     public List<Taxon> asList() {
         return TaxonList.Utils.asList(this);
     }

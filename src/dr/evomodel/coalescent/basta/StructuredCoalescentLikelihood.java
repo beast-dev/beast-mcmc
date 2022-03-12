@@ -72,7 +72,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
 
     //private static final boolean USE_BEAGLE = false;
     private static final boolean ASSOC_MULTIPLICATION = true;
-    private static final boolean USE_TRANSPOSE = false;
+    private static final boolean USE_TRANSPOSE = true;
 
     public StructuredCoalescentLikelihood(Tree tree, BranchRateModel branchRateModel, Parameter popSizes, PatternList patternList,
                                           DataType dataType, String tag, GeneralSubstitutionModel generalSubstitutionModel, int subIntervals,

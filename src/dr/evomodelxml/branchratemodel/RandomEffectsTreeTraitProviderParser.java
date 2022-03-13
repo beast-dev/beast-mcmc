@@ -36,6 +36,7 @@ public class RandomEffectsTreeTraitProviderParser extends AbstractXMLObjectParse
 
     private static final String PARSER_NAME = "randomEffectsTrait";
     private static final String TRAIT_NAME = "name";
+    private static final String TAKE_LOG = "log";
 
     public String getParserName() {
         return PARSER_NAME;
@@ -48,7 +49,9 @@ public class RandomEffectsTreeTraitProviderParser extends AbstractXMLObjectParse
         final String traitName = (xo.hasAttribute(TRAIT_NAME) ?
                 xo.getStringAttribute(TRAIT_NAME) : "randomEffect");
 
-        return new RandomEffectsTreeTraitProvider(rates, traitName);
+        final boolean takeLog = xo.getAttribute(TAKE_LOG, false);
+
+        return new RandomEffectsTreeTraitProvider(rates, traitName, takeLog);
     }
 
     //************************************************************************
@@ -70,6 +73,7 @@ public class RandomEffectsTreeTraitProviderParser extends AbstractXMLObjectParse
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(ArbitraryBranchRates.class),
+            AttributeRule.newBooleanRule(TAKE_LOG, true),
             new StringAttributeRule(TRAIT_NAME,
                     "Optional name of a rate attribute to be read with the trees", true)
     };

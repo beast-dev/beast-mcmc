@@ -37,9 +37,11 @@ import dr.evolution.tree.TreeTraitProvider;
 public class RandomEffectsTreeTraitProvider implements TreeTraitProvider, TreeTrait<Double> {
 
     public RandomEffectsTreeTraitProvider(ArbitraryBranchRates branchRates,
-                                          String traitName) {
+                                          String traitName,
+                                          boolean takeLog) {
         this.branchRates = branchRates;
         this.traitName = traitName;
+        this.takeLog = takeLog;
     }
 
     public String getTraitName() {
@@ -67,7 +69,11 @@ public class RandomEffectsTreeTraitProvider implements TreeTraitProvider, TreeTr
     }
 
     public Double getTrait(final Tree tree, final NodeRef node) {
-        return branchRates.getUntransformedBranchRate(tree, node);
+        double value = branchRates.getUntransformedBranchRate(tree, node);
+        if (takeLog) {
+            value = Math.log(value);
+        }
+        return value;
     }
 
     public String getTraitString(final Tree tree, final NodeRef node) {
@@ -76,4 +82,5 @@ public class RandomEffectsTreeTraitProvider implements TreeTraitProvider, TreeTr
 
     private final ArbitraryBranchRates branchRates;
     private final String traitName;
+    private final boolean takeLog;
 }

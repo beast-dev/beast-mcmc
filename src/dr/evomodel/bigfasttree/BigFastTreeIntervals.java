@@ -196,7 +196,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     }
 
     public NodeRef getSamplingNode(int interval) {
-        if (events.getType(interval+1) != IntervalType.SAMPLE) {
+        if (events.getType(interval) != IntervalType.SAMPLE) {
             throw new IllegalArgumentException("interval is not a sampling interval");
         }
         return tree.getNode(events.getNode(interval));

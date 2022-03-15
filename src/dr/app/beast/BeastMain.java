@@ -188,17 +188,8 @@ public class BeastMain {
 
                     parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML, version);
 
-                    // DM: Hot chains also need to add plugin parsers
-                    for (String pluginName : PluginLoader.getAvailablePlugins()) {
-                        Plugin plugin = PluginLoader.loadPlugin(pluginName);
-                        if (plugin != null) {
-                            Set<XMLObjectParser> parserSet = plugin.getParsers();
-                            for (XMLObjectParser pluginParser : parserSet) {
-                                parser.addXMLObjectParser(pluginParser);
-                            }
-                        }
-                    }
-
+                    PluginLoader.loadPlugins(parser);
+                    
                     chains[i] = (MCMC) parser.parse(fileReader, MCMC.class);
                     if (chains[i] == null) {
                         throw new dr.xml.XMLParseException("BEAST XML file is missing an MCMC element");

@@ -134,8 +134,8 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
 
 
     @Override
-    /*
-     * Returns the interval numbers for with intervals the node is in.(begins and ends)
+    /**
+     * Returns the interval numbers for which intervals the node is in (first and last interval)
      */
     public int[] getIntervalsForNode(int nodeNumber) {
         if(!intervalsKnown){
@@ -168,6 +168,10 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     }
 
     @Override
+    /**
+     *
+     */
+    //TODO figure out why only an array of length 2 is being returned
     public int[] getNodeNumbersForInterval(int i) {
         if (!intervalsKnown) {
             calculateIntervals();
@@ -185,10 +189,17 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
 
     @Override
     public NodeRef getCoalescentNode(int interval) {
-        if(events.getType(interval+1)!=IntervalType.COALESCENT){
+        if (events.getType(interval+1) != IntervalType.COALESCENT){
             throw new IllegalArgumentException("interval is not a coalescent interval");
         }
         return tree.getNode(events.getNode(interval + 1));
+    }
+
+    public NodeRef getSamplingNode(int interval) {
+        if (events.getType(interval+1) != IntervalType.SAMPLE) {
+            throw new IllegalArgumentException("interval is not a sampling interval");
+        }
+        return tree.getNode(events.getNode(interval));
     }
 
     @Override

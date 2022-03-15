@@ -291,6 +291,9 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                     System.out.println("coalescent child node: " + treeModel.getChild(node, j));
                 }*/
 
+                //TODO add information to coalescentLeftProbs and coalescentRightProbs
+
+
 
             } else if (intervals.getIntervalType(i) == IntervalType.SAMPLE) {
                 //check for zero-length interval

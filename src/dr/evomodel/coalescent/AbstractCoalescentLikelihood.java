@@ -52,7 +52,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
         }
     }
 
-    AbstractCoalescentLikelihood(String name) {
+    protected AbstractCoalescentLikelihood(String name) {
         super(name);
     }
 

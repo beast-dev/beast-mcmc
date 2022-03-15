@@ -1,3 +1,28 @@
+/*
+ * CoalescentTreeRejectionSampler.java
+ *
+ * Copyright (c) 2002-2021 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.continuous;
 
 import dr.evolution.tree.Tree;
@@ -17,42 +42,44 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * An independent iterative coalescent sampler especially for trees with constraints, based on the coalescent simulator parser code.
+ * An independent coalescent sampler that rejects samples if they do not comply with any specified monophyletic constraints, based on the coalescent simulator code.
+ * This sampler draws from the coalescent prior and accepts each draw with probability 1, and hence should not be used for posterior inference.
  *
- * @author Kanika Nahata (knahata15@gmail.com)
+ * @author Kanika Nahata
+ * @author Guy Baele
  *
  */
 
-public class IterativeGibbsIndependentCoalescentOperator extends SimpleMCMCOperator implements GibbsOperator {
-    public static final String OPERATOR_NAME = "IterativeGibbsIndependentCoalescentOperator";
-    public static final String HEIGHT = "height";
+public class CoalescentTreeRejectionSampler extends SimpleMCMCOperator implements GibbsOperator {
+    public static final String OPERATOR_NAME = "CoalescentTreeRejectionSampler";
     private DefaultTreeModel treeModel;
     private DemographicModel demoModel;
     private TaxonList allTaxa;
     private List<Set> subtree_nodes;
     private final CoalescentSimulator simulator = new CoalescentSimulator();
 
-    public IterativeGibbsIndependentCoalescentOperator(TaxonList allTaxa, List<Set> subtree_nodes, DefaultTreeModel treeModel, DemographicModel demoModel, double weight) {
-
+    public CoalescentTreeRejectionSampler(TaxonList allTaxa, List<Set> subtree_nodes, DefaultTreeModel treeModel, DemographicModel demoModel, double weight) {
         this.allTaxa = allTaxa;
         this.subtree_nodes = subtree_nodes;
         this.treeModel = treeModel;
         this.demoModel = demoModel;
         setWeight(weight);
-
     }
 
     @Override
     public void setPathParameter(double beta) {
         //do nothing
     }
+
     public String getPerformanceSuggestion() {
         return "";
     }
+
     @Override
     public String getOperatorName() {
-        return "IterativeGibbsIndependentCoalescentOperator";
+        return "CoalescentTreeRejectionSampler";
     }
+
     public int getStepCount() {
         return 1;
     }
@@ -118,7 +145,7 @@ public class IterativeGibbsIndependentCoalescentOperator extends SimpleMCMCOpera
                 System.out.println(subtree_nodes.get(i));
             }
 
-            return new IterativeGibbsIndependentCoalescentOperator(allTaxa.get(0), subtree_nodes, treeModel, demoModel, weight);
+            return new CoalescentTreeRejectionSampler(allTaxa.get(0), subtree_nodes, treeModel, demoModel, weight);
 
         }
 
@@ -139,7 +166,7 @@ public class IterativeGibbsIndependentCoalescentOperator extends SimpleMCMCOpera
         };
 
         public String getParserDescription() {
-            return "This element returns an iterative coalescent sampler used in cases of monophyletic constraints on a tree, disguised as a Gibbs operator, from a demographic model.";
+            return "This element returns an iterative coalescent sampler - disguised as a Gibbs operator - from a demographic model, to be used in case of monophyletic constraints on a tree.";
         }
 
         public Class getReturnType() {
@@ -147,6 +174,5 @@ public class IterativeGibbsIndependentCoalescentOperator extends SimpleMCMCOpera
         }
 
     };
-
 
 }

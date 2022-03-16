@@ -321,8 +321,6 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
         if (model == tree) {
-            makeDirty();
-            System.err.println("TreeModel changed");
             if (object instanceof TreeChangedEvent) {
                 TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
                 if (treeChangedEvent.isNodeChanged()) {

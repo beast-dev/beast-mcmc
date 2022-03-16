@@ -199,7 +199,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     }
 
     public NodeRef getSamplingNode(int interval) {
-        if(!intervalsKnown){
+        if (!intervalsKnown) {
             calculateIntervals();
         }
         if (events.getType(interval + 1) != IntervalType.SAMPLE) {

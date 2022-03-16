@@ -1,3 +1,4 @@
 File created by build process. Do not edit by hand
 @repository.tag@
 @repository.commit@
+@repository.branch@

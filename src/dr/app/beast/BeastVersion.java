@@ -34,6 +34,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -59,14 +61,15 @@ public class BeastVersion implements Version, Citable {
 
     private static final String DATE_STRING = "2002-2019";
 
-    private static final boolean IS_PRERELEASE = true;
+//    private static final boolean IS_PRERELEASE = true;
 
     // this is now being manually updated since the move to GitHub. 7 digits of GitHub hash.
     private static final String REVISION = "23570d1";
 
     public String getVersion() {
         //TODO update with BEAUTI version too
-        return readVersion().get("tag").replace("v",""); // remove the first v if present
+        return readVersion()
+                .get("version");
     }
 
     public String getVersionString() {
@@ -185,6 +188,7 @@ public class BeastVersion implements Version, Citable {
     }
     public static Map<String,String> readVersion() {
         Map<String, String> version = new HashMap<>();
+        Pattern versionPattern = Pattern.compile("v([\\d.]+)[^\\d.].*"); //v1.10.5ANYTHING_ELSE_IS_IGNORED_FOR_VERSION
         try {
             try (InputStream in = BeastVersion.class.getResourceAsStream("/version.txt")) {
                 assert in != null;
@@ -193,15 +197,18 @@ public class BeastVersion implements Version, Citable {
                         new InputStreamReader(in, StandardCharsets.UTF_8))
                         .lines()
                         .collect(Collectors.toList());
+                Matcher versionMatcher = versionPattern.matcher(lines.get(1));
+                if(!versionMatcher.find()){
+                    throw new RuntimeException("Last tag does not match semantic versioning please use the format v([\\d.]+)[^\\d.].* which will capture the version number");
+                }
+                version.put("version",versionMatcher.group(1));
                 version.put("tag",lines.get(1).replaceAll("-\\d+-g[a-zA-Z0-9]+","")); //"tag-commit" -commit is not provided if at tag
                 version.put("commit",lines.get(2)); //"commit-dirty" -dirty is only output if there are uncommited changes
+                version.put("branch", lines.get(3));
             }
             return version;
         } catch (IOException e) {
-            Logger.getLogger("dr.apps.beast").warning("Cannot report the present tag and commit. No version file found. Try running `ant version` to make it");
-            version.put("tag", "unknown");
-            version.put("commit", "unknown");
-            return version;
+            throw new RuntimeException("Cannot report the present tag and commit. No version file found. Try running `ant version` to make it");
         }
     }
 }

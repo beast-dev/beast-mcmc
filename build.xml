@@ -91,9 +91,22 @@
             </and>
         </condition>
     </target>
+    <target name="git.branch" description="Store git branch in ${repository.branch}" if="git.present">
+        <exec executable="git" outputproperty="git.branch" failifexecutionfails="true" errorproperty="">
+            <arg value="rev-parse"/>
+            <arg value="--abbrev-ref"/>
+            <arg value="HEAD"/>
+        </exec>
+        <condition property="repository.branch" value="${git.branch}" else="unknown">
+            <and>
+                <isset property="git.branch"/>
+                <length string="${git.branch}" trim="yes" length="0" when="greater"/>
+            </and>
+        </condition>
+    </target>
 
 
-    <target name="version" depends="git.tag,git.commit" description="build version.txt from template">
+    <target name="version" depends="git.tag,git.commit,git.branch" description="build version.txt from template">
         <copy file="version.txt.template" tofile="src/version.txt" overwrite="yes">
             <filterchain>
                 <replacetokens>
@@ -101,6 +114,9 @@
                 </replacetokens>
                 <replacetokens>
                     <token key="repository.commit" value="${repository.commit}" />
+                </replacetokens>
+                <replacetokens>
+                    <token key="repository.branch" value="${repository.branch}" />
                 </replacetokens>
             </filterchain>
         </copy>

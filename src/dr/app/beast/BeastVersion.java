@@ -199,7 +199,8 @@ public class BeastVersion implements Version, Citable {
                         .collect(Collectors.toList());
                 Matcher versionMatcher = versionPattern.matcher(lines.get(1));
                 if(!versionMatcher.find()){
-                    throw new RuntimeException("Last tag does not match semantic versioning please use the format v([\\d.]+)[^\\d.].* which will capture the version number");
+                    throw new RuntimeException("Last tag:" +lines.get(1)+
+                            " does not match semantic versioning please use the format v([\\d.]+)[^\\d.].* which will capture the version number");
                 }
                 version.put("version",versionMatcher.group(1));
                 version.put("tag",lines.get(1).replaceAll("-\\d+-g[a-zA-Z0-9]+","")); //"tag-commit" -commit is not provided if at tag

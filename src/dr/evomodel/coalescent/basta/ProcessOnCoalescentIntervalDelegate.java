@@ -39,27 +39,31 @@ import java.util.List;
 public interface ProcessOnCoalescentIntervalDelegate {
 
     final class BranchIntervalOperation {
-        BranchIntervalOperation(int intervalNumber, double intervalLength, int intervalOrder) {
-            this.intervalNumber = intervalNumber;
+        BranchIntervalOperation(int outputBuffer,
+                                int inputBuffer1,
+                                int inputBuffer2,
+                                double intervalLength,
+                                int executionOrder,
+                                int subIntervalNumber) {
+            this.outputBuffer = outputBuffer;
+            this.inputBuffer1 = inputBuffer1;
+            this.inputBuffer2 = inputBuffer2;
             this.intervalLength = intervalLength;
-            this.intervalOrder = intervalOrder;
-        }
-
-        public int getIntervalNumber() {
-            return intervalNumber;
-        }
-
-        public double getIntervalLength() {
-            return intervalLength;
+            this.executionOrder = executionOrder;
+            this.subIntervalNumber = subIntervalNumber;
         }
 
         public String toString() {
-            return intervalNumber + ":" + intervalLength;
+            return subIntervalNumber + ":" + outputBuffer + " <- " + inputBuffer1 + " + " + inputBuffer2
+                    + " (" + intervalLength + ") @ " + executionOrder;
         }
 
-        private final int intervalNumber;
-        private final double intervalLength;
-        private final int intervalOrder;
+        public final int outputBuffer;
+        public final int inputBuffer1;
+        public final int inputBuffer2;
+        public final double intervalLength;
+        public final int executionOrder;
+        public final int subIntervalNumber;
     }
 
     final class OtherOperation {

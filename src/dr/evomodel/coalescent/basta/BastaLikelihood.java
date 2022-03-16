@@ -29,8 +29,10 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeChangedEvent;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -51,10 +53,13 @@ public final class BastaLikelihood extends AbstractModelLikelihood implements
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
 
+    private static final boolean TEST = false;
+
     public BastaLikelihood(String name,
                            BastaLikelihoodDelegate likelihoodDelegate,
                            Tree treeModel,
-                           BranchRateModel branchRateModel) {
+                           BranchRateModel branchRateModel,
+                           int numberSubIntervals) {
 
         super(name);
 
@@ -78,7 +83,10 @@ public final class BastaLikelihood extends AbstractModelLikelihood implements
         this.branchRateModel = branchRateModel;
         addModel(branchRateModel);
 
-        treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, branchRateModel);
+        treeIntervals = new BigFastTreeIntervals((TreeModel)treeModel);
+        treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, treeIntervals, branchRateModel, numberSubIntervals);
+
+        addModel(treeIntervals);
 
         likelihoodKnown = false;
         hasInitialized = true;
@@ -172,8 +180,9 @@ public final class BastaLikelihood extends AbstractModelLikelihood implements
     protected final void storeState() {
 
         assert (likelihoodKnown) : "the likelihood should always be known at this point in the cycle";
-
         storedLogLikelihood = logLikelihood;
+
+        if (TEST) treeIntervals.storeModelState();
     }
 
     @Override
@@ -182,10 +191,13 @@ public final class BastaLikelihood extends AbstractModelLikelihood implements
         // restore the likelihood and flag it as known
         logLikelihood = storedLogLikelihood;
         likelihoodKnown = true;
+
+        if (TEST) treeIntervals.restoreModelState();
     }
 
     @Override
     protected void acceptState() {
+        if (TEST) treeIntervals.acceptModelState();
     } // nothing to do
 
     /**
@@ -196,6 +208,8 @@ public final class BastaLikelihood extends AbstractModelLikelihood implements
     private double calculateLogLikelihood() {
 
         double logL;
+
+//        likelihoodDelegate.makeDirty();
 
         treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
 
@@ -340,7 +354,8 @@ public final class BastaLikelihood extends AbstractModelLikelihood implements
     /**
      * The data likelihood delegate
      */
-    private final BastaLikelihoodDelegate likelihoodDelegate;
+    private final
+    BastaLikelihoodDelegate likelihoodDelegate;
 
     /**
      * the tree model
@@ -358,6 +373,7 @@ public final class BastaLikelihood extends AbstractModelLikelihood implements
     private final Helper treeTraits = new Helper();
 
     private final CoalescentIntervalTraversal treeTraversalDelegate;
+    private final BigFastTreeIntervals treeIntervals;
 
     private double logLikelihood;
     private double storedLogLikelihood;

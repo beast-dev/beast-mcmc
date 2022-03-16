@@ -189,6 +189,9 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
 
     @Override
     public NodeRef getCoalescentNode(int interval) {
+        if(!intervalsKnown){
+            calculateIntervals();
+        }
         if (events.getType(interval+1) != IntervalType.COALESCENT){
             throw new IllegalArgumentException("interval is not a coalescent interval");
         }
@@ -196,10 +199,13 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     }
 
     public NodeRef getSamplingNode(int interval) {
-        if (events.getType(interval+1) != IntervalType.SAMPLE) {
+        if(!intervalsKnown){
+            calculateIntervals();
+        }
+        if (events.getType(interval + 1) != IntervalType.SAMPLE) {
             throw new IllegalArgumentException("interval is not a sampling interval");
         }
-        return tree.getNode(events.getNode(interval));
+        return tree.getNode(events.getNode(interval + 1));
     }
 
     @Override
@@ -315,6 +321,8 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
         if (model == tree) {
+            makeDirty();
+            System.err.println("TreeModel changed");
             if (object instanceof TreeChangedEvent) {
                 TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
                 if (treeChangedEvent.isNodeChanged()) {

@@ -30,6 +30,7 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.Reportable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -126,7 +127,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
 
         @Override
         public List<Citation> getCitations() {
-            return null;
+            return new ArrayList<>();
         }
 
         @Override

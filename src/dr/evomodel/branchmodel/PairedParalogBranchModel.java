@@ -31,8 +31,7 @@ import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.tree.AncestralTraitTreeModel;
-import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.DuplicationTreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -47,7 +46,7 @@ import java.util.*;
  */
 public class PairedParalogBranchModel extends AbstractModel implements BranchModel {
 
-    private final AncestralTraitTreeModel tree;
+    private final DuplicationTreeModel tree;
     private final SubstitutionModel baseModel;
     private final SubstitutionModel geneConversionModel;
     private final Taxa postDuplicationTaxa;
@@ -57,7 +56,7 @@ public class PairedParalogBranchModel extends AbstractModel implements BranchMod
     public PairedParalogBranchModel(String name,
                                     SubstitutionModel baseModel,
                                     SubstitutionModel geneConversionModel,
-                                    AncestralTraitTreeModel tree,
+                                    DuplicationTreeModel tree,
                                     Taxa postDuplicationTaxa) {
         super(name);
 
@@ -78,13 +77,13 @@ public class PairedParalogBranchModel extends AbstractModel implements BranchMod
     }
 
     private void buildBranchModelMapping() {
-        int[] nodes = new int[postDuplicationTaxa.getTaxonCount()];
+        Set<String> leafNodes = new HashSet<>();
 
-        for (int i = 0; i < nodes.length; i++) {
-            nodes[i] = tree.getShadowTaxonIndex(postDuplicationTaxa.getTaxon(i));
+        for (int i = 0; i < postDuplicationTaxa.getTaxonCount(); i++) {
+            leafNodes.add(postDuplicationTaxa.getTaxon(i).getId());
         }
 
-        NodeRef duplicationNode = TreeUtils.getCommonAncestor(tree, nodes);
+        NodeRef duplicationNode = TreeUtils.getCommonAncestorNode(tree, leafNodes);
 
         buildBranchModelMappingRecursively(tree, tree.getRoot(), duplicationNode, branchModelMap, duplicationNode == tree.getRoot());
     }

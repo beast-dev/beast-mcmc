@@ -25,24 +25,12 @@
 
 package dr.evomodelxml.branchmodel;
 
-import dr.evolution.io.Importer;
-import dr.evolution.io.NexusImporter;
-import dr.evolution.tree.FlexibleTree;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchmodel.PairedParalogBranchModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.geneconversion.PairedParalogGeneConversionSubstitutionModel;
-import dr.evomodel.tree.AncestralTraitTreeModel;
-import dr.inference.model.Parameter;
-import dr.util.FileHelpers;
+import dr.evomodel.tree.DuplicationTreeModel;
 import dr.xml.*;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Xiang Ji
@@ -61,7 +49,7 @@ public class PairedParalogBranchModelParser extends AbstractXMLObjectParser {
         SubstitutionModel baseModel = (SubstitutionModel) xo.getChild(BASE).getChild(SubstitutionModel.class);
         SubstitutionModel geneConversionModel = (SubstitutionModel) xo.getChild(GENE_CONVERSION).getChild(SubstitutionModel.class);
 
-        AncestralTraitTreeModel treeModel = (AncestralTraitTreeModel) xo.getChild(AncestralTraitTreeModel.class);
+        DuplicationTreeModel treeModel = (DuplicationTreeModel) xo.getChild(DuplicationTreeModel.class);
         Taxa postDuplicationTaxa = (Taxa) xo.getChild(Taxa.class);
 
         return new PairedParalogBranchModel(NAME, baseModel, geneConversionModel, treeModel, postDuplicationTaxa);
@@ -76,7 +64,7 @@ public class PairedParalogBranchModelParser extends AbstractXMLObjectParser {
             new ElementRule(BASE, PairedParalogGeneConversionSubstitutionModel.class, "Base substitution model", false),
             new ElementRule(GENE_CONVERSION, PairedParalogGeneConversionSubstitutionModel.class, "Gene conversion substitution model", false),
             new ElementRule(Taxa.class, "All post duplication taxa (including duplication taxon)."),
-            new ElementRule(AncestralTraitTreeModel.class, "An ancestralTraitTreeModel that tracks duplication node"),
+            new ElementRule(DuplicationTreeModel.class, "An ancestralTraitTreeModel that tracks duplication node"),
     };
 
     @Override

@@ -51,10 +51,10 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     private final int ancestorCount;
 
-    private final int treeExternalCount;
-    private final int treeInternalCount;
+    protected final int treeExternalCount;
+    protected final int treeInternalCount;
 
-    private final int externalCount;
+    protected final int externalCount;
     private final int internalCount;
     
     private ShadowNode[] nodes;
@@ -93,7 +93,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
         private ShadowNode() { /* Do nothing */ }
 
-        private ShadowNode(int number, NodeRef originalNode, AncestralTaxonInTree ancestor) {
+        protected ShadowNode(int number, NodeRef originalNode, AncestralTaxonInTree ancestor) {
             this.number = number;
             this.originalNumber = originalNode != null ?
                     originalNode.getNumber() :
@@ -127,6 +127,18 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             }
         }
 
+        public void setParent(ShadowNode parent) {
+            this.parent = parent;
+        }
+
+        public void setChild0(ShadowNode child0) {
+            this.child0 = child0;
+        }
+
+        public void setChild1(ShadowNode child1) {
+            this.child1 = child1;
+        }
+
         @Override
         public int getNumber() { return number; }
 
@@ -135,7 +147,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             throw new RuntimeException("Node number is not modifiable");
         }
 
-        private int getOriginalNumber() { return originalNumber; }
+        protected int getOriginalNumber() { return originalNumber; }
 
         private NodeRef getOriginalNode() {
             return originalNumber >= 0 ?
@@ -244,15 +256,15 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         root = buildRecursivelyShadowTree(treeModel.getRoot(), null);
     }
 
-    private void storeNode(ShadowNode node) {
+    protected void storeNode(ShadowNode node) {
         nodes[node.getNumber()] = node;
     }
 
-    private static void sortByTime(List<AncestralTaxonInTree> ancestors) {
+    protected static void sortByTime(List<AncestralTaxonInTree> ancestors) {
         ancestors.sort((lhs, rhs) -> -Double.compare(lhs.getHeight(), rhs.getHeight()));
     }
 
-    private ShadowNode buildRecursivelyShadowTree(NodeRef originalNode,
+    protected ShadowNode buildRecursivelyShadowTree(NodeRef originalNode,
                                                   ShadowNode parentNode) {
         final int originalNumber = originalNode.getNumber();
         final int newNumber = mapOriginalToShadowNumber(originalNumber);
@@ -319,7 +331,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         return newNode;
     }
 
-    private int mapOriginalToShadowNumber(int originalNumber) {
+    protected int mapOriginalToShadowNumber(int originalNumber) {
 
         assert (originalNumber >= 0);
         assert (originalNumber < treeExternalCount + treeInternalCount);
@@ -797,7 +809,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         // Do nothing
     }
 
-    private final MutableTreeModel treeModel;
+    protected final MutableTreeModel treeModel;
     private final List<AncestralTaxonInTree> ancestors;
 
     public double[] getMultivariateNodeTrait(NodeRef node, String name) {
@@ -1089,7 +1101,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
     }
 
     final private Map<BitSet, AncestralTaxonInTree> clampList = new HashMap<>();
-    final private Map<Integer, List<AncestralTaxonInTree>> nodeToClampMap = new HashMap<>();
+    protected final Map<Integer, List<AncestralTaxonInTree>> nodeToClampMap = new HashMap<>();
 
     private Set<Integer> ancestralPathNodeNumbers = new HashSet<>();
     private Set<Integer> savedAncestralPathNodeNumbers = new HashSet<>();

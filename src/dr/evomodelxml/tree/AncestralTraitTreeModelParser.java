@@ -65,7 +65,7 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         MutableTreeModel tree = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
-        List<AncestralTaxonInTree> ancestors = parseAllAncestors(tree, xo);
+        List<AncestralTaxonInTree> ancestors = parseAllAncestors(tree, xo, ANCESTOR);
 
         int index = tree.getExternalNodeCount();
         for (AncestralTaxonInTree ancestor : ancestors) {
@@ -127,10 +127,10 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
         ParameterParser.replaceParameter(cxo, parameter);
     }
 
-    private static List<AncestralTaxonInTree> parseAllAncestors(MutableTreeModel tree, XMLObject xo) throws XMLParseException {
+    static List<AncestralTaxonInTree> parseAllAncestors(MutableTreeModel tree, XMLObject xo, String ancestorString) throws XMLParseException {
         int index = tree.getExternalNodeCount();
         List<AncestralTaxonInTree> ancestors = new ArrayList<AncestralTaxonInTree>();
-        for (XMLObject cxo : xo.getAllChildren(ANCESTOR)) {
+        for (XMLObject cxo : xo.getAllChildren(ancestorString)) {
             ancestors.add(parseAncestor(tree, cxo, index));
             ++index;
         }

@@ -52,7 +52,6 @@ public class PairedParalogSitePatternsParser extends AbstractXMLObjectParser {
         final int nParalogs = (int) xo.getAttribute(SIZE, 2);
         final SitePatterns siteList = (SitePatterns) xo.getChild(SitePatterns.class);
         final Taxa speciesTaxa = (Taxa) xo.getChild(SPECIES).getChild(Taxa.class);
-        final Taxa allSeq = (Taxa) xo.getChild(ALL_SEQ).getChild(Taxa.class);
         final String[] singleCopySpecies = xo.getStringArrayAttribute(SINGLE_COPY_SPECIES);
 
         if (paralogs.length != nParalogs) {
@@ -63,7 +62,7 @@ public class PairedParalogSitePatternsParser extends AbstractXMLObjectParser {
             throw new RuntimeException("Not yet implemented for more than two paralogs.");
         }
 
-        return new PairedParalogSitePatterns(siteList, paralogs, idSeparator, speciesTaxa, singleCopySpecies, allSeq);
+        return new PairedParalogSitePatterns(siteList, paralogs, idSeparator, speciesTaxa, singleCopySpecies);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -77,7 +76,6 @@ public class PairedParalogSitePatternsParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(SIZE, true),
             new ElementRule(SitePatterns.class),
             new ElementRule(SPECIES, Taxa.class),
-            new ElementRule(ALL_SEQ, Taxa.class),
     };
 
     @Override

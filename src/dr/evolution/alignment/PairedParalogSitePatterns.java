@@ -43,7 +43,6 @@ public class PairedParalogSitePatterns implements SiteList {
     private final SitePatterns sitePatterns;
     private final PairedDataType dataType;
     private final Taxa species;
-    private final Taxa allSeq;
     private final List<String> paralogs;
     private final String idSeparator;
     private final List<String> singleCopySpecies;
@@ -56,16 +55,14 @@ public class PairedParalogSitePatterns implements SiteList {
                                      String[] paralogs,
                                      String idSeparator,
                                      Taxa species,
-                                     String[] singleCopySpecies,
-                                     Taxa allSeq) {
+                                     String[] singleCopySpecies) {
         this.sitePatterns = sitePatterns;
         this.dataType = new PairedDataType(sitePatterns.getDataType());
         this.paralogs = Arrays.asList(paralogs);
         this.idSeparator = idSeparator;
         this.species = species;
         this.singleCopySpecies = Arrays.asList(singleCopySpecies);
-        this.allSeq = allSeq;
-        this.allIds = getAllIds(allSeq);
+        this.allIds = getAllIds(sitePatterns.getSiteList().asList());
         this.pairedPatterns = new int[sitePatterns.getPatternCount()][];
         setPairedPatterns();
     }
@@ -82,12 +79,12 @@ public class PairedParalogSitePatterns implements SiteList {
         }
     }
 
-    private List<String> getAllIds(Taxa allSeq) {
+    private List<String> getAllIds(List<Taxon> allSeq) {
 
         List<String> allIds = new ArrayList<>();
 
-        for (int i = 0; i < allSeq.getTaxonCount(); i++) {
-            allIds.add(allSeq.getTaxonId(i));
+        for (int i = 0; i < allSeq.size(); i++) {
+            allIds.add(allSeq.get(i).getId());
         }
 
         return allIds;
@@ -134,7 +131,7 @@ public class PairedParalogSitePatterns implements SiteList {
             for (int j = 0; j < paralogs.size(); j++) {
                 final String seqId = getSeqID(speciesName, j);
                 if (allIds.contains(seqId)) {
-                    final int patternIndex = allSeq.getTaxonIndex(seqId);
+                    final int patternIndex = allIds.indexOf(seqId);
                     paralogPattern1 = paralogPattern2 = sitePatterns.getSitePattern(siteIndex)[patternIndex];
                 }
             }
@@ -144,8 +141,8 @@ public class PairedParalogSitePatterns implements SiteList {
         } else {
             final String seqId1 = getSeqID(speciesName, 0);
             final String seqId2 = getSeqID(speciesName, 1);
-            final int patternIndex1 = allSeq.getTaxonIndex(seqId1);
-            final int patternIndex2 = allSeq.getTaxonIndex(seqId2);
+            final int patternIndex1 = allIds.indexOf(seqId1);
+            final int patternIndex2 = allIds.indexOf(seqId2);
             paralogPattern1 = sitePatterns.getSitePattern(siteIndex)[patternIndex1];
             paralogPattern2 = sitePatterns.getSitePattern(siteIndex)[patternIndex2];
         }

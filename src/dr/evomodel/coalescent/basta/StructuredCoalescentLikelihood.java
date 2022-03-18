@@ -121,12 +121,20 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
         this.migrationMatrices = new double[maxCoalescentIntervals][this.demes*this.demes];
         this.storedMigrationMatrices = new double[maxCoalescentIntervals][this.demes*this.demes];
 
-        this.intervalStartProbs = new double[intervals.getIntervalCount()+1][];
-        this.intervalEndProbs = new double[intervals.getIntervalCount()+1][];
-        this.intervalStartSquareProbs = new double[intervals.getIntervalCount()+1][];
-        this.intervalEndSquareProbs = new double[intervals.getIntervalCount()+1][];
-        this.coalescentLeftProbs = new double[intervals.getIntervalCount()+1][];
-        this.coalescentRightProbs = new double[intervals.getIntervalCount()+1][];
+        this.intervalStartProbs = new double[intervals.getIntervalCount()][];
+        this.intervalEndProbs = new double[intervals.getIntervalCount()][];
+        this.intervalStartSquareProbs = new double[intervals.getIntervalCount()][];
+        this.intervalEndSquareProbs = new double[intervals.getIntervalCount()][];
+        this.coalescentLeftProbs = new double[intervals.getIntervalCount()][];
+        this.coalescentRightProbs = new double[intervals.getIntervalCount()][];
+        for (int i = 0; i < intervals.getIntervalCount(); i++) {
+            this.intervalStartProbs[i] = new double[demes];
+            this.intervalEndProbs[i] = new double[demes];
+            this.intervalStartSquareProbs[i] = new double[demes];
+            this.intervalEndSquareProbs[i] = new double[demes];
+            this.coalescentLeftProbs[i] = new double[nodeCount*demes];
+            this.coalescentRightProbs[i] = new double[nodeCount*demes];
+        }
         //keep track of currently active lineage probabilities and use to compute / populate the lists above
         //this.activeLineages = new ArrayList<double[]>();
         this.activeLineages = new double[treeModel.getNodeCount()*demes];
@@ -182,15 +190,19 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
 
     /**
      * Calculates the log structured coalescent density from a given interval number up to the root.
+     *
+     * @param startingInterval
      */
     public double calculateLogLikelihood(int startingInterval) {
 
-        double logL = Double.NEGATIVE_INFINITY;
+        System.out.println("\n>calculateLogLikelihood");
+
+        double logL = 0.0;
 
         //TODO only iterate over a subset of the intervals
         int intervalCount = intervals.getIntervalCount();
         for (int i = 0; i < intervalCount; i++) {
-            double intervalLength = intervals.getIntervalTime(i);
+            double intervalLength = intervals.getInterval(i);
 
             //TODO this could be funky for zero-length intervals
             if (intervalLength != 0.0) {
@@ -209,17 +221,18 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                         densityTwo += (((lineageEndCount[j]*lineageEndCount[j])-lineageEndCountSquare[j])/(2.0*popSizes.getParameterValue(j)));
                     }
                     logL += -halfLength*densityOne;
+                    System.out.println("logL = " + logL);
                     logL += -halfLength*densityTwo;
+                    System.out.println("logL = " + logL);
                 }
 
                 if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
-                    Double[] leftProbs = new Double[demes];
-                    Double[] rightProbs = new Double[demes];
-                    for (int j = 0 ; j < demes; j++) {
-                        leftProbs[j] = coalescentLeftProbs[i][j];
-                        rightProbs[j] = coalescentRightProbs[i][j];
+                    double contribution = 0.0;
+                    for (int j = 0; j < demes; j++) {
+                        contribution += (coalescentLeftProbs[i][j]*coalescentRightProbs[i][j])/ popSizes.getParameterValue(j);
                     }
-
+                    logL += Math.log(contribution);
+                    System.out.println("logL = " + logL);
                 } else {
                     //do nothing
                 }
@@ -229,15 +242,21 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
             }
         }
 
+        System.out.println("final logL = " + logL);
         return logL;
 
     }
 
     /**
      * Compute all required probability distributions for calculating the overall structured coalescent density.
-     * This methods computes equations 11 and 12 from the BASTA manuscript.
+     * This methods computes equations 11 and 12 from the BASTA manuscript and populates the following arrays
+     * in order to enable a straight forward structured coalescent density computation in calculateLogLikelihood:
+     * intervalStartProbs, intervalStartSquareProbs, intervalEndProbs and intervalEndSquareProbs, and for the
+     * contributions at the coalescent events: coalescentLeftProbs and coalescentRightProbs
      */
     private void computeProbabilityDistributions() {
+
+        System.out.println("\n>computeProbabilityDistributions");
 
         int intervalCount = intervals.getIntervalCount();
         System.out.println("number of intervals: " + intervalCount);
@@ -299,8 +318,13 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                     this.activeLineages[node.getNumber()*demes+k] = temp[k]/sum;
                 }
 
-                //TODO add information to coalescentLeftProbs and coalescentRightProbs?
-
+                //TODO add information to coalescentLeftProbs and coalescentRightProbs really necessary
+                //TODO merge into one of the previous loops over k?
+                //this code mostly to keep the calculateLogLikelihood function as clean as possible
+                for (int k = 0; k < demes; k++) {
+                    this.coalescentLeftProbs[i][node.getNumber()*demes+k] = activeLineages[leftChild.getNumber()*demes+k];
+                    this.coalescentRightProbs[i][node.getNumber()*demes+k] = activeLineages[rightChild.getNumber()*demes+k];
+                }
 
                 //remove 2 nodes from active lineage list and add a new one
                 this.activeNodeNumbers.remove((Integer)leftChild.getNumber());
@@ -328,6 +352,17 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                     //compute end probabilities of sampling interval
                     double intervalLength = intervals.getInterval(i);
 
+                    //first compute Sd for the first interval half
+                    //TODO check these computations
+                    for (int k = 0; k < demes; k++) {
+                        this.intervalStartProbs[i][k] = 0.0;
+                        this.intervalStartSquareProbs[i][k] = 0.0;
+                        for (int l = 0; l < activeNodeNumbers.size(); l++) {
+                            this.intervalStartProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+l];
+                            this.intervalStartSquareProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+l]*activeLineages[activeNodeNumbers.get(l)*demes+l];
+                        }
+                    }
+
                     //matrix exponentiation to compute end interval probabilities; equation 11
                     incrementActiveLineages(this.activeLineages, intervalLength, i);
 
@@ -345,6 +380,19 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                             sumActiveLineages[j] += lineage[j];
                         }
                     }*/
+
+                    //compute Sd for the second interval half
+                    //TODO check these computations
+                    for (int k = 0; k < demes; k++) {
+                        this.intervalEndProbs[i][k] = 0.0;
+                        this.intervalEndSquareProbs[i][k] = 0.0;
+                        for (int l = 0; l < activeNodeNumbers.size(); l++) {
+                            this.intervalEndProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+l];
+                            this.intervalEndSquareProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+l]*activeLineages[activeNodeNumbers.get(l)*demes+l];
+                        }
+                    }
+
+                    printIntervalContributions(i);
 
                     //this.intervalEndProbs[i] = Arrays.copyOf(sumActiveLineages, demes);
                     //this.intervalEndSquareProbs[i] = Arrays.copyOf(lineageCountSquare, demes);
@@ -372,6 +420,29 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
             }
         }
 
+    }
+
+    private void printIntervalContributions(int interval) {
+        System.out.print("  starting lineage count: ");
+        for (int k = 0; k < demes; k++) {
+            System.out.print(this.intervalStartProbs[interval][k] + " ");
+        }
+        System.out.println();
+        System.out.print("  starting lineage count squared: ");
+        for (int k = 0; k < demes; k++) {
+            System.out.print(this.intervalStartSquareProbs[interval][k] + " ");
+        }
+        System.out.println();
+        System.out.print("  ending lineage count: ");
+        for (int k = 0; k < demes; k++) {
+            System.out.print(this.intervalEndProbs[interval][k] + " ");
+        }
+        System.out.println();
+        System.out.print("  ending lineage count squared: ");
+        for (int k = 0; k < demes; k++) {
+            System.out.print(this.intervalEndSquareProbs[interval][k] + " ");
+        }
+        System.out.println();
     }
 
     private void printActiveLineages() {
@@ -831,6 +902,8 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
     private BigFastTreeIntervals intervals;
 
     //probability densities at the start and end of each coalescent interval
+    //first index is the number of the coalescent interval
+    //second index is the deme number
     private double[][] intervalStartProbs;
     private double[][] intervalEndProbs;
     private double[][] intervalStartSquareProbs;

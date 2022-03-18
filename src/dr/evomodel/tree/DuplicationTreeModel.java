@@ -51,9 +51,7 @@ public class DuplicationTreeModel extends AncestralTraitTreeModel{
         ShadowNode newNode = new ShadowNode(newNumber, originalNode, null);
 
         ShadowNode recurse = parentNode;
-        if (parentNode == null) {
-
-        } else {
+        if (parentNode != null) {
             final boolean isLeftChild = treeModel.getChild(treeModel.getNode(parentNode.getOriginalNumber()), 0) == originalNode;
 
             if (nodeToClampMap.containsKey(originalNode.getNumber())) {

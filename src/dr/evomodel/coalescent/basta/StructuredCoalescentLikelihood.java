@@ -216,9 +216,15 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                 if (halfLength != 0.0) {
                     double densityOne = 0.0;
                     double densityTwo = 0.0;
+                    //TODO I believe there is a calculation problem here
                     for (int j = 0; j < demes; j++) {
                         densityOne += (((lineageStartCount[j]*lineageStartCount[j])-lineageStartCountSquare[j])/(2.0*popSizes.getParameterValue(j)));
                         densityTwo += (((lineageEndCount[j]*lineageEndCount[j])-lineageEndCountSquare[j])/(2.0*popSizes.getParameterValue(j)));
+
+                        System.out.println("lineageStartCount[j] = " + lineageStartCount[j]);
+                        System.out.println("lineageStartCountSquare[j] = " + lineageStartCountSquare[j]);
+                        System.out.println("lineageEndCount[j] = " + lineageEndCount[j]);
+                        System.out.println("lineageEndCountSquare[j] = " + lineageEndCountSquare[j]);
                     }
                     logL += -halfLength*densityOne;
                     System.out.println("logL = " + logL);
@@ -227,9 +233,12 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                 }
 
                 if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
+                    System.out.println("coalescent contribution");
                     double contribution = 0.0;
                     for (int j = 0; j < demes; j++) {
                         contribution += (coalescentLeftProbs[i][j]*coalescentRightProbs[i][j])/ popSizes.getParameterValue(j);
+                        System.out.println("coalescentLeftProbs[i][j] = " + coalescentLeftProbs[i][j]);
+                        System.out.println("coalescentRightProbs[i][j] = " + coalescentRightProbs[i][j]);
                     }
                     logL += Math.log(contribution);
                     System.out.println("logL = " + logL);
@@ -240,6 +249,9 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
             } else {
                 //do nothing
             }
+
+            System.out.println("logL(interval " + i + ") = " + logL);
+
         }
 
         System.out.println("final logL = " + logL);
@@ -322,8 +334,8 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                 //TODO merge into one of the previous loops over k?
                 //this code mostly to keep the calculateLogLikelihood function as clean as possible
                 for (int k = 0; k < demes; k++) {
-                    this.coalescentLeftProbs[i][node.getNumber()*demes+k] = activeLineages[leftChild.getNumber()*demes+k];
-                    this.coalescentRightProbs[i][node.getNumber()*demes+k] = activeLineages[rightChild.getNumber()*demes+k];
+                    this.coalescentLeftProbs[i][k] = activeLineages[leftChild.getNumber()*demes+k];
+                    this.coalescentRightProbs[i][k] = activeLineages[rightChild.getNumber()*demes+k];
                 }
 
                 //remove 2 nodes from active lineage list and add a new one

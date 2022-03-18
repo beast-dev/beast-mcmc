@@ -14,6 +14,7 @@ import java.util.List;
 
 /**
  * @author Xiang Ji
+ * @author Marc Suchard
  */
 public class DuplicationTreeModelParser extends AbstractXMLObjectParser {
 

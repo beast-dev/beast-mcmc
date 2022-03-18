@@ -6,6 +6,10 @@ import dr.evomodel.continuous.AncestralTaxonInTree;
 
 import java.util.List;
 
+/**
+ * @author Xiang Ji
+ * @author Marc Suchard
+ */
 public class DuplicationTreeModel extends AncestralTraitTreeModel{
 
     public DuplicationTreeModel(String id,

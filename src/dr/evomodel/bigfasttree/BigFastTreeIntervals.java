@@ -391,7 +391,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
      * A private classs that wraps an array of events and provides some a higher level api for updated an event when
      * the associated node's height changes.
      */
-    private class Events {
+    protected class Events {
 
         public Events(int numberOfEvents) {
             nodes = new int[numberOfEvents];
@@ -630,20 +630,20 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
 
     }
 
-    private final Events events;
+    protected final Events events;
     private final Events storedEvents;
 
-    private List<Integer> updatedNodes;
+    protected List<Integer> updatedNodes;
     private List<Integer> storedUpdatedNodes;
 
-    private boolean intervalsKnown;
+    protected boolean intervalsKnown;
     private boolean storedIntervalsKnown;
 
-    private boolean onlyUpdateTimes;
+    protected boolean onlyUpdateTimes;
     private boolean storedOnlyUpdateTimes;
 
     private final TreeModel tree;
-    private boolean dirty;
+    protected boolean dirty;
     private int intervalCount = 0;
 
 

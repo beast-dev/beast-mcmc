@@ -54,7 +54,7 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         assert tree instanceof TreeModel;
 
         this.treeIntervals = treeIntervals;
-        this.numberSubIntervals = 1; //numberSubIntervals;
+        this.numberSubIntervals = numberSubIntervals;
         this.activeNodesForAllIntervals = new ArrayList<>();
     }
 
@@ -85,10 +85,12 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         private final Set<NodeRef> activeSet;
         private final int[] currentOffset;
         private final int[] executionOrder;
-        private int stride;
+        private final int stride;
+        private final List<NodeRef> intervalNodeOrder;
 
         public ActiveNodesForInterval(int maximumSize) {
             activeSet = new HashSet<>();
+            intervalNodeOrder = new ArrayList<>();
             currentOffset = new int[maximumSize];
             executionOrder = new int[maximumSize];
             stride = maximumSize;
@@ -107,7 +109,8 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
 
         public int getActiveBuffer(NodeRef node) {
             if (DEBUG) test(node);
-            return node.getNumber() * stride + getCurrentOffset(node);
+//            return node.getNumber() * stride + getCurrentOffset(node);
+            return 1000 + getCurrentOffset(node) * 1000 + node.getNumber();
         }
 
         public int getExecutionOrder(NodeRef node) {
@@ -128,6 +131,13 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         public void setExecutionOrder(NodeRef node, int value) {
             if (DEBUG) test(node);
             executionOrder[node.getNumber()] = value;
+        }
+
+        public int getNodeOrder(NodeRef node) {
+            for (int i = 0; i < intervalNodeOrder.size(); ++i) {
+                if (node == intervalNodeOrder.get(i)) return i;
+            }
+            return -1;
         }
 
         @Override
@@ -162,6 +172,7 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
 
         @Override
         public boolean add(NodeRef node) {
+            intervalNodeOrder.add(node);
             return activeSet.add(node);
         }
 
@@ -196,7 +207,19 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         }
     }
 
+    private int determineStartingInterval() {
+        int startingInterval = 0;
+        for (int node = 0; node < updateNode.length; ++node) {
+            if (updateNode[node]) {
+                
+            }
+        }
+    }
+
     private void traverseReverseCoalescentLevelOrder() {
+
+        int startingInterval = 0;
+
 
         // Rebuild active nodes from scratch; TODO cache
         ActiveNodesForInterval activeNodesForInterval = new ActiveNodesForInterval(treeModel.getNodeCount());
@@ -218,6 +241,13 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
                     throw new RuntimeException("Not a coalescence at top");
                 }
             }
+        }
+
+        if (false) {
+            for (ProcessOnCoalescentIntervalDelegate.BranchIntervalOperation op : branchIntervalOperations) {
+                System.err.println(op);
+            }
+            System.exit(-1);
         }
     }
     
@@ -277,7 +307,7 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
 
         // Handle last sub-interval
         activeNodesForInterval.add(nodeAtTopOfInterval);
-        coalescenceTransmissionProbabilities(subInterval, nodeAtTopOfInterval, leftChild, rightChild, subInterval,
+        coalescenceTransmissionProbabilities(subInterval, nodeAtTopOfInterval, leftChild, rightChild, subIntervalLength,
                 activeNodesForInterval);
 
         //        System.err.println("Added " + nodeAtTopOfInterval.getNumber());

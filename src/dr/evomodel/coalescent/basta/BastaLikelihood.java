@@ -127,7 +127,6 @@ public final class BastaLikelihood extends AbstractModelLikelihood implements
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // TODO
     }
-
     @Override @SuppressWarnings("Duplicates")
     protected final void handleModelChangedEvent(Model model, Object object, int index) {
 
@@ -144,7 +143,7 @@ public final class BastaLikelihood extends AbstractModelLikelihood implements
                     // above being updated as well. Node events occur when a node
                     // is added to a branch, removed from a branch or its height or
                     // rate changes.
-                    updateNodeAndChildren(((TreeChangedEvent) object).getNode());
+                    updateNode(((TreeChangedEvent) object).getNode());
                 } else if (treeChangedEvent.isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
                     // This event type is now used for EmpiricalTreeDistributions.
@@ -251,13 +250,13 @@ public final class BastaLikelihood extends AbstractModelLikelihood implements
     /**
      * Set update flag for a node and its direct children
      */
-    protected void updateNodeAndChildren(NodeRef node) {
-        if (COUNT_TOTAL_OPERATIONS)
-            totalRateUpdateSingleCount += 1 + treeModel.getChildCount(node);
-
-        treeTraversalDelegate.updateNodeAndChildren(node);
-        likelihoodKnown = false;
-    }
+//    protected void updateNodeAndChildren(NodeRef node) {
+//        if (COUNT_TOTAL_OPERATIONS)
+//            totalRateUpdateSingleCount += 1 + treeModel.getChildCount(node);
+//
+//        treeTraversalDelegate.updateNodeAndChildren(node);
+//        likelihoodKnown = false;
+//    }
 
     /**
      * Set update flag for all nodes

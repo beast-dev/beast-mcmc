@@ -27,6 +27,7 @@ package dr.evoxml;
 
 import dr.evolution.alignment.PairedParalogSitePatterns;
 import dr.evolution.alignment.SitePatterns;
+import dr.evolution.datatype.PairedDataType;
 import dr.evolution.util.Taxa;
 import dr.xml.*;
 
@@ -53,6 +54,7 @@ public class PairedParalogSitePatternsParser extends AbstractXMLObjectParser {
         final SitePatterns siteList = (SitePatterns) xo.getChild(SitePatterns.class);
         final Taxa speciesTaxa = (Taxa) xo.getChild(SPECIES).getChild(Taxa.class);
         final String[] singleCopySpecies = xo.getStringArrayAttribute(SINGLE_COPY_SPECIES);
+        PairedDataType datatype = new PairedDataType(siteList.getDataType());
 
         if (paralogs.length != nParalogs) {
             throw new RuntimeException("Paralog list dimension mismatch input number of paralogs.");
@@ -62,7 +64,7 @@ public class PairedParalogSitePatternsParser extends AbstractXMLObjectParser {
             throw new RuntimeException("Not yet implemented for more than two paralogs.");
         }
 
-        return new PairedParalogSitePatterns(siteList, paralogs, idSeparator, speciesTaxa, singleCopySpecies);
+        return new PairedParalogSitePatterns(siteList, datatype, paralogs, idSeparator, speciesTaxa, singleCopySpecies);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

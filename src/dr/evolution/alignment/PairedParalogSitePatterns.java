@@ -31,14 +31,17 @@ import dr.evolution.datatype.PairedDataType;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Xiang Ji
  * @author Jeff Thorne
  * @author Marc A. Suchard
  */
-public class PairedParalogSitePatterns implements SiteList {
+public class PairedParalogSitePatterns extends UncertainSiteList {
 
     private final SitePatterns sitePatterns;
     private final PairedDataType dataType;
@@ -52,19 +55,22 @@ public class PairedParalogSitePatterns implements SiteList {
     private String id;
 
     public PairedParalogSitePatterns(SitePatterns sitePatterns,
+                                     PairedDataType datatype,
                                      String[] paralogs,
                                      String idSeparator,
                                      Taxa species,
                                      String[] singleCopySpecies) {
+        super(datatype, sitePatterns);
         this.sitePatterns = sitePatterns;
-        this.dataType = new PairedDataType(sitePatterns.getDataType());
+        this.dataType = datatype;
         this.paralogs = Arrays.asList(paralogs);
         this.idSeparator = idSeparator;
         this.species = species;
         this.singleCopySpecies = Arrays.asList(singleCopySpecies);
         this.allIds = getAllIds(sitePatterns.getSiteList().asList());
         this.pairedPatterns = new int[sitePatterns.getPatternCount()][];
-        setPairedPatterns();
+//        setPairedPatterns();
+        setUncertainSitePatterns();
     }
 
     private void setPairedPatterns() {
@@ -150,6 +156,63 @@ public class PairedParalogSitePatterns implements SiteList {
         return dataType.getState(paralogPattern1, paralogPattern2);
     }
 
+    private void fillPartial(double[] partials, int paralogPattern1, int paralogPattern2) {
+        if (paralogPattern1 < dataType.getBaseDataType().getStateCount() &&
+                paralogPattern2 < dataType.getBaseDataType().getStateCount()) {
+            partials[dataType.getState(paralogPattern1, paralogPattern2)] = 1.0;
+        } else if (paralogPattern1 < dataType.getBaseDataType().getStateCount()) {
+            for (int i = 0; i < dataType.getBaseDataType().getStateCount(); i++) {
+                partials[dataType.getState(paralogPattern1, i)] = 1.0;
+            }
+        } else if (paralogPattern2 < dataType.getBaseDataType().getStateCount()) {
+            for (int i = 0; i < dataType.getBaseDataType().getStateCount(); i++) {
+                partials[dataType.getState(i, paralogPattern2)] = 1.0;
+            }
+        } else {
+            for (int i = 0; i < dataType.getBaseDataType().getStateCount(); i++) {
+                partials[dataType.getState(i, i)] = 1.0;
+            }
+        }
+    }
+
+    private void setUncertainSitePatterns() {
+
+        for (int siteIndex = 0; siteIndex < sitePatterns.getSiteCount(); siteIndex++) {
+
+            double[][] uncertainPattern = new double[species.getTaxonCount()][];
+
+            for (int i = 0; i < species.getTaxonCount(); i++) {
+                String speciesName = species.getTaxon(i).getId();
+                double[] partials = new double[dataType.getStateCount()];
+
+                int paralogPattern1, paralogPattern2;
+
+                if (singleCopySpecies.contains(speciesName)) {
+                    paralogPattern1 = paralogPattern2 = -1;
+                    for (int j = 0; j < paralogs.size(); j++) {
+                        final String seqId = getSeqID(speciesName, j);
+                        if (allIds.contains(seqId)) {
+                            final int patternIndex = allIds.indexOf(seqId);
+                            paralogPattern1 = paralogPattern2 = sitePatterns.getSitePattern(siteIndex)[patternIndex];
+                        }
+                    }
+                } else {
+                    final String seqId1 = getSeqID(speciesName, 0);
+                    final String seqId2 = getSeqID(speciesName, 1);
+                    final int patternIndex1 = allIds.indexOf(seqId1);
+                    final int patternIndex2 = allIds.indexOf(seqId2);
+                    paralogPattern1 = sitePatterns.getSitePattern(siteIndex)[patternIndex1];
+                    paralogPattern2 = sitePatterns.getSitePattern(siteIndex)[patternIndex2];
+                }
+
+                fillPartial(partials, paralogPattern1, paralogPattern2);
+
+                uncertainPattern[i] = partials;
+            }
+            addPattern(uncertainPattern);
+        }
+    }
+
     @Override
     public double[] getUncertainState(int taxonIndex, int siteIndex) {
         throw new UnsupportedOperationException("uncertain patterns not implemented yet");
@@ -207,7 +270,7 @@ public class PairedParalogSitePatterns implements SiteList {
 
     @Override
     public double[] getStateFrequencies() {
-        return Utils.empiricalStateFrequencies(this);
+        return PatternList.Utils.empiricalStateFrequencies(this);
     }
 
     @Override

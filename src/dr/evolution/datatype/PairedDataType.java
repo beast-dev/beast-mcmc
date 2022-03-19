@@ -103,6 +103,10 @@ package dr.evolution.datatype;
 		return -1;
 	}
 
+	public DataType getBaseDataType() {
+		return baseDataType;
+	}
+
 	// Private members
 
 	private DataType baseDataType;

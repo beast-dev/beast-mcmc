@@ -97,5 +97,5 @@ public class UncertainSiteList extends SimpleSiteList implements Citable {
                 ));
     }
 
-    private List<double[][]> uncertainSitePatterns = new ArrayList<double[][]>();
+    protected List<double[][]> uncertainSitePatterns = new ArrayList<double[][]>();
 }

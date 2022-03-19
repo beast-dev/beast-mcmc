@@ -213,7 +213,7 @@ public class BASTATreeMoveTester {
 
         //perform scale operator on a different node height
         ScaleOperator nodeHeightOperator = new ScaleOperator(treeModel.getVariable(1), 0.75);
-        rootHeightOperator.doOperation();
+        nodeHeightOperator.doOperation();
 
         System.out.println("Structured coalescent lnL = " + structured.getLogLikelihood() + "\n");
 
@@ -222,7 +222,7 @@ public class BASTATreeMoveTester {
         System.out.println("MODIFIED EXAMPLE 1: 4 taxa with 2 demes (altered node height)");
 
         try {
-            treeModel = createSpecifiedTree("(((AB192965Japan2004:0.42343888910376215,AF189018Indonesia2005:1.4234388891037622):9.725099517053918,AF071228Spain1997:3.14853840615768):1.4565239720642662,AF105975Portugal1995:2.6050623782219464)");
+            treeModel = createSpecifiedTree("(((AB192965Japan2004:0.42343888910376215,AF189018Indonesia2005:1.4234388891037622):8.95084315354517,AF071228Spain1997:2.3742820426489324):2.7057546367371756,AF105975Portugal1995:3.080036679386108)");
         } catch (Exception e) {
             throw new RuntimeException("Unable to parse Newick tree");
         }

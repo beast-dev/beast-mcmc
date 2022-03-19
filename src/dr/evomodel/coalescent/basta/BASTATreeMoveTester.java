@@ -185,6 +185,8 @@ public class BASTATreeMoveTester {
 
         System.out.println("Structured coalescent lnL = " + structured.getLogLikelihood() + "\n");
 
+
+        //perform scale operator on the root height
         ScaleOperator rootHeightOperator = new ScaleOperator(treeModel.getVariable(0), 0.75);
         rootHeightOperator.doOperation();
 
@@ -192,10 +194,35 @@ public class BASTATreeMoveTester {
 
 
         //calculate structured coalescent density from scratch to compare result of tree move against
-        System.out.println("MODIFIED EXAMPLE 1: 4 taxa with 2 demes");
+        System.out.println("MODIFIED EXAMPLE 1: 4 taxa with 2 demes (altered root height)");
 
         try {
             treeModel = createSpecifiedTree("(((AB192965Japan2004:0.42343888910376215,AF189018Indonesia2005:1.4234388891037622):9.725099517053918,AF071228Spain1997:3.14853840615768):1.9314982732284278,AF105975Portugal1995:3.080036679386108)");
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to parse Newick tree");
+        }
+
+        try {
+            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns,null, "", migrationModel, subIntervals, includeSubtree, excludeSubtrees, false);
+        } catch (TreeUtils.MissingTaxonException missing) {
+            System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
+        }
+
+        System.out.println("Structured coalescent lnL = " + structured.getLogLikelihood() + "\n");
+
+
+        //perform scale operator on a different node height
+        ScaleOperator nodeHeightOperator = new ScaleOperator(treeModel.getVariable(1), 0.75);
+        rootHeightOperator.doOperation();
+
+        System.out.println("Structured coalescent lnL = " + structured.getLogLikelihood() + "\n");
+
+
+        //calculate structured coalescent density from scratch to compare result of tree move against
+        System.out.println("MODIFIED EXAMPLE 1: 4 taxa with 2 demes (altered node height)");
+
+        try {
+            treeModel = createSpecifiedTree("(((AB192965Japan2004:0.42343888910376215,AF189018Indonesia2005:1.4234388891037622):9.725099517053918,AF071228Spain1997:3.14853840615768):1.4565239720642662,AF105975Portugal1995:2.6050623782219464)");
         } catch (Exception e) {
             throw new RuntimeException("Unable to parse Newick tree");
         }

@@ -207,6 +207,7 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         }
     }
 
+    //TODO incomplete implementation but also never used
     private int determineStartingInterval() {
         int startingInterval = 0;
         for (int node = 0; node < updateNode.length; ++node) {
@@ -214,6 +215,7 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
                 
             }
         }
+        return startingInterval;
     }
 
     private void traverseReverseCoalescentLevelOrder() {

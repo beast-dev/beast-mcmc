@@ -1,7 +1,7 @@
 /*
  * BASTADensityTester.java
  *
- * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * Guy Baele
+ * @author Guy Baele
  */
 public class BASTADensityTester {
 
@@ -99,7 +99,6 @@ public class BASTADensityTester {
 
         SimpleAlignment alignment = new SimpleAlignment();
         alignment.setDataType(dataType);
-//        alignment.setDataType(Nucleotides.INSTANCE);
 
         Taxon[] taxa = new Taxon[taxa_sequence[0].length]; // 6, 17
         System.out.println("Taxon len = " + taxa_sequence[0].length);

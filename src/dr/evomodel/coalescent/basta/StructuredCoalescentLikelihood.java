@@ -34,6 +34,7 @@ import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.bigfasttree.IntervalChangedEvent;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
@@ -54,6 +55,7 @@ import java.util.List;
 
 /**
  * @author Guy Baele
+ * @author Marc A. Suchard
  *
  * Implementation of BASTA: Bayesian structured coalescent approximation.
  * Original paper: Nicola De Maio, Chieh-Hsi Wu, Kathleen O'Reilly and Daniel Wilson
@@ -88,6 +90,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
         }
 
         if (tree instanceof TreeModel) {
+            System.out.println("initial tree = " + (TreeModel) tree);
             this.intervals = new BigFastTreeIntervals((TreeModel) tree);
         } else {
             throw new IllegalArgumentException("Please provide a TreeModel for the structured coalescent model.");
@@ -165,7 +168,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
 
         //TODO write if-else clause that determines whether a full likelihood recalculation is required
         //TODO if not, write a method that only recomputes part of the probability distributions
-        computeProbabilityDistributions();
+        computeProbabilityDistributions(0);
 
         return calculateLogLikelihood(0);
 
@@ -250,7 +253,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
      * intervalStartProbs, intervalStartSquareProbs, intervalEndProbs and intervalEndSquareProbs, and for the
      * contributions at the coalescent events: coalescentLeftProbs and coalescentRightProbs
      */
-    private void computeProbabilityDistributions() {
+    private void computeProbabilityDistributions(int startingInterval) {
 
         //System.out.println("\n>computeProbabilityDistributions");
 
@@ -342,7 +345,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                 this.activeNodeNumbers.remove((Integer)rightChild.getNumber());
                 this.activeNodeNumbers.add(node.getNumber());
 
-                printActiveLineages();
+                //printActiveLineages();
 
             } else if (intervals.getIntervalType(i) == IntervalType.SAMPLE) {
                 //check for zero-length interval
@@ -391,7 +394,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
 
                     //get the node number of the sampling node
                     node = intervals.getSamplingNode(i);
-                    System.out.println("sampling node: "+ treeModel.getNodeTaxon(node).getId());
+                    //System.out.println("sampling node: "+ treeModel.getNodeTaxon(node).getId());
 
                     //set start probabilities of first sampling interval
                     this.activeLineages[node.getNumber()*demes+patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(node).getId())]] = 1.0;
@@ -517,9 +520,10 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
     /**
      * Compute all the probability densities (equation 11)
      *
-     * @param intervalLength
+     * @param intervalLength length of the coalescent interval
      * @param interval denotes the index of the interval to get the correct matrix exponential
      */
+    //TODO remove this method
     private void incrementActiveLineages(ArrayList<double[]> lineageCount, double intervalLength, int interval) {
 
         System.out.println("incrementActiveLineages with intervalLength: " + intervalLength);
@@ -592,31 +596,17 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                 // above being updated as well. Node events occur when a node
                 // is added to a branch, removed from a branch or its height or
                 // rate changes.
+                System.out.println("TreeChangedEvent");
                 if (((TreeChangedEvent) object).isNodeChanged()) {
-                    //System.out.println("isNodeChanged: " + ((TreeChangedEvent) object).getNode().getNumber());
+                    System.out.println("current tree = " + treeModel);
+                    System.out.println("isNodeChanged: " + ((TreeChangedEvent) object).getNode().getNumber());
+                    System.out.println("root node number: " + treeModel.getRoot().getNumber());
                     //System.out.println(treeModel.getNodeHeight(((TreeChangedEvent) object).getNode());
                     //double changeHeight = treeModel.getNodeHeight(((TreeChangedEvent) object).getNode());
-                    //TODO use what's in the current times variable to decide which ProbDist to update?
-                    //TODO NOT SUFFICIENT: sketch out an example
-
-                    //print out the tree to check
-                    System.out.println(treeModel);
-
-                    //TODO uncomment this
-                    /*double minHeight = Math.min(changeHeight, );
-
-                    for (ProbDist pd : this.nodeProbDist) {
-                        if (treeModel.getNodeHeight(pd.node) >= minHeight) {
-                            pd.needsUpdate = true;
-                        }
-                    }*/
-
-                    //TODO give updateTransitionProbabilities more responsibility?
                 } else if (((TreeChangedEvent) object).isHeightChanged()) {
-                    //System.out.println("isHeightChanged: " + ((TreeChangedEvent) object).getNode().getNumber());
-
+                    System.out.println("isHeightChanged: " + ((TreeChangedEvent) object).getNode().getNumber());
                 } else if (((TreeChangedEvent) object).isTreeChanged()) {
-                    //System.out.println("isTreeChanged");
+                    System.out.println("isTreeChanged");
                     // Full tree events result in a complete updating of the tree likelihood
                     // This event type is now used for EmpiricalTreeDistributions.
                     System.err.println("Full tree update event - these events currently aren't used\n" +
@@ -626,43 +616,42 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                     //Other event types are ignored (probably trait changes).
                     System.err.println("Another tree event has occurred (possibly a trait change).");
                 }
+            } else if (object instanceof IntervalChangedEvent) {
+                //these are the kinds of events we expect from BestSignalsFromBigFastTreeIntervals
+                System.out.println("IntervalChangedEvent");
+
+                //for all the nodes that are older than the event, set needsUpdate to true
+                //then trigger a recalculation that makes use of an adjusted traverseTree method (that checks whether
+                //or not the ProbDist needs to be updated
+
+
+
             }
-            //for all the nodes that are older than the event, set needsUpdate to true
-            //then trigger a recalculation that makes use of an adjusted traverseTree method (that checks whether
-            //or not the ProbDist needs to be updated
+
             likelihoodKnown = false;
             //TODO not all matrices will have to be recomputed all the time
             matricesKnown = false;
             areStatesRedrawn = false;
         } else if (model == branchRateModel) {
             matricesKnown = false;
-            //the following to accommodate events stemming from the upDownOperator
-            /*likelihoodKnown = false;
-            for (ProbDist pd : this.nodeProbDist) {
-                pd.needsUpdate = true;
-            }*/
-            //updateAllDensities();
             likelihoodKnown = false;
             areStatesRedrawn = false;
         } else if (model == generalSubstitutionModel) {
             matricesKnown = false;
-            //TODO is this necessary? turns out it is to avoid store/restore issues but why??
-            /*likelihoodKnown = false;
-            for (ProbDist pd : this.nodeProbDist) {
-                pd.needsUpdate = true;
-            }*/
-            //updateAllDensities();
             likelihoodKnown = false;
             areStatesRedrawn = false;
         } else {
             throw new RuntimeException("Unknown handleModelChangedEvent source, exiting.");
         }
+
+        //TODO is this necessary?
+        fireModelChanged();
+
     }
 
     // **************************************************************
     // VariableListener IMPLEMENTATION
     // **************************************************************
-
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (DEBUG) {

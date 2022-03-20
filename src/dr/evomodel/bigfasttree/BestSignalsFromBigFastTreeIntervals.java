@@ -9,6 +9,11 @@ public class BestSignalsFromBigFastTreeIntervals extends BigFastTreeIntervals {
 
     private final Events originalEvents;
 
+    public BestSignalsFromBigFastTreeIntervals(TreeModel tree) {
+        super(tree);
+        originalEvents = new Events(tree.getNodeCount());
+    }
+
     public BestSignalsFromBigFastTreeIntervals(String name, TreeModel tree) {
         super(name, tree);
         originalEvents = new Events(tree.getNodeCount());

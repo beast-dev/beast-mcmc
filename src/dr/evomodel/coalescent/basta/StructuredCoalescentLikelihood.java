@@ -33,6 +33,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
+import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.bigfasttree.IntervalChangedEvent;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -92,6 +93,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
         if (tree instanceof TreeModel) {
             System.out.println("initial tree = " + (TreeModel) tree);
             this.intervals = new BigFastTreeIntervals((TreeModel) tree);
+            //this.intervals = new BestSignalsFromBigFastTreeIntervals((TreeModel) tree);
         } else {
             throw new IllegalArgumentException("Please provide a TreeModel for the structured coalescent model.");
         }
@@ -166,6 +168,10 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
      */
     public double calculateLogLikelihood() {
 
+        //TODO why do I need to do this to avoid store/restore errors (here using BigFastTreeIntervals)???
+        intervals.makeDirty();
+        intervals.calculateIntervals();
+
         //TODO write if-else clause that determines whether a full likelihood recalculation is required
         //TODO if not, write a method that only recomputes part of the probability distributions
         computeProbabilityDistributions(0);
@@ -181,7 +187,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
      */
     public double calculateLogLikelihood(int startingInterval) {
 
-        //System.out.println("\n>calculateLogLikelihood");
+        System.out.println("\n>calculateLogLikelihood");
 
         double logL = 0.0;
 
@@ -189,7 +195,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
         int intervalCount = intervals.getIntervalCount();
         for (int i = 0; i < intervalCount; i++) {
 
-            //System.out.println("interval: " + i + " (" + intervals.getIntervalType(i) + ")");
+            System.out.println("interval: " + i + " (" + intervals.getIntervalType(i) + ")");
 
             double intervalLength = intervals.getInterval(i);
 
@@ -201,6 +207,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                 double[] lineageEndCountSquare = intervalEndSquareProbs[i];
 
                 double halfLength = intervalLength/2.0;
+                System.out.println("half interval length = " + halfLength);
                 if (halfLength != 0.0) {
                     double densityOne = 0.0;
                     double densityTwo = 0.0;
@@ -208,27 +215,27 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                         densityOne += (((lineageStartCount[j]*lineageStartCount[j])-lineageStartCountSquare[j])/(2.0*popSizes.getParameterValue(j)));
                         densityTwo += (((lineageEndCount[j]*lineageEndCount[j])-lineageEndCountSquare[j])/(2.0*popSizes.getParameterValue(j)));
 
-                        //System.out.println("lineageStartCount[" + j + "] = " + lineageStartCount[j]);
-                        //System.out.println("lineageStartCountSquare[" + j + "] = " + lineageStartCountSquare[j]);
-                        //System.out.println("lineageEndCount[" + j + "] = " + lineageEndCount[j]);
-                        //System.out.println("lineageEndCountSquare[" + j +"] = " + lineageEndCountSquare[j]);
+                        System.out.println("lineageStartCount[" + j + "] = " + lineageStartCount[j]);
+                        System.out.println("lineageStartCountSquare[" + j + "] = " + lineageStartCountSquare[j]);
+                        System.out.println("lineageEndCount[" + j + "] = " + lineageEndCount[j]);
+                        System.out.println("lineageEndCountSquare[" + j +"] = " + lineageEndCountSquare[j]);
                     }
                     logL += -halfLength*densityOne;
-                    //System.out.println("logL = " + logL);
+                    System.out.println("logL = " + logL);
                     logL += -halfLength*densityTwo;
-                    //System.out.println("logL = " + logL);
+                    System.out.println("logL = " + logL);
                 }
 
                 if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
-                    //System.out.println("coalescent contribution");
+                    System.out.println("coalescent contribution");
                     double contribution = 0.0;
                     for (int j = 0; j < demes; j++) {
                         contribution += (coalescentLeftProbs[i][j]*coalescentRightProbs[i][j])/ popSizes.getParameterValue(j);
-                        //System.out.println("coalescentLeftProbs[i][j] = " + coalescentLeftProbs[i][j]);
-                        //System.out.println("coalescentRightProbs[i][j] = " + coalescentRightProbs[i][j]);
+                        System.out.println("coalescentLeftProbs[i][j] = " + coalescentLeftProbs[i][j]);
+                        System.out.println("coalescentRightProbs[i][j] = " + coalescentRightProbs[i][j]);
                     }
                     logL += Math.log(contribution);
-                    //System.out.println("logL = " + logL);
+                    System.out.println("logL = " + logL);
                 } else {
                     //do nothing
                 }
@@ -237,11 +244,11 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                 //do nothing
             }
 
-            //System.out.println("logL(interval " + i + ") = " + logL);
+            System.out.println("logL(interval " + i + ") = " + logL);
 
         }
 
-        //System.out.println("final logL = " + logL);
+        System.out.println("final logL = " + logL);
         return logL;
 
     }
@@ -257,6 +264,9 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
 
         //System.out.println("\n>computeProbabilityDistributions");
 
+        //TODO still clear the activeNodeNumbers if startingInterval != 0 ?
+        this.activeNodeNumbers.clear();
+
         int intervalCount = intervals.getIntervalCount();
 
         //first sampling event is not considered so take this into account
@@ -264,6 +274,9 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
         //System.out.println("sampling node: "+ treeModel.getNodeTaxon(node).getId());
 
         //set start probabilities of first sampling interval
+        for (int k = 0; k < demes; k++) {
+            this.activeLineages[node.getNumber()*demes+k] = 0.0;
+        }
         this.activeLineages[node.getNumber()*demes+patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(node).getId())]] = 1.0;
         this.activeNodeNumbers.add(node.getNumber());
 
@@ -348,6 +361,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                 //printActiveLineages();
 
             } else if (intervals.getIntervalType(i) == IntervalType.SAMPLE) {
+
                 //check for zero-length interval
                 if (intervals.getInterval(i) == 0.0) {
                     //multiple samples at same sampling time
@@ -355,6 +369,9 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
 
                     node = intervals.getSamplingNode(i);
                     //System.out.println("sampling node: "+ treeModel.getNodeTaxon(node).getId());
+                    for (int k = 0; k < demes; k++) {
+                        this.activeLineages[node.getNumber()*demes+k] = 0.0;
+                    }
                     this.activeLineages[node.getNumber()*demes+patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(node).getId())]] = 1.0;
                     this.activeNodeNumbers.add(node.getNumber());
 
@@ -397,6 +414,9 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                     //System.out.println("sampling node: "+ treeModel.getNodeTaxon(node).getId());
 
                     //set start probabilities of first sampling interval
+                    for (int k = 0; k < demes; k++) {
+                        this.activeLineages[node.getNumber()*demes+k] = 0.0;
+                    }
                     this.activeLineages[node.getNumber()*demes+patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(node).getId())]] = 1.0;
                     this.activeNodeNumbers.add(node.getNumber());
 
@@ -467,7 +487,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
      */
     private void incrementActiveLineages(double[] activeLineages, double intervalLength, int interval) {
 
-        //System.out.println("incrementActiveLineages with intervalLength: " + intervalLength);
+        System.out.println("incrementActiveLineages with intervalLength: " + intervalLength);
 
         final double branchRate;
         synchronized (branchRateModel) {
@@ -821,6 +841,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
     private boolean[] addedLineages;
 
     private BigFastTreeIntervals intervals;
+    //private BestSignalsFromBigFastTreeIntervals intervals;
 
     //probability densities at the start and end of each coalescent interval
     //first index is the number of the coalescent interval

@@ -80,7 +80,7 @@
         </condition>
     </target>
 
-    <target name="revision" depends="git.commit" description="build version.txt from template">
+    <target name="revision" depends="git.commit" description="build revision.txt from template">
         <copy file="revision.txt.template" tofile="src/revision.txt" overwrite="yes">
             <filterchain>
                 <replacetokens>
@@ -186,6 +186,7 @@
             </fileset>
             <fileset dir="${src}">
                 <include name="dr/**/*.png"/>
+                <include name="revision.txt"/>
                 <include name="org/virion/jam/**/*.png"/>
                 <include name="dr/**/*.properties"/>
             </fileset>

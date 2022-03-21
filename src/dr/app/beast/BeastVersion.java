@@ -183,7 +183,7 @@ public class BeastVersion implements Version, Citable {
     }
     public static String getRevision() {
         try {
-            try (InputStream in = BeastVersion.class.getResourceAsStream("/version.txt")) {
+            try (InputStream in = BeastVersion.class.getResourceAsStream("/revision.txt")) {
                 assert in != null;
 
                 List<String> lines =  new BufferedReader(

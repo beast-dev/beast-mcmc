@@ -139,6 +139,22 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             this.child1 = child1;
         }
 
+        public ShadowNode getChild0() {
+            return child0;
+        }
+
+        public ShadowNode getChild1() {
+            return child1;
+        }
+
+        public AncestralTaxonInTree getAncestor() {
+            return ancestor;
+        }
+
+        public ShadowNode getParent() {
+            return parent;
+        }
+
         @Override
         public int getNumber() { return number; }
 
@@ -149,7 +165,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
         protected int getOriginalNumber() { return originalNumber; }
 
-        private NodeRef getOriginalNode() {
+        protected NodeRef getOriginalNode() {
             return originalNumber >= 0 ?
                     treeModel.getNode(originalNumber) :
                     null;
@@ -165,7 +181,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             }
         }
 
-        private boolean isExternal() { return child0 == null && child1 == null; }
+        protected boolean isExternal() { return child0 == null && child1 == null; }
 
         public String toString() {
             int pa = parent != null ? parent.getNumber() : -1;
@@ -234,7 +250,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         return treeModel;
     }
 
-    private void checkShadowTree() {
+    protected void checkShadowTree() {
         if (!validShadowTree) {
             buildShadowTree();
             validShadowTree = true;

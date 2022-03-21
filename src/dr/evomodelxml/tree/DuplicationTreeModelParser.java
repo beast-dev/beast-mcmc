@@ -34,6 +34,7 @@ import dr.evomodel.tree.DuplicationTreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -45,12 +46,18 @@ public class DuplicationTreeModelParser extends AbstractXMLObjectParser {
 
     private static final String DUPLICATION_TREE_MODEL = "duplicationTreeModel";
     private static final String DUPLICATION = "duplication";
+    private static final String DUPLICATION_TIME_RATIO = "duplicationTimeRatio";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         MutableTreeModel tree = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
         List<AncestralTaxonInTree> duplications = AncestralTraitTreeModelParser.parseAllAncestors(tree, xo, DUPLICATION);
+        List<Parameter> duplicationTimeRatios = parseAllDuplicationTimes(xo);
+
+        if (duplications.size() != duplicationTimeRatios.size()) {
+            throw new RuntimeException("Each duplication event needs a ratio for its timing");
+        }
 
         int index = tree.getExternalNodeCount();
         for (AncestralTaxonInTree duplication : duplications) {
@@ -68,7 +75,15 @@ public class DuplicationTreeModelParser extends AbstractXMLObjectParser {
             });
         }
 
-        return new DuplicationTreeModel(xo.getId(), tree, duplications);
+        return new DuplicationTreeModel(xo.getId(), tree, duplications, duplicationTimeRatios);
+    }
+
+    private List<Parameter> parseAllDuplicationTimes(XMLObject xo) {
+        List<Parameter> duplicationTimes = new ArrayList<Parameter>();
+        for (XMLObject cxo : xo.getAllChildren(DUPLICATION_TIME_RATIO)) {
+            duplicationTimes.add((Parameter) cxo.getChild(Parameter.class));
+        }
+        return duplicationTimes;
     }
 
     @Override
@@ -84,6 +99,7 @@ public class DuplicationTreeModelParser extends AbstractXMLObjectParser {
                 new ElementRule(Parameter.class, "Branch length towards duplication node."),
                 new ElementRule(MonophylyStatisticParser.MRCA, Taxa.class),
             }, 1, 1),
+            new ElementRule(DUPLICATION_TIME_RATIO, Parameter.class, "A ratio for duplication timing on the original branch", 1, 1),
         };
 
     @Override

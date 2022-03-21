@@ -27,9 +27,13 @@ package dr.evomodel.tree;
 
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.continuous.AncestralTaxonInTree;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Xiang Ji
@@ -37,10 +41,67 @@ import java.util.List;
  */
 public class DuplicationTreeModel extends AncestralTraitTreeModel{
 
+    private final Map<Integer, Parameter> duplicationTimeRatioMap;
+
     public DuplicationTreeModel(String id,
                                 MutableTreeModel tree,
-                                List<AncestralTaxonInTree> duplications) {
+                                List<AncestralTaxonInTree> duplications,
+                                List<Parameter> duplicaitonTimeRatios) {
         super(id, tree, duplications);
+        this.duplicationTimeRatioMap = new HashMap<>();
+        for (int i = 0; i < duplications.size(); i++) {
+            duplicationTimeRatioMap.put(getCommonAncestor(tree, duplications.get(i).getTaxonList()).getNumber(), duplicaitonTimeRatios.get(i));
+            addVariable(duplicaitonTimeRatios.get(i));
+        }
+    }
+
+    private NodeRef getCommonAncestor(MutableTreeModel tree, TaxonList descendents) {
+        Set<String> leafNodes = new HashSet<>();
+
+        for (int i = 0; i < descendents.getTaxonCount(); i++) {
+            leafNodes.add(descendents.getTaxon(i).getId());
+        }
+
+        NodeRef mrca = TreeUtils.getCommonAncestorNode(tree, leafNodes);
+        return mrca;
+    }
+
+    public double getNodeHeight(NodeRef iNode) {
+        assert (iNode != null);
+
+        checkShadowTree();
+
+        double height;
+
+        ShadowNode node = (ShadowNode) iNode;
+        int originalNumber = node.getOriginalNumber();
+        if (originalNumber >= 0) {
+            height = treeModel.getNodeHeight(node.getOriginalNode());
+        } else {
+
+            final AncestralTaxonInTree ancestor = node.getAncestor();
+
+            if (node.isExternal()) {
+                height = getNodeHeight(node.getParent());
+            } else {
+                final double timeRatio = duplicationTimeRatioMap.get(getInternalChildNode(node).getOriginalNode().getNumber()).getParameterValue(0);
+                height = treeModel.getNodeHeight(treeModel.getParent(getInternalChildNode(node).getOriginalNode())) * timeRatio +
+                        treeModel.getNodeHeight(getInternalChildNode(node).getOriginalNode()) * (1.0 - timeRatio);
+            }
+        }
+        return height;
+    }
+
+    private ShadowNode getInternalChildNode(ShadowNode node) {
+        if (node.getChild0().isExternal()) {
+            return node.getChild1();
+        } else {
+            return node.getChild0();
+        }
+    }
+
+    protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
+        fireModelChanged(new TreeChangedEvent.WholeTree());
     }
 
     protected ShadowNode buildRecursivelyShadowTree(NodeRef originalNode,

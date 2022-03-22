@@ -208,7 +208,8 @@ public class BASTATreeMoveTester {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }
 
-        System.out.println("Structured coalescent lnL = " + structured.getLogLikelihood() + "\n");
+        System.out.println("Check structured coalescent lnL = " + structured.getLogLikelihood() + "\n");
+
 
 
         //perform scale operator on a different node height
@@ -233,7 +234,7 @@ public class BASTATreeMoveTester {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }
 
-        System.out.println("Structured coalescent lnL = " + structured.getLogLikelihood() + "\n");
+        System.out.println("Check structured coalescent lnL = " + structured.getLogLikelihood() + "\n");
 
     }
 

@@ -130,12 +130,27 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     public boolean isCoalescentOnly() {
         return true;
     }
-    // Interval Node mapping
 
+    // Interval Node mapping
 
     @Override
     /**
-     * Returns the interval numbers for which intervals the node is in (first and last interval)
+     *
+     * @param nodeNumber the node number
+     * @return int[] of interval indices for which the node is a member.
+     *
+     * If the node is the most recent tip or root it is only
+     * present in one interval and so the array only has one entry. But there might be better ways to communicate that fact.
+     *
+     * In this interval implementation there is always 1 more node than interval.
+     * The 0th node is the start of the 0th interval. The index 1 node ends the index 0 interval and begins the index 1
+     * interval.
+     * The last node (the root) ends the last interval.
+     *
+     *
+     * Nodes:           4 ------- 3 ------- 2 ------- 1 ------- 0
+     * Intervals:            3         2         1         0
+     *IntervalsForNode: [3]     [2,3]     [1,2]     [0,1]       [0]
      */
     public int[] getIntervalsForNode(int nodeNumber) {
         if(!intervalsKnown){
@@ -143,9 +158,8 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
         }
         int first=-1;
         int second=-1;
-        // order would be interval that ends with this node if it was used to get the interval
 
-        int order = this.events.getNodePosition(nodeNumber);
+        int order = this.events.getNodePosition(nodeNumber); // the index of the node when sorted by height.
         if(order>0){
             first = order-1; // the interval that ends in this node
             if(order<this.intervalCount){
@@ -155,7 +169,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
             first=0;
         }
         int[] intervals;
-        if(second==-1){
+        if(second==-1){ // this true if order ==0 or if order>0 && order == interval count (this is the last node)
             intervals=new int[1];
             intervals[0]=first;
         }else{
@@ -169,7 +183,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
 
     @Override
     /**
-     *
+     * Returns an array of the first and last node in an interval.
      */
     //TODO figure out why only an array of length 2 is being returned
     public int[] getNodeNumbersForInterval(int i) {

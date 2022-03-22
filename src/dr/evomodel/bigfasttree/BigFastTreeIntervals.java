@@ -349,7 +349,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
                 //System.err.println("Another tree event has occured (possibly a trait change).");
             }
 
-            fireModelChanged();
+            fireModelChanged(object);
         }
     }
 

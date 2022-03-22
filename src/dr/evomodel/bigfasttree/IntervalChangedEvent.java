@@ -9,6 +9,7 @@ public interface IntervalChangedEvent {
 
     class FirstAffectedInterval implements IntervalChangedEvent {
 
+        //TODO expand this to first and last intervals, to minimize redoing the number of matrix exponentiations?
         private final int interval;
 
         public FirstAffectedInterval(int interval) {

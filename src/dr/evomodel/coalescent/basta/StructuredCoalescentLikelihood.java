@@ -214,7 +214,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
         }
 
         logLikelihood = traverseTree(treeModel, treeModel.getRoot(), patternList);
-        redrawAncestralStates();
+//        redrawAncestralStates();
 
         return logLikelihood;
     }

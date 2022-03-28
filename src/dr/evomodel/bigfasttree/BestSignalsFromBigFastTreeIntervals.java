@@ -4,6 +4,7 @@ import dr.evomodel.tree.TreeModel;
 
 /**
  * @author Marc A. Suchard
+ * @author Guy Baele
  */
 public class BestSignalsFromBigFastTreeIntervals extends BigFastTreeIntervals {
 
@@ -24,28 +25,47 @@ public class BestSignalsFromBigFastTreeIntervals extends BigFastTreeIntervals {
 
         boolean changed = !intervalsKnown;
 
-        if (!intervalsKnown) {
+        if (!intervalsKnown && (originalEvents != null)) {
             originalEvents.copyEvents(events);
         }
 
         super.calculateIntervals();
 
-        if (changed) {
+        if (changed && (originalEvents != null)) {
             // Find first affected interval
-            int firstEvent = compareEvents(originalEvents, events);
+            int firstEvent = findFirstEvent(originalEvents, events);
             if (firstEvent < events.size()) {
                 fireModelChanged(new IntervalChangedEvent.FirstAffectedInterval(firstEvent - 1));
             }
+            //TODO consider using the code below to return range of intervals that are changed
+            /*int[] changedEvents = findChangedEvents(originalEvents, events);
+            if (changedEvents[0] < events.size() && changedEvents[1] < events.size()) {
+                fireModelChanged(new IntervalChangedEvent.AffectedIntervals(changedEvents));
+            }*/
         }
     }
 
-    private int compareEvents(Events lhs, Events rhs) {
-
+    private int findFirstEvent(Events lhs, Events rhs) {
         int i = 0;
         for (; i < lhs.size(); ++i) {
             if (lhs.getNode(i) != rhs.getNode(i) || lhs.getInterval(i) != rhs.getInterval(i)) break;
         }
-
         return i;
+    }
+
+    private int[] findChangedEvents(Events lhs, Events rhs) {
+        int[] changes = new int[2];
+        changes[0] = -1;
+        changes[1] = -1;
+        for (int i = 0; i < lhs.size(); ++i) {
+            if (lhs.getNode(i) != rhs.getNode(i) || lhs.getInterval(i) != rhs.getInterval(i)) {
+                if (changes[0] == -1) {
+                    changes[0] = i;
+                } else {
+                    changes[1] = i;
+                }
+            }
+        }
+        return changes;
     }
 }

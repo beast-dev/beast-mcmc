@@ -385,6 +385,16 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         public int preconditioningMemory() {
             return preconditioningOptions.preconditioningMemory();
         }
+
+        @Override
+        public Parameter preconditioningEigenLowerBound() {
+            throw new RuntimeException("Not yet implemented.");
+        }
+
+        @Override
+        public Parameter preconditioningEigenUpperBound() {
+            throw new RuntimeException("Not yet implemented.");
+        }
     }
 
     public static class NumericInstabilityException extends Exception {

@@ -26,14 +26,13 @@
 package dr.evomodel.tree;
 
 import dr.evolution.tree.*;
-import dr.evomodel.branchratemodel.CartesianNodeMap;
 import dr.evomodel.branchratemodel.NodeRateMap;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
-import java.util.function.*;
+import java.util.function.DoubleBinaryOperator;
 
 /**
  * This class maintains a parameter of length equal to the number of nodes in the tree.
@@ -179,7 +178,7 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
 
         assert (!tree.isRoot(node) && !includeRoot) : "root node doesn't have a parameter value!";
 
-        assert tree.getRoot().getNumber() == rootNodeNumber.getValue(0).intValue() :
+        assert !includeRoot || tree.getRoot().getNumber() == rootNodeNumber.getValue(0).intValue() :
                 "INTERNAL ERROR! node with number " + rootNodeNumber + " should be the root node.";
 
         int nodeNumber = node.getNumber();

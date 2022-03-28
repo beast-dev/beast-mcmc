@@ -26,6 +26,7 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
@@ -52,7 +53,8 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     private List<Epoch> epochs = new ArrayList<Epoch>();
 
     private boolean ratiosKnown = false;
-    private boolean epochKnown = false;
+    protected boolean epochKnown = false;
+    protected boolean heightsKnown = true;
 
     public NodeHeightToRatiosTransformDelegate(TreeModel treeModel,
                   Parameter nodeHeights,
@@ -95,7 +97,8 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         ratios.restoreParameterValues();
     }
 
-    private void constructEpochs() {
+    protected void constructEpochs() {
+        assert(heightsKnown);
         nodeEpochMap.clear();
         epochs.clear();
 
@@ -162,16 +165,24 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     }
 
     public double[] setMaskByHeightDifference(double threshold) {
+
         double[] tooSmall = new double[ratios.getDimension()];
-        for (int i = tree.getExternalNodeCount(); i < tree.getNodeCount(); i++) {
-            NodeRef node = tree.getNode(i);
-            if (!tree.isRoot(node)) {
-                final double distance = tree.getNodeHeight(node) - nodeEpochMap.get(node.getNumber()).getAnchorTipHeight();
-                if (distance < threshold) {
-                    tooSmall[i - tree.getExternalNodeCount()] = 0.0;
-                } else {
-                    tooSmall[i - tree.getExternalNodeCount()] = 1.0;
-                }
+
+        if (!epochKnown) {
+            constructEpochs();
+        }
+
+        for (Epoch epoch : epochs) {
+            for (int nodeNumber : epoch.getInternalNodes()) {
+
+                NodeRef node = tree.getNode(nodeNumber);
+
+                final int ratioNum = getRatiosIndex(node);
+
+                final double distance = getNodePartial(node);
+
+                tooSmall[ratioNum] = distance < threshold ? 0.0 : 1.0;
+
             }
         }
         return tooSmall;
@@ -191,6 +202,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     @Override
     public void setNodeHeights(double[] nodeHeights) {
         super.setNodeHeights(nodeHeights);
+        heightsKnown = true;
         ratiosKnown = false;
     }
 
@@ -203,12 +215,13 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     }
 
     protected void updateRatios() {
+        assert(heightsKnown);
         if (!ratiosKnown) {
             if (!epochKnown) {
                 constructEpochs();
             }
             for (Epoch epoch : epochs) {
-                double previousNodeHeight = tree.getNodeHeight(epoch.getConnectingNode());
+                double previousNodeHeight = tree.getNodeHeight(tree.getNode(epoch.getConnectingNodeNumber()));
                 final double anchorNodeHeight = epoch.getAnchorTipHeight();
                 for (int nodeNumber : epoch.getInternalNodes()) {
 
@@ -235,22 +248,48 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     }
 
     protected void updateNodeHeights() {
-        preOrderTraversal.updateAllNodes();
-        preOrderTraversal.dispatchTreeTraversalCollectBranchAndNodeOperations();
-        final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = preOrderTraversal.getNodeOperations();
-        for (ProcessOnTreeDelegate.NodeOperation op : nodeOperations) {
-            NodeRef node = tree.getNode(op.getLeftChild());
-            if (!tree.isRoot(node) && !tree.isExternal(node)) {
-                Epoch epoch = nodeEpochMap.get(node.getNumber());
-                final NodeRef parentNode = tree.getParent(node);
-
-                final double ratio = ratios.getParameterValue(getRatiosIndex(node));
-                final double nodeHeight = ratio * (tree.getNodeHeight(parentNode) - epoch.getAnchorTipHeight()) + epoch.getAnchorTipHeight();
-
-                nodeHeights.setParameterValueQuietly(getNodeHeightIndex(node), nodeHeight);
-            }
+        if (!epochKnown) {
+            constructEpochs();
         }
-        tree.pushTreeChangedEvent(TreeChangedEvent.create());
+//        preOrderTraversal.updateAllNodes();
+//        preOrderTraversal.dispatchTreeTraversalCollectBranchAndNodeOperations();
+//        final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = preOrderTraversal.getNodeOperations();
+//        for (ProcessOnTreeDelegate.NodeOperation op : nodeOperations) {
+//            NodeRef node = tree.getNode(op.getLeftChild());
+//            if (!tree.isRoot(node) && !tree.isExternal(node)) {
+//                Epoch epoch = nodeEpochMap.get(node.getNumber());
+//                final NodeRef parentNode = tree.getParent(node);
+//
+//                final double ratio = ratios.getParameterValue(getRatiosIndex(node));
+//                final double nodeHeight = ratio * (tree.getNodeHeight(parentNode) - epoch.getAnchorTipHeight()) + epoch.getAnchorTipHeight();
+//
+//                nodeHeights.setParameterValueQuietly(getNodeHeightIndex(node), nodeHeight);
+//            }
+//        }
+        if (!heightsKnown) {
+            preOrderUpdateNodeHeights(tree, tree.getRoot(), null);
+            tree.pushTreeChangedEvent(TreeChangedEvent.create());
+            heightsKnown = true;
+        }
+    }
+
+    private void preOrderUpdateNodeHeights(final Tree tree, final NodeRef node, final NodeRef parent) {
+
+        if (parent != null && (!tree.isExternal(node))) {
+            Epoch epoch = nodeEpochMap.get(node.getNumber());
+            final double ratio = ratios.getParameterValue(getRatiosIndex(node));
+            final double nodeHeight = ratio * (tree.getNodeHeight(parent) - epoch.getAnchorTipHeight()) + epoch.getAnchorTipHeight();
+
+            nodeHeights.setParameterValueQuietly(getNodeHeightIndex(node), nodeHeight);
+        }
+
+        if (!tree.isExternal(node)) {
+            final NodeRef child1 = tree.getChild(node, 0);
+            final NodeRef child2 = tree.getChild(node, 1);
+
+            preOrderUpdateNodeHeights(tree, child1, node);
+            preOrderUpdateNodeHeights(tree, child2, node);
+        }
     }
 
     protected int getNodeHeightIndex(NodeRef node) {
@@ -277,7 +316,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == ratios) {
-            updateNodeHeights();
+            heightsKnown = false;
         } else if (variable == nodeHeights) {
             ratiosKnown = false;
         }
@@ -293,6 +332,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     @Override
     double[] inverse(double[] values) {
         setRatios(values);
+        heightsKnown = false;
         updateNodeHeights();
         return getNodeHeights().getParameterValues();
     }
@@ -409,7 +449,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         private final int anchorTipNodeNumber;
         private List<Integer> internalNodes = new ArrayList<Integer>();
         private Epoch lastEpoch;
-        private NodeRef connectingNode;
+        private int connectingNodeNumber;
 
         private Epoch(NodeRef anchorTipNode) {
             this.anchorTipNodeNumber = anchorTipNode.getNumber();
@@ -422,7 +462,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
 
         public void endEpoch(NodeRef node, Epoch lastEpoch) {
             this.lastEpoch = lastEpoch;
-            this.connectingNode = node;
+            this.connectingNodeNumber = node.getNumber();
         }
 
         public void addInternalNode(NodeRef node) {
@@ -433,8 +473,8 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
             return internalNodes;
         }
 
-        public NodeRef getConnectingNode() {
-            return connectingNode;
+        public int getConnectingNodeNumber() {
+            return connectingNodeNumber;
         }
 
         @Override

@@ -1,7 +1,7 @@
 /*
  * BeastMain.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -289,6 +289,12 @@ public class BeastMain {
             ex.printStackTrace(System.err);
             System.err.flush();
             throw new RuntimeException("Terminate");
+        }
+
+        try {
+            dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.releaseAllBeagleInstances();
+        } catch (Throwable e) {
+           throw new RuntimeException("Terminate");
         }
     }
 

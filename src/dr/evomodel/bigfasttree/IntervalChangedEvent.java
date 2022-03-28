@@ -2,23 +2,58 @@ package dr.evomodel.bigfasttree;
 
 /**
  * @author Marc A. Suchard
+ * @author Guy Baele
  */
 public interface IntervalChangedEvent {
 
-    int getInterval();
+    int getFirstInterval();
+    int getLastInterval();
 
     class FirstAffectedInterval implements IntervalChangedEvent {
 
-        //TODO expand this to first and last intervals, to minimize redoing the number of matrix exponentiations?
-        private final int interval;
+        private final int firstInterval;
 
         public FirstAffectedInterval(int interval) {
-            this.interval = interval;
+            this.firstInterval = interval;
         }
 
         @Override
-        public int getInterval() {
-            return interval;
+        public int getFirstInterval() {
+            return firstInterval;
         }
+
+        @Override
+        public int getLastInterval() {
+            throw new RuntimeException("");
+        }
+
     }
+
+    class AffectedIntervals implements IntervalChangedEvent {
+
+        private final int firstInterval;
+        private final int lastInterval;
+
+        public AffectedIntervals(int firstInterval, int lastInterval) {
+            this.firstInterval = firstInterval;
+            this.lastInterval = lastInterval;
+        }
+
+        public AffectedIntervals(int[] intervals) {
+            this.firstInterval = intervals[0];
+            this.lastInterval = intervals[1];
+        }
+
+        @Override
+        public int getFirstInterval() {
+            return firstInterval;
+        }
+
+        @Override
+        public int getLastInterval() {
+            return lastInterval;
+        }
+
+    }
+
 }

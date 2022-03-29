@@ -96,6 +96,10 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
             stride = maximumSize;
         }
 
+        public Set<NodeRef> copy() {
+            return new HashSet<>(activeSet);
+        }
+
         private void test(NodeRef node) {
             if (!activeSet.contains(node)) {
                 throw new RuntimeException("Not in active set");
@@ -243,6 +247,8 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
                     throw new RuntimeException("Not a coalescence at top");
                 }
             }
+
+            activeNodesForAllIntervals.add(activeNodesForInterval.copy());
         }
 
         if (false) {

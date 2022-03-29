@@ -11,7 +11,7 @@ public class BestSignalsFromBigFastTreeIntervals extends BigFastTreeIntervals {
     private final Events originalEvents;
 
     public BestSignalsFromBigFastTreeIntervals(TreeModel tree) {
-        super(tree);
+        super("signalsFromBigFastIntervals", tree);
         originalEvents = new Events(tree.getNodeCount());
     }
 
@@ -33,15 +33,17 @@ public class BestSignalsFromBigFastTreeIntervals extends BigFastTreeIntervals {
 
         if (changed && (originalEvents != null)) {
             // Find first affected interval
-            int firstEvent = findFirstEvent(originalEvents, events);
+            /*int firstEvent = findFirstEvent(originalEvents, events);
             if (firstEvent < events.size()) {
                 fireModelChanged(new IntervalChangedEvent.FirstAffectedInterval(firstEvent - 1));
-            }
-            //TODO consider using the code below to return range of intervals that are changed
-            /*int[] changedEvents = findChangedEvents(originalEvents, events);
+            }*/
+
+            //using the code below to return range of intervals that are changed
+            //find first and last interval affected
+            int[] changedEvents = findChangedEvents(originalEvents, events);
             if (changedEvents[0] < events.size() && changedEvents[1] < events.size()) {
                 fireModelChanged(new IntervalChangedEvent.AffectedIntervals(changedEvents));
-            }*/
+            }
         }
     }
 
@@ -60,9 +62,9 @@ public class BestSignalsFromBigFastTreeIntervals extends BigFastTreeIntervals {
         for (int i = 0; i < lhs.size(); ++i) {
             if (lhs.getNode(i) != rhs.getNode(i) || lhs.getInterval(i) != rhs.getInterval(i)) {
                 if (changes[0] == -1) {
-                    changes[0] = i;
+                    changes[0] = i-1;
                 } else {
-                    changes[1] = i;
+                    changes[1] = i-1;
                 }
             }
         }

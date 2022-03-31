@@ -207,7 +207,7 @@ public class FasterStructuredCoalescentLikelihood extends AbstractModelLikelihoo
                     double densityTwo = 0.0;
                     for (int j = 0; j < demes; j++) {
                         densityOne += (((lineageStartCount[j]*lineageStartCount[j])-lineageStartCountSquare[j])/(2.0*popSizes.getParameterValue(j)));
-                        densityTwo += (((lineageEndCount[j]*lineageEndCount[j])-lineageEndCountSquare[j])/(2.0*popSizes.getParameterValue(j)));
+                        densityOne += (((lineageEndCount[j]*lineageEndCount[j])-lineageEndCountSquare[j])/(2.0*popSizes.getParameterValue(j)));
 
                         //System.out.println("lineageStartCount[" + j + "] = " + lineageStartCount[j]);
                         //System.out.println("lineageStartCountSquare[" + j + "] = " + lineageStartCountSquare[j]);
@@ -223,11 +223,12 @@ public class FasterStructuredCoalescentLikelihood extends AbstractModelLikelihoo
                 if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
                     //System.out.println("coalescent contribution");
                     double contribution = 0.0;
-                    for (int j = 0; j < demes; j++) {
-                        contribution += (coalescentLeftProbs[i][j]*coalescentRightProbs[i][j])/ popSizes.getParameterValue(j);
-                        //System.out.println("coalescentLeftProbs[i][j] = " + coalescentLeftProbs[i][j]);
-                        //System.out.println("coalescentRightProbs[i][j] = " + coalescentRightProbs[i][j]);
-                    }
+//                    for (int j = 0; j < demes; j++) {
+//                        contribution += (coalescentLeftProbs[i][j]*coalescentRightProbs[i][j])/ popSizes.getParameterValue(j);
+//                        //System.out.println("coalescentLeftProbs[i][j] = " + coalescentLeftProbs[i][j]);
+//                        //System.out.println("coalescentRightProbs[i][j] = " + coalescentRightProbs[i][j]);
+//                    }
+                    contribution = coalescentLeftProbs[i][0]; // Use cached value
                     logL += Math.log(contribution);
                     //System.out.println("logL = " + logL);
                 } else {
@@ -267,8 +268,6 @@ public class FasterStructuredCoalescentLikelihood extends AbstractModelLikelihoo
             }
         }
     }
-
-
 
     private void handleCoalescense(NodeRef node, int offset, int i) {
                 //compute end probabilities of sampling interval
@@ -312,9 +311,11 @@ public class FasterStructuredCoalescentLikelihood extends AbstractModelLikelihoo
                     temp[k] = (activeLineages[leftOffset+k]*activeLineages[rightOffset+k])/popSizes.getParameterValue(k);
                     sum += temp[k];
                 }
+                this.coalescentLeftProbs[i][0] = sum; // Cache this value directly, instead of recomputing later
+
                 //store the resulting coalescent probability density
                 for (int k = 0; k < demes; k++) {
-                    this.activeLineages[offset+k] = temp[k]/sum;
+                    this.activeLineages[offset+k] = temp[k] / sum;
                 }
 
                 //compute Sd for the second interval half
@@ -330,10 +331,10 @@ public class FasterStructuredCoalescentLikelihood extends AbstractModelLikelihoo
 
                 //TODO merge into one of the previous loops over k?
                 //this code mostly to keep the calculateLogLikelihood function as clean as possible
-                for (int k = 0; k < demes; k++) {
-                    this.coalescentLeftProbs[i][k] = activeLineages[leftChild.getNumber()*demes+k];
-                    this.coalescentRightProbs[i][k] = activeLineages[rightChild.getNumber()*demes+k];
-                }
+//                for (int k = 0; k < demes; k++) {
+//                    this.coalescentLeftProbs[i][k] = activeLineages[leftChild.getNumber()*demes+k];
+//                    this.coalescentRightProbs[i][k] = activeLineages[rightChild.getNumber()*demes+k];
+//                }
 
                 doShit(node, leftChild, rightChild);
 //
@@ -394,7 +395,7 @@ public class FasterStructuredCoalescentLikelihood extends AbstractModelLikelihoo
         for (int i = 0; i < intervalCount; i++) {
 
             //System.out.println("interval type: " + intervals.getIntervalType(i));
-            
+
             if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
 
                 handleCoalescense(node, offset, i);

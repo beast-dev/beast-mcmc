@@ -51,6 +51,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
     public static final String BSSVS_SCALAR = "bssvsScalar";
     public static final String CHECK_CONDITIONING = "checkConditioning";
     public static final String NORMALIZED = "normalized";
+    public static final String COMPUTE_STATIONARY = "computeStationary";
 
     public static final int maxRandomizationTries = 100;
 
@@ -72,9 +73,11 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
         if (xo.hasChildNamed(FREQUENCIES)) {
             cxo = xo.getChild(FREQUENCIES);
             freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
-        } else if (xo.hasChildNamed(ROOT_FREQUENCIES)){
+        } else if (xo.hasChildNamed(ROOT_FREQUENCIES)) {
             cxo = xo.getChild(ROOT_FREQUENCIES);
             freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
+        } else if (!xo.getAttribute(COMPUTE_STATIONARY, false)) {
+            throw new XMLParseException("No frequency model found in " + getParserName());
         }
 //        FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 //        DataType dataType = freqModel.getDataType();
@@ -215,5 +218,6 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(BSSVS_SCALAR, true),
             AttributeRule.newBooleanRule(CHECK_CONDITIONING, true),
             AttributeRule.newBooleanRule(NORMALIZED, true),
+            AttributeRule.newBooleanRule(COMPUTE_STATIONARY, true),
     };
 }

@@ -50,6 +50,7 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
     public static final String FREQUENCIES = "frequencies";
     public static final String INDICATOR = "rateIndicator";
     public static final String NORMALIZED = "normalized";
+    public static final String COMPUTE_STATIONARY = "computeStationary";
 
     public String getParserName() {
         return GENERAL_SUBSTITUTION_MODEL;
@@ -63,6 +64,8 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
         if (xo.hasChildNamed(FREQUENCIES)) {
             XMLObject cxo = xo.getChild(FREQUENCIES);
             freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
+        } else if (!xo.getAttribute(COMPUTE_STATIONARY, false)) {
+            throw new XMLParseException("No frequency model found in " + getParserName());
         }
 
         DataType dataType = DataTypeUtils.getDataType(xo);
@@ -242,5 +245,6 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
                     }, true),
             AttributeRule.newBooleanRule(ComplexSubstitutionModelParser.RANDOMIZE,true),
             AttributeRule.newBooleanRule(NORMALIZED, true),
+            AttributeRule.newBooleanRule(COMPUTE_STATIONARY, true),
     };
 }

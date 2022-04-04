@@ -54,10 +54,13 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
         super(name, dataType, freqModel, parameter, -1);
         probability = new double[stateCount * stateCount];
         
-        stationaryDistribution = new double[stateCount];
-        storedStationaryDistribution = new double[stateCount];
-        stationaryDistributionKnown = false;
-        storedStationaryDistributionKnown = false;
+        if (freqModel == null) {
+            computeStationary = true;
+            stationaryDistribution = new double[stateCount];
+            storedStationaryDistribution = new double[stateCount];
+            stationaryDistributionKnown = false;
+            storedStationaryDistributionKnown = false;
+        }
     }
 
     @Override
@@ -111,7 +114,11 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     }
     
     protected double[] getPi() {
-        return getFrequencies();
+        if (computeStationary) {
+            return getFrequencies();
+        } else {
+            return freqModel.getFrequencies();
+        }
     }
     
     public double[] getFrequencies() {
@@ -226,6 +233,7 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
                 if (thisRate < 0.0) thisRate = 0.0;
 //                matrix[i][j] = thisRate * pi[j];
                 matrix[i][j] = thisRate;
+                if (!computeStationary) matrix[i][j] *= pi[j];
             }
         }
         // Copy lower triangle in column-order form (transposed)
@@ -235,6 +243,7 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
                 if (thisRate < 0.0) thisRate = 0.0;
 //                matrix[i][j] = thisRate * pi[j];
                 matrix[i][j] = thisRate;
+                if (!computeStationary) matrix[i][j] *= pi[j];
             }
         }
     }
@@ -269,17 +278,21 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     }
     
     protected void storeState() {
-        System.arraycopy(stationaryDistribution, 0, storedStationaryDistribution, 0, stateCount);
-        storedStationaryDistributionKnown = stationaryDistributionKnown;
-        
+        if (computeStationary) {
+            System.arraycopy(stationaryDistribution, 0, storedStationaryDistribution, 0, stateCount);
+            storedStationaryDistributionKnown = stationaryDistributionKnown;
+        }
+
         super.storeState();
     }
     
     protected void restoreState() {
-        double[] tmp = stationaryDistribution;
-        stationaryDistribution = storedStationaryDistribution;
-        storedStationaryDistribution = tmp;
-        stationaryDistributionKnown = storedStationaryDistributionKnown;
+        if (computeStationary) {
+            double[] tmp = stationaryDistribution;
+            stationaryDistribution = storedStationaryDistribution;
+            storedStationaryDistribution = tmp;
+            stationaryDistributionKnown = storedStationaryDistributionKnown;
+        }
 
         super.restoreState();
     }
@@ -381,6 +394,7 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     }
 
     private boolean doNormalization = true;
+    private boolean computeStationary = false;
 
     private double[] stationaryDistribution;
     private double[] storedStationaryDistribution;

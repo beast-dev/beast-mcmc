@@ -25,6 +25,8 @@ public interface TreeChangedEvent {
 
     boolean isHeightChanged();
 
+    boolean isOnlyHeightChanged();
+
     class WholeTree implements TreeChangedEvent {
 
         @Override public int getIndex() { return -1; }
@@ -42,6 +44,8 @@ public interface TreeChangedEvent {
         @Override public boolean isNodeParameterChanged() { return false; }
 
         @Override public boolean isHeightChanged() { return false; }
+
+        @Override public boolean isOnlyHeightChanged() { return false; }
     }
 
     class NodeOnTree implements TreeChangedEvent {
@@ -75,6 +79,8 @@ public interface TreeChangedEvent {
 
         @Override
         public boolean isHeightChanged() { return false; }
+
+        @Override public boolean isOnlyHeightChanged() { return false; }
     }
 
     static TreeChangedEvent create() {
@@ -94,6 +100,8 @@ public interface TreeChangedEvent {
             @Override public boolean isNodeParameterChanged() { return false; }
 
             @Override public boolean isHeightChanged() { return false; }
+
+            @Override public boolean isOnlyHeightChanged() { return false; }
         };
     }
 
@@ -114,6 +122,8 @@ public interface TreeChangedEvent {
             @Override public boolean isNodeParameterChanged() { return false; }
 
             @Override public boolean isHeightChanged() { return isHeightChanged; }
+
+            @Override public boolean isOnlyHeightChanged() { return false; }
         };
     }
 
@@ -135,6 +145,8 @@ public interface TreeChangedEvent {
             @Override public boolean isNodeParameterChanged() { return false; }
 
             @Override public boolean isHeightChanged() { return isHeightChanged; }
+
+            @Override public boolean isOnlyHeightChanged() { return false; }
         };
     }
 
@@ -155,6 +167,8 @@ public interface TreeChangedEvent {
             @Override public boolean isNodeParameterChanged() { return true; }
 
             @Override public boolean isHeightChanged() { return isHeightChanged; }
+
+            @Override public boolean isOnlyHeightChanged() { return false; }
         };
     }
 
@@ -175,6 +189,8 @@ public interface TreeChangedEvent {
             @Override public boolean isNodeParameterChanged() { return true; }
 
             @Override public boolean isHeightChanged() { return isHeightChanged; }
+
+            @Override public boolean isOnlyHeightChanged() { return isHeightChanged; }
         };
     }
 }

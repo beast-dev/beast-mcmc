@@ -39,7 +39,7 @@ import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodPar
  */
 
 public abstract class BayesianBridgeDistributionModel extends AbstractModel implements
-        ParametricMultivariateDistributionModel,
+        BayesianBridgeStatisticsProvider, ParametricMultivariateDistributionModel,
         GradientProvider, HessianProvider {
     
     BayesianBridgeDistributionModel(Parameter globalScale,

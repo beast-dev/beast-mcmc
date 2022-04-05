@@ -40,6 +40,7 @@ import dr.inference.loggers.Loggable;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -153,6 +154,10 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
         double[] differentials = (double[]) treeTraitProvider.getTrait(tree, null);
         double[] generator = new double[differentials.length];
 
+        if (DEBUG_CROSS_PRODUCTS) {
+            savedDifferentials = differentials.clone();
+        }
+
         substitutionModel.getInfinitesimalMatrix(generator);
         double[] pi = substitutionModel.getFrequencyModel().getFrequencies();
 
@@ -241,6 +246,14 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
     public String getReport() {
 
         StringBuilder sb = new StringBuilder();
+
+        String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, null);
+        sb.append(message);
+
+        if (DEBUG_CROSS_PRODUCTS) {
+            sb.append("\n\tdifferentials: ").append(new WrappedVector.Raw(savedDifferentials, 0, savedDifferentials.length));
+        }
+
         if (COUNT_TOTAL_OPERATIONS) {
             sb.append("\n\tgetCrossProductGradientCount = ").append(gradientCount);
             sb.append("\n\taverageGradientTime = ");
@@ -252,13 +265,14 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
             sb.append("\n");
         }
 
-        String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, null);
-        sb.append(message);
-
         return  sb.toString();
     }
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
+    private static final boolean DEBUG_CROSS_PRODUCTS = true;
+
+    private double[] savedDifferentials;
+
     private long gradientCount = 0;
     private long totalGradientTime = 0;
 

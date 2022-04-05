@@ -18,13 +18,12 @@ import java.util.function.DoubleBinaryOperator;
 
 // todo: match gradient -- numerical != 0?
 public class FixedReferenceRates extends AbstractBranchRateModel implements DifferentiableBranchRates {
-    public static final String FIXED_REFERENCE_RATES = "fixedReferenceRates";
-    public static final String FIXED_LENGTH = "fixedLength";
+    private static final String FIXED_REFERENCE_RATES = "fixedReferenceRates";
+    private static final String FIXED_LENGTH = "fixedLength";
 
     private final TreeModel treeModel;
     private final DifferentiableBranchRates differentiableBranchRateModel;
     private final Taxon referenceTaxon;
-    private final int fixedLength;
     //    private List<NodeRef> nodeList;
     private NodeRef oneNode; // node to be set to 1.0
     private boolean nodeKnown = false;
@@ -36,7 +35,6 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
         super(name);
         this.treeModel = treeModel;
         this.referenceTaxon = referenceTaxon;
-        this.fixedLength = fixedLength; //todo: add implementation for this optional parameter
         this.differentiableBranchRateModel = (branchRateModel instanceof DifferentiableBranchRates) ?
                 (DifferentiableBranchRates) branchRateModel : null;
 
@@ -79,7 +77,7 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
         }
     }
 
-    void updateNodeList(Tree tree, Taxon taxon) {
+    private void updateNodeList(Tree tree, Taxon taxon) {
         nodeKnown = true;
         int nodeNumber = tree.getTaxonIndex(taxon.getId());
         NodeRef node = tree.getNode(nodeNumber);
@@ -165,11 +163,6 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
     }
 
     @Override
-    public double getPriorRateAsIncrement(Tree tree) {
-        return 0;
-    }
-
-    @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == differentiableBranchRateModel) {
             fireModelChanged();
@@ -229,8 +222,7 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
 
             int fixedLength = xo.getAttribute(FIXED_LENGTH, 0);
 
-            FixedReferenceRates fixedReferenceRates = new FixedReferenceRates(FIXED_REFERENCE_RATES, tree, model, referenceTaxon, fixedLength);
-            return fixedReferenceRates;
+            return new FixedReferenceRates(FIXED_REFERENCE_RATES, tree, model, referenceTaxon, fixedLength);
         }
 
         //************************************************************************

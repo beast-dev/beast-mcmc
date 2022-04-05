@@ -47,14 +47,14 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
         if (hmcProvider instanceof SplitHamiltonianMonteCarloOperator) {
             updateRS();
-            if (splitHMCmultiplier.shouldGetMultiplier(getCount())){
+            if (splitHMCmultiplier.shouldGetMultiplier(getCount())) {
                 ((SplitHamiltonianMonteCarloOperator) hmcProvider).relativeScale = splitHMCmultiplier.getMultiplier();
             }
         }
 
         final double[] initialPosition = hmcProvider.getInitialPosition();
 
-        if(updatePreconditioning){ //todo: should preconditioning, use a schedular
+        if (updatePreconditioning) { //todo: should preconditioning, use a schedular
             hmcProvider.providerUpdatePreconditioning();
         }
 
@@ -75,8 +75,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         final WrappedVector initialMomentum = hmcProvider.drawMomentum();
 
         final double initialJointDensity = hmcProvider.getJointProbability(initialMomentum);
-
-        double logSliceU = Math.log(MathUtils.nextDouble()) + initialJointDensity;
+        double logSliceU = Math.log(getUniform()) + initialJointDensity;
 
         TreeState trajectoryTree = new TreeState(initialPosition, initialMomentum.getBuffer(),
                 hmcProvider.getGradientProvider().getGradientLogDensity(), 1, true);
@@ -107,7 +106,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
         double[] endPosition = null;
 
-        final double uniform1 = MathUtils.nextDouble();
+        final double uniform1 = getUniform();
         int direction = (uniform1 < 0.5) ? -1 : 1;
         TreeState nextTrajectoryTree = buildTree(
                 trajectoryTree.getPosition(direction), trajectoryTree.getMomentum(direction),
@@ -116,7 +115,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
         if (nextTrajectoryTree.flagContinue) {
 
-            final double uniform = MathUtils.nextDouble();
+            final double uniform = getUniform();
             final double acceptProb = (double) nextTrajectoryTree.numNodes / (double) trajectoryTree.numNodes;
             if (uniform < acceptProb) {
                 endPosition = nextTrajectoryTree.getSample();
@@ -279,6 +278,22 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         return result;
     }
 
+
+    private double getUniform() {
+        double tmp;
+        if (randomFlg) {
+            tmp = MathUtils.nextDouble();
+        } else {
+            if (count % 10 == 0) {
+                ++count;
+            }
+            tmp = count % 10 / 10.;
+            System.err.println(tmp);
+            ++count;
+        }
+        return tmp;
+    }
+
     private class TreeState {
 
         private TreeState(double[] position, double[] moment, double[] gradient,
@@ -340,7 +355,9 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
             this.gradient[getIndex(direction)] = gradient;
         }
 
-        private void setSample(double[] position) { setPosition(0, position); }
+        private void setSample(double[] position) {
+            setPosition(0, position);
+        }
 
         private int getIndex(int direction) { // valid directions: -1, 0, +1
             assert (direction >= -1 && direction <= 1);
@@ -363,7 +380,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         }
 
         private void updateSample(TreeState nextTree) {
-            double uniform = MathUtils.nextDouble();
+            double uniform = getUniform();
             if (nextTree.numNodes > 0
                     && uniform < ((double) nextTree.numNodes / (double) (numNodes + nextTree.numNodes))) {
                 setSample(nextTree.getSample());
@@ -381,37 +398,45 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         private int numAcceptProbStates;
     }
 
-    private void initializeNumEvents(){
+    private void initializeNumEvents() {
         numBaseCalls = 0;
         numBoundaryEvents = 0;
         numGradientEvents = 0;
     }
 
-    private void recordOneBaseCall(){
+    private void recordOneBaseCall() {
         numBaseCalls++;
     }
 
-    private void recordEvents(){
+    private void recordEvents() {
         numGradientEvents += hmcProvider.getNumGradientEvent();
         numBoundaryEvents += hmcProvider.getNumBoundaryEvent();
     }
 
     @Override
     public LogColumn[] getColumns() {
-        LogColumn[] columns = new LogColumn[3];
+        LogColumn[] columns = new LogColumn[4];
         columns[0] = new NumberColumn("base calls") {
             @Override
             public double getDoubleValue() {
                 return numBaseCalls;
             }
         };
-        columns[1] = new NumberColumn("gradient events") {
+        columns[1] = new NumberColumn("step size") {
+            @Override
+
+            public double getDoubleValue() {
+                if (stepSizeInformation != null) return stepSizeInformation.getStepSize();
+                else return 0;
+            }
+        };
+        columns[2] = new NumberColumn("gradient events") {
             @Override
             public double getDoubleValue() {
                 return numGradientEvents;
             }
         };
-        columns[2] = new NumberColumn("boundary events") {
+        columns[3] = new NumberColumn("boundary events") {
             @Override
             public double getDoubleValue() {
                 return numBoundaryEvents;
@@ -441,5 +466,9 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
     private final boolean updatePreconditioning = false;
     private final boolean printStepsize = false;
+
+
+    final private boolean randomFlg = true;
+    private int count;
 }
 

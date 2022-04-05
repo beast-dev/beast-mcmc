@@ -192,7 +192,6 @@ public class TreeTraitParserUtilities {
     public void jitter(Parameter trait, int dim, boolean[] missingIndicators, double[] window,
                        TaxonList taxonList,
                        boolean duplicates, boolean verbose) {
-
         int numTraits = trait.getDimension() / dim;
         boolean[] update = new boolean[numTraits];
         if (!duplicates) {

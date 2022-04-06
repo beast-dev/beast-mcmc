@@ -29,6 +29,7 @@ import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.matrixAlgebra.WrappedMatrix;
+import dr.xml.*;
 
 import static dr.math.matrixAlgebra.SymmetricMatrix.compoundCorrelationSymmetricMatrix;
 import static dr.math.matrixAlgebra.SymmetricMatrix.extractUpperTriangular;
@@ -152,6 +153,42 @@ public class CorrelationToCholesky extends Transform.MultivariateTransform {
     private int posStrict(int i, int j) {
         return i * (2 * dimVector - i - 1) / 2 + (j - i - 1);
     }
+
+
+    public static final AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
+        private static final String DIMENSION = "dimension";
+        private static final String CORRELATION_TO_CHOLESKY = "correlationToCholeskyTransform";
+
+
+        @Override
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+            int dim = xo.getIntegerAttribute(DIMENSION);
+            return new CorrelationToCholesky(dim);
+        }
+
+        @Override
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return new XMLSyntaxRule[]{
+                    AttributeRule.newIntegerRule(DIMENSION)
+            };
+        }
+
+        @Override
+        public String getParserDescription() {
+            return "transforms the off-diagonal elements of a correlation to the off-diagonal elements of its" +
+                    " Cholesky decomposition";
+        }
+
+        @Override
+        public Class getReturnType() {
+            return CorrelationToCholesky.class;
+        }
+
+        @Override
+        public String getParserName() {
+            return CORRELATION_TO_CHOLESKY;
+        }
+    };
 
 }
 

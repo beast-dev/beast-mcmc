@@ -469,8 +469,8 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                 Object[] currentJump = (Object[]) jumps[j];
                 currentJump[1] = getMergedState((String) currentJump[1]);
                 currentJump[2] = getMergedState((String) currentJump[2]);
-                return jumps;
             }
+            return jumps;
         }
         return null;
     }

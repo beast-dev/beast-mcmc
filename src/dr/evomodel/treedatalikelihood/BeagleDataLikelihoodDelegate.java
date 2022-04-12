@@ -35,10 +35,7 @@ import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -84,7 +81,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
 
-    private static int instanceCount = 0;
+    public static int instanceCount = 0;
     private static List<Integer> resourceOrder = null;
     private static List<Integer> preferredOrder = null;
     private static List<Integer> requiredOrder = null;
@@ -908,7 +905,15 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             // next step
             flip = false;
             underflowHandling = 0;
-            throw new LikelihoodUnderflowException();
+
+            if (USE_CACHED_EXCEPTION) {
+                if (cachedException == null) {
+                    cachedException = new LikelihoodUnderflowException();
+                }
+                throw cachedException;
+            } else {
+                throw new LikelihoodUnderflowException();
+            }
 
         } else {
 
@@ -947,6 +952,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         updateSiteModel = true;
         updateSubstitutionModel = true;
         updateRootFrequency = true;
+        fireModelChanged();
     }
 
     @Override
@@ -1085,6 +1091,25 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         return Collections.singletonList(CommonCitations.AYRES_2019_BEAGLE);
     }
 
+    private void releaseBeagle() throws Throwable {
+        if (beagle != null) {
+            beagle.finalize();
+        }
+    }
+
+    public static void releaseAllBeagleInstances() throws Throwable {
+        for (Likelihood likelihood : dr.inference.model.Likelihood.FULL_LIKELIHOOD_SET) {
+            if (likelihood instanceof TreeDataLikelihood) {
+                TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) likelihood;
+                DataLikelihoodDelegate likelihoodDelegate = treeDataLikelihood.getDataLikelihoodDelegate();
+                if (likelihoodDelegate instanceof BeagleDataLikelihoodDelegate) {
+                    BeagleDataLikelihoodDelegate delegate = (BeagleDataLikelihoodDelegate) likelihoodDelegate;
+                    delegate.releaseBeagle();
+                }
+            }
+        }
+    }
+
     // **************************************************************
     // INSTANCE VARIABLES
     // **************************************************************
@@ -1220,4 +1245,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * PreOrder related settings
      */
     private PreOrderSettings settings;
+
+    private static boolean USE_CACHED_EXCEPTION = true;
+    private LikelihoodUnderflowException cachedException = null; // new LikelihoodUnderflowException();
 }

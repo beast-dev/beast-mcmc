@@ -3,23 +3,35 @@ package dr.inference.operators.hmc;
 public class MinimumTravelInformation {
 
     final double time;
-    final int index;
+    final int[] index;
     final AbstractParticleOperator.Type type;
 
-    MinimumTravelInformation(double minTime, int minIndex, AbstractParticleOperator.Type type) {
+    MinimumTravelInformation(double minTime, int[] minIndex, AbstractParticleOperator.Type type) { //todo: merge multiple constructors
         this.time = minTime;
         this.index = minIndex;
         this.type = type;
     }
 
-    MinimumTravelInformation(double minTime, int minIndex) {
+    MinimumTravelInformation(double minTime, int[] minIndex) {
         this.time = minTime;
         this.index = minIndex;
         this.type = AbstractParticleOperator.Type.NONE;
     }
 
+    public MinimumTravelInformation(double minTime, int minIndex) {
+        this.time = minTime;
+        this.index = new int[]{minIndex};
+        this.type = AbstractParticleOperator.Type.NONE;
+    }
+
+    MinimumTravelInformation(double minTime, int minIndex, AbstractParticleOperator.Type type) {
+        this.time = minTime;
+        this.index = new int[]{minIndex};
+        this.type = type;
+    }
+
     @SuppressWarnings("unused")
-    public MinimumTravelInformation(double minTime, int minIndex, int ordinal) {
+    public MinimumTravelInformation(double minTime, int[] minIndex, int ordinal) {
         this(minTime, minIndex, AbstractParticleOperator.Type.castFromInt(ordinal));
     }
 

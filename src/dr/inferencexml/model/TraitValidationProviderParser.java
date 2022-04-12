@@ -4,13 +4,13 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
+import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CrossValidationProvider;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.TraitValidationProvider;
 import dr.xml.*;
-
-import java.util.List;
 
 /**
  * @author Gabriel Hassler
@@ -31,7 +31,6 @@ public class TraitValidationProviderParser extends AbstractXMLObjectParser {
     }
 
     public static TraitValidationProvider parseTraitValidationProvider(XMLObject xo) throws XMLParseException {
-        String trueValuesName = xo.getStringAttribute(TreeTraitParserUtilities.TRAIT_NAME);
         String inferredValuesName = xo.getStringAttribute(INFERRED_NAME);
 
         TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
@@ -40,6 +39,13 @@ public class TraitValidationProviderParser extends AbstractXMLObjectParser {
                 (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate();
 
         ContinuousTraitPartialsProvider dataModel = delegate.getDataModel();
+        final ModelExtensionProvider extensionProvider;
+        if (dataModel instanceof ModelExtensionProvider) {
+            extensionProvider = (ModelExtensionProvider) dataModel;
+        } else {
+            throw new XMLParseException("Tree likelihood delegate does must implement ModelExtensionProvider");
+        }
+
         Tree treeModel = treeLikelihood.getTree();
 
 
@@ -47,11 +53,11 @@ public class TraitValidationProviderParser extends AbstractXMLObjectParser {
 
 
         TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                utilities.parseTraitsFromTaxonAttributes(xo, trueValuesName,
+                utilities.parseTraitsFromTaxonAttributes(xo,
                         treeModel, true);
 
         Parameter trueParameter = returnValue.traitParameter;
-        List<Integer> trueMissing = returnValue.missingIndices;
+        boolean[] trueMissing = returnValue.getMissingIndicators();
         Parameter missingParameter = null;
         if (xo.hasChildNamed(MASK)) {
             missingParameter = (Parameter) xo.getElementFirstChild(MASK);
@@ -61,7 +67,7 @@ public class TraitValidationProviderParser extends AbstractXMLObjectParser {
         String id = xo.getId();
 
 
-        TraitValidationProvider provider = new TraitValidationProvider(trueParameter, dataModel, treeModel, id,
+        TraitValidationProvider provider = new TraitValidationProvider(trueParameter, extensionProvider, treeModel, id,
                 missingParameter, treeLikelihood, inferredValuesName, trueMissing);
 
         return provider;

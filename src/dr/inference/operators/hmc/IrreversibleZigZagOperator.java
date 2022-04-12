@@ -46,92 +46,57 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
     public IrreversibleZigZagOperator(GradientWrtParameterProvider gradientProvider,
                                       PrecisionMatrixVectorProductProvider multiplicationProvider,
                                       PrecisionColumnProvider columnProvider,
-                                      double weight, Options runtimeOptions, Parameter mask,
-                                      int threadCount) {
+                                      double weight, Options runtimeOptions, NativeCodeOptions nativeOptions,
+                                      boolean refreshVelocity, Parameter mask, Parameter categoryClass,
+                                      int threadCount, MassPreconditioner massPreconditioner,
+                                      MassPreconditionScheduler.Type preconditionSchedulerType) {
 
-        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, mask, threadCount);
+        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions,
+                refreshVelocity, mask, categoryClass, threadCount, massPreconditioner, preconditionSchedulerType);
     }
 
-    @Override
-    WrappedVector drawInitialMomentum() {
-        return new WrappedVector.Raw(null, 0, 0);
-    }
 
     @Override
     WrappedVector drawInitialVelocity(WrappedVector momentum) {
-        ReadableVector mass = preconditioning.mass;
+        if (!refreshVelocity && storedVelocity != null) {
+            return storedVelocity;
+        } else {
+            ReadableVector mass = preconditioning.mass;
 
-        double[] velocity = new double[mass.getDim()];
+            double[] velocity = new double[mass.getDim()];
 
-        for (int i = 0, len = mass.getDim(); i < len; ++i) {
-            velocity[i] = (MathUtils.nextDouble() > 0.5) ? 1.0 : -1.0;
+            for (int i = 0, len = mass.getDim(); i < len; ++i) {
+                velocity[i] = (MathUtils.nextDouble() > 0.5) ? 1.0 : -1.0;
+            }
+
+            if (mask != null) {
+                applyMask(velocity);
+            }
+            return new WrappedVector.Raw(velocity);
         }
-
-        if (mask != null) {
-            applyMask(velocity); // TODO Is this necessary?
-        }
-
-        return new WrappedVector.Raw(velocity);
     }
 
-    double integrateTrajectory(WrappedVector position) {
-
-        WrappedVector momentum = drawInitialMomentum();
-        WrappedVector velocity = drawInitialVelocity(momentum);
-        WrappedVector gradient = getInitialGradient();
-        WrappedVector action = getPrecisionProduct(velocity);
-
-        BounceState bounceState = new BounceState(drawTotalTravelTime());
-
-        int count = 0;
-
-        if (TIMING) {
-            timer.startTimer("integrateTrajectory");
-        }
-
-        while (bounceState.isTimeRemaining()) {
-
-            final MinimumTravelInformation firstBounce;
-
-            if (TIMING) {
-                timer.startTimer("getNext");
-            }
-
-            firstBounce = getNextBounce(position, velocity, action, gradient, momentum);
-
-            if (TIMING) {
-                timer.stopTimer("getNext");
-            }
-
-            if (CPP_NEXT_BOUNCE) {
-                MinimumTravelInformation test = testNative(position, velocity, action, gradient);
-                System.exit(-1);
-            }
-
-            bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);
-
-            ++count;
-        }
-
-        if (TIMING) {
-            timer.stopTimer("integrateTrajectory");
-        }
-
-        return 0.0;
+    @Override
+    void updatePositionAndMomentum(WrappedVector position,
+                                   WrappedVector velocity,
+                                   WrappedVector action,
+                                   WrappedVector gradient,
+                                   WrappedVector momentum,
+                                   double time) {
+        updatePosition(position.getBuffer(), velocity.getBuffer(), time);
     }
 
-    private MinimumTravelInformation testNative(WrappedVector position,
-                                                WrappedVector velocity,
-                                                WrappedVector action,
-                                                WrappedVector gradient) {
+    private MinimumTravelInformation getNextBounceNative(
+            WrappedVector position,
+            WrappedVector velocity,
+            WrappedVector action,
+            WrappedVector gradient) {
 
         if (TIMING) {
             timer.startTimer("getNextC++");
         }
 
-        final MinimumTravelInformation mti;
-
-        mti = nativeZigZag.getNextEventIrreversible(position.getBuffer(), velocity.getBuffer(),
+        final MinimumTravelInformation mti = nativeZigZag.getNextIrreversibleEvent(position.getBuffer(), velocity.getBuffer(),
                 action.getBuffer(), gradient.getBuffer());
 
         if (TIMING) {
@@ -141,25 +106,67 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         return mti;
     }
 
-    // TODO Same as in super-class?
-    private MinimumTravelInformation getNextBounce(WrappedVector position,
-                                                   WrappedVector velocity,
-                                                   WrappedVector action,
-                                                   WrappedVector gradient,
-                                                   WrappedVector momentum) {
+    private void testNative(MinimumTravelInformation firstBounce,
+                            WrappedVector position,
+                            WrappedVector velocity,
+                            WrappedVector action,
+                            WrappedVector gradient) {
+        if (TIMING) {
+            timer.startTimer("getNextC++");
+        }
 
-        return getNextBounce(0, position.getDim(),
-                position.getBuffer(), velocity.getBuffer(),
-                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
+        final MinimumTravelInformation mti;
 
+        mti = nativeZigZag.getNextIrreversibleEvent(position.getBuffer(), velocity.getBuffer(),
+                action.getBuffer(), gradient.getBuffer());
+
+        if (TIMING) {
+            timer.stopTimer("getNextC++");
+        }
+
+        if (!firstBounce.equals(mti)) {
+            System.err.println(mti + " ?= " + firstBounce + "\n");
+            System.exit(-1);
+        }
     }
 
-    private MinimumTravelInformation getNextBounce(final int begin, final int end,
-                                                   final double[] position,
-                                                   final double[] velocity,
-                                                   final double[] action,
-                                                   final double[] gradient,
-                                                   final double[] momentum) {
+    @SuppressWarnings("Duplicates")
+    @Override
+    MinimumTravelInformation getNextBounce(WrappedVector position,
+                                           WrappedVector velocity,
+                                           WrappedVector action,
+                                           WrappedVector gradient,
+                                           WrappedVector momentum) {
+
+        final MinimumTravelInformation firstBounce;
+
+        if (TIMING) {
+            timer.startTimer("getNext");
+        }
+
+        if (nativeCodeOptions.useNativeFindNextBounce) {
+            firstBounce = getNextBounceNative(position, velocity, action, gradient);
+        } else {
+            firstBounce = getNextBounceImpl(position.getBuffer(), velocity.getBuffer(), action.getBuffer(),
+                    gradient.getBuffer());
+        }
+
+        if (TIMING) {
+            timer.stopTimer("getNext");
+        }
+
+        if (nativeCodeOptions.testNativeFindNextBounce) {
+            testNative(firstBounce, position, velocity, action, gradient);
+        }
+
+        return firstBounce;
+    }
+
+    @SuppressWarnings("Duplicates")
+    private MinimumTravelInformation getNextBounceImpl(double[] p,
+                                                       double[] v,
+                                                       double[] a,
+                                                       double[] g) {
 
         double minimumTime = Double.POSITIVE_INFINITY;
         int index = -1;
@@ -168,17 +175,17 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
 
         if (NEW_WAY) {
 
-            double[] roots = getRoots(action, gradient);
+            double[] roots = getRoots(a, g);
             double[] rootsSorted = roots.clone();
             Arrays.sort(rootsSorted);
 
             double minBoundaryTime = Double.POSITIVE_INFINITY;
-            gradientTime = getSwitchTimeByMergedProcesses(action, gradient, velocity, roots, rootsSorted);
-            int gradientIndex = getEventDimension(velocity, gradient, action, gradientTime);
+            gradientTime = getSwitchTimeByMergedProcesses(a, g, v, roots, rootsSorted);
+            int gradientIndex = getEventDimension(v, g, a, gradientTime);
 
-            for (int i = 0; i < end; i++) {
+            for (int i = 0, end = p.length; i < end; i++) {
 
-                double boundaryTime = findBoundaryTime(i, position[i], velocity[i]);
+                double boundaryTime = findBinaryBoundaryTime(i, p[i], v[i]);
 
                 if (boundaryTime < minBoundaryTime) {
                     minBoundaryTime = boundaryTime;
@@ -193,24 +200,23 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
                 type = Type.GRADIENT;
             } else {
                 minimumTime = minBoundaryTime;
-                type = Type.BOUNDARY;
+                type = Type.BINARY_BOUNDARY;
             }
 
         } else {
-            for (int i = begin; i < end; ++i) {
 
-                double boundaryTime = findBoundaryTime(i, position[i], velocity[i]);
+            for (int i = 0, end = p.length; i < end; ++i) {
+
+                double boundaryTime = findBinaryBoundaryTime(i, p[i], v[i]);
 
                 if (boundaryTime < minimumTime) {
                     minimumTime = boundaryTime;
                     index = i;
-                    type = Type.BOUNDARY;
+                    type = Type.BINARY_BOUNDARY;
                 }
 
-
                 double T = MathUtils.nextExponential(1);
-                gradientTime = getSwitchTime(-velocity[i] * gradient[i], velocity[i] * action[i], T);
-
+                gradientTime = getSwitchTime(-v[i] * g[i], v[i] * a[i], T);
 
                 if (gradientTime < minimumTime) {
                     minimumTime = gradientTime;
@@ -235,9 +241,11 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         return roots;
     }
 
-    private double getSwitchTimeByMergedProcesses(double[] action, double[] gradient, double[] velocity, double[] roots, double[] rootsSorted) {
+    private double getSwitchTimeByMergedProcesses(double[] action, double[] gradient, double[] velocity,
+                                                  double[] roots, double[] rootsSorted) {
 
-        // for the linear piece wise line: y = bx + a, where a = -velocity * gradient (as gradient is negated), b = velocity * action
+        // for the linear piece wise line: y = bx + a, where a = -velocity * gradient (as gradient is negated), b =
+        // velocity * action
         // root = - a / b = gradient / action
         double T = MathUtils.nextExponential(1);
         double minFirstEvent = -1;
@@ -310,24 +318,26 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
                                                      double[] action,
                                                      double[] roots) {
 
-        double[] c0coeff = new double[2];
-        double[] c1coeff = new double[2];
+        double[] c0Coefficients = new double[2];
+        double[] c1Coefficients = new double[2];
 
         for (int i = 0; i < roots.length; i++) {
 
-            accumulateCoef(c0, velocity, gradient, action, roots, c0coeff, i);
-            accumulateCoef(c1, velocity, gradient, action, roots, c1coeff, i);
+            accumulateCoefficients(c0, velocity, gradient, action, roots, c0Coefficients, i);
+            accumulateCoefficients(c1, velocity, gradient, action, roots, c1Coefficients, i);
         }
 
-        return new PiecewiseLinearEndpoints(c0, c1, c0coeff[0] * c0 + c0coeff[1], c1coeff[0] * c1 + c1coeff[1],
-                c0coeff[0], c1coeff[0]);
+        return new PiecewiseLinearEndpoints(c0, c1,
+                c0Coefficients[0] * c0 + c0Coefficients[1],
+                c1Coefficients[0] * c1 + c1Coefficients[1],
+                c0Coefficients[0], c1Coefficients[0]);
     }
 
-    private void accumulateCoef(double c, double[] velocity, double[] gradient, double[] action, double[] roots,
-                                double[] coef, int i) {
+    private void accumulateCoefficients(double c, double[] velocity, double[] gradient, double[] action, double[] roots,
+                                        double[] coefficients, int i) {
         if ((roots[i] >= c && velocity[i] * action[i] <= 0) || (roots[i] <= c && velocity[i] * action[i] >= 0)) {
-            coef[0] += velocity[i] * action[i];
-            coef[1] += -velocity[i] * gradient[i];
+            coefficients[0] += velocity[i] * action[i];
+            coefficients[1] += -velocity[i] * gradient[i];
         }
     }
 
@@ -362,7 +372,6 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
 
         return index;
     }
-
 
     private class PiecewiseLinearEndpoints {
 
@@ -402,7 +411,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
                 // a > 0
                 double t1 = -a / b;
                 if (u <= a * t1 + b * t1 * t1 / 2)
-                    return -a / b - Math.sqrt(a * a / (b * b) + 2 * u / b);
+                    return t1 - Math.sqrt(t1 * t1 + 2 * u / b);
                 else
                     return Double.POSITIVE_INFINITY;
             }
@@ -411,59 +420,23 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
 
     @SuppressWarnings("Duplicates")
     @Override
-    BounceState doBounce(BounceState initialBounceState, MinimumTravelInformation firstBounce,
-                         WrappedVector position, WrappedVector velocity,
-                         WrappedVector action, WrappedVector gradient, WrappedVector momentum) {
+    void updateDynamics(WrappedVector position,
+                        WrappedVector velocity,
+                        WrappedVector action,
+                        WrappedVector gradient,
+                        WrappedVector momentum,
+                        WrappedVector column,
+                        double time,
+                        int[] index,
+                        Type eventType) {
 
-        // TODO Probably shares almost all code with doBounce() in ReversibleZigZagOperator, so move shared
-        // TODO code into AbstractZigZagOperator
+        final double[] p = position.getBuffer();
+        final double[] v = velocity.getBuffer();
+        final double[] a = action.getBuffer();
+        final double[] g = gradient.getBuffer();
+        final double[] c = column.getBuffer();
 
-
-        if (TIMING) {
-            timer.startTimer("doBounce");
-        }
-
-        double remainingTime = initialBounceState.remainingTime;
-        double eventTime = firstBounce.time;
-
-        final BounceState finalBounceState;
-        if (remainingTime < eventTime) { // No event during remaining time
-
-            updatePosition(position, velocity, remainingTime);
-            finalBounceState = new BounceState(Type.NONE, -1, 0.0);
-
-        } else {
-
-            final Type eventType = firstBounce.type;
-            final int eventIndex = firstBounce.index;
-
-            WrappedVector column = getPrecisionColumn(eventIndex);
-
-            updateDynamics(position.getBuffer(), velocity.getBuffer(),
-                    action.getBuffer(), gradient.getBuffer(),
-                    column.getBuffer(), eventTime, eventIndex);
-
-            reflectVelocity(velocity, eventIndex);
-            finalBounceState = new BounceState(eventType, eventIndex, remainingTime - eventTime);
-        }
-
-        if (TIMING) {
-            timer.stopTimer("doBounce");
-        }
-
-        return finalBounceState;
-    }
-
-    @SuppressWarnings("Duplicates")
-    private void updateDynamics(double[] p,
-                                double[] v,
-                                double[] a,
-                                double[] g,
-                                double[] c,
-                                double time,
-                                int index) {
-
-        final double twoV = 2 * v[index];
+        final double twoV = 2 * v[index[0]];
 
         for (int i = 0, len = p.length; i < len; ++i) {
             final double ai = a[i];
@@ -471,6 +444,10 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
             p[i] = p[i] + time * v[i];
             g[i] = g[i] - time * ai;
             a[i] = ai - twoV * c[i];
+        }
+
+        if (NOT_YET_IMPLEMENTED) {
+            nativeZigZag.updateIrreversibleDynamics(p, v, a, g, c, time, index[0], eventType.ordinal());
         }
     }
 
@@ -480,5 +457,6 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
     }
 
     static final boolean CPP_NEXT_BOUNCE = false;
-    private static final boolean NEW_WAY = true;
+    private static final boolean NEW_WAY = false;
+    private static final boolean NOT_YET_IMPLEMENTED = false;
 }

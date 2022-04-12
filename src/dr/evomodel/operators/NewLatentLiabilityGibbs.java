@@ -39,6 +39,7 @@ import dr.evomodel.continuous.DummyLatentTruncationProvider;
 import dr.evomodel.continuous.LatentTruncation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.evomodel.treedatalikelihood.preorder.ConditionalPrecisionAndTransform;
 import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
@@ -74,7 +75,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
     private final LatentTruncation latentLiability;
     private final CompoundParameter tipTraitParameter;
     private final TreeTrait<List<WrappedNormalSufficientStatistics>> fullConditionalDensity;
-    private final RepeatedMeasuresTraitDataModel repeatedMeasuresModel;
+    private final ContinuousTraitPartialsProvider extensionProvider;
 
     private int maxAttempts;
 
@@ -97,14 +98,14 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
     public NewLatentLiabilityGibbs(
             TreeDataLikelihood treeDataLikelihood,
             LatentTruncation LatentLiability, CompoundParameter tipTraitParameter,
-            RepeatedMeasuresTraitDataModel repeatedMeasuresModel, Parameter mask,
+            ContinuousTraitPartialsProvider extensionProvider, Parameter mask,
             double weight, String traitName, int maxAttempts, boolean missingByColumn) {
         super();
 
         this.latentLiability = LatentLiability;
         this.tipTraitParameter = tipTraitParameter;
         this.treeModel = treeDataLikelihood.getTree();
-        this.repeatedMeasuresModel = repeatedMeasuresModel;
+        this.extensionProvider = extensionProvider;
         ContinuousDataLikelihoodDelegate likelihoodDelegate = (ContinuousDataLikelihoodDelegate) treeDataLikelihood
                 .getDataLikelihoodDelegate();
         this.dim = likelihoodDelegate.getTraitDim();
@@ -198,10 +199,10 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
             }
         }
 
-        if (repeatedMeasuresModel != null) {
+        if (extensionProvider != null) {
             //TODO: preallocate memory for all these matrices/vectors
             DenseMatrix64F Q = new DenseMatrix64F(fcdPrecision); //storing original fcd precision
-            double[] tipPartial = repeatedMeasuresModel.getTipPartial(thisNumber, false);
+            double[] tipPartial = extensionProvider.getTipPartial(thisNumber, false);
             int offset = dim;
             DenseMatrix64F P = MissingOps.wrap(tipPartial, offset, dim, dim);
 

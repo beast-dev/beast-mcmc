@@ -81,4 +81,6 @@ public interface DiffusionProcessDelegate extends Model {
     double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi, int dim);
 
     double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance, final double[][] treeSharedLengths, final double[][] traitVariance);
+
+    void getMeanTipVariances(final double priorSampleSize, final double[] treeLengths, final DenseMatrix64F traitVariance, final DenseMatrix64F varSum);
 }

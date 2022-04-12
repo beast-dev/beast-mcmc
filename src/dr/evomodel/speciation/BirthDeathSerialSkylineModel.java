@@ -27,6 +27,7 @@ package dr.evomodel.speciation;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.inference.model.Parameter;
@@ -369,6 +370,11 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
     public double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude) {
         if (exclude.size() == 0) return calculateTreeLogLikelihood(tree);
         throw new RuntimeException("Not implemented!");
+    }
+
+    @Override
+    public double getNodeGradient(Tree tree, NodeRef node) {
+        throw new RuntimeException("Not yet implemented!");
     }
 
     public static void main(String[] args) throws IOException, Importer.ImportException {

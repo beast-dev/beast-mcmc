@@ -264,6 +264,11 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
     }
 
     @Override
+    public void setupDifferentialFrequency(WrtParameter wrt, double[] differentialFrequency) {
+        wrt.setupDifferentialFrequencies(differentialFrequency, getFrequencyModel().getFrequencies());
+    }
+
+    @Override
     public double getWeightedNormalizationGradient(WrtParameter wrtParameter, double[][] differentialMassMatrix, double[] frequencies) {
         double normalizationRatio = getNormalizationRatioForParameterization();
         double normalizationRatioInverse = normalizationRatio == 1.0 ?
@@ -279,8 +284,7 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
     }
 
     @Override
-    public WrtParameter factory(Parameter parameter) {
-
+    public WrtParameter factory(Parameter parameter, int dim) {
         if (parameter == alphaParameter) {
             return new Alpha(getNumSynTransitions(), options.isParameterTotalRate);
         } else if (parameter == betaParameter) {
@@ -335,6 +339,16 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
             }
             throw new IllegalArgumentException("Invalid switch case");
         }
+
+        @Override
+        public void setupDifferentialFrequencies(double[] differentialFrequencies, double[] frequencies) {
+            System.arraycopy(frequencies, 0, differentialFrequencies, 0, frequencies.length);
+        }
+
+        @Override
+        public void setupDifferentialRates(double[] differentialRates, double[] relativeRates, double normalizingConstant) {
+            throw new RuntimeException("Not yet implemented.");
+        }
     }
 
     class Beta extends WrtMG94ModelParameter {
@@ -360,6 +374,16 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
                     return 1.0 * perEventRateScalar;   // non-synonymous transversion
             }
             throw new IllegalArgumentException("Invalid switch case");
+        }
+
+        @Override
+        public void setupDifferentialFrequencies(double[] differentialFrequencies, double[] frequencies) {
+            System.arraycopy(frequencies, 0, differentialFrequencies, 0, frequencies.length);
+        }
+
+        @Override
+        public void setupDifferentialRates(double[] differentialRates, double[] relativeRates, double normalizingConstant) {
+            throw new RuntimeException("Not yet implemented.");
         }
     }
 }

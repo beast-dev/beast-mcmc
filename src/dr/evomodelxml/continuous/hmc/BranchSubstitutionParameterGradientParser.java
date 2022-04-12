@@ -28,11 +28,14 @@ package dr.evomodelxml.continuous.hmc;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.BranchSpecificSubstitutionParameterBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.BranchSubstitutionParameterGradient;
+import dr.evomodel.treedatalikelihood.discrete.HomogeneousSubstitutionParameterGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
@@ -45,6 +48,9 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
 
     private static final String NAME = "branchSubstitutionParameterGradient";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
+    private static final String HOMOGENEOUS_PROCESS = "homogeneous";
+    private static final String DIMENSION = "dim";
+    public static final String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
     public static final String USE_HESSIAN = "useHessian";
 
     @Override
@@ -58,15 +64,23 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
         boolean useHessian = xo.getAttribute(USE_HESSIAN, false);
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+        final Double tolerance = xo.hasAttribute(GRADIENT_CHECK_TOLERANCE) ? xo.getDoubleAttribute(GRADIENT_CHECK_TOLERANCE) : null;
         BranchSpecificSubstitutionParameterBranchModel branchModel = (BranchSpecificSubstitutionParameterBranchModel) xo.getChild(BranchModel.class);
 
         BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) treeDataLikelihood.getDataLikelihoodDelegate();
 
-        BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
-        CompoundParameter branchParameter = branchModel.getBranchSpecificParameters(branchRateModel);
+        Boolean homogeneous = xo.getAttribute(HOMOGENEOUS_PROCESS, false);
 
-        return new BranchSubstitutionParameterGradient(traitName, treeDataLikelihood, beagleData,
-                branchParameter, branchRateModel, useHessian);
+        int dim = xo.getAttribute(DIMENSION, 0);
+        if (homogeneous) {
+            Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+            return new HomogeneousSubstitutionParameterGradient(traitName, treeDataLikelihood, parameter, beagleData, dim);
+        } else {
+            DifferentiableBranchRates branchRateModel = (DifferentiableBranchRates) xo.getChild(DifferentiableBranchRates.class);
+            CompoundParameter branchParameter = branchModel.getBranchSpecificParameters(branchRateModel);
+            return new BranchSubstitutionParameterGradient(traitName, treeDataLikelihood, beagleData,
+                    branchParameter, branchRateModel, tolerance, useHessian, dim);
+        }
     }
 
     @Override
@@ -77,8 +91,14 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TRAIT_NAME),
             new ElementRule(TreeDataLikelihood.class),
-            new ElementRule(BranchSpecificSubstitutionParameterBranchModel.class),
-            new ElementRule(BranchRateModel.class)
+            new XORRule(
+                    new AndRule(
+                            new ElementRule(BranchSpecificSubstitutionParameterBranchModel.class),
+                            new ElementRule(DifferentiableBranchRates.class)),
+                    new ElementRule(Parameter.class)),
+            AttributeRule.newBooleanRule(HOMOGENEOUS_PROCESS, true),
+            AttributeRule.newIntegerRule(DIMENSION, true),
+            AttributeRule.newDoubleRule(GRADIENT_CHECK_TOLERANCE, true),
     };
 
     @Override

@@ -51,7 +51,7 @@ public class CompoundGradientParser extends AbstractXMLObjectParser {
 
     @Override
     public String[] getParserNames() {
-        return new String[] { SUM_DERIVATIVE, SUM_DERIVATIVE2 };
+        return new String[]{SUM_DERIVATIVE, SUM_DERIVATIVE2};
     }
 
     @Override

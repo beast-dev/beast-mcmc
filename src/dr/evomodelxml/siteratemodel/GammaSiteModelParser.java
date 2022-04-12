@@ -48,7 +48,6 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
     public static final String SITE_MODEL = SiteModel.SITE_MODEL;
     public static final String SUBSTITUTION_MODEL = "substitutionModel";
-    public static final String BRANCH_SUBSTITUTION_MODEL = "branchSubstitutionModel";
     public static final String MUTATION_RATE = "mutationRate";
     public static final String SUBSTITUTION_RATE = "substitutionRate";
     public static final String RELATIVE_RATE = "relativeRate";
@@ -64,7 +63,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         String msg = "";
-        SubstitutionModel substitutionModel = null;
+        SubstitutionModel substitutionModel;
 
         double muWeight = 1.0;
 

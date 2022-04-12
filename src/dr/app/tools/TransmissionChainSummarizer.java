@@ -201,7 +201,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
 
             String nodeState = getMergedState(tree, node, nodeStateAnnotation);
 
-            if(!annotationStates.contains(nodeState) || tree.getNodeHeight(node) < nodeHeight)
+            if(!annotationStates.contains(nodeState) || nodeHeight < this.timeSlice)
                 continue;
 
             NodeRef parentNode = tree.isRoot(node) ? null : tree.getParent(node);

@@ -5,11 +5,13 @@ import dr.app.util.Arguments;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
+import dr.util.DataTable;
 import dr.util.Version;
 
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
@@ -22,18 +24,22 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
     private static final String BURN_IN = "burnIn";
     private static final String NODE_STATE_ANNOTATION = "nodeStateAnnotation";
     private static final String ANNOTATION_STATES = "annotationStates";
+    private static final String MERGE_STATES = "mergeStates";
     private PrintStream ps;
+    private HashMap<String, String> mergedStates;
 
     public TransmissionChainSummarizer(
             String inputFileName,
             String outputFileName,
             int burnIn,
             String nodeStateAnnotation,
-            String[] annotationStates
+            String[] annotationStates,
+            HashMap<String, String> mergedStates
     ) throws IOException {
         SequentialTreeReader treeReader = new SequentialTreeReader(inputFileName, burnIn);
 
         this.ps = openOutputFile(outputFileName);
+        this.mergedStates = mergedStates;
         processTrees(treeReader, burnIn, nodeStateAnnotation, annotationStates);
         closeOutputFile(ps);
     }
@@ -158,6 +164,24 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
         return obj.toString();
     }
 
+    // Get node state after merging states
+    private String getMergedState(String nodeState){
+        String key = nodeState.toLowerCase();
+        if(this.mergedStates.containsKey(key)){
+            return this.mergedStates.get(key);
+        }
+        return nodeState;
+    }
+
+    private String getMergedState(Tree tree, NodeRef node, String nodeStateAnnotation){
+        String nodeState = (String) tree.getNodeAttribute(node, nodeStateAnnotation);
+        String key = nodeState.toLowerCase();
+        if(this.mergedStates.containsKey(key)){
+            return this.mergedStates.get(key);
+        }
+        return nodeState;
+    }
+
     private void processOneTree(Tree tree, String nodeStateAnnotation, List<String> annotationStates){
         String treeId = tree.getId();
         if (treeId.startsWith("STATE_")) {
@@ -166,16 +190,16 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
 
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             NodeRef node = tree.getNode(i);
-            if(tree.isRoot(node))
-                continue;
+//            if(tree.isRoot(node))
+//                continue;
 
-            String nodeState = (String) tree.getNodeAttribute(node, nodeStateAnnotation);
+            String nodeState = getMergedState(tree, node, nodeStateAnnotation);
 
             if(!annotationStates.contains(nodeState))
                 continue;
 
-            NodeRef parentNode = tree.getParent(node);
-            double parentNodeHeight = tree.getNodeHeight(parentNode);
+            NodeRef parentNode = tree.isRoot(node) ? null : tree.getParent(node);
+            double parentNodeHeight = tree.isRoot(node) ? tree.getNodeHeight(node) : tree.getNodeHeight(parentNode);
 
             Set nodeDescendants = TreeUtils.getExternalNodes(tree, node);
             if (nodeState == null) {
@@ -184,7 +208,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
             }
 
             String currentState = nodeState;
-            String ancestralState =  (String) tree.getNodeAttribute(parentNode, nodeStateAnnotation);;
+            String ancestralState = tree.isRoot(node) ? null : getMergedState(tree, parentNode, nodeStateAnnotation);
 
             // If state of parentNode is the same as the current node skip
             if(currentState.equalsIgnoreCase(ancestralState))
@@ -225,7 +249,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
             double rootHeight = tree.getNodeHeight(tree.getRoot());
             Row row = new Row(
                     treeId,
-                    parentNode.getNumber(),
+                    parentNode == null ? -1 : parentNode.getNumber(),
                     node.getNumber(),
                     ancestralState,
                     currentState,
@@ -280,7 +304,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
         Iterator iter = leafs.iterator();
         while (iter.hasNext()) {
             NodeRef currentNode = (NodeRef)iter.next();
-            String nodeState = (String) tree.getNodeAttribute(currentNode, nodeStateAnnotation);
+            String nodeState = getMergedState(tree, currentNode, nodeStateAnnotation);
             if (nodeState.equalsIgnoreCase(state)){
                 descendents++;
             }
@@ -294,7 +318,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
         int numberOfBranches = childCount;
         for (int i = 0; i < childCount; i++) {
             NodeRef childNode = tree.getChild(node, i);
-            String nodeState = (String) tree.getNodeAttribute(childNode, nodeStateAnnotation);
+            String nodeState = getMergedState(tree, childNode, nodeStateAnnotation);
             if (!nodeState.equalsIgnoreCase(state)){
                 continue;
             }
@@ -316,7 +340,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
         double currHeight = 0;
         for (int i = 0; i < tree.getChildCount(node); i++) {
             NodeRef childNode = tree.getChild(node, i);
-            String childNodeState = (String) tree.getNodeAttribute(childNode, nodeStateAnnotation);
+            String childNodeState = getMergedState(tree, childNode, nodeStateAnnotation);
             if(tree.isExternal(childNode)) {
                 if (childNodeState.equalsIgnoreCase(annotationState)){
                     // If node is external and is in same state as chain, add to persistent descendants
@@ -415,12 +439,17 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
         return (nodeHeight - minHeight)/rootHeight;
     }
 
-    private static Object[] readCJH(NodeRef node, Tree treeTime) {
+    private Object[] readCJH(NodeRef node, Tree treeTime) {
         if (treeTime.getNodeAttribute(node, HISTORY) != null) {
-            return (Object[]) treeTime.getNodeAttribute(node, HISTORY);
-        } else {
-            return null;
+            Object[] jumps = (Object[]) treeTime.getNodeAttribute(node, HISTORY);
+            for (int j = jumps.length - 1; j >= 0; j--) {
+                Object[] currentJump = (Object[]) jumps[j];
+                currentJump[1] = getMergedState((String) currentJump[1]);
+                currentJump[2] = getMergedState((String) currentJump[2]);
+                return jumps;
+            }
         }
+        return null;
     }
 
     public static void printTitle() {
@@ -462,6 +491,8 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
         int burnIn = -1;
         String nodeStateAnnotation = null;
         String[] annotationStates = new String[1];
+        String mergedStatesFileName = new String();
+        HashMap<String, String> mergedStates = new HashMap<String, String>();
 
         printTitle();
 
@@ -470,6 +501,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                         new Arguments.IntegerOption(BURN_IN, "the number of states to be considered as 'burn-in' [default = 0]"),
                         new Arguments.StringOption(NODE_STATE_ANNOTATION, "String", "use node state annotations as poor proxy to MJs based on a annotation string for the discrete trait"),
                         new Arguments.StringOption(ANNOTATION_STATES, "String", "States to consider"),
+                        new Arguments.StringOption(MERGE_STATES, "String", "States to be merged into a new state"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 
@@ -479,6 +511,19 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
 
         if (arguments.hasOption(ANNOTATION_STATES)) {
             annotationStates = arguments.getStringOption(ANNOTATION_STATES).split(",");
+        }
+
+        if (arguments.hasOption(MERGE_STATES)) {
+            mergedStatesFileName = arguments.getStringOption(MERGE_STATES);
+            DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(mergedStatesFileName));
+            if(dataTable.getColumnCount() != 1){
+                throw new Arguments.ArgumentException(MERGE_STATES + " file should have two columns: State and New_State");
+            }
+            String[] rowLabels = dataTable.getRowLabels();
+            for (int i = 0; i <dataTable.getRowCount(); i++) {
+                String[] states = dataTable.getRow(i);
+                mergedStates.put(rowLabels[i].toLowerCase(), states[0]);
+            }
         }
 
         if (arguments.hasOption(BURN_IN)) {
@@ -500,7 +545,8 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                 fileNames[1],
                 burnIn,
                 nodeStateAnnotation,
-                annotationStates
+                annotationStates,
+                mergedStates
         );
         System.exit(0);
     }

@@ -240,7 +240,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
             // Count of each immediate jump from a transmission chain into a different state
             HashMap<String, Integer> map = new HashMap<String, Integer>();
             // Length of persistence of transmission chain in same state
-            double heightOfTransmissionChain = Double.MAX_VALUE;
+            double heightOfTransmissionChain = nodeHeight;
 
             heightOfTransmissionChain = traversePersistentChain(
                     tree,
@@ -264,7 +264,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                     nodeDescendants.size(),
                     getSameStateDescendants(nodeDescendants, tree, currentState, nodeStateAnnotation),
                     persistentDescendants.size(),
-                    (nodeHeight - heightOfTransmissionChain)/rootHeight,
+                    (introductionTime - heightOfTransmissionChain)/rootHeight,
                     rootHeight,
                     tree.isExternal(node),
                     convertToJson(map)

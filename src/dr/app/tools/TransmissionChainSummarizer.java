@@ -207,7 +207,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
             NodeRef parentNode = tree.isRoot(node) ? null : tree.getParent(node);
             double parentNodeHeight = tree.isRoot(node) ? tree.getNodeHeight(node) : tree.getNodeHeight(parentNode);
 
-            Set nodeDescendants = getDescendants(tree, node);
+            Set<NodeRef> nodeDescendants = getDescendants(tree, node);
             if (nodeState == null) {
                 throw new RuntimeException("Could not locate node state annotation '" + nodeStateAnnotation +
                         "' for node " + node.getNumber());
@@ -304,9 +304,9 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
         return recentJump;
     }
 
-    private Set getDescendants(Tree tree, NodeRef node){
-        Set descendants = new HashSet<NodeRef>();
-        Set nodeDescendants = TreeUtils.getExternalNodes(tree, node);
+    private Set<NodeRef> getDescendants(Tree tree, NodeRef node){
+        Set<NodeRef> descendants = new HashSet<NodeRef>();
+        Set<NodeRef> nodeDescendants = TreeUtils.getExternalNodes(tree, node);
         Iterator iter = nodeDescendants.iterator();
         while (iter.hasNext()) {
             NodeRef currentNode = (NodeRef)iter.next();
@@ -361,8 +361,11 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
         double currHeight = 0;
         for (int i = 0; i < tree.getChildCount(node); i++) {
             NodeRef childNode = tree.getChild(node, i);
-            if(tree.getNodeHeight(childNode) < this.timeSlice)
+            if(tree.getNodeHeight(childNode) < this.timeSlice) {
+                if(this.timeSlice < minHeight)
+                    minHeight = this.timeSlice;
                 continue;
+            }
             String childNodeState = getMergedState(tree, childNode, nodeStateAnnotation);
             if(tree.isExternal(childNode)) {
                 if (childNodeState.equalsIgnoreCase(annotationState)){

@@ -49,10 +49,7 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Guy Baele
@@ -138,11 +135,14 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
         //this.activeLineages = new ArrayList<double[]>();
         //TODO make this dependent on the interval to store all probability densities (?)
         this.activeLineages = new double[nodeCount*demes];
-        this.activeNodeNumbers = new ArrayList<Integer>(nodeCount);
+        this.activeNodeNumbers = new ArrayList<>(nodeCount);
 
         this.likelihoodKnown = false;
 
+        this.temp = new double[demes];
     }
+
+    final double[] temp;
 
     // **************************************************************
     // Likelihood IMPLEMENTATION
@@ -245,6 +245,136 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
 
     }
 
+    private void newHardWork(double[] probs, double[] squareProbs) {
+//        for (int k = 0; k < demes; k++) {
+//            probs[k] = 0.0;
+//            squareProbs[k] = 0.0;
+//            for (int l : activeNodeNumbers) {
+//                probs[k] += activeLineages[l*demes+k];
+//                squareProbs[k] += activeLineages[l*demes+k]*activeLineages[l*demes+k];
+//            }
+//        }
+        for (int k = 0; k < demes; k++) {
+            probs[k] = 0.0;
+            squareProbs[k] = 0.0;
+        }
+        for (int l : activeNodeNumbers) {
+            for (int k = 0; k < demes; k++) {
+                probs[k] += activeLineages[l*demes+k];
+                squareProbs[k] += activeLineages[l*demes+k]*activeLineages[l*demes+k];
+            }
+        }
+    }
+
+    private void hardWork(int i) {
+        for (int k = 0; k < demes; k++) {
+            this.intervalStartProbs[i][k] = 0.0;
+            this.intervalStartSquareProbs[i][k] = 0.0;
+            for (int l : activeNodeNumbers) {
+                this.intervalStartProbs[i][k] += activeLineages[l*demes+k];
+                this.intervalStartSquareProbs[i][k] += activeLineages[l*demes+k]*activeLineages[l*demes+k];
+            }
+        }
+
+//        for (int k = 0; k < demes; k++) {
+//            this.intervalEndProbs[i][k] = 0.0;
+//            this.intervalEndSquareProbs[i][k] = 0.0;
+//            for (int l = 0; l < activeNodeNumbers.size(); l++) {
+//                this.intervalEndProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k];
+//                this.intervalEndSquareProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k]*activeLineages[activeNodeNumbers.get(l)*demes+k];
+//            }
+//        }
+
+    }
+
+    private void handleCoalescense(NodeRef node, int offset, int i) {
+                //compute end probabilities of sampling interval
+                double intervalLength = intervals.getInterval(i);
+
+                //printActiveLineages();
+
+                //first compute Sd for the first interval half
+//                for (int k = 0; k < demes; k++) {
+//                    this.intervalStartProbs[i][k] = 0.0;
+//                    this.intervalStartSquareProbs[i][k] = 0.0;
+//                    for (int l = 0; l < activeNodeNumbers.size(); l++) {
+//                        this.intervalStartProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k];
+//                        this.intervalStartSquareProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k]*activeLineages[activeNodeNumbers.get(l)*demes+k];
+//                    }
+//                }
+                newHardWork(this.intervalStartProbs[i], this.intervalStartSquareProbs[i]);
+//                hardWork(i);
+
+                //matrix exponentiation to compute end interval probabilities; equation 11
+                incrementActiveLineages(this.activeLineages, intervalLength, i);
+
+                //printActiveLineages();
+
+                //get coalescent node from interval
+                node = intervals.getCoalescentNode(i);
+
+                offset = node.getNumber()*demes;
+                //get child nodes
+                NodeRef leftChild = treeModel.getChild(node, 0);
+                NodeRef rightChild = treeModel.getChild(node, 1);
+
+                final int leftOffset = leftChild.getNumber() * demes;
+                final int rightOffset = rightChild.getNumber() * demes;
+
+                //access probability densities from both child nodes to compute equation 12
+                //get end lineage densities for the 2 child nodes from the previous interval
+//                double[] temp = new double[demes];
+                double sum = 0.0;
+                for (int k = 0; k < demes; k++) {
+                    temp[k] = (activeLineages[leftOffset+k]*activeLineages[rightOffset+k])/popSizes.getParameterValue(k);
+                    sum += temp[k];
+                }
+                //store the resulting coalescent probability density
+                for (int k = 0; k < demes; k++) {
+                    this.activeLineages[offset+k] = temp[k]/sum;
+                }
+
+                //compute Sd for the second interval half
+//                for (int k = 0; k < demes; k++) {
+//                    this.intervalEndProbs[i][k] = 0.0;
+//                    this.intervalEndSquareProbs[i][k] = 0.0;
+//                    for (int l = 0; l < activeNodeNumbers.size(); l++) {
+//                        this.intervalEndProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k];
+//                        this.intervalEndSquareProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k]*activeLineages[activeNodeNumbers.get(l)*demes+k];
+//                    }
+//                }
+                    newHardWork(this.intervalEndProbs[i], this.intervalEndSquareProbs[i]);
+
+                //TODO merge into one of the previous loops over k?
+                //this code mostly to keep the calculateLogLikelihood function as clean as possible
+                for (int k = 0; k < demes; k++) {
+                    this.coalescentLeftProbs[i][k] = activeLineages[leftChild.getNumber()*demes+k];
+                    this.coalescentRightProbs[i][k] = activeLineages[rightChild.getNumber()*demes+k];
+                }
+
+                doShit(node, leftChild, rightChild);
+//
+//                //remove 2 nodes from active lineage list and add a new one
+//                this.activeNodeNumbers.remove((Integer)leftChild.getNumber());
+//                this.activeNodeNumbers.remove((Integer)rightChild.getNumber());
+//                this.activeNodeNumbers.add(node.getNumber());
+
+                //printActiveLineages();
+    }
+
+    private void doShit(NodeRef node, NodeRef leftChild, NodeRef rightChild) {
+
+//Set<Integer> test = new
+
+            //remove 2 nodes from active lineage list and add a new one
+            this.activeNodeNumbers.remove((Integer)leftChild.getNumber());
+            this.activeNodeNumbers.remove((Integer)rightChild.getNumber());
+            this.activeNodeNumbers.add(node.getNumber());
+
+
+    }
+
+
     /**
      * Compute all required probability distributions for calculating the overall structured coalescent density.
      * This methods computes equations 11 and 12 from the BASTA manuscript and populates the following arrays
@@ -263,17 +393,19 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
         NodeRef node = intervals.getSamplingNode(-1);
         //System.out.println("sampling node: "+ treeModel.getNodeTaxon(node).getId());
 
+        int offset = node.getNumber() * demes;
+
         //set start probabilities of first sampling interval
         for (int k = 0; k < demes; k++) {
-            this.activeLineages[node.getNumber()*demes+k] = 0.0;
+            this.activeLineages[offset+k] = 0.0;
         }
-        this.activeLineages[node.getNumber()*demes+patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(node).getId())]] = 1.0;
+        this.activeLineages[offset+patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(node).getId())]] = 1.0;
         this.activeNodeNumbers.add(node.getNumber());
 
         //this.intervalStartProbs[0] = Arrays.copyOf(lineageCount, demes);
         //this.intervalStartSquareProbs[0] = Arrays.copyOf(lineageCount, demes);
-        this.intervalStartProbs[0] = Arrays.copyOfRange(this.activeLineages, node.getNumber()*demes, node.getNumber()*demes+demes);
-        this.intervalStartSquareProbs[0] = Arrays.copyOfRange(this.activeLineages, node.getNumber()*demes, node.getNumber()*demes+demes);
+        this.intervalStartProbs[0] = Arrays.copyOfRange(this.activeLineages, offset, offset+demes);
+        this.intervalStartSquareProbs[0] = Arrays.copyOfRange(this.activeLineages, offset, offset+demes);
         //add to list of active lineages
         //this.activeLineages.add(lineageCount);
 
@@ -285,139 +417,218 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
 
             //System.out.println("interval type: " + intervals.getIntervalType(i));
 
+
+
             if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
 
-                //compute end probabilities of sampling interval
-                double intervalLength = intervals.getInterval(i);
+                handleCoalescense(node, offset, i);
 
-                //printActiveLineages();
-
-                //first compute Sd for the first interval half
-                for (int k = 0; k < demes; k++) {
-                    this.intervalStartProbs[i][k] = 0.0;
-                    this.intervalStartSquareProbs[i][k] = 0.0;
-                    for (int l = 0; l < activeNodeNumbers.size(); l++) {
-                        this.intervalStartProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k];
-                        this.intervalStartSquareProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k]*activeLineages[activeNodeNumbers.get(l)*demes+k];
-                    }
-                }
-
-                //matrix exponentiation to compute end interval probabilities; equation 11
-                incrementActiveLineages(this.activeLineages, intervalLength, i);
-
-                //printActiveLineages();
-
-                //get coalescent node from interval
-                node = intervals.getCoalescentNode(i);
-                //get child nodes
-                NodeRef leftChild = treeModel.getChild(node, 0);
-                NodeRef rightChild = treeModel.getChild(node, 1);
-
-                //access probability densities from both child nodes to compute equation 12
-                //get end lineage densities for the 2 child nodes from the previous interval
-                double[] temp = new double[demes];
-                double sum = 0.0;
-                for (int k = 0; k < demes; k++) {
-                    temp[k] = (activeLineages[leftChild.getNumber()*demes+k]*activeLineages[rightChild.getNumber()*demes+k])/popSizes.getParameterValue(k);
-                    sum += temp[k];
-                }
-                //store the resulting coalescent probability density
-                for (int k = 0; k < demes; k++) {
-                    this.activeLineages[node.getNumber()*demes+k] = temp[k]/sum;
-                }
-
-                //compute Sd for the second interval half
-                for (int k = 0; k < demes; k++) {
-                    this.intervalEndProbs[i][k] = 0.0;
-                    this.intervalEndSquareProbs[i][k] = 0.0;
-                    for (int l = 0; l < activeNodeNumbers.size(); l++) {
-                        this.intervalEndProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k];
-                        this.intervalEndSquareProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k]*activeLineages[activeNodeNumbers.get(l)*demes+k];
-                    }
-                }
-
-                //TODO merge into one of the previous loops over k?
-                //this code mostly to keep the calculateLogLikelihood function as clean as possible
-                for (int k = 0; k < demes; k++) {
-                    this.coalescentLeftProbs[i][k] = activeLineages[leftChild.getNumber()*demes+k];
-                    this.coalescentRightProbs[i][k] = activeLineages[rightChild.getNumber()*demes+k];
-                }
-
-                //remove 2 nodes from active lineage list and add a new one
-                this.activeNodeNumbers.remove((Integer)leftChild.getNumber());
-                this.activeNodeNumbers.remove((Integer)rightChild.getNumber());
-                this.activeNodeNumbers.add(node.getNumber());
-
-                //printActiveLineages();
+//                //compute end probabilities of sampling interval
+//                double intervalLength = intervals.getInterval(i);
+//
+//                //printActiveLineages();
+//
+//                //first compute Sd for the first interval half
+//                for (int k = 0; k < demes; k++) {
+//                    this.intervalStartProbs[i][k] = 0.0;
+//                    this.intervalStartSquareProbs[i][k] = 0.0;
+//                    for (int l = 0; l < activeNodeNumbers.size(); l++) {
+//                        this.intervalStartProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k];
+//                        this.intervalStartSquareProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k]*activeLineages[activeNodeNumbers.get(l)*demes+k];
+//                    }
+//                }
+//
+//                //matrix exponentiation to compute end interval probabilities; equation 11
+//                incrementActiveLineages(this.activeLineages, intervalLength, i);
+//
+//                //printActiveLineages();
+//
+//                //get coalescent node from interval
+//                node = intervals.getCoalescentNode(i);
+//
+//                offset = node.getNumber()*demes;
+//                //get child nodes
+//                NodeRef leftChild = treeModel.getChild(node, 0);
+//                NodeRef rightChild = treeModel.getChild(node, 1);
+//
+//                final int leftOffset = leftChild.getNumber() * demes;
+//                final int rightOffset = rightChild.getNumber() * demes;
+//
+//                //access probability densities from both child nodes to compute equation 12
+//                //get end lineage densities for the 2 child nodes from the previous interval
+////                double[] temp = new double[demes];
+//                double sum = 0.0;
+//                for (int k = 0; k < demes; k++) {
+//                    temp[k] = (activeLineages[leftOffset+k]*activeLineages[rightOffset+k])/popSizes.getParameterValue(k);
+//                    sum += temp[k];
+//                }
+//                //store the resulting coalescent probability density
+//                for (int k = 0; k < demes; k++) {
+//                    this.activeLineages[offset+k] = temp[k]/sum;
+//                }
+//
+//                //compute Sd for the second interval half
+//                for (int k = 0; k < demes; k++) {
+//                    this.intervalEndProbs[i][k] = 0.0;
+//                    this.intervalEndSquareProbs[i][k] = 0.0;
+//                    for (int l = 0; l < activeNodeNumbers.size(); l++) {
+//                        this.intervalEndProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k];
+//                        this.intervalEndSquareProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k]*activeLineages[activeNodeNumbers.get(l)*demes+k];
+//                    }
+//                }
+//
+//                //TODO merge into one of the previous loops over k?
+//                //this code mostly to keep the calculateLogLikelihood function as clean as possible
+//                for (int k = 0; k < demes; k++) {
+//                    this.coalescentLeftProbs[i][k] = activeLineages[leftChild.getNumber()*demes+k];
+//                    this.coalescentRightProbs[i][k] = activeLineages[rightChild.getNumber()*demes+k];
+//                }
+//
+//                //remove 2 nodes from active lineage list and add a new one
+//                this.activeNodeNumbers.remove((Integer)leftChild.getNumber());
+//                this.activeNodeNumbers.remove((Integer)rightChild.getNumber());
+//                this.activeNodeNumbers.add(node.getNumber());
+//
+//                //printActiveLineages();
 
             } else if (intervals.getIntervalType(i) == IntervalType.SAMPLE) {
 
-                //check for zero-length interval
-                if (intervals.getInterval(i) == 0.0) {
-                    //multiple samples at same sampling time
-                    //System.out.println("zero-length interval");
+                handleSampling(node, offset, i);
 
-                    node = intervals.getSamplingNode(i);
-                    //System.out.println("sampling node: "+ treeModel.getNodeTaxon(node).getId());
-                    for (int k = 0; k < demes; k++) {
-                        this.activeLineages[node.getNumber()*demes+k] = 0.0;
-                    }
-                    this.activeLineages[node.getNumber()*demes+patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(node).getId())]] = 1.0;
-                    this.activeNodeNumbers.add(node.getNumber());
-
-                    //TODO initiate caching for samples with identical sampling time and location here?
-
-                    //printActiveLineages();
-
-                } else {
-                    //one sample at a time
-
-                    double intervalLength = intervals.getInterval(i);
-
-                    //printActiveLineages();
-
-                    //first compute Sd for the first interval half
-                    for (int k = 0; k < demes; k++) {
-                        this.intervalStartProbs[i][k] = 0.0;
-                        this.intervalStartSquareProbs[i][k] = 0.0;
-                        for (int l = 0; l < activeNodeNumbers.size(); l++) {
-                            this.intervalStartProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k];
-                            this.intervalStartSquareProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k]*activeLineages[activeNodeNumbers.get(l)*demes+k];
-                        }
-                    }
-
-                    //matrix exponentiation to compute end interval probabilities; equation 11
-                    incrementActiveLineages(this.activeLineages, intervalLength, i);
-
-                    //compute Sd for the second interval half
-                    for (int k = 0; k < demes; k++) {
-                        this.intervalEndProbs[i][k] = 0.0;
-                        this.intervalEndSquareProbs[i][k] = 0.0;
-                        for (int l = 0; l < activeNodeNumbers.size(); l++) {
-                            this.intervalEndProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k];
-                            this.intervalEndSquareProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k]*activeLineages[activeNodeNumbers.get(l)*demes+k];
-                        }
-                    }
-
-                    //printIntervalContributions(i);
-
-                    //get the node number of the sampling node
-                    node = intervals.getSamplingNode(i);
-                    //System.out.println("sampling node: "+ treeModel.getNodeTaxon(node).getId());
-
-                    //set start probabilities of first sampling interval
-                    for (int k = 0; k < demes; k++) {
-                        this.activeLineages[node.getNumber()*demes+k] = 0.0;
-                    }
-                    this.activeLineages[node.getNumber()*demes+patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(node).getId())]] = 1.0;
-                    this.activeNodeNumbers.add(node.getNumber());
-
-                    //printActiveLineages();
-
-                }
+//                //check for zero-length interval
+//                if (intervals.getInterval(i) == 0.0) {
+//                    //multiple samples at same sampling time
+//                    //System.out.println("zero-length interval");
+//
+//                    node = intervals.getSamplingNode(i);
+//                    //System.out.println("sampling node: "+ treeModel.getNodeTaxon(node).getId());
+//                    for (int k = 0; k < demes; k++) {
+//                        this.activeLineages[node.getNumber()*demes+k] = 0.0;
+//                    }
+//                    this.activeLineages[node.getNumber()*demes+patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(node).getId())]] = 1.0;
+//                    this.activeNodeNumbers.add(node.getNumber());
+//
+//                    //TODO initiate caching for samples with identical sampling time and location here?
+//
+//                    //printActiveLineages();
+//
+//                } else {
+//                    //one sample at a time
+//
+//                    double intervalLength = intervals.getInterval(i);
+//
+//                    //printActiveLineages();
+//
+//                    //first compute Sd for the first interval half
+//                    for (int k = 0; k < demes; k++) {
+//                        this.intervalStartProbs[i][k] = 0.0;
+//                        this.intervalStartSquareProbs[i][k] = 0.0;
+//                        for (int l = 0; l < activeNodeNumbers.size(); l++) {
+//                            this.intervalStartProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k];
+//                            this.intervalStartSquareProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k]*activeLineages[activeNodeNumbers.get(l)*demes+k];
+//                        }
+//                    }
+//
+//                    //matrix exponentiation to compute end interval probabilities; equation 11
+//                    incrementActiveLineages(this.activeLineages, intervalLength, i);
+//
+//                    //compute Sd for the second interval half
+//                    for (int k = 0; k < demes; k++) {
+//                        this.intervalEndProbs[i][k] = 0.0;
+//                        this.intervalEndSquareProbs[i][k] = 0.0;
+//                        for (int l = 0; l < activeNodeNumbers.size(); l++) {
+//                            this.intervalEndProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k];
+//                            this.intervalEndSquareProbs[i][k] += activeLineages[activeNodeNumbers.get(l)*demes+k]*activeLineages[activeNodeNumbers.get(l)*demes+k];
+//                        }
+//                    }
+//
+//                    //printIntervalContributions(i);
+//
+//                    //get the node number of the sampling node
+//                    node = intervals.getSamplingNode(i);
+//                    //System.out.println("sampling node: "+ treeModel.getNodeTaxon(node).getId());
+//
+//                    //set start probabilities of first sampling interval
+//                    for (int k = 0; k < demes; k++) {
+//                        this.activeLineages[node.getNumber()*demes+k] = 0.0;
+//                    }
+//                    this.activeLineages[node.getNumber()*demes+patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(node).getId())]] = 1.0;
+//                    this.activeNodeNumbers.add(node.getNumber());
+//
+//                    //printActiveLineages();
+//
+//                }
             }
         }
 
+    }
+
+    private void handleSampling(NodeRef node, int offset, int i) {
+        //check for zero-length interval
+        if (intervals.getInterval(i) == 0.0) {
+            //multiple samples at same sampling time
+            //System.out.println("zero-length interval");
+
+            node = intervals.getSamplingNode(i);
+            //System.out.println("sampling node: "+ treeModel.getNodeTaxon(node).getId());
+            for (int k = 0; k < demes; k++) {
+                this.activeLineages[node.getNumber()*demes+k] = 0.0;
+            }
+            this.activeLineages[node.getNumber()*demes+patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(node).getId())]] = 1.0;
+            this.activeNodeNumbers.add(node.getNumber());
+
+            //TODO initiate caching for samples with identical sampling time and location here?
+
+            //printActiveLineages();
+
+        } else {
+            //one sample at a time
+
+            double intervalLength = intervals.getInterval(i);
+
+            //printActiveLineages();
+
+            //first compute Sd for the first interval half
+//            for (int k = 0; k < demes; k++) {
+//                this.intervalStartProbs[i][k] = 0.0;
+//                this.intervalStartSquareProbs[i][k] = 0.0;
+//                for (int l : activeNodeNumbers) {
+//                    this.intervalStartProbs[i][k] += activeLineages[l*demes+k];
+//                    this.intervalStartSquareProbs[i][k] += activeLineages[l*demes+k]*activeLineages[l*demes+k];
+//                }
+//            }
+            newHardWork(intervalStartProbs[i], intervalStartSquareProbs[i]);
+
+            //matrix exponentiation to compute end interval probabilities; equation 11
+            incrementActiveLineages(this.activeLineages, intervalLength, i);
+
+            //compute Sd for the second interval half
+//            for (int k = 0; k < demes; k++) {
+//                this.intervalEndProbs[i][k] = 0.0;
+//                this.intervalEndSquareProbs[i][k] = 0.0;
+//                for (int l : activeNodeNumbers) {
+//                    this.intervalEndProbs[i][k] += activeLineages[l*demes+k];
+//                    this.intervalEndSquareProbs[i][k] += activeLineages[l*demes+k]*activeLineages[l*demes+k];
+//                }
+//            }
+            newHardWork(intervalEndProbs[i], intervalEndSquareProbs[i]);
+
+            //printIntervalContributions(i);
+
+            //get the node number of the sampling node
+            node = intervals.getSamplingNode(i);
+            //System.out.println("sampling node: "+ treeModel.getNodeTaxon(node).getId());
+
+            //set start probabilities of first sampling interval
+            for (int k = 0; k < demes; k++) {
+                this.activeLineages[node.getNumber()*demes+k] = 0.0;
+            }
+            this.activeLineages[node.getNumber()*demes+patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(node).getId())]] = 1.0;
+            this.activeNodeNumbers.add(node.getNumber());
+
+            //printActiveLineages();
+
+        }
     }
 
     private void printIntervalContributions(int interval) {
@@ -516,9 +727,11 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
             matricesKnown[interval] = true;
         }
 
+//        double[] temp = new double[demes];
+
         //compute all dot products / probability densities (i.e. equation 11) for all active nodes
         for (int active : activeNodeNumbers) {
-            double[] temp = new double[demes];
+//            double[] temp = new double[demes];
             for (int k = 0; k < demes; k++) {
                 temp[k] = USE_TRANSPOSE ?
                         rdot(demes, activeLineages, active*demes, 1, migrationMatrices[interval], k * demes, 1) :
@@ -580,7 +793,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
 
         for (double[] linCount : lineageCount) {
             //temporary array
-            double[] temp = new double[linCount.length];
+//            double[] temp = new double[linCount.length];
             for (int k = 0; k < demes; k++) {
                     /*double value = 0.0;
                     for (int l = 0; l < demes; l++) {
@@ -758,7 +971,11 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
             for (int i = 0; i < n; i++)
                 s += dx[i] * dy[i];
         }
-        else {
+        else if (incx == 1 && incy == 1){
+            for (int c = 0, xi = dxIdx, yi = dyIdx; c < n; ++c, ++xi, ++yi) {
+                s += dx[xi] * dy[yi];
+            }
+        } else {
             for (int c = 0, xi = dxIdx, yi = dyIdx; c < n; c++, xi += incx, yi += incy) {
                 s += dx[xi] * dy[yi];
             }

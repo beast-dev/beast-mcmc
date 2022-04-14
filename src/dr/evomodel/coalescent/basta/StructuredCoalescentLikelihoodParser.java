@@ -112,7 +112,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                         return new BastaLikelihood("name", new GenericBastaLikelihoodDelegate("name"),
                                 treeModel, branchRateModel, subIntervals) ;
                     } else {
-                        return new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList,
+                        return new FasterStructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList,
                                 dataType, tag, generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees,
                                 useMAP);
                     }

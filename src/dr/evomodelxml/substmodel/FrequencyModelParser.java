@@ -27,6 +27,7 @@ package dr.evomodelxml.substmodel;
 
 //import dr.app.bss.Utils;
 import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.HiddenDataType;
@@ -35,9 +36,11 @@ import dr.evomodel.substmodel.CodonFromNucleotideFrequencyModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.*;
 
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
@@ -69,6 +72,8 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
         Parameter freqsParam = (Parameter) xo.getElementFirstChild(FREQUENCIES);
         double[] frequencies = null;
 
+        List<PatternList> multiplePatterns = new ArrayList<>();
+
         for (int i = 0; i < xo.getChildCount(); i++) {
             Object obj = xo.getChild(i);
             if (obj instanceof PatternList) {
@@ -89,7 +94,7 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
                                     * baseStateCount];
                         }
                     }
-
+                    break;
                 } else {
 
                     // TODO
@@ -101,16 +106,41 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
                             frequencies = getEmpirical3x4Freqs(patternList);
 
                         }
-
+                        break;
                     } else {
 
+                        multiplePatterns.add(patternList);
                         frequencies = patternList.getStateFrequencies();
 
                     } // END: composition check
 
                 }
-                break;
             }// END: patternList check
+        }
+
+        if (multiplePatterns.size() > 1) {
+            StringBuilder sb = new StringBuilder("\n Concatenating multiple pattern lists to calculate initial frequencies from: \n\t");
+            for (PatternList patterns : multiplePatterns) {
+                sb.append(" " + patterns.getId());
+            }
+
+            int totalWeight = 0;
+            for (PatternList p : multiplePatterns) {
+                totalWeight += p.getPatternCount();
+            }
+
+            Arrays.fill(frequencies, 0.0);
+
+            for (PatternList p : multiplePatterns) {
+                double[] increment = p.getStateFrequencies();
+                double weight = (double) p.getPatternCount() / (double) totalWeight;
+
+                for (int i = 0; i < frequencies.length; ++i) {
+                    frequencies[i] += increment[i] * weight;
+                }
+            }
+
+            Logger.getLogger("dr.evomodel").info(sb.toString());
         }
 
         StringBuilder sb = new StringBuilder(

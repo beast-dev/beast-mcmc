@@ -35,7 +35,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.distributions.Distribution;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author Xiang Ji
@@ -45,12 +45,12 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood {
 
     private final SpeciationLikelihood speciationLikelihood;
     private final TreeModel tree;
-    private final Set<CalibrationLikelihood> calibrationLikelihoods;
+    private final List<CalibrationLikelihood> calibrationLikelihoods;
 
     public CalibratedSpeciationLikelihood(String name,
                                           SpeciationLikelihood speciationLikelihood,
                                           TreeModel tree,
-                                          Set<CalibrationLikelihood> calibrationLikelihoods) {
+                                          List<CalibrationLikelihood> calibrationLikelihoods) {
         super(name);
         this.speciationLikelihood = speciationLikelihood;
         this.tree = tree;
@@ -59,9 +59,7 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood {
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == tree) {
-            throw new RuntimeException("Only tested on fixed topology.");
-        }
+
     }
 
     @Override
@@ -103,7 +101,7 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood {
 
     }
 
-    public class CalibrationLikelihood {
+    public static class CalibrationLikelihood {
 
         private final TMRCAStatistic tmrcaStatistic;
         private final Distribution distribution;
@@ -117,7 +115,7 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood {
         }
 
         public double getLogLikelihood() {
-            final double nodeHeight = tmrcaStatistic.getTree().getNodeHeight(tree.getNode(mrcaNodeNumber));
+            final double nodeHeight = tmrcaStatistic.getTree().getNodeHeight(tmrcaStatistic.getTree().getNode(mrcaNodeNumber));
             return distribution.logPdf(nodeHeight);
         }
 

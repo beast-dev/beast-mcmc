@@ -72,7 +72,7 @@ public class SkewTDistribution extends AbstractContinuousDistribution implements
 
         final double pdf = 2/scale * PDFt(z, 0, 1, df, lnConst_pdft)
                 * CDFt(shape*z*Math.sqrt((df+1)/(df+z*z)), 0, 1, df+1, lnbeta_cdft);
-        return 0;
+        return pdf;
     }
 
     private double LnGamma(double x) {
@@ -196,7 +196,7 @@ public class SkewTDistribution extends AbstractContinuousDistribution implements
 
         if ((p + q) * y / (p + 1) < eps) {  /* tail approximation */
             ans = 0;
-            xb = p * Math.log(max2(y, sml)) - Math.log(p) - lnbeta;
+            xb = p * Math.log(Math.max(y, sml)) - Math.log(p) - lnbeta;
             if (xb > alnsml && y != 0)
                 ans = Math.exp(xb);
             if (y != x || p != pin)
@@ -217,7 +217,7 @@ public class SkewTDistribution extends AbstractContinuousDistribution implements
                 ans = Math.exp(xb);
                 term = ans * p;
                 if (ps != 1) {
-                    n = (int)max2(alneps/Math.log(y), 4.0);
+                    n = (int)Math.max(alneps/Math.log(y), 4.0);
                     for(i=1 ; i<= n ; i++) {
                         xi = i;
                         term = term * (xi - ps) * y / xi;
@@ -260,62 +260,58 @@ public class SkewTDistribution extends AbstractContinuousDistribution implements
         return ans;
     }
 
-    private double max2(double a, double b) {
-        return a > b ? a : b;
-    }
-
     private double LnBeta(double p, double q) {
         return LnGamma(p) + LnGamma(q) - LnGamma(p + q);
     }
 
     @Override
     public double logPdf(double x) {
-        return 0;
+        return Math.log(pdf(x));
     }
 
     @Override
     public double cdf(double x) {
-        return 0;
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
     public double quantile(double y) {
-        return 0;
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
     public double mean() {
-        return 0;
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
     public double variance() {
-        return 0;
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
     public UnivariateFunction getProbabilityDensityFunction() {
-        return null;
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
     protected double getInitialDomain(double v) {
-        return 0;
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
     protected double getDomainLowerBound(double v) {
-        return 0;
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
     protected double getDomainUpperBound(double v) {
-        return 0;
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
     public double cumulativeProbability(double v) throws MathException {
-        return 0;
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override

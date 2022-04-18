@@ -98,7 +98,7 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood {
 
     @Override
     public void makeDirty() {
-
+        speciationLikelihood.makeDirty();
     }
 
     public static class CalibrationLikelihood {
@@ -118,7 +118,5 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood {
             final double nodeHeight = tmrcaStatistic.getTree().getNodeHeight(tmrcaStatistic.getTree().getNode(mrcaNodeNumber));
             return distribution.logPdf(nodeHeight);
         }
-
     }
-
 }

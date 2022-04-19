@@ -25,6 +25,8 @@
 
 package dr.inference.distribution;
 
+import dr.inference.model.GradientProvider;
+import dr.math.NumericalDerivative;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.Distribution;
 import dr.util.Author;
@@ -42,7 +44,7 @@ import java.util.List;
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public class SkewTDistribution extends AbstractContinuousDistribution implements Distribution, Citable {
+public class SkewTDistribution extends AbstractContinuousDistribution implements GradientProvider, Distribution, Citable {
 
     private final double location;
     private final double scale;
@@ -346,4 +348,28 @@ public class SkewTDistribution extends AbstractContinuousDistribution implements
             31,
             Citation.Status.PUBLISHED
     );
+
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+    private final UnivariateFunction logPdfFunction = new UnivariateFunction() {
+        public final double evaluate(double x) {
+            return logPdf(x);
+        }
+
+        public final double getLowerBound() {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        public final double getUpperBound() {
+            return Double.POSITIVE_INFINITY;
+        }
+    };
+
+    @Override
+    public double[] getGradientLogDensity(Object x) {
+        return new double[]{NumericalDerivative.firstDerivative(logPdfFunction, (double) x)};
+    }
 }

@@ -25,6 +25,7 @@
 
 package dr.inference.distribution;
 
+import dr.inference.model.GradientProvider;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.Distribution;
 import dr.util.Author;
@@ -42,7 +43,7 @@ import java.util.List;
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public class SoftBoundUniformDistribution extends AbstractContinuousDistribution implements Distribution, Citable {
+public class SoftBoundUniformDistribution extends AbstractContinuousDistribution implements Distribution, GradientProvider, Citable {
 
     private final double lowerBound;
     private final double upperBound;
@@ -159,4 +160,23 @@ public class SoftBoundUniformDistribution extends AbstractContinuousDistribution
             226,
             Citation.Status.PUBLISHED
     );
+
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object x) {
+        double input = (double) x;
+        if (input > lowerBound && input < upperBound) {
+            return new double[]{0.0};
+        } else if (input < lowerBound) {
+            final double thetaL = (1.0 - lowerProbability - upperProbability)*lowerBound/(lowerProbability *(upperBound-lowerBound));
+            return new double[]{(thetaL - 1) / input};
+        } else {
+            final double thetaR = (1.0 - lowerProbability - upperProbability) / (upperProbability * (upperBound - lowerBound));
+            return new double[]{-thetaR * input};
+        }
+    }
 }

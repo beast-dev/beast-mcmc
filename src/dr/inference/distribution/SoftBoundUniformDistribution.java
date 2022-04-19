@@ -176,7 +176,7 @@ public class SoftBoundUniformDistribution extends AbstractContinuousDistribution
             return new double[]{(thetaL - 1) / input};
         } else {
             final double thetaR = (1.0 - lowerProbability - upperProbability) / (upperProbability * (upperBound - lowerBound));
-            return new double[]{-thetaR * input};
+            return new double[]{-thetaR};
         }
     }
 }

@@ -33,6 +33,7 @@ import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 import dr.math.distributions.Distribution;
+import dr.xml.Reportable;
 
 import java.util.List;
 
@@ -40,7 +41,8 @@ import java.util.List;
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood implements GradientWrtParameterProvider {
+public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood
+        implements GradientWrtParameterProvider, Reportable {
 
     private final SpeciationLikelihood speciationLikelihood;
     private final TreeModel tree;
@@ -131,6 +133,11 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood impl
             gradient[nodeIndex] += calibrationGradient[0];
         }
         return gradient;
+    }
+
+    @Override
+    public String getReport() {
+        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, 1E-2);
     }
 
     public static class CalibrationLikelihood {

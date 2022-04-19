@@ -29,10 +29,9 @@ package dr.evomodel.speciation;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModelLikelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
+import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.*;
 import dr.math.distributions.Distribution;
 
 import java.util.List;
@@ -41,11 +40,13 @@ import java.util.List;
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood {
+public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood implements GradientWrtParameterProvider {
 
     private final SpeciationLikelihood speciationLikelihood;
     private final TreeModel tree;
     private final List<CalibrationLikelihood> calibrationLikelihoods;
+    private final Parameter nodeHeightParameter;
+    private SpeciationLikelihoodGradient speciationLikelihoodGradient = null;
 
     public CalibratedSpeciationLikelihood(String name,
                                           SpeciationLikelihood speciationLikelihood,
@@ -55,6 +56,7 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood {
         this.speciationLikelihood = speciationLikelihood;
         this.tree = tree;
         this.calibrationLikelihoods = calibrationLikelihoods;
+        this.nodeHeightParameter = new NodeHeightProxyParameter("nodeHeightProxyParameter", tree, true);
     }
 
     @Override
@@ -101,6 +103,36 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood {
         speciationLikelihood.makeDirty();
     }
 
+    @Override
+    public Likelihood getLikelihood() {
+        return this;
+    }
+
+    @Override
+    public Parameter getParameter() {
+        return nodeHeightParameter;
+    }
+
+    @Override
+    public int getDimension() {
+        return nodeHeightParameter.getDimension();
+    }
+
+    @Override
+    public double[] getGradientLogDensity() {
+        if (speciationLikelihoodGradient == null) {
+            this.speciationLikelihoodGradient = new SpeciationLikelihoodGradient(speciationLikelihood, tree);
+        }
+        double[] gradient = speciationLikelihoodGradient.getGradientLogDensity();
+        for (CalibrationLikelihood calibrationLikelihood : calibrationLikelihoods) {
+            final int nodeIndex = calibrationLikelihood.mrcaNodeNumber - tree.getExternalNodeCount();
+            double[] calibrationGradient = calibrationLikelihood.getGradientLogDensity();
+            assert(calibrationGradient.length == 1);
+            gradient[nodeIndex] += calibrationGradient[0];
+        }
+        return gradient;
+    }
+
     public static class CalibrationLikelihood {
 
         private final TMRCAStatistic tmrcaStatistic;
@@ -115,8 +147,16 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood {
         }
 
         public double getLogLikelihood() {
-            final double nodeHeight = tmrcaStatistic.getTree().getNodeHeight(tmrcaStatistic.getTree().getNode(mrcaNodeNumber));
+            final double nodeHeight = getNodeHeight();
             return distribution.logPdf(nodeHeight);
+        }
+
+        private final double getNodeHeight() {
+            return tmrcaStatistic.getTree().getNodeHeight(tmrcaStatistic.getTree().getNode(mrcaNodeNumber));
+        }
+
+        public double[] getGradientLogDensity() {
+            return ((GradientProvider) distribution).getGradientLogDensity(getNodeHeight());
         }
     }
 }

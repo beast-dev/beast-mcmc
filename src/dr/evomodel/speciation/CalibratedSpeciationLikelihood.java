@@ -29,39 +29,41 @@ package dr.evomodel.speciation;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModelLikelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
+import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.*;
 import dr.math.distributions.Distribution;
+import dr.xml.Reportable;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood {
+public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood
+        implements GradientWrtParameterProvider, Reportable {
 
     private final SpeciationLikelihood speciationLikelihood;
     private final TreeModel tree;
-    private final Set<CalibrationLikelihood> calibrationLikelihoods;
+    private final List<CalibrationLikelihood> calibrationLikelihoods;
+    private final Parameter nodeHeightParameter;
+    private SpeciationLikelihoodGradient speciationLikelihoodGradient = null;
 
     public CalibratedSpeciationLikelihood(String name,
                                           SpeciationLikelihood speciationLikelihood,
                                           TreeModel tree,
-                                          Set<CalibrationLikelihood> calibrationLikelihoods) {
+                                          List<CalibrationLikelihood> calibrationLikelihoods) {
         super(name);
         this.speciationLikelihood = speciationLikelihood;
         this.tree = tree;
         this.calibrationLikelihoods = calibrationLikelihoods;
+        this.nodeHeightParameter = new NodeHeightProxyParameter("nodeHeightProxyParameter", tree, true);
     }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == tree) {
-            throw new RuntimeException("Only tested on fixed topology.");
-        }
+
     }
 
     @Override
@@ -100,10 +102,45 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood {
 
     @Override
     public void makeDirty() {
-
+        speciationLikelihood.makeDirty();
     }
 
-    public class CalibrationLikelihood {
+    @Override
+    public Likelihood getLikelihood() {
+        return this;
+    }
+
+    @Override
+    public Parameter getParameter() {
+        return nodeHeightParameter;
+    }
+
+    @Override
+    public int getDimension() {
+        return nodeHeightParameter.getDimension();
+    }
+
+    @Override
+    public double[] getGradientLogDensity() {
+        if (speciationLikelihoodGradient == null) {
+            this.speciationLikelihoodGradient = new SpeciationLikelihoodGradient(speciationLikelihood, tree);
+        }
+        double[] gradient = speciationLikelihoodGradient.getGradientLogDensity();
+        for (CalibrationLikelihood calibrationLikelihood : calibrationLikelihoods) {
+            final int nodeIndex = calibrationLikelihood.mrcaNodeNumber - tree.getExternalNodeCount();
+            double[] calibrationGradient = calibrationLikelihood.getGradientLogDensity();
+            assert(calibrationGradient.length == 1);
+            gradient[nodeIndex] += calibrationGradient[0];
+        }
+        return gradient;
+    }
+
+    @Override
+    public String getReport() {
+        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, 1E-2);
+    }
+
+    public static class CalibrationLikelihood {
 
         private final TMRCAStatistic tmrcaStatistic;
         private final Distribution distribution;
@@ -117,10 +154,16 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood {
         }
 
         public double getLogLikelihood() {
-            final double nodeHeight = tmrcaStatistic.getTree().getNodeHeight(tree.getNode(mrcaNodeNumber));
+            final double nodeHeight = getNodeHeight();
             return distribution.logPdf(nodeHeight);
         }
 
-    }
+        private final double getNodeHeight() {
+            return tmrcaStatistic.getTree().getNodeHeight(tmrcaStatistic.getTree().getNode(mrcaNodeNumber));
+        }
 
+        public double[] getGradientLogDensity() {
+            return ((GradientProvider) distribution).getGradientLogDensity(getNodeHeight());
+        }
+    }
 }

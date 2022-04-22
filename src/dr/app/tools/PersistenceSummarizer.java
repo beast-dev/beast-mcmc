@@ -27,33 +27,41 @@ public class PersistenceSummarizer extends BaseTreeTool {
     private PersistenceSummarizer(String inputFileName,
                                   String outputFileName,
                                   int burnIn,
-                                  double evaluationTime,
-                                  double ancestralTime,
+                                  double[] evaluationTimes,
+                                  double[] ancestralTimes,
 //                                         double mrsd,
                                   String nodeStateAnnotation
     ) throws IOException {
 
-        List<Tree> trees = new ArrayList<>();
+//        List<Tree> trees = new ArrayList<>();
 
-        readTrees(trees, inputFileName, burnIn);
+//        readTrees(trees, inputFileName, burnIn);
 
- //       this.mrsd = mrsd;
-//        this.evaluationTime = evaluationTime;
-//        this.ancestryTime = ancestryTime;
+        SequentialTreeReader treeReader = new SequentialTreeReader(inputFileName, burnIn);
+        //       this.mrsd = mrsd;
+        //        this.evaluationTime = evaluationTime;
+        //        this.ancestryTime = ancestryTime;
 
         this.ps = openOutputFile(outputFileName);
         //processTrees(trees, burnIn, evaluationTime, ancestryTime, nodeStateAnnotation);
-        processTrees(trees, burnIn, evaluationTime, ancestralTime, nodeStateAnnotation);
+        processTrees(treeReader, burnIn, evaluationTimes, ancestralTimes, nodeStateAnnotation);
         closeOutputFile(ps);
     }
 
-    private void processTrees(List<Tree> trees, int burnIn, double evaluationTime, double ancestralTime, String nodeStateAnnotation) {
+    private void processTrees(SequentialTreeReader treeReader, int burnIn, double[] evaluationTimes, double[] ancestralTimes, String nodeStateAnnotation) throws IOException {
         if (burnIn < 0) {
             burnIn = 0;
         }
-        for (int i = burnIn; i < trees.size(); ++i) {
-            Tree tree = trees.get(i);
-            processOneTree(tree, evaluationTime, ancestralTime, nodeStateAnnotation);
+
+        int index = burnIn;
+        Tree tree;
+
+        while (treeReader.getTree(index) != null) {
+            tree = treeReader.getTree(index);
+            for (int i = 0; i < evaluationTimes.length; i++) {
+                processOneTree(tree, evaluationTimes[i], ancestralTimes[i], nodeStateAnnotation);
+            }
+            index++;
         }
     }
 
@@ -81,6 +89,11 @@ public class PersistenceSummarizer extends BaseTreeTool {
                     NodeRef originalNode = tree.getNode(i);
 
                     String nodeState = (String) tree.getNodeAttribute(node, nodeStateAnnotation);
+                    if (nodeState == null) {
+                        throw new RuntimeException("Could not locate node state annotation '" + nodeStateAnnotation +
+                                "' for node " + node.getNumber());
+                    }
+
                     String currentState = nodeState;
                     String ancestralState = nodeState;
                     double currentStateTime = 0;
@@ -183,7 +196,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
                     double independenceTime = getIndependenceTime(tree,nodes,originalNode,evaluationTime,currentState,nodeStateAnnotation);
                     nodes.add(originalNode);
 
-                    Row row = new Row(treeId, evaluationTime, ancestralTime, currentState, ancestralState, currentStateTime, independenceTime,
+                    Row row = new Row(treeId, evaluationTime, ancestralTime, originalNode.getNumber(), node.getNumber(), currentState, ancestralState, currentStateTime, independenceTime,
                             nodeDescendants.size(),getSameStateDescendants(nodeDescendants,tree,currentState,nodeStateAnnotation, 0),
                             totalEventDescendents.size(),getSameStateDescendants(totalEventDescendents,tree,currentState,nodeStateAnnotation, 0),
                             nodesAfterEvalTime(totalEventDescendents, tree, evaluationTime),getSameStateDescendants(totalEventDescendents,tree,currentState,nodeStateAnnotation, evaluationTime));
@@ -297,6 +310,8 @@ public class PersistenceSummarizer extends BaseTreeTool {
         String treeId;
         double evaluationTime;
         double ancestralTime;
+        int startNodeID;
+        int endNodeID;
         String startLocation;
         String endLocation;
         double time;
@@ -311,6 +326,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
         private static final String DELIMITER = ",";
 
         private Row(String treeId, double evaluationTime, double ancestralTime,
+                    int startNodeID, int endNodeID,
                     String startLocation, String endLocation,
                     double time, double independenceTime, int numberOfDescendants, int numberOfDescendantsOfSameState,
                     int totalNumberOfDescendantsFromUniqueEvent, int totalnumberOfDescendantsFromUniqueEventAndSameState,
@@ -318,8 +334,11 @@ public class PersistenceSummarizer extends BaseTreeTool {
         ) {
             this.treeId = treeId;
             this.evaluationTime = evaluationTime;
+            this.startNodeID = startNodeID;
+            this.endNodeID = endNodeID;
             this.ancestralTime = ancestralTime;
-            this.startLocation = startLocation; this.endLocation = endLocation;
+            this.startLocation = startLocation;
+            this.endLocation = endLocation;
             this.time = time;
             this.independenceTime = independenceTime;
             this.numberOfDescendants = numberOfDescendants;
@@ -332,6 +351,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
 
         public String toString() {
             return treeId + DELIMITER + evaluationTime + DELIMITER + ancestralTime + DELIMITER
+                    + startNodeID + DELIMITER + endNodeID + DELIMITER
                     + startLocation + DELIMITER + endLocation + DELIMITER
                     + time + DELIMITER + independenceTime + DELIMITER + numberOfDescendants + DELIMITER + numberOfDescendantsOfSameState
                     + DELIMITER + totalNumberOfDescendantsFromUniqueEvent + DELIMITER + totalnumberOfDescendantsFromUniqueEventAndSameState
@@ -359,7 +379,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
 
     protected PrintStream openOutputFile(String outputFileName) {
         PrintStream ps = super.openOutputFile(outputFileName);
-        ps.println("treeId,evaluationTime,ancestralTime,stateAtEvaluationTime,ancestralState,persistenceTime,independenceTime,descendants,descendantsOfSameState,totalDescendantsFromUnique,totalDescendantsFromUniqueOfSameState,descendantsFromUniqueAfterEvalTime,descendantsFromUniqueOfSameStateAfterEvalTime");
+        ps.println("treeId,evaluationTime,ancestralTime,evaluationNodeID,ancestralNodeID,stateAtEvaluationTime,ancestralState,persistenceTime,independenceTime,descendants,descendantsOfSameState,totalDescendantsFromUnique,totalDescendantsFromUniqueOfSameState,descendantsFromUniqueAfterEvalTime,descendantsFromUniqueOfSameStateAfterEvalTime");
         return ps;
     }
 
@@ -392,12 +412,16 @@ public class PersistenceSummarizer extends BaseTreeTool {
         progressStream.println();
     }
 
+    private static final String EVALUATION_TIME = "evaluationTime";
+    private static final String ANCESTRAL_TIME = "ancestralTime";
+    private static final String NODE_STATE_ANNOTATION = "nodeStateAnnotation";
+
     //Main method
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, Arguments.ArgumentException {
 
         int burnIn = -1;
-        double evaluationTime = 0;
-        double ancestralTime = Double.MAX_VALUE;
+        double[] evaluationTimes = new double[1];
+        double[] ancestralTimes = new double[]{Double.MAX_VALUE};
         String nodeStateAnnotation = null;
 
         printTitle();
@@ -405,11 +429,11 @@ public class PersistenceSummarizer extends BaseTreeTool {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.IntegerOption(BURN_IN, "the number of states to be considered as 'burn-in' [default = 0]"),
-                        new Arguments.RealOption("mrsd", "The most recent sampling time to convert heights to times [default=MAX_VALUE]"),
-                        new Arguments.RealOption("evaluationTime", "The time at which the ancestral persistence of lineages is evaluated"),
-                        new Arguments.RealOption("independenceTime", "The time for which a lineage should not share a common ancestor with another lineage to be called a unique persistence/introduction  [default=MAX_VALUE]"),
-                        new Arguments.RealOption("ancestralTime", "The time in the past until which the the ancestral persistence of lineages is evaluated [default=MAX_VALUE]"),
-                        new Arguments.StringOption("nodeStateAnnotation", "String", "use node state annotations as poor proxy to MJs based on a annotation string for the discrete trait"),
+//                        new Arguments.RealOption("mrsd", "The most recent sampling time to convert heights to times [default=MAX_VALUE]"),
+                        new Arguments.RealArrayOption(EVALUATION_TIME, -1, "The time(s) at which the ancestral persistence of lineages is evaluated"),
+//                        new Arguments.RealOption("independenceTime", "The time for which a lineage should not share a common ancestor with another lineage to be called a unique persistence/introduction  [default=MAX_VALUE]"),
+                        new Arguments.RealArrayOption(ANCESTRAL_TIME, -1, "The time(s) in the past until which the the ancestral persistence of lineages is evaluated [default=MAX_VALUE]"),
+                        new Arguments.StringOption(NODE_STATE_ANNOTATION, "String", "use node state annotations as poor proxy to MJs based on a annotation string for the discrete trait"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 
@@ -420,12 +444,18 @@ public class PersistenceSummarizer extends BaseTreeTool {
 //            mrsd = arguments.getRealOption("mrsd");
 //        }
 
-        if (arguments.hasOption("evaluationTime")) {
-            evaluationTime = arguments.getRealOption("evaluationTime");
+        if (arguments.hasOption(EVALUATION_TIME)) {
+            evaluationTimes = arguments.getRealArrayOption(EVALUATION_TIME);
         }
 
-        if (arguments.hasOption("ancestralTime")) {
-            ancestralTime = arguments.getRealOption("ancestralTime");
+        if (arguments.hasOption(ANCESTRAL_TIME)) {
+            ancestralTimes = arguments.getRealArrayOption(ANCESTRAL_TIME);
+        }
+
+        if (evaluationTimes.length != ancestralTimes.length) {
+            throw new Arguments.ArgumentException("The number of " + EVALUATION_TIME + " arguments (" +
+                    evaluationTimes.length + ") must equal the number of " + ANCESTRAL_TIME +
+                    " arguments (" + ancestralTimes.length + ")");
         }
 
         if (arguments.hasOption(BURN_IN)) {
@@ -433,16 +463,19 @@ public class PersistenceSummarizer extends BaseTreeTool {
             System.err.println("Ignoring a burn-in of " + burnIn + " trees.");
         }
 
-        if (arguments.hasOption("nodeStateAnnotation")) {
-            nodeStateAnnotation = arguments.getStringOption("nodeStateAnnotation");
+        if (arguments.hasOption(NODE_STATE_ANNOTATION)) {
+            nodeStateAnnotation = arguments.getStringOption(NODE_STATE_ANNOTATION);
+        } else {
+            throw new Arguments.ArgumentException("Must include state annotation name via argument " +
+                    NODE_STATE_ANNOTATION + " (e.g. -" + NODE_STATE_ANNOTATION + " yourStateName)");
         }
 
         String[] fileNames = getInputOutputFileNames(arguments, PersistenceSummarizer::printUsage);
 
         new PersistenceSummarizer(fileNames[0], fileNames[1], burnIn,
  //               mrsd,
-                evaluationTime,
-                ancestralTime,
+                evaluationTimes,
+                ancestralTimes,
                 nodeStateAnnotation
         );
         System.exit(0);

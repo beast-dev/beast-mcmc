@@ -26,7 +26,6 @@
 package dr.app.checkpoint;
 
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovchain.MarkovChain;
@@ -37,7 +36,10 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
-import dr.inference.state.*;
+import dr.inference.state.Factory;
+import dr.inference.state.StateLoader;
+import dr.inference.state.StateLoaderSaver;
+import dr.inference.state.StateSaverChainListener;
 import dr.math.MathUtils;
 
 import java.io.*;
@@ -65,12 +67,16 @@ public class BeastCheckpointer implements StateLoaderSaver {
     public final static String FORCE_RESUME = "force.resume";
     public final static String CHECKPOINT_SEED = "checkpoint.seed";
 
+    public final static String FULL_CHECKPOINT_PRECISION = "full.checkpoint.precision";
+
     private final String loadStateFileName;
     private final String saveStateFileName;
 
     private final String stemFileName;
 
     private boolean forceResume = false;
+
+    private final boolean useFullPrecision;
 
     public BeastCheckpointer() {
         loadStateFileName = System.getProperty(LOAD_STATE_FILE, null);
@@ -88,6 +94,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
             final long saveStateEvery = Long.parseLong(System.getProperty(SAVE_STATE_EVERY));
             listeners.add(new StateSaverChainListener(BeastCheckpointer.this, saveStateEvery,true));
         }
+
+        useFullPrecision = (System.getProperty(FULL_CHECKPOINT_PRECISION) != null) &&
+                System.getProperty(FULL_CHECKPOINT_PRECISION).equalsIgnoreCase("true");
 
         Factory.INSTANCE = new Factory() {
             @Override
@@ -225,7 +234,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
         OutputStream fileOut = null;
         try {
             fileOut = new FileOutputStream(file);
-            PrintStream out = new PrintStream(fileOut);
+            PrintStream out = useFullPrecision ? new CheckpointPrintStream(fileOut) : new PrintStream(fileOut);
 
             ArrayList<TreeParameterModel> traitModels = new ArrayList<TreeParameterModel>();
 
@@ -366,6 +375,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
     }
 
     protected long readStateFromFile(File file, MarkovChain markovChain, double[] lnL) {
+
+        DoubleParser parser = useFullPrecision ? DoubleParser.HEX : DoubleParser.TEXT;
+
         OperatorSchedule operatorSchedule = markovChain.getSchedule();
 
         long state = -1;
@@ -412,7 +424,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
                     throw new RuntimeException("Unable to read lnL from state file");
                 }
                 if (lnL != null) {
-                    lnL[0] = Double.parseDouble(fields[1]);
+                    lnL[0] = parser.parseDouble(fields[1]);
                 }
             } catch (NumberFormatException nfe) {
                 throw new RuntimeException("Unable to read lnL from state file");
@@ -439,7 +451,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
                     if (fields[1].equals("branchRates.categories.rootNodeNumber")) {
                         // System.out.println("eek");
-                        double value = Double.parseDouble(fields[3]);
+                        double value = parser.parseDouble(fields[3]);
                         parameter.setParameterValue(0, value);
                         if (DEBUG) {
                             System.out.println("restoring " + fields[1] + " with value " + value);
@@ -450,13 +462,13 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         }
                         for (int dim = 0; dim < parameter.getDimension(); dim++) {
                             try {
-                                parameter.setParameterUntransformedValue(dim, Double.parseDouble(fields[dim + 3]));
+                                parameter.setParameterUntransformedValue(dim, parser.parseDouble(fields[dim + 3]));
                             } catch (RuntimeException rte) {
                                 System.err.println(rte);
                                 continue;
                             }
                             if (DEBUG) {
-                                System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
+                                System.out.print(parser.parseDouble(fields[dim + 3]) + " ");
                             }
                         }
                         if (DEBUG) {
@@ -486,7 +498,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
                     if (fields.length != 6) {
                         throw new RuntimeException("Coercable operator missing parameter: " + fields[1]);
                     }
-                    ((AdaptableMCMCOperator)operator).setAdaptableParameter(Double.parseDouble(fields[4]));
+                    ((AdaptableMCMCOperator)operator).setAdaptableParameter(parser.parseDouble(fields[4]));
                     ((AdaptableMCMCOperator)operator).setAdaptationCount(Long.parseLong(fields[5]));
                 }
             }
@@ -560,7 +572,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         for (int i = 0; i < nodeCount; i++) {
                             line = in.readLine();
                             fields = line.split("\t");
-                            nodeHeights[i] = Double.parseDouble(fields[1]);
+                            nodeHeights[i] = parser.parseDouble(fields[1]);
                             if (i < taxaNames.length) {
                                 taxaNames[i] = fields[2];
                             }
@@ -603,8 +615,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
                                 // childOrder[i] = Integer.parseInt(fields[2]);
                                 childOrder[Integer.parseInt(fields[0])] = Integer.parseInt(fields[2]);
                                 for (int j = 0; j < linkedModels.get(model.getId()).size(); j++) {
-                                    //   traitValues[j][i] = Double.parseDouble(fields[3+j]);
-                                    traitValues[j][Integer.parseInt(fields[0])] = Double.parseDouble(fields[3+j]);
+                                    //   traitValues[j][i] = parser.parseDouble(fields[3+j]);
+                                    traitValues[j][Integer.parseInt(fields[0])] = parser.parseDouble(fields[3+j]);
                                 }
                             }
                         }
@@ -677,6 +689,86 @@ public class BeastCheckpointer implements StateLoaderSaver {
         }
 
         return state;
+    }
+
+    class CheckpointPrintStream extends PrintStream {
+        public CheckpointPrintStream(OutputStream out) {
+            super(out);
+        }
+
+        public void print(double d) {
+            String byteString = Long.toHexString(Double.doubleToRawLongBits(d));
+            super.print(d + "/" + byteString);
+        }
+
+        public void println(double d) {
+            String byteString = Long.toHexString(Double.doubleToRawLongBits(d));
+            super.println(d + "/" + byteString);
+        }
+    }
+
+    enum DoubleParser {
+        TEXT {
+            public double parseDouble(String string) {
+                return Double.parseDouble(string);
+            }
+        },
+        HEX {
+            public double parseDouble(String string) {
+                String[] strings = string.split("/");
+                return convertHexStrToDouble(strings[1]);
+            }
+
+            private double convertHexStrToDouble(String input) {
+                // convert the input to positive, as needed
+                String s2 = preprocess(input);
+                boolean negative = true;
+                // if the original equals the new string, then it is not negative
+                if (input.equalsIgnoreCase(s2)) {
+                    negative = false;
+                }
+
+                // convert the hex string to long
+                long doubleAsLongReverse = Long.parseLong(s2, 16);
+
+                // Convert the long back into the original double
+                double doubleOutput = Double.longBitsToDouble(doubleAsLongReverse);
+
+                // return as a negative value, as needed
+                if (negative) {
+                    return -doubleOutput;
+                } else {
+                    return doubleOutput;
+                }
+            }
+
+            private String preprocess(String doubleAsHexString) {
+                // get the first char and convert it to an int
+                String s0 = doubleAsHexString.substring(0, 1);
+                int int1 = Integer.parseInt(s0, 16);
+
+                // if the int is < 8, then the string is not negative
+                // and is returned without further processing
+                if (int1 < 8) {
+                    return doubleAsHexString;
+                }
+
+                // otherwise subtract 8
+                int1 = int1 - 8;
+                s0 = Integer.toString(int1);
+
+                // don't prepend a "0"
+                if (int1 == 0) {
+                    s0 = "";
+                }
+
+                // return the string with a new inital char
+                return s0 + doubleAsHexString.substring(1);
+            }
+
+        };
+
+        public abstract double parseDouble(String string);
     }
 
 }

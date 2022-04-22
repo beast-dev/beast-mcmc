@@ -33,6 +33,7 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -40,77 +41,173 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.DoubleBinaryOperator;
 
 public class TimeIncrementBranchRateModel extends AbstractBranchRateModel implements DifferentiableBranchRates, Citable {
 
     private static final String PARSER_NAME = "timeIncrementBranchRateModel";
     private static final String INCREMENT = "increment";
 
-    private final AbstractBranchRateModel baseModel;
-    private final DifferentiableBranchRates baseRate;
-    private final int taxonNumber;
-    private final double increment;
+    private final TreeModel treeModel;
+    private final BranchRateModel branchRateModel;
+    private final DifferentiableBranchRates differentiableBranchRateModel;
+    private final NodeRef tip;
+    private final Parameter offset;
 
     public TimeIncrementBranchRateModel(String name,
-                                        AbstractBranchRateModel baseModel,
-                                        DifferentiableBranchRates baseRate,
-                                        Taxon taxon, double increment
-    ) {
+                                        TreeModel treeModel,
+                                        BranchRateModel branchRateModel,
+                                        Taxon taxon, Parameter offset) {
         super(name);
-        this.baseModel = baseModel;
-        this.baseRate = baseRate;
-        this.taxonNumber = 0; // TODO Fix
-        this.increment = increment;
 
-        addModel(baseModel);
+        this.treeModel = treeModel;
+        this.branchRateModel = branchRateModel;
+        this.differentiableBranchRateModel = (branchRateModel instanceof DifferentiableBranchRates) ?
+                (DifferentiableBranchRates) branchRateModel : null;
+
+        this.tip = treeModel.getNode(treeModel.getTaxonIndex(taxon));
+
+        if (tip == null) {
+            throw new IllegalArgumentException("Unable to find tip node for taxon");
+        }
+
+        this.offset = offset;
+
+        addModel(treeModel); // TODO Can probably remove?
+        addModel(branchRateModel);
+        addVariable(offset);
     }
 
     @Override
-    public double getUntransformedBranchRate(Tree tree, NodeRef node) {
-        return baseRate.getUntransformedBranchRate(tree, node);
+    public void handleModelChangedEvent(Model model, Object object, int index) {
+        fireModelChanged();
     }
 
+    @Override
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        fireModelChanged();
+    }
 
     @Override
-    public double getBranchRateDifferential(Tree tree, NodeRef node) {
+    protected void storeState() {
+    }
+
+    @Override
+    protected void restoreState() {
+    }
+
+    @Override
+    protected void acceptState() {
+    }
+
+    @Override
+    public double getBranchRateDifferential(final Tree tree, final NodeRef node) {
+        checkDifferentiability();
         throw new RuntimeException("Not yet implemented");
     }
 
     @Override
     public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
+        checkDifferentiability();
         throw new RuntimeException("Not yet implemented");
     }
 
     @Override
     public Parameter getRateParameter() {
-        return baseRate.getRateParameter();
+        checkDifferentiability();
+        return differentiableBranchRateModel.getRateParameter();
+    }
+
+    public Tree getTree() {
+        return treeModel;
     }
 
     @Override
     public int getParameterIndexFromNode(NodeRef node) {
-        return baseRate.getParameterIndexFromNode(node);
+        checkDifferentiability();
+        return differentiableBranchRateModel.getParameterIndexFromNode(node);
+    }
+
+    private void checkDifferentiability() {
+        if (differentiableBranchRateModel == null) {
+            throw new RuntimeException("Non-differentiable base BranchRateModel");
+        }
     }
 
     @Override
     public ArbitraryBranchRates.BranchRateTransform getTransform() {
-        return baseRate.getTransform();
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
     public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
         throw new RuntimeException("Not yet implemented");
-
     }
 
     @Override
-    public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value, int from, int to) {
+    public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value,
+                                                    int from, int to) {
         throw new RuntimeException("Not yet implemented");
     }
 
     @Override
-    public double getBranchRate(Tree tree, NodeRef node) {
-        return 0; // TODO Figure this out
+    public double mapReduceOverRates(NodeRateMap map, DoubleBinaryOperator reduce, double initial) {
+        checkDifferentiability();
+        return differentiableBranchRateModel.mapReduceOverRates(map, reduce, initial);
+    }
+
+    @Override
+    public void forEachOverRates(NodeRateMap map) {
+        checkDifferentiability();
+        differentiableBranchRateModel.forEachOverRates(map);
+    }
+
+    @Override
+    public double getBranchRate(final Tree tree, final NodeRef node) {
+        double rate = branchRateModel.getBranchRate(tree, node);
+
+        if (node == tip) {
+            double oldLength = tree.getBranchLength(node);
+            double newLength = oldLength + offset.getParameterValue(0);
+
+            rate *= (newLength / oldLength);
+        }
+
+        return rate;
+    }
+
+    public double getUntransformedBranchRate(Tree tree, NodeRef node) {
+        checkDifferentiability();
+        throw new RuntimeException("Not yet implemented");
+//        return differentiableBranchRateModel.getUntransformedBranchRate(tree, node);
+    }
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.MOLECULAR_CLOCK;
+    }
+
+    @Override
+    public String getDescription() {
+        String description =
+                (branchRateModel instanceof Citable) ?
+                        ((Citable) branchRateModel).getDescription() :
+                        "Unknown clock model";
+
+        description += " with lost time for taxon " + tip;
+        return description;
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        List<Citation> list =
+                (branchRateModel instanceof Citable) ?
+                        new ArrayList<>(((Citable) branchRateModel).getCitations()) :
+                        new ArrayList<>();
+        // TODO
+        return list;
     }
 
     // **************************************************************
@@ -125,19 +222,12 @@ public class TimeIncrementBranchRateModel extends AbstractBranchRateModel implem
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-
-            RandomLocalClockModel rlcModel = (RandomLocalClockModel) xo.getChild(RandomLocalClockModel.class);
-            AbstractBranchRateModel branchRates = (AbstractBranchRateModel) xo.getChild(AbstractBranchRateModel.class);
-            if (!(branchRates instanceof DifferentiableBranchRates)) {
-                throw new XMLParseException("Need a good comment");
-            }
-            DifferentiableBranchRates differentiableBranchRates = (DifferentiableBranchRates) branchRates;
-
+            TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);;
+            BranchRateModel branchRates = (BranchRateModel) xo.getChild(AbstractBranchRateModel.class);
             Taxon taxon = (Taxon) xo.getChild(Taxon.class);
-            double length = xo.getDoubleAttribute(INCREMENT);
+            Parameter offset = (Parameter) xo.getChild(Parameter.class);
 
-            return new TimeIncrementBranchRateModel("name",
-                    branchRates, differentiableBranchRates, taxon, length);
+            return new TimeIncrementBranchRateModel("name", tree, branchRates, taxon, offset);
         }
 
         //************************************************************************
@@ -151,7 +241,7 @@ public class TimeIncrementBranchRateModel extends AbstractBranchRateModel implem
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(AbstractBranchRateModel.class),
                 new ElementRule(Taxon.class),
-                AttributeRule.newDoubleRule(INCREMENT),
+                new ElementRule(Parameter.class),
         };
 
         public String getParserDescription() {
@@ -162,44 +252,4 @@ public class TimeIncrementBranchRateModel extends AbstractBranchRateModel implem
             return TimeIncrementBranchRateModel.class;
         }
     };
-
-    @Override
-    protected void handleModelChangedEvent(Model model, Object object, int index) {
-        fireModelChanged(object, index);
-    }
-
-    @Override
-    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        throw new RuntimeException("Should not get here");
-    }
-
-    @Override
-    protected void storeState() {
-
-    }
-
-    @Override
-    protected void restoreState() {
-
-    }
-
-    @Override
-    protected void acceptState() {
-
-    }
-
-    @Override
-    public Citation.Category getCategory() {
-        return null;
-    }
-
-    @Override
-    public String getDescription() {
-        return null;
-    }
-
-    @Override
-    public List<Citation> getCitations() {
-        return null;
-    }
 }

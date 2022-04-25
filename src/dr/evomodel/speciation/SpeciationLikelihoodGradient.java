@@ -43,16 +43,19 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
 
     private final SpeciationModel speciationModel;
     private final SpeciationLikelihood likelihood;
-    private final Parameter nodeHeightParameter;
+    private final Parameter parameter;
+    private final WrtParameter wrtParameter;
     private final TreeModel tree;
 
     public SpeciationLikelihoodGradient(SpeciationLikelihood likelihood,
-                                        TreeModel tree) {
+                                        TreeModel tree,
+                                        WrtParameter wrtParameter) {
 
         this.likelihood = likelihood;
         this.speciationModel = likelihood.speciationModel;
         this.tree = tree;
-        this.nodeHeightParameter = new NodeHeightProxyParameter("internalNodeParameter", tree, true);
+        this.wrtParameter = wrtParameter;
+        this.parameter = wrtParameter.getParameter(likelihood, tree);
 
     }
 
@@ -63,24 +66,21 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
 
     @Override
     public Parameter getParameter() {
-        return nodeHeightParameter;
+        return parameter;
     }
 
     @Override
     public int getDimension() {
-        return nodeHeightParameter.getDimension();
+        return parameter.getDimension();
     }
 
     @Override
     public double[] getGradientLogDensity() {
+        return wrtParameter.getGradientLogDensity(likelihood, tree);
+    }
 
-        double[] gradient = new double[tree.getInternalNodeCount()];
-
-        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            gradient[i] = speciationModel.getNodeGradient(tree, tree.getNode(i + tree.getExternalNodeCount()));
-        }
-
-        return gradient;
+    public TreeModel getTree() {
+        return tree;
     }
 
     @Override
@@ -91,5 +91,51 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
     @Override
     public String getReport() {
         return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, 1E-3);
+    }
+
+    public enum WrtParameter {
+        NODE_HEIGHT("nodeHeight") {
+
+            private Parameter parameter;
+
+            @Override
+            double[] getGradientLogDensity(SpeciationLikelihood likelihood,
+                                           TreeModel tree) {
+                double[] gradient = new double[tree.getInternalNodeCount()];
+
+                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                    gradient[i] = likelihood.getSpeciationModel().getNodeGradient(tree, tree.getNode(i + tree.getExternalNodeCount()));
+                }
+
+                return gradient;
+            }
+
+            @Override
+            Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree) {
+                if (parameter == null) {
+                    parameter = new NodeHeightProxyParameter("internalNodeParameter", tree, true);
+                }
+                return parameter;
+            }
+        };
+
+        WrtParameter(String name) {
+            this.name = name;
+        }
+
+        abstract double[] getGradientLogDensity(SpeciationLikelihood likelihood, TreeModel tree);
+        abstract Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree);
+
+        private final String name;
+
+
+        public static WrtParameter factory(String match) {
+            for (WrtParameter type : WrtParameter.values()) {
+                if (match.equalsIgnoreCase(type.name)) {
+                    return type;
+                }
+            }
+            return null;
+        }
     }
 }

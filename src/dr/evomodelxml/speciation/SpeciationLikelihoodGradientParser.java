@@ -38,16 +38,20 @@ import dr.xml.*;
 public class SpeciationLikelihoodGradientParser extends AbstractXMLObjectParser {
 
     private static final String NAME = "speciationLikelihoodGradient";
+    private static final String WRT_PARAMETER = "wrtParameter";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         SpeciationLikelihood likelihood = (SpeciationLikelihood) xo.getChild(SpeciationLikelihood.class);
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        String wrtParamter = (String) xo.getAttribute(WRT_PARAMETER);
 
         if (! (likelihood.getSpeciationModel() instanceof BirthDeathGernhard08Model)) {
             throw new RuntimeException("Not yet implemented for other cases.");
         }
-        return new SpeciationLikelihoodGradient(likelihood, tree);
+
+        SpeciationLikelihoodGradient.WrtParameter type = SpeciationLikelihoodGradient.WrtParameter.factory(wrtParamter);
+        return new SpeciationLikelihoodGradient(likelihood, tree, type);
     }
 
     @Override
@@ -56,6 +60,7 @@ public class SpeciationLikelihoodGradientParser extends AbstractXMLObjectParser 
     }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newStringRule(WRT_PARAMETER),
             new ElementRule(SpeciationLikelihood.class),
             new ElementRule(TreeModel.class),
     };

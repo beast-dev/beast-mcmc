@@ -30,10 +30,8 @@ import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
-import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 import dr.math.distributions.Distribution;
-import dr.xml.Reportable;
 
 import java.util.List;
 
@@ -41,8 +39,7 @@ import java.util.List;
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood
-        implements GradientWrtParameterProvider, Reportable {
+public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood {
 
     private final SpeciationLikelihood speciationLikelihood;
     private final TreeModel tree;
@@ -100,44 +97,13 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood
         return lnL;
     }
 
+    public List<CalibrationLikelihood> getCalibrationLikelihoods() {
+        return calibrationLikelihoods;
+    }
+
     @Override
     public void makeDirty() {
         speciationLikelihood.makeDirty();
-    }
-
-    @Override
-    public Likelihood getLikelihood() {
-        return this;
-    }
-
-    @Override
-    public Parameter getParameter() {
-        return nodeHeightParameter;
-    }
-
-    @Override
-    public int getDimension() {
-        return nodeHeightParameter.getDimension();
-    }
-
-    @Override
-    public double[] getGradientLogDensity() {
-        if (speciationLikelihoodGradient == null) {
-            this.speciationLikelihoodGradient = new SpeciationLikelihoodGradient(speciationLikelihood, tree);
-        }
-        double[] gradient = speciationLikelihoodGradient.getGradientLogDensity();
-        for (CalibrationLikelihood calibrationLikelihood : calibrationLikelihoods) {
-            final int nodeIndex = calibrationLikelihood.mrcaNodeNumber - tree.getExternalNodeCount();
-            double[] calibrationGradient = calibrationLikelihood.getGradientLogDensity();
-            assert(calibrationGradient.length == 1);
-            gradient[nodeIndex] += calibrationGradient[0];
-        }
-        return gradient;
-    }
-
-    @Override
-    public String getReport() {
-        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, 1E-2);
     }
 
     public static class CalibrationLikelihood {
@@ -151,6 +117,10 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood
             this.tmrcaStatistic = tmrcaStatistic;
             this.distribution = distribution;
             this.mrcaNodeNumber = TreeUtils.getCommonAncestorNode(tmrcaStatistic.getTree(), tmrcaStatistic.getLeafSet()).getNumber();
+        }
+
+        public int getMrcaNodeNumber() {
+            return mrcaNodeNumber;
         }
 
         public double getLogLikelihood() {

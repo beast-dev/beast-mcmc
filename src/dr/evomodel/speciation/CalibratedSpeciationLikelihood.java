@@ -112,7 +112,7 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood impl
 
     @Override
     public String getDescription() {
-        return "Calibration prior citations";
+        return "Calibration prior distributions";
     }
 
     @Override

@@ -32,14 +32,17 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.model.*;
 import dr.math.distributions.Distribution;
+import dr.util.Citable;
+import dr.util.Citation;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood {
+public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood implements Citable {
 
     private final SpeciationLikelihood speciationLikelihood;
     private final TreeModel tree;
@@ -106,6 +109,30 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood {
         speciationLikelihood.makeDirty();
     }
 
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.PRIOR_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Calibration prior citations";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        List<Citation> calibrationCitations = new ArrayList<>();
+        for (CalibrationLikelihood calibrationLikelihood : calibrationLikelihoods) {
+            if (calibrationLikelihood.getDistribution() instanceof Citable) {
+                Citation citation = ((Citable) calibrationLikelihood.getDistribution()).getCitations().get(0);
+                if (!calibrationCitations.contains(citation)) {
+                    calibrationCitations.add(((Citable) calibrationLikelihood.getDistribution()).getCitations().get(0));
+                }
+            }
+        }
+        return calibrationCitations;
+    }
+
     public static class CalibrationLikelihood {
 
         private final TMRCAStatistic tmrcaStatistic;
@@ -121,6 +148,10 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood {
 
         public int getMrcaNodeNumber() {
             return mrcaNodeNumber;
+        }
+
+        public Distribution getDistribution() {
+            return distribution;
         }
 
         public double getLogLikelihood() {

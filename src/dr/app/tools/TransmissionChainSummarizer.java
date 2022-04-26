@@ -30,6 +30,8 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
     private PrintStream ps;
     private HashMap<String, String> mergedStates;
     private double timeSlice = Double.MAX_VALUE;
+    public static final String SPECIAL_CHARACTERS_REGEX = ".*[\\s\\.;,\"\'].*";
+    private HashMap<String, Integer> idMap = new HashMap<String, Integer>();
 
     public TransmissionChainSummarizer(
             String inputFileName,
@@ -51,7 +53,6 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
 
     protected PrintStream openOutputFile(String outputFileName) {
         PrintStream ps = super.openOutputFile(outputFileName);
-        ps.println(Row.header);
         return ps;
     }
 
@@ -59,6 +60,27 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
         if (ps != null) {
             ps.close();
         }
+    }
+
+    private HashMap<String, Integer> createAndPrintIdMap(Tree tree){
+        int k = 1;
+        int taxonCount = tree.getTaxonCount();
+        List<String> names = new ArrayList<String>();
+        for (int i = 0; i < tree.getTaxonCount(); i++) {
+            names.add(tree.getTaxonId(i));
+        }
+        HashMap<String, Integer> idMap = new HashMap<String, Integer>();
+        for (String name : names) {
+            idMap.put(name, k);
+            if (name.matches(SPECIAL_CHARACTERS_REGEX)) {
+                name = "'" + name + "'";
+            }
+            if (k < names.size()) {
+                this.ps.println("#"+k + "\t" + name);
+            }
+            k += 1;
+        }
+        return idMap;
     }
 
     private void processTrees(SequentialTreeReader treeReader, int burnIn, String nodeStateAnnotation, String[] annotationStates) throws IOException {
@@ -71,6 +93,10 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
 
         while (treeReader.getTree(index) != null) {
             tree = treeReader.getTree(index);
+            if(index == burnIn){
+                this.idMap = createAndPrintIdMap(tree);
+                this.ps.println(Row.header);
+            }
             processOneTree(tree, nodeStateAnnotation, Arrays.asList(annotationStates));
             index++;
         }
@@ -87,6 +113,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
         int numberOfDescendants;
         int numberOfDescendantsOfSameState;
         int numberOfPersistentDescendantsOfSameState;
+        String persistentDescendantIds;
         double lengthOfTransmissionChain;
         double rootHeight;
         boolean isExternal;
@@ -104,6 +131,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                 "numberOfDescendants\t"+
                 "numberOfDescendantsOfSameState\t"+
                 "numberOfPersistentDescendantsOfSameState\t"+
+                "persistentDescendantsOfSameState\t"+
                 "lengthOfTransmissionChain\t"+
                 "rootHeight\t"+
                 "isExternal\t"+
@@ -120,6 +148,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                 int numberOfDescendants,
                 int numberOfDescendantsOfSameState,
                 int numberOfPersistentDescendantsOfSameState,
+                String persistentDescendantIds,
                 double lengthOfTransmissionChain,
                 double rootHeight,
                 boolean isExternal,
@@ -135,6 +164,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
             this.numberOfDescendants = numberOfDescendants;
             this.numberOfDescendantsOfSameState = numberOfDescendantsOfSameState;
             this.numberOfPersistentDescendantsOfSameState = numberOfPersistentDescendantsOfSameState;
+            this.persistentDescendantIds = persistentDescendantIds;
             this.lengthOfTransmissionChain = lengthOfTransmissionChain;
             this.rootHeight = rootHeight;
             this.isExternal = isExternal;
@@ -154,12 +184,25 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                     String.valueOf(numberOfDescendants),
                     String.valueOf(numberOfDescendantsOfSameState),
                     String.valueOf(numberOfPersistentDescendantsOfSameState),
+                    persistentDescendantIds,
                     String.valueOf(lengthOfTransmissionChain),
                     String.valueOf(rootHeight),
                     String.valueOf(isExternal),
                     jumpsToDifferentState
             );
         }
+    }
+
+    private String idstoString(Tree tree, Set<NodeRef> persistentDescendants){
+        Iterator iter = persistentDescendants.iterator();
+        List<String> ids = new ArrayList<String>();
+        int ctr = 0;
+        NodeRef currentNode;
+        while (iter.hasNext()) {
+            currentNode = (NodeRef)iter.next();
+            ids.add(String.valueOf(this.idMap.get(tree.getNodeTaxon(currentNode).getId())));
+        }
+        return String.join(",", ids);
     }
 
     private String convertToJson(HashMap<String, Integer> map){
@@ -264,6 +307,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                     nodeDescendants.size(),
                     getSameStateDescendants(nodeDescendants, tree, currentState, nodeStateAnnotation),
                     persistentDescendants.size(),
+                    idstoString(tree, persistentDescendants),
                     (introductionTime - heightOfTransmissionChain)/rootHeight,
                     rootHeight,
                     tree.isExternal(node),

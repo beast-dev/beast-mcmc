@@ -29,7 +29,6 @@ package dr.evomodel.speciation;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.model.*;
 import dr.math.distributions.Distribution;
 import dr.util.Citable;
@@ -47,8 +46,6 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood impl
     private final SpeciationLikelihood speciationLikelihood;
     private final TreeModel tree;
     private final List<CalibrationLikelihood> calibrationLikelihoods;
-    private final Parameter nodeHeightParameter;
-    private SpeciationLikelihoodGradient speciationLikelihoodGradient = null;
 
     public CalibratedSpeciationLikelihood(String name,
                                           SpeciationLikelihood speciationLikelihood,
@@ -58,7 +55,6 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood impl
         this.speciationLikelihood = speciationLikelihood;
         this.tree = tree;
         this.calibrationLikelihoods = calibrationLikelihoods;
-        this.nodeHeightParameter = new NodeHeightProxyParameter("nodeHeightProxyParameter", tree, true);
     }
 
     @Override

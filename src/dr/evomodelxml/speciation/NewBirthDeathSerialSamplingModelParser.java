@@ -43,6 +43,7 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
     public static final String R = "treatmentProbability";
     public static final String ORIGIN = "origin";
     public static final String TREE_TYPE = "type";
+    public static final String CONDITION = "conditionOnSurvival";
     public static final String BDSS = "bdss";
 
     public String getParserName() {
@@ -62,6 +63,8 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
 
         final Parameter origin = (Parameter) xo.getElementFirstChild(ORIGIN);;
 
+        Boolean condition = xo.getAttribute(CONDITION, false);
+
         String citeThisModel;
         if ( r.getParameterValue(0) < Double.MIN_VALUE ) {
             citeThisModel = getCitationFBD();
@@ -73,7 +76,7 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
 
         Logger.getLogger("dr.evomodel").info(citeThisModel);
 
-        return new NewBirthDeathSerialSamplingModel(modelName, lambda, mu, psi, r, rho, origin, units);
+        return new NewBirthDeathSerialSamplingModel(modelName, lambda, mu, psi, r, rho, origin, condition, units);
     }
 
     //************************************************************************
@@ -115,5 +118,6 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
             new ElementRule(PSI, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(R, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(RHO, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(CONDITION, new XMLSyntaxRule[]{new ElementRule(boolean.class)}, true),
     };
 }

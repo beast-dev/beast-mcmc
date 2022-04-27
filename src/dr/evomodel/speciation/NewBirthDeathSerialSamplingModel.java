@@ -62,6 +62,8 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
     // the originTime of the infection, origin > tree.getRoot();
     Variable<Double> originTime;
 
+    private boolean conditionOnSurvival;
+
     // useful constants we don't want to compute nTaxa times
     private double storedC1 = Double.NEGATIVE_INFINITY;
     private double storedC2 = Double.NEGATIVE_INFINITY;
@@ -73,9 +75,10 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
             Variable<Double> treatmentProbability,
             Variable<Double> samplingFractionAtPresent,
             Variable<Double> originTime,
+            boolean condition,
             Type units) {
 
-        this("NewBirthDeathSerialSamplingModel", birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingFractionAtPresent, originTime, units);
+        this("NewBirthDeathSerialSamplingModel", birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingFractionAtPresent, originTime, condition, units);
     }
 
     public NewBirthDeathSerialSamplingModel(
@@ -86,6 +89,7 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
             Variable<Double> treatmentProbability,
             Variable<Double> samplingFractionAtPresent,
             Variable<Double> originTime,
+            boolean condition,
             Type units) {
 
         super(modelName, units);
@@ -272,6 +276,10 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
 //        System.err.println("r is " + r);
 //        System.err.println("new logL is " + logL);
         // TODO conditioning
+        if ( conditionOnSurvival ) {
+            logL -= Math.log(1.0 - p0(origin));
+        }
+
         return logL;
     }
 

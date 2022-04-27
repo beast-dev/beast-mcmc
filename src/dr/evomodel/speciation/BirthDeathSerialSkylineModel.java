@@ -401,7 +401,32 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
     public double[] getSamplingProbabilityGradient(Tree tree) {
         throw new RuntimeException("Not yet implemented!");
     }
-    
+
+    @Override
+    public final Parameter getBirthRateParameter() {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public final Parameter getDeathRateParameter() {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public final Parameter getSamplingRateParameter() {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public final Parameter getTreatmentProbabilityParameter() {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public final Parameter getSamplingProbabilityParameter() {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
     public static void main(String[] args) throws IOException, Importer.ImportException {
 
         // test framework

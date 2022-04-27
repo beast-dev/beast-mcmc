@@ -205,6 +205,31 @@ public class BirthDeathCollapseModel extends SpeciationModel implements Citable 
     }
 
     @Override
+    public final Parameter getBirthRateParameter() {
+        throw new RuntimeException("Parameter does not exist in this model.");
+    }
+
+    @Override
+    public final Parameter getDeathRateParameter() {
+        throw new RuntimeException("Parameter does not exist in this model.");
+    }
+
+    @Override
+    public final Parameter getSamplingRateParameter() {
+        throw new RuntimeException("Parameter does not exist in this model.");
+    }
+
+    @Override
+    public final Parameter getTreatmentProbabilityParameter() {
+        throw new RuntimeException("Parameter does not exist in this model.");
+    }
+
+    @Override
+    public final Parameter getSamplingProbabilityParameter() {
+        throw new RuntimeException("Parameter does not exist in this model.");
+    }
+
+    @Override
     public Citation.Category getCategory() {
         return Citation.Category.SPECIES_MODELS;
     }

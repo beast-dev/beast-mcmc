@@ -319,6 +319,31 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
         throw new RuntimeException("Not yet implemented!");
     }
 
+    @Override
+    public final Parameter getBirthRateParameter() {
+        return null;
+    }
+
+    @Override
+    public final Parameter getDeathRateParameter() {
+        return null;
+    }
+
+    @Override
+    public final Parameter getSamplingRateParameter() {
+        return null;
+    }
+
+    @Override
+    public final Parameter getTreatmentProbabilityParameter() {
+        return null;
+    }
+
+    @Override
+    public final Parameter getSamplingProbabilityParameter() {
+        return null;
+    }
+
     public void mask(SpeciationModel mask) {
         if (mask instanceof NewBirthDeathSerialSamplingModel) {
             this.mask = (NewBirthDeathSerialSamplingModel) mask;

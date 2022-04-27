@@ -55,6 +55,7 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
 
     public abstract double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude);
 
+    // TODO Start remove (make classes *SpeciationLikelihoodGradient that provide the gradients, don't inflate existing classes
     public abstract double getNodeGradient(Tree tree, NodeRef node);
 
     public abstract double[] getBirthRateGradient(Tree tree);
@@ -76,6 +77,7 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
     public abstract Parameter getTreatmentProbabilityParameter();
 
     public abstract Parameter getSamplingProbabilityParameter();
+    // TODO End remove
 
     // True if Yule.
     //

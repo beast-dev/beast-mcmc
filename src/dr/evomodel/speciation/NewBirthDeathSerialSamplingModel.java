@@ -295,6 +295,31 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
         throw new RuntimeException("Not yet implemented!");
     }
 
+    @Override
+    public double getBirthRateGradient(Tree tree) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public double getDeathRateGradient(Tree tree) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public double getSamplingRateGradient(Tree tree) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public double getTreatmentProbabilityGradient(Tree tree) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public double getSamplingProbabilityGradient(Tree tree) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
     public void mask(SpeciationModel mask) {
         if (mask instanceof NewBirthDeathSerialSamplingModel) {
             this.mask = (NewBirthDeathSerialSamplingModel) mask;

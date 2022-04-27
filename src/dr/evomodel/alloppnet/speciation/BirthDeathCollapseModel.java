@@ -180,6 +180,31 @@ public class BirthDeathCollapseModel extends SpeciationModel implements Citable 
     }
 
     @Override
+    public double getBirthRateGradient(Tree tree) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public double getDeathRateGradient(Tree tree) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public double getSamplingRateGradient(Tree tree) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public double getTreatmentProbabilityGradient(Tree tree) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public double getSamplingProbabilityGradient(Tree tree) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
     public Citation.Category getCategory() {
         return Citation.Category.SPECIES_MODELS;
     }

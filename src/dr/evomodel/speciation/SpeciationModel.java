@@ -57,6 +57,16 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
 
     public abstract double getNodeGradient(Tree tree, NodeRef node);
 
+    public abstract double getBirthRateGradient(Tree tree);
+
+    public abstract double getDeathRateGradient(Tree tree);
+
+    public abstract double getSamplingRateGradient(Tree tree);
+
+    public abstract double getTreatmentProbabilityGradient(Tree tree);
+    
+    public abstract double getSamplingProbabilityGradient(Tree tree);
+
     // True if Yule.
     //
     // Not abstract - non supporting derived classes do not need to override anything

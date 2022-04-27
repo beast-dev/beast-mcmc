@@ -114,6 +114,8 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
         addVariable(treatmentProbability);
         treatmentProbability.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
 
+        this.conditionOnSurvival = condition;
+
         this.originTime = originTime;
         if (originTime != null) {
             addVariable(originTime);

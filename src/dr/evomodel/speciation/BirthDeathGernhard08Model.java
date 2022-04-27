@@ -185,7 +185,7 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel implem
 
     @Override
     public double getTreatmentProbabilityGradient(Tree tree) {
-        throw new RuntimeException("Not yet implemented!");
+        throw new RuntimeException("Parameter does not exist in this model.");
     }
 
     @Override

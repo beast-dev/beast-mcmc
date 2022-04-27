@@ -33,7 +33,6 @@ import dr.inference.model.Variable;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
-import dr.xml.Reportable;
 
 import java.util.Collections;
 import java.util.List;
@@ -296,27 +295,27 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
     }
 
     @Override
-    public double getBirthRateGradient(Tree tree) {
+    public double[] getBirthRateGradient(Tree tree) {
         throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
-    public double getDeathRateGradient(Tree tree) {
+    public double[] getDeathRateGradient(Tree tree) {
         throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
-    public double getSamplingRateGradient(Tree tree) {
+    public double[] getSamplingRateGradient(Tree tree) {
         throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
-    public double getTreatmentProbabilityGradient(Tree tree) {
+    public double[] getTreatmentProbabilityGradient(Tree tree) {
         throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
-    public double getSamplingProbabilityGradient(Tree tree) {
+    public double[] getSamplingProbabilityGradient(Tree tree) {
         throw new RuntimeException("Not yet implemented!");
     }
 

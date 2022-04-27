@@ -239,27 +239,27 @@ public class RandomLocalYuleModel extends UltrametricSpeciationModel implements 
     }
 
     @Override
-    public double getBirthRateGradient(Tree tree) {
+    public double[] getBirthRateGradient(Tree tree) {
         throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
-    public double getDeathRateGradient(Tree tree) {
+    public double[] getDeathRateGradient(Tree tree) {
         throw new RuntimeException("Parameter does not exist in this model.");
     }
 
     @Override
-    public double getSamplingRateGradient(Tree tree) {
+    public double[] getSamplingRateGradient(Tree tree) {
         throw new RuntimeException("Parameter does not exist in this model.");
     }
 
     @Override
-    public double getTreatmentProbabilityGradient(Tree tree) {
+    public double[] getTreatmentProbabilityGradient(Tree tree) {
         throw new RuntimeException("Parameter does not exist in this model.");
     }
 
     @Override
-    public double getSamplingProbabilityGradient(Tree tree) {
+    public double[] getSamplingProbabilityGradient(Tree tree) {
         throw new RuntimeException("Parameter does not exist in this model.");
     }
 }

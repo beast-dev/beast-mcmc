@@ -180,7 +180,7 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel implem
 
     @Override
     public double[] getSamplingRateGradient(Tree tree) {
-        throw new RuntimeException("Not yet implemented!");
+        throw new RuntimeException("Parameter does not exist in this model.");
     }
 
     @Override
@@ -200,17 +200,17 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel implem
 
     @Override
     public final Parameter getSamplingRateParameter() {
-        throw new RuntimeException("Not yet implemented!");
+        throw new RuntimeException("Parameter does not exist in this model.");
     }
 
     @Override
     public final Parameter getTreatmentProbabilityParameter() {
-        throw new RuntimeException("Not yet implemented!");
+        throw new RuntimeException("Parameter does not exist in this model.");
     }
 
     @Override
     public final Parameter getSamplingProbabilityParameter() {
-        throw new RuntimeException("Parameter does not exist in this model.");
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override

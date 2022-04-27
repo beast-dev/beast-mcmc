@@ -26,6 +26,7 @@
 package dr.evomodelxml.speciation;
 
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
+import dr.evomodel.speciation.NewBirthDeathSerialSamplingModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationLikelihoodGradient;
 import dr.evomodel.tree.TreeModel;
@@ -46,7 +47,7 @@ public class SpeciationLikelihoodGradientParser extends AbstractXMLObjectParser 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         String wrtParamter = (String) xo.getAttribute(WRT_PARAMETER);
 
-        if (! (likelihood.getSpeciationModel() instanceof BirthDeathGernhard08Model)) {
+        if (! ((likelihood.getSpeciationModel() instanceof BirthDeathGernhard08Model) || (likelihood.getSpeciationModel() instanceof NewBirthDeathSerialSamplingModel)) ) {
             throw new RuntimeException("Not yet implemented for other cases.");
         }
 

@@ -117,6 +117,96 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
                 }
                 return parameter;
             }
+        },
+        BIRTH_RATE("birthRate") {
+
+            private Parameter parameter;
+
+            @Override
+            double[] getGradientLogDensity(SpeciationLikelihood likelihood,
+                    TreeModel tree) {
+                return likelihood.getSpeciationModel().getBirthRateGradient(tree);
+            }
+
+            @Override
+            Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree) {
+                if (parameter == null) {
+                    parameter = likelihood.getSpeciationModel().getBirthRateParameter();
+                }
+                return parameter;
+            }
+        },
+        DEATH_RATE("deathRate") {
+
+            private Parameter parameter;
+
+            @Override
+            double[] getGradientLogDensity(SpeciationLikelihood likelihood,
+                                           TreeModel tree) {
+                return likelihood.getSpeciationModel().getDeathRateGradient(tree);
+            }
+
+            @Override
+            Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree) {
+                if (parameter == null) {
+                    parameter = likelihood.getSpeciationModel().getDeathRateParameter();
+                }
+                return parameter;
+            }
+        },
+        SAMPLING_RATE("samplingRate") {
+
+            private Parameter parameter;
+
+            @Override
+            double[] getGradientLogDensity(SpeciationLikelihood likelihood,
+                                           TreeModel tree) {
+                return likelihood.getSpeciationModel().getSamplingRateGradient(tree);
+            }
+
+            @Override
+            Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree) {
+                if (parameter == null) {
+                    parameter = likelihood.getSpeciationModel().getSamplingRateParameter();
+                }
+                return parameter;
+            }
+        },
+        TREATMENT_PROBABILITY("treatmentProbability") {
+
+            private Parameter parameter;
+
+            @Override
+            double[] getGradientLogDensity(SpeciationLikelihood likelihood,
+                                           TreeModel tree) {
+                return likelihood.getSpeciationModel().getTreatmentProbabilityGradient(tree);
+            }
+
+            @Override
+            Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree) {
+                if (parameter == null) {
+                    parameter = likelihood.getSpeciationModel().getTreatmentProbabilityParameter();
+                }
+                return parameter;
+            }
+        },
+        SAMPLING_PROBABILITY("samplingProbability") {
+
+            private Parameter parameter;
+
+            @Override
+            double[] getGradientLogDensity(SpeciationLikelihood likelihood,
+                                           TreeModel tree) {
+                return likelihood.getSpeciationModel().getSamplingProbabilityGradient(tree);
+            }
+
+            @Override
+            Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree) {
+                if (parameter == null) {
+                    parameter = likelihood.getSpeciationModel().getSamplingProbabilityParameter();
+                }
+                return parameter;
+            }
         };
 
         WrtParameter(String name) {

@@ -44,22 +44,22 @@ import java.util.Set;
 public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel implements Citable {
 
     // extant sampling proportion
-    Variable<Double> samplingFractionAtPresent;
+    Parameter samplingFractionAtPresent;
 
     // birth rate
-    Variable<Double> birthRate;
+    Parameter birthRate;
 
     // death rate
-    Variable<Double> deathRate;
+    Parameter deathRate;
 
     // serial sampling rate
-    Variable<Double> serialSamplingRate;
+    Parameter serialSamplingRate;
 
     // "treatmentProbability" parameter aka r aka Pr(death | lineage is sampled)
-    Variable<Double> treatmentProbability;
+    Parameter treatmentProbability;
 
     // the originTime of the infection, origin > tree.getRoot();
-    Variable<Double> originTime;
+    Parameter originTime;
 
     private boolean conditionOnSurvival;
 
@@ -68,12 +68,12 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
     private double storedC2 = Double.NEGATIVE_INFINITY;
 
     public NewBirthDeathSerialSamplingModel(
-            Variable<Double> birthRate,
-            Variable<Double> deathRate,
-            Variable<Double> serialSamplingRate,
-            Variable<Double> treatmentProbability,
-            Variable<Double> samplingFractionAtPresent,
-            Variable<Double> originTime,
+            Parameter birthRate,
+            Parameter deathRate,
+            Parameter serialSamplingRate,
+            Parameter treatmentProbability,
+            Parameter samplingFractionAtPresent,
+            Parameter originTime,
             boolean condition,
             Type units) {
 
@@ -82,12 +82,12 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
 
     public NewBirthDeathSerialSamplingModel(
             String modelName,
-            Variable<Double> birthRate,
-            Variable<Double> deathRate,
-            Variable<Double> serialSamplingRate,
-            Variable<Double> treatmentProbability,
-            Variable<Double> samplingFractionAtPresent,
-            Variable<Double> originTime,
+            Parameter birthRate,
+            Parameter deathRate,
+            Parameter serialSamplingRate,
+            Parameter treatmentProbability,
+            Parameter samplingFractionAtPresent,
+            Parameter originTime,
             boolean condition,
             Type units) {
 
@@ -321,27 +321,27 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
 
     @Override
     public final Parameter getBirthRateParameter() {
-        return null;
+        return birthRate;
     }
 
     @Override
     public final Parameter getDeathRateParameter() {
-        return null;
+        return deathRate;
     }
 
     @Override
     public final Parameter getSamplingRateParameter() {
-        return null;
+        return serialSamplingRate;
     }
 
     @Override
     public final Parameter getTreatmentProbabilityParameter() {
-        return null;
+        return treatmentProbability;
     }
 
     @Override
     public final Parameter getSamplingProbabilityParameter() {
-        return null;
+        return samplingFractionAtPresent;
     }
 
     public void mask(SpeciationModel mask) {

@@ -163,7 +163,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
     // Super-clean interface (just one intrusive function) and a better place, since `Likelihood`s have gradients (`Model`s do not).
     public SpeciationModelGradientProvider getGradientProvider() {
         if (gradientProvider == null) {
-            throw new RuntimeException("Not yet implemented");
+            gradientProvider = speciationModel.getProvider();
         }
         return gradientProvider;
     }

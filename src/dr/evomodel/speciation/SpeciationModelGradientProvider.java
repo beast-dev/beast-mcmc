@@ -6,28 +6,27 @@ import dr.inference.model.Parameter;
 
 public interface SpeciationModelGradientProvider {
 
-    // Possible interface TWO
-    default double getNodeGradient(Tree tree, NodeRef node) {
+    default double getNodeHeightGradient(Tree tree, NodeRef node) {
         throw new RuntimeException("Not yet implemented");
     }
 
-    default double[] getBirthRateGradient(Tree tree) {
+    default double[] getBirthRateGradient(Tree tree, NodeRef node) {
         throw new RuntimeException("Not yet implemented");
     }
 
-    default double[] getDeathRateGradient(Tree tree) {
+    default double[] getDeathRateGradient(Tree tree, NodeRef node) {
         throw new RuntimeException("Not yet implemented");
     }
 
-    default double[] getSamplingRateGradient(Tree tree) {
+    default double[] getSamplingRateGradient(Tree tree, NodeRef node) {
         throw new RuntimeException("Not yet implemented");
     }
 
-    default double[] getTreatmentProbabilityGradient(Tree tree) {
+    default double[] getTreatmentProbabilityGradient(Tree tree, NodeRef node) {
         throw new RuntimeException("Not yet implemented");
     }
 
-    default double[] getSamplingProbabilityGradient(Tree tree) {
+    default double[] getSamplingProbabilityGradient(Tree tree, NodeRef node) {
         throw new RuntimeException("Not yet implemented");
     }
 
@@ -51,6 +50,7 @@ public interface SpeciationModelGradientProvider {
         throw new RuntimeException("Not yet implemented");
     }
 
+    // TODO This factory is probability unnecessary ...
     static SpeciationModelGradientProvider factory(SpeciationModel speciationModel) {
         return speciationModel.getProvider();
     }

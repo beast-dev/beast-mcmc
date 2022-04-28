@@ -26,6 +26,8 @@
 
 package dr.evomodel.speciation;
 
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -41,7 +43,6 @@ import dr.xml.Reportable;
  */
 public class SpeciationLikelihoodGradient implements GradientWrtParameterProvider, Reportable, Loggable {
 
-    private final SpeciationModel speciationModel;
     private final SpeciationLikelihood likelihood;
     private final Parameter parameter;
     private final WrtParameter wrtParameter;
@@ -54,11 +55,9 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
                                         WrtParameter wrtParameter) {
 
         this.likelihood = likelihood;
-        this.speciationModel = likelihood.speciationModel;
         this.tree = tree;
         this.wrtParameter = wrtParameter;
         this.parameter = wrtParameter.getParameter(likelihood, tree);
-
         this.provider = likelihood.getGradientProvider();
     }
 
@@ -80,6 +79,7 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
     @Override
     public double[] getGradientLogDensity() {
         return wrtParameter.getGradientLogDensity(likelihood, tree);
+        // TODO should be: .getGradientLogDensity(provider, tree);
     }
 
     public TreeModel getTree() {
@@ -98,12 +98,8 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
 
     public enum WrtParameter {
         NODE_HEIGHT("nodeHeight") {
-
-            private Parameter parameter;
-
             @Override
-            double[] getGradientLogDensity(SpeciationLikelihood likelihood,
-                                           TreeModel tree) {
+            double[] getGradientLogDensity(SpeciationLikelihood likelihood, Tree tree) {
                 double[] gradient = new double[tree.getInternalNodeCount()];
 
                 for (int i = 0; i < tree.getInternalNodeCount(); i++) {
@@ -115,106 +111,68 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
 
             @Override
             Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree) {
-                if (parameter == null) {
-                    parameter = new NodeHeightProxyParameter("internalNodeParameter", tree, true);
-                }
-                return parameter;
+                return new NodeHeightProxyParameter("internalNodeParameter", tree, true);
             }
         },
 
         BIRTH_RATE("birthRate") {
-
-            private Parameter parameter;
-
             @Override
-            double[] getGradientLogDensity(SpeciationLikelihood likelihood,
-                    TreeModel tree) {
+            double[] getGradientLogDensity(SpeciationLikelihood likelihood, Tree tree) {
                 return likelihood.getSpeciationModel().getBirthRateGradient(tree);
                 // TODO should be: return provider.getBirthRateGradient(tree);
             }
 
             @Override
             Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree) {
-                if (parameter == null) {
-                    parameter = likelihood.getSpeciationModel().getBirthRateParameter();
-                }
-                return parameter;
+                return likelihood.getSpeciationModel().getBirthRateParameter();
             }
         },
 
         DEATH_RATE("deathRate") {
-
-            private Parameter parameter;
-
             @Override
-            double[] getGradientLogDensity(SpeciationLikelihood likelihood,
-                                           TreeModel tree) {
+            double[] getGradientLogDensity(SpeciationLikelihood likelihood, Tree tree) {
                 return likelihood.getSpeciationModel().getDeathRateGradient(tree);
             }
 
             @Override
             Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree) {
-                if (parameter == null) {
-                    parameter = likelihood.getSpeciationModel().getDeathRateParameter();
-                }
-                return parameter;
+                return likelihood.getSpeciationModel().getDeathRateParameter();
             }
         },
 
         SAMPLING_RATE("samplingRate") {
-
-            private Parameter parameter;
-
             @Override
-            double[] getGradientLogDensity(SpeciationLikelihood likelihood,
-                                           TreeModel tree) {
+            double[] getGradientLogDensity(SpeciationLikelihood likelihood, Tree tree) {
                 return likelihood.getSpeciationModel().getSamplingRateGradient(tree);
             }
 
             @Override
             Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree) {
-                if (parameter == null) {
-                    parameter = likelihood.getSpeciationModel().getSamplingRateParameter();
-                }
-                return parameter;
+                return likelihood.getSpeciationModel().getSamplingRateParameter();
             }
         },
 
         TREATMENT_PROBABILITY("treatmentProbability") {
-
-            private Parameter parameter;
-
             @Override
-            double[] getGradientLogDensity(SpeciationLikelihood likelihood,
-                                           TreeModel tree) {
+            double[] getGradientLogDensity(SpeciationLikelihood likelihood, Tree tree) {
                 return likelihood.getSpeciationModel().getTreatmentProbabilityGradient(tree);
             }
 
             @Override
             Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree) {
-                if (parameter == null) {
-                    parameter = likelihood.getSpeciationModel().getTreatmentProbabilityParameter();
-                }
-                return parameter;
+                return likelihood.getSpeciationModel().getTreatmentProbabilityParameter();
             }
         },
 
         SAMPLING_PROBABILITY("samplingProbability") {
-
-            private Parameter parameter;
-
             @Override
-            double[] getGradientLogDensity(SpeciationLikelihood likelihood,
-                                           TreeModel tree) {
+            double[] getGradientLogDensity(SpeciationLikelihood likelihood, Tree tree) {
                 return likelihood.getSpeciationModel().getSamplingProbabilityGradient(tree);
             }
 
             @Override
             Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree) {
-                if (parameter == null) {
-                    parameter = likelihood.getSpeciationModel().getSamplingProbabilityParameter();
-                }
-                return parameter;
+                return likelihood.getSpeciationModel().getSamplingProbabilityParameter();
             }
         };
 
@@ -222,7 +180,7 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             this.name = name;
         }
 
-        abstract double[] getGradientLogDensity(SpeciationLikelihood likelihood, TreeModel tree);
+        abstract double[] getGradientLogDensity(SpeciationLikelihood likelihood, Tree tree);
 
         abstract Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree);
 

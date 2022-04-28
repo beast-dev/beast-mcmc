@@ -55,6 +55,10 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
 
     public abstract double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude);
 
+    public SpeciationModelGradientProvider getProvider() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
     // TODO Start remove (make classes *SpeciationLikelihoodGradient that provide the gradients, don't inflate existing classes
     public abstract double getNodeGradient(Tree tree, NodeRef node);
 

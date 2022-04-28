@@ -80,6 +80,10 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
         this("NewBirthDeathSerialSamplingModel", birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingFractionAtPresent, originTime, condition, units);
     }
 
+    public SpeciationModelGradientProvider getProvider() { // This is less INTRUSIVE to the exisiting file
+        return new NewBirthDeathSerialSamplingModelGradient(this);
+    }
+
     public NewBirthDeathSerialSamplingModel(
             String modelName,
             Parameter birthRate,

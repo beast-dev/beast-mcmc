@@ -47,6 +47,8 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
     private final WrtParameter wrtParameter;
     private final TreeModel tree;
 
+    private final SpeciationModelGradientProvider provider;
+
     public SpeciationLikelihoodGradient(SpeciationLikelihood likelihood,
                                         TreeModel tree,
                                         WrtParameter wrtParameter) {
@@ -57,6 +59,7 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
         this.wrtParameter = wrtParameter;
         this.parameter = wrtParameter.getParameter(likelihood, tree);
 
+        this.provider = likelihood.getGradientProvider();
     }
 
     @Override
@@ -118,6 +121,7 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
                 return parameter;
             }
         },
+
         BIRTH_RATE("birthRate") {
 
             private Parameter parameter;
@@ -126,6 +130,7 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             double[] getGradientLogDensity(SpeciationLikelihood likelihood,
                     TreeModel tree) {
                 return likelihood.getSpeciationModel().getBirthRateGradient(tree);
+                // TODO should be: return provider.getBirthRateGradient(tree);
             }
 
             @Override
@@ -136,6 +141,7 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
                 return parameter;
             }
         },
+
         DEATH_RATE("deathRate") {
 
             private Parameter parameter;
@@ -154,6 +160,7 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
                 return parameter;
             }
         },
+
         SAMPLING_RATE("samplingRate") {
 
             private Parameter parameter;
@@ -172,6 +179,7 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
                 return parameter;
             }
         },
+
         TREATMENT_PROBABILITY("treatmentProbability") {
 
             private Parameter parameter;
@@ -190,6 +198,7 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
                 return parameter;
             }
         },
+
         SAMPLING_PROBABILITY("samplingProbability") {
 
             private Parameter parameter;
@@ -214,10 +223,10 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
         }
 
         abstract double[] getGradientLogDensity(SpeciationLikelihood likelihood, TreeModel tree);
+
         abstract Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree);
 
         private final String name;
-
 
         public static WrtParameter factory(String match) {
             for (WrtParameter type : WrtParameter.values()) {

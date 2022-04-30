@@ -26,7 +26,6 @@
 
 package dr.evomodel.speciation;
 
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
@@ -98,7 +97,7 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
 
     public enum WrtParameter {
         NODE_HEIGHT("nodeHeight") {
-            @Override
+            @Override @Deprecated
             double[] getGradientLogDensity(SpeciationLikelihood likelihood, Tree tree) {
                 double[] gradient = new double[tree.getInternalNodeCount()];
 
@@ -109,34 +108,63 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
                 return gradient;
             }
 
-            @Override
+            @Override @Deprecated
             Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree) {
                 return new NodeHeightProxyParameter("internalNodeParameter", tree, true);
+            }
+
+            @Override
+            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+                throw new RuntimeException("To be implemented soon");
+            }
+
+            @Override
+            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+                throw new RuntimeException("To be implemented soon");
             }
         },
 
         BIRTH_RATE("birthRate") {
             @Override
             double[] getGradientLogDensity(SpeciationLikelihood likelihood, Tree tree) {
-                return likelihood.getSpeciationModel().getBirthRateGradient(tree);
-                // TODO should be: return provider.getBirthRateGradient(tree);
+                throw new RuntimeException("deprecated");
             }
 
             @Override
             Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree) {
-                return likelihood.getSpeciationModel().getBirthRateParameter();
+                throw new RuntimeException("deprecated");
+            }
+
+            @Override
+            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+                return provider.getBirthRateGradient(tree, null);
+            }
+
+            @Override
+            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+                return provider.getBirthRateParameter();
             }
         },
 
         DEATH_RATE("deathRate") {
             @Override
             double[] getGradientLogDensity(SpeciationLikelihood likelihood, Tree tree) {
-                return likelihood.getSpeciationModel().getDeathRateGradient(tree);
+                throw new RuntimeException("Deprecated");
             }
 
             @Override
             Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree) {
-                return likelihood.getSpeciationModel().getDeathRateParameter();
+                throw new RuntimeException("Deprecated");
+            }
+
+            @Override
+            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+                return provider.getDeathRateGradient(tree, null);
+            }
+
+            @Override
+            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+                return provider.getDeathRateParameter();
             }
         },
 
@@ -150,6 +178,16 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree) {
                 return likelihood.getSpeciationModel().getSamplingRateParameter();
             }
+
+            @Override
+            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+                return provider.getSamplingRateGradient(tree, null);
+            }
+
+            @Override
+            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+                return provider.getSamplingRateParameter();
+            }
         },
 
         TREATMENT_PROBABILITY("treatmentProbability") {
@@ -161,6 +199,16 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             @Override
             Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree) {
                 return likelihood.getSpeciationModel().getTreatmentProbabilityParameter();
+            }
+
+            @Override
+            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+                return provider.getTreatmentProbabilityGradient(tree, null);
+            }
+
+            @Override
+            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+                return provider.getTreatmentProbabilityParameter();
             }
         },
 
@@ -174,14 +222,30 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree) {
                 return likelihood.getSpeciationModel().getSamplingProbabilityParameter();
             }
+
+            @Override
+            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+                return provider.getSamplingProbabilityGradient(tree, null);
+            }
+
+            @Override
+            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+                return provider.getSamplingProbabilityParameter();
+            }
         };
 
         WrtParameter(String name) {
             this.name = name;
         }
 
+        abstract double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree);
+
+        abstract Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree);
+
+        @Deprecated
         abstract double[] getGradientLogDensity(SpeciationLikelihood likelihood, Tree tree);
 
+        @Deprecated
         abstract Parameter getParameter(SpeciationLikelihood likelihood, TreeModel tree);
 
         private final String name;

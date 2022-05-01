@@ -372,61 +372,6 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
         throw new RuntimeException("Not implemented!");
     }
 
-    @Override
-    public double getNodeGradient(Tree tree, NodeRef node) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double[] getBirthRateGradient(Tree tree) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double[] getDeathRateGradient(Tree tree) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double[] getSamplingRateGradient(Tree tree) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double[] getTreatmentProbabilityGradient(Tree tree) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double[] getSamplingProbabilityGradient(Tree tree) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public final Parameter getBirthRateParameter() {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public final Parameter getDeathRateParameter() {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public final Parameter getSamplingRateParameter() {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public final Parameter getTreatmentProbabilityParameter() {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public final Parameter getSamplingProbabilityParameter() {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
     public static void main(String[] args) throws IOException, Importer.ImportException {
 
         // test framework

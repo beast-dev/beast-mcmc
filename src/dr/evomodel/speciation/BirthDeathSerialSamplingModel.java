@@ -365,61 +365,6 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel imple
         throw new RuntimeException("Not implemented!");
     }
 
-    @Override
-    public double getNodeGradient(Tree tree, NodeRef node) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double[] getBirthRateGradient(Tree tree) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double[] getDeathRateGradient(Tree tree) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double[] getSamplingRateGradient(Tree tree) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double[] getTreatmentProbabilityGradient(Tree tree) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double[] getSamplingProbabilityGradient(Tree tree) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public final Parameter getBirthRateParameter() {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public final Parameter getDeathRateParameter() {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public final Parameter getSamplingRateParameter() {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public final Parameter getTreatmentProbabilityParameter() {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public final Parameter getSamplingProbabilityParameter() {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
     public void mask(SpeciationModel mask) {
         if (mask instanceof BirthDeathSerialSamplingModel) {
             this.mask = (BirthDeathSerialSamplingModel) mask;

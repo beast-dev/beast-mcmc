@@ -25,7 +25,6 @@
 
 package dr.evomodel.speciation;
 
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
@@ -59,33 +58,9 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
         throw new RuntimeException("Not yet implemented");
     }
 
-    // TODO Start remove (make classes *SpeciationLikelihoodGradient that provide the gradients, don't inflate existing classes
-    public abstract double getNodeGradient(Tree tree, NodeRef node);
-
-    public abstract double[] getBirthRateGradient(Tree tree);
-
-    public abstract double[] getDeathRateGradient(Tree tree);
-
-    public abstract double[] getSamplingRateGradient(Tree tree);
-
-    public abstract double[] getTreatmentProbabilityGradient(Tree tree);
-
-    public abstract double[] getSamplingProbabilityGradient(Tree tree);
-
-    public abstract Parameter getBirthRateParameter();
-
-    public abstract Parameter getDeathRateParameter();
-
-    public abstract Parameter getSamplingRateParameter();
-
-    public abstract Parameter getTreatmentProbabilityParameter();
-
-    public abstract Parameter getSamplingProbabilityParameter();
-    // TODO End remove
-
     // True if Yule.
     //
-    // Not abstract - non supporting derived classes do not need to override anything
+    // Not abstract - non-supporting derived classes do not need to override anything
     public boolean isYule() {
         return false;
     }

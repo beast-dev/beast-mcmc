@@ -55,7 +55,8 @@ import static org.apache.commons.math.special.Gamma.logGamma;
  * @author Joseph Heled
  *         Date: 24/02/2008
  */
-public class BirthDeathGernhard08Model extends UltrametricSpeciationModel implements Citable {
+public class BirthDeathGernhard08Model extends UltrametricSpeciationModel
+        implements SpeciationModelGradientProvider, Citable {
 
     public enum TreeType {
         UNSCALED,     // no coefficient 
@@ -130,8 +131,12 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel implem
         this.type = type;
     }
 
-    @Override
-    public double getNodeGradient(Tree tree, NodeRef node) {
+    public SpeciationModelGradientProvider getProvider() { // This is less INTRUSIVE to the exisiting file
+        return this;
+    }
+    
+    @Override // TODO Move into separate Gradient class
+    public double getNodeHeightGradient(Tree tree, NodeRef node) {
         final double height = tree.getNodeHeight(node);
         final double r = getR();
         final double mrh = -r * height;
@@ -166,56 +171,6 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel implem
             }
             return result;
         }
-    }
-
-    @Override
-    public double[] getBirthRateGradient(Tree tree) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double[] getDeathRateGradient(Tree tree) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double[] getSamplingRateGradient(Tree tree) {
-        throw new RuntimeException("Parameter does not exist in this model.");
-    }
-
-    @Override
-    public double[] getTreatmentProbabilityGradient(Tree tree) {
-        throw new RuntimeException("Parameter does not exist in this model.");
-    }
-
-    @Override
-    public final Parameter getBirthRateParameter() {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public final Parameter getDeathRateParameter() {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public final Parameter getSamplingRateParameter() {
-        throw new RuntimeException("Parameter does not exist in this model.");
-    }
-
-    @Override
-    public final Parameter getTreatmentProbabilityParameter() {
-        throw new RuntimeException("Parameter does not exist in this model.");
-    }
-
-    @Override
-    public final Parameter getSamplingProbabilityParameter() {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double[] getSamplingProbabilityGradient(Tree tree) {
-        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override

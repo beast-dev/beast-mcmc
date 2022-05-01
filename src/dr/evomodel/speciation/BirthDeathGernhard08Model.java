@@ -134,7 +134,7 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel
     public SpeciationModelGradientProvider getProvider() { // This is less INTRUSIVE to the exisiting file
         return this;
     }
-    
+
     @Override // TODO Move into separate Gradient class
     public double getNodeHeightGradient(Tree tree, NodeRef node) {
         final double height = tree.getNodeHeight(node);

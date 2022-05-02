@@ -350,6 +350,7 @@ public class CompleteHistorySimulator extends SimpleAlignment
 									: null), 
 									idMap, 
 									sb);
+            sb.append(";");
 			sb.append("\n");
 
 		}

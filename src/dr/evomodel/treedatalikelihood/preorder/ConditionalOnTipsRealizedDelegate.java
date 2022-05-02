@@ -105,31 +105,35 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
         } else {
 
             final double priorPrec = partialPriorBuffer[offsetPartial + dimTrait];
-            final double totalPrec = priorPrec + rootPrec;
+            if (Double.isInfinite(priorPrec)) {
+                System.arraycopy(partialPriorBuffer, offsetPartial, sample, offsetSample, dimTrait);
+            } else {
+                final double totalPrec = priorPrec + rootPrec;
 
-            for (int i = 0; i < dimTrait; ++i) {
-                tmpMean[i] = (rootPrec * partialNodeBuffer[offsetPartial + i]
-                        + priorPrec * partialPriorBuffer[offsetPartial + i])
-                        / totalPrec;
-            }
+                for (int i = 0; i < dimTrait; ++i) {
+                    tmpMean[i] = (rootPrec * partialNodeBuffer[offsetPartial + i]
+                            + priorPrec * partialPriorBuffer[offsetPartial + i])
+                            / totalPrec;
+                }
 
-            if (DEBUG) {
-                System.err.println("\troot   mean: " + new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait));
-                System.err.println("\tprior  prec: " + priorPrec);
-                System.err.println("\tprior  mean: " + new WrappedVector.Raw(partialPriorBuffer, offsetPartial, dimTrait));
-                System.err.println("\tweight mean: " + new WrappedVector.Raw(tmpMean, 0, dimTrait));
-            }
+                if (DEBUG) {
+                    System.err.println("\troot   mean: " + new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait));
+                    System.err.println("\tprior  prec: " + priorPrec);
+                    System.err.println("\tprior  mean: " + new WrappedVector.Raw(partialPriorBuffer, offsetPartial, dimTrait));
+                    System.err.println("\tweight mean: " + new WrappedVector.Raw(tmpMean, 0, dimTrait));
+                }
 
-            final double sqrtScale = Math.sqrt(1.0 / totalPrec);
+                final double sqrtScale = Math.sqrt(1.0 / totalPrec);
 
-            MultivariateNormalDistribution.nextMultivariateNormalCholesky(
-                    tmpMean, 0, // input mean
-                    cholesky, sqrtScale, // input variance
-                    sample, offsetSample, // output sample
-                    tmpEpsilon);
+                MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                        tmpMean, 0, // input mean
+                        cholesky, sqrtScale, // input variance
+                        sample, offsetSample, // output sample
+                        tmpEpsilon);
 
-            if (DEBUG) {
-                System.err.println("\tsample: " + new WrappedVector.Raw(sample, offsetSample, dimTrait));
+                if (DEBUG) {
+                    System.err.println("\tsample: " + new WrappedVector.Raw(sample, offsetSample, dimTrait));
+                }
             }
         }
     }

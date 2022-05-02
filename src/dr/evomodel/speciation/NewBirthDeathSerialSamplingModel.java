@@ -25,9 +25,12 @@
 
 package dr.evomodel.speciation;
 
+import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.util.Author;
 import dr.util.Citable;
@@ -212,6 +215,28 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
      * @return log-likelihood of density
      */
     public final double calculateTreeLogLikelihood(Tree tree) {
+        precomputeConstants();
+
+//        double logLInterval = calculateLogLikelihoodOverIntervals(tree);
+        double logL = calculateUnconditionedTreeLogLikelihood(tree);
+
+//        System.err.println("interval lnL = " + logLInterval + "; classical lnL = " + logL);
+
+        double origin = originTime.getValue(0);
+        if (origin < tree.getNodeHeight(tree.getRoot())) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        if ( conditionOnSurvival ) {
+            logL -= Math.log(1.0 - p0(origin));
+        }
+
+        return logL;
+    }
+
+    // Log-likelihood of tree without conditioning on anything
+    public final double calculateUnconditionedTreeLogLikelihood(Tree tree) {
+
         double lambda = lambda();
         double mu = mu();
         double psi = psi();
@@ -220,8 +245,6 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
 
         double timeZeroTolerance = Double.MIN_VALUE;
         boolean noSamplingAtPresent = rho < Double.MIN_VALUE;
-
-        precomputeConstants();
 
         double origin = originTime.getValue(0);
         if (origin < tree.getNodeHeight(tree.getRoot())) {
@@ -237,18 +260,20 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
 
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             NodeRef node = tree.getExternalNode(i);
-            if (tree.getNodeHeight(node) < timeZeroTolerance) {
-                n += 1;
-            } else {
+            if (noSamplingAtPresent || tree.getNodeHeight(node) > timeZeroTolerance) {
                 m += 1;
+            } else {
+                n += 1;
             }
         }
 
-        if (noSamplingAtPresent && n < 1) {
+        if ((!noSamplingAtPresent) && n < 1) {
             throw new RuntimeException(
                     "Sampling fraction at time zero (rho) is >0 but there are no samples at time zero"
             );
         }
+
+//        System.err.println("Count uncondit: n = " + n + "; m = " + m + "; k = " + k);
 
         double logL = 0.0;
 
@@ -269,7 +294,6 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
             logL -= logq(x);
         }
 
-        // TODO tip times on starting tree are all 0?
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             double y = tree.getNodeHeight(tree.getExternalNode(i));
             if (noSamplingAtPresent || y > timeZeroTolerance) {
@@ -279,11 +303,6 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
         }
 //        System.err.println("r is " + r);
 //        System.err.println("new logL is " + logL);
-        // TODO conditioning
-        if ( conditionOnSurvival ) {
-            logL -= Math.log(1.0 - p0(origin));
-        }
-
         return logL;
     }
 

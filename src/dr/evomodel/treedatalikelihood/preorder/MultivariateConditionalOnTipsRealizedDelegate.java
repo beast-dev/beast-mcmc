@@ -3,11 +3,11 @@ package dr.evomodel.treedatalikelihood.preorder;
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.*;
+import dr.evomodel.treedatalikelihood.continuous.cdi.MultivariateIntegrator;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
-import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -45,8 +45,9 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
 
         // Integrate out against prior
         final DenseMatrix64F rootPrec = wrap(partialNodeBuffer, offsetPartial + dimTrait, dimTrait, dimTrait);
-        final DenseMatrix64F priorPrec = new DenseMatrix64F(dimTrait, dimTrait);
-        MissingOps.safeMult(Pd, wrap(partialPriorBuffer, offsetPartial + dimTrait, dimTrait, dimTrait), priorPrec);
+        final DenseMatrix64F priorPrec = wrap(partialPriorBuffer, offsetPartial + dimTrait, dimTrait, dimTrait);
+ //       MissingOps.safeMult(Pd, wrap(partialPriorBuffer, offsetPartial + dimTrait, dimTrait, dimTrait), priorPrec);
+        ((MultivariateIntegrator) cdi).getRootPriorPrecision(Pd, priorPrec, likelihoodDelegate.getDiffusionProcessDelegate().isIntegratedProcess());
 
         final DenseMatrix64F totalPrec = new DenseMatrix64F(dimTrait, dimTrait);
         CommonOps.add(rootPrec, priorPrec, totalPrec);
@@ -143,7 +144,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
         } else {
 
             final int zeroCount = countZeroDiagonals(P0);
-            if (zeroCount == dimTrait) { //  All missing completely at random
+            if (zeroCount == dimTrait && !likelihoodDelegate.getDiffusionProcessDelegate().hasDrift()) { //  All missing completely at random
                 //TODO: This is N(X_pa(j), l_j V_root). Why not N(X_pa(j), V_branch) ?
 
                 final double sqrtScale = Math.sqrt(1.0 / branchPrecision);

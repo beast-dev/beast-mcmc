@@ -1,12 +1,11 @@
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
-import dr.math.MathUtils;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.InversionResult;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
-import static dr.math.matrixAlgebra.missingData.InversionResult.Code.*;
+import static dr.math.matrixAlgebra.missingData.InversionResult.Code.NOT_OBSERVED;
 import static dr.math.matrixAlgebra.missingData.InversionResult.mult;
 import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
@@ -616,20 +615,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
             // TODO Block below is for the conjugate prior ONLY
             {
-
-                if (!isIntegratedProcess) {
-                    final DenseMatrix64F PTmp = new DenseMatrix64F(dimTrait, dimTrait);
-                    CommonOps.mult(Pd, PPrior, PTmp);
-                    PPrior.set(PTmp); // TODO What does this do?
-                } else {
-                    DenseMatrix64F Pdbis = new DenseMatrix64F(dimTrait, dimTrait);
-                    blockUnwrap(Pd, Pdbis.data, 0, 0, 0, dimTrait);
-                    blockUnwrap(Pd, Pdbis.data, dimProcess, dimProcess, 0, dimTrait);
-
-                    final DenseMatrix64F PTmp = new DenseMatrix64F(dimTrait, dimTrait);
-                    CommonOps.mult(Pdbis, PPrior, PTmp);
-                    PPrior.set(PTmp);
-                }
+                getRootPriorPrecision(Pd, PPrior, isIntegratedProcess);
             }
 
             final DenseMatrix64F VTotal = new DenseMatrix64F(dimTrait, dimTrait);

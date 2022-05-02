@@ -333,6 +333,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return rootPrior;
     }
 
+    public int getDimProcess() {
+        return dimProcess;
+    }
+
     public int getPartialBufferCount() {
         return partialBufferHelper.getBufferCount();
     }

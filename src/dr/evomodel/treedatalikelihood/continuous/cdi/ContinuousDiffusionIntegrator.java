@@ -108,9 +108,9 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                                                             final double[] rotation,
                                                             int updateCount);
 
-    public void updateIntegratedBrownianMotionDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
-                                                                final double[] edgeLengths, final double[] driftRates,
-                                                                int updateCount);
+    void updateIntegratedBrownianMotionDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
+                                                         final double[] edgeLengths, final double[] driftRates,
+                                                         int updateCount);
 
 //    void updateOrnsteinUhlenbeckMatrices(int precisionIndex, final int[] probabilityIndices,
 //                                         final double[] edgeLengths,

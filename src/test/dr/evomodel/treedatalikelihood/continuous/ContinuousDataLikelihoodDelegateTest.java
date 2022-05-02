@@ -184,7 +184,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
-        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 1.0369622398437415, 2.065450266793184, 0.6174755164694558, 0.5, 2.0829935706195615, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
+        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 1.0369756434332398, 2.0462155265038557, 0.6054236464363175, 0.5, 2.0829935706195615, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
         testConditionalSimulations(dataLikelihood, likelihoodDelegate, diffusionModel, dataModel, rootPrior, expectedTraits);
 
 
@@ -232,7 +232,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
-        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 1.811803424441062, 0.6837595819961084, -1.0607909328094163, 0.5, 3.8623525502275142, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
+        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 1.811936920575975, 0.6645253568041535, -1.0807136572611238, 0.5, 3.8623525502275142, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
         testConditionalSimulations(dataLikelihood, likelihoodDelegate, diffusionModel, dataModel, rootPrior, expectedTraits);
 
         // Fixed Root
@@ -375,7 +375,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
-        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 1.0427958776637916, 2.060317467842193, 0.5916377446549433, 0.5, 2.07249828895442, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
+        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 1.0428617934711057, 2.0411050451484463, 0.5794607846668219, 0.5, 2.07249828895442, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
         testConditionalSimulations(dataLikelihood, likelihoodDelegate, diffusionModel, dataModel, rootPrior, expectedTraits);
 
         // Fixed Root
@@ -425,7 +425,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
-        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 1.6349449153945943, 2.8676718538313635, -1.0653412418514505, 0.5, 3.3661883786009166, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
+        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 1.635010498015842, 2.864821373865659, -1.0853111798010757, 0.5, 3.3661883786009166, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
         testConditionalSimulations(dataLikelihood, likelihoodDelegate, diffusionModel, dataModel, rootPrior, expectedTraits);
 
         // Fixed Root
@@ -791,7 +791,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
-        double[] expectedTraits = new double[]{1.3270345780274333, -1.5589839744569975, 1.241407854756886, -1.4525648723106128, 1.388017192005544, -1.533399261149814, 1.8040948421311085, -1.4189758121385794, 1.1408165195832969, -1.4607180451268982, 1.6048925583434688, -1.4333922414628846};
+        double[] expectedTraits = new double[]{1.3270345780684147, -1.5589839744772112, 1.2414736635261745, -1.4667294402006905, 1.3880171920550715, -1.533399261284528, 1.8040948422714405, -1.4189758124698626, 1.1408165196730307, -1.4607180452574147, 1.6048925584768932, -1.433392241781935};
         testConditionalSimulations(dataLikelihoodFactors, likelihoodDelegateFactors, diffusionModelFactor, dataModelFactor, rootPriorFactor, expectedTraits);
 
     }
@@ -827,7 +827,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
-        double[] expectedTraits = new double[]{1.2546097113922914, -1.1761389606670978, 1.305611773283861, -1.0644815941127401, 1.4571577864569687, -1.1477885449972944, 1.749551506462585, -0.9890375857170963, 1.0763987351136657, -1.0671848958534547, 1.5276137550128892, -0.9822950795368887};
+        double[] expectedTraits = new double[]{1.254609711504247, -1.1761389610061128, 1.305808317174877, -1.0709005664064868, 1.4571577865578949, -1.147788545433862, 1.7495515066909766, -0.9890375865560959, 1.0763987352911082, -1.0671848962791533, 1.5276137552159164, -0.9822950803483552};
         testConditionalSimulations(dataLikelihoodFactors, likelihoodDelegateFactors, diffusionModelFactor, dataModelFactor, rootPriorFactor, expectedTraits);
 
     }
@@ -865,7 +865,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
-        double[] expectedTraits = new double[]{0.4889263054598222, 1.866143125522109, 0.41845209107775877, 1.978457443711536, 0.5589398189015322, 1.8942177991552116, 0.9699471556784252, 2.0423474270630155, 0.3288819110219145, 1.9759942582707206, 0.8081782260054755, 2.038299849681893};
+        double[] expectedTraits = new double[]{0.4889263055380016, 1.866143125332805, 0.418517497134906, 1.9704713910092426, 0.5589398189745178, 1.8942177988462992, 0.9699471558714021, 2.0423474264069226, 0.32888191115035126, 1.9759942580128798, 0.8081782261607062, 2.0382998491256417};
         testConditionalSimulations(dataLikelihoodFactors, likelihoodDelegateFactors, diffusionModelFactor, dataModelFactor, rootPriorFactor, expectedTraits);
 
     }
@@ -907,7 +907,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
-        double[] expectedTraits = new double[]{0.6074917696668031, 1.4240248941610945, 0.5818653246406664, 1.545237778993696, 0.7248840308905077, 1.4623057820376757, 1.0961030597302799, 1.603694717986661, 0.44280937767720896, 1.5374906898020686, 0.920698984735896, 1.6011019734876784};
+        double[] expectedTraits = new double[]{0.6074917697347216, 1.4240248940048557, 0.5819299147586043, 1.5372685585813965, 0.7248840309526001, 1.4623057817648863, 1.0961030599134718, 1.6036947173685623, 0.442809377799788, 1.5374906895611142, 0.9206989848884695, 1.6011019729425795};
         testConditionalSimulations(dataLikelihoodFactors, likelihoodDelegateFactors, diffusionModelFactor, dataModelFactor, rootPriorFactor, expectedTraits);
 
     }

@@ -810,6 +810,22 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         }
     }
 
+    public void getRootPriorPrecision(DenseMatrix64F Pd, DenseMatrix64F PPrior, boolean isIntegratedProcess) {
+        if (!isIntegratedProcess) {
+            final DenseMatrix64F PTmp = new DenseMatrix64F(dimTrait, dimTrait);
+            CommonOps.mult(Pd, PPrior, PTmp);
+            PPrior.set(PTmp);
+        } else {
+            DenseMatrix64F Pdbis = new DenseMatrix64F(dimTrait, dimTrait);
+            blockUnwrap(Pd, Pdbis.data, 0, 0, 0, dimTrait);
+            blockUnwrap(Pd, Pdbis.data, dimProcess, dimProcess, 0, dimTrait);
+
+            final DenseMatrix64F PTmp = new DenseMatrix64F(dimTrait, dimTrait);
+            CommonOps.mult(Pdbis, PPrior, PTmp);
+            PPrior.set(PTmp);
+        }
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     /// Derivation Functions
     ///////////////////////////////////////////////////////////////////////////

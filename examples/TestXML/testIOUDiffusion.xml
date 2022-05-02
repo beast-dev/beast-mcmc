@@ -42,7 +42,7 @@
 		</precisionMatrix>
 	</multivariateDiffusionModel>
 
-	<traitDataLikelihood id="iouLikelihood" traitName="X" forceFullPrecision="true" integratedProcess="true">
+	<traitDataLikelihood id="iouLikelihood" traitName="X" forceFullPrecision="true" integratedProcess="true" reconstructTraits="true">
 		<multivariateDiffusionModel idref="diffusionModel"/>
 		<treeModel idref="treeModel"/>
 		<traitParameter>
@@ -119,6 +119,10 @@
 			<parameter idref="meanRoot"/>
 			<parameter idref="sampleSizeRoot"/>
             <matrixParameter idref="attenuation.matrix"/>
+            <traitLogger traitName="X" nodes="all">
+                <traitDataLikelihood idref="iouLikelihood"/>
+                <treeModel idref="treeModel"/>
+            </traitLogger> 
 		</log>
 
 		<!-- <logTree logEvery="1" nexusFormat="true" fileName="testIOU.trees"> -->

@@ -155,6 +155,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
     abstract class AbstractContinuousTraitDelegate extends AbstractDelegate {
 
         final int dimTrait;
+        final int dimProcess;
         final int numTraits;
         final int dimNode;
 
@@ -182,6 +183,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             super(name, tree);
 
             dimTrait = likelihoodDelegate.getTraitDim();
+            dimProcess = likelihoodDelegate.getDimProcess();
             numTraits = likelihoodDelegate.getTraitCount();
             dimNode = dimTrait * numTraits;
             this.diffusionModel = diffusionModel;
@@ -229,11 +231,11 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             if (diffusionVariance == null) {
                 double[][] diffusionPrecision = diffusionModel.getPrecisionmatrix();
                 diffusionVariance = getVectorizedVarianceFromPrecision(diffusionPrecision);
-                Vd = wrap(diffusionVariance, 0, dimTrait, dimTrait);
+                Vd = wrap(diffusionVariance, 0, dimProcess, dimProcess);
                 Pd = new DenseMatrix64F(diffusionPrecision);
             }
             if (cholesky == null) {
-                cholesky = getCholeskyOfVariance(diffusionVariance, dimTrait);
+                cholesky = getCholeskyOfVariance(diffusionVariance, dimProcess);
             }
         }
 

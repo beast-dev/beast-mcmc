@@ -102,4 +102,22 @@ public class IntegratedProcessTraitDataModel extends
         return 2 * dimTrait;
     }
 
+    @Override
+    public boolean[] getDataMissingIndicators() {
+            // Find missing values
+            boolean[] missingIndicators = super.getDataMissingIndicators();
+
+            // init all to missing
+            boolean[] missingIndicatorsIntegrated = new boolean[2 * missingIndicators.length];
+            for (int i = 0; i < 2 * missingIndicators.length; i++) {
+                missingIndicatorsIntegrated[i] = true;
+            }
+            // fill data with status
+            for (int i = 0; i < missingIndicators.length; i++) {
+                int indMissing = (2 * (i / dimTrait) + 1) * dimTrait + i % dimTrait;
+                missingIndicatorsIntegrated[indMissing] = missingIndicators[i];
+            }
+            return missingIndicatorsIntegrated;
+        }
+
 }

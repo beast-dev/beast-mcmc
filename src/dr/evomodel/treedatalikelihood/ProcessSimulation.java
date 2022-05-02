@@ -62,6 +62,7 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
                 simulationDelegate.getOptimalTraversalType());
 
         treeDataLikelihood.addModelListener(this);
+        treeDataLikelihood.addModelRestoreListener(this);
 
         this.simulationDelegate = simulationDelegate;
         simulationDelegate.setCallback(this);
@@ -70,8 +71,23 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
 
         validSimulation = false;
     }
-    
+
+    private static final boolean IGNORE_REMAINDER = true;
+
     public final void cacheSimulatedTraits(final NodeRef node) {
+
+        if (IGNORE_REMAINDER) {
+
+            if (!validSimulation) {
+                treeDataLikelihood.calculatePostOrderStatistics();
+                simulateTraits(node);
+                validSimulation = true;
+            }
+
+            return;
+        }
+
+        //TODO: eliminate if statement and delete rest of function
 
         treeDataLikelihood.getLogLikelihood(); // Ensure likelihood is up-to-date
 
@@ -117,6 +133,6 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
 
     @Override
     public void modelRestored(Model model) {
-        // Do nothing
+        validSimulation = false;
     }
 }

@@ -34,6 +34,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.MixtureModelBranchRates;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeLengthStatistic;
 import dr.evomodel.tree.TreeModel;
@@ -142,7 +143,7 @@ public class LogGenerator extends Generator {
             if (model.hasTipCalibrations()) {
                 writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, model.getPrefix() + "age(root)");
             } else {
-                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
+                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + DefaultTreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
             }
 
             writer.writeCloseTag(ColumnsParser.COLUMN);
@@ -215,7 +216,7 @@ public class LogGenerator extends Generator {
         }
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
+            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + DefaultTreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
         }
 
         // for convenience, log root age statistic - gives the absolute age of the root given the tip dates.
@@ -307,7 +308,7 @@ public class LogGenerator extends Generator {
         writer.writeIDref(CompoundLikelihoodParser.PRIOR, "prior");
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
+            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + DefaultTreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
         }
 
         for (Taxa taxa : options.taxonSets) {
@@ -435,7 +436,7 @@ public class LogGenerator extends Generator {
 
         writer.writeOpenTag(TreeLoggerParser.LOG_TREE, attributes);
 
-        writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, tree.getPrefix() + DefaultTreeModel.TREE_MODEL);
 
         writeTreeTraits(writer, tree);
 
@@ -459,7 +460,7 @@ public class LogGenerator extends Generator {
                         new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, treeLogFileName),
                         new Attribute.Default<String>(TreeLoggerParser.BRANCH_LENGTHS, TreeLoggerParser.SUBSTITUTIONS)
                 });
-        writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, tree.getPrefix() + DefaultTreeModel.TREE_MODEL);
 
         PartitionClockModel model = options.getPartitionClockModels(options.getDataPartitions(tree)).get(0);
         String tag = "";

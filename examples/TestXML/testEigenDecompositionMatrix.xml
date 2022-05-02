@@ -117,10 +117,14 @@ for (i in 1:(dim-1)) {
 }
 -->
 
-    <matrixParameter id="attenuation.vectors">
+    <!-- ********************************************************************************-->
+    <!-- Eigen Vectors -->
+    <!-- ********************************************************************************-->
+
+    <matrixParameter id="attenuation.vectors" isEigenVectors="true">
         <parameter id="attVec.col1" value="0.5 0.5 0.5"/>
         <parameter id="attVec.col2" value="0.8 0.4 0.4"/>
-        <parameter id="attVec.col3" value="0.4 0.8 0.1"/>
+        <parameter id="attVec.col3" value="0.4 0.8 0.2"/>
         <parameter id="attVec.col4" value="0.5 0.5 0.5"/>
     </matrixParameter>
 
@@ -222,6 +226,19 @@ for (i in 1:(length-1)) {
   }
 }
 -->
+
+    <!-- ********************************************************************************-->
+    <!-- Both -->
+    <!-- ********************************************************************************-->
+
+    <compoundEigenMatrix id="attenuation.matrix">
+        <eigenValues>
+            <parameter idref="attenuation.values"/>
+        </eigenValues>
+        <eigenVectors>
+            <matrixParameter idref="attenuation.vectors"/>
+        </eigenVectors>
+    </compoundEigenMatrix>
 
 </beast>
 

@@ -32,11 +32,11 @@ public class HiddenNucleotides extends Nucleotides implements HiddenDataType {
 
     public static final String DESCRIPTION = "hiddenNucleotide";
 
-    public static final HiddenNucleotides NUCLEOTIDE_HIDDEN_1 = new HiddenNucleotides(1);
-    public static final HiddenNucleotides NUCLEOTIDE_HIDDEN_2 = new HiddenNucleotides(2);
-    public static final HiddenNucleotides NUCLEOTIDE_HIDDEN_3 = new HiddenNucleotides(3);
-    public static final HiddenNucleotides NUCLEOTIDE_HIDDEN_4 = new HiddenNucleotides(4);
-    public static final HiddenNucleotides NUCLEOTIDE_HIDDEN_8 = new HiddenNucleotides(8);
+    static final HiddenNucleotides NUCLEOTIDE_HIDDEN_1 = new HiddenNucleotides(1);
+    static final HiddenNucleotides NUCLEOTIDE_HIDDEN_2 = new HiddenNucleotides(2);
+    static final HiddenNucleotides NUCLEOTIDE_HIDDEN_3 = new HiddenNucleotides(3);
+    static final HiddenNucleotides NUCLEOTIDE_HIDDEN_4 = new HiddenNucleotides(4);
+    static final HiddenNucleotides NUCLEOTIDE_HIDDEN_8 = new HiddenNucleotides(8);
 
     /**
      * Private constructor - DEFAULT_INSTANCE provides the only instance
@@ -53,6 +53,14 @@ public class HiddenNucleotides extends Nucleotides implements HiddenDataType {
         return HiddenDataType.Utils.getStateSet(state, stateCount, hiddenClassCount, Nucleotides.INSTANCE);
     }
 
+    public String getCode(int state) {
+        return HiddenDataType.getCodeImpl(state, stateCount, super::getCode);
+    }
+
+    public String getCodeWithoutHiddenState(int state) {
+        return HiddenDataType.getCodeWithoutHiddenStateImpl(state, stateCount, super::getCode);
+    }
+
     public int getStateCount() {
         return stateCount * hiddenClassCount;
     }
@@ -61,5 +69,9 @@ public class HiddenNucleotides extends Nucleotides implements HiddenDataType {
 
     public int getHiddenClassCount() {
         return hiddenClassCount;
+    }
+
+    public String getDescription() {
+        return DESCRIPTION + hiddenClassCount;
     }
 }

@@ -5,6 +5,7 @@ import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.WilsonBalding;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.oldevomodel.substmodel.FrequencyModel;
 import dr.oldevomodel.substmodel.HKY;
@@ -83,19 +84,19 @@ public class MCMCTest extends TraceCorrelationAssert {
         schedule.addOperator(operator);
 
 //        Parameter rootParameter = treeModel.createNodeHeightsParameter(true, false, false);
-//        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, CoercionMode.COERCION_ON, 1.0);
+//        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, AdaptationMode.ADAPTATION_ON, 1.0);
 
-        Parameter rootHeight = treeModel.getRootHeightParameter();
+        Parameter rootHeight = ((DefaultTreeModel)treeModel).getRootHeightParameter();
         rootHeight.setId(TREE_HEIGHT);
         operator = new ScaleOperator(rootHeight, 0.5);
         operator.setWeight(1.0);
         schedule.addOperator(operator);
 
-        Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
+        Parameter internalHeights = ((DefaultTreeModel)treeModel).createNodeHeightsParameter(false, true, false);
         operator = new UniformOperator(internalHeights, 10.0);
         schedule.addOperator(operator);
 
-        operator = new SubtreeSlideOperator(treeModel, 1, 1, true, false, false, false, CoercionMode.COERCION_ON);
+        operator = new SubtreeSlideOperator(((DefaultTreeModel)treeModel), 1, 1, true, false, false, false, AdaptationMode.ADAPTATION_ON, AdaptableMCMCOperator.DEFAULT_ADAPTATION_TARGET);
         schedule.addOperator(operator);
 
         operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 1.0);

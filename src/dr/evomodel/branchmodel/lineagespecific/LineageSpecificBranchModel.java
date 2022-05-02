@@ -31,8 +31,11 @@ import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.codon.MG94CodonModel;
+import dr.evomodel.substmodel.codon.CodonOptions;
+import dr.evomodel.substmodel.codon.MG94HKYCodonModel;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.substmodel.codon.MG94K80CodonModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
@@ -210,7 +213,7 @@ public class LineageSpecificBranchModel extends AbstractModel implements BranchM
             // create tree
             NewickImporter importer = new NewickImporter(
                     "(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
-            TreeModel tree = new TreeModel(importer.importTree(null));
+            TreeModel tree = new DefaultTreeModel(importer.importTree(null));
 
             // create site model
             GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
@@ -237,7 +240,7 @@ public class LineageSpecificBranchModel extends AbstractModel implements BranchM
             // create substitution model
             Parameter alpha = new Parameter.Default(1, 10);
             Parameter beta = new Parameter.Default(1, 5);
-            MG94CodonModel mg94 = new MG94CodonModel(Codons.UNIVERSAL, alpha, beta, freqModel);
+            MG94HKYCodonModel mg94 = new MG94K80CodonModel(Codons.UNIVERSAL, alpha, beta, freqModel, new CodonOptions());
 
             HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(mg94);
 
@@ -268,7 +271,7 @@ public class LineageSpecificBranchModel extends AbstractModel implements BranchM
 			for (int i = 0; i < 2; i++) {
 //				alpha = new Parameter.Default(1, 10 );
 //				beta = new Parameter.Default(1, 5 );
-//				mg94 = new MG94CodonModel(Codons.UNIVERSAL, alpha, beta,
+//				mg94 = new MG94HKYCodonModel(Codons.UNIVERSAL, alpha, beta,
 //						freqModel);
 				substModels.add(mg94);
 			}

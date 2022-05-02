@@ -48,7 +48,7 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
 
     // values = vector of euclidean unit ball
     @Override
-    protected double[] transform(double[] values) {
+    public double[] transform(double[] values) {
         assert isInEuclideanUnitBall(values) : "Initial vector is not in the Euclidean unit ball.";
 
         double[] transformedValues = new double[values.length];
@@ -66,7 +66,7 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
 
     // values = vector of invinite unit ball
     @Override
-    protected double[] inverse(double[] values) {
+    public double[] inverse(double[] values) {
         assert isInInfiniteUnitBall(values) : "Initial vector is not in the Euclidean unit ball.";
 
         double[] transformedValues = new double[values.length];
@@ -84,6 +84,15 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
 
     private boolean isInEuclideanUnitBall(double[] x) {
         return (squaredNorm(x) <= 1.0);
+    }
+
+    private boolean isInStrictEuclideanUnitBall(double[] x) {
+        return (squaredNorm(x) <= 1.0);
+    }
+
+    @Override
+    public boolean isInInteriorDomain(double[] values) {
+        return isInStrictEuclideanUnitBall(values);
     }
 
     private boolean isInInfiniteUnitBall(double[] x) {
@@ -110,7 +119,7 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
     }
 
     public static double projection(final double[] x, final int offset, final int length) {
-        return Math.sqrt(1 - squaredNorm(x, offset, length));
+        return Math.sqrt(1.0 - squaredNorm(x, offset, length));
     }
 
     @Override
@@ -146,9 +155,8 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
     @Override
     protected double[] getGradientLogJacobianInverse(double[] values) {
         double[] gradientLogJacobian = new double[values.length];
-        int k = 0;
-        for (int i = 0; i < dim - 2; i++) { // Sizes of conditioning sets
-            gradientLogJacobian[k] = -(dim - i - 2) * values[k] / (1.0 - Math.pow(values[k], 2));
+        for (int i = 0; i < dim - 1; i++) { // Sizes of conditioning sets
+            gradientLogJacobian[i] = -(dim - i - 1) * values[i] / (1.0 - Math.pow(values[i], 2));
         }
         return gradientLogJacobian;
     }
@@ -158,7 +166,6 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
     // ************************************************************************* //
 
     // Returns the *transpose* of the Jacobian matrix: jacobian[j][i] = d x_i / d y_j
-    @Override
     public double[][] computeJacobianMatrixInverse(double[] values) {
         double[][] jacobian = new double[dim][dim];
 
@@ -203,14 +210,10 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
             int dim = xo.getIntegerAttribute(DIMENSION);
 
             // Fisher Z  (Infinte norm unit ball to unconstrained)
-            List<Transform> transforms = new ArrayList<Transform>();
-            for (int i = 0; i < dim * (dim + 1); i++) {
-                transforms.add(Transform.FISHER_Z);
-            }
-            Transform.Array fisherZTransforms = new Transform.Array(transforms, null);
+            Transform.Array fisherZTransforms = new Transform.Array(Transform.FISHER_Z, dim * (dim + 1), null);
 
             // Spherical (Euclidean to Infinite norm unit ball)
-            List<MultivariateTransform> transformsMul = new ArrayList<MultivariateTransform>();
+            List<MultivariableTransform> transformsMul = new ArrayList<MultivariableTransform>();
             for (int i = 0; i < dim + 1; i++) {
                 transformsMul.add(new EuclideanToInfiniteNormUnitBallTransform(dim));
             }
@@ -226,7 +229,7 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
         //************************************************************************
 
         public String getParserDescription() {
-            return "A compound matrix parametrized by its eigen values and vectors.";
+            return "A spherical transform using Fisher Z and LKJ.";
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {

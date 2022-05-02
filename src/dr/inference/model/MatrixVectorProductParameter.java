@@ -37,6 +37,9 @@ public class MatrixVectorProductParameter extends Parameter.Abstract implements 
 
         matrix.addVariableListener(this);
         vector.addVariableListener(this);
+
+        Parameter.CONNECTED_PARAMETER_SET.add(matrix);
+        Parameter.CONNECTED_PARAMETER_SET.add(vector);
     }
 
     public int getDimension() {
@@ -46,6 +49,10 @@ public class MatrixVectorProductParameter extends Parameter.Abstract implements 
     public void setDimension(int dim) {
         throwError("setDimension()");
     }
+
+    public Parameter getVector() { return vector; }
+
+    public MatrixParameter getMatrix() { return matrix; }
 
     protected void storeValues() {
         matrix.storeParameterValues();
@@ -86,6 +93,10 @@ public class MatrixVectorProductParameter extends Parameter.Abstract implements 
         throwError("setParameterValueNotifyChangedAll()");
     }
 
+    public boolean isImmutable() {
+        return true;
+    }
+
     private void throwError(String functionName) throws RuntimeException {
         throw new RuntimeException("Object " + getId() + " is a deterministic function. Calling "
                 + functionName + " is not allowed");
@@ -106,7 +117,7 @@ public class MatrixVectorProductParameter extends Parameter.Abstract implements 
     }
 
     public Bounds<Double> getBounds() {
-        throwError("getBounds()");
+//        throwError("getBounds()");
         return null;
     }
 

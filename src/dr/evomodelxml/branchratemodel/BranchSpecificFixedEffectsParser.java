@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.branchratemodel;
 
+import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
@@ -53,6 +54,8 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
 
     private static final String FIXED_EFFECTS = "fixedEffects";
     private static final String INCLUDE_INTERCEPT = "includeIntercept";
+    private static final String TIME_DEPENDENT_EFFECT = "timeEffect";
+    private static final String CATEGORY = "category";
 
     public String getParserName() {
         return FIXED_EFFECTS;
@@ -66,23 +69,35 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
 
         boolean includeIntercept = xo.getAttribute(INCLUDE_INTERCEPT, true);
 
-        CountableBranchCategoryProvider.CladeBranchCategoryModel cladeModel =
-                new CountableBranchCategoryProvider.CladeBranchCategoryModel(treeModel,
-                        new Parameter.Default(treeModel.getNodeCount() -1));
-
-        parseCladeCategories(xo, cladeModel);
-
         List<CountableBranchCategoryProvider> categories = new ArrayList<CountableBranchCategoryProvider>();
-        categories.add(cladeModel);
 
-        List<ContinuousBranchValueProvider> values = new ArrayList<ContinuousBranchValueProvider>();
+        for (XMLObject xoc : xo.getAllChildren(CATEGORY)) {
+            CountableBranchCategoryProvider.CladeBranchCategoryModel cladeModel =
+                    new CountableBranchCategoryProvider.CladeBranchCategoryModel(treeModel,
+                            new Parameter.Default(treeModel.getNodeCount() -1));
+
+            parseCladeCategories(xoc, cladeModel);
+
+            categories.add(cladeModel);
+        }
+
+        List<ContinuousBranchValueProvider> values = getValueProviders(xo);
+
+        List<BranchRates> branchRates = new ArrayList<BranchRates>();
+
+        for (int i = 0; i < xo.getChildCount(); ++i) {
+            Object obj = xo.getChild(i);
+            if (obj instanceof BranchRates) {
+                branchRates.add((BranchRates) obj);
+            }
+        }
 
         Transform transform = (Transform)
                 xo.getChild(Transform.class);
 
         BranchSpecificFixedEffects.Default fixedEffects = new BranchSpecificFixedEffects.Default(
                 xo.getId(),
-                categories, values,
+                categories, values, branchRates,
                 coefficients,
                 includeIntercept
         );
@@ -100,6 +115,22 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
         } else {
             return fixedEffects;
         }
+    }
+
+    List<ContinuousBranchValueProvider> getValueProviders(XMLObject xo) throws XMLParseException {
+        List<ContinuousBranchValueProvider> values = new ArrayList<ContinuousBranchValueProvider>();
+
+        boolean timeDependentEffect = xo.getAttribute(TIME_DEPENDENT_EFFECT, false);
+        if (timeDependentEffect) {
+            if (xo.hasChildNamed(TIME_DEPENDENT_EFFECT)) {
+                Parameter timeThreshold = (Parameter) xo.getChild(TIME_DEPENDENT_EFFECT).getChild(Parameter.class);
+                values.add(new ContinuousBranchValueProvider.ConstrainedMidPoint(timeThreshold));
+            } else {
+                values.add(new ContinuousBranchValueProvider.MidPoint());
+            }
+        }
+
+        return values;
     }
 
     private String annotateDesignMatrix(double[][] matrix, Tree tree) {
@@ -141,6 +172,7 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(INCLUDE_INTERCEPT, true),
             new ElementRule(TreeModel.class),
             new ElementRule(Parameter.class),
+            new ElementRule(BranchRates.class, 0, Integer.MAX_VALUE),
             new ElementRule(LocalClockModelParser.CLADE,
                     new XMLSyntaxRule[]{
                             AttributeRule.newIntegerRule(CATEGORY, false),

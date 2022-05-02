@@ -31,6 +31,7 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
@@ -65,10 +66,10 @@ public class TreeModelGenerator extends Generator {
 
         String prefix = model.getPrefix();
 
-        final String treeModelName = prefix + TreeModel.TREE_MODEL; // treemodel.treeModel or treeModel
+        final String treeModelName = prefix + DefaultTreeModel.TREE_MODEL; // treemodel.treeModel or treeModel
 
         writer.writeComment("Generate a tree model");
-        writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.ID, treeModelName), false);
+        writer.writeTag(DefaultTreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.ID, treeModelName), false);
 
         final String STARTING_TREE = InitialTreeGenerator.STARTING_TREE;
 
@@ -173,7 +174,7 @@ public class TreeModelGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_MODEL, model, writer);
 
-        writer.writeCloseTag(TreeModel.TREE_MODEL);
+        writer.writeCloseTag(DefaultTreeModel.TREE_MODEL);
 
 //        if (autocorrelatedClockCount == 1) {
 //        if (count[0] == 1) {
@@ -190,7 +191,7 @@ public class TreeModelGenerator extends Generator {
                 new Attribute[]{
                         new Attribute.Default<String>(XMLParser.ID, prefix + "treeLength"),
                 }, false);
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModelName);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelName);
         writer.writeCloseTag(TreeLengthStatisticParser.TREE_LENGTH_STATISTIC);
 
         if (model.hasTipCalibrations()) {
@@ -200,7 +201,7 @@ public class TreeModelGenerator extends Generator {
                             new Attribute.Default<String>(XMLParser.ID, prefix + "age(root)"),
                             new Attribute.Default<String>(TMRCAStatisticParser.ABSOLUTE, "true")
                     }, false);
-            writer.writeIDref(TreeModel.TREE_MODEL, treeModelName);
+            writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelName);
             writer.writeCloseTag(TMRCAStatisticParser.TMRCA_STATISTIC);
         }
 
@@ -212,7 +213,7 @@ public class TreeModelGenerator extends Generator {
                                 MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL), false);
 
                 writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.TREE);
-                writer.writeIDref(TreeModel.TREE_MODEL, treeModelName);
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelName);
                 writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.TREE);
 
                 writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.INTERNAL_VALUES);

@@ -43,6 +43,7 @@ import java.util.Date;
  *
  * @author Alexei Drummond
  */
+@Deprecated
 public class ExponentialSkythingLikelihood extends OldAbstractCoalescentLikelihood {
 
     // PUBLIC STUFF

@@ -55,7 +55,7 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
             double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
             double windowSize = xo.getDoubleAttribute(WINDOW_SIZE);
@@ -146,7 +146,7 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WINDOW_SIZE),
                 AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-                AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+                AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
                 new ElementRule(UPDATE_INDEX,
                         new XMLSyntaxRule[] {
                                 new ElementRule(Parameter.class),

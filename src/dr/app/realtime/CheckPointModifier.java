@@ -1,7 +1,7 @@
 /*
  * CheckPointUpdater.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -28,12 +28,14 @@ package dr.app.realtime;
 import dr.app.checkpoint.BeastCheckpointer;
 import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
+import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercableMCMCOperator;
+import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
 
@@ -42,19 +44,23 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
  * @author Guy Baele
+ * @author Mandev Gill
  */
 public class CheckPointModifier extends BeastCheckpointer {
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
+    private static final boolean IN_MEMORY = true;
 
     private CheckPointTreeModifier modifyTree;
     private BranchRates rateModel;
     private ArrayList<TreeParameterModel> traitModels;
+    private ParametricDistributionModel parDistMod;
 
     public final static String LOAD_STATE_FILE = "load.state.file";
     public final static String SAVE_STATE_FILE = "save.state.file";
@@ -72,7 +78,7 @@ public class CheckPointModifier extends BeastCheckpointer {
         return readStateFromFile(new File(loadStateFileName), markovChain, savedLnL);
     }
 
-    private long readStateFromFile(File file, MarkovChain markovChain, double[] lnL) {
+    protected long readStateFromFile(File file, MarkovChain markovChain, double[] lnL) {
 
         OperatorSchedule operatorSchedule = markovChain.getSchedule();
         long state = -1;
@@ -157,7 +163,7 @@ public class CheckPointModifier extends BeastCheckpointer {
                         }
                     } else {
                         if (DEBUG) {
-                            System.out.print("restoring " + fields[1] + " with values ");
+                            System.out.print("restoring " + fields[1] + " with dimension " + parameter.getDimension() + " and value(s) ");
                         }
                         if (fields[1].equals("branchRates.categories")) {
                             for (int dim = 0; dim < (fields.length-3); dim++) {
@@ -169,9 +175,15 @@ public class CheckPointModifier extends BeastCheckpointer {
                             }
                         } else {
                             for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                                parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 3]));
-                                if (DEBUG) {
-                                    System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
+                                if ((dim + 3) < fields.length) {
+                                    parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 3]));
+                                    if (DEBUG) {
+                                        System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
+                                    }
+                                } else {
+                                    if (DEBUG) {
+                                        System.out.println("  unable to restore index " + dim + " for " + parameter.getId() + " (moving on ...)");
+                                    }
                                 }
                             }
                         }
@@ -186,32 +198,89 @@ public class CheckPointModifier extends BeastCheckpointer {
 
                 } else {
 
+                    if (DEBUG) {
+                        System.out.println("  unable to match " + parameter.getId() + " with " + fields[1] + " (moving on ...)");
+                    }
+
                     //there will be more parameters in the connected set than there are lines in the checkpoint file
-                    //do nothing and just keep iterating over the parameters in the connected set
+                    //TODO keep track of these parameters and print a list of those parameters to screen
 
                 }
 
             }
 
-            //No changes needed for loading in operators
-            for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
-                MCMCOperator operator = operatorSchedule.getOperator(i);
-                if (!fields[1].equals(operator.getOperatorName())) {
-                    throw new RuntimeException("Unable to match operator: " + fields[1]);
+            //TODO remove else-clause (and boolean) after multiple rounds of testing
+            if (IN_MEMORY) {
+
+                //first read in all the operator lines from the checkpoint file
+                //store them in a HashMap (or other structure that allows easy look-up)
+                HashMap<String, String[]> operatorMap = new HashMap<String, String[]>();
+                while (fields[0].equals("operator")) {
+                    operatorMap.put(fields[1], fields);
+                    line = in.readLine();
+                    fields = line.split("\t");
                 }
-                if (fields.length < 4) {
-                    throw new RuntimeException("Operator missing values: " + fields[1]);
-                }
-                operator.setAcceptCount(Integer.parseInt(fields[2]));
-                operator.setRejectCount(Integer.parseInt(fields[3]));
-                if (operator instanceof CoercableMCMCOperator) {
-                    if (fields.length != 5) {
-                        throw new RuntimeException("Coercable operator missing parameter: " + fields[1]);
+
+                //then iterate over the operator schedule and look into the HashMap for the information
+                for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
+                    MCMCOperator operator = operatorSchedule.getOperator(i);
+                    String[] lookup = operatorMap.get(operator.getOperatorName());
+                    if (lookup == null) {
+                        //could be additional operator so not necessarily a problem that warrants an exception
+                        if (DEBUG) {
+                            System.out.println("No information found in checkpoint file for operator " + operator.getOperatorName());
+                        }
+                    } else {
+                        //entry was found in stored information
+                        if (DEBUG) {
+                            System.out.println("restoring operator " + operator.getOperatorName() + " with settings from " + lookup[1]);
+                        }
+                        if (lookup.length < 4) {
+                            throw new RuntimeException("Operator missing values: " + lookup[1] + ", length=" + lookup.length);
+                        }
+                        operator.setAcceptCount(Integer.parseInt(lookup[2]));
+                        operator.setRejectCount(Integer.parseInt(lookup[3]));
+                        if (operator instanceof AdaptableMCMCOperator) {
+                            if (lookup.length != 6) {
+                                throw new RuntimeException("Coercable operator missing parameter: " + lookup[1]);
+                            }
+                            ((AdaptableMCMCOperator) operator).setAdaptableParameter(Double.parseDouble(lookup[4]));
+                        }
                     }
-                    ((CoercableMCMCOperator)operator).setCoercableParameter(Double.parseDouble(fields[4]));
+                    //don't forget to remove the entry from the hash map
+                    operatorMap.remove(operator.getOperatorName());
                 }
-                line = in.readLine();
-                fields = line.split("\t");
+
+                if (DEBUG) {
+                    System.out.println("Number of entries left in stored operator map: " + operatorMap.size());
+                }
+
+            } else {
+
+                //No changes needed for loading in operators
+                for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
+                    MCMCOperator operator = operatorSchedule.getOperator(i);
+                    if (DEBUG) {
+                        System.out.println("restoring operator " + operator.getOperatorName() + " with settings from " + fields[1]);
+                    }
+                    if (!fields[1].equals(operator.getOperatorName())) {
+                        throw new RuntimeException("Unable to match operator: " + fields[1] + " vs. " + operator.getOperatorName());
+                    }
+                    if (fields.length < 4) {
+                        throw new RuntimeException("Operator missing values: " + fields[1] + ", length=" + fields.length);
+                    }
+                    operator.setAcceptCount(Integer.parseInt(fields[2]));
+                    operator.setRejectCount(Integer.parseInt(fields[3]));
+                    if (operator instanceof AdaptableMCMCOperator) {
+                        if (fields.length != 6) {
+                            throw new RuntimeException("Coercable operator missing parameter: " + fields[1]);
+                        }
+                        ((AdaptableMCMCOperator) operator).setAdaptableParameter(Double.parseDouble(fields[4]));
+                    }
+                    line = in.readLine();
+                    fields = line.split("\t");
+                }
+
             }
 
             // load the tree models last as we get the node heights from the tree (not the parameters which
@@ -229,6 +298,12 @@ public class CheckPointModifier extends BeastCheckpointer {
 
                 if (model instanceof BranchRates) {
                     this.rateModel = (BranchRates)model;
+                }
+
+                //specific if-clause for DiscretizedBranchRates as other clock models use different underlying models
+                //e.g. MixtureModelBranchRates uses an array of ParametricDistributionModel
+                if (model instanceof DiscretizedBranchRates) {
+                    parDistMod = ((DiscretizedBranchRates)model).getParametricDistributionModel();
                 }
 
             }
@@ -304,7 +379,8 @@ public class CheckPointModifier extends BeastCheckpointer {
 
                         //perform magic with the acquired information
                         //CheckPointTreeModifier modifyTree = new CheckPointTreeModifier((TreeModel) model);
-                        this.modifyTree = new CheckPointTreeModifier((TreeModel) model);
+                        this.modifyTree = new CheckPointTreeModifier((TreeModel) model, parDistMod);
+                        //this.modifyTree = new CheckPointTreeModifier((TreeModel) model);
                         modifyTree.adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
                         if (traitModels.size() > 0) {
                             modifyTree.adoptTraitData(parents, this.traitModels, traitValues);
@@ -350,8 +426,7 @@ public class CheckPointModifier extends BeastCheckpointer {
         if (this.rateModel == null) {
             throw new RuntimeException("BranchRates model has not been set correctly.");
         } else {
-            ArrayList<NodeRef> newTaxa = modifyTree.incorporateAdditionalTaxa(choice, this.rateModel);
-            modifyTree.interpolateTraitValues(this.traitModels);
+            ArrayList<NodeRef> newTaxa = modifyTree.incorporateAdditionalTaxa(choice, this.rateModel, this.traitModels);
         }
     }
 
@@ -371,6 +446,11 @@ public class CheckPointModifier extends BeastCheckpointer {
         int i = 0;
         if (name.charAt(0) == '-') {
             return false;
+        }
+        if (length > 3) {
+            if (name.substring(0,3).equals("age")) {
+                return true;
+            }
         }
         for (; i < length; i++) {
             char c = name.charAt(i);

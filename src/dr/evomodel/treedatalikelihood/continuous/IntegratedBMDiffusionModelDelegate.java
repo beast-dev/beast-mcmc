@@ -31,7 +31,6 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.math.KroneckerOperation;
-import org.ejml.data.DenseMatrix64F;
 
 import java.util.List;
 
@@ -96,11 +95,6 @@ public class IntegratedBMDiffusionModelDelegate extends AbstractDriftDiffusionMo
                 edgeLengths,
                 getDriftRates(branchIndices, updateCount),
                 updateCount);
-    }
-
-    @Override
-    public void getGradientPrecision(double scalar, DenseMatrix64F gradient) {
-        throw new RuntimeException("not yet implemented");
     }
 
     @Override

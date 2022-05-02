@@ -25,22 +25,18 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.evolution.tree.*;
-import dr.evomodel.treedatalikelihood.*;
-import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.hmc.HessianWrtParameterProvider;
-import dr.inference.loggers.Loggable;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.Parameter;
-import dr.xml.Reportable;
 
-import static dr.math.MachineAccuracy.SQRT_EPSILON;
 
 /**
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class BranchRateGradientForDiscreteTrait extends DiscreteTraitBranchRateGradient
-        implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
+public class BranchRateGradientForDiscreteTrait extends DiscreteTraitBranchRateGradient {
 
     public BranchRateGradientForDiscreteTrait(String traitName,
                                               TreeDataLikelihood treeDataLikelihood,
@@ -52,14 +48,17 @@ public class BranchRateGradientForDiscreteTrait extends DiscreteTraitBranchRateG
 
     @Override
     protected double getChainGradient(Tree tree, NodeRef node) {
-        final double differential = branchRateModel.getBranchRateDifferential(tree, node);
-        return differential * tree.getBranchLength(node);
+        return branchRateModel.getBranchRateDifferential(tree, node) * tree.getBranchLength(node);
+    }
+
+    @Override
+    double[] updateBranchRateGradientLogDensity(double[] result) {
+        return branchRateModel.updateGradientLogDensity(result, null, 0, result.length);
     }
 
     @Override
     protected double getChainSecondDerivative(Tree tree, NodeRef node) {
-        final double branchLength = tree.getBranchLength(node);
-        return branchRateModel.getBranchRateSecondDifferential(tree, node) * branchLength;
+        return branchRateModel.getBranchRateSecondDifferential(tree, node) * tree.getBranchLength(node);
     }
 
 }

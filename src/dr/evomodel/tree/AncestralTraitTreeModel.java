@@ -28,6 +28,7 @@ package dr.evomodel.tree;
 import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.continuous.AncestralTaxonInTree;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -55,8 +56,6 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     private final int externalCount;
     private final int internalCount;
-
-    private int extraInternal;
     
     private ShadowNode[] nodes;
     private ShadowNode[] storedNodes;
@@ -66,7 +65,12 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     @Override
     public NodeRef getOriginalNode(NodeRef transformedNode) {
-        throw new RuntimeException("Not yet implemented");
+
+        assert (transformedNode != null);
+
+        checkShadowTree();
+        ShadowNode node = (ShadowNode) transformedNode;
+        return node.getOriginalNode();
     }
 
     @Override
@@ -233,43 +237,19 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
         setupClamps();
 
-        for (ShadowNode node : nodes) { // TODO Only need to set extra nodes
+        for (ShadowNode node : nodes) {
             node.setUnused();
         }
-
-        extraInternal = 0;
+        
         root = buildRecursivelyShadowTree(treeModel.getRoot(), null);
-
-//        if (DEBUG) {
-//            if (nodeToClampMap.size() != ancestors.size()) {
-//                StringBuilder sb = new StringBuilder();
-//                for (AncestralTaxonInTree ancestor : ancestors) {
-//                    Set<String> names = new HashSet<String>();
-//                    if (!nodeToClampMap.containsKey(ancestor.getNode())) {
-//                        sb.append("Unable to find ancestor '" + ancestor.getTaxon() +
-//                                "' in treeModel '" + treeModel.getId() + "'");
-//                    }
-//                    sb.append("\n                       ");
-//                    for (Taxon taxon : ancestor.getTaxonList()) {
-//                        sb.append(" " + taxon.getId());
-//                        names.add(taxon.getId());
-//                    }
-//
-//                    boolean mono = TreeUtils.isMonophyletic(treeModel, names);
-//                    sb.append("\nis mono = " + mono);
-//                }
-//
-//                System.out.println(sb.toString());
-//
-////            throw new RuntimeException(sb.toString());
-//            }
-//        }
-
-        validShadowTree = true;
     }
 
     private void storeNode(ShadowNode node) {
         nodes[node.getNumber()] = node;
+    }
+
+    private static void sortByTime(List<AncestralTaxonInTree> ancestors) {
+        ancestors.sort((lhs, rhs) -> -Double.compare(lhs.getHeight(), rhs.getHeight()));
     }
 
     private ShadowNode buildRecursivelyShadowTree(NodeRef originalNode,
@@ -281,39 +261,62 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         newNode.parent = parentNode;
         storeNode(newNode);
 
-        ShadowNode returnNode = newNode;
+
+
+        ShadowNode recurse0 = newNode;
+        ShadowNode recurse1 = newNode;
 
         if (nodeToClampMap.containsKey(originalNode.getNumber())) {
 
-            // Add tip
-            AncestralTaxonInTree ancestor = nodeToClampMap.get(originalNode.getNumber());
-            final int newTipNumber = treeExternalCount + ancestor.getIndex();
+            List<AncestralTaxonInTree> ancestors = nodeToClampMap.get(originalNode.getNumber());
 
-            ShadowNode newTipNode = new ShadowNode(newTipNumber, null, ancestor);
+            if (ancestors.size() > 1) {
+                sortByTime(ancestors);
+            }
 
-            newTipNode.parent = newNode;
-            newNode.child1 = newTipNode;
+            // Add tips
+            for (AncestralTaxonInTree ancestor : ancestors) {
+                final int newTipNumber = treeExternalCount + ancestor.getIndex();
 
-            storeNode(newTipNode);
+                ShadowNode newTipNode = new ShadowNode(newTipNumber, null, ancestor);
 
-            ShadowNode newInternalNode = new ShadowNode(externalCount + treeInternalCount + extraInternal, null, null);
+                ShadowNode newInternalNode = new ShadowNode(externalCount +
+                        treeInternalCount + ancestor.getIndex(), null, ancestor);
 
-            newInternalNode.parent = newNode;
-            newNode.child0 = newInternalNode;
+                if (ancestor.getPathChildNumber() == 0) {
 
-            storeNode(newInternalNode);
+                    recurse0.child0 = newInternalNode;
+                    newInternalNode.parent = recurse0;
 
-            ++extraInternal;
+                    newInternalNode.child1 = newTipNode;
+                    newTipNode.parent = newInternalNode;
 
-            newNode = newInternalNode;
+                    recurse0 = newInternalNode; // recurse0.child0 is free
+
+                } else {
+
+                    recurse1.child1 = newInternalNode;
+                    newInternalNode.parent = recurse1;
+
+                    newInternalNode.child0 = newTipNode;
+                    newTipNode.parent = newInternalNode;
+
+                    recurse1 = newInternalNode; // recurse1.child1 is free
+                }
+
+                storeNode(newTipNode);
+                storeNode(newInternalNode);
+            }
         }
 
         if (!treeModel.isExternal(originalNode)) {
-            newNode.child0 = buildRecursivelyShadowTree(treeModel.getChild(originalNode, 0), newNode);
-            newNode.child1 = buildRecursivelyShadowTree(treeModel.getChild(originalNode, 1), newNode);
+            NodeRef originalChild0 = treeModel.getChild(originalNode, 0);
+            NodeRef originalChild1 = treeModel.getChild(originalNode, 1);
+            recurse0.child0 = buildRecursivelyShadowTree(originalChild0, recurse0);
+            recurse1.child1 = buildRecursivelyShadowTree(originalChild1, recurse1);
         }
 
-        return returnNode;
+        return newNode;
     }
 
     private int mapOriginalToShadowNumber(int originalNumber) {
@@ -336,33 +339,62 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         return treeModel instanceof AbstractModel && ((AbstractModel) treeModel).isVariable();
     }
 
-    public double getNodeHeight(NodeRef inode) {
-        assert (inode != null);
+//    private Parameter getNodeHeightParameter(NodeRef iNode) {
+//        assert (iNode != null);
+//        return  ((DefaultTreeModel.Node) iNode).getHeightParameter();
+//    }
+
+    public double getNodeHeight(NodeRef iNode) {
+        assert (iNode != null);
 
         checkShadowTree();
 
-        ShadowNode node = (ShadowNode) inode;
+        double height;
+
+        ShadowNode node = (ShadowNode) iNode;
         int originalNumber = node.getOriginalNumber();
         if (originalNumber >= 0) {
-            return treeModel.getNodeHeight(node.getOriginalNode());
+            height = treeModel.getNodeHeight(node.getOriginalNode());
         } else {
 
-            double height = treeModel.getNodeHeight(node.parent.getOriginalNode());
-            if (node.isExternal()) {
-                double diff = node.ancestor.getPseudoBranchLength();
-                return height - diff;
-            } else {
-                return height;
+            final AncestralTaxonInTree ancestor = node.ancestor;
+
+            if (ancestor.isOnAncestralPath()) { // TODO Refactor into subclasses
+                double ancestorHeight = ancestor.getHeight();
+                if (node.isExternal()) {
+                    ancestorHeight -= ancestor.getPseudoBranchLength();
+                }
+                double rootHeight = treeModel.getNodeHeight(treeModel.getRoot());
+                ancestorHeight = Math.min(rootHeight, ancestorHeight);
+                height = ancestorHeight;
+            } else { // Below is the original
+                if (node.isExternal()) {
+                    height = treeModel.getNodeHeight(node.parent.parent.getOriginalNode())
+                            - ancestor.getPseudoBranchLength();
+                } else {
+                    height = treeModel.getNodeHeight(node.parent.getOriginalNode());
+                }
             }
         }
+
+        return height;
     }
 
-    public double getBranchLength(NodeRef inode) {
-        assert (inode != null);
+    private static final boolean FIX_BRANCH_LENGTH = true;
+
+    public double getBranchLength(NodeRef iNode) {
+
+        if (FIX_BRANCH_LENGTH) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        System.err.println("DIE");
+
+        assert (iNode != null);
 
         checkShadowTree();
 
-        ShadowNode node = (ShadowNode) inode;
+        ShadowNode node = (ShadowNode) iNode;
         if (!node.isUsed()) {
             return 0.0;
         }
@@ -396,7 +428,8 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             storedNodes[i].adoptValues(nodes[i], storedNodes);
         }
     }
-    
+
+    @SuppressWarnings("unchecked")
     protected void storeState() {
 
         assert (nodes != null);
@@ -406,6 +439,11 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         if (validShadowTree) {
             storeNodeStructure();
             storedRootNumber = root.getNumber();
+
+            if (hasAncestralPathTaxa) {
+                // swallow copy
+                savedAncestralPathNodeNumbers = new HashSet<Integer>(ancestralPathNodeNumbers);
+            }
         }
     }
 
@@ -424,6 +462,12 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             storedNodes = tmp;
 
             root = nodes[storedRootNumber];
+
+            if (hasAncestralPathTaxa) {
+                Set<Integer> tmpSet = ancestralPathNodeNumbers;
+                ancestralPathNodeNumbers = savedAncestralPathNodeNumbers;
+                savedAncestralPathNodeNumbers = tmpSet;
+            }
         }
     }
 
@@ -447,12 +491,16 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
         @Override public boolean isTreeChanged() { return event.isTreeChanged(); }
 
+        @Override
+        public boolean isNodeOrderChanged() { return event.isNodeOrderChanged(); }
+
         @Override public boolean isNodeParameterChanged() { return event.isNodeParameterChanged(); }
 
         @Override public boolean isHeightChanged() { return event.isHeightChanged(); }
+
+        @Override public boolean isOnlyHeightChanged() { return event.isOnlyHeightChanged(); }
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
         if (DEBUG) {
@@ -464,6 +512,29 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             if (object instanceof TreeChangedEvent) {
                 final TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
 
+
+                if (ancestors.size() == 1 && ancestors.get(0).isAtRoot()) {
+
+                    final NodeRef originalNode = treeChangedEvent.getNode();
+                    final ShadowNode shadow = nodes[mapOriginalToShadowNumber(originalNode.getNumber())];
+
+                    fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow), index);
+
+                    if (shadow.child0 != null) {
+                        fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow.child0), index);
+                    }
+
+                    if (shadow.child1 != null) {
+                        fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow.child1), index);
+                    }
+
+                    if (!treeChangedEvent.isOnlyHeightChanged() && originalNode != treeModel.getRoot()) {
+                        validShadowTree = false;
+                    }
+
+                    return; // Early exit
+                }
+
                 if (treeChangedEvent.isTreeChanged()) {
 
                     if (DEBUG) {
@@ -471,7 +542,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                     }
 
                     validShadowTree = false;
-                    fireModelChanged(new TreeChangedEvent.WholeTree());
+                    fireModelChanged(TreeChangedEvent.create());
 
                 } else if (treeChangedEvent.isNodeChanged()) {
 
@@ -488,14 +559,48 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                         }
 
                         if (!shadow.isExternal()) {
-                            if (shadow.child1.ancestor != null) {
+                            if (shadow.child0.ancestor != null) {
                                 /* If there is an ancestor (and zero-branch-length internal node),
                                  * we apparently need to hit the both the parent of the ancestor and the
                                  * zero-branch-length internal node.  MAS is unsure why we must hit the
                                  * ancestor parent.
                                  */
-                                fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow), index);
-                                shadow = shadow.child0;  // Get zero-branch-length internal node
+
+                                if (shadow.parent != null) {
+                                    fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow.parent), index);
+                                }
+
+                                fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow.child0), index);
+                                shadow = shadow.child1;
+                            }
+                        }
+
+                        if (hasAncestralPathTaxa) {
+                            if (treeChangedEvent.isHeightChanged()) {
+                                NodeRef realNode = treeChangedEvent.getNode();
+                                if (ancestralPathNodeNumbers.contains(treeChangedEvent.getNode().getNumber())) {
+                                    ShadowNode node = nodes[mapOriginalToShadowNumber(originalNode.getNumber())];
+
+                                    if (NEW_APPROACH2) {
+                                        if (isExtraNode(node.parent) ||
+                                                isExtraNode(node.child0) || isExtraNode(node.child1)) {
+                                            validShadowTree = false;
+                                            double height = treeModel.getNodeHeight(realNode);
+                                            if ((node.parent != null && height > getNodeHeight(node.parent))
+                                                    || (node.child0 != null && height < getNodeHeight(node.child0))
+                                                    || (node.child1 != null && height < getNodeHeight(node.child1))) {
+                                                fireModelChanged(new TreeChangedEvent.WholeTree()); // This appears to work
+                                            }
+                                        }
+                                    } else {
+
+                                        if (isExtraNode(node.parent) ||
+                                                isExtraNode(node.child0) || isExtraNode(node.child1)) {
+                                            validShadowTree = false;
+                                            fireModelChanged(new TreeChangedEvent.WholeTree()); // Not used
+                                        }
+                                    }
+                                }
                             }
                         }
 
@@ -509,21 +614,87 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                 }
 
             } else if (object instanceof Parameter) {
-                // Do nothing
+
+//                if (hasAncestralPathTaxa) {
+//
+//                    Parameter parameter = (Parameter) object;
+//                    if (ancestralPathNodeHeightParameters.containsKey(parameter)) {
+//
+//                        NodeRef originalNode = ancestralPathNodeHeightParameters.get(parameter);
+//                        ShadowNode node = nodes[mapOriginalToShadowNumber(originalNode.getNumber())];
+//
+//                        if (NEW_APPROACH2) {
+//
+//                            if (isExtraNode(node.parent) ||
+//                                    isExtraNode(node.child0) || isExtraNode(node.child1)) {
+//                                validShadowTree = false;
+//                                double height = parameter.getParameterValue(0);
+//                                if ((node.parent != null && height > getNodeHeight(node.parent))
+//                                        || (node.child0 != null && height < getNodeHeight(node.child0))
+//                                        || (node.child1 != null && height < getNodeHeight(node.child1))) {
+//
+//                                    fireModelChanged(new TreeChangedEvent.WholeTree()); // This appears to work
+//                                }
+//                            }
+//
+//                        } else {
+//
+//                            if (isExtraNode(node.parent) ||
+//                                    isExtraNode(node.child0) || isExtraNode(node.child1)) {
+//                                validShadowTree = false;
+//                                fireModelChanged(new TreeChangedEvent.WholeTree()); // Not used
+//                            }
+//                        }
+//                    }
+//                }
             } else {
                 throw new IllegalArgumentException("TreeModel should not generate other objects");
             }
 
         } else if (model instanceof AncestralTaxonInTree && ancestors.contains(model)) {
 
-            fireModelChanged(new TreeChangedEvent.WholeTree());
+            if (hasAncestralPathTaxa) {
 
+                AncestralTaxonInTree ancestor = (AncestralTaxonInTree) model;
+                double height = ancestor.getHeight();
+
+                validShadowTree = false;
+
+                ShadowNode node = nodes[mapOriginalToShadowNumber(ancestor.getNode().getNumber())];
+                while (node.parent != null && getNodeHeight(node) < height) {
+                    node = node.parent;
+                }
+                safeFireNodeChangedRecursion(node);
+
+            } else {
+                fireModelChanged(new TreeChangedEvent.WholeTree()); // TODO Only update relevant part of tree
+            }
         } else {
             throw new IllegalArgumentException("Illegal model");
         }
 
         if (DEBUG) {
             System.out.println("ATTM.hMCE end");
+        }
+    }
+
+    private void safeFireNodeChangedRecursion(ShadowNode node) {
+        safeFireNodeChanged(node);
+        if (node.child0 != null) {
+            safeFireNodeChangedRecursion(node.child0);
+        }
+        if (node.child1 != null) {
+            safeFireNodeChangedRecursion(node.child1);
+        }
+    }
+
+    private boolean isExtraNode(ShadowNode node) {
+        return node != null && node.originalNumber < 0;
+    }
+
+    private void safeFireNodeChanged(NodeRef node) {
+        if (node != null) {
+            fireModelChanged(new TreeChangedEvent.NodeOnTree(node));
         }
     }
 
@@ -765,10 +936,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
     }
 
     public int getTaxonIndex(String id) {
-        for (int i = 0, n = getTaxonCount(); i < n; i++) {
-            if (getTaxonId(i).equals(id)) return i;
-        }
-        return -1;
+        return TaxonList.Utils.getTaxonIndex(this, id);
     }
 
     public int getTaxonIndex(Taxon taxon) {
@@ -782,7 +950,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
     }
 
     public List<Taxon> asList() {
-        throw new RuntimeException("Not yet implemented");
+        return TaxonList.Utils.asList(this);
     }
 
     public Object getTaxonAttribute(int taxonIndex, String name) {
@@ -816,27 +984,101 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     @Override
     public String getDescription() {
-        return "Bayesian estimation of Pagel's lambda";
+        return "TreeModel with ghost / travel history lineages";
     }
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.VRANCKEN_2015_SIMULTANEOUSLY);
+        return Collections.singletonList(CommonCitations.LEMEY_2020_ACCOMMODATING);
     }
 
     private Taxon getTaxonByTreeIndex(int index) {
-        return ancestors.get(index - treeExternalCount).getTaxon();
+        if (index >= externalCount ) {
+            return null;
+        } else {
+            return ancestors.get(index - treeExternalCount).getTaxon();
+        }
     }
 
     private void setupClamps() {
         nodeToClampMap.clear();
-        recursiveSetupClamp(treeModel, treeModel.getRoot(), new BitSet(), clampList, nodeToClampMap);
+        recursiveSetupMrcaClamps(treeModel, treeModel.getRoot(), new BitSet(), clampList, nodeToClampMap);
+        setupAncestralPathClamps(treeModel, clampList, nodeToClampMap);
     }
 
-    private static void recursiveSetupClamp(Tree tree, NodeRef node,
-                                            BitSet tips,
-                                            Map<BitSet, AncestralTaxonInTree> clampList,
-                                            Map<Integer, AncestralTaxonInTree> nodeToClampMap) {
+    private static void addAncestralTaxonToMap(Map<Integer, List<AncestralTaxonInTree>> map,
+                                               int index,
+                                               AncestralTaxonInTree ancestor) {
+
+        final List<AncestralTaxonInTree> list = map.containsKey(index) ? map.get(index) : new ArrayList<>();
+        list.add(ancestor);
+        map.put(index, list);
+    }
+
+//    private void addAncestralNodeHeightParameter(NodeRef node) {
+//        Parameter parameter = getNodeHeightParameter(node);
+//        if (parameter != null) {
+//            ancestralPathNodeHeightParameters.put(parameter, node);
+//        }
+//    }
+
+//    private void addAllAncestralNodeHeightParameterBelow(NodeRef node) {
+//        addAncestralNodeHeightParameter(node);
+//        for (int i = 0; i < treeModel.getChildCount(node); ++i) {
+//            addAllAncestralNodeHeightParameterBelow(treeModel.getChild(node, i));
+//        }
+//    }
+
+    private void setupAncestralPathClamps(Tree tree,
+                                          Map<BitSet, AncestralTaxonInTree> clampList,
+                                          Map<Integer, List<AncestralTaxonInTree>> nodeToClampMap) {
+
+        hasAncestralPathTaxa = false;
+        ancestralPathNodeNumbers.clear();
+
+        for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
+            NodeRef node = tree.getExternalNode(i);
+            BitSet tip = new BitSet();
+            tip.set(node.getNumber());
+
+            if (clampList.containsKey(tip)) {
+                AncestralTaxonInTree partials = clampList.get(tip);
+                partials.setTipNode(node);
+
+                ancestralPathNodeNumbers.add(node.getNumber());
+
+                double pathHeight = partials.getHeight();
+                assert (pathHeight > 0.0);
+
+                NodeRef parent = tree.getParent(node);
+                double parentHeight = tree.getNodeHeight(parent);
+                boolean isChild0 = tree.getChild(parent, 0) == node;
+
+                while (parentHeight < pathHeight && parent != tree.getRoot()) {
+                    node = parent;
+
+                    ancestralPathNodeNumbers.add(node.getNumber());;
+
+                    parent = tree.getParent(parent);
+                    parentHeight = tree.getNodeHeight(parent);
+                    isChild0 = tree.getChild(parent, 0) == node;
+                }
+
+                ancestralPathNodeNumbers.add(parent.getNumber());
+
+                partials.setNode(parent, isChild0 ? 0 : 1);
+                addAncestralTaxonToMap(nodeToClampMap, parent.getNumber(), partials);
+                hasAncestralPathTaxa = true;
+            }
+        }
+    }
+
+    private static final boolean NEW_APPROACH2 = false;
+
+    private static void recursiveSetupMrcaClamps(Tree tree, NodeRef node,
+                                                 BitSet tips,
+                                                 Map<BitSet, AncestralTaxonInTree> clampList,
+                                                 Map<Integer, List<AncestralTaxonInTree>> nodeToClampMap) {
 
         if (tree.isExternal(node)) {
             tips.set(node.getNumber());
@@ -845,14 +1087,14 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                 NodeRef child = tree.getChild(node, i);
 
                 BitSet childTips = new BitSet();
-                recursiveSetupClamp(tree, child, childTips, clampList, nodeToClampMap);
+                recursiveSetupMrcaClamps(tree, child, childTips, clampList, nodeToClampMap);
                 tips.or(childTips);
             }
 
             if (clampList.containsKey(tips)) {
                 AncestralTaxonInTree partials = clampList.get(tips);
                 partials.setNode(node);
-                nodeToClampMap.put(node.getNumber(), partials);
+                addAncestralTaxonToMap(nodeToClampMap, node.getNumber(), partials);
             }
         }
     }
@@ -862,13 +1104,15 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         clampList.put(nodeClamp.getTipBitSet(), nodeClamp);
         addModel(nodeClamp);
         nodeClamp.setIndex(index);
-
-//        System.err.println("Added a CLAMP #" + nodeClamp.getIndex() + " for " + nodeClamp.getTaxon().getId());
     }
 
-    final private Map<BitSet, AncestralTaxonInTree> clampList = new HashMap<BitSet, AncestralTaxonInTree>();
-    final private Map<Integer, AncestralTaxonInTree> nodeToClampMap = new HashMap<Integer, AncestralTaxonInTree>();
+    final private Map<BitSet, AncestralTaxonInTree> clampList = new HashMap<>();
+    final private Map<Integer, List<AncestralTaxonInTree>> nodeToClampMap = new HashMap<>();
 
+    private Set<Integer> ancestralPathNodeNumbers = new HashSet<>();
+    private Set<Integer> savedAncestralPathNodeNumbers = new HashSet<>();
+
+    private boolean hasAncestralPathTaxa = false;
     private boolean validShadowTree = false;
     private boolean savedValidShadowTree;
 }

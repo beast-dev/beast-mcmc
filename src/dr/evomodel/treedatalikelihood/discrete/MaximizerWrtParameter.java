@@ -31,6 +31,7 @@ import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.util.Timer;
 import dr.util.Transform;
 import dr.xml.Reportable;
 import com.github.lbfgs4j.liblbfgs.Lbfgs;
@@ -55,7 +56,7 @@ public class MaximizerWrtParameter implements Reportable {
     private final Function function;
     private final Settings settings;
 
-    private long time = 0;
+    private double time = 0.0;
     private long count = 0;
     private double minimumValue = Double.NaN;
     private double[] minimumPoint = null;
@@ -64,11 +65,13 @@ public class MaximizerWrtParameter implements Reportable {
         int numberIterations;
         boolean startAtCurrentState;
         boolean printToScreen;
+        boolean includeJacobian;
 
-        public Settings(int numberIterations, boolean startAtCurrentState, boolean printToScreen) {
+        public Settings(int numberIterations, boolean startAtCurrentState, boolean printToScreen, boolean includeJacobian) {
             this.numberIterations = numberIterations;
             this.startAtCurrentState = startAtCurrentState;
             this.printToScreen = printToScreen;
+            this.includeJacobian = includeJacobian;
         }
     }
 
@@ -93,6 +96,10 @@ public class MaximizerWrtParameter implements Reportable {
         this.settings = settings;
     }
 
+    public Likelihood getLikelihood() {
+        return likelihood;
+    }
+
     public void maximize() {
 
         LBFGS_Param paramsBFGS = Lbfgs.defaultParams();
@@ -110,22 +117,24 @@ public class MaximizerWrtParameter implements Reportable {
             if (transform != null) {
                 x0 = transform.transform(x0, 0, x0.length);
             }
-// PB: I don't think that this is needed. XJ: bug fixed, should be transform instead of inverse, sorry.
-//            if (transform != null) {
-//                x0 = transform.inverse(x0, 0, x0.length);
-//            }
+
         }
 
-        long startTime = System.currentTimeMillis();
+        Timer timer = new Timer();
+        timer.start();
 
         minimumPoint = minimizer.minimize(function, x0);
 
-        long endTime = System.currentTimeMillis();
+        timer.stop();
 
-        time += endTime - startTime;
+        time += timer.toSeconds();
         minimumValue = function.valueAt(minimumPoint);
 
-        setParameter(new WrappedVector.Raw(minimumPoint), parameter);
+        if (transform != null) {
+            setParameter(new WrappedVector.Raw(transform.inverse(minimumPoint, 0, minimumPoint.length)), parameter);
+        } else {
+            setParameter(new WrappedVector.Raw(minimumPoint), parameter);
+        }
     }
 
     @Override
@@ -137,11 +146,15 @@ public class MaximizerWrtParameter implements Reportable {
             sb.append("Not yet executed.");
         } else {
 
+            if (transform != null) {
+                sb.append("Gradient is taken with respect to the transformed paramter values.\n");
+                sb.append("Untransformed X: ").append(new dr.math.matrixAlgebra.Vector(transform.inverse(minimumPoint, 0, minimumPoint.length))).append("\n");
+            }
             sb.append("X: ").append(new dr.math.matrixAlgebra.Vector(minimumPoint)).append("\n");
             sb.append("Gradient: ").append(new dr.math.matrixAlgebra.Vector(function.gradientAt(minimumPoint))).append("\n");
             sb.append("Gradient type: ").append(gradientType).append("\n");
             sb.append("Fx: ").append(minimumValue).append("\n");
-            sb.append("Time: ").append(time).append("\n");
+            sb.append("Time: ").append(time).append("s\n");
             sb.append("Count: ").append(count).append("\n");
 
         }
@@ -171,6 +184,10 @@ public class MaximizerWrtParameter implements Reportable {
                 }
 
                 setParameter(new WrappedVector.Raw(argument), parameter);
+
+                if (settings.includeJacobian) {
+                    return -evaluateLogLikelihood() - transform.getLogJacobian(argument, 0, argument.length);
+                }
                 return -evaluateLogLikelihood();
             }
 
@@ -187,7 +204,12 @@ public class MaximizerWrtParameter implements Reportable {
 
                 if (transform != null) {
 
-                    result = transform.updateGradientUnWeightedLogDensity(result, argument, 0, argument.length);
+                    if (settings.includeJacobian) {
+                        result = transform.updateGradientLogDensity(result, argument, 0, argument.length);
+                    } else {
+                        result = transform.updateGradientUnWeightedLogDensity(result, argument, 0, argument.length);
+                    }
+
 
                 }
                 for (int i = 0; i < result.length; ++i) {

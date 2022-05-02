@@ -38,7 +38,7 @@ import dr.inference.loggers.MCLogger;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.mcmc.MCMC;
 import dr.inference.model.Likelihood;
-import dr.util.Transform;
+import dr.math.MathUtils;
 import dr.xml.XMLParseException;
 import dr.xml.XMLParser;
 import org.xml.sax.SAXException;
@@ -47,10 +47,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Guy Baele
@@ -161,44 +158,53 @@ public class CheckPointUpdaterApp {
             // appropriate savers and loaders according to the user's options.
             // BeastCheckpointer checkpoint = new BeastCheckpointer();
 
-            CheckPointModifier checkpoint = new CheckPointModifier();
+            String inputStateFilesString = System.getProperty(BeastCheckpointer.LOAD_STATE_FILE);
+            String outputStateFilesString = System.getProperty(BeastCheckpointer.SAVE_STATE_FILE);
+            List<String> inputStateFiles = Arrays.asList(inputStateFilesString.split(","));
+            List<String> outputStateFiles = Arrays.asList(outputStateFilesString.split(","));
 
-            //load the stored checkpoint file
-            //this will/should also copy any trait information present in the checkpoint file
-            //TODO Check if this works for multiple trees (e.g. for multiple partitions)
-            long state = checkpoint.loadState(mc, new double[]{Double.NaN});
+            for(int i = 0; i < inputStateFiles.size(); i++) {
+                System.setProperty(BeastCheckpointer.LOAD_STATE_FILE, inputStateFiles.get(i));
+                System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, outputStateFiles.get(i));
+                CheckPointModifier checkpoint = new CheckPointModifier();
 
-            //TODO Check if this can be uncommented again
-            //System.out.println("Pre-checking likelihood values ...");
-            //probably don't need this but it's good to check
-            //double logL = mc.evaluate();
-            //System.out.println("likelihood = " + logL);
-            //mc.getLikelihood().makeDirty();
-            //logL = mc.evaluate();
-            //System.out.println("likelihood = " + logL);
+                //load the stored checkpoint file
+                //this will/should also copy any trait information present in the checkpoint file
+                //TODO Check if this works for multiple trees (e.g. for multiple partitions)
+                long state = checkpoint.loadState(mc, new double[]{Double.NaN});
 
-            double logL;
+                //TODO Check if this can be uncommented again
+                //System.out.println("Pre-checking likelihood values ...");
+                //probably don't need this but it's good to check
+                //double logL = mc.evaluate();
+                //System.out.println("likelihood = " + logL);
+                //mc.getLikelihood().makeDirty();
+                //logL = mc.evaluate();
+                //System.out.println("likelihood = " + logL);
 
-            if (ADD_TAXA) {
+                double logL;
 
-                checkpoint.extendLoadState(choice);
+                if (ADD_TAXA) {
 
-                mc.getLikelihood().makeDirty();
-                logL = mc.evaluate();
-                System.out.println("likelihood = " + logL);
-                mc.getLikelihood().makeDirty();
-                logL = mc.evaluate();
-                System.out.println("likelihood = " + logL);
+                    checkpoint.extendLoadState(choice);
 
-                //TODO Print full compoundLikelihood evaluation
-                Set<Likelihood> likelihoodSet = mc.getLikelihood().getLikelihoodSet();
-                for (Likelihood l : likelihoodSet) {
-                    System.out.println("  " + l.getLogLikelihood());
+                    mc.getLikelihood().makeDirty();
+                    logL = mc.evaluate();
+                    System.out.println("likelihood = " + logL);
+                    mc.getLikelihood().makeDirty();
+                    logL = mc.evaluate();
+                    System.out.println("likelihood = " + logL);
+
+                    //TODO Print full compoundLikelihood evaluation
+                    Set<Likelihood> likelihoodSet = mc.getLikelihood().getLikelihoodSet();
+                    for (Likelihood l : likelihoodSet) {
+                        System.out.println("  " + l.getLogLikelihood());
+                    }
+
                 }
 
+                checkpoint.saveState(mc, state, logL);
             }
-
-            checkpoint.saveState(mc, state, logL);
 
             //TODO .log and .trees files are being created; not necessary here as we're not running an analysis
 
@@ -227,7 +233,8 @@ public class CheckPointUpdaterApp {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.StringOption("BEAST_XML", "FILENAME", "Specify a BEAST XML file"),
-                        new Arguments.StringOption("load_dump", "FILENAME", "Specify a filename to load a dumped state from"),
+                        new Arguments.LongOption("seed", "Specify a random number generator seed"),
+                        new Arguments.StringOption("load_state", "FILENAME", "Specify a filename to load a state from"),
                         new Arguments.StringOption("output_file", "FILENAME", "Specify a filename for the output file"),
                         new Arguments.StringOption("update_choice", "UPDATECHOICE", "Specify a function by which to update the tree"),
                         new Arguments.Option("help", "Print this information and stop")
@@ -244,6 +251,16 @@ public class CheckPointUpdaterApp {
         }
 
         String inputFile = null;
+        long seed = MathUtils.getSeed();
+
+        if (arguments.hasOption("seed")) {
+            seed = arguments.getLongOption("seed");
+            if (seed <= 0) {
+                System.err.println("The random number seed should be > 0");
+                System.exit(1);
+            }
+            MathUtils.setSeed(seed);
+        }
 
         if (arguments.hasOption("BEAST_XML")) {
             inputFile = arguments.getStringOption("BEAST_XML");
@@ -252,12 +269,12 @@ public class CheckPointUpdaterApp {
         }
 
         String debugStateFile;
-        if (arguments.hasOption("load_dump")) {
-            debugStateFile = arguments.getStringOption("load_dump");
+        if (arguments.hasOption("load_state")) {
+            debugStateFile = arguments.getStringOption("load_state");
             //pass on as argument
             System.setProperty(BeastCheckpointer.LOAD_STATE_FILE, debugStateFile);
         } else {
-            throw new RuntimeException("No dump file specified.");
+            throw new RuntimeException("No state file specified.");
         }
 
         String choice = "";

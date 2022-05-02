@@ -1,23 +1,14 @@
 package test.dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
-import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
-import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
-import dr.inference.model.*;
-import dr.xml.AttributeParser;
-import dr.xml.XMLParser;
-import test.dr.inference.trace.TraceCorrelationAssert;
+import dr.inference.model.Parameter;
 
-import java.io.StringReader;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import static dr.evomodel.branchratemodel.ArbitraryBranchRates.make;
 
@@ -26,16 +17,7 @@ import static dr.evomodel.branchratemodel.ArbitraryBranchRates.make;
  * @author Paul Bastide
  */
 
-public class BranchSpecificGradientTest extends TraceCorrelationAssert {
-
-    private int dimTrait;
-    private int nTips;
-
-    private MultivariateDiffusionModel diffusionModel;
-    private ContinuousTraitPartialsProvider dataModel;
-    private ConjugateRootTraitPrior rootPrior;
-
-    private NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
+public class BranchSpecificGradientTest extends ContinuousTraitTest {
 
     public BranchSpecificGradientTest(String name) {
         super(name);
@@ -43,69 +25,6 @@ public class BranchSpecificGradientTest extends TraceCorrelationAssert {
 
     public void setUp() throws Exception {
         super.setUp();
-
-        dimTrait = 3;
-
-        format.setMaximumFractionDigits(5);
-
-        // Tree
-        createAlignment(PRIMATES_TAXON_SEQUENCE, Nucleotides.INSTANCE);
-        treeModel = createPrimateTreeModel();
-
-        // Data
-        nTips = 6;
-        Parameter[] dataTraits = new Parameter[6];
-        dataTraits[0] = new Parameter.Default("human", new double[]{-1.0, 2.0, 3.0});
-        dataTraits[1] = new Parameter.Default("chimp", new double[]{10.0, 12.0, 14.0});
-        dataTraits[2] = new Parameter.Default("bonobo", new double[]{0.5, -2.0, 5.5});
-        dataTraits[3] = new Parameter.Default("gorilla", new double[]{2.0, 5.0, -8.0});
-        dataTraits[4] = new Parameter.Default("orangutan", new double[]{11.0, 1.0, -1.5});
-        dataTraits[5] = new Parameter.Default("siamang", new double[]{1.0, 2.5, 4.0});
-        CompoundParameter traitParameter = new CompoundParameter("trait", dataTraits);
-
-        List<Integer> missingIndices = new ArrayList<Integer>();
-        traitParameter.setParameterValue(2, 0);
-        missingIndices.add(3);
-        missingIndices.add(4);
-        missingIndices.add(5);
-        missingIndices.add(7);
-
-        //// Standard Model //// ***************************************************************************************
-
-        // Diffusion
-        Parameter[] precisionParameters = new Parameter[dimTrait];
-        precisionParameters[0] = new Parameter.Default(new double[]{1.0, 0.1, 0.2});
-        precisionParameters[1] = new Parameter.Default(new double[]{0.1, 2.0, 0.0});
-        precisionParameters[2] = new Parameter.Default(new double[]{0.2, 0.0, 3.0});
-        MatrixParameterInterface diffusionPrecisionMatrixParameter
-                = new MatrixParameter("precisionMatrix", precisionParameters);
-        diffusionModel = new MultivariateDiffusionModel(diffusionPrecisionMatrixParameter);
-
-        PrecisionType precisionType = PrecisionType.FULL;
-
-        // Root prior
-        String s = "<beast>\n" +
-                "    <conjugateRootPrior>\n" +
-                "        <meanParameter>\n" +
-                "            <parameter id=\"meanRoot\"  value=\"-3.0 -1.0 1.0\"/>\n" +
-                "        </meanParameter>\n" +
-                "        <priorSampleSize>\n" +
-                "            <parameter id=\"sampleSizeRoot\" value=\"10.0\"/>\n" +
-                "        </priorSampleSize>\n" +
-                "    </conjugateRootPrior>\n" +
-                "</beast>";
-        XMLParser parser = new XMLParser(true, true, true, null);
-        parser.addXMLObjectParser(new AttributeParser());
-        parser.addXMLObjectParser(new ParameterParser());
-        parser.parse(new StringReader(s), true);
-        rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(parser.getRoot(), dimTrait);
-//        rootPrior = new ConjugateRootTraitPrior(new double[]{-1.0, -3.0, 2.5}, 10.0, true);
-
-        // Data Model
-        dataModel = new ContinuousTraitDataModel("dataModel",
-                traitParameter,
-                missingIndices, true,
-                dimTrait, precisionType);
     }
 
     public void testRateGradient() {
@@ -120,7 +39,7 @@ public class BranchSpecificGradientTest extends TraceCorrelationAssert {
                 = new DriftDiffusionModelDelegate(treeModel, diffusionModel, driftModels);
 
         // Rates
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, true, null, null);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, true, false, null, null);
         Parameter branchRates = new Parameter.Default(new double[]{10, 9, 8, 7, 6, 5, 4, 3, 2, 1});
         ArbitraryBranchRates rateModel = new ArbitraryBranchRates(treeModel, branchRates, transform, false);
 
@@ -146,11 +65,18 @@ public class BranchSpecificGradientTest extends TraceCorrelationAssert {
                 = new BranchSpecificGradient("trait", dataLikelihood, likelihoodDelegate,
                 traitGradient, branchRates);
         double[] gradient2 = branchGradient2.getGradientLogDensity();
+        double[] numericalGradient = branchGradient1.getNumericalGradient();
 
-        System.err.println("\tGradient with rate method = " + new dr.math.matrixAlgebra.Vector(gradient1));
+        System.err.println("\tGradient with rate method    = " + new dr.math.matrixAlgebra.Vector(gradient1));
         System.err.println("\tGradient with general method = " + new dr.math.matrixAlgebra.Vector(gradient2));
+        System.err.println("\tNumerical gradient           = " + new dr.math.matrixAlgebra.Vector(numericalGradient));
 
         assertEquals("length", gradient1.length, gradient2.length);
+        for (int i = 0; i < gradient1.length; i++) {
+            assertEquals("numeric " + i,
+                    gradient1[i],
+                    numericalGradient[i], 1E-4);
+        }
         for (int i = 0; i < gradient1.length; i++) {
             assertEquals("gradient " + i,
                     format.format(gradient1[i]),

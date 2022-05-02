@@ -36,11 +36,11 @@ import dr.math.MathUtils;
  * @author Alexander V. Alekseyenko
  * @version $Id: DeltaMixOperator.java,v 1.6 2010/09/23 $
  */
-public class DeltaMixOperator extends AbstractCoercableOperator {
+public class DeltaMixOperator extends AbstractAdaptableOperator {
 
     public DeltaMixOperator(Parameter parameter, double delta) {
 
-        super(CoercionMode.COERCION_ON);
+        super(AdaptationMode.ADAPTATION_ON);
 
         this.parameter = parameter;
         this.delta = delta;
@@ -52,7 +52,7 @@ public class DeltaMixOperator extends AbstractCoercableOperator {
         }
     }
 
-    public DeltaMixOperator(Parameter parameter, int[] parameterWeights, double delta, double weight, CoercionMode mode) {
+    public DeltaMixOperator(Parameter parameter, int[] parameterWeights, double delta, double weight, AdaptationMode mode) {
 
         super(mode);
 
@@ -107,11 +107,12 @@ public class DeltaMixOperator extends AbstractCoercableOperator {
         return parameter.getParameterName();
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(delta)-Math.log(1-delta);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         delta = 1/(1+Math.exp(-value));
     }
 
@@ -119,23 +120,8 @@ public class DeltaMixOperator extends AbstractCoercableOperator {
         return delta;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-
-        double d = OperatorUtils.optimizeWindowSize(delta, parameter.getParameterValue(0) * 2.0, prob, targetProb);
-
-
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try decreasing delta to about " + d;
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try increasing delta to about " + d;
-        } else return "";
+    public String getAdaptableParameterName() {
+        return "delta";
     }
 
     public String toString() {

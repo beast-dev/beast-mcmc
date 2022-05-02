@@ -93,6 +93,11 @@ public class ColouredTreeIntervals implements StructuredIntervalList {
         return intervalCount;
     }
 
+    @Override
+    public double getStartTime() {
+        return 0;
+    }
+
     /**
      * get the total number of sampling events.
      */
@@ -106,6 +111,21 @@ public class ColouredTreeIntervals implements StructuredIntervalList {
     public double getInterval(int i) {
         if (i == 0) return getEvent(i).time;
         return getEvent(i).time - getEvent(i - 1).time;
+    }
+
+    /**
+     * Returns the time of the start of an interval
+     */
+    public double getIntervalTime(int i){
+        if (i == 0) return getEvent(i).time;
+        return getEvent(i - 1).time;
+    }
+
+    /**
+     * Recalculates all the intervals from the tree model.
+     */
+    public void calculateIntervals(){
+        // fill in
     }
 
     /**

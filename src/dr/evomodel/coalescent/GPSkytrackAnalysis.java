@@ -31,7 +31,7 @@ import dr.inference.model.Parameter;
 //import dr.evolution.io.NexusImporter;
 //import dr.evolution.io.TreeImporter;
 //import dr.evolution.tree.Tree;
-//import dr.inference.operators.CoercionMode;
+//import dr.inference.operators.AdaptationMode;
 //import dr.inference.trace.AbstractTraceList;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
@@ -53,6 +53,7 @@ import java.util.StringTokenizer;
 /**
  * @author Joseph Heled
  */
+@Deprecated
 public class GPSkytrackAnalysis extends TabularData {
 //    TabularData
 

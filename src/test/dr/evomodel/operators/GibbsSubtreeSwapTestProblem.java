@@ -6,6 +6,8 @@ package test.dr.evomodel.operators;
 import java.io.IOException;
 
 import dr.evolution.tree.TreeUtils;
+import dr.evomodel.tree.DefaultTreeModel;
+import dr.inference.operators.*;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -16,11 +18,7 @@ import dr.evomodel.operators.GibbsSubtreeSwap;
 //import dr.evomodel.operators.ImportanceSubtreeSwap;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercionMode;
-import dr.inference.operators.OperatorSchedule;
-import dr.inference.operators.ScaleOperator;
-import dr.inference.operators.SimpleOperatorSchedule;
-import dr.inference.operators.UniformOperator;
+import dr.inference.operators.AdaptationMode;
 
 
 /**
@@ -74,7 +72,7 @@ public class GibbsSubtreeSwapTestProblem extends OperatorAssert{
 
         for (int i = 0; i < reps; i++) {
 
-            TreeModel treeModel = new TreeModel("treeModel", tree5);
+            DefaultTreeModel treeModel = new DefaultTreeModel("treeModel", tree5);
             GibbsSubtreeSwap operator = new GibbsSubtreeSwap(treeModel, false, 1.0);
             double hr = operator.operate(null);
 
@@ -98,13 +96,13 @@ public class GibbsSubtreeSwapTestProblem extends OperatorAssert{
         assertExpectation(0.1, p_1, reps);
     }
 
-    public OperatorSchedule getOperatorSchedule(TreeModel treeModel) {
+    public OperatorSchedule getOperatorSchedule(DefaultTreeModel treeModel) {
 
         Parameter rootParameter = treeModel.createNodeHeightsParameter(true, false, false);
         Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
 
         GibbsSubtreeSwap operator = new GibbsSubtreeSwap(treeModel, false, 1.0);
-        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, CoercionMode.COERCION_ON, 1.0);
+        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, AdaptationMode.ADAPTATION_ON, 1.0);
         UniformOperator uniformOperator = new UniformOperator(internalHeights, 1.0);
 
         OperatorSchedule schedule = new SimpleOperatorSchedule();

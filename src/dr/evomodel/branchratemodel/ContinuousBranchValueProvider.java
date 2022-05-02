@@ -27,6 +27,11 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
+
 /**
  * @author Marc A. Suchard
  * @author Philippe Lemey
@@ -43,13 +48,75 @@ public interface ContinuousBranchValueProvider {
 
             assert (tree.getRoot() != node);
 
-            double midPoint = tree.getNodeHeight(tree.getParent(node)) - tree.getNodeHeight(node);
+            final double midPoint = (tree.getNodeHeight(tree.getParent(node)) + tree.getNodeHeight(node)) * 0.5;
 
             return transform(midPoint);
         }
 
         double transform(double x) {
             return Math.log(x);
+        }
+    }
+
+    class ConstrainedMidPoint extends AbstractModel implements ContinuousBranchValueProvider {
+
+        final static String NAME = "constrainedMidPoint";
+        private final Parameter heightLowerBound;
+
+        public ConstrainedMidPoint(Parameter heightLowerBound) {
+            super(NAME);
+            this.heightLowerBound = heightLowerBound;
+            addVariable(heightLowerBound);
+        }
+
+        @Override
+        public double getBranchValue(Tree tree, NodeRef node) {
+            assert (tree.getRoot() != node);
+
+            final double parentNodeHeight = tree.getNodeHeight(tree.getParent(node));
+            final double nodeHeight = tree.getNodeHeight(node);
+            final double timeEffect;
+
+            if (parentNodeHeight < heightLowerBound.getParameterValue(0)) {
+                timeEffect = heightLowerBound.getParameterValue(0);
+            } else if (nodeHeight < heightLowerBound.getParameterValue(0)) {
+                timeEffect = (0.5 * parentNodeHeight * parentNodeHeight
+                        + 0.5 * heightLowerBound.getParameterValue(0) * heightLowerBound.getParameterValue(0)
+                        - heightLowerBound.getParameterValue(0) * nodeHeight ) / (parentNodeHeight - nodeHeight);
+            } else {
+                timeEffect = 0.5 * (nodeHeight + parentNodeHeight);
+            }
+
+            return transform(timeEffect);
+        }
+
+        double transform(double x) {
+            return Math.log(x);
+        }
+
+        @Override
+        protected void handleModelChangedEvent(Model model, Object object, int index) {
+
+        }
+
+        @Override
+        protected void storeState() {
+
+        }
+
+        @Override
+        protected void restoreState() {
+
+        }
+
+        @Override
+        protected void acceptState() {
+
+        }
+
+        @Override
+        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+
         }
     }
 }

@@ -34,8 +34,10 @@ import dr.util.Transform;
  */
 abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter {
 
-    protected final Parameter diagonalParameter;
-    protected final Parameter offDiagonalParameter;
+    final Parameter diagonalParameter;
+    final Parameter offDiagonalParameter;
+
+    final CompoundParameter untransformedCompoundParameter;
 
     protected final int dim;
 
@@ -46,6 +48,9 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
         offDiagonalParameter = offDiagonal;
         addParameter(diagonalParameter);
         addParameter(offDiagonalParameter);
+
+        untransformedCompoundParameter = new CompoundParameter(this.getParameterName());
+        setUntransformedCompoundParameter();
     }
 
     AbstractTransformedCompoundMatrix(Parameter diagonals, Parameter offDiagonal,
@@ -57,6 +62,14 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
                 (transform == null) ? offDiagonal: new TransformedMultivariateParameter(offDiagonal, transform, inverse);
         addParameter(diagonalParameter);
         addParameter(offDiagonalParameter);
+
+        untransformedCompoundParameter = new CompoundParameter(this.getParameterName());
+        setUntransformedCompoundParameter();
+    }
+
+    private void setUntransformedCompoundParameter() {
+        untransformedCompoundParameter.addParameter(getDiagonalParameter());
+        untransformedCompoundParameter.addParameter(getUntransformedOffDiagonalParameter());
     }
 
     @Override
@@ -68,6 +81,33 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
     public double getParameterValue(int index) {
         final int dim = getColumnDimension();
         return getParameterValue(index / dim, index % dim);
+    }
+
+    @Override
+    public double getParameterUntransformedValue(int index) {
+        final int dim = getColumnDimension();
+        return getParameterUntransformedValue(index / dim, index % dim);
+    }
+
+    private double getParameterUntransformedValue(int row, int col) {
+        if (row != col) {
+            return offDiagonalParameter.getParameterUntransformedValue(getUpperTriangularIndex(row, col));
+        }
+        return diagonalParameter.getParameterUntransformedValue(row);
+    }
+
+    @Override
+    public void setParameterUntransformedValue(int index, double a) {
+        final int dim = getColumnDimension();
+        setParameterUntransformedValue(index / dim, index % dim, a);
+    }
+
+    private void setParameterUntransformedValue(int row, int col, double a) {
+        if (row != col) {
+            offDiagonalParameter.setParameterUntransformedValue(getUpperTriangularIndex(row, col), a);
+        } else {
+            diagonalParameter.setParameterUntransformedValue(row, a);
+        }
     }
 
     @Override
@@ -109,6 +149,10 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
         return offDiagonalParameter;
     }
 
+    public CompoundParameter getUntransformedCompoundParameter(){
+        return untransformedCompoundParameter;
+    }
+
     abstract double[] updateGradientDiagonal(double[] gradient);
 
     abstract double[] updateGradientOffDiagonal(double[] gradient);
@@ -139,5 +183,17 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
     public String getReport() {
         return new WrappedMatrix.ArrayOfArray(getParameterAsMatrix()).toString();
     }
-}
 
+    int getUpperTriangularIndex(int i, int j) {
+        assert i != j;
+        if (i < j) {
+            return upperTriangularTransformation(i, j);
+        } else {
+            return upperTriangularTransformation(j, i);
+        }
+    }
+
+    private int upperTriangularTransformation(int i, int j) {
+        return i * (2 * dim - i - 1) / 2 + (j - i - 1);
+    }
+}

@@ -39,6 +39,8 @@ import java.util.Arrays;
 public class Intervals implements IntervalList {
 
     public Intervals(int maxEventCount) {
+        startTime = Double.POSITIVE_INFINITY;
+
         events = new Event[maxEventCount];
         for (int i = 0; i < maxEventCount; i++) {
             events[i] = new Event();
@@ -57,6 +59,8 @@ public class Intervals implements IntervalList {
         intervalsKnown = source.intervalsKnown;
         eventCount = source.eventCount;
         sampleCount = source.sampleCount;
+        intervalCount = source.intervalCount;
+        startTime = source.startTime;
 
         //don't copy the actual events..
         /*
@@ -73,12 +77,18 @@ public class Intervals implements IntervalList {
     }
 
     public void resetEvents() {
+        startTime = Double.POSITIVE_INFINITY;
+
         intervalsKnown = false;
         eventCount = 0;
         sampleCount = 0;
     }
 
     public void addSampleEvent(double time) {
+        if (time < startTime) {
+            startTime = time;
+        }
+
         events[eventCount].time = time;
         events[eventCount].type = IntervalType.SAMPLE;
         eventCount++;
@@ -113,22 +123,37 @@ public class Intervals implements IntervalList {
     }
 
     public int getIntervalCount() {
-        if (!intervalsKnown) calculateIntervals();
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         return intervalCount;
     }
 
     public double getInterval(int i) {
-        if (!intervalsKnown) calculateIntervals();
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         return intervals[i];
     }
 
+    public double getIntervalTime(int i){
+        if (!intervalsKnown){
+            calculateIntervals();
+        }
+        return events[i].time;
+    }
+
     public int getLineageCount(int i) {
-        if (!intervalsKnown) calculateIntervals();
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         return lineageCounts[i];
     }
 
     public int getCoalescentEvents(int i) {
-        if (!intervalsKnown) calculateIntervals();
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         if (i < intervalCount - 1) {
             return lineageCounts[i] - lineageCounts[i + 1];
         } else {
@@ -136,14 +161,25 @@ public class Intervals implements IntervalList {
         }
     }
 
+    public double getStartTime() {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        return startTime;
+    }
+
     public IntervalType getIntervalType(int i) {
-        if (!intervalsKnown) calculateIntervals();
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         return intervalTypes[i];
     }
 
     public double getTotalDuration() {
 
-        if (!intervalsKnown) calculateIntervals();
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         return events[eventCount - 1].time;
     }
 
@@ -155,7 +191,7 @@ public class Intervals implements IntervalList {
         return true;
     }
 
-    private void calculateIntervals() {
+    public void calculateIntervals() {
 
         if (eventCount < 2) {
             throw new IllegalArgumentException("Too few events to construct intervals");
@@ -228,6 +264,8 @@ public class Intervals implements IntervalList {
 
     }
 
+    private double startTime;
+
     private Event[] events;
     private int eventCount;
     private int sampleCount;
@@ -236,6 +274,5 @@ public class Intervals implements IntervalList {
     private double[] intervals;
     private int[] lineageCounts;
     private IntervalType[] intervalTypes;
-    //private int[] destinations;
     private int intervalCount = 0;
 }

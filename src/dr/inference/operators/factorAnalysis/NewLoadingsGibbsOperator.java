@@ -26,16 +26,17 @@
 package dr.inference.operators.factorAnalysis;
 
 import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.NormalDistributionModel;
+import dr.inference.distribution.NormalStatisticsProvider;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.distributions.NormalDistribution;
 import dr.math.matrixAlgebra.*;
+import dr.xml.Reportable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -43,10 +44,14 @@ import java.util.concurrent.Executors;
 /**
  * @author Max R. Tolkoff
  * @author Marc A. Suchard
+ * @author Gabriel Hassler
  */
-public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOperator, Reportable {
 
-    private NormalDistribution workingPrior;
+    private final FactorAnalysisStatisticsProvider statisticsProvider;
+
+
+    private NormalDistributionModel workingPrior;
     private final ArrayList<double[][]> precisionArray;
     private final ArrayList<double[]> meanMidArray;
     private final ArrayList<double[]> meanArray;
@@ -54,105 +59,87 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     private final boolean randomScan;
     private double pathParameter = 1.0;
 
-    private final double priorPrecision;
-    private final double priorMean;
+    private final NormalStatisticsProvider prior;
     private final double priorPrecisionWorking;
 
     private final FactorAnalysisOperatorAdaptor adaptor;
 
     private final ConstrainedSampler constrainedSampler;
+    private final ColumnDimProvider columnDimProvider;
 
-    public NewLoadingsGibbsOperator(FactorAnalysisOperatorAdaptor adaptor, DistributionLikelihood prior,
+
+    public NewLoadingsGibbsOperator(FactorAnalysisStatisticsProvider statisticsProvider, NormalStatisticsProvider prior,
                                     double weight, boolean randomScan, DistributionLikelihood workingPrior,
                                     boolean multiThreaded, int numThreads,
-                                    ConstrainedSampler constrainedSampler) {
+                                    ConstrainedSampler constrainedSampler,
+                                    ColumnDimProvider columnDimProvider) {
 
         setWeight(weight);
 
-        this.adaptor = adaptor;
+        this.statisticsProvider = statisticsProvider;
+        this.adaptor = statisticsProvider.getAdaptor();
 
-        NormalDistribution prior1 = (NormalDistribution) prior.getDistribution();
+        this.prior = prior;
+
         if (workingPrior != null) {
-            this.workingPrior = (NormalDistribution) workingPrior.getDistribution();
+            this.workingPrior = (NormalDistributionModel) workingPrior.getDistribution();
         }
 
         precisionArray = new ArrayList<double[][]>();
-        double[][] temp;
+        meanMidArray = new ArrayList<double[]>();
+        meanArray = new ArrayList<double[]>();
+
         this.randomScan = randomScan;
         this.constrainedSampler = constrainedSampler;
+        this.columnDimProvider = columnDimProvider;
 
-        meanArray = new ArrayList<double[]>();
-        meanMidArray = new ArrayList<double[]>();
-
-        // TODO Clean up memory allocation
-        double[] tempMean;
-        if (!randomScan) {
-            for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-                temp = new double[i + 1][i + 1];
-                precisionArray.add(temp);
-            }
-            for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-                tempMean = new double[i + 1];
-                meanArray.add(tempMean);
-            }
-
-            for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-                tempMean = new double[i + 1];
-                meanMidArray.add(tempMean);
-            }
-        } else {
-            for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-                temp = new double[adaptor.getNumberOfFactors() - i][adaptor.getNumberOfFactors() - i];
-                precisionArray.add(temp);
-            }
-            for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-                tempMean = new double[adaptor.getNumberOfFactors() - i];
-                meanArray.add(tempMean);
-            }
-
-            for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-                tempMean = new double[adaptor.getNumberOfFactors() - i];
-                meanMidArray.add(tempMean);
-            }
-        }
-
-        priorPrecision = 1 / (prior1.getSD() * prior1.getSD());
-        priorMean = prior1.getMean();
 
         if (workingPrior == null) {
-            priorPrecisionWorking = priorPrecision;
+            priorPrecisionWorking = getPrecision(prior, 0); //TODO: Do I need to let priorPrecisionWorking vary with dimension?
         } else {
-            priorPrecisionWorking = 1 / (this.workingPrior.getSD() * this.workingPrior.getSD());
+            priorPrecisionWorking = 1 / (this.workingPrior.getStdev() * this.workingPrior.getStdev());
         }
 
         if (multiThreaded) {
             for (int i = 0; i < adaptor.getNumberOfTraits(); i++) {
-                if (i < adaptor.getNumberOfFactors())
-                    drawCallers.add(new DrawCaller(i, new double[i + 1][i + 1], new double[i + 1], new double[i + 1]));
-                else
-                    drawCallers.add(new DrawCaller(i, new double[adaptor.getNumberOfFactors()][adaptor.getNumberOfFactors()],
-                            new double[adaptor.getNumberOfFactors()], new double[adaptor.getNumberOfFactors()]));
+                int dim = columnDimProvider.getColumnDim(i, adaptor.getNumberOfFactors());
+                drawCallers.add(new DrawCaller(i, new double[dim][dim], new double[dim], new double[dim]));
             }
             pool = Executors.newFixedThreadPool(numThreads);
         } else {
             pool = null;
+            columnDimProvider.allocateStorage(precisionArray, meanMidArray, meanArray, adaptor.getNumberOfFactors());
         }
+
+
+        if (statisticsProvider.useCache()) {
+            if (multiThreaded && numThreads > 1) {
+                throw new IllegalArgumentException("Cannot currently parallelize cached precisions");
+            }
+        }
+    }
+
+    public FactorAnalysisOperatorAdaptor getAdaptor() {
+        return adaptor;
+    }
+
+    private double getPrecision(NormalStatisticsProvider provider, int dim) {
+        double sd = provider.getNormalSD(dim);
+        return 1.0 / (sd * sd);
     }
 
 
     private void getPrecisionOfTruncated(FactorAnalysisOperatorAdaptor adaptor, //MatrixParameterInterface full,
                                          int newRowDimension, int row, double[][] answer) {
 
-        int p = adaptor.getNumberOfTaxa(); //.getColumnDimension();
+        statisticsProvider.getFactorInnerProduct(row, newRowDimension, answer);
 
         for (int i = 0; i < newRowDimension; i++) {
             for (int j = i; j < newRowDimension; j++) {
-                double sum = 0;
-                for (int k = 0; k < p; k++)
-                    sum += adaptor.getFactorValue(i, k) * adaptor.getFactorValue(j, k);
-                answer[i][j] = sum * this.adaptor.getColumnPrecision(row); //adaptor.getColumnPrecision().getParameterValue(row, row);
+                answer[i][j] *= this.adaptor.getColumnPrecision(row); //adaptor.getColumnPrecision().getParameterValue(row, row);
                 if (i == j) {
-                    answer[i][j] = answer[i][j] * pathParameter + getAdjustedPriorPrecision();
+                    answer[i][j] = answer[i][j] * pathParameter +
+                            getAdjustedPriorPrecision(adaptor.getNumberOfTraits() * i + row);
                 } else {
                     answer[i][j] *= pathParameter;
                     answer[j][i] = answer[i][j];
@@ -164,21 +151,14 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
     private void getTruncatedMean(int newRowDimension, int dataColumn, double[][] variance, double[] midMean, double[] mean) {
 
-        final int p = adaptor.getNumberOfTaxa();
+        statisticsProvider.getFactorTraitProduct(dataColumn, newRowDimension, midMean);
 
         for (int i = 0; i < newRowDimension; i++) {
-            double sum = 0;
 
-            for (int k = 0; k < p; k++) {
-                if (adaptor.isNotMissing(dataColumn, k)) {
-                    sum += adaptor.getFactorValue(i, k) /*Left.getParameterValue(i, k)*/
-                            * adaptor.getDataValue(dataColumn, k); //data.getParameterValue(dataColumn, k);
-                }
-            }
+            int priorDim = adaptor.getNumberOfTraits() * i + dataColumn;
 
-            sum = sum * adaptor.getColumnPrecision(dataColumn); //adaptor.getColumnPrecision().getParameterValue(dataColumn, dataColumn);
-            sum += priorMean * priorPrecision;
-            midMean[i] = sum;
+            midMean[i] *= adaptor.getColumnPrecision(dataColumn); //adaptor.getColumnPrecision().getParameterValue(dataColumn, dataColumn);
+            midMean[i] += prior.getNormalMean(priorDim) * getPrecision(prior, priorDim);
         }
 
         for (int i = 0; i < newRowDimension; i++) {
@@ -191,21 +171,14 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
     private void getPrecision(int i, double[][] answer) {
         int size = adaptor.getNumberOfFactors();
-        if (i < size) {
-            getPrecisionOfTruncated(adaptor, i + 1, i, answer);
-        } else {
-            getPrecisionOfTruncated(adaptor, size, i, answer);
-        }
+        getPrecisionOfTruncated(adaptor, columnDimProvider.getColumnDim(i, size), i, answer);
     }
 
     private void getMean(int i, double[][] variance, double[] midMean, double[] mean) {
 
         int size = adaptor.getNumberOfFactors();
-        if (i < size) {
-            getTruncatedMean(i + 1, i, variance, midMean, mean);
-        } else {
-            getTruncatedMean(size, i, variance, midMean, mean);
-        }
+        getTruncatedMean(columnDimProvider.getColumnDim(i, size), i, variance, midMean, mean);
+
         for (int j = 0; j < mean.length; j++) {
             mean[j] *= pathParameter;  // TODO Is this missing the working prior component?
         }
@@ -225,6 +198,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         getMean(i, variance, midMean, mean);
 
+
         double[] draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
 
         adaptor.setLoadingsForTraitQuietly(i, draw);
@@ -233,16 +207,24 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             System.err.println("draw: " + new Vector(draw));
         }
     }
-    
-    @Override
-    public String getPerformanceSuggestion() {
-        return null;
+
+    private void drawI(int i) {
+        int arrayInd = columnDimProvider.getArrayIndex(i, adaptor.getNumberOfFactors());
+        drawI(i, precisionArray.get(arrayInd), meanMidArray.get(arrayInd), meanArray.get(arrayInd));
     }
 
+//    @Override
+//    public String getPerformanceSuggestion() {
+//        return null;
+//    }
+
     @Override
-    public String getOperatorName() { return "newLoadingsGibbsOperator"; }
+    public String getOperatorName() {
+        return "newLoadingsGibbsOperator";
+    }
 
     private static boolean DEBUG = false;
+
 
     @Override
     public double doOperation() {
@@ -255,47 +237,6 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         adaptor.drawFactors();
 
         int size = adaptor.getNumberOfTraits();
-        if (adaptor.getNumberOfFactors() != precisionArray.listIterator().next().length) {
-
-            if (DEBUG) {
-                System.err.println("!= length");
-            }
-
-            precisionArray.clear();
-            meanArray.clear();
-            meanMidArray.clear();
-            double[] tempMean;
-            double[][] temp;
-            if (!randomScan) {
-                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-                    temp = new double[i + 1][i + 1];
-                    precisionArray.add(temp);
-                }
-                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-                    tempMean = new double[i + 1];
-                    meanArray.add(tempMean);
-                }
-
-                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-                    tempMean = new double[i + 1];
-                    meanMidArray.add(tempMean);
-                }
-            } else {
-                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-                    temp = new double[adaptor.getNumberOfFactors() - i][adaptor.getNumberOfFactors() - i];
-                    precisionArray.add(temp);
-                }
-                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-                    tempMean = new double[adaptor.getNumberOfFactors() - i];
-                    meanArray.add(tempMean);
-                }
-
-                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-                    tempMean = new double[adaptor.getNumberOfFactors() - i];
-                    meanMidArray.add(tempMean);
-                }
-            }
-        }
 
         if (pool != null) {
 
@@ -315,42 +256,20 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
                 System.err.println("inner");
             }
 
-            if (!randomScan) {
-                ListIterator<double[][]> currentPrecision = precisionArray.listIterator();
-                ListIterator<double[]> currentMidMean = meanMidArray.listIterator();
-                ListIterator<double[]> currentMean = meanArray.listIterator();
-                double[][] precision = null;
-                double[] midMean = null;
-                double[] mean = null;
-                for (int i = 0; i < size; i++) {
-                    if (i < adaptor.getNumberOfFactors()) {
-                        precision = currentPrecision.next();
-                        midMean = currentMidMean.next();
-                        mean = currentMean.next();
-                    }
 
-                    drawI(i, precision, midMean, mean);
+            if (!randomScan) {
+                for (int i = 0; i < size; i++) {
+                    drawI(i);
                 }
-                constrainedSampler.applyConstraint(adaptor);
-                adaptor.fireLoadingsChanged();
+
             } else {
                 int i = MathUtils.nextInt(adaptor.getNumberOfTraits());
-                ListIterator<double[][]> currentPrecision;
-                ListIterator<double[]> currentMidMean;
-                ListIterator<double[]> currentMean;
-                if (i < adaptor.getNumberOfFactors()) {
-                    currentPrecision = precisionArray.listIterator(adaptor.getNumberOfFactors() - i - 1);
-                    currentMidMean = meanMidArray.listIterator(adaptor.getNumberOfFactors() - i - 1);
-                    currentMean = meanArray.listIterator(adaptor.getNumberOfFactors() - i - 1);
-                } else {
-                    currentPrecision = precisionArray.listIterator();
-                    currentMidMean = meanMidArray.listIterator();
-                    currentMean = meanArray.listIterator();
-                }
-                drawI(i, currentPrecision.next(), currentMidMean.next(), currentMean.next());
-                constrainedSampler.applyConstraint(adaptor);
-                adaptor.fireLoadingsChanged();
+                drawI(i);
+
             }
+
+            constrainedSampler.applyConstraint(adaptor);
+            adaptor.fireLoadingsChanged();
 
         }
 
@@ -377,8 +296,8 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         pathParameter = beta;
     }
 
-    private double getAdjustedPriorPrecision() {
-        return priorPrecision * pathParameter + (1 - pathParameter) * priorPrecisionWorking;
+    private double getAdjustedPriorPrecision(int dim) {
+        return getPrecision(prior, dim) * pathParameter + (1 - pathParameter) * priorPrecisionWorking;
     }
 
     class DrawCaller implements Callable<Double> {
@@ -450,4 +369,217 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         abstract void applyConstraint(FactorAnalysisOperatorAdaptor adaptor);
     }
+
+    public enum ColumnDimProvider {//TODO: don't hard code constraints, make more generalizable
+
+
+        NONE("none") {
+            @Override
+            int getColumnDim(int colIndex, int nRows) {
+                return nRows;
+            }
+
+            @Override
+            int getArrayIndex(int colIndex, int nRows) {
+                return 0;
+            }
+
+            @Override
+            void allocateStorage(ArrayList<double[][]> precisionArray, ArrayList<double[]> midMeanArray,
+                                 ArrayList<double[]> meanArray, int nRows) {
+
+                precisionArray.add(new double[nRows][nRows]);
+                midMeanArray.add(new double[nRows]);
+                meanArray.add(new double[nRows]);
+
+            }
+        },
+
+        UPPER_TRIANGULAR("upperTriangular") {
+            @Override
+            int getColumnDim(int colIndex, int nRows) {
+                return Math.min(colIndex + 1, nRows);
+            }
+
+            @Override
+            int getArrayIndex(int colIndex, int nRows) {
+                return Math.min(colIndex, nRows - 1);
+            }
+
+            @Override
+            void allocateStorage(ArrayList<double[][]> precisionArray, ArrayList<double[]> midMeanArray,
+                                 ArrayList<double[]> meanArray, int nRows) {
+
+                for (int i = 1; i <= nRows; i++) {
+                    precisionArray.add(new double[i][i]);
+                    midMeanArray.add(new double[i]);
+                    meanArray.add(new double[i]);
+                }
+
+            }
+        },
+
+        FIRST_ROW("firstRow") {
+            @Override
+            int getColumnDim(int colIndex, int nRows) {
+                return 1;
+            }
+
+            @Override
+            int getArrayIndex(int colIndex, int nRows) {
+                return 0;
+            }
+
+            @Override
+            void allocateStorage(ArrayList<double[][]> precisionArray, ArrayList<double[]> midMeanArray,
+                                 ArrayList<double[]> meanArray, int nRows) {
+
+                precisionArray.add(new double[1][1]);
+                midMeanArray.add(new double[1]);
+                meanArray.add(new double[1]);
+
+            }
+        },
+
+        HYBRID("hybrid") {
+            @Override
+            int getColumnDim(int colIndex, int nRows) {
+
+                if (colIndex == 0) {
+                    return 1;
+                }
+                return nRows;
+            }
+
+            @Override
+            int getArrayIndex(int colIndex, int nRows) {
+                if (colIndex == 0) {
+                    return 0;
+                }
+                return 1;
+            }
+
+            @Override
+            void allocateStorage(ArrayList<double[][]> precisionArray, ArrayList<double[]> midMeanArray, ArrayList<double[]> meanArray, int nRows) {
+
+                // first column
+                precisionArray.add(new double[1][1]);
+                midMeanArray.add(new double[1]);
+                meanArray.add(new double[1]);
+
+
+                // remaining columns
+                precisionArray.add(new double[nRows][nRows]);
+                midMeanArray.add(new double[nRows]);
+                meanArray.add(new double[nRows]);
+
+            }
+        };
+
+        abstract int getColumnDim(int colIndex, int nRows);
+
+        abstract int getArrayIndex(int colIndex, int nRows);
+
+        abstract void allocateStorage(ArrayList<double[][]> precisionArray, ArrayList<double[]> midMeanArray,
+                                      ArrayList<double[]> meanArray, int nRows);
+
+
+        private String name;
+
+        ColumnDimProvider(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public static ColumnDimProvider parse(String name) {
+            name = name.toLowerCase();
+            for (ColumnDimProvider dimProvider : ColumnDimProvider.values()) {
+                if (name.compareTo(dimProvider.getName().toLowerCase()) == 0) {
+                    return dimProvider;
+                }
+            }
+            throw new IllegalArgumentException("Unknown dimension provider type");
+        }
+
+    }
+
+    @Override
+    public String getReport() {
+        int repeats = 20000;
+
+        int nFac = adaptor.getNumberOfFactors();
+        int nTraits = adaptor.getNumberOfTraits();
+
+
+        int dimLoadings = nTraits * nFac;
+        double[] loadMean = new double[dimLoadings];
+        double[][] loadCov = new double[dimLoadings][dimLoadings];
+
+        double[] originalLoadings = new double[dimLoadings];
+        for (int i = 0; i < dimLoadings; i++) {
+            originalLoadings[i] = adaptor.getLoadingsValue(i);
+        }
+
+
+        for (int rep = 0; rep < repeats; rep++) {
+            doOperation();
+            for (int i = 0; i < dimLoadings; i++) {
+                loadMean[i] += adaptor.getLoadingsValue(i);
+                for (int j = i; j < dimLoadings; j++) {
+                    loadCov[i][j] += adaptor.getLoadingsValue(i) * adaptor.getLoadingsValue(j);
+                }
+            }
+            adaptor.fireLoadingsChanged();
+        }
+
+        restoreLoadings(originalLoadings);
+        adaptor.fireLoadingsChanged();
+
+        for (int i = 0; i < dimLoadings; i++) {
+            loadMean[i] /= repeats;
+            for (int j = i; j < dimLoadings; j++) {
+                loadCov[i][j] /= repeats;
+            }
+        }
+
+
+        for (int i = 0; i < dimLoadings; i++) {
+            for (int j = i; j < dimLoadings; j++) {
+                loadCov[i][j] = loadCov[i][j] - loadMean[i] * loadMean[j];
+                loadCov[j][i] = loadCov[i][j];
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(getOperatorName() + "Report:\n");
+        sb.append("Loadings mean:\n");
+        sb.append(new Vector(loadMean));
+        sb.append("\n\n");
+        sb.append("Loadings covariance:\n");
+        sb.append(new Matrix(loadCov));
+        sb.append("\n\n");
+
+        return sb.toString();
+    }
+
+    private void restoreLoadings(double[] originalLoadings) {
+        int nTraits = adaptor.getNumberOfTraits();
+        int nFac = adaptor.getNumberOfFactors();
+
+        double[] buffer = new double[nFac];
+
+        for (int i = 0; i < nTraits; i++) {
+
+            for (int j = 0; j < nFac; j++) {
+                buffer[j] = originalLoadings[j * nTraits + i];
+            }
+
+            adaptor.setLoadingsForTraitQuietly(i, buffer);
+        }
+    }
+
 }
+

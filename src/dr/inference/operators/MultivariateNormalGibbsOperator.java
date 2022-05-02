@@ -70,7 +70,7 @@ public class MultivariateNormalGibbsOperator extends SimpleMCMCOperator implemen
 
 
     private void setParameterValue(Parameter set, double[] value){
-        set.setDimension(value.length);
+//        set.setDimension(value.length);
         for(int i=0; i<value.length; i++)
         {set.setParameterValueQuietly(i,value[i]);}
         set.fireParameterChangedEvent();
@@ -141,11 +141,6 @@ System.err.print("\n");
     @Override
     public String getOperatorName() {
         return MVN_GIBBS;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public String getPerformanceSuggestion() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

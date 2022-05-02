@@ -3,7 +3,6 @@ package dr.math;
 import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedMatrix;
-import dr.math.matrixAlgebra.WrappedVector;
 
 /**
  * @author Marc A. Suchard
@@ -26,9 +25,9 @@ public class AdaptableCovariance {
 
         updates = 0;
         counts = 0;
-        for (int i = 0; i < dim; i++) {
-            empirical[i][i] = 1.0;
-        }
+//        for (int i = 0; i < dim; i++) {
+//            empirical[i][i] = 1.0;
+//        }
     }
 
     public int getUpdateCount() { return updates; }
@@ -86,7 +85,7 @@ public class AdaptableCovariance {
         return result;
     }
 
-    public static class WithSubsampling extends AdaptableCovariance {
+    public class WithSubsampling extends AdaptableCovariance {
 
 //        final int maxUpdates;
         final int minCounts;

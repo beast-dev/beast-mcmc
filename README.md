@@ -4,9 +4,14 @@ BEAST is a cross-platform program for Bayesian analysis of molecular sequences u
 
 ## Download BEAST
 
-[Download BEAST v1.10.0 binaries for Mac, Windows and UNIX/Linux](https://github.com/beast-dev/beast-mcmc/releases/tag/v1.10.0)
+[Download BEAST v1.10.X binaries for Mac, Windows and UNIX/Linux](https://github.com/beast-dev/beast-mcmc/releases)
 
-[The previous major release of BEAST was v1.8.4 --- binaries for Mac, Windows and UNIX/Linux](https://github.com/beast-dev/beast-mcmc/releases/tag/v1.8.4)
+[Latest stable release ![Release Version](https://img.shields.io/github/release/beast-dev/beast-mcmc.svg?style=plastic) ![Release Date](https://img.shields.io/github/release-date/beast-dev/beast-mcmc.svg?style=plastic)](https://github.com/beast-dev/beast-mcmc/releases/latest/) ![Downloads](https://img.shields.io/github/downloads/beast-dev/beast-mcmc/v1.10.4/total.svg?style=plastic)
+
+[Latest development release ![Development Version](https://img.shields.io/github/release/beast-dev/beast-mcmc/all.svg?style=plastic) ![Development Date](https://img.shields.io/github/release-date-pre/beast-dev/beast-mcmc.svg?style=plastic)](https://github.com/beast-dev/beast-mcmc/releases/latest/) ![Downloads](https://img.shields.io/github/downloads-pre/beast-dev/beast-mcmc/latest/total.svg?style=plastic)
+
+
+[The previous major release of BEAST was v1.8.4 --- binaries for Mac, Windows and UNIX/Linux](https://github.com/beast-dev/beast-mcmc/releases/tag/v1.8.4) ![Downloads](https://img.shields.io/github/downloads/beast-dev/beast-mcmc/v1.8.4/total.svg?style=plastic)
 
 [Older BEAST Downloads](https://code.google.com/p/beast-mcmc/downloads)
 
@@ -20,6 +25,9 @@ BEAST is a cross-platform program for Bayesian analysis of molecular sequences u
 
 [BEAST Documentation Website](http://beast.community)
 
+# Development software
+
+We use IntelliJ IDEA and java profiling via [JProfile](https://www.ej-technologies.com/products/jprofiler/overview.html) and YourKit
 
 # Acknowledgements
 - This work was supported in part by the European Union Seventh Framework Programme for research, technological development and demonstration under Grant Agreement no. 278433-PREDEMICS and no. 725422-ReservoirDOCS, the Wellcome Trust through collaborator award 206298/Z/17/Z, NSF grant DMS 1264153 and NIH grants R01 HG006139, R01 AI107034 and U19 AI135995.

@@ -429,6 +429,10 @@ public interface Axis {
             isCalibrated = false;
         }
 
+        public void setEpsilon(double epsilon) {
+            this.epsilon = epsilon;
+        }
+
         /**
          *	A static method that uses the natural log to obtain log to base10.
          *	This is required for the linear autoCalibrate but will also be
@@ -614,11 +618,11 @@ public interface Axis {
 
             // Trim down any excess major ticks either side of the data range
             // Epsilon allows for any inprecision in the calculation
-            while ((minTick + majorTick - epsilon)<minData) {
+            while ((minTick + majorTick - epsilon)<minData && majorTickCount > 0) {
                 minTick+=majorTick;
                 majorTickCount--;
             }
-            while ((maxTick - majorTick + epsilon)>maxData) {
+            while ((maxTick - majorTick + epsilon)>maxData && majorTickCount > 0) {
                 maxTick-=majorTick;
                 majorTickCount--;
             }

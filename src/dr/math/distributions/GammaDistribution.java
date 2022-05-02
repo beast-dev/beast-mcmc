@@ -28,6 +28,8 @@ package dr.math.distributions;
 import cern.jet.random.Gamma;
 import cern.jet.random.engine.MersenneTwister;
 import cern.jet.random.engine.RandomEngine;
+import dr.inference.model.GradientProvider;
+import dr.inference.model.HessianProvider;
 import dr.math.GammaFunction;
 import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
@@ -47,7 +49,7 @@ import java.util.List;
  * @author Gerton Lunter
  * @version $Id: GammaDistribution.java,v 1.9 2006/03/30 11:12:47 rambaut Exp $
  */
-public class GammaDistribution implements Distribution {
+public class GammaDistribution implements Distribution, GradientProvider, HessianProvider {
     //
     // Public stuff
     //
@@ -223,6 +225,33 @@ public class GammaDistribution implements Distribution {
         return ((shape - 1.0) * (Math.log(x) - Math.log(scale)) - x / scale - GammaFunction
                 .lnGamma(shape))
                 - Math.log(scale);
+    }
+
+    /**
+     * the gradient of the natural log of the probability density function of the distribution
+     *
+     * @param x     argument
+     * @param shape shape parameter
+     * @param scale scale parameter
+     * @return grad log pdf value
+     */
+    public static double gradLogPdf2(double x, double shape, double scale) {
+        if (x < 0) {
+            return Double.POSITIVE_INFINITY;
+        }
+        if (shape == 1.0) {
+            return - 1.0 / scale;
+        }
+        if (x == 0) {
+            return Double.POSITIVE_INFINITY;
+        }
+        if (shape == 0.0) {  // uninformative
+            return -1.0 / x;
+        }
+        if (shape == -0.5) { // Gelman 2008, hierarchical variance, -1 degrees of freedom
+            return 0.5 / x;
+        }
+        return (shape - 1.0) / x - 1 / scale;
     }
 
     /**
@@ -459,6 +488,40 @@ public class GammaDistribution implements Distribution {
 
         return sample;
 
+    }
+
+    public static double gradLogPdf(double x, double shape, double scale) {
+
+        if (x < 0) {
+            return 0;
+        }
+
+        if (shape == -0.5) { // Gelman 2008, hierarchical variance, -1 degrees of freedom
+            return 0.5 / x;
+        } else if (shape == 0.0) { // Uninformative
+            return -1.0 / x;
+        } else if (shape == 1.0) {
+            return -1.0 / scale;
+        } else {
+            return (shape - 1.0) / x - 1.0 / scale;
+        }
+    }
+
+    public static double hessianLogPdf(double x, double shape, double scale) {
+
+        if (x < 0) {
+            return 0;
+        }
+
+        if (shape == -0.5) {
+            return -0.5 / (x * x);
+        } else if (shape == 0.0) {
+            return 1.0 / (x * x);
+        } else if (shape == 1.0) {
+            return 0.0;
+        } else  {
+            return (1.0 - shape) / (x * x);
+        }
     }
 
     // Private
@@ -839,5 +902,34 @@ public class GammaDistribution implements Distribution {
     private static RandomEngine randomEngine;
     private static Gamma coltGamma;
 
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = gradLogPdf(x[i], shape, scale);
+        }
+        return result;
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+        double[] result = new double[x.length];                      
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = hessianLogPdf(x[i], shape, scale);
+        }
+        return result;
+    }
+
+    @Override
+    public double[][] getHessianLogDensity(Object obj) {
+        return HessianProvider.expandDiagonals(getDiagonalHessianLogDensity(obj));
+    }
 }
 

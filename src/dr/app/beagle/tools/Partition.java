@@ -106,7 +106,8 @@ public class Partition {
 					 FrequencyModel freqModel, //
 					 int from, //
 					 int to, //
-					 int every //
+					 int every, //
+					 DataType dType
 	) {
 
 		this.treeModel = treeModel;
@@ -119,7 +120,11 @@ public class Partition {
 		this.to = to;
 		this.every = every;
 
-		dataType = freqModel.getDataType();
+		if(dType == null) {
+			dataType = freqModel.getDataType();
+		}else{
+			dataType = dType;
+		}
 		partitionSiteCount = getPartitionSiteCount();
 
 		setBufferHelpers();
@@ -130,6 +135,18 @@ public class Partition {
 		random = new MersenneTwister(MathUtils.nextLong());
 
 	}// END: Constructor
+
+	public Partition(TreeModel treeModel, //
+					 BranchModel branchModel, //
+					 GammaSiteRateModel siteModel, //
+					 BranchRateModel branchRateModel, //
+					 FrequencyModel freqModel, //
+					 int from, //
+					 int to, //
+					 int every //
+	){
+		this(treeModel, branchModel, siteModel, branchRateModel, freqModel, from, to, every, null);
+	}
 
 	private void setSubstitutionModelDelegate() {
 		substitutionModelDelegate = new SubstitutionModelDelegate(treeModel,

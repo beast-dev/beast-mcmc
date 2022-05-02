@@ -27,8 +27,10 @@ package dr.evomodelxml.treelikelihood;
 
 //import dr.app.beagle.evomodel.treelikelihood.RestrictedPartialsSequenceLikelihood;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.EpochBranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
@@ -61,6 +63,9 @@ import java.util.Set;
 public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String BEAGLE_INSTANCE_COUNT = "beagle.instance.count";
+    public static final String BEAGLE_THREAD_COUNT = "beagle.thread.count";
+    public static final String THREAD_COUNT = "thread.count";
+    public static final String THREADS = "threads";
 
     public static final String TREE_LIKELIHOOD = "treeLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
@@ -75,7 +80,7 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
         return TREE_LIKELIHOOD;
     }
 
-    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
+    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, MutableTreeModel treeModel,
                                                         BranchModel branchModel,
                                                         GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
@@ -112,7 +117,7 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
-        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
         GammaSiteRateModel siteRateModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
 
         FrequencyModel rootFreqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
@@ -130,6 +135,11 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+
+        if (branchModel instanceof EpochBranchModel && rootFreqModel != null) {
+            EpochBranchModel epochBranchModel = (EpochBranchModel) branchModel;
+            epochBranchModel.setRootFrequencyModel(rootFreqModel);
+        }
 
         TipStatesModel tipStatesModel = (TipStatesModel) xo.getChild(TipStatesModel.class);
 //        if (xo.getChild(TipStatesModel.class) != null) {
@@ -164,6 +174,24 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
 
         }
 
+        int beagleThreadCount = -1;
+        if (System.getProperty(BEAGLE_THREAD_COUNT) != null) {
+            beagleThreadCount = Integer.parseInt(System.getProperty(BEAGLE_THREAD_COUNT));
+        }
+
+        if (beagleThreadCount == -1) {
+            // the default is -1 threads (automatic thread pool size) but an XML attribute can override it
+            int threadCount = xo.getAttribute(THREADS, -1);
+
+            if (System.getProperty(THREAD_COUNT) != null) {
+                threadCount = Integer.parseInt(System.getProperty(THREAD_COUNT));
+            }
+        
+            // Todo: allow for different number of threads per beagle instance according to pattern counts
+            if (threadCount >= 0) {
+                System.setProperty(BEAGLE_THREAD_COUNT, Integer.toString(threadCount / instanceCount));
+            }
+        }
 
         if (instanceCount == 1 || patternList.getPatternCount() < instanceCount) {
             return createTreeLikelihood(

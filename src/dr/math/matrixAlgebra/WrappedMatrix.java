@@ -73,7 +73,9 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
             return buffer;
         }
 
-        final public int getOffset() { return offset; }
+        final public int getOffset() {
+            return offset;
+        }
 
         final public int getMajorDim() {
             return dimMajor;
@@ -83,10 +85,12 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
             return dimMinor;
         }
 
-        public int getDim() { return getMajorDim() * getMinorDim(); }
+        public int getDim() {
+            return getMajorDim() * getMinorDim();
+        }
     }
 
-    final class WrappedDenseMatrix extends Base  {
+    final class WrappedDenseMatrix extends Base {
 
         private final DenseMatrix64F matrix;
 
@@ -183,7 +187,9 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
         }
 
         @Override
-        public int getDim() { return getMajorDim() * getMinorDim(); }
+        public int getDim() {
+            return getMajorDim() * getMinorDim();
+        }
 
         @Override
         public double[] getBuffer() {
@@ -240,16 +246,24 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
         }
 
         @Override
-        final public double get(final int i, final int j) { return variable.getValue(offset + i * dimMajor + j); }
+        final public double get(final int i, final int j) {
+            return variable.getValue(offset + i * dimMajor + j);
+        }
 
         @Override
-        final public void set(final int i, final double x) { variable.setValue(offset + i, x); }
+        final public void set(final int i, final double x) {
+            variable.setValue(offset + i, x);
+        }
 
         @Override
-        public void set(int i, int j, double x) { variable.setValue(offset + i * dimMajor + j, x); }
+        public void set(int i, int j, double x) {
+            variable.setValue(offset + i * dimMajor + j, x);
+        }
 
         @Override
-        public double get(int i) { return variable.getValue(i); }
+        public double get(int i) {
+            return variable.getValue(i);
+        }
     }
 
     final class MatrixParameter extends Abstract {
@@ -263,16 +277,24 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
         }
 
         @Override
-        public void set(int i, int j, double x) { matrix.setParameterValue(i, j, x); }
+        public void set(int i, int j, double x) {
+            matrix.setParameterValue(i, j, x);
+        }
 
         @Override
-        public double get(int i, int j) { return matrix.getParameterValue(i, j); }
+        public double get(int i, int j) {
+            return matrix.getParameterValue(i, j);
+        }
 
         @Override
-        public double get(int i) { return matrix.getParameterValue(i); }
+        public double get(int i) {
+            return matrix.getParameterValue(i);
+        }
 
         @Override
-        public void set(int i, double x) { matrix.setParameterValue(i, x); }
+        public void set(int i, double x) {
+            matrix.setParameterValue(i, x);
+        }
     }
 
     final class Indexed extends Abstract {
@@ -287,16 +309,24 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
         }
 
         @Override
-        final public double get(int i, int j) { return buffer[getIndex(i, j)]; }
+        final public double get(int i, int j) {
+            return buffer[getIndex(i, j)];
+        }
 
         @Override
-        final public void set(int i, int j, double x) { buffer[getIndex(i, j)] = x; }
+        final public void set(int i, int j, double x) {
+            buffer[getIndex(i, j)] = x;
+        }
 
         @Override
-        final public double get(int i) { throw new RuntimeException("Not yet implemented"); }
+        final public double get(int i) {
+            throw new RuntimeException("Not yet implemented");
+        }
 
         @Override
-        final public void set(int i, double x) { throw new RuntimeException("Not yet implemented"); }
+        final public void set(int i, double x) {
+            throw new RuntimeException("Not yet implemented");
+        }
 
         private int getIndex(final int i, final int j) {
             return offset + indicesMajor[i] * dimMajor + indicesMinor[j];
@@ -326,7 +356,7 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
             for (int i = 0; i < rowLength; ++i) {
                 final int rowIndex = rowIndices[i];
                 for (int j = 0; j < colLength; ++j) {
-                    destination.set(i, j, source.get(rowIndex, colIndices[j]) );
+                    destination.set(i, j, source.get(rowIndex, colIndices[j]));
                 }
             }
         }
@@ -353,6 +383,43 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
                 for (int j = 0; j < colLength; ++j) {
                     destination.set(rowIndex, colIndices[i], source.get(i, j));
                 }
+            }
+        }
+
+        public static WrappedMatrix.Indexed wrapBlockDiagonalMatrix(double[] buffer, int offset, int startDim, int dimMat) {
+            int[] inds = new int[dimMat];
+            int dim = startDim;
+
+            for (int i = 0; i < dimMat; i++) {
+                inds[i] = dim;
+                dim++;
+            }
+
+            return new WrappedMatrix.Indexed(buffer, offset, inds, inds, dimMat, dimMat);
+        }
+
+        public static void transferSymmetricBlockDiagonal(WrappedMatrix srcMat, WrappedMatrix destMat, int destOffset) {
+            int srcDim = srcMat.getMajorDim();
+            int destDim = destMat.getMajorDim();
+            if (srcMat.getMinorDim() != srcDim || destMat.getMinorDim() != destDim) {
+                throw new RuntimeException("Matrices must be square.");
+            }
+
+            int destI = destOffset;
+
+            for (int i = 0; i < srcDim; i++) {
+
+                destMat.set(destI, destI, srcMat.get(i, i));
+                int destJ = destI + 1;
+
+                for (int j = i + 1; j < srcDim; j++) {
+
+                    double val = srcMat.get(i, j);
+                    destMat.set(destI, destJ, val);
+                    destMat.set(destJ, destI, val);
+                    destJ++;
+                }
+                destI++;
             }
         }
     }
@@ -424,8 +491,9 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
                     W.set(i, j, temp);
                     sum += temp * temp;
                 }
-                if (sum > 1) {
-                    throw new RuntimeException("In Cholesky parametrization: the row squared sum of the off-diagonal coefficients cannot be greater than 1.O");
+                if (sum > 1.0) {
+                    assert (Math.abs(sum - 1.0) < 1E-6);
+                    sum = 1.0;
                 }
                 W.set(j, j, Math.sqrt(1 - sum));
             }
@@ -434,7 +502,9 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
         }
 
         @Override
-        final public int getDim() { return buffer.length; }
+        final public int getDim() {
+            return buffer.length;
+        }
     }
 
     final class WrappedStrictlyUpperTriangularMatrix extends Abstract {
@@ -489,11 +559,15 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
         }
 
         @Override
-        final public int getDim() { return buffer.length; }
+        final public int getDim() {
+            return buffer.length;
+        }
 
         private int pos(int i, int j) {
             return i * (2 * dimMajor - i - 1) / 2 + (j - i - 1);
         }
 
     }
+
+
 }

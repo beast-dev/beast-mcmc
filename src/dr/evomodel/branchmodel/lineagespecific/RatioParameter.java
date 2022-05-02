@@ -25,8 +25,6 @@
 
 package dr.evomodel.branchmodel.lineagespecific;
 
-import java.util.List;
-
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -57,6 +55,11 @@ public class RatioParameter extends Parameter.Abstract implements
 
 		return value;
 	}// END: getParameterValue
+
+	@Override
+	public boolean isImmutable() {
+		return true;
+	}
 
 	@Override
 	public void setParameterValue(int dim, double value) {

@@ -7,6 +7,7 @@ import dr.evolution.io.Importer.ImportException;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.operators.ExchangeOperator;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
@@ -58,7 +59,7 @@ public class ExchangeOperatorTest extends OperatorAssert {
 
         for (int i = 0; i < reps; i++) {
 
-            TreeModel treeModel = new TreeModel("treeModel", tree5);
+            DefaultTreeModel treeModel = new DefaultTreeModel("treeModel", tree5);
             ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 1.0);
             operator.doOperation();
 
@@ -115,7 +116,7 @@ public class ExchangeOperatorTest extends OperatorAssert {
 
         for (int i = 0; i < reps; i++) {
 
-            TreeModel treeModel = new TreeModel("treeModel", tree5_2);
+            DefaultTreeModel treeModel = new DefaultTreeModel("treeModel", tree5_2);
             ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 1.0);
             operator.doOperation();
 
@@ -137,13 +138,13 @@ public class ExchangeOperatorTest extends OperatorAssert {
 
     // STATIC METHODS
 
-    public OperatorSchedule getOperatorSchedule(TreeModel treeModel) {
+    public OperatorSchedule getOperatorSchedule(DefaultTreeModel treeModel) {
 
         Parameter rootParameter = treeModel.createNodeHeightsParameter(true, false, false);
         Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
 
         ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 1.0);
-        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, CoercionMode.COERCION_ON, 1.0);
+        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, AdaptationMode.ADAPTATION_ON, 1.0);
         UniformOperator uniformOperator = new UniformOperator(internalHeights, 1.0);
 
         OperatorSchedule schedule = new SimpleOperatorSchedule();

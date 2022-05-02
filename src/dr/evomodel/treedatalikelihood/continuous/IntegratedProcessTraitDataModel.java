@@ -28,8 +28,6 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.CompoundParameter;
 
-import java.util.List;
-
 import static dr.math.matrixAlgebra.missingData.MissingOps.blockUnwrap;
 import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
 
@@ -44,19 +42,19 @@ public class IntegratedProcessTraitDataModel extends
 
     public IntegratedProcessTraitDataModel(String name,
                                            CompoundParameter parameter,
-                                           List<Integer> missingIndices,
+                                           boolean[] missingIndicators,
                                            boolean useMissingIndices,
                                            final int dimTrait) {
-        super(name, parameter, missingIndices, useMissingIndices, dimTrait, PrecisionType.FULL);
+        super(name, parameter, missingIndicators, useMissingIndices, dimTrait, PrecisionType.FULL);
     }
 
     public IntegratedProcessTraitDataModel(String name,
                                            CompoundParameter parameter,
-                                           List<Integer> missingIndices,
+                                           boolean[] missingIndicators,
                                            boolean useMissingIndices,
                                            final int dimTrait,
                                            PrecisionType precisionType) {
-        this(name, parameter, missingIndices, useMissingIndices, dimTrait);
+        this(name, parameter, missingIndicators, useMissingIndices, dimTrait);
         assert precisionType == PrecisionType.FULL : "Integrated Process is only implemented for full precision type.";
     }
 
@@ -86,6 +84,15 @@ public class IntegratedProcessTraitDataModel extends
         blockUnwrap(wrap(partial, precisionType.getVarianceOffset(dimTrait), dimTrait, dimTrait),
                 partialDouble, offsetVar,
                 dimTrait, dimTrait, dimTraitDouble);
+
+        int effDimOffset = precisionType.getEffectiveDimensionOffset(dimTrait);
+        int effDim = (int) Math.round(partial[effDimOffset]);
+        precisionType.fillEffDimInPartials(partialDouble, 0, effDim, dimTraitDouble);
+
+        int detDimOffset = precisionType.getDeterminantOffset(dimTrait);
+        double det = partial[detDimOffset];
+        precisionType.fillDeterminantInPartials(partialDouble, 0, det, dimTraitDouble);
+
 
         return partialDouble;
     }

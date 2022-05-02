@@ -34,6 +34,7 @@ import dr.xml.*;
 public class CompoundParameterParser extends AbstractXMLObjectParser {
 
     public static final String COMPOUND_PARAMETER = "compoundParameter";
+    public static final String DIMENSION = "dim";
 
     public String getParserName() {
         return COMPOUND_PARAMETER;
@@ -43,10 +44,22 @@ public class CompoundParameterParser extends AbstractXMLObjectParser {
 
         CompoundParameter compoundParameter = new CompoundParameter((String) null);
 
+        final int dim = xo.getAttribute(DIMENSION, 0);
+
         for (int i = 0; i < xo.getChildCount(); i++) {
             compoundParameter.addParameter((Parameter) xo.getChild(i));
         }
 
+        if (dim > compoundParameter.getDimension() && compoundParameter.getDimension() == 1) {
+            Parameter singleParameter = compoundParameter.getParameter(0);
+            for (int i = 0; i < dim - 1; i++) {
+                compoundParameter.addParameter(
+                        new Parameter.Default(singleParameter.getId() + String.valueOf(i + 1),
+                        singleParameter.getParameterValue(0),
+                        singleParameter.getBounds().getLowerLimit(0),
+                        singleParameter.getBounds().getUpperLimit(0)));
+            }
+        }
         return compoundParameter;
     }
 

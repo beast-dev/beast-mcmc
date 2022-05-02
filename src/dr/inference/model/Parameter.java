@@ -124,6 +124,11 @@ public interface Parameter extends Statistic, Variable<Double> {
     boolean isWithinBounds();
 
     /**
+     * @return true if the parameter is acceptable
+     */
+    boolean check();
+
+    /**
      * Can be called before store is called. If it results in new
      * dimensions, then the value of the first dimension is copied into the new dimensions.
      *
@@ -164,6 +169,15 @@ public interface Parameter extends Statistic, Variable<Double> {
     void fireParameterChangedEvent(int index, Parameter.ChangeType type);
 
     boolean isUsed();
+
+    /**
+     * For Check-pointing: getting and setting untransformed parameter values when relevant
+     */
+    double getParameterUntransformedValue(int dim);
+
+    void setParameterUntransformedValue(int dim, double a);
+
+    boolean isImmutable();
 
     Set<Parameter> FULL_PARAMETER_SET = new LinkedHashSet<Parameter>();
     Set<Parameter> CONNECTED_PARAMETER_SET = new LinkedHashSet<Parameter>();
@@ -322,6 +336,18 @@ public interface Parameter extends Statistic, Variable<Double> {
             return true;
         }
 
+        public boolean check() {
+            return true;
+        }
+
+        public void setParameterUntransformedValue(int dim, double a) {
+            setParameterValue(dim, a);
+        }
+
+        public double getParameterUntransformedValue(int dim) {
+            return getParameterValue(dim);
+        }
+
         // --------------------------------------------------------------------
         // IMPLEMENT VARIABLE
         // --------------------------------------------------------------------
@@ -393,6 +419,10 @@ public interface Parameter extends Statistic, Variable<Double> {
          */
         public void acceptVariableValues() {
             acceptParameterValues();
+        }
+
+        public boolean isImmutable() {
+            return false;
         }
 
         public boolean isUsed() {
@@ -769,6 +799,13 @@ public interface Parameter extends Statistic, Variable<Double> {
         }
     }
 
+//    class Wrapped extends Default {
+//        public Wrapped(double[] buffer) {
+//            super(0.0);
+//            this.values
+//        }
+//    }
+
     class DefaultBounds implements Bounds<Double> {
 
         public DefaultBounds(double upper, double lower, int dimension) {
@@ -821,6 +858,59 @@ public interface Parameter extends Statistic, Variable<Double> {
         }
 
         private final double[] uppers, lowers;
+    }
+
+    abstract class Proxy extends Parameter.Abstract {
+
+        private final String name;
+        protected final int dim;
+
+        public Proxy(String name, int dim) {
+            this.name = name;
+            this.dim = dim;
+        }
+
+        @Override
+        public int getDimension() {
+            return dim;
+        }
+
+        @Override
+        public String getParameterName() {
+            return name;
+        }
+
+        @Override
+        public void addBounds(Bounds<Double> bounds) {
+            throw new RuntimeException("Not implemented for proxy '" + name + "'");
+        }
+
+        @Override
+        public Bounds<Double> getBounds() {
+            throw new RuntimeException("Not implemented for proxy '" + name + "'");
+        }
+
+        @Override
+        public void addDimension(int index, double value) {
+            throw new RuntimeException("Not implemented for proxy '" + name + "'");
+        }
+
+        @Override
+        public double removeDimension(int index) {
+            throw new RuntimeException("Not implemented for proxy '" + name + "'");
+        }
+
+        @Override
+        protected void storeValues() { }
+
+        @Override
+        protected void restoreValues() { }
+
+        @Override
+        protected void acceptValues() { }
+
+        @Override
+        protected void adoptValues(Parameter source) { }
     }
 
 }

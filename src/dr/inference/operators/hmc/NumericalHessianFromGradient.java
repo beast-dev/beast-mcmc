@@ -5,21 +5,31 @@ import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MachineAccuracy;
+import dr.xml.Reportable;
 
 /**
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public class NumericalHessianFromGradient implements HessianWrtParameterProvider {
-    GradientWrtParameterProvider gradientProvider;
+public class NumericalHessianFromGradient implements HessianWrtParameterProvider, Reportable {
 
-    NumericalHessianFromGradient(GradientWrtParameterProvider gradientWrtParameterProvider) {
+    private final GradientWrtParameterProvider gradientProvider;
+
+    public NumericalHessianFromGradient(GradientWrtParameterProvider gradientWrtParameterProvider) {
         this.gradientProvider = gradientWrtParameterProvider;
     }
 
     @Override
     public double[] getDiagonalHessianLogDensity() {
-        throw new RuntimeException("Not yet implemented");
+
+        final int dim = gradientProvider.getDimension();
+        double[][] numericalHessian = getNumericalHessianCentral(); //todo: no need to get the full hessian if only need the diagonals
+        double[] numericalHessianDiag = new double[dim];
+
+        for (int i = 0; i < dim; i++) {
+            numericalHessianDiag[i] = numericalHessian[i][i];
+        }
+        return numericalHessianDiag;
     }
 
     @Override
@@ -75,5 +85,12 @@ public class NumericalHessianFromGradient implements HessianWrtParameterProvider
         }
 
         return hessian;
+    }
+
+    @Override
+    public String getReport() {
+        return GradientWrtParameterProvider.getReportAndCheckForError(this,
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
+                GradientWrtParameterProvider.TOLERANCE);
     }
 }

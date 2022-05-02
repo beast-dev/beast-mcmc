@@ -26,6 +26,7 @@
 package dr.evomodel.treedatalikelihood;
 
 import dr.inference.model.Model;
+import dr.inference.model.Profileable;
 import dr.xml.Reportable;
 
 import java.util.List;
@@ -37,7 +38,7 @@ import java.util.List;
  * @author Marc Suchard
  * @version $Id$
  */
-public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Reportable {
+public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Profileable, Reportable {
 
     void makeDirty();
 
@@ -54,6 +55,8 @@ public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Re
 
     RateRescalingScheme getRateRescalingScheme();
 
+    class DelegateTypeException extends Exception { }
+
     class LikelihoodException extends Exception { }
 
     class LikelihoodUnderflowException extends LikelihoodException { }
@@ -64,7 +67,7 @@ public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Re
 
     int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations);
 
-//    int getActiveNodeIndex(final int index);
-//
-//    int getActiveMatrixIndex(final int index);
+    void setComputePostOrderStatisticsOnly(boolean computePostOrderStatistics);
+
+    boolean providesPostOrderStatisticsOnly();
 }

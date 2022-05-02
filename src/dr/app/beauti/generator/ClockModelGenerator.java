@@ -33,6 +33,7 @@ import dr.app.beauti.types.OperatorSetType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.inference.model.Statistic;
 import dr.inference.model.StatisticParser;
 import dr.oldevomodel.clock.RateEvolutionLikelihood;
@@ -112,7 +113,7 @@ public class ClockModelGenerator extends Generator {
                                     prefix  + BranchRateModel.BRANCH_RATES)};
                     writer.writeOpenTag(tag, attributes);
                     // tree
-                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+                    writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
 
                     writer.writeOpenTag("distribution");
                     writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
@@ -165,7 +166,7 @@ public class ClockModelGenerator extends Generator {
                                     prefix  + BranchRateModel.BRANCH_RATES)};
                     writer.writeOpenTag(tag, attributes);
                     // tree
-                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+                    writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
 
                     writer.writeOpenTag("distribution");
 
@@ -236,10 +237,10 @@ public class ClockModelGenerator extends Generator {
                 };
 
                 writer.writeOpenTag(tag, attributes);
-                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
 
 //                    if (!model.isEstimatedRate()) { //TODO move to options or panel select method
-//                        Parameter parameter = tree.getParameter(TreeModel.TREE_MODEL + "." + RateEvolutionLikelihood.ROOTRATE);//"treeModel.rootRate"
+//                        Parameter parameter = tree.getParameter(DefaultTreeModel.TREE_MODEL + "." + RateEvolutionLikelihood.ROOTRATE);//"treeModel.rootRate"
 //                        parameter.isFixed = true;
 //                        parameter.initial = model.getRate();
 //                    }
@@ -251,7 +252,7 @@ public class ClockModelGenerator extends Generator {
                                 new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
                         });
                 writer.writeTag(ParameterParser.PARAMETER,
-                        new Attribute.Default<String>(XMLParser.ID, treePrefix + TreeModel.TREE_MODEL + "."
+                        new Attribute.Default<String>(XMLParser.ID, treePrefix + DefaultTreeModel.TREE_MODEL + "."
                                 + TreeModelParser.NODE_RATES), true);
                 writer.writeCloseTag(RateEvolutionLikelihood.RATES);
 
@@ -262,7 +263,7 @@ public class ClockModelGenerator extends Generator {
                                 new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "false")
                         });
                 writer.writeTag(ParameterParser.PARAMETER,
-                        new Attribute.Default<String>(XMLParser.ID, treePrefix + TreeModel.TREE_MODEL + "."
+                        new Attribute.Default<String>(XMLParser.ID, treePrefix + DefaultTreeModel.TREE_MODEL + "."
                                 + RateEvolutionLikelihood.ROOTRATE), true);
                 writer.writeCloseTag(RateEvolutionLikelihood.ROOTRATE);
                 //                writeParameterRef("rates", treePrefix + "treeModel.nodeRates", writer);
@@ -274,11 +275,11 @@ public class ClockModelGenerator extends Generator {
 //                    if (model.isEstimatedRate()) {//TODO
                 writer.writeText("");
                 writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.ID, treePrefix + TreeModel.TREE_MODEL
+                        new Attribute[]{new Attribute.Default<String>(XMLParser.ID, treePrefix + DefaultTreeModel.TREE_MODEL
                                 + "." + "allRates")});
-                writer.writeIDref(ParameterParser.PARAMETER, treePrefix + TreeModel.TREE_MODEL + "."
+                writer.writeIDref(ParameterParser.PARAMETER, treePrefix + DefaultTreeModel.TREE_MODEL + "."
                         + TreeModelParser.NODE_RATES);
-                writer.writeIDref(ParameterParser.PARAMETER, treePrefix + TreeModel.TREE_MODEL + "."
+                writer.writeIDref(ParameterParser.PARAMETER, treePrefix + DefaultTreeModel.TREE_MODEL + "."
                         + RateEvolutionLikelihood.ROOTRATE);
                 writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
 //                    }
@@ -301,7 +302,7 @@ public class ClockModelGenerator extends Generator {
                                 new Attribute.Default<String>("ratesAreMultipliers", "false")
                         }
                 );
-                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
 
                 writer.writeOpenTag("rates");
                 writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>
@@ -349,7 +350,7 @@ public class ClockModelGenerator extends Generator {
                                 new Attribute.Default<String>(XMLParser.ID, prefix + BranchRateModel.BRANCH_RATES)                        }
                 );
 
-                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
 
                 writeParameter(LocalClockModelParser.RATE, "clock.rate", clockModel, writer);
 
@@ -394,7 +395,7 @@ public class ClockModelGenerator extends Generator {
                         new Attribute.Default<String>("external", "true")
                 }
         );
-        writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeIDref(tag, prefix
                 + BranchRateModel.BRANCH_RATES);
         writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
@@ -409,7 +410,7 @@ public class ClockModelGenerator extends Generator {
                         new Attribute.Default<String>("name", prefix + "covariance")
                 }
         );
-        writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeIDref(tag, prefix + BranchRateModel.BRANCH_RATES);
         writer.writeCloseTag(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC);
     }
@@ -426,7 +427,7 @@ public class ClockModelGenerator extends Generator {
                         new Attribute.Default<String>("external", "true")
                 }
         );
-        writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeIDref(tag, prefix + BranchRateModel.BRANCH_RATES);
         writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
     }
@@ -552,9 +553,9 @@ public class ClockModelGenerator extends Generator {
         if (options.useNuRelativeRates()) {
             Parameter allNus = model.getParameter("allNus");
             if (allNus.getSubParameters().size() > 1) {
-                // The mu's are the more relevent parameter and allow comparisons with the old parameterization
-                // It would be confusing to log the nus and mus.
-//                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, prefix + "allNus");
+                // The mu's are the more relevant parameter and allow comparisons with the old parameterization
+                // May be confusing to log the nus and mus, but necessary for use with generalized stepping-stone sampling
+                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, prefix + "allNus");
 
                 for (Parameter parameter : allNus.getSubParameters()) {
                     String name = parameter.getName();

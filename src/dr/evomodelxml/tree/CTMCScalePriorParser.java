@@ -84,7 +84,6 @@ public class CTMCScalePriorParser extends AbstractXMLObjectParser {
             new ElementRule(TreeModel.class),
             new ElementRule(TaxonList.class, true),
             new ElementRule(SCALEPARAMETER, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(SCALEPARAMETER, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             AttributeRule.newBooleanRule(RECIPROCAL, true),
             new ElementRule(SubstitutionModel.class, true),
             AttributeRule.newBooleanRule(TRIAL, true),

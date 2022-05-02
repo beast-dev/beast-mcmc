@@ -36,11 +36,17 @@ public class ProductParameter extends Parameter.Abstract implements VariableList
         this.paramList = parameter;
         for (Parameter p : paramList) {
             p.addVariableListener(this);
+            Parameter.CONNECTED_PARAMETER_SET.add(p);
         }
     }
 
     public int getDimension() {
         return paramList.get(0).getDimension();
+    }
+
+    @Override
+    public boolean isImmutable() {
+        return true;
     }
 
     protected void storeValues() {

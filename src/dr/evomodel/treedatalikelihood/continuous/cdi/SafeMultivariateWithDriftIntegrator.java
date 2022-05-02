@@ -1,7 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
 import dr.math.matrixAlgebra.WrappedVector;
-import dr.math.matrixAlgebra.missingData.InversionResult;
 import org.ejml.data.DenseMatrix64F;
 
 import static dr.math.matrixAlgebra.missingData.MissingOps.*;
@@ -136,8 +135,8 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
     }
 
     @Override
-    InversionResult partialMean(int ibo, int jbo, int kbo,
-                                int ido, int jdo) {
+    void partialMean(int ibo, int jbo, int kbo,
+                     int ido, int jdo) {
         if (TIMING) {
             startTime("peel4");
         }
@@ -150,14 +149,14 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
             displacementj[g] = partials[jbo + g] - displacements[jdo + g];
         }
 
-        final double[] tmp = vector0;
+        final double[] tmp = vectorPMk;
 
         computeWeightedSum(displacementi, displacementj, dimTrait, tmp);
 
         final WrappedVector kPartials = new WrappedVector.Raw(partials, kbo, dimTrait);
         final WrappedVector wrapTmp = new WrappedVector.Raw(tmp, 0, dimTrait);
 
-        InversionResult ck = safeSolve(matrixPk, wrapTmp, kPartials, true);
+        safeSolve(matrixPk, wrapTmp, kPartials, false);
 
         if (TIMING) {
             endTime("peel4");
@@ -174,7 +173,7 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
                 System.err.print(" " + displacements[jdo + e]);
             }
         }
-        return ck;
+//        return ck;
     }
 
     @Override
@@ -185,9 +184,10 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
                      final int kbo,
                      final DenseMatrix64F Pk,
                      final int dimTrait) {
-        return weightedThreeInnerProduct(vectorDispi, 0, Pip,
+        return weightedThreeInnerProductNormalized(vectorDispi, 0, Pip,
                 vectorDispj, 0, Pjp,
-                partials, kbo, Pk,
+                partials, kbo,
+                vectorPMk, 0,
                 dimTrait);
     }
 

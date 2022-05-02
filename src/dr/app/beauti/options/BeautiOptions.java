@@ -61,13 +61,16 @@ public class BeautiOptions extends ModelOptions {
     private static final boolean NEW_GTR_PARAMETERIZATION = true;
 
     // Makes sets the initial state of PartitionClockModel.continuousQuantile
-    public static final boolean DEFAULT_QUANTILE_RELAXED_CLOCK = true;
+    public static final boolean DEFAULT_QUANTILE_RELAXED_CLOCK = false;
 
     // Uses a logit transformed random walk on pInv parameters
     private static final boolean LOGIT_PINV_KERNEL = true;
 
     // Switches to a dirichlet prior & delta exchange on state frequencies
     private static final boolean FREQUENCIES_DIRICHLET_PRIOR = true;
+
+    // Switches to a gamma prior on population size parameters
+    private static final boolean POPSIZE_GAMMA_PRIOR = true;
 
     private static final long serialVersionUID = -3676802825545741012L;
 
@@ -108,7 +111,7 @@ public class BeautiOptions extends ModelOptions {
         taxonSetsIncludeStem.clear();
         taxonSetsTreeModel.clear();
 
-//        meanDistance = 1.0;
+        // meanDistance = 1.0;
         datesUnits = DateUnitsType.YEARS;
         datesDirection = DateUnitsType.FORWARDS;
         maximumTipHeight = 0.0;
@@ -116,22 +119,22 @@ public class BeautiOptions extends ModelOptions {
 
         dataPartitions.clear();
         traits.clear();
-//        partitionModels.clear();
-//        partitionTreeModels.clear();
-//        partitionTreePriors.clear();
-//        partitionClockTreeLinks.clear();
-//        activedSameTreePrior = null;
-//        shareSameTreePrior = true;
+        // partitionModels.clear();
+        // partitionTreeModels.clear();
+        // partitionTreePriors.clear();
+        // partitionClockTreeLinks.clear();
+        // activedSameTreePrior = null;
+        // shareSameTreePrior = true;
         userTrees.clear();
 
-//        rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
-//        meanSubstitutionRate = 1.0;
+        // rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
+        // meanSubstitutionRate = 1.0;
         unlinkPartitionRates = true;
 
         units = Units.Type.SUBSTITUTIONS;
 
         // Operator schedule options
-        optimizationTransform = OperatorSchedule.OptimizationTransform.DEFAULT;
+        optimizationTransform = OperatorSchedule.DEFAULT_TRANSFORM;
 
         // MCMC options
         chainLength = 10000000;
@@ -177,29 +180,35 @@ public class BeautiOptions extends ModelOptions {
 
         if (taxonSets != null) {
             for (Taxa taxa : taxonSets) {
-                Parameter statistic = statistics.get(taxa);
-                PartitionTreeModel treeModel = taxonSetsTreeModel.get(taxa);
-                if (statistic == null) {
-                    // default scaleType = PriorScaleType.NONE; priorType = PriorType.NONE_TREE_PRIOR
-                    statistic = new Parameter.Builder(taxa.getId(), "tmrca statistic for taxon set")
-                            .isStatistic(true).isNodeHeight(true)
-                            .partitionOptions(treeModel).initial(Double.NaN).isNonNegative(true).build();
-                    statistic.setPrefix(treeModel.getPrefix());
-
-                    statistics.put(taxa, statistic);
-
-                } else {
-                    statistic.setOptions(treeModel); // keep consistent to taxonSetsTreeModel
-                    statistic.setPrefix(treeModel.getPrefix()); // keep prefix consistent after link/unlink tree
-                    PartitionTreePrior treePrior = treeModel.getPartitionTreePrior();
-                    statistic.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION
-                            && taxonSetsMono.get(taxa);
-                }
-                params.add(statistic);
+                params.add(updateTMRCAStatistic(taxa));
             }
         } else {
             System.err.println("TaxonSets are null");
         }
+    }
+
+    public Parameter updateTMRCAStatistic(Taxa taxa) {
+        Parameter statistic = statistics.get(taxa);
+        PartitionTreeModel treeModel = taxonSetsTreeModel.get(taxa);
+        if (statistic == null) {
+            // default scaleType = PriorScaleType.NONE; priorType = PriorType.NONE_TREE_PRIOR
+            statistic = new Parameter.Builder(taxa.getId(), "tmrca statistic for taxon set")
+                    .isStatistic(true).isNodeHeight(true)
+                    .partitionOptions(treeModel).initial(Double.NaN).isNonNegative(true).build();
+            statistic.setPrefix(treeModel.getPrefix());
+            statistic.taxaId = taxa.getId();
+
+            statistics.put(taxa, statistic);
+
+        } else {
+            statistic.setOptions(treeModel); // keep consistent to taxonSetsTreeModel
+            statistic.setPrefix(treeModel.getPrefix()); // keep prefix consistent after link/unlink tree
+            PartitionTreePrior treePrior = treeModel.getPartitionTreePrior();
+            statistic.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION
+                    && taxonSetsMono.get(taxa);
+            statistic.taxaId = taxa.getId();
+        }
+        return statistic;
     }
 
     public boolean renameTMRCAStatistic(Taxa taxonSet) {
@@ -280,6 +289,9 @@ public class BeautiOptions extends ModelOptions {
         treeModelOptions.selectParameters(parameters);
 
         for (PartitionTreePrior prior : getPartitionTreePriors()) {
+            //refresh prior choices
+            prior.alternatePopulationSizePriors();
+
             prior.selectParameters(parameters);
         }
 
@@ -1205,7 +1217,7 @@ public class BeautiOptions extends ModelOptions {
     // ++++++++++++++++++++ message bar +++++++++++++++++
 
     public String statusMessage() {
-//        String message = "<html><p>";
+        // String message = "<html><p>";
         String message = "";
         if (hasData()) {
             message += "Data: " + taxonList.getTaxonCount() + " taxa, ";
@@ -1216,11 +1228,11 @@ public class BeautiOptions extends ModelOptions {
                         (userTrees.size() > 1 ? " trees" : " tree");
             }
 
-//            if (hasPhylogeographic()) {
-//                message += ";    Phylogeographic Analysis";
-//            }
+            // if (hasPhylogeographic()) {
+            //      message += ";    Phylogeographic Analysis";
+            // }
 
-//            message += "; " + clockModelOptions.statusMessageClockModel();
+            // message += "; " + clockModelOptions.statusMessageClockModel();
 
         } else if (userTrees.size() > 0) { // TODO
             message += "Trees only : " + userTrees.size() +
@@ -1231,7 +1243,7 @@ public class BeautiOptions extends ModelOptions {
         } else {
             message += "No data loaded - select 'Import Data...' from the 'File' menu.";
         }
-//        message += "</p></html>";
+        // message += "</p></html>";
         return message;
     }
 
@@ -1280,10 +1292,10 @@ public class BeautiOptions extends ModelOptions {
 
 
     public DateGuesser dateGuesser = new DateGuesser();
-//    public TraitGuesser traitGuesser = new TraitGuesser();
-//
-//    public List<String> selecetedTraits = new ArrayList<String>();
-//    public Map<String, TraitGuesser.TraitType> traitTypes = new HashMap<String, TraitGuesser.TraitType>();
+    // public TraitGuesser traitGuesser = new TraitGuesser();
+    //
+    // public List<String> selecetedTraits = new ArrayList<String>();
+    // public Map<String, TraitGuesser.TraitType> traitTypes = new HashMap<String, TraitGuesser.TraitType>();
 
     // Data
     public List<AbstractPartitionData> dataPartitions = new ArrayList<AbstractPartitionData>();
@@ -1300,7 +1312,7 @@ public class BeautiOptions extends ModelOptions {
     public Units.Type units = Units.Type.YEARS;
 
     // Operator schedule options
-    public OperatorSchedule.OptimizationTransform optimizationTransform = OperatorSchedule.OptimizationTransform.DEFAULT;
+    public OperatorSchedule.OptimizationTransform optimizationTransform = OperatorSchedule.DEFAULT_TRANSFORM;
 
     // MCMC options
     public int chainLength = 10000000;
@@ -1321,8 +1333,8 @@ public class BeautiOptions extends ModelOptions {
     public String demographicLogFileName = null;
 
     public boolean allowOverwriteLog = false;
-    //    public boolean mapTreeLog = false;
-    //    public String mapTreeFileName = null;
+    // public boolean mapTreeLog = false;
+    // public String mapTreeFileName = null;
     public List<String> treeFileName = new ArrayList<String>();
     public boolean substTreeLog = false;
     public List<String> substTreeFileName = new ArrayList<String>();
@@ -1345,8 +1357,16 @@ public class BeautiOptions extends ModelOptions {
         return !useClassicOperatorsAndPriors() || !NEW_RELATIVE_RATE_PARAMETERIZATION;
     }
 
+    public boolean useGammaPriorPopSize() {
+        return !useClassicOperatorsAndPriors() || !POPSIZE_GAMMA_PRIOR;
+    }
+
     public boolean useNewGTR() {
         return !useClassicOperatorsAndPriors() || !NEW_GTR_PARAMETERIZATION;
+    }
+
+    public boolean usePInvRandomWalk() {
+        return !useClassicOperatorsAndPriors() || !LOGIT_PINV_KERNEL;
     }
 
     public boolean useNewFrequenciesPrior() {

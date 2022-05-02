@@ -40,7 +40,11 @@ import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
+import dr.math.matrixAlgebra.Matrix;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.getTipTraitName;
@@ -49,7 +53,7 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRA
 /**
  * @author Marc A. Suchard
  */
-public class WishartStatisticsWrapper extends AbstractModel implements ConjugateWishartStatisticsProvider, Loggable {
+public class WishartStatisticsWrapper extends AbstractModel implements ConjugateWishartStatisticsProvider, Loggable, Reportable {
 
     public static final String PARSER_NAME = "wishartStatistics";
     public static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
@@ -67,8 +71,8 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         this.tipCount = dataLikelihood.getTree().getExternalNodeCount();
         this.dimPartial = dimTrait + 1;
 
-        addModel(dataLikelihood);
-
+        dataLikelihood.addModelListener(this);
+        dataLikelihood.addModel(this);
         String partialTraitName = getTipTraitName(traitName);
         tipSampleTrait = dataLikelihood.getTreeTrait(partialTraitName);
 
@@ -81,7 +85,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
 
             ContinuousTraitPartialsProvider dataProvider = likelihoodDelegate.getDataModel();
 
-            if (dataProvider instanceof RepeatedMeasuresTraitDataModel) {
+            if (!dataProvider.suppliesWishartStatistics()) {
                 dataProvider = new EmptyTraitDataModel(traitName, dataProvider.getParameter(),
                         dataProvider.getTraitDimension(), PrecisionType.SCALAR);
             }
@@ -108,7 +112,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         return wishartStatistics;
     }
 
-    private void simulateMissingTraits() {
+    public void simulateMissingTraits() {
 
         likelihoodDelegate.fireModelChanged(); // Force new sample!
 
@@ -268,7 +272,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
             return PARSER_NAME;
         }
 
-        private final XMLSyntaxRule[] syntax = new XMLSyntaxRule[] {
+        private final XMLSyntaxRule[] syntax = new XMLSyntaxRule[]{
                 new ElementRule(TreeDataLikelihood.class),
                 AttributeRule.newStringRule(TRAIT_NAME, true),
         };
@@ -311,7 +315,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         int index = 0;
         for (int i = 0; i < dimTrait; ++i) {
             for (int j = 0; j < dimTrait; ++j) {
-                columns[index] =  new OuterProductColumn("OP" + (i + 1) + "" + (j + 1), index);
+                columns[index] = new OuterProductColumn("OP" + (i + 1) + "" + (j + 1), index);
                 ++index;
             }
         }
@@ -322,6 +326,59 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         }
 
         return columns;
+    }
+
+    @Override
+    public String getReport() {
+
+        WishartSufficientStatistics stats = getWishartStatistics();
+        double[][] treePrec = likelihoodDelegate.getTreePrecision();
+
+
+        int dimTrait = likelihoodDelegate.getTraitDim();
+        int nTaxa = treePrec.length;
+
+        double[] traits = (double[]) tipSampleTrait.getTrait(dataLikelihood.getTree(), null); // should just re-sample the existing traits
+
+        DenseMatrix64F traitMat = DenseMatrix64F.wrap(nTaxa, dimTrait, traits);
+
+        double[] rootMean = likelihoodDelegate.getRootPrior().getMean();
+        DenseMatrix64F rootVec = DenseMatrix64F.wrap(dimTrait, 1, rootMean);
+        double[] ones = new double[nTaxa];
+        Arrays.fill(ones, 1.0);
+        DenseMatrix64F oneVec = DenseMatrix64F.wrap(nTaxa, 1, ones);
+        DenseMatrix64F rootMat = new DenseMatrix64F(nTaxa, dimTrait);
+
+        CommonOps.multTransB(oneVec, rootVec, rootMat);
+        CommonOps.add(traitMat, -1, rootMat);
+
+        DenseMatrix64F treePrecMat = new DenseMatrix64F(nTaxa, nTaxa);
+        for (int i = 0; i < nTaxa; i++) {
+            for (int j = 0; j < nTaxa; j++) {
+                treePrecMat.set(i, j, treePrec[i][j]);
+            }
+        }
+
+        DenseMatrix64F bufferMat = new DenseMatrix64F(nTaxa, dimTrait);
+        CommonOps.mult(treePrecMat, traitMat, bufferMat);
+
+        DenseMatrix64F scaleMat = new DenseMatrix64F(dimTrait, dimTrait);
+        CommonOps.multTransA(traitMat, bufferMat, scaleMat);
+
+        StringBuilder sb = new StringBuilder("WishartStatisticsWrapper report:\n\n");
+
+        sb.append("Scale matrix (naive):\n");
+        sb.append(new Matrix(scaleMat.data, dimTrait, dimTrait));
+
+        sb.append("\n");
+
+
+        sb.append("Scale matrix (recursive):\n");
+        sb.append(new Matrix(stats.getScaleMatrix(), dimTrait, dimTrait));
+
+        sb.append("\n\n");
+
+        return sb.toString();
     }
 
     private class OuterProductColumn extends NumberColumn {

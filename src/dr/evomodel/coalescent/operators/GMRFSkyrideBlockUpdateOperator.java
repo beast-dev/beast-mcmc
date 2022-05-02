@@ -25,7 +25,7 @@
 
 package dr.evomodel.coalescent.operators;
 
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
@@ -40,7 +40,7 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  * @version $Id: GMRFSkylineBlockUpdateOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
-public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
+public class GMRFSkyrideBlockUpdateOperator extends AbstractAdaptableOperator {
 
     private static boolean FAIL_SILENTLY = true;
 
@@ -55,12 +55,12 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
     private Parameter precisionParameter;
     private Parameter lambdaParameter;
 
-    GMRFSkyrideLikelihood gmrfField;
+    OldGMRFSkyrideLikelihood gmrfField;
 
     private double[] zeros;
 
-    public GMRFSkyrideBlockUpdateOperator(GMRFSkyrideLikelihood gmrfLikelihood,
-                                          double weight, CoercionMode mode, double scaleFactor,
+    public GMRFSkyrideBlockUpdateOperator(OldGMRFSkyrideLikelihood gmrfLikelihood,
+                                          double weight, AdaptationMode mode, double scaleFactor,
                                           int maxIterations, double stopValue) {
         super(mode);
         gmrfField = gmrfLikelihood;
@@ -349,12 +349,13 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
         return GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR;
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
 //        return Math.log(scaleFactor);
         return Math.sqrt(scaleFactor - 1);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
 //        scaleFactor = Math.exp(value);
         scaleFactor = 1 + value * value;
     }
@@ -367,41 +368,9 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
         return scaleFactor;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-
-        double sf = OperatorUtils.optimizeWindowSize(scaleFactor, prob, targetProb);
-
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
-    }
-
 
 //  public DenseVector oldNewtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) throws OperatorFailedException{
 //  return newNewtonRaphson(data, currentGamma, proposedQ, maxIterations, stopValue);

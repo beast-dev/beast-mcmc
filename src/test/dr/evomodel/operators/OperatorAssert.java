@@ -13,10 +13,7 @@ import dr.evolution.util.Units;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
-import dr.evomodel.tree.TreeHeightStatistic;
-import dr.evomodel.tree.TreeLengthStatistic;
-import dr.evomodel.tree.TreeLogger;
-import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.*;
 import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
@@ -96,7 +93,7 @@ public abstract class OperatorAssert extends TestCase {
     	MCMC mcmc = new MCMC("mcmc1");
         MCMCOptions options = new MCMCOptions(chainLength);
 
-        TreeModel treeModel = new TreeModel("treeModel", tree);
+        DefaultTreeModel treeModel = new DefaultTreeModel("treeModel", tree);
         TreeLengthStatistic tls = new TreeLengthStatistic(TL, treeModel);
         TreeHeightStatistic rootHeight = new TreeHeightStatistic(TREE_HEIGHT, treeModel);
 
@@ -192,5 +189,5 @@ public abstract class OperatorAssert extends TestCase {
         }
     }
 
-    public abstract OperatorSchedule getOperatorSchedule(TreeModel treeModel);
+    public abstract OperatorSchedule getOperatorSchedule(DefaultTreeModel treeModel);
 }

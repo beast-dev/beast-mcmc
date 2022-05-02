@@ -59,7 +59,7 @@ public enum OperatorType {
     UNIFORM("uniform"),
     INTEGER_UNIFORM("integerUniform"),
     SUBTREE_SLIDE("subtreeSlide"),
-    SUBTREE_JUMP("subtreeJump"),
+    FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT("fixedHeightSPR"),
     SUBTREE_LEAP("subtreeLeap"),
     ADAPTIVE_MULTIVARIATE("adaptiveMultivariate"),
     NARROW_EXCHANGE("narrowExchange"),

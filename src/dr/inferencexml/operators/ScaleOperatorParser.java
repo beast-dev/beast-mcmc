@@ -27,8 +27,8 @@ package dr.inferencexml.operators;
 
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.ScaleOperator;
 import dr.xml.*;
@@ -40,10 +40,11 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
     public static final String SCALE_ALL = "scaleAll";
     public static final String SCALE_ALL_IND = "scaleAllIndependently";
     public static final String SCALE_FACTOR = "scaleFactor";
-    public static final String DEGREES_OF_FREEDOM = "df";
+    private static final String DEGREES_OF_FREEDOM = "df";
     public static final String INDICATORS = "indicators";
     public static final String PICKONEPROB = "pickoneprob";
     public static final String IGNORE_BOUNDS = "ignoreBounds";
+    private static final String FIXED_DIMENSION = "fixedDimension";
 
     public String getParserName() {
         return SCALE_OPERATOR;
@@ -56,7 +57,7 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
         final int degreesOfFreedom = xo.getAttribute(DEGREES_OF_FREEDOM, 0);
         final boolean ignoreBounds = xo.getAttribute(IGNORE_BOUNDS, false);
 
-        final CoercionMode mode = CoercionMode.parseMode(xo);
+        final AdaptationMode mode = AdaptationMode.parseMode(xo);
 
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
@@ -67,12 +68,42 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
 
         final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
         Bounds<Double> bounds = parameter.getBounds();
+
+        Boolean negativeSpace = null;
+
         for (int dim = 0; dim < parameter.getDimension(); dim++) {
-            if (bounds.getLowerLimit(dim) < 0.0) {
-                throw new XMLParseException("Scale operator can only be used on parameters with a lower bound of zero (" + parameter.getId() + ")");
-            }
-            if (!ignoreBounds && !Double.isInfinite(bounds.getUpperLimit(dim))) {
-                throw new XMLParseException("Scale operator can't be used on parameters with a finite upper bound (use a RandomWalk) (" + parameter.getId() + ")");
+
+            if (parameter.getParameterValue(dim) < 0.0) {
+                // the parameter is in negative space
+
+                if (negativeSpace != null && !negativeSpace) {
+                    throw new XMLParseException("Scale operator can only be used on parameters where all elements are strictly positive or negative (" + parameter.getId() + ")");
+                }
+
+                negativeSpace = true;
+
+                if (bounds.getUpperLimit(dim) > 0.0) {
+                    throw new XMLParseException("Scale operator can only be used on parameters constrained to be strictly positive or negative (" + parameter.getId() + ")");
+                }
+                if (!ignoreBounds && !Double.isInfinite(bounds.getLowerLimit(dim))) {
+                    throw new XMLParseException("Scale operator can only be used on parameters with an infinite upper or lower bound (use a RandomWalk) (" + parameter.getId() + ")");
+                }
+            } else if (parameter.getParameterValue(dim) > 0.0) {
+                if (negativeSpace != null && negativeSpace) {
+                    throw new XMLParseException("Scale operator can only be used on parameters where all elements are strictly positive or negative (" + parameter.getId() + ")");
+                }
+
+                negativeSpace = false;
+
+                if (bounds.getLowerLimit(dim) < 0.0) {
+                    throw new XMLParseException("Scale operator can only be used on parameters constrained to be strictly positive or negative (" + parameter.getId() + ")");
+                }
+                if (!ignoreBounds && !Double.isInfinite(bounds.getUpperLimit(dim))) {
+                    throw new XMLParseException("Scale operator can only be used on parameters with an infinite upper or lower bound (use a RandomWalk) (" + parameter.getId() + ")");
+                }
+            } else {
+                // disallow zero starting values
+                throw new XMLParseException("Scale operator can only be used on parameters where all elements are strictly positive or negative (" + parameter.getId() + ")");
             }
         }
 
@@ -80,7 +111,23 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
         double indicatorOnProb = 1.0;
         final XMLObject inds = xo.getChild(INDICATORS);
 
-        if (inds != null) {
+        if (inds != null && xo.hasAttribute(FIXED_DIMENSION)){
+            throw new XMLParseException("Cannot include indicators when specifying a single fixed dimension.");
+        }
+
+        if (xo.hasAttribute(FIXED_DIMENSION)) {
+            int idx = xo.getIntegerAttribute(FIXED_DIMENSION);
+            if (idx < 1 || idx > parameter.getDimension()) {
+                throw new XMLParseException("Invalid dimension");
+            }
+            --idx;
+            indicator = new Parameter.Default(parameter.getDimension());
+            for (int i = 0; i < indicator.getDimension(); ++i) {
+                if (i != idx) {
+                    indicator.setParameterValue(i, 0.0);
+                }
+            }
+        } else if (inds != null) {
             indicator = (Parameter) inds.getChild(Parameter.class);
             if (inds.hasAttribute(PICKONEPROB)) {
                 indicatorOnProb = inds.getDoubleAttribute(PICKONEPROB);
@@ -89,6 +136,7 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
                 }
             }
         }
+        
         ScaleOperator operator = new ScaleOperator(parameter, scaleAll,
                 degreesOfFreedom, scaleFactor,
                 mode, indicator, indicatorOnProb,
@@ -118,7 +166,7 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(SCALE_ALL, true),
             AttributeRule.newBooleanRule(SCALE_ALL_IND, true),
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newIntegerRule(DEGREES_OF_FREEDOM, true),
             AttributeRule.newBooleanRule(IGNORE_BOUNDS, true),
 
@@ -127,5 +175,6 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{
                             AttributeRule.newDoubleRule(PICKONEPROB, true),
                             new ElementRule(Parameter.class)}, true),
+            AttributeRule.newIntegerRule(FIXED_DIMENSION, true),
     };
 }

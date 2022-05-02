@@ -26,6 +26,7 @@
 package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
@@ -46,9 +47,9 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
 
     private static final int MAX_TRIES = 10000;
 
-    private final TreeModel tree;
+    private final DefaultTreeModel tree;
 
-    public RLCNarrowExchangeOperator(TreeModel tree, double weight) {
+    public RLCNarrowExchangeOperator(DefaultTreeModel tree, double weight) {
         this.tree = tree;
         setWeight(weight);
     }
@@ -140,24 +141,6 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
         tree.setNodeTrait(b, "trait", changedA);
     }
 
-    public double getMinimumAcceptanceLevel() {
-        return 0.05;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.05;
-    }
-
-    public String getPerformanceSuggestion() {
-        if (Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
-            return "";
-        } else if (Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
-            return "";
-        } else {
-            return "";
-        }
-    }
-
     public static XMLObjectParser NARROW_EXCHANGE_PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
@@ -166,7 +149,7 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            DefaultTreeModel treeModel = (DefaultTreeModel) xo.getChild(DefaultTreeModel.class);
             double weight = xo.getDoubleAttribute("weight");
 
             return new RLCNarrowExchangeOperator(treeModel, weight);
@@ -191,7 +174,7 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule("weight"),
-                new ElementRule(TreeModel.class)
+                new ElementRule(DefaultTreeModel.class)
         };
 
     };

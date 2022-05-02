@@ -80,13 +80,15 @@ public class TransformedMultivariateParameter extends TransformedParameter {
 
     public void addBounds(Bounds<Double> bounds) {
 //        parameter.addBounds(new DefaultBounds(null, null));
-        throw new RuntimeException("Should not call addBounds() on transformed parameter");
+//        throw new RuntimeException("Should not call addBounds() on transformed parameter");
+        // TODO: Check bounds of the parameter ?  XJ: bounds can be quite arbitrary in this case.  I decided to allow manual setup through parser.
+        transformedBounds = bounds;
     }
 
-    public Bounds<Double> getBounds() {
-//        throw new RuntimeException("Should not call addBounds() on transformed parameter");
-        return new DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, parameter.getDimension());
-    }
+//    public Bounds<Double> getBounds() {
+////        throw new RuntimeException("Should not call addBounds() on transformed parameter");
+//        return new DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, parameter.getDimension());
+//    }
 
     private void update() {
         if (hasChanged()) {

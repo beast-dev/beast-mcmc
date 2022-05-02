@@ -39,7 +39,7 @@ import java.util.concurrent.*;
  * @author Andrew Rambaut
  * @version $Id: CompoundLikelihood.java,v 1.19 2005/05/25 09:14:36 rambaut Exp $
  */
-public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
+public class CompoundLikelihood implements Likelihood, Profileable, Reportable, Keywordable {
 
     public final static boolean UNROLL_COMPOUND = true;
 
@@ -113,18 +113,18 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
 //        evaluationCounts = null;
 //        
 //    }
-    
+
     protected void addLikelihood(Likelihood likelihood, int index, boolean addToPool) {
 
         // unroll any compound likelihoods
         if (UNROLL_COMPOUND && addToPool && likelihood instanceof CompoundLikelihood) {
-        	
+
             for (Likelihood l : ((CompoundLikelihood)likelihood).getLikelihoods()) {
                 addLikelihood(l, index, addToPool);
             }
-            
+
         } else {
-        	
+
             if (!likelihoods.contains(likelihood)) {
 
                 likelihoods.add(likelihood);
@@ -133,11 +133,11 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
                 }
 
                 if (likelihood.evaluateEarly()) {
-                	
+
                     earlyLikelihoods.add(likelihood);
-                    
+
                 } else {
-                	
+
                     // late likelihood list is used to evaluate them if the thread pool is not being used...
                     lateLikelihoods.add(likelihood);
 
@@ -149,9 +149,9 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
             } else {
                 throw new IllegalArgumentException("Attempted to add the same likelihood multiple times to CompoundLikelihood.");
             } // END: contains check
-            
+
         }//END: if unroll check
-        
+
     }//END: addLikelihood
 
     public Set<Likelihood> getLikelihoodSet() {
@@ -333,6 +333,8 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
         return message;
     }
 
+
+
     public String toString() {
         return getId();
         // really bad for debugging
@@ -357,23 +359,22 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
     public int getThreadCount() {
         return threadCount;
     }
-    
+
     public long[] getEvaluationTimes() {
-    	return evaluationTimes;
+        return evaluationTimes;
     }
-    
+
     public int[] getEvaluationCounts() {
-    	return evaluationCounts;
+        return evaluationCounts;
+    }
+
+    public void resetEvaluationTimes() {
+        for (int i = 0; i < evaluationTimes.length; i++) {
+            evaluationTimes[i] = 0;
+            evaluationCounts[i] = 0;
+        }
     }
     
-    public void resetEvaluationTimes() {
-    	for (int i = 0; i < evaluationTimes.length; i++) {
-    		evaluationTimes[i] = 0;
-    		evaluationCounts[i] = 0;
-    	}
-    }
-
-
     // **************************************************************
     // Loggable IMPLEMENTATION
     // **************************************************************
@@ -401,6 +402,17 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
             }
         }
         return keywords;
+    }
+
+    @Override
+    public long getTotalCalculationCount() {
+        long count = 0;
+        for (Likelihood likelihood : likelihoods) {
+            if (likelihood instanceof Profileable) {
+                count += ((Profileable)likelihood).getTotalCalculationCount();
+            }
+        }
+        return count;
     }
 
     private class LikelihoodColumn extends dr.inference.loggers.NumberColumn implements Keywordable {
@@ -432,8 +444,8 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
     }
 
     public String getReport(int indent) {
+        String message = "\n";
         if (EVALUATION_TIMERS) {
-            String message = "\n";
             boolean first = true;
 
             final NumberFormatter nf = new NumberFormatter(6);
@@ -476,11 +488,28 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
                 }
                 index++;
             }
+            message += "\n\n";
+            for (int i = 0; i < indent; i++) {
+                message += " ";
+            }
+            message += this.getId() + " log-likelihood = " + this.getLogLikelihood();
 
-            return message;
+            if (indent == 0) message += "\n\n";
+
         } else {
-            return "No evaluation timer report available";
+            message += "No evaluation timer report available";
         }
+
+        if (indent == 0) {
+            message += "\n";
+            message += "likelihood: ";
+            message += getLogLikelihood();
+            message += "\n\n";
+
+        }
+
+        return message;
+
     }
 
 

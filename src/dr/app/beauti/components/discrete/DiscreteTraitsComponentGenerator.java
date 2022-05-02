@@ -25,6 +25,7 @@
 
 package dr.app.beauti.components.discrete;
 
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.generator.BaseComponentGenerator;
@@ -84,7 +85,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 }
 
                 for (Predictor predictor : model.getTraitData().getIncludedPredictors()) {
-                    if (predictor.isLogged() && predictor.hasZeroValues()) {
+                    if (predictor.isLogged() && predictor.hasZeroValues(true)) {
                         throw new GeneratorException("The GLM predictor, " + predictor.getName() + ", for trait, " + model.getTraitData().getName() + ", has zero values and therefore should not be logged.");
                     }
                     if (predictor.isStandardized() && predictor.isBinary()) {
@@ -533,7 +534,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         });
 
         writer.writeIDref(AttributePatternsParser.ATTRIBUTE_PATTERNS, prefix + "pattern");
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
         writer.writeIDref(SiteModel.SITE_MODEL, substModel.getName() + "." + SiteModel.SITE_MODEL);
 
         if (partition.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
@@ -604,11 +605,15 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeComment("Using the binomialLikelihood we specify a 50% prior mass on no predictors being included.");
         writer.writeOpenTag(BinomialLikelihood.BINOMIAL_LIKELIHOOD);
         writer.writeOpenTag(BinomialLikelihoodParser.PROPORTION);
-        writer.writeTag("parameter", new Attribute.Default<Double>("value", proportion), true);
+        writer.writeTag("parameter", new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, prefix + BinomialLikelihoodParser.PROPORTION),
+                new Attribute.Default<Double>("value", proportion)
+        }, true);
         writer.writeCloseTag(BinomialLikelihoodParser.PROPORTION);
         // the dimension of this parameter will be set automatically to be the same as the counts.
         writer.writeOpenTag(BinomialLikelihoodParser.TRIALS);
         writer.writeTag("parameter", new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, prefix + BinomialLikelihoodParser.TRIALS),
                 new Attribute.Default<Double>("value", 1.0)
         }, true);
         writer.writeCloseTag(BinomialLikelihoodParser.TRIALS);

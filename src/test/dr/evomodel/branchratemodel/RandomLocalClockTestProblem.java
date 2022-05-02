@@ -2,13 +2,14 @@ package test.dr.evomodel.branchratemodel;
 
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
-import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.RandomLocalClockModel;
 import dr.evomodel.coalescent.CoalescentLikelihood;
-import dr.evomodel.coalescent.ConstantPopulationModel;
+import dr.evomodel.coalescent.demographicmodel.ConstantPopulationModel;
+import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.WilsonBalding;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.oldevomodel.substmodel.FrequencyModel;
 import dr.oldevomodel.substmodel.HKY;
@@ -16,7 +17,7 @@ import dr.evomodel.tree.RateCovarianceStatistic;
 import dr.evomodel.tree.RateStatistic;
 import dr.oldevomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
-import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
+import dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser;
 import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
 import dr.oldevomodelxml.substmodel.HKYParser;
 import dr.evomodelxml.tree.RateStatisticParser;
@@ -68,7 +69,8 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
         Parameter popSize = new Parameter.Default(ConstantPopulationModelParser.POPULATION_SIZE, 0.077, 0, Double.POSITIVE_INFINITY);
         ConstantPopulationModel constantModel = createRandomInitialTree(popSize);
 
-        CoalescentLikelihood coalescent = new CoalescentLikelihood(treeModel, null, new ArrayList<TaxonList>(), constantModel);
+        TreeIntervals intervalList = new TreeIntervals(treeModel, null, null);
+        CoalescentLikelihood coalescent = new CoalescentLikelihood(intervalList, constantModel);
         coalescent.setId("coalescent");
 
         // clock model
@@ -124,17 +126,17 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
         operator.setWeight(3.0);
         schedule.addOperator(operator);
 
-        Parameter rootHeight = treeModel.getRootHeightParameter();
+        Parameter rootHeight = ((DefaultTreeModel)treeModel).getRootHeightParameter();
         rootHeight.setId(TREE_HEIGHT);
         operator = new ScaleOperator(rootHeight, 0.75);
         operator.setWeight(3.0);
         schedule.addOperator(operator);
 
-        Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
+        Parameter internalHeights = ((DefaultTreeModel)treeModel).createNodeHeightsParameter(false, true, false);
         operator = new UniformOperator(internalHeights, 30.0);
         schedule.addOperator(operator);
 
-        operator = new SubtreeSlideOperator(treeModel, 15.0, 0.0077, true, false, false, false, CoercionMode.COERCION_ON);
+        operator = new SubtreeSlideOperator(((DefaultTreeModel)treeModel), 15.0, 0.0077, true, false, false, false, AdaptationMode.ADAPTATION_ON, AdaptableMCMCOperator.DEFAULT_ADAPTATION_TARGET);
         schedule.addOperator(operator);
 
         operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 15.0);

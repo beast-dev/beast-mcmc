@@ -17,11 +17,11 @@ public interface AdaptableVector {
     public void update(ReadableVector x);
 
     class Default implements AdaptableVector {
-        final private int dim;
+        final protected int dim;
         final private double[] oldMeans;
         final private double[] newMeans;
 
-        private int updates;
+        protected int updates;
 
         public Default(int dim) {
             this.dim = dim;
@@ -96,6 +96,31 @@ public interface AdaptableVector {
             }
             updates++;
             updateIndex = (updateIndex + 1) % queueSize;
+        }
+    }
+
+    class AdaptableVariance extends Default {
+
+        final private double[] meanSquaredValues;
+        final private double[] variance;
+
+        public AdaptableVariance(int dim) {
+            super(dim);
+            this.meanSquaredValues = new double[dim];
+            this.variance = new double[dim];
+        }
+
+        @Override
+        public void update(ReadableVector x) {
+            super.update(x);
+            for (int i = 0; i < dim; i++) {
+                meanSquaredValues[i] = ((updates - 1.0) * meanSquaredValues[i] + x.get(i) * x.get(i)) / updates;
+                variance[i] = Math.abs(meanSquaredValues[i] - getNewMeans(i) * getNewMeans(i));
+            }
+        }
+
+        public double[] getVariance() {
+            return variance.clone();
         }
     }
 

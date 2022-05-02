@@ -30,6 +30,7 @@ import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
 import dr.util.Attribute;
 import dr.util.Identifiable;
+import dr.xml.Reportable;
 
 /**
  * @author Alexei Drummond
@@ -76,7 +77,7 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
     /**
      * Abstract base class for Statistics
      */
-    public abstract class Abstract implements Statistic {
+    public abstract class Abstract implements Statistic, Reportable {
 
         private String name = null;
 
@@ -184,7 +185,7 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
         public LogColumn[] getColumns() {
             LogColumn[] columns = new LogColumn[getDimension()];
             for (int i = 0; i < getDimension(); i++) {
-                columns[i] = new StatisticColumn(getDimensionName(i), i);
+                 columns[i] = new StatisticColumn(getDimensionName(i), i);
             }
             return columns;
         }
@@ -199,6 +200,17 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
 
             public double getDoubleValue() {
                 return getStatisticValue(dim); }
+        }
+
+        @Override
+        public String getReport() {
+            StringBuilder sb = new StringBuilder("\n\n");
+            sb.append("Report for " + getStatisticName() + " with id=" + getId() + "\n");
+            for (int i = 0; i < getDimension(); i++) {
+                sb.append("\t" + getDimensionName(i) + ":\t" + getStatisticValue(i) + "\n");
+            }
+            sb.append("\n");
+            return sb.toString();
         }
     }
 }

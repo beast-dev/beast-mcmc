@@ -25,20 +25,20 @@
 
 package dr.evomodel.substmodel.nucleotide;
 
-import dr.evomodel.substmodel.BaseSubstitutionModel;
-import dr.evomodel.substmodel.EigenDecomposition;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
+import dr.evomodel.substmodel.*;
+import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.evolution.datatype.Nucleotides;
 import dr.math.matrixAlgebra.Vector;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Arrays;
 
 
 /**
@@ -48,7 +48,8 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Marc A. Suchard
  */
-public class HKY extends BaseSubstitutionModel implements Citable, ParameterReplaceableSubstitutionModel {
+public class HKY extends BaseSubstitutionModel implements Citable,
+        ParameterReplaceableSubstitutionModel, DifferentiableSubstitutionModel {
 
     private Parameter kappaParameter = null;
 
@@ -74,6 +75,21 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
         addVariable(kappaParameter);
         kappaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
+        Statistic tsTvStatistic = new Statistic.Abstract() {
+
+            public String getStatisticName() {
+                return "tsTv";
+            }
+
+            public int getDimension() {
+                return 1;
+            }
+
+            public double getStatisticValue(int dim) {
+                return getTsTv();
+            }
+
+        };
         addStatistic(tsTvStatistic);
     }
 
@@ -93,33 +109,31 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
         return kappaParameter.getParameterValue(0);
     }
 
-    /**
-     * set ts/tv
-     * @param tsTv
-     */
-    public void setTsTv(double tsTv) {
-        double freqA = freqModel.getFrequency(0);
-        double freqC = freqModel.getFrequency(1);
-        double freqG = freqModel.getFrequency(2);
-        double freqT = freqModel.getFrequency(3);
-        double freqR = freqA + freqG;
-        double freqY = freqC + freqT;
-        setKappa((tsTv * freqR * freqY) / (freqA * freqG + freqC * freqT));
-    }
+//    /**
+//     * set ts/tv
+//     * @param tsTv
+//     */
+//    public void setTsTv(double tsTv) {
+//        double freqA = freqModel.getFrequency(0);
+//        double freqC = freqModel.getFrequency(1);
+//        double freqG = freqModel.getFrequency(2);
+//        double freqT = freqModel.getFrequency(3);
+//        double freqR = freqA + freqG;
+//        double freqY = freqC + freqT;
+//        setKappa((tsTv * freqR * freqY) / (freqA * freqG + freqC * freqT));
+//    }
 
     /**
      * @return tsTv
      */
-    public double getTsTv() {
+    private double getTsTv() {
         double freqA = freqModel.getFrequency(0);
         double freqC = freqModel.getFrequency(1);
         double freqG = freqModel.getFrequency(2);
         double freqT = freqModel.getFrequency(3);
         double freqR = freqA + freqG;
         double freqY = freqC + freqT;
-        double tsTv = (getKappa() * (freqA * freqG + freqC * freqT)) / (freqR * freqY);
-
-        return tsTv;
+        return (getKappa() * (freqA * freqG + freqC * freqT)) / (freqR * freqY);
     }
 
     protected void frequenciesChanged() {
@@ -216,22 +230,6 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
     // Private stuff
     //
 
-    private Statistic tsTvStatistic = new Statistic.Abstract() {
-
-        public String getStatisticName() {
-            return "tsTv";
-        }
-
-        public int getDimension() {
-            return 1;
-        }
-
-        public double getStatisticValue(int dim) {
-            return getTsTv();
-        }
-
-    };
-
     @Override
     public Citation.Category getCategory() {
         return Citation.Category.SUBSTITUTION_MODELS;
@@ -299,10 +297,160 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
 
     /**
      * Generate a replicate of itself with new kappaParamter.
-     * @param parameter
+     * @param oldParameters
+     * @param newParameters
      */
     @Override
-    public HKY replaceParameter(Parameter parameter) {
-        return new HKY(parameter, freqModel);
+    public HKY factory(List<Parameter> oldParameters, List<Parameter> newParameters) {
+        Parameter kappa = kappaParameter;
+        FrequencyModel frequencies = freqModel;
+        assert(oldParameters.size() == newParameters.size());
+
+        for (int i = 0; i < oldParameters.size(); i++){
+            Parameter oldParameter = oldParameters.get(i);
+            Parameter newParameter = newParameters.get(i);
+            if (oldParameter == kappaParameter) {
+                kappa = newParameter;
+            } else if (oldParameter == freqModel.getFrequencyParameter()) {
+                frequencies = new FrequencyModel(freqModel.getDataType(), newParameter);
+            } else {
+                throw new RuntimeException("Parameter not found in HKY SubstitutionModel.");
+            }
+        }
+        return new HKY(kappa, frequencies);
+    }
+
+
+    public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
+        double[] relativeRates = new double[rateCount];
+        setupRelativeRates(relativeRates);
+        wrt.setupDifferentialRates(differentialRates, relativeRates, normalizingConstant);
+    }
+
+    @Override
+    public void setupDifferentialFrequency(WrtParameter wrt, double[] differentialFrequency) {
+        wrt.setupDifferentialFrequencies(differentialFrequency, getFrequencyModel().getFrequencies());
+    }
+
+    @Override
+    public double getWeightedNormalizationGradient(WrtParameter wrtParameter, double[][] differentialMassMatrix, double[] differentialFrequencies) {
+        double[] frequencies = getFrequencyModel().getFrequencies();
+        double[] Q = new double[stateCount * stateCount];
+        getInfinitesimalMatrix(Q);
+        double[] QDiagonal = new double[stateCount];
+        for (int i = 0; i < stateCount; i++) {
+            QDiagonal[i] = Q[i * stateCount + i];
+        }
+        double[] differentialMassMatrixDiagonal = new double[stateCount];
+        for (int i = 0; i < stateCount; i++) {
+            differentialMassMatrixDiagonal[i] = differentialMassMatrix[i][i];
+        }
+        //TODO: fix numeric gradient for Frequencies?
+        return ((WrtHKYModelParameter) wrtParameter).getWeightedNormalizationGradient(differentialMassMatrixDiagonal, QDiagonal, differentialFrequencies, frequencies);
+    }
+
+    @Override
+    public WrappedMatrix getInfinitesimalDifferentialMatrix(WrtParameter wrt) {
+        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
+    }
+
+    @Override
+    public WrtParameter factory(Parameter parameter, int dim) {
+        WrtHKYModelParameter wrt;
+        if (parameter == kappaParameter) {
+            wrt = WrtHKYModelParameter.KAPPA;
+        } else if (parameter == freqModel.getFrequencyParameter()) {
+            switch(dim) {
+                case 0:
+                    wrt = WrtHKYModelParameter.FREQ_A;
+                    break;
+                default:
+                    throw new RuntimeException("Not yet implemented!");
+            }
+        } else {
+            throw new RuntimeException("Not yet implemented!");
+        }
+        return wrt;
+    }
+
+    enum WrtHKYModelParameter implements WrtParameter {
+        KAPPA {
+            @Override
+            double getWeightedNormalizationGradient(double[] differentialMassMatrixDiagonal, double[] infinitesimalMatrixDiagonal, double[] differentialFrequencies, double[] frequencies) {
+                return getInnerProduct(differentialMassMatrixDiagonal, frequencies);
+            }
+
+            @Override
+            public double getRate(int switchCase) {
+                switch (switchCase) {
+                    case 0: return 0.0;
+                    case 1: return 1.0; // synonymous transition
+                }
+                throw new IllegalArgumentException("Invalid switch case");
+            }
+
+            @Override
+            public double getNormalizationDifferential() {
+                return 1.0;
+            }
+
+            @Override
+            public void setupDifferentialFrequencies(double[] differentialFrequencies, double[] frequencies) {
+                System.arraycopy(frequencies, 0, differentialFrequencies, 0, frequencies.length);
+            }
+
+            @Override
+            public void setupDifferentialRates(double[] differentialRates, double[] relativeRates, double normalizingConstant) {
+                byte[] rateMap = new byte[relativeRates.length];
+                Arrays.fill(rateMap, (byte) 0);
+                rateMap[1] = rateMap[4] = 1;
+
+                for (int i = 0; i < relativeRates.length; ++i) {
+                    differentialRates[i] = getRate(rateMap[i]) / normalizingConstant;
+                }
+            }
+
+        },
+        FREQ_A {
+            @Override
+            double getWeightedNormalizationGradient(double[] differentialMassMatrixDiagonal, double[] infinitesimalMatrixDiagonal, double[] differentialFrequencies, double[] frequencies) {
+                return getInnerProduct(differentialMassMatrixDiagonal, frequencies) + getInnerProduct(infinitesimalMatrixDiagonal, differentialFrequencies);
+            }
+
+            @Override
+            public double getRate(int switchCase) {
+                return 0;
+            }
+
+            @Override
+            public double getNormalizationDifferential() {
+                return 1.0;
+            }
+
+            @Override
+            public void setupDifferentialFrequencies(double[] differentialFrequencies, double[] frequencies) {
+                Arrays.fill(differentialFrequencies, 0);
+                differentialFrequencies[0] = 1.0;
+            }
+
+            @Override
+            public void setupDifferentialRates(double[] differentialRates, double[] relativeRates, double normalizingConstant) {
+                for (int i = 0; i < relativeRates.length; i++) {
+                    differentialRates[i] = relativeRates[i] / normalizingConstant;
+                }
+            }
+        };
+
+        abstract double getWeightedNormalizationGradient(double[] differentialMassMatrixDiagonal, double[] infinitesimalMatrixDiagonal,
+                                                         double[] differentialFrequencies, double[] frequencies);
+
+        public double getInnerProduct(double[] frequencies, double[] diagonals) {
+            double subst = 0.0;
+
+            for (int i = 0; i < frequencies.length; i++)
+                subst -= frequencies[i] * diagonals[i];
+
+            return subst;
+        }
     }
 }

@@ -32,10 +32,11 @@ import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.EmpiricalRateMatrix;
 import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.codon.CodonOptions;
+import dr.evomodel.substmodel.codon.MG94HKYCodonModel;
 import dr.evomodel.substmodel.nucleotide.GTR;
 import dr.evomodel.substmodel.codon.GY94CodonModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
-import dr.evomodel.substmodel.codon.MG94HKYCodonModel;
 import dr.evomodel.substmodel.nucleotide.TN93;
 import dr.evolution.coalescent.CoalescentSimulator;
 import dr.evolution.coalescent.ConstantPopulation;
@@ -52,6 +53,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.substmodel.aminoacid.*;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evoxml.TaxaParser;
@@ -278,10 +280,10 @@ public class PartitionData implements Serializable {
 	// //////////////////
 
 //	public Tree tree = null;
-	public String treeModelIdref = TreeModel.TREE_MODEL;
+	public String treeModelIdref = DefaultTreeModel.TREE_MODEL;
 
 	public void resetTreeModelIdref() {
-	this.treeModelIdref = TreeModel.TREE_MODEL;
+	this.treeModelIdref = DefaultTreeModel.TREE_MODEL;
 	}
 	
 	public TreeModel createTreeModel() {
@@ -289,19 +291,19 @@ public class PartitionData implements Serializable {
 		TreeModel treeModel = null;
 		if (this.demographicModelIndex == 0 && this.record.isTreeSet()) {
 			
-			treeModel = new TreeModel(this.record.getTree());
+			treeModel = new DefaultTreeModel(this.record.getTree());
 			
 		} else if( (this.demographicModelIndex > 0 && this.demographicModelIndex <= lastImplementedIndex) && this.record.isTreeSet()) {
 			
 			Taxa taxa = new Taxa(this.record.getTree().asList()); 
 			CoalescentSimulator topologySimulator = new CoalescentSimulator();
-			treeModel = new TreeModel(topologySimulator.simulateTree(taxa, createDemographicFunction()));			
+			treeModel = new DefaultTreeModel(topologySimulator.simulateTree(taxa, createDemographicFunction()));
 			
 		} else if((this.demographicModelIndex > 0 && this.demographicModelIndex <= lastImplementedIndex) && this.record.isTaxaSet()) {
 			
 			Taxa taxa = this.record.getTaxa();
 			CoalescentSimulator topologySimulator = new CoalescentSimulator();
-			treeModel = new TreeModel(topologySimulator.simulateTree(taxa, createDemographicFunction()));
+			treeModel = new DefaultTreeModel(topologySimulator.simulateTree(taxa, createDemographicFunction()));
 		
 //			} else if (this.demographicModelIndex == 0 && this.record.taxaSet) { 
 //			throw new RuntimeException("Data and demographic model incompatible for partition ");	
@@ -367,7 +369,7 @@ public class PartitionData implements Serializable {
 			"GTR", //
 			"TN93", //
 			"GY94CodonModel", //
-			"MG94CodonModel",
+			"MG94HKYCodonModel",
             "Blosum62", //	
 			"CPREV", //
 			"Dayhoff", //
@@ -382,7 +384,7 @@ public class PartitionData implements Serializable {
 			0, // GTR
 			0, // TN93
 			1, // GY94CodonModel
-			1, // MG94CodonModel
+			1, // MG94HKYCodonModel
 			2, // Blosum62
 			2, // CPREV
 			2, // Dayhoff
@@ -405,9 +407,9 @@ public class PartitionData implements Serializable {
 			"Kappa 2 (C-T)", // TN93
 			"Omega value", // GY94CodonModel
 			"Kappa value", // GY94CodonModel
-			"Alpha value", // MG94CodonModel
-			"Beta value", // MG94CodonModel
-			"Kappa value" // MG94CodonModel
+			"Alpha value", // MG94HKYCodonModel
+			"Beta value", // MG94HKYCodonModel
+			"Kappa value" // MG94HKYCodonModel
 			
 	};
 
@@ -415,7 +417,7 @@ public class PartitionData implements Serializable {
 			{ 1, 2, 3, 4, 5, 6 }, // GTR
 			{ 7, 8 }, // TN93
 			{ 9, 10 }, // GY94CodonModel
-			{11, 12, 13}, // MG94CodonModel
+			{11, 12, 13}, // MG94HKYCodonModel
 			{}, // Blosum62
 			{}, // CPREV
 			{}, // Dayhoff
@@ -505,7 +507,7 @@ public class PartitionData implements Serializable {
 			branchModel = new HomogeneousBranchModel(yangCodonModel);
 
 			
-		} else if(this.substitutionModelIndex == 4) { // MG94CodonModel
+		} else if(this.substitutionModelIndex == 4) { // MG94HKYCodonModel
 			
 			
 			FrequencyModel frequencyModel = this.createFrequencyModel();
@@ -514,7 +516,8 @@ public class PartitionData implements Serializable {
 			Parameter beta = new Parameter.Default(1, substitutionParameterValues[12]);
 			Parameter kappa = new Parameter.Default(1, substitutionParameterValues[13]);
 			
-			MG94HKYCodonModel mg94 = new MG94HKYCodonModel(Codons.UNIVERSAL, alpha, beta, kappa, frequencyModel);
+			MG94HKYCodonModel mg94 = new MG94HKYCodonModel(Codons.UNIVERSAL, alpha, beta, kappa,
+					frequencyModel, new CodonOptions());
 
 			branchModel = new HomogeneousBranchModel(mg94);
 			

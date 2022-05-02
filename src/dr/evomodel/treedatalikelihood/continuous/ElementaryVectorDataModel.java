@@ -45,6 +45,8 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
 
     private final PrecisionType precisionType;
 
+    private String tipTraitName;
+
     public ElementaryVectorDataModel(String name,
                                      Parameter tipIndicator,
                                      Parameter dimIndicator,
@@ -66,13 +68,29 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
     }
 
     @Override
-    public boolean bufferTips() { return true; }
+    public boolean bufferTips() {
+        return true;
+    }
 
     @Override
-    public int getTraitCount() {  return numTraits; }
+    public int getTraitCount() {
+        return numTraits;
+    }
 
     @Override
-    public int getTraitDimension() { return dimTrait; }
+    public int getTraitDimension() {
+        return dimTrait;
+    }
+
+    @Override
+    public String getTipTraitName() {
+        return tipTraitName;
+    }
+
+    @Override
+    public void setTipTraitName(String name) {
+        tipTraitName = name;
+    }
 
     @Override
     public PrecisionType getPrecisionType() {
@@ -80,7 +98,9 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
     }
 
     @Override
-    public CompoundParameter getParameter() { return traitParameter; }
+    public CompoundParameter getParameter() {
+        return traitParameter;
+    }
 
     public void setTipTraitDimParameters(int tip, int trait, int dim) {
         tipIndicator.setParameterValue(trait, tip);
@@ -93,7 +113,14 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
     }
 
     @Override
-    public List<Integer> getMissingIndices() { return noMissingIndices; }
+    public List<Integer> getMissingIndices() {
+        return noMissingIndices;
+    }
+
+    @Override
+    public boolean[] getDataMissingIndicators() {
+        return null;
+    }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -109,18 +136,21 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
     }
 
     @Override
-    protected void storeState() { }
+    protected void storeState() {
+    }
 
     @Override
-    protected void restoreState() { }
+    protected void restoreState() {
+    }
 
     @Override
-    protected void acceptState() { }
+    protected void acceptState() {
+    }
 
     @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
 
-        final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);
+        final int offsetInc = precisionType.getPartialsDimension(dimTrait);
         final double[] partial = new double[numTraits * offsetInc]; // zeros all values
         final double precision = PrecisionType.getObservedPrecisionValue(false);
 

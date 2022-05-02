@@ -44,6 +44,7 @@ import java.util.*;
 /**
  * @author shhn001
  */
+@Deprecated
 public class ConvergenceLogger extends MCLogger {
 
     public final static String LOG_CONVERGENCE = "LogConvergence";

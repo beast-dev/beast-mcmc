@@ -29,11 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dr.inference.model.Parameter;
-import dr.inference.operators.AbstractCoercableOperator;
-import dr.inference.operators.AdaptableVarianceMultivariateNormalOperator;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
-import dr.inference.operators.TwoPhaseOperator;
+import dr.inference.operators.*;
+import dr.inference.operators.AdaptableMCMCOperator;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -67,7 +64,7 @@ public class TwoPhaseOperatorParser extends AbstractXMLObjectParser {
             System.err.println("\nParsing TwoPhaseOperator");
         }
 
-        final CoercionMode mode = CoercionMode.parseMode(xo);
+        final AdaptationMode mode = AdaptationMode.parseMode(xo);
         final double weight = xo.getDoubleAttribute(WEIGHT);
         final int initial = xo.getIntegerAttribute(INITIAL);
         final int burnin = xo.getIntegerAttribute(BURNIN);
@@ -89,10 +86,10 @@ public class TwoPhaseOperatorParser extends AbstractXMLObjectParser {
             System.err.println(xo.getChild(PHASE_TWO).getChildCount());
         }
 
-        List<AbstractCoercableOperator> phaseOneOperators = new ArrayList<AbstractCoercableOperator>();
+        List<AbstractAdaptableOperator> phaseOneOperators = new ArrayList<AbstractAdaptableOperator>();
         int phaseOneCount = xo.getChild(PHASE_ONE).getChildCount();
         for (int i = 0; i < phaseOneCount; i++) {
-            phaseOneOperators.add((AbstractCoercableOperator)xo.getChild(PHASE_ONE).getChild(i));
+            phaseOneOperators.add((AbstractAdaptableOperator)xo.getChild(PHASE_ONE).getChild(i));
         }
 
         if (DEBUG) {
@@ -102,10 +99,10 @@ public class TwoPhaseOperatorParser extends AbstractXMLObjectParser {
             }
         }
 
-        /*List<AbstractCoercableOperator> phaseTwoOperators = new ArrayList<AbstractCoercableOperator>();
+        /*List<AbstractAdaptableOperator> phaseTwoOperators = new ArrayList<AbstractAdaptableOperator>();
         int phaseTwoCount = xo.getChild(PHASE_TWO).getChildCount();
         for (int i = 0; i < phaseTwoCount; i++) {
-            phaseTwoOperators.add((AbstractCoercableOperator)xo.getChild(PHASE_TWO).getChild(i));
+            phaseTwoOperators.add((AbstractAdaptableOperator)xo.getChild(PHASE_TWO).getChild(i));
         }*/
 
         List<AdaptableVarianceMultivariateNormalOperator> phaseTwoOperators = new ArrayList<AdaptableVarianceMultivariateNormalOperator>();
@@ -158,12 +155,12 @@ public class TwoPhaseOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(WEIGHT),
             AttributeRule.newIntegerRule(INITIAL),
             AttributeRule.newIntegerRule(BURNIN),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             new ElementRule(PHASE_ONE,
-                    new XMLSyntaxRule[]{new ElementRule(AbstractCoercableOperator.class, 1, Integer.MAX_VALUE)}),
+                    new XMLSyntaxRule[]{new ElementRule(AbstractAdaptableOperator.class, 1, Integer.MAX_VALUE)}),
                     new ElementRule(PHASE_TWO,
                             new XMLSyntaxRule[]{new ElementRule(AdaptableVarianceMultivariateNormalOperator.class, 1, Integer.MAX_VALUE)})
             /*new ElementRule(PHASE_TWO,
-                    new XMLSyntaxRule[]{new ElementRule(AbstractCoercableOperator.class, 1, Integer.MAX_VALUE)})*/
+                    new XMLSyntaxRule[]{new ElementRule(AbstractAdaptableOperator.class, 1, Integer.MAX_VALUE)})*/
     };
 }

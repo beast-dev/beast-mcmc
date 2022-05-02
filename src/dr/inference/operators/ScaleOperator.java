@@ -43,24 +43,24 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id: ScaleOperator.java,v 1.20 2005/06/14 10:40:34 rambaut Exp $
  */
-public class ScaleOperator extends AbstractCoercableOperator {
+public class ScaleOperator extends AbstractAdaptableOperator {
 
     private Parameter indicator;
     private double indicatorOnProb;
 
     public ScaleOperator(Variable variable, double scale) {
 
-        this(variable, scale, CoercionMode.COERCION_ON, 1.0);
+        this(variable, scale, AdaptationMode.ADAPTATION_ON, 1.0);
     }
 
-    public ScaleOperator(Variable<Double> variable, double scale, CoercionMode mode, double weight) {
+    public ScaleOperator(Variable<Double> variable, double scale, AdaptationMode mode, double weight) {
 
         this(variable, false, 0, scale, mode, null, 1.0, false);
         setWeight(weight);
     }
 
     public ScaleOperator(Variable<Double> variable, boolean scaleAll, int degreesOfFreedom, double scale,
-                         CoercionMode mode, Parameter indicator, double indicatorOnProb, boolean scaleAllInd) {
+                         AdaptationMode mode, Parameter indicator, double indicatorOnProb, boolean scaleAllInd) {
 
         super(mode);
 
@@ -218,11 +218,11 @@ public class ScaleOperator extends AbstractCoercableOperator {
         return "scale(" + variable.getVariableName() + ")";
     }
 
-    public double getCoercableParameter() {
+    public double getAdaptableParameterValue() {
         return Math.log(1.0 / scaleFactor - 1.0);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = 1.0 / (Math.exp(value) + 1.0);
     }
 
@@ -234,21 +234,8 @@ public class ScaleOperator extends AbstractCoercableOperator {
         return scaleFactor;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-        double sf = OperatorUtils.optimizeScaleFactor(scaleFactor, prob, targetProb);
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
 
     public String toString() {

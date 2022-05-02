@@ -30,8 +30,11 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.inference.model.*;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.xml.Reportable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -43,7 +46,7 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 
-public final class TreeDataLikelihood extends AbstractModelLikelihood implements TreeTraitProvider, Reportable {
+public final class TreeDataLikelihood extends AbstractModelLikelihood implements TreeTraitProvider, Citable, Profileable, Reportable {
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
@@ -69,7 +72,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         this.treeModel = treeModel;
         isTreeRandom = (treeModel instanceof AbstractModel) && ((AbstractModel) treeModel).isVariable();
         if (isTreeRandom) {
-            addModel(((AbstractModel)treeModel));
+            addModel(((AbstractModel) treeModel));
         }
 
         likelihoodKnown = false;
@@ -81,7 +84,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         addModel(this.branchRateModel);
 
         treeTraversalDelegate = new LikelihoodTreeTraversal(treeModel, branchRateModel,
-                    likelihoodDelegate.getOptimalTraversalType()
+                likelihoodDelegate.getOptimalTraversalType()
         );
 
         rateRescalingScheme = likelihoodDelegate.getRateRescalingScheme();
@@ -111,20 +114,52 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     }
 
     @Override
+    @SuppressWarnings("Duplicates")
     public final double getLogLikelihood() {
         if (COUNT_TOTAL_OPERATIONS)
             totalGetLogLikelihoodCount++;
 
         if (!likelihoodKnown) {
+            long startTime;
             if (COUNT_TOTAL_OPERATIONS) {
                 totalCalculateLikelihoodCount++;
+                startTime = System.nanoTime();
             }
 
             logLikelihood = calculateLogLikelihood();
+
+            if (COUNT_TOTAL_OPERATIONS) {
+                long endTime = System.nanoTime();
+                totalLikelihoodTime += (endTime - startTime) / 1000000;
+            }
+
+            setAllNodesUpdated();
             likelihoodKnown = true;
         }
 
         return logLikelihood;
+    }
+
+    final void calculatePostOrderStatistics() {
+        if (COUNT_TOTAL_OPERATIONS) {
+            totalPostOrderStatistics++;
+        }
+
+        if (!likelihoodKnown) {
+            if (COUNT_TOTAL_OPERATIONS) {
+                totalCalculatePostOrderStatistics++;
+            }
+
+            likelihoodDelegate.setComputePostOrderStatisticsOnly(true);
+            double tmp = calculateLogLikelihood();
+            likelihoodDelegate.setComputePostOrderStatisticsOnly(false);
+
+            if (!likelihoodDelegate.providesPostOrderStatisticsOnly()) {
+                setAllNodesUpdated();
+                logLikelihood = tmp;
+                likelihoodKnown = true;
+            }
+        }
     }
 
     @Override
@@ -277,9 +312,6 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         } while (!done && underflowCount < MAX_UNDERFLOWS_BEFORE_ERROR);
 
-        // after traverse all nodes and patterns have been updated --
-        //so change flags to reflect this.
-        setAllNodesUpdated();
 
         return logL;
     }
@@ -358,7 +390,10 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                           "\n  calculate likelihoods = ").append(totalCalculateLikelihoodCount).append(
                           "\n  get likelihoods = ").append(totalGetLogLikelihoodCount).append(
                           "\n  all rate updates = ").append(totalRateUpdateAllCount).append(
-                          "\n  partial rate updates = ").append(totalRateUpdateSingleCount);
+                          "\n  partial rate updates = ").append(totalRateUpdateSingleCount).append(
+                          "\n  get post-order statistics = ").append(totalPostOrderStatistics).append(
+                          "\n  calculate post-order statistics = ").append(totalCalculatePostOrderStatistics).append(
+                          "\n  average likelihood time = ").append(totalLikelihoodTime / totalCalculateLikelihoodCount);
 
             return sb.toString();
         } else {
@@ -404,6 +439,38 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         treeTraits.addTraits(traits);
     }
 
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.FRAMEWORK;
+    }
+
+    @Override
+    public String getDescription() {
+        if (likelihoodDelegate instanceof Citable) {
+            return ((Citable) likelihoodDelegate).getDescription();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        if (likelihoodDelegate instanceof Citable) {
+            return ((Citable) likelihoodDelegate).getCitations();
+        } else {
+            return new ArrayList<>();
+        }
+    }
+
+    // **************************************************************
+    // INSTANCE PROFILEABLE
+    // **************************************************************
+
+    @Override
+    public long getTotalCalculationCount() {
+        return likelihoodDelegate.getTotalCalculationCount();
+    }
+
     // **************************************************************
     // INSTANCE VARIABLES
     // **************************************************************
@@ -434,9 +501,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
     private double logLikelihood;
     private double storedLogLikelihood;
-    protected boolean likelihoodKnown = false;
+    protected boolean likelihoodKnown;
 
-    private boolean hasInitialized = false;
+    private boolean hasInitialized;
 
     private final boolean isTreeRandom;
 
@@ -448,4 +515,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     private int totalCalculateLikelihoodCount = 0;
     private int totalRateUpdateAllCount = 0;
     private int totalRateUpdateSingleCount = 0;
+    private int totalPostOrderStatistics = 0;
+    private int totalCalculatePostOrderStatistics = 0;
+    private long totalLikelihoodTime = 0;
 }

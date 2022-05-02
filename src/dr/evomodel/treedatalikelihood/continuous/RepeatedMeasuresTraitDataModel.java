@@ -1,7 +1,7 @@
 /*
- * ContinuousTraitData.java
+ * RepeatedMeasuresTraitDataModel.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,91 +26,263 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.MutableTreeModel;
-import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
+import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.model.*;
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
+import dr.math.matrixAlgebra.CholeskyDecomposition;
+import dr.math.matrixAlgebra.IllegalDimension;
+import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author Marc A. Suchard
+ * @author Gabriel Hassler
  */
-public class RepeatedMeasuresTraitDataModel extends
-        ContinuousTraitDataModel implements ContinuousTraitPartialsProvider {
+public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel implements ContinuousTraitPartialsProvider,
+        ModelExtensionProvider.NormalExtensionProvider {
 
     private final String traitName;
-    private final Parameter samplingPrecision;
+    private final MatrixParameterInterface samplingPrecisionParameter;
+    private boolean diagonalOnly = false;
+    //    private DenseMatrix64F samplingVariance;
+    private boolean variableChanged = true;
+    private boolean varianceKnown = false;
+
+    private Matrix samplingPrecision;
+    private Matrix samplingVariance;
+    private Matrix storedSamplingPrecision;
+    private Matrix storedSamplingVariance;
+    private boolean storedVarianceKnown = false;
+    private boolean storedVariableChanged = true;
+
+    private boolean[] missingTraitIndicators = null;
+
 
     public RepeatedMeasuresTraitDataModel(String name,
                                           CompoundParameter parameter,
-                                          List<Integer> missingIndices,
+                                          boolean[] missindIndicators,
                                           boolean useMissingIndices,
                                           final int dimTrait,
-                                          Parameter samplingPrecision) {
-        super(name, parameter, missingIndices, useMissingIndices, dimTrait, PrecisionType.FULL);
+                                          MatrixParameterInterface samplingPrecision) {
+
+        super(name, parameter, missindIndicators, useMissingIndices, dimTrait,
+                dimTrait == 1 ? PrecisionType.SCALAR : PrecisionType.FULL); //TODO: Not sure this is the best way to do this.
+
         this.traitName = name;
-        this.samplingPrecision = samplingPrecision;
+        this.samplingPrecisionParameter = samplingPrecision;
         addVariable(samplingPrecision);
 
-        samplingPrecision.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
+        calculatePrecisionInfo();
+
+//        this.samplingVariance = new Matrix(samplingPrecision.getParameterAsMatrix()).inverse();
+        this.samplingVariance = null;
+
+
+        samplingPrecisionParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
                 samplingPrecision.getDimension()));
 
-        if (samplingPrecision.getDimension() != dimTrait) {
-            throw new RuntimeException("Currently only implemented for diagonal deflation");
-        }
     }
 
     @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
 
         assert (numTraits == 1);
+        assert (samplingPrecision.rows() == dimTrait && samplingPrecision.columns() == dimTrait);
 
-//        if (fullyObserved) {
-//            throw new IllegalArgumentException("Wishart statistics are not implemented for the repeated measures model");
-//        }
-        if (fullyObserved == true){
-            return new double[dimTrait + 1];
+        recomputeVariance();
+
+        if (fullyObserved) {
+            throw new RuntimeException("Incompatible with this model.");
         }
-
 
         double[] partial = super.getTipPartial(taxonIndex, fullyObserved);
+        if (precisionType == precisionType.SCALAR) {
+            return partial; //TODO: I don't think this is right, especially given constructor above.
+        }
+        DenseMatrix64F V = MissingOps.wrap(partial, dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
-        DenseMatrix64F V = MissingOps.wrap(partial,dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-
-        for (int index = 0; index< dimTrait; index++){
-            V.set(index, index, V.get(index, index) + 1 / samplingPrecision.getParameterValue(index));
+        //TODO: remove diagonalOnly part
+        if (diagonalOnly) {
+            for (int index = 0; index < dimTrait; index++) {
+                V.set(index, index, V.get(index, index) + 1 / samplingPrecision.component(index, index));
+            }
+        } else {
+            for (int i = 0; i < dimTrait; i++) {
+                for (int j = 0; j < dimTrait; j++) {
+                    V.set(i, j, V.get(i, j) + samplingVariance.component(i, j));
+                }
+            }
         }
 
+
         DenseMatrix64F P = new DenseMatrix64F(dimTrait, dimTrait);
-        MissingOps.safeInvert(V, P, false);
+        MissingOps.safeInvert2(V, P, false); //TODO this isn't necessary when this is fully observed
 
         MissingOps.unwrap(P, partial, dimTrait);
         MissingOps.unwrap(V, partial, dimTrait + dimTrait * dimTrait);
 
+        if (DEBUG) {
+            System.err.println("taxon " + taxonIndex);
+            System.err.println("\tprecision: " + P);
+            System.err.println("\tmean: " + new WrappedVector.Raw(partial, 0, dimTrait));
+        }
+
         return partial;
     }
 
-    public Parameter getSamplingPrecision() { return samplingPrecision; }
+    @Override
+    public boolean[] getTraitMissingIndicators() {
+        if (getDataMissingIndicators() == null) {
+            return null;
+        } else if (missingTraitIndicators == null) {
+            this.missingTraitIndicators = new boolean[getParameter().getDimension()];
+            Arrays.fill(missingTraitIndicators, true); // all traits are latent
+        }
+        return missingTraitIndicators;
+    }
 
-    public String getTraitName() { return traitName; }
+
+    private void recomputeVariance() {
+        checkVariableChanged();
+        if (!varianceKnown) {
+            samplingVariance = samplingPrecision.inverse();
+            varianceKnown = true;
+        }
+    }
+
+    public Matrix getSamplingVariance() {
+        recomputeVariance();
+        return samplingVariance;
+    }
+
+    public String getTraitName() {
+        return traitName;
+    }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         super.handleVariableChangedEvent(variable, index, type);
 
-        if (variable == samplingPrecision) {
+        if (variable == samplingPrecisionParameter) {
+
+            variableChanged = true;
+            varianceKnown = false;
             fireModelChanged();
         }
     }
-    
+
+    private void calculatePrecisionInfo() {
+        samplingPrecision = new Matrix(samplingPrecisionParameter.getParameterAsMatrix());
+    }
+
+    private void checkVariableChanged() {
+        if (variableChanged) {
+            calculatePrecisionInfo();
+            variableChanged = false;
+            varianceKnown = false;
+        }
+    }
+
+    @Override
+    protected void storeState() {
+        storedSamplingPrecision = samplingPrecision.clone();
+        storedSamplingVariance = samplingVariance.clone();
+        storedVarianceKnown = varianceKnown;
+        storedVariableChanged = variableChanged;
+    }
+
+    @Override
+    protected void restoreState() {
+        Matrix tmp = samplingPrecision;
+        samplingPrecision = storedSamplingPrecision;
+        storedSamplingPrecision = tmp;
+
+        tmp = samplingVariance;
+        samplingVariance = storedSamplingVariance;
+        storedSamplingVariance = tmp;
+
+        varianceKnown = storedVarianceKnown;
+        variableChanged = storedVariableChanged;
+    }
+
+    @Override
+    public ContinuousExtensionDelegate getExtensionDelegate(ContinuousDataLikelihoodDelegate delegate,
+                                                            TreeTrait treeTrait, Tree tree) {
+        checkVariableChanged();
+        return new ContinuousExtensionDelegate.MultivariateNormalExtensionDelegate(delegate, treeTrait,
+                this, tree);
+    }
+
+    @Override
+    public boolean diagonalVariance() {
+        return false; //TODO: base on precisionType
+    }
+
+    @Override
+    public DenseMatrix64F getExtensionVariance() {
+        recomputeVariance();
+        double[] buffer = samplingVariance.toArrayComponents();
+        return DenseMatrix64F.wrap(dimTrait, dimTrait, buffer);
+    }
+
+    @Override
+    public DenseMatrix64F getExtensionVariance(NodeRef node) {
+        return getExtensionVariance();
+    }
+
+    public void getMeanTipVariances(DenseMatrix64F samplingVariance, DenseMatrix64F samplingComponent) {
+        CommonOps.scale(1.0, samplingVariance, samplingComponent);
+    }
+
+    @Override
+    public MatrixParameterInterface getExtensionPrecision() {
+        checkVariableChanged();
+        return samplingPrecisionParameter;
+    }
+
+    @Override
+    public double[] transformTreeTraits(double[] treeTraits) {
+        return treeTraits;
+    }
+
+    @Override
+    public int getDataDimension() {
+        return dimTrait;
+    }
+
+    @Override
+    public boolean suppliesWishartStatistics() {
+        return false;
+    }
+
+    @Override
+    public void chainRuleWrtVariance(double[] gradient, NodeRef node) {
+        // Do nothing
+    }
+
+
+    private static final boolean DEBUG = false;
+
     // TODO Move remainder into separate class file
-    private static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
+    public static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
     private static final String PRECISION = "samplingPrecision";
+    private static final String SCALE_BY_TIP_HEIGHT = "scaleByTipHeight";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
         @Override
@@ -120,25 +292,61 @@ public class RepeatedMeasuresTraitDataModel extends
             TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
 
             TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                    utilities.parseTraitsFromTaxonAttributes(xo, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME,
-                            treeModel, true);
+                    utilities.parseTraitsFromTaxonAttributes(xo, treeModel, true);
             CompoundParameter traitParameter = returnValue.traitParameter;
-            List<Integer> missingIndices = returnValue.missingIndices;
+            boolean[] missingIndicators = returnValue.getMissingIndicators();
 
-            Parameter samplingPrecision = (Parameter) xo.getElementFirstChild(PRECISION);
+            XMLObject cxo = xo.getChild(PRECISION);
+            MatrixParameterInterface samplingPrecision = (MatrixParameterInterface)
+                    cxo.getChild(MatrixParameterInterface.class);
+
+            CholeskyDecomposition chol;
+            try {
+                chol = new CholeskyDecomposition(samplingPrecision.getParameterAsMatrix());
+            } catch (IllegalDimension illegalDimension) {
+                throw new XMLParseException(PRECISION + " must be a square matrix.");
+            }
+
+            if (!chol.isSPD()) {
+                throw new XMLParseException(PRECISION + " must be a positive definite matrix.");
+            }
+
 
             String traitName = returnValue.traitName;
-            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
-                    xo.getChild(MultivariateDiffusionModel.class);
+            //TODO diffusionModel was only used for the dimension.
+            // But this should be the same as the samplingPrecision dimension ?
+//            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
+//                    xo.getChild(MultivariateDiffusionModel.class);
 
-            return new RepeatedMeasuresTraitDataModel(
-                    traitName,
-                    traitParameter,
-                    missingIndices,
-                    true,
-                    diffusionModel.getPrecisionParameter().getRowDimension(),
-                    samplingPrecision
-            );
+            //TODO: This was never used.
+//            final boolean[] missingIndicators = new boolean[returnValue.traitParameter.getDimension()];
+//            for (int i : missingIndices) {
+//                missingIndicators[i] = true;
+//            }
+
+            boolean scaleByTipHeight = xo.getAttribute(SCALE_BY_TIP_HEIGHT, false);
+
+            if (!scaleByTipHeight) {
+                return new RepeatedMeasuresTraitDataModel(
+                        traitName,
+                        traitParameter,
+                        missingIndicators,
+//                    missingIndicators,
+                        true,
+                        samplingPrecision.getColumnDimension(),
+//                    diffusionModel.getPrecisionParameter().getRowDimension(),
+                        samplingPrecision
+                );
+            } else {
+                return new TreeScaledRepeatedMeasuresTraitDataModel(
+                        traitName,
+                        traitParameter,
+                        missingIndicators,
+                        true,
+                        samplingPrecision.getColumnDimension(),
+                        samplingPrecision
+                );
+            }
         }
 
         @Override
@@ -162,8 +370,8 @@ public class RepeatedMeasuresTraitDataModel extends
         }
     };
 
-    private final static XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            new ElementRule(PRECISION, new XMLSyntaxRule[] {
+    private final static XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            new ElementRule(PRECISION, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class),
             }),
             // Tree trait parser
@@ -175,6 +383,9 @@ public class RepeatedMeasuresTraitDataModel extends
             new ElementRule(TreeTraitParserUtilities.MISSING, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true),
-            new ElementRule(MultivariateDiffusionModel.class),
+            AttributeRule.newBooleanRule(SCALE_BY_TIP_HEIGHT, true),
+//            new ElementRule(MultivariateDiffusionModel.class),
     };
+
+
 }

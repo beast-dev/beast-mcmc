@@ -78,19 +78,6 @@ public class CompoundSymmetricMatrix extends AbstractTransformedCompoundMatrix {
         return diagonalParameter.getParameterValue(row);
     }
 
-    private int getUpperTriangularIndex(int i, int j) {
-        assert i != j;
-        if (i < j) {
-            return upperTriangularTransformation(i, j);
-        } else {
-            return upperTriangularTransformation(j, i);
-        }
-    }
-
-    private int upperTriangularTransformation(int i, int j) {
-        return i * (2 * dim - i - 1) / 2 + (j - i - 1);
-    }
-
     @Override
     public double[][] getParameterAsMatrix() {
         final int I = dim;

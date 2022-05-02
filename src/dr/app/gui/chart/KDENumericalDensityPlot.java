@@ -25,15 +25,15 @@
 
 package dr.app.gui.chart;
 
-import dr.inference.trace.TraceDistribution;
 import dr.math.distributions.GammaKDEDistribution;
 import dr.math.distributions.KernelDensityEstimatorDistribution;
-import dr.math.distributions.LogTransformedNormalKDEDistribution;
 import dr.math.distributions.NormalKDEDistribution;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 
 import java.util.List;
+
+import static dr.math.distributions.TransformedNormalKDEDistribution.getLogTransformedNormalKDEDistribution;
 
 /**
  * @author Marc A. Suchard
@@ -58,7 +58,7 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot {
         switch (type) {
             case GAUSSIAN: return new NormalKDEDistribution(samples);
             case GAMMA: return new GammaKDEDistribution(samples);
-            case LOG_TRANSFORMED_GAUSSIAN: return new LogTransformedNormalKDEDistribution(samples);
+            case LOG_TRANSFORMED_GAUSSIAN: return getLogTransformedNormalKDEDistribution(samples);
             default:
                 throw new RuntimeException("Unknown type");
         }
@@ -114,7 +114,14 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot {
             x -= frequency.getBinSize();
             extraEdgeCount += 1;
         }
-        xData.add(x);
+        // take the raw X min
+        double rawXMin = Double.parseDouble(raw.getMin().toString());
+        // here sometime final x < lowerBoundary from above loop
+        // rawXMin >= lowerBoundary to ignore the negative X, e.g. likelihoods
+        if (rawXMin >= lowerBoundary && x < lowerBoundary)
+            xData.add(lowerBoundary); // set min x to lowerBoundary
+        else
+            xData.add(x);
         yData.add(0.0);
         x += frequency.getBinSize();
         int count = 0;

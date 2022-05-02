@@ -365,6 +365,11 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel imple
         throw new RuntimeException("Not implemented!");
     }
 
+    @Override
+    public double getNodeGradient(Tree tree, NodeRef node) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
     public void mask(SpeciationModel mask) {
         if (mask instanceof BirthDeathSerialSamplingModel) {
             this.mask = (BirthDeathSerialSamplingModel) mask;

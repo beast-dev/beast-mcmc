@@ -40,9 +40,12 @@ import dr.evomodel.substmodel.EmpiricalRateMatrix;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.aminoacid.Blosum62;
 import dr.evomodel.substmodel.aminoacid.EmpiricalAminoAcidModel;
+import dr.evomodel.substmodel.codon.CodonOptions;
 import dr.evomodel.substmodel.codon.GY94CodonModel;
+import dr.evomodel.substmodel.codon.MG94K80CodonModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
-import dr.evomodel.substmodel.codon.MG94CodonModel;
+import dr.evomodel.substmodel.codon.MG94HKYCodonModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
@@ -113,7 +116,7 @@ public class BeagleSeqSimTest {
 			
 	        File treeFile = new File("/home/filip/Dropbox/BeagleSequenceSimulator/SimTree/SimTree.figtree");
 	        Tree tree = Utils.importTreeFromFile(treeFile);
-	        TreeModel treeModel = new TreeModel(tree);
+			DefaultTreeModel treeModel = new DefaultTreeModel(tree);
 			
 			// create Frequency Model
 			Parameter freqs = new Parameter.Default(Utils.UNIFORM_CODON_FREQUENCIES);
@@ -182,7 +185,7 @@ public class BeagleSeqSimTest {
 			NewickImporter importer = new NewickImporter(
 					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
 			Tree tree = importer.importTree(null);
-			TreeModel treeModel = new TreeModel(tree);
+			DefaultTreeModel treeModel = new DefaultTreeModel(tree);
 
 			for (NodeRef node : treeModel.getNodes()) {
 
@@ -269,7 +272,7 @@ public class BeagleSeqSimTest {
 
 			CoalescentSimulator topologySimulator = new CoalescentSimulator();
 
-			TreeModel treeModel = new TreeModel(topologySimulator.simulateTree(
+			DefaultTreeModel treeModel = new DefaultTreeModel(topologySimulator.simulateTree(
 					taxa, exponentialGrowth));
 
 			System.out.println(treeModel.toString());
@@ -333,7 +336,7 @@ public class BeagleSeqSimTest {
 			NewickImporter importer = new NewickImporter(
 					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
 			Tree tree = importer.importTree(null);
-			TreeModel treeModel = new TreeModel(tree);
+			DefaultTreeModel treeModel = new DefaultTreeModel(tree);
 
 			// create Frequency Model
 			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
@@ -404,7 +407,7 @@ public class BeagleSeqSimTest {
 			NewickImporter importer = new NewickImporter(
 					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
 			Tree tree = importer.importTree(null);
-			TreeModel treeModel = new TreeModel(tree);
+			DefaultTreeModel treeModel = new DefaultTreeModel(tree);
 
 			// create Frequency Model
 			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
@@ -482,7 +485,7 @@ public class BeagleSeqSimTest {
 			NewickImporter importer = new NewickImporter(
 					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
 			Tree tree = importer.importTree(null);
-			TreeModel treeModel = new TreeModel(tree);
+			DefaultTreeModel treeModel = new DefaultTreeModel(tree);
 
 			// create Frequency Model
 			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
@@ -573,7 +576,7 @@ public class BeagleSeqSimTest {
 			NewickImporter importer = new NewickImporter(
 					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
 			Tree tree = importer.importTree(null);
-			TreeModel treeModel = new TreeModel(tree);
+			DefaultTreeModel treeModel = new DefaultTreeModel(tree);
 
 			// create site model
 			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
@@ -643,7 +646,7 @@ public class BeagleSeqSimTest {
 			NewickImporter importer = new NewickImporter(
 					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
 			Tree tree = importer.importTree(null);
-			TreeModel treeModel = new TreeModel(tree);
+			DefaultTreeModel treeModel = new DefaultTreeModel(tree);
 
 			// create site model
 			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
@@ -661,8 +664,8 @@ public class BeagleSeqSimTest {
 			Parameter alpha = new Parameter.Default(1, 10);
 			Parameter beta = new Parameter.Default(1, 5);
 //			Parameter kappa = new Parameter.Default(1, 1);
-			MG94CodonModel mg94 = new MG94CodonModel(Codons.UNIVERSAL, alpha,
-					beta, freqModel);
+			MG94HKYCodonModel mg94 = new MG94K80CodonModel(Codons.UNIVERSAL, alpha,
+					beta, freqModel, new CodonOptions());
 
 			HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(
 					mg94);

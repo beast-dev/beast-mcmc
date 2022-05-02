@@ -25,22 +25,22 @@
 
 package dr.inference.trace;
 
+import dr.util.Attribute;
+import dr.util.FileHelpers;
+import dr.xml.*;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.nio.file.Paths;
 import java.util.*;
-
-import dr.util.Attribute;
-import dr.util.FileHelpers;
-
-import dr.xml.*;
 
 /**
  * @author Guy Baele
  */
 
-public class GeneralizedSteppingStoneSamplingAnalysis {
+public class GeneralizedSteppingStoneSamplingAnalysis implements Reportable {
 	
     public static final String GENERALIZED_STEPPING_STONE_SAMPLING_ANALYSIS = "generalizedSteppingStoneSamplingAnalysis";
     public static final String RESULT_FILE_NAME = "resultsFileName";
@@ -151,7 +151,12 @@ public class GeneralizedSteppingStoneSamplingAnalysis {
         sb.append("\nlog marginal likelihood (using generalized stepping stone sampling) from (" + sourceName + " - " + destinationName + ") = " + bf + "\n");
         return sb.toString();
     }
-    
+
+    @Override
+    public String getReport() {
+        return this.toString();
+    }
+
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
     	
     	public String getParserName() {
@@ -181,9 +186,13 @@ public class GeneralizedSteppingStoneSamplingAnalysis {
     				String name = file.getName();
     				String parent = file.getParent();
 
-    				if (!file.isAbsolute()) {
-    					parent = System.getProperty("user.dir");
-    				}
+                    if (!file.isAbsolute()) {
+                        if (parent == null) {
+                            parent = System.getProperty("user.dir");
+                        } else {
+                            parent = Paths.get(System.getProperty("user.dir"), parent).toString();
+                        }
+                    }
 
                     final String fileNamePrefix = System.getProperty("file.name.prefix");
                     final String fileSeparator = System.getProperty("file.separator");

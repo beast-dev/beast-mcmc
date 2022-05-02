@@ -4,8 +4,8 @@ package dr.evomodel.antigenic.phyloclustering.misc.obsolete;
 import dr.evomodel.antigenic.phyloclustering.operators.serumDriftActiveScaledMu1Operator;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
-import dr.inference.operators.AbstractCoercableOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AbstractAdaptableOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorUtils;
 import dr.math.MathUtils;
@@ -17,7 +17,7 @@ import dr.xml.XMLObjectParser;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
 
-public class serumDriftScalingMuOperator extends AbstractCoercableOperator {
+public class serumDriftScalingMuOperator extends AbstractAdaptableOperator {
 
 	
 
@@ -31,7 +31,7 @@ public class serumDriftScalingMuOperator extends AbstractCoercableOperator {
 	
 	public serumDriftScalingMuOperator(double weight, MatrixParameter mu, Parameter muMean, Parameter muPrec, Parameter serumDrift, double scale){
     
-        super(CoercionMode.COERCION_ON);
+        super(AdaptationMode.ADAPTATION_ON);
 		
 		setWeight(weight);
         this.mu = mu;
@@ -74,12 +74,13 @@ public class serumDriftScalingMuOperator extends AbstractCoercableOperator {
 
 
 	//copied from the original ScaleOperator
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(1.0 / scaleFactor - 1.0);
     }
 
 	//copied from the original ScaleOperator
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = 1.0 / (Math.exp(value) + 1.0);
     }
 
@@ -88,29 +89,10 @@ public class serumDriftScalingMuOperator extends AbstractCoercableOperator {
         return scaleFactor;
     }
 
-	
-	
-	//copied from the original ScaleOperator
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
-	//copied from the original ScaleOperator
-    public final String getPerformanceSuggestion() {
 
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-        double sf = OperatorUtils.optimizeScaleFactor(scaleFactor, prob, targetProb);
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
-    }
-	
-	
-
-    
     public final static String SERUMDRIFTSCALINGMUOperator = "serumDriftScalingMuOperator";
 
     public final String getOperatorName() {

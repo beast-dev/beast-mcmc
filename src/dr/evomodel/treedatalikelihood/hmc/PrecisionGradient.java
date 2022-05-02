@@ -25,21 +25,23 @@
 
 package dr.evomodel.treedatalikelihood.hmc;
 
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 
 /**
  * @author Paul Bastide
  * @author Marc A. Suchard
  */
-public class PrecisionGradient extends AbstractPrecisionGradient {
+public class PrecisionGradient extends AbstractPrecisionGradient implements HessianWrtParameterProvider {
 
     public PrecisionGradient(GradientWrtPrecisionProvider gradientWrtPrecisionProvider,
                              Likelihood likelihood,
                              MatrixParameterInterface parameter) {
 
-        super(gradientWrtPrecisionProvider, likelihood, parameter);
+        super(gradientWrtPrecisionProvider, likelihood, parameter, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY);
     }
 
     @Override
@@ -52,17 +54,40 @@ public class PrecisionGradient extends AbstractPrecisionGradient {
         return mergeGradients(gradientDiagonal, gradientCorrelation);
     }
 
-    private double[] mergeGradients(double[] gradientDiagonal, double[] gradientCorrelation) {
-        throw new RuntimeException("Not yet implemented");
-    }
-
-    MultivariateFunction getNumeric() {
-        return null;
+    @Override
+    public Parameter getParameter() {
+        return compoundSymmetricMatrix.getUntransformedCompoundParameter();
     }
 
     @Override
-    String checkNumeric(double[] analytic) {
-        return "";
+    public int getDimension() {
+        return getParameter().getDimension();
     }
 
+    private double[] mergeGradients(double[] gradientDiagonal, double[] gradientCorrelation) {
+        double[] gradient = new double[gradientDiagonal.length + gradientCorrelation.length];
+        System.arraycopy(gradientDiagonal, 0, gradient, 0, gradientDiagonal.length);
+        System.arraycopy(gradientCorrelation, 0, gradient, gradientDiagonal.length, gradientCorrelation.length);
+        return gradient;
+    }
+
+    MultivariateFunction getNumeric() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public String getReport() {
+        return "precisionGradient." + compoundSymmetricMatrix.getParameterName() + "\n" +
+                super.getReport();
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public double[][] getHessianLogDensity() {
+        throw new RuntimeException("Not yet implemented");
+    }
 }

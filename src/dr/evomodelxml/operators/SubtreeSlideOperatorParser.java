@@ -26,9 +26,10 @@
 package dr.evomodelxml.operators;
 
 import dr.evomodel.operators.SubtreeSlideOperator;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
 
@@ -54,16 +55,16 @@ public class SubtreeSlideOperatorParser extends AbstractXMLObjectParser {
         boolean swapTraits = xo.getAttribute(SWAP_TRAITS, false);
         boolean scaledDirichletBranches = xo.getAttribute(DIRICHLET_BRANCHES, false);
 
-        CoercionMode mode = CoercionMode.DEFAULT;
-        if (xo.hasAttribute(CoercableMCMCOperator.AUTO_OPTIMIZE)) {
-            if (xo.getBooleanAttribute(CoercableMCMCOperator.AUTO_OPTIMIZE)) {
-                mode = CoercionMode.COERCION_ON;
+        AdaptationMode mode = AdaptationMode.DEFAULT;
+        if (xo.hasAttribute(AdaptableMCMCOperator.AUTO_OPTIMIZE)) {
+            if (xo.getBooleanAttribute(AdaptableMCMCOperator.AUTO_OPTIMIZE)) {
+                mode = AdaptationMode.ADAPTATION_ON;
             } else {
-                mode = CoercionMode.COERCION_OFF;
+                mode = AdaptationMode.ADAPTATION_OFF;
             }
         }
 
-        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        DefaultTreeModel treeModel = (DefaultTreeModel) xo.getChild(DefaultTreeModel.class);
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
         final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
@@ -77,8 +78,7 @@ public class SubtreeSlideOperatorParser extends AbstractXMLObjectParser {
 
         final boolean gaussian = xo.getBooleanAttribute("gaussian");
         SubtreeSlideOperator operator = new SubtreeSlideOperator(treeModel, weight, size, gaussian,
-                swapRates, swapTraits, scaledDirichletBranches, mode);
-        operator.setTargetAcceptanceProbability(targetAcceptance);
+                swapRates, swapTraits, scaledDirichletBranches, mode, targetAcceptance);
 
         return operator;
     }
@@ -103,7 +103,7 @@ public class SubtreeSlideOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule("gaussian"),
             AttributeRule.newBooleanRule(SWAP_RATES, true),
             AttributeRule.newBooleanRule(SWAP_TRAITS, true),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             new ElementRule(TreeModel.class)
     };
 

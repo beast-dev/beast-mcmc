@@ -26,11 +26,11 @@
 package dr.evomodelxml.treedatalikelihood;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
@@ -38,6 +38,7 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.PreOrderSettings;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -57,13 +58,19 @@ import java.util.List;
 public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String BEAGLE_INSTANCE_COUNT = "beagle.instance.count";
+    public static final String BEAGLE_THREAD_COUNT = "beagle.thread.count";
+    public static final String THREAD_COUNT = "thread.count";
+    public static final String THREADS = "threads";
 
     public static final String TREE_DATA_LIKELIHOOD = "treeDataLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     public static final String INSTANCE_COUNT = "instanceCount";
+    public static final String PREFER_GPU = "preferGPU";
     public static final String SCALING_SCHEME = "scalingScheme";
     public static final String DELAY_SCALING = "delayScaling";
     public static final String USE_PREORDER = "usePreOrder";
+    public static final String BRANCHRATE_DERIVATIVE = "branchRateDerivative";
+    public static final String BRANCHINFINITESIMAL_DERIVATIVE = "branchInfinitesimalDerivative";
 
     public static final String PARTITION = "partition";
 
@@ -74,13 +81,14 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     protected Likelihood createTreeDataLikelihood(List<PatternList> patternLists,
                                                   List<BranchModel> branchModels,
                                                   List<SiteRateModel> siteRateModels,
-                                                  TreeModel treeModel,
+                                                  Tree treeModel,
                                                   BranchRateModel branchRateModel,
                                                   TipStatesModel tipStatesModel,
                                                   boolean useAmbiguities,
+                                                  boolean preferGPU,
                                                   PartialsRescalingScheme scalingScheme,
                                                   boolean delayRescalingUntilUnderflow,
-                                                  boolean usePreOrder) throws XMLParseException {
+                                                  PreOrderSettings settings) throws XMLParseException {
 
         if (tipStatesModel != null) {
             throw new XMLParseException("Tip State Error models are not supported yet with TreeDataLikelihood");
@@ -90,76 +98,121 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         List<Taxon> patternTaxa = patternLists.get(0).asList();
 
         if (!patternTaxa.containsAll(treeTaxa)) {
-            throw new XMLParseException("TreeModel contains more taxa than the partition pattern list.");
+            throw new XMLParseException("TreeModel "+ treeModel.getId() + " contains more taxa (" + treeModel.getExternalNodeCount() + ") than the partition pattern list (" + patternTaxa.size() + ").");
         }
 
         if (!treeTaxa.containsAll(patternTaxa)) {
-            throw new XMLParseException("TreeModel contains fewer taxa than the partition pattern list.");
+            throw new XMLParseException("TreeModel " + treeModel.getId() + " contains fewer taxa (" + treeModel.getExternalNodeCount() + ") than the partition pattern list (" + patternTaxa.size() +").");
         }
 
-//        DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
-//                treeModel,
-//                patternLists.get(0),
-//                branchModel,
-//                siteRateModel,
-//                useAmbiguities,
-//                scalingScheme,
-//                delayRescalingUntilUnderflow);
+        boolean useBeagle3MultiPartition = false;
 
-        boolean useBeagle3 = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3", "true"));
+        if (patternLists.size() > 1) {
+            // will currently recommend true if using GPU, CUDA or OpenCL.
+            useBeagle3MultiPartition = MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_RECOMMENDED();
+    
+            if (System.getProperty("USE_BEAGLE3_EXTENSIONS") != null) {
+                useBeagle3MultiPartition = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3_EXTENSIONS"));
+            }
+
+            if (System.getProperty("beagle.multipartition.extensions") != null &&
+                    !System.getProperty("beagle.multipartition.extensions").equals("auto")) {
+                useBeagle3MultiPartition = Boolean.parseBoolean(System.getProperty("beagle.multipartition.extensions"));
+            }
+        }
+
         boolean useJava = Boolean.parseBoolean(System.getProperty("java.only", "false"));
 
-//        if ( useBeagle3 && MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_COMPATIBLE() && !useJava) {///XJ: need to change this back
-        if (false) {
-            DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
-                    treeModel,
-                    patternLists,
-                    branchModels,
-                    siteRateModels,
-                    useAmbiguities,
-                    scalingScheme,
-                    delayRescalingUntilUnderflow);
+        int threadCount = -1;
+        int beagleThreadCount = -1;
+        if (System.getProperty(BEAGLE_THREAD_COUNT) != null) {
+            beagleThreadCount = Integer.parseInt(System.getProperty(BEAGLE_THREAD_COUNT));
+        }
 
-            return new TreeDataLikelihood(
-                    dataLikelihoodDelegate,
-                    treeModel,
-                    branchRateModel);
-        } else {
-            // The multipartition data likelihood isn't available so make a set of single partition data likelihoods
-            List<Likelihood> treeDataLikelihoods = new ArrayList<Likelihood>();
+        if (beagleThreadCount == -1) {
+            // Todo: can't access XML object here, perhaps need to refactor
+            // the default is -1 threads (automatic thread pool size) but an XML attribute can override it
+            // int threadCount = xo.getAttribute(THREADS, -1);
 
-            for (int i = 0; i < patternLists.size(); i++) {
+            if (System.getProperty(THREAD_COUNT) != null) {
+                threadCount = Integer.parseInt(System.getProperty(THREAD_COUNT));
+            }
+        }
 
-                DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+        if ( useBeagle3MultiPartition && !useJava) {
+
+            if (beagleThreadCount == -1 && threadCount >= 0) {
+                System.setProperty(BEAGLE_THREAD_COUNT, Integer.toString(threadCount));
+            }
+
+            try {
+                DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
                         treeModel,
-                        patternLists.get(i),
-                        branchModels.get(i),
-                        siteRateModels.get(i),
+                        patternLists,
+                        branchModels,
+                        siteRateModels,
                         useAmbiguities,
                         scalingScheme,
-                        delayRescalingUntilUnderflow,
-                        usePreOrder);
+                        delayRescalingUntilUnderflow
+                        );
 
-                treeDataLikelihoods.add(
-                        new TreeDataLikelihood(
-                                dataLikelihoodDelegate,
-                                treeModel,
-                                branchRateModel));
-
+                return new TreeDataLikelihood(
+                        dataLikelihoodDelegate,
+                        treeModel,
+                        branchRateModel);
+            } catch (DataLikelihoodDelegate.DelegateTypeException dte) {
+                useBeagle3MultiPartition = false;
             }
 
-            if (treeDataLikelihoods.size() == 1) {
-                return treeDataLikelihoods.get(0);
-            }
+        } 
 
-            return new CompoundLikelihood(treeDataLikelihoods);
+        // The multipartition data likelihood isn't available so make a set of single partition data likelihoods
+        List<Likelihood> treeDataLikelihoods = new ArrayList<Likelihood>();
+
+        // Todo: allow for different number of threads per beagle instance according to pattern counts
+        if (beagleThreadCount == -1 && threadCount >= 0) {
+            System.setProperty(BEAGLE_THREAD_COUNT, Integer.toString(threadCount / patternLists.size()));
         }
+
+        for (int i = 0; i < patternLists.size(); i++) {
+
+            DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+                    treeModel,
+                    patternLists.get(i),
+                    branchModels.get(i),
+                    siteRateModels.get(i),
+                    useAmbiguities,
+                    preferGPU,
+                    scalingScheme,
+                    delayRescalingUntilUnderflow,
+                    settings);
+
+            treeDataLikelihoods.add(
+                    new TreeDataLikelihood(
+                            dataLikelihoodDelegate,
+                            treeModel,
+                            branchRateModel));
+
+        }
+
+        if (treeDataLikelihoods.size() == 1) {
+            return treeDataLikelihoods.get(0);
+        }
+
+        return new CompoundLikelihood(treeDataLikelihoods);
+    
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
         boolean usePreOrder = xo.getAttribute(USE_PREORDER, false);
+        boolean branchRateDerivative = xo.getAttribute(BRANCHRATE_DERIVATIVE, usePreOrder);
+        boolean branchInfinitesimalDerivative = xo.getAttribute(BRANCHINFINITESIMAL_DERIVATIVE, false);
+        if (usePreOrder != (branchRateDerivative || branchInfinitesimalDerivative)) {
+            throw new RuntimeException("Need to specify derivative types.");
+        }
+        PreOrderSettings settings = new PreOrderSettings(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative);
 
         // TreeDataLikelihood doesn't currently support Instances defined from the command line
 //        int instanceCount = xo.getAttribute(INSTANCE_COUNT, 1);
@@ -243,7 +296,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Either a single set of patterns should be given or multiple 'partitions' elements within DataTreeLikelihood: "+xo.getId());
         }
 
-        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        Tree treeModel = (Tree) xo.getChild(Tree.class);
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
         if (branchRateModel == null) {
@@ -253,8 +306,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
         TipStatesModel tipStatesModel = (TipStatesModel) xo.getChild(TipStatesModel.class);
 
+        final boolean preferGPU = xo.getAttribute(PREFER_GPU, false);
+
         PartialsRescalingScheme scalingScheme = PartialsRescalingScheme.DEFAULT;
-        boolean delayScaling = true;
         if (xo.hasAttribute(SCALING_SCHEME)) {
             scalingScheme = PartialsRescalingScheme.parseFromString(xo.getStringAttribute(SCALING_SCHEME));
             if (scalingScheme == null)
@@ -262,9 +316,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                         "TreeDataLikelihood object '"+xo.getId());
 
         }
-        if (xo.hasAttribute(DELAY_SCALING)) {
-            delayScaling = xo.getBooleanAttribute(DELAY_SCALING);
-        }
+
+        final boolean delayScaling = xo.getAttribute(DELAY_SCALING, true);
 
         if (tipStatesModel != null) {
             throw new XMLParseException("BEAGLE_INSTANCES option cannot be used with a TipStateModel (i.e., a sequence error model).");
@@ -278,9 +331,10 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 branchRateModel,
                 null,
                 useAmbiguities,
+                preferGPU,
                 scalingScheme,
                 delayScaling,
-                usePreOrder);
+                settings);
     }
 
     //************************************************************************
@@ -297,6 +351,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
+            AttributeRule.newBooleanRule(PREFER_GPU, true),
             AttributeRule.newStringRule(SCALING_SCHEME,true),
 
             // really it should be this set of elements or the PARTITION elements
@@ -307,14 +362,14 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     new ElementRule(BranchModel.class, true)})
                     ,
                     new ElementRule(PARTITION, new XMLSyntaxRule[] {
-                    new ElementRule(PatternList.class),
-                    new ElementRule(SiteRateModel.class),
-                    new ElementRule(FrequencyModel.class, true),
-                    new ElementRule(BranchModel.class, true)
-            }, 1, Integer.MAX_VALUE)),
+                            new ElementRule(PatternList.class),
+                            new ElementRule(SiteRateModel.class),
+                            new ElementRule(FrequencyModel.class, true),
+                            new ElementRule(BranchModel.class, true)
+                    }, 1, Integer.MAX_VALUE)),
 
             new ElementRule(BranchRateModel.class, true),
-            new ElementRule(TreeModel.class),
+            new ElementRule(Tree.class),
             new ElementRule(TipStatesModel.class, true)
     };
 

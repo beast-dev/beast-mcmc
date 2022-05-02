@@ -25,10 +25,12 @@
 
 package dr.inference.operators.hmc;
 
-import dr.evolution.alignment.PatternList;
-import dr.evolution.tree.NodeRef;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
+import dr.inference.loggers.NumberColumn;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
@@ -41,12 +43,17 @@ import static dr.math.matrixAlgebra.ReadableVector.Utils.innerProduct;
  * @author Marc A. Suchard
  */
 
-public class BouncyParticleOperator extends AbstractParticleOperator {
+public class BouncyParticleOperator extends AbstractParticleOperator implements Loggable {
 
     public BouncyParticleOperator(GradientWrtParameterProvider gradientProvider,
                                   PrecisionMatrixVectorProductProvider multiplicationProvider,
-                                  double weight, Options runtimeOptions, Parameter mask) {
-        super(gradientProvider, multiplicationProvider, weight, runtimeOptions, mask);
+                                  PrecisionColumnProvider columnProvider,
+                                  double weight, Options runtimeOptions, NativeCodeOptions nativeOptions,
+                                  boolean refreshVelocity, Parameter mask,
+                                  MassPreconditioner massPreconditioner,
+                                  MassPreconditionScheduler.Type preconditionSchedulerType) {
+        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions,
+                refreshVelocity, mask, null, massPreconditioner, preconditionSchedulerType);
     }
 
     @Override
@@ -55,84 +62,114 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
     }
 
     @Override
-    double integrateTrajectory(WrappedVector position) {
+    double integrateTrajectory(WrappedVector position, WrappedVector momentum) {
 
         WrappedVector velocity = drawInitialVelocity();
         WrappedVector gradient = getInitialGradient();
+        WrappedVector action = getPrecisionProduct(velocity);
 
-        double remainingTime = drawTotalTravelTime();
-        while (remainingTime > 0) {
+        BounceState bounceState = new BounceState(drawTotalTravelTime());
 
-            ReadableVector Phi_v = getPrecisionProduct(velocity);
+        initializeNumEvent();
+
+        while (bounceState.remainingTime > 0) {
+
+            if (bounceState.type == Type.BINARY_BOUNDARY) {
+                updateAction(action, velocity, bounceState.index);
+            } else {
+                action = getPrecisionProduct(velocity);
+            }
 
             double v_Phi_x = -innerProduct(velocity, gradient);
-            double v_Phi_v = innerProduct(velocity, Phi_v);
+            double v_Phi_v = innerProduct(velocity, action);
 
             double tMin = Math.max(0.0, -v_Phi_x / v_Phi_v);
             double U_min = tMin * tMin / 2 * v_Phi_v + tMin * v_Phi_x;
 
             double bounceTime = getBounceTime(v_Phi_v, v_Phi_x, U_min);
             MinimumTravelInformation travelInfo = getTimeToBoundary(position, velocity);
+            double refreshTime = getRefreshTime();
 
-            remainingTime = doBounce(
-                    remainingTime, bounceTime, travelInfo,
-                    position, velocity, gradient, Phi_v
+            if (printEventLocations) System.err.println(position);
+            bounceState = doBounce(
+                    bounceState.remainingTime, bounceTime, travelInfo, refreshTime,
+                    position, velocity, gradient, action
             );
-        }
 
+            recordOneMoreEvent();
+        }
+        storeVelocity(velocity);
         return 0.0;
     }
 
-    private double doBounce(double remainingTime, double bounceTime,
-                            MinimumTravelInformation travelInfo,
-                            WrappedVector position, WrappedVector velocity,
-                            WrappedVector gradient, ReadableVector Phi_v) {
+    private BounceState doBounce(double remainingTime, double bounceTime,
+                                 MinimumTravelInformation boundaryInfo,
+                                 double refreshTime,
+                                 WrappedVector position, WrappedVector velocity,
+                                 WrappedVector gradient, WrappedVector action) {
 
-        double timeToBoundary = travelInfo.time;
-        int boundaryIndex = travelInfo.index;
+        double timeToBoundary = boundaryInfo.time;
+        int boundaryIndex = boundaryInfo.index[0];
+        final BounceState finalBounceState;
+        final Type eventType;
+        int eventIndex;
 
         if (remainingTime < Math.min(timeToBoundary, bounceTime)) { // No event during remaining time
 
             updatePosition(position, velocity, remainingTime);
-            remainingTime = 0.0;
+            finalBounceState = new BounceState(Type.NONE, -1, 0.0);
+        } else {
+            if (refreshTime < Math.min(timeToBoundary, bounceTime)) { //refreshment event
+                eventType = Type.REFRESHMENT;
+                eventIndex = -1;
+                updatePosition(position, velocity, refreshTime);
+                updateGradient(gradient, refreshTime, action);
 
-        } else if (timeToBoundary < bounceTime) { // Reflect against the boundary
+                refreshVelocity(velocity);
+            } else if (timeToBoundary < bounceTime) { // Reflect against the boundary
+                eventType = Type.BINARY_BOUNDARY;
+                eventIndex = boundaryIndex;
 
-            updatePosition(position, velocity, timeToBoundary);
-            updateGradient(gradient, timeToBoundary, Phi_v);
+                updatePosition(position, velocity, timeToBoundary);
+                updateGradient(gradient, timeToBoundary, action);
 
-            position.set(boundaryIndex, 0.0);
-            velocity.set(boundaryIndex, -1 * velocity.get(boundaryIndex));
+                position.set(boundaryIndex, 0.0);
+                velocity.set(boundaryIndex, -1 * velocity.get(boundaryIndex));
 
-            remainingTime -= timeToBoundary;
+                remainingTime -= timeToBoundary;
 
-        } else { // Bounce caused by the gradient
+            } else { // Bounce caused by the gradient
+                eventType = Type.GRADIENT;
+                eventIndex = -1;
 
-            updatePosition(position, velocity, bounceTime);
-            updateGradient(gradient, bounceTime, Phi_v);
-            updateVelocity(velocity, gradient, preconditioning.mass);
-
-            remainingTime -= bounceTime;
-
+                updatePosition(position, velocity, bounceTime);
+                updateGradient(gradient, bounceTime, action);
+                updateVelocity(velocity, gradient, preconditioning.mass);
+                remainingTime -= bounceTime;
+            }
+            finalBounceState = new BounceState(eventType, eventIndex, remainingTime);
         }
-
-        return remainingTime;
+        return finalBounceState;
     }
 
     private WrappedVector drawInitialVelocity() {
 
-        ReadableVector mass = preconditioning.mass;
-        double[] velocity = new double[mass.getDim()];
+        if (!refreshVelocity && storedVelocity != null) {
+            return storedVelocity;
+        } else {
+            ReadableVector mass = preconditioning.mass;
+            double[] velocity = new double[mass.getDim()];
 
-        for (int i = 0, len = velocity.length; i < len; i++) {
-            velocity[i] = MathUtils.nextGaussian() / Math.sqrt(mass.get(i));
+            for (int i = 0, len = velocity.length; i < len; i++) {
+                velocity[i] = MathUtils.nextGaussian() / Math.sqrt(mass.get(i));
+            }
+
+            if (mask != null) {
+                applyMask(velocity);
+            }
+
+            return new WrappedVector.Raw(velocity);
         }
-
-        if (mask != null) {
-            applyMask(velocity);
-        }
-
-        return new WrappedVector.Raw(velocity);
     }
 
     private MinimumTravelInformation getTimeToBoundary(ReadableVector position, ReadableVector velocity) {
@@ -144,8 +181,14 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
 
         for (int i = 0, len = position.getDim(); i < len; ++i) {
 
+            // TODO Here is where we check that x_j > x_i for categorical dimensions
+
+            // TODO I believe we can simply the condition below (for fixed boundaries) with:
+            // double travelTime = -position.get(i) / velocity.get(i); // This is only true for boundaries at 0
+            // if (travelTime > 0.0 && missingDataMask[positionIndex] == 0.0)
+
             double travelTime = Math.abs(position.get(i) / velocity.get(i));
-            if (travelTime > 0.0 && headingTowardsBoundary(position.get(i), velocity.get(i), i)) {
+            if (travelTime > 0.0 && headingTowardsBinaryBoundary(velocity.get(i), i)) {
 
                 if (travelTime < minTime) {
                     index = i;
@@ -157,11 +200,15 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
         return new MinimumTravelInformation(minTime, index);
     }
 
+    private double getRefreshTime() {
+        return refreshmentRate > 0 ? MathUtils.nextExponential(1) / refreshmentRate : Double.POSITIVE_INFINITY;
+    }
+
     @SuppressWarnings("all")
     private double getBounceTime(double v_phi_v, double v_phi_x, double u_min) {
         double a = v_phi_v / 2;
         double b = v_phi_x;
-        double c = u_min - MathUtils.nextExponential(1);
+        double c = -u_min - MathUtils.nextExponential(1);
         return (-b + Math.sqrt(b * b - 4 * a * c)) / 2 / a;
     }
 
@@ -176,4 +223,41 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
             velocity.set(i, velocity.get(i) - 2 * vg / ggDivM * gDivM.get(i));
         }
     }
+
+    private void refreshVelocity(WrappedVector velocity) {
+        ReadableVector mass = preconditioning.mass;
+
+        for (int i = 0, len = velocity.getDim(); i < len; ++i) {
+            velocity.set(i, MathUtils.nextGaussian() / Math.sqrt(mass.get(i)));
+        }
+
+        if (mask != null) {
+            applyMask(velocity);
+        }
+    }
+
+    private WrappedVector storedVelocity;
+
+    @Override
+    public LogColumn[] getColumns() {
+        LogColumn[] columns = new LogColumn[preconditioning.mass.getDim()];
+        for (int i = 0; i < preconditioning.mass.getDim(); ++i) {
+            final int index = i;
+            columns[i] = new NumberColumn("v" + index) {
+                @Override
+                public double getDoubleValue() {
+                    if (storedVelocity != null) {
+                        return storedVelocity.get(index);
+                    } else {
+                        return 0.0;
+                    }
+                }
+            };
+        }
+
+        return columns;
+    }
+
+    private final double refreshmentRate = 1.4;//todo: make an input option
+    private final static boolean printEventLocations = false;
 }

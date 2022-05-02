@@ -39,13 +39,12 @@ import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.*;
+import dr.evolution.util.Date;
 import dr.util.Attributable;
 
 import java.awt.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -771,6 +770,27 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
     }
 
 
+    private Set<String> getNames(Collection<Taxon> taxa) {
+        Set<String> names = new HashSet<String>();
+        for (Taxon taxon : taxa) {
+            names.add(taxon.getId());
+        }
+        return names;
+    }
+
+    String notFoundInReference(Set<String> source, Set<String> reference) {
+
+        boolean any = false;
+        StringBuilder sb = new StringBuilder();
+        for (String name : source) {
+            if (!reference.contains(name)) {
+                sb.append(" ").append(name);
+                any = true;
+            }
+        }
+        return any ? sb.toString() : null;
+    }
+
     /**
      * Reads a 'TREES' block.
      */
@@ -779,6 +799,21 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
         String[] lastToken = new String[1];
         HashMap<String, Taxon> translationList = readTranslationList(taxonList, lastToken);
+
+        if (useTaxonListNumbering && translationList.size() != taxonList.getTaxonCount()) {
+            
+            Set<String> namesFromList = getNames(taxonList.asList());
+            Set<String> namesFromFile = getNames(translationList.values());
+
+            String notFoundInList = notFoundInReference(namesFromFile, namesFromList);
+            String notFoundInFile = notFoundInReference(namesFromList, namesFromFile);
+
+            throw new ImportException("Mismatch in taxa count in tree file (" + translationList.size() +
+            ") and <taxa> block (" + taxonList.getTaxonCount() + ")\n" +
+                    ((notFoundInList != null) ? ("Not found in list:" + notFoundInList) : "") +
+                    ((notFoundInFile != null) ? ("Not found in file:" + notFoundInFile) : "")
+            );
+        }
 
         boolean done = false;
         do {
@@ -830,7 +865,8 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                     if (index == -1) {
                         // taxon not found in taxon list...
                         // ...perhaps it is a numerical taxon reference?
-                        throw new UnknownTaxonException(token3);
+                        throw new UnknownTaxonException("Taxon '" + token3 + "' in nexus '" + token + "' block but " +
+                                "not in the taxon list (taxon list may or may not originate from the nexus file)");
                     } else {
                         taxon = taxonList.getTaxon(index);
                     }
@@ -1307,10 +1343,10 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
         while (matcher.find()) {
             String label = matcher.group(1);
-            if (label.charAt(0) == '\"') {
+            if (label.length() > 1 && label.startsWith("\"")) {
                 label = label.substring(1, label.length() - 1);
             }
-            if (label == null || label.trim().length() == 0) {
+            if (label.trim().length() == 0) {
                 throw new Importer.BadFormatException("Badly formatted attribute: '" + matcher.group() + "'");
             }
             final String value = matcher.group(2);
@@ -1436,6 +1472,9 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         }
 
         // return the trimmed string
+        if (value.charAt(0) == '\"') {
+            value = value.substring(1, value.length() - 1);
+        }
         return value;
     }
 

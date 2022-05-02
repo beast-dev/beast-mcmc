@@ -77,7 +77,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
         mc = new MarkovChain(likelihood, schedule, criterion,
                 options.getFullEvaluationCount(), options.minOperatorCountForFullEvaluation(),
                 options.getEvaluationTestThreshold(),
-                options.useCoercion());
+                options.useAdaptation(), options.useSmoothedAcceptanceProbability());
 
         this.options = options;
         this.loggers = loggers;
@@ -161,7 +161,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
                 if (initialStateLoader != null) {
                     double[] savedLnL = new double[1];
 
-                    initialStateLoader.loadState(mc, savedLnL);
+                    loadedState = initialStateLoader.loadState(mc, savedLnL);
 
                     mc.setCurrentLength(loadedState);
 
@@ -175,27 +175,20 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
             long chainLength = getChainLength();
 
-            //this also potentially gets the new coercionDelay of a possibly increased chain length
-            final long coercionDelay = getCoercionDelay();
+            //this also potentially gets the new adaptationDelay of a possibly increased chain length
+            final long adaptationDelay = getAdaptationDelay();
 
-            //assume that dumped state has passed the coercionDelay
-            //TODO: discuss whether we want to dump the coercionDelay or chainLength to file
-            if (coercionDelay > loadedState) {
-                mc.runChain(coercionDelay - loadedState, true);
-                chainLength -= coercionDelay;
-            }
+            //assume that saved state has passed the adaptationDelay
+            //TODO: discuss whether we want to save the adaptationDelay or chainLength to file
+//            System.out.println("adaptationDelay = " + adaptationDelay + " vs. loadedState = " +loadedState);
+            if (adaptationDelay > loadedState) {
+                mc.runChain(adaptationDelay - loadedState, true);
+                chainLength -= adaptationDelay;
 
-            //if (coercionDelay > 0) {
-            // Run the chain for coercionDelay steps with coercion disabled
-            //mc.runChain(coercionDelay, true);
-            //chainLength -= coercionDelay;
-
-            // reset operator acceptance levels
-            //GB: we are now restoring these; commenting out for now
-                /*for (int i = 0; i < schedule.getOperatorCount(); i++) {
+                for (int i = 0; i < schedule.getOperatorCount(); i++) {
                     schedule.getOperator(i).reset();
-                }*/
-            //}
+                }
+            }
 
             mc.runChain(chainLength, false);
 
@@ -277,13 +270,13 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
             }
             // OperatorAnalysisPrinter class can do the job now
             if (showOperatorAnalysis) {
-                OperatorAnalysisPrinter.showOperatorAnalysis(System.out, getOperatorSchedule(), options.useCoercion());
+                OperatorAnalysisPrinter.showOperatorAnalysis(System.out, getOperatorSchedule(), options.useAdaptation());
             }
 
             if (operatorAnalysisFile != null) {
                 try {
                     PrintStream out = new PrintStream(new FileOutputStream(operatorAnalysisFile));
-                    OperatorAnalysisPrinter.showOperatorAnalysis(out, getOperatorSchedule(), options.useCoercion());
+                    OperatorAnalysisPrinter.showOperatorAnalysis(out, getOperatorSchedule(), options.useAdaptation());
                     out.flush();
                     out.close();
                 } catch (IOException e) {
@@ -367,19 +360,19 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
 
     //PRIVATE METHODS *****************************************
-    protected long getCoercionDelay() {
+    protected long getAdaptationDelay() {
 
-        long delay = options.getCoercionDelay();
+        long delay = options.getAdaptationDelay();
         if (delay < 0) {
             delay = (long)(options.getChainLength() / 100);
         }
-        if (options.useCoercion()) return delay;
+        if (options.useAdaptation()) return delay;
 
         for (int i = 0; i < schedule.getOperatorCount(); i++) {
             MCMCOperator op = schedule.getOperator(i);
 
-            if (op instanceof CoercableMCMCOperator) {
-                if (((CoercableMCMCOperator) op).getMode() == CoercionMode.COERCION_ON) return delay;
+            if (op instanceof AdaptableMCMCOperator) {
+                if (((AdaptableMCMCOperator) op).getMode() == AdaptationMode.ADAPTATION_ON) return delay;
             }
         }
 

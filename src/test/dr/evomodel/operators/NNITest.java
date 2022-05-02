@@ -7,6 +7,7 @@ package test.dr.evomodel.operators;
 import java.io.IOException;
 
 import dr.evolution.tree.TreeUtils;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.inference.operators.*;
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -45,7 +46,7 @@ public class NNITest extends OperatorAssert{
 
         for (int i = 0; i < reps; i++) {
 
-            TreeModel treeModel = new TreeModel("treeModel", tree5);
+            TreeModel treeModel = new DefaultTreeModel("treeModel", tree5);
             NNI operator = new NNI(treeModel, 1);
             operator.doOperation();
 
@@ -66,13 +67,13 @@ public class NNITest extends OperatorAssert{
         
 	}
 	
-	public OperatorSchedule getOperatorSchedule(TreeModel treeModel) {
+	public OperatorSchedule getOperatorSchedule(DefaultTreeModel treeModel) {
 
         Parameter rootParameter = treeModel.createNodeHeightsParameter(true, false, false);
         Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
 
         NNI operator = new NNI(treeModel, 1.0);
-        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, CoercionMode.COERCION_ON, 1.0);
+        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, AdaptationMode.ADAPTATION_ON, 1.0);
         UniformOperator uniformOperator = new UniformOperator(internalHeights, 1.0);
 
         OperatorSchedule schedule = new SimpleOperatorSchedule();

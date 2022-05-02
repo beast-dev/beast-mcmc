@@ -38,8 +38,6 @@ import dr.evomodel.substmodel.SubstitutionModel;
  */
 public interface EvolutionaryProcessDelegate {
 
-    boolean cacheInfinitesimalMatrices();
-
     boolean canReturnComplexDiagonalization();
 
     int getEigenBufferCount();
@@ -48,9 +46,19 @@ public interface EvolutionaryProcessDelegate {
 
     int getInfinitesimalMatrixBufferIndex(int branchIndex);
 
-    int getSquaredInfinitesimalMatrixBufferIndex(int branchIndex);
+    int getInfinitesimalSquaredMatrixBufferIndex(int branchIndex);
 
-    int getInfinitesimalMatrixBufferCount();
+    int getFirstOrderDifferentialMatrixBufferIndex(int branchIndex);
+
+    int getSecondOrderDifferentialMatrixBufferIndex(int branchIndex);
+
+    void cacheInfinitesimalMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix);
+
+    void cacheInfinitesimalSquaredMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix);
+
+    void cacheFirstOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[] differentialMassMatrix);
+
+    int getCachedMatrixBufferCount(PreOrderSettings settings);  //TODO: cache them by same memory space?
 
     int getSubstitutionModelCount();
 

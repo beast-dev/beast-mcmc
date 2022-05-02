@@ -30,7 +30,10 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
+import dr.evomodel.epidemiology.casetocase.PartitionedTreeModel;
+import dr.evomodel.operators.AbstractAdaptableTreeOperator;
 import dr.evomodel.operators.AbstractTreeOperator;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
@@ -45,16 +48,16 @@ import java.util.List;
  * @author Matthew Hall
  *
  */
-public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements CoercableMCMCOperator {
+public class TransmissionSubtreeSlideA extends AbstractAdaptableTreeOperator {
 
     private CaseToCaseTreeLikelihood c2cLikelihood;
-    private TreeModel tree;
+    private PartitionedTreeModel tree;
     private double size = 1.0;
     private boolean gaussian = false;
     private final boolean swapInRandomRate;
     private final boolean swapInRandomTrait;
     private final boolean resampleInfectionTimes;
-    private CoercionMode mode = CoercionMode.DEFAULT;
+    private AdaptationMode mode = AdaptationMode.DEFAULT;
     private static final boolean DEBUG = false;
     public static final String TRANSMISSION_SUBTREE_SLIDE_A = "transmissionSubtreeSlideA";
     public static final String SWAP_RATES = "swapInRandomRate";
@@ -63,8 +66,10 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
 
     public TransmissionSubtreeSlideA(CaseToCaseTreeLikelihood c2cLikelihood, double weight, double size,
-                                     boolean gaussian, boolean swapRates, boolean swapTraits,  CoercionMode mode,
+                                     boolean gaussian, boolean swapRates, boolean swapTraits,  AdaptationMode mode,
                                      boolean resampleInfectionTimes) {
+        super(mode);
+
         this.c2cLikelihood = c2cLikelihood;
         tree = c2cLikelihood.getTreeModel();
         setWeight(weight);
@@ -415,24 +420,24 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
         this.size = size;
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(getSize());
     }
 
-    public void setCoercableParameter(double value) {
+    @Override
+    protected void setAdaptableParameterValue(double value) {
         setSize(Math.exp(value));
     }
 
+    @Override
     public double getRawParameter() {
         return getSize();
     }
 
-    public CoercionMode getMode() {
-        return mode;
-    }
-
-    public String getPerformanceSuggestion() {
-        return "not implemented";
+    @Override
+    public String getAdaptableParameterName() {
+        return "size";
     }
 
     public String getOperatorName() {
@@ -448,12 +453,12 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
             boolean swapRates = xo.getAttribute(SWAP_RATES, false);
             boolean swapTraits = xo.getAttribute(SWAP_TRAITS, false);
 
-            CoercionMode mode = CoercionMode.DEFAULT;
-            if (xo.hasAttribute(CoercableMCMCOperator.AUTO_OPTIMIZE)) {
-                if (xo.getBooleanAttribute(CoercableMCMCOperator.AUTO_OPTIMIZE)) {
-                    mode = CoercionMode.COERCION_ON;
+            AdaptationMode mode = AdaptationMode.DEFAULT;
+            if (xo.hasAttribute(AdaptableMCMCOperator.AUTO_OPTIMIZE)) {
+                if (xo.getBooleanAttribute(AdaptableMCMCOperator.AUTO_OPTIMIZE)) {
+                    mode = AdaptationMode.ADAPTATION_ON;
                 } else {
-                    mode = CoercionMode.COERCION_OFF;
+                    mode = AdaptationMode.ADAPTATION_OFF;
                 }
             }
 
@@ -478,7 +483,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
             final boolean gaussian = xo.getBooleanAttribute("gaussian");
             TransmissionSubtreeSlideA operator = new TransmissionSubtreeSlideA(c2cL, weight, size, gaussian,
                     swapRates, swapTraits, mode, resampleInfectionTimes);
-            operator.setTargetAcceptanceProbability(targetAcceptance);
+//            operator.setTargetAcceptanceProbability(targetAcceptance);
 
             return operator;
         }
@@ -507,7 +512,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
                 AttributeRule.newBooleanRule("gaussian"),
                 AttributeRule.newBooleanRule(SWAP_RATES, true),
                 AttributeRule.newBooleanRule(SWAP_TRAITS, true),
-                AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+                AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
                 AttributeRule.newBooleanRule(RESAMPLE_INFECTION_TIMES, true),
                 new ElementRule(CaseToCaseTreeLikelihood.class)
         };

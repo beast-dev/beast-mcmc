@@ -42,7 +42,7 @@ import org.w3c.dom.Element;
  */
 
 public class NormalDistributionModel extends AbstractModel implements ParametricDistributionModel,
-        GaussianProcessRandomGenerator, GradientProvider, HessianProvider {
+        GaussianProcessRandomGenerator, GradientProvider, HessianProvider, NormalStatisticsProvider {
     /**
      * Constructor.
      */
@@ -86,6 +86,16 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
 
     public Variable<Double> getMean() {
         return mean;
+    }
+
+    @Override
+    public double getNormalMean(int dim) {
+        return mean.getValue(0);
+    }
+
+    @Override
+    public double getNormalSD(int dim) {
+        return getStdev();
     }
 
     public Variable<Double> getPrecision() {
@@ -195,17 +205,13 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     }
 
     @Override
-    public int getDimension() { return 1; }
+    public int getDimension() {
+        return 1;
+    }
 
     @Override
     public double[] getGradientLogDensity(Object obj) {
-        double[] x;
-        if (obj instanceof double[]) {
-            x = (double[]) obj;
-        } else {
-            x = new double[1];
-            x[0] = (Double) obj;
-        }
+        double[] x = GradientProvider.toDoubleArray(obj);
 
         double[] result = new double[x.length];
         for (int i = 0; i < x.length; ++i) {
@@ -238,13 +244,7 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
 
     @Override
     public double[] getDiagonalHessianLogDensity(Object obj) {
-        double[] x;
-        if (obj instanceof double[]) {
-            x = (double[]) obj;
-        } else {
-            x = new double[1];
-            x[0] = (Double) obj;
-        }
+        double[] x = GradientProvider.toDoubleArray(obj);
 
         double[] result = new double[x.length];
         for (int i = 0; i < x.length; ++i) {

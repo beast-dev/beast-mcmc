@@ -29,44 +29,62 @@ package dr.evolution.datatype;
  * @author Marc A. Suchard
  */
 public class HiddenCodons extends Codons implements HiddenDataType {
-		
-	public static final String DESCRIPTION = "hiddenCodon";
+    public static final String DESCRIPTION = "hiddenCodon";
 
-	public static final HiddenCodons UNIVERSAL_HIDDEN_2 = new HiddenCodons(GeneticCode.UNIVERSAL,2);
-	public static final HiddenCodons UNIVERSAL_HIDDEN_3 = new HiddenCodons(GeneticCode.UNIVERSAL,3);
-	
-	/**
-	 * Private constructor - DEFAULT_INSTANCE provides the only instance
-	 */
-	private HiddenCodons(GeneticCode geneticCode, int hiddenClassCount) {
-		super(geneticCode);
-		this.hiddenClassCount = hiddenClassCount;
-	}
+    public static final HiddenCodons UNIVERSAL_HIDDEN_2 = new HiddenCodons(GeneticCode.UNIVERSAL, 2);
+    public static final HiddenCodons UNIVERSAL_HIDDEN_3 = new HiddenCodons(GeneticCode.UNIVERSAL, 3);
+    public static final HiddenCodons UNIVERSAL_HIDDEN_4 = new HiddenCodons(GeneticCode.UNIVERSAL, 4);
+    public static final HiddenCodons UNIVERSAL_HIDDEN_5 = new HiddenCodons(GeneticCode.UNIVERSAL, 5);
 
-	/**
-	 * returns an array containing the non-ambiguous states that this state represents.
-	 */
-	public boolean[] getStateSet(int state) {
+    /**
+     * Private constructor - DEFAULT_INSTANCE provides the only instance
+     */
+    private HiddenCodons(GeneticCode geneticCode, int hiddenClassCount) {
 
-	    boolean[] stateSet = new boolean[stateCount*hiddenClassCount];
-
-	    if (!isAmbiguousState(state)) {
-		    for(int h=0; h<hiddenClassCount; h++)
-	            stateSet[h*stateCount + state] = true;
-	    } else {
-	        for (int i = 0; i < stateCount; i++) {
-	            stateSet[i] = true;
-	        }
-	    }
-
-	    return stateSet;
-	}
-
-	public int getStateCount() {
-        return stateCount*hiddenClassCount;
+        super(geneticCode);
+        this.hiddenClassCount = hiddenClassCount;
     }
 
-	private int hiddenClassCount;
+    /**
+     * returns an array containing the non-ambiguous states that this state represents.
+     */
+    public boolean[] getStateSet(int state) {
+
+        boolean[] stateSet = new boolean[stateCount * hiddenClassCount];
+
+        if (!isAmbiguousState(state)) {
+            for (int h = 0; h < hiddenClassCount; h++)
+                stateSet[h * stateCount + state] = true;
+        } else {
+            for (int i = 0; i < stateCount; i++) {
+                stateSet[i] = true;
+            }
+        }
+
+        return stateSet;
+    }
+
+    public String getTriplet(int state) {
+        return HiddenDataType.getCodeImpl(state, stateCount, super::getTriplet);
+    }
+
+    public String getTripletWithoutHiddenCode(int state) {
+        return HiddenDataType.getCodeWithoutHiddenStateImpl(state, stateCount, super::getTriplet);
+    }
+
+    public String getCode(int state) {
+        return HiddenDataType.getCodeImpl(state, stateCount, super::getCode);
+    }
+
+    public String getCodeWithoutHiddenState(int state) {
+        return HiddenDataType.getCodeWithoutHiddenStateImpl(state, stateCount, super::getCode);
+    }
+
+    public int getStateCount() {
+        return stateCount * hiddenClassCount;
+    }
+
+    private int hiddenClassCount;
 
     public int getHiddenClassCount() {
         return hiddenClassCount;

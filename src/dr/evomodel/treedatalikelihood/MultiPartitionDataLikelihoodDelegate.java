@@ -25,17 +25,6 @@
 
 package dr.evomodel.treedatalikelihood;
 
-/**
- * MultiPartitionDataLikelihoodDelegate
- *
- * A DataLikelihoodDelegate that uses BEAGLE 3 to allow for parallelization across multiple data partitions
- *
- * @author Andrew Rambaut
- * @author Marc Suchard
- * @author Guy Baele
- * @version $Id$
- */
-
 import beagle.*;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
@@ -57,19 +46,63 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
+
+/**
+ * MultiPartitionDataLikelihoodDelegate
+ *
+ * A DataLikelihoodDelegate that uses BEAGLE 3 to allow for parallelization across multiple data partitions
+ *
+ * @author Andrew Rambaut
+ * @author Marc Suchard
+ * @author Guy Baele
+ * @version $Id$
+ */
+
 public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
+
+    private static final boolean COUNT_CALCULATIONS = true; // keep a cumulative total of number of computations
 
     private static final boolean RESCALING_OFF = false; // a debugging switch
     private static final boolean DEBUG = false;
 
-    public static boolean IS_MULTI_PARTITION_COMPATIBLE() {
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3;
+    public static boolean IS_MULTI_PARTITION_RECOMMENDED() {
+        if (!IS_MULTI_PARTITION_COMPATIBLE()) {
+            return false;
+        }
+
+        String resourceAuto = System.getProperty(RESOURCE_AUTO_PROPERTY);
+        if (resourceAuto != null && Boolean.parseBoolean(resourceAuto)) {
+            return true;
+        }
+
+        fetchBeagleSettings();
+
+        int index = resourceOrder.size() > 0 ? instanceCount % resourceOrder.size() : 0;
+
+        if (resourceOrder.size() > 0 && resourceOrder.get(index) > 0) {
+            return true;
+        }
+        if (requiredOrder.size() > 0 &&
+                ((requiredOrder.get(index) & BeagleFlag.PROCESSOR_GPU.getMask()) != 0 ||
+                        (requiredOrder.get(index) & BeagleFlag.FRAMEWORK_CUDA.getMask()) != 0 ||
+                        (requiredOrder.get(index) & BeagleFlag.FRAMEWORK_OPENCL.getMask()) != 0)) {
+            return true;
+        }
+        if (preferredOrder.size() > 0 &&
+                ((preferredOrder.get(index) & BeagleFlag.PROCESSOR_GPU.getMask()) != 0 ||
+                        (preferredOrder.get(index) & BeagleFlag.FRAMEWORK_CUDA.getMask()) != 0 ||
+                        (preferredOrder.get(index) & BeagleFlag.FRAMEWORK_OPENCL.getMask()) != 0)) {
+            return true;
+        }
+
+        return false;
     }
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
     // will wrap around.
+    private static final String RESOURCE_AUTO_PROPERTY = "beagle.resource.auto";
     private static final String RESOURCE_ORDER_PROPERTY = "beagle.resource.order";
     private static final String PREFERRED_FLAGS_PROPERTY = "beagle.preferred.flags";
     private static final String REQUIRED_FLAGS_PROPERTY = "beagle.required.flags";
@@ -78,6 +111,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     private static final String DELAY_SCALING_PROPERTY = "beagle.delay.scaling";
     private static final String EXTRA_BUFFER_COUNT_PROPERTY = "beagle.extra.buffer.count";
     private static final String FORCE_VECTORIZATION = "beagle.force.vectorization";
+    private static final String THREAD_COUNT = "beagle.thread.count";
+
 
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
@@ -89,9 +124,34 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     private static List<String> scalingOrder = null;
     private static List<Integer> extraBufferOrder = null;
 
+    private static void fetchBeagleSettings() {
+        // Attempt to get the resource order from the System Property
+        if (resourceOrder == null) {
+            resourceOrder = parseSystemPropertyIntegerArray(RESOURCE_ORDER_PROPERTY);
+        }
+        if (preferredOrder == null) {
+            preferredOrder = parseSystemPropertyIntegerArray(PREFERRED_FLAGS_PROPERTY);
+        }
+        if (requiredOrder == null) {
+            requiredOrder = parseSystemPropertyIntegerArray(REQUIRED_FLAGS_PROPERTY);
+        }
+        if (scalingOrder == null) {
+            scalingOrder = parseSystemPropertyStringArray(SCALING_PROPERTY);
+        }
+        if (extraBufferOrder == null) {
+            extraBufferOrder = parseSystemPropertyIntegerArray(EXTRA_BUFFER_COUNT_PROPERTY);
+        }
+    }
+
+
     // Default frequency for complete recomputation of scaling factors under the 'dynamic' scheme
     private static final int RESCALE_FREQUENCY = 100;
     private static final int RESCALE_TIMES = 1;
+
+    // count the number of partial likelihood and matrix updates
+    private long totalMatrixUpdateCount = 0;
+    private long totalPartialsUpdateCount = 0;
+    private long totalEvaluationCount = 0;
 
     /**
      * Construct an instance using a list of PatternLists, one for each partition. The
@@ -111,12 +171,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                                                 List<SiteRateModel> siteRateModels,
                                                 boolean useAmbiguities,
                                                 PartialsRescalingScheme rescalingScheme,
-                                                boolean delayRescalingUntilUnderflow) {
+                                                boolean delayRescalingUntilUnderflow)
+                                                  throws DelegateTypeException {
 
         super("MultiPartitionDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel");
-
-        logger.info("\nUsing Multi-Partition Data Likelihood Delegate with BEAGLE 3 extensions");
 
         setId(patternLists.get(0).getId());
 
@@ -156,9 +215,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         assert(branchModels.size() == 1 || (branchModels.size() == patternLists.size()));
 
         this.branchModels.addAll(branchModels);
-        for (BranchModel branchModel : this.branchModels) {
-            addModel(branchModel);
-        }
 
         // SiteRateModels determine the rates per category (for site-heterogeneity models).
         // There can be either one per partition or one shared across all partitions
@@ -166,10 +222,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         this.siteRateModels.addAll(siteRateModels);
         this.categoryCount = this.siteRateModels.get(0).getCategoryCount();
-        for (SiteRateModel siteRateModel : this.siteRateModels) {
-            assert(siteRateModel.getCategoryCount() == categoryCount);
-            addModel(siteRateModel);
-        }
 
         nodeCount = tree.getNodeCount();
         tipCount = tree.getExternalNodeCount();
@@ -223,22 +275,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 partitionNumber ++;
             }
 
-            // Attempt to get the resource order from the System Property
-            if (resourceOrder == null) {
-                resourceOrder = parseSystemPropertyIntegerArray(RESOURCE_ORDER_PROPERTY);
-            }
-            if (preferredOrder == null) {
-                preferredOrder = parseSystemPropertyIntegerArray(PREFERRED_FLAGS_PROPERTY);
-            }
-            if (requiredOrder == null) {
-                requiredOrder = parseSystemPropertyIntegerArray(REQUIRED_FLAGS_PROPERTY);
-            }
-            if (scalingOrder == null) {
-                scalingOrder = parseSystemPropertyStringArray(SCALING_PROPERTY);
-            }
-            if (extraBufferOrder == null) {
-                extraBufferOrder = parseSystemPropertyIntegerArray(EXTRA_BUFFER_COUNT_PROPERTY);
-            }
+            fetchBeagleSettings(); // in case they haven't been set already
 
             // first set the rescaling scheme to use from the parser
             this.rescalingScheme = rescalingScheme;
@@ -321,9 +358,22 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 forceVectorization = true;
             }
 
+            String tc = System.getProperty(THREAD_COUNT);
+            if (tc != null) {
+                threadCount = Integer.parseInt(tc);
+            }
+
+            if (threadCount == 0 || threadCount == 1) {
+                preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
+            } else {
+                preferenceFlags &= ~BeagleFlag.THREADING_NONE.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_CPP.getMask();
+            }
+
             if (BeagleFlag.VECTOR_SSE.isSet(preferenceFlags) && (stateCount != 4)
-                    && !forceVectorization
-                    ) {
+                    && !forceVectorization && !IS_ODD_STATE_SSE_FIXED()
+            ) {
                 // @todo SSE doesn't seem to work for larger state spaces so for now we override the
                 // SSE option.
                 preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
@@ -344,15 +394,63 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             }
 
             if ((resourceList == null &&
-                (BeagleFlag.PROCESSOR_GPU.isSet(preferenceFlags) ||
-                BeagleFlag.FRAMEWORK_CUDA.isSet(preferenceFlags) ||
-                BeagleFlag.FRAMEWORK_OPENCL.isSet(preferenceFlags)))
-                ||
-                (resourceList != null && resourceList[0] > 0)) {
+                    (BeagleFlag.PROCESSOR_GPU.isSet(preferenceFlags) ||
+                            BeagleFlag.FRAMEWORK_CUDA.isSet(preferenceFlags) ||
+                            BeagleFlag.FRAMEWORK_OPENCL.isSet(preferenceFlags)))
+                    ||
+                    (resourceList != null && resourceList[0] > 0)) {
                 // non-CPU implementations don't have SSE so remove default preference for SSE
                 // when using non-CPU preferences or prioritising non-CPU resource
                 preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
+                preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
             }
+
+            // start auto resource selection
+            String resourceAuto = System.getProperty(RESOURCE_AUTO_PROPERTY);
+            if (resourceAuto != null && Boolean.parseBoolean(resourceAuto)) {
+
+                long benchmarkFlags = 0;
+
+                if (this.rescalingScheme == PartialsRescalingScheme.NONE) {
+                    benchmarkFlags =  BeagleBenchmarkFlag.SCALING_NONE.getMask();
+                } else if (this.rescalingScheme == PartialsRescalingScheme.ALWAYS) {
+                    benchmarkFlags =  BeagleBenchmarkFlag.SCALING_ALWAYS.getMask();
+                } else {
+                    benchmarkFlags =  BeagleBenchmarkFlag.SCALING_DYNAMIC.getMask();
+                }
+
+                logger.info("\nRunning benchmarks to automatically select fastest BEAGLE resource for analysis... ");
+
+                List<BenchmarkedResourceDetails> benchmarkedResourceDetails =
+                        BeagleFactory.getBenchmarkedResourceDetails(
+                                tipCount,
+                                compactPartialsCount,
+                                stateCount,
+                                totalPatternCount,
+                                categoryCount,
+                                resourceList,
+                                preferenceFlags,
+                                requirementFlags,
+                                1, // eigenModelCount,
+                                partitionCount,
+                                0, // calculateDerivatives,
+                                benchmarkFlags);
+
+
+                logger.info(" Benchmark results, from fastest to slowest:");
+
+                for (BenchmarkedResourceDetails benchmarkedResource : benchmarkedResourceDetails) {
+                    logger.info(benchmarkedResource.toString());
+                }
+
+                long benchedFlags = benchmarkedResourceDetails.get(0).getBenchedFlags();
+                if ((benchedFlags & BeagleFlag.FRAMEWORK_CPU.getMask()) != 0) {
+                    throw new DelegateTypeException();
+                }
+
+                resourceList = new int[]{benchmarkedResourceDetails.get(0).getResourceNumber()};
+            }
+            // end auto resource selection
 
             //TODO: check getBufferCount() calls with Daniel
             //TODO: should we multiple getBufferCount() by the number of partitions?
@@ -373,6 +471,22 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
             InstanceDetails instanceDetails = beagle.getDetails();
             ResourceDetails resourceDetails = null;
+
+            long instanceFlags = instanceDetails.getFlags();
+            if ((instanceFlags & BeagleFlag.FRAMEWORK_CPU.getMask()) != 0) {
+                throw new DelegateTypeException();
+            }
+
+            logger.info("\nUsing Multi-Partition Data Likelihood Delegate with BEAGLE 3 multi-partition extensions");
+
+            for (BranchModel branchModel : this.branchModels) {
+                addModel(branchModel);
+            }
+
+            for (SiteRateModel siteRateModel : this.siteRateModels) {
+                assert(siteRateModel.getCategoryCount() == categoryCount);
+                addModel(siteRateModel);
+            }
 
             if (instanceDetails != null) {
                 resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());
@@ -395,6 +509,10 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 }
             } else {
                 logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
+            }
+
+            if (IS_THREAD_COUNT_COMPATIBLE() && threadCount > 1) {
+                beagle.setCPUThreadCount(threadCount);
             }
 
             patternPartitions = new int[totalPatternCount];
@@ -524,43 +642,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 updateSiteRateModels[i] = true;
             }
         }
-    }
-
-
-    private static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {
-        List<Integer> order = new ArrayList<Integer>();
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    int n = Integer.parseInt(part.trim());
-                    order.add(n);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
-    }
-
-    private static List<String> parseSystemPropertyStringArray(String propertyName) {
-
-        List<String> order = new ArrayList<String>();
-
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    String s = part.trim();
-                    order.add(s);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
     }
 
     private int getScaleBufferCount() {
@@ -737,6 +818,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 if (categoryRates == null) {
                     // If this returns null then there was a numerical error calculating the category rates
                     // (probably a very small alpha) so reject the move.
+
+                    // mark model updates as completed before returning
+                    updateSubstitutionModels(false);
+                    updateSiteRateModels(false);
+
                     return Double.NEGATIVE_INFINITY;
                 }
 
@@ -769,7 +855,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             int   [] probabilityIndices        = new int   [branchUpdateCount * partitionCount];
             double[] edgeLengths               = new double[branchUpdateCount * partitionCount];
 
-            int op = 0;
+            int operationCount = 0;
             int partition = 0;
             for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {
                 if (updatePartition[partition] || updateAllPartitions) {
@@ -779,11 +865,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     }
 
                     for (int i = 0; i < branchUpdateCount; i++) {
-                        eigenDecompositionIndices[op] = evolutionaryProcessDelegate.getEigenIndex(0);
-                        categoryRateIndices[op] = categoryRateBufferHelper[partition].getOffsetIndex(0);
-                        probabilityIndices[op] = evolutionaryProcessDelegate.getMatrixIndex(branchUpdateIndices[i]);
-                        edgeLengths[op] = branchLengths[i];
-                        op++;
+                        eigenDecompositionIndices[operationCount] = evolutionaryProcessDelegate.getEigenIndex(0);
+                        categoryRateIndices[operationCount] = categoryRateBufferHelper[partition].getOffsetIndex(0);
+                        probabilityIndices[operationCount] = evolutionaryProcessDelegate.getMatrixIndex(branchUpdateIndices[i]);
+                        edgeLengths[operationCount] = branchLengths[i];
+                        operationCount++;
                     }
                 }
                 partition++;
@@ -796,7 +882,12 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     null, // firstDerivativeIndices
                     null, // secondDerivativeIndices
                     edgeLengths,
-                    op);
+                    operationCount);
+
+            if (COUNT_CALCULATIONS) {
+                totalMatrixUpdateCount += operationCount;
+            }
+
         }
 
         for (int i = 0; i < partitionCount; i++) {
@@ -901,8 +992,13 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             }
         }
 
-
         beagle.updatePartialsByPartition(operations, operationCount);
+
+        if (COUNT_CALCULATIONS) {
+            totalEvaluationCount += 1;
+            totalPartialsUpdateCount += operationCount;
+        }
+
 
         //double[] rootPartials = new double[totalPatternCount * stateCount];
         //beagle.getPartials(rootIndex, 0, rootPartials);
@@ -1057,7 +1153,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                             // underflowed buffers. Flip will be turned on again in storeState for
                             // next step
                             flip[partitionIndices[i]] = false;
-                            
+
                             updateAllPartitions = false;
                             if (DEBUG) {
                                 System.out.println("Double.isNaN(logL) || Double.isInfinite(logL) (partition index: " + partitionIndices[i] + ")");
@@ -1195,8 +1291,16 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
     @Override
     public void setCallback(TreeDataLikelihood treeDataLikelihood) {
-        // Callback not necessary
+        // Do nothing
     }
+
+    @Override
+    public void setComputePostOrderStatisticsOnly(boolean computePostOrderStatistic) {
+        // Do nothing
+    }
+
+    @Override
+    public boolean providesPostOrderStatisticsOnly() { return false; }
 
     @Override
     public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations) {
@@ -1205,6 +1309,16 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
     @Override
     protected void acceptState() {
+    }
+
+    // **************************************************************
+    // INSTANCE PROFILEABLE
+    // **************************************************************
+
+    @Override
+    public long getTotalCalculationCount() {
+        // Can only return one count at the moment so return the number of partials updated
+        return totalPartialsUpdateCount;
     }
 
     // **************************************************************
@@ -1218,12 +1332,12 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
     @Override
     public String getDescription() {
-        return "Using BEAGLE likelihood calculation library";
+        return "BEAGLE likelihood calculation library";
     }
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.AYRES_2012_BEAGLE);
+        return Collections.singletonList(CommonCitations.AYRES_2019_BEAGLE);
     }
 
     // **************************************************************
@@ -1252,6 +1366,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     private PartialsRescalingScheme rescalingScheme;
     private int rescalingFrequency = RESCALE_FREQUENCY;
     private boolean delayRescalingUntilUnderflow = true;
+
+    private int threadCount = -1;
 
     //allow per partition rescaling
     private boolean[] useScaleFactors;
@@ -1350,5 +1466,4 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
      * Flag to take into account the first likelihood evaluation when initiating the MCMC chain
      */
     private boolean initialEvaluation = true;
-
 }

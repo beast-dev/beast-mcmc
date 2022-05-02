@@ -43,6 +43,10 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         this.transform = transform;
         this.inverse = inverse;
         this.parameter.addVariableListener(this);
+        Bounds bounds = parameter.getBounds();
+        if (bounds != null && !(transform instanceof Transform.MultivariateTransform)) {
+            addBounds(bounds);
+        }
     }
 
     public int getDimension() {
@@ -105,6 +109,10 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         return parameter.getParameterValues();
     }
 
+    public void setParameterUntransformedValue(int dim, double a) {
+        parameter.setParameterValue(dim, a);
+    }
+
     public Parameter getUntransformedParameter() {
         return parameter;
     }
@@ -132,8 +140,15 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         final double[] lower = new double[dim];
         final double[] upper = new double[dim];
         for (int i = 0; i < dim; ++i) {
-            lower[i] = inverse(bounds.getLowerLimit(i));
-            upper[i] = inverse(bounds.getUpperLimit(i));
+            final double transformedLowerBound = transform(bounds.getLowerLimit(i));
+            final double transformedUpperBound = transform(bounds.getUpperLimit(i));
+            if (transformedLowerBound < transformedUpperBound) {
+                lower[i] = transformedLowerBound;
+                upper[i] = transformedUpperBound;
+            } else {
+                lower[i] = transformedUpperBound;
+                upper[i] = transformedLowerBound;
+            }
         }
         transformedBounds = new DefaultBounds(upper, lower);
 
@@ -157,8 +172,12 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
 //        }
 //        System.err.println("\n");
 //
-        parameter.addBounds(transformedBounds);
+//        parameter.addBounds(transformedBounds);
 //        throw new RuntimeException("Should not call addBounds() on transformed parameter");
+    }
+
+    public boolean check() {
+        return parameter.check();
     }
 
     public Bounds<Double> getBounds() {
@@ -193,5 +212,5 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
     protected final Parameter parameter;
     protected final Transform transform;
     protected final boolean inverse;
-    private Bounds<Double> transformedBounds = null;
+    protected Bounds<Double> transformedBounds;
 }

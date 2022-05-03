@@ -82,9 +82,9 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         }
     }
 
-    public SpeciationLikelihood(Tree tree, SpeciationModel specModel, String id, CalibrationPoints calib) {
+    public SpeciationLikelihood(Tree tree, SpeciationModel specModel, String id, CalibrationPoints calibration) {
         this(tree, specModel, id);
-        this.calibration = calib;
+        this.calibration = calibration;
     }
 
     // **************************************************************
@@ -176,16 +176,19 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
 
         for (int i = 0; i < treeIntervals.getIntervalCount(); ++i) {
 
-            final double tYoung = treeIntervals.getIntervalTime(i);
-            final double tOld = tYoung + treeIntervals.getInterval(i);
+            final double intervalStart = treeIntervals.getIntervalTime(i);
+            final double intervalEnd = intervalStart + treeIntervals.getInterval(i);
             final int nLineages = treeIntervals.getLineageCount(i);
 
-            logL += speciationModel.processInterval(tYoung, tOld, nLineages);
+            // TODO Need to check for intervalStart == intervalEnd?
+            // TODO Need to check for intervalStart == intervalEnd == 0.0?
 
-            // Interval ends with a coalescent or sampling event at time tOld
+            logL += speciationModel.processInterval(intervalStart, intervalEnd, nLineages);
+
+            // Interval ends with a coalescent or sampling event at time intervalEnd
             if (treeIntervals.getIntervalType(i) == IntervalType.SAMPLE) {
 
-                logL += speciationModel.processSampling(tOld);
+                logL += speciationModel.processSampling(intervalEnd);
 
             } else if (treeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
 
@@ -197,6 +200,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         }
 
         // We've missed the first sample and need to add it back
+        // TODO May we missed multiple samples @ t == 0.0?
         logL += speciationModel.processSampling(treeIntervals.getStartTime());
 
         // origin branch is a fake branch that doesn't exist in the tree, now compute its contribution
@@ -285,12 +289,12 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
     /**
      * The speciation model.
      */
-    SpeciationModel speciationModel = null;
+    final SpeciationModel speciationModel;
 
     /**
      * The tree.
      */
-    Tree tree = null;
+    final Tree tree;
     private final Set<Taxon> exclude;
 
     private CalibrationPoints calibration;

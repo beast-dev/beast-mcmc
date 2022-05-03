@@ -152,6 +152,11 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
      * @return the log likelihood
      */
     private double calculateLogLikelihood() {
+
+        if (USE_INTERVAL_REDUCTION) {
+            return calculateUnconditionedLogLikelihoodOverIntervals();
+        }
+
         if (exclude != null) {
             return speciationModel.calculateTreeLogLikelihood(tree, exclude);
         }
@@ -162,6 +167,8 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
 
         return speciationModel.calculateTreeLogLikelihood(tree);
     }
+
+    private static final boolean USE_INTERVAL_REDUCTION = false;
 
     private double calculateUnconditionedLogLikelihoodOverIntervals() {
 

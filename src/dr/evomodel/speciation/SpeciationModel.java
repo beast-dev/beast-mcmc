@@ -65,6 +65,8 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
         return false;
     }
 
+    public double contribut
+
     // Likelihood for the speciation model conditional on monophyly and calibration densities in
     // 'calibration'.
     //
@@ -105,5 +107,18 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
      */
     public Units.Type getUnits() {
         return units;
+    }
+
+    // TODO Probably should be somewhere else
+    public double processInterval(double tYoung, double tOld, int nLineages) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    public double processSampling(double tOld) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    public double processCoalescence() {
+        throw new RuntimeException("Not implemented");
     }
 }

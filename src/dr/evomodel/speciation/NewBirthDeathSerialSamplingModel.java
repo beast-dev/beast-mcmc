@@ -301,6 +301,33 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
         return logL;
     }
 
+    @Override
+    public double processInterval(double tYoung, double tOld, int nLineages) {
+        return nLineages * (Math.log(tYoung) - Math.log(tOld));
+    }
+
+    @Override
+    public double processCoalescence() {
+        return Math.log(lambda()); // TODO Notice the natural parameterization is `log lambda`
+    }
+
+    @Override
+    public double processSampling(double tOld) {
+
+        double logPsi = Math.log(psi()); // TODO Notice the natural parameterization is `log psi`
+        double r = r();
+        double logRho = Math.log(rho()); // TODO Notice the natural parameterization is `log rho`
+
+        double timeZeroTolerance = Double.MIN_VALUE;
+        boolean noSamplingAtPresent = rho() < Double.MIN_VALUE;
+
+        if (noSamplingAtPresent || tOld > timeZeroTolerance) {
+            return logPsi + Math.log(r + (1.0 - r) * p0(tOld));
+        } else {
+            return logRho;
+        }
+    }
+
     // Log-likelihood of tree without conditioning on anything
     private double calculateUnconditionedLogLikelihoodOverIntervals(Tree tree) {
 

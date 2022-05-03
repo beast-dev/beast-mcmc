@@ -25,6 +25,7 @@
 
 package dr.evomodel.speciation;
 
+import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
@@ -160,6 +161,49 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         }
 
         return speciationModel.calculateTreeLogLikelihood(tree);
+    }
+
+    private double calculateUnconditionedLogLikelihoodOverIntervals() {
+
+        if (!(tree instanceof TreeModel)) {
+            throw new IllegalArgumentException("Failed test");
+        }
+
+        // TODO Make cached class-object
+        BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals((TreeModel)tree);
+
+        double logL = 0.0;
+
+        for (int i = 0; i < treeIntervals.getIntervalCount(); ++i) {
+
+            final double tYoung = treeIntervals.getIntervalTime(i);
+            final double tOld = tYoung + treeIntervals.getInterval(i);
+            final int nLineages = treeIntervals.getLineageCount(i);
+
+            logL += speciationModel.processInterval(tYoung, tOld, nLineages);
+
+            // Interval ends with a coalescent or sampling event at time tOld
+            if (treeIntervals.getIntervalType(i) == IntervalType.SAMPLE) {
+
+                logL += speciationModel.processSampling(tOld);
+
+            } else if (treeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
+
+                logL += speciationModel.processCoalescence();
+
+            } else {
+                throw new RuntimeException("Birth-death tree includes non birth/death/sampling event.");
+            }
+        }
+
+        // We've missed the first sample and need to add it back
+        logL += speciationModel.processSampling(treeIntervals.getStartTime());
+
+        // origin branch is a fake branch that doesn't exist in the tree, now compute its contribution
+        logL += speciationModel.processInterval(treeIntervals.getTotalDuration(),
+                treeIntervals.getStartTime(), 1);
+
+        return logL;
     }
 
     // Super-clean interface (just one intrusive function) and a better place, since `Likelihood`s have gradients (`Model`s do not).

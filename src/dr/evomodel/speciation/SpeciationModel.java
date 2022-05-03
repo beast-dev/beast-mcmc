@@ -64,9 +64,7 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
     public boolean isYule() {
         return false;
     }
-
-    public double contribut
-
+    
     // Likelihood for the speciation model conditional on monophyly and calibration densities in
     // 'calibration'.
     //

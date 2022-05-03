@@ -170,24 +170,6 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         return gradientProvider;
     }
 
-    // TODO Move code to own (?) Likelihood
-    private double calculateLogLikelihoodOverIntervals() {
-
-        if (!(tree instanceof TreeModel)) {
-            throw new IllegalArgumentException("Failed test");
-        }
-
-        // TODO Make cached class-object
-        BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals((TreeModel)tree);
-
-        for (int i = 0; i < treeIntervals.getIntervalCount(); ++i) {
-            System.err.println(treeIntervals.getInterval(i) + " " + treeIntervals.getLineageCount() + " " +
-                    treeIntervals.getIntervalType());
-        }
-        
-        return Double.NEGATIVE_INFINITY;
-    }
-
     private SpeciationModelGradientProvider gradientProvider = null;
 
     // **************************************************************

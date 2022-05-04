@@ -10,7 +10,7 @@ import dr.xml.*;
 
 import java.util.logging.Logger;
 
-public class BirthDeathEpisodicSeriallySampledModelParser {
+public class BirthDeathEpisodicSeriallySampledModelParser extends AbstractXMLObjectParser {
 
     public static final String ESSBDM = "episodicSeriallySampledBirthDeathModel";
     public static final String NUM_GRID_POINTS = "numGridPoints";

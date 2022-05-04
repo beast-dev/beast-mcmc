@@ -116,7 +116,7 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
         throw new RuntimeException("Not implemented");
     }
 
-    public double processCoalescence(int model) {
+    public double processCoalescence(int model, double tOld) {
         throw new RuntimeException("Not implemented");
     }
 
@@ -128,7 +128,7 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
         throw new RuntimeException("Not implemented");
     }
 
-    public double processOrigin(double rootAge) {
+    public double processOrigin(int model, double rootAge) {
         throw new RuntimeException("Not implemented");
     }
 

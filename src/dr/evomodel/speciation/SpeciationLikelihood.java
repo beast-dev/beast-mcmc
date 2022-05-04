@@ -214,7 +214,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
 
             } else if (treeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
 
-                logL += speciationModel.processCoalescence(currentModelSegment);
+                logL += speciationModel.processCoalescence(currentModelSegment,intervalEnd);
 
             } else {
                 throw new RuntimeException("Birth-death tree includes non birth/death/sampling event.");
@@ -226,7 +226,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         logL += speciationModel.processSampling(0, treeIntervals.getStartTime()); // TODO for-loop for models with multiple segments?
 
         // origin branch is a fake branch that doesn't exist in the tree, now compute its contribution
-        logL += speciationModel.processOrigin(treeIntervals.getTotalDuration());
+        logL += speciationModel.processOrigin(currentModelSegment, treeIntervals.getTotalDuration());
 
         logL += speciationModel.logConditioningProbability();
 

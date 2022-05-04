@@ -63,6 +63,8 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
     // the originTime of the infection, origin > tree.getRoot();
     Parameter originTime;
 
+    // TODO if we want to supplant other birth-death models, need an ENUM, and choice of options
+    // Minimally, need survival of 1 lineage (passable default for SSBDP) and nTaxa (which is current option for non-serially-sampled BDP)
     private boolean conditionOnSurvival;
 
     // useful constants we don't want to compute nTaxa times
@@ -319,12 +321,12 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
     }
 
     @Override
-    public double processOrigin(double rootAge) {
+    public double processOrigin(int model, double rootAge) {
         return (logq(rootAge) - logq(originTime.getValue(0)));
     }
 
     @Override
-    public double processCoalescence(int model) {
+    public double processCoalescence(int model, double tOld) {
         return Math.log(lambda()); // TODO Notice the natural parameterization is `log lambda`
     }
 

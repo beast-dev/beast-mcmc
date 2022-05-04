@@ -119,4 +119,16 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
     public double processCoalescence() {
         throw new RuntimeException("Not implemented");
     }
+
+    public double processOrigin(double rootAge) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    public void precomputeConstants() {
+        throw new RuntimeException("Not implemented");
+    }
+
+    public double logConditioningProbability() {
+        throw new RuntimeException("Not implemented");
+    }
 }

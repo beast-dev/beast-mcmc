@@ -163,7 +163,7 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
         return -(lambda - 2.0 * rho * lambda - mu - psi)/c1(lambda, mu, psi);
     }
 
-    private void precomputeConstants() {
+    public void precomputeConstants() {
         this.storedC1 = c1(lambda(), mu(), psi());
         this.storedC2 = c2(lambda(), mu(), psi(), rho());
     }
@@ -207,6 +207,14 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
         return samplingFractionAtPresent.getValue(0);
     }
 
+    @Override
+    public double logConditioningProbability() {
+        double logP = 0.0;
+        if ( conditionOnSurvival ) {
+            logP -= Math.log(1.0 - p0(originTime.getValue(0)));
+        }
+        return logP;
+    }
 
     /**
      * Generic likelihood calculation
@@ -303,7 +311,12 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
 
     @Override
     public double processInterval(double tYoung, double tOld, int nLineages) {
-        return nLineages * (Math.log(tYoung) - Math.log(tOld));
+        return nLineages * (logq(tYoung) - logq(tOld));
+    }
+
+    @Override
+    public double processOrigin(double rootAge) {
+        return (logq(rootAge) - logq(originTime.getValue(0)));
     }
 
     @Override

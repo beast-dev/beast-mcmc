@@ -154,7 +154,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
     private double calculateLogLikelihood() {
 
         if (USE_INTERVAL_REDUCTION) {
-            return calculateUnconditionedLogLikelihoodOverIntervals();
+            return calculateLogLikelihoodOverIntervals();
         }
 
         if (exclude != null) {
@@ -165,16 +165,21 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
             return speciationModel.calculateTreeLogLikelihood(tree, calibration);
         }
 
+        System.err.println("speciationModel.calculateTreeLogLikelihood(tree) = " + speciationModel.calculateTreeLogLikelihood(tree) +
+        "; calculateLogLikelihoodOverIntervals() = " + calculateLogLikelihoodOverIntervals());
+
         return speciationModel.calculateTreeLogLikelihood(tree);
     }
 
     private static final boolean USE_INTERVAL_REDUCTION = false;
 
-    private double calculateUnconditionedLogLikelihoodOverIntervals() {
+    private double calculateLogLikelihoodOverIntervals() {
 
         if (!(tree instanceof TreeModel)) {
             throw new IllegalArgumentException("Failed test");
         }
+
+        speciationModel.precomputeConstants();
 
         // TODO Make cached class-object
         BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals((TreeModel)tree);
@@ -211,8 +216,9 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         logL += speciationModel.processSampling(treeIntervals.getStartTime());
 
         // origin branch is a fake branch that doesn't exist in the tree, now compute its contribution
-        logL += speciationModel.processInterval(treeIntervals.getTotalDuration(),
-                treeIntervals.getStartTime(), 1);
+        logL += speciationModel.processOrigin(treeIntervals.getTotalDuration());
+
+        logL += logL + speciationModel.logConditioningProbability();
 
         return logL;
     }

@@ -119,5 +119,6 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
             new ElementRule(R, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(RHO, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(CONDITION, new XMLSyntaxRule[]{new ElementRule(boolean.class)}, true),
+            XMLUnits.SYNTAX_RULES[0]
     };
 }

@@ -225,8 +225,7 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
     public final double calculateTreeLogLikelihood(Tree tree) {
         precomputeConstants();
 
-        double logL = calculateUnconditionedLogLikelihoodOverIntervals(tree);
-//        double logL = calculateUnconditionedTreeLogLikelihood(tree);
+        double logL = calculateUnconditionedTreeLogLikelihood(tree);
 
         double origin = originTime.getValue(0);
         if (origin < tree.getNodeHeight(tree.getRoot())) {
@@ -340,85 +339,6 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
             return logRho;
         }
     }
-
-    // Log-likelihood of tree without conditioning on anything
-    private double calculateUnconditionedLogLikelihoodOverIntervals(Tree tree) {
-
-        if (!(tree instanceof TreeModel)) {
-            throw new IllegalArgumentException("Failed test");
-        }
-
-        double logLambda = Math.log(lambda());
-        double mu = mu();
-        double logPsi = Math.log(psi());
-        double r = r();
-        double logRho = Math.log(rho());
-
-        double timeZeroTolerance = Double.MIN_VALUE;
-        boolean noSamplingAtPresent = rho() < Double.MIN_VALUE;
-
-        double origin = originTime.getValue(0);
-
-        // TODO Make cached class-object
-        BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals((TreeModel)tree);
-
-        double logL = 0.0;
-
-        // TODO might be able to avoid O(nnodes) computations of q
-        // nominally in every loop, we can set tYoung <- tOld and logqYoung <- logqOld
-        for (int i = 0; i < treeIntervals.getIntervalCount(); ++i) {
-            double tYoung = treeIntervals.getIntervalTime(i);
-            double tOld = tYoung + treeIntervals.getInterval(i);
-
-            double logqYoung = logq(tYoung);
-            double logqOld = logq(tOld);
-
-            // Prob of 1 lineage surviving from interval b/n tYoung and tOld is q(tYoung)/q(tOld)
-            int nLineages = treeIntervals.getLineageCount(i);
-            logL += nLineages * (logqYoung - logqOld);
-
-            // Interval ends with a coalescent or sampling event at time tOld
-            if (treeIntervals.getIntervalType(i) == IntervalType.SAMPLE) {
-                if (noSamplingAtPresent || tOld > timeZeroTolerance) {
-                    logL += logPsi + Math.log(r + (1.0 - r) * p0(tOld));
-                } else {
-                    logL += logRho;
-                }
-            } else if (treeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
-                logL += logLambda;
-            } else {
-                throw new RuntimeException("Birth-death tree includes non birth/death/sampling event.");
-            }
-        }
-
-        // We've missed the first sample and need to add it back
-        double t0 = treeIntervals.getStartTime();
-        if (noSamplingAtPresent || t0 > timeZeroTolerance) {
-            logL += logPsi + Math.log(r + (1.0 - r) * p0(t0));
-        } else {
-            logL += logRho;
-        }
-
-        // origin branch is a fake branch that doesn't exist in the tree, now compute its contribution
-        double tYoung = treeIntervals.getTotalDuration();
-        double tOld = origin;
-
-        double logqYoung = logq(tYoung);
-        double logqOld = logq(tOld);
-
-        logL += (logqYoung - logqOld);
-
-//        System.err.println(">>>>>> Intervals <<<<<<");
-//        System.err.println(treeIntervals.getIntervalCount() + " " + treeIntervals.getSampleCount() + " " + treeIntervals.getTotalDuration());
-//        for (int i = 0; i < treeIntervals.getIntervalCount(); ++i) {
-//            System.err.println(treeIntervals.getInterval(i) + " " + treeIntervals.getLineageCount(i) + " " +
-//                    treeIntervals.getIntervalTime(i) + " " + treeIntervals.getIntervalType(i));
-//        }
-//        System.err.println("<<<<<< Intervals >>>>>>");
-        return logL;
-    }
-
-
 
     public double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude) {
         if (exclude.size() == 0) return calculateTreeLogLikelihood(tree);

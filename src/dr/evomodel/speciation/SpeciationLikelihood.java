@@ -153,7 +153,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
      */
     private double calculateLogLikelihood() {
 
-        if (USE_INTERVAL_REDUCTION) {
+        if (USE_INTERVAL_REDUCTION || speciationModel instanceof NewBirthDeathSerialSamplingModel) {
             return calculateLogLikelihoodOverIntervals();
         }
 

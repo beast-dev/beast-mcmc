@@ -127,4 +127,16 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
     public double processModelSegmentBreakPoint(int model, double intervalStart, double segmentIntervalEnd) {
         throw new RuntimeException("Not implemented");
     }
+
+    public double processOrigin(double rootAge) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    public void precomputeConstants() { // TODO Probably should be handled automatically by the store/restore mechanism
+        throw new RuntimeException("Not implemented");
+    }
+
+    public double logConditioningProbability() {
+        throw new RuntimeException("Not implemented");
+    }
 }

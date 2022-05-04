@@ -153,8 +153,8 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
      */
     private double calculateLogLikelihood() {
 
-        if (USE_INTERVAL_REDUCTION) {
-            return calculateUnconditionedLogLikelihoodOverIntervals();
+        if (USE_INTERVAL_REDUCTION || speciationModel instanceof NewBirthDeathSerialSamplingModel) {
+            return calculateLogLikelihoodOverIntervals();
         }
 
         if (exclude != null) {
@@ -170,11 +170,13 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
 
     private static final boolean USE_INTERVAL_REDUCTION = false;
 
-    private double calculateUnconditionedLogLikelihoodOverIntervals() {
+    private double calculateLogLikelihoodOverIntervals() {
 
         if (!(tree instanceof TreeModel)) {
             throw new IllegalArgumentException("Failed test");
         }
+
+        speciationModel.precomputeConstants();
 
         // TODO Make cached class-object
         BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals((TreeModel)tree);
@@ -224,8 +226,9 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         logL += speciationModel.processSampling(0, treeIntervals.getStartTime()); // TODO for-loop for models with multiple segments?
 
         // origin branch is a fake branch that doesn't exist in the tree, now compute its contribution
-        logL += speciationModel.processInterval(0, treeIntervals.getTotalDuration(),
-                treeIntervals.getStartTime(), 1); // TODO for-loop for models with multiple segments?
+        logL += speciationModel.processOrigin(treeIntervals.getTotalDuration());
+
+        logL += speciationModel.logConditioningProbability();
 
         return logL;
     }

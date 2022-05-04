@@ -165,9 +165,6 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
             return speciationModel.calculateTreeLogLikelihood(tree, calibration);
         }
 
-        System.err.println("speciationModel.calculateTreeLogLikelihood(tree) = " + speciationModel.calculateTreeLogLikelihood(tree) +
-        "; calculateLogLikelihoodOverIntervals() = " + calculateLogLikelihoodOverIntervals());
-
         return speciationModel.calculateTreeLogLikelihood(tree);
     }
 
@@ -218,7 +215,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         // origin branch is a fake branch that doesn't exist in the tree, now compute its contribution
         logL += speciationModel.processOrigin(treeIntervals.getTotalDuration());
 
-        logL += logL + speciationModel.logConditioningProbability();
+        logL += speciationModel.logConditioningProbability();
 
         return logL;
     }

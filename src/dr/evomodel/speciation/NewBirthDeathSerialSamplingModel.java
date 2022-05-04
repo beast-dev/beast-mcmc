@@ -302,17 +302,22 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
     }
 
     @Override
-    public double processInterval(double tYoung, double tOld, int nLineages) {
+    public double[] getBreakPoints() {
+        return new double[] { Double.POSITIVE_INFINITY };
+    }
+
+    @Override
+    public double processInterval(int model, double tYoung, double tOld, int nLineages) {
         return nLineages * (Math.log(tYoung) - Math.log(tOld));
     }
 
     @Override
-    public double processCoalescence() {
+    public double processCoalescence(int model) {
         return Math.log(lambda()); // TODO Notice the natural parameterization is `log lambda`
     }
 
     @Override
-    public double processSampling(double tOld) {
+    public double processSampling(int model, double tOld) {
 
         double logPsi = Math.log(psi()); // TODO Notice the natural parameterization is `log psi`
         double r = r();

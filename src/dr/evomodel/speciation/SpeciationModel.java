@@ -108,15 +108,23 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
     }
 
     // TODO Probably should be somewhere else
-    public double processInterval(double tYoung, double tOld, int nLineages) {
+    public double processInterval(int model, double tYoung, double tOld, int nLineages) {
         throw new RuntimeException("Not implemented");
     }
 
-    public double processSampling(double tOld) {
+    public double processSampling(int model, double tOld) {
         throw new RuntimeException("Not implemented");
     }
 
-    public double processCoalescence() {
+    public double processCoalescence(int model) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    public double[] getBreakPoints() {
+        throw new RuntimeException("Not implemented");
+    }
+
+    public double processModelSegmentBreakPoint(int model, double intervalStart, double segmentIntervalEnd) {
         throw new RuntimeException("Not implemented");
     }
 }

@@ -46,9 +46,9 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
     private final Likelihood likelihood;
     private final Parameter parameter;
 
-    private final List<GradientWrtParameterProvider> derivativeList;
+    final List<GradientWrtParameterProvider> derivativeList;
 
-    private final List<DerivativeWrtParameterProvider> newDerivativeList;
+    final List<DerivativeWrtParameterProvider> newDerivativeList;
     private final DerivativeOrder highestOrder;
 
     public JointGradient(List<GradientWrtParameterProvider> derivativeList){
@@ -184,7 +184,7 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
         return hessian;
     }
 
-    private double[] getDerivativeLogDensity(DerivativeType derivativeType) {
+    double[] getDerivativeLogDensity(DerivativeType derivativeType) {
         int size = derivativeList.size();
 
         final double[] derivative = derivativeType.getDerivativeLogDensity(derivativeList.get(0));
@@ -217,7 +217,7 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
                 GradientWrtParameterProvider.TOLERANCE);
     }
 
-    private enum DerivativeType {
+    enum DerivativeType {
         GRADIENT("gradient") {
             @Override
             public double[] getDerivativeLogDensity(GradientWrtParameterProvider gradientWrtParameterProvider) {
@@ -232,7 +232,7 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
         };
 
         @SuppressWarnings("unused")
-        private String type;
+        final private String type;
 
         DerivativeType(String type) {
             this.type = type;

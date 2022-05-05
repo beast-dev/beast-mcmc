@@ -27,10 +27,13 @@ package dr.inference.hmc;
 
 import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
 import dr.evomodel.treedatalikelihood.discrete.BranchRateGradientForDiscreteTrait;
+import dr.inference.model.DerivativeOrder;
+import dr.inference.model.Likelihood;
 import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * @author Alexander Fisher
@@ -38,12 +41,68 @@ import java.util.List;
 
 public class JointBranchRateGradient extends JointGradient {
 
+    private static final boolean COMPUTE_IN_PARALLEL = true;
+    private final ExecutorService pool;
+    private final List<Callable<double[]>> derivativeCaller;
+
     private final static String JOINT_BRANCH_RATE_GRADIENT = "JointBranchRateGradient";
 
     public JointBranchRateGradient(List<GradientWrtParameterProvider> derivativeList) {
         super(derivativeList);
+
+        if (COMPUTE_IN_PARALLEL && derivativeList.size() > 1) {
+            pool = Executors.newFixedThreadPool(derivativeList.size());
+            derivativeCaller = new ArrayList<>(derivativeList.size());
+
+            for (int i = 0; i < derivativeList.size(); ++i) {
+                derivativeCaller.add(new DerivativeCaller(derivativeList.get(i), i));
+            }
+
+        } else {
+            pool = null;
+            derivativeCaller = null;
+        }
     }
 
+    @Override
+    double[] getDerivativeLogDensity(DerivativeType derivativeType) {
+
+        if (COMPUTE_IN_PARALLEL && pool != null) {
+            return getDerivativeLogDensityInParallel(derivativeType);
+        } else {
+            return super.getDerivativeLogDensity(derivativeType);
+        }
+    }
+
+
+    private double[] getDerivativeLogDensityInParallel(DerivativeType derivativeType) {
+
+        if (derivativeType != DerivativeType.GRADIENT) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        final int length = derivativeList.get(0).getDimension();
+
+        double[] derivative = new double[length];
+
+        try {
+            List<Future<double[]>> results = pool.invokeAll(derivativeCaller);
+
+            for (Future<double[]> result : results) {
+                double[] d = result.get();
+                for (int j = 0; j < length; ++j) {
+                    derivative[j] += d[j];
+                }
+            }
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        return derivative;
+    }
 
     // **************************************************************
     // XMLObjectParser
@@ -89,4 +148,25 @@ public class JointBranchRateGradient extends JointGradient {
             return JointBranchRateGradient.class;
         }
     };
+
+    class DerivativeCaller implements Callable<double[]> {
+
+        public DerivativeCaller(GradientWrtParameterProvider gradient, int index) {
+            this.gradient = gradient;
+            this.index = index;
+        }
+
+        public double[] call() throws Exception {
+            if (DEBUG_PARALLEL_EVALUATION) {
+                System.err.println("Invoking thread #" + index + " for " + gradient.getLikelihood().getId());
+            }
+
+            return gradient.getGradientLogDensity();
+        }
+
+        private final GradientWrtParameterProvider gradient;
+        private final int index;
+    }
+
+    public static final boolean DEBUG_PARALLEL_EVALUATION = false;
 }

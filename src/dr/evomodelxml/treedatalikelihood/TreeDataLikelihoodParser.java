@@ -26,6 +26,7 @@
 package dr.evomodelxml.treedatalikelihood;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.Patterns;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchmodel.BranchModel;
@@ -42,12 +43,14 @@ import dr.evomodel.treedatalikelihood.PreOrderSettings;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treelikelihood.AbstractTreeLikelihood;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -214,16 +217,15 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         }
         PreOrderSettings settings = new PreOrderSettings(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative);
 
-        // TreeDataLikelihood doesn't currently support Instances defined from the command line
-//        int instanceCount = xo.getAttribute(INSTANCE_COUNT, 1);
-//        if (instanceCount < 1) {
-//            instanceCount = 1;
-//        }
-//
-//        String ic = System.getProperty(BEAGLE_INSTANCE_COUNT);
-//        if (ic != null && ic.length() > 0) {
-//            instanceCount = Integer.parseInt(ic);
-//        }
+        int instanceCount = xo.getAttribute(INSTANCE_COUNT, 1);
+
+        String ic = System.getProperty(BEAGLE_INSTANCE_COUNT);
+        if (ic != null && ic.length() > 0) {
+            instanceCount = Integer.parseInt(ic);
+        }
+        if (instanceCount < 1) {
+            instanceCount = 1;
+        }
 
         List<PatternList> patternLists = new ArrayList<PatternList>();
         List<SiteRateModel> siteRateModels = new ArrayList<SiteRateModel>();
@@ -323,18 +325,45 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             throw new XMLParseException("BEAGLE_INSTANCES option cannot be used with a TipStateModel (i.e., a sequence error model).");
         }
 
-        return createTreeDataLikelihood(
-                patternLists,
-                branchModels,
-                siteRateModels,
-                treeModel,
-                branchRateModel,
-                null,
-                useAmbiguities,
-                preferGPU,
-                scalingScheme,
-                delayScaling,
-                settings);
+        if (instanceCount == 1 || patternLists.size() > 1) {
+
+            return createTreeDataLikelihood(
+                    patternLists,
+                    branchModels,
+                    siteRateModels,
+                    treeModel,
+                    branchRateModel,
+                    null,
+                    useAmbiguities,
+                    preferGPU,
+                    scalingScheme,
+                    delayScaling,
+                    settings);
+        } else {
+
+            List<Likelihood> likelihoods = new ArrayList<>();
+            for (int i = 0; i < instanceCount; i++) {
+
+                Patterns subPatterns = new Patterns(patternList, i, instanceCount);
+
+                Likelihood treeLikelihood =  createTreeDataLikelihood(
+                        Arrays.asList(subPatterns),
+                        branchModels,
+                        siteRateModels,
+                        treeModel,
+                        branchRateModel,
+                        null,
+                        useAmbiguities,
+                        preferGPU,
+                        scalingScheme,
+                        delayScaling,
+                        settings);
+                treeLikelihood.setId(xo.getId() + "_" + instanceCount);
+                likelihoods.add(treeLikelihood);
+            }
+
+            return new CompoundLikelihood(likelihoods);
+        }
     }
 
     //************************************************************************
@@ -353,6 +382,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
             AttributeRule.newBooleanRule(PREFER_GPU, true),
             AttributeRule.newStringRule(SCALING_SCHEME,true),
+            AttributeRule.newIntegerRule(INSTANCE_COUNT, true),
 
             // really it should be this set of elements or the PARTITION elements
             new OrRule(new AndRule(new XMLSyntaxRule[]{

@@ -31,97 +31,6 @@
 		</origin>
 	</newBirthDeathSerialSampling>
 
-	<distributionLikelihood id="bdss.birthRatePrior">
-	  <data>
-	    <parameter idref="bdss.birthRate"/>
-	  </data>
-	  <distribution>
-	    <logNormalDistributionModel meanInRealSpace="false">
-	      <mean>
-	        <parameter value="1.0"/>
-	      </mean>
-	      <stdev>
-	        <parameter value="1.5" lower="0.0"/>
-	      </stdev>
-	    </logNormalDistributionModel>
-	  </distribution>
-	</distributionLikelihood>
-
-	<distributionLikelihood id="bdss.deathRatePrior">
-	  <data>
-	    <parameter idref="bdss.deathRate"/>
-	  </data>
-	  <distribution>
-	    <logNormalDistributionModel>
-	      <mean>
-	        <parameter value="1.0"/>
-	      </mean>
-	      <stdev>
-	        <parameter value="1.5" lower="0.0"/>
-	      </stdev>
-	    </logNormalDistributionModel>
-	  </distribution>
-	</distributionLikelihood>
-
-	<distributionLikelihood id="bdss.psiPrior">
-	  <data>
-	    <parameter idref="bdss.psi"/>
-	  </data>
-	  <distribution>
-	    <logNormalDistributionModel meanInRealSpace="false">
-	      <mean>
-	        <parameter value="1.0"/>
-	      </mean>
-	      <stdev>
-	        <parameter value="1.5" lower="0.0"/>
-	      </stdev>
-	    </logNormalDistributionModel>
-	  </distribution>
-	</distributionLikelihood>
-
-	<distributionLikelihood id="bdss.originPrior">
-	  <data>
-	    <parameter idref="bdss.origin"/>
-	  </data>
-	  <distribution>
-	    <logNormalDistributionModel meanInRealSpace="false">
-	      <mean>
-	        <parameter value="1.0"/>
-	      </mean>
-	      <stdev>
-	        <parameter value="1.5" lower="0.0"/>
-	      </stdev>
-	    </logNormalDistributionModel>
-	  </distribution>
-	</distributionLikelihood>
-
-	<compoundGradient id="grad.bdss.prior">
-		<numericalHessian>
-			<gradient>
-				<distributionLikelihood idref="bdss.birthRatePrior"/>
-				<parameter idref="bdss.birthRate"/>
-			</gradient>
-		</numericalHessian>
-		<numericalHessian>
-			<gradient>
-				<distributionLikelihood idref="bdss.deathRatePrior"/>
-				<parameter idref="bdss.deathRate"/>
-			</gradient>
-		</numericalHessian>
-		<numericalHessian>
-			<gradient>
-				<distributionLikelihood idref="bdss.psiPrior"/>
-				<parameter idref="bdss.psi"/>
-			</gradient>
-		</numericalHessian>
-		<numericalHessian>
-			<gradient>
-				<distributionLikelihood idref="bdss.originPrior"/>
-				<parameter idref="bdss.origin"/>
-			</gradient>
-		</numericalHessian>
-	</compoundGradient>
-
 	<newick id="startingTree" usingHeights="true" usingDates="false">
 		((A:1.0,B:2.0):1.0,(C:1.0,D:2.0):2.0)
 	</newick>
@@ -150,7 +59,7 @@
 	<!-- Generate a speciation likelihood for Yule or Birth Death                -->
 	<speciationLikelihood id="speciation">
 		<model>
-			<birthDeathSerialSampling idref="bdss"/>
+			<newBirthDeathSerialSampling idref="bdss"/>
 		</model>
 		<speciesTree>
 			<treeModel idref="treeModel"/>
@@ -182,7 +91,7 @@
 		<treeModel idref="treeModel"/>
 	</speciationLikelihoodGradient>
 
-	<!-- <report>
+	<report>
 		<speciationLikelihoodGradient idref="grad.birthRate"/>
 	</report>
 
@@ -200,6 +109,6 @@
 
 	<report>
 		<speciationLikelihoodGradient idref="grad.samplingProbability"/>
-	</report> -->
+	</report>
 
 </beast>

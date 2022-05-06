@@ -41,7 +41,7 @@ public class JointBranchRateGradient extends JointGradient {
 
     private static final boolean COMPUTE_IN_PARALLEL = true;
     private final ExecutorService pool;
-    private final List<DerivativeCallableAndSettable> derivativeCaller;
+    private final List<DerivativeCaller> derivativeCaller;
 
     private final static String JOINT_BRANCH_RATE_GRADIENT = "JointBranchRateGradient";
 
@@ -75,7 +75,7 @@ public class JointBranchRateGradient extends JointGradient {
 
     private double[] getDerivativeLogDensityInParallel(DerivativeType derivativeType) {
 
-        for (DerivativeCallableAndSettable caller : derivativeCaller) {
+        for (DerivativeCaller caller : derivativeCaller) {
             caller.setDerivativeType(derivativeType);
         }
 
@@ -143,11 +143,7 @@ public class JointBranchRateGradient extends JointGradient {
         }
     };
 
-    private interface DerivativeCallableAndSettable extends Callable<double[]> {
-        void setDerivativeType(DerivativeType type);
-    }
-
-    private static class DerivativeCaller implements DerivativeCallableAndSettable {
+    private static class DerivativeCaller implements Callable<double[]> {
 
         public DerivativeCaller(GradientWrtParameterProvider gradient, int index) {
             this.gradient = gradient;
@@ -160,8 +156,7 @@ public class JointBranchRateGradient extends JointGradient {
                         " with type " + type);
             }
 
-            // TODO Dispatch based on `type`
-            return gradient.getGradientLogDensity();
+            return type.getDerivativeLogDensity(gradient);
         }
 
         public void setDerivativeType(DerivativeType type) {

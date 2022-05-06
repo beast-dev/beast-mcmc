@@ -66,7 +66,7 @@ public class HessianWrapperParser  extends AbstractXMLObjectParser {
             final HessianProvider provider = (HessianProvider) dl.getDistribution();
             final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-            // TODO Ensure that parameter and data inside provider are the same
+            // TODO Ensure that parameter and data inside provider are the same.
 
             return new HessianWrtParameterProvider.ParameterWrapper(provider, parameter, dl);
         }

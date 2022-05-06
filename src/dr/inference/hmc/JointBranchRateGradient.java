@@ -27,8 +27,6 @@ package dr.inference.hmc;
 
 import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
 import dr.evomodel.treedatalikelihood.discrete.BranchRateGradientForDiscreteTrait;
-import dr.inference.model.DerivativeOrder;
-import dr.inference.model.Likelihood;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -43,7 +41,7 @@ public class JointBranchRateGradient extends JointGradient {
 
     private static final boolean COMPUTE_IN_PARALLEL = true;
     private final ExecutorService pool;
-    private final List<Callable<double[]>> derivativeCaller;
+    private final List<DerivativeCallableAndSettable> derivativeCaller;
 
     private final static String JOINT_BRANCH_RATE_GRADIENT = "JointBranchRateGradient";
 
@@ -77,12 +75,11 @@ public class JointBranchRateGradient extends JointGradient {
 
     private double[] getDerivativeLogDensityInParallel(DerivativeType derivativeType) {
 
-        if (derivativeType != DerivativeType.GRADIENT) {
-            throw new RuntimeException("Not yet implemented");
+        for (DerivativeCallableAndSettable caller : derivativeCaller) {
+            caller.setDerivativeType(derivativeType);
         }
 
         final int length = derivativeList.get(0).getDimension();
-
         double[] derivative = new double[length];
 
         try {
@@ -94,10 +91,7 @@ public class JointBranchRateGradient extends JointGradient {
                     derivative[j] += d[j];
                 }
             }
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
+        } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
 
@@ -114,7 +108,7 @@ public class JointBranchRateGradient extends JointGradient {
             return JOINT_BRANCH_RATE_GRADIENT;
         }
 
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) {
 
             List<GradientWrtParameterProvider> derivativeList = new ArrayList<>();
 
@@ -133,7 +127,7 @@ public class JointBranchRateGradient extends JointGradient {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new OrRule(
                         new ElementRule(BranchRateGradient.class, 1, Integer.MAX_VALUE),
                         new ElementRule(BranchRateGradientForDiscreteTrait.class, 1, Integer.MAX_VALUE)
@@ -149,7 +143,11 @@ public class JointBranchRateGradient extends JointGradient {
         }
     };
 
-    class DerivativeCaller implements Callable<double[]> {
+    private interface DerivativeCallableAndSettable extends Callable<double[]> {
+        void setDerivativeType(DerivativeType type);
+    }
+
+    private static class DerivativeCaller implements DerivativeCallableAndSettable {
 
         public DerivativeCaller(GradientWrtParameterProvider gradient, int index) {
             this.gradient = gradient;
@@ -158,14 +156,22 @@ public class JointBranchRateGradient extends JointGradient {
 
         public double[] call() throws Exception {
             if (DEBUG_PARALLEL_EVALUATION) {
-                System.err.println("Invoking thread #" + index + " for " + gradient.getLikelihood().getId());
+                System.err.println("Invoking thread #" + index + " for " + gradient.getLikelihood().getId() +
+                        " with type " + type);
             }
 
+            // TODO Dispatch based on `type`
             return gradient.getGradientLogDensity();
+        }
+
+        public void setDerivativeType(DerivativeType type) {
+            this.type = type;
         }
 
         private final GradientWrtParameterProvider gradient;
         private final int index;
+
+        private DerivativeType type;
     }
 
     public static final boolean DEBUG_PARALLEL_EVALUATION = false;

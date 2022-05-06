@@ -31,6 +31,7 @@ import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * @author Alexander Fisher
@@ -38,12 +39,64 @@ import java.util.List;
 
 public class JointBranchRateGradient extends JointGradient {
 
+    private static final boolean COMPUTE_IN_PARALLEL = true;
+    private final ExecutorService pool;
+    private final List<DerivativeCaller> derivativeCaller;
+
     private final static String JOINT_BRANCH_RATE_GRADIENT = "JointBranchRateGradient";
 
     public JointBranchRateGradient(List<GradientWrtParameterProvider> derivativeList) {
         super(derivativeList);
+
+        if (COMPUTE_IN_PARALLEL && derivativeList.size() > 1) {
+            pool = Executors.newFixedThreadPool(derivativeList.size());
+            derivativeCaller = new ArrayList<>(derivativeList.size());
+
+            for (int i = 0; i < derivativeList.size(); ++i) {
+                derivativeCaller.add(new DerivativeCaller(derivativeList.get(i), i));
+            }
+
+        } else {
+            pool = null;
+            derivativeCaller = null;
+        }
     }
 
+    @Override
+    double[] getDerivativeLogDensity(DerivativeType derivativeType) {
+
+        if (COMPUTE_IN_PARALLEL && pool != null) {
+            return getDerivativeLogDensityInParallel(derivativeType);
+        } else {
+            return super.getDerivativeLogDensity(derivativeType);
+        }
+    }
+
+
+    private double[] getDerivativeLogDensityInParallel(DerivativeType derivativeType) {
+
+        for (DerivativeCaller caller : derivativeCaller) {
+            caller.setDerivativeType(derivativeType);
+        }
+
+        final int length = derivativeList.get(0).getDimension();
+        double[] derivative = new double[length];
+
+        try {
+            List<Future<double[]>> results = pool.invokeAll(derivativeCaller);
+
+            for (Future<double[]> result : results) {
+                double[] d = result.get();
+                for (int j = 0; j < length; ++j) {
+                    derivative[j] += d[j];
+                }
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        return derivative;
+    }
 
     // **************************************************************
     // XMLObjectParser
@@ -55,7 +108,7 @@ public class JointBranchRateGradient extends JointGradient {
             return JOINT_BRANCH_RATE_GRADIENT;
         }
 
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) {
 
             List<GradientWrtParameterProvider> derivativeList = new ArrayList<>();
 
@@ -74,7 +127,7 @@ public class JointBranchRateGradient extends JointGradient {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new OrRule(
                         new ElementRule(BranchRateGradient.class, 1, Integer.MAX_VALUE),
                         new ElementRule(BranchRateGradientForDiscreteTrait.class, 1, Integer.MAX_VALUE)
@@ -89,4 +142,32 @@ public class JointBranchRateGradient extends JointGradient {
             return JointBranchRateGradient.class;
         }
     };
+
+    private static class DerivativeCaller implements Callable<double[]> {
+
+        public DerivativeCaller(GradientWrtParameterProvider gradient, int index) {
+            this.gradient = gradient;
+            this.index = index;
+        }
+
+        public double[] call() throws Exception {
+            if (DEBUG_PARALLEL_EVALUATION) {
+                System.err.println("Invoking thread #" + index + " for " + gradient.getLikelihood().getId() +
+                        " with type " + type);
+            }
+
+            return type.getDerivativeLogDensity(gradient);
+        }
+
+        public void setDerivativeType(DerivativeType type) {
+            this.type = type;
+        }
+
+        private final GradientWrtParameterProvider gradient;
+        private final int index;
+
+        private DerivativeType type;
+    }
+
+    public static final boolean DEBUG_PARALLEL_EVALUATION = false;
 }

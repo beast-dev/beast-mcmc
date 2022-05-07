@@ -25,12 +25,9 @@
 
 package dr.evomodel.speciation;
 
-import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.util.Author;
 import dr.util.Citable;
@@ -168,6 +165,11 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
     public void precomputeConstants() {
         this.storedC1 = c1(lambda(), mu(), psi());
         this.storedC2 = c2(lambda(), mu(), psi(), rho());
+    }
+
+    public double[] getConstants() {
+        double[] constants = {storedC1,storedC2};
+        return constants;
     }
 
     public double p0(double t) {

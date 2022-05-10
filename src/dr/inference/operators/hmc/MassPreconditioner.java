@@ -564,7 +564,7 @@ public interface MassPreconditioner {
             normalizeL1(boundedMassInverse, dim);
 
             for (int i = 0; i < dim; i++) {
-                boundedMassInverse[i] = 1.0 / boundedMassInverse[i];
+                boundedMassInverse[i] = -1.0 / boundedMassInverse[i];
                 if (boundedMassInverse[i] < lowerBound.getParameterValue(0)) {
                     boundedMassInverse[i] = lowerBound.getParameterValue(0);
                 } else if (boundedMassInverse[i] > upperBound.getParameterValue(0)) {

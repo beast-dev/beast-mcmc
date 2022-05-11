@@ -125,8 +125,7 @@ public interface MassPreconditionScheduler {
 
         protected boolean shouldUpdate(long count) {
             return ((options.preconditioningUpdateFrequency() > 0)
-                    && (((count % options.preconditioningUpdateFrequency() == 0)
-                    && (count > options.preconditioningDelay())))
+                    && (((count % options.preconditioningUpdateFrequency() == 0)))
                     && (options.preconditioningMaxUpdate() == 0 || totalUpdates < options.preconditioningMaxUpdate()));
         }
 

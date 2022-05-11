@@ -66,49 +66,49 @@
 		</speciesTree>
 	</speciationLikelihood>
 
-	<speciationLikelihoodGradient id="grad.birthRate" wrtParameter="birthRate">
-		<speciationLikelihood idref="speciation"/>
-		<treeModel idref="treeModel"/>
-	</speciationLikelihoodGradient>
+<!--	<speciationLikelihoodGradient id="grad.birthRate" wrtParameter="birthRate">-->
+<!--		<speciationLikelihood idref="speciation"/>-->
+<!--		<treeModel idref="treeModel"/>-->
+<!--	</speciationLikelihoodGradient>-->
 
-	<speciationLikelihoodGradient id="grad.deathRate" wrtParameter="deathRate">
-		<speciationLikelihood idref="speciation"/>
-		<treeModel idref="treeModel"/>
-	</speciationLikelihoodGradient>
+<!--	<speciationLikelihoodGradient id="grad.deathRate" wrtParameter="deathRate">-->
+<!--		<speciationLikelihood idref="speciation"/>-->
+<!--		<treeModel idref="treeModel"/>-->
+<!--	</speciationLikelihoodGradient>-->
 
-	<speciationLikelihoodGradient id="grad.samplingRate" wrtParameter="samplingRate">
-		<speciationLikelihood idref="speciation"/>
-		<treeModel idref="treeModel"/>
-	</speciationLikelihoodGradient>
+<!--	<speciationLikelihoodGradient id="grad.samplingRate" wrtParameter="samplingRate">-->
+<!--		<speciationLikelihood idref="speciation"/>-->
+<!--		<treeModel idref="treeModel"/>-->
+<!--	</speciationLikelihoodGradient>-->
 
-	<speciationLikelihoodGradient id="grad.treatmentProbability" wrtParameter="treatmentProbability">
-		<speciationLikelihood idref="speciation"/>
-		<treeModel idref="treeModel"/>
-	</speciationLikelihoodGradient>
+<!--	<speciationLikelihoodGradient id="grad.treatmentProbability" wrtParameter="treatmentProbability">-->
+<!--		<speciationLikelihood idref="speciation"/>-->
+<!--		<treeModel idref="treeModel"/>-->
+<!--	</speciationLikelihoodGradient>-->
 
-	<speciationLikelihoodGradient id="grad.samplingProbability" wrtParameter="samplingProbability">
-		<speciationLikelihood idref="speciation"/>
-		<treeModel idref="treeModel"/>
-	</speciationLikelihoodGradient>
+<!--	<speciationLikelihoodGradient id="grad.samplingProbability" wrtParameter="samplingProbability">-->
+<!--		<speciationLikelihood idref="speciation"/>-->
+<!--		<treeModel idref="treeModel"/>-->
+<!--	</speciationLikelihoodGradient>-->
 
-	<report>
-		<speciationLikelihoodGradient idref="grad.birthRate"/>
-	</report>
+<!--	<report>-->
+<!--		<speciationLikelihoodGradient idref="grad.birthRate"/>-->
+<!--	</report>-->
 
-	<report>
-		<speciationLikelihoodGradient idref="grad.deathRate"/>
-	</report>
+<!--	<report>-->
+<!--		<speciationLikelihoodGradient idref="grad.deathRate"/>-->
+<!--	</report>-->
 
-	<report>
-		<speciationLikelihoodGradient idref="grad.samplingRate"/>
-	</report>
+<!--	<report>-->
+<!--		<speciationLikelihoodGradient idref="grad.samplingRate"/>-->
+<!--	</report>-->
 
-	<report>
-		<speciationLikelihoodGradient idref="grad.treatmentProbability"/>
-	</report>
+<!--	<report>-->
+<!--		<speciationLikelihoodGradient idref="grad.treatmentProbability"/>-->
+<!--	</report>-->
 
-	<report>
-		<speciationLikelihoodGradient idref="grad.samplingProbability"/>
-	</report>
+<!--	<report>-->
+<!--		<speciationLikelihoodGradient idref="grad.samplingProbability"/>-->
+<!--	</report>-->
 
 </beast>

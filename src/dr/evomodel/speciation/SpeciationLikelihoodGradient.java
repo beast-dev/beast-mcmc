@@ -28,6 +28,7 @@ package dr.evomodel.speciation;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
@@ -108,7 +109,7 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
 
             @Override
             Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
-                throw new RuntimeException("To be implemented soon");
+                return new NodeHeightProxyParameter("nodeHeightProxyParameter", tree, true);
             }
         },
 

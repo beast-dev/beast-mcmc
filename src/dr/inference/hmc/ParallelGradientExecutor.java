@@ -59,20 +59,6 @@ public class ParallelGradientExecutor {
         }
     }
 
-    // TODO Function goes in `CompoundGradient`
-    public double[] compound(JointGradient.DerivativeType derivativeType) {
-        return getDerivativeLogDensityInParallel(derivativeType, (gradients, length) -> {
-            double[] reduction = new double[length];
-            int offset = 0;
-            for (Future<double[]> result : gradients) {
-                double[] tmp = result.get();
-                System.arraycopy(tmp, 0, reduction, offset, tmp.length);
-                offset += tmp.length;
-            }
-            return reduction;
-        }, 10);
-    }
-
     public double[] getDerivativeLogDensityInParallel(JointGradient.DerivativeType derivativeType,
                                                       Reducer reducer, int length) {
 

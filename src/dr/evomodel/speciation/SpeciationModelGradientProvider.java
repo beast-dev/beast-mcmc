@@ -50,6 +50,8 @@ public interface SpeciationModelGradientProvider {
         throw new RuntimeException("Not yet implemented");
     }
 
+    default double[] getBreakPoints() { throw new RuntimeException("Not yet implemented"); }
+
     // TODO This factory is probability unnecessary ...
     static SpeciationModelGradientProvider factory(SpeciationModel speciationModel) {
         return speciationModel.getProvider();

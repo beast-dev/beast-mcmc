@@ -96,6 +96,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private long totalMatrixUpdateCount = 0;
     private long totalPartialsUpdateCount = 0;
     private long totalEvaluationCount = 0;
+    private boolean releaseSingleton = true;
 
     /**
      *
@@ -1092,19 +1093,29 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     }
 
     private void releaseBeagle() throws Throwable {
-        if (beagle != null) {
+        if (beagle != null && releaseSingleton) {
             beagle.finalize();
+            releaseSingleton = false;
+        }
+    }
+
+    public static void releaseBeagleDataLikelihoodDelegate(TreeDataLikelihood treeDataLikelihood) throws Throwable {
+        DataLikelihoodDelegate likelihoodDelegate = treeDataLikelihood.getDataLikelihoodDelegate();
+        if (likelihoodDelegate instanceof BeagleDataLikelihoodDelegate) {
+            BeagleDataLikelihoodDelegate delegate = (BeagleDataLikelihoodDelegate) likelihoodDelegate;
+            delegate.releaseBeagle();
         }
     }
 
     public static void releaseAllBeagleInstances() throws Throwable {
         for (Likelihood likelihood : dr.inference.model.Likelihood.FULL_LIKELIHOOD_SET) {
             if (likelihood instanceof TreeDataLikelihood) {
-                TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) likelihood;
-                DataLikelihoodDelegate likelihoodDelegate = treeDataLikelihood.getDataLikelihoodDelegate();
-                if (likelihoodDelegate instanceof BeagleDataLikelihoodDelegate) {
-                    BeagleDataLikelihoodDelegate delegate = (BeagleDataLikelihoodDelegate) likelihoodDelegate;
-                    delegate.releaseBeagle();
+                releaseBeagleDataLikelihoodDelegate((TreeDataLikelihood) likelihood);
+            } else if (likelihood instanceof CompoundLikelihood) {
+                for (Likelihood likelihood2: ((CompoundLikelihood) likelihood).getLikelihoods()) {
+                    if (likelihood2 instanceof TreeDataLikelihood) {
+                        releaseBeagleDataLikelihoodDelegate((TreeDataLikelihood) likelihood2);
+                    }
                 }
             }
         }

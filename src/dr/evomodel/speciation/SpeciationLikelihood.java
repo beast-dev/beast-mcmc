@@ -91,7 +91,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
     // ModelListener IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleModelChangedEvent(Model model, Object object, int index) {
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
         likelihoodKnown = false;
     }
 

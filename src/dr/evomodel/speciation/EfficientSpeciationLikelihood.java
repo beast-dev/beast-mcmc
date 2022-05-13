@@ -30,7 +30,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
+import dr.inference.model.Model;
 
 import java.util.Set;
 
@@ -41,22 +41,33 @@ import java.util.Set;
  */
 public class EfficientSpeciationLikelihood extends SpeciationLikelihood {
 
+    final private BigFastTreeIntervals treeIntervals;
+    
+    private boolean intervalsKnown;
+
     public EfficientSpeciationLikelihood(Tree tree, SpeciationModel speciationModel, Set<Taxon> exclude, String id) {
-        super(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, tree, speciationModel, exclude);
-        setId(id);
+        super(tree, speciationModel, exclude, id);
+
+        if (!(tree instanceof TreeModel)) {
+            throw new IllegalArgumentException("Must currently provide a TreeModel");
+        }
+
+        treeIntervals = new BigFastTreeIntervals((TreeModel)tree);
+
+        addModel(treeIntervals);
+    }
+
+    protected final void handleModelChangedEvent(Model model, Object object, int index) {
+        super.handleModelChangedEvent(model, object, index);
+        if (model == treeIntervals) {
+            intervalsKnown = false;
+        }
     }
 
     @Override
     double calculateLogLikelihood() {
 
-        if (!(tree instanceof TreeModel)) {
-            throw new IllegalArgumentException("Failed test");
-        }
-
         speciationModel.precomputeConstants();
-
-        // TODO Make cached class-object
-        BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals((TreeModel)tree);
 
         double[] modelBreakPoints = speciationModel.getBreakPoints();
         assert modelBreakPoints[modelBreakPoints.length - 1] == Double.POSITIVE_INFINITY;

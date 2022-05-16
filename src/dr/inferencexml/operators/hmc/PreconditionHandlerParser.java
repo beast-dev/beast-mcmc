@@ -51,7 +51,7 @@ public class PreconditionHandlerParser extends AbstractXMLObjectParser {
     private final static String PRECONDITIONING_MEMORY = "preconditioningMemory";
     private final static String PRECONDITIONER = "preconditioner";
     private final static String PRECONDITIONING_GUESS_INIT_MASS = "guessInitialMass";
-    private final static String BOUNDS = "bounds";
+    private final static String EIGEN_BOUNDS = "eigenValueBounds";
 
     public static PreconditionHandler parsePreconditionHandler(XMLObject xo) throws XMLParseException {
         MassPreconditioner.Type preconditioningType;
@@ -79,9 +79,9 @@ public class PreconditionHandlerParser extends AbstractXMLObjectParser {
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
 
         Parameter eigenLowerBound, eigenUpperBound;
-        if (xo.hasAttribute(BOUNDS)) {
-            eigenLowerBound = xo.getChild(BOUNDS).getAllChildren(Parameter.class).get(0);
-            eigenUpperBound = xo.getChild(BOUNDS).getAllChildren(Parameter.class).get(1);
+        if (xo.hasChildNamed(EIGEN_BOUNDS)) {
+            eigenLowerBound = xo.getChild(EIGEN_BOUNDS).getAllChildren(Parameter.class).get(0);
+            eigenUpperBound = xo.getChild(EIGEN_BOUNDS).getAllChildren(Parameter.class).get(1);
         } else {
             eigenLowerBound = new Parameter.Default(1E-2);
             eigenUpperBound = new Parameter.Default(1E2);
@@ -131,7 +131,7 @@ public class PreconditionHandlerParser extends AbstractXMLObjectParser {
                     })
             ),
 
-            new ElementRule(BOUNDS, new XMLSyntaxRule[]{
+            new ElementRule(EIGEN_BOUNDS, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class, 2, 2)
             }, true),
 

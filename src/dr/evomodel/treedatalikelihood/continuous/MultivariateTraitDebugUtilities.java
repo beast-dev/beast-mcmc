@@ -178,6 +178,7 @@ public class MultivariateTraitDebugUtilities {
 
     private static double getScaledBranchLength(NodeRef node, Tree tree, BranchRates branchRates, double normalization) {
         double branchLength = tree.getBranchLength(node);
+        if (branchLength == 0.0) return branchLength;
         if (branchRates != null) {
             branchLength *= branchRates.getBranchRate(tree, node);
         }

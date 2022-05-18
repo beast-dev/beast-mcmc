@@ -15,9 +15,16 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
 
     public SafeMultivariateWithDriftIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int dimProcess,
                                                int bufferCount, int diffusionCount) {
+        this(precisionType, numTraits, dimTrait, dimProcess, bufferCount, diffusionCount, false);
+    }
+
+    public SafeMultivariateWithDriftIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int dimProcess,
+                                               int bufferCount, int diffusionCount, boolean scaleDriftWithBranchRates) {
         super(precisionType, numTraits, dimTrait, dimProcess, bufferCount, diffusionCount);
 
         allocateStorage();
+
+        this.scaleDriftWithBranchRates = scaleDriftWithBranchRates;
 
         System.err.println("Trying SafeMultivariateWithDriftIntegrator");
     }
@@ -58,6 +65,7 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
 
     private double[] vectorDispi;
     private double[] vectorDispj;
+    private boolean scaleDriftWithBranchRates;
 
     private void allocateStorage() {
 
@@ -71,10 +79,11 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
     ///////////////////////////////////////////////////////////////////////////
 
     public void updateBrownianDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
-                                                final double[] edgeLengths, final double[] driftRates,
+                                                final double[] edgeLengths, final double[] realTimeEdgeLengths,
+                                                final double[] driftRates,
                                                 int updateCount) {
 
-        super.updateBrownianDiffusionMatrices(precisionIndex, probabilityIndices, edgeLengths, driftRates, updateCount);
+        super.updateBrownianDiffusionMatrices(precisionIndex, probabilityIndices, edgeLengths, realTimeEdgeLengths, driftRates, updateCount);
 
         if (DEBUG) {
             System.err.println("Matrices (safe with drift):");
@@ -92,7 +101,7 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
             int offset = 0;
             for (int up = 0; up < updateCount; ++up) {
 
-                final double edgeLength = edgeLengths[up];
+                final double edgeLength = scaleDriftWithBranchRates ? edgeLengths[up] : realTimeEdgeLengths[up];
                 final int pio = dimTrait * probabilityIndices[up];
 
                 scale(driftRates, offset, edgeLength, displacements, pio, dimTrait);

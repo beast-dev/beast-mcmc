@@ -51,6 +51,7 @@ public class Property implements Attribute {
         this.name = name;
         this.argument = argument;
 
+        if (object instanceof Property) object = ((Property) object).getAttributeValue();
         this.object = object;
 
         StringBuffer getterName = new StringBuffer("get");
@@ -66,6 +67,11 @@ public class Property implements Attribute {
             else
                 getter = c.getMethod(getterName.toString(), (Class[]) null);
         } catch (NoSuchMethodException e) {
+            try {
+                if (argument != null && argument instanceof Integer)
+                    getter = c.getMethod(getterName.toString(), new Class[]{int.class});
+            } catch (NoSuchMethodException e2) {
+            }
         }
 
     }

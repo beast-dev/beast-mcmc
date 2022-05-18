@@ -131,7 +131,8 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     }
 
     @Override
-    public void updateDiffusionMatrices(ContinuousDiffusionIntegrator cdi, int[] branchIndices, double[] edgeLengths,
+    public void updateDiffusionMatrices(ContinuousDiffusionIntegrator cdi, int[] branchIndices,
+                                        double[] edgeLengths, double[] realTimeEdgeLengths,
                                         int updateCount, boolean flip) {
 
         int[] probabilityIndices = new int[updateCount];
@@ -147,6 +148,7 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
                 eigenBufferHelper.getOffsetIndex(0),
                 probabilityIndices,
                 edgeLengths,
+                realTimeEdgeLengths,
                 getDriftRates(branchIndices, updateCount),
                 updateCount);
     }
@@ -251,5 +253,19 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
             return gradient.getData();
         }
         return new double[gradient.getNumRows()];
+    }
+
+    @Override
+    public void updateGradientDisplacementWrtRate(double[] gradient,
+                                                  double scaling,
+                                                  DenseMatrix64F displacement,
+                                                  DenseMatrix64F gradMatN,
+                                                  DenseMatrix64F gradN) {
+        // Do nothing
+    }
+
+    @Override
+    public boolean scaleDriftWithBranchRates() {
+        return false;
     }
 }

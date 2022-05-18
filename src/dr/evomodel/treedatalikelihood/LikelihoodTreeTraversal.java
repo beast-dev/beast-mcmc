@@ -209,7 +209,7 @@ public final class LikelihoodTreeTraversal extends TreeTraversal {
      */
     private void addBranchUpdateOperation(final Tree tree, final NodeRef node) {
         branchOperations.add(new DataLikelihoodDelegate.BranchOperation(node.getNumber(),
-                computeBranchLength(tree, node)));
+                computeBranchLength(tree, node), computeRealTimeBranchLength(tree, node)));
     }
 
     private final List<DataLikelihoodDelegate.BranchOperation> branchOperations = new ArrayList<DataLikelihoodDelegate.BranchOperation>();

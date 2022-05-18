@@ -77,7 +77,8 @@ public class IntegratedBMDiffusionModelDelegate extends AbstractDriftDiffusionMo
     }
 
     @Override
-    public void updateDiffusionMatrices(ContinuousDiffusionIntegrator cdi, int[] branchIndices, double[] edgeLengths,
+    public void updateDiffusionMatrices(ContinuousDiffusionIntegrator cdi, int[] branchIndices,
+                                        double[] edgeLengths, double[] realTimeEdgeLengths,
                                         int updateCount, boolean flip) {
 
         int[] probabilityIndices = new int[updateCount];

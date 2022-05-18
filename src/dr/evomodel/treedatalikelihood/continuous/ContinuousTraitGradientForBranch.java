@@ -194,13 +194,16 @@ public interface ContinuousTraitGradientForBranch {
 
     class RateGradient extends Default {
 
+        DiffusionProcessDelegate diffusionProcessDelegate;
+
         private final DenseMatrix64F matrixJacobianQInv;
         private final DenseMatrix64F matrixJacobianN;
         private final DenseMatrix64F matrix0;
 
         private final ArbitraryBranchRates branchRateModel;
 
-        public RateGradient(int dim, Tree tree, BranchRateModel brm) {
+        public RateGradient(int dim, Tree tree, BranchRateModel brm,
+                            DiffusionProcessDelegate diffusionProcessDelegate) {
             super(dim, tree);
 
             this.branchRateModel = (brm instanceof ArbitraryBranchRates) ? (ArbitraryBranchRates) brm : null;
@@ -208,6 +211,8 @@ public interface ContinuousTraitGradientForBranch {
             matrixJacobianQInv = new DenseMatrix64F(dim, dim);
             matrixJacobianN = new DenseMatrix64F(dim, 1);
             matrix0 = new DenseMatrix64F(dim, dim);
+
+            this.diffusionProcessDelegate = diffusionProcessDelegate;
         }
 
         @Override
@@ -239,12 +244,10 @@ public interface ContinuousTraitGradientForBranch {
             }
 
             // n_i w.r.t. rate
-            // TODO: Fix delegate to (possibly) un-link drift from arbitrary rate
             DenseMatrix64F gradMatN = matrixJacobianN;
-            CommonOps.scale(scaling, statistics.getBranch().getRawDisplacement(), gradMatN);
-            for (int i = 0; i < gradMatN.numRows; i++) {
-                gradient[0] += gradMatN.get(i) * gradN.get(i);
-            }
+            diffusionProcessDelegate.updateGradientDisplacementWrtRate(gradient, scaling,
+                    statistics.getBranch().getRawDisplacement(),
+                    gradMatN, gradN);
 
             return gradient;
 

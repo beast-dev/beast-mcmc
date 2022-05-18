@@ -145,6 +145,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         branchUpdateIndices = new int[nodeCount];
         branchLengths = new double[nodeCount];
+        realTimeBranchLengths = new double[nodeCount];
 
         // one or two partials buffer for each tip and two for each internal node (for store restore)
         partialBufferHelper = new BufferIndexHelper(nodeCount,
@@ -221,7 +222,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                                     dimTrait,
                                     dimTrait,
                                     partialBufferCount,
-                                    matrixBufferCount
+                                    matrixBufferCount,
+                                    ((DriftDiffusionModelDelegate) diffusionProcessDelegate).scaleDriftWithBranchRates()
                             );
                         } else {
                             if (diffusionProcessDelegate instanceof IntegratedBMDiffusionModelDelegate) {
@@ -779,7 +781,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         for (BranchOperation op : branchOperations) {
             branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
             branchLengths[branchUpdateCount] = op.getBranchLength() * branchNormalization;
-            branchUpdateCount++;
+            realTimeBranchLengths[branchUpdateCount] = op.getRealTimeBranchLength() * branchNormalization;
+            branchUpdateCount ++;
         }
 
         if (!updateTipData.isEmpty()) {
@@ -803,6 +806,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                     cdi,
                     branchUpdateIndices,
                     branchLengths,
+                    realTimeBranchLengths,
                     branchUpdateCount,
                     flip);
         }
@@ -980,6 +984,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     private final int[] branchUpdateIndices;
     private final double[] branchLengths;
+    private final double[] realTimeBranchLengths;
 
     private final int[] operations;
 

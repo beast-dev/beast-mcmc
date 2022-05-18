@@ -111,10 +111,11 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     ///////////////////////////////////////////////////////////////////////////
 
     public void updateBrownianDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
-                                                final double[] edgeLengths, final double[] driftRates,
+                                                final double[] edgeLengths, final double[] realTimeEdgeLengths,
+                                                final double[] driftRates,
                                                 int updateCount) {
 
-        super.updateBrownianDiffusionMatrices(precisionIndex, probabilityIndices, edgeLengths, driftRates, updateCount);
+        super.updateBrownianDiffusionMatrices(precisionIndex, probabilityIndices, edgeLengths, realTimeEdgeLengths, driftRates, updateCount);
 
         assert (diffusions != null);
         assert (probabilityIndices.length >= updateCount);

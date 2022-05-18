@@ -42,6 +42,13 @@ public interface ProcessOnTreeDelegate {
         BranchOperation(int branchNumber, double branchLength) {
             this.branchNumber = branchNumber;
             this.branchLength = branchLength;
+            this.realTimeBranchLength = branchLength; // Default: branchLength = realTimeBranchLength
+        }
+
+        BranchOperation(int branchNumber, double branchLength, double realTimeBranchLength) {
+            this.branchNumber = branchNumber;
+            this.branchLength = branchLength;
+            this.realTimeBranchLength = realTimeBranchLength;
         }
 
         public int getBranchNumber() {
@@ -52,12 +59,17 @@ public interface ProcessOnTreeDelegate {
             return branchLength;
         }
 
+        public double getRealTimeBranchLength() {
+            return realTimeBranchLength;
+        }
+
         public String toString() {
-            return branchNumber + ":" + branchLength;
+            return branchNumber + ":" + branchLength + ":" + realTimeBranchLength;
         }
 
         private final int branchNumber;
         private final double branchLength;
+        private final double realTimeBranchLength;
     }
 
     final class NodeOperation {

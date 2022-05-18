@@ -128,7 +128,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
     // TODO Only send a list of operations
     void updatePreOrderPartial(int kp, int ip, int im, int jp, int jm);
 
-    void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex, int precisionIndex);
+    void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex, int precisionIndex, boolean isIntegratedProcess);
 
     int getBufferCount();
 
@@ -799,7 +799,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         }
 
         @Override
-        public void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex, int precisionIndex) {
+        public void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex, int precisionIndex, boolean isIntegratedProcess) {
             System.arraycopy(partials, dimPartial * priorBufferIndex, // Copy from prior
                     preOrderPartials, dimPartial * rootNodeIndex, dimPartial); // To pre-order root
         }

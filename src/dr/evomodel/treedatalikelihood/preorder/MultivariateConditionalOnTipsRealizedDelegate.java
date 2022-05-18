@@ -47,7 +47,9 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
         final DenseMatrix64F rootPrec = wrap(partialNodeBuffer, offsetPartial + dimTrait, dimTrait, dimTrait);
         final DenseMatrix64F priorPrec = wrap(partialPriorBuffer, offsetPartial + dimTrait, dimTrait, dimTrait);
  //       MissingOps.safeMult(Pd, wrap(partialPriorBuffer, offsetPartial + dimTrait, dimTrait, dimTrait), priorPrec);
-        ((MultivariateIntegrator) cdi).getRootPriorPrecision(Pd, priorPrec, likelihoodDelegate.getDiffusionProcessDelegate().isIntegratedProcess());
+        final DenseMatrix64F PTmp = new DenseMatrix64F(dimTrait, dimTrait);
+        ((MultivariateIntegrator) cdi).getRootPriorPrecision(Pd, priorPrec, PTmp, likelihoodDelegate.getDiffusionProcessDelegate().isIntegratedProcess());
+        priorPrec.set(PTmp);
 
         final DenseMatrix64F totalPrec = new DenseMatrix64F(dimTrait, dimTrait);
         CommonOps.add(rootPrec, priorPrec, totalPrec);

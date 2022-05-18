@@ -34,13 +34,23 @@
 	</treeModel>
 
     <multivariateDiffusionModel id="diffusionModel">
-		<precisionMatrix>
-			<matrixParameter id="precisionMatrix">
-				<parameter id="prec.col1" value="1.0 0.1"/>
-				<parameter id="prec.col2" value="0.1 2.0"/>
-			</matrixParameter>
-		</precisionMatrix>
+        <precisionMatrix>
+                <compoundSymmetricMatrix id="precision.matrix" asCorrelation="true" isCholesky="true">
+                    <diagonal>
+                        <parameter id="precision.diagonal" value="1 1" lower="0 0"/>
+                    </diagonal>
+                    <offDiagonal>
+                        <parameter id="precision.offDiagonal" value="0"/>
+                    </offDiagonal>
+                </compoundSymmetricMatrix>
+        </precisionMatrix>
 	</multivariateDiffusionModel>
+
+    <LKJCorrelationPrior id="precision.offDiagonal.prior" shapeParameter="1.0" dimension="2">
+		<data>
+            <parameter idref="precision.offDiagonal"/>
+		</data>
+	</LKJCorrelationPrior>
 
 	<traitDataLikelihood id="ibmLikelihood" traitName="X" forceFullPrecision="true" integratedProcess="true">
 		<multivariateDiffusionModel idref="diffusionModel"/>
@@ -48,6 +58,7 @@
 		<traitParameter>
 			<parameter idref="leafTraits"/>
 		</traitParameter>
+		<!-- 
 		<driftModels>
 			<strictClockBranchRates>
 				<rate>
@@ -60,12 +71,13 @@
 				</rate>
 			</strictClockBranchRates>
 		</driftModels>
+		-->
      	<conjugateRootPrior>
             <meanParameter>
-                <parameter id="meanRoot"  value="-0.5 1.0 1.0 -2.0"/>
+                <parameter id="meanRoot"  value="0 0 0 0"/>
             </meanParameter>
             <priorSampleSize>
-                <parameter id="sampleSizeRoot" value="10.0"/>
+                <parameter id="sampleSizeRoot" value="0.00001"/>
             </priorSampleSize>
         </conjugateRootPrior>
 	</traitDataLikelihood>
@@ -76,31 +88,47 @@
 	</report>
 
 	<operators id="ibmOperators">
-       <dirtyLikelihood weight="1">
-            <traitDataLikelihood idref="ibmLikelihood"/>
-        </dirtyLikelihood>
+       <randomWalkOperator windowSize="0.1" weight="20" boundaryCondition="log">
+           <parameter idref="precision.diagonal"/>
+       </randomWalkOperator>
+       <randomWalkOperator windowSize="0.1" weight="20">
+           <parameter idref="precision.offDiagonal"/>
+           <LKJTransform dimension="2"/>
+       </randomWalkOperator>
 	</operators>
 
-	<mcmc id="ibmMcmc" chainLength="10">
+	<mcmc id="ibmMcmc" chainLength="1000000">
 		<posterior id="ibmPosterior">
-			<traitDataLikelihood idref="ibmLikelihood"/>
+		<prior id="prior">
+				<LKJCorrelationPrior idref="precision.offDiagonal.prior"/>
+                <halfTPrior id="precision.diagonal.prior" df="1" scale="2.5">
+                    <parameter idref="precision.diagonal"/>
+                </halfTPrior>
+			</prior>
+			<likelihood id="likelihood">
+				<traitDataLikelihood idref="ibmLikelihood"/>
+			</likelihood>
 		</posterior>
 		<operators idref="ibmOperators"/>
-		<log logEvery="10">
+		<log logEvery="10000">
 			<posterior idref="ibmPosterior"/>
 		</log>
 
-		<log logEvery="1" fileName="testIBM.log">
+		<log logEvery="1000" fileName="testIBM.log">
 			<!-- <traitLogger traitName="X" nodes="all"> -->
 			<!-- 	<traitDataLikelihood idref="ibmLikelihood"/> -->
 			<!-- 	<treeModel idref="treeModel"/> -->
 			<!-- </traitLogger> -->
+<!-- 
 			<parameter idref="rate.1"/>
 			<parameter idref="rate.2"/>
+ -->
 			<traitDataLikelihood idref="ibmLikelihood"/>
-            <matrixParameter idref="precisionMatrix"/>
 			<parameter idref="meanRoot"/>
 			<parameter idref="sampleSizeRoot"/>
+			<matrixParameter idref="precision.matrix"/>
+            <matrixParameter idref="precision.diagonal"/>
+            <matrixParameter idref="precision.offDiagonal"/>
 		</log>
 
 		<!-- <logTree logEvery="1" nexusFormat="true" fileName="testIBM.trees"> -->

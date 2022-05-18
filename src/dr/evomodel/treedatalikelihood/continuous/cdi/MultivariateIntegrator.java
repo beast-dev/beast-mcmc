@@ -660,14 +660,14 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     }
 
     @Override
-    public void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex, int precisionIndex) {
+    public void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex, int precisionIndex, boolean isIntegratedProcess) {
 
-        super.calculatePreOrderRoot(priorBufferIndex, rootNodeIndex, precisionIndex);
+        super.calculatePreOrderRoot(priorBufferIndex, rootNodeIndex, precisionIndex, isIntegratedProcess);
 
         updatePrecisionOffsetAndDeterminant(precisionIndex);
 
-        final DenseMatrix64F Pd = wrap(diffusions, precisionOffset, dimTrait, dimTrait);
-        final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
+        final DenseMatrix64F Pd = wrap(diffusions, precisionOffset, dimProcess, dimProcess);
+        final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimProcess, dimProcess);
 
         int rootOffset = dimPartial * rootNodeIndex;
 
@@ -681,10 +681,12 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             {
                 final DenseMatrix64F tmp = matrix0;
 
-                MissingOps.safeMult(Pd, Proot, tmp);
+                getRootPriorPrecision(Pd, Proot, tmp, isIntegratedProcess);
+                //MissingOps.safeMult(Pd, Proot, tmp);
                 unwrap(tmp, preOrderPartials, rootOffset + dimTrait);
 
-                CommonOps.mult(Vd, Vroot, tmp);
+                getRootPriorPrecision(Vd, Vroot, tmp, isIntegratedProcess);
+                // CommonOps.mult(Vd, Vroot, tmp);
                 unwrap(tmp, preOrderPartials, rootOffset + dimTrait + dimTrait * dimTrait);
             }
             rootOffset += dimPartialForTrait;
@@ -810,19 +812,14 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         }
     }
 
-    public void getRootPriorPrecision(DenseMatrix64F Pd, DenseMatrix64F PPrior, boolean isIntegratedProcess) {
-        if (!isIntegratedProcess) {
-            final DenseMatrix64F PTmp = new DenseMatrix64F(dimTrait, dimTrait);
-            CommonOps.mult(Pd, PPrior, PTmp);
-            PPrior.set(PTmp);
-        } else {
+    public void getRootPriorPrecision(DenseMatrix64F Pd, DenseMatrix64F PPrior, DenseMatrix64F PTmp, boolean isIntegratedProcess) {
+        if (isIntegratedProcess) {
             DenseMatrix64F Pdbis = new DenseMatrix64F(dimTrait, dimTrait);
             blockUnwrap(Pd, Pdbis.data, 0, 0, 0, dimTrait);
             blockUnwrap(Pd, Pdbis.data, dimProcess, dimProcess, 0, dimTrait);
-
-            final DenseMatrix64F PTmp = new DenseMatrix64F(dimTrait, dimTrait);
-            CommonOps.mult(Pdbis, PPrior, PTmp);
-            PPrior.set(PTmp);
+            MissingOps.safeMult(Pdbis, PPrior, PTmp);
+        } else {
+            MissingOps.safeMult(Pd, PPrior, PTmp);
         }
     }
 

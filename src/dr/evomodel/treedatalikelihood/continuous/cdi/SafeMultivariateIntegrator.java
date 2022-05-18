@@ -615,7 +615,9 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
             // TODO Block below is for the conjugate prior ONLY
             {
-                getRootPriorPrecision(Pd, PPrior, isIntegratedProcess);
+                final DenseMatrix64F PTmp = new DenseMatrix64F(dimTrait, dimTrait);
+                getRootPriorPrecision(Pd, PPrior, PTmp, isIntegratedProcess);
+                PPrior.set(PTmp);
             }
 
             final DenseMatrix64F VTotal = new DenseMatrix64F(dimTrait, dimTrait);

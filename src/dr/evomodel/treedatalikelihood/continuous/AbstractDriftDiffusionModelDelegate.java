@@ -71,7 +71,7 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
-        if (branchRateModels.contains(model)) {
+        if (branchRateModels != null && branchRateModels.contains(model)) {
             fireModelChanged(model);
         } else {
             super.handleModelChangedEvent(model, object, index);

@@ -57,7 +57,7 @@ public abstract class AbstractFullConditionalDistributionDelegate
         }
 
         cdi.calculatePreOrderRoot(rootProcessDelegate.getPriorBufferIndex(),
-                likelihoodDelegate.getActiveNodeIndex(rootIndex), likelihoodDelegate.getActivePrecisionIndex(0));
+                likelihoodDelegate.getActiveNodeIndex(rootIndex), likelihoodDelegate.getActivePrecisionIndex(0), likelihoodDelegate.getDiffusionProcessDelegate().isIntegratedProcess());
 
         if (DEBUG) {
             cdi.getPreOrderPartial(likelihoodDelegate.getActiveNodeIndex(rootIndex), partialRootBuffer);

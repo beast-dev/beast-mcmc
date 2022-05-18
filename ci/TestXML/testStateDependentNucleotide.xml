@@ -1,0 +1,88 @@
+<?xml version="1.0" ?>
+<beast>
+
+    <taxa id="taxa">
+        <taxon id="A">
+            <attr name="host">
+                Bat
+            </attr>
+        </taxon>
+        <taxon id="B">
+            <attr name="host">
+                Bat
+            </attr>
+        </taxon>
+        <taxon id="C">
+            <attr name="host">
+                Cat
+            </attr>
+        </taxon>
+    </taxa>
+
+    <alignment id="alignment" dataType="nucleotide">
+    <sequence>
+        <taxon idref="A"/>
+        CCA
+    </sequence>
+    <sequence>
+        <taxon idref="B"/>
+        CCC
+    </sequence>
+    <sequence>
+        <taxon idref="C"/>
+        CCC
+    </sequence>
+    </alignment>
+
+    <generalDataType id="host.dataType">
+        <state code="Bat"/>
+        <state code="Cat"/>
+    </generalDataType>
+
+    <!-- Data pattern for discrete trait, 'host'                                 -->
+    <attributePatterns id="host.pattern" attribute="host">
+        <taxa idref="taxa"/>
+        <generalDataType idref="host.dataType"/>
+    </attributePatterns>
+
+
+    <expandStateSpace id="expandedAlignment" dataType="stateDependentNucleotide2">
+        <alignment>
+          <alignment idref="alignment"/>
+        </alignment>
+        <trait>
+          <attributePatterns idref="host.pattern"/>
+        </trait>
+    </expandStateSpace>
+
+
+
+  <!-- <expandStateSpace id="expandedAlignment" dataType="stateDependentNucleotide" trait="host">
+    <taxa idref="taxa"/>
+    <alignment idref="alignment"/>
+  </expandStateSpace>
+ -->
+  <!--
+	<patterns id="patterns" from="1">
+		<alignment idref="alignment"/>
+	</patterns>
+
+  <newick id="realTree" usingHeights="true" usingDates="false">
+  	((A:1.0,B:1.0):1.0,C:1.0)
+  </newick>
+
+	<treeModel id="realTreeModel">
+		<newick idref="realTree"/>
+		<rootHeight fixHeights="true">
+			<parameter id="realTreeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="realTreeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="realTreeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+	</treeModel> -->
+
+
+</beast>

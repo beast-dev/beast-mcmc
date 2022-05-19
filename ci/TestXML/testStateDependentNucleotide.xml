@@ -4,7 +4,7 @@
     <taxa id="taxa">
         <taxon id="A">
             <attr name="host">
-                Bat
+                Rat
             </attr>
         </taxon>
         <taxon id="B">
@@ -35,8 +35,10 @@
     </alignment>
 
     <generalDataType id="host.dataType">
+        <!-- This defines the ordering in the expanded state-space -->
         <state code="Bat"/>
         <state code="Cat"/>
+        <state code="Rat"/>
     </generalDataType>
 
     <!-- Data pattern for discrete trait, 'host'                                 -->
@@ -46,7 +48,7 @@
     </attributePatterns>
 
 
-    <expandStateSpace id="expandedAlignment" dataType="stateDependentNucleotide2">
+    <expandStateSpace id="expandedAlignment" dataType="stateDependentNucleotide3">
         <alignment>
           <alignment idref="alignment"/>
         </alignment>
@@ -105,13 +107,27 @@
         </rates>
     </gtrModel>
 
-    <markovModulatedSubstitutionModel id="mm" dataType="stateDependentNucleotide2">
+    <gtrModel id="gtr3">
+        <frequencies>
+            <frequencyModel dataType="nucleotide">
+                <frequencies>
+                    <parameter idref="frequencies"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <rates>
+            <parameter id="gtr3.rates" dimension="6" value="1.0" lower="0.0"/>
+        </rates>
+    </gtrModel>
+
+    <markovModulatedSubstitutionModel id="mm" dataType="stateDependentNucleotide3">
         <switchingRates>
-            <parameter id="switchingRates" value="1" dimension="2" lower="0.0"/>
+            <parameter id="switchingRates" value="1" dimension="6" lower="0.0"/>
         </switchingRates>
 
         <GTRModel idref="gtr1"/>
         <GTRModel idref="gtr2"/>
+        <GTRModel idref="gtr3"/>
     </markovModulatedSubstitutionModel>
 
     <!-- site model                                                              -->

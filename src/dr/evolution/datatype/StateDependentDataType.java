@@ -60,6 +60,8 @@ public interface StateDependentDataType {
             return state * dependentClass;
         }
 
+
+        // TODO is this right or should it include the dependent class?
         static boolean[] getStateSet(final int state,
                                      final int stateCount,
                                      final int dependentClassCount,

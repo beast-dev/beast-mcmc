@@ -26,7 +26,6 @@
 package dr.evomodelxml.substmodel;
 
 import dr.evolution.datatype.HiddenDataType;
-import dr.evolution.datatype.StateDependentDataType;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.MarkovModulatedSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -58,7 +57,7 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         DataType dataType = DataTypeUtils.getDataType(xo);
-        if (!(dataType instanceof HiddenDataType || dataType instanceof StateDependentDataType)) {
+        if (!(dataType instanceof HiddenDataType)) {
             throw new XMLParseException("Must construct " + MARKOV_MODULATED_MODEL + " with hidden data types. " +
                     "You may need to provide the `-universal` extension to your hidden code type.");
         }

@@ -202,8 +202,8 @@
 	<!-- Define operators                                                        -->
 	<operators id="operators" optimizationSchedule="power">
 
-		<hamiltonianMonteCarloOperator weight="1" nSteps="4" stepSize="1E-2" mode="vanilla"
-		                 drawVariance="1.0" autoOptimize="true" targetAcceptanceProbability="0.7"
+		<hamiltonianMonteCarloOperator weight="1" nSteps="5" stepSize="1E-2" mode="vanilla"
+		                 drawVariance="1.0" autoOptimize="true" targetAcceptanceProbability="0.8"
 		                 preconditioningUpdateFrequency="1">
 			<jointGradient>
 				<bayesianBridge idref="bbDistribution"/>

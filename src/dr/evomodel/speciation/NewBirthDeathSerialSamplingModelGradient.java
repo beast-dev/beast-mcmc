@@ -53,98 +53,6 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
 
         return partialC1C2;
     }
-
-    private double partialQpartialRho(double t) {
-        // c1 == constants[0], c2 == constants[1]
-        double[] constants = model.getConstants();
-        double lambda = model.lambda();
-        double C1 = constants[0];
-        double C2 = constants[1];
-
-        // d/dc2
-        double partialC2 = 2 * lambda / constants[0];
-        double partialQ = 2 * partialC2 * (Math.exp(C1 * t) * (1 + C2) - Math.exp(-C1 * t) * (1 - C2) - 2 * C2);
-
-        return partialQ;
-    }
-
-    private double partialP0partialRho(double t) {
-        // c1 == constants[0], c2 == constants[1]
-        double[] constants = model.getConstants();
-        double lambda = model.lambda();
-        double C1 = constants[0];
-        double C2 = constants[1];
-
-        // d/dc2
-        double partialC2 = 2 * lambda / constants[0];
-
-        // define g1
-        double G1 = g1(t);
-        double partialP0 = -C1 / lambda * (partialC2 * (G1 - (1 - Math.exp(-C1 * t)) * (1 + C2))) / (G1 * G1);
-
-        return partialP0;
-    }
-
-    @Override
-    public Parameter getSamplingProbabilityParameter() {
-        return model.samplingFractionAtPresent;
-    }
-
-    @Override
-    public double[] getSamplingProbabilityGradient(Tree tree, NodeRef node) {
-        model.precomputeConstants();
-
-        // c1 == constants[0], c2 == constants[1]
-        double rho = model.rho();
-
-        // d/dq
-        double partialLL = 0.0;
-
-        double origin = model.originTime.getValue(0);
-        //double p0 = model.p0(origin);
-        // partialLL += 1 / (1 - p0) * partialP0partialRho(origin);
-        double Q = Math.exp(model.logq(origin));
-        partialLL -= partialQpartialRho(origin) / Q;
-
-        BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals((TreeModel) tree);
-
-        int m = 0;
-        int mPlusn = 1;
-
-
-        for (int i = 0; i < treeIntervals.getIntervalCount(); ++i) {
-            double intervalStart = treeIntervals.getIntervalTime(i);
-            final double intervalEnd = intervalStart + treeIntervals.getInterval(i);
-            // final int nLineages = treeIntervals.getLineageCount(i);
-
-            if (treeIntervals.getIntervalType(i) == IntervalType.SAMPLE) {
-                double t = intervalEnd;
-                Q = Math.exp(model.logq(t));
-                double P0 = model.p0(t);
-                double r = model.r();
-                partialLL += (1 - r) / ((1 - r) * P0 + r) * partialP0partialRho(t) + partialQpartialRho(t) / Q;
-                m += 1;
-
-            } else if (treeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
-                double t = intervalEnd;
-                Q = Math.exp(model.logq(t));
-                partialLL -= partialQpartialRho(t) / Q;
-                mPlusn += 1;
-            }
-        }
-
-        int n = mPlusn - m;
-        if (rho != 0) {
-            partialLL += n / rho;
-        }
-
-        double[] partialLL_vec = new double[1];
-        partialLL_vec[0] = partialLL;
-
-        return partialLL_vec;
-    }
-
-    // Gradient w.r.t. mu
     private double[] partialC1C2partialMu() {
         // c1 == constants[0], c2 == constants[1]
         double[] constants = model.getConstants();
@@ -161,86 +69,6 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
         return partialC1C2;
     }
 
-    private double partialQpartialMu(double t) {
-        // c1 == constants[0], c2 == constants[1]
-        double[] constants = model.getConstants();
-        double C1 = constants[0];
-        double C2 = constants[1];
-
-        double[] partialC1C2 = partialC1C2partialMu();
-        double partialC1 = partialC1C2[0];
-        double partialC2 = partialC1C2[1];
-        double partialQ = t * partialC1 * ((Math.exp(C1 * t) * (1 + C2) * (1 + C2) - Math.exp(-C1 * t) * (1 - C2) * (1 - C2)));
-        partialQ += 2 * partialC2 * ((Math.exp(C1 * t) * (1 + C2) - Math.exp(-C1 * t) * (1 - C2) - 2 * C2));
-        return partialQ;
-    }
-
-
-    private double partialG2partialMu(double t) {
-        // c1 == constants[0], c2 == constants[1]
-        double[] constants = model.getConstants();
-        double C1 = constants[0];
-        double C2 = constants[1];
-
-        double[] partialC1C2 = partialC1C2partialMu();
-        double partialC1 = partialC1C2[0];
-        double partialC2 = partialC1C2[1];
-
-        double partialG2 = g1(t) * ((partialC1 * (1 + C2) + partialC2 * C1)) - (partialC1 * t * Math.exp(-C1 * t) * (C2 - 1) + partialC2 * (1 - Math.exp(-C1 * t))) * C1 * (1 + C2);
-        double G1 = g1(t);
-        partialG2 = -2 * partialG2 / (G1 * G1);
-        partialG2 += partialC1;
-        return partialG2;
-    }
-
-    private double partialP0partialMu(double t) {
-        double lambda = model.lambda();
-        double partialG2 = partialG2partialMu(t);
-        return (1 + partialG2) / (2 * lambda);
-    }
-
-    @Override
-    public Parameter getDeathRateParameter() {
-        return model.deathRate;
-    }
-
-    @Override
-    public double[] getDeathRateGradient(Tree tree, NodeRef node) {
-        model.precomputeConstants();
-        double partialLL = 0.0;
-        double origin = model.originTime.getValue(0);
-        double p0 = model.p0(origin);
-        partialLL += 1 / (1 - p0) * partialP0partialMu(origin);
-        double Q = Math.exp(model.logq(origin));
-        partialLL -= partialQpartialMu(origin) / Q;
-        BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals((TreeModel) tree);
-
-
-        for (int i = 0; i < treeIntervals.getIntervalCount(); ++i) {
-            double intervalStart = treeIntervals.getIntervalTime(i);
-            final double intervalEnd = intervalStart + treeIntervals.getInterval(i);
-            // final int nLineages = treeIntervals.getLineageCount(i);
-
-            if (treeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
-                double t = intervalEnd;
-                Q = Math.exp(model.logq(t)); // can store q's when calculating likelihood
-                partialLL -= partialQpartialMu(t) / Q;
-            } else if (treeIntervals.getIntervalType(i) == IntervalType.SAMPLE) {
-                double t = intervalEnd;
-                Q = Math.exp(model.logq(t));
-                double P0 = model.p0(t);
-                double r = model.r();
-                partialLL += (1 - r) / ((1 - r) * P0 + r) * partialP0partialMu(t) + partialQpartialMu(t) / Q;
-            }
-        }
-
-        double[] partialLL_vec = new double[1];
-        partialLL_vec[0] = partialLL;
-
-        return partialLL_vec;
-    }
-
-    // Gradient w.r.t. lambda
     private double[] partialC1C2partialLambda() {
         // c1 == constants[0], c2 == constants[1]
         double[] constants = model.getConstants();
@@ -257,96 +85,6 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
         return partialC1C2;
     }
 
-    private double partialQpartialLambda(double t) {
-        // c1 == constants[0], c2 == constants[1]
-        double[] constants = model.getConstants();
-        double C1 = constants[0];
-        double C2 = constants[1];
-
-        double[] partialC1C2 = partialC1C2partialLambda();
-        double partialC1 = partialC1C2[0];
-        double partialC2 = partialC1C2[1];
-        double partialQ = t * partialC1 * ((Math.exp(C1 * t) * (1 + C2) * (1 + C2) - Math.exp(-C1 * t) * (1 - C2) * (1 - C2)));
-        partialQ += 2 * partialC2 * ((Math.exp(C1 * t) * (1 + C2) - Math.exp(-C1 * t) * (1 - C2) - 2 * C2));
-        return partialQ;
-    }
-
-
-    private double partialG2partialLambda(double t) {
-        // c1 == constants[0], c2 == constants[1]
-        double[] constants = model.getConstants();
-        double C1 = constants[0];
-        double C2 = constants[1];
-
-        double[] partialC1C2 = partialC1C2partialLambda();
-        double partialC1 = partialC1C2[0];
-        double partialC2 = partialC1C2[1];
-
-        double partialG2 = g1(t) * ((partialC1 * (1 + C2) + partialC2 * C1)) - (partialC1 * t * Math.exp(-C1 * t) * (C2 - 1) + partialC2 * (1 - Math.exp(-C1 * t))) * C1 * (1 + C2);
-        double G1 = g1(t);
-        partialG2 = -2 * partialG2 / (G1 * G1);
-        partialG2 += partialC1;
-        return partialG2;
-    }
-
-    private double partialP0partialLambda(double t) {
-        double lambda = model.lambda();
-        double G2 = g2(t);
-        double mu = model.mu();
-        double psi = model.psi();
-        double partialG2 = partialG2partialLambda(t);
-        return (-mu - psi + lambda*partialG2 - G2) / (2 * lambda*lambda);
-    }
-
-    @Override
-    public Parameter getBirthRateParameter() {
-        return model.birthRate;
-    }
-
-    @Override
-    public double[] getBirthRateGradient(Tree tree, NodeRef node) {
-        model.precomputeConstants();
-        double lambda = model.lambda();
-        double partialLL = 0.0;
-        double origin = model.originTime.getValue(0);
-        double p0 = model.p0(origin);
-        partialLL += 1 / (1 - p0) * partialP0partialLambda(origin);
-        double Q = Math.exp(model.logq(origin));
-        partialLL -= partialQpartialLambda(origin) / Q;
-        BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals((TreeModel) tree);
-
-        int m = 0;
-        int mPlusn = 1;
-
-
-        for (int i = 0; i < treeIntervals.getIntervalCount(); ++i) {
-            double intervalStart = treeIntervals.getIntervalTime(i);
-            final double intervalEnd = intervalStart + treeIntervals.getInterval(i);
-            // final int nLineages = treeIntervals.getLineageCount(i);
-
-            if (treeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
-                double t = intervalEnd;
-                Q = Math.exp(model.logq(t));
-                mPlusn += 1;
-                partialLL -= partialQpartialLambda(t) / Q;
-            } else if (treeIntervals.getIntervalType(i) == IntervalType.SAMPLE) {
-                double t = intervalEnd;
-                Q = Math.exp(model.logq(t));
-                double P0 = model.p0(t);
-                double r = model.r();
-                m += 1;
-                partialLL += (1 - r) / ((1 - r) * P0 + r) * partialP0partialLambda(t) + partialQpartialLambda(t) / Q;
-            }
-        }
-        int n = mPlusn - m;
-        partialLL += (n + m - 1)/lambda;
-        double[] partialLL_vec = new double[1];
-        partialLL_vec[0] = partialLL;
-
-        return partialLL_vec;
-    }
-
-    // Gradients wrt psi
     private double[] partialC1C2partialPsi() {
         // c1 == constants[0], c2 == constants[1]
         double[] constants = model.getConstants();
@@ -363,41 +101,41 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
         return partialC1C2;
     }
 
-    private double partialQpartialPsi(double t) {
-        // c1 == constants[0], c2 == constants[1]
-        double[] constants = model.getConstants();
-        double C1 = constants[0];
-        double C2 = constants[1];
-
-        double[] partialC1C2 = partialC1C2partialPsi();
-        double partialC1 = partialC1C2[0];
-        double partialC2 = partialC1C2[1];
-        double partialQ = t * partialC1 * ((Math.exp(C1 * t) * (1 + C2) * (1 + C2) - Math.exp(-C1 * t) * (1 - C2) * (1 - C2)));
-        partialQ += 2 * partialC2 * ((Math.exp(C1 * t) * (1 + C2) - Math.exp(-C1 * t) * (1 - C2) - 2 * C2));
-        return partialQ;
+    @Override
+    public Parameter getSamplingProbabilityParameter() {
+        return model.samplingFractionAtPresent;
     }
 
-    private double partialG2partialPsi(double t) {
-        // c1 == constants[0], c2 == constants[1]
-        double[] constants = model.getConstants();
-        double C1 = constants[0];
-        double C2 = constants[1];
-
-        double[] partialC1C2 = partialC1C2partialPsi();
-        double partialC1 = partialC1C2[0];
-        double partialC2 = partialC1C2[1];
-
-        double partialG2 = g1(t) * ((partialC1 * (1 + C2) + partialC2 * C1)) - (partialC1 * t * Math.exp(-C1 * t) * (C2 - 1) + partialC2 * (1 - Math.exp(-C1 * t))) * C1 * (1 + C2);
-        double G1 = g1(t);
-        partialG2 = -2 * partialG2 / (G1 * G1);
-        partialG2 += partialC1;
-        return partialG2;
+    @Override
+    public double[] getSamplingProbabilityGradient(Tree tree, NodeRef node) {
+        double[] result = new double[1];
+        result[0] = getAllGradient(tree, node)[3];
+        return result;
     }
 
-    private double partialP0partialPsi(double t) {
-        double lambda = model.lambda();
-        double partialG2 = partialG2partialPsi(t);
-        return (1 + partialG2) / (2 * lambda);
+    @Override
+    public Parameter getDeathRateParameter() {
+        return model.deathRate;
+    }
+
+    @Override
+    public double[] getDeathRateGradient(Tree tree, NodeRef node) {
+        double[] result = new double[1];
+        result[0] = getAllGradient(tree, node)[1];
+        return result;
+    }
+
+
+    @Override
+    public Parameter getBirthRateParameter() {
+        return model.birthRate;
+    }
+
+    @Override
+    public double[] getBirthRateGradient(Tree tree, NodeRef node) {
+        double[] result = new double[1];
+        result[0] = getAllGradient(tree, node)[0];
+        return result;
     }
 
     @Override
@@ -407,47 +145,9 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
 
     @Override
     public double[] getSamplingRateGradient(Tree tree, NodeRef node) {
-        model.precomputeConstants();
-        double partialLL = 0.0;
-
-        double psi = model.psi();
-
-        double origin = model.originTime.getValue(0);
-        double p0 = model.p0(origin);
-        partialLL += 1 / (1 - p0) * partialP0partialPsi(origin);
-        double Q = Math.exp(model.logq(origin));
-        partialLL -= partialQpartialPsi(origin) / Q;
-        BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals((TreeModel) tree);
-
-        int m = 0;
-        // TODO(yucais): check how to calculate k from a given tree
-        int k = 0;
-
-        for (int i = 0; i < treeIntervals.getIntervalCount(); ++i) {
-            double intervalStart = treeIntervals.getIntervalTime(i);
-            final double intervalEnd = intervalStart + treeIntervals.getInterval(i);
-            // final int nLineages = treeIntervals.getLineageCount(i);
-
-            if (treeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
-                double t = intervalEnd;
-                Q = Math.exp(model.logq(t)); // can store q's when calculating likelihood
-                partialLL -= partialQpartialPsi(t) / Q;
-            } else if (treeIntervals.getIntervalType(i) == IntervalType.SAMPLE) {
-                double t = intervalEnd;
-                Q = Math.exp(model.logq(t));
-                double P0 = model.p0(t);
-                double r = model.r();
-                partialLL += (1 - r) / ((1 - r) * P0 + r) * partialP0partialPsi(t) + partialQpartialPsi(t) / Q;
-                m += 1;
-            }
-        }
-
-        partialLL += (k + m) / psi;
-
-        double[] partialLL_vec = new double[1];
-        partialLL_vec[0] = partialLL;
-
-        return partialLL_vec;
+        double[] result = new double[1];
+        result[0] = getAllGradient(tree, node)[2];
+        return result;
     }
 
     // gradients for all
@@ -599,7 +299,9 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
             // psi
             partialLL_all[2] += (k + m) / psi;
             // rho
-            partialLL_all[3] += n / rho;
+            if (rho != 0) {
+                partialLL_all[3] += n / rho;
+            }
 
             savedGradient = partialLL_all;
 

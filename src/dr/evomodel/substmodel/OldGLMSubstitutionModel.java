@@ -56,6 +56,9 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel {
     public GeneralizedLinearModel getGeneralizedLinearModel() { return glm; }
 
     protected void setupRelativeRates(double[] rates) {
+        System.err.println(">>>>>>>>>>oldGLMSubstitutionModel");
+        System.err.println(new dr.math.matrixAlgebra.Vector(glm.getXBeta()));
+        System.err.println("<<<<<<<<<<");
         System.arraycopy(glm.getXBeta(),0,rates,0,rates.length);
     }
 

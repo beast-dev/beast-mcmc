@@ -31,8 +31,8 @@ public class InstantaneousMixtureSubstitutionModelParser extends AbstractXMLObje
 
 //        boolean normalize = xo.getAttribute(NORMALIZE_WEIGHTS, false);
 
-        SubstitutionRateMatrixMixture srmm = (SubstitutionRateMatrixMixture) xo.getChild(SubstitutionRateMatrixMixture.class);
-        if ( srmm.getColumnDimension() > 2 ) {
+        List<SubstitutionModel> modelList = xo.getAllChildren(SubstitutionModel.class);
+        if ( modelList.size() > 2 ) {
             throw new RuntimeException("instantaneousMixtureSubstitutionModel only implemented for 2 components.");
         }
 
@@ -56,7 +56,7 @@ public class InstantaneousMixtureSubstitutionModelParser extends AbstractXMLObje
             throw new RuntimeException("Invalid bounds of weight parameter for instantaneousMixtureSubstitutionModel which uses p, 1-p mixture.");
         }
 
-        return new InstantaneousMixtureSubstitutionModel(xo.getId(),dataType,rootFreq,srmm,weights);
+        return new InstantaneousMixtureSubstitutionModel(xo.getId(),dataType,rootFreq,modelList,weights);
     }
 
     //************************************************************************
@@ -83,7 +83,7 @@ public class InstantaneousMixtureSubstitutionModelParser extends AbstractXMLObje
                     new ElementRule(DataType.class)
             ),
             new ElementRule(ComplexSubstitutionModelParser.ROOT_FREQUENCIES, FrequencyModel.class),
-            new ElementRule(SubstitutionRateMatrixMixture.class),
+            new ElementRule(SubstitutionModel.class, 1, Integer.MAX_VALUE),
             new ElementRule(MIXTURE_WEIGHTS, Parameter.class)
     };
 }

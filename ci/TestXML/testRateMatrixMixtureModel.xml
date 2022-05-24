@@ -128,6 +128,8 @@
 
 
 	<instantaneousMixtureSubstitutionModel id="mixtureModel" dataType="nucleotide">
+		<gtrModel idref="gtr1"/>
+		<gtrModel idref="gtr2"/>
 		<rootFrequencies>
 			<frequencyModel dataType="nucleotide">
 				<frequencies>
@@ -138,10 +140,6 @@
 		<mixtureWeights>
 			<parameter id="mixtureWeights" value="0.5" lower="0.0" upper="1.0"/>
 		</mixtureWeights>
-		<substitutionRateMatrixMixtureModel id="subsMix">
-			<gtrModel idref="gtr1"/>
-			<gtrModel idref="gtr2"/>
-		</substitutionRateMatrixMixtureModel>
 	</instantaneousMixtureSubstitutionModel>
 
 	<glmSubstitutionModel id="glm" normalize="true" dataType="nucleotide">

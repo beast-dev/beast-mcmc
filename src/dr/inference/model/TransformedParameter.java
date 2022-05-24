@@ -201,8 +201,8 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
     public double diffLogJacobian(double[] oldValues, double[] newValues) {
         // Takes **untransformed** values
         if (inverse) {
-            return -transform.getLogJacobian(oldValues, 0, oldValues.length)
-                    + transform.getLogJacobian(newValues, 0, newValues.length);
+            return -transform.getLogJacobian(transform(oldValues), 0, oldValues.length)
+                    + transform.getLogJacobian(transform(newValues), 0, newValues.length);
         } else {
             return transform.getLogJacobian(oldValues, 0, oldValues.length)
                     - transform.getLogJacobian(newValues, 0, newValues.length);

@@ -28,20 +28,28 @@ public class InstantaneousMixtureSubstitutionModel extends ComplexSubstitutionMo
         this.mixtureWeights = mixtureWeights;
         // TODO generalize
         this.numComponents = 2;
+//        System.err.println("constructing InstantaneousMixtureSubstitutionModel");
+        addVariable(mixtureWeights);
     }
 
-    protected void setupRelativeRates(double[] rates) {
-        double[] r = new double[rates.length];
+    public double[] getRates() {
         double[][] rateComponents = substitutionRateMatrixMixture.getParameterAsMatrix();
         double p = mixtureWeights.getParameterValue(0);
         double[] w = new double[]{p, 1.0 - p};
+//        System.err.println("Mixing with p = " + p);
+
+        double[] rates = new double[rateComponents.length];
         for (int i = 0; i < rateComponents.length; i++) {
             for (int j = 0; j < numComponents; j++) {
-                r[i] += w[j] * rateComponents[i][j];
+                rates[i] += w[j] * rateComponents[i][j];
             }
-            r[i] = Math.exp(r[i]);
+            rates[i] = Math.exp(rates[i]);
         }
-        System.arraycopy(r,0,rates,0,rates.length);
+        return rates;
+    }
+
+    protected void setupRelativeRates(double[] rates) {
+        System.arraycopy(getRates(),0,rates,0,rates.length);
     }
 
     @Override

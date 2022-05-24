@@ -137,15 +137,12 @@
 		<mixtureWeights>
 			<parameter id="mixtureWeights" value="1.0" lower="0.0" upper="1.0"/>
 		</mixtureWeights>
-		<substitutionRateMatrixMixtureModel id="subsMix">
-			<gtrModel idref="gtr1"/>
-			<gtrModel idref="gtr2"/>
-		</substitutionRateMatrixMixtureModel>
+		<gtrModel idref="gtr1"/>
+		<gtrModel idref="gtr2"/>
 	</instantaneousMixtureSubstitutionModel>
 
 	<arbitraryBranchRates id="branchSpecific.mixtureWeights" exp="false"
-						  randomScale="1.0"
-						  randomizeRates="true" centerAtOne="false">
+						  randomizeRates="false" centerAtOne="false">
 		<treeModel idref="treeModel"/>
 		<rates>
 			<parameter id="branchSpecific.mixtureWeight" value="0.5" lower="0.0" upper="1.0"/>

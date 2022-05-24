@@ -25,6 +25,7 @@
 
 package dr.inference.operators;
 
+import dr.inference.model.GeneralParameterBounds;
 import dr.inference.model.TransformedParameter;
 import dr.math.matrixAlgebra.Matrix;
 
@@ -35,10 +36,14 @@ import dr.math.matrixAlgebra.Matrix;
 public class TransformedParameterRandomWalkOperator extends RandomWalkOperator {
 
     private static boolean DEBUG = false;
+    private static boolean checkValid = true;
+
+    private final GeneralParameterBounds generalBounds;
 
     public TransformedParameterRandomWalkOperator(TransformedParameter parameter, double windowSize,
                                                   BoundaryCondition bc, double weight, AdaptationMode mode) {
         super(parameter, windowSize, bc, weight, mode);
+        this.generalBounds = null; //TODO: implement if needed
     }
 
     public TransformedParameterRandomWalkOperator(TransformedParameter parameter, RandomWalkOperator randomWalkOperator) {
@@ -47,14 +52,16 @@ public class TransformedParameterRandomWalkOperator extends RandomWalkOperator {
                 randomWalkOperator.getBoundaryCondition(),
                 randomWalkOperator.getWeight(),
                 randomWalkOperator.getMode());
+        this.generalBounds = null; //TODO: implement if needed
     }
 
-    public TransformedParameterRandomWalkOperator(RandomWalkOperator randomWalkOperator) {
+    public TransformedParameterRandomWalkOperator(RandomWalkOperator randomWalkOperator, GeneralParameterBounds bounds) {
         super((TransformedParameter) randomWalkOperator.getParameter(),
                 randomWalkOperator.getWindowSize(),
                 randomWalkOperator.getBoundaryCondition(),
                 randomWalkOperator.getWeight(),
                 randomWalkOperator.getMode());
+        this.generalBounds = bounds;
     }
 
     @Override
@@ -73,6 +80,15 @@ public class TransformedParameterRandomWalkOperator extends RandomWalkOperator {
             System.err.println("newValues: " + new Matrix(newValues, newValues.length, 1));
             System.err.println("newValuesTrans: " + new Matrix(parameter.getParameterValues(), newValues.length, 1));
         }
+
+        if (checkValid) { // GH: below is sloppy, but best I could do without refactoring how Parameter handles bounds
+            if (generalBounds == null && !parameter.isWithinBounds()) {
+                return Double.NEGATIVE_INFINITY;
+            } else if (!generalBounds.satisfiesBounds(parameter)) {
+                return Double.NEGATIVE_INFINITY;
+            }
+        }
+
         // Compute Jacobians
         ratio += ((TransformedParameter) parameter).diffLogJacobian(oldValues, newValues);
         if (DEBUG) {

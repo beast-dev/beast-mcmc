@@ -77,23 +77,36 @@ public class InstantaneousMixtureSubstitutionModel extends ComplexSubstitutionMo
         for (int m = 0; m < numComponents; ++m) {
             // Get Q-matrix
             SubstitutionModel model = substitutionModelList.get(m);
-            // Full matrix stored row-wise
-            double[] qMatrix = new double[alphabetSize2];
-            model.getInfinitesimalMatrix(qMatrix);
-
-            // get base freqs
-            double[] freqs = model.getFrequencyModel().getFrequencies();
-            for (int i = 0; i < alphabetSize; i++) {
-                freqs[i] = Math.log(freqs[i]);
-            }
-
-            int idx = 0;
-            for (int i = 0; i < (alphabetSize - 1); i++) {
-                for (int j = (i + 1); j < alphabetSize; j++) {
-                    rates[idx + m * nRates] = Math.log(qMatrix[i*alphabetSize + j]) - freqs[j];
-                    rates[idx + halfSize + m * nRates] = Math.log(qMatrix[j*alphabetSize + i]) - freqs[i];
-                    idx++;
+            double[] modelRates = new double[nRates];
+            if ( model instanceof ComplexSubstitutionModel ) {
+                ComplexSubstitutionModel cmodel = (ComplexSubstitutionModel)model;
+                modelRates = cmodel.relativeRates;
+            } else if ( model instanceof BaseSubstitutionModel ) {
+                BaseSubstitutionModel bmodel = (BaseSubstitutionModel)model;
+                for (int i = 0; i < halfSize; i++) {
+                    modelRates[i] = modelRates[i + halfSize] = bmodel.relativeRates[i];
                 }
+            } else {
+                // Full matrix stored row-wise
+                double[] qMatrix = new double[alphabetSize2];
+                model.getInfinitesimalMatrix(qMatrix);
+
+                // get base freqs
+                double[] freqs = model.getFrequencyModel().getFrequencies();
+
+                int idx = 0;
+                for (int i = 0; i < (alphabetSize - 1); i++) {
+                    for (int j = (i + 1); j < alphabetSize; j++) {
+                        modelRates[idx] = qMatrix[i*alphabetSize + j]/freqs[j];
+                        modelRates[idx + halfSize] = qMatrix[j*alphabetSize + i]/freqs[i];
+//                        rates[idx + m * nRates] = Math.log(qMatrix[i*alphabetSize + j]) - freqs[j];
+//                        rates[idx + halfSize + m * nRates] = Math.log(qMatrix[j*alphabetSize + i]) - freqs[i];
+                        idx++;
+                    }
+                }
+            }
+            for (int i = 0; i < nRates; i++) {
+                rates[i + m*nRates] = Math.log(modelRates[i]);
             }
         }
         return rates;

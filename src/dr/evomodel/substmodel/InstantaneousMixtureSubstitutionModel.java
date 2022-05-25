@@ -103,7 +103,7 @@ public class InstantaneousMixtureSubstitutionModel extends ComplexSubstitutionMo
             }
             rates[i] = Math.exp(rates[i]);
         }
-        System.err.println(new Vector(rates));
+//        System.err.println(new Vector(rates));
         return rates;
     }
 

@@ -11,6 +11,7 @@ import dr.math.matrixAlgebra.Vector;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
+import javax.xml.crypto.Data;
 import java.util.Collections;
 import java.util.List;
 
@@ -111,28 +112,6 @@ public class InstantaneousMixtureSubstitutionModel extends ComplexSubstitutionMo
         System.arraycopy(getRates(),0,rates,0,rates.length);
     }
 
-    protected void handleModelChangedEvent(Model model, Object object, int index) {
-        boolean found = false;
-        if (substitutionModelList != null) {
-            for (SubstitutionModel substitutionModel : substitutionModelList) {
-                if (model == substitutionModel) {
-                    found = true;
-                    updateMatrix = true;
-                    fireModelChanged();
-                }
-            }
-        }
-        if (!found) {
-            if ( object == mixtureWeights) {
-                updateMatrix = true;
-                fireModelChanged();
-            } else {
-                super.handleModelChangedEvent(model, object, index);
-            }
-        }
-    }
-
-
     @Override
     public String getDescription() {
         return "Substitution model from log-linear combinations of Q matrices.";
@@ -141,6 +120,11 @@ public class InstantaneousMixtureSubstitutionModel extends ComplexSubstitutionMo
     @Override
     public ParameterReplaceableSubstitutionModel factory(List<Parameter> oldParameters, List<Parameter> newParameters) {
         Parameter weights = mixtureWeights;
+        List<SubstitutionModel> subsModels = substitutionModelList;
+        FrequencyModel frequencies = freqModel;
+        DataType dt = dataType;
+        String name = super.getModelName();
+
         for (int i = 0; i < oldParameters.size(); i++) {
             Parameter oldParameter = oldParameters.get(i);
             Parameter newParameter = newParameters.get(i);
@@ -150,7 +134,7 @@ public class InstantaneousMixtureSubstitutionModel extends ComplexSubstitutionMo
                 throw new RuntimeException("Parameter not found in InstantaneousMixtureSubstitutionModel.");
             }
         }
-        return new InstantaneousMixtureSubstitutionModel(super.getModelName(), super.dataType, super.freqModel, substitutionModelList, weights);
+        return new InstantaneousMixtureSubstitutionModel(name, dt, frequencies, subsModels, weights);
     }
 
     private int alphabetSize;

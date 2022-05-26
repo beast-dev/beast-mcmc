@@ -62,6 +62,9 @@ public class BranchSpecificSubstitutionParameterBranchModel extends AbstractMode
             throw new RuntimeException("Dimension mismatch!");
         }
         this.substitutionModelList = constructSubstitutionModels(substitutionParameterList, branchRateModelList);
+        for (BranchRateModel branchRateModel : branchRateModelList) {
+            addModel(branchRateModel);
+        }
         for (SubstitutionModel singleSubstitutionModel : substitutionModelList) {
             addModel(singleSubstitutionModel);
         }

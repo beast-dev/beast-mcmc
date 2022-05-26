@@ -39,6 +39,7 @@ import java.util.List;
 
 /**
  * The uniform distribution with soft bounds as Eq. 17 in Yang and Rannala, 2006
+ * reference: paml4.8 package by Dr. Ziheng Yang
  *
  * @author Xiang Ji
  * @author Marc Suchard

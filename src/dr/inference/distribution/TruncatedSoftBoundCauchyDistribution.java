@@ -39,6 +39,7 @@ import java.util.List;
 
 /**
  * The truncated Cauchy distribution with soft bound in Inoue, Donoghue and Yang, 2010
+ * reference: paml4.8 package by Dr. Ziheng Yang
  *
  * @author Xiang Ji
  * @author Marc Suchard

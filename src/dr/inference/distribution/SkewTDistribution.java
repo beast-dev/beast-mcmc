@@ -40,6 +40,7 @@ import java.util.List;
 
 /**
  * The Skew-T distribution in Wilkinson et al, 2011
+ * reference: paml4.8 package by Dr. Ziheng Yang
  *
  * @author Xiang Ji
  * @author Marc Suchard
@@ -61,6 +62,9 @@ public class SkewTDistribution extends AbstractContinuousDistribution implements
         this.df = df;
     }
 
+    /*
+    Reference: line 2103 - line 2118 of PDFSkewT function from tools.c file in paml 4.8 package by Dr. Ziheng Yang
+     */
     @Override
     public double pdf(double x) {
         // PDFSkewT function in paml 4.8
@@ -77,6 +81,9 @@ public class SkewTDistribution extends AbstractContinuousDistribution implements
         return pdf;
     }
 
+    /*
+    Reference: line 2208 - line 2243 of LnGamma function from tools.c file in paml 4.8 package by Dr. Ziheng Yang
+     */
     private double LnGamma(double x) {
        /* LnGamma function in paml 4.8
        returns ln(gamma(x)) for x>0, accurate to 10 decimal places.
@@ -110,6 +117,9 @@ public class SkewTDistribution extends AbstractContinuousDistribution implements
         return  lng;
     }
 
+    /*
+    Reference: line 4391 - line 4397 of factorial function from tools.c file in paml 4.8 package by Dr. Ziheng Yang
+     */
     private double factorial(int n) {
         long f=1, i;
         if (n>11) throw new RuntimeException("n>10 in factorial");
@@ -117,6 +127,9 @@ public class SkewTDistribution extends AbstractContinuousDistribution implements
         return (f);
     }
 
+    /*
+    Reference: line 2073 - line 2084 of PDFt function from tools.c file in paml 4.8 package by Dr. Ziheng Yang
+     */
     private double PDFt (double x, double loc, double scale, double df, double lnConst)
     {
         /* PDFt function from paml 4.8
@@ -131,6 +144,9 @@ public class SkewTDistribution extends AbstractContinuousDistribution implements
         return Math.exp(lnpdf)/scale;
     }
 
+    /*
+    Reference: line 2086 - line 2101 of CDFt function from tools.c file in paml 4.8 package by Dr. Ziheng Yang
+     */
     private double CDFt (double x, double loc, double scale, double df, double lnbeta)
     {
         /* CDFt function from paml 4.8
@@ -149,6 +165,9 @@ public class SkewTDistribution extends AbstractContinuousDistribution implements
         return(cdf);
     }
 
+    /*
+    Reference: line 2812 - line 2921 of CDFBeta function from tools.c file in paml 4.8 package by Dr. Ziheng Yang
+     */
     private double CDFBeta (double x, double pin, double qin, double lnbeta)
     {
 /* Returns distribution function of the standard form of the beta distribution,
@@ -262,6 +281,9 @@ public class SkewTDistribution extends AbstractContinuousDistribution implements
         return ans;
     }
 
+    /*
+    Reference: line 110 of function LnBeta from paml.h file of paml 4.8 package by Dr. Ziheng Yang
+     */
     private double LnBeta(double p, double q) {
         return LnGamma(p) + LnGamma(q) - LnGamma(p + q);
     }

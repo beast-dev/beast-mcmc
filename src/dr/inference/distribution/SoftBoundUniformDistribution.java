@@ -74,6 +74,9 @@ public class SoftBoundUniformDistribution extends AbstractContinuousDistribution
         }
     }
 
+    /*
+    Reference: line 2290 - line 2303 of mcmctree.c from paml4.8 package by Dr. Ziheng Yang
+     */
     @Override
     public double logPdf(double x) {
         if (x > lowerBound && x < upperBound) {

@@ -33,8 +33,8 @@ public class InstantaneousMixtureSubstitutionModel extends ComplexSubstitutionMo
         this.alphabetSize2 = alphabetSize * alphabetSize;
         this.nRates = alphabetSize * (alphabetSize - 1);
         this.numComponents = substitutionModelList.size();
-        this.pOneMinusP = numComponents == 2 && mixtureWeights.getSize() == 1;
         this.transform = transform;
+        this.pOneMinusP = (numComponents == 2 && mixtureWeights.getSize() == 1 && !transform);
 
         if (!checkWeightDimension()) {throw new RuntimeException("Mismatch between number of mixture weights and number of substitution models.");}
 
@@ -49,10 +49,12 @@ public class InstantaneousMixtureSubstitutionModel extends ComplexSubstitutionMo
     }
 
     private boolean checkWeightDimension() {
-        boolean weightsValid = true;
-        if (numComponents != mixtureWeights.getSize()) {
-            if ((!pOneMinusP) || (transform && mixtureWeights.getSize() != numComponents - 1)) {
-                weightsValid = false;
+        boolean weightsValid = (numComponents == mixtureWeights.getSize());
+        if ( !weightsValid ) {
+            if ( pOneMinusP ) {
+                weightsValid = true;
+            } else if ( transform && mixtureWeights.getSize() == numComponents - 1 ) {
+                weightsValid = true;
             }
         }
         return weightsValid;
@@ -142,7 +144,7 @@ public class InstantaneousMixtureSubstitutionModel extends ComplexSubstitutionMo
                 }
                 s += w[i];
             }
-            if ( Math.abs(s - 1.0) > Double.MIN_VALUE ) {
+            if ( Math.abs(s - 1.0) > 1e-6 ) {
                 throw new RuntimeException("Mixing proportions do not sum to 1");
             }
         }

@@ -78,13 +78,14 @@ public class InstantaneousMixtureSubstitutionModel extends ComplexSubstitutionMo
             // Get Q-matrix
             SubstitutionModel model = substitutionModelList.get(m);
             double[] modelRates = new double[nRates];
+            double donut = 0.0;
             if ( model instanceof ComplexSubstitutionModel ) {
-                ComplexSubstitutionModel cmodel = (ComplexSubstitutionModel)model;
-                modelRates = cmodel.relativeRates;
+                ((ComplexSubstitutionModel)model).setupRelativeRates(modelRates);
             } else if ( model instanceof BaseSubstitutionModel ) {
-                BaseSubstitutionModel bmodel = (BaseSubstitutionModel)model;
+                double[] relativeRates = new double[halfSize];
+                ((BaseSubstitutionModel)model).setupRelativeRates(relativeRates);
                 for (int i = 0; i < halfSize; i++) {
-                    modelRates[i] = modelRates[i + halfSize] = bmodel.relativeRates[i];
+                    modelRates[i] = modelRates[i + halfSize] = relativeRates[i];
                 }
             } else {
                 // Full matrix stored row-wise
@@ -159,6 +160,9 @@ public class InstantaneousMixtureSubstitutionModel extends ComplexSubstitutionMo
                 rates[i] += w[j] * rateComponents[i + j * nRates];
             }
             rates[i] = Math.exp(rates[i]);
+            if (Double.isNaN(rates[i])) {
+                System.err.println("Rate " + i + " is NaN");
+            }
         }
 //        System.err.println(new Vector(rates));
         return rates;

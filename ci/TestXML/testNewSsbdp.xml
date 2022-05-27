@@ -15,42 +15,31 @@
 		<taxon id="D"/>
 	</taxa>
 
-
-	<newBirthDeathSerialSampling id="new.bdss" units="years" hasFinalSample="false" conditionOnSurvival="false">
+	<!-- One  newBirthDeathSerialSampling per test case-->
+	<newBirthDeathSerialSampling id="bdss1" units="years" conditionOnSurvival="false">
 		<birthRate>
-			<parameter id="bdss.birthRate" value="0.8" lower="0.0"/>
+			<parameter id="bdss1.birthRate" value="8.472" lower="0.0"/>
 		</birthRate>
 		<deathRate>
-			<parameter id="bdss.deathRate" value="0.5" lower="0.0" upper="1.0"/>
+			<parameter id="bdss1.deathRate" value="3.21" lower="0.0"/>
 		</deathRate>
 		<samplingRate>
-			<parameter id="bdss.samplingRate" value="0.2" lower="0.0"/>
+			<parameter id="bdss1.samplingRate" value="1.234" lower="0.0"/>
 		</samplingRate>
+		<treatmentProbability>
+			<parameter id="bdss1.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<samplingProbabilityAtPresent>
+			<parameter id="bdss1.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
+		</samplingProbabilityAtPresent>
 		<origin>
-			<parameter id="bdss.origin" value="5.0" lower="0.0"/>
+			<parameter id="bdss1.origin" value="5.123" lower="0.0"/>
 		</origin>
 	</newBirthDeathSerialSampling>
-
-	<birthDeathSerialSampling id="old.bdss" units="years" hasFinalSample="false">
-		<birthRate>
-			<parameter idref="bdss.birthRate"/>
-		</birthRate>
-		<deathRate>
-			<parameter idref="bdss.deathRate"/>
-		</deathRate>
-		<psi>
-			<parameter idref="bdss.samplingRate"/>
-		</psi>
-		<origin>
-			<parameter idref="bdss.origin"/>
-		</origin>
-	</birthDeathSerialSampling>
-
 
 	<newick id="startingTree" usingHeights="true" usingDates="false">
 		((A:1.0,B:2.0):1.0,(C:1.0,D:2.0):2.0)
 	</newick>
-
 
 	<!-- Generate a tree model                                                   -->
 	<treeModel id="treeModel">
@@ -66,119 +55,29 @@
 		</nodeHeights>
 	</treeModel>
 
-	<!-- Statistic for sum of the branch lengths of the tree (tree length)       -->
-	<treeLengthStatistic id="treeLength">
-		<treeModel idref="treeModel"/>
-	</treeLengthStatistic>
-
-
 	<!-- Generate a speciation likelihood for Yule or Birth Death                -->
-	<speciationLikelihood id="new.speciation">
+	<speciationLikelihood id="speciation1">
 		<model>
-			<birthDeathSerialSampling idref="new.bdss"/>
+			<birthDeathSerialSampling idref="bdss1"/>
 		</model>
 		<speciesTree>
 			<treeModel idref="treeModel"/>
 		</speciesTree>
 	</speciationLikelihood>
 
-	<numericalGradient id="new.numGrad.birthRate">
-		<parameter idref="bdss.birthRate"/>
-		<speciationLikelihood idref="new.speciation"/>
-	</numericalGradient>
-
-	<numericalGradient id="new.numGrad.deathRate">
-		<parameter idref="bdss.deathRate"/>
-		<speciationLikelihood idref="new.speciation"/>
-	</numericalGradient>
-
-	<numericalGradient id="new.numGrad.psi">
-		<parameter idref="bdss.samplingRate"/>
-		<speciationLikelihood idref="new.speciation"/>
-	</numericalGradient>
-
-	<numericalGradient id="new.numGrad.origin">
-		<parameter idref="bdss.origin"/>
-		<speciationLikelihood idref="new.speciation"/>
-	</numericalGradient>
-
-	<compoundGradient id="new.numGrad.bdss.likelihood">
-		<numericalHessian>
-			<numericalGradient idref="new.numGrad.birthRate"/>
-		</numericalHessian>
-		<numericalHessian>
-			<numericalGradient idref="new.numGrad.deathRate"/>
-		</numericalHessian>
-		<numericalHessian>
-			<numericalGradient idref="new.numGrad.psi"/>
-		</numericalHessian>
-		<numericalHessian>
-			<numericalGradient idref="new.numGrad.origin"/>
-		</numericalHessian>
-	</compoundGradient>
-
-	<speciationLikelihood id="old.speciation">
-		<model>
-			<birthDeathSerialSampling idref="old.bdss"/>
-		</model>
-		<speciesTree>
-			<treeModel idref="treeModel"/>
-		</speciesTree>
-	</speciationLikelihood>
-
-	<numericalGradient id="old.numGrad.birthRate">
-		<parameter idref="bdss.birthRate"/>
-		<speciationLikelihood idref="old.speciation"/>
-	</numericalGradient>
-
-	<numericalGradient id="old.numGrad.deathRate">
-		<parameter idref="bdss.deathRate"/>
-		<speciationLikelihood idref="old.speciation"/>
-	</numericalGradient>
-
-	<numericalGradient id="old.numGrad.psi">
-		<parameter idref="bdss.samplingRate"/>
-		<speciationLikelihood idref="old.speciation"/>
-	</numericalGradient>
-
-	<numericalGradient id="old.numGrad.origin">
-		<parameter idref="bdss.origin"/>
-		<speciationLikelihood idref="old.speciation"/>
-	</numericalGradient>
-
-	<compoundGradient id="old.numGrad.bdss.likelihood">
-		<numericalHessian>
-			<numericalGradient idref="old.numGrad.birthRate"/>
-		</numericalHessian>
-		<numericalHessian>
-			<numericalGradient idref="old.numGrad.deathRate"/>
-		</numericalHessian>
-		<numericalHessian>
-			<numericalGradient idref="old.numGrad.psi"/>
-		</numericalHessian>
-		<numericalHessian>
-			<numericalGradient idref="old.numGrad.origin"/>
-		</numericalHessian>
-	</compoundGradient>
-
-	<cachedReport id="new.numGrad">
-		<compoundGradient idref="new.numGrad.bdss.likelihood"/>
-	</cachedReport>
-
-	<cachedReport id="old.numGrad">
-		<compoundGradient idref="old.numGrad.bdss.likelihood"/>
-	</cachedReport>
-
-	<assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
-			<message>
-					numeric gradient comparison
-			</message>
-			<actual regex="numeric : (.*?)\n">
-					<cachedReport idref="new.numGrad"/>
-			</actual>
-			<expected regex="numeric : (.*?)\n">
-					<cachedReport idref="old.numGrad"/>
-			</expected>
-	</assertEqual>
+<!--	<assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">-->
+<!--			<message>-->
+<!--					check full model-->
+<!--			</message>-->
+<!--			<actual regex="lnL:\s(.*?)\n">-->
+<!--				<report>-->
+<!--					<speciationLikelihood idref="speciation1"/>-->
+<!--				</report>-->
+<!--			</actual>-->
+<!--			&lt;!&ndash; computed in RevBayes &ndash;&gt;-->
+<!--			<expected>-->
+<!--				-61.833857649018767688-->
+<!--			</expected>-->
+<!--	</assertEqual>-->
 
 </beast>

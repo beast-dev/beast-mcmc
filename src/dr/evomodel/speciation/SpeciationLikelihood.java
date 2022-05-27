@@ -36,6 +36,7 @@ import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.xml.Reportable;
 
 import java.util.Set;
 
@@ -48,7 +49,7 @@ import java.util.Set;
  * @author Alexei Drummond
  * @version $Id: SpeciationLikelihood.java,v 1.10 2005/05/18 09:51:11 rambaut Exp $
  */
-public class SpeciationLikelihood extends AbstractModelLikelihood implements Units {
+public class SpeciationLikelihood extends AbstractModelLikelihood implements Reportable, Units {
 
     // PUBLIC STUFF
     /**
@@ -193,6 +194,15 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         return new dr.inference.loggers.LogColumn[]{
                 new LikelihoodColumn(columnName)
         };
+    }
+
+    @Override
+    public String getReport() {
+        String report = "SpeciationLikelihoodReport:\n" +
+                "Model: " + speciationModel.getModelName() + "\n" +
+                "ID: " + speciationModel.getId() + "\n" +
+                "lnL: " + calculateLogLikelihood();
+        return report;
     }
 
     private final class LikelihoodColumn extends dr.inference.loggers.NumberColumn {

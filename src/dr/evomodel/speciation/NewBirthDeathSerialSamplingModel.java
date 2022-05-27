@@ -323,7 +323,7 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
 
     @Override
     public double processInterval(int model, double tYoung, double tOld, int nLineages) {
-        return nLineages * (logq(tOld) - logq(tYoung));
+        return nLineages * (logq(tYoung) - logq(tOld));
     }
 
     @Override

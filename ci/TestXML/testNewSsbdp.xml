@@ -18,13 +18,13 @@
 	<!-- One  newBirthDeathSerialSampling per test case-->
 	<newBirthDeathSerialSampling id="bdss1" units="years" conditionOnSurvival="false">
 		<birthRate>
-			<parameter id="bdss1.birthRate" value="8.472" lower="0.0"/>
+			<parameter id="bdss1.birthRate" value="0.8472" lower="0.0"/>
 		</birthRate>
 		<deathRate>
-			<parameter id="bdss1.deathRate" value="3.21" lower="0.0"/>
+			<parameter id="bdss1.deathRate" value="0.4321" lower="0.0"/>
 		</deathRate>
 		<samplingRate>
-			<parameter id="bdss1.samplingRate" value="1.234" lower="0.0"/>
+			<parameter id="bdss1.samplingRate" value="0.1234" lower="0.0"/>
 		</samplingRate>
 		<treatmentProbability>
 			<parameter id="bdss1.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
@@ -56,7 +56,7 @@
 	</treeModel>
 
 	<!-- Generate a speciation likelihood for Yule or Birth Death                -->
-	<speciationLikelihood id="speciation1">
+	<speciationLikelihood id="speciation1" useNewLoop="true">
 		<model>
 			<birthDeathSerialSampling idref="bdss1"/>
 		</model>
@@ -65,19 +65,19 @@
 		</speciesTree>
 	</speciationLikelihood>
 
-<!--	<assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">-->
-<!--			<message>-->
-<!--					check full model-->
-<!--			</message>-->
-<!--			<actual regex="lnL:\s(.*?)\n">-->
-<!--				<report>-->
-<!--					<speciationLikelihood idref="speciation1"/>-->
-<!--				</report>-->
-<!--			</actual>-->
-<!--			&lt;!&ndash; computed in RevBayes &ndash;&gt;-->
-<!--			<expected>-->
-<!--				-61.833857649018767688-->
-<!--			</expected>-->
-<!--	</assertEqual>-->
+	<assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
+			<message>
+					check full model
+			</message>
+			<actual regex="lnL:\s(.*?)\n">
+				<report>
+					<speciationLikelihood idref="speciation1"/>
+				</report>
+			</actual>
+			<!-- computed in RevBayes -->
+			<expected>
+				-70.389509338300143781
+			</expected>
+	</assertEqual>
 
 </beast>

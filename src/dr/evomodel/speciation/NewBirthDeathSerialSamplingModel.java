@@ -152,9 +152,8 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
 //        // Should only be a problem if tree is being inferred and sampled ancestors are allowed
 //        double res = c1 * t + 2.0 * Math.log( Math.exp(-c1 * t) * (1.0 - c2) + (1.0 + c2) ); // operate directly in logspace, c1 * t too big
 //        return res;
-        double oneMinusC2Sq = (1 - Math.pow(c2,2.0));
         double expC1t = Math.exp(c1 * t);
-        double q = 2 * oneMinusC2Sq + (1.0/expC1t) * oneMinusC2Sq + expC1t * Math.pow(1.0 + c2,2.0);
+        double q = 2 * (1 - Math.pow(c2,2.0)) + (1.0/expC1t) * Math.pow((1.0 - c2),2.0) + expC1t * Math.pow(1.0 + c2,2.0);
         return Math.log(q);
     }
 

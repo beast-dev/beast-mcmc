@@ -348,7 +348,7 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
         if (noSamplingAtPresent || tOld > timeZeroTolerance) {
             return logPsi + Math.log(r + (1.0 - r) * p0(tOld));
         } else {
-            return logRho;
+            return Math.log(4.0) + logRho;
         }
     }
 

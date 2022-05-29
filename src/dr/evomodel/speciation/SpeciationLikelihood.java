@@ -25,12 +25,9 @@
 
 package dr.evomodel.speciation;
 
-import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
@@ -91,6 +88,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
     // ModelListener IMPLEMENTATION
     // **************************************************************
 
+    // TODO Make final again after done with EfficientSpeciationLikelihood
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         likelihoodKnown = false;
     }
@@ -163,10 +161,6 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
 
         return speciationModel.calculateTreeLogLikelihood(tree);
     }
-
-    private static final boolean USE_INTERVAL_REDUCTION = false;
-
-
 
     // Super-clean interface (just one intrusive function) and a better place, since `Likelihood`s have gradients (`Model`s do not).
     public SpeciationModelGradientProvider getGradientProvider() {

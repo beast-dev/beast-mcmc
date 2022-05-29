@@ -28,15 +28,12 @@ package dr.evomodel.treedatalikelihood.discrete;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.substmodel.GLMSubstitutionModel;
-import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleGradientDelegate;
 
 import java.util.Arrays;
-
-import static dr.evomodel.treedatalikelihood.discrete.DiscreteTraitBranchRateDelegate.scaleInfinitesimalMatrixByRates;
 
 /**
  * @author Marc A. Suchard
@@ -46,7 +43,9 @@ public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradien
     private final String name;
     private final Tree tree;
     private final BranchRateModel branchRateModel;
+    private final BranchModel branchModel;
     private final int stateCount;
+    private final int substitutionModelCount;
 
     private static final String GRADIENT_TRAIT_NAME = "substitutionModelCrossProductGradient";
 
@@ -61,76 +60,126 @@ public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradien
         this.tree = tree;
         this.stateCount = stateCount;
         this.branchRateModel = branchRateModel;
+        this.branchModel = likelihoodDelegate.getBranchModel();
+        this.substitutionModelCount = branchModel.getSubstitutionModels().size();
     }
 
     private double getBranchLength(NodeRef node) {
+
+        double parentHeight = tree.getNodeHeight(tree.getParent(node));
+        double nodeHeight = tree.getNodeHeight(node);
+
+        return parentHeight - nodeHeight;
+    }
+
+    private double getBranchWeight(NodeRef node, double branchLength) {
 
         final double branchRate;
         synchronized (branchRateModel) {
             branchRate = branchRateModel.getBranchRate(tree, node);
         }
 
-        double parentHeight = tree.getNodeHeight(tree.getParent(node));
-        double nodeHeight = tree.getNodeHeight(node);
-
-        return branchRate * (parentHeight - nodeHeight);
+        return branchRate * branchLength;
     }
 
     @Override
     protected int getGradientLength() {
-        return stateCount * stateCount;
+        return stateCount * stateCount * substitutionModelCount;
     }
 
-    @Override
-    protected void getNodeDerivatives(Tree tree, double[] first, double[] second) {
-
-        assert (first.length >= stateCount * stateCount);
-        assert (second == null || second.length >= stateCount * stateCount);
-
-        final int[] postBufferIndices = new int[tree.getNodeCount() - 1];
-        final int[] preBufferIndices = new int[tree.getNodeCount() - 1];
-        final double[] branchLengths = new double[tree.getNodeCount() - 1];
-
+    private int coverWholeTree(int[] postBufferIndices,
+                                int[] preBufferIndices,
+                                double[] branchLengths) {
         int u = 0;
         for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
             NodeRef node = tree.getNode(nodeNum);
             if (!tree.isRoot(tree.getNode(nodeNum))) {
                 postBufferIndices[u] = getPostOrderPartialIndex(nodeNum);
                 preBufferIndices[u]  = getPreOrderPartialIndex(nodeNum);
-                branchLengths[u] = getBranchLength(node);
+                branchLengths[u] = getBranchWeight(node, getBranchLength(node));
                 u++;
             }
         }
+        return tree.getNodeCount() - 1;
+    }
 
-        Arrays.fill(first, 0, first.length, 0.0);
-        double[] firstSquared = (second != null) ? new double[second.length] : null;
+    private int coverPartialTree(int modelNumber,
+                                 int[] postBufferIndices,
+                                 int[] preBufferIndices,
+                                 double[] branchLengths) {
+        int u = 0;
+        for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
+            NodeRef node = tree.getNode(nodeNum);
+            if (!tree.isRoot(tree.getNode(nodeNum))) {
 
-        beagle.calculateCrossProductDifferentials(postBufferIndices, preBufferIndices,
-                new int[] { 0 }, new int[] { 0 },
-                branchLengths,
-                tree.getNodeCount() - 1,
-                first, firstSquared);
+                BranchModel.Mapping mapping = branchModel.getBranchModelMapping(node);
+                int[] order = mapping.getOrder();
+                double[] weights = mapping.getWeights();
+
+                for (int k = 0; k < order.length; ++k) {
+                    if (order[k] == modelNumber) {
+                        postBufferIndices[u] = getPostOrderPartialIndex(nodeNum);
+                        preBufferIndices[u]  = getPreOrderPartialIndex(nodeNum);
+                        branchLengths[u] = getBranchWeight(node, weights[k]);
+                        u++;
+                    }
+                }
+            }
+        }
+        return u;
+    }
+
+    @Override
+    protected void getNodeDerivatives(Tree tree, double[] first, double[] second) {
+
+        final int length = stateCount * stateCount;
+
+        assert (first.length >= length * substitutionModelCount);
+        assert (second == null || second.length >= stateCount * stateCount * substitutionModelCount);
 
         if (second != null) {
-//            beagle.calculateEdgeDifferentials(postBufferIndices, preBufferIndices,
-//                    secondDeriveIndices, new int[] { 0 }, tree.getNodeCount() - 1,
-//                    null, second, null);
-//
-//            for (int i = 0; i < second.length; ++i) {
-//                second[i] -= firstSquared[i];
-//            }
             throw new RuntimeException("Not yet implemented");
         }
+
+        final int[] postBufferIndices = new int[tree.getNodeCount() - 1];
+        final int[] preBufferIndices = new int[tree.getNodeCount() - 1];
+        final double[] branchWeights = new double[tree.getNodeCount() - 1];
+
+        if (substitutionModelCount == 1) {
+
+            Arrays.fill(first, 0, first.length, 0.0);
+
+            int count = coverWholeTree(postBufferIndices, preBufferIndices, branchWeights);
+            beagle.calculateCrossProductDifferentials(postBufferIndices, preBufferIndices,
+                    new int[] { 0 }, new int[] { 0 },
+                    branchWeights,
+                    count,
+                    first, null);
+        } else {
+
+            double[] buffer = new double[length];
+
+            for (int i = 0; i < substitutionModelCount; ++i) {
+
+                Arrays.fill(buffer, 0, buffer.length, 0.0);
+                int count = coverPartialTree(i, postBufferIndices, preBufferIndices,
+                        branchWeights);
+                beagle.calculateCrossProductDifferentials(postBufferIndices, preBufferIndices,
+                        new int[] { 0 }, new int[] { 0 },
+                        branchWeights,
+                        count,
+                        buffer, null);
+
+                System.arraycopy(buffer, 0, first, i * length, length);
+            }
+        }
+        // TOOD handle `firstSquared` and `second`
     }
 
     @Override
     protected String getGradientTraitName() {
         return GRADIENT_TRAIT_NAME + "." + name;
     }
-
-//    protected String getHessianTraitName() {
-//        return HESSIAN_TRAIT_NAME + ":" + name;
-//    }
 
     public static String getName(String name) {
         return GRADIENT_TRAIT_NAME + "." + name;

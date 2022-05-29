@@ -1,7 +1,7 @@
 /*
  * DiscreteTraitBranchSubstitutionParameterDelegate.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -83,8 +83,8 @@ public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradien
     }
 
     private int coverWholeTree(int[] postBufferIndices,
-                                int[] preBufferIndices,
-                                double[] branchLengths) {
+                               int[] preBufferIndices,
+                               double[] branchLengths) {
         int u = 0;
         for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
             NodeRef node = tree.getNode(nodeNum);
@@ -110,22 +110,26 @@ public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradien
                 BranchModel.Mapping mapping = branchModel.getBranchModelMapping(node);
                 int[] order = mapping.getOrder();
                 double[] weights = mapping.getWeights();
-                double sum = 0.0;
-                for (double w : weights) {
-                    sum += w;
-                }
 
                 for (int k = 0; k < order.length; ++k) {
                     if (order[k] == modelNumber) {
                         postBufferIndices[u] = getPostOrderPartialIndex(nodeNum);
                         preBufferIndices[u]  = getPreOrderPartialIndex(nodeNum);
-                        branchLengths[u] = getBranchLength(node) * weights[k] / sum;
+                        branchLengths[u] = getBranchLength(node) * relativeWeight(k, weights);
                         u++;
                     }
                 }
             }
         }
         return u;
+    }
+
+    private double relativeWeight(int k, double[] weights) {
+        double sum = 0.0;
+        for (double w : weights) {
+            sum += w;
+        }
+        return weights[k] / sum;
     }
 
     @Override
@@ -142,16 +146,16 @@ public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradien
 
         final int[] postBufferIndices = new int[tree.getNodeCount() - 1];
         final int[] preBufferIndices = new int[tree.getNodeCount() - 1];
-        final double[] branchWeights = new double[tree.getNodeCount() - 1];
+        final double[] branchLengths = new double[tree.getNodeCount() - 1];
 
         if (substitutionModelCount == 1) {
 
             Arrays.fill(first, 0, first.length, 0.0);
 
-            int count = coverWholeTree(postBufferIndices, preBufferIndices, branchWeights);
+            int count = coverWholeTree(postBufferIndices, preBufferIndices, branchLengths);
             beagle.calculateCrossProductDifferentials(postBufferIndices, preBufferIndices,
                     new int[] { 0 }, new int[] { 0 },
-                    branchWeights,
+                    branchLengths,
                     count,
                     first, null);
         } else {
@@ -162,10 +166,10 @@ public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradien
 
                 Arrays.fill(buffer, 0, buffer.length, 0.0);
                 int count = coverPartialTree(i, postBufferIndices, preBufferIndices,
-                        branchWeights);
+                        branchLengths);
                 beagle.calculateCrossProductDifferentials(postBufferIndices, preBufferIndices,
                         new int[] { 0 }, new int[] { 0 },
-                        branchWeights,
+                        branchLengths,
                         count,
                         buffer, null);
 

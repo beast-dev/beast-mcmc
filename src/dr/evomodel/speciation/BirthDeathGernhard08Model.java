@@ -145,7 +145,7 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel
         if( ! conditionalOnRoot ) {
             final double rho = getRho();
             final double tmp = ((1 - rho) - a) * Math.exp(mrh);
-            final double zDeriv = tmp + rho == 1.0 ? 0.0 : -r * tmp / Math.log(rho + tmp);
+            final double zDeriv = -r * tmp / (rho + tmp);
             double result = -2 * zDeriv - r;
 
             if( tree.getRoot() == node ) {

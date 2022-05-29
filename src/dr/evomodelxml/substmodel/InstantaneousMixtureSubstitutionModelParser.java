@@ -21,7 +21,7 @@ public class InstantaneousMixtureSubstitutionModelParser extends AbstractXMLObje
 
     private static final String MIXTURE_MODEL = "instantaneousMixtureSubstitutionModel";
     private static final String MIXTURE_WEIGHTS = "mixtureWeights";
-    private static final String NORMALIZE_WEIGHTS = "normalizeWeights";
+    private static final String RELATIVE = "weightsRelativeToOne";
 
     public String getParserName() {
         return MIXTURE_MODEL;
@@ -29,7 +29,7 @@ public class InstantaneousMixtureSubstitutionModelParser extends AbstractXMLObje
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-//        boolean normalize = xo.getAttribute(NORMALIZE_WEIGHTS, false);
+        boolean transform = xo.getAttribute(RELATIVE, false);
 
         List<SubstitutionModel> modelList = xo.getAllChildren(SubstitutionModel.class);
         if ( modelList.size() > 2 ) {
@@ -56,7 +56,7 @@ public class InstantaneousMixtureSubstitutionModelParser extends AbstractXMLObje
             throw new RuntimeException("Invalid bounds of weight parameter for instantaneousMixtureSubstitutionModel which uses p, 1-p mixture.");
         }
 
-        return new InstantaneousMixtureSubstitutionModel(xo.getId(),dataType,rootFreq,modelList,weights);
+        return new InstantaneousMixtureSubstitutionModel(xo.getId(),dataType,rootFreq,modelList,weights,transform);
     }
 
     //************************************************************************
@@ -76,7 +76,7 @@ public class InstantaneousMixtureSubstitutionModelParser extends AbstractXMLObje
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-//            AttributeRule.newBooleanRule(NORMALIZE_WEIGHTS, true),
+            AttributeRule.newBooleanRule(RELATIVE, true),
             new XORRule(
                     new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data",
                             DataType.getRegisteredDataTypeNames(), false),

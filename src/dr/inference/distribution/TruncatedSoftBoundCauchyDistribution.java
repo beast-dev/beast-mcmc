@@ -39,6 +39,7 @@ import java.util.List;
 
 /**
  * The truncated Cauchy distribution with soft bound in Inoue, Donoghue and Yang, 2010
+ * reference: paml4.8 package by Dr. Ziheng Yang
  *
  * @author Xiang Ji
  * @author Marc Suchard
@@ -89,6 +90,9 @@ public class TruncatedSoftBoundCauchyDistribution extends AbstractContinuousDist
         }
     }
 
+    /*
+    Reference: line 2263 - line 2279 of mcmctree.c from paml4.8 package by Dr. Ziheng Yang
+     */
     @Override
     public double logPdf(double x) {
         assert x > 0;

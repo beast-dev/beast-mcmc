@@ -148,10 +148,13 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
      * @return the probability of no sampled descendants after time, t
      */
     public static double logq(double c1, double c2, double t) {
-        // TODO off by a factor of 4 from Gavryushkina et al (2014) and Magee and Hoehna (2021)
-        // Should only be a problem if tree is being inferred and sampled ancestors are allowed
-        double res = c1 * t + 2.0 * Math.log( Math.exp(-c1 * t) * (1.0 - c2) + (1.0 + c2) ); // operate directly in logspace, c1 * t too big
-        return res;
+//        // TODO off by a factor of 4 from Gavryushkina et al (2014) and Magee and Hoehna (2021)
+//        // Should only be a problem if tree is being inferred and sampled ancestors are allowed
+//        double res = c1 * t + 2.0 * Math.log( Math.exp(-c1 * t) * (1.0 - c2) + (1.0 + c2) ); // operate directly in logspace, c1 * t too big
+//        return res;
+        double expC1t = Math.exp(c1 * t);
+        double q = 2 * (1 - Math.pow(c2,2.0)) + (1.0/expC1t) * Math.pow((1.0 - c2),2.0) + expC1t * Math.pow(1.0 + c2,2.0);
+        return Math.log(q);
     }
 
     private static double c1(double lambda, double mu, double psi) {
@@ -345,7 +348,7 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
         if (noSamplingAtPresent || tOld > timeZeroTolerance) {
             return logPsi + Math.log(r + (1.0 - r) * p0(tOld));
         } else {
-            return logRho;
+            return Math.log(4.0) + logRho;
         }
     }
 

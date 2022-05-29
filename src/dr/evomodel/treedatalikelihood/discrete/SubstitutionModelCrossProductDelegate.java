@@ -66,20 +66,15 @@ public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradien
 
     private double getBranchLength(NodeRef node) {
 
-        double parentHeight = tree.getNodeHeight(tree.getParent(node));
-        double nodeHeight = tree.getNodeHeight(node);
-
-        return parentHeight - nodeHeight;
-    }
-
-    private double getBranchWeight(NodeRef node, double branchLength) {
-
         final double branchRate;
         synchronized (branchRateModel) {
             branchRate = branchRateModel.getBranchRate(tree, node);
         }
 
-        return branchRate * branchLength;
+        double parentHeight = tree.getNodeHeight(tree.getParent(node));
+        double nodeHeight = tree.getNodeHeight(node);
+
+        return branchRate * (parentHeight - nodeHeight);
     }
 
     @Override
@@ -96,7 +91,7 @@ public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradien
             if (!tree.isRoot(tree.getNode(nodeNum))) {
                 postBufferIndices[u] = getPostOrderPartialIndex(nodeNum);
                 preBufferIndices[u]  = getPreOrderPartialIndex(nodeNum);
-                branchLengths[u] = getBranchWeight(node, getBranchLength(node));
+                branchLengths[u] = getBranchLength(node);
                 u++;
             }
         }
@@ -115,12 +110,16 @@ public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradien
                 BranchModel.Mapping mapping = branchModel.getBranchModelMapping(node);
                 int[] order = mapping.getOrder();
                 double[] weights = mapping.getWeights();
+                double sum = 0.0;
+                for (double w : weights) {
+                    sum += w;
+                }
 
                 for (int k = 0; k < order.length; ++k) {
                     if (order[k] == modelNumber) {
                         postBufferIndices[u] = getPostOrderPartialIndex(nodeNum);
                         preBufferIndices[u]  = getPreOrderPartialIndex(nodeNum);
-                        branchLengths[u] = getBranchWeight(node, weights[k]);
+                        branchLengths[u] = getBranchLength(node) * weights[k] / sum;
                         u++;
                     }
                 }

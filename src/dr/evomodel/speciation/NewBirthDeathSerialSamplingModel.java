@@ -153,7 +153,7 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
 //        double res = c1 * t + 2.0 * Math.log( Math.exp(-c1 * t) * (1.0 - c2) + (1.0 + c2) ); // operate directly in logspace, c1 * t too big
 //        return res;
         double expC1t = Math.exp(c1 * t);
-        double q = 2 * (1 - Math.pow(c2,2.0)) + (1.0/expC1t) * Math.pow((1.0 - c2),2.0) + expC1t * Math.pow(1.0 + c2,2.0);
+        double q = 4/(2 * (1 - Math.pow(c2,2.0)) + (1.0/expC1t) * Math.pow((1.0 - c2),2.0) + expC1t * Math.pow(1.0 + c2,2.0));
         return Math.log(q);
     }
 
@@ -322,12 +322,12 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
 
     @Override
     public double processInterval(int model, double tYoung, double tOld, int nLineages) {
-        return nLineages * (logq(tYoung) - logq(tOld));
+        return nLineages * (logq(tOld) - logq(tYoung));
     }
 
     @Override
     public double processOrigin(int model, double rootAge) {
-        return (logq(rootAge) - logq(originTime.getValue(0)));
+        return (logq(originTime.getValue(0))) - logq(rootAge);
     }
 
     @Override
@@ -348,7 +348,7 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
         if (noSamplingAtPresent || tOld > timeZeroTolerance) {
             return logPsi + Math.log(r + (1.0 - r) * p0(tOld));
         } else {
-            return Math.log(4.0) + logRho;
+            return logRho;
         }
     }
 

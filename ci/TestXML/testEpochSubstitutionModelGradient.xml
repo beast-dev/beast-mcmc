@@ -560,7 +560,7 @@
     <designMatrix id="hky.designMatrix">
         <parameter id="kappa.design" value="0 1 0 0 1 0	0 1 0 0 1 0"/>
     </designMatrix>     
-
+ 
      <hkyModel id="hky.1">
          <frequencies>
              <frequencyModel idref="freqModel"/>
@@ -592,11 +592,15 @@
         <rootFrequencies>
             <frequencyModel idref="freqModel"/>
         </rootFrequencies>
-        <glmModel family="logLinear" checkIdentifiability="true">
+        <glmModel family="logLinear" checkIdentifiability="false">
             <independentVariables>
                 <parameter id="log.kappa.1" value="0.0"/>
 				<designMatrix idref="hky.designMatrix"/>
-            </independentVariables>            
+            </independentVariables>
+            <independentVariables>
+                <parameter id="effect.kappa.1" value="0.0"/>
+				<designMatrix idref="hky.designMatrix"/>
+            </independentVariables>                        
         </glmModel>
     </glmSubstitutionModel>  
     

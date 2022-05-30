@@ -30,6 +30,9 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Marc A. Suchard
  */
@@ -133,21 +136,34 @@ public class CompactGradient implements HessianWrtParameterProvider, Reportable 
         }
     }
 
+    private List<Parameter> unroll(CompoundParameter source) {
+        List<Parameter> unrolled = new ArrayList<>();
+        for (int i = 0; i < source.getParameterCount(); ++i) {
+            Parameter p = source.getParameter(i);
+            if (p instanceof CompoundParameter) {
+                unrolled.addAll(unroll((CompoundParameter) p));
+            } else {
+                unrolled.add(p);
+            }
+        }
+        return unrolled;
+    }
+
     private ParameterMap constructParameter(Parameter source) {
 
         ParameterMap map = new ParameterMap(sourceParameter.getDimension());
 
         if (source instanceof CompoundParameter) {
-            CompoundParameter cp = (CompoundParameter) source;
+            List<Parameter> cp = unroll((CompoundParameter) source);
 
             int current = 0;
-            for (int i = 0; i < cp.getParameterCount(); ++i) {
-                Parameter p = cp.getParameter(i);
+            for (int i = 0; i < cp.size(); ++i) {
+                Parameter p = cp.get(i);
 
                 int past = 0;
                 boolean found = false;
                 for (int j = 0; j < i && !found; ++j) {
-                    Parameter q = cp.getParameter(j);
+                    Parameter q = cp.get(j);
                     if (p == q) {
                         map(p, current, past, null, map.map);
                         found = true;

@@ -532,15 +532,6 @@
 		</nodeHeights>
 	</treeModel>
 
-	<!-- Generate a coalescent likelihood                                        -->
-	<coalescentLikelihood id="coalescent">
-		<model>
-			<constantSize idref="constant"/>
-		</model>
-		<populationTree>
-			<treeModel idref="treeModel"/>
-		</populationTree>
-	</coalescentLikelihood>
 
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="branchRates">
@@ -560,34 +551,7 @@
     <designMatrix id="hky.designMatrix">
         <parameter id="kappa.design" value="0 1 0 0 1 0	0 1 0 0 1 0"/>
     </designMatrix>     
- 
-     <hkyModel id="hky.1">
-         <frequencies>
-             <frequencyModel idref="freqModel"/>
-         </frequencies>
-         <kappa>
-             <parameter id="kappa.1" value="1.0" lower="0.0"/>
-         </kappa>
-     </hkyModel>
-     
-     <hkyModel id="hky.2">
-         <frequencies>
-             <frequencyModel idref="freqModel"/>
-         </frequencies>
-         <kappa>
-             <parameter id="kappa.2" value="2.0" lower="0.0"/>
-         </kappa>
-     </hkyModel>
-     
-    <hkyModel id="hky.3">
-         <frequencies>
-             <frequencyModel idref="freqModel"/>
-         </frequencies>
-         <kappa>
-             <parameter id="kappa.3" value="3.0" lower="0.0"/>
-         </kappa>
-     </hkyModel>
-     
+      
     <glmSubstitutionModel id="glm.1" dataType="nucleotide">
         <rootFrequencies>
             <frequencyModel idref="freqModel"/>
@@ -610,7 +574,6 @@
         </rootFrequencies>
         <glmModel family="logLinear" checkIdentifiability="true">
             <independentVariables>
-<!--                 <parameter idref="log.kappa.1"/> -->
                 <parameter id="log.kappa.2" value="0.6931472"/> <!-- kappa == 2 -->
 				<designMatrix idref="hky.designMatrix"/>
             </independentVariables>            
@@ -623,30 +586,21 @@
         </rootFrequencies>
         <glmModel family="logLinear" checkIdentifiability="true">
             <independentVariables>
-	             <parameter idref="log.kappa.1"/>
-<!--                 <parameter id="log.kappa.3" value="1.098612"/> <!~~ kappa == 3 ~~> -->
+	            <parameter idref="log.kappa.1"/>
 				<designMatrix idref="hky.designMatrix"/>
             </independentVariables>            
         </glmModel>
-    </glmSubstitutionModel>    
-    
-    <!-- -23264.69129507818 -->           
+    </glmSubstitutionModel>          
 
 <!-- epoch model -->
 	<epochBranchModel id="epochModel">
-
         <epoch id="epoch1" transitionTime="10">
-<!-- 			<hkyModel idref="hky.1"/> -->
 			<glmSubstitutionModel idref="glm.1"/>
         </epoch>
-
         <epoch id="epoch2" transitionTime="15">
-<!-- 			<hkyModel idref="hky.2"/> -->
 			<glmSubstitutionModel idref="glm.2"/>			
         </epoch>
-
-<!--             <hkyModel idref="hky.3"/> -->
-			<glmSubstitutionModel idref="glm.3"/>            
+		<glmSubstitutionModel idref="glm.3"/>            
         <treeModel idref="treeModel"/>
     </epochBranchModel>
 
@@ -673,7 +627,7 @@
 	</treeDataLikelihood>
 	
 	<report>
-		<treeLikelihood idref="treeLikelihood"/>
+		<treeDataLikelihood idref="treeLikelihood"/>
 	</report>
 	
 	<glmSubstitutionModelGradient id="gradient.1" traitName="Sequence" effects="fixed">
@@ -703,128 +657,78 @@
     </compactGradient>
     
     <report>
-    	<compoundGradient idref="gradient"/>
-<!-- 
-    	<glmSubstitutionModelGradient idref="gradient.1"/>
-    	<glmSubstitutionModelGradient idref="gradient.2"/>
-    	<glmSubstitutionModelGradient idref="gradient.3"/>
- -->
+    	<compactGradient idref="gradient"/>
     </report>    
-		
-<!-- 
-    <epochSubstitutionModelGradient id="gradient" traitName="Sequence">
-	    <epochBranchModel idref="epochModel"/>
-    	<treeDataLikelihood idref="treeLikelihood"/>    	
-    </epochSubstitutionModelGradient>
+			
+	<normalPrior id="log.kappa.1.prior" mean="0.0" stdev="2">
+		<parameter idref="log.kappa.1"/>
+	</normalPrior>	
 	
- -->
+	<normalPrior id="log.kappa.2.prior" mean="0.0" stdev="2">
+		<parameter idref="log.kappa.2"/>
+	</normalPrior>					
+			
+	<normalPrior id="effect.kappa.1.prior" mean="0.0" stdev="0.1">
+		<parameter idref="effect.kappa.1"/>
+	</normalPrior>				
 	
+	<compoundGradient id="gradient.prior">
+		<gradient>
+			<normalPrior idref="log.kappa.1.prior"/>
+			<parameter idref="log.kappa.1"/>
+		</gradient>
+		<gradient>
+			<normalPrior idref="effect.kappa.1.prior"/>
+			<parameter idref="effect.kappa.1"/>
+		</gradient>	
+		<gradient>
+			<normalPrior idref="log.kappa.2.prior"/>
+			<parameter idref="log.kappa.2"/>
+		</gradient>			
+	</compoundGradient>
+	
+	<jointGradient id="joint">
+		<compactGradient idref="gradient"/>
+		<compoundGradient idref="gradient.prior"/>
+	</jointGradient>
+	
+	<report>
+		<jointGradient idref="joint"/>
+	</report>
 
 	<!-- Define operators                                                        -->
-<!-- 
+
 	<operators id="operators">
-	
-		<scaleOperator scaleFactor="0.75" weight="0.1">
-			<parameter idref="kappa.1"/>
-		</scaleOperator>
-		
-		<scaleOperator scaleFactor="0.75" weight="0.1">
-			<parameter idref="kappa.2"/>
-		</scaleOperator>
-		
-		<scaleOperator scaleFactor="0.75" weight="0.1">
-			<parameter idref="kappa.3"/>
-		</scaleOperator>
-		
-		<deltaExchange delta="0.01" weight="0.1">
-			<parameter idref="frequencies"/>
-		</deltaExchange>
-		
-		<subtreeSlide size="0.13999999999999999" gaussian="true" weight="15">
-			<treeModel idref="treeModel"/>
-		</subtreeSlide>
-		
-		<narrowExchange weight="15">
-			<treeModel idref="treeModel"/>
-		</narrowExchange>
-		
-		<wideExchange weight="3">
-			<treeModel idref="treeModel"/>
-		</wideExchange>
-		
-		<wilsonBalding weight="3">
-			<treeModel idref="treeModel"/>
-		</wilsonBalding>
-		
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="treeModel.rootHeight"/>
-		</scaleOperator>
-		
-		<uniformOperator weight="30">
-			<parameter idref="treeModel.internalNodeHeights"/>
-		</uniformOperator>
-		
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="constant.popSize"/>
-		</scaleOperator>
-		
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="clock.rate"/>
-		</scaleOperator>
-		
-		<upDownOperator scaleFactor="0.75" weight="3">
-			<up>
-				<parameter idref="clock.rate"/>
-			</up>
-			<down>
-				<parameter idref="treeModel.allInternalNodeHeights"/>
-			</down>
-		</upDownOperator>
-		
+		<hamiltonianMonteCarloOperator weight="20" nSteps="5" stepSize="1E-2" mode="vanilla"
+        	drawVariance="1.0" autoOptimize="true">
+            <jointGradient idref="joint"/>            
+ 		</hamiltonianMonteCarloOperator> 			 							
 	</operators>
 
-	<!~~ Define MCMC                                                             ~~>
-	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
+	<!-- Define MCMC                                                             -->
+	<mcmc id="mcmc" chainLength="100" autoOptimize="true">
 		<posterior id="posterior">
 			<prior id="prior">
-			
-				<logNormalPrior mean="1.0" stdev="2" offset="0.0" meanInRealSpace="true">
-					<parameter idref="kappa.1"/>
-				</logNormalPrior>
+				<normalPrior idref="log.kappa.1.prior"/>		
+				<normalPrior idref="log.kappa.2.prior"/>		
+				<normalPrior idref="effect.kappa.1.prior"/>	
 				
-				<logNormalPrior mean="1.0" stdev="2" offset="0.0" meanInRealSpace="true">
-					<parameter idref="kappa.2"/>
-				</logNormalPrior>
+				<glmSubstitutionModel idref="glm.1"/> 
+				<glmSubstitutionModel idref="glm.2"/> 
+				<glmSubstitutionModel idref="glm.3"/> 
 				
-				<logNormalPrior mean="1.0" stdev="2" offset="0.0" meanInRealSpace="true">
-					<parameter idref="kappa.3"/>
-				</logNormalPrior>
-				
-				<uniformPrior lower="0.0" upper="1.0">
-					<parameter idref="frequencies"/>
-				</uniformPrior>
-
-				<uniformPrior lower="0.0" upper="1.0">
-					<parameter idref="clock.rate"/>
-				</uniformPrior>
-				
-				<logNormalPrior mean="1.0" stdev="2" offset="0.0" meanInRealSpace="false">
-					<parameter idref="constant.popSize"/>
-				</logNormalPrior>
-				
-				<coalescentLikelihood idref="coalescent"/>
-				
+				<strictClockBranchRates idref="branchRates"/>					
 			</prior>
 			
 			<likelihood id="likelihood">
-				<treeLikelihood idref="treeLikelihood"/>
+				<treeDataLikelihood idref="treeLikelihood"/>
 			</likelihood>
 			
 		</posterior>
 		<operators idref="operators"/>
 
-		<!~~ write log to screen                                                     ~~>
-		<log id="screenLog" logEvery="5000">
+		<!-- write log to screen                                                     -->
+		<log id="screenLog" logEvery="10">
 		
 			<column label="Posterior" dp="4" width="12">
 				<posterior idref="posterior"/>
@@ -837,57 +741,26 @@
 			<column label="Likelihood" dp="4" width="12">
 				<likelihood idref="likelihood"/>
 			</column>
-			
-			<column label="clock.rate" sf="6" width="12">
-				<parameter idref="clock.rate"/>
+									
+			<column label="log.kappa.1" sf="6" width="12">
+				<parameter idref="log.kappa.1"/>
 			</column>
 			
-			<column label="kappa.1" sf="6" width="12">
-				<parameter idref="kappa.1"/>
+			<column label="effect.kappa.1" sf="6" width="12">
+				<parameter idref="effect.kappa.1"/>
 			</column>
 			
-			<column label="kappa.2" sf="6" width="12">
-				<parameter idref="kappa.2"/>
-			</column>
-			
-			<column label="kappa.3" sf="6" width="12">
-				<parameter idref="kappa.3"/>
-			</column>
-			
-		</log>
-
-		<!~~ write log to file                                                       ~~>
-		<log id="fileLog" logEvery="1000" fileName="epoch.log" overwrite="false">
-			<posterior idref="posterior"/>
-			<prior idref="prior"/>
-			<likelihood idref="likelihood"/>
-			<parameter idref="kappa.1"/>
-			<parameter idref="kappa.2"/>
-			<parameter idref="kappa.3"/>
-			<parameter idref="frequencies"/>
-			<parameter idref="clock.rate"/>
-			<treeLikelihood idref="treeLikelihood"/>
-			<coalescentLikelihood idref="coalescent"/>
-		</log>
-
-		<!~~ write tree log to file                                                  ~~>
-		<logTree id="treeFileLog" logEvery="5000" nexusFormat="true" fileName="epoch.trees" sortTranslationTable="true">
-			<treeModel idref="treeModel"/>
-			<trait name="rate" tag="rate">
-				<strictClockBranchRates idref="branchRates"/>
-			</trait>
-			<posterior idref="posterior"/>
-		</logTree>
-		
+			<column label="log.kappa.2" sf="6" width="12">
+				<parameter idref="log.kappa.2"/>
+			</column>			
+		</log>				
 	</mcmc>
- -->
 	
-<!-- 
 	<report>
 		<property name="timer">
 			<mcmc idref="mcmc"/>
 		</property>
 	</report>
- -->
+
 	
 </beast>

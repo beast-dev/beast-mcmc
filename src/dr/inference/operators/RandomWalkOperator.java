@@ -102,6 +102,10 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
         return boundaryCondition;
     }
 
+    public final List<Integer> getUpdateMap() {
+        return updateMap;
+    }
+
     /**
      * change the parameter and return the hastings ratio.
      */

@@ -51,7 +51,8 @@ public class TransformedParameterRandomWalkOperator extends RandomWalkOperator {
                 randomWalkOperator.getWindowSize(),
                 randomWalkOperator.getBoundaryCondition(),
                 randomWalkOperator.getWeight(),
-                randomWalkOperator.getMode());
+                randomWalkOperator.getMode(),
+                randomWalkOperator.getUpdateMap());
         this.generalBounds = null; //TODO: implement if needed
     }
 
@@ -60,7 +61,8 @@ public class TransformedParameterRandomWalkOperator extends RandomWalkOperator {
                 randomWalkOperator.getWindowSize(),
                 randomWalkOperator.getBoundaryCondition(),
                 randomWalkOperator.getWeight(),
-                randomWalkOperator.getMode());
+                randomWalkOperator.getMode(),
+                randomWalkOperator.getUpdateMap());
         this.generalBounds = bounds;
     }
 

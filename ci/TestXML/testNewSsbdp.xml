@@ -65,19 +65,19 @@
 		</speciesTree>
 	</speciationLikelihood>
 
-<!--	<assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">-->
-<!--			<message>-->
-<!--					check full model-->
-<!--			</message>-->
-<!--			<actual regex="lnL:\s(.*?)\n">-->
-<!--				<report>-->
-<!--					<speciationLikelihood idref="speciation1"/>-->
-<!--				</report>-->
-<!--			</actual>-->
-<!--			&lt;!&ndash; computed in RevBayes &ndash;&gt;-->
-<!--			<expected>-->
-<!--				-70.389509338300143781-->
-<!--			</expected>-->
-<!--	</assertEqual>-->
+	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+			<message>
+					check full model
+			</message>
+			<actual regex="lnL:\s(.*?)\n">
+				<report>
+					<speciationLikelihood idref="speciation1"/>
+				</report>
+			</actual>
+			<!-- computed in RevBayes -->
+			<expected>
+				-66.309702772061569931
+			</expected>
+	</assertEqual>
 
 </beast>

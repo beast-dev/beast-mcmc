@@ -453,11 +453,13 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
 
     @Override
     public void updateIntegratedBrownianMotionDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
-                                                                final double[] edgeLengths, final double[] driftRates,
+                                                                final double[] edgeLengths, double[] realTimeEdgeLengths,
+                                                                final double[] driftRates,
                                                                 int updateCount) {
 
+        assert !scaleDriftWithBranchRates : "Integrated BM cannot be used with option 'scaleDriftWithBranchRates' to true in 'traitDataLikelihood'.";
         super.updateIntegratedBrownianMotionDiffusionMatrices(precisionIndex, probabilityIndices,
-                edgeLengths, driftRates, updateCount);
+                edgeLengths, realTimeEdgeLengths, driftRates, updateCount);
 
         if (DEBUG) {
             System.err.println("Matrices (safe with actualized drift, integrated BM):");
@@ -473,18 +475,20 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
             final int pio = dimTrait * probabilityIndices[up];
             final int scaledOffset = matrixTraitSize * probabilityIndices[up];
             final double edgeLength = edgeLengths[up];
-            final double edgeLengthSquare = edgeLength * edgeLength / 2;
-            final double edgeLengthCube = edgeLength * edgeLength * edgeLength / 3;
+            final double realTimeEdgeLength = realTimeEdgeLengths[up];
+            final double edgeLengthSquare = edgeLength * realTimeEdgeLength / 2;
+            final double edgeLengthCube = edgeLength * realTimeEdgeLength * realTimeEdgeLength / 3;
+            final double realTimeEdgeLengthSquare = realTimeEdgeLength * realTimeEdgeLength / 2;
 
             // Drift
             KroneckerOperation.product(
-                    new double[]{edgeLength, edgeLengthSquare}, 2, 1, 0,
+                    new double[]{realTimeEdgeLength, realTimeEdgeLengthSquare}, 2, 1, 0,
                     driftRates, dimProcess, 1, offset,
                     displacements, pio);
 
             // Actualization
             KroneckerOperation.product(
-                    new double[]{1, 0, edgeLength, 1}, 2, 2, 0,
+                    new double[]{1, 0, realTimeEdgeLength, 1}, 2, 2, 0,
                     KroneckerOperation.makeIdentityMatrix(dimProcess), dimProcess, dimProcess, 0,
                     actualizations, scaledOffset);
 

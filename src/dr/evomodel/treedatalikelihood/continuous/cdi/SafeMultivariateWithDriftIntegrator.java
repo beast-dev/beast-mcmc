@@ -65,7 +65,7 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
 
     private double[] vectorDispi;
     private double[] vectorDispj;
-    private boolean scaleDriftWithBranchRates;
+    protected boolean scaleDriftWithBranchRates;
 
     private void allocateStorage() {
 

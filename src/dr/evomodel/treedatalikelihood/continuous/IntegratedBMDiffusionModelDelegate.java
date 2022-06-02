@@ -94,6 +94,7 @@ public class IntegratedBMDiffusionModelDelegate extends AbstractDriftDiffusionMo
                 getEigenBufferOffsetIndex(0),
                 probabilityIndices,
                 edgeLengths,
+                realTimeEdgeLengths,
                 getDriftRates(branchIndices, updateCount),
                 updateCount);
     }

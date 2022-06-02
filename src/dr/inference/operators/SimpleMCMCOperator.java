@@ -26,6 +26,7 @@
 package dr.inference.operators;
 
 import dr.inference.model.Likelihood;
+import dr.inference.model.Parameter;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -227,6 +228,10 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
      * @return the hastings ratio
      */
     public abstract double doOperation();
+
+    public Parameter getParameter() {
+        throw new RuntimeException("not implemented for operator of class " + getOperatorName());
+    }
 
     private double weight = 1.0;
     private long acceptCount = 0;

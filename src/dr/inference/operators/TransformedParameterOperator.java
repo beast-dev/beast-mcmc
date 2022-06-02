@@ -5,11 +5,12 @@ import dr.inference.model.Parameter;
 import dr.inference.model.TransformedParameter;
 
 public class TransformedParameterOperator extends AbstractAdaptableOperator {
-    private boolean isAdaptable;
-    private SimpleMCMCOperator subOperator;
-    private TransformedParameter parameter;
-    private boolean checkValid;
-    private GeneralParameterBounds generalBounds;
+    private final boolean isAdaptable;
+    private final SimpleMCMCOperator subOperator;
+    private final TransformedParameter parameter;
+    private final boolean checkValid;
+    private final GeneralParameterBounds generalBounds;
+    public static final String TRANSFORMED_OPERATOR = "transformedParameterOperator";
 
     public TransformedParameterOperator(SimpleMCMCOperator operator, GeneralParameterBounds generalBounds) {
 
@@ -56,7 +57,7 @@ public class TransformedParameterOperator extends AbstractAdaptableOperator {
 
     @Override
     public String getOperatorName() {
-        return "transformedParameterOperator." + subOperator.getOperatorName();
+        return TRANSFORMED_OPERATOR + "." + subOperator.getOperatorName();
     }
 
     @Override

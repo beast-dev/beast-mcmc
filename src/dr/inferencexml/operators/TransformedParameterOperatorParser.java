@@ -5,9 +5,10 @@ import dr.inference.operators.SimpleMCMCOperator;
 import dr.inference.operators.TransformedParameterOperator;
 import dr.xml.*;
 
+import static dr.inference.operators.TransformedParameterOperator.TRANSFORMED_OPERATOR;
+
 public class TransformedParameterOperatorParser extends AbstractXMLObjectParser {
 
-    private static final String TRANSFORMED_OPERATOR = "transformedParameterOperator";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

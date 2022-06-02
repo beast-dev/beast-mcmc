@@ -15,7 +15,29 @@
 		<taxon id="D"/>
 	</taxa>
 
+	<newick id="startingTree" usingHeights="true" usingDates="false">
+		((A:1.0,B:2.0):1.0,(C:1.0,D:2.0):2.0)
+	</newick>
+
+	<!-- Generate a tree model                                                   -->
+	<treeModel id="treeModel">
+		<newick idref="startingTree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+	</treeModel>
+
 	<!-- One  newBirthDeathSerialSampling per test case-->
+
+	<!-- ########## -->
+	<!-- # CASE 1 # -->
+	<!-- ########## -->
 	<newBirthDeathSerialSampling id="bdss1" units="years" conditionOnSurvival="false">
 		<birthRate>
 			<parameter id="bdss1.birthRate" value="8.472" lower="0.0"/>
@@ -37,25 +59,6 @@
 		</origin>
 	</newBirthDeathSerialSampling>
 
-	<newick id="startingTree" usingHeights="true" usingDates="false">
-		((A:1.0,B:2.0):1.0,(C:1.0,D:2.0):2.0)
-	</newick>
-
-	<!-- Generate a tree model                                                   -->
-	<treeModel id="treeModel">
-		<newick idref="startingTree"/>
-		<rootHeight>
-			<parameter id="treeModel.rootHeight"/>
-		</rootHeight>
-		<nodeHeights internalNodes="true">
-			<parameter id="treeModel.internalNodeHeights"/>
-		</nodeHeights>
-		<nodeHeights internalNodes="true" rootNode="true">
-			<parameter id="treeModel.allInternalNodeHeights"/>
-		</nodeHeights>
-	</treeModel>
-
-	<!-- Generate a speciation likelihood for Yule or Birth Death                -->
 	<speciationLikelihood id="speciation1" useNewLoop="true">
 		<model>
 			<birthDeathSerialSampling idref="bdss1"/>
@@ -65,19 +68,211 @@
 		</speciesTree>
 	</speciationLikelihood>
 
-<!--	<assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">-->
-<!--			<message>-->
-<!--					check full model-->
-<!--			</message>-->
-<!--			<actual regex="lnL:\s(.*?)\n">-->
-<!--				<report>-->
-<!--					<speciationLikelihood idref="speciation1"/>-->
-<!--				</report>-->
-<!--			</actual>-->
-<!--			&lt;!&ndash; computed in RevBayes &ndash;&gt;-->
-<!--			<expected>-->
-<!--				-70.389509338300143781-->
-<!--			</expected>-->
-<!--	</assertEqual>-->
+	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+			<message>
+					check full model
+			</message>
+			<actual regex="lnL:\s(.*?)\n">
+				<report>
+					<speciationLikelihood idref="speciation1"/>
+				</report>
+			</actual>
+			<!-- computed in RevBayes -->
+			<expected>
+				-66.309702772061569931
+			</expected>
+	</assertEqual>
+
+	<!-- ########## -->
+	<!-- # CASE 2 # -->
+	<!-- ########## -->
+	<newBirthDeathSerialSampling id="bdss2" units="years" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss2.birthRate" value="8.472" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss2.deathRate" value="4.321" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss2.samplingRate" value="1.234" lower="0.0"/>
+		</samplingRate>
+		<treatmentProbability>
+			<parameter id="bdss2.treatmentProbability" value="0.0" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<samplingProbabilityAtPresent>
+			<parameter id="bdss2.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
+		</samplingProbabilityAtPresent>
+		<origin>
+			<parameter id="bdss2.origin" value="5.123" lower="0.0"/>
+		</origin>
+	</newBirthDeathSerialSampling>
+
+	<speciationLikelihood id="speciation2" useNewLoop="true">
+		<model>
+			<birthDeathSerialSampling idref="bdss2"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+		<message>
+			check 2 (r = 0)
+		</message>
+		<actual regex="lnL:\s(.*?)\n">
+			<report>
+				<speciationLikelihood idref="speciation2"/>
+			</report>
+		</actual>
+		<!-- computed in RevBayes -->
+		<expected>
+			-67.863138307858733356
+		</expected>
+	</assertEqual>
+
+	<!-- ########## -->
+	<!-- # CASE 3 # -->
+	<!-- ########## -->
+	<newBirthDeathSerialSampling id="bdss3" units="years" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss3.birthRate" value="8.472" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss3.deathRate" value="4.321" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss3.samplingRate" value="1.234" lower="0.0"/>
+		</samplingRate>
+		<treatmentProbability>
+			<parameter id="bdss3.treatmentProbability" value="1.0" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<samplingProbabilityAtPresent>
+			<parameter id="bdss3.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
+		</samplingProbabilityAtPresent>
+		<origin>
+			<parameter id="bdss3.origin" value="5.123" lower="0.0"/>
+		</origin>
+	</newBirthDeathSerialSampling>
+
+	<speciationLikelihood id="speciation3" useNewLoop="true">
+		<model>
+			<birthDeathSerialSampling idref="bdss3"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+		<message>
+			check 3 (r = 1)
+		</message>
+		<actual regex="lnL:\s(.*?)\n">
+			<report>
+				<speciationLikelihood idref="speciation3"/>
+			</report>
+		</actual>
+		<!-- computed in RevBayes -->
+		<expected>
+			-65.183089216683370637
+		</expected>
+	</assertEqual>
+
+	<!-- ########## -->
+	<!-- # CASE 4 # -->
+	<!-- ########## -->
+	<newBirthDeathSerialSampling id="bdss4" units="years" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss4.birthRate" value="8.472" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss4.deathRate" value="4.321" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss4.samplingRate" value="1.234" lower="0.0"/>
+		</samplingRate>
+		<treatmentProbability>
+			<parameter id="bdss4.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<samplingProbabilityAtPresent>
+			<parameter id="bdss4.samplingProbabilityAtPresent" value="0.0" lower="0.0" upper="1.0"/>
+		</samplingProbabilityAtPresent>
+		<origin>
+			<parameter id="bdss4.origin" value="5.123" lower="0.0"/>
+		</origin>
+	</newBirthDeathSerialSampling>
+
+	<speciationLikelihood id="speciation4" useNewLoop="true">
+		<model>
+			<birthDeathSerialSampling idref="bdss4"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+		<message>
+			check 4 (rho = 0)
+		</message>
+		<actual regex="lnL:\s(.*?)\n">
+			<report>
+				<speciationLikelihood idref="speciation4"/>
+			</report>
+		</actual>
+		<!-- computed in RevBayes -->
+		<expected>
+			-63.233328265141651059
+		</expected>
+	</assertEqual>
+
+	<!-- ########## -->
+	<!-- # CASE 5 # -->
+	<!-- ########## -->
+	<newBirthDeathSerialSampling id="bdss5" units="years" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss5.birthRate" value="8.472" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss5.deathRate" value="4.321" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss5.samplingRate" value="1.234" lower="0.0"/>
+		</samplingRate>
+		<treatmentProbability>
+			<parameter id="bdss5.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<samplingProbabilityAtPresent>
+			<parameter id="bdss5.samplingProbabilityAtPresent" value="1.0" lower="0.0" upper="1.0"/>
+		</samplingProbabilityAtPresent>
+		<origin>
+			<parameter id="bdss5.origin" value="5.123" lower="0.0"/>
+		</origin>
+	</newBirthDeathSerialSampling>
+
+	<speciationLikelihood id="speciation5" useNewLoop="true">
+		<model>
+			<birthDeathSerialSampling idref="bdss5"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+		<message>
+			check 5 (rho = 1)
+		</message>
+		<actual regex="lnL:\s(.*?)\n">
+			<report>
+				<speciationLikelihood idref="speciation5"/>
+			</report>
+		</actual>
+		<!-- computed in RevBayes -->
+		<expected>
+			-66.696843909761611258
+		</expected>
+	</assertEqual>
 
 </beast>

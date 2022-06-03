@@ -111,12 +111,11 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
         if (xo.hasChildNamed(TreeTraitParserUtilities.TRAIT_PARAMETER)) {
             dataModel = ContinuousTraitDataModelParser.parseContinuousTraitDataModel(xo);
-            traitName = xo.getStringAttribute(TreeTraitParserUtilities.TRAIT_NAME);
         } else {  // Has ContinuousTraitPartialsProvider
             dataModel = (ContinuousTraitPartialsProvider) xo.getChild(ContinuousTraitPartialsProvider.class);
-            traitName = xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME);
         }
 
+        traitName = xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME);
         dataModel.setTipTraitName(getTipTraitName(traitName)); // TODO: not an ideal solution as the trait name could be set differently later
 
         ConjugateRootTraitPrior rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(xo, dataModel.getTraitDimension());

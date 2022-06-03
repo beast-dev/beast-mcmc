@@ -33,7 +33,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
-import dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser;
+import dr.evomodelxml.continuous.ContinuousTraitDataModelParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
@@ -312,7 +312,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 
             int dimTrait = samplingPrecision.getColumnDimension();
             final PrecisionType precisionType;
-            if (xo.getAttribute(ContinuousDataLikelihoodParser.FORCE_FULL_PRECISION, false) ||
+            if (xo.getAttribute(ContinuousTraitDataModelParser.FORCE_FULL_PRECISION, false) ||
                     dimTrait > 1) {
                 precisionType = PrecisionType.FULL;
             } else {

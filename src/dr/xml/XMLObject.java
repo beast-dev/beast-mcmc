@@ -329,10 +329,19 @@ public class XMLObject {
     }
 
     /**
-     * @return the named attribute as a double[].
+     * @return the named attribute as a int[].
      */
     public int[] getIntegerArrayAttribute(String name) throws XMLParseException {
         return getIntegerArray(getAndTest(name));
+    }
+
+    /**
+     * @param i the index of the child to return
+     * @return the ith child as a int[].
+     * @throws XMLParseException if getChild(i) would
+     */
+    public int[] getIntegerArrayChild(int i) throws XMLParseException {
+        return getIntegerArray(getChild(i));
     }
 
     /**

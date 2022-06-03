@@ -64,7 +64,7 @@ public class MarkovRandomFieldMatrixParser extends AbstractXMLObjectParser {
 
         boolean asCorrelation = xo.getAttribute(AS_CORRELATION, false);
 
-        if (diagonalParameter.getDimension() != 1  || offDiagonalParameter.getDimension() != 1) {
+        if (diagonalParameter.getDimension() != dim  || offDiagonalParameter.getDimension() != 1) {
             throw new XMLParseException("Wrong parameter dimensions for GMRF");
         }
 

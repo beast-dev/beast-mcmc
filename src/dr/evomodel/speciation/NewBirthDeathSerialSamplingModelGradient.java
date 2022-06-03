@@ -241,9 +241,8 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
 
             double origin = model.originTime.getValue(0);
             double p0 = model.p0(origin);
-            double Q = Math.exp(model.logq(origin));
+            double Q = 4*(1/Math.exp(model.logq(origin)));
             double lambda = model.lambda();
-            double mu = model.mu();
             double psi = model.psi();
             double rho = model.rho();
 
@@ -252,7 +251,7 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
 
 
             for (int i = 0; i < 4; ++i) {
-                partialLL_all[i] = 1 / (1 - p0) * partialP0_all_origin[i];
+               // partialLL_all[i] = 1 / (1 - p0) * partialP0_all_origin[i];
                 partialLL_all[i] -= partialQ_all_origin[i] / Q;
             }
 
@@ -269,7 +268,7 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
                 // final int nLineages = treeIntervals.getLineageCount(i);
                 if (treeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
                     double t = intervalEnd;
-                    Q = Math.exp(model.logq(t));
+                    Q = 4*(1/Math.exp(model.logq(t)));
                     double[] partialQ_all = partialQpartialAll(t);
                     for (int j = 0; j < 4; ++j) {
                         partialLL_all[j] -= partialQ_all[j] / Q;
@@ -277,7 +276,7 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
                     mPlusn += 1;
                 } else if (treeIntervals.getIntervalType(i) == IntervalType.SAMPLE) {
                     double t = intervalEnd;
-                    Q = Math.exp(model.logq(t));
+                    Q = 4*(1/Math.exp(model.logq(t)));
                     double[] partialP0_all = partialP0partialAll(t);
                     double[] partialQ_all = partialQpartialAll(t);
                     double P0 = model.p0(t);

@@ -228,6 +228,11 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     @Override
+    public boolean usesMissingIndices() {
+        return true;
+    }
+
+    @Override
     public boolean getDefaultAllowSingular() {
         return true;
     }

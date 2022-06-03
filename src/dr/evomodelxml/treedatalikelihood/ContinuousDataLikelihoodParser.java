@@ -100,14 +100,9 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
                 treeModel, scaleByTime, useTreeLength);
 
-        final int dim = diffusionModel.getPrecisionmatrix().length;
-
         final String traitName;
-        boolean[] missingIndicators;
-//        Parameter sampleMissingParameter = null;
+
         ContinuousTraitPartialsProvider dataModel;
-        boolean useMissingIndices = true;
-        boolean integratedProcess = xo.getAttribute(INTEGRATED_PROCESS, false);
 
         if (xo.hasChildNamed(TreeTraitParserUtilities.TRAIT_PARAMETER)) {
             dataModel = ContinuousTraitDataModelParser.parseContinuousTraitDataModel(xo);
@@ -145,6 +140,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         DiffusionProcessDelegate diffusionProcessDelegate;
+        boolean integratedProcess = dataModel instanceof IntegratedProcessTraitDataModel; //TODO: can add to interface if that would be better
         if ((optimalTraitsModels != null && elasticModel != null) || xo.getAttribute(FORCE_OU, false)) {
             if (!integratedProcess) {
                 diffusionProcessDelegate = new OUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel);
@@ -172,7 +168,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         if (reconstructTraits) {
 
 //            if (missingIndices != null && missingIndices.size() == 0) {
-            if (!useMissingIndices) {
+            if (!dataModel.usesMissingIndices()) {
 
                 ProcessSimulationDelegate simulationDelegate =
                         delegate.getPrecisionType() == PrecisionType.SCALAR ?

@@ -227,6 +227,15 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
     }
 
     @Override
+    public boolean usesMissingIndices() {
+        boolean useMissingIndices = false;
+        for (ContinuousTraitPartialsProvider provider : providers) {
+            useMissingIndices = useMissingIndices || provider.usesMissingIndices();
+        }
+        return useMissingIndices;
+    }
+
+    @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         fireModelChanged(); // sub-providers should handle everything else
     }

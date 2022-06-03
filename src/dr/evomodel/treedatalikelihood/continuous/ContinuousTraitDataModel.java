@@ -48,6 +48,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     final PrecisionType precisionType;
 
     private final boolean[] missingIndicators;
+    private boolean useMissingIndices;
 
     private String tipTraitName = null;
 
@@ -61,6 +62,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         addVariable(parameter);
 
         this.originalMissingIndicators = missingIndicators;
+        this.useMissingIndices = true;
         this.missingIndicators = (useMissingIndices ? missingIndicators : new boolean[missingIndicators.length]);
 
         this.dimTrait = dimTrait;
@@ -106,6 +108,11 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     @Override
     public CompoundParameter getParameter() {
         return parameter;
+    }
+
+    @Override
+    public boolean usesMissingIndices() {
+        return useMissingIndices;
     }
 
     @Override

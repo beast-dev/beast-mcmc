@@ -70,6 +70,8 @@ public interface ContinuousTraitPartialsProvider {
 
     String getModelName();
 
+    boolean usesMissingIndices();
+
     default boolean getDefaultAllowSingular() {
         return false;
     }

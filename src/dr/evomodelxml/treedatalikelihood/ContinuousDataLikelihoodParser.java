@@ -45,8 +45,6 @@ import dr.xml.*;
 import java.util.List;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.getTipTraitName;
-import static dr.evomodelxml.continuous.ContinuousTraitDataModelParser.FORCE_COMPLETELY_MISSING;
-import static dr.evomodelxml.continuous.ContinuousTraitDataModelParser.INTEGRATED_PROCESS;
 
 /**
  * @author Andrew Rambaut
@@ -64,7 +62,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
     private static final String RECONSTRUCT_TRAITS = "reconstructTraits";
     private static final String ALLOW_SINGULAR = "allowSingular";
-    public static final String FORCE_FULL_PRECISION = "forceFullPrecision";
     private static final String FORCE_DRIFT = "forceDrift";
     private static final String FORCE_OU = "forceOU";
 
@@ -254,12 +251,9 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
             AttributeRule.newBooleanRule(RECIPROCAL_RATES, true),
             AttributeRule.newBooleanRule(RECONSTRUCT_TRAITS, true),
-            AttributeRule.newBooleanRule(FORCE_COMPLETELY_MISSING, true),
             AttributeRule.newBooleanRule(ALLOW_SINGULAR, true),
-            AttributeRule.newBooleanRule(FORCE_FULL_PRECISION, true),
             AttributeRule.newBooleanRule(FORCE_DRIFT, true),
             AttributeRule.newBooleanRule(FORCE_OU, true),
-            AttributeRule.newBooleanRule(INTEGRATED_PROCESS, true),
             AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME, true),
             TreeTraitParserUtilities.jitterRules(true),
     };

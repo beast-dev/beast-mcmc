@@ -1,7 +1,6 @@
 package dr.evomodelxml.continuous;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedProcessTraitDataModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
@@ -10,7 +9,6 @@ import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-import static dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser.FORCE_FULL_PRECISION;
 
 public class ContinuousTraitDataModelParser extends AbstractXMLObjectParser {
 
@@ -18,6 +16,8 @@ public class ContinuousTraitDataModelParser extends AbstractXMLObjectParser {
 
     public static final String INTEGRATED_PROCESS = "integratedProcess";
     public static final String FORCE_COMPLETELY_MISSING = "forceCompletelyMissing";
+    public static final String FORCE_FULL_PRECISION = "forceFullPrecision";
+
 
     private static final String NUM_TRAITS = "numTraits";
 

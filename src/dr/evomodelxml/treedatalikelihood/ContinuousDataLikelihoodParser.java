@@ -46,6 +46,8 @@ import dr.xml.*;
 import java.util.List;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.getTipTraitName;
+import static dr.evomodelxml.continuous.ContinuousTraitDataModelParser.FORCE_COMPLETELY_MISSING;
+import static dr.evomodelxml.continuous.ContinuousTraitDataModelParser.INTEGRATED_PROCESS;
 
 /**
  * @author Andrew Rambaut
@@ -62,7 +64,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
     private static final String OPTIMAL_TRAITS = AbstractMultivariateTraitLikelihood.OPTIMAL_TRAITS;
 
     private static final String RECONSTRUCT_TRAITS = "reconstructTraits";
-    private static final String FORCE_COMPLETELY_MISSING = "forceCompletelyMissing";
     private static final String ALLOW_SINGULAR = "allowSingular";
     public static final String FORCE_FULL_PRECISION = "forceFullPrecision";
     private static final String FORCE_DRIFT = "forceDrift";
@@ -70,7 +71,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
     private static final String STRENGTH_OF_SELECTION_MATRIX = "strengthOfSelectionMatrix";
 
-    private static final String INTEGRATED_PROCESS = "integratedProcess";
 
     public static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
 

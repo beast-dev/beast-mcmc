@@ -16,7 +16,7 @@
 	</taxa>
 
 
-	<newBirthDeathSerialSampling id="bdss" units="years" hasFinalSample="false">
+	<newBirthDeathSerialSampling id="bdss" units="years" conditionOnSurvival="false">
 		<birthRate>
 			<parameter id="bdss.birthRate" value="2.0" lower="0.0"/>
 		</birthRate>
@@ -57,7 +57,7 @@
 
 
 	<!-- Generate a speciation likelihood for Yule or Birth Death                -->
-	<speciationLikelihood id="speciation">
+	<speciationLikelihood id="speciation" useNewLoop="true">
 		<model>
 			<newBirthDeathSerialSampling idref="bdss"/>
 		</model>

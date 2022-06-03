@@ -24,12 +24,15 @@ public class ContinuousTraitDataModelParser extends AbstractXMLObjectParser {
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        return parseContinuousTraitDataModel(xo);
+    }
 
+    public static ContinuousTraitDataModel parseContinuousTraitDataModel(XMLObject xo) throws XMLParseException {
         Tree treeModel = (Tree) xo.getChild(Tree.class);
         boolean[] missingIndicators;
         final String traitName;
 
-        boolean useMissingIndices = true;
+        boolean useMissingIndices;
         boolean integratedProcess = xo.getAttribute(INTEGRATED_PROCESS, false);
 
 
@@ -75,22 +78,25 @@ public class ContinuousTraitDataModelParser extends AbstractXMLObjectParser {
                 dim, precisionType);
     }
 
+    public static final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            new ElementRule(Tree.class),
+            new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }),
+            AttributeRule.newBooleanRule(INTEGRATED_PROCESS, true),
+            AttributeRule.newIntegerRule(NUM_TRAITS, true),
+            AttributeRule.newBooleanRule(FORCE_COMPLETELY_MISSING, true),
+            AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME, true)
+    };
+
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
-        return new XMLSyntaxRule[]{
-                new ElementRule(Tree.class),
-                new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class)
-                }),
-                AttributeRule.newBooleanRule(INTEGRATED_PROCESS, true),
-                AttributeRule.newIntegerRule(NUM_TRAITS, true),
-                AttributeRule.newBooleanRule(FORCE_COMPLETELY_MISSING, true)
-        };
+        return rules;
     }
 
     @Override
     public String getParserDescription() {
-        return null;
+        return "parses continuous traits from a tree";
     }
 
     @Override

@@ -37,10 +37,9 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.*;
+import dr.evomodelxml.continuous.ContinuousTraitDataModelParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.List;
@@ -111,40 +110,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         boolean integratedProcess = xo.getAttribute(INTEGRATED_PROCESS, false);
 
         if (xo.hasChildNamed(TreeTraitParserUtilities.TRAIT_PARAMETER)) {
-            TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
-
-            TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                    utilities.parseTraitsFromTaxonAttributes(xo, treeModel, true);
-            CompoundParameter traitParameter = returnValue.traitParameter;
-            missingIndicators = returnValue.getMissingIndicators();
-//            sampleMissingParameter = returnValue.sampleMissingParameter;
-            traitName = returnValue.traitName;
-            useMissingIndices = returnValue.useMissingIndices;
-
-            PrecisionType precisionType = PrecisionType.SCALAR;
-
-            if (xo.getAttribute(FORCE_FULL_PRECISION, false) ||
-                    (useMissingIndices && !xo.getAttribute(FORCE_COMPLETELY_MISSING, false))) {
-                precisionType = PrecisionType.FULL;
-            }
-
-            if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
-                utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndicators);
-            }
-
-//            System.err.println("Using precisionType == " + precisionType + " for data model.");
-
-            if (!integratedProcess) {
-                dataModel = new ContinuousTraitDataModel(traitName,
-                        traitParameter,
-                        missingIndicators, useMissingIndices,
-                        dim, precisionType);
-            } else {
-                dataModel = new IntegratedProcessTraitDataModel(traitName,
-                        traitParameter,
-                        missingIndicators, useMissingIndices,
-                        dim, precisionType);
-            }
+            dataModel = ContinuousTraitDataModelParser.parseContinuousTraitDataModel(xo);
+            traitName = xo.getStringAttribute(TreeTraitParserUtilities.TRAIT_NAME);
         } else {  // Has ContinuousTraitPartialsProvider
             dataModel = (ContinuousTraitPartialsProvider) xo.getChild(ContinuousTraitPartialsProvider.class);
             traitName = xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME);
@@ -276,12 +243,10 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(MultivariateDiffusionModel.class),
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(CONJUGATE_ROOT_PRIOR, ConjugateRootTraitPrior.rules),
-            new XORRule(
-                    new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
-                            new ElementRule(Parameter.class),
-                    }),
+            new XORRule(new XMLSyntaxRule[]{
+                    new AndRule(ContinuousTraitDataModelParser.rules),
                     new ElementRule(ContinuousTraitPartialsProvider.class)
-            ),
+            }),
             new ElementRule(DRIFT_MODELS, new XMLSyntaxRule[]{
                     new ElementRule(BranchRateModel.class, 1, Integer.MAX_VALUE),
             }, true),

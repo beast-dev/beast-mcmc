@@ -26,17 +26,15 @@
 package test.dr.evomodel.coalescent;
 
 import dr.evomodel.coalescent.smooth.SmoothSkygridLikelihood;
+import dr.math.GeneralizedLogisticFunction;
 import junit.framework.TestCase;
-import org.apache.commons.math.ConvergenceException;
-import org.apache.commons.math.FunctionEvaluationException;
-import org.apache.commons.math.analysis.UnivariateRealFunction;
 import org.apache.commons.math.analysis.integration.RombergIntegrator;
 import org.apache.commons.math.analysis.integration.UnivariateRealIntegrator;
 
 /**
  * @author Marc A. Suchard
  */
-public class SmoothSkygridTest extends TestCase {
+public class GeneralizedLogisticFunctionTest extends TestCase {
 
 //    public void testStartUp() throws Exception {
 //        long startTime = System.nanoTime();
@@ -46,111 +44,58 @@ public class SmoothSkygridTest extends TestCase {
 //        System.err.println("Total startup time: " + (endTime-startTime) + "ns");
 //    }
 
-    public void testSmoothSkyrideIntegrals() throws Exception {
-        double x;
+    public void testGeneralizedLogisticFunction() throws Exception {
+
         double y;
-        
-        double[] xx;
-        double[] yy;
+        y = GeneralizedLogisticFunction.evaluate(1,
+                1,2,
+                10,20,
+                10,1.5, 1);
+        System.err.println(y);
 
-        long startTime;
-        long endTime;
+        y = GeneralizedLogisticFunction.evaluate(2,
+                1,2,
+                10,20,
+                10,1.5, 1);
+        System.err.println(y);
 
-        startTime = System.nanoTime();
-        UnivariateRealIntegrator integrator = new RombergIntegrator();
-        integrator.integrate(v -> 2.0 * v + 1.0, 1, 2);
-        endTime = System.nanoTime();
-        System.err.println("Total startup time: " + (endTime-startTime) + "ns");
+        y = GeneralizedLogisticFunction.evaluate(1.1,
+                1,2,
+                10,20,
+                10,1.5, 1);
+        System.err.println(y);
 
-        // Test gradients
-        startTime = System.nanoTime();
-        xx = SmoothSkygridLikelihood.getGradientWrtLogPopSizesInIntervalViaCentralDifference(
-                1.1, 1.9,
-                1, 2,
-                Math.log(5), Math.log(10), 2.0);
-        endTime = System.nanoTime();
-        System.err.println("Total cDiff execution time: " + (endTime-startTime) + "ns");
-        
-        startTime = System.nanoTime();
-        yy = SmoothSkygridLikelihood.getGradientWrtLogPopSizesInInterval(
-                1.1, 1.9,
-                1, 2,
-                Math.log(5), Math.log(10), 2.0);
-        endTime = System.nanoTime();
-        System.err.println("Total grad execution time: " + (endTime-startTime) + "ns");
+        y = GeneralizedLogisticFunction.evaluate(1.9,
+                1,2,
+                10,20,
+                10,1.5, 1);
+        System.err.println(y);
 
-        System.err.println(xx[0] + " " + xx[1]);
-        System.err.println(yy[0] + " " + yy[1]);
-        assertEquals(xx[0], yy[0], tolerance);
-        assertEquals(xx[1], yy[1], tolerance);
-        
-        // New time-dependent refactoring
-//        x = SmoothSkygridLikelihood.getNewIntensityInInterval(1.1, 1.6,
-//                1,2,
-//                Math.log(5), Math.log(10), 2.0);
-//        y = SmoothSkygridLikelihood.getIntensityInInterval(1.1, 1.6,
-//                1,2,
-//                Math.log(5), Math.log(10), 2.0);
-//        System.err.println(x + " " + y);
-//        assertEquals(x, y, tolerance);
+        y = GeneralizedLogisticFunction.evaluate(1.4,
+                1,2,
+                10,20,
+                10,1.5, 1);
+        System.err.println(y);
 
-//        // Constant model case
-//        x = SmoothSkygridLikelihood.getIntensityInInterval(1.1, 1.6,
-//                1,2,
-//                Math.log(5), Math.log(10), 0.0);
-//        y = (1.6 - 1.1) / Math.exp((Math.log(5) + Math.log(10)) / 2);
-//        System.err.println(x + " " + y);
-//        assertEquals(x, y, tolerance);
-//
-//        // Linear model case
-//        x = SmoothSkygridLikelihood.getNumericIntensityInInterval(1.1, 1.6,
-//                1, 2,
-//                Math.log(5), Math.log(10), 1.0);
-//        y = SmoothSkygridLikelihood.getIntensityInInterval(1.1, 1.6,
-//                1,2,
-//                Math.log(5), Math.log(10), 1.0);
-//        System.err.println(x + " " + y);
-//        assertEquals(x, y, tolerance);
-//
-//        // True step function
-//        x = SmoothSkygridLikelihood.getIntensityInInterval(1.1, 1.4,
-//                1, 2,
-//                Math.log(5), Math.log(10), Double.POSITIVE_INFINITY);
-//        y = (1.4 - 1.1) / 5;
-//        System.err.println(x + " " + y);
-//        assertEquals(x, y, tolerance);
-//
-//        x = SmoothSkygridLikelihood.getIntensityInInterval(1.1, 1.6,
-//                1, 2,
-//                Math.log(5), Math.log(10), Double.POSITIVE_INFINITY);
-//        y = (1.5 - 1.1) / 5 + (1.6 - 1.5) / 10;
-//        System.err.println(x + " " + y);
-//        assertEquals(x, y, tolerance);
-//
-//        x = SmoothSkygridLikelihood.getIntensityInInterval(1.6, 1.8,
-//                1, 2,
-//                Math.log(5), Math.log(10), Double.POSITIVE_INFINITY);
-//        y = (1.8 - 1.6) / 10;
-//        System.err.println(x + " " + y);
-//        assertEquals(x, y, tolerance);
-//
-        // Approximated step function
-        startTime = System.nanoTime();
-        x = SmoothSkygridLikelihood.getPopSizeInInterval(1.6,
-                1, 2,
-                Math.log(5), Math.log(10), 100.0);
-        System.err.println(x);
-        y = 10;
-        assertEquals(x, y, tolerance);
+        y = GeneralizedLogisticFunction.evaluate(1.6,
+                1,2,
+                10,20,
+                10,1.5, 1);
+        System.err.println(y);
 
-        x = SmoothSkygridLikelihood.getIntensityInInterval(1, 2,
-                1, 2,
-                Math.log(5), Math.log(10), 100.0);
-        System.err.println(x);
-        y = 0.5 * 1 / 5 + 0.5 * 1 / 10;
-        assertEquals(x, y, tolerance);
-        endTime = System.nanoTime();
-        System.err.println("Total execution time: " + (endTime-startTime) + "ns");
+        y = GeneralizedLogisticFunction.evaluate(1.4,
+                1,2,
+                10,20,
+                10,1.6, 1);
+        System.err.println(y);
+
+        y = GeneralizedLogisticFunction.evaluate(1.6,
+                1,2,
+                10,20,
+                10,1.6, 1);
+        System.err.println(y);
+
+//        assertEquals(xx[0], yy[0], tolerance);
     }
 
     private final static double tolerance = 1E-4;

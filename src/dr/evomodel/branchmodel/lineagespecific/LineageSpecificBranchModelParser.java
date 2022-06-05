@@ -1,7 +1,7 @@
 /*
  * LineageSpecificBranchModelParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -60,7 +60,7 @@ public class LineageSpecificBranchModelParser extends AbstractXMLObjectParser {
 		TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 		FrequencyModel rootFrequencyModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
 		
-	      List<SubstitutionModel> substitutionModels = new ArrayList<SubstitutionModel>();
+	      List<SubstitutionModel> substitutionModels = new ArrayList<>();
 	      
 	      XMLObject cxo = xo.getChild(MODELS);
 			for (int i = 0; i < cxo.getChildCount(); i++) {

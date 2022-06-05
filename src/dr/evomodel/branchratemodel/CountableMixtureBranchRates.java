@@ -50,6 +50,7 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
     private final List<AbstractBranchRateModel> randomEffectsModels;
     private final int categoryCount;
     private final Parameter timeCoefficient;
+    private final CountableMixtureBranchRates.TimeDependentModel timeDependentModel;
 
     public CountableMixtureBranchRates(CountableBranchCategoryProvider rateCategories,
                                        TreeModel treeModel, Parameter ratesParameter, Parameter timeCoefficient,
@@ -79,6 +80,8 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
             addModel(model);
         }
         // TODO Check that randomEffectsModel means are zero
+
+        this.timeDependentModel = new CountableMixtureBranchRates.TimeDependentModel.Average();
 
         modelInLogSpace = inLogSpace;
 
@@ -229,17 +232,6 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         return effect;
     }
 
-    private double getMidpointHeight(Tree tree, NodeRef node, boolean log){
-        double nodeHeight = tree.getNodeHeight(node);
-        double parentNodeHeight = tree.getNodeHeight(tree.getParent(node));
-        double midpoint = nodeHeight+(parentNodeHeight-nodeHeight)/2;
-        if(log){
-            return Math.log(midpoint);
-        } else {
-            return midpoint;
-        }
-    }
-
     private double getBranchTimeEffect(Tree tree, NodeRef node) {
         if (timeCoefficient!=null) {
             int rateCategory = rateCategories.getBranchCategory(tree, node);
@@ -254,9 +246,9 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 //            }
 
             if (modelInLogSpace) {
-                return coefficient * getMidpointHeight(tree, node, true);
+                return coefficient * timeDependentModel.getMidpointValue(tree, node, true);
             } else {
-                return Math.pow(coefficient,getMidpointHeight(tree, node, false));
+                return Math.pow(timeDependentModel.getMidpointValue(tree, node, false), coefficient);
             }
         } else {
             if (modelInLogSpace) {
@@ -386,9 +378,9 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 
         if (timeCoefficient!=null) {
             if (modelInLogSpace) {
-                effect += coefficient * getMidpointHeight(tree, node, true);
+                effect += coefficient * timeDependentModel.getMidpointValue(tree, node, true);
             } else {
-                effect *= Math.pow(getMidpointHeight(tree, node, false),coefficient);
+                effect *= Math.pow(timeDependentModel.getMidpointValue(tree, node, false), coefficient);
             }
         }
 
@@ -411,4 +403,25 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 
     private final CountableBranchCategoryProvider rateCategories;
     private final boolean modelInLogSpace;
+
+    public interface TimeDependentModel {
+
+        double getMidpointValue(Tree tree, NodeRef node, boolean log);
+
+        class Average implements TimeDependentModel {
+
+            public double getMidpointValue(Tree tree, NodeRef node, boolean log) {
+
+                double nodeHeight = tree.getNodeHeight(node);
+                double parentNodeHeight = tree.getNodeHeight(tree.getParent(node));
+                double midpoint = (nodeHeight + parentNodeHeight) / 2;
+
+                if (log) {
+                    return Math.log(midpoint);
+                } else {
+                    return midpoint;
+                }
+            }
+        }
+    }
 }

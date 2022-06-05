@@ -1,7 +1,7 @@
 /*
  * EpochBranchModel.java
  *
- * Copyright (c) 2002-2021 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -29,10 +29,7 @@ import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.NodeRef;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -45,7 +42,7 @@ import java.util.*;
  * @author Marc A. Suchard
  * @version $Id$
  */
-@SuppressWarnings("serial")
+
 public class EpochBranchModel extends AbstractModel implements BranchModel, Citable {
 
     public static final String EPOCH_BRANCH_MODEL = "EpochBranchModel";
@@ -83,8 +80,8 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
         double parentHeight = tree.getNodeHeight(tree.getParent(node));
         double nodeHeight = tree.getNodeHeight(node);
 
-        List<Double> weightList = new ArrayList<Double>();
-        List<Integer> orderList = new ArrayList<Integer>();
+        List<Double> weightList = new ArrayList<>();
+        List<Integer> orderList = new ArrayList<>();
 
         // find the epoch that the node height is in...
         int epoch = 0;
@@ -106,11 +103,6 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
 
         weightList.add( parentHeight - currentHeight );
         orderList.add(epoch);
-
-
-        if (orderList.size() == 0) {
-            throw new RuntimeException("EpochBranchModel failed to give a valid mapping");
-        }
 
         final int[] order = new int[orderList.size()];
         final double[] weights = new double[weightList.size()];
@@ -182,7 +174,7 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
     }
 
     public List<Citation> getCitations() {
-        return Arrays.asList(
+        return Collections.singletonList(
                 new Citation(new Author[]{new Author("F", "Bielejec"),
                         new Author("P", "Lemey"),
                         new Author("G", "Baele"),
@@ -190,7 +182,7 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
                         new Author("MA", "Suchard")},
                         "Inferring heterogeneous evolutionary processes through time: from sequence substitution to phylogeography",
                         2014,
-                        "Syst. Biol.",
+                        "Systematic Biology",
                         63,
                         493,
                         504,

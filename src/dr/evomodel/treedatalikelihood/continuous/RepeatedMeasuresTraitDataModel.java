@@ -72,8 +72,11 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 
     private boolean[] missingTraitIndicators = null;
 
+    private ContinuousTraitPartialsProvider childModel;
+
 
     public RepeatedMeasuresTraitDataModel(String name,
+                                          ContinuousTraitPartialsProvider childModel,
                                           CompoundParameter parameter,
                                           boolean[] missindIndicators,
                                           boolean useMissingIndices,
@@ -83,6 +86,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 
         super(name, parameter, missindIndicators, useMissingIndices, dimTrait, precisionType);
 
+        this.childModel = childModel;
         this.traitName = name;
         this.samplingPrecisionParameter = samplingPrecision;
         addVariable(samplingPrecision);
@@ -110,7 +114,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
             throw new RuntimeException("Incompatible with this model.");
         }
 
-        double[] partial = super.getTipPartial(taxonIndex, fullyObserved);
+        double[] partial = childModel.getTipPartial(taxonIndex, fullyObserved);
         if (precisionType == precisionType.SCALAR) {
             return partial; //TODO: I don't think this is right, especially given constructor above.
         }
@@ -283,12 +287,14 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(TreeModel.class);
-            TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
+            final ContinuousTraitPartialsProvider subModel;
 
-            TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                    utilities.parseTraitsFromTaxonAttributes(xo, treeModel, true);
-            CompoundParameter traitParameter = returnValue.traitParameter;
-            boolean[] missingIndicators = returnValue.getMissingIndicators();
+            if (xo.hasChildNamed(TreeTraitParserUtilities.TRAIT_PARAMETER)) {
+                subModel = ContinuousTraitDataModelParser.parseContinuousTraitDataModel(xo);
+            } else {
+                subModel = (ContinuousTraitPartialsProvider) xo.getChild(ContinuousTraitPartialsProvider.class);
+            }
+
 
             XMLObject cxo = xo.getChild(PRECISION);
             MatrixParameterInterface samplingPrecision = (MatrixParameterInterface)
@@ -306,7 +312,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
             }
 
 
-            String traitName = returnValue.traitName;
+            String modelName = subModel.getModelName();
 
             boolean scaleByTipHeight = xo.getAttribute(SCALE_BY_TIP_HEIGHT, false);
 
@@ -321,9 +327,10 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 
             if (!scaleByTipHeight) {
                 return new RepeatedMeasuresTraitDataModel(
-                        traitName,
-                        traitParameter,
-                        missingIndicators,
+                        modelName,
+                        subModel,
+                        subModel.getParameter(),
+                        subModel.getDataMissingIndicators(),
 //                    missingIndicators,
                         true,
                         dimTrait,
@@ -333,9 +340,10 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                 );
             } else {
                 return new TreeScaledRepeatedMeasuresTraitDataModel(
-                        traitName,
-                        traitParameter,
-                        missingIndicators,
+                        modelName,
+                        subModel,
+                        subModel.getParameter(),
+                        subModel.getDataMissingIndicators(),
                         true,
                         dimTrait,
                         samplingPrecision,
@@ -372,9 +380,10 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
             // Tree trait parser
             new ElementRule(MutableTreeModel.class),
             AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME),
-            new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
-            }),
+            new XORRule(
+                    new ElementRule(ContinuousTraitPartialsProvider.class),
+                    new AndRule(ContinuousTraitDataModelParser.rules)
+            ),
             new ElementRule(TreeTraitParserUtilities.MISSING, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true),

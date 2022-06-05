@@ -203,6 +203,7 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
                 new CompoundSymmetricMatrix(diagonalVarSampling, offDiagonalSampling, true, false));
 
         dataModelRepeatedMeasures = new RepeatedMeasuresTraitDataModel("dataModelRepeatedMeasures",
+                dataModel,
                 traitParameter,
                 missingIndicators,
                 true,
@@ -211,6 +212,7 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
                 PrecisionType.FULL);
 
         dataModelRepeatedMeasuresInv = new RepeatedMeasuresTraitDataModel("dataModelRepeatedMeasuresInv",
+                dataModel,
                 traitParameter,
                 missingIndicators,
                 true,

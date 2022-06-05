@@ -133,6 +133,14 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
         loadingsParameters[5] = new Parameter.Default(new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 1.0});
         MatrixParameterInterface loadingsMatrixParameters = new MatrixParameter("loadings", loadingsParameters);
 
+        dataModel = new ContinuousTraitDataModel("dataModel",
+                traitParameter,
+                missingIndicators,
+                true,
+                6,
+                PrecisionType.FULL
+        );
+
         dataModelFactor = new IntegratedFactorAnalysisLikelihood("dataModelFactors",
                 traitParameter,
                 missingIndicators,
@@ -143,6 +151,7 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
 
         //// Repeated Measures Model //// ******************************************************************************
         dataModelRepeatedMeasures = new RepeatedMeasuresTraitDataModel("dataModelRepeatedMeasures",
+                dataModel,
                 traitParameter,
                 missingIndicators,
 //                new boolean[3],
@@ -152,6 +161,7 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
                 PrecisionType.FULL);
 
         dataModelRepeatedMeasuresFull = new RepeatedMeasuresTraitDataModel("dataModelRepeatedMeasures",
+                dataModel,
                 traitParameter,
                 missingIndicators,
                 true,

@@ -26,7 +26,6 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
-import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 
@@ -52,7 +51,7 @@ public class BirthDeathSubstitutionModel extends ComplexSubstitutionModel {
         addVariable(birthParameter);
         addVariable(deathParameter);
 
-        this.parameterization = BirthDeathParameterization.DEFAULT;
+        this.parameterization = BirthDeathParameterization.LINEAR;
         this.freqModel = setupEquilibriumModel();
 
         checkDataType(dataType);
@@ -77,6 +76,11 @@ public class BirthDeathSubstitutionModel extends ComplexSubstitutionModel {
             matrix[i - 1][i] = parameterization.birthRate(i,  perCapitaBirthRate);
             matrix[i][i - 1] = parameterization.deathRate(i + 1,  perCapitaDeathRate);
         }
+    }
+
+    @Override
+    protected double getNormalizationValue(double[][] matrix, double[] pi) {
+        return 1.0;
     }
 
     @Override
@@ -125,7 +129,7 @@ public class BirthDeathSubstitutionModel extends ComplexSubstitutionModel {
     }
 
     private enum BirthDeathParameterization {
-        DEFAULT {
+        LINEAR {
             @Override
             double birthRate(int capita, double rate) {
                 return capita * rate;

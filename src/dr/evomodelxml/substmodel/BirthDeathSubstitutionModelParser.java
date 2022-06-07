@@ -28,6 +28,7 @@ package dr.evomodelxml.substmodel;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.substmodel.*;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterParser;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -54,11 +55,6 @@ public class BirthDeathSubstitutionModelParser extends AbstractXMLObjectParser {
         DataType  dataType = (DataType) xo.getChild(DataType.class);
         int states = dataType.getStateCount();
 
-        Parameter equilibrium = null;
-        if (xo.hasChildNamed(FREQUENCIES)) {
-            equilibrium = (Parameter) xo.getElementFirstChild(FREQUENCIES);
-        }
-
         boolean useStationaryDistribution = xo.getAttribute(USE_STATIONARY_DISTRIBUTION, false);
 
         Logger.getLogger("dr.app.beagle.evomodel").info(
@@ -72,8 +68,9 @@ public class BirthDeathSubstitutionModelParser extends AbstractXMLObjectParser {
         BirthDeathSubstitutionModel model = new BirthDeathSubstitutionModel(xo.getId(), birth, death, dataType,
                 useStationaryDistribution);
 
-        if (equilibrium != null) {
-            // TODO replace equilibrium with Proxy from model;
+        if (xo.hasChildNamed(FREQUENCIES)) {
+            ParameterParser.replaceParameter(xo.getChild(FREQUENCIES),
+                    model.getFrequencyModel().getFrequencyParameter());
         }
 
         return model;

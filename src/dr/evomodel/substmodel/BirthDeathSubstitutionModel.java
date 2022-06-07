@@ -32,24 +32,28 @@ import dr.inference.model.Parameter;
 /**
  * @author Marc Suchard
  */
-public class BirthDeathSubstitutionModel extends ComplexSubstitutionModel {
+public class BirthDeathSubstitutionModel extends ComplexSubstitutionModelAtStationarity {
 
     private final Parameter birthParameter;
     private final Parameter deathParameter;
 
     private final BirthDeathParameterization parameterization;
+    private final boolean useStationaryDistribution;
 
     public BirthDeathSubstitutionModel(String name,
                                        Parameter birthParameter,
                                        Parameter deathParameter,
-                                       DataType dataType) {
-        super(name, dataType, null, null);
+                                       DataType dataType,
+                                       boolean useStationaryDistribution) {
+        super(name, dataType, null);
 
         this.birthParameter = birthParameter;
         this.deathParameter = deathParameter;
 
         addVariable(birthParameter);
         addVariable(deathParameter);
+
+        this.useStationaryDistribution = useStationaryDistribution;
 
         this.parameterization = BirthDeathParameterization.LINEAR;
         this.freqModel = setupEquilibriumModel();
@@ -60,6 +64,11 @@ public class BirthDeathSubstitutionModel extends ComplexSubstitutionModel {
     @Override
     protected void frequenciesChanged() {
         throw new RuntimeException("Frequencies are fixed to birth-death equilibrium distribution");
+    }
+
+    @Override
+    protected double[] getPi() {
+        return freqModel.getFrequencies();
     }
 
     @Override
@@ -93,7 +102,11 @@ public class BirthDeathSubstitutionModel extends ComplexSubstitutionModel {
 
             @Override
             public double getParameterValue(int dim) {
-                return 1.0 / stateCount; // TODO Fix!
+                if (useStationaryDistribution) {
+                    return getStationaryDistribution()[dim];
+                } else {
+                    return 1.0 / stateCount;
+                }
             }
 
             @Override

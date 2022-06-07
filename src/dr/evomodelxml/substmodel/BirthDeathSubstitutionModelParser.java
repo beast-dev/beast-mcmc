@@ -40,6 +40,7 @@ public class BirthDeathSubstitutionModelParser extends AbstractXMLObjectParser {
     private static final String SUBSTITUTION_MODEL = "birthDeathSubstitutionModel";
     private static final String BIRTH_PARAMETER = "birth";
     private static final String DEATH_PARAMETER = "death";
+    private static final String USE_STATIONARY_DISTRIBUTION = "useStationaryDistribution";
     private static final String FREQUENCIES = "frequencies";
 
     public String getParserName() {
@@ -58,10 +59,18 @@ public class BirthDeathSubstitutionModelParser extends AbstractXMLObjectParser {
             equilibrium = (Parameter) xo.getElementFirstChild(FREQUENCIES);
         }
 
+        boolean useStationaryDistribution = xo.getAttribute(USE_STATIONARY_DISTRIBUTION, false);
+
         Logger.getLogger("dr.app.beagle.evomodel").info(
                 "  Birth-death Substitution Model (stateCount=" + states + ")");
 
-        BirthDeathSubstitutionModel model = new BirthDeathSubstitutionModel(xo.getId(), birth, death, dataType);
+        if (useStationaryDistribution) {
+            Logger.getLogger("dr.app.beagle.evomodel").info(
+                    "    using stationary distribution of process as root frequencies");
+        }
+
+        BirthDeathSubstitutionModel model = new BirthDeathSubstitutionModel(xo.getId(), birth, death, dataType,
+                useStationaryDistribution);
 
         if (equilibrium != null) {
             // TODO replace equilibrium with Proxy from model;
@@ -92,6 +101,7 @@ public class BirthDeathSubstitutionModelParser extends AbstractXMLObjectParser {
             new ElementRule(FREQUENCIES, new XMLSyntaxRule[] {
                     new ElementRule(Parameter.class),
             }, true),
+            AttributeRule.newBooleanRule(USE_STATIONARY_DISTRIBUTION, true),
             new ElementRule(DataType.class),
     };
 }

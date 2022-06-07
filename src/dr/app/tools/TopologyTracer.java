@@ -1,7 +1,7 @@
 /*
  * TopologyTracer.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2021 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -163,15 +163,27 @@ public class TopologyTracer {
 
                     //no need to keep trees in memory
                     Tree tree = importer.importNextTree();
-                    long state = Long.parseLong(tree.getId().split("_")[1]);
+                    long state = 0;
+                    try {
+                        state = Long.parseLong(tree.getId().split("_")[1]);
+                    } catch(ArrayIndexOutOfBoundsException oob) {
+                        System.out.println("Likely missing underscore in the tree name (i.e. use TREE_1 instead of TREE1 in the .trees file)");
+                        oob.printStackTrace();
+                    }
 
                     Tree tree2 = null;
+                    long state2 = 0;
                     if (importer2 != null) {
                         tree2 = importer2.importNextTree();
-                        long state2 = Long.parseLong(tree2.getId().split("_")[1]);
+                        try {
+                            state2 = Long.parseLong(tree2.getId().split("_")[1]);
+                        } catch(ArrayIndexOutOfBoundsException oob) {
+                            System.out.println("Likely missing underscore in the tree name (i.e. use TREE_1 instead of TREE1 in the .trees file)");
+                            oob.printStackTrace();
+                        }
 
                         if (state != state2) {
-                            throw new RuntimeException("State numbers in paired tree files are not in synchrony");
+                            throw new RuntimeException("State numbers in paired tree files are not in synchrony; state = " + state + " vs. state = " + state2);
                         }
                     }
 
@@ -314,7 +326,8 @@ public class TopologyTracer {
     public static void printUsage(Arguments arguments) {
         arguments.printUsage("TopologyTracer", "<input-file-name> <output-file-name>");
         System.out.println();
-        System.out.println("  Example: treeloganalyser test.trees ess-values.log");
+        System.out.println("  Example: TopologyTracer test.trees ess-values.log");
+        System.out.println("  Example: TopologyTracer file1.trees file2.trees output.log");
         System.out.println();
     }
 
@@ -324,6 +337,8 @@ public class TopologyTracer {
         // To ensure compatibility between programs in the package, enforce the US locale.
         Locale.setDefault(Locale.US);
 
+        //Example usage (compute Robinson-Foulds metric between 2 trees files):
+        //
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = none]"),

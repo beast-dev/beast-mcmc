@@ -429,6 +429,10 @@ public interface Axis {
             isCalibrated = false;
         }
 
+        public void setEpsilon(double epsilon) {
+            this.epsilon = epsilon;
+        }
+
         /**
          *	A static method that uses the natural log to obtain log to base10.
          *	This is required for the linear autoCalibrate but will also be

@@ -110,7 +110,6 @@ public class TreeTraitParserUtilities {
         boolean duplicates = cxo.getAttribute(TreeTraitParserUtilities.DUPLICATES, true); // default = true
         TaxonList taxonList = (TaxonList) cxo.getChild(TaxonList.class);
         jitter(traits, length, missingIndicators, window, taxonList, duplicates, true);
-
     }
 
     public void randomize(XMLObject xo) throws XMLParseException {

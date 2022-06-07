@@ -55,6 +55,7 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood impl
         this.speciationLikelihood = speciationLikelihood;
         this.tree = tree;
         this.calibrationLikelihoods = calibrationLikelihoods;
+        addModel(speciationLikelihood);
     }
 
     @Override

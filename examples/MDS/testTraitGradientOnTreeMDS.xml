@@ -42,99 +42,14 @@
 		</precisionMatrix>
 	</multivariateDiffusionModel>
 
-	<multivariateTraitLikelihood id="oldLikelihood" traitName="X" integrateInternalTraits="true">
-		<multivariateDiffusionModel idref="diffusionModel"/>
-		<treeModel idref="treeModel"/>
-		<traitParameter>
-			<parameter idref="leafTraits"/>
-		</traitParameter>
-        <conjugateRootPrior>
-            <meanParameter>
-                <parameter value="0.0 0.0"/>
-            </meanParameter>
-            <priorSampleSize>
-                <parameter value="10.0"/>
-            </priorSampleSize>
-        </conjugateRootPrior>
-	</multivariateTraitLikelihood>
 
-	<report>
-		Old likelihood =
-		<multivariateTraitLikelihood idref="oldLikelihood"/>
-	</report>
-
-	<traitDataLikelihood id="scalarLikelihood" traitName="X">
-		<multivariateDiffusionModel idref="diffusionModel"/>
-		<treeModel idref="treeModel"/>
-		<traitParameter>
-			<parameter idref="leafTraits"/>
-		</traitParameter>
-        <conjugateRootPrior>
-            <meanParameter>
-                <parameter value="0.0 0.0"/>
-            </meanParameter>
-            <priorSampleSize>
-                <parameter value="10.0"/>
-            </priorSampleSize>
-        </conjugateRootPrior>
-	</traitDataLikelihood>
-
-	<report>
-		Scalar likelihood =
-		<traitDataLikelihood idref="scalarLikelihood"/>
-	</report>
-	
-	<traitDataLikelihood id="fullLikelihood" traitName="X" forceFullPrecision="true">
-		<multivariateDiffusionModel idref="diffusionModel"/>
-		<treeModel idref="treeModel"/>
-		<traitParameter>
-			<parameter idref="leafTraits"/>
-		</traitParameter>
-        <conjugateRootPrior>
-            <meanParameter>
-                <parameter value="0.0 0.0"/>
-            </meanParameter>
-            <priorSampleSize>
-                <parameter value="10.0"/>
-            </priorSampleSize>
-        </conjugateRootPrior>
-	</traitDataLikelihood>
-
-	<report>
-		Full likelihood =
-		<traitDataLikelihood idref="fullLikelihood"/>
-	</report>
-
-	<!-- START GRADIENTS -->
-
-	<report>
-		Old gradient =
-		<traitGradientOnTree>
-			<multivariateTraitLikelihood idref="oldLikelihood"/>
-		</traitGradientOnTree>
-	</report>
-
-	<report>
-		Scalar gradient =
-		<traitGradientOnTree traitName="X">
-			<traitDataLikelihood idref="scalarLikelihood"/>
-		</traitGradientOnTree>
-	</report>
-	
-	<report>
-		Full gradient =
-		<traitGradientOnTree traitName="X">
-			<traitDataLikelihood idref="fullLikelihood"/>
-		</traitGradientOnTree>
-	</report>
-	
 	<!-- OU DIAGONAL MODEL -->
 		
 	<traitDataLikelihood id="ouLikelihood" traitName="X" forceFullPrecision="true">
 		<multivariateDiffusionModel idref="diffusionModel"/>
 		<treeModel idref="treeModel"/>
 		<traitParameter>
-			<parameter idref="leafTraits"/>
+			<fastMatrixParameter id="XOU" rows="2" columns="3" test="true" signalComponents="false"/>
 		</traitParameter>
         <conjugateRootPrior>
             <meanParameter>
@@ -162,13 +77,33 @@
             </diagonalMatrix>
         </strengthOfSelectionMatrix>
 	</traitDataLikelihood>
-
+	
+	<multidimensionalScalingLikelihood id="mdsLikelihoodOU" fileName="test_distances.txt" mdsDimension="2" forceReorder="true">
+		<locations>
+			<parameter idref="XOU"/>
+		</locations>
+		<mdsPrecision>
+			<parameter value="1.0" lower="0.0"/>
+		</mdsPrecision>
+	</multidimensionalScalingLikelihood>
+	
 	<report>
 		Diagonal OU gradient =
 		<traitGradientOnTree traitName="X">
 			<traitDataLikelihood idref="ouLikelihood"/>
 		</traitGradientOnTree>
 	</report>
+	
+	<report>
+		 Joint MDS Diagonal OU gradient
+	 	<jointGradient>
+ 			<multidimensionalScalingLikelihood idref="mdsLikelihoodOU"/>
+			<traitGradientOnTree traitName="X">
+				<traitDataLikelihood idref="ouLikelihood"/>
+			</traitGradientOnTree>
+		</jointGradient> 	
+	</report>
+			
 	
 	<!-- OU FULL MODEL WITH REPEATED MEASURES -->
 		
@@ -204,7 +139,7 @@
         <repeatedMeasuresModel traitName="X">
         	<treeModel idref="treeModel"/>
         	<traitParameter>
-          	  <parameter idref="leafTraits"/>
+          	  <fastMatrixParameter id="XOURep" rows="2" columns="3" test="true" signalComponents="false"/>
         	</traitParameter>
         	<samplingPrecision>
            	 	<matrixParameter>
@@ -222,6 +157,26 @@
 			<traitDataLikelihood idref="ouRepeatedMeasuresLikelihood"/>
 		</traitGradientOnTree>
 	</report>
+	
+	<multidimensionalScalingLikelihood id="mdsLikelihoodOURep" fileName="test_distances.txt" mdsDimension="2" forceReorder="true">
+		<locations>
+			<parameter idref="XOURep"/>
+		</locations>
+		<mdsPrecision>
+			<parameter value="1.0" lower="0.0"/>
+		</mdsPrecision>
+	</multidimensionalScalingLikelihood>
+	
+	<report>
+		 Joint MDS Full OU with Repeated Measures gradient = 
+	 	<jointGradient>
+ 			<multidimensionalScalingLikelihood idref="mdsLikelihoodOURep"/>
+			<traitGradientOnTree traitName="XOURep">
+				<traitDataLikelihood idref="ouRepeatedMeasuresLikelihood"/>
+			</traitGradientOnTree>
+		</jointGradient> 	
+	</report>
+
 	
 	<!-- BM DRIFT MODEL WITH SCALED REPEATED MEASURES -->
 		
@@ -251,7 +206,7 @@
         <repeatedMeasuresModel traitName="X" scaleByTipHeight="true">
         	<treeModel idref="treeModel"/>
         	<traitParameter>
-          	  <parameter idref="leafTraits"/>
+          	  <fastMatrixParameter id="XDrift" rows="2" columns="3" test="true" signalComponents="false"/>
         	</traitParameter>
         	<samplingPrecision>
            	 	<matrixParameter>
@@ -268,6 +223,25 @@
 		<traitGradientOnTree traitName="X">
 			<traitDataLikelihood idref="driftScaledLikelihood"/>
 		</traitGradientOnTree>
+	</report>
+	
+	<multidimensionalScalingLikelihood id="mdsLikelihoodDrift" fileName="test_distances.txt" mdsDimension="2" forceReorder="true">
+		<locations>
+			<parameter idref="XDrift"/>
+		</locations>
+		<mdsPrecision>
+			<parameter value="1.0" lower="0.0"/>
+		</mdsPrecision>
+	</multidimensionalScalingLikelihood>
+	
+	<report>
+		 Joint MDS Drift with Scaled Repeated Measures gradient = 
+	 	<jointGradient>
+ 			<multidimensionalScalingLikelihood idref="mdsLikelihoodDrift"/>
+			<traitGradientOnTree traitName="XDrift">
+				<traitDataLikelihood idref="driftScaledLikelihood"/>
+			</traitGradientOnTree>
+		</jointGradient> 	
 	</report>
 	
 </beast>

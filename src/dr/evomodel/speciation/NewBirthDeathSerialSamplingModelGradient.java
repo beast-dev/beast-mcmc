@@ -11,15 +11,20 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
 
     private final NewBirthDeathSerialSamplingModel model;
     private double[] savedGradient;
+    private BigFastTreeIntervals savedTreeInterval;
 
     public NewBirthDeathSerialSamplingModelGradient(NewBirthDeathSerialSamplingModel model) {
         this.model = model;
         this.savedGradient = null;
+        this.savedTreeInterval = null;
     }
 
-    // TODO(yucais): call this function when a new tree comes!
+    // TODO(yucais): call these functions when a new tree comes!
     public void clearGradient() {
         this.savedGradient = null;
+    }
+    public void clearTreeInterval(){
+        this.savedTreeInterval = null;
     }
 
     private double g1(double t) {
@@ -255,11 +260,15 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
                 partialLL_all[i] -= partialQ_all_origin[i] / Q;
             }
 
-            BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals((TreeModel) tree);
+            BigFastTreeIntervals treeIntervals = this.savedTreeInterval;
+
+            if (this.savedTreeInterval == null) {
+                treeIntervals = new BigFastTreeIntervals((TreeModel) tree);
+                this.savedTreeInterval = treeIntervals;
+            }
 
             int m = 0;
             int mPlusn = 1;
-            // TODO(yucais): check how to calculate k
             int k = 0;
 
             for (int i = 0; i < treeIntervals.getIntervalCount(); ++i) {
@@ -300,8 +309,16 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
             // rho
             if (rho != 0) {
                 partialLL_all[3] += n / rho;
+            } else {
+                double[] partialP0_all = partialP0partialAll(0);
+                double P0 = model.p0(0);
+                double r = model.r();
+                double v = (1 - r) / ((1 - r) * P0 + r);
+                for (int j = 0; j < 4; ++j) {
+                    partialLL_all[j] += v * partialP0_all[j];
+                }
+                partialLL_all[2] += 1/psi;
             }
-
             savedGradient = partialLL_all;
 
             return partialLL_all;

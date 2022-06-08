@@ -16,21 +16,6 @@
 	</taxa>
 
 
-	<newBirthDeathSerialSampling id="bdss" units="years" conditionOnSurvival="false">
-		<birthRate>
-			<parameter id="bdss.birthRate" value="2.0" lower="0.0"/>
-		</birthRate>
-		<deathRate>
-			<parameter id="bdss.deathRate" value="0.5" lower="0.0" upper="1.0"/>
-		</deathRate>
-		<samplingRate>
-			<parameter id="bdss.psi" value="2.0" lower="0.0"/>
-		</samplingRate>
-		<origin>
-			<parameter id="bdss.origin" value="5.0" lower="0.0"/>
-		</origin>
-	</newBirthDeathSerialSampling>
-
 	<newick id="startingTree" usingHeights="true" usingDates="false">
 		((A:1.0,B:2.0):1.0,(C:1.0,D:2.0):2.0)
 	</newick>
@@ -56,59 +41,359 @@
 	</treeLengthStatistic>
 
 
+
+	<!-- ########## -->
+	<!-- # CASE 1 # -->
+	<!-- ########## -->
+
+	<!--full model-->
+	<newBirthDeathSerialSampling id="bdss1" units="years" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss1.birthRate" value="8.472" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss1.deathRate" value="4.321" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss1.samplingRate" value="1.234" lower="0.0"/>
+		</samplingRate>
+		<treatmentProbability>
+			<parameter id="bdss1.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<samplingProbabilityAtPresent>
+			<parameter id="bdss1.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
+		</samplingProbabilityAtPresent>
+		<origin>
+			<parameter id="bdss1.origin" value="5.123" lower="0.0"/>
+		</origin>
+	</newBirthDeathSerialSampling>
+
 	<!-- Generate a speciation likelihood for Yule or Birth Death                -->
-	<speciationLikelihood id="speciation" useNewLoop="true">
+	<speciationLikelihood id="speciation1" useNewLoop="true">
 		<model>
-			<newBirthDeathSerialSampling idref="bdss"/>
+			<newBirthDeathSerialSampling idref="bdss1"/>
 		</model>
 		<speciesTree>
 			<treeModel idref="treeModel"/>
 		</speciesTree>
 	</speciationLikelihood>
 
-<!--	<speciationLikelihoodGradient id="grad.birthRate" wrtParameter="birthRate">-->
-<!--		<speciationLikelihood idref="speciation"/>-->
-<!--		<treeModel idref="treeModel"/>-->
-<!--	</speciationLikelihoodGradient>-->
+	<speciationLikelihoodGradient id="grad.birthRate1" wrtParameter="birthRate">
+		<speciationLikelihood idref="speciation1"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
 
-<!--	<speciationLikelihoodGradient id="grad.deathRate" wrtParameter="deathRate">-->
-<!--		<speciationLikelihood idref="speciation"/>-->
-<!--		<treeModel idref="treeModel"/>-->
-<!--	</speciationLikelihoodGradient>-->
+	<speciationLikelihoodGradient id="grad.deathRate1" wrtParameter="deathRate">
+		<speciationLikelihood idref="speciation1"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
 
-<!--	<speciationLikelihoodGradient id="grad.samplingRate" wrtParameter="samplingRate">-->
-<!--		<speciationLikelihood idref="speciation"/>-->
-<!--		<treeModel idref="treeModel"/>-->
-<!--	</speciationLikelihoodGradient>-->
+	<speciationLikelihoodGradient id="grad.samplingRate1" wrtParameter="samplingRate">
+		<speciationLikelihood idref="speciation1"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
 
-<!--	<speciationLikelihoodGradient id="grad.treatmentProbability" wrtParameter="treatmentProbability">-->
-<!--		<speciationLikelihood idref="speciation"/>-->
-<!--		<treeModel idref="treeModel"/>-->
-<!--	</speciationLikelihoodGradient>-->
+	<speciationLikelihoodGradient id="grad.samplingProbability1" wrtParameter="samplingProbability">
+		<speciationLikelihood idref="speciation1"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
 
-<!--	<speciationLikelihoodGradient id="grad.samplingProbability" wrtParameter="samplingProbability">-->
-<!--		<speciationLikelihood idref="speciation"/>-->
-<!--		<treeModel idref="treeModel"/>-->
-<!--	</speciationLikelihoodGradient>-->
+	<report>
+		<speciationLikelihoodGradient idref="grad.birthRate1"/>
+	</report>
 
-<!--	<report>-->
-<!--		<speciationLikelihoodGradient idref="grad.birthRate"/>-->
-<!--	</report>-->
+	<report>
+		<speciationLikelihoodGradient idref="grad.deathRate1"/>
+	</report>
 
-<!--	<report>-->
-<!--		<speciationLikelihoodGradient idref="grad.deathRate"/>-->
-<!--	</report>-->
+	<report>
+		<speciationLikelihoodGradient idref="grad.samplingRate1"/>
+	</report>
 
-<!--	<report>-->
-<!--		<speciationLikelihoodGradient idref="grad.samplingRate"/>-->
-<!--	</report>-->
+	<report>
+		<speciationLikelihoodGradient idref="grad.samplingProbability1"/>
+	</report>
 
-<!--	<report>-->
-<!--		<speciationLikelihoodGradient idref="grad.treatmentProbability"/>-->
-<!--	</report>-->
 
-<!--	<report>-->
-<!--		<speciationLikelihoodGradient idref="grad.samplingProbability"/>-->
-<!--	</report>-->
+
+	<!-- ########## -->
+	<!-- # CASE 2 # -->
+	<!-- ########## -->
+
+	<!-- rho = 1 case -->
+	<newBirthDeathSerialSampling id="bdss2" units="years" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss2.birthRate" value="8.472" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss2.deathRate" value="4.321" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss2.samplingRate" value="1.234" lower="0.0"/>
+		</samplingRate>
+		<treatmentProbability>
+			<parameter id="bdss2.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<samplingProbabilityAtPresent>
+			<parameter id="bdss2.samplingProbabilityAtPresent" value="1" lower="0.0" upper="1.0"/>
+		</samplingProbabilityAtPresent>
+		<origin>
+			<parameter id="bdss2.origin" value="5.123" lower="0.0"/>
+		</origin>
+	</newBirthDeathSerialSampling>
+
+	<!-- Generate a speciation likelihood for Yule or Birth Death                -->
+	<speciationLikelihood id="speciation2" useNewLoop="true">
+		<model>
+			<newBirthDeathSerialSampling idref="bdss2"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<speciationLikelihoodGradient id="grad.birthRate2" wrtParameter="birthRate">
+		<speciationLikelihood idref="speciation2"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<speciationLikelihoodGradient id="grad.deathRate2" wrtParameter="deathRate">
+		<speciationLikelihood idref="speciation2"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<speciationLikelihoodGradient id="grad.samplingRate2" wrtParameter="samplingRate">
+		<speciationLikelihood idref="speciation2"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<speciationLikelihoodGradient id="grad.samplingProbability2" wrtParameter="samplingProbability">
+		<speciationLikelihood idref="speciation2"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.birthRate2"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.deathRate2"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.samplingRate2"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.samplingProbability2"/>
+	</report>
+
+	<!-- ########## -->
+	<!-- # CASE 3 # -->
+	<!-- ########## -->
+
+	<!-- rho = 0 case -->
+	<newBirthDeathSerialSampling id="bdss3" units="years" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss3.birthRate" value="8.472" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss3.deathRate" value="4.321" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss3.samplingRate" value="1.234" lower="0.0"/>
+		</samplingRate>
+		<treatmentProbability>
+			<parameter id="bdss3.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<samplingProbabilityAtPresent>
+			<parameter id="bdss3.samplingProbabilityAtPresent" value="0" lower="0.0" upper="1.0"/>
+		</samplingProbabilityAtPresent>
+		<origin>
+			<parameter id="bdss3.origin" value="5.123" lower="0.0"/>
+		</origin>
+	</newBirthDeathSerialSampling>
+
+	<!-- Generate a speciation likelihood for Yule or Birth Death                -->
+	<speciationLikelihood id="speciation3" useNewLoop="true">
+		<model>
+			<newBirthDeathSerialSampling idref="bdss3"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<speciationLikelihoodGradient id="grad.birthRate3" wrtParameter="birthRate">
+		<speciationLikelihood idref="speciation3"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<speciationLikelihoodGradient id="grad.deathRate3" wrtParameter="deathRate">
+		<speciationLikelihood idref="speciation3"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<speciationLikelihoodGradient id="grad.samplingRate3" wrtParameter="samplingRate">
+		<speciationLikelihood idref="speciation3"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.birthRate3"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.deathRate3"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.samplingRate3"/>
+	</report>
+
+	<!-- ########## -->
+	<!-- # CASE 4 # -->
+	<!-- ########## -->
+
+	<!-- r = 1 case -->
+	<newBirthDeathSerialSampling id="bdss4" units="years" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss4.birthRate" value="8.472" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss4.deathRate" value="4.321" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss4.samplingRate" value="1.234" lower="0.0"/>
+		</samplingRate>
+		<treatmentProbability>
+			<parameter id="bdss4.treatmentProbability" value="1" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<samplingProbabilityAtPresent>
+			<parameter id="bdss4.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
+		</samplingProbabilityAtPresent>
+		<origin>
+			<parameter id="bdss4.origin" value="5.123" lower="0.0"/>
+		</origin>
+	</newBirthDeathSerialSampling>
+
+	<!-- Generate a speciation likelihood for Yule or Birth Death                -->
+	<speciationLikelihood id="speciation4" useNewLoop="true">
+		<model>
+			<newBirthDeathSerialSampling idref="bdss4"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<speciationLikelihoodGradient id="grad.birthRate4" wrtParameter="birthRate">
+		<speciationLikelihood idref="speciation4"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<speciationLikelihoodGradient id="grad.deathRate4" wrtParameter="deathRate">
+		<speciationLikelihood idref="speciation4"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<speciationLikelihoodGradient id="grad.samplingRate4" wrtParameter="samplingRate">
+		<speciationLikelihood idref="speciation4"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<speciationLikelihoodGradient id="grad.samplingProbability4" wrtParameter="samplingProbability">
+		<speciationLikelihood idref="speciation4"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.birthRate4"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.deathRate4"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.samplingRate4"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.samplingProbability4"/>
+	</report>
+
+	<!-- ########## -->
+	<!-- # CASE 5 # -->
+	<!-- ########## -->
+
+	<!-- r = 0 case -->
+	<newBirthDeathSerialSampling id="bdss5" units="years" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss5.birthRate" value="8.472" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss5.deathRate" value="4.321" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss5.samplingRate" value="1.234" lower="0.0"/>
+		</samplingRate>
+		<treatmentProbability>
+			<parameter id="bdss5.treatmentProbability" value="0" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<samplingProbabilityAtPresent>
+			<parameter id="bdss5.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
+		</samplingProbabilityAtPresent>
+		<origin>
+			<parameter id="bdss5.origin" value="5.123" lower="0.0"/>
+		</origin>
+	</newBirthDeathSerialSampling>
+
+	<!-- Generate a speciation likelihood for Yule or Birth Death                -->
+	<speciationLikelihood id="speciation5" useNewLoop="true">
+		<model>
+			<newBirthDeathSerialSampling idref="bdss5"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<speciationLikelihoodGradient id="grad.birthRate5" wrtParameter="birthRate">
+		<speciationLikelihood idref="speciation5"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<speciationLikelihoodGradient id="grad.deathRate5" wrtParameter="deathRate">
+		<speciationLikelihood idref="speciation5"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<speciationLikelihoodGradient id="grad.samplingRate5" wrtParameter="samplingRate">
+		<speciationLikelihood idref="speciation5"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<speciationLikelihoodGradient id="grad.samplingProbability5" wrtParameter="samplingProbability">
+		<speciationLikelihood idref="speciation5"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.birthRate5"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.deathRate5"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.samplingRate5"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.samplingProbability5"/>
+	</report>
+
 
 </beast>

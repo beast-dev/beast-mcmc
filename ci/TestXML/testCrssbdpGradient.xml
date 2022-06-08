@@ -394,6 +394,69 @@
 	<report>
 		<speciationLikelihoodGradient idref="grad.samplingProbability5"/>
 	</report>
+	<!-- ########## -->
+	<!-- # CASE 6 # -->
+	<!-- ########## -->
+
+	<!-- mu = 0, r > 0 case -->
+	<newBirthDeathSerialSampling id="bdss6" units="years" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss6.birthRate" value="8.472" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss6.deathRate" value="0" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss6.samplingRate" value="1.234" lower="0.0"/>
+		</samplingRate>
+		<treatmentProbability>
+			<parameter id="bdss6.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<samplingProbabilityAtPresent>
+			<parameter id="bdss6.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
+		</samplingProbabilityAtPresent>
+		<origin>
+			<parameter id="bdss6.origin" value="5.123" lower="0.0"/>
+		</origin>
+	</newBirthDeathSerialSampling>
+
+	<!-- Generate a speciation likelihood for Yule or Birth Death                -->
+	<speciationLikelihood id="speciation6" useNewLoop="true">
+		<model>
+			<newBirthDeathSerialSampling idref="bdss6"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<speciationLikelihoodGradient id="grad.birthRate6" wrtParameter="birthRate">
+		<speciationLikelihood idref="speciation6"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+
+	<speciationLikelihoodGradient id="grad.samplingRate6" wrtParameter="samplingRate">
+		<speciationLikelihood idref="speciation6"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<speciationLikelihoodGradient id="grad.samplingProbability6" wrtParameter="samplingProbability">
+		<speciationLikelihood idref="speciation6"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.birthRate6"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.samplingRate6"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.samplingProbability6"/>
+	</report>
 
 
 </beast>

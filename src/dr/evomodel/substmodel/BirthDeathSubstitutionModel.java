@@ -29,36 +29,42 @@ import dr.evolution.datatype.DataType;
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 
+import java.util.List;
+
 /**
  * @author Marc Suchard
  */
 public class BirthDeathSubstitutionModel extends ComplexSubstitutionModelAtStationarity {
 
-    private final Parameter birthParameter;
-    private final Parameter deathParameter;
-
+    private final List<Parameter> parameters;
     private final BirthDeathParameterization parameterization;
     private final boolean useStationaryDistribution;
+    private final int dim;
 
     public BirthDeathSubstitutionModel(String name,
-                                       Parameter birthParameter,
-                                       Parameter deathParameter,
+                                       List<Parameter> parameters,
                                        DataType dataType,
                                        boolean useStationaryDistribution) {
         super(name, dataType, null);
 
-        this.birthParameter = birthParameter;
-        this.deathParameter = deathParameter;
+        this.parameters = parameters;
 
-        addVariable(birthParameter);
-        addVariable(deathParameter);
+        int len = 0;
+        for (Parameter p : parameters) {
+            addVariable(p);
+            len += p.getDimension();
+        }
+        this.dim = len;
 
         this.useStationaryDistribution = useStationaryDistribution;
-
         this.parameterization = BirthDeathParameterization.LINEAR;
         this.freqModel = setupEquilibriumModel();
 
         checkDataType(dataType);
+
+        if (dim != parameterization.getRequiredDimension()) {
+            throw new IllegalArgumentException("Invalid parameterization for birth-death substitution process");
+        }
     }
 
     @Override
@@ -78,12 +84,12 @@ public class BirthDeathSubstitutionModel extends ComplexSubstitutionModelAtStati
 
     @Override
     protected void setupQMatrix(double[] rates, double[] pi, double[][] matrix) {
-        final double perCapitaBirthRate = birthParameter.getParameterValue(0);
-        final double perCapitaDeathRate = deathParameter.getParameterValue(0);
+
+        final double[] perCapitaRate = getRates();
 
         for (int i = 1; i < stateCount; i++) {
-            matrix[i - 1][i] = parameterization.birthRate(i,  perCapitaBirthRate);
-            matrix[i][i - 1] = parameterization.deathRate(i + 1,  perCapitaDeathRate);
+            matrix[i - 1][i] = parameterization.birthRate(i,  perCapitaRate);
+            matrix[i][i - 1] = parameterization.deathRate(i + 1,  perCapitaRate);
         }
     }
 
@@ -95,6 +101,21 @@ public class BirthDeathSubstitutionModel extends ComplexSubstitutionModelAtStati
     @Override
     public double getLogLikelihood() {
         return 0.0;
+    }
+
+    private double[] getRates() {
+
+        double[] result = new double[dim];
+
+        int offset = 0;
+        for (Parameter p : parameters) {
+            for (int i = 0; i < p.getDimension(); ++i) {
+                result[offset + i] = p.getParameterValue(i);
+            }
+            offset += p.getDimension();
+        }
+
+        return result;
     }
     
     private FrequencyModel setupEquilibriumModel() {
@@ -141,21 +162,51 @@ public class BirthDeathSubstitutionModel extends ComplexSubstitutionModelAtStati
         }
     }
 
+    // Some different models:
+    //   https://doi.org/10.1093/molbev/msg084
+    //   https://doi.org/10.1534/genetics.103.022665
+    //   https://doi.org/10.1534/genetics.110.125260
+
     private enum BirthDeathParameterization {
         LINEAR {
             @Override
-            double birthRate(int capita, double rate) {
-                return capita * rate;
+            double birthRate(int capita, double[] rate) {
+                return capita * rate[0];
             }
 
             @Override
-            double deathRate(int capita, double rate) {
-                return capita * rate;
+            double deathRate(int capita, double[] rate) {
+                return capita * rate[1];
+            }
+
+            @Override
+            int getRequiredDimension() {
+                return 2;
+            }
+        },
+        QUADRATIC {
+            @Override
+            double birthRate(int capita, double[] rate) {
+                return capita * rate[0]
+                        + capita * capita * rate[1];
+            }
+
+            @Override
+            double deathRate(int capita, double[] rate) {
+                return capita * rate[2]
+                        + capita * capita * rate[3];
+            }
+
+            @Override
+            int getRequiredDimension() {
+                return 4;
             }
         };
 
-        abstract double birthRate(int capita, double rate);
+        abstract double birthRate(int capita, double[] rate);
 
-        abstract double deathRate(int capita, double rate);
+        abstract double deathRate(int capita, double[] rate);
+
+        abstract int getRequiredDimension();
     }
 }

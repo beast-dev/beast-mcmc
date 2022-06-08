@@ -31,6 +31,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.ParameterParser;
 import dr.xml.*;
 
+import java.util.Arrays;
 import java.util.logging.Logger;
 
 /**
@@ -65,8 +66,8 @@ public class BirthDeathSubstitutionModelParser extends AbstractXMLObjectParser {
                     "    using stationary distribution of process as root frequencies");
         }
 
-        BirthDeathSubstitutionModel model = new BirthDeathSubstitutionModel(xo.getId(), birth, death, dataType,
-                useStationaryDistribution);
+        BirthDeathSubstitutionModel model = new BirthDeathSubstitutionModel(xo.getId(),
+                Arrays.asList(birth, death), dataType, useStationaryDistribution);
 
         if (xo.hasChildNamed(FREQUENCIES)) {
             ParameterParser.replaceParameter(xo.getChild(FREQUENCIES),

@@ -29,7 +29,7 @@ public class ConvexSpaceRandomWalkOperator extends AbstractAdaptableOperator {
         double oneMinus = 1.0 - t;
 
         for (int i = 0; i < values.length; i++) {
-            sample[i] = values[i] * t + sample[i] * oneMinus;
+            sample[i] = values[i] * oneMinus + sample[i] * t;
         }
 
         parameter.setAllParameterValuesQuietly(sample);
@@ -62,6 +62,11 @@ public class ConvexSpaceRandomWalkOperator extends AbstractAdaptableOperator {
     @Override
     public String getOperatorName() {
         return CONVEX_RW;
+    }
+
+    @Override
+    public Parameter getParameter() {
+        return parameter;
     }
 
 

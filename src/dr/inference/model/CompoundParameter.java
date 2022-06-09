@@ -274,15 +274,15 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
         int dim = 0;
-        for (Parameter parameter1 : uniqueParameters) {
-            if (variable == parameter1) {
-                if (!doNotPropagateChangeUp) {
+        if (!doNotPropagateChangeUp) {
+            for (Parameter parameter1 : uniqueParameters) {
+                if (variable == parameter1) {
                     int subparameterIndex = (index == -1) ? -1 : dim + index;
                     fireParameterChangedEvent(subparameterIndex, type);
+                    break;
                 }
-                break;
+                dim += parameter1.getDimension();
             }
-            dim += parameter1.getDimension();
         }
     }
 
@@ -375,7 +375,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         }
     }
 
-    protected ArrayList<Parameter> getParameters(){
+    protected ArrayList<Parameter> getParameters() {
         return parameters;
     }
 

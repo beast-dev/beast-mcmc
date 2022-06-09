@@ -40,7 +40,7 @@ import java.util.Set;
 /**
  * A phylogenetic birth-death-sampling model which includes serial sampling, sampling at present, and the possibility of treatmentProbability.
  */
-public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel implements Citable {
+public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements Citable {
 
     // extant sampling proportion
     Parameter samplingFractionAtPresent;
@@ -62,7 +62,7 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
 
     // TODO if we want to supplant other birth-death models, need an ENUM, and choice of options
     // Minimally, need survival of 1 lineage (passable default for SSBDP) and nTaxa (which is current option for non-serially-sampled BDP)
-    private boolean conditionOnSurvival;
+    private final boolean conditionOnSurvival;
 
     // useful constants we don't want to compute nTaxa times
     private double storedC1 = Double.NEGATIVE_INFINITY;
@@ -179,34 +179,23 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
         return logq(storedC1, storedC2, t);
     }
 
-    public double lambda() {
-        if (mask != null) return mask.lambda();
-        else {
-            return birthRate.getValue(0);
-        }
+    double lambda() {
+        return birthRate.getValue(0);
     }
 
-    public double mu() {
-        if (mask != null) return mask.mu();
-        else {
-            return deathRate.getValue(0);
-        }
+    double mu() {
+        return deathRate.getValue(0);
     }
 
-    public double psi() {
-        if (mask != null) return mask.psi();
-        else {
-            return serialSamplingRate.getValue(0);
-        }
+    double psi() {
+        return serialSamplingRate.getValue(0);
     }
 
-    public double r() {
-        if (mask != null) return mask.r();
+    double r() {
         return treatmentProbability.getValue(0);
     }
 
-    public double rho() {
-        if (mask != null) return mask.rho();
+    double rho() {
         return samplingFractionAtPresent.getValue(0);
     }
 
@@ -352,21 +341,6 @@ public class NewBirthDeathSerialSamplingModel extends MaskableSpeciationModel im
         if (exclude.size() == 0) return calculateTreeLogLikelihood(tree);
         throw new RuntimeException("Not implemented!");
     }
-
-    public void mask(SpeciationModel mask) {
-        if (mask instanceof NewBirthDeathSerialSamplingModel) {
-            this.mask = (NewBirthDeathSerialSamplingModel) mask;
-        } else {
-            throw new IllegalArgumentException();
-        }
-    }
-
-    public void unmask() {
-        mask = null;
-    }
-
-    // if a mask exists then use the mask's parameters instead (except for originTime and finalTimeInterval)
-    NewBirthDeathSerialSamplingModel mask = null;
 
     @Override
     public Citation.Category getCategory() {

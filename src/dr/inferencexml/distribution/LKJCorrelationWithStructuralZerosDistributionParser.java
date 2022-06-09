@@ -17,8 +17,14 @@ public class LKJCorrelationWithStructuralZerosDistributionParser extends Abstrac
         ArrayList<int[]> blocks = new ArrayList<>();
 
         for (int i = 0; i < bxo.getChildCount(); i++) {
-            XMLObject bcxo = (XMLObject) xo.getChild(i);
+            XMLObject bcxo = (XMLObject) bxo.getChild(i);
             blocks.add(bcxo.getIntegerArrayChild(0));
+        }
+
+        for (int[] block : blocks) {
+            for (int i = 0; i < block.length; i++) {
+                block[i] = block[i] - 1;
+            }
         }
 
         int dim = xo.getIntegerAttribute(ParameterParser.DIMENSION);

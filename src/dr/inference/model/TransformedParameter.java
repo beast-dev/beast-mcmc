@@ -193,9 +193,21 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         throw new RuntimeException("Not yet implemented.");
     }
 
-    public void variableChangedEvent(Variable variable, int index, ChangeType type) {
-        // Propogate change up model graph
-        fireParameterChangedEvent(index, type);
+    @Override
+    public void fireParameterChangedEvent() {
+
+        doNotPropagateChangeUp = true;
+        parameter.fireParameterChangedEvent();
+        doNotPropagateChangeUp = false;
+
+        fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
+    }
+
+    @Override
+    public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (!doNotPropagateChangeUp) {
+            fireParameterChangedEvent(index, type);
+        }
     }
 
     public double diffLogJacobian(double[] oldValues, double[] newValues) {
@@ -217,4 +229,6 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
     protected final Transform transform;
     protected final boolean inverse;
     protected Bounds<Double> transformedBounds;
+
+    protected boolean doNotPropagateChangeUp = false;
 }

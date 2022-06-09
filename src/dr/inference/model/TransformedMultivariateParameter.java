@@ -121,4 +121,11 @@ public class TransformedMultivariateParameter extends TransformedParameter {
         }
         return false;
     }
+
+    @Override
+    public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (!doNotPropagateChangeUp) {
+            fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED); //if one dimension of the untransformed parameter changes, it is very likely that many dimensions of the transformed parameter change
+        }
+    }
 }

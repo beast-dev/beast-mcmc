@@ -3,13 +3,13 @@
 
 	<taxa id="taxa">
 		<taxon id="A">
-			<attr name="X">11 12</attr>
+			<attr name="X">0 0</attr>
 		</taxon>
 		<taxon id="B">
-			<attr name="X">1 2</attr>
+			<attr name="X">0 0</attr>
 		</taxon>
 		<taxon id="C">
-			<attr name="X">3 3</attr>
+			<attr name="X">0 0</attr>
 		</taxon>
 	</taxa>
 
@@ -51,6 +51,9 @@
 		<traitParameter>
 			<fastMatrixParameter id="XOU" rows="2" columns="3" test="true" signalComponents="false"/>
 		</traitParameter>
+		<jitter window="1 1" duplicatesOnly="false">
+			<parameter idref="XOU"/>
+		</jitter>
         <conjugateRootPrior>
             <meanParameter>
                 <parameter value="0.0 0.0"/>
@@ -148,6 +151,9 @@
             	</matrixParameter>
         	</samplingPrecision>
         	<multivariateDiffusionModel idref="diffusionModel"/>
+        	<jitter window="1 1" duplicatesOnly="false">
+				<parameter idref="XOURep"/>
+			</jitter>
     	</repeatedMeasuresModel>
 	</traitDataLikelihood>
 
@@ -215,6 +221,9 @@
             	</matrixParameter>
         	</samplingPrecision>
         	<multivariateDiffusionModel idref="diffusionModel"/>
+        <jitter window="1 1" duplicatesOnly="false">
+			<parameter idref="XDrift"/>
+		</jitter>
     	</repeatedMeasuresModel>
 	</traitDataLikelihood>
 

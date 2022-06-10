@@ -148,6 +148,16 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         } else {  // Has ContinuousTraitPartialsProvider
             dataModel = (ContinuousTraitPartialsProvider) xo.getChild(ContinuousTraitPartialsProvider.class);
             traitName = xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME);
+
+            if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
+                System.err.println("Jitter is specified in " + xo.getAttribute(XMLObject.ID) + " but will be ignored, as a data model is provided. If a jitter is needed, please add it to the data model " + dataModel.getClass().toString() + ".");
+            }
+            if (xo.getAttribute(FORCE_FULL_PRECISION, false)) {
+                System.err.println("Option " + FORCE_FULL_PRECISION + "is set to 'true' in " + xo.getAttribute(XMLObject.ID) + " but will be ignored, as a data model is provided. Please check the data model for this attribute.");
+            }
+            if (xo.getAttribute(FORCE_COMPLETELY_MISSING, false)) {
+                System.err.println("Option " + FORCE_COMPLETELY_MISSING + "is set to 'true' in " + xo.getAttribute(XMLObject.ID) + " but will be ignored, as a data model is provided. Please check the data model for this attribute.");
+            }
         }
 
         dataModel.setTipTraitName(getTipTraitName(traitName)); // TODO: not an ideal solution as the trait name could be set differently later

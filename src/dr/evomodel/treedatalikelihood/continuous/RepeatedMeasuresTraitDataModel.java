@@ -48,7 +48,6 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -326,6 +325,11 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 
             boolean scaleByTipHeight = xo.getAttribute(SCALE_BY_TIP_HEIGHT, false);
 
+            // Jitter
+            if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
+                utilities.jitter(xo, samplingPrecision.getColumnDimension(), missingIndicators);
+            }
+
             if (!scaleByTipHeight) {
                 return new RepeatedMeasuresTraitDataModel(
                         traitName,
@@ -385,6 +389,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
             }, true),
             AttributeRule.newBooleanRule(SCALE_BY_TIP_HEIGHT, true),
 //            new ElementRule(MultivariateDiffusionModel.class),
+            TreeTraitParserUtilities.jitterRules(true),
     };
 
 

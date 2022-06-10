@@ -1,5 +1,6 @@
 package dr.math.distributions;
 
+import dr.app.bss.Utils;
 import dr.evomodel.substmodel.ColtEigenSystem;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.math.MathUtils;
@@ -45,7 +46,7 @@ public class LKJCorrelationWithStructuralZerosDistribution extends LKJCorrelatio
             for (int col = row + 1; col < dim; col++) {
 
                 if (blockAssignments[row] == 0 || blockAssignments[row] != blockAssignments[col]) {
-                    int diag = row - col;
+                    int diag = col - row;
                     double alpha = shape + 0.5 * (dim - 1 - diag);
                     double beta = MathUtils.nextBeta(alpha, alpha);
                     beta *= 2;
@@ -105,7 +106,7 @@ public class LKJCorrelationWithStructuralZerosDistribution extends LKJCorrelatio
                 }
 
                 double d = (1 - r1tRinvr1) * (1 - r2tRinvr2);
-                double c = r1tRinvr2 + partial.get(row, col) * d;
+                double c = r1tRinvr2 + partial.get(row, col) * Math.sqrt(d);
                 partial.set(row, col, c);
                 partial.set(col, row, c);
             }

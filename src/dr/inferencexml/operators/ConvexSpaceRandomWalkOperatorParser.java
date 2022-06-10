@@ -3,7 +3,7 @@ package dr.inferencexml.operators;
 import dr.inference.model.Parameter;
 import dr.inference.operators.ConvexSpaceRandomWalkOperator;
 import dr.inference.operators.MCMCOperator;
-import dr.math.distributions.RandomGenerator;
+import dr.math.distributions.ConvexSpaceRandomGenerator;
 import dr.xml.*;
 
 public class ConvexSpaceRandomWalkOperatorParser extends AbstractXMLObjectParser {
@@ -12,7 +12,12 @@ public class ConvexSpaceRandomWalkOperatorParser extends AbstractXMLObjectParser
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-        RandomGenerator generator = (RandomGenerator) xo.getChild(RandomGenerator.class);
+        ConvexSpaceRandomGenerator generator =
+                (ConvexSpaceRandomGenerator) xo.getChild(ConvexSpaceRandomGenerator.class);
+
+        if (!generator.isUniform()) {
+            throw new XMLParseException("sample distribution must be uniform over its support");
+        }
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
@@ -28,7 +33,7 @@ public class ConvexSpaceRandomWalkOperatorParser extends AbstractXMLObjectParser
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
                 new ElementRule(Parameter.class),
-                new ElementRule(RandomGenerator.class),
+                new ElementRule(ConvexSpaceRandomGenerator.class),
                 AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
                 AttributeRule.newDoubleRule(ConvexSpaceRandomWalkOperator.WINDOW_SIZE, true)
         };

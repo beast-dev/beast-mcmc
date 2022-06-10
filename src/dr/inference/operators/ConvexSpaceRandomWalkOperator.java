@@ -1,18 +1,19 @@
 package dr.inference.operators;
 
 import dr.inference.model.Parameter;
-import dr.math.distributions.RandomGenerator;
+import dr.math.distributions.ConvexSpaceRandomGenerator;
 import jebl.math.Random;
 
 public class ConvexSpaceRandomWalkOperator extends AbstractAdaptableOperator {
     private double window;
-    private final RandomGenerator generator;
+    private final ConvexSpaceRandomGenerator generator;
     private final Parameter parameter;
 
     public static final String CONVEX_RW = "convexSpaceRandomWalkOperator";
     public static final String WINDOW_SIZE = "relativeWindowSize";
 
-    public ConvexSpaceRandomWalkOperator(Parameter parameter, RandomGenerator generator, double window, double weight) {
+    public ConvexSpaceRandomWalkOperator(Parameter parameter, ConvexSpaceRandomGenerator generator,
+                                         double window, double weight) {
         setWeight(weight);
 
         this.parameter = parameter;
@@ -25,6 +26,9 @@ public class ConvexSpaceRandomWalkOperator extends AbstractAdaptableOperator {
     public double doOperation() {
         double[] sample = (double[]) generator.nextRandom();
         double[] values = parameter.getParameterValues();
+
+        ConvexSpaceRandomGenerator.LineThroughPoints distances = generator.distanceToEdge(values, sample);
+
         double t = window * Random.nextDouble();
         double oneMinus = 1.0 - t;
 
@@ -34,7 +38,20 @@ public class ConvexSpaceRandomWalkOperator extends AbstractAdaptableOperator {
 
         parameter.setAllParameterValuesQuietly(sample);
         parameter.fireParameterChangedEvent();
-        return 0.0; //TODO: need to check that the prior is uniform
+
+        double tForward = t / (distances.forwardDistance * window);
+        double forwardLogDensity = uniformProductLogPdf(tForward);
+
+        double backWardDistance = distances.backwardDistance + t;
+        double tBackward = t / (backWardDistance * window);
+        double backwardLogDensity = uniformProductLogPdf(tBackward);
+
+        return backwardLogDensity - forwardLogDensity;
+    }
+
+    private double uniformProductLogPdf(double t) {
+        double density = -Math.log(t);
+        return Math.log(density);
     }
 
 

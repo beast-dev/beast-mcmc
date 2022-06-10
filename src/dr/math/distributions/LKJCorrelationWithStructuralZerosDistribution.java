@@ -1,12 +1,20 @@
 package dr.math.distributions;
 
+import dr.evomodel.substmodel.ColtEigenSystem;
+import dr.evomodel.substmodel.EigenDecomposition;
 import dr.math.MathUtils;
+import dr.math.matrixAlgebra.IllegalDimension;
+import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.SymmetricMatrix;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import java.util.ArrayList;
 
-public class LKJCorrelationWithStructuralZerosDistribution extends LKJCorrelationDistribution implements RandomGenerator {
+import static dr.math.matrixAlgebra.SymmetricMatrix.compoundCorrelationSymmetricMatrix;
+import static dr.math.matrixAlgebra.SymmetricMatrix.compoundSymmetricMatrix;
+
+public class LKJCorrelationWithStructuralZerosDistribution extends LKJCorrelationDistribution implements ConvexSpaceRandomGenerator {
 
     private final int[] blockAssignments;
 
@@ -122,5 +130,47 @@ public class LKJCorrelationWithStructuralZerosDistribution extends LKJCorrelatio
     @Override
     public double logPdf(Object x) {
         return logPdf((double[]) x);
+    }
+
+    @Override
+    public LineThroughPoints distanceToEdge(double[] origin, double[] draw) {
+        double[] x = new double[origin.length];
+        for (int i = 0; i < origin.length; i++) {
+            x[i] = origin[i] - draw[i];
+        }
+
+        SymmetricMatrix Y = compoundCorrelationSymmetricMatrix(origin, dim);
+        SymmetricMatrix X = compoundSymmetricMatrix(0.0, x, dim);
+
+        SymmetricMatrix Xinv = X.inverse();
+        final Matrix Z;
+
+        try {
+            Z = Y.product(Xinv);
+        } catch (IllegalDimension illegalDimension) {
+            throw new RuntimeException("illegal dimensions");
+        }
+
+        ColtEigenSystem eigenSystem = new ColtEigenSystem(dim);
+        EigenDecomposition decomposition = eigenSystem.decomposeMatrix(Z.toComponents()); //TODO: only need smallest magnitude eigenvalues
+        double[] values = decomposition.getEigenValues();
+
+        double minNegative = Double.NEGATIVE_INFINITY;
+        double minPositive = Double.POSITIVE_INFINITY;
+        for (int i = 0; i < values.length; i++) {
+            double value = values[i];
+            if (value < 0 && value > minNegative) {
+                minNegative = value;
+            } else if (value >= 0 & value < minPositive) {
+                minPositive = value;
+            }
+        }
+
+        return new ConvexSpaceRandomGenerator.LineThroughPoints(minPositive, -minNegative);
+    }
+
+    @Override
+    public boolean isUniform() {
+        return shape == 1;
     }
 }

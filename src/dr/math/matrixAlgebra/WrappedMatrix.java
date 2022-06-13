@@ -492,7 +492,10 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
                     sum += temp * temp;
                 }
                 if (sum > 1.0) {
-                    assert (Math.abs(sum - 1.0) < 1E-6);
+                    if (Math.abs(sum - 1.0) > 1E-6) {
+                        throw new RuntimeException("Values are not consistent with the cholesky decomposition of " +
+                                "a correlation matrix. Sum of squared values must be less than 1 (got " + sum + ")");
+                    }
                     sum = 1.0;
                 }
                 W.set(j, j, Math.sqrt(1 - sum));

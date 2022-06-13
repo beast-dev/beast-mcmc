@@ -137,17 +137,18 @@ public class LKJCorrelationWithStructuralZerosDistribution extends LKJCorrelatio
     public LineThroughPoints distanceToEdge(double[] origin, double[] draw) {
         double[] x = new double[origin.length];
         for (int i = 0; i < origin.length; i++) {
-            x[i] = origin[i] - draw[i];
+            x[i] = draw[i];
         }
 
         SymmetricMatrix Y = compoundCorrelationSymmetricMatrix(origin, dim);
         SymmetricMatrix X = compoundSymmetricMatrix(0.0, x, dim);
 
-        SymmetricMatrix Xinv = X.inverse();
+//        SymmetricMatrix Xinv = X.inverse();
+        SymmetricMatrix Yinv = Y.inverse();
         final Matrix Z;
 
         try {
-            Z = Y.product(Xinv);
+            Z = Yinv.product(X);
         } catch (IllegalDimension illegalDimension) {
             throw new RuntimeException("illegal dimensions");
         }
@@ -156,18 +157,50 @@ public class LKJCorrelationWithStructuralZerosDistribution extends LKJCorrelatio
         EigenDecomposition decomposition = eigenSystem.decomposeMatrix(Z.toComponents()); //TODO: only need smallest magnitude eigenvalues
         double[] values = decomposition.getEigenValues();
 
-        double minNegative = Double.NEGATIVE_INFINITY;
-        double minPositive = Double.POSITIVE_INFINITY;
+        double maxNegative = 0;
+        double maxPositive = 0;
         for (int i = 0; i < values.length; i++) {
             double value = values[i];
-            if (value < 0 && value > minNegative) {
-                minNegative = value;
-            } else if (value >= 0 & value < minPositive) {
-                minPositive = value;
+            if (value < 0 && value < maxNegative) {
+                maxNegative = value;
+            } else if (value >= 0 & value > maxPositive) {
+                maxPositive = value;
             }
         }
 
-        return new ConvexSpaceRandomGenerator.LineThroughPoints(minPositive, -minNegative);
+        if (DEBUG) {
+            System.out.print("Eigenvalues: ");
+            Utils.printArray(values);
+
+            Matrix S = new SymmetricMatrix(dim, dim);
+            Matrix T = new SymmetricMatrix(dim, dim);
+            for (int i = 0; i < dim; i++) {
+                S.set(i, i, 1);
+                T.set(i, i, 1);
+                for (int j = (i + 1); j < dim; j++) {
+                    double y = Y.toComponents()[i][j];
+                    double z = X.toComponents()[i][j];
+                    double valueS = y - z / maxNegative;
+                    double valueT = y - z / maxPositive;
+                    S.set(i, j, valueS);
+                    S.set(j, i, valueS);
+                    T.set(i, j, valueT);
+                    T.set(j, i, valueT);
+                }
+            }
+            try {
+                System.out.println("neg: \n\tt = " + maxNegative);
+                System.out.println("\tdet = " + S.determinant());
+                System.out.println(S);
+                System.out.println("pos: \n\tt = " + maxPositive);
+                System.out.println("\tdet = " + T.determinant());
+                System.out.println(T);
+            } catch (IllegalDimension illegalDimension) {
+                illegalDimension.printStackTrace();
+            }
+        }
+
+        return new ConvexSpaceRandomGenerator.LineThroughPoints(1 / maxPositive, -1 / maxNegative);
     }
 
     @Override

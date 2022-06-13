@@ -1,6 +1,7 @@
 package dr.inference.operators;
 
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 import dr.math.distributions.ConvexSpaceRandomGenerator;
 import jebl.math.Random;
 
@@ -8,14 +9,17 @@ public class ConvexSpaceRandomWalkOperator extends AbstractAdaptableOperator {
     private double window;
     private final ConvexSpaceRandomGenerator generator;
     private final Parameter parameter;
+    private final Parameter updateIndex;
 
     public static final String CONVEX_RW = "convexSpaceRandomWalkOperator";
     public static final String WINDOW_SIZE = "relativeWindowSize";
 
     public ConvexSpaceRandomWalkOperator(Parameter parameter, ConvexSpaceRandomGenerator generator,
+                                         Parameter updateIndex,
                                          double window, double weight) {
         setWeight(weight);
 
+        this.updateIndex = updateIndex;
         this.parameter = parameter;
         this.generator = generator;
         this.window = window;
@@ -24,35 +28,53 @@ public class ConvexSpaceRandomWalkOperator extends AbstractAdaptableOperator {
 
     @Override
     public double doOperation() {
-        double[] sample = (double[]) generator.nextRandom();
+//        double[] sample = (double[]) generator.nextRandom();
         double[] values = parameter.getParameterValues();
 
+        double[] sample = new double[values.length];
+        double sum = 0;
+        for (int i = 0; i < values.length; i++) {
+            if (updateIndex == null || updateIndex.getParameterValue(i) == 1) {
+                sample[i] = MathUtils.nextGaussian();
+                sum += sample[i] * sample[i];
+            }
+        }
+        double norm = Math.sqrt(sum);
+        for (int i = 0; i < values.length; i++) {
+            sample[i] = sample[i] / norm;
+        }
+
         ConvexSpaceRandomGenerator.LineThroughPoints distances = generator.distanceToEdge(values, sample);
+//        double u1 = Random.nextDouble() * distances.forwardDistance;
+//        for (int i = 0; i < values.length; i++) {
+//            sample[i] = values[i] + (sample[i] - values[i]) * u1;
+//        }
+
 
         double t = window * Random.nextDouble();
-        double oneMinus = 1.0 - t;
+        t = RandomWalkOperator.reflectValue(t, -distances.backwardDistance, distances.forwardDistance);
 
         for (int i = 0; i < values.length; i++) {
-            sample[i] = values[i] * oneMinus + sample[i] * t;
+            sample[i] = values[i] - sample[i] * t;
         }
 
         parameter.setAllParameterValuesQuietly(sample);
         parameter.fireParameterChangedEvent();
 
-        double tForward = t / (distances.forwardDistance * window);
-        double forwardLogDensity = uniformProductLogPdf(tForward);
+//        double tForward = t / (distances.forwardDistance * window);
+//        double forwardLogDensity = uniformProductLogPdf(tForward);
+//
+//        double backWardDistance = distances.backwardDistance + t;
+//        double tBackward = t / (backWardDistance * window);
+//        double backwardLogDensity = uniformProductLogPdf(tBackward);
 
-        double backWardDistance = distances.backwardDistance + t;
-        double tBackward = t / (backWardDistance * window);
-        double backwardLogDensity = uniformProductLogPdf(tBackward);
-
-        return backwardLogDensity - forwardLogDensity;
+        return 0;
     }
 
-    private double uniformProductLogPdf(double t) {
-        double density = -Math.log(t);
-        return Math.log(density);
-    }
+//    private double uniformProductLogPdf(double t) {
+//        double density = -Math.log(t);
+//        return Math.log(density);
+//    }
 
 
     @Override

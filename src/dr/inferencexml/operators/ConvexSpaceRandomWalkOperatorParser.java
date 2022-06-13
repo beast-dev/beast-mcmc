@@ -3,6 +3,7 @@ package dr.inferencexml.operators;
 import dr.inference.model.Parameter;
 import dr.inference.operators.ConvexSpaceRandomWalkOperator;
 import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.RandomWalkOperator;
 import dr.math.distributions.ConvexSpaceRandomGenerator;
 import dr.xml.*;
 
@@ -26,7 +27,16 @@ public class ConvexSpaceRandomWalkOperatorParser extends AbstractXMLObjectParser
             throw new XMLParseException(ConvexSpaceRandomWalkOperator.WINDOW_SIZE + " must be between 0 and 1");
         }
 
-        return new ConvexSpaceRandomWalkOperator(parameter, generator, windowSize, weight);
+        final Parameter updateIndex;
+
+        if (xo.hasChildNamed(RandomWalkOperatorParser.UPDATE_INDEX)) {
+            XMLObject cxo = xo.getChild(RandomWalkOperatorParser.UPDATE_INDEX);
+            updateIndex = (Parameter) cxo.getChild(Parameter.class);
+        } else {
+            updateIndex = null;
+        }
+
+        return new ConvexSpaceRandomWalkOperator(parameter, generator, updateIndex, windowSize, weight);
     }
 
     @Override
@@ -34,6 +44,11 @@ public class ConvexSpaceRandomWalkOperatorParser extends AbstractXMLObjectParser
         return new XMLSyntaxRule[]{
                 new ElementRule(Parameter.class),
                 new ElementRule(ConvexSpaceRandomGenerator.class),
+                new ElementRule(RandomWalkOperatorParser.UPDATE_INDEX,
+                        new XMLSyntaxRule[]{
+                                new ElementRule(Parameter.class)
+                        }, true
+                ),
                 AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
                 AttributeRule.newDoubleRule(ConvexSpaceRandomWalkOperator.WINDOW_SIZE, true)
         };

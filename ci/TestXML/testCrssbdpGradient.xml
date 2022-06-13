@@ -98,6 +98,11 @@
 		<treeModel idref="treeModel"/>
 	</speciationLikelihoodGradient>
 
+	<speciationLikelihoodGradient id="grad.treatmentProbability1" wrtParameter="treatmentProbability">
+		<speciationLikelihood idref="speciation1"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
 	<report>
 		<speciationLikelihoodGradient idref="grad.birthRate1"/>
 	</report>
@@ -114,6 +119,9 @@
 		<speciationLikelihoodGradient idref="grad.samplingProbability1"/>
 	</report>
 
+	<report>
+		<speciationLikelihoodGradient idref="grad.treatmentProbability1"/>
+	</report>
 
 
 	<!-- ########## -->
@@ -172,6 +180,11 @@
 		<treeModel idref="treeModel"/>
 	</speciationLikelihoodGradient>
 
+	<speciationLikelihoodGradient id="grad.treatmentProbability2" wrtParameter="treatmentProbability">
+		<speciationLikelihood idref="speciation2"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
 	<report>
 		<speciationLikelihoodGradient idref="grad.birthRate2"/>
 	</report>
@@ -186,6 +199,10 @@
 
 	<report>
 		<speciationLikelihoodGradient idref="grad.samplingProbability2"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.treatmentProbability2"/>
 	</report>
 
 	<!-- ########## -->
@@ -239,6 +256,11 @@
 		<treeModel idref="treeModel"/>
 	</speciationLikelihoodGradient>
 
+	<speciationLikelihoodGradient id="grad.treatmentProbability3" wrtParameter="treatmentProbability">
+		<speciationLikelihood idref="speciation3"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
 	<report>
 		<speciationLikelihoodGradient idref="grad.birthRate3"/>
 	</report>
@@ -249,6 +271,10 @@
 
 	<report>
 		<speciationLikelihoodGradient idref="grad.samplingRate3"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.treatmentProbability3"/>
 	</report>
 
 	<!-- ########## -->
@@ -307,6 +333,11 @@
 		<treeModel idref="treeModel"/>
 	</speciationLikelihoodGradient>
 
+	<speciationLikelihoodGradient id="grad.treatmentProbability4" wrtParameter="treatmentProbability">
+		<speciationLikelihood idref="speciation4"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
 	<report>
 		<speciationLikelihoodGradient idref="grad.birthRate4"/>
 	</report>
@@ -321,6 +352,10 @@
 
 	<report>
 		<speciationLikelihoodGradient idref="grad.samplingProbability4"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.treatmentProbability4"/>
 	</report>
 
 	<!-- ########## -->
@@ -446,6 +481,11 @@
 		<treeModel idref="treeModel"/>
 	</speciationLikelihoodGradient>
 
+	<speciationLikelihoodGradient id="grad.treatmentProbability6" wrtParameter="treatmentProbability">
+		<speciationLikelihood idref="speciation6"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
 	<report>
 		<speciationLikelihoodGradient idref="grad.birthRate6"/>
 	</report>
@@ -457,6 +497,8 @@
 	<report>
 		<speciationLikelihoodGradient idref="grad.samplingProbability6"/>
 	</report>
-
+	<report>
+		<speciationLikelihoodGradient idref="grad.treatmentProbability6"/>
+	</report>
 
 </beast>

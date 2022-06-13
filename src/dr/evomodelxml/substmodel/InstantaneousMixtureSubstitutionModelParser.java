@@ -53,7 +53,9 @@ public class InstantaneousMixtureSubstitutionModelParser extends AbstractXMLObje
         }
 
         if ( weights.getDimension() != 1 || weights.getBounds().getLowerLimit(0) > Double.MIN_VALUE || Math.abs(1.0 - weights.getBounds().getUpperLimit(0)) > Double.MIN_VALUE ) {
-            throw new RuntimeException("Invalid bounds of weight parameter for instantaneousMixtureSubstitutionModel which uses p, 1-p mixture.");
+            if (!transform) {
+                throw new RuntimeException("Invalid bounds of weight parameter for instantaneousMixtureSubstitutionModel which uses p, 1-p mixture.");
+            }
         }
 
         return new InstantaneousMixtureSubstitutionModel(xo.getId(),dataType,rootFreq,modelList,weights,transform);

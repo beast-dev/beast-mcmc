@@ -40,6 +40,7 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
     private final EfficientSpeciationLikelihood likelihood;
     private final SpeciationModelGradientProvider provider;
     private final BigFastTreeIntervals treeIntervals;
+    private final SpeciationModel speciationModel;
 
     private double[] gradient;
     private double[] storedGradient;
@@ -52,14 +53,28 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
         this.likelihood = likelihood;
         this.provider = likelihood.getGradientProvider();
         this.treeIntervals = likelihood.getTreeIntervals();
+        this.speciationModel = likelihood.getSpeciationModel();
 
-        addModel(likelihood);
+        addModel(this.likelihood);
+        addModel(this.treeIntervals);
+        addModel(this.speciationModel);
+
+        NewBirthDeathSerialSamplingModel model = (NewBirthDeathSerialSamplingModel) this.speciationModel;
+
+        addVariable(model.getBirthRateParameter());
+        addVariable(model.getDeathRateParameter());
+        addVariable(model.getSamplingRateParameter());
+        addVariable(model.getSamplingProbabilityParameter());
+        addVariable(model.getTreatmentProbabilityParameter());
 
         gradientKnown = false;
+
+        System.err.println("CONSTRUCT SINGLETON");
     }
 
     private double[] getGradientLogDensityImpl() {
 
+//        System.err.println("DE NOVO CALCULATION");
         double[] gradient = new double[5];
 
         provider.precomputeGradientConstants(); // TODO hopefully get rid of this
@@ -68,7 +83,6 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
         assert modelBreakPoints[modelBreakPoints.length - 1] == Double.POSITIVE_INFINITY;
 
         int currentModelSegment = 0;
-
 
         for (int i = 0; i < treeIntervals.getIntervalCount(); ++i) {
 
@@ -132,6 +146,7 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
 
     @Override
     public double[] getTrait(Tree tree, NodeRef node) {
+        gradientKnown = false;
         if (!gradientKnown) {
             gradient = getGradientLogDensityImpl();
             gradientKnown = true;
@@ -151,16 +166,18 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == likelihood) {
+//        if (model == treeIntervals || model == speciationModel) {
             gradientKnown = false;
-        } else {
-            throw new IllegalArgumentException("Unknown model: " + model.getId());
-        }
+//        } else {
+//            throw new IllegalArgumentException("Unknown model: " + model.getId());
+//        }
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        throw new IllegalArgumentException("Unknown variable: " + variable.getId());
+//        throw new IllegalArgumentException("Unknown variable: " + variable.getId());
+        gradientKnown = false;
+//        System.err.println(variable.getId());
     }
 
     @Override
@@ -176,6 +193,7 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
         storedGradient = swap;
 
         gradientKnown = storedGradientKnown;
+        gradientKnown = false;
     }
 
     @Override

@@ -65,6 +65,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         if (model == treeIntervals) {
             intervalsKnown = false;
         }
+//        fireModelChanged(object, index);
     }
 
     final TreeModel getTreeModel() {

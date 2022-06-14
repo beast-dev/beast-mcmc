@@ -26,6 +26,7 @@
 package dr.evomodel.speciation;
 
 import dr.evolution.tree.TreeTrait;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
@@ -47,6 +48,8 @@ public class EfficientSpeciationLikelihoodGradient extends AbstractModel
     private final Parameter parameter;
     private final SpeciationLikelihoodGradient.WrtParameter wrtParameter;
     private final TreeModel tree;
+    private final SpeciationModel speciationModel;
+    private final BigFastTreeIntervals treeIntervals;
     private final SpeciationModelGradientProvider provider;
 
     private final TreeTrait gradientProvider;
@@ -64,10 +67,18 @@ public class EfficientSpeciationLikelihoodGradient extends AbstractModel
 
         this.tree = likelihood.getTreeModel();
 
+        this.speciationModel = likelihood.getSpeciationModel();
+        this.treeIntervals = likelihood.getTreeIntervals();
         this.provider = likelihood.getGradientProvider();
         this.parameter = wrtParameter.getParameter(provider, tree);
 
-        addModel(likelihood);
+        likelihood.addModel(this);
+
+        if (wrtParameter == SpeciationLikelihoodGradient.WrtParameter.NODE_HEIGHT) {
+            speciationModel.addModelListener(this);
+            treeIntervals.addModelListener(this);
+        }
+
         gradientKnown = false;
 
         this.gradientProvider = getGradientDelegateSingleton(likelihood);
@@ -76,7 +87,9 @@ public class EfficientSpeciationLikelihoodGradient extends AbstractModel
     private TreeTrait getGradientDelegateSingleton(EfficientSpeciationLikelihood likelihood) {
         TreeTrait singleton = likelihood.getTreeTrait(GRADIENT_KEY);
         if (singleton == null) {
-            singleton = new CachedGradientDelegate(likelihood);
+            CachedGradientDelegate delegate = new CachedGradientDelegate(likelihood);
+            addModel(delegate);
+            singleton = delegate;
             likelihood.addTrait(singleton);
         }
         return singleton;
@@ -122,7 +135,7 @@ public class EfficientSpeciationLikelihoodGradient extends AbstractModel
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == likelihood) {
+        if (model == speciationModel || model == treeIntervals) {
             gradientKnown = false;
         } else {
             throw new IllegalArgumentException("Unknown model: " + model.getId());
@@ -137,7 +150,12 @@ public class EfficientSpeciationLikelihoodGradient extends AbstractModel
     @Override
     protected void storeState() {
         if (wrtParameter == SpeciationLikelihoodGradient.WrtParameter.NODE_HEIGHT) {
-            System.arraycopy(gradient, 0, storedGradient, 0, gradient.length);
+            if (gradient != null) {
+                if (storedGradient == null) {
+                    storedGradient = new double[gradient.length];
+                }
+                System.arraycopy(gradient, 0, storedGradient, 0, gradient.length);
+            }
         }
     }
 

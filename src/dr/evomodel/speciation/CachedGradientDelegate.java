@@ -55,26 +55,14 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
         this.treeIntervals = likelihood.getTreeIntervals();
         this.speciationModel = likelihood.getSpeciationModel();
 
-        addModel(this.likelihood);
         addModel(this.treeIntervals);
         addModel(this.speciationModel);
 
-        NewBirthDeathSerialSamplingModel model = (NewBirthDeathSerialSamplingModel) this.speciationModel;
-
-        addVariable(model.getBirthRateParameter());
-        addVariable(model.getDeathRateParameter());
-        addVariable(model.getSamplingRateParameter());
-        addVariable(model.getSamplingProbabilityParameter());
-        addVariable(model.getTreatmentProbabilityParameter());
-
         gradientKnown = false;
-
-        System.err.println("CONSTRUCT SINGLETON");
     }
 
     private double[] getGradientLogDensityImpl() {
 
-//        System.err.println("DE NOVO CALCULATION");
         double[] gradient = new double[5];
 
         provider.precomputeGradientConstants(); // TODO hopefully get rid of this
@@ -146,7 +134,6 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
 
     @Override
     public double[] getTrait(Tree tree, NodeRef node) {
-        gradientKnown = false;
         if (!gradientKnown) {
             gradient = getGradientLogDensityImpl();
             gradientKnown = true;
@@ -166,23 +153,26 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-//        if (model == treeIntervals || model == speciationModel) {
+        if (model == treeIntervals || model == speciationModel) {
             gradientKnown = false;
-//        } else {
-//            throw new IllegalArgumentException("Unknown model: " + model.getId());
-//        }
+        } else {
+            throw new IllegalArgumentException("Unknown model: " + model.getId());
+        }
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-//        throw new IllegalArgumentException("Unknown variable: " + variable.getId());
-        gradientKnown = false;
-//        System.err.println(variable.getId());
+        throw new IllegalArgumentException("Unknown variable: " + variable.getId());
     }
 
     @Override
     protected void storeState() {
-        System.arraycopy(gradient, 0, storedGradient, 0, gradient.length);
+        if (gradient != null) {
+            if (storedGradient == null) {
+                storedGradient = new double[gradient.length];
+            }
+            System.arraycopy(gradient, 0, storedGradient, 0, gradient.length);
+        }
         storedGradientKnown = gradientKnown;
     }
 
@@ -193,7 +183,6 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
         storedGradient = swap;
 
         gradientKnown = storedGradientKnown;
-        gradientKnown = false;
     }
 
     @Override

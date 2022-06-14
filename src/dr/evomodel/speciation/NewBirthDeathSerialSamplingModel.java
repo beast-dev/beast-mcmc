@@ -70,8 +70,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     private double C1 = Double.NEGATIVE_INFINITY;
     private double C2 = Double.NEGATIVE_INFINITY;
 
-
-    private final NewBirthDeathSerialSamplingModel model;
     private double[] savedGradient;
     private double savedQ;
     private double[] partialQ;
@@ -141,7 +139,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             originTime.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         }
 
-        this.model = this;
         this.savedGradient = null;
 //        this.savedTreeInterval = null;
         this.savedQ = Double.MIN_VALUE;
@@ -405,32 +402,32 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     // Material from `Gradient` class
 
     private double g1(double t) {
-//        double[] constants = model.getConstants();
-        double C1 = model.getC1();
-        double C2 = model.getC2();
+//        double[] constants = getConstants();
+        double C1 = getC1();
+        double C2 = getC2();
         double G1 = Math.exp(-C1 * t) * (1 - C2) + (1 + C2);
         return G1;
     }
 
     private double g2(double t) {
-//        double[] constants = model.getConstants();
-        double C1 = model.getC1();
-        double C2 = model.getC2();
+//        double[] constants = getConstants();
+        double C1 = getC1();
+        double C2 = getC2();
         double G1 = g1(t);
         double G2 = C1 * (1 - 2 * (1 + C2) / G1);
         return G2;
     }
 
     private double Q(double t){
-        return 4*(1/Math.exp(model.logq(t)));
+        return 4*(1/Math.exp(logq(t)));
     }
 
     // Gradient w.r.t. Rho
     private void partialC1C2partialRho(double[] partialC1C2) {
         // c1 == constants[0], c2 == constants[1]
-//        double[] constants = model.getConstants();
-        double lambda = model.lambda();
-        double C1 = model.getC1();
+//        double[] constants = getConstants();
+        double lambda = lambda();
+        double C1 = getC1();
 
 //        double[] partialC1C2 = new double[2];
         partialC1C2[0] = 0;
@@ -441,12 +438,12 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     private void partialC1C2partialMu(double[] partialC1C2) {
         // c1 == constants[0], c2 == constants[1]
-//        double[] constants = model.getConstants();
-        double lambda = model.lambda();
-        double mu = model.mu();
-        double psi = model.psi();
-        double rho = model.rho();
-        double C1 = model.getC1();
+//        double[] constants = getConstants();
+        double lambda = lambda();
+        double mu = mu();
+        double psi = psi();
+        double rho = rho();
+        double C1 = getC1();
 
 //        double[] partialC1C2 = new double[2];
         partialC1C2[0] = (-lambda + mu + psi) / C1;
@@ -457,12 +454,12 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     private void partialC1C2partialLambda(double[] partialC1C2) {
         // c1 == constants[0], c2 == constants[1]
-//        double[] constants = model.getConstants();
-        double lambda = model.lambda();
-        double mu = model.mu();
-        double psi = model.psi();
-        double rho = model.rho();
-        double C1 = model.getC1();
+//        double[] constants = getConstants();
+        double lambda = lambda();
+        double mu = mu();
+        double psi = psi();
+        double rho = rho();
+        double C1 = getC1();
 
 //        double[] partialC1C2 = new double[2];
         partialC1C2[0] = (lambda - mu + psi) / C1;
@@ -473,12 +470,12 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     private void partialC1C2partialPsi(double[] partialC1C2) {
         // c1 == constants[0], c2 == constants[1]
-//        double[] constants = model.getConstants();
-        double lambda = model.lambda();
-        double mu = model.mu();
-        double psi = model.psi();
-        double rho = model.rho();
-        double C1 = model.getC1();
+//        double[] constants = getConstants();
+        double lambda = lambda();
+        double mu = mu();
+        double psi = psi();
+        double rho = rho();
+        double C1 = getC1();
 
 //        double[] partialC1C2 = new double[2];
         partialC1C2[0] = (lambda + mu + psi) / C1;
@@ -489,7 +486,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public Parameter getSamplingProbabilityParameter() {
-        return model.samplingFractionAtPresent;
+        return samplingFractionAtPresent;
     }
 
     @Override
@@ -501,7 +498,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public Parameter getDeathRateParameter() {
-        return model.deathRate;
+        return deathRate;
     }
 
     @Override
@@ -514,7 +511,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public Parameter getBirthRateParameter() {
-        return model.birthRate;
+        return birthRate;
     }
 
     @Override
@@ -526,7 +523,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public Parameter getSamplingRateParameter() {
-        return model.serialSamplingRate;
+        return serialSamplingRate;
     }
 
     @Override
@@ -539,8 +536,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public Parameter getTreatmentProbabilityParameter() {
-        return model.treatmentProbability;
+        return treatmentProbability;
     }
+
     @Override
     public double[] getTreatmentProbabilityGradient(Tree tree, NodeRef node) {
         double[] result = new double[1];
@@ -569,9 +567,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 //    }
 
     public double[] partialQpartialAll(double[] partialQ_all, double t) {
-//        double[] constants = model.getConstants();
-        double C1 = model.getC1();
-        double C2 = model.getC2();
+//        double[] constants = getConstants();
+        double C1 = getC1();
+        double C2 = getC2();
 
         double expC1t = Math.exp(-C1 * t);
 
@@ -592,9 +590,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     // (lambda, mu, psi, rho)
     public double[] partialG2partialAll(double t, double expC1t) {
-//        double[] constants = model.getConstants();
-        double C1 = model.getC1();
-        double C2 = model.getC2();
+//        double[] constants = getConstants();
+        double C1 = getC1();
+        double C2 = getC2();
 
 //        double expC1t = Math.exp(-C1 * t);
 
@@ -621,13 +619,13 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
         double[] partialP0_all = temp2; // new double[4];
 
-        double lambda = model.lambda();
+        double lambda = lambda();
         double G2 = g2(t);
-        double mu = model.mu();
-        double psi = model.psi();
-//        double[] constants = model.getConstants();
-        double C1 = model.getC1();
-        double C2 = model.getC2();
+        double mu = mu();
+        double psi = psi();
+//        double[] constants = getConstants();
+        double C1 = getC1();
+        double C2 = getC2();
         double G1 = g1(t);
 
 //        double expC1t = Math.exp(-C1 * t); // TODO Notice this is (1) shared in many functions and (2) slow to compute
@@ -652,20 +650,20 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
 
-    // @Override
+    @Override
     public void precomputeGradientConstants() {
-        model.precomputeConstants();
+        precomputeConstants();
         this.savedQ = Double.MIN_VALUE;
 //        this.savedPartialQ = null;
         this.partialQKnown = false;
     }
 
-    // @Override
+    @Override
     public void processGradientModelSegmentBreakPoint(double[] gradient, int currentModelSegment, double intervalStart, double segmentIntervalEnd) {
         return;
     }
 
-    // @Override
+    @Override
     public void processGradientInterval(double[] gradient, int currentModelSegment, double intervalStart, double intervalEnd, int nLineages) {
         double tOld = intervalEnd;
         double tYoung = intervalStart;
@@ -705,20 +703,20 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     }
 
-    // @Override
+    @Override
     public void processGradientSampling(double[] gradient, int currentModelSegment, double intervalEnd) {
-        double r = model.r();
-        double rho = model.rho();
-        double psi = model.psi();
+        double r = r();
+        double rho = rho();
+        double psi = psi();
         double t = intervalEnd;
 
         double timeZeroTolerance = Double.MIN_VALUE;
-        boolean noSamplingAtPresent = model.rho() < Double.MIN_VALUE;
+        boolean noSamplingAtPresent = rho() < Double.MIN_VALUE;
 
         if (noSamplingAtPresent || t > timeZeroTolerance) {
-            double expC1t = Math.exp(-model.getC1() * t);
+            double expC1t = Math.exp(-getC1() * t);
             double[] partialP0_all = partialP0partialAll(t, expC1t);
-            double P0 = model.p0(t);
+            double P0 = p0(t);
             double v = (1 - r) / ((1 - r) * P0 + r);
             for (int j = 0; j < 4; ++j) {
                 gradient[j] += v * partialP0_all[j];
@@ -733,14 +731,14 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     }
 
-    // @Override
+    @Override
     public void processGradientCoalescence(double[] gradient, int currentModelSegment, double intervalEnd) {
-        gradient[0] += 1 / model.lambda();
+        gradient[0] += 1 / lambda();
     }
 
-    // @Override
+    @Override
     public void processGradientOrigin(double[] gradient, int currentModelSegment, double totalDuration) {
-        double origin = model.originTime.getValue(0);
+        double origin = originTime.getValue(0);
         double[] partialQ_all_origin = partialQpartialAll(temp2, origin);
         double[] partialQ_all_root = partialQpartialAll(temp3, totalDuration);
         for (int i = 0; i < 4; ++i) {
@@ -750,7 +748,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     }
 
-    // @Override
+    @Override
     public void logConditioningProbability(double[] gradient) {
         return;
     }

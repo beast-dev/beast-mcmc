@@ -1,5 +1,5 @@
 /*
- * IntegratedTimeDependentModel.java
+ * PiecewiseLinearTimeDependentModel.java
  *
  * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -34,7 +34,6 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -42,17 +41,17 @@ import java.util.List;
  * @author Marc A. Suchard
  * @author Philippe Lemey
  */
-public class IntegratedTimeDependentModel extends AbstractModel implements ContinuousBranchValueProvider,
+public class PiecewiseLinearTimeDependentModel extends AbstractModel implements ContinuousBranchValueProvider,
         CountableMixtureBranchRates.TimeDependentModel {
 
     private final TreeModel treeModel;
     private final ParameterPack pack;
 
-    private HashMap<BranchLength, Double> integratedValues;
-    private HashMap<BranchLength, Double> savedIntegratedValues;
+    private boolean slopeInterceptKnown;
+    private SlopeInterceptPack slopeInterceptPack;
 
-    public IntegratedTimeDependentModel(TreeModel treeModel, ParameterPack pack) {
-        super("integratedBranchValues");
+    public PiecewiseLinearTimeDependentModel(TreeModel treeModel, ParameterPack pack) {
+        super("piecewiseLinearBranchValues");
         this.treeModel = treeModel;
         this.pack = pack;
 
@@ -61,21 +60,51 @@ public class IntegratedTimeDependentModel extends AbstractModel implements Conti
         for (Parameter p : pack) {
             addVariable(p);
         }
+
+        slopeInterceptKnown = false;
     }
 
-    private double computeIntegratedValue(double parent, double child) {
-        return parent - child;
+    private double integrate(double x0, double x1, double slope, double intercept) {
+        double halfSlope = slope / 2;
+        return (halfSlope * x1 + intercept) * x1 - (halfSlope * x0 + intercept) * x0;
+    }
+
+    double computeIntegratedValue(double parent, double child) {
+
+        final double[] slopes = slopeInterceptPack.slopes;
+        final double[] intercepts = slopeInterceptPack.intercepts;
+        final double[] breaks = slopeInterceptPack.breaks;
+
+        int currentEpoch = 0;
+        while (child > breaks[currentEpoch]) {
+            ++currentEpoch;
+        }
+
+        double integral = 0.0;
+        double currentTime = child;
+        while (breaks[currentEpoch] <= parent) {
+            integral += integrate(currentTime, breaks[currentEpoch],
+                    slopes[currentEpoch], intercepts[currentEpoch]);
+            currentTime = breaks[currentEpoch];
+            ++currentEpoch;
+        }
+        integral += integrate(currentTime, parent, slopes[currentEpoch], intercepts[currentEpoch]);
+
+        return integral;
     }
 
     @Override
     public double getBranchValue(Tree tree, NodeRef node) {
 
+        if (!slopeInterceptKnown) {
+            slopeInterceptPack = new SlopeInterceptPack(pack);
+            slopeInterceptKnown = true;
+        }
+
         double parent = tree.getNodeHeight(tree.getParent(node));
         double child = tree.getNodeHeight(node);
-        BranchLength branchLength = new BranchLength(parent, child);
 
-        return integratedValues.computeIfAbsent(branchLength,
-                k -> computeIntegratedValue(parent, child));
+        return computeIntegratedValue(parent, child);
     }
 
     @Override
@@ -99,7 +128,7 @@ public class IntegratedTimeDependentModel extends AbstractModel implements Conti
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (pack.contains(variable)) {
-            integratedValues.clear();
+            slopeInterceptKnown = false;
         } else {
             throw new IllegalArgumentException("Unknown variable");
         }
@@ -107,53 +136,39 @@ public class IntegratedTimeDependentModel extends AbstractModel implements Conti
 
     @Override
     protected void storeState() {
-        savedIntegratedValues.clear();
-        savedIntegratedValues.putAll(integratedValues);
+        // Do nothing
     }
 
     @Override
     protected void restoreState() {
-        HashMap<BranchLength, Double> tmp = integratedValues;
-        integratedValues = savedIntegratedValues;
-        savedIntegratedValues = tmp;
+        slopeInterceptKnown = false;
     }
 
     @Override
     protected void acceptState() { }
 
-    static class BranchLength {
-
-        final double parent;
-        final double child;
-
-        BranchLength(double parent, double child) {
-            this.parent = parent;
-            this.child = child;
-        }
-    }
-
     public static class ParameterPack implements Iterable<Parameter> {
 
         final Parameter historicValue;
         final Parameter currentValue;
-        final Parameter midTime;
-        final Parameter slope;
+        final Parameter epochStartTime;
+        final Parameter epochLength;
 
         final List<Parameter> parameterList = new ArrayList<>();
 
         public ParameterPack(Parameter historicValue,
                              Parameter currentValue,
-                             Parameter midTime,
-                             Parameter slope) {
+                             Parameter epochStartTime,
+                             Parameter epochLength) {
             this.historicValue = historicValue;
             this.currentValue = currentValue;
-            this.midTime = midTime;
-            this.slope = slope;
+            this.epochStartTime = epochStartTime;
+            this.epochLength = epochLength;
 
             parameterList.add(historicValue);
             parameterList.add(currentValue);
-            parameterList.add(midTime);
-            parameterList.add(slope);
+            parameterList.add(epochStartTime);
+            parameterList.add(epochLength);
         }
 
         public boolean contains(Variable variable) {
@@ -163,6 +178,27 @@ public class IntegratedTimeDependentModel extends AbstractModel implements Conti
         @Override
         public Iterator<Parameter> iterator() {
             return parameterList.iterator();
+        }
+    }
+
+    private static class SlopeInterceptPack {
+
+        final double[] slopes;
+        final double[] intercepts;
+        final double[] breaks;
+
+        SlopeInterceptPack(ParameterPack pack) {
+            double y0 = pack.currentValue.getParameterValue(0);
+            double y1 = pack.historicValue.getParameterValue(0);
+
+            double x0 = pack.epochStartTime.getParameterValue(0);
+            double x1 = x0 + pack.epochLength.getParameterValue(0);
+
+            double midSlope = (y1 - y0) / (x1 - x0);
+
+            slopes = new double[] { 0.0, midSlope, 0.0 };
+            intercepts = new double[] { y0, y0 - midSlope * x0, y1 };
+            breaks = new double[] { x0, x1, Double.POSITIVE_INFINITY };
         }
     }
 }

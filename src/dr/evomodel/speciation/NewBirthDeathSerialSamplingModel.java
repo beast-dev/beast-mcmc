@@ -65,8 +65,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     private final boolean conditionOnSurvival;
 
     // useful constants we don't want to compute nTaxa times
-    private double storedC1 = Double.NEGATIVE_INFINITY;
-    private double storedC2 = Double.NEGATIVE_INFINITY;
+    private double C1 = Double.NEGATIVE_INFINITY;
+    private double C2 = Double.NEGATIVE_INFINITY;
 
     public NewBirthDeathSerialSamplingModel(
             Parameter birthRate,
@@ -162,21 +162,25 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     public void precomputeConstants() {
-        this.storedC1 = c1(lambda(), mu(), psi());
-        this.storedC2 = c2(lambda(), mu(), psi(), rho());
+        this.C1 = c1(lambda(), mu(), psi());
+        this.C2 = c2(lambda(), mu(), psi(), rho());
     }
 
-    public double[] getConstants() {
-        double[] constants = {storedC1,storedC2};
-        return constants;
-    }
+    public double getC1() { return C1; }
+
+    public double getC2() { return C2; }
+
+//    public double[] getConstants() {
+//        double[] constants = {C1, C2};
+//        return constants;
+//    }
 
     public double p0(double t) {
-        return p0(lambda(), mu(), psi(), rho(), storedC1, storedC2, t);
+        return p0(lambda(), mu(), psi(), rho(), C1, C2, t);
     }
 
     public double logq(double t) {
-        return logq(storedC1, storedC2, t);
+        return logq(C1, C2, t);
     }
 
     double lambda() {

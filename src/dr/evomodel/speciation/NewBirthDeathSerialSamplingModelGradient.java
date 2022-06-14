@@ -33,17 +33,17 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
     }
 
     private double g1(double t) {
-        double[] constants = model.getConstants();
-        double C1 = constants[0];
-        double C2 = constants[1];
+//        double[] constants = model.getConstants();
+        double C1 = model.getC1();
+        double C2 = model.getC2();
         double G1 = Math.exp(-C1 * t) * (1 - C2) + (1 + C2);
         return G1;
     }
 
     private double g2(double t) {
-        double[] constants = model.getConstants();
-        double C1 = constants[0];
-        double C2 = constants[1];
+//        double[] constants = model.getConstants();
+        double C1 = model.getC1();
+        double C2 = model.getC2();
         double G1 = g1(t);
         double G2 = C1 * (1 - 2 * (1 + C2) / G1);
         return G2;
@@ -56,9 +56,9 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
     // Gradient w.r.t. Rho
     private double[] partialC1C2partialRho() {
         // c1 == constants[0], c2 == constants[1]
-        double[] constants = model.getConstants();
+//        double[] constants = model.getConstants();
         double lambda = model.lambda();
-        double C1 = constants[0];
+        double C1 = model.getC1();
 
         double[] partialC1C2 = new double[2];
         partialC1C2[0] = 0;
@@ -68,12 +68,12 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
     }
     private double[] partialC1C2partialMu() {
         // c1 == constants[0], c2 == constants[1]
-        double[] constants = model.getConstants();
+//        double[] constants = model.getConstants();
         double lambda = model.lambda();
         double mu = model.mu();
         double psi = model.psi();
         double rho = model.rho();
-        double C1 = constants[0];
+        double C1 = model.getC1();
 
         double[] partialC1C2 = new double[2];
         partialC1C2[0] = (-lambda + mu + psi) / C1;
@@ -84,12 +84,12 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
 
     private double[] partialC1C2partialLambda() {
         // c1 == constants[0], c2 == constants[1]
-        double[] constants = model.getConstants();
+//        double[] constants = model.getConstants();
         double lambda = model.lambda();
         double mu = model.mu();
         double psi = model.psi();
         double rho = model.rho();
-        double C1 = constants[0];
+        double C1 = model.getC1();
 
         double[] partialC1C2 = new double[2];
         partialC1C2[0] = (lambda - mu + psi) / C1;
@@ -100,12 +100,12 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
 
     private double[] partialC1C2partialPsi() {
         // c1 == constants[0], c2 == constants[1]
-        double[] constants = model.getConstants();
+//        double[] constants = model.getConstants();
         double lambda = model.lambda();
         double mu = model.mu();
         double psi = model.psi();
         double rho = model.rho();
-        double C1 = constants[0];
+        double C1 = model.getC1();
 
         double[] partialC1C2 = new double[2];
         partialC1C2[0] = (lambda + mu + psi) / C1;
@@ -188,9 +188,9 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
 
     // (lambda, mu, psi, rho)
     public double[] partialQpartialAll(double t) {
-        double[] constants = model.getConstants();
-        double C1 = constants[0];
-        double C2 = constants[1];
+//        double[] constants = model.getConstants();
+        double C1 = model.getC1();
+        double C2 = model.getC2();
         double v = Math.exp(C1 * t) * (1 + C2) - Math.exp(-C1 * t) * (1 - C2) - 2 * C2;
         double v1 = Math.exp(C1 * t) * (1 + C2) * (1 + C2) - Math.exp(-C1 * t) * (1 - C2) * (1 - C2);
 
@@ -206,9 +206,9 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
 
     // (lambda, mu, psi, rho)
     public double[] partialG2partialAll(double t) {
-        double[] constants = model.getConstants();
-        double C1 = constants[0];
-        double C2 = constants[1];
+//        double[] constants = model.getConstants();
+        double C1 = model.getC1();
+        double C2 = model.getC2();
 
         double[][] partialC1C2_all = partialC1C2partialAll();
 
@@ -236,9 +236,9 @@ public class NewBirthDeathSerialSamplingModelGradient implements SpeciationModel
         double G2 = g2(t);
         double mu = model.mu();
         double psi = model.psi();
-        double[] constants = model.getConstants();
-        double C1 = constants[0];
-        double C2 = constants[1];
+//        double[] constants = model.getConstants();
+        double C1 = model.getC1();
+        double C2 = model.getC2();
         double G1 = g1(t);
 
         // lambda

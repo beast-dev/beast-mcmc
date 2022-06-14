@@ -56,4 +56,33 @@ public interface SpeciationModelGradientProvider {
     static SpeciationModelGradientProvider factory(SpeciationModel speciationModel) {
         return speciationModel.getProvider();
     }
+
+    default void precomputeGradientConstants() { throw new RuntimeException("Not yet implemented"); }
+
+    default void processGradientModelSegmentBreakPoint(double[] gradient,
+                                                       int currentModelSegment,
+                                                       double intervalStart,
+                                                       double segmentIntervalEnd) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    default void processGradientInterval(double[] gradient,
+                                         int currentModelSegment,
+                                         double intervalStart,
+                                         double intervalEnd,
+                                         int nLineages) { throw new RuntimeException("Not yet implemented"); }
+
+    default void processGradientSampling(double[] gradient,
+                                         int currentModelSegment,
+                                         double intervalEnd) { throw new RuntimeException("Not yet implemented"); }
+
+    default void processGradientCoalescence(double[] gradient,
+                                            int currentModelSegment,
+                                            double intervalEnd) { throw new RuntimeException("Not yet implemented"); }
+
+    default void processGradientOrigin(double[] gradient,
+                                       int currentModelSegment,
+                                       double totalDuration) { throw new RuntimeException("Not yet implemented"); }
+
+    default void logConditioningProbability(double[] gradient) { throw new RuntimeException("Not yet implemented"); }
 }

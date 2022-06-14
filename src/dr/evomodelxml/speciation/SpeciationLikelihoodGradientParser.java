@@ -25,10 +25,7 @@
 
 package dr.evomodelxml.speciation;
 
-import dr.evomodel.speciation.BirthDeathGernhard08Model;
-import dr.evomodel.speciation.NewBirthDeathSerialSamplingModel;
-import dr.evomodel.speciation.SpeciationLikelihood;
-import dr.evomodel.speciation.SpeciationLikelihoodGradient;
+import dr.evomodel.speciation.*;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
 
@@ -40,6 +37,7 @@ public class SpeciationLikelihoodGradientParser extends AbstractXMLObjectParser 
 
     private static final String NAME = "speciationLikelihoodGradient";
     private static final String WRT_PARAMETER = "wrtParameter";
+    private static final String USE_NEW_LOOP = "useNewLoop";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -52,7 +50,13 @@ public class SpeciationLikelihoodGradientParser extends AbstractXMLObjectParser 
         }
 
         SpeciationLikelihoodGradient.WrtParameter type = SpeciationLikelihoodGradient.WrtParameter.factory(wrtParamter);
-        return new SpeciationLikelihoodGradient(likelihood, tree, type);
+
+        boolean newLoop = xo.getAttribute(USE_NEW_LOOP, false);
+        if (newLoop && (likelihood instanceof EfficientSpeciationLikelihood)) {
+            return new EfficientSpeciationLikelihoodGradient((EfficientSpeciationLikelihood) likelihood, type);
+        } else {
+            return new SpeciationLikelihoodGradient(likelihood, tree, type);
+        }
     }
 
     @Override
@@ -64,6 +68,7 @@ public class SpeciationLikelihoodGradientParser extends AbstractXMLObjectParser 
             AttributeRule.newStringRule(WRT_PARAMETER),
             new ElementRule(SpeciationLikelihood.class),
             new ElementRule(TreeModel.class),
+            AttributeRule.newBooleanRule(USE_NEW_LOOP, true),
     };
 
     @Override

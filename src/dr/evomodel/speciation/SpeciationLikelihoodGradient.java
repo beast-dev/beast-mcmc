@@ -181,6 +181,11 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
                 return new NodeHeightProxyParameter("nodeHeightProxyParameter", tree, true);
             }
+
+            @Override
+            double[] filter(double[] input) {
+                return input;
+            }
         },
 
         BIRTH_RATE("birthRate") {
@@ -192,6 +197,11 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             @Override
             Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
                 return provider.getBirthRateParameter();
+            }
+
+            @Override
+            double[] filter(double[] input) {
+                return new double[] { input[0] };
             }
         },
 
@@ -205,6 +215,11 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
                 return provider.getDeathRateParameter();
             }
+
+            @Override
+            double[] filter( double[] input) {
+                return new double[] { input[1] };
+            }
         },
 
         SAMPLING_RATE("samplingRate") {
@@ -217,17 +232,10 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
                 return provider.getSamplingRateParameter();
             }
-        },
-
-        TREATMENT_PROBABILITY("treatmentProbability") {
-            @Override
-            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
-                return provider.getTreatmentProbabilityGradient(tree, null);
-            }
 
             @Override
-            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
-                return provider.getTreatmentProbabilityParameter();
+            double[] filter(double[] input) {
+                return new double[] { input[2] };
             }
         },
 
@@ -241,6 +249,28 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
                 return provider.getSamplingProbabilityParameter();
             }
+
+            @Override
+            double[] filter(double[] input) {
+                return new double[] { input[3] };
+            }
+        },
+
+        TREATMENT_PROBABILITY("treatmentProbability") {
+            @Override
+            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+                return provider.getTreatmentProbabilityGradient(tree, null);
+            }
+
+            @Override
+            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+                return provider.getTreatmentProbabilityParameter();
+            }
+
+            @Override
+            double[] filter(double[] input) {
+                return new double[] { input[4] };
+            }
         };
 
         WrtParameter(String name) {
@@ -250,6 +280,8 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
         abstract double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree);
 
         abstract Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree);
+
+        abstract double[] filter(double[] input);
 
         private final String name;
 

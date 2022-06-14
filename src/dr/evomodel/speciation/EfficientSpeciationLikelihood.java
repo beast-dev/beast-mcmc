@@ -1,7 +1,7 @@
 /*
- * SpeciationLikelihood.java
+ * EfficientSpeciationLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,6 +27,8 @@ package dr.evomodel.speciation;
 
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.util.Taxon;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
@@ -39,9 +41,10 @@ import java.util.Set;
  * @author Yucai Shao
  * @author Marc Suchard
  */
-public class EfficientSpeciationLikelihood extends SpeciationLikelihood {
+public class EfficientSpeciationLikelihood extends SpeciationLikelihood implements TreeTraitProvider {
 
-    final private BigFastTreeIntervals treeIntervals;
+    private final BigFastTreeIntervals treeIntervals;
+    private final TreeTraitProvider.Helper treeTraits = new TreeTraitProvider.Helper();
     
     private boolean intervalsKnown;
 
@@ -62,6 +65,14 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood {
         if (model == treeIntervals) {
             intervalsKnown = false;
         }
+    }
+
+    final TreeModel getTreeModel() {
+        return (TreeModel) tree;
+    }
+
+    final BigFastTreeIntervals getTreeIntervals() {
+        return treeIntervals;
     }
 
     @Override
@@ -130,4 +141,18 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood {
     }
 
     private SpeciationModelGradientProvider gradientProvider = null;
+
+    @Override
+    public TreeTrait[] getTreeTraits() {
+        return treeTraits.getTreeTraits();
+    }
+
+    @Override
+    public TreeTrait getTreeTrait(String key) {
+        return treeTraits.getTreeTrait(key);
+    }
+
+    public void addTrait(TreeTrait trait) {
+        treeTraits.addTrait(trait);
+    }
 }

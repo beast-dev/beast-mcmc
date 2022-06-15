@@ -26,6 +26,7 @@
 package dr.evomodelxml.speciation;
 
 import dr.evolution.util.Units;
+import dr.evomodel.speciation.CriticalBirthDeathSerialSamplingModel;
 import dr.evomodel.speciation.NewBirthDeathSerialSamplingModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
@@ -75,6 +76,10 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
         }
 
         Logger.getLogger("dr.evomodel").info(citeThisModel);
+
+        if (psi.getParameterValue(0) < Double.MIN_VALUE){
+            return new CriticalBirthDeathSerialSamplingModel(modelName, lambda, mu, psi, r, rho, origin, condition, units);
+        }
 
         return new NewBirthDeathSerialSamplingModel(modelName, lambda, mu, psi, r, rho, origin, condition, units);
     }

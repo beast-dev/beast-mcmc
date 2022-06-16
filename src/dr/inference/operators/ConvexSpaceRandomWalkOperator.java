@@ -1,7 +1,7 @@
 package dr.inference.operators;
 
+import dr.inference.model.BoundedSpace;
 import dr.inference.model.Parameter;
-import dr.math.distributions.ConvexSpaceRandomGenerator;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import jebl.math.Random;
@@ -17,7 +17,7 @@ public class ConvexSpaceRandomWalkOperator extends AbstractAdaptableOperator {
 
 
     private double window;
-    private final ConvexSpaceRandomGenerator generator;
+    private final BoundedSpace space;
     private final Parameter parameter;
     private final Parameter updateIndex;
     private final boolean ADAPTIVE_COVARIANCE = true;
@@ -36,14 +36,14 @@ public class ConvexSpaceRandomWalkOperator extends AbstractAdaptableOperator {
     public static final String CONVEX_RW = "convexSpaceRandomWalkOperator";
     public static final String WINDOW_SIZE = "relativeWindowSize";
 
-    public ConvexSpaceRandomWalkOperator(Parameter parameter, ConvexSpaceRandomGenerator generator,
+    public ConvexSpaceRandomWalkOperator(Parameter parameter, BoundedSpace space,
                                          Parameter updateIndex,
                                          double window, double weight) {
         setWeight(weight);
 
         this.updateIndex = updateIndex;
         this.parameter = parameter;
-        this.generator = generator;
+        this.space = space;
         this.window = window;
 
         this.dim = parameter.getDimension();
@@ -190,7 +190,7 @@ public class ConvexSpaceRandomWalkOperator extends AbstractAdaptableOperator {
             sample[varInds.get(i)] = varSample[i];
         }
 
-        ConvexSpaceRandomGenerator.LineThroughPoints distances = generator.distanceToEdge(values, sample);
+        BoundedSpace.IntersectionDistances distances = space.distancesToBoundary(values, sample);
 //        double u1 = Random.nextDouble() * distances.forwardDistance;
 //        for (int i = 0; i < values.length; i++) {
 //            sample[i] = values[i] + (sample[i] - values[i]) * u1;

@@ -1,10 +1,9 @@
 package dr.inferencexml.operators;
 
+import dr.inference.model.BoundedSpace;
 import dr.inference.model.Parameter;
 import dr.inference.operators.ConvexSpaceRandomWalkOperator;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.RandomWalkOperator;
-import dr.math.distributions.ConvexSpaceRandomGenerator;
 import dr.xml.*;
 
 public class ConvexSpaceRandomWalkOperatorParser extends AbstractXMLObjectParser {
@@ -13,12 +12,9 @@ public class ConvexSpaceRandomWalkOperatorParser extends AbstractXMLObjectParser
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-        ConvexSpaceRandomGenerator generator =
-                (ConvexSpaceRandomGenerator) xo.getChild(ConvexSpaceRandomGenerator.class);
+        BoundedSpace space =
+                (BoundedSpace) xo.getChild(BoundedSpace.class);
 
-        if (!generator.isUniform()) {
-            throw new XMLParseException("sample distribution must be uniform over its support");
-        }
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
@@ -36,14 +32,14 @@ public class ConvexSpaceRandomWalkOperatorParser extends AbstractXMLObjectParser
             updateIndex = null;
         }
 
-        return new ConvexSpaceRandomWalkOperator(parameter, generator, updateIndex, windowSize, weight);
+        return new ConvexSpaceRandomWalkOperator(parameter, space, updateIndex, windowSize, weight);
     }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
                 new ElementRule(Parameter.class),
-                new ElementRule(ConvexSpaceRandomGenerator.class),
+                new ElementRule(BoundedSpace.class),
                 new ElementRule(RandomWalkOperatorParser.UPDATE_INDEX,
                         new XMLSyntaxRule[]{
                                 new ElementRule(Parameter.class)

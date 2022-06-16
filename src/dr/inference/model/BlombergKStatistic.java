@@ -13,6 +13,9 @@ import java.util.Arrays;
 
 
 public class BlombergKStatistic extends Statistic.Abstract implements ModelListener {
+
+    public static final String BLOMBERGS_K = "blombergsK";
+
     private final TreeDataLikelihood traitLikelihood;
     private final TreeModel tree;
     private final TreeTrait treeTrait;
@@ -20,7 +23,7 @@ public class BlombergKStatistic extends Statistic.Abstract implements ModelListe
     private final int traitDim;
     private Matrix Linv;
     private final int treeDim;
-    private double mseExpected;
+    private double expectedRatio;
     private final ContinuousDiffusionIntegrator integrator;
     private final ContinuousDataLikelihoodDelegate delegate;
     private final double[] k;
@@ -58,6 +61,7 @@ public class BlombergKStatistic extends Statistic.Abstract implements ModelListe
             double[][] treeStructure = MultivariateTraitDebugUtilities.getTreeVariance(tree,
                     traitLikelihood.getBranchRateModel(),
                     1.0, Double.POSITIVE_INFINITY); //TODO: make sure order is right
+            //TODO: don't actually need to construct or invert this. can use Ho & Ane 2014 for all calculations
 
 
             SymmetricMatrix V = new SymmetricMatrix(treeStructure);
@@ -70,8 +74,8 @@ public class BlombergKStatistic extends Statistic.Abstract implements ModelListe
                 throw new RuntimeException();
             }
 
-            Linv = L.inverse(); //TODO: need some triangular-matix specific inverse
-            double[] ones = new double[traitDim];
+            Linv = L.inverse().transpose();
+            double[] ones = new double[treeDim];
             Arrays.fill(ones, 1);
 
             Vector l;
@@ -84,7 +88,7 @@ public class BlombergKStatistic extends Statistic.Abstract implements ModelListe
             }
 
             double sumInverse = 0;
-            for (int i = 0; i < traitDim; i++) {
+            for (int i = 0; i < treeDim; i++) {
                 sumInverse += l.component(i) * l.component(i);
             }
 
@@ -93,12 +97,12 @@ public class BlombergKStatistic extends Statistic.Abstract implements ModelListe
                 trace += treeStructure[i][i];
             }
 
-            mseExpected = (trace - treeDim / sumInverse) / (treeDim - 1);
+            expectedRatio = (trace - treeDim / sumInverse) / (treeDim - 1);
             needToUpdateTree = false;
         }
 
 
-        double[] treeTraits = (double[]) treeTrait.getTrait(tree, tree.getRoot());
+        double[] treeTraits = (double[]) treeTrait.getTrait(tree, null);
 
         PrecisionType type = delegate.getDataModel().getPrecisionType();
 
@@ -113,8 +117,9 @@ public class BlombergKStatistic extends Statistic.Abstract implements ModelListe
 
         for (int trait = 0; trait < traitDim; trait++) {
             for (int taxon = 0; taxon < treeDim; taxon++) {
-                thisTrait[taxon] = treeTraits[taxon * traitDim + trait];
+                thisTrait[taxon] = treeTraits[taxon * traitDim + trait] - mean[trait];
             }
+
 
             Vector contrasts;
 
@@ -125,20 +130,19 @@ public class BlombergKStatistic extends Statistic.Abstract implements ModelListe
                 throw new RuntimeException();
             }
 
-            double ssTrait = sumSquareDiff(thisTrait, mean[trait]);
-            double ssContrasts = sumSquareDiff(contrasts.toComponents(), mean[trait]);
+            double mse0 = sumSquares(thisTrait);
+            double mse = sumSquares(contrasts.toComponents());
 
-            k[trait] = (ssTrait / ssContrasts) / mseExpected;
+            k[trait] = (mse0 / mse) / expectedRatio;
         }
 
         return 0;
     }
 
-    private double sumSquareDiff(double[] x, double a) {
+    private double sumSquares(double[] x) {
         double ss = 0;
         for (int i = 0; i < x.length; i++) {
-            double diff = x[i] - a;
-            ss += diff * diff;
+            ss += x[i] * x[i];
         }
         return ss;
     }

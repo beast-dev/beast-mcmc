@@ -1,6 +1,6 @@
 package dr.inferencexml.operators;
 
-import dr.inference.model.GeneralParameterBounds;
+import dr.inference.model.BoundedSpace;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.inference.operators.TransformedParameterOperator;
 import dr.xml.*;
@@ -13,7 +13,7 @@ public class TransformedParameterOperatorParser extends AbstractXMLObjectParser 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         SimpleMCMCOperator operator = (SimpleMCMCOperator) xo.getChild(SimpleMCMCOperator.class);
-        GeneralParameterBounds bounds = (GeneralParameterBounds) xo.getChild(GeneralParameterBounds.class);
+        BoundedSpace bounds = (BoundedSpace) xo.getChild(BoundedSpace.class);
         return new TransformedParameterOperator(operator, bounds);
     }
 
@@ -21,7 +21,7 @@ public class TransformedParameterOperatorParser extends AbstractXMLObjectParser 
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
                 new ElementRule(SimpleMCMCOperator.class),
-                new ElementRule(GeneralParameterBounds.class, true)
+                new ElementRule(BoundedSpace.class, true)
         };
     }
 

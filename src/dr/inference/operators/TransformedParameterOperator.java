@@ -1,6 +1,6 @@
 package dr.inference.operators;
 
-import dr.inference.model.GeneralParameterBounds;
+import dr.inference.model.BoundedSpace;
 import dr.inference.model.Parameter;
 import dr.inference.model.TransformedParameter;
 
@@ -9,10 +9,10 @@ public class TransformedParameterOperator extends AbstractAdaptableOperator {
     private final SimpleMCMCOperator subOperator;
     private final TransformedParameter parameter;
     private final boolean checkValid;
-    private final GeneralParameterBounds generalBounds;
+    private final BoundedSpace generalBounds;
     public static final String TRANSFORMED_OPERATOR = "transformedParameterOperator";
 
-    public TransformedParameterOperator(SimpleMCMCOperator operator, GeneralParameterBounds generalBounds) {
+    public TransformedParameterOperator(SimpleMCMCOperator operator, BoundedSpace generalBounds) {
 
         this.subOperator = operator;
         setWeight(operator.getWeight());
@@ -70,7 +70,7 @@ public class TransformedParameterOperator extends AbstractAdaptableOperator {
         if (checkValid) { // GH: below is sloppy, but best I could do without refactoring how Parameter handles bounds
             if (generalBounds == null && !parameter.isWithinBounds()) {
                 return Double.NEGATIVE_INFINITY;
-            } else if (!generalBounds.satisfiesBounds(parameter)) {
+            } else if (!generalBounds.isWithinBounds(parameter.getParameterValues())) {
                 return Double.NEGATIVE_INFINITY;
             }
         }

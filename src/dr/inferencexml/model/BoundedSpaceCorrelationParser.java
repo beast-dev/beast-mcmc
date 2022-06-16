@@ -1,9 +1,9 @@
 package dr.inferencexml.model;
 
-import dr.inference.model.GeneralParameterBounds;
+import dr.inference.model.BoundedSpace;
 import dr.xml.*;
 
-public class CorrelationParameterBoundsParser extends AbstractXMLObjectParser {
+public class BoundedSpaceCorrelationParser extends AbstractXMLObjectParser {
     private static final String CORRELATION_BOUNDS = "correlationBounds";
     private static final String DIMENSION = "dimension";
 
@@ -11,7 +11,7 @@ public class CorrelationParameterBoundsParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         int dim = xo.getIntegerAttribute(DIMENSION);
-        return new GeneralParameterBounds.CorrelationParameterBounds(dim);
+        return new BoundedSpace.Correlation(dim);
     }
 
     @Override
@@ -28,7 +28,7 @@ public class CorrelationParameterBoundsParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return GeneralParameterBounds.CorrelationParameterBounds.class;
+        return BoundedSpace.Correlation.class;
     }
 
     @Override

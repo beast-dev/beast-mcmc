@@ -25,7 +25,7 @@
 
 package dr.inference.operators;
 
-import dr.inference.model.GeneralParameterBounds;
+import dr.inference.model.BoundedSpace;
 import dr.inference.model.TransformedParameter;
 import dr.math.matrixAlgebra.Matrix;
 
@@ -38,7 +38,7 @@ public class TransformedParameterRandomWalkOperator extends RandomWalkOperator {
     private static boolean DEBUG = false;
     private static boolean checkValid = true;
 
-    private final GeneralParameterBounds generalBounds;
+    private final BoundedSpace generalBounds;
 
     public TransformedParameterRandomWalkOperator(TransformedParameter parameter, double windowSize,
                                                   BoundaryCondition bc, double weight, AdaptationMode mode) {
@@ -56,7 +56,7 @@ public class TransformedParameterRandomWalkOperator extends RandomWalkOperator {
         this.generalBounds = null; //TODO: implement if needed
     }
 
-    public TransformedParameterRandomWalkOperator(RandomWalkOperator randomWalkOperator, GeneralParameterBounds bounds) {
+    public TransformedParameterRandomWalkOperator(RandomWalkOperator randomWalkOperator, BoundedSpace bounds) {
         super((TransformedParameter) randomWalkOperator.getParameter(),
                 randomWalkOperator.getWindowSize(),
                 randomWalkOperator.getBoundaryCondition(),
@@ -86,7 +86,7 @@ public class TransformedParameterRandomWalkOperator extends RandomWalkOperator {
         if (checkValid) { // GH: below is sloppy, but best I could do without refactoring how Parameter handles bounds
             if (generalBounds == null && !parameter.isWithinBounds()) {
                 return Double.NEGATIVE_INFINITY;
-            } else if (!generalBounds.satisfiesBounds(parameter)) {
+            } else if (!generalBounds.isWithinBounds(parameter.getParameterValues())) {
                 return Double.NEGATIVE_INFINITY;
             }
         }

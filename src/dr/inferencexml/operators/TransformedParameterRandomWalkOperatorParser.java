@@ -25,7 +25,7 @@
 
 package dr.inferencexml.operators;
 
-import dr.inference.model.GeneralParameterBounds;
+import dr.inference.model.BoundedSpace;
 import dr.inference.model.TransformedParameter;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
@@ -48,7 +48,7 @@ public class TransformedParameterRandomWalkOperatorParser extends RandomWalkOper
         } catch (XMLParseException e) {
             throw new XMLParseException("RandomWalkOperatorParser failled in TraansformedParameterRandomWalkOperator.");
         }
-        GeneralParameterBounds bounds = (GeneralParameterBounds) xo.getChild(GeneralParameterBounds.class);
+        BoundedSpace bounds = (BoundedSpace) xo.getChild(BoundedSpace.class);
         return new TransformedParameterRandomWalkOperator((RandomWalkOperator) randomWalk, bounds);
 
     }
@@ -79,6 +79,6 @@ public class TransformedParameterRandomWalkOperatorParser extends RandomWalkOper
                     }, true),
             new StringAttributeRule(BOUNDARY_CONDITION, null, RandomWalkOperator.BoundaryCondition.values(), true),
             new ElementRule(TransformedParameter.class),
-            new ElementRule(GeneralParameterBounds.class, true)
+            new ElementRule(BoundedSpace.class, true)
     };
 }

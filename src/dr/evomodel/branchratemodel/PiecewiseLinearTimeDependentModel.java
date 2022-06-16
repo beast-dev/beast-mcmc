@@ -46,14 +46,16 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
 
     private final TreeModel treeModel;
     private final ParameterPack pack;
+    private final Scale scale;
 
     private boolean slopeInterceptKnown;
     private SlopeInterceptPack slopeInterceptPack;
 
-    public PiecewiseLinearTimeDependentModel(TreeModel treeModel, ParameterPack pack) {
+    public PiecewiseLinearTimeDependentModel(TreeModel treeModel, ParameterPack pack, Scale scale) {
         super("piecewiseLinearBranchValues");
         this.treeModel = treeModel;
         this.pack = pack;
+        this.scale = scale;
 
         addModel(treeModel);
 
@@ -65,8 +67,16 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
     }
 
     private double integrate(double x0, double x1, double slope, double intercept) {
-        double halfSlope = slope / 2;
-        return (halfSlope * x1 + intercept) * x1 - (halfSlope * x0 + intercept) * x0;
+        if (slope == 0) {
+            return intercept * (x1 - x0);
+        } else {
+            if (Double.isInfinite(x0) || Double.isInfinite(x1)) {
+                throw new IllegalArgumentException("Unbounded function integral");
+            } else {
+                double halfSlope = slope / 2;
+                return (halfSlope * x1 + intercept) * x1 - (halfSlope * x0 + intercept) * x0;
+            }
+        }
     }
 
     double computeIntegratedValue(double parent, double child) {
@@ -74,6 +84,10 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
         final double[] slopes = slopeInterceptPack.slopes;
         final double[] intercepts = slopeInterceptPack.intercepts;
         final double[] breaks = slopeInterceptPack.breaks;
+
+        if (Double.isInfinite(child)) {
+            return slopes[0];
+        }
 
         int currentEpoch = 0;
         while (child > breaks[currentEpoch]) {
@@ -88,9 +102,10 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
             currentTime = breaks[currentEpoch];
             ++currentEpoch;
         }
+
         integral += integrate(currentTime, parent, slopes[currentEpoch], intercepts[currentEpoch]);
 
-        return integral;
+        return integral / (parent - child);
     }
 
     @Override
@@ -101,10 +116,14 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
             slopeInterceptKnown = true;
         }
 
-        double parent = tree.getNodeHeight(tree.getParent(node));
-        double child = tree.getNodeHeight(node);
+        double p = tree.getNodeHeight(tree.getParent(node));
+        double c = tree.getNodeHeight(node);
 
-        return computeIntegratedValue(parent, child);
+        double parent = scale.transformTime(p);
+        double child = scale.transformTime(c);
+
+        double value = computeIntegratedValue(parent, child);
+        return scale.inverseTransformRate(value);
     }
 
     @Override
@@ -146,6 +165,52 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
 
     @Override
     protected void acceptState() { }
+
+    public enum Scale {
+        LOG10_UNIT("log10-rate.unit-time") {
+            @Override
+            double transformTime(double time) {
+                return time;
+            }
+
+            @Override
+            double inverseTransformRate(double rate) {
+                return log10 * rate;
+            }
+        },
+        LOG10_LOG10("log10-rate.log10-time") {
+            @Override
+            double transformTime(double time) {
+                return Math.log10(time);
+            }
+
+            @Override
+            double inverseTransformRate(double rate) {
+                return log10 * rate; // return natural log rate
+            }
+        };
+
+        Scale(String name) {
+            this.name = name;
+        }
+
+        abstract double transformTime(double time);
+
+        abstract double inverseTransformRate(double rate);
+
+        private final String name;
+
+        public static Scale parse(String text) {
+            for (Scale s : Scale.values()) {
+                if (s.name.equalsIgnoreCase(text)) {
+                    return s;
+                }
+            }
+            return null;
+        }
+    }
+
+    private final static double log10 = Math.log(10.0);
 
     public static class ParameterPack implements Iterable<Parameter> {
 

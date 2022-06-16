@@ -33,6 +33,7 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.branchratemodel.ContinuousBranchValueProvider;
 import dr.evomodel.branchratemodel.CountableBranchCategoryProvider;
+import dr.evomodel.branchratemodel.PiecewiseLinearTimeDependentModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.WrappedVector;
@@ -55,6 +56,7 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
     private static final String FIXED_EFFECTS = "fixedEffects";
     private static final String INCLUDE_INTERCEPT = "includeIntercept";
     private static final String TIME_DEPENDENT_EFFECT = "timeEffect";
+    private static final String TIME_MODEL = "model";
     private static final String CATEGORY = "category";
 
     public String getParserName() {
@@ -69,7 +71,7 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
 
         boolean includeIntercept = xo.getAttribute(INCLUDE_INTERCEPT, true);
 
-        List<CountableBranchCategoryProvider> categories = new ArrayList<CountableBranchCategoryProvider>();
+        List<CountableBranchCategoryProvider> categories = new ArrayList<>();
 
         for (XMLObject xoc : xo.getAllChildren(CATEGORY)) {
             CountableBranchCategoryProvider.CladeBranchCategoryModel cladeModel =
@@ -83,7 +85,7 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
 
         List<ContinuousBranchValueProvider> values = getValueProviders(xo);
 
-        List<BranchRates> branchRates = new ArrayList<BranchRates>();
+        List<BranchRates> branchRates = new ArrayList<>();
 
         for (int i = 0; i < xo.getChildCount(); ++i) {
             Object obj = xo.getChild(i);
@@ -118,13 +120,17 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
     }
 
     List<ContinuousBranchValueProvider> getValueProviders(XMLObject xo) throws XMLParseException {
-        List<ContinuousBranchValueProvider> values = new ArrayList<ContinuousBranchValueProvider>();
+        List<ContinuousBranchValueProvider> values = new ArrayList<>();
 
         boolean timeDependentEffect = xo.getAttribute(TIME_DEPENDENT_EFFECT, false);
         if (timeDependentEffect) {
             if (xo.hasChildNamed(TIME_DEPENDENT_EFFECT)) {
                 Parameter timeThreshold = (Parameter) xo.getChild(TIME_DEPENDENT_EFFECT).getChild(Parameter.class);
                 values.add(new ContinuousBranchValueProvider.ConstrainedMidPoint(timeThreshold));
+            } else if (xo.getChild(PiecewiseLinearTimeDependentModel.class) != null) {
+                PiecewiseLinearTimeDependentModel model = (PiecewiseLinearTimeDependentModel)
+                        xo.getChild(PiecewiseLinearTimeDependentModel.class);
+                values.add(model);
             } else {
                 values.add(new ContinuousBranchValueProvider.MidPoint());
             }

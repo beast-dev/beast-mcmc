@@ -64,7 +64,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
     private static final String RECONSTRUCT_TRAITS = "reconstructTraits";
     private static final String FORCE_COMPLETELY_MISSING = "forceCompletelyMissing";
     private static final String ALLOW_SINGULAR = "allowSingular";
-    private static final String FORCE_FULL_PRECISION = "forceFullPrecision";
+    public static final String FORCE_FULL_PRECISION = "forceFullPrecision";
     private static final String FORCE_DRIFT = "forceDrift";
     private static final String FORCE_OU = "forceOU";
 

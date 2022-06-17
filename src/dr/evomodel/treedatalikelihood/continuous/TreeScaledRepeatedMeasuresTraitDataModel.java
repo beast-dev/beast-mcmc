@@ -32,8 +32,6 @@ import dr.inference.model.MatrixParameterInterface;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
-import java.util.List;
-
 /**
  * @author Marc A. Suchard
  * @author Paul Bastide
@@ -48,8 +46,9 @@ public class TreeScaledRepeatedMeasuresTraitDataModel extends RepeatedMeasuresTr
                                                     boolean[] missingIndicators,
                                                     boolean useMissingIndices,
                                                     final int dimTrait,
-                                                    MatrixParameterInterface samplingPrecision) {
-        super(name, parameter, missingIndicators, useMissingIndices, dimTrait, samplingPrecision);
+                                                    MatrixParameterInterface samplingPrecision,
+                                                    boolean forceFullPrecision) {
+        super(name, parameter, missingIndicators, useMissingIndices, dimTrait, samplingPrecision, forceFullPrecision);
     }
 
     @Override

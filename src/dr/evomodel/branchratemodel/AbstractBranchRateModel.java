@@ -84,4 +84,17 @@ public abstract class AbstractBranchRateModel extends AbstractModelLikelihood im
     public void makeDirty() {
         // Do nothing
     }
+    
+    public Mapping getBranchRateModelMapping(final Tree tree, final NodeRef node) {
+        
+        return new Mapping() {
+            public double[] getRates() {
+                return new double[] { getBranchRate(tree, node) };
+            }
+
+            public double[] getWeights() {
+                return new double[] { 1.0 };
+            }
+        };
+    }
 }

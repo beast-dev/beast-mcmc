@@ -41,6 +41,10 @@ public final class DefaultBranchRateModel implements BranchRateModel, Differenti
     public double getBranchRate(Tree tree, NodeRef node) {
         return 1.0;
     }
+    
+    public Mapping getBranchRateModelMapping(final Tree tree, final NodeRef node) {
+        return DEFAULT;
+    }
 
     public void addModelListener(ModelListener listener) {
         // nothing to do

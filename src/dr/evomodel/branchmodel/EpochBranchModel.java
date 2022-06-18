@@ -92,7 +92,7 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
         double currentHeight = nodeHeight;
 
         // find the epoch that the parent height is in...
-        while (epoch < epochCount && parentHeight >= transitionTimes[epoch]) {
+        while (epoch < epochCount && parentHeight > transitionTimes[epoch]) {
             weightList.add( transitionTimes[epoch] - currentHeight );
             orderList.add(epoch);
 

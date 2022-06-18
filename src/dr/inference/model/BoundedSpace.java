@@ -3,6 +3,7 @@ package dr.inference.model;
 import dr.app.bss.Utils;
 import dr.evomodel.substmodel.ColtEigenSystem;
 import dr.evomodel.substmodel.EigenDecomposition;
+import dr.math.matrixAlgebra.EJMLUtils;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
@@ -13,11 +14,13 @@ import org.ejml.interfaces.decomposition.CholeskyDecomposition;
 import static dr.math.matrixAlgebra.SymmetricMatrix.compoundCorrelationSymmetricMatrix;
 import static dr.math.matrixAlgebra.SymmetricMatrix.compoundSymmetricMatrix;
 
-public interface BoundedSpace {
+public interface BoundedSpace extends GeneralBoundsProvider {
 
     boolean isWithinBounds(double[] values);
 
     IntersectionDistances distancesToBoundary(double[] origin, double[] direction);
+
+    double[] getNormalVectorAtBoundary(double[] position);
 
     default double forwardDistanceToBoundary(double[] origin, double[] direction) {
         return distancesToBoundary(origin, direction).forwardDistance;
@@ -111,7 +114,7 @@ public interface BoundedSpace {
             }
 
             ColtEigenSystem eigenSystem = new ColtEigenSystem(dim);
-            EigenDecomposition decomposition = eigenSystem.decomposeMatrix(Z.toComponents()); //TODO: only need smallest magnitude eigenvalues
+            EigenDecomposition decomposition = eigenSystem.decomposeMatrix(Z.toComponents()); //TODO: only need largest magnitude eigenvalues
             double[] values = decomposition.getEigenValues();
 
             double maxNegative = 0;
@@ -158,6 +161,31 @@ public interface BoundedSpace {
             }
 
             return new IntersectionDistances(1 / maxPositive, -1 / maxNegative);
+        }
+
+        @Override
+        public double[] getNormalVectorAtBoundary(double[] position) {
+            Utils.printArray(position);
+            double[] c = compoundCorrelationSymmetricMatrix(position, dim).toArrayComponents();
+            DenseMatrix64F C = DenseMatrix64F.wrap(dim, dim, c);
+            DenseMatrix64F A;
+            try {
+                A = EJMLUtils.computeRobustAdjugate(C);
+            } catch (IllegalDimension illegalDimension) {
+                illegalDimension.printStackTrace();
+                throw new RuntimeException();
+            }
+
+            double[] normalVector = new double[position.length];
+            int ind = 0;
+            for (int i = 0; i < dim; i++) {
+                for (int j = (i + 1); j < dim; j++) {
+                    normalVector[ind] = A.get(i, j);
+                    ind++;
+                }
+            }
+
+            return normalVector;
         }
 
     }

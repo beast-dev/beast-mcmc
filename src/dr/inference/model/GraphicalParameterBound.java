@@ -29,7 +29,7 @@ package dr.inference.model;
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public interface GraphicalParameterBound {
+public interface GraphicalParameterBound extends GeneralBoundsProvider {
 
     Parameter getParameter();
 

@@ -44,6 +44,8 @@ import java.util.List;
 public class PiecewiseLinearTimeDependentModel extends AbstractModel implements ContinuousBranchValueProvider,
         CountableMixtureBranchRates.TimeDependentModel {
 
+    private final static boolean TEST = true;
+
     private final TreeModel treeModel;
     private final ParameterPack pack;
     private final Scale scale;
@@ -67,6 +69,11 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
     }
 
     private double integrate(double x0, double x1, double slope, double intercept) {
+
+        if (TEST) {
+            return scale.integral(x0, x1, slope, intercept);
+        }
+
         if (slope == 0) {
             return intercept * (x1 - x0);
         } else {
@@ -116,14 +123,21 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
             slopeInterceptKnown = true;
         }
 
-        double p = tree.getNodeHeight(tree.getParent(node));
-        double c = tree.getNodeHeight(node);
+        double parent = tree.getNodeHeight(tree.getParent(node));
+        double child = tree.getNodeHeight(node);
 
-        double parent = scale.transformTime(p);
-        double child = scale.transformTime(c);
+        if (!TEST) {
+            parent = scale.transformTime(parent);
+            child = scale.transformTime(child);
+        }
 
         double value = computeIntegratedValue(parent, child);
-        return scale.inverseTransformRate(value);
+
+        if (TEST) {
+            return Math.log(value);
+        } else {
+            return scale.inverseTransformRate(value);
+        }
     }
 
     @Override
@@ -167,7 +181,8 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
     protected void acceptState() { }
 
     public enum Scale {
-        LOG10_UNIT("log10-rate.unit-time") {
+        LOG10_UNIT("log10-rate.unit-time") { // rate = 10^(slope * time + intercept) is the correct function
+                                                   //      = exp(log10 * slope * time) * 10^(intercept)
             @Override
             double transformTime(double time) {
                 return time;
@@ -177,8 +192,19 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
             double inverseTransformRate(double rate) {
                 return log10 * rate;
             }
+
+            @Override
+            double integral(double t0, double t1, double slope, double intercept) { // TODO Check
+                if (slope == 0.0) {
+                    return Math.exp(log10 * intercept) * (t1 - t0);
+                } else {
+                    final double factor = log10 * slope;
+                    return Math.exp(log10 * intercept) / factor * (Math.exp(factor * t1) - Math.exp(factor * t0));
+                }
+            }
+
         },
-        LOG10_LOG10("log10-rate.log10-time") {
+        LOG10_LOG10("log10-rate.log10-time") { // rate = (time)^(slope) * 10^(intercept) is the correct function
             @Override
             double transformTime(double time) {
                 return Math.log10(time);
@@ -186,7 +212,13 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
 
             @Override
             double inverseTransformRate(double rate) {
-                return log10 * rate; // return natural log rate
+                return log10 * rate;
+            }
+
+            @Override
+            double integral(double t0, double t1, double slope, double intercept) { // TODO Check
+                final double power = slope + 1.0;
+                return Math.exp(log10 * intercept) / power * (Math.pow(t1, power) - Math.pow(t0, power));
             }
         };
 
@@ -197,6 +229,8 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
         abstract double transformTime(double time);
 
         abstract double inverseTransformRate(double rate);
+
+        abstract double integral(double t0, double t1, double slope, double intercept);
 
         private final String name;
 
@@ -267,4 +301,3 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
         }
     }
 }
-

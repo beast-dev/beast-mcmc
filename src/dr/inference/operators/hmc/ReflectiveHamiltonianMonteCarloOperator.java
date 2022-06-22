@@ -35,6 +35,8 @@ import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
 import dr.xml.Reportable;
 
+import java.util.ArrayList;
+
 
 /**
  * @author Xiang Ji
@@ -118,6 +120,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
     class WithMultivariateCurvedBounds extends WithBounds {
 
         private final BoundedSpace space;
+        public final int[] defaultIndices;
 
         WithMultivariateCurvedBounds(Parameter parameter,
                                      InstabilityHandler instabilityHandler,
@@ -126,6 +129,16 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
                                      BoundedSpace space) {
             super(parameter, instabilityHandler, preconditioning, mask);
             this.space = space;
+            ArrayList<Integer> inds = new ArrayList<>();
+            for (int i = 0; i < mask.length; i++) {
+                if (mask[i] == 1) {
+                    inds.add(i);
+                }
+            }
+            this.defaultIndices = new int[inds.size()];
+            for (int i = 0; i < inds.size(); i++) {
+                defaultIndices[i] = inds.get(i);
+            }
         }
 
 
@@ -136,20 +149,23 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
 
             if (DEBUG) {
                 System.out.println("Time to reflection: " + timeToReflection);
+                System.out.println("Interval length: " + intervalLength);
             }
 
 
-
-            if (timeToReflection < intervalLength) {
-                return new ReflectionEvent(ReflectionType.None, Double.NaN, intervalLength, new int[0]);
+            if (timeToReflection > intervalLength) {
+                return new ReflectionEvent(ReflectionType.None, intervalLength, Double.NaN, new int[0]);
             } else {
+                if (DEBUG) {
+                    System.out.println("!!!!!!!!!!!!!!!REFLECTION!!!!!!!!!!!!!!!");
+                }
                 double[] boundaryPosition = new double[position.length];
                 for (int i = 0; i < position.length; i++) {
                     boundaryPosition[i] = position[i] + timeToReflection * velocity[i];
                 }
                 double[] normalVector = space.getNormalVectorAtBoundary(boundaryPosition);
                 return new ReflectionEvent(ReflectionType.MultivariateReflection, timeToReflection,
-                        boundaryPosition, normalVector);
+                        boundaryPosition, normalVector, defaultIndices);
             }
         }
     }
@@ -308,12 +324,6 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
             this(type, eventTime, new double[]{eventLocation}, null, indices);
         }
 
-        ReflectionEvent(ReflectionType type,
-                        double eventTime,
-                        double[] eventLocation,
-                        double[] normalVector) {
-            this(type, eventTime, eventLocation, normalVector, new int[0]);
-        }
 
         public double getEventTime() {
             return eventTime;

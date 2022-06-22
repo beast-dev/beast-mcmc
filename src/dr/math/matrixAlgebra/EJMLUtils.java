@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 public class EJMLUtils {
 
-    private static final Boolean DEBUG = true;
+    private static final Boolean DEBUG = false;
 
     public static void addWithTransposed(DenseMatrix64F X) {
 

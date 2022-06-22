@@ -26,11 +26,14 @@
 
 package dr.inference.operators.hmc;
 
+import dr.app.bss.Utils;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 import dr.inference.operators.AdaptationMode;
 import dr.inferencexml.operators.hmc.ReflectiveHamiltonianMonteCarloOperatorParser;
+import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.ReadableVector;
+import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
 import dr.xml.Reportable;
@@ -45,7 +48,7 @@ import java.util.ArrayList;
 public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCarloOperator implements Reportable {
 
     private final GeneralBoundsProvider parameterBound;
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
 
     public ReflectiveHamiltonianMonteCarloOperator(AdaptationMode mode,
@@ -108,7 +111,30 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
             double collapsedTime = 0.0;
             while (collapsedTime < functionalStepSize) {
                 ReflectionEvent event = nextEvent(position, momentum, functionalStepSize - collapsedTime);
+
+                if (DEBUG) {
+                    SymmetricMatrix C = SymmetricMatrix.compoundCorrelationSymmetricMatrix(position, 6); //TODO: remove
+                    try {
+                        System.out.println("starting det: " + C.determinant());
+                    } catch (IllegalDimension illegalDimension) {
+                        illegalDimension.printStackTrace();
+                        throw new RuntimeException();
+                    }
+                }
+
                 event.doReflection(position, momentum);
+
+                if (DEBUG) {
+                    System.out.println("event: " + event.getType());
+                    SymmetricMatrix C = SymmetricMatrix.compoundCorrelationSymmetricMatrix(position, 6); //TODO: remove
+                    try {
+                        System.out.println("ending det: " + C.determinant());
+                    } catch (IllegalDimension illegalDimension) {
+                        illegalDimension.printStackTrace();
+                        throw new RuntimeException();
+                    }
+                }
+
                 collapsedTime += event.getEventTime();
             }
             setParameter(position);
@@ -165,6 +191,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
                 }
                 double[] normalVector = space.getNormalVectorAtBoundary(boundaryPosition);
                 return new ReflectionEvent(ReflectionType.MultivariateReflection, timeToReflection,
+                        intervalLength - timeToReflection,
                         boundaryPosition, normalVector, defaultIndices);
             }
         }
@@ -304,9 +331,11 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
         private final double[] eventLocation;
         private final int[] indices;
         private final double[] normalVector;
+        private final double remainingTime;
 
         ReflectionEvent(ReflectionType type,
                         double eventTime,
+                        double remainingTime,
                         double[] eventLocation,
                         double[] normalVector,
                         int[] indices) {
@@ -315,13 +344,14 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
             this.indices = indices;
             this.eventLocation = eventLocation;
             this.normalVector = normalVector;
+            this.remainingTime = remainingTime;
         }
 
         ReflectionEvent(ReflectionType type,
                         double eventTime,
                         double eventLocation,
                         int[] indices) {
-            this(type, eventTime, new double[]{eventLocation}, null, indices);
+            this(type, eventTime, Double.NaN, new double[]{eventLocation}, null, indices);
         }
 
 
@@ -334,7 +364,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
         }
 
         public void doReflection(double[] position, WrappedVector momentum) {
-            type.doReflection(position, preconditioning, momentum, eventLocation, indices, normalVector, eventTime);
+            type.doReflection(position, preconditioning, momentum, eventLocation, indices, normalVector, eventTime, remainingTime);
         }
 
     }
@@ -344,7 +374,16 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
         MultivariateReflection {
             @Override
             void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum,
-                              double eventLocation[], int[] indices, double[] normalVector, double time) {
+                              double eventLocation[], int[] indices, double[] normalVector, double time,
+                              double remainingTime) {
+
+
+                if (DEBUG) {
+                    System.out.println("time: " + time);
+                    System.out.print("start: ");
+                    Utils.printArray(position);
+                    System.out.println(momentum);
+                }
 
                 updatePosition(position, preconditioning, momentum, time);
                 double vn = 0;
@@ -361,12 +400,31 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
                     momentum.set(i, momentum.get(i) - c * normalVector[i]);
                     position[i] = eventLocation[i];
                 }
+
+                if (DEBUG) {
+                    System.out.print("end: ");
+                    Utils.printArray(position);
+                    System.out.println(momentum);
+                }
+
+                if (BOUNCE) {
+                    double t = Math.min(remainingTime, 1e-10); //TODO: need to make sure I'm not leaving the space again, also need to update time later
+                    System.out.println("bounce time: " + t);
+                    updatePosition(position, preconditioning, momentum, t);
+                }
+
+                if (DEBUG) {
+                    System.out.print("bounce: ");
+                    Utils.printArray(position);
+                    System.out.println(momentum);
+                }
             }
         },
         Reflection {
             @Override
             void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum,
-                              double eventLocation[], int[] indices, double[] normalVector, double time) {
+                              double eventLocation[], int[] indices, double[] normalVector, double time,
+                              double remainingTime) {
                 updatePosition(position, preconditioning, momentum, time);
                 momentum.set(indices[0], -momentum.get(indices[0]));
                 position[indices[0]] = eventLocation[0];
@@ -375,7 +433,8 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
         Collision {
             @Override
             void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum,
-                              double eventLocation[], int[] indices, double[] normalVector, double time) {
+                              double eventLocation[], int[] indices, double[] normalVector, double time,
+                              double remainingTime) {
                 updatePosition(position, preconditioning, momentum, time);
                 ReadableVector updatedMomentum = preconditioning.doCollision(indices, momentum);
 
@@ -389,8 +448,19 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
         None {
             @Override
             void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum,
-                              double eventLocation[], int[] indices, double[] normalVector, double time) {
+                              double eventLocation[], int[] indices, double[] normalVector, double time,
+                              double remainginTime) {
+
+                if (DEBUG) {
+                    System.out.println("time: " + time);
+                    System.out.print("start: ");
+                    Utils.printArray(position);
+                }
                 updatePosition(position, preconditioning, momentum, time);
+                if (DEBUG) {
+                    System.out.print("end: ");
+                    Utils.printArray(position);
+                }
             }
         };
 
@@ -402,7 +472,10 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
         }
 
         abstract void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum,
-                                   double eventLocation[], int[] indices, double[] normalVector, double time);
+                                   double eventLocation[], int[] indices, double[] normalVector, double time, double remainingTime);
+
+        private static final boolean BOUNCE = true;
+
     }
 
 }

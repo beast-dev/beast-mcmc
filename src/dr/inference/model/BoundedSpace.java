@@ -42,8 +42,8 @@ public interface BoundedSpace extends GeneralBoundsProvider {
 
     class Correlation implements BoundedSpace {
 
-        private static final boolean DEBUG = true;
-        private static final double TOL = 0;
+        private static final boolean DEBUG = false;
+        private static final double TOL = 1e-10;
         private final int dim;
 
         public Correlation(int dim) {
@@ -142,6 +142,18 @@ public interface BoundedSpace extends GeneralBoundsProvider {
         @Override
         public IntersectionDistances distancesToBoundary(double[] origin, double[] direction) {
 
+            if (!isWithinBounds(origin)) { //TODO: make this optional?
+                SymmetricMatrix C = compoundCorrelationSymmetricMatrix(origin, dim);
+                System.out.println(C);
+                try {
+                    System.out.println(C.determinant());
+                } catch (IllegalDimension illegalDimension) {
+                    illegalDimension.printStackTrace();
+                }
+
+                throw new RuntimeException("Starting position is outside of bounds");
+            }
+
 
             double values[] = robustTrajectoryEigenValues(origin, direction);
 
@@ -155,6 +167,9 @@ public interface BoundedSpace extends GeneralBoundsProvider {
                     minPositive = value;
                 }
             }
+
+            minPositive = -minPositive;
+            minNegative = -minNegative;
 
             if (DEBUG) {
                 SymmetricMatrix Y = compoundCorrelationSymmetricMatrix(origin, dim);
@@ -171,10 +186,10 @@ public interface BoundedSpace extends GeneralBoundsProvider {
                     for (int j = (i + 1); j < dim; j++) {
                         double y = Y.toComponents()[i][j];
                         double z = X.toComponents()[i][j];
-                        double valueS = y - z * minNegative;
-                        double valueT = y - z * minPositive;
+                        double valueS = y + z * minNegative;
+                        double valueT = y + z * minPositive;
                         if (Math.abs(valueS) > absMax) absMax = Math.abs(valueS);
-                        if (Math.abs(valueT) > absMax) absMax = Math.abs(valueT);
+//                        if (Math.abs(valueT) > absMax) absMax = Math.abs(valueT);
 
                         S.set(i, j, valueS);
                         S.set(j, i, valueS);
@@ -182,9 +197,11 @@ public interface BoundedSpace extends GeneralBoundsProvider {
                         T.set(j, i, valueT);
                     }
                 }
+                double detY;
                 try {
                     System.out.println("starting position: ");
-                    System.out.println("\tdet = " + Y.determinant());
+                    detY = Y.determinant();
+                    System.out.println("\tdet = " + detY);
                     System.out.println(Y);
                     System.out.println("direction:");
                     System.out.println(X);
@@ -197,14 +214,19 @@ public interface BoundedSpace extends GeneralBoundsProvider {
                     System.out.println(T);
                 } catch (IllegalDimension illegalDimension) {
                     illegalDimension.printStackTrace();
+                    throw new RuntimeException();
+                }
+
+                if (detY < -TOL || detY > 1) {
+                    throw new RuntimeException("invalid starting position");
                 }
 
                 if (absMax > 1.0) {
-                    throw new RuntimeException("Cannot exceed 1");
+                    throw new RuntimeException("Invalid ending position");
                 }
             }
 
-            return new IntersectionDistances(minPositive, minNegative);
+            return new IntersectionDistances(minNegative, minPositive);
         }
 
         @Override

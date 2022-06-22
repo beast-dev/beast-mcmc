@@ -15,11 +15,12 @@
 		<taxon id="D"/>
 	</taxa>
 
+<!--
 	<newick id="startingTree" usingHeights="true" usingDates="false">
 		((A:1.0,B:2.0):1.0,(C:1.0,D:2.0):2.0)
 	</newick>
 
-	<!-- Generate a tree model                                                   -->
+	&lt;!&ndash; Generate a tree model                                                   &ndash;&gt;
 	<treeModel id="treeModel">
 		<newick idref="startingTree"/>
 		<rootHeight>
@@ -33,11 +34,11 @@
 		</nodeHeights>
 	</treeModel>
 
-	<!-- One  newBirthDeathSerialSampling per test case-->
+	&lt;!&ndash; One  newBirthDeathSerialSampling per test case&ndash;&gt;
 
-	<!-- ########## -->
-	<!-- # CASE 1 # -->
-	<!-- ########## -->
+	&lt;!&ndash; ########## &ndash;&gt;
+	&lt;!&ndash; # CASE 1 # &ndash;&gt;
+	&lt;!&ndash; ########## &ndash;&gt;
 	<newBirthDeathSerialSampling id="bdss1" units="years" conditionOnSurvival="false">
 		<birthRate>
 			<parameter id="bdss1.birthRate" value="8.472" lower="0.0"/>
@@ -77,15 +78,15 @@
 					<speciationLikelihood idref="speciation1"/>
 				</report>
 			</actual>
-			<!-- computed in RevBayes -->
+			&lt;!&ndash; computed in RevBayes &ndash;&gt;
 			<expected>
 				-66.309702772061569931
 			</expected>
 	</assertEqual>
 
-	<!-- ########## -->
-	<!-- # CASE 2 # -->
-	<!-- ########## -->
+	&lt;!&ndash; ########## &ndash;&gt;
+	&lt;!&ndash; # CASE 2 # &ndash;&gt;
+	&lt;!&ndash; ########## &ndash;&gt;
 	<newBirthDeathSerialSampling id="bdss2" units="years" conditionOnSurvival="false">
 		<birthRate>
 			<parameter id="bdss2.birthRate" value="8.472" lower="0.0"/>
@@ -125,15 +126,15 @@
 				<speciationLikelihood idref="speciation2"/>
 			</report>
 		</actual>
-		<!-- computed in RevBayes -->
+		&lt;!&ndash; computed in RevBayes &ndash;&gt;
 		<expected>
 			-67.863138307858733356
 		</expected>
 	</assertEqual>
 
-	<!-- ########## -->
-	<!-- # CASE 3 # -->
-	<!-- ########## -->
+	&lt;!&ndash; ########## &ndash;&gt;
+	&lt;!&ndash; # CASE 3 # &ndash;&gt;
+	&lt;!&ndash; ########## &ndash;&gt;
 	<newBirthDeathSerialSampling id="bdss3" units="years" conditionOnSurvival="false">
 		<birthRate>
 			<parameter id="bdss3.birthRate" value="8.472" lower="0.0"/>
@@ -173,15 +174,15 @@
 				<speciationLikelihood idref="speciation3"/>
 			</report>
 		</actual>
-		<!-- computed in RevBayes -->
+		&lt;!&ndash; computed in RevBayes &ndash;&gt;
 		<expected>
 			-65.183089216683370637
 		</expected>
 	</assertEqual>
 
-	<!-- ########## -->
-	<!-- # CASE 4 # -->
-	<!-- ########## -->
+	&lt;!&ndash; ########## &ndash;&gt;
+	&lt;!&ndash; # CASE 4 # &ndash;&gt;
+	&lt;!&ndash; ########## &ndash;&gt;
 	<newBirthDeathSerialSampling id="bdss4" units="years" conditionOnSurvival="false">
 		<birthRate>
 			<parameter id="bdss4.birthRate" value="8.472" lower="0.0"/>
@@ -221,15 +222,15 @@
 				<speciationLikelihood idref="speciation4"/>
 			</report>
 		</actual>
-		<!-- computed in RevBayes -->
+		&lt;!&ndash; computed in RevBayes &ndash;&gt;
 		<expected>
 			-63.233328265141651059
 		</expected>
 	</assertEqual>
 
-	<!-- ########## -->
-	<!-- # CASE 5 # -->
-	<!-- ########## -->
+	&lt;!&ndash; ########## &ndash;&gt;
+	&lt;!&ndash; # CASE 5 # &ndash;&gt;
+	&lt;!&ndash; ########## &ndash;&gt;
 	<newBirthDeathSerialSampling id="bdss5" units="years" conditionOnSurvival="false">
 		<birthRate>
 			<parameter id="bdss5.birthRate" value="8.472" lower="0.0"/>
@@ -269,7 +270,75 @@
 				<speciationLikelihood idref="speciation5"/>
 			</report>
 		</actual>
-		<!-- computed in RevBayes -->
+		&lt;!&ndash; computed in RevBayes &ndash;&gt;
+		<expected>
+			-66.696843909761611258
+		</expected>
+	</assertEqual>
+-->
+
+
+	<!-- ########## -->
+	<!-- # CASE 6 # -->
+	<!-- ########## -->
+	<newick id="startingTree" usingHeights="true" usingDates="false">
+		((D:0.3525971197,C:0.3525971197):0.3030439728,(B:0.4709696264,A:0.4709696264):0.1846714661)
+	</newick>
+
+	<!-- Generate a tree model                                                   -->
+	<treeModel id="treeModel">
+		<newick idref="startingTree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+	</treeModel>
+
+
+	<newBirthDeathSerialSampling id="bdss1" units="years" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss1.birthRate" value="8.472" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss1.deathRate" value="4.321" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss1.samplingRate" value="0" lower="0.0"/>
+		</samplingRate>
+		<treatmentProbability>
+			<parameter id="bdss1.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<samplingProbabilityAtPresent>
+			<parameter id="bdss1.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
+		</samplingProbabilityAtPresent>
+		<origin>
+			<parameter id="bdss1.origin" value="5.123" lower="0.0"/>
+		</origin>
+	</newBirthDeathSerialSampling>
+
+	<speciationLikelihood id="speciation1" useNewLoop="true">
+		<model>
+			<birthDeathSerialSampling idref="bdss1"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+	<message>
+		check full model
+	</message>
+	<actual regex="lnL:\s(.*?)\n">
+		<report>
+			<speciationLikelihood idref="speciation1"/>
+		</report>
+	</actual>
 		<expected>
 			-66.696843909761611258
 		</expected>

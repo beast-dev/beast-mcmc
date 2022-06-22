@@ -25,9 +25,12 @@
 
 package dr.evomodel.speciation;
 
+import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.util.Author;
@@ -645,8 +648,63 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     // (lambda, mu, psi, rho)
     public double[] getAllGradient(Tree tree, NodeRef node) {
-        return null;
+        // return null;
 //        return getGradientLogDensityImpl((TreeModel) tree);
+        double[] gradient = new double[5];
+
+        BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals((TreeModel) tree);
+
+
+        precomputeGradientConstants(); // TODO hopefully get rid of this
+
+        double[] modelBreakPoints = getBreakPoints();
+        assert modelBreakPoints[modelBreakPoints.length - 1] == Double.POSITIVE_INFINITY;
+
+        int currentModelSegment = 0;
+
+        for (int i = 0; i < treeIntervals.getIntervalCount(); ++i) {
+
+            double intervalStart = treeIntervals.getIntervalTime(i);
+            final double intervalEnd = intervalStart + treeIntervals.getInterval(i);
+            final int nLineages = treeIntervals.getLineageCount(i);
+
+            while (intervalEnd > modelBreakPoints[currentModelSegment]) { // TODO Maybe it's >= ?
+
+                final double segmentIntervalEnd = modelBreakPoints[currentModelSegment];
+                processGradientModelSegmentBreakPoint(gradient, currentModelSegment, intervalStart, segmentIntervalEnd);
+                intervalStart = segmentIntervalEnd;
+                ++currentModelSegment;
+            }
+
+            // TODO Need to check for intervalStart == intervalEnd?
+            // TODO Need to check for intervalStart == intervalEnd == 0.0?
+
+            processGradientInterval(gradient, currentModelSegment, intervalStart, intervalEnd, nLineages);
+
+            // Interval ends with a coalescent or sampling event at time intervalEnd
+            if (treeIntervals.getIntervalType(i) == IntervalType.SAMPLE) {
+
+                processGradientSampling(gradient, currentModelSegment, intervalEnd);
+
+            } else if (treeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
+
+                processGradientCoalescence(gradient, currentModelSegment, intervalEnd);
+
+            } else {
+                throw new RuntimeException("Birth-death tree includes non birth/death/sampling event.");
+            }
+        }
+
+        // We've missed the first sample and need to add it back
+        // TODO May we missed multiple samples @ t == 0.0?
+        processGradientSampling(gradient, 0, treeIntervals.getStartTime()); // TODO for-loop for models with multiple segments?
+
+        // origin branch is a fake branch that doesn't exist in the tree, now compute its contribution
+        processGradientOrigin(gradient, currentModelSegment, treeIntervals.getTotalDuration());
+
+        logConditioningProbability(gradient);
+
+        return gradient;
     }
 
 

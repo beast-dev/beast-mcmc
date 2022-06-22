@@ -30,11 +30,11 @@ import dr.inference.model.Parameter;
 import static java.lang.Math.exp;
 import static java.lang.Math.log;
 
-public class CriticalBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplingModel {
+public class NewBirthDeathModel extends NewBirthDeathSerialSamplingModel {
 
     private int n_events;
 
-    public CriticalBirthDeathSerialSamplingModel(
+    public NewBirthDeathModel(
             String modelName,
             Parameter birthRate,
             Parameter deathRate,

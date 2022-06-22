@@ -5,8 +5,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.MultivariateTraitDebugUtilities;
-import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
-import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.math.matrixAlgebra.*;
 
 import java.util.Arrays;
@@ -24,7 +22,6 @@ public class BlombergKStatistic extends Statistic.Abstract implements ModelListe
     private Matrix Linv;
     private final int treeDim;
     private double expectedRatio;
-    private final ContinuousDiffusionIntegrator integrator;
     private final ContinuousDataLikelihoodDelegate delegate;
     private final double[] k;
 
@@ -37,7 +34,6 @@ public class BlombergKStatistic extends Statistic.Abstract implements ModelListe
         this.traitDim = traitLikelihood.getDataLikelihoodDelegate().getTraitDim();
         this.treeDim = tree.getTaxonCount();
         this.delegate = (ContinuousDataLikelihoodDelegate) traitLikelihood.getDataLikelihoodDelegate();
-        this.integrator = delegate.getIntegrator();
         this.k = new double[traitDim];
     }
 
@@ -56,7 +52,7 @@ public class BlombergKStatistic extends Statistic.Abstract implements ModelListe
     }
 
 
-    public double computeStatistics() {
+    public void computeStatistics() {
         if (needToUpdateTree) {
             double[][] treeStructure = MultivariateTraitDebugUtilities.getTreeVariance(tree,
                     traitLikelihood.getBranchRateModel(),
@@ -104,14 +100,8 @@ public class BlombergKStatistic extends Statistic.Abstract implements ModelListe
 
         double[] treeTraits = (double[]) treeTrait.getTrait(tree, null);
 
-        PrecisionType type = delegate.getDataModel().getPrecisionType();
 
-        double[] partial = new double[type.getPartialsDimension(traitDim)];
-
-        integrator.getPostOrderPartial(delegate.getActiveNodeIndex(tree.getRoot().getNumber()), partial);
-        double mean[] = new double[traitDim];
-        System.arraycopy(partial, type.getMeanOffset(traitDim), mean, 0, traitDim);
-
+        double[] mean = delegate.getPostOrderRootMean();
 
         double[] thisTrait = new double[treeDim];
 
@@ -135,8 +125,6 @@ public class BlombergKStatistic extends Statistic.Abstract implements ModelListe
 
             k[trait] = (mse0 / mse) / expectedRatio;
         }
-
-        return 0;
     }
 
     private double sumSquares(double[] x) {

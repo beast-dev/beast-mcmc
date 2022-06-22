@@ -1116,4 +1116,16 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 false,
                 likelihoodDelegate.allowSingular);
     }
+
+    public double[] getPostOrderRootMean() {
+        PrecisionType type = getDataModel().getPrecisionType();
+
+        double[] partial = new double[type.getPartialsDimension(dimProcess)];
+
+        getIntegrator().getPostOrderPartial(getActiveNodeIndex(tree.getRoot().getNumber()), partial);
+        double mean[] = new double[dimProcess];
+        System.arraycopy(partial, type.getMeanOffset(dimProcess), mean, 0, dimProcess);
+
+        return mean;
+    }
 }

@@ -408,6 +408,10 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         return Math.exp(-C1 * t) * (1 - C2) + (1 + C2);
     }
 
+    private double g2(double t, double G1) {
+        return C1 * (1 - 2 * (1 + C2) / G1);
+    }
+
     private double g2(double t) {
         double G1 = g1(t);
         return C1 * (1 - 2 * (1 + C2) / G1);
@@ -601,11 +605,11 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double[] partialP0_all = temp2; // new double[4];
 
         double lambda = lambda();
-        double G2 = g2(t);
         double mu = mu();
         double psi = psi();
 //        double[] constants = getConstants();
         double G1 = g1(t);
+        double G2 = g2(t,G1);
 
 //        double expC1t = Math.exp(-C1 * t); // TODO Notice this is (1) shared in many functions and (2) slow to compute
 
@@ -620,7 +624,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
         return partialP0_all;
     }
-    
+
     @Override
     public void precomputeGradientConstants() {
         precomputeConstants();

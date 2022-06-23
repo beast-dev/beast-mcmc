@@ -78,7 +78,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     private double[] partialQ;
     private boolean partialQKnown;
 
-    private double[][] temp1;
+    private double[] temp1;
     private double[] temp2;
     private double[] temp3;
 
@@ -148,7 +148,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         this.partialQ = new double[4];
         this.partialQKnown = false;
 
-        this.temp1 = new double[4][2];
+        this.temp1 = new double[8];
         this.temp2 = new double[4];
         this.temp3 = new double[4];
     }
@@ -425,17 +425,17 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     // Gradient w.r.t. Rho
-    private void partialC1C2partialRho(double[] partialC1C2) {
+    private void partialC1C2partialRho(int idx1, int idx2) {
         double lambda = lambda();
 
 //        double[] partialC1C2 = new double[2];
-        partialC1C2[0] = 0;
-        partialC1C2[1] = 2 * lambda / C1;
+        this.temp1[idx1] = 0;
+        this.temp1[idx2] = 2 * lambda / C1;
 
 //        return partialC1C2;
     }
 
-    private void partialC1C2partialMu(double[] partialC1C2) {
+    private void partialC1C2partialMu(int idx1, int idx2) {
         // c1 == constants[0], c2 == constants[1]
 //        double[] constants = getConstants();
         double lambda = lambda();
@@ -444,13 +444,13 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double rho = rho();
 
 //        double[] partialC1C2 = new double[2];
-        partialC1C2[0] = (-lambda + mu + psi) / C1;
-        partialC1C2[1] = (C1 + (lambda - mu - 2 * lambda * rho - psi) * partialC1C2[0]) / (C1 * C1);
+        this.temp1[idx1] = (-lambda + mu + psi) / C1;
+        this.temp1[idx2] = (C1 + (lambda - mu - 2 * lambda * rho - psi) * this.temp1[idx1]) / (C1 * C1);
 
 //        return partialC1C2;
     }
 
-    private void partialC1C2partialLambda(double[] partialC1C2) {
+    private void partialC1C2partialLambda(int idx1, int idx2) {
         // c1 == constants[0], c2 == constants[1]
 //        double[] constants = getConstants();
         double lambda = lambda();
@@ -459,13 +459,13 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double rho = rho();
 
 //        double[] partialC1C2 = new double[2];
-        partialC1C2[0] = (lambda - mu + psi) / C1;
-        partialC1C2[1] = ((2*rho - 1)*C1 - (-lambda + mu + 2 * lambda * rho + psi) * partialC1C2[0]) / (C1 * C1);
+        this.temp1[idx1] = (lambda - mu + psi) / C1;
+        this.temp1[idx2] = ((2*rho - 1)*C1 - (-lambda + mu + 2 * lambda * rho + psi) * this.temp1[idx1]) / (C1 * C1);
 
 //        return partialC1C2;
     }
 
-    private void partialC1C2partialPsi(double[] partialC1C2) {
+    private void partialC1C2partialPsi(int idx1, int idx2) {
         // c1 == constants[0], c2 == constants[1]
 //        double[] constants = getConstants();
         double lambda = lambda();
@@ -474,8 +474,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double rho = rho();
 
 //        double[] partialC1C2 = new double[2];
-        partialC1C2[0] = (lambda + mu + psi) / C1;
-        partialC1C2[1] = (C1 + (lambda - mu - 2 * lambda * rho - psi) * partialC1C2[0]) / (C1 * C1);
+        this.temp1[idx1] = (lambda + mu + psi) / C1;
+        this.temp1[idx2] = (C1 + (lambda - mu - 2 * lambda * rho - psi) * this.temp1[idx1]) / (C1 * C1);
 
 //        return partialC1C2;
     }
@@ -538,16 +538,16 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     // gradients for all
     // (lambda, mu, psi, rho)
-    public double[][] partialC1C2partialAll(double[][] partialC1C2_all) {
-        partialC1C2partialLambda(partialC1C2_all[0]);
-        partialC1C2partialMu(partialC1C2_all[1]);
-        partialC1C2partialPsi(partialC1C2_all[2]);
-        partialC1C2partialRho(partialC1C2_all[3]);
+    public void partialC1C2partialAll() {
+        partialC1C2partialLambda(0, 1);
+        partialC1C2partialMu(2, 3);
+        partialC1C2partialPsi(4, 5);
+        partialC1C2partialRho(6, 7);
 //        partialC1C2_all[0] = partialC1C2partialLambda();
 //        partialC1C2_all[1] = partialC1C2partialMu();
 //        partialC1C2_all[2] = partialC1C2partialPsi();
 //        partialC1C2_all[3] = partialC1C2partialRho();
-        return partialC1C2_all;
+//        return this.temp1;
     }
 
     // (lambda, mu, psi, rho)
@@ -565,31 +565,33 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double v = (1 + C2) / expC1t - expC1t * (1 - C2) - 2 * C2;
         double v1 = (1 + C2) /expC1t * (1 + C2) - expC1t * (1 - C2) * (1 - C2);
 
-        double[][] partialC1C2_all = partialC1C2partialAll(temp1);
+        partialC1C2partialAll();
+
+        double[] partialC1C2_all = this.temp1;
 
 //        double[] partialQ_all = new double[4];
         Arrays.fill(partialQ_all, 0.0);
         for (int i = 0; i < 4; ++i) {
-            partialQ_all[i] += t * partialC1C2_all[i][0] * v1;
-            partialQ_all[i] += 2 * partialC1C2_all[i][1] * v;
+            partialQ_all[i] += t * partialC1C2_all[i*2+0] * v1;
+            partialQ_all[i] += 2 * partialC1C2_all[i*2+1] * v;
         }
         return partialQ_all;
     }
 
     // (lambda, mu, psi, rho)
-    public double[] partialG2partialAll(double t, double expC1t) {
+    public double[] partialG2partialAll(double t, double expC1t, double G1) {
 
 //        double expC1t = Math.exp(-C1 * t);
+        partialC1C2partialAll();
 
-        double[][] partialC1C2_all = partialC1C2partialAll(temp1);
-
+        double[] partialC1C2_all = this.temp1;
         double[] partialG2_all = temp2; // new double[4];
         for (int i = 0; i < 3; ++i) {
-            double partialC1 = partialC1C2_all[i][0];
-            double partialC2 = partialC1C2_all[i][1];
-            double partialG2 = g1(t) * ((partialC1 * (1 + C2) + partialC2 * C1)) -
+            double partialC1 = partialC1C2_all[i*2+0];
+            double partialC2 = partialC1C2_all[i*2+1];
+            double partialG2 = G1 * ((partialC1 * (1 + C2) + partialC2 * C1)) -
                     (partialC1 * t * expC1t * (C2 - 1) + partialC2 * (1 - expC1t)) * C1 * (1 + C2);
-            double G1 = g1(t);
+            // double G1 = g1(t);
             partialG2 = -2 * partialG2 / (G1 * G1);
             partialG2 += partialC1;
             partialG2_all[i] = partialG2;
@@ -600,7 +602,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     // (lambda, mu, psi, rho)
     public double[] partialP0partialAll(double t, double expC1t) {
-        double[] partialG2_all = partialG2partialAll(t, expC1t);
+        double G1 = g1(t);
+        double[] partialG2_all = partialG2partialAll(t, expC1t, G1);
 
         double[] partialP0_all = temp2; // new double[4];
 
@@ -608,7 +611,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double mu = mu();
         double psi = psi();
 //        double[] constants = getConstants();
-        double G1 = g1(t);
+        // double G1 = g1(t);
         double G2 = g2(t,G1);
 
 //        double expC1t = Math.exp(-C1 * t); // TODO Notice this is (1) shared in many functions and (2) slow to compute
@@ -716,9 +719,11 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double origin = originTime.getValue(0);
         double[] partialQ_all_origin = partialQpartialAll(temp2, origin);
         double[] partialQ_all_root = partialQpartialAll(temp3, totalDuration);
+        double Q_totalDuration = Q(totalDuration);
+        double Q_origin = Q(origin);
         for (int i = 0; i < 4; ++i) {
             // partialLL_all[i] = 1 / (1 - p0) * partialP0_all_origin[i];
-            gradient[i] += partialQ_all_root[i]/Q(totalDuration) - partialQ_all_origin[i] / Q(origin);
+            gradient[i] += partialQ_all_root[i]/Q_totalDuration - partialQ_all_origin[i] / Q_origin;
         }
 
     }

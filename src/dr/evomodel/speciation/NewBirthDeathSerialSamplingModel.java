@@ -405,32 +405,24 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     // Material from `Gradient` class
 
     private double g1(double t) {
-//        double[] constants = getConstants();
-        double C1 = getC1();
-        double C2 = getC2();
-        double G1 = Math.exp(-C1 * t) * (1 - C2) + (1 + C2);
-        return G1;
+        return Math.exp(-C1 * t) * (1 - C2) + (1 + C2);
     }
 
     private double g2(double t) {
-//        double[] constants = getConstants();
-        double C1 = getC1();
-        double C2 = getC2();
         double G1 = g1(t);
-        double G2 = C1 * (1 - 2 * (1 + C2) / G1);
-        return G2;
+        return C1 * (1 - 2 * (1 + C2) / G1);
     }
 
+
     private double Q(double t){
-        return 4*(1/Math.exp(logq(t)));
+        // TODO why the factor of 4 and inversion here?
+        double expC1t = Math.exp(C1 * t);
+        return (2.0 * (1.0 - Math.pow(C2,2.0)) + (1.0/expC1t) * Math.pow((1.0 - C2),2.0) + expC1t * Math.pow(1.0 + C2,2.0));
     }
 
     // Gradient w.r.t. Rho
     private void partialC1C2partialRho(double[] partialC1C2) {
-        // c1 == constants[0], c2 == constants[1]
-//        double[] constants = getConstants();
         double lambda = lambda();
-        double C1 = getC1();
 
 //        double[] partialC1C2 = new double[2];
         partialC1C2[0] = 0;
@@ -446,7 +438,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double mu = mu();
         double psi = psi();
         double rho = rho();
-        double C1 = getC1();
 
 //        double[] partialC1C2 = new double[2];
         partialC1C2[0] = (-lambda + mu + psi) / C1;
@@ -462,7 +453,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double mu = mu();
         double psi = psi();
         double rho = rho();
-        double C1 = getC1();
 
 //        double[] partialC1C2 = new double[2];
         partialC1C2[0] = (lambda - mu + psi) / C1;
@@ -478,7 +468,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double mu = mu();
         double psi = psi();
         double rho = rho();
-        double C1 = getC1();
 
 //        double[] partialC1C2 = new double[2];
         partialC1C2[0] = (lambda + mu + psi) / C1;
@@ -571,8 +560,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     public double[] partialQpartialAll(double[] partialQ_all, double t) {
 //        double[] constants = getConstants();
-        double C1 = getC1();
-        double C2 = getC2();
 
         double expC1t = Math.exp(-C1 * t);
 
@@ -593,9 +580,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     // (lambda, mu, psi, rho)
     public double[] partialG2partialAll(double t, double expC1t) {
-//        double[] constants = getConstants();
-        double C1 = getC1();
-        double C2 = getC2();
 
 //        double expC1t = Math.exp(-C1 * t);
 
@@ -627,8 +611,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double mu = mu();
         double psi = psi();
 //        double[] constants = getConstants();
-        double C1 = getC1();
-        double C2 = getC2();
         double G1 = g1(t);
 
 //        double expC1t = Math.exp(-C1 * t); // TODO Notice this is (1) shared in many functions and (2) slow to compute
@@ -648,7 +630,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     // (lambda, mu, psi, rho)
     public double[] getAllGradient(Tree tree, NodeRef node) {
-        // return null;
 //        return getGradientLogDensityImpl((TreeModel) tree);
         double[] gradient = new double[5];
 

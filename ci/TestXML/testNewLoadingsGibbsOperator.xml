@@ -392,6 +392,20 @@
         <actual regex="Loadings mean:\s+(.*)\n">
             <cachedReport idref="lo"/>
             <cachedReport idref="clo"/>
+        </actual>
+        <expected>
+            -0.3721665664840462 0.48001788993686695 -0.34886569662988637 0.2915078879991332 -0.10091700602930198
+            -0.31415199927621096 -2.3884331810214676 1.4849101564580578 -1.7038907684395337 -1.6692350718773161
+            -0.09114521475759652 1.0644914784924318 -1.4629205281009046 -0.10761097309593033 -0.09163219006876919
+            -0.10718108191461742 -0.49226000993882457 -0.4356048068181444
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-1" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check unconstrained loadings mean (multithreaded)
+        </message>
+        <actual regex="Loadings mean:\s+(.*)\n">
             <cachedReport idref="mlo"/>
         </actual>
         <expected>
@@ -444,6 +458,20 @@
         <actual regex="Loadings mean:\s+(.*)\n">
             <cachedReport idref="tlo"/>
             <cachedReport idref="ctlo"/>
+        </actual>
+        <expected>
+            -1.401754437093048 0.46714122549955267 -0.34886569662988637 0.2915078879991332 -0.10091700602930198
+            -0.31415199927621096 0.0 1.4871332789573564 -1.7038907684395337 -1.6692350718773161 -0.09114521475759652
+            1.0644914784924318 0.0 0.0 -0.09163219006876919 -0.10718108191461742 -0.49226000993882457
+            -0.4356048068181444
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-1" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check upper triangular loadings mean (multithreaded)
+        </message>
+        <actual regex="Loadings mean:\s+(.*)\n">
             <cachedReport idref="mtlo"/>
         </actual>
         <expected>
@@ -588,6 +616,20 @@
         <actual regex="Loadings mean:\s+(.*)\n">
             <cachedReport idref="lo2"/>
             <cachedReport idref="clo2"/>
+        </actual>
+        <expected>
+            -0.5624212060691973 0.6686957665052548 -0.12883363489801392 -0.028483503802251994 -0.20245004154707416
+            0.5727800946633681 -0.1177869727015475 -0.03557128301763026 -0.3402971236017539 0.30078836060143443
+            -0.020476521372923114 0.134604155411238 -0.03372109032875503 -0.16741994314436884 -0.032031678146118236
+            0.34725416185170455 0.049927738575763006 -0.07642808814316454
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-1" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check unconstrained loadings mean (multithreaded)
+        </message>
+        <actual regex="Loadings mean:\s+(.*)\n">
             <cachedReport idref="mlo2"/>
         </actual>
         <expected>
@@ -636,6 +678,17 @@
         <actual regex="Loadings mean:\s+(.*)\n">
             <cachedReport idref="tlo2"/>
             <cachedReport idref="ctlo2"/>
+        </actual>
+        <expected>
+            -0.47980541485547296 0.6422210311912988 -0.12883363489801392 -0.028483503802251994 -0.20245004154707416 0.5727800946633681 0.0 -0.02101776994119088 -0.3402971236017539 0.30078836060143443 -0.020476521372923114 0.134604155411238 0.0 0.0 -0.032031678146118236 0.34725416185170455 0.049927738575763006 -0.07642808814316454
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check upper triangular loadings mean (multithreaded)
+        </message>
+        <actual regex="Loadings mean:\s+(.*)\n">
             <cachedReport idref="mtlo2"/>
         </actual>
         <expected>

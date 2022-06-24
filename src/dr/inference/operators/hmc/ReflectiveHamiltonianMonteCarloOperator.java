@@ -69,6 +69,11 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
 
     @Override
     protected LeapFrogEngine constructLeapFrogEngine(Transform transform) {
+        if (parameterBound == null) {
+            return null; //will get called again
+        }
+
+
         if (transform != null) {
             throw new RuntimeException("not yet implemented");
         }
@@ -156,8 +161,8 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
             super(parameter, instabilityHandler, preconditioning, mask);
             this.space = space;
             ArrayList<Integer> inds = new ArrayList<>();
-            for (int i = 0; i < mask.length; i++) {
-                if (mask[i] == 1) {
+            for (int i = 0; i < parameter.getDimension(); i++) {
+                if (mask == null || mask[i] == 1) {
                     inds.add(i);
                 }
             }

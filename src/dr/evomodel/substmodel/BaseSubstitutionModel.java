@@ -279,10 +279,14 @@ public abstract class BaseSubstitutionModel extends AbstractModel
 
     protected double setupMatrix() {
         setupRelativeRates(relativeRates);
-        double[] pi = freqModel.getFrequencies();
+        double[] pi = getPi();
         setupQMatrix(relativeRates, pi, q);
         makeValid(q, stateCount);
         return getNormalizationValue(q, pi);
+    }
+
+    protected double[] getPi() {
+        return freqModel.getFrequencies();
     }
 
     public void getInfinitesimalMatrix(double[] out) {

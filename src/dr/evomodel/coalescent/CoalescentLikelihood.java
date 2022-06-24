@@ -221,6 +221,11 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 		return logL;
 	}
 
+
+	public DemographicModel getDemoModel() {
+		return demographicModel;
+	}
+
 	// **************************************************************
 	// CoalescentIntervalProvider IMPLEMENTATION
 	// **************************************************************

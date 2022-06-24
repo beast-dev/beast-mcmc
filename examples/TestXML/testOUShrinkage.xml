@@ -1,0 +1,392 @@
+<?xml version="1.0" ?>
+<beast>
+
+<!-- <newick id="startingTree">
+	((C:5.0,(A:1.0,B:1.0):4.0):3.0,D:8.0);
+</newick> -->
+<!-- ntax=4 -->
+	<taxa id="taxa">
+		<taxon id="A">
+			<attr name="X">10 8.5</attr>
+		</taxon>
+		<taxon id="B">
+			<attr name="X">9.5 7.0</attr>
+		</taxon>
+		<taxon id="C">
+			<attr name="X">5 5.5</attr>
+		</taxon>
+		<taxon id="D">
+			<attr name="X">6 5</attr>
+		</taxon>
+	</taxa>
+
+<!-- ntax=4 nchar=8000-->
+
+	<!-- <patterns id="patterns" from="1">
+		<alignment idref="alignment"/>
+	</patterns> -->
+
+<newick id="startingTree">
+	((C:5.0,(A:1.0,B:1.0):4.0):3.0,D:8.0);
+</newick>
+
+<!-- A prior assumption that the population size has remained constant       -->
+	<!-- throughout the time spanned by the genealogy.                           -->
+	   <!-- <constantSize id="constant" units="years">
+        <populationSize>
+            <parameter id="constant.popSize" value="380.0" lower="0.0"/>
+        </populationSize>
+    </constantSize> -->
+
+	<treeModel id="treeModel">
+		<newick idref="startingTree"/>
+		<rootHeight fixHeights="true">
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+	</treeModel>
+
+<multivariateDiffusionModel id="X.diffusionModel">
+        <precisionMatrix>
+            <cachedMatrixInverse id="X.precision.matrix">
+                <compoundSymmetricMatrix id="X.variance.matrix" asCorrelation="false" isCholesky="false">
+                    <diagonal>
+                        <parameter id="X.variance.diagonal" value="1 1" lower="0 0"/>
+                    </diagonal>
+                    <offDiagonal>
+                        <parameter id="X.variance.offDiagonal" value="0"/>
+                    </offDiagonal>
+                </compoundSymmetricMatrix>
+            </cachedMatrixInverse>
+        </precisionMatrix>
+	</multivariateDiffusionModel>
+
+	<!-- <parameter id="trait1.opt.branch" value="1E0"/> -->
+	<!-- <parameter id="trait2.opt.branch" value="1E0"/> -->
+
+	<diagonalMatrix id="X.attenuation.matrix">
+		<compoundParameter id="X.attenuation.values">
+			<parameter id="X.attenuation.values.1" value="1" lower="0"/>
+			<parameter id="X.attenuation.values.2" value="1" lower="0"/>
+		</compoundParameter>
+	</diagonalMatrix>
+	<maskedParameter id="X.attenuation.values.masked">
+		<parameter idref="X.attenuation.values"/>
+		<mask>
+			<parameter value="1.0 1.0"/>
+		</mask>
+	</maskedParameter>
+
+    <traitDataLikelihood id="X.traitLikelihood" traitName="X"
+        useTreeLength="false" scaleByTime="false"
+        forceFullPrecision="true" allowSingular="true"
+        reportAsMultivariate="true" integrateInternalTraits="true">
+		<multivariateDiffusionModel idref="X.diffusionModel"/>
+		<transformedTreeModel>
+		    <treeModel idref="treeModel"/>
+		    <parameter id="X.lambda" value="1.0" lower="0.0" upper="1.0"/>
+		</transformedTreeModel>
+		<traitParameter>
+			<parameter id="leaf.X"/>
+		</traitParameter>
+		<conjugateRootPrior>
+            <meanParameter>
+                <compoundParameter id="X.meanParameter">
+                    <parameter id="X.opt.1" value="0.0"/>
+    				<parameter id="X.opt.2" value="0.0"/>
+                </compoundParameter>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="Infinity"/> <!-- 1 is probably a good number -->
+            </priorSampleSize>
+		</conjugateRootPrior>
+		<optimalTraits id="X.opt">
+			<arbitraryBranchRates id="opt.traits1" centerAtOne="false">
+				<treeModel idref="treeModel"/>
+					<rates>
+            			<parameter id="trait1.opt.branch" value="1 2 3 4 5 6"/>
+        			</rates>
+			</arbitraryBranchRates>
+			<arbitraryBranchRates id="opt.traits2" centerAtOne="false">
+				<treeModel idref="treeModel"/>
+					<rates>
+            			<parameter id="trait2.opt.branch" value="7 8 9 10 11 12"/>
+        			</rates>
+			</arbitraryBranchRates>
+		</optimalTraits>
+		<strengthOfSelectionMatrix>
+			<matrixParameter idref="X.attenuation.matrix"/>
+		</strengthOfSelectionMatrix>
+	</traitDataLikelihood>
+
+	<bayesianBridgeDistribution id="bbDistribution1">
+		<slabWidth>
+			<parameter id="slabWidth1" value="2.0" />
+		</slabWidth>
+	 	<globalScale>
+	 		<parameter id="globalScale1" value="1" lower="0" />
+	 	</globalScale>
+ 		<exponent>
+ 			<parameter id="exponent1" value="0.25" />
+ 		</exponent>
+		<localScale>
+				<parameter id="localScale1" value="10" lower="0.0" dimension="6" />
+		</localScale>
+	</bayesianBridgeDistribution>
+
+	<bayesianBridgeDistribution id="bbDistribution2">
+		<slabWidth>
+			<parameter id="slabWidth2" value="2.0" />
+		</slabWidth>
+	 	<globalScale>
+	 		<parameter id="globalScale2" value="1" lower="0" />
+	 	</globalScale>
+ 		<exponent>
+ 			<parameter id="exponent2" value="0.25" />
+ 		</exponent>
+		<localScale>
+				<parameter id="localScale2" value="10" lower="0.0" dimension="6" />
+		</localScale>
+	</bayesianBridgeDistribution>
+
+<!-- todo: check in case where we need jacobian correction from operateOnIncrements -->
+	<autoCorrelatedRatesPrior id="optimalTrait.1.Prior" scaling="none" operateOnIncrements="true">
+		<arbitraryBranchRates idref="opt.traits1"/>
+ 		<bayesianBridgeDistribution idref="bbDistribution1" />
+ 	</autoCorrelatedRatesPrior>
+
+	<autoCorrelatedRatesPrior id="optimalTrait.2.Prior" scaling="none" operateOnIncrements="true">
+		<arbitraryBranchRates idref="opt.traits2"/>
+ 		<bayesianBridgeDistribution idref="bbDistribution2" />
+ 	</autoCorrelatedRatesPrior>
+
+	<autoCorrelatedRatesPrior id="ratesPrior.optimalTrait.1" scaling="none" operateOnIncrements="false">
+		<arbitraryBranchRates idref="opt.traits1"/>
+ 		<bayesianBridgeDistribution idref="bbDistribution1" />
+ 	</autoCorrelatedRatesPrior>
+
+	<autoCorrelatedRatesPrior id="ratesPrior.optimalTrait.2" scaling="none" operateOnIncrements="false">
+		<arbitraryBranchRates idref="opt.traits2"/>
+ 		<bayesianBridgeDistribution idref="bbDistribution2" />
+ 	</autoCorrelatedRatesPrior>
+
+
+
+	<gammaPrior id="globalScalePrior1" shape="1" scale="2">
+ 		<parameter idref="globalScale1" />
+ 	</gammaPrior>
+
+	<gammaPrior id="globalScalePrior2" shape="1" scale="2">
+ 		<parameter idref="globalScale2" />
+ 	</gammaPrior>
+
+	<optimaLikelihoodGradient id="optimaGradient">
+		<traitDataLikelihood idref="X.traitLikelihood"/>
+		<arbitraryBranchRates idref="opt.traits1"/>
+		<arbitraryBranchRates idref="opt.traits2"/>
+	</optimaLikelihoodGradient>
+
+	<assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check peeling gradient of trait data log-likelihood w.r.t. rates
+        </message>
+        <actual regex="peeling\s*:(.*?)\n">
+            <optimaLikelihoodGradient idref="optimaGradient"/>
+        </actual>
+        <expected>
+            7.882167812934418, 7.871229154446798, 6.215936261296775, 4.001341400521866, 8.048243164757745, 0.1934907944374935, -3.038450082123884, -0.30351455705260055, -3.4209246074626343, -9.989939496086008, -2.12783701786209, -0.0573088801539914
+        </expected>
+    </assertEqual>
+
+	<report>
+		<optimaLikelihoodGradient idref="optimaGradient"/>
+	</report>
+
+	<gradientWrtIncrements id="incrementGradient1">
+		<autoCorrelatedRatesPrior idref="optimalTrait.1.Prior"/>
+	</gradientWrtIncrements>
+
+	<gradientWrtIncrements id="incrementGradient2">
+		<autoCorrelatedRatesPrior idref="optimalTrait.2.Prior"/>
+	</gradientWrtIncrements>
+
+	<gradientWrtIncrements id="rateGradient1">
+		<autoCorrelatedRatesPrior idref="ratesPrior.optimalTrait.1"/>
+	</gradientWrtIncrements>
+
+	<gradientWrtIncrements id="rateGradient2">
+		<autoCorrelatedRatesPrior idref="ratesPrior.optimalTrait.2"/>
+	</gradientWrtIncrements>
+
+<!-- gradient of prior wrt rates -->
+	<compoundGradient id="ratePrior">
+		<autoCorrelatedRatesPrior idref="ratesPrior.optimalTrait.1"/>
+		<autoCorrelatedRatesPrior idref="ratesPrior.optimalTrait.2"/>
+	</compoundGradient>
+
+
+<!-- gradient of prior wrt rates (construct without logJacobian correction via operateOnIncrements)-->
+	<!-- <compoundGradient id="ratePrior">
+		<gradientWrtIncrements idref="rateGradient1"/>
+		<gradientWrtIncrements idref="rateGradient2"/>
+	</compoundGradient> -->
+
+<!-- gradient of prior wrt increments-->
+	<compoundGradient id="incrementPrior">
+		<gradientWrtIncrements idref="incrementGradient1"/>
+		<gradientWrtIncrements idref="incrementGradient2"/>
+	</compoundGradient>
+
+<!-- gradient of likelihood wrt increments-->
+	<branchRateGradientWrtIncrements id="branchRateGradientWrtIncrements">
+		<compoundGradient idref="incrementPrior"/>
+		<optimaLikelihoodGradient idref="optimaGradient"/>
+	</branchRateGradientWrtIncrements>
+
+	<assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check analytic gradient of increment prior w.r.t. rates
+        </message>
+        <actual regex="analytic\s*:(.*?)\n">
+            <compoundGradient idref="ratePrior"/>
+        </actual>
+        <expected>
+		1.2999999999999998, 0.7799999999999999, 0.5199999999999999, -1.0399999999999998, -1.04, -3.119999999999999, 1.2999999999999998, 0.7799999999999999, 0.5199999999999999, -2.5999999999999996, -1.04, -4.68
+        </expected>
+    </assertEqual>
+
+	<report>
+		<compoundGradient idref="ratePrior"/>
+	</report>
+
+
+	<assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check analytic gradient of increment prior w.r.t. increments
+        </message>
+        <actual regex="analytic\s*:(.*?)\n">
+            <compoundGradient idref="incrementPrior"/>
+        </actual>
+        <expected>
+		1.2999999999999998, 0.7799999999999999, 0.5199999999999999, -1.0399999999999998, 0.25999999999999995, -1.5599999999999998, 1.2999999999999998, 0.7799999999999999, 0.5199999999999999, -2.5999999999999996, 0.25999999999999995, -3.1199999999999997
+        </expected>
+    </assertEqual>
+
+	<report>
+		<compoundGradient idref="incrementPrior"/>
+	</report>
+
+	<assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check analytic gradient of trait likelihood w.r.t. increments
+        </message>
+        <actual regex="analytic\s*:(.*?)\n">
+            <branchRateGradientWrtIncrements idref="branchRateGradientWrtIncrements"/>
+        </actual>
+        <expected>
+            7.882167812934418, 7.871229154446798, 6.215936261296775, 4.001341400521866, 22.13540858050132, 30.211067187873233, -3.038450082123884, -0.30351455705260055, -3.4209246074626343, -9.989939496086008, -5.852276182377325, -8.948035144655199
+        </expected>
+    </assertEqual>
+
+	<report>
+		<branchRateGradientWrtIncrements idref="branchRateGradientWrtIncrements"/>
+	</report>
+
+
+	<!-- <report>
+		<compoundGradient idref="ratePrior"/>
+	</report> -->
+
+	<!-- <report>
+		<traitDataLikelihood idref="X.traitLikelihood"/>
+	</report> -->
+
+	<!-- <report>
+        <diffusionGradient idref="X.traitLikelihood.gradient"/>
+    </report> -->
+
+    <!-- <compoundGradient id="X.prior.gradient">
+        <gradient>
+            <halfTPrior idref="X.variance.diagonal.prior"/>
+            <parameter idref="X.variance.diagonal"/>
+        </gradient>
+        <gradient>
+            <LKJCorrelationPrior idref="X.variance.offDiagonal.prior"/>
+        </gradient>
+		<gradient>
+			<distributionLikelihood idref="X.attenuation.values.prior"/>
+			<parameter idref="X.attenuation.values"/>
+		</gradient>
+        <gradient>
+            <distributionLikelihood idref="X.meanParameter.prior"/>
+            <parameter idref="X.meanParameter"/>
+        </gradient>
+    </compoundGradient>
+
+    <jointGradient id="X.posterior.gradient">
+        <diffusionGradient idref="X.traitLikelihood.gradient"/>
+        <compoundGradient idref="X.prior.gradient"/>
+    </jointGradient> -->
+
+	<operators id="operators">
+
+	<hamiltonianMonteCarloOperator weight="20" nSteps="5" stepSize="1E-3" mode="vanilla"
+        	drawVariance="1.0" autoOptimize="true" gradientCheckCount="100" gradientCheckTolerance="1E-1">
+            <jointGradient>
+            	<branchRateGradientWrtIncrements idref="branchRateGradientWrtIncrements"/>
+				<compoundGradient idref="incrementPrior"/>
+            </jointGradient>
+ 		</hamiltonianMonteCarloOperator>
+	</operators>
+
+	<mcmc id="mcmc" chainLength="100" autoOptimize="true">
+		<posterior id="posterior">
+			<prior id="prior">
+                <!-- <LKJCorrelationPrior idref="X.variance.offDiagonal.prior"/>
+				<halfNormalPrior idref="X.attenuation.values.prior"/>
+                <halfTPrior idref="X.variance.diagonal.prior"/> -->
+
+				<gammaPrior idref="globalScalePrior1"/>
+				<gammaPrior idref="globalScalePrior2"/>
+				<autoCorrelatedRatesPrior idref="optimalTrait.1.Prior"/>
+				<autoCorrelatedRatesPrior idref="optimalTrait.2.Prior"/>
+
+				<!-- <normalPrior idref="X.meanParameter.prior"/> -->
+				<!--prior terms for shrinkage-clock -->
+				<!-- <gammaPrior idref="globalScalePrior"/>
+				<autoCorrelatedRatesPrior idref="substBranchRatesPrior"/> -->
+			</prior>
+			<likelihood id="likelihood">
+                <traitDataLikelihood idref="X.traitLikelihood"/>
+			</likelihood>
+		</posterior>
+
+		<operators idref="operators"/>
+		<log id="screenLog" logEvery="10">
+			<column label="Posterior" dp="4" width="12">
+				<posterior idref="posterior"/>
+			</column>
+			<column label="Prior" dp="4" width="12">
+				<prior idref="prior"/>
+			</column>
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood"/>
+			</column>
+			<column label="Root Height" sf="6" width="12">
+				<parameter idref="treeModel.rootHeight"/>
+			</column>
+		</log>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc"/>
+		</property>
+	</report>
+
+</beast>

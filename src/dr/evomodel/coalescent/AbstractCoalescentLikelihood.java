@@ -52,7 +52,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
         }
     }
 
-    AbstractCoalescentLikelihood(String name) {
+    protected AbstractCoalescentLikelihood(String name) {
         super(name);
     }
 
@@ -130,8 +130,8 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     protected abstract double calculateLogLikelihood();
 
 
-    protected final IntervalList getIntervalList() {
-        return intervalList;
+    public IntervalList getIntervalList() {
+            return intervalList;
     }
 
     public String toString() {

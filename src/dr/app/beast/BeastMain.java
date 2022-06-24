@@ -1,7 +1,7 @@
 /*
  * BeastMain.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -195,6 +195,17 @@ public class BeastMain {
 
                     parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML, version);
 
+                    // DM: Hot chains also need to add plugin parsers
+                    for (String pluginName : PluginLoader.getAvailablePlugins()) {
+                        Plugin plugin = PluginLoader.loadPlugin(pluginName);
+                        if (plugin != null) {
+                            Set<XMLObjectParser> parserSet = plugin.getParsers();
+                            for (XMLObjectParser pluginParser : parserSet) {
+                                parser.addXMLObjectParser(pluginParser);
+                            }
+                        }
+                    }
+
                     chains[i] = (MCMC) parser.parse(fileReader, MCMC.class);
                     if (chains[i] == null) {
                         throw new dr.xml.XMLParseException("BEAST XML file is missing an MCMC element");
@@ -278,6 +289,12 @@ public class BeastMain {
             ex.printStackTrace(System.err);
             System.err.flush();
             throw new RuntimeException("Terminate");
+        }
+
+        try {
+            dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.releaseAllBeagleInstances();
+        } catch (Throwable e) {
+           throw new RuntimeException("Terminate");
         }
     }
 
@@ -379,6 +396,7 @@ public class BeastMain {
                         new Arguments.LongOption("save_at", "Specify a state at which to save a state file"),
                         new Arguments.LongOption("save_every", "Specify a frequency to save the state file"),
                         new Arguments.StringOption("save_state", "FILENAME", "Specify a filename to save state to"),
+                        new Arguments.Option("full_checkpoint_precision", "Use hex-encoded doubles in checkpoint files"),
                         new Arguments.Option("force_resume", "Force resuming from a saved state"),
 
                         new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
@@ -672,6 +690,10 @@ public class BeastMain {
                 System.setProperty(BeastCheckpointer.SAVE_STEM, stemName);
             }
 
+            if (arguments.hasOption("full_checkpoint_precision")) {
+                System.setProperty(BeastCheckpointer.FULL_CHECKPOINT_PRECISION, "true");
+            }
+
             if (arguments.hasOption("force_resume")) {
                 System.setProperty("force.resume", Boolean.TRUE.toString());
             }
@@ -910,7 +932,7 @@ public class BeastMain {
             BeastMPI.Finalize();
         }
 
-        if (!window) {
+        if (!usingMC3 && !window) { // DM: with MC3 the main thread gets here and terminates all threads prematurely 
             System.exit(0);
         }
     }

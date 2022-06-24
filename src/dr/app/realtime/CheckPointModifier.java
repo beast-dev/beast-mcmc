@@ -163,7 +163,7 @@ public class CheckPointModifier extends BeastCheckpointer {
                         }
                     } else {
                         if (DEBUG) {
-                            System.out.print("restoring " + fields[1] + " with values ");
+                            System.out.print("restoring " + fields[1] + " with dimension " + parameter.getDimension() + " and value(s) ");
                         }
                         if (fields[1].equals("branchRates.categories")) {
                             for (int dim = 0; dim < (fields.length-3); dim++) {
@@ -175,9 +175,15 @@ public class CheckPointModifier extends BeastCheckpointer {
                             }
                         } else {
                             for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                                parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 3]));
-                                if (DEBUG) {
-                                    System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
+                                if ((dim + 3) < fields.length) {
+                                    parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 3]));
+                                    if (DEBUG) {
+                                        System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
+                                    }
+                                } else {
+                                    if (DEBUG) {
+                                        System.out.println("  unable to restore index " + dim + " for " + parameter.getId() + " (moving on ...)");
+                                    }
                                 }
                             }
                         }

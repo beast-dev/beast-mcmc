@@ -26,7 +26,6 @@
 package test.dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
@@ -86,18 +85,18 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
         dataTraits[5] = new Parameter.Default("siamang", new double[]{1.0, 2.5, 4.0, 4.0, -5.2, 1.0});
         CompoundParameter traitParameter = new CompoundParameter("trait", dataTraits);
 
-        List<Integer> missingIndices = new ArrayList<Integer>();
+        boolean[] missingIndicators = new boolean[traitParameter.getDimension()];
         traitParameter.setParameterValue(2, 0);
-        missingIndices.add(6);
-        missingIndices.add(7);
-        missingIndices.add(8);
-        missingIndices.add(9);
-        missingIndices.add(10);
-        missingIndices.add(11);
-        missingIndices.add(13);
-        missingIndices.add(15);
-        missingIndices.add(25);
-        missingIndices.add(29);
+        missingIndicators[6] = true;
+        missingIndicators[7] = true;
+        missingIndicators[8] = true;
+        missingIndicators[9] = true;
+        missingIndicators[10] = true;
+        missingIndicators[11] = true;
+        missingIndicators[13] = true;
+        missingIndicators[15] = true;
+        missingIndicators[25] = true;
+        missingIndicators[29] = true;
 
         // Error model Diagonal
         Parameter[] samplingPrecision = new Parameter[dimTrait];
@@ -135,15 +134,16 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
 
         dataModelFactor = new IntegratedFactorAnalysisLikelihood("dataModelFactors",
                 traitParameter,
-                missingIndices,
+                missingIndicators,
                 loadingsMatrixParameters,
-                samplingPrecisionDiagonal, 0.0, null);
+                samplingPrecisionDiagonal, 0.0, null,
+                IntegratedFactorAnalysisLikelihood.CacheProvider.NO_CACHE);
 
 
         //// Repeated Measures Model //// ******************************************************************************
         dataModelRepeatedMeasures = new RepeatedMeasuresTraitDataModel("dataModelRepeatedMeasures",
                 traitParameter,
-                missingIndices,
+                missingIndicators,
 //                new boolean[3],
                 true,
                 dimTrait,
@@ -151,7 +151,7 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
 
         dataModelRepeatedMeasuresFull = new RepeatedMeasuresTraitDataModel("dataModelRepeatedMeasures",
                 traitParameter,
-                missingIndices,
+                missingIndicators,
                 true,
                 dimTrait,
                 samplingPrecisionParameterFull);
@@ -164,11 +164,6 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
         // Diffusion
         DiffusionProcessDelegate diffusionProcessDelegate
                 = new HomogeneousDiffusionModelDelegate(treeModel, diffusionModel);
-
-        // Rates
-        ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
-                treeModel, false, false);
-        BranchRateModel rateModel = new DefaultBranchRateModel();
 
         //// Factor Model //// *****************************************************************************************
         // CDL
@@ -278,11 +273,6 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
         DiffusionProcessDelegate diffusionProcessDelegate
                 = new OUDiffusionModelDelegate(treeModel, diffusionModel,
                 optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
-
-        // Rates
-        ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
-                treeModel, false, false);
-        BranchRateModel rateModel = new DefaultBranchRateModel();
 
         //// Factor Model //// *****************************************************************************************
         // CDL

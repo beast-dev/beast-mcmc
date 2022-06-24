@@ -25,6 +25,8 @@
 
 package dr.inferencexml.model;
 
+import dr.evomodelxml.continuous.DataFromTreeTipsParser;
+import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
 import dr.xml.*;
 
@@ -41,12 +43,12 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
     public final static String LOADINGS = "loadings";
     public static final String ROW_PRECISION = "rowPrecision";
     public static final String COLUMN_PRECISION = "columnPrecision";
-    public static final String SCALE_DATA="scaleData";
-    public static final String CONTINUOUS="continuous";
-    public static final String COMPUTE_RESIDUALS_FOR_DISCRETE="computeResidualsForDiscrete";
-    public static final String RECOMPUTE_RESIDUALS="recomputeResiduals";
-    public static final String RECOMPUTE_FACTORS="recomputeFactors";
-    public static final String RECOMPUTE_LOADINGS="recomputeLoadings";
+    public static final String SCALE_DATA = "scaleData";
+    public static final String CONTINUOUS = "continuous";
+    public static final String COMPUTE_RESIDUALS_FOR_DISCRETE = "computeResidualsForDiscrete";
+    public static final String RECOMPUTE_RESIDUALS = "recomputeResiduals";
+    public static final String RECOMPUTE_FACTORS = "recomputeFactors";
+    public static final String RECOMPUTE_LOADINGS = "recomputeLoadings";
     public static final String MISSING_INDICATOR = "missingIndicator";
 
 
@@ -57,33 +59,64 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         MatrixParameterInterface factors;
-        if (xo.getChild(FACTORS).getChild(FastMatrixParameter.class) == null)
-        {
+        if (xo.getChild(FACTORS).getChild(FastMatrixParameter.class) == null) {
             CompoundParameter factorsTemp = (CompoundParameter) xo.getChild(FACTORS).getChild(CompoundParameter.class);
             factors = MatrixParameter.recast(factorsTemp.getParameterName(), factorsTemp);
-        }
-        else {
+        } else {
             factors = (MatrixParameterInterface) xo.getChild(FACTORS).getChild(MatrixParameterInterface.class);
         }
-        MatrixParameterInterface dataParameter = (MatrixParameterInterface) xo.getChild(DATA).getChild(MatrixParameterInterface.class);
-        MatrixParameterInterface loadings = (MatrixParameterInterface) xo.getChild(LOADINGS).getChild(MatrixParameterInterface.class);
+
+        final MatrixParameterInterface dataParameter;
         Parameter missingIndicator = null;
-        if(xo.hasChildNamed(MISSING_INDICATOR))
-            missingIndicator = (Parameter) xo.getChild(MISSING_INDICATOR).getChild(Parameter.class);
+
+        XMLObject dxo = xo.getChild(DATA);
+
+        TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
+                (TreeTraitParserUtilities.TraitsAndMissingIndices)
+                        dxo.getChild(TreeTraitParserUtilities.TraitsAndMissingIndices.class);
+
+        if (returnValue != null) {
+            dataParameter = MatrixParameter.checkMatrixAndRecast(returnValue.traitParameter);
+
+            double[] missingIndicators = new double[returnValue.missingIndicators.length]; //TODO standardize how these models handle missing data
+            for (int i = 0; i < missingIndicators.length; i++) {
+                if (returnValue.missingIndicators[i]) {
+                    missingIndicators[i] = 1.0;
+                }
+            }
+            missingIndicator = new Parameter.Default(returnValue.traitParameter.getParameterName() + "missing",
+                    missingIndicators);
+        } else {
+            dataParameter = (MatrixParameterInterface) dxo.getChild(MatrixParameterInterface.class);
+        }
+
+
+        MatrixParameterInterface loadings = (MatrixParameterInterface) xo.getChild(LOADINGS).getChild(MatrixParameterInterface.class);
+
+        if (xo.hasChildNamed(MISSING_INDICATOR)) {
+            if (missingIndicator == null) {
+                missingIndicator = (Parameter) xo.getChild(MISSING_INDICATOR).getChild(Parameter.class);
+            } else {
+                throw new XMLParseException("Missing traits already parsed from " +
+                        DataFromTreeTipsParser.DATA_FROM_TREE_TIPS + " element. Do not supply " +
+                        MISSING_INDICATOR + ".");
+            }
+
+        }
         DiagonalMatrix rowPrecision = (DiagonalMatrix) xo.getChild(ROW_PRECISION).getChild(MatrixParameter.class);
         DiagonalMatrix colPrecision = (DiagonalMatrix) xo.getChild(COLUMN_PRECISION).getChild(MatrixParameter.class);
-        boolean newModel= xo.getAttribute(COMPUTE_RESIDUALS_FOR_DISCRETE, true);
-        boolean computeResiduals= xo.getAttribute(RECOMPUTE_RESIDUALS, true);
-        boolean computeFactors=xo.getAttribute(RECOMPUTE_FACTORS, true);
-        boolean computeLoadings=xo.getAttribute(RECOMPUTE_LOADINGS, true);
-        Parameter continuous=null;
-        if(xo.getChild(CONTINUOUS)!=null)
-            continuous=(Parameter) xo.getChild(CONTINUOUS).getChild(Parameter.class);
+        boolean newModel = xo.getAttribute(COMPUTE_RESIDUALS_FOR_DISCRETE, true);
+        boolean computeResiduals = xo.getAttribute(RECOMPUTE_RESIDUALS, true);
+        boolean computeFactors = xo.getAttribute(RECOMPUTE_FACTORS, true);
+        boolean computeLoadings = xo.getAttribute(RECOMPUTE_LOADINGS, true);
+        Parameter continuous = null;
+        if (xo.getChild(CONTINUOUS) != null)
+            continuous = (Parameter) xo.getChild(CONTINUOUS).getChild(Parameter.class);
         else
-            continuous=new Parameter.Default(colPrecision.getRowDimension(), 1.0);
-        boolean scaleData=xo.getAttribute(SCALE_DATA, true);
- //       int numFactors = xo.getAttribute(NUMBER_OF_FACTORS, 4);
-        Parameter temp=null;
+            continuous = new Parameter.Default(colPrecision.getRowDimension(), 1.0);
+        boolean scaleData = xo.getAttribute(SCALE_DATA, true);
+        //       int numFactors = xo.getAttribute(NUMBER_OF_FACTORS, 4);
+        Parameter temp = null;
 //        for(int i=0; i<loadings.getColumnDimension(); i++)
 //        {
 //            if(loadings.getParameterValue(i,i)<0)
@@ -102,9 +135,11 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(COMPUTE_RESIDUALS_FOR_DISCRETE, true),
             AttributeRule.newBooleanRule(RECOMPUTE_FACTORS, true),
             AttributeRule.newBooleanRule(RECOMPUTE_RESIDUALS, true),
-            AttributeRule.newBooleanRule(RECOMPUTE_LOADINGS,true),
+            AttributeRule.newBooleanRule(RECOMPUTE_LOADINGS, true),
             new ElementRule(DATA, new XMLSyntaxRule[]{
-                    new ElementRule(MatrixParameterInterface.class),
+                    new XORRule(
+                            new ElementRule(MatrixParameterInterface.class),
+                            new ElementRule(TreeTraitParserUtilities.TraitsAndMissingIndices.class))
             }),
             new ElementRule(FACTORS, new XMLSyntaxRule[]{
                     new ElementRule(CompoundParameter.class)

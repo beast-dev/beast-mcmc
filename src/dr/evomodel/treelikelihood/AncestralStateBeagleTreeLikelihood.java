@@ -33,6 +33,7 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.UncertainSiteList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;

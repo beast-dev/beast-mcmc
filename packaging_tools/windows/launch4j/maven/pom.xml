@@ -57,7 +57,7 @@
 					<groupId>commons-collections</groupId>
 				</exclusion>
 			</exclusions>
-			<version>1.7.0</version>
+			<version>1.9.4</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-logging</groupId>
@@ -138,12 +138,12 @@
 		<dependency>
 			<groupId>com.thoughtworks.xstream</groupId>
 			<artifactId>xstream</artifactId>
-			<version>1.4.8</version>
+			<version>1.4.18</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.ant</groupId>
 			<artifactId>ant</artifactId>
-			<version>1.8.2</version>
+			<version>1.10.9</version>
 		</dependency>
 
 	</dependencies>

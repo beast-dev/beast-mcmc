@@ -81,12 +81,7 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
             categories.add(cladeModel);
         }
 
-        List<ContinuousBranchValueProvider> values = new ArrayList<ContinuousBranchValueProvider>();
-
-        boolean timeDependentEffect = xo.getAttribute(TIME_DEPENDENT_EFFECT, false);
-        if (timeDependentEffect) {
-            values.add(new ContinuousBranchValueProvider.MidPoint());
-        }
+        List<ContinuousBranchValueProvider> values = getValueProviders(xo);
 
         List<BranchRates> branchRates = new ArrayList<BranchRates>();
 
@@ -120,6 +115,22 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
         } else {
             return fixedEffects;
         }
+    }
+
+    List<ContinuousBranchValueProvider> getValueProviders(XMLObject xo) throws XMLParseException {
+        List<ContinuousBranchValueProvider> values = new ArrayList<ContinuousBranchValueProvider>();
+
+        boolean timeDependentEffect = xo.getAttribute(TIME_DEPENDENT_EFFECT, false);
+        if (timeDependentEffect) {
+            if (xo.hasChildNamed(TIME_DEPENDENT_EFFECT)) {
+                Parameter timeThreshold = (Parameter) xo.getChild(TIME_DEPENDENT_EFFECT).getChild(Parameter.class);
+                values.add(new ContinuousBranchValueProvider.ConstrainedMidPoint(timeThreshold));
+            } else {
+                values.add(new ContinuousBranchValueProvider.MidPoint());
+            }
+        }
+
+        return values;
     }
 
     private String annotateDesignMatrix(double[][] matrix, Tree tree) {

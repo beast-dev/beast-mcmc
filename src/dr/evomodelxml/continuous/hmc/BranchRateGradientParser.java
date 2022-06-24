@@ -25,21 +25,17 @@
 
 package dr.evomodelxml.continuous.hmc;
 
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
-import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.evomodel.branchratemodel.LocalBranchRates;
+import dr.evomodel.branchratemodel.*;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.discrete.BranchRateGradientForDiscreteTrait;
-import dr.evomodel.treedatalikelihood.discrete.LocalBranchRateGradientForDiscreteTrait;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.hmc.CompoundGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.hmc.SumDerivative;
+import dr.inference.hmc.JointBranchRateGradient;
+import dr.inference.hmc.JointGradient;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
@@ -93,14 +89,14 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
 
             checkBranchRateModels(providers);
 
-            return new SumDerivative(providers);
+            return new JointBranchRateGradient(providers);
         }
     }
 
     static void checkBranchRateModels(List<GradientWrtParameterProvider> providers) throws XMLParseException {
-        BranchRateModel rateModel = ((TreeDataLikelihood)providers.get(0).getLikelihood()).getBranchRateModel();
+        BranchRateModel rateModel = ((TreeDataLikelihood) providers.get(0).getLikelihood()).getBranchRateModel();
         for (GradientWrtParameterProvider provider : providers) {
-            if (rateModel != ((TreeDataLikelihood)provider.getLikelihood()).getBranchRateModel()) {
+            if (rateModel != ((TreeDataLikelihood) provider.getLikelihood()).getBranchRateModel()) {
                 throw new XMLParseException("All TreeDataLikelihoods must use the same BranchRateModel");
             }
         }
@@ -111,15 +107,11 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
                                                                  boolean useHessian) throws XMLParseException {
 
 
-
         BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
 
-        if (branchRateModel instanceof DefaultBranchRateModel || branchRateModel instanceof ArbitraryBranchRates) {
+        if (branchRateModel instanceof DifferentiableBranchRates) {
 
-            Parameter branchRates = null;
-            if (branchRateModel instanceof ArbitraryBranchRates) {
-                branchRates = ((ArbitraryBranchRates) branchRateModel).getRateParameter();
-            }
+            Parameter branchRates = ((DifferentiableBranchRates) branchRateModel).getRateParameter();
 
             DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
 
@@ -131,17 +123,14 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
             } else if (delegate instanceof BeagleDataLikelihoodDelegate) {
 
                 BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) delegate;
-                if (branchRateModel instanceof LocalBranchRates) {
-                    return new LocalBranchRateGradientForDiscreteTrait(traitName, treeDataLikelihood, beagleData, branchRates, useHessian);
-                } else {
-                    return new BranchRateGradientForDiscreteTrait(traitName, treeDataLikelihood, beagleData, branchRates, useHessian);
-                }
+                return new BranchRateGradientForDiscreteTrait(traitName, treeDataLikelihood, beagleData, branchRates, useHessian);
+
             } else {
                 throw new XMLParseException("Unknown likelihood delegate type");
             }
 
         } else {
-            throw new XMLParseException("Only implemented for an arbitrary rates model");
+            throw new XMLParseException("Only implemented for differentiable rates models");
         }
     }
 

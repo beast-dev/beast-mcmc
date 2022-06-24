@@ -25,6 +25,7 @@
 
 package dr.evomodel.speciation;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
@@ -53,6 +54,8 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
     public abstract double calculateTreeLogLikelihood(Tree tree);
 
     public abstract double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude);
+
+    public abstract double getNodeGradient(Tree tree, NodeRef node);
 
     // True if Yule.
     //

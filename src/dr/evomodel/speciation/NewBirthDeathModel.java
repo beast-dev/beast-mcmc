@@ -76,6 +76,13 @@ public class NewBirthDeathModel extends NewBirthDeathSerialSamplingModel {
     }
 
     @Override
+    public void precomputeConstants() {
+        this.C1 = c1(lambda(), mu(), psi());
+        this.C2 = c2(lambda(), mu(), psi(), rho());
+        n_events = 0;
+    }
+
+    @Override
     public double processInterval(int model, double tYoung, double tOld, int nLineages) {
         // TODO Do something different
         return super.processInterval(model, tYoung, tOld, nLineages);
@@ -105,6 +112,13 @@ public class NewBirthDeathModel extends NewBirthDeathSerialSamplingModel {
     @Override
     public double logConditioningProbability() {
         return -log(n_events);
+    }
+
+    @Override
+    public void precomputeGradientConstants() {
+        n_events = 0;
+        this.saved_q = Double.MIN_VALUE;
+        this.partialqKnown = false;
     }
 
     @Override

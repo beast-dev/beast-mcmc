@@ -30,9 +30,15 @@ import dr.inference.model.Parameter;
 import static java.lang.Math.exp;
 import static java.lang.Math.log;
 
+
 public class NewBirthDeathModel extends NewBirthDeathSerialSamplingModel {
 
     private int n_events;
+    private double[] temp2;
+    private double[] temp3;
+    private double saved_q;
+    private boolean partialqKnown;
+    private double[] partialq;
 
     public NewBirthDeathModel(
             String modelName,
@@ -47,8 +53,27 @@ public class NewBirthDeathModel extends NewBirthDeathSerialSamplingModel {
 
         super(modelName, birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingFractionAtPresent, originTime, condition, units);
         n_events = 0;
+        this.temp2 = new double[4];
+        this.temp3 = new double[4];
+        this.saved_q = Double.MIN_VALUE;
+        this.partialqKnown = false;
+        this.partialq = new double[4];
     }
-
+    public double q(double t){
+        double C1 = getC1();
+        double C2 = getC2();
+        // TODO why the factor of 4 and inversion here?
+        double expC1t = Math.exp(C1 * t);
+        return 4/(2.0 * (1.0 - Math.pow(C2,2.0)) + (1.0/expC1t) * Math.pow((1.0 - C2),2.0) + expC1t * Math.pow(1.0 + C2,2.0));
+    }
+    public double[] partialqpartialAll (double[] partialQ_all, double t) {
+        double Q = Q(t);
+        double[] temp1 = partialQpartialAll(partialQ_all, t);
+        for (int i = 0; i < temp1.length; i++) {
+            temp1[i] *= -4*Math.pow(Q, -2);
+        }
+        return temp1;
+    }
 
     @Override
     public double processInterval(int model, double tYoung, double tOld, int nLineages) {
@@ -81,4 +106,76 @@ public class NewBirthDeathModel extends NewBirthDeathSerialSamplingModel {
     public double logConditioningProbability() {
         return -log(n_events);
     }
+
+    @Override
+    public void processGradientInterval(double[] gradient, int currentModelSegment, double intervalStart, double intervalEnd, int nLineages) {
+        double tOld = intervalEnd;
+        double tYoung = intervalStart;
+        double[] partialq_all_old = partialqpartialAll(temp2, tOld);
+        double[] partialq_all_young;
+        double q_Old = q(tOld);
+        double q_young;
+        if (this.saved_q != Double.MIN_VALUE) {
+            q_young = this.saved_q;
+        }
+        else {
+            q_young = q(tYoung);
+        }
+        this.saved_q = q_Old;
+
+        if (partialqKnown) {
+            partialq_all_young = temp3;
+            System.arraycopy(partialq, 0, partialq_all_young, 0, 4);
+        } else {
+            partialq_all_young = partialQpartialAll(temp3, tYoung);
+            //System.arraycopy(partialQ_all_young, 0, savedPartialQ, 0, 4);
+            partialqKnown = true;
+        }
+        System.arraycopy(partialq_all_old, 0, partialq, 0, 4);
+
+
+        for (int j = 0; j < 4; ++j) {
+            gradient[j] += nLineages*(partialq_all_young[j] / q_young - partialq_all_old[j] / q_Old);
+        }
+
+    }
+
+    @Override
+    public void processGradientSampling(double[] gradient, int currentModelSegment, double intervalEnd) {
+        return;
+    }
+
+    @Override
+    public void processGradientCoalescence(double[] gradient, int currentModelSegment, double intervalEnd) {
+        n_events += 1;
+        return;
+    }
+
+    @Override
+    public void processGradientOrigin(double[] gradient, int currentModelSegment, double totalDuration) {
+        double lambda = lambda();
+        double rho = rho();
+        double mu = mu();
+        double v = exp(-(lambda - mu) * totalDuration);
+        double v2 = (lambda*(1-rho) - mu)* v;
+        double v1 = lambda*rho + v2;
+
+        // (lambda, mu, psi, rho)
+        gradient[0] += (n_events - 1)*((1/v1)*(rho + v*(1-rho) - v2*totalDuration) - 1/(1-v)*v*totalDuration);
+        gradient[1] +=  (n_events - 1)*(1/v1*(-v+v2*totalDuration) + 1/(1-v)*v*totalDuration);
+        gradient[3] += (n_events - 1)*(1/v1*(lambda-v*lambda));
+
+        double[] partialq_all_root = partialqpartialAll(temp3, totalDuration);
+
+        double q_totalDuration = q(totalDuration);
+        for (int i = 0; i < 4; ++i) {
+            gradient[i] -=  2* partialq_all_root[i] / q_totalDuration;
+        }
+    }
+
+    @Override
+    public void logConditioningProbability(double[] gradient) {
+        return;
+    }
+
 }

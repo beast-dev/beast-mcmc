@@ -418,7 +418,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
 
-    private double Q(double t){
+    public double Q(double t){
         // TODO why the factor of 4 and inversion here?
         double expC1t = Math.exp(C1 * t);
         return (2.0 * (1.0 - Math.pow(C2,2.0)) + (1.0/expC1t) * Math.pow((1.0 - C2),2.0) + expC1t * Math.pow(1.0 + C2,2.0));

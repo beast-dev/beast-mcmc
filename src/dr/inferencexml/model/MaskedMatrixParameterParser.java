@@ -25,10 +25,10 @@
 
 package dr.inferencexml.model;
 
-import dr.inference.model.MaskedParameter;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.*;
+
+import java.util.ArrayList;
 
 /**
  * @author Marc A. Suchard
@@ -44,7 +44,7 @@ public class MaskedMatrixParameterParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        MatrixParameter matrix = (MatrixParameter) xo.getChild(MatrixParameter.class);
+        MatrixParameterInterface matrix = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
 
 
 //        System.err.println("colDim " + matrix.getColumnDimension());
@@ -86,7 +86,7 @@ public class MaskedMatrixParameterParser extends AbstractXMLObjectParser {
             maskedParameters[col].addMask(mask, ones);
         }
 
-        MatrixParameter maskedMatrix = new MatrixParameter(matrix.getId() + ".masked", maskedParameters);
+        MaskedMatrixParameter maskedMatrix = new MaskedMatrixParameter(matrix, mask);
 
 //        for (int col = 0; col < matrix.getColumnDimension(); ++col) {
 //            maskedMatrix.addParameter(matrix.getParameter(col));
@@ -100,7 +100,7 @@ public class MaskedMatrixParameterParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(MatrixParameter.class),
+            new ElementRule(MatrixParameterInterface.class),
             new ElementRule(MASKING,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)

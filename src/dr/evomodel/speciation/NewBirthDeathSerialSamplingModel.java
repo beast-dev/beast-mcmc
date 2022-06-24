@@ -250,6 +250,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
      * @return log-likelihood of density
      */
     public final double calculateTreeLogLikelihood(Tree tree) {
+
         precomputeConstants();
 
         double logL = calculateUnconditionedTreeLogLikelihood(tree);
@@ -347,7 +348,11 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public double processOrigin(int model, double rootAge) {
-        return (logq(originTime.getValue(0))) - logq(rootAge);
+        if (originTime.getValue(0) < rootAge) {
+            return Double.NaN;
+        } else {
+            return (logq(originTime.getValue(0))) - logq(rootAge);
+        }
     }
 
     @Override

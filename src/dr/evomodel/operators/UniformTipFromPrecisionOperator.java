@@ -1,7 +1,7 @@
 /*
  * UniformTipFromPrecisionOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -30,42 +30,34 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
-import dr.inference.operators.SimpleMCMCOperator;
 import dr.evomodelxml.operators.UniformTipFromPrecisionOperatorParser;
+import dr.inference.operators.UniformOperator;
 import dr.math.MathUtils;
 
 /**
- * Like UniformOperator but for tip times being sampled from precision (and are thus subject to tree-based age constraints)
+ * Uniform operator on tip dates being sampled from precision but that are subject to tree-based age constraints (i.e. parent node height constraint)
+ *
+ * @author Andy Magee
+ * @author Guy Baele
  */
-public class UniformTipFromPrecisionOperator extends SimpleMCMCOperator {
+public class UniformTipFromPrecisionOperator extends UniformOperator {
 
     public UniformTipFromPrecisionOperator(Parameter parameter, double weight, Taxon taxon, TreeModel tree) {
         this(parameter, weight, taxon, tree, null, null);
     }
 
     public UniformTipFromPrecisionOperator(Parameter parameter, double weight, Taxon taxon, TreeModel tree, Double lowerBound, Double upperBound) {
-        this.parameter = parameter;
+        super(parameter, weight, lowerBound, upperBound);
         this.tree = tree;
         this.taxon = taxon;
-        setWeight(weight);
-
-        this.lowerBound = lowerBound;
-        this.upperBound = upperBound;
 
         if (parameter.getDimension() != 1) {
-            throw new RuntimeException("UniformTipFromPrecision operator only valid for single tip.");
+            throw new RuntimeException("UniformTipFromPrecision operator only valid for a single tip.");
         }
 
         if (!parameter.getParameterName().contains(taxon.toString())) {
-            throw new RuntimeException("Mismatch between parameter and taxon in UniformTipFromPrecision.");
+            throw new RuntimeException("Mismatch between parameter and taxon names in UniformTipFromPrecision.");
         }
-    }
-
-    /**
-     * @return the parameter this operator acts on.
-     */
-    public Parameter getParameter() {
-        return parameter;
     }
 
     /**
@@ -85,7 +77,6 @@ public class UniformTipFromPrecisionOperator extends SimpleMCMCOperator {
 
         parameter.setParameterValue(index, newValue);
 
-//        System.out.println(newValue + "[" + lower + "," + upper + "]");
         return 0.0;
     }
 
@@ -94,32 +85,11 @@ public class UniformTipFromPrecisionOperator extends SimpleMCMCOperator {
         return "uniformTipFromPrecision(" + parameter.getParameterName() + ")";
     }
 
-    public final void optimize(double targetProb) {
-
-        throw new RuntimeException("This operator cannot be optimized!");
-    }
-
-    public boolean isOptimizing() {
-        return false;
-    }
-
-    public void setOptimizing(boolean opt) {
-        throw new RuntimeException("This operator cannot be optimized!");
-    }
-
-    public String getPerformanceSuggestion() {
-        return "";
-    }
-
     public String toString() {
         return UniformTipFromPrecisionOperatorParser.UTFP + "(" + parameter.getParameterName() + ")";
     }
 
     //PRIVATE STUFF
-
-    private Parameter parameter = null;
-    private final Double lowerBound;
-    private final Double upperBound;
     private final TreeModel tree;
     private final Taxon taxon;
 }

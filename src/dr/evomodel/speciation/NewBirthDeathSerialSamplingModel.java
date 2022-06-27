@@ -593,9 +593,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double[] partialC1C2_all = this.temp1;
 
 //        double[] partialQ_all = new double[4];
-        Arrays.fill(partialQ_all, 0.0);
+//        Arrays.fill(partialQ_all, 0.0);
         for (int i = 0; i < 4; ++i) {
-            partialQ_all[i] += t * partialC1C2_all[i*2+0] * v1;
+            partialQ_all[i] = t * partialC1C2_all[i*2+0] * v1;
             partialQ_all[i] += 2 * partialC1C2_all[i*2+1] * v;
         }
         return partialQ_all;

@@ -534,6 +534,7 @@
 	 </multivariateNormalPrior>
     
 	<multivariateTraitLikelihood id="traitLikelihood" traitName="location" 
+						         cacheBranches="false"
 	 						     useTreeLength="true" scaleByTime="true" 
                                  reportAsMultivariate="true">
 		<multivariateDiffusionModel idref="diffusionModel"/>

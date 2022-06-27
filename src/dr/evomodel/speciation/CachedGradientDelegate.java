@@ -37,7 +37,6 @@ import dr.inference.model.Variable;
 
 class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]> {
 
-    private final EfficientSpeciationLikelihood likelihood;
     private final SpeciationModelGradientProvider provider;
     private final BigFastTreeIntervals treeIntervals;
     private final SpeciationModel speciationModel;
@@ -50,7 +49,6 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
     CachedGradientDelegate(EfficientSpeciationLikelihood likelihood) {
         super("cachedGradientDelegate");
 
-        this.likelihood = likelihood;
         this.provider = likelihood.getGradientProvider();
         this.treeIntervals = likelihood.getTreeIntervals();
         this.speciationModel = likelihood.getSpeciationModel();
@@ -88,6 +86,8 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
 
             // TODO Need to check for intervalStart == intervalEnd?
             // TODO Need to check for intervalStart == intervalEnd == 0.0?
+
+            provider.updateModelValues(currentModelSegment);
 
             provider.processGradientInterval(gradient, currentModelSegment, intervalStart, intervalEnd, nLineages);
 

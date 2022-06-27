@@ -28,6 +28,7 @@ package dr.evomodel.substmodel;
 import dr.evolution.datatype.DataType;
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedMatrix;
 
 import java.util.List;
 

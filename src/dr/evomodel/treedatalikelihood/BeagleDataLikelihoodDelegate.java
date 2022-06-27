@@ -71,7 +71,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     private static final boolean DEBUG = false; // write debug information to stdOut
 
-    private final boolean USE_ACTION = true;  //TODO: move into constructor
+    private final boolean USE_ACTION = false;  //TODO: move into constructor
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then

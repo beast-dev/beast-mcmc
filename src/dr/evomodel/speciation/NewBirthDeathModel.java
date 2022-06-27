@@ -77,8 +77,8 @@ public class NewBirthDeathModel extends NewBirthDeathSerialSamplingModel {
 
     @Override
     public void precomputeConstants() {
-        this.C1 = c1(lambda(), mu(), psi());
-        this.C2 = c2(lambda(), mu(), psi(), rho());
+        this.C1 = c1(lambda, mu, psi);
+        this.C2 = c2(lambda, mu, psi, rho);
         n_events = 0;
     }
 
@@ -90,9 +90,9 @@ public class NewBirthDeathModel extends NewBirthDeathSerialSamplingModel {
 
     @Override
     public double processOrigin(int model, double rootAge) {
-        double lambda = lambda();
-        double rho = rho();
-        double mu = mu();
+//        double lambda = lambda();
+//        double rho = rho();
+//        double mu = mu();
         double v = exp(-(lambda - mu) * rootAge);
         double p_n = log(lambda*rho + (lambda*(1-rho) - mu)* v) - log(1- v);
         return -2*logq(rootAge) + (n_events-1)*p_n;
@@ -167,9 +167,9 @@ public class NewBirthDeathModel extends NewBirthDeathSerialSamplingModel {
 
     @Override
     public void processGradientOrigin(double[] gradient, int currentModelSegment, double totalDuration) {
-        double lambda = lambda();
-        double rho = rho();
-        double mu = mu();
+//        double lambda = lambda();
+//        double rho = rho();
+//        double mu = mu();
         double v = exp(-(lambda - mu) * totalDuration);
         double v2 = (lambda*(1-rho) - mu)* v;
         double v1 = lambda*rho + v2;

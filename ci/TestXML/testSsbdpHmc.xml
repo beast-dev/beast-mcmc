@@ -523,7 +523,7 @@
 			<parameter id="bdss.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
 		</samplingProbabilityAtPresent>
 		<origin>
-			<parameter id="bdss.origin" value="5.123" lower="0.0"/>
+			<parameter id="bdss.origin" value="30.123" lower="0.0"/>
 		</origin>
 	</newBirthDeathSerialSampling>
 

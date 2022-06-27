@@ -42,6 +42,7 @@ public class PiecewiseLinearTimeDependentModelParser extends AbstractXMLObjectPa
     private static final String RATES = "rates";
     private static final String TRANSITION_TIME = "epochStart";
     private static final String EPOCH_LENGTH = "epochLength";
+    private static final String SLOPE = "slope";
     private static final String SCALE = "scale";
 
     public String getParserName() {
@@ -57,7 +58,17 @@ public class PiecewiseLinearTimeDependentModelParser extends AbstractXMLObjectPa
         Parameter currentRate = (Parameter) cxo.getChild(1);
 
         Parameter firstTransitionTime = (Parameter) xo.getElementFirstChild(TRANSITION_TIME);
-        Parameter epochLength = (Parameter) xo.getElementFirstChild(EPOCH_LENGTH);
+
+        final PiecewiseLinearTimeDependentModel.ParameterPack parameters;
+        if (xo.hasChildNamed(EPOCH_LENGTH)) {
+            Parameter epochLength = (Parameter) xo.getElementFirstChild(EPOCH_LENGTH);
+            parameters = new PiecewiseLinearTimeDependentModel.EpochLengthParameterPack(historicalRate,
+                    currentRate, firstTransitionTime, epochLength);
+        } else {
+            Parameter slope = (Parameter) xo.getElementFirstChild(SLOPE);
+            parameters = new PiecewiseLinearTimeDependentModel.SlopeParameterPack(historicalRate,
+                    currentRate, firstTransitionTime, slope);
+        }
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
 
@@ -72,11 +83,7 @@ public class PiecewiseLinearTimeDependentModelParser extends AbstractXMLObjectPa
             throw new XMLParseException("Unknown scale");
         }
 
-        return new PiecewiseLinearTimeDependentModel(tree,
-                new PiecewiseLinearTimeDependentModel.ParameterPack(
-                        historicalRate, currentRate,
-                        firstTransitionTime, epochLength),
-                scale);
+        return new PiecewiseLinearTimeDependentModel(tree, parameters, scale);
     }
     
     //************************************************************************
@@ -101,7 +108,9 @@ public class PiecewiseLinearTimeDependentModelParser extends AbstractXMLObjectPa
                     new ElementRule(Parameter.class, 2, 2),
             }),
             new ElementRule(TRANSITION_TIME, Parameter.class),
-            new ElementRule(EPOCH_LENGTH, Parameter.class),
+            new XORRule(
+                    new ElementRule(EPOCH_LENGTH, Parameter.class),
+                    new ElementRule(SLOPE, Parameter.class)),
             AttributeRule.newStringRule(SCALE),
     };
 }

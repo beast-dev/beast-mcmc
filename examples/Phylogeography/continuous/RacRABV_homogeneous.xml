@@ -442,7 +442,7 @@
 	
 	<generalizedSkyLineLikelihood id="skyline" linear="false">
 		<populationSizes>
-			<parameter id="skyline.popSize" dimension="6" value="225.0" lower="0.0" upper="220000.0"/>
+			<parameter id="skyline.popSize" dimension="6" value="225.0" lower="0.0" upper="Infinity"/>
 		</populationSizes>
 		<groupSizes>
 			<parameter id="skyline.groupSize" dimension="6"/>
@@ -461,7 +461,7 @@
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="branchRates">
 		<rate>
-			<parameter id="clock.rate" value="1.6E-6" lower="0.0" upper="100.0"/>
+			<parameter id="clock.rate" value="1.6E-6" lower="0.0" upper="Infinity"/>
 		</rate>
 	</strictClockBranchRates>
 
@@ -486,7 +486,7 @@
 			<hkyModel idref="hky"/>
 		</substitutionModel>
 		<gammaShape gammaCategories="4">
-			<parameter id="siteModel.alpha" value="0.5" lower="0.0" upper="100.0"/>
+			<parameter id="siteModel.alpha" value="0.5" lower="0.0" upper="Infinity"/>
 		</gammaShape>
 	</siteModel>
 	
@@ -501,7 +501,7 @@
 		<precisionMatrix>
 			<matrixParameter id="precisionMatrix">
 				<parameter id="col1" value="0.05 0.002"/>
-				<parameter id="col2" value="0.02 0.05"/>
+				<parameter id="col2" value="0.002 0.05"/>
 			</matrixParameter>
 		</precisionMatrix>
 	</multivariateDiffusionModel>
@@ -534,6 +534,7 @@
 	 </multivariateNormalPrior>
     
 	<multivariateTraitLikelihood id="traitLikelihood" traitName="location" 
+						         cacheBranches="false"
 	 						     useTreeLength="true" scaleByTime="true" 
                                  reportAsMultivariate="true">
 		<multivariateDiffusionModel idref="diffusionModel"/>
@@ -579,6 +580,7 @@
 	</treeDispersionStatistic>
 
 	<operators id="operators" optimizationSchedule="log">
+<!-- 
 		<scaleOperator scaleFactor="0.75" weight="1">
 			<parameter idref="hky.kappa"/>
 		</scaleOperator>
@@ -625,15 +627,18 @@
             <multivariateTraitLikelihood idref="traitLikelihood"/>
 			<multivariateWishartPrior idref="precisionPrior"/>
 	    </precisionGibbsOperator>
+ -->
 
         <traitGibbsOperator weight="50">
 			<multivariateTraitLikelihood idref="traitLikelihood"/>
 			<multivariateNormalPrior idref="rootPrior"/>
 		</traitGibbsOperator>
 		
+<!-- 
     	<randomWalkOperator windowSize="10.0" weight="5">
 			<parameter idref="rootTrait"/>
 	    </randomWalkOperator>
+ -->
 
 	</operators>
 	

@@ -79,7 +79,8 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
     @Override
     double calculateLogLikelihood() {
 
-        speciationModel.precomputeConstants();
+        speciationModel.updateModelValues(0);
+        speciationModel.precomputeConstants(); // TODO C1 / C2 will change depending on currentModelSegment
 
         double[] modelBreakPoints = speciationModel.getBreakPoints();
         assert modelBreakPoints[modelBreakPoints.length - 1] == Double.POSITIVE_INFINITY;
@@ -101,6 +102,8 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
                 intervalStart = segmentIntervalEnd;
                 ++currentModelSegment;
             }
+
+            speciationModel.updateModelValues(currentModelSegment);
 
             // TODO Need to check for intervalStart == intervalEnd?
             // TODO Need to check for intervalStart == intervalEnd == 0.0?

@@ -28,10 +28,8 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.loggers.Loggable;
+import dr.inference.model.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -66,6 +64,50 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
         }
 
         slopeInterceptKnown = false;
+
+        addStatistic(new Statistic.Abstract("intercept") {
+            @Override
+            public int getDimension() {
+                return slopeInterceptPack.intercepts.length;
+            }
+
+            @Override
+            public double getStatisticValue(int dim) {
+                checkSlopeIntercept();
+                return slopeInterceptPack.intercepts[dim];
+            }
+        });
+
+        addStatistic(new Statistic.Abstract("slope") {
+            @Override
+            public int getDimension() {
+                return slopeInterceptPack.slopes.length;
+            }
+
+            @Override
+            public double getStatisticValue(int dim) {
+                checkSlopeIntercept();
+                return slopeInterceptPack.slopes[dim];
+            }
+        });
+
+        addStatistic(new Statistic.Abstract("breaks") {
+            @Override
+            public int getDimension() {
+                return slopeInterceptPack.breaks.length;
+            }
+
+            @Override
+            public double getStatisticValue(int dim) {
+                checkSlopeIntercept();
+                return slopeInterceptPack.breaks[dim];
+            }
+        });
+    }
+
+    SlopeInterceptPack getSlopeInterceptPack() {
+        checkSlopeIntercept();
+        return slopeInterceptPack;
     }
 
     private double integrate(double x0, double x1, double slope, double intercept) {
@@ -92,21 +134,21 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
         final double[] intercepts = slopeInterceptPack.intercepts;
         final double[] breaks = slopeInterceptPack.breaks;
 
-        if (Double.isInfinite(child)) {
-            return slopes[0];
-        }
+//        if (Double.isInfinite(child)) {
+//            return slopes[0];
+//        }
 
         int currentEpoch = 0;
-        while (child > breaks[currentEpoch]) {
+        while (child > scale.transformTime(breaks[currentEpoch])) {
             ++currentEpoch;
         }
 
         double integral = 0.0;
         double currentTime = child;
-        while (breaks[currentEpoch] <= parent) {
-            integral += integrate(currentTime, breaks[currentEpoch],
+        while (scale.transformTime(breaks[currentEpoch]) <= parent) {
+            integral += integrate(currentTime, scale.transformTime(breaks[currentEpoch]),
                     slopes[currentEpoch], intercepts[currentEpoch]);
-            currentTime = breaks[currentEpoch];
+            currentTime = scale.transformTime(breaks[currentEpoch]);
             ++currentEpoch;
         }
 
@@ -115,13 +157,17 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
         return integral / (parent - child);
     }
 
-    @Override
-    public double getBranchValue(Tree tree, NodeRef node) {
-
+    private void checkSlopeIntercept() {
         if (!slopeInterceptKnown) {
-            slopeInterceptPack = new SlopeInterceptPack(pack);
+            slopeInterceptPack = pack.getSlopesAndIntercepts();
             slopeInterceptKnown = true;
         }
+    }
+
+    @Override
+    public double getBranchValue(Tree tree, NodeRef node) {
+        
+        checkSlopeIntercept();
 
         double parent = tree.getNodeHeight(tree.getParent(node));
         double child = tree.getNodeHeight(node);
@@ -246,33 +292,31 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
 
     private final static double log10 = Math.log(10.0);
 
-    public static class ParameterPack implements Iterable<Parameter> {
+    abstract public static class ParameterPack implements Iterable<Parameter> {
 
         final Parameter historicValue;
         final Parameter currentValue;
         final Parameter epochStartTime;
-        final Parameter epochLength;
-
-        final List<Parameter> parameterList = new ArrayList<>();
 
         public ParameterPack(Parameter historicValue,
                              Parameter currentValue,
-                             Parameter epochStartTime,
-                             Parameter epochLength) {
+                             Parameter epochStartTime) {
             this.historicValue = historicValue;
             this.currentValue = currentValue;
             this.epochStartTime = epochStartTime;
-            this.epochLength = epochLength;
 
             parameterList.add(historicValue);
             parameterList.add(currentValue);
             parameterList.add(epochStartTime);
-            parameterList.add(epochLength);
         }
+
+        final List<Parameter> parameterList = new ArrayList<>();
 
         public boolean contains(Variable variable) {
             return parameterList.contains((Parameter) variable);
         }
+
+        abstract SlopeInterceptPack getSlopesAndIntercepts();
 
         @Override
         public Iterator<Parameter> iterator() {
@@ -280,13 +324,53 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
         }
     }
 
-    private static class SlopeInterceptPack {
+    public static class EpochLengthParameterPack extends ParameterPack {
+
+        final Parameter epochLength;
+
+        public EpochLengthParameterPack(Parameter historicValue,
+                                        Parameter currentValue,
+                                        Parameter epochStartTime,
+                                        Parameter epochLength) {
+            super(historicValue, currentValue, epochStartTime);
+
+            this.epochLength = epochLength;
+            parameterList.add(epochLength);
+        }
+
+        @Override
+        SlopeInterceptPack getSlopesAndIntercepts() {
+            return new SlopeInterceptPack(this);
+        }
+    }
+
+    public static class SlopeParameterPack extends ParameterPack {
+
+        final Parameter slope;
+
+        public SlopeParameterPack(Parameter historicValue,
+                                  Parameter currentValue,
+                                  Parameter epochStartTime,
+                                  Parameter slope) {
+            super(historicValue, currentValue, epochStartTime);
+
+            this.slope = slope;
+            parameterList.add(slope);
+        }
+
+        @Override
+        SlopeInterceptPack getSlopesAndIntercepts() {
+            return new SlopeInterceptPack(this);
+        }
+    }
+
+    static class SlopeInterceptPack {
 
         final double[] slopes;
         final double[] intercepts;
         final double[] breaks;
 
-        SlopeInterceptPack(ParameterPack pack) {
+        SlopeInterceptPack(EpochLengthParameterPack pack) {
             double y0 = pack.currentValue.getParameterValue(0);
             double y1 = pack.historicValue.getParameterValue(0);
 
@@ -294,10 +378,34 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
             double x1 = x0 + pack.epochLength.getParameterValue(0);
 
             double midSlope = (y1 - y0) / (x1 - x0);
+            double midIntercept = y0 - midSlope * x0;
 
             slopes = new double[] { 0.0, midSlope, 0.0 };
-            intercepts = new double[] { y0, y0 - midSlope * x0, y1 };
+            intercepts = new double[] { y0, midIntercept, y1 };
             breaks = new double[] { x0, x1, Double.POSITIVE_INFINITY };
+
+//            for (int i = 0; i < breaks.length - 1; ++i) {
+//                breaks[i] = scale.transformTime(breaks[i]);
+//            }
+        }
+
+        SlopeInterceptPack(SlopeParameterPack pack) {
+            double y0 = pack.currentValue.getParameterValue(0);
+            double y1 = pack.historicValue.getParameterValue(0);
+
+            double x0 = pack.epochStartTime.getParameterValue(0);
+            double midSlope = pack.slope.getParameterValue(0);
+
+            double midIntercept = y0 - midSlope * x0;
+            double x1 = (y1 - midIntercept) / midSlope;
+
+            slopes = new double[] { 0.0, midSlope, 0.0 };
+            intercepts = new double[] { y0, midIntercept, y1 };
+            breaks = new double[] { x0, x1, Double.POSITIVE_INFINITY };
+
+//            for (int i = 0; i < breaks.length - 1; ++i) {
+//                breaks[i] = scale.transformTime(breaks[i]);
+//            }
         }
     }
 }

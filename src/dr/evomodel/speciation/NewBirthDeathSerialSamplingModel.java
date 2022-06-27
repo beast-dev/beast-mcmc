@@ -25,12 +25,9 @@
 
 package dr.evomodel.speciation;
 
-import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.util.Author;
@@ -70,8 +67,13 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     private final boolean conditionOnSurvival;
 
     // useful constants we don't want to compute nTaxa times
-    public double C1 = Double.NEGATIVE_INFINITY;
-    public double C2 = Double.NEGATIVE_INFINITY;
+    double C1 = Double.NEGATIVE_INFINITY;
+    double C2 = Double.NEGATIVE_INFINITY;
+    double lambda;
+    double mu;
+    double psi;
+    double r;
+    double rho;
 
     private double[] savedGradient;
     private double savedQ;
@@ -192,9 +194,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         return -(lambda - 2.0 * rho * lambda - mu - psi)/c1(lambda, mu, psi);
     }
 
-    public void precomputeConstants() {
-        this.C1 = c1(lambda(), mu(), psi());
-        this.C2 = c2(lambda(), mu(), psi(), rho());
+    public void precomputeConstants() { // TODO These may change depending on currentModelSegment
+        this.C1 = c1(lambda, mu, psi);
+        this.C2 = c2(lambda, mu, psi, rho);
     }
 
     public double getC1() { return C1; }
@@ -207,32 +209,33 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 //    }
 
     public double p0(double t) {
-        return p0(lambda(), mu(), psi(), rho(), C1, C2, t);
+//        return p0(lambda(), mu(), psi(), rho(), C1, C2, t);
+        return p0(lambda, mu, psi, rho, C1, C2, t);
     }
 
     public double logq(double t) {
         return logq(C1, C2, t);
     }
 
-    double lambda() {
-        return birthRate.getParameterValue(0);
-    }
-
-    double mu() {
-        return deathRate.getParameterValue(0);
-    }
-
-    double psi() {
-        return serialSamplingRate.getParameterValue(0);
-    }
-
-    double r() {
-        return treatmentProbability.getParameterValue(0);
-    }
-
-    double rho() {
-        return samplingFractionAtPresent.getParameterValue(0);
-    }
+//    double lambda() {
+//        return birthRate.getParameterValue(0);
+//    }
+//
+//    double mu() {
+//        return deathRate.getParameterValue(0);
+//    }
+//
+//    double psi() {
+//        return serialSamplingRate.getParameterValue(0);
+//    }
+//
+//    double r() {
+//        return treatmentProbability.getParameterValue(0);
+//    }
+//
+//    double rho() {
+//        return samplingFractionAtPresent.getParameterValue(0);
+//    }
 
     @Override
     public double logConditioningProbability() {
@@ -270,11 +273,11 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     // Log-likelihood of tree without conditioning on anything
     public final double calculateUnconditionedTreeLogLikelihood(Tree tree) {
 
-        double lambda = lambda();
-        double mu = mu();
-        double psi = psi();
-        double r = r();
-        double rho = rho();
+//        double lambda = lambda();
+//        double mu = mu();
+//        double psi = psi();
+//        double r = r();
+//        double rho = rho();
 
         double timeZeroTolerance = Double.MIN_VALUE;
         boolean noSamplingAtPresent = rho < Double.MIN_VALUE;
@@ -347,6 +350,15 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     @Override
+    public void updateModelValues(int model) {
+        lambda = birthRate.getParameterValue(model);
+        mu = deathRate.getParameterValue(model);
+        psi = serialSamplingRate.getParameterValue(model);
+        r = treatmentProbability.getParameterValue(model);
+        rho = samplingFractionAtPresent.getParameterValue(model);
+    }
+
+    @Override
     public double processOrigin(int model, double rootAge) {
         if (originTime.getValue(0) < rootAge) {
             return Double.NaN;
@@ -357,23 +369,24 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public double processCoalescence(int model, double tOld) {
-        return Math.log(lambda()); // TODO Notice the natural parameterization is `log lambda`
+//        return Math.log(lambda()); // TODO Notice the natural parameterization is `log lambda`
+        return Math.log(lambda);
     }
 
     @Override
     public double processSampling(int model, double tOld) {
 
         // double logPsi = Math.log(psi()); // TODO Notice the natural parameterization is `log psi`
-        double r = r();
+//        double r = r();
         // double logRho = Math.log(rho()); // TODO Notice the natural parameterization is `log rho`
 
         double timeZeroTolerance = Double.MIN_VALUE;
-        boolean noSamplingAtPresent = rho() < Double.MIN_VALUE;
+        boolean noSamplingAtPresent = rho < Double.MIN_VALUE;
 
         if (noSamplingAtPresent || tOld > timeZeroTolerance) {
-            return Math.log(psi()) + Math.log(r + (1.0 - r) * p0(tOld));
+            return Math.log(psi) + Math.log(r + (1.0 - r) * p0(tOld));
         } else {
-            return Math.log(rho());
+            return Math.log(rho);
         }
     }
 
@@ -435,7 +448,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
 //        double[] partialC1C2 = new double[2];
         this.temp1[idx1] = 0;
-        this.temp1[idx2] = 2 * lambda() / C1;
+        this.temp1[idx2] = 2 * lambda / C1;
 
 //        return partialC1C2;
     }
@@ -549,9 +562,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         // double psi = psi();
         // double rho = rho();
 
-        partialC1C2partialLambda(0, 1, lambda(), mu(), psi(), rho());
-        partialC1C2partialMu(2, 3, lambda(), mu(), psi(), rho());
-        partialC1C2partialPsi(4, 5, lambda(), mu(), psi(), rho());
+        partialC1C2partialLambda(0, 1, lambda, mu, psi, rho);
+        partialC1C2partialMu(2, 3, lambda, mu, psi, rho);
+        partialC1C2partialPsi(4, 5, lambda, mu, psi, rho);
         partialC1C2partialRho(6, 7);
 //        partialC1C2_all[0] = partialC1C2partialLambda();
 //        partialC1C2_all[1] = partialC1C2partialMu();
@@ -617,9 +630,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
         double[] partialP0_all = temp2; // new double[4];
 
-        double lambda = lambda();
-        double mu = mu();
-        double psi = psi();
+//        double lambda = lambda();
+//        double mu = mu();
+//        double psi = psi();
 //        double[] constants = getConstants();
         // double G1 = g1(t);
         double G2 = g2(t,G1);
@@ -640,7 +653,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public void precomputeGradientConstants() {
-        precomputeConstants();
+        updateModelValues(0);
+        precomputeConstants(); // TODO These may change depending on currentModelSegment
         this.savedQ = Double.MIN_VALUE;
 //        this.savedPartialQ = null;
         this.partialQKnown = false;
@@ -693,13 +707,13 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public void processGradientSampling(double[] gradient, int currentModelSegment, double intervalEnd) {
-        double r = r();
+//        double r = r();
         // double rho = rho();
         // double psi = psi();
         double t = intervalEnd;
 
         double timeZeroTolerance = Double.MIN_VALUE;
-        boolean noSamplingAtPresent = rho() < Double.MIN_VALUE;
+        boolean noSamplingAtPresent = rho < Double.MIN_VALUE;
 
         if (noSamplingAtPresent || t > timeZeroTolerance) {
             double expC1t = Math.exp(-getC1() * t);
@@ -709,11 +723,11 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             for (int j = 0; j < 4; ++j) {
                 gradient[j] += v * partialP0_all[j];
             }
-            gradient[2] += 1 / psi();
+            gradient[2] += 1 / psi;
             gradient[4] += (1 - P0) / ((1 - r)*P0 + r);
         } else {
-            if (rho() != 0) {
-                gradient[3] += 1 / rho();
+            if (rho != 0.0) {
+                gradient[3] += 1 / rho;
             }
         }
 
@@ -721,7 +735,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public void processGradientCoalescence(double[] gradient, int currentModelSegment, double intervalEnd) {
-        gradient[0] += 1 / lambda();
+        gradient[0] += 1 / lambda;
     }
 
     @Override

@@ -50,13 +50,18 @@ public interface SpeciationModelGradientProvider {
         throw new RuntimeException("Not yet implemented");
     }
 
+    default int getBirthRateIndex() { throw new RuntimeException("Not implemented"); }
+
+    default int getDeathRateIndex() { throw new RuntimeException("Not implemented"); }
+
+    default int getSamplingRateIndex() { throw new RuntimeException("Not implemented"); }
+
+    default int getSamplingProbabilityIndex() { throw new RuntimeException("Not implemented"); }
+
+    default int getTreatmentProbabilityIndex() { throw new RuntimeException("Not implemented"); }
+
     default double[] getBreakPoints() { throw new RuntimeException("Not yet implemented"); }
-
-    // TODO This factory is probability unnecessary ...
-    static SpeciationModelGradientProvider factory(SpeciationModel speciationModel) {
-        return speciationModel.getProvider();
-    }
-
+    
     default void precomputeGradientConstants() { throw new RuntimeException("Not yet implemented"); }
 
     default void processGradientModelSegmentBreakPoint(double[] gradient,
@@ -85,4 +90,6 @@ public interface SpeciationModelGradientProvider {
                                        double totalDuration) { throw new RuntimeException("Not yet implemented"); }
 
     default void logConditioningProbability(double[] gradient) { throw new RuntimeException("Not yet implemented"); }
+
+    default void updateModelValues(int currentModelSegment) { throw new RuntimeException("Not yet implemented"); }
 }

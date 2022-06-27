@@ -259,25 +259,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 //        return samplingFractionAtPresent.getParameterValue(0);
 //    }
 
-    double lambda() {
-        return birthRate.getParameterValue(0);
-    }
-
-    double mu() {
-        return deathRate.getParameterValue(0);
-    }
-
-    double psi() {
-        return serialSamplingRate.getParameterValue(0);
-    }
-
-    double r() {
-        return treatmentProbability.getParameterValue(0);
-    }
-
-    double rho() {
-        return samplingFractionAtPresent.getParameterValue(0);
-    }
 
     @Override
     public double logConditioningProbability() {

@@ -82,6 +82,7 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
                 provider.processGradientModelSegmentBreakPoint(gradient, currentModelSegment, intervalStart, segmentIntervalEnd);
                 intervalStart = segmentIntervalEnd;
                 ++currentModelSegment;
+                provider.updateModelValues(currentModelSegment);
             }
 
             // TODO Need to check for intervalStart == intervalEnd?
@@ -89,7 +90,10 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
 
             provider.updateModelValues(currentModelSegment);
 
-            provider.processGradientInterval(gradient, currentModelSegment, intervalStart, intervalEnd, nLineages);
+            if (intervalEnd > intervalStart) {
+//                System.err.println("interval: " + intervalStart + " -- " + intervalEnd);
+                provider.processGradientInterval(gradient, currentModelSegment, intervalStart, intervalEnd, nLineages);
+            }
 
             // Interval ends with a coalescent or sampling event at time intervalEnd
             if (treeIntervals.getIntervalType(i) == IntervalType.SAMPLE) {

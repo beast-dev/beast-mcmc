@@ -101,9 +101,10 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
                 logL += speciationModel.processModelSegmentBreakPoint(currentModelSegment, intervalStart, segmentIntervalEnd);
                 intervalStart = segmentIntervalEnd;
                 ++currentModelSegment;
+                speciationModel.updateModelValues(currentModelSegment);
             }
 
-            speciationModel.updateModelValues(currentModelSegment);
+
 
             // TODO Need to check for intervalStart == intervalEnd?
             // TODO Need to check for intervalStart == intervalEnd == 0.0?

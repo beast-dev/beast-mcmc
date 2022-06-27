@@ -34,6 +34,10 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
+import dr.evomodel.treedatalikelihood.action.ActionBeagleDelegate;
+import dr.evomodel.treedatalikelihood.action.ActionEvolutionaryProcessDelegate;
+import dr.evomodel.treedatalikelihood.action.ActionSubstitutionModelDelegate;
+import dr.evomodel.treedatalikelihood.action.HomogeneousActionSubstitutionModelDelegate;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -66,6 +70,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private static final boolean RESCALING_OFF = false; // a debugging switch
 
     private static final boolean DEBUG = false; // write debug information to stdOut
+
+    private final boolean USE_ACTION = true;  //TODO: move into constructor
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -179,20 +185,22 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             scaleBufferHelper = new BufferIndexHelper(getSingleScaleBufferCount(), 0);
 
             if (settings.branchInfinitesimalDerivative) {
-                evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, settings);
-//                evolutionaryProcessDelegate = new ActionSubstitutionModelDelegate(branchModel, nodeCount);
+                evolutionaryProcessDelegate = USE_ACTION ?
+                        new ActionSubstitutionModelDelegate(tree, branchModel, nodeCount) :
+                        new SubstitutionModelDelegate(tree, branchModel, settings);
             } else {
 
                 if (branchModel.getSubstitutionModels().size() == 1) {
-                    evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
-//                    evolutionaryProcessDelegate = new HomogeneousActionSubstitutionModelDelegate(branchModel.getSubstitutionModels().get(0), nodeCount);
+                    evolutionaryProcessDelegate = USE_ACTION ?
+                            new HomogeneousActionSubstitutionModelDelegate(branchModel.getSubstitutionModels().get(0), nodeCount) :
+                            new HomogenousSubstitutionModelDelegate(tree, branchModel);
                 } else {
                     // use a more general delegate that allows different substitution models on different branches and
                     // can do matrix convolution.
 
                     // TODO: the constructor should take the delegate and the delegate should wrap the branchModel
-                    evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, settings);
-//                    evolutionaryProcessDelegate = new ActionSubstitutionModelDelegate(branchModel, nodeCount);
+                    evolutionaryProcessDelegate = USE_ACTION ? new ActionSubstitutionModelDelegate(tree, branchModel, nodeCount) :
+                            new SubstitutionModelDelegate(tree, branchModel, settings);
                 }
             }
 
@@ -401,7 +409,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             // end auto resource selection
 
 
-            beagle = BeagleFactory.loadBeagleInstance(
+            beagle = USE_ACTION ?
+                    new ActionBeagleDelegate(tree, numPartials, patternCount,
+                    stateCount, categoryCount, stateCount * patternCount * categoryCount,
+                    rescalingScheme, (ActionEvolutionaryProcessDelegate) evolutionaryProcessDelegate) :
+                    BeagleFactory.loadBeagleInstance(
                     tipCount,
                     numPartials,
                     compactPartialsCount,
@@ -416,9 +428,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     requirementFlags
             );
 
-//            beagle = new ActionBeagleDelegate(tree, numPartials, patternCount,
-//                    stateCount, categoryCount, stateCount * patternCount * categoryCount,
-//                    rescalingScheme, (ActionEvolutionaryProcessDelegate) evolutionaryProcessDelegate);
             InstanceDetails instanceDetails = beagle.getDetails();
             ResourceDetails resourceDetails = null;
 
@@ -445,11 +454,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
             }
 
-            instanceFlags = instanceDetails.getFlags();
-//            instanceFlags = 1209043542;
+            if (!USE_ACTION) {
+                instanceFlags = instanceDetails.getFlags();
 
-            if (IS_THREAD_COUNT_COMPATIBLE() && threadCount > 1) {
-                beagle.setCPUThreadCount(threadCount);
+                if (IS_THREAD_COUNT_COMPATIBLE() && threadCount > 1) {
+                    beagle.setCPUThreadCount(threadCount);
+                }
             }
 
             if (patternList instanceof UncertainSiteList) { // TODO Remove
@@ -461,6 +471,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 //            }
 
             //add in logger info for preOrder traversal
+            logger.info("  " + (USE_ACTION ? "Using" : "Ignoring") + " action calculations in tree likelihood.");
             logger.info("  " + (settings.usePreOrder ? "Using" : "Ignoring") + " preOrder partials in tree likelihood.");
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
             logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");

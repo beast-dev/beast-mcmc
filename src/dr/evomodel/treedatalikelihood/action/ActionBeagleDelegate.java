@@ -125,7 +125,6 @@ public class ActionBeagleDelegate implements Beagle {
 
     @Override
     public void setPatternWeights(double[] doubles) {
-        assert(doubles.length == patternCount);
         patternWeights.setData(doubles);
     }
 

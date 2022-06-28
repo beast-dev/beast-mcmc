@@ -87,7 +87,7 @@ public class ActionBeagleDelegate implements Beagle {
                                 ActionEvolutionaryProcessDelegate evolutionaryProcessDelegate) {
         this.treeModel = treeModel;
         this.tipCount = treeModel.getExternalNodeCount();
-        this.partialsBufferCount = partialsBufferCount;
+        this.partialsBufferCount = partialsBufferCount + 1;
         this.patternCount = patternCount;
         this.stateCount = stateCount;
         this.categoryCount = categoryCount;
@@ -112,7 +112,7 @@ public class ActionBeagleDelegate implements Beagle {
         this.rescalingScheme = rescalingScheme;
         this.identity = CommonOps_DSCC.identity(stateCount);
         this.A = new DMatrixSparseCSC(stateCount, stateCount);
-        this.rescaleCols = IntStream.range(0, patternCount).toArray();
+        this.rescaleRows = IntStream.range(0, patternCount).toArray();
         this.tmpLogScalingFactors = new DMatrixRMaj(1, patternCount);
     }
 
@@ -366,31 +366,32 @@ public class ActionBeagleDelegate implements Beagle {
                     CommonOps_DDRM.elementDiv(partials[destinationPartialIndex][j], scalingFactors[readScaleIndex], partials[destinationPartialIndex][j]);
                 }
             }
-            if (rescale == 1) {
+            if (rescale == 1 && i1 != Beagle.NONE) {
                 rescalePartials(partials[destinationPartialIndex], scalingFactors[writeScaleIndex], scalingFactors[i1]);
             }
 
         }
     }
 
-    private final int[] rescaleCols;
+    private final int[] rescaleRows;
     private final DMatrixRMaj tmpLogScalingFactors;
 
     private void rescalePartials(DMatrixRMaj[] destPartials, DMatrixRMaj scalingFactors, DMatrixRMaj cumulativeScaleBuffer) {
-        DMatrixRMaj categoryCombined = new DMatrixRMaj(stateCount * categoryCount, patternCount);
-        final int rowSize = stateCount * categoryCount;
-        final int colSize = patternCount;
+        DMatrixRMaj categoryCombined = new DMatrixRMaj(patternCount, stateCount * categoryCount);
+        final int rowSize = patternCount;
+        final int colSize = stateCount;
         for (int j = 0; j < categoryCount; j++) {
             CommonOps_DDRM.insert(destPartials[j], categoryCombined,
-                    IntStream.range(j * rowSize, j * rowSize + rowSize).toArray(), rowSize,
-                    rescaleCols, colSize);
+                    rescaleRows, rowSize,
+                    IntStream.range(j * colSize, j * colSize + rowSize).toArray(), colSize);
         }
-        CommonOps_DDRM.maxCols(categoryCombined, scalingFactors);
+        CommonOps_DDRM.maxRows(categoryCombined, scalingFactors);
+        CommonOps_DDRM.transpose(scalingFactors);
         CommonOps_DDRM.elementLog(scalingFactors, tmpLogScalingFactors);
         CommonOps_DDRM.add(cumulativeScaleBuffer, tmpLogScalingFactors, cumulativeScaleBuffer);
 
         for (int j = 0; j < categoryCount; j++) {
-            CommonOps_DDRM.divideCols(destPartials[j], scalingFactors.getData());
+            CommonOps_DDRM.divideRows(scalingFactors.getData(), destPartials[j]);
         }
     }
 

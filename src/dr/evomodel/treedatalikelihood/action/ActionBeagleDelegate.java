@@ -39,6 +39,7 @@ import org.newejml.sparse.csc.misc.ImplCommonOps_DSCC;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 /**
  * @author Xiang Ji
@@ -111,6 +112,8 @@ public class ActionBeagleDelegate implements Beagle {
         this.rescalingScheme = rescalingScheme;
         this.identity = CommonOps_DSCC.identity(stateCount);
         this.A = new DMatrixSparseCSC(stateCount, stateCount);
+        this.rescaleCols = IntStream.range(0, patternCount).toArray();
+        this.tmpLogScalingFactors = new DMatrixRMaj(1, patternCount);
     }
 
     @Override
@@ -339,6 +342,14 @@ public class ActionBeagleDelegate implements Beagle {
             final int secondChildPartialIndex = ints[operation * operationSize + 5];
             final int secondChildSubstitutionMatrixIndex = ints[operation * operationSize + 6];
 
+            // consistent with Beagle cases for easier future reference
+            int rescale = Beagle.NONE;
+            if (writeScaleIndex != Beagle.NONE) {
+                rescale = 1;
+            } else if (readScaleIndex != Beagle.NONE) {
+                rescale = 0;
+            }
+
             for (int j = 0; j < categoryCount; j++) {
                 DMatrixRMaj leftPartial = partials[firstChildPartialIndex][j];
                 DMatrixRMaj rightPartial = partials[secondChildPartialIndex][j];
@@ -350,7 +361,36 @@ public class ActionBeagleDelegate implements Beagle {
                 DMatrixRMaj parentRightPostPartial = simpleAction(rightGeneratorMatrix, rightPartial);
 
                 CommonOps_DDRM.elementMult(parentLeftPostPartial, parentRightPostPartial, partials[destinationPartialIndex][j]);
+
+                if (rescale == 0) {
+                    CommonOps_DDRM.elementDiv(partials[destinationPartialIndex][j], scalingFactors[readScaleIndex], partials[destinationPartialIndex][j]);
+                }
             }
+            if (rescale == 1) {
+                rescalePartials(partials[destinationPartialIndex], scalingFactors[writeScaleIndex], scalingFactors[i1]);
+            }
+
+        }
+    }
+
+    private final int[] rescaleCols;
+    private final DMatrixRMaj tmpLogScalingFactors;
+
+    private void rescalePartials(DMatrixRMaj[] destPartials, DMatrixRMaj scalingFactors, DMatrixRMaj cumulativeScaleBuffer) {
+        DMatrixRMaj categoryCombined = new DMatrixRMaj(stateCount * categoryCount, patternCount);
+        final int rowSize = stateCount * categoryCount;
+        final int colSize = patternCount;
+        for (int j = 0; j < categoryCount; j++) {
+            CommonOps_DDRM.insert(destPartials[j], categoryCombined,
+                    IntStream.range(j * rowSize, j * rowSize + rowSize).toArray(), rowSize,
+                    rescaleCols, colSize);
+        }
+        CommonOps_DDRM.maxCols(categoryCombined, scalingFactors);
+        CommonOps_DDRM.elementLog(scalingFactors, tmpLogScalingFactors);
+        CommonOps_DDRM.add(cumulativeScaleBuffer, tmpLogScalingFactors, cumulativeScaleBuffer);
+
+        for (int j = 0; j < categoryCount; j++) {
+            CommonOps_DDRM.divideCols(destPartials[j], scalingFactors.getData());
         }
     }
 
@@ -607,7 +647,7 @@ public class ActionBeagleDelegate implements Beagle {
 
     @Override
     public void accumulateScaleFactorsByPartition(int[] ints, int i, int i1, int i2) {
-
+        throw new RuntimeException("Not yet impelmented!");
     }
 
     @Override
@@ -617,7 +657,7 @@ public class ActionBeagleDelegate implements Beagle {
 
     @Override
     public void removeScaleFactorsByPartition(int[] ints, int i, int i1, int i2) {
-
+        throw new RuntimeException("Not yet impelmented!");
     }
 
     @Override

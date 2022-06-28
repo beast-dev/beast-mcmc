@@ -80,7 +80,7 @@ public class PairedParalogGeneConversionSubstitutionModel extends BaseSubstituti
 
     @Override
     public String getDescription() {
-        return "Using igc extension model for gene conversion rate estimations.";
+        return "Using pairwise interlocus gene conversion substitution model.";
     }
 
     @Override

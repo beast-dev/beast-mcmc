@@ -62,7 +62,6 @@ public class NewBirthDeathModel extends NewBirthDeathSerialSamplingModel {
     public double q(double t){
         double C1 = getC1();
         double C2 = getC2();
-        // TODO why the factor of 4 and inversion here?
         double expC1t = Math.exp(C1 * t);
         return 4/(2.0 * (1.0 - Math.pow(C2,2.0)) + (1.0/expC1t) * Math.pow((1.0 - C2),2.0) + expC1t * Math.pow(1.0 + C2,2.0));
     }
@@ -116,6 +115,8 @@ public class NewBirthDeathModel extends NewBirthDeathSerialSamplingModel {
 
     @Override
     public void precomputeGradientConstants() {
+        updateModelValues(0);
+        precomputeConstants(); // TODO These may change depending on currentModelSegment
         n_events = 0;
         this.saved_q = Double.MIN_VALUE;
         this.partialqKnown = false;
@@ -127,21 +128,22 @@ public class NewBirthDeathModel extends NewBirthDeathSerialSamplingModel {
         double tYoung = intervalStart;
         double[] partialq_all_old = partialqpartialAll(temp2, tOld);
         double[] partialq_all_young;
-        double q_Old = q(tOld);
+        double q_old = q(tOld);
         double q_young;
-        if (this.saved_q != Double.MIN_VALUE) {
+
+       if (this.saved_q != Double.MIN_VALUE) {
             q_young = this.saved_q;
         }
         else {
             q_young = q(tYoung);
         }
-        this.saved_q = q_Old;
+        this.saved_q = q_old;
 
         if (partialqKnown) {
             partialq_all_young = temp3;
             System.arraycopy(partialq, 0, partialq_all_young, 0, 4);
         } else {
-            partialq_all_young = partialQpartialAll(temp3, tYoung);
+            partialq_all_young = partialqpartialAll(temp3, tYoung);
             //System.arraycopy(partialQ_all_young, 0, savedPartialQ, 0, 4);
             partialqKnown = true;
         }
@@ -149,7 +151,7 @@ public class NewBirthDeathModel extends NewBirthDeathSerialSamplingModel {
 
 
         for (int j = 0; j < 4; ++j) {
-            gradient[j] += nLineages*(partialq_all_young[j] / q_young - partialq_all_old[j] / q_Old);
+            gradient[j] += nLineages*(partialq_all_old[j] / q_old - partialq_all_young[j] / q_young);
         }
 
     }
@@ -167,9 +169,13 @@ public class NewBirthDeathModel extends NewBirthDeathSerialSamplingModel {
 
     @Override
     public void processGradientOrigin(double[] gradient, int currentModelSegment, double totalDuration) {
-//        double lambda = lambda();
-//        double rho = rho();
-//        double mu = mu();
+        double[] partialq_all_root = partialqpartialAll(temp3, totalDuration);
+
+        double q_totalDuration = q(totalDuration);
+        for (int i = 0; i < 4; ++i) {
+            gradient[i] -=  2* partialq_all_root[i] / q_totalDuration;
+        }
+
         double v = exp(-(lambda - mu) * totalDuration);
         double v2 = (lambda*(1-rho) - mu)* v;
         double v1 = lambda*rho + v2;
@@ -179,12 +185,6 @@ public class NewBirthDeathModel extends NewBirthDeathSerialSamplingModel {
         gradient[1] +=  (n_events - 1)*(1/v1*(-v+v2*totalDuration) + 1/(1-v)*v*totalDuration);
         gradient[3] += (n_events - 1)*(1/v1*(lambda-v*lambda));
 
-        double[] partialq_all_root = partialqpartialAll(temp3, totalDuration);
-
-        double q_totalDuration = q(totalDuration);
-        for (int i = 0; i < 4; ++i) {
-            gradient[i] -=  2* partialq_all_root[i] / q_totalDuration;
-        }
     }
 
     @Override

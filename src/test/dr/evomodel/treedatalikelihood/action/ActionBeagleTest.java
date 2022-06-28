@@ -1,5 +1,6 @@
 package test.dr.evomodel.treedatalikelihood.action;
 
+import beagle.Beagle;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
@@ -130,10 +131,10 @@ public class ActionBeagleTest extends MathTestCase {
                 4,
                 false);
         int[] operations = new int[]{
-                3, 0, 0, 0, 0, 1, 1,
-                4, 0, 0, 3, 3, 2, 2
+                3, 0, Beagle.NONE, 0, 0, 1, 1,
+                4, 1, Beagle.NONE, 3, 3, 2, 2
         };
-        beagle.updatePartials(operations, 2, 0);
+        beagle.updatePartials(operations, 2, 2);
 
         double[] seePartials = new double[partialsSize];
         beagle.getPartials(4, 0, seePartials);
@@ -142,7 +143,7 @@ public class ActionBeagleTest extends MathTestCase {
         int rootIndex = 4;
         double[] sumLogLikelihoods = new double[1];
         beagle.calculateRootLogLikelihoods(new int[]{rootIndex}, new int[]{0}, new int[]{0},
-                new int[]{0}, 1, sumLogLikelihoods);
+                new int[]{2}, 1, sumLogLikelihoods);
 
         double logL = sumLogLikelihoods[0];
         System.err.println(logL);

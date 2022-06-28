@@ -279,67 +279,68 @@
 	<!-- ########## -->
 	<!-- # CASE 6 # -->
 	<!-- ########## -->
-<!--	<newick id="startingTree2" usingHeights="true" usingDates="false">-->
-<!--		((D:0.3525971197,C:0.3525971197):0.3030439728,(B:0.4709696264,A:0.4709696264):0.1846714661)-->
-<!--	</newick>-->
+	
+	<newick id="startingTree2" usingHeights="true" usingDates="false">
+		((D:0.353,C:0.353):0.303,(B:0.471,A:0.471):0.185)
+	</newick>
 
-<!--	&lt;!&ndash; Generate a tree model                                                   &ndash;&gt;-->
-<!--	<treeModel id="treeModel2">-->
-<!--		<newick idref="startingTree"/>-->
-<!--		<rootHeight>-->
-<!--			<parameter id="treeModel.rootHeight"/>-->
-<!--		</rootHeight>-->
-<!--		<nodeHeights internalNodes="true">-->
-<!--			<parameter id="treeModel.internalNodeHeights"/>-->
-<!--		</nodeHeights>-->
-<!--		<nodeHeights internalNodes="true" rootNode="true">-->
-<!--			<parameter id="treeModel.allInternalNodeHeights"/>-->
-<!--		</nodeHeights>-->
-<!--	</treeModel>-->
+	<!-- Generate a tree model                                                   -->
+	<treeModel id="treeModel2">
+		<newick idref="startingTree2"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+	</treeModel>
 
 
-<!--	<newBirthDeathSerialSampling id="bdss1" units="years" conditionOnSurvival="false">-->
-<!--		<birthRate>-->
-<!--			<parameter id="bdss1.birthRate" value="8.472" lower="0.0"/>-->
-<!--		</birthRate>-->
-<!--		<deathRate>-->
-<!--			<parameter id="bdss1.deathRate" value="4.321" lower="0.0"/>-->
-<!--		</deathRate>-->
-<!--		<samplingRate>-->
-<!--			<parameter id="bdss1.samplingRate" value="0" lower="0.0"/>-->
-<!--		</samplingRate>-->
-<!--		<treatmentProbability>-->
-<!--			<parameter id="bdss1.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>-->
-<!--		</treatmentProbability>-->
-<!--		<samplingProbabilityAtPresent>-->
-<!--			<parameter id="bdss1.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>-->
-<!--		</samplingProbabilityAtPresent>-->
-<!--		<origin>-->
-<!--			<parameter id="bdss1.origin" value="5.123" lower="0.0"/>-->
-<!--		</origin>-->
-<!--	</newBirthDeathSerialSampling>-->
+	<newBirthDeathSerialSampling id="bdss1" units="years" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss1.birthRate" value="8.472" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss1.deathRate" value="4.321" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss1.samplingRate" value="0" lower="0.0"/>
+		</samplingRate>
+		<treatmentProbability>
+			<parameter id="bdss1.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<samplingProbabilityAtPresent>
+			<parameter id="bdss1.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
+		</samplingProbabilityAtPresent>
+		<origin>
+			<parameter id="bdss1.origin" value="5.123" lower="0.0"/>
+		</origin>
+	</newBirthDeathSerialSampling>
 
-<!--	<speciationLikelihood id="speciation1" useNewLoop="true">-->
-<!--		<model>-->
-<!--			<birthDeathSerialSampling idref="bdss1"/>-->
-<!--		</model>-->
-<!--		<speciesTree>-->
-<!--			<treeModel idref="treeModel"/>-->
-<!--		</speciesTree>-->
-<!--	</speciationLikelihood>-->
+	<speciationLikelihood id="speciation1" useNewLoop="true">
+		<model>
+			<birthDeathSerialSampling idref="bdss1"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel2"/>
+		</speciesTree>
+	</speciationLikelihood>
 
-<!--	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">-->
-<!--	<message>-->
-<!--		check full model-->
-<!--	</message>-->
-<!--	<actual regex="lnL:\s(.*?)\n">-->
-<!--		<report>-->
-<!--			<speciationLikelihood idref="speciation1"/>-->
-<!--		</report>-->
-<!--	</actual>-->
-<!--		<expected>-->
-<!--			-66.696843909761611258-->
-<!--		</expected>-->
-<!--	</assertEqual>-->
+	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+	<message>
+		check full model
+	</message>
+	<actual regex="lnL:\s(.*?)\n">
+		<report>
+			<speciationLikelihood idref="speciation1"/>
+		</report>
+	</actual>
+		<expected>
+			-1.3286850000000000
+		</expected>
+	</assertEqual>
 
 </beast>

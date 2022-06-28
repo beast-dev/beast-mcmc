@@ -58,7 +58,7 @@ public class ActionBeagleTest extends MathTestCase {
         PartialsRescalingScheme rescalingScheme = PartialsRescalingScheme.AUTO;
         ActionEvolutionaryProcessDelegate evolutionaryProcessDelegate = new HomogeneousActionSubstitutionModelDelegate(hky, 5);
         this.beagle = new ActionBeagleDelegate(new DefaultTreeModel("void tree"), partialsBufferCount, patternCount,
-                stateCount, categoryCount, partialsSize,
+                stateCount, categoryCount, partialsSize, partialsBufferCount + 1,
                 rescalingScheme, evolutionaryProcessDelegate);
         evolutionaryProcessDelegate.updateSubstitutionModels(beagle, false);
 

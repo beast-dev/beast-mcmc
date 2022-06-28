@@ -83,6 +83,7 @@ public class ActionBeagleDelegate implements Beagle {
                                 int stateCount,
                                 int categoryCount,
                                 int partialsSize,
+                                int scaleBufferCount,
                                 PartialsRescalingScheme rescalingScheme,
                                 ActionEvolutionaryProcessDelegate evolutionaryProcessDelegate) {
         this.treeModel = treeModel;
@@ -97,15 +98,17 @@ public class ActionBeagleDelegate implements Beagle {
         this.patternWeights = new DMatrixRMaj(1, patternCount);
         this.stateFrequencies = new double[stateCount];
         this.partials = new DMatrixRMaj[partialsBufferCount][categoryCount];
-        this.scalingFactors = new DMatrixRMaj[partialsBufferCount];
+        this.scalingFactors = new DMatrixRMaj[scaleBufferCount];
         this.autoScalingBuffers = new DMatrixRMaj[partialsBufferCount];
         this.activeScalingFactors = new boolean[partialsBufferCount];
         for (int i = 0; i < partialsBufferCount; i++) {
             for (int j = 0; j < categoryCount; j++) {
                 partials[i][j] = new DMatrixRMaj(patternCount, stateCount);
             }
-            scalingFactors[i] = new DMatrixRMaj(1, patternCount);
             autoScalingBuffers[i] = new DMatrixRMaj(1, patternCount);
+        }
+        for (int i = 0; i < scaleBufferCount; i++) {
+            scalingFactors[i] = new DMatrixRMaj(1, patternCount);
         }
         this.instantaneousMatrices = instantaneousMatrices;
         this.evolutionaryProcessDelegate = evolutionaryProcessDelegate;

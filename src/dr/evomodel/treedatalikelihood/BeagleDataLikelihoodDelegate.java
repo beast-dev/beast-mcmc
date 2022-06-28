@@ -411,7 +411,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             beagle = USE_ACTION ?
                     new ActionBeagleDelegate(tree, numPartials, patternCount,
-                    stateCount, categoryCount, stateCount * patternCount * categoryCount,
+                    stateCount, categoryCount, stateCount * patternCount * categoryCount, numScaleBuffers,
                     rescalingScheme, (ActionEvolutionaryProcessDelegate) evolutionaryProcessDelegate) :
                     BeagleFactory.loadBeagleInstance(
                     tipCount,

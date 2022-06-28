@@ -380,7 +380,7 @@
 		</speciesTree>
 	</speciationLikelihood>
 
-	<assertEqual tolerance="1e1000" verbose="true" charactersToStrip="\[\],">
+	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
 		<message>
 			(isochronous tree) psi = 0
 		</message>
@@ -428,7 +428,7 @@
 		</speciesTree>
 	</speciationLikelihood>
 
-	<assertEqual tolerance="1e1000" verbose="true" charactersToStrip="\[\],">
+	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
 		<message>
 			(isochronous tree) psi = 0, r = 0
 		</message>
@@ -476,7 +476,7 @@
 		</speciesTree>
 	</speciationLikelihood>
 
-	<assertEqual tolerance="1e1000" verbose="true" charactersToStrip="\[\],">
+	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
 		<message>
 			(isochronous tree) psi = 0, r = 0, rho = 1
 		</message>

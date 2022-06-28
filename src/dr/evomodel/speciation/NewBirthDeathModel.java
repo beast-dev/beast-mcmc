@@ -32,6 +32,10 @@ import static java.lang.Math.log;
 
 
 public class NewBirthDeathModel extends NewBirthDeathSerialSamplingModel {
+    // TODO
+    //   1) this probably should not extend a more parameter-rich model
+    //   2) we have a lot of parameters being passed around that don't exist
+    //   3) figure out how this should be instantiated from the XML (it probably should have own parser as it is a unique model and does not have, say, an origin time)
 
     private int n_events;
     private double[] temp2;

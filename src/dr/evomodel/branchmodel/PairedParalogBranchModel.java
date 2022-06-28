@@ -73,6 +73,7 @@ public class PairedParalogBranchModel extends AbstractModel implements BranchMod
 
         addModel(baseModel);
         addModel(geneConversionModel);
+        addModel(tree);
 
     }
 

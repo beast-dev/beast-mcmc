@@ -288,41 +288,44 @@
 	<treeModel id="treeModel2">
 		<newick idref="startingTree2"/>
 		<rootHeight>
-			<parameter id="treeModel.rootHeight"/>
+			<parameter id="treeModel2.rootHeight"/>
 		</rootHeight>
 		<nodeHeights internalNodes="true">
-			<parameter id="treeModel.internalNodeHeights"/>
+			<parameter id="treeModel2.internalNodeHeights"/>
 		</nodeHeights>
 		<nodeHeights internalNodes="true" rootNode="true">
-			<parameter id="treeModel.allInternalNodeHeights"/>
+			<parameter id="treeModel2.allInternalNodeHeights"/>
 		</nodeHeights>
 	</treeModel>
 
+	<!-- ########## -->
+	<!-- # CASE 6 # -->
+	<!-- ########## -->
 
-	<newBirthDeathSerialSampling id="bdss1" units="years" conditionOnSurvival="false">
+	<newBirthDeathSerialSampling id="bdss6" units="years" conditionOnSurvival="false">
 		<birthRate>
-			<parameter id="bdss1.birthRate" value="8.472" lower="0.0"/>
+			<parameter id="bdss6.birthRate" value="8.472" lower="0.0"/>
 		</birthRate>
 		<deathRate>
-			<parameter id="bdss1.deathRate" value="4.321" lower="0.0"/>
+			<parameter id="bdss6.deathRate" value="4.321" lower="0.0"/>
 		</deathRate>
 		<samplingRate>
-			<parameter id="bdss1.samplingRate" value="0" lower="0.0"/>
+			<parameter id="bdss6.samplingRate" value="1.234" lower="0.0"/>
 		</samplingRate>
 		<treatmentProbability>
-			<parameter id="bdss1.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
+			<parameter id="bdss6.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
 		<samplingProbabilityAtPresent>
-			<parameter id="bdss1.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
+			<parameter id="bdss6.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
 		</samplingProbabilityAtPresent>
 		<origin>
-			<parameter id="bdss1.origin" value="5.123" lower="0.0"/>
+			<parameter id="bdss6.origin" value="5.123" lower="0.0"/>
 		</origin>
 	</newBirthDeathSerialSampling>
 
-	<speciationLikelihood id="speciation1" useNewLoop="true">
+	<speciationLikelihood id="speciation6" useNewLoop="true">
 		<model>
-			<birthDeathSerialSampling idref="bdss1"/>
+			<birthDeathSerialSampling idref="bdss6"/>
 		</model>
 		<speciesTree>
 			<treeModel idref="treeModel2"/>
@@ -331,15 +334,159 @@
 
 	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
 	<message>
-		check full model
+		(isochronous tree) check full model
 	</message>
 	<actual regex="lnL:\s(.*?)\n">
 		<report>
-			<speciationLikelihood idref="speciation1"/>
+			<speciationLikelihood idref="speciation6"/>
 		</report>
 	</actual>
 		<expected>
-			-1.3286850000000000
+			-42.141224575022185661
+		</expected>
+	</assertEqual>
+
+	<!-- ########## -->
+	<!-- # CASE 7 # -->
+	<!-- ########## -->
+
+	<newBirthDeathSerialSampling id="bdss7" units="years" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss7.birthRate" value="8.472" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss7.deathRate" value="4.321" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss7.samplingRate" value="0.0" lower="0.0"/>
+		</samplingRate>
+		<treatmentProbability>
+			<parameter id="bdss7.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<samplingProbabilityAtPresent>
+			<parameter id="bdss7.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
+		</samplingProbabilityAtPresent>
+		<origin>
+			<parameter id="bdss7.origin" value="5.123" lower="0.0"/>
+		</origin>
+	</newBirthDeathSerialSampling>
+
+	<speciationLikelihood id="speciation7" useNewLoop="true">
+		<model>
+			<birthDeathSerialSampling idref="bdss7"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel2"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<assertEqual tolerance="1e1000" verbose="true" charactersToStrip="\[\],">
+		<message>
+			(isochronous tree) psi = 0
+		</message>
+		<actual regex="lnL:\s(.*?)\n">
+			<report>
+				<speciationLikelihood idref="speciation7"/>
+			</report>
+		</actual>
+		<expected>
+			-23.379985986869900927
+		</expected>
+	</assertEqual>
+
+	<!-- ########## -->
+	<!-- # CASE 8 # -->
+	<!-- ########## -->
+
+	<newBirthDeathSerialSampling id="bdss8" units="years" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss8.birthRate" value="8.472" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss8.deathRate" value="4.321" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss8.samplingRate" value="0.0" lower="0.0"/>
+		</samplingRate>
+		<treatmentProbability>
+			<parameter id="bdss8.treatmentProbability" value="0.0" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<samplingProbabilityAtPresent>
+			<parameter id="bdss8.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
+		</samplingProbabilityAtPresent>
+		<origin>
+			<parameter id="bdss8.origin" value="5.123" lower="0.0"/>
+		</origin>
+	</newBirthDeathSerialSampling>
+
+	<speciationLikelihood id="speciation8" useNewLoop="true">
+		<model>
+			<birthDeathSerialSampling idref="bdss8"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel2"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<assertEqual tolerance="1e1000" verbose="true" charactersToStrip="\[\],">
+		<message>
+			(isochronous tree) psi = 0, r = 0
+		</message>
+		<actual regex="lnL:\s(.*?)\n">
+			<report>
+				<speciationLikelihood idref="speciation8"/>
+			</report>
+		</actual>
+		<expected>
+			-23.379985986869900927
+		</expected>
+	</assertEqual>
+
+	<!-- ########## -->
+	<!-- # CASE 9 # -->
+	<!-- ########## -->
+
+	<newBirthDeathSerialSampling id="bdss9" units="years" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss9.birthRate" value="8.472" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss9.deathRate" value="4.321" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss9.samplingRate" value="0.0" lower="0.0"/>
+		</samplingRate>
+		<treatmentProbability>
+			<parameter id="bdss9.treatmentProbability" value="0.0" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<samplingProbabilityAtPresent>
+			<parameter id="bdss9.samplingProbabilityAtPresent" value="1.0" lower="0.0" upper="1.0"/>
+		</samplingProbabilityAtPresent>
+		<origin>
+			<parameter id="bdss9.origin" value="5.123" lower="0.0"/>
+		</origin>
+	</newBirthDeathSerialSampling>
+
+	<speciationLikelihood id="speciation9" useNewLoop="true">
+		<model>
+			<birthDeathSerialSampling idref="bdss9"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel2"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<assertEqual tolerance="1e1000" verbose="true" charactersToStrip="\[\],">
+		<message>
+			(isochronous tree) psi = 0, r = 0, rho = 1
+		</message>
+		<actual regex="lnL:\s(.*?)\n">
+			<report>
+				<speciationLikelihood idref="speciation9"/>
+			</report>
+		</actual>
+		<expected>
+			-26.237364854656995306
 		</expected>
 	</assertEqual>
 

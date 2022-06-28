@@ -43,6 +43,7 @@ public class ActionSubstitutionModelDelegate implements ActionEvolutionaryProces
 
     private final double[] branchLengths;
     private DMatrixSparseCSC[] sparseQs;
+    private DMatrixSparseCSC[] scaledQs;
     private Tree tree;
     private final BranchModel branchModel;
     private final int nodeCount;
@@ -59,6 +60,10 @@ public class ActionSubstitutionModelDelegate implements ActionEvolutionaryProces
         this.sparseQs = new DMatrixSparseCSC[nodeCount];
         for (int i = 0; i < nodeCount; i++) {
             sparseQs[i] = new DMatrixSparseCSC(stateCount, stateCount, 10 * stateCount);
+        }
+        this.scaledQs = new DMatrixSparseCSC[nodeCount];
+        for (int i = 0; i < nodeCount; i++) {
+            scaledQs[i] = new DMatrixSparseCSC(stateCount, stateCount, 10 * stateCount);
         }
     }
 
@@ -198,7 +203,7 @@ public class ActionSubstitutionModelDelegate implements ActionEvolutionaryProces
 
     @Override
     public DMatrixSparseCSC getScaledInstantaneousMatrix(int nodeIndex, double categoryRate) {
-        CommonOps_DSCC.scale(branchLengths[nodeIndex] * categoryRate, sparseQs[nodeIndex], sparseQs[nodeIndex]);
-        return sparseQs[nodeIndex];
+        CommonOps_DSCC.scale(branchLengths[nodeIndex] * categoryRate, sparseQs[nodeIndex], scaledQs[nodeIndex]);
+        return scaledQs[nodeIndex];
     }
 }

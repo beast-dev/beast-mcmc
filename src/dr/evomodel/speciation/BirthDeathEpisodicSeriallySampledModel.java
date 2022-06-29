@@ -209,8 +209,8 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel {
             Arrays.fill(intervalTimes, 0.0);
         }
 
-        for (int idx = 0; idx < numIntervals - 1; idx++) {
-            intervalTimes[idx] = idx * (gridEnd / numIntervals);
+        for (int idx = 0; idx <= numIntervals - 1 ; idx++) {
+            intervalTimes[idx] = (idx+1) * (gridEnd / numIntervals);
         }
     }
 
@@ -227,7 +227,7 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel {
     public double p(int index, double t) {
         double lambda = birthRate(index);
         double mu = deathRate(index);
-        double rho = samplingProbability(index);
+        double psi = serialSamplingRate(index);
         double A = Ai[index];
         double B = Bi[index];
 
@@ -235,8 +235,8 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel {
         double eA = Math.exp(A * (t - ti));
         double oneMinus = eA * (1.0 + B) - (1.0 - B);
         double onePlus = eA * (1.0 + B) + (1.0 - B);
-
-        return (lambda + mu + rho - A * oneMinus/onePlus)/(2 * lambda);
+        //System.out.println((lambda + mu + psi- A * oneMinus/onePlus)/(2 * lambda));
+        return (lambda + mu + psi- A * oneMinus/onePlus)/(2 * lambda);
 
     }
 
@@ -246,13 +246,13 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel {
         double eA = Math.exp(A * (t - ti));
         double oneMinus = eA * (1.0 + B) - (1.0 - B);
         double onePlus = eA * (1.0 + B) + (1.0 - B);
-
+        //System.out.println((lambda + mu + rho - A * oneMinus/onePlus)/(2 * lambda));
         return (lambda + mu + rho - A * oneMinus/onePlus)/(2 * lambda);
 
     }
 
     public double q(int index, double t) {
-        double ti = index == 0 ? 0 : intervalTimes[index-1];
+        double ti = index == 0 ? 0 : intervalTimes[index];
 
         double eA = Math.exp(Ai[index] * (t - ti));
         double sqrtDenom = eA * (1.0 + Bi[index]) + (1.0 - Bi[index]);
@@ -266,8 +266,8 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel {
         double At = Ai[index] * (t - ti);
         double eA = Math.exp(At);
         double sqrtDenom = eA * (1.0 + Bi[index]) + (1.0 - Bi[index]);
-
-        return At * Math.log(4.0) - 2.0 * Math.log(sqrtDenom);
+        //System.out.println(At + Math.log(4.0) - 2.0 * Math.log(sqrtDenom));
+        return At + Math.log(4.0) - 2.0 * Math.log(sqrtDenom);
     }
 
     public double birthRate(int i) {
@@ -336,25 +336,36 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel {
         throw new RuntimeException("Not implemented!");
     }
 
+
+    @Override
+    public void updateModelValues(int model) {
+    }
+
     @Override
     public double[] getBreakPoints() {
         return intervalTimes;
     }
 
     @Override
+    public double processModelSegmentBreakPoint(int model, double intervalStart, double segmentIntervalEnd) {
+        return 0;
+    }
+
+    @Override
     public double processInterval(int model, double tYoung, double tOld, int nLineages) {
-        return nLineages * (logq(model, tYoung) - logq(model, tOld));
+        return nLineages * (logq(model, tOld) - logq(model, tYoung));
     }
 
     @Override
     public double processOrigin(int model, double rootAge) {
-        return (logq(model, rootAge) - logq(model, originTime.getValue(0)));
+        return (logq(model,originTime.getValue(0)) - logq(model, rootAge));
     }
 
     @Override
     public double processCoalescence(int model, double tOld) {
         return Math.log(birthRate.getValue(model)); // TODO Notice the natural parameterization is `log lambda`
     }
+
 
     @Override
     public double processSampling(int model, double tOld) {
@@ -381,5 +392,13 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel {
 
         return logSampProb;
     }
+
+
+    @Override
+    public double logConditioningProbability() {
+       return 0;
+    }
+
+
 
 }

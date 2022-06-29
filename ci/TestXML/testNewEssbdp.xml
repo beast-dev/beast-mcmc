@@ -6,6 +6,7 @@
 <!--       Institute of Evolutionary Biology, University of Edinburgh        -->
 <!--       David Geffen School of Medicine, University of California, Los Angeles-->
 <!--       http://beast.community/                                           -->
+
 <beast version="1.10.5">
 
 	<taxa id="taxa">
@@ -15,27 +16,6 @@
 		<taxon id="D"/>
 	</taxa>
 
-
-	<episodicSeriallySampledBirthDeathModel id="new.bdss" units="years" hasFinalSample="false" conditionOnSurvival="false">
-		<birthRate>
-			<parameter id="bdss.birthRate" value="0.8" lower="0.0"/>
-		</birthRate>
-		<deathRate>
-			<parameter id="bdss.deathRate" value="0.5" lower="0.0" upper="1.0"/>
-		</deathRate>
-		<samplingRate>
-			<parameter id="bdss.samplingRate" value="0.2" lower="0.0"/>
-		</samplingRate>
-		<origin>
-			<parameter id="bdss.origin" value="5.0" lower="0.0"/>
-		</origin>
-		<cutOff>
-			<parameter value="10000.0"/>
-		</cutOff>
-		<numGridPoints>
-			<parameter value="1"/>
-		</numGridPoints>
-	</episodicSeriallySampledBirthDeathModel>
 
 	<newick id="startingTree" usingHeights="true" usingDates="false">
 		((A:1.0,B:2.0):1.0,(C:1.0,D:2.0):2.0)
@@ -61,5 +41,62 @@
 		<treeModel idref="treeModel"/>
 	</treeLengthStatistic>
 
+
+	<!-- ########## -->
+	<!-- # CASE 1 # -->
+	<!-- ########## -->
+
+	<!-- constant rate model with only one interval -->
+	<episodicSeriallySampledBirthDeathModel id="new.bdss1" units="years" hasFinalSample="false" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss1.birthRate" value="8.472" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss1.deathRate" value="4.321" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss1.samplingRate" value="1.234" lower="0.0"/>
+		</samplingRate>
+		<treatmentProbability>
+			<parameter id="bdss1.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<samplingProbability>
+			<parameter id="bdss1.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
+		</samplingProbability>
+		<origin>
+			<parameter id="bdss1.origin" value="5.123" lower="0.0"/>
+		</origin>
+		<cutOff>
+			<parameter value="5.123"/>
+		</cutOff>
+		<numGridPoints>
+			<parameter value="1"/>
+		</numGridPoints>
+	</episodicSeriallySampledBirthDeathModel>
+
+
+	<speciationLikelihood id="speciation1" useNewLoop="true">
+		<model>
+			<birthDeathSerialSampling idref="new.bdss1"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+		<message>
+			check constant rate one interval case
+		</message>
+		<actual regex="lnL:\s(.*?)\n">
+			<report>
+				<speciationLikelihood idref="speciation1"/>
+			</report>
+		</actual>
+		<!-- computed in NewSsbdp -->
+		<expected>
+			-66.30970351360976
+		</expected>
+	</assertEqual>
 
 </beast>

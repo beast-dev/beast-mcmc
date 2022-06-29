@@ -109,7 +109,9 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
             // TODO Need to check for intervalStart == intervalEnd?
             // TODO Need to check for intervalStart == intervalEnd == 0.0?
 
-            logL += speciationModel.processInterval(currentModelSegment, intervalStart, intervalEnd, nLineages);
+            if (intervalEnd > intervalStart) {
+                logL += speciationModel.processInterval(currentModelSegment, intervalStart, intervalEnd, nLineages);
+            }
 
             // Interval ends with a coalescent or sampling event at time intervalEnd
             if (treeIntervals.getIntervalType(i) == IntervalType.SAMPLE) {

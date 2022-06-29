@@ -77,10 +77,6 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
 
         Logger.getLogger("dr.evomodel").info(citeThisModel);
 
-        if (psi.getParameterValue(0) < Double.MIN_VALUE){
-            return new NewBirthDeathModel(modelName, lambda, mu, psi, r, rho, origin, condition, units);
-        }
-
         return new NewBirthDeathSerialSamplingModel(modelName, lambda, mu, psi, r, rho, origin, condition, units);
     }
 

@@ -99,4 +99,61 @@
 		</expected>
 	</assertEqual>
 
+
+	<!-- ########## -->
+	<!-- # CASE 2 # -->
+	<!-- ########## -->
+
+	<!-- multiple rate model with only three intervals -->
+	<episodicSeriallySampledBirthDeathModel id="new.bdss2" units="years" hasFinalSample="false" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss2.birthRate" value ="8.47 2.88 1.82" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss2.deathRate" value ="4.89 2.67 3.23" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss2.samplingRate" value ="3.42 2.95 1.21" lower="0.0"/>
+		</samplingRate>
+		<samplingProbability>
+			<parameter id="bdss2.samplingProbability" value ="0.07  0.22  0.18" lower="0.0" upper="1.0"/>
+		</samplingProbability>
+		<treatmentProbability>
+			<parameter id="bdss2.treatmentProbability" value ="0.89 0.93 0.79" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<origin>
+			<parameter id="bdss2.origin" value="5.123" lower="0.0"/>
+		</origin>
+		<cutOff>
+			<parameter value="5.123"/>
+		</cutOff>
+		<numGridPoints>
+			<parameter value="3"/>
+		</numGridPoints>
+	</episodicSeriallySampledBirthDeathModel>
+
+
+	<speciationLikelihood id="speciation2" useNewLoop="true">
+		<model>
+			<birthDeathSerialSampling idref="new.bdss2"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+		<message>
+			check constant rate one interval case
+		</message>
+		<actual regex="lnL:\s(.*?)\n">
+			<report>
+				<speciationLikelihood idref="speciation2"/>
+			</report>
+		</actual>
+		<!-- computed in RevBayes -->
+		<expected>
+
+		</expected>
+	</assertEqual>
 </beast>

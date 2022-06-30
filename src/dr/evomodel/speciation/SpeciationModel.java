@@ -128,7 +128,7 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
         throw new RuntimeException("Not implemented");
     }
 
-    public double processModelSegmentBreakPoint(int model, double intervalStart, double segmentIntervalEnd) {
+    public double processModelSegmentBreakPoint(int model, double intervalStart, double segmentIntervalEnd, int nLineages) {
         throw new RuntimeException("Not implemented");
     }
 

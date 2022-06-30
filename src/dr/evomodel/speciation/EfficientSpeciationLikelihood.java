@@ -98,7 +98,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
             while (intervalEnd > modelBreakPoints[currentModelSegment]) { // TODO Maybe it's >= ?
 
                 final double segmentIntervalEnd = modelBreakPoints[currentModelSegment];
-                logL += speciationModel.processModelSegmentBreakPoint(currentModelSegment, intervalStart, segmentIntervalEnd);
+                logL += speciationModel.processModelSegmentBreakPoint(currentModelSegment, intervalStart, segmentIntervalEnd, nLineages);
                 intervalStart = segmentIntervalEnd;
                 ++currentModelSegment;
                 speciationModel.updateModelValues(currentModelSegment);

@@ -144,7 +144,7 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel {
             throw new RuntimeException("Length of r parameter should be one or equal to the size of time parameter (size = " + numIntervals + ")");
         }
 
-        if (samplingProbability.getSize() != 1 && samplingProbability.getSize() != (numIntervals + 1)) {
+        if (samplingProbability.getSize() != 1 && samplingProbability.getSize() != (numIntervals)) {
             throw new RuntimeException("Length of samplingProbability parameter should be one or equal to the size of time parameter (size = " + numIntervals + ")");
         }
 
@@ -347,8 +347,8 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel {
     }
 
     @Override
-    public double processModelSegmentBreakPoint(int model, double intervalStart, double segmentIntervalEnd) {
-        return 0;
+    public double processModelSegmentBreakPoint(int model, double intervalStart, double segmentIntervalEnd, int nLineages) {
+        return nLineages * (logq(model, segmentIntervalEnd) - logq(model, intervalStart));
     }
 
     @Override
@@ -383,7 +383,7 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel {
         if (sampleIsAtPresent && samplesTakenAtPresent) {
             logSampProb = Math.log(samplingProbability(0));
         } else if (sampleIsAtEventTime && samplesTakenAtEventTime) {
-            logSampProb = Math.log(samplingProbability(model));
+            logSampProb = Math.log(samplingProbability(model+1));
         } else {
             double logPsi = Math.log(serialSamplingRate(model)); // TODO Notice the natural parameterization is `log psi`
             double r = treatmentProbability.getValue(model);

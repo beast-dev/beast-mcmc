@@ -405,7 +405,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     public double processSampling(int model, double tOld) {
 
         // double logPsi = Math.log(psi()); // TODO Notice the natural parameterization is `log psi`
-//        double r = r();
+        // double r = r();
         // double logRho = Math.log(rho()); // TODO Notice the natural parameterization is `log rho`
 
         double timeZeroTolerance = Double.MIN_VALUE;
@@ -760,9 +760,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             gradient[2] += 1 / psi;
             gradient[4] += (1 - P0) / ((1 - r)*P0 + r);
         } else {
-            if (rho != 0.0) {
-                gradient[3] += 1 / rho;
-            }
+            gradient[3] += 1 / rho;
         }
 
     }

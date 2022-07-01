@@ -773,7 +773,7 @@
 
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true" fullEvaluation="0" operatorAnalysis="ssbdp_hmc.ops">
+	<mcmc id="mcmc" chainLength="100000" autoOptimize="true" fullEvaluation="0" operatorAnalysis="ssbdp_hmc.ops">
 		<joint id="joint">
 			<prior id="prior">
 				<logNormalPrior idref="bdss.birthRatePrior"/>

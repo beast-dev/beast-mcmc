@@ -61,7 +61,7 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
 
     private double[] getGradientLogDensityImpl() {
 
-        double[] gradient = new double[5];
+        double[] gradient = new double[provider.getGradientLength()];
 
         provider.precomputeGradientConstants(); // TODO hopefully get rid of this
         provider.updateModelValues(0);

@@ -787,4 +787,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         return;
     }
 
+    @Override
+    public int getGradientLength() { return 5; }
 }

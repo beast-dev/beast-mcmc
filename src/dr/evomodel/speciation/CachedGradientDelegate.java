@@ -60,12 +60,8 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
     }
 
     private double[] getGradientLogDensityImpl() {
-        double[] gradient;
-        if (speciationModel instanceof BirthDeathEpisodicSeriallySampledModel) {
-            gradient = new double[5*((BirthDeathEpisodicSeriallySampledModel) speciationModel).numIntervals];
-        } else {
-            gradient = new double[5];
-        }
+
+        double[] gradient = new double[5];
 
         provider.precomputeGradientConstants(); // TODO hopefully get rid of this
         provider.updateModelValues(0);

@@ -119,7 +119,11 @@ public class EfficientSpeciationLikelihoodGradient extends AbstractModel
             }
             return gradient;
         } else {
-            return wrtParameter.filter((double[]) gradientProvider.getTrait(null, null));
+            if (speciationModel instanceof BirthDeathEpisodicSeriallySampledModel) {
+                return wrtParameter.filter((double[]) gradientProvider.getTrait(null, null), ((BirthDeathEpisodicSeriallySampledModel) speciationModel).numIntervals);
+            } else {
+                return wrtParameter.filter((double[]) gradientProvider.getTrait(null, null));
+            }
         }
     }
 

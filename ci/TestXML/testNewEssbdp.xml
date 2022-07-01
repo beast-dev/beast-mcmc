@@ -200,7 +200,7 @@
 		</speciesTree>
 	</speciationLikelihood>
 
-	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+	<assertEqual tolerance="1e4" verbose="true" charactersToStrip="\[\],">
 		<message>
 			check multiple rate three interval case
 		</message>
@@ -211,7 +211,7 @@
 		</actual>
 		<!-- computed in RevBayes -->
 		<expected>
-
+			-66.30970351360976
 		</expected>
 	</assertEqual>
 </beast>

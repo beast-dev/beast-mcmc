@@ -121,6 +121,11 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             double[] filter(double[] input) {
                 return input;
             }
+
+            @Override
+            double[] filter(double[] input, int numIntervals) {
+                return input;
+            }
         },
 
         BIRTH_RATE("birthRate") {
@@ -137,6 +142,15 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             @Override
             double[] filter(double[] input) {
                 return new double[] { input[0] };
+            }
+
+            @Override
+            double[] filter(double[] input, int numIntervals) {
+                double[] grad =  new double[numIntervals];
+                for(int i = 0; i < numIntervals; i++) {
+                    grad[i] = input[0*numIntervals+i];
+                }
+                return grad;
             }
         },
 
@@ -155,6 +169,15 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             double[] filter( double[] input) {
                 return new double[] { input[1] };
             }
+
+            @Override
+            double[] filter(double[] input, int numIntervals) {
+                double[] grad =  new double[numIntervals];
+                for(int i = 0; i < numIntervals; i++) {
+                    grad[i] = input[1*numIntervals+i];
+                }
+                return grad;
+            }
         },
 
         SAMPLING_RATE("samplingRate") {
@@ -171,6 +194,15 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             @Override
             double[] filter(double[] input) {
                 return new double[] { input[2] };
+            }
+
+            @Override
+            double[] filter(double[] input, int numIntervals) {
+                double[] grad =  new double[numIntervals];
+                for(int i = 0; i < numIntervals; i++) {
+                    grad[i] = input[2*numIntervals+i];
+                }
+                return grad;
             }
         },
 
@@ -189,6 +221,15 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             double[] filter(double[] input) {
                 return new double[] { input[3] };
             }
+
+            @Override
+            double[] filter(double[] input, int numIntervals) {
+                double[] grad =  new double[numIntervals];
+                for(int i = 0; i < numIntervals; i++) {
+                    grad[i] = input[3*numIntervals+i];
+                }
+                return grad;
+            }
         },
 
         TREATMENT_PROBABILITY("treatmentProbability") {
@@ -205,6 +246,15 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             @Override
             double[] filter(double[] input) {
                 return new double[] { input[4] };
+            }
+
+            @Override
+            double[] filter(double[] input, int numIntervals) {
+                double[] grad =  new double[numIntervals];
+                for(int i = 0; i < numIntervals; i++) {
+                    grad[i] = input[4*numIntervals+i];
+                }
+                return grad;
             }
         },
 
@@ -231,6 +281,11 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             double[] filter(double[] input) {
                 return input;
             }
+
+            @Override
+            double[] filter(double[] input, int numIntervals) {
+                return input;
+            }
         };
 
         WrtParameter(String name) {
@@ -242,6 +297,8 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
         abstract Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree);
 
         abstract double[] filter(double[] input);
+
+        abstract double[] filter(double[] input, int numIntervals);
 
         private final String name;
 

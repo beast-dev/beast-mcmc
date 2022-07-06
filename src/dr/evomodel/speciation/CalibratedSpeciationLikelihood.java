@@ -134,17 +134,15 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood impl
 
         private final TMRCAStatistic tmrcaStatistic;
         private final Distribution distribution;
-        private final int mrcaNodeNumber;
 
         public CalibrationLikelihood(TMRCAStatistic tmrcaStatistic,
                                      Distribution distribution) {
             this.tmrcaStatistic = tmrcaStatistic;
             this.distribution = distribution;
-            this.mrcaNodeNumber = TreeUtils.getCommonAncestorNode(tmrcaStatistic.getTree(), tmrcaStatistic.getLeafSet()).getNumber();
         }
 
         public int getMrcaNodeNumber() {
-            return mrcaNodeNumber;
+            return TreeUtils.getCommonAncestorNode(tmrcaStatistic.getTree(), tmrcaStatistic.getLeafSet()).getNumber();
         }
 
         public Distribution getDistribution() {
@@ -157,7 +155,7 @@ public class CalibratedSpeciationLikelihood extends AbstractModelLikelihood impl
         }
 
         private final double getNodeHeight() {
-            return tmrcaStatistic.getTree().getNodeHeight(tmrcaStatistic.getTree().getNode(mrcaNodeNumber));
+            return tmrcaStatistic.getStatisticValue(0);
         }
 
         public double[] getGradientLogDensity() {

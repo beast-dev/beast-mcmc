@@ -68,8 +68,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     private final boolean conditionOnSurvival;
 
     // useful constants we don't want to compute nTaxa times
-    double A = Double.NEGATIVE_INFINITY;
-    double B = Double.NEGATIVE_INFINITY;
+    double A;
+    double B;
     double lambda;
     double mu;
     double psi;
@@ -169,20 +169,19 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
      * @param t   time
      * @return the probability of no sampled descendants after time, t
      */
-    public static double p(double lambda, double mu, double psi, double rho, double c1, double c2, double t) {
+    // TODO make this take in the most recent break time as an argument
+    public static double p(double lambda, double mu, double psi, double rho, double a, double b, double t) {
 
-        double expc1trc2 = Math.exp(-c1 * t) * (1.0 - c2);
+        double eAt1B = Math.exp(a * t) * (1.0 + b);
 
-        // Stadler 2011 p 349
-        return (lambda + mu + psi + c1 * ((expc1trc2 - (1.0 + c2)) / (expc1trc2 + (1.0 + c2)))) / (2.0 * lambda);
+        return (lambda + mu + psi - a * ((eAt1B - (1.0 - b)) / (eAt1B + (1.0 - b)))) / (2.0 * lambda);
     }
 
-    public static double p(double lambda, double mu, double psi, double rho, double c1, double c2, double t, double expC1t) {
-        // expC1t = Math.exp(-A * t)
-        double expc1trc2 =  (1.0 - c2) / expC1t;
+    // TODO do we really need 4 p functions?
+    public static double p(double lambda, double mu, double psi, double rho, double a, double b, double t, double eAt) {
+        double eAt1B = eAt * (1.0 + b);
 
-        // Stadler 2011 p 349
-        return (lambda + mu + psi + c1 * ((expc1trc2 - (1.0 + c2)) / (expc1trc2 + (1.0 + c2)))) / (2.0 * lambda);
+        return (lambda + mu + psi - a * ((eAt1B - (1.0 - b)) / (eAt1B + (1.0 - b)))) / (2.0 * lambda);
     }
 
     /**
@@ -201,12 +200,14 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         return Math.log(q);
     }
 
+    // Named as per Gavryushkina et al 2014
     public static double computeA(double lambda, double mu, double psi) {
         return Math.abs(Math.sqrt(Math.pow(lambda - mu - psi, 2.0) + 4.0 * lambda * psi));
     }
 
-    public static double computeB(double lambda, double mu, double psi, double rho) {
-        return -(lambda - 2.0 * rho * lambda - mu - psi)/computeA(lambda, mu, psi);
+    // Named as per Gavryushkina et al 2014
+    public static double computeB(double lambda, double mu, double psi, double rho, double A, double pPrevious) {
+        return ((1.0 - 2.0 * (1 - rho) * pPrevious) * lambda + mu + psi)/A;
     }
 
     public double p(double t) {
@@ -361,13 +362,14 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public void updateModelValues(int model) {
+        // TODO would it be excessive to also get the log-values for these? Would save O(n) calls to Math.log()
         lambda = birthRate.getParameterValue(model);
         mu = deathRate.getParameterValue(model);
         psi = serialSamplingRate.getParameterValue(model);
         r = treatmentProbability.getParameterValue(model);
         rho = samplingFractionAtPresent.getParameterValue(model);
-        this.A = computeA(lambda, mu, psi);
-        this.B = computeB(lambda, mu, psi, rho);
+        A = computeA(lambda, mu, psi);
+        B = computeB(lambda, mu, psi, rho, A, 1.0);
     }
 
     @Override
@@ -414,21 +416,21 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public String getDescription() {
-        return "A serially-sampled birth-death model with the possibility of treatment and sampling at present.";
+        return "A (possibly episodic) serially-sampled birth-death model with the possibility of treatment (death when sampled) and intensive sampling.";
     }
 
     @Override
     public List<Citation> getCitations() {
         return Collections.singletonList(new Citation(
                 new Author[]{
-                        new Author("T", "Gernhard"),
+                        new Author("A", "Gavryushkina"),
                 },
-                "The conditioned reconstructed process",
-                2008,
-                "Journal of Theoretical Biology",
-                253,
-                769, 778,
-                "10.1016/j.jtbi.2008.04.005"
+                "Bayesian Inference of Sampled Ancestor Trees",
+                2014,
+                "PLoS Computational Biology",
+                10,
+                1, 15,
+                "10.1371/journal.pcbi.1003919"
         ));
     }
 

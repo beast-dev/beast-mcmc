@@ -80,7 +80,7 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
             while (intervalEnd > modelBreakPoints[currentModelSegment]) { // TODO Maybe it's >= ?
 
                 final double segmentIntervalEnd = modelBreakPoints[currentModelSegment];
-                provider.processGradientModelSegmentBreakPoint(gradient, currentModelSegment, intervalStart, segmentIntervalEnd);
+                provider.processGradientModelSegmentBreakPoint(gradient, currentModelSegment, intervalStart, segmentIntervalEnd, nLineages);
                 intervalStart = segmentIntervalEnd;
                 ++currentModelSegment;
                 provider.updateModelValues(currentModelSegment);

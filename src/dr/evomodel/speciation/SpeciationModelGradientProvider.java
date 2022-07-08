@@ -67,7 +67,8 @@ public interface SpeciationModelGradientProvider {
     default void processGradientModelSegmentBreakPoint(double[] gradient,
                                                        int currentModelSegment,
                                                        double intervalStart,
-                                                       double segmentIntervalEnd) {
+                                                       double segmentIntervalEnd,
+                                                       int nLineages) {
         throw new RuntimeException("Not yet implemented");
     }
 

@@ -45,7 +45,7 @@ public class SpeciationLikelihoodGradientParser extends AbstractXMLObjectParser 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         String wrtParamter = (String) xo.getAttribute(WRT_PARAMETER);
 
-        if (! ((likelihood.getSpeciationModel() instanceof BirthDeathGernhard08Model) || (likelihood.getSpeciationModel() instanceof NewBirthDeathSerialSamplingModel)) ) {
+        if (! ((likelihood.getSpeciationModel() instanceof BirthDeathGernhard08Model) || (likelihood.getSpeciationModel() instanceof NewBirthDeathSerialSamplingModel) || (likelihood.getSpeciationModel() instanceof BirthDeathEpisodicSeriallySampledModel)) ) {
             throw new RuntimeException("Not yet implemented for other cases.");
         }
 

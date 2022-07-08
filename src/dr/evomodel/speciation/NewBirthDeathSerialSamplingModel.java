@@ -695,7 +695,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     @Override
-    public void processGradientModelSegmentBreakPoint(double[] gradient, int currentModelSegment, double intervalStart, double segmentIntervalEnd) {}
+    public void processGradientModelSegmentBreakPoint(double[] gradient, int currentModelSegment, double intervalStart, double segmentIntervalEnd, int nLineages) {}
 
     @Override
     public void processGradientInterval(double[] gradient, int currentModelSegment, double intervalStart, double intervalEnd, int nLineages) {

@@ -434,6 +434,7 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
 
     private double partialApartialLambda(int i) {
         return (lambda(i) - mu(i) + psi(i)) / Ai[i];
+
     }
 
     private double partialApartialMu(int i) {
@@ -494,10 +495,10 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
             partialP[0] = (lambda(i) * partialTemp1 - temp1)/ (2 * lambda(i) * lambda(i));
             // mu
             partialTemp1 = (-2 * temp2 * partialB[1] - 2 * (1 - Bi[i]) * temp3[1]) / (temp2 * temp2);
-            partialP[1] = (1 - partialA[1] * temp1 + Ai[i] * partialTemp1);
+            partialP[1] = (1 - partialA[1] * (1 - 2*(1 - Bi[i]) / temp2) + Ai[i] * partialTemp1)/(2 * lambda(i));
             // psi
             partialTemp1 = (-2 * temp2 * partialB[2] - 2 * (1 - Bi[i]) * temp3[2]) / (temp2 * temp2);
-            partialP[2] = (1 - partialA[2] * temp1 + Ai[i] * partialTemp1);
+            partialP[2] = (1 - partialA[2] * (1 - 2*(1 - Bi[i]) / temp2) + Ai[i] * partialTemp1)/(2 * lambda(i));
             // rho
             partialP[3] = -Ai[i] / (2 * lambda(i)) * (temp2 * (Math.exp(Ai[i] * (t - ti)) * partialB[3] + partialB[3]) - (temp2 - 2 * (1 - Bi[i])) * (Math.exp(Ai[i] * (t - ti)) * partialB[3] - partialB[3])) / (temp2 * temp2);
         } else if (k < i) {
@@ -512,16 +513,26 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
     }
 
 
-    private double[] partialqpartialAll(int i, double t) {
+    private double[] partialqpartialAll(int i, int k, double t) {
         // TODO: share temp2 with partialPpartialAll
         double[] partialq = new double[4];
+        if (i < k) { return partialq; }
         double[] partialA = partialApartialAll(i);
-        double[] partialB = partialBpartialAll(i, i);
+        double tempA1;
+        double tempA2;
+        double[] partialB = partialBpartialAll(i, k);
         double ti = i == 0 ? 0 : intervalTimes[i-1];
         double temp2 = Math.exp((Ai[i]) * (t - ti)) * (1 + Bi[i]) + (1 - Bi[i]);
         double temp_exp = Math.exp(Ai[i] * (t - ti));
         for (int n = 0; n < 3; n++) {
-            partialq[n] = (temp2 * temp2 * 4 * (t - ti) * temp_exp * partialA[n] - 8 * temp_exp * temp2 * ((t - ti) * partialA[n] * temp_exp * (1 + Bi[i]) + partialB[n] * (temp_exp - 1))) / (Math.pow(temp2, 4));
+            if (i == k) {
+                tempA1 = temp2 * temp2 * 4 * (t - ti) * temp_exp * partialA[n];
+                tempA2 = (t - ti) * partialA[n] * temp_exp * (1 + Bi[i]);
+            } else {
+                tempA1 = 0;
+                tempA2 = 0;
+            }
+            partialq[n] = (tempA1 - 8 * temp_exp * temp2 * (tempA2 + partialB[n] * (temp_exp - 1))) / (Math.pow(temp2, 4));
         }
         partialq[3] = -8 * temp_exp * partialB[3] * (temp_exp - 1) / (Math.pow(temp2, 3));
         return partialq;
@@ -566,14 +577,20 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
     @Override
     public void processGradientModelSegmentBreakPoint(double[] gradient, int currentModelSegment, double intervalStart, double segmentIntervalEnd, int nLineages) {
         // only partialq_ii has value, so we don't need to loop k
-        double[] partialqStart = partialqpartialAll(currentModelSegment, intervalStart);
-        double[] partialqEnd = partialqpartialAll(currentModelSegment, segmentIntervalEnd);
-        double qStart = q(currentModelSegment, intervalStart);
-        double qEnd = q(currentModelSegment, segmentIntervalEnd);
+        double[] partialqStart;
+        double[] partialqEnd;
+        double qStart;
+        double qEnd;
+        for (int k = 0; k <= currentModelSegment; k++) {
+            partialqStart = partialqpartialAll(currentModelSegment, k, intervalStart);
+            partialqEnd = partialqpartialAll(currentModelSegment, k, segmentIntervalEnd);
+            qStart = q(currentModelSegment, intervalStart);
+            qEnd = q(currentModelSegment, segmentIntervalEnd);
 
-        for (int n = 0; n < 4; n++) {
-            // assume lambda_1, lambda_2, ..., mu_1, mu_2, ...
-            gradient[n * numIntervals + currentModelSegment] = nLineages * (partialqEnd[n] / qEnd - partialqStart[n] / qStart);
+            for (int n = 0; n < 4; n++) {
+                // assume lambda_1, lambda_2, ..., mu_1, mu_2, ...
+                gradient[n * numIntervals + k] += nLineages * (partialqEnd[n] / qEnd - partialqStart[n] / qStart);
+            }
         }
         // return nLineages * (logq(model, segmentIntervalEnd) - logq(model, intervalStart));
     }
@@ -581,14 +598,20 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
     @Override
     public void processGradientInterval(double[] gradient, int currentModelSegment, double intervalStart, double intervalEnd, int nLineages) {
         // TODO: cache these calculations since they are used by processGradientModelSegmentBreakPoint
-        double[] partialqStart = partialqpartialAll(currentModelSegment, intervalStart);
-        double[] partialqEnd = partialqpartialAll(currentModelSegment, intervalEnd);
-        double qStart = q(currentModelSegment, intervalStart);
-        double qEnd = q(currentModelSegment, intervalEnd);
+        double[] partialqStart;
+        double[] partialqEnd;
+        double qStart;
+        double qEnd;
+        for (int k = 0; k <= currentModelSegment; k++) {
+            partialqStart = partialqpartialAll(currentModelSegment, k, intervalStart);
+            partialqEnd = partialqpartialAll(currentModelSegment, k, intervalEnd);
+            qStart = q(currentModelSegment, intervalStart);
+            qEnd = q(currentModelSegment, intervalEnd);
 
-        for (int n = 0; n < 4; n++) {
-            // assume lambda_1, lambda_2, ..., mu_1, mu_2, ...
-            gradient[n * numIntervals + currentModelSegment] = nLineages * (partialqEnd[n] / qEnd - partialqStart[n] / qStart);
+            for (int n = 0; n < 4; n++) {
+                // assume lambda_1, lambda_2, ..., mu_1, mu_2, ...
+                gradient[n * numIntervals + k] += nLineages * (partialqEnd[n] / qEnd - partialqStart[n] / qStart);
+            }
         }
         // return nLineages * (logq(model, tOld) - logq(model, tYoung));
     }
@@ -596,14 +619,21 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
     @Override
     public void processGradientOrigin(double[] gradient, int currentModelSegment, double totalDuration) {
         double origin = originTime.getValue(0);
-        double[] partialqOrigin = partialqpartialAll(currentModelSegment, origin);
-        double[] partialqRoot = partialqpartialAll(currentModelSegment, totalDuration);
-        double qOrigin = q(currentModelSegment, origin);
-        double qRoot = q(currentModelSegment, totalDuration);
+        double[] partialqOrigin;
+        double[] partialqRoot;
+        double qOrigin;
+        double qRoot;
 
-        for (int n = 0; n < 4; n++) {
-            // assume lambda_1, lambda_2, ..., mu_1, mu_2, ...
-            gradient[n * numIntervals + currentModelSegment] = (partialqOrigin[n] / qOrigin - partialqRoot[n] / qRoot);
+        for (int k = 0; k <= currentModelSegment; k++) {
+            partialqOrigin = partialqpartialAll(currentModelSegment, k, origin);
+            partialqRoot = partialqpartialAll(currentModelSegment, k, totalDuration);
+            qOrigin = q(currentModelSegment, origin);
+            qRoot = q(currentModelSegment, totalDuration);
+
+            for (int n = 0; n < 4; n++) {
+                // assume lambda_1, lambda_2, ..., mu_1, mu_2, ...
+                gradient[n * numIntervals + k] += (partialqOrigin[n] / qOrigin - partialqRoot[n] / qRoot);
+            }
         }
         // return (logq(model,originTime.getValue(0)) - logq(model, rootAge));
     }
@@ -643,7 +673,7 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
             double p_it = p(currentModelSegment, intervalEnd);
             gradient[4*numIntervals + currentModelSegment] += (1 - p_it) / ((1-r)*p_it + r);
             double[] partialP;
-            for(int k = 0; k < numIntervals; k++) {
+            for(int k = 0; k <= currentModelSegment; k++) {
                 partialP = partialPpartialAll(currentModelSegment, k, intervalEnd);
                 for(int n = 0; n < 4; n++) {
                     gradient[n*numIntervals + k] += (1 - r) / ((1 - r) * p_it + r) * partialP[n];

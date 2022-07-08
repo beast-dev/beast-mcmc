@@ -329,7 +329,7 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
     }
 
     /*    calculate and store A_i, B_i and p_i(t_i)        */
-    public void precomputeConstants() {
+    public void updateModelValues(int model) {
 
         double t_origin = originTime.getValue(0);
 
@@ -366,10 +366,6 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
         throw new RuntimeException("Not implemented!");
     }
 
-
-    @Override
-    public void updateModelValues(int model) {
-    }
 
     @Override
     public double[] getBreakPoints() {
@@ -571,7 +567,7 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
 
     @Override
     public void precomputeGradientConstants() {
-        precomputeConstants();
+        updateModelValues(0);
     }
 
     @Override

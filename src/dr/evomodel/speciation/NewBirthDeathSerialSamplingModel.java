@@ -188,17 +188,26 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
      * @param t   time
      * @return the probability of no sampled descendants after time, t
      */
-    public static double logq(double c1, double c2, double t) {
-        double expC1t = Math.exp(c1 * t);
-        double q = 4.0/(2.0 * (1.0 - Math.pow(c2,2.0)) + (1.0/expC1t) * Math.pow((1.0 - c2),2.0) + expC1t * Math.pow(1.0 + c2,2.0));
+    // TODO do we really need 4 logq functions?
+    public static double logq(double a, double b, double t) {
+        double eAt = Math.exp(a * t);
+        double q = 4.0/(2.0 * (1.0 - Math.pow(b,2.0)) + (1.0/eAt) * Math.pow((1.0 - b),2.0) + eAt * Math.pow(1.0 + b,2.0));
         return Math.log(q);
     }
 
-    public static double logq(double c1, double c2, double t, double expC1t) {
-        // expC1t = Math.exp(A * t)
-        double q = 4.0/(2.0 * (1.0 - Math.pow(c2,2.0)) + (1.0/expC1t) * Math.pow((1.0 - c2),2.0) + expC1t * Math.pow(1.0 + c2,2.0));
+    public static double logq(double a, double b, double t, double eAt) {
+        double q = 4.0/(2.0 * (1.0 - Math.pow(a,2.0)) + (1.0/eAt) * Math.pow((1.0 - b),2.0) + eAt * Math.pow(1.0 + b,2.0));
         return Math.log(q);
     }
+
+    public double logq(double t) {
+        return logq(A, B, t);
+    }
+
+    public double logq(double t, double eAt) {
+        return logq(A, B, t, eAt);
+    }
+
 
     // Named as per Gavryushkina et al 2014
     public static double computeA(double lambda, double mu, double psi) {
@@ -215,16 +224,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         return p(lambda, mu, psi, rho, A, B, t);
     }
 
-    public double p(double t, double expC1t) {
-        return p(lambda, mu, psi, rho, A, B, t, expC1t);
-    }
-
-    public double logq(double t) {
-        return logq(A, B, t);
-    }
-
-    public double logq(double t, double expC1t) {
-        return logq(A, B, t, expC1t);
+    public double p(double t, double eAt) {
+        return p(lambda, mu, psi, rho, A, B, t, eAt);
     }
 
 //    double lambda() {
@@ -335,14 +336,14 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             logL -= logq(x);
         }
 
-        double temp_expC1t = 0;
+        double temp_eAt = 0;
 
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             double y = tree.getNodeHeight(tree.getExternalNode(i));
             if (noSamplingAtPresent || y > timeZeroTolerance) {
                 // TODO(change here)
-                temp_expC1t = Math.exp(A * y);
-                logL += Math.log(psi * (r + (1.0 - r) * p(y, temp_expC1t))) + logq(y, temp_expC1t);
+                temp_eAt = Math.exp(A * y);
+                logL += Math.log(psi * (r + (1.0 - r) * p(y, temp_eAt))) + logq(y, temp_eAt);
 //                System.err.println("logq(y) = " + logq(y));
             }
         }
@@ -440,9 +441,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         return Math.exp(-A * t) * (1 - B) + (1 + B);
     }
 
-    private double g1(double t, double expC1t) {
-        // expC1t = Math.exp(-A * t)
-        return  (1 - B) * expC1t + (1 + B);
+    private double g1(double t, double eAt) {
+        return  (1 - B) * eAt + (1 + B);
     }
 
     private double g2(double t, double G1) {
@@ -457,8 +457,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     public double Q(double t){
         // TODO why the factor of 4 and inversion here?
-        double expC1t = Math.exp(A * t);
-        return (2.0 * (1.0 - Math.pow(B,2.0)) + (1.0/expC1t) * Math.pow((1.0 - B),2.0) + expC1t * Math.pow(1.0 + B,2.0));
+        double eAt = Math.exp(A * t);
+        return (2.0 * (1.0 - Math.pow(B,2.0)) + (1.0/eAt) * Math.pow((1.0 - B),2.0) + eAt * Math.pow(1.0 + B,2.0));
     }
 
     // Gradient w.r.t. Rho
@@ -601,11 +601,11 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     public double[] partialQpartialAll(double[] partialQ_all, double t) {
 //        double[] constants = getConstants();
 
-        double expC1t = Math.exp(-A * t);
+        double eAt = Math.exp(-A * t);
 
-//        double v = Math.exp(A * t) * (1 + B) - expC1t * (1 - B) - 2 * B;
-        double v = (1 + B) / expC1t - expC1t * (1 - B) - 2 * B;
-        double v1 = (1 + B) /expC1t * (1 + B) - expC1t * (1 - B) * (1 - B);
+//        double v = Math.exp(A * t) * (1 + B) - eAt * (1 - B) - 2 * B;
+        double v = (1 + B) / eAt - eAt * (1 - B) - 2 * B;
+        double v1 = (1 + B) /eAt * (1 + B) - eAt * (1 - B) * (1 - B);
 
         partialC1C2partialAll();
 
@@ -621,9 +621,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     // (lambda, mu, psi, rho)
-    public double[] partialG2partialAll(double t, double expC1t, double G1) {
+    public double[] partialG2partialAll(double t, double eAt, double G1) {
 
-//        double expC1t = Math.exp(-A * t);
+//        double eAt = Math.exp(-A * t);
         partialC1C2partialAll();
 
         double[] partialC1C2_all = this.temp1;
@@ -632,7 +632,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             double partialC1 = partialC1C2_all[i*2+0];
             double partialC2 = partialC1C2_all[i*2+1];
             double partialG2 = G1 * ((partialC1 * (1 + B) + partialC2 * A)) -
-                    (partialC1 * t * expC1t * (B - 1) + partialC2 * (1 - expC1t)) * A * (1 + B);
+                    (partialC1 * t * eAt * (B - 1) + partialC2 * (1 - eAt)) * A * (1 + B);
             // double G1 = g1(t);
             partialG2 = -2 * partialG2 / (G1 * G1);
             partialG2 += partialC1;
@@ -643,10 +643,10 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     // (lambda, mu, psi, rho)
-    public double[] partialP0partialAll(double t, double expC1t) {
-        double G1 = g1(t, expC1t);
+    public double[] partialP0partialAll(double t, double eAt) {
+        double G1 = g1(t, eAt);
         // double G1 = g1(t);
-        double[] partialG2_all = partialG2partialAll(t, expC1t, G1);
+        double[] partialG2_all = partialG2partialAll(t, eAt, G1);
 
         double[] partialP0_all = temp2; // new double[4];
 
@@ -657,7 +657,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         // double G1 = g1(t);
         double G2 = g2(t,G1);
 
-//        double expC1t = Math.exp(-A * t); // TODO Notice this is (1) shared in many functions and (2) slow to compute
+//        double eAt = Math.exp(-A * t); // TODO Notice this is (1) shared in many functions and (2) slow to compute
 
         // lambda
         partialP0_all[0] = (-mu - psi + lambda * partialG2_all[0] - G2) / (2 * lambda*lambda);
@@ -666,7 +666,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         // psi
         partialP0_all[2] = (1 + partialG2_all[2]) / (2 * lambda);
         // rho
-        partialP0_all[3] = -A / lambda * (2 * lambda / A * (G1 - (1 - expC1t) * (1 + B))) / (G1 * G1);
+        partialP0_all[3] = -A / lambda * (2 * lambda / A * (G1 - (1 - eAt) * (1 + B))) / (G1 * G1);
 
         return partialP0_all;
     }
@@ -733,8 +733,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         boolean noSamplingAtPresent = rho < Double.MIN_VALUE;
 
         if (noSamplingAtPresent || t > timeZeroTolerance) {
-            double expC1t = Math.exp(-A * t);
-            double[] partialP0_all = partialP0partialAll(t, expC1t);
+            double eAt = Math.exp(-A * t);
+            double[] partialP0_all = partialP0partialAll(t, eAt);
             double P0 = p(t);
             double v = (1 - r) / ((1 - r) * P0 + r);
             for (int j = 0; j < 4; ++j) {

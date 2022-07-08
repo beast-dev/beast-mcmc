@@ -189,25 +189,22 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
      * @return the probability of no sampled descendants after time, t
      */
     // TODO do we really need 4 logq functions?
+    public static double logq(double a, double b, double t, double eAt) {
+        return Math.log(4.0 * eAt) - 2.0 * Math.log(eAt * (1 + b) + (1 - b));
+    }
+
     public static double logq(double a, double b, double t) {
         double eAt = Math.exp(a * t);
-        double q = 4.0/(2.0 * (1.0 - Math.pow(b,2.0)) + (1.0/eAt) * Math.pow((1.0 - b),2.0) + eAt * Math.pow(1.0 + b,2.0));
-        return Math.log(q);
-    }
-
-    public static double logq(double a, double b, double t, double eAt) {
-        double q = 4.0/(2.0 * (1.0 - Math.pow(a,2.0)) + (1.0/eAt) * Math.pow((1.0 - b),2.0) + eAt * Math.pow(1.0 + b,2.0));
-        return Math.log(q);
-    }
-
-    public double logq(double t) {
-        return logq(A, B, t);
+        return logq(a, b, t, eAt);
     }
 
     public double logq(double t, double eAt) {
         return logq(A, B, t, eAt);
     }
 
+    public double logq(double t) {
+        return logq(A, B, t);
+    }
 
     // Named as per Gavryushkina et al 2014
     public static double computeA(double lambda, double mu, double psi) {

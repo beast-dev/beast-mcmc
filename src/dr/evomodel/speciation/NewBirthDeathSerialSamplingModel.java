@@ -214,10 +214,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         this.B = computeB(lambda, mu, psi, rho);
     }
 
-    public double getC1() { return A; }
-
-    public double getC2() { return B; }
-
 //    public double[] getConstants() {
 //        double[] constants = {A, B};
 //        return constants;
@@ -748,7 +744,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         boolean noSamplingAtPresent = rho < Double.MIN_VALUE;
 
         if (noSamplingAtPresent || t > timeZeroTolerance) {
-            double expC1t = Math.exp(-getC1() * t);
+            double expC1t = Math.exp(-A * t);
             double[] partialP0_all = partialP0partialAll(t, expC1t);
             double P0 = p(t);
             double v = (1 - r) / ((1 - r) * P0 + r);

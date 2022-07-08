@@ -103,6 +103,7 @@
 	</speciationLikelihoodGradient>
 
 
+	<!-- These really need to be assert statements, otherwise they do not hold any weight -->
 	<report>
 		<speciationLikelihoodGradient idref="grad.birthRate1"/>
 	</report>

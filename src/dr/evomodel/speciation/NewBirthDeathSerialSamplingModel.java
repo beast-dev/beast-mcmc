@@ -169,19 +169,24 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
      * @param t   time
      * @return the probability of no sampled descendants after time, t
      */
-    // TODO make this take in the most recent break time as an argument
-    public static double p(double lambda, double mu, double psi, double rho, double a, double b, double t) {
-
-        double eAt1B = Math.exp(a * t) * (1.0 + b);
-
-        return (lambda + mu + psi - a * ((eAt1B - (1.0 - b)) / (eAt1B + (1.0 - b)))) / (2.0 * lambda);
-    }
-
+    // TODO make this take in the most recent break time as an argument or the model index so we can obtain said time
     // TODO do we really need 4 p functions?
     public static double p(double lambda, double mu, double psi, double rho, double a, double b, double t, double eAt) {
         double eAt1B = eAt * (1.0 + b);
-
         return (lambda + mu + psi - a * ((eAt1B - (1.0 - b)) / (eAt1B + (1.0 - b)))) / (2.0 * lambda);
+    }
+
+    public static double p(double lambda, double mu, double psi, double rho, double a, double b, double t) {
+        double eAt = Math.exp(a * t);
+        return p(lambda, mu, psi, rho, a, b, t, eAt);
+    }
+
+    public double p(double t, double eAt) {
+        return p(lambda, mu, psi, rho, A, B, t, eAt);
+    }
+
+    public double p(double t) {
+        return p(lambda, mu, psi, rho, A, B, t);
     }
 
     /**
@@ -214,15 +219,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     // Named as per Gavryushkina et al 2014
     public static double computeB(double lambda, double mu, double psi, double rho, double A, double pPrevious) {
         return ((1.0 - 2.0 * (1 - rho) * pPrevious) * lambda + mu + psi)/A;
-    }
-
-    public double p(double t) {
-//        return p(lambda(), mu(), psi(), rho(), A, B, t);
-        return p(lambda, mu, psi, rho, A, B, t);
-    }
-
-    public double p(double t, double eAt) {
-        return p(lambda, mu, psi, rho, A, B, t, eAt);
     }
 
 //    double lambda() {

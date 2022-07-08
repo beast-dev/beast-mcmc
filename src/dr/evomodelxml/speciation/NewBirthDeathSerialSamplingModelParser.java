@@ -26,7 +26,6 @@
 package dr.evomodelxml.speciation;
 
 import dr.evolution.util.Units;
-import dr.evomodel.speciation.NewBirthDeathModel;
 import dr.evomodel.speciation.NewBirthDeathSerialSamplingModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;

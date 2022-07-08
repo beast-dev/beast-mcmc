@@ -221,27 +221,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         return ((1.0 - 2.0 * (1 - rho) * pPrevious) * lambda + mu + psi)/A;
     }
 
-//    double lambda() {
-//        return birthRate.getParameterValue(0);
-//    }
-//
-//    double mu() {
-//        return deathRate.getParameterValue(0);
-//    }
-//
-//    double psi() {
-//        return serialSamplingRate.getParameterValue(0);
-//    }
-//
-//    double r() {
-//        return treatmentProbability.getParameterValue(0);
-//    }
-//
-//    double rho() {
-//        return samplingFractionAtPresent.getParameterValue(0);
-//    }
-
-
     @Override
     public double logConditioningProbability() {
         double logP = 0.0;
@@ -515,50 +494,20 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         return samplingFractionAtPresent;
     }
 
-//    @Override
-//    public double[] getSamplingProbabilityGradient(Tree tree, NodeRef node) {
-//        double[] result = new double[1];
-//        result[0] = getAllGradient(tree, node)[3];
-//        return result;
-//    }
-
     @Override
     public Parameter getDeathRateParameter() {
         return deathRate;
     }
-
-//    @Override
-//    public double[] getDeathRateGradient(Tree tree, NodeRef node) {
-//        double[] result = new double[1];
-//        result[0] = getAllGradient(tree, node)[1];
-//        return result;
-//    }
-
 
     @Override
     public Parameter getBirthRateParameter() {
         return birthRate;
     }
 
-//    @Override
-//    public double[] getBirthRateGradient(Tree tree, NodeRef node) {
-//        double[] result = new double[1];
-//        result[0] = getAllGradient(tree, node)[0];
-//        return result;
-//    }
-
     @Override
     public Parameter getSamplingRateParameter() {
         return serialSamplingRate;
     }
-
-//    @Override
-//    public double[] getSamplingRateGradient(Tree tree, NodeRef node) {
-//        double[] result = new double[1];
-//        result[0] = getAllGradient(tree, node)[2];
-//        return result;
-//    }
-
 
     @Override
     public Parameter getTreatmentProbabilityParameter() {
@@ -762,7 +711,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public void logConditioningProbability(double[] gradient) {
-        return;
     }
 
     @Override

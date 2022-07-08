@@ -136,7 +136,7 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
         throw new RuntimeException("Not implemented");
     }
 
-    public void precomputeConstants() { // TODO Probably should be handled automatically by the store/restore mechanism
+    public void updateModelValues() {
         throw new RuntimeException("Not implemented");
     }
 

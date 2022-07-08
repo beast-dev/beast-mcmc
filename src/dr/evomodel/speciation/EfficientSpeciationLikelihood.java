@@ -80,7 +80,6 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
     double calculateLogLikelihood() {
 
         speciationModel.updateModelValues(0);
-        speciationModel.precomputeConstants(); // TODO C1 / C2 will change depending on currentModelSegment
 
         double[] modelBreakPoints = speciationModel.getBreakPoints();
         assert modelBreakPoints[modelBreakPoints.length - 1] == Double.POSITIVE_INFINITY;
@@ -96,6 +95,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
             final int nLineages = treeIntervals.getLineageCount(i);
 
             while (intervalEnd > modelBreakPoints[currentModelSegment]) { // TODO Maybe it's >= ?
+                speciationModel.updateModelValues(currentModelSegment);
 
                 final double segmentIntervalEnd = modelBreakPoints[currentModelSegment];
                 logL += speciationModel.processModelSegmentBreakPoint(currentModelSegment, intervalStart, segmentIntervalEnd, nLineages);

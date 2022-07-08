@@ -209,16 +209,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         return -(lambda - 2.0 * rho * lambda - mu - psi)/computeA(lambda, mu, psi);
     }
 
-    public void precomputeConstants() { // TODO These may change depending on currentModelSegment
-        this.A = computeA(lambda, mu, psi);
-        this.B = computeB(lambda, mu, psi, rho);
-    }
-
-//    public double[] getConstants() {
-//        double[] constants = {A, B};
-//        return constants;
-//    }
-
     public double p(double t) {
 //        return p(lambda(), mu(), psi(), rho(), A, B, t);
         return p(lambda, mu, psi, rho, A, B, t);
@@ -273,8 +263,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
      * @return log-likelihood of density
      */
     public final double calculateTreeLogLikelihood(Tree tree) {
-
-        precomputeConstants();
+        // TODO deprecate this function, we only ever want to use the new loop
+        updateModelValues();
 
         double logL = calculateUnconditionedTreeLogLikelihood(tree);
 
@@ -293,11 +283,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     // Log-likelihood of tree without conditioning on anything
     public final double calculateUnconditionedTreeLogLikelihood(Tree tree) {
 
-//        double lambda = lambda();
-//        double mu = mu();
-//        double psi = psi();
-//        double r = r();
-//        double rho = rho();
+        // TODO deprecate this function, we only ever want to use the new loop
 
         double timeZeroTolerance = Double.MIN_VALUE;
         boolean noSamplingAtPresent = rho < Double.MIN_VALUE;
@@ -380,6 +366,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         psi = serialSamplingRate.getParameterValue(model);
         r = treatmentProbability.getParameterValue(model);
         rho = samplingFractionAtPresent.getParameterValue(model);
+        this.A = computeA(lambda, mu, psi);
+        this.B = computeB(lambda, mu, psi, rho);
     }
 
     @Override
@@ -684,7 +672,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     @Override
     public void precomputeGradientConstants() {
         updateModelValues(0);
-        precomputeConstants(); // TODO These may change depending on currentModelSegment
         this.savedQ = Double.MIN_VALUE;
 //        this.savedPartialQ = null;
         this.partialQKnown = false;

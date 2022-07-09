@@ -63,6 +63,14 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     // the originTime of the infection, origin > tree.getRoot();
     Parameter originTime;
 
+    // Tolerance for declaring that a node time is equal to an event time
+    double absTol = 1e-8;
+
+    // there are numIntervals intervalStarts, implicitly intervalStarts[-1] == 0
+    int numIntervals;
+    double gridEnd;
+    double[] intervalStarts = null;
+
     // TODO if we want to supplant other birth-death models, need an ENUM, and choice of options
     // Minimally, need survival of 1 lineage (passable default for SSBDP) and nTaxa (which is current option for non-serially-sampled BDP)
     private final boolean conditionOnSurvival;
@@ -95,9 +103,11 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             Parameter samplingFractionAtPresent,
             Parameter originTime,
             boolean condition,
+            int numIntervals,
+            double gridEnd,
             Type units) {
 
-        this("NewBirthDeathSerialSamplingModel", birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingFractionAtPresent, originTime, condition, units);
+        this("NewBirthDeathSerialSamplingModel", birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingFractionAtPresent, originTime, condition, numIntervals, gridEnd, units);
     }
 
     public SpeciationModelGradientProvider getProvider() { // This is less INTRUSIVE to the exisiting file
@@ -113,6 +123,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             Parameter samplingFractionAtPresent,
             Parameter originTime,
             boolean condition,
+            int numIntervals,
+            double gridEnd,
             Type units) {
 
         super(modelName, units);
@@ -154,6 +166,21 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         this.temp1 = new double[8];
         this.temp2 = new double[4];
         this.temp3 = new double[4];
+
+        setupTimeline();
+    }
+
+    // TODO should probably be replaced and brought in line with smoothSkygrid
+    private void setupTimeline() {
+        if (intervalStarts == null) {
+            intervalStarts = new double[numIntervals + 1];
+        } else {
+            Arrays.fill(intervalStarts, 0.0);
+        }
+
+        for (int idx = 0; idx <= numIntervals - 1 ; idx++) {
+            intervalStarts[idx] = (idx) * (gridEnd / numIntervals);
+        }
     }
 
     @Override

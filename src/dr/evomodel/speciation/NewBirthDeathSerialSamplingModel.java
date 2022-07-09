@@ -194,26 +194,29 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
      * @param psi   proportion sampled at final time point
      * @param rho rate of sampling per lineage per unit time
      * @param t   time
+     * @param eAt precomputed exp(A * (t - t_i))
      * @return the probability of no sampled descendants after time, t
      */
     // TODO make this take in the most recent break time as an argument or the model index so we can obtain said time
     // TODO do we really need 4 p functions?
-    public static double p(double lambda, double mu, double psi, double rho, double a, double b, double t, double eAt) {
+    public static double p(int model, double lambda, double mu, double psi, double rho, double a, double b, double t, double ti, double eAt) {
         double eAt1B = eAt * (1.0 + b);
         return (lambda + mu + psi - a * ((eAt1B - (1.0 - b)) / (eAt1B + (1.0 - b)))) / (2.0 * lambda);
     }
 
-    public static double p(double lambda, double mu, double psi, double rho, double a, double b, double t) {
-        double eAt = Math.exp(a * t);
-        return p(lambda, mu, psi, rho, a, b, t, eAt);
+    public static double p(int model, double lambda, double mu, double psi, double rho, double a, double b, double t, double ti) {
+        double eAt = Math.exp(a * (t - ti));
+        return p(model, lambda, mu, psi, rho, a, b, t, ti, eAt);
     }
 
-    public double p(double t, double eAt) {
-        return p(lambda, mu, psi, rho, A, B, t, eAt);
+    public double p(int model, double t, double eAt) {
+        double ti = intervalStarts[model];
+        return p(model, lambda, mu, psi, rho, A, B, t, ti, eAt);
     }
 
-    public double p(double t) {
-        return p(lambda, mu, psi, rho, A, B, t);
+    public double p(int model, double t) {
+        double ti = intervalStarts[model];
+        return p(model, lambda, mu, psi, rho, A, B, t, ti);
     }
 
     /**
@@ -252,7 +255,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     public double logConditioningProbability() {
         double logP = 0.0;
         if ( conditionOnSurvival ) {
-            logP -= Math.log(1.0 - p(originTime.getParameterValue(0)));
+            logP -= Math.log(1.0 - p(0, originTime.getParameterValue(0)));
         }
         return logP;
     }
@@ -275,7 +278,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         }
 
         if ( conditionOnSurvival ) {
-            logL -= Math.log(1.0 - p(origin));
+            logL -= Math.log(1.0 - p(0, origin));
         }
 
         return logL;
@@ -342,7 +345,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             if (noSamplingAtPresent || y > timeZeroTolerance) {
                 // TODO(change here)
                 temp_eAt = Math.exp(A * y);
-                logL += Math.log(psi * (r + (1.0 - r) * p(y, temp_eAt))) + logq(y, temp_eAt);
+                logL += Math.log(psi * (r + (1.0 - r) * p(0, y, temp_eAt))) + logq(y, temp_eAt);
 //                System.err.println("logq(y) = " + logq(y));
             }
         }
@@ -398,7 +401,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         boolean noSamplingAtPresent = rho < Double.MIN_VALUE;
 
         if (noSamplingAtPresent || tOld > timeZeroTolerance) {
-            return Math.log(psi) + Math.log(r + (1.0 - r) * p(tOld));
+            return Math.log(psi) + Math.log(r + (1.0 - r) * p(0, tOld));
         } else {
             return Math.log(rho);
         }
@@ -704,7 +707,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         if (noSamplingAtPresent || t > timeZeroTolerance) {
             double eAt = Math.exp(-A * t);
             double[] partialP0_all = partialP0partialAll(t, eAt);
-            double P0 = p(t);
+            double P0 = p(0, t);
             double v = (1 - r) / ((1 - r) * P0 + r);
             for (int j = 0; j < 4; ++j) {
                 gradient[j] += v * partialP0_all[j];

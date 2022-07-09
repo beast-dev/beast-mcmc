@@ -167,6 +167,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         this.temp2 = new double[4];
         this.temp3 = new double[4];
 
+        this.gridEnd = gridEnd;
+        this.numIntervals = numIntervals;
         setupTimeline();
     }
 
@@ -178,8 +180,11 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             Arrays.fill(intervalStarts, 0.0);
         }
 
-        for (int idx = 0; idx <= numIntervals - 1 ; idx++) {
-            intervalStarts[idx] = (idx) * (gridEnd / numIntervals);
+        intervalStarts[0] = 0.0;
+        if (numIntervals > 1) {
+            for (int idx = 1; idx <= numIntervals - 1 ; idx++) {
+                intervalStarts[idx] = (idx) * (gridEnd / numIntervals);
+            }
         }
     }
 

@@ -229,21 +229,23 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
      * @return the probability of no sampled descendants after time, t
      */
     // TODO do we really need 4 logq functions?
-    public static double logq(double a, double b, double t, double eAt) {
+    public static double logq(int model, double a, double b, double t, double ti, double eAt) {
         return Math.log(4.0 * eAt) - 2.0 * Math.log(eAt * (1 + b) + (1 - b));
     }
 
-    public static double logq(double a, double b, double t) {
+    public static double logq(int model, double a, double b, double t, double ti) {
         double eAt = Math.exp(a * t);
-        return logq(a, b, t, eAt);
+        return logq(model, a, b, t, ti, eAt);
     }
 
-    public double logq(double t, double eAt) {
-        return logq(A, B, t, eAt);
+    public double logq(int model, double t, double eAt) {
+        double ti = intervalStarts[model];
+        return logq(model, A, B, t, ti, eAt);
     }
 
-    public double logq(double t) {
-        return logq(A, B, t);
+    public double logq(int model, double t) {
+        double ti = intervalStarts[model];
+        return logq(model, A, B, t, ti);
     }
 
     // Named as per Gavryushkina et al 2014
@@ -336,11 +338,11 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             logL += n * Math.log(rho);
         }
 
-        logL -= logq(origin);
+        logL -= logq(0, origin);
 
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
             double x = tree.getNodeHeight(tree.getInternalNode(i));
-            logL -= logq(x);
+            logL -= logq(0, x);
         }
 
         double temp_eAt = 0;
@@ -350,7 +352,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             if (noSamplingAtPresent || y > timeZeroTolerance) {
                 // TODO(change here)
                 temp_eAt = Math.exp(A * y);
-                logL += Math.log(psi * (r + (1.0 - r) * p(0, y, temp_eAt))) + logq(y, temp_eAt);
+                logL += Math.log(psi * (r + (1.0 - r) * p(0, y, temp_eAt))) + logq(0, y, temp_eAt);
 //                System.err.println("logq(y) = " + logq(y));
             }
         }
@@ -365,7 +367,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public double processInterval(int model, double tYoung, double tOld, int nLineages) {
-        return nLineages * (logq(tOld) - logq(tYoung));
+        return nLineages * (logq(0, tOld) - logq(0, tYoung));
     }
 
     @Override
@@ -385,7 +387,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         if (originTime.getValue(0) < rootAge) {
             return Double.NaN;
         } else {
-            return (logq(originTime.getValue(0))) - logq(rootAge);
+            return (logq(0, originTime.getValue(0))) - logq(0, rootAge);
         }
     }
 

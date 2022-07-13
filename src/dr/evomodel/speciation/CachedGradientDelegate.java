@@ -71,6 +71,8 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
 
         int currentModelSegment = 0;
 
+        provider.processGradientSampling(gradient, currentModelSegment, treeIntervals.getStartTime()); // TODO Fix for getStartTime() != 0.0
+
         for (int i = 0; i < treeIntervals.getIntervalCount(); ++i) {
 
             double intervalStart = treeIntervals.getIntervalTime(i);
@@ -86,11 +88,7 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
                 provider.updateModelValues(currentModelSegment);
             }
 
-            // TODO Need to check for intervalStart == intervalEnd?
-            // TODO Need to check for intervalStart == intervalEnd == 0.0?
-
             if (intervalEnd > intervalStart) {
-//                System.err.println("interval: " + intervalStart + " -- " + intervalEnd);
                 provider.processGradientInterval(gradient, currentModelSegment, intervalStart, intervalEnd, nLineages);
             }
 
@@ -107,10 +105,6 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
                 throw new RuntimeException("Birth-death tree includes non birth/death/sampling event.");
             }
         }
-
-        // We've missed the first sample and need to add it back
-        // TODO May we missed multiple samples @ t == 0.0?
-        provider.processGradientSampling(gradient, 0, treeIntervals.getStartTime()); // TODO for-loop for models with multiple segments?
 
         // origin branch is a fake branch that doesn't exist in the tree, now compute its contribution
         provider.processGradientOrigin(gradient, currentModelSegment, treeIntervals.getTotalDuration());

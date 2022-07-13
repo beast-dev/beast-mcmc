@@ -104,11 +104,12 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
         weightList.add( parentHeight - currentHeight );
         orderList.add(epoch);
 
-        final int[] order = new int[orderList.size()];
-        final double[] weights = new double[weightList.size()];
-        for (int i = 0; i < orderList.size(); i++) {
-            order[i] = orderList.get(i);
-            weights[i] = weightList.get(i);
+        final int len = orderList.size();
+        final int[] order = new int[len];
+        final double[] weights = new double[len];
+        for (int i = 0; i < len; i++) {
+            order[len - 1 - i] = orderList.get(i);
+            weights[len - 1 -i] = weightList.get(i);
         }
 
         return new Mapping() {
@@ -195,6 +196,7 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
 
     public void setRootFrequencyModel(FrequencyModel rootFreqModel) {
         this.rootFrequencyModel = rootFreqModel;
+        addModel(rootFrequencyModel);
     }
 
     private FrequencyModel rootFrequencyModel;

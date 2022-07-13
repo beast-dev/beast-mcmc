@@ -86,7 +86,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
 
         int currentModelSegment = 0;
 
-        double logL = 0.0;
+        double logL = speciationModel.processSampling(0, treeIntervals.getStartTime()); // TODO Fix for getStartTime() != 0.0
 
         for (int i = 0; i < treeIntervals.getIntervalCount(); ++i) {
 
@@ -103,11 +103,6 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
                 ++currentModelSegment;
                 speciationModel.updateModelValues(currentModelSegment);
             }
-
-
-
-            // TODO Need to check for intervalStart == intervalEnd?
-            // TODO Need to check for intervalStart == intervalEnd == 0.0?
 
             if (intervalEnd > intervalStart) {
                 logL += speciationModel.processInterval(currentModelSegment, intervalStart, intervalEnd, nLineages);
@@ -126,10 +121,6 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
                 throw new RuntimeException("Birth-death tree includes non birth/death/sampling event.");
             }
         }
-
-        // We've missed the first sample and need to add it back
-        // TODO May we missed multiple samples @ t == 0.0?
-        logL += speciationModel.processSampling(0, treeIntervals.getStartTime()); // TODO for-loop for models with multiple segments?
 
         // origin branch is a fake branch that doesn't exist in the tree, now compute its contribution
         logL += speciationModel.processOrigin(currentModelSegment, treeIntervals.getTotalDuration());

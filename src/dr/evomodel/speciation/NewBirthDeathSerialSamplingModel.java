@@ -761,7 +761,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     private static final void transpose(double[] array, final int majorDim, final int minorDim) { // TODO untested
         int oldIndex = 0;
         for (int major = 0; major < majorDim; ++major) {
-            for (int minor = major; minor < minorDim; ++minorDim) {
+            for (int minor = major; minor < minorDim; ++minor) {
                 final int newIndex = minor * minorDim + majorDim;
                 double tmp = array[newIndex];
                 array[newIndex] = array[oldIndex];

@@ -765,7 +765,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
                 final int newIndex = minor * minorDim + majorDim;
                 double tmp = array[newIndex];
                 array[newIndex] = array[oldIndex];
-                array
+                array[oldIndex] = tmp;
                 ++oldIndex;
             }
         }

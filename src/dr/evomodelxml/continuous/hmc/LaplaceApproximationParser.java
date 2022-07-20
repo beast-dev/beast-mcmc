@@ -40,7 +40,9 @@ import dr.xml.*;
 public class LaplaceApproximationParser extends AbstractXMLObjectParser {
 
     private static final String NAME = "laplaceApproximation";
-    private static final String DIAGONAL = "diagonal";
+    private static final String DIAGONAL = "reportDiagonal";
+    private static final String ML = "reportMarginalLikelihood";
+    private static final String KL = "estimateKL";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -48,8 +50,10 @@ public class LaplaceApproximationParser extends AbstractXMLObjectParser {
         MaximizerWrtParameter maximizer = (MaximizerWrtParameter) xo.getChild(MaximizerWrtParameter.class);
 
         boolean diagonal = xo.getAttribute(DIAGONAL, true);
+        boolean kl = xo.getAttribute(KL, true);
+        boolean ml = xo.getAttribute(ML, true);
 
-        LaplaceApproximation laplace = new LaplaceApproximation(maximizer, diagonal);
+        LaplaceApproximation laplace = new LaplaceApproximation(maximizer, diagonal, kl, ml);
 
         laplace.approximate();
 
@@ -78,6 +82,8 @@ public class LaplaceApproximationParser extends AbstractXMLObjectParser {
 
     private static XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(MaximizerWrtParameter.class, false),
-            AttributeRule.newBooleanRule(DIAGONAL, true)
+            AttributeRule.newBooleanRule(DIAGONAL, true, "Should we report only the diagonal of the covariance matrix?"),
+            AttributeRule.newBooleanRule(KL, true, "Should the (variational-inference-style wrong-way) KL(aproximation||posterior) be estimated? Requires sampling from approximation."),
+            AttributeRule.newBooleanRule(ML, true, "Should the (log) Marginal Likelihood (using the Laplace approximation) be reported?")
     };
 }

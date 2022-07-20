@@ -116,6 +116,14 @@ public class MaximizerWrtParameter implements Reportable {
         return function != null;
     }
 
+    public Transform getTransform() {
+        return transform;
+    }
+
+    public Function getFunction() {
+        return function;
+    }
+
     public void maximize() {
 
         LBFGS_Param paramsBFGS = Lbfgs.defaultParams();

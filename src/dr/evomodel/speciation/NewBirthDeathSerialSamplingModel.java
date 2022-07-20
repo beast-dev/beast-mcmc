@@ -752,4 +752,59 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public int getGradientLength() { return 5; }
+
+    private static final boolean AOS = true;
+
+    private static final int birthIndex(final int n, final int stride) {
+        if (AOS) {
+            return n * stride + 0;
+        } else {
+            return 0 * stride + n;
+        }
+    }
+
+    private static final int deathIndex(final int n, final int stride) {
+        if (AOS) {
+            return n * stride + 1;
+        } else {
+            return 1 * stride + n;
+        }
+    }
+
+    private static final int samplingIndex(final int n, final int stride) {
+        if (AOS) {
+            return n * stride + 2;
+        } else {
+            return 2 * stride + n;
+        }
+    }
+
+    private static final int fractionIndex(final int n, final int stride) {
+        if (AOS) {
+            return n * stride + 3;
+        } else {
+            return 3 * stride + n;
+        }
+    }
+
+    private static final int treatmentIndex(final int n, final int stride) {
+        if (AOS) {
+            return n * stride + 4;
+        } else {
+            return 4 * stride + n;
+        }
+    }
+
+    private static final void transpose(double[] array, final int majorDim, final int minorDim) { // TODO untested
+        int oldIndex = 0;
+        for (int major = 0; major < majorDim; ++major) {
+            for (int minor = major; minor < minorDim; ++minor) {
+                final int newIndex = minor * minorDim + majorDim;
+                double tmp = array[newIndex];
+                array[newIndex] = array[oldIndex];
+                array[oldIndex] = tmp;
+                ++oldIndex;
+            }
+        }
+    }
 }

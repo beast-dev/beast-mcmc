@@ -50,8 +50,8 @@ public class LaplaceApproximationParser extends AbstractXMLObjectParser {
         MaximizerWrtParameter maximizer = (MaximizerWrtParameter) xo.getChild(MaximizerWrtParameter.class);
 
         boolean diagonal = xo.getAttribute(DIAGONAL, true);
-        boolean kl = xo.getAttribute(KL, true);
-        boolean ml = xo.getAttribute(ML, true);
+        boolean kl = xo.getAttribute(KL, false);
+        boolean ml = xo.getAttribute(ML, false);
 
         LaplaceApproximation laplace = new LaplaceApproximation(maximizer, diagonal, kl, ml);
 

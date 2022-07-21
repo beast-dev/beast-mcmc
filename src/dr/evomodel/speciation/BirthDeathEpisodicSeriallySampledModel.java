@@ -80,6 +80,20 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
     private boolean intensiveSamplingOnlyAtPresent = false;
     private boolean noIntensiveSampling = true;
 
+    // private double[][][] partialBPreviousPartialAll;
+
+    boolean computedBCurrent;
+    private double[][] partialBCurrentPartialAll;
+    private double[][] partialBPreviousPartialAll;
+
+    boolean computedPPrevious;
+    private double[][] partialPPreviousPartialAll;
+
+    private double cachedBIndex;
+
+    // private double[][][] partialPPreviousPartialAll;
+
+    private double cachedPIndex;
     // useful constants we don't want to compute nTaxa times
 
     // Tolerance for declaring that a node time is equal to an event time
@@ -349,6 +363,13 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
             piMinus1[i] = p(i-1, intervalTimes[i-1]);
             Bi[i] = Bi(birthRate(i), deathRate(i), serialSamplingRate(i), samplingProbability(i), Ai[i], piMinus1[i]);
         }
+
+
+        computedBCurrent = false;
+        computedPPrevious = false;
+        if (model > 0) {
+            partialBPreviousPartialAll = partialBCurrentPartialAll;
+        }
     }
 
     /**
@@ -452,6 +473,9 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
 
 
     private double[] partialBpartialAll(int i, int k) {
+        if (computedBCurrent) {
+            return partialBCurrentPartialAll[k];
+        }
         double[] partialB = new double[4];
         if (k == i) {
             double[] partialA = partialApartialAll(i);
@@ -462,47 +486,58 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
             partialB[3] = 2 * lambda(i) * piMinus1[i] / Ai[i];
         } else if (k < i) {
             double ti = i == 0 ? 0 : intervalTimes[i-1];
-            double[] partialP = partialPpartialAll(i-1, k, ti);
             for(int n = 0; n < 4; n++) {
-                partialB[n] = -2 * (1 - rho(i)) * lambda(i) / Ai[i] * partialP[n];
+                partialB[n] = -2 * (1 - rho(i)) * lambda(i) / Ai[i] * partialPpartialAll(i-1, k, ti, true)[n];
             }
         }
         // else: k > i, all zero
+        partialBCurrentPartialAll[k] = partialB;
+        if (k == i) {
+            computedBCurrent = true;
+        }
         return partialB;
     }
 
 
-
-    private double[] partialPpartialAll(int i, int k, double t) {
+    private double[] partialPpartialAll(int i, int k, double t, boolean save) {
+        if (computedPPrevious && save) {
+            return partialPPreviousPartialAll[k];
+        }
         double[] partialP = new double[4];
         if (k == i) {
             double ti = i == 0 ? 0 : intervalTimes[i-1];
-            double temp2 = Math.exp((Ai[i]) * (t - ti)) * (1 + Bi[i]) + (1 - Bi[i]);
-            double temp1 = mu(i) + psi(i) - Ai[i] * (1 - 2*(1 - Bi[i]) / temp2);
+            double g1 = Math.exp((Ai[i]) * (t - ti)) * (1 + Bi[i]) + (1 - Bi[i]);
+            double g2 =  Ai[i] * (1 - 2*(1 - Bi[i]) / g1);
             double[] partialA = partialApartialAll(i);
-            double[] partialB = partialBpartialAll(i, k);
+            double[] partialB = partialBPreviousPartialAll[k];
             double[] temp3 = new double[3];
             for(int n = 0; n < 3; n++) {
                 temp3[n] = Math.exp(Ai[i] * (t - ti)) * (1 + Bi[i]) * partialA[n] * (t - ti) + (Math.exp(Ai[i] * (t - ti)) - 1) * partialB[n];
             }
             double partialTemp1;
             // lambda
-            partialTemp1 = -partialA[0] * (1 - 2 * (1 - Bi[i]) / temp2) + Ai[i] * ((2 * temp2 * (-partialB[0]) -2 * (1 - Bi[i]) * temp3[0]) / (temp2 * temp2));
-            partialP[0] = (lambda(i) * partialTemp1 - temp1)/ (2 * lambda(i) * lambda(i));
+            partialTemp1 = partialA[0] - 2 * (g1 * (partialA[0] * (1 - Bi[i]) + partialB[0] * Ai[i]) +  (1 - Bi[i]) * temp3[0] * Ai[i]) / (g1 * g1);
+            partialP[0] = (- mu(i) - psi(i) - lambda(i) * partialTemp1 + g2)/ (2 * lambda(i) * lambda(i));
             // mu
-            partialTemp1 = (-2 * temp2 * partialB[1] - 2 * (1 - Bi[i]) * temp3[1]) / (temp2 * temp2);
-            partialP[1] = (1 - partialA[1] * (1 - 2*(1 - Bi[i]) / temp2) + Ai[i] * partialTemp1)/(2 * lambda(i));
+            partialTemp1 = partialA[1] - 2 * (g1 * (partialA[1] * (1 - Bi[i]) - partialB[1] * Ai[i]) -  (1 - Bi[i]) * temp3[1] * Ai[i]) / (g1 * g1);
+            partialP[1] = (1 - partialTemp1)/(2 * lambda(i));
             // psi
-            partialTemp1 = (-2 * temp2 * partialB[2] - 2 * (1 - Bi[i]) * temp3[2]) / (temp2 * temp2);
-            partialP[2] = (1 - partialA[2] * (1 - 2*(1 - Bi[i]) / temp2) + Ai[i] * partialTemp1)/(2 * lambda(i));
+            partialTemp1 = partialA[2] - 2 * (g1 * (partialA[2] * (1 - Bi[i]) - partialB[2] * Ai[i]) -  (1 - Bi[i]) * temp3[2] * Ai[i]) / (g1 * g1);
+            partialP[2] = (1 - partialTemp1)/(2 * lambda(i));
             // rho
-            partialP[3] = -Ai[i] / (2 * lambda(i)) * (temp2 * (Math.exp(Ai[i] * (t - ti)) * partialB[3] + partialB[3]) - (temp2 - 2 * (1 - Bi[i])) * (Math.exp(Ai[i] * (t - ti)) * partialB[3] - partialB[3])) / (temp2 * temp2);
+            partialP[3] = -Ai[i] / lambda(i) * ((1 - Bi[i]) * (Math.exp(Ai[i] * (t - ti)) - 1) + g1 ) * partialB[3] / Math.pow(g1,2);
         } else if (k < i) {
             double ti = i == 0 ? 0 : intervalTimes[i-1];
-            double[] partialB = partialBpartialAll(i, k);
-            double temp2 = Math.exp((Ai[i]) * (t - ti)) * (1 + Bi[i]) + (1 - Bi[i]);
+            double[] partialB = partialBPreviousPartialAll[k]; // if computed already, directly return partialBCurrentPartialAll[k]
+            double g1 = Math.exp((Ai[i]) * (t - ti)) * (1 + Bi[i]) + (1 - Bi[i]);
             for (int n = 0; n < 4; n++) {
-                partialP[n] = -Ai[i] / (2 * lambda(i)) * (temp2 * (Math.exp(Ai[i] * (t - ti)) * partialB[n] + partialB[n]) - (temp2 - 2 * (1 - Bi[i])) * (Math.exp(Ai[i] * (t - ti)) * partialB[n] - partialB[n])) / (temp2 * temp2);
+                partialP[n] = -Ai[i] / lambda(i) * ((1 - Bi[i]) * (Math.exp(Ai[i] * (t - ti)) - 1) + g1 ) * partialB[n] / Math.pow(g1,2);
+            }
+        }
+        if (save) {
+            partialPPreviousPartialAll[k] = partialP;
+            if (k == i) {
+                computedPPrevious = true;
             }
         }
         return partialP;
@@ -518,19 +553,19 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
         double tempA2;
         double[] partialB = partialBpartialAll(i, k);
         double ti = i == 0 ? 0 : intervalTimes[i-1];
-        double temp2 = Math.exp((Ai[i]) * (t - ti)) * (1 + Bi[i]) + (1 - Bi[i]);
+        double g1 = Math.exp((Ai[i]) * (t - ti)) * (1 + Bi[i]) + (1 - Bi[i]);
         double temp_exp = Math.exp(Ai[i] * (t - ti));
         for (int n = 0; n < 3; n++) {
             if (i == k) {
-                tempA1 = temp2 * temp2 * 4 * (t - ti) * temp_exp * partialA[n];
-                tempA2 = (t - ti) * partialA[n] * temp_exp * (1 + Bi[i]);
+                tempA1 = (t - ti) * partialA[n] * (g1 / 2 - temp_exp * (1 + Bi[i]));
+                //tempA2 = (t - ti) * partialA[n] * temp_exp * (1 + Bi[i]);
             } else {
                 tempA1 = 0;
-                tempA2 = 0;
+                //tempA2 = 0;
             }
-            partialq[n] = (tempA1 - 8 * temp_exp * temp2 * (tempA2 + partialB[n] * (temp_exp - 1))) / (Math.pow(temp2, 4));
+            partialq[n] = 8 * temp_exp * (tempA1 - partialB[n] * (temp_exp - 1)) / (Math.pow(g1, 3));//(tempA1 - 8 * temp_exp * temp2 * (tempA2 + partialB[n] * (temp_exp - 1))) / (Math.pow(temp2, 4));
         }
-        partialq[3] = -8 * temp_exp * partialB[3] * (temp_exp - 1) / (Math.pow(temp2, 3));
+        partialq[3] = -8 * temp_exp * partialB[3] * (temp_exp - 1) / (Math.pow(g1, 3));
         return partialq;
     }
 
@@ -567,6 +602,11 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
 
     @Override
     public void precomputeGradientConstants() {
+        partialBPreviousPartialAll = new double[numIntervals][4];
+        partialPPreviousPartialAll = new double[numIntervals][4];
+        partialBCurrentPartialAll = new double[numIntervals][4];
+        cachedBIndex = 0;
+        cachedPIndex = 0;
         updateModelValues(0);
     }
 
@@ -585,7 +625,8 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
 
             for (int n = 0; n < 4; n++) {
                 // assume lambda_1, lambda_2, ..., mu_1, mu_2, ...
-                gradient[n * numIntervals + k] += nLineages * (partialqEnd[n] / qEnd - partialqStart[n] / qStart);
+                gradient[k * 5 + n] += nLineages * (partialqEnd[n] / qEnd - partialqStart[n] / qStart);
+                //gradient[n * numIntervals + k] += nLineages * (partialqEnd[n] / qEnd - partialqStart[n] / qStart);
             }
         }
         // return nLineages * (logq(model, segmentIntervalEnd) - logq(model, intervalStart));
@@ -606,7 +647,8 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
 
             for (int n = 0; n < 4; n++) {
                 // assume lambda_1, lambda_2, ..., mu_1, mu_2, ...
-                gradient[n * numIntervals + k] += nLineages * (partialqEnd[n] / qEnd - partialqStart[n] / qStart);
+                gradient[k * 5 + n] += nLineages * (partialqEnd[n] / qEnd - partialqStart[n] / qStart);
+                //gradient[n * numIntervals + k] += nLineages * (partialqEnd[n] / qEnd - partialqStart[n] / qStart);
             }
         }
         // return nLineages * (logq(model, tOld) - logq(model, tYoung));
@@ -628,7 +670,8 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
 
             for (int n = 0; n < 4; n++) {
                 // assume lambda_1, lambda_2, ..., mu_1, mu_2, ...
-                gradient[n * numIntervals + k] += (partialqOrigin[n] / qOrigin - partialqRoot[n] / qRoot);
+                gradient[k * 5 + n] += (partialqOrigin[n] / qOrigin - partialqRoot[n] / qRoot);
+                //gradient[n * numIntervals + k] += (partialqOrigin[n] / qOrigin - partialqRoot[n] / qRoot);
             }
         }
         // return (logq(model,originTime.getValue(0)) - logq(model, rootAge));
@@ -636,7 +679,8 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
 
     @Override
     public void processGradientCoalescence(double[] gradient, int currentModelSegment, double intervalEnd) {
-        gradient[currentModelSegment] += 1 / lambda(currentModelSegment);
+        gradient[currentModelSegment*5] += 1 / lambda(currentModelSegment);
+        //gradient[currentModelSegment] += 1 / lambda(currentModelSegment);
         // return Math.log(birthRate.getValue(model)); // TODO Notice the natural parameterization is `log lambda`
     }
 
@@ -656,23 +700,28 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
 
         if (sampleIsAtPresent && samplesTakenAtPresent) {
             // logSampProb = Math.log(samplingProbability(0));
-            gradient[3*numIntervals] += 1 / rho(0);
+            gradient[3] += 1 / rho(0);
+            //gradient[3*numIntervals] += 1 / rho(0);
         } else if (sampleIsAtEventTime && samplesTakenAtEventTime) {
             // logSampProb = Math.log(samplingProbability(currentModelSegment+1));
-            gradient[3*numIntervals + currentModelSegment+1] += 1 / rho(currentModelSegment+1);
+            gradient[3 + 5*(currentModelSegment+1)] += 1 / rho(currentModelSegment+1);
+            //gradient[3*numIntervals + currentModelSegment+1] += 1 / rho(currentModelSegment+1);
         } else {
             // double logPsi = Math.log(serialSamplingRate(currentModelSegment)); // TODO Notice the natural parameterization is `log psi`
-            gradient[2*numIntervals + currentModelSegment] += 1 / psi(currentModelSegment);
+             gradient[2 + 5*currentModelSegment] += 1 / psi(currentModelSegment);
+            //gradient[2*numIntervals + currentModelSegment] += 1 / psi(currentModelSegment);
             double r = treatmentProbability.getValue(currentModelSegment);
             // logSampProb = logPsi + Math.log(r + (1.0 - r) * p(currentModelSegment,intervalEnd));
             // partialP
             double p_it = p(currentModelSegment, intervalEnd);
-            gradient[4*numIntervals + currentModelSegment] += (1 - p_it) / ((1-r)*p_it + r);
+            gradient[4 + 5*currentModelSegment] += (1 - p_it) / ((1-r)*p_it + r);
+            //gradient[4*numIntervals + currentModelSegment] += (1 - p_it) / ((1-r)*p_it + r);
             double[] partialP;
             for(int k = 0; k <= currentModelSegment; k++) {
-                partialP = partialPpartialAll(currentModelSegment, k, intervalEnd);
+                partialP = partialPpartialAll(currentModelSegment, k, intervalEnd, false);
                 for(int n = 0; n < 4; n++) {
-                    gradient[n*numIntervals + k] += (1 - r) / ((1 - r) * p_it + r) * partialP[n];
+                    gradient[n + 5*k] += (1 - r) / ((1 - r) * p_it + r) * partialP[n];
+                    //gradient[n*numIntervals + k] += (1 - r) / ((1 - r) * p_it + r) * partialP[n];
                 }
             }
         }

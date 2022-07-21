@@ -1,7 +1,7 @@
 /*
  * EpochBranchModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,14 +25,11 @@
 
 package dr.evomodel.branchmodel;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -45,13 +42,12 @@ import java.util.*;
  * @author Marc A. Suchard
  * @version $Id$
  */
-@SuppressWarnings("serial")
+
 public class EpochBranchModel extends AbstractModel implements BranchModel, Citable {
 
     public static final String EPOCH_BRANCH_MODEL = "EpochBranchModel";
 
-
-    public EpochBranchModel(TreeModel tree,
+    public EpochBranchModel(MutableTreeModel tree,
                             List<SubstitutionModel> substitutionModels,
                             Parameter epochTimes) {
 
@@ -84,8 +80,8 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
         double parentHeight = tree.getNodeHeight(tree.getParent(node));
         double nodeHeight = tree.getNodeHeight(node);
 
-        List<Double> weightList = new ArrayList<Double>();
-        List<Integer> orderList = new ArrayList<Integer>();
+        List<Double> weightList = new ArrayList<>();
+        List<Integer> orderList = new ArrayList<>();
 
         // find the epoch that the node height is in...
         int epoch = 0;
@@ -108,16 +104,12 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
         weightList.add( parentHeight - currentHeight );
         orderList.add(epoch);
 
-
-        if (orderList.size() == 0) {
-            throw new RuntimeException("EpochBranchModel failed to give a valid mapping");
-        }
-
-        final int[] order = new int[orderList.size()];
-        final double[] weights = new double[weightList.size()];
-        for (int i = 0; i < orderList.size(); i++) {
-            order[i] = orderList.get(i);
-            weights[i] = weightList.get(i);
+        final int len = orderList.size();
+        final int[] order = new int[len];
+        final double[] weights = new double[len];
+        for (int i = 0; i < len; i++) {
+            order[len - 1 - i] = orderList.get(i);
+            weights[len - 1 -i] = weightList.get(i);
         }
 
         return new Mapping() {
@@ -183,18 +175,28 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
     }
 
     public List<Citation> getCitations() {
-        return Arrays.asList(
+        return Collections.singletonList(
                 new Citation(new Author[]{new Author("F", "Bielejec"),
-                        new Author("P", "Lemey"), new Author("G", "Baele"), new Author("A", "Rambaut"),
-                        new Author("MA", "Suchard")}, Citation.Status.IN_PREPARATION));
+                        new Author("P", "Lemey"),
+                        new Author("G", "Baele"),
+                        new Author("A", "Rambaut"),
+                        new Author("MA", "Suchard")},
+                        "Inferring heterogeneous evolutionary processes through time: from sequence substitution to phylogeography",
+                        2014,
+                        "Systematic Biology",
+                        63,
+                        493,
+                        504,
+                        Citation.Status.PUBLISHED));
     }// END: getCitations
 
-    private final TreeModel tree;
+    private final MutableTreeModel tree;
     private final List<SubstitutionModel> substitutionModels;
     private final Parameter epochTimes;
 
     public void setRootFrequencyModel(FrequencyModel rootFreqModel) {
         this.rootFrequencyModel = rootFreqModel;
+        addModel(rootFrequencyModel);
     }
 
     private FrequencyModel rootFrequencyModel;

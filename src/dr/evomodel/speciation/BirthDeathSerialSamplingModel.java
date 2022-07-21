@@ -356,18 +356,13 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel imple
 
             }
         }
-
+//        System.err.println("logL is " + logL);
         return logL;
     }
 
     public double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude) {
         if (exclude.size() == 0) return calculateTreeLogLikelihood(tree);
         throw new RuntimeException("Not implemented!");
-    }
-
-    @Override
-    public double getNodeGradient(Tree tree, NodeRef node) {
-        throw new RuntimeException("Not yet implemented!");
     }
 
     public void mask(SpeciationModel mask) {

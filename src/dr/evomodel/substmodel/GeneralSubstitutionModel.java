@@ -115,6 +115,10 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
         ratesParameter.setDimensionNames(rateNames.toArray(tmp));
     }
 
+    public void setNormalization(boolean doNormalization) {
+        this.doNormalization = doNormalization;
+    }
+
     protected String getDimensionString(int i, int j, String prefix) {
         String codes =  dataType.getCode(i) + "." + dataType.getCode(j);
         if (prefix == null) {
@@ -122,6 +126,14 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
         } else {
             return prefix + "." + codes;
         }
+    }
+
+    protected double getNormalizationValue(double[][] matrix, double[] pi) {
+        double norm = 1.0;
+        if (doNormalization) {
+            norm = super.getNormalizationValue(matrix, pi);
+        }
+        return norm;
     }
 
     /**
@@ -155,4 +167,5 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
      */
 
     protected Parameter ratesParameter = null;
+    private boolean doNormalization = true;
 }

@@ -26,11 +26,15 @@
 
 package dr.evomodel.speciation;
 
+import dr.evolution.coalescent.IntervalType;
+import dr.evolution.tree.Tree;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
@@ -41,19 +45,24 @@ import dr.xml.Reportable;
  */
 public class SpeciationLikelihoodGradient implements GradientWrtParameterProvider, Reportable, Loggable {
 
-    private final SpeciationModel speciationModel;
     private final SpeciationLikelihood likelihood;
-    private final Parameter nodeHeightParameter;
+    private final Parameter parameter;
+    private final WrtParameter wrtParameter;
     private final TreeModel tree;
 
+    private final SpeciationModelGradientProvider provider;
+
+    private static final boolean DO_IT_RIGHT = false;
+
     public SpeciationLikelihoodGradient(SpeciationLikelihood likelihood,
-                                        TreeModel tree) {
+                                        TreeModel tree,
+                                        WrtParameter wrtParameter) {
 
         this.likelihood = likelihood;
-        this.speciationModel = likelihood.speciationModel;
         this.tree = tree;
-        this.nodeHeightParameter = new NodeHeightProxyParameter("internalNodeParameter", tree, true);
-
+        this.wrtParameter = wrtParameter;
+        this.provider = likelihood.getGradientProvider();
+        this.parameter = wrtParameter.getParameter(provider, tree);
     }
 
     @Override
@@ -63,24 +72,21 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
 
     @Override
     public Parameter getParameter() {
-        return nodeHeightParameter;
+        return parameter;
     }
 
     @Override
     public int getDimension() {
-        return nodeHeightParameter.getDimension();
+        return parameter.getDimension();
     }
 
     @Override
     public double[] getGradientLogDensity() {
+        return wrtParameter.getGradientLogDensity(provider, tree);
+    }
 
-        double[] gradient = new double[tree.getInternalNodeCount()];
-
-        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            gradient[i] = speciationModel.getNodeGradient(tree, tree.getNode(i + tree.getExternalNodeCount()));
-        }
-
-        return gradient;
+    public TreeModel getTree() {
+        return tree;
     }
 
     @Override
@@ -91,5 +97,161 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
     @Override
     public String getReport() {
         return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, 1E-3);
+    }
+
+    public enum WrtParameter {
+        NODE_HEIGHT("nodeHeight") {
+            @Override
+            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+                double[] gradient = new double[tree.getInternalNodeCount()];
+
+                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                    gradient[i] = provider.getNodeHeightGradient(tree, tree.getNode(i + tree.getExternalNodeCount()));
+                }
+
+                return gradient;
+            }
+
+            @Override
+            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+                return new NodeHeightProxyParameter("nodeHeightProxyParameter", tree, true);
+            }
+
+            @Override
+            double[] filter(double[] input) {
+                return input;
+            }
+        },
+
+        BIRTH_RATE("birthRate") {
+            @Override
+            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+                return provider.getBirthRateGradient(tree, null);
+            }
+
+            @Override
+            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+                return provider.getBirthRateParameter();
+            }
+
+            @Override
+            double[] filter(double[] input) {
+                return new double[] { input[0] };
+            }
+        },
+
+        DEATH_RATE("deathRate") {
+            @Override
+            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+                return provider.getDeathRateGradient(tree, null);
+            }
+
+            @Override
+            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+                return provider.getDeathRateParameter();
+            }
+
+            @Override
+            double[] filter( double[] input) {
+                return new double[] { input[1] };
+            }
+        },
+
+        SAMPLING_RATE("samplingRate") {
+            @Override
+            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+                return provider.getSamplingRateGradient(tree, null);
+            }
+
+            @Override
+            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+                return provider.getSamplingRateParameter();
+            }
+
+            @Override
+            double[] filter(double[] input) {
+                return new double[] { input[2] };
+            }
+        },
+
+        SAMPLING_PROBABILITY("samplingProbability") {
+            @Override
+            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+                return provider.getSamplingProbabilityGradient(tree, null);
+            }
+
+            @Override
+            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+                return provider.getSamplingProbabilityParameter();
+            }
+
+            @Override
+            double[] filter(double[] input) {
+                return new double[] { input[3] };
+            }
+        },
+
+        TREATMENT_PROBABILITY("treatmentProbability") {
+            @Override
+            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+                return provider.getTreatmentProbabilityGradient(tree, null);
+            }
+
+            @Override
+            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+                return provider.getTreatmentProbabilityParameter();
+            }
+
+            @Override
+            double[] filter(double[] input) {
+                return new double[] { input[4] };
+            }
+        },
+
+        ALL("all") {
+            @Override
+            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+                throw new RuntimeException("Not yet implemented");
+            }
+
+            @Override
+            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+
+                CompoundParameter cp = new CompoundParameter("allSpeciationParameters");
+                cp.addParameter(provider.getBirthRateParameter());
+                cp.addParameter(provider.getDeathRateParameter());
+                cp.addParameter(provider.getSamplingRateParameter());
+                cp.addParameter(provider.getSamplingProbabilityParameter());
+                cp.addParameter(provider.getTreatmentProbabilityParameter());
+
+                return cp;
+            }
+
+            @Override
+            double[] filter(double[] input) {
+                return input;
+            }
+        };
+
+        WrtParameter(String name) {
+            this.name = name;
+        }
+
+        abstract double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree);
+
+        abstract Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree);
+
+        abstract double[] filter(double[] input);
+
+        private final String name;
+
+        public static WrtParameter factory(String match) {
+            for (WrtParameter type : WrtParameter.values()) {
+                if (match.equalsIgnoreCase(type.name)) {
+                    return type;
+                }
+            }
+            return null;
+        }
     }
 }

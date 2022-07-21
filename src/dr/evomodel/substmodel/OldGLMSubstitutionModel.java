@@ -30,12 +30,12 @@ import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.distribution.LogLinearModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Marc A. Suchard
@@ -59,6 +59,11 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel {
         System.arraycopy(glm.getXBeta(),0,rates,0,rates.length);
     }
 
+    @Override
+    public Set<Likelihood> getLikelihoodSet() {
+        return new HashSet<>(Arrays.asList(this, glm));
+    }
+
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == glm) {
             updateMatrix = true;
@@ -77,7 +82,7 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel {
             index++;
         }
         aggregated[index++] = new LikelihoodColumn(getId() + ".L");
-        aggregated[index++] = new NormalizationColumn(getId() + ".Norm");
+        aggregated[index] = new NormalizationColumn(getId() + ".Norm");
 
         return aggregated;
         //return glm.getColumns();
@@ -103,6 +108,6 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel {
         return Collections.singletonList(CommonCitations.LEMEY_2014_UNIFYING);
     }
 
-    private LogLinearModel glm;
-    private double[] testProbabilities;
+    private final LogLinearModel glm;
+    private final double[] testProbabilities;
 }

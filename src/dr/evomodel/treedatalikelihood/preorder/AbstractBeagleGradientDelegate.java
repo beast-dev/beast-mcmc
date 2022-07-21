@@ -254,7 +254,7 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
     protected final int patternCount;
     protected final int stateCount;
     protected final int categoryCount;
-    private int preOrderPartialOffset;
+    private final int preOrderPartialOffset;
 
     protected double[] gradient;
 

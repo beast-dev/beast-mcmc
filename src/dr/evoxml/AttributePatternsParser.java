@@ -51,7 +51,11 @@ public class AttributePatternsParser extends AbstractXMLObjectParser {
     public static final String PATTERNS = "Patterns";
     public static final String ATTRIBUTE_PATTERNS = ATTRIBUTE + PATTERNS;
 
-    public String getParserName() { return ATTRIBUTE_PATTERNS; }
+    private static final String MULTIPLE = "patternCount";
+    private static final String REGEX = "regex";
+
+    public String getParserName() {
+        return ATTRIBUTE_PATTERNS; }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -60,6 +64,9 @@ public class AttributePatternsParser extends AbstractXMLObjectParser {
         TaxonList taxa = (TaxonList)xo.getChild(TaxonList.class);
         DataType dataType = DataTypeUtils.getDataType(xo);
 
+        int patternCount = xo.getAttribute(MULTIPLE, 1);
+        String regex = xo.getAttribute(REGEX, "\\w+");
+
         if (dataType == null) {
             throw new XMLParseException("dataType expected for attributePatterns element");
         }
@@ -67,47 +74,54 @@ public class AttributePatternsParser extends AbstractXMLObjectParser {
         // using a SimpleSiteList rather than Patterns to allow ancestral reconstruction
         SimpleSiteList patterns = new SimpleSiteList(dataType, taxa);
 
-        int[] pattern = new int[taxa.getTaxonCount()];
+        for (int j = 0; j < patternCount; ++j) {
+            int[] pattern = new int[taxa.getTaxonCount()];
 
-        boolean attributeFound = true;
+            boolean attributeFound = true;
 
-        for (int i = 0; i < taxa.getTaxonCount(); i++) {
-            Taxon taxon = taxa.getTaxon(i);
+            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                Taxon taxon = taxa.getTaxon(i);
 
-            if (secondaryAttributeName == null || secondaryAttributeName.isEmpty()) {
-                Object value = taxon.getAttribute(attributeName);
+                if (secondaryAttributeName == null || secondaryAttributeName.isEmpty()) {
+                    Object value = taxon.getAttribute(attributeName);
 
-                if (value != null) {
-                    int state = dataType.getState(value.toString());
-                    if (state < 0) {
-                        throw new XMLParseException("State for attribute, " + attributeName + ", in taxon, " + taxon.getId() + ", is unknown: " + value.toString());
+                    if (patternCount > 1) {
+                        String[] tmp = value.toString().split(regex);
+                        value = tmp[j];
                     }
-                    pattern[i] = state;
-                } else {
-                    attributeFound = false;
-                }
-            } else {
-                Object value1 = taxon.getAttribute(attributeName);
-                Object value2 = taxon.getAttribute(secondaryAttributeName);
 
-                if (value1 != null && value2 != null) {
-                    String code = value1.toString() + CompositeDataTypeParser.COMPOSITE_STATE_SEPARATOR + value2.toString();
-                    int state = dataType.getState(code);
-                    if (state < 0) {
-                        throw new XMLParseException("State for attributes, " + attributeName + " & " + secondaryAttributeName + ", in taxon, " + taxon.getId() + ", is unknown: " + code);
+                    if (value != null) {
+                        int state = dataType.getState(value.toString());
+                        if (state < 0) {
+                            throw new XMLParseException("State for attribute, " + attributeName + ", in taxon, " + taxon.getId() + ", is unknown: " + value.toString());
+                        }
+                        pattern[i] = state;
+                    } else {
+                        attributeFound = false;
                     }
-                    pattern[i] = state;
                 } else {
-                    attributeFound = false;
+                    Object value1 = taxon.getAttribute(attributeName);
+                    Object value2 = taxon.getAttribute(secondaryAttributeName);
+
+                    if (value1 != null && value2 != null) {
+                        String code = value1.toString() + CompositeDataTypeParser.COMPOSITE_STATE_SEPARATOR + value2.toString();
+                        int state = dataType.getState(code);
+                        if (state < 0) {
+                            throw new XMLParseException("State for attributes, " + attributeName + " & " + secondaryAttributeName + ", in taxon, " + taxon.getId() + ", is unknown: " + code);
+                        }
+                        pattern[i] = state;
+                    } else {
+                        attributeFound = false;
+                    }
                 }
             }
-        }
 
-        if (!attributeFound) {
-            throw new XMLParseException("The attribute, " + attributeName + " was not found in all taxa. Check the name of the attribute.");
-        }
+            if (!attributeFound) {
+                throw new XMLParseException("The attribute, " + attributeName + " was not found in all taxa. Check the name of the attribute.");
+            }
 
-        patterns.addPattern(pattern);
+            patterns.addPattern(pattern);
+        }
 
         if (xo.hasAttribute(XMLParser.ID)) {
 		    Logger.getLogger("dr.evoxml").info("Read attribute patterns, '" + xo.getId() + "' for attribute, "+ attributeName);
@@ -134,6 +148,8 @@ public class AttributePatternsParser extends AbstractXMLObjectParser {
                 ),
             AttributeRule.newStringRule(ATTRIBUTE),
             AttributeRule.newStringRule(SECONDARY_ATTRIBUTE, true),
+            AttributeRule.newIntegerRule(MULTIPLE, true),
+            AttributeRule.newStringRule(REGEX, true),
             new ElementRule(TaxonList.class, "The taxon set")
     };
 

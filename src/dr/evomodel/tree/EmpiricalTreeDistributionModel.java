@@ -85,10 +85,12 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel {
 
     protected void storeState() {
         storedCurrentTree = currentTree;
+        storedCurrentTreeIndex = currentTreeIndex;
     }
 
     protected void restoreState() {
         currentTree = storedCurrentTree;
+        currentTreeIndex = storedCurrentTreeIndex;
     }
 
     protected void acceptState() {
@@ -276,4 +278,5 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel {
     private Tree storedCurrentTree;
 
     private int currentTreeIndex;
+    private int storedCurrentTreeIndex;
 }

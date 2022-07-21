@@ -38,6 +38,8 @@ import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
 
+import java.util.ArrayList;
+
 /**
  * @author Max Tolkoff
  * @author Zhenyu Zhang
@@ -172,8 +174,9 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
         double[] lastGradient = leapFrogEngine.getLastGradient();
         double[] lastPosition = leapFrogEngine.getLastPosition();
+        double[] currentPosition = leapFrogEngine.getInitialPosition();
         if (preconditionScheduler.shouldStoreSecant(lastGradient, lastPosition)) {
-            preconditioning.storeSecant(new WrappedVector.Raw(lastGradient), new WrappedVector.Raw(lastPosition));
+            preconditioning.storeSecant(new WrappedVector.Raw(lastGradient), new WrappedVector.Raw(currentPosition));
         }
         preconditioning.updateMass();
     }
@@ -278,7 +281,8 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
                 String sb = "Gradients do not match:\n" +
                         "\tAnalytic: " + new WrappedVector.Raw(analyticalGradientOriginal) + "\n" +
-                        "\tNumeric : " + new WrappedVector.Raw(numericGradientOriginal) + "\n";
+                        "\tNumeric : " + new WrappedVector.Raw(numericGradientOriginal) + "\n" +
+                        gradientMismatchInformation(analyticalGradientOriginal, numericGradientOriginal);
                 throw new RuntimeException(sb);
             }
 
@@ -296,12 +300,55 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
                         "\tAnalytic: " + new WrappedVector.Raw(analyticalGradientTransformed) + "\n" +
                         "\tNumeric : " + new WrappedVector.Raw(numericGradientTransformed) + "\n" +
                         "\tParameter : " + new WrappedVector.Raw(parameter.getParameterValues()) + "\n" +
-                        "\tTransformed Parameter : " + new WrappedVector.Raw(transformedParameter) + "\n";
+                        "\tTransformed Parameter : " + new WrappedVector.Raw(transformedParameter) + "\n" +
+                        gradientMismatchInformation(analyticalGradientTransformed, numericGradientTransformed);
                 throw new RuntimeException(sb);
             }
         }
 
         ReadableVector.Utils.setParameter(restoredParameterValue, parameter);
+    }
+
+    private String gradientMismatchInformation(double[] analyticGradient, double[] numericGradient) {
+        int n = analyticGradient.length;
+        double maxDiff = 0;
+        int maxInd = -1;
+        double meanDiff = 0;
+        ArrayList<Integer> overIndices = new ArrayList<>();
+        double[] absDiffs = new double[n];
+
+        for (int i = 0; i < n; i++) {
+            double absDiff = Math.abs(analyticGradient[i] - numericGradient[i]);
+            absDiffs[i] = absDiff;
+            meanDiff += absDiff;
+            if (absDiff > runtimeOptions.gradientCheckTolerance) {
+                overIndices.add(i);
+            }
+            if (absDiff > maxDiff) {
+                maxDiff = absDiff;
+                maxInd = i;
+            }
+        }
+
+
+        meanDiff /= n;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("\tMaximum aboslute difference: " + maxDiff + " (at index " + (maxInd) + ")\n");
+        sb.append("\tAverage absolute difference: " + meanDiff + "\n");
+        sb.append("\tList of all values exceeding the tolerance:\n");
+        sb.append("\t\tindex    analytic    numeric    absolute difference\n");
+
+        int ind = 0;
+        String spacer = "    ";
+        for (int i : overIndices) {
+
+            sb.append("\t\t" + overIndices.get(ind) + spacer + analyticGradient[i] + spacer + numericGradient[i] +
+                    spacer + absDiffs[i] + "\n");
+            ind++;
+        }
+
+        return sb.toString();
     }
 
     static double[] mask(double[] vector, double[] mask) {

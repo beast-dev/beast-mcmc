@@ -23,13 +23,51 @@ class BaseTreeTool {
     int totalTrees = 0;
     private int totalUsedTrees = 0;
 
+    public static class TreeProgressPrinter {
+        private final PrintStream stream;
+        private static long stepSize = 10000 / 60;
+
+        public TreeProgressPrinter(PrintStream stream) {
+            this.stream = stream;
+        }
+
+        public void printReadingTrees() {
+            stream.println("Reading trees (bar assumes 10,000 trees)...");
+            stream.println("0              25             50             75            100");
+            stream.println("|--------------|--------------|--------------|--------------|");
+        }
+
+        public void printProgress(int totalTrees) {
+            if (totalTrees > 0 && totalTrees % stepSize == 0) {
+                progressStream.print("*");
+                progressStream.flush();
+            }
+        }
+
+        public void printSummary(int totalTrees, int totalUsedTrees, int burnIn) {
+            stream.println();
+            stream.println();
+
+            if (totalTrees < 1) {
+                System.err.println("No trees");
+                return;
+            }
+            if (totalUsedTrees < 1) {
+                System.err.println("No trees past burn-in (=" + burnIn + ")");
+                return;
+            }
+
+            stream.println("Total trees read: " + totalTrees);
+            stream.println("Total trees used: " + totalUsedTrees);
+        }
+
+    }
+
     void readTrees(List<Tree> trees, String inputFileName, int burnIn) throws IOException {
 
-        progressStream.println("Reading trees (bar assumes 10,000 trees)...");
-        progressStream.println("0              25             50             75            100");
-        progressStream.println("|--------------|--------------|--------------|--------------|");
+        TreeProgressPrinter progressPrinter = new TreeProgressPrinter(progressStream);
+        progressPrinter.printReadingTrees();
 
-        long stepSize = 10000 / 60;
 
         FileReader fileReader = new FileReader(inputFileName);
         TreeImporter importer = new NexusImporter(fileReader, false);
@@ -44,10 +82,8 @@ class BaseTreeTool {
                 }
                 trees.add(tree);
 
-                if (totalTrees > 0 && totalTrees % stepSize == 0) {
-                    progressStream.print("*");
-                    progressStream.flush();
-                }
+                progressPrinter.printProgress(totalTrees);
+
                 totalTrees++;
                 if (totalTrees > burnIn) {
                     totalUsedTrees++;
@@ -61,20 +97,8 @@ class BaseTreeTool {
 
         fileReader.close();
 
-        progressStream.println();
-        progressStream.println();
+        progressPrinter.printSummary(totalTrees, totalUsedTrees, burnIn);
 
-        if (totalTrees < 1) {
-            System.err.println("No trees");
-            return;
-        }
-        if (totalUsedTrees < 1) {
-            System.err.println("No trees past burn-in (=" + burnIn + ")");
-            return;
-        }
-
-        progressStream.println("Total trees read: " + totalTrees);
-        progressStream.println("Total trees used: " + totalUsedTrees);
     }
 
     protected PrintStream openOutputFile(String outputFileName) {

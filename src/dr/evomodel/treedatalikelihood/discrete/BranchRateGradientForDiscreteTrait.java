@@ -52,6 +52,11 @@ public class BranchRateGradientForDiscreteTrait extends DiscreteTraitBranchRateG
     }
 
     @Override
+    double[] updateBranchRateGradientLogDensity(double[] result) {
+        return branchRateModel.updateGradientLogDensity(result, null, 0, result.length);
+    }
+
+    @Override
     protected double getChainSecondDerivative(Tree tree, NodeRef node) {
         return branchRateModel.getBranchRateSecondDifferential(tree, node) * tree.getBranchLength(node);
     }

@@ -41,6 +41,7 @@ public class JointGradientParser extends AbstractXMLObjectParser {
 
     private final static String SUM_DERIVATIVE = "sumDerivative";
     private final static String SUM_DERIVATIVE2 = "jointGradient";
+    private static final String THREADS = "threads";
 
     @Override
     public String getParserName() {
@@ -62,7 +63,9 @@ public class JointGradientParser extends AbstractXMLObjectParser {
             derivativeList.add(grad);
         }
 
-        return new JointGradient(derivativeList);
+        int threads = xo.getAttribute(THREADS, 0);
+
+        return new JointGradient(derivativeList, threads);
     }
 
     @Override
@@ -72,6 +75,7 @@ public class JointGradientParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(GradientWrtParameterProvider.class, 1, Integer.MAX_VALUE),
+            AttributeRule.newIntegerRule(THREADS, true),
     };
 
     @Override

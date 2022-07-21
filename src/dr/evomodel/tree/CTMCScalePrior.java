@@ -30,6 +30,7 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.*;
 import dr.math.GammaFunction;
 import dr.util.Author;
@@ -48,7 +49,8 @@ import java.util.Set;
  *         Date: Aug 22, 2008
  *         Time: 3:26:57 PM
  */
-public class CTMCScalePrior extends AbstractModelLikelihood implements GradientWrtParameterProvider, Citable {
+public class CTMCScalePrior extends AbstractModelLikelihood
+        implements GradientWrtParameterProvider, HessianWrtParameterProvider, Citable {
     final private Parameter ctmcScale;
     final private TreeModel treeModel;
     private Set<Taxon> taxa = null;
@@ -261,5 +263,25 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements GradientW
             gradLogLike[i] = -shape / ab - totalTreeTime;
         }
         return gradLogLike;
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity() {
+
+        double[] diagonalHessian = new double[ctmcScale.getDimension()];
+
+        final double totalTreeTime = scaledTotalTreeTime();
+
+        for (int i = 0; i < ctmcScale.getDimension(); ++i) {
+            final double ab = ctmcScale.getParameterValue(i);
+            diagonalHessian[i] = shape / (ab * ab);
+        }
+
+        return diagonalHessian;
+    }
+
+    @Override
+    public double[][] getHessianLogDensity() {
+        throw new RuntimeException("Not yet implemented.");
     }
 }

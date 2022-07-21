@@ -372,11 +372,6 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
         throw new RuntimeException("Not implemented!");
     }
 
-    @Override
-    public double getNodeGradient(Tree tree, NodeRef node) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
     public static void main(String[] args) throws IOException, Importer.ImportException {
 
         // test framework

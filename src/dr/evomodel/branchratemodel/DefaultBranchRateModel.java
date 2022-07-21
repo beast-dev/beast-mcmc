@@ -173,14 +173,4 @@ public final class DefaultBranchRateModel implements BranchRateModel, Differenti
                                                     int from, int to) {
         return diagonalHessian;
     }
-
-    @Override
-    public void forEachOverRates(NodeRateMap map) {
-        throw new RuntimeException("Not yet implemented");
-    }
-
-    @Override
-    public double mapReduceOverRates(NodeRateMap map, DoubleBinaryOperator reduce, double initial) {
-        throw new RuntimeException("Not yet implemented");
-    }
 }

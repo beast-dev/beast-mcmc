@@ -175,11 +175,6 @@ public class BirthDeathCollapseModel extends SpeciationModel implements Citable 
     }
 
     @Override
-    public double getNodeGradient(Tree tree, NodeRef node) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
     public Citation.Category getCategory() {
         return Citation.Category.SPECIES_MODELS;
     }

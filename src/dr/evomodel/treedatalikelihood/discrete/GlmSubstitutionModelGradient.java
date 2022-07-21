@@ -1,7 +1,7 @@
 /*
  * DiscreteTraitBranchRateGradient.java
  *
- * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -28,7 +28,9 @@ package dr.evomodel.treedatalikelihood.discrete;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
+import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.OldGLMSubstitutionModel;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -40,6 +42,7 @@ import dr.inference.loggers.Loggable;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -52,7 +55,10 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  */
-public class GlmSubstitutionModelGradient implements GradientWrtParameterProvider, Reportable, Loggable, Citable {
+
+@SuppressWarnings("deprecation")
+public class GlmSubstitutionModelGradient implements GradientWrtParameterProvider, Reportable,
+        Loggable, Citable {
 
     protected final TreeDataLikelihood treeDataLikelihood;
     protected final TreeTrait treeTraitProvider;
@@ -60,8 +66,10 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
 
     protected final OldGLMSubstitutionModel substitutionModel;
     protected final GeneralizedLinearModel glm;
-    private final ParameterMap parameterMap;
     protected final int stateCount;
+
+    private final ParameterMap parameterMap;
+    private final int whichSubstitutionModel;
 
     public GlmSubstitutionModelGradient(String traitName,
                                         TreeDataLikelihood treeDataLikelihood,
@@ -74,6 +82,8 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
         this.glm = substitutionModel.getGeneralizedLinearModel();
         this.parameterMap = makeParameterMap(glm);
         this.stateCount = substitutionModel.getDataType().getStateCount();
+        this.whichSubstitutionModel = determineSubstitutionNumber(
+                likelihoodDelegate.getBranchModel(), substitutionModel);
 
         String name = SubstitutionModelCrossProductDelegate.getName(traitName);
 
@@ -89,6 +99,18 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
 
         treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
         assert (treeTraitProvider != null);
+    }
+
+    private int determineSubstitutionNumber(BranchModel branchModel,
+                                            OldGLMSubstitutionModel substitutionModel) {
+
+        List<SubstitutionModel> substitutionModels = branchModel.getSubstitutionModels();
+        for (int i = 0; i < substitutionModels.size(); ++i) {
+            if (substitutionModel == substitutionModels.get(i)) {
+                return i;
+            }
+        }
+        throw new IllegalArgumentException("Unknown substitution model");
     }
 
     ParameterMap makeParameterMap(GeneralizedLinearModel glm) {
@@ -152,6 +174,17 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
 
         double[] differentials = (double[]) treeTraitProvider.getTrait(tree, null);
         double[] generator = new double[differentials.length];
+
+        if (whichSubstitutionModel > 0) {
+            final int length = stateCount * stateCount;
+            System.arraycopy(
+                    differentials, whichSubstitutionModel * length,
+                    differentials, 0, length);
+        }
+
+        if (DEBUG_CROSS_PRODUCTS) {
+            savedDifferentials = differentials.clone();
+        }
 
         substitutionModel.getInfinitesimalMatrix(generator);
         double[] pi = substitutionModel.getFrequencyModel().getFrequencies();
@@ -241,6 +274,14 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
     public String getReport() {
 
         StringBuilder sb = new StringBuilder();
+
+        String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, null);
+        sb.append(message);
+
+        if (DEBUG_CROSS_PRODUCTS) {
+            sb.append("\n\tdifferentials: ").append(new WrappedVector.Raw(savedDifferentials, 0, savedDifferentials.length));
+        }
+
         if (COUNT_TOTAL_OPERATIONS) {
             sb.append("\n\tgetCrossProductGradientCount = ").append(gradientCount);
             sb.append("\n\taverageGradientTime = ");
@@ -252,13 +293,14 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
             sb.append("\n");
         }
 
-        String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, null);
-        sb.append(message);
-
         return  sb.toString();
     }
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
+    private static final boolean DEBUG_CROSS_PRODUCTS = true;
+
+    private double[] savedDifferentials;
+
     private long gradientCount = 0;
     private long totalGradientTime = 0;
 
@@ -284,10 +326,11 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
 
     private static final Citation CITATION = new Citation(
             new Author[]{
+                    new Author( "A", "Magee"),
                     new Author("P", "Lemey"),
                     new Author("MA", "Suchard"),
             },
-            "Phylogeographic GLM random effects",
+            "Phylo-geographic GLM random effects",
             "",
             Citation.Status.IN_PREPARATION);
 

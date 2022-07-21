@@ -29,12 +29,12 @@ import dr.evolution.datatype.DataType;
 import dr.inference.glm.GeneralizedLinearModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Marc A. Suchard
@@ -100,10 +100,14 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
     public String getDescription() {
         return "Generalized linear (model, GLM) substitution model"; // TODO Horrible; fix
     }
+    
+    @Override
+    public Set<Likelihood> getLikelihoodSet() {
+        return new HashSet<Likelihood>(Arrays.asList(this, glm));
+    }
 
     @Override
     public List<Citation> getCitations() {
-
         return Collections.singletonList(CommonCitations.LEMEY_2014_UNIFYING);
     }
 

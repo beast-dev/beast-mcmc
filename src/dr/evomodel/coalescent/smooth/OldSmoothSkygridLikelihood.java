@@ -26,7 +26,7 @@ import java.util.List;
  * @author Xiang Ji
  */
 
-public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implements Citable {
+public class OldSmoothSkygridLikelihood extends AbstractCoalescentLikelihood implements Citable {
 
     private final List<IntervalList> intervalList;
     private final Parameter logPopSizeParameter;
@@ -47,9 +47,9 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
     private final static UnivariateRealIntegrator integrator = new RombergIntegrator();
 //    private final static UnivariateRealIntegrator integrator = new SimpsonIntegrator();
 
-    public SmoothSkygridLikelihood(String name, List<IntervalList> intervalList,
-                                   Parameter logPopSizeParameter,
-                                   Parameter gridPointParameter) {
+    public OldSmoothSkygridLikelihood(String name, List<IntervalList> intervalList,
+                                      Parameter logPopSizeParameter,
+                                      Parameter gridPointParameter) {
 
         super(name);
         this.intervalList = intervalList;

@@ -25,11 +25,8 @@
 
 package test.dr.evomodel.coalescent;
 
-import dr.evomodel.coalescent.smooth.SmoothSkygridLikelihood;
 import dr.math.GeneralizedLogisticFunction;
 import junit.framework.TestCase;
-import org.apache.commons.math.analysis.integration.RombergIntegrator;
-import org.apache.commons.math.analysis.integration.UnivariateRealIntegrator;
 
 /**
  * @author Marc A. Suchard

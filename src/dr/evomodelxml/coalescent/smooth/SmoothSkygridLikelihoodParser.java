@@ -2,9 +2,8 @@ package dr.evomodelxml.coalescent.smooth;
 
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.TreeIntervals;
-import dr.evolution.tree.Tree;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
-import dr.evomodel.coalescent.smooth.SmoothSkygridLikelihood;
+import dr.evomodel.coalescent.smooth.OldSmoothSkygridLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.inference.model.Parameter;
@@ -44,11 +43,11 @@ public class SmoothSkygridLikelihoodParser extends AbstractXMLObjectParser {
         Parameter logPopSizes = (Parameter) xo.getElementFirstChild(POPULATION_PARAMETER);
         Parameter gridPoints = (Parameter) xo.getElementFirstChild(GRID_POINTS);
 
-        if (!SmoothSkygridLikelihood.checkValidParameters(logPopSizes, gridPoints)) {
+        if (!OldSmoothSkygridLikelihood.checkValidParameters(logPopSizes, gridPoints)) {
             throw new XMLParseException("Invalid initial parameters");
         }
 
-        SmoothSkygridLikelihood likelihood = new SmoothSkygridLikelihood(xo.getId(), intervalList, logPopSizes, gridPoints);
+        OldSmoothSkygridLikelihood likelihood = new OldSmoothSkygridLikelihood(xo.getId(), intervalList, logPopSizes, gridPoints);
         likelihood.setDebugIntervalList(debugIntervalList);
         return likelihood;
     }
@@ -65,7 +64,7 @@ public class SmoothSkygridLikelihoodParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return SmoothSkygridLikelihood.class;
+        return OldSmoothSkygridLikelihood.class;
     }
 
     @Override

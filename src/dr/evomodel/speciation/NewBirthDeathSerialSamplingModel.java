@@ -62,6 +62,14 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     // the originTime of the infection, origin > tree.getRoot();
     Parameter originTime;
 
+    // Tolerance for declaring that a node time is equal to an event time
+    double absTol = 1e-8;
+
+    // there are numIntervals intervalStarts, implicitly intervalStarts[-1] == 0
+    int numIntervals;
+    double gridEnd;
+    double[] intervalStarts = null;
+
     // TODO if we want to supplant other birth-death models, need an ENUM, and choice of options
     // Minimally, need survival of 1 lineage (passable default for SSBDP) and nTaxa (which is current option for non-serially-sampled BDP)
     private final boolean conditionOnSurvival;
@@ -94,9 +102,11 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             Parameter samplingFractionAtPresent,
             Parameter originTime,
             boolean condition,
+            int numIntervals,
+            double gridEnd,
             Type units) {
 
-        this("NewBirthDeathSerialSamplingModel", birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingFractionAtPresent, originTime, condition, units);
+        this("NewBirthDeathSerialSamplingModel", birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingFractionAtPresent, originTime, condition, numIntervals, gridEnd, units);
     }
 
     public SpeciationModelGradientProvider getProvider() { // This is less INTRUSIVE to the exisiting file
@@ -112,6 +122,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             Parameter samplingFractionAtPresent,
             Parameter originTime,
             boolean condition,
+            int numIntervals,
+            double gridEnd,
             Type units) {
 
         super(modelName, units);
@@ -153,6 +165,26 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         this.temp1 = new double[8];
         this.temp2 = new double[4];
         this.temp3 = new double[4];
+
+        this.gridEnd = gridEnd;
+        this.numIntervals = numIntervals;
+        setupTimeline();
+    }
+
+    // TODO should probably be replaced and brought in line with smoothSkygrid
+    private void setupTimeline() {
+        if (intervalStarts == null) {
+            intervalStarts = new double[numIntervals + 1];
+        } else {
+            Arrays.fill(intervalStarts, 0.0);
+        }
+
+        intervalStarts[0] = 0.0;
+        if (numIntervals > 1) {
+            for (int idx = 1; idx <= numIntervals - 1 ; idx++) {
+                intervalStarts[idx] = (idx) * (gridEnd / numIntervals);
+            }
+        }
     }
 
     @Override
@@ -166,26 +198,29 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
      * @param psi   proportion sampled at final time point
      * @param rho rate of sampling per lineage per unit time
      * @param t   time
+     * @param eAt precomputed exp(A * (t - t_i))
      * @return the probability of no sampled descendants after time, t
      */
     // TODO make this take in the most recent break time as an argument or the model index so we can obtain said time
     // TODO do we really need 4 p functions?
-    public static double p(double lambda, double mu, double psi, double rho, double a, double b, double t, double eAt) {
+    public static double p(int model, double lambda, double mu, double psi, double rho, double a, double b, double t, double ti, double eAt) {
         double eAt1B = eAt * (1.0 + b);
         return (lambda + mu + psi - a * ((eAt1B - (1.0 - b)) / (eAt1B + (1.0 - b)))) / (2.0 * lambda);
     }
 
-    public static double p(double lambda, double mu, double psi, double rho, double a, double b, double t) {
-        double eAt = Math.exp(a * t);
-        return p(lambda, mu, psi, rho, a, b, t, eAt);
+    public static double p(int model, double lambda, double mu, double psi, double rho, double a, double b, double t, double ti) {
+        double eAt = Math.exp(a * (t - ti));
+        return p(model, lambda, mu, psi, rho, a, b, t, ti, eAt);
     }
 
-    public double p(double t, double eAt) {
-        return p(lambda, mu, psi, rho, A, B, t, eAt);
+    public double p(int model, double t, double eAt) {
+        double ti = intervalStarts[model];
+        return p(model, lambda, mu, psi, rho, A, B, t, ti, eAt);
     }
 
-    public double p(double t) {
-        return p(lambda, mu, psi, rho, A, B, t);
+    public double p(int model, double t) {
+        double ti = intervalStarts[model];
+        return p(model, lambda, mu, psi, rho, A, B, t, ti);
     }
 
     /**
@@ -193,21 +228,23 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
      * @return the probability of no sampled descendants after time, t
      */
     // TODO do we really need 4 logq functions?
-    public static double logq(double a, double b, double t, double eAt) {
+    public static double logq(int model, double a, double b, double t, double ti, double eAt) {
         return Math.log(4.0 * eAt) - 2.0 * Math.log(eAt * (1 + b) + (1 - b));
     }
 
-    public static double logq(double a, double b, double t) {
+    public static double logq(int model, double a, double b, double t, double ti) {
         double eAt = Math.exp(a * t);
-        return logq(a, b, t, eAt);
+        return logq(model, a, b, t, ti, eAt);
     }
 
-    public double logq(double t, double eAt) {
-        return logq(A, B, t, eAt);
+    public double logq(int model, double t, double eAt) {
+        double ti = intervalStarts[model];
+        return logq(model, A, B, t, ti, eAt);
     }
 
-    public double logq(double t) {
-        return logq(A, B, t);
+    public double logq(int model, double t) {
+        double ti = intervalStarts[model];
+        return logq(model, A, B, t, ti);
     }
 
     // Named as per Gavryushkina et al 2014
@@ -224,7 +261,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     public double logConditioningProbability() {
         double logP = 0.0;
         if ( conditionOnSurvival ) {
-            logP -= Math.log(1.0 - p(originTime.getParameterValue(0)));
+            logP -= Math.log(1.0 - p(0, originTime.getParameterValue(0)));
         }
         return logP;
     }
@@ -247,7 +284,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         }
 
         if ( conditionOnSurvival ) {
-            logL -= Math.log(1.0 - p(origin));
+            logL -= Math.log(1.0 - p(0, origin));
         }
 
         return logL;
@@ -300,11 +337,11 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             logL += n * Math.log(rho);
         }
 
-        logL -= logq(origin);
+        logL -= logq(0, origin);
 
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
             double x = tree.getNodeHeight(tree.getInternalNode(i));
-            logL -= logq(x);
+            logL -= logq(0, x);
         }
 
         double temp_eAt = 0;
@@ -314,7 +351,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             if (noSamplingAtPresent || y > timeZeroTolerance) {
                 // TODO(change here)
                 temp_eAt = Math.exp(A * y);
-                logL += Math.log(psi * (r + (1.0 - r) * p(y, temp_eAt))) + logq(y, temp_eAt);
+                logL += Math.log(psi * (r + (1.0 - r) * p(0, y, temp_eAt))) + logq(0, y, temp_eAt);
 //                System.err.println("logq(y) = " + logq(y));
             }
         }
@@ -329,7 +366,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public double processInterval(int model, double tYoung, double tOld, int nLineages) {
-        return nLineages * (logq(tOld) - logq(tYoung));
+        return nLineages * (logq(0, tOld) - logq(0, tYoung));
     }
 
     @Override
@@ -349,7 +386,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         if (originTime.getValue(0) < rootAge) {
             return Double.NaN;
         } else {
-            return (logq(originTime.getValue(0))) - logq(rootAge);
+            return (logq(0, originTime.getValue(0))) - logq(0, rootAge);
         }
     }
 
@@ -370,7 +407,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         boolean noSamplingAtPresent = rho < Double.MIN_VALUE;
 
         if (noSamplingAtPresent || tOld > timeZeroTolerance) {
-            return Math.log(psi) + Math.log(r + (1.0 - r) * p(tOld));
+            return Math.log(psi) + Math.log(r + (1.0 - r) * p(0, tOld));
         } else {
             return Math.log(rho);
         }
@@ -676,7 +713,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         if (noSamplingAtPresent || t > timeZeroTolerance) {
             double eAt = Math.exp(-A * t);
             double[] partialP0_all = partialP0partialAll(t, eAt);
-            double P0 = p(t);
+            double P0 = p(0, t);
             double v = (1 - r) / ((1 - r) * P0 + r);
             for (int j = 0; j < 4; ++j) {
                 gradient[j] += v * partialP0_all[j];

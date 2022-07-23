@@ -54,7 +54,7 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
 
         final String modelName = xo.getId();
         final Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
-        
+
         final Parameter lambda = (Parameter) xo.getElementFirstChild(LAMBDA);
         final Parameter mu     = (Parameter) xo.getElementFirstChild(MU);
         final Parameter psi    = (Parameter) xo.getElementFirstChild(PSI);
@@ -64,6 +64,9 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
         final Parameter origin = (Parameter) xo.getElementFirstChild(ORIGIN);;
 
         Boolean condition = xo.getAttribute(CONDITION, false);
+
+        final double cutoff = Double.POSITIVE_INFINITY;
+        int numGridPoints = 1;
 
         String citeThisModel;
         if ( r.getParameterValue(0) < Double.MIN_VALUE ) {
@@ -76,7 +79,7 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
 
         Logger.getLogger("dr.evomodel").info(citeThisModel);
 
-        return new NewBirthDeathSerialSamplingModel(modelName, lambda, mu, psi, r, rho, origin, condition, units);
+        return new NewBirthDeathSerialSamplingModel(modelName, lambda, mu, psi, r, rho, origin, condition, numGridPoints, cutoff, units);
     }
 
     //************************************************************************

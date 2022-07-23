@@ -34,7 +34,6 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -758,16 +757,22 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         }
     }
 
+    private static void swap(double[] array, final int i, final int j) {
+        double tmp = array[i];
+        array[i] = array[j];
+        array[j] = tmp;
+    }
+
     private static final void transpose(double[] array, final int majorDim, final int minorDim) { // TODO untested
         int oldIndex = 0;
-        for (int major = 0; major < majorDim; ++major) {
+        for (int major = 0; major < majorDim; ++major) { // TODO Not cache-friendly, see https://stackoverflow.com/questions/5200338/a-cache-efficient-matrix-transpose-program
             for (int minor = major; minor < minorDim; ++minor) {
                 final int newIndex = minor * minorDim + majorDim;
-                double tmp = array[newIndex];
-                array[newIndex] = array[oldIndex];
-                array[oldIndex] = tmp;
+                swap(array, newIndex, oldIndex);
                 ++oldIndex;
             }
         }
     }
+
+    // Some useful JVM flags: -XX:+PrintCompilation -XX:+UnlockDiagnosticVMOptions -XX:+PrintInlining
 }

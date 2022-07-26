@@ -357,6 +357,10 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
             Bi[i] = Bi(birthRate(i), deathRate(i), serialSamplingRate(i), samplingProbability(i), Ai[i], piMinus1[i]);
         }
 
+        if (partialBCurrentPartialAll == null) {
+            partialPCurrentPartialAll = new double[numIntervals][4];
+            partialBCurrentPartialAll = new double[numIntervals][4];
+        }
 
         computedBCurrent = false;
         // computedPPrevious = false;

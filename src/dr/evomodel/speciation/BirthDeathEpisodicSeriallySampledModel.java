@@ -522,7 +522,7 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
             }
             double partialTemp1;
             // lambda
-            partialTemp1 = partialA[0] - 2 * (g1 * (partialA[0] * (1 - Bi[i]) + partialB[0] * Ai[i]) +  (1 - Bi[i]) * temp3[0] * Ai[i]) / (g1 * g1);
+            partialTemp1 = partialA[0] - 2 * (g1 * (partialA[0] * (1 - Bi[i]) - partialB[0] * Ai[i]) -  (1 - Bi[i]) * temp3[0] * Ai[i]) / (g1 * g1);
             partialP[0] = (- mu(i) - psi(i) - lambda(i) * partialTemp1 + g2)/ (2 * lambda(i) * lambda(i));
             // mu
             partialTemp1 = partialA[1] - 2 * (g1 * (partialA[1] * (1 - Bi[i]) - partialB[1] * Ai[i]) -  (1 - Bi[i]) * temp3[1] * Ai[i]) / (g1 * g1);

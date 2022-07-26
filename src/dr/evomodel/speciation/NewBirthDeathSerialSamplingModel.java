@@ -493,9 +493,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         boolean samplesTakenAtEventTime = rho(model) >= Double.MIN_VALUE;
 
         if (sampleIsAtPresent && samplesTakenAtPresent) {
-            logSampProb = Math.log(rho(0));
+            logSampProb = Math.log(rho);
         } else if (sampleIsAtEventTime && samplesTakenAtEventTime) {
-            logSampProb = Math.log(rho(model+1));
+            logSampProb = Math.log(rho);
         } else {
             double logPsi = Math.log(psi); // TODO Notice the natural parameterization is `log psi`
             logSampProb = logPsi + Math.log(r + (1.0 - r) * p(model,tOld));
@@ -547,22 +547,12 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     // Material from `Gradient` class
 
-    private double g1(int model, double t) {
-        double ti = model == 0 ? 0 : intervalEnds[model-1];
-        return Math.exp((A * (t - ti)) * (1 + B) + (1 - B));
-    }
 
     private double g1(int model, double t, double eAt) {
         return  (1 + B) * eAt + (1 - B);
     }
 
     private double g2(double t, double G1) {
-        return A * (1 - 2 * (1 + B) / G1);
-    }
-
-    private double g2(int model, double t) {
-
-        double G1 = g1(model, t);
         return A * (1 - 2 * (1 - B) / G1);
     }
 
@@ -777,18 +767,13 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double[] partialB = partialBStored;
         double[] partialG2_all = temp2; // new double[4];
         double[] temp3 = new double[3];
-        if (t == 0) {
-            for (int n = 0; n < 3; ++n) {
-                double partialG2 = partialA[n] - 2 * (G1 * (partialA[n] * (1 + B) + partialB[n] * A)) / (G1 * G1);
-                partialG2_all[n] = partialG2;
+
+        for (int n = 0; n < 3; ++n) {
+            temp3[n] = eAt * (1 + B) * partialA[n] * (t - ti) + (eAt - 1) * partialB[n];
+            double partialG2 = partialA[n] - 2 * (G1 * (partialA[n] * (1 - B) - partialB[n] * A) - (1 - B) * temp3[n] * A) / (G1 * G1);
+            partialG2_all[n] = partialG2;
             }
-        } else {
-            for (int n = 0; n < 3; ++n) {
-                temp3[n] = eAt * (1 + B) * partialA[n] * (t - ti) + (eAt - 1) * partialB[n];
-                double partialG2 = partialA[n] - 2 * (G1 * (partialA[n] * (1 - B) + partialB[n] * A) + (1 - B) * temp3[n] * A) / (G1 * G1);
-                partialG2_all[n] = partialG2;
-            }
-        }
+
         partialG2_all[3] = 0; // w.r.t. rho
         return partialG2_all;
     }
@@ -804,25 +789,15 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             double[] partialG2_all = partialG2partialAll(model, t, eAt, G1, partialB);
             double G2 = g2(t, G1);
 
-            if (t == 0) {
-                partialP_all[0] = (-mu - psi + lambda * partialG2_all[0] - G2) / (2 * lambda * lambda);
-                // mu
-                partialP_all[1] = (1 + partialG2_all[1]) / (2 * lambda);
-                // psi
-                partialP_all[2] = (1 + partialG2_all[2]) / (2 * lambda);
-                // rho
-                partialP_all[3] = -A / lambda *  G1 * partialB[3] / Math.pow(G1, 2);
-
-            } else {
                 // lambda
-                partialP_all[0] = (-mu - psi - lambda * partialG2_all[0] + G2) / (2 * lambda * lambda);
+            partialP_all[0] = (-mu - psi - lambda * partialG2_all[0] + G2) / (2 * lambda * lambda);
                 // mu
-                partialP_all[1] = (1 - partialG2_all[1]) / (2 * lambda);
+            partialP_all[1] = (1 - partialG2_all[1]) / (2 * lambda);
                 // psi
-                partialP_all[2] = (1 - partialG2_all[2]) / (2 * lambda);
+            partialP_all[2] = (1 - partialG2_all[2]) / (2 * lambda);
                 // rho
-                partialP_all[3] = -A / lambda * ((1 - B) * (eAt - 1) + G1) * partialB[3] / Math.pow(G1, 2);
-            }
+            partialP_all[3] = -A / lambda * ((1 - B) * (eAt - 1) + G1) * partialB[3] / Math.pow(G1, 2);
+
         }  else if (k < model) {
             for (int n = 0; n < 4; n++) {
                 partialP_all[n] = -A / lambda * ((1 - B) * (eAt - 1) + G1 ) * partialB[n] / Math.pow(G1,2);
@@ -935,31 +910,25 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public void processGradientSampling(double[] gradient, int currentModelSegment, double intervalEnd) {
-        double logSampProb = 0.0;
 
         double atEventTimeTolerance = Double.MIN_VALUE;
 
         boolean sampleIsAtPresent = intervalEnd < atEventTimeTolerance;
-        boolean samplesTakenAtPresent = rho >= Double.MIN_VALUE;
+        boolean samplesTakenAtPresent = rho(0) >= Double.MIN_VALUE;
 
         boolean sampleIsAtEventTime = Math.abs(intervalEnd - intervalEnds[currentModelSegment]) < atEventTimeTolerance;
-        boolean samplesTakenAtEventTime = rho >= Double.MIN_VALUE;
+        boolean samplesTakenAtEventTime = rho(currentModelSegment) >= Double.MIN_VALUE;
 
         if (sampleIsAtPresent && samplesTakenAtPresent) {
-            // logSampProb = Math.log(samplingProbability(0));
             gradient[3] += 1 / rho;
             //gradient[3*numIntervals] += 1 / rho(0);
         } else if (sampleIsAtEventTime && samplesTakenAtEventTime) {
-            // logSampProb = Math.log(samplingProbability(currentModelSegment+1));
-            gradient[3 + 5*(currentModelSegment+1)] += 1 / rho(currentModelSegment+1);
-            //gradient[3*numIntervals + currentModelSegment+1] += 1 / rho(currentModelSegment+1);
+            gradient[3 + 5*currentModelSegment] += 1 / rho;
+            //gradient[3*numIntervals + currentModelSegment] += 1 / rho(currentModelSegment);
         } else {
             // double logPsi = Math.log(serialSamplingRate(currentModelSegment)); // TODO Notice the natural parameterization is `log psi`
             gradient[2 + 5*currentModelSegment] += 1 / psi;
             //gradient[2*numIntervals + currentModelSegment] += 1 / psi(currentModelSegment);
-            //double r = treatmentProbability.getValue(currentModelSegment);
-            // logSampProb = logPsi + Math.log(r + (1.0 - r) * p(currentModelSegment,intervalEnd));
-            // partialP
             double p_it = p(currentModelSegment, intervalEnd);
             gradient[4 + 5*currentModelSegment] += (1 - p_it) / ((1-r)*p_it + r);
             //gradient[4*numIntervals + currentModelSegment] += (1 - p_it) / ((1-r)*p_it + r);
@@ -997,7 +966,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             qRoot = q(currentModelSegment, totalDuration);
 
             for (int n = 0; n < 4; n++) {
-                // assume lambda_1, lambda_2, ..., mu_1, mu_2, ...
                 gradient[k * 5 + n] += (partialqOrigin[n] / qOrigin - partialqRoot[n] / qRoot);
                 //gradient[n * numIntervals + k] += (partialqOrigin[n] / qOrigin - partialqRoot[n] / qRoot);
             }

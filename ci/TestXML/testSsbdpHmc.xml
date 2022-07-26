@@ -519,9 +519,9 @@
 		<treatmentProbability>
 			<parameter id="bdss.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss.origin" value="30.123" lower="0.0"/>
 		</origin>
@@ -749,7 +749,7 @@
 	<operators id="operators" optimizationSchedule="power">
 		<hamiltonianMonteCarloOperator weight="1" nSteps="5" stepSize="1E-2" mode="vanilla"
 								 drawVariance="1.0" autoOptimize="true" targetAcceptanceProbability="0.7"
-								 gradientCheckCount="100"
+								 gradientCheckCount="100" gradientCheckTolerance = "100"
 								 preconditioning="adaptiveDiagonal" preconditioningUpdateFrequency="100" preconditioningDelay="1000">
 			<jointGradient>
 				<compoundGradient idref="numGrad.bdss.prior"/>

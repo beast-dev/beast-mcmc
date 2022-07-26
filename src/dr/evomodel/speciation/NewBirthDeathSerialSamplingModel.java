@@ -34,6 +34,7 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -45,7 +46,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     // TODO should we pre-emptively put the combinatorial constant in here? It only really matters when inferring a tree where there may/may not be sampled ancestors
 
     // extant sampling proportion
-    Parameter samplingFractionAtPresent;
+    Parameter samplingProbability;
 
     // birth rate
     Parameter birthRate;
@@ -68,7 +69,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     // there are numIntervals intervalStarts, implicitly intervalStarts[-1] == 0
     int numIntervals;
     double gridEnd;
-    double[] intervalStarts = null;
+    double[] intervalEnds = null;
 
     // TODO if we want to supplant other birth-death models, need an ENUM, and choice of options
     // Minimally, need survival of 1 lineage (passable default for SSBDP) and nTaxa (which is current option for non-serially-sampled BDP)
@@ -77,6 +78,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     // useful constants we don't want to compute nTaxa times
     double A;
     double B;
+    double pPrevious;
     double lambda;
     double mu;
     double psi;
@@ -88,9 +90,20 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     private double[] partialQ;
     private boolean partialQKnown;
 
-    private double[] temp1;
+
     private double[] temp2;
     private double[] temp3;
+
+    private double[] temp33;
+
+    private double[] tempA;
+
+    boolean computedBCurrent;
+    private double[][] partialBCurrentPartialAll;
+
+    private double[][] partialPPreviousPartialAll;
+
+    private double[][] partialPCurrentPartialAll;
 
 
 
@@ -99,14 +112,14 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             Parameter deathRate,
             Parameter serialSamplingRate,
             Parameter treatmentProbability,
-            Parameter samplingFractionAtPresent,
+            Parameter samplingProbability,
             Parameter originTime,
             boolean condition,
             int numIntervals,
             double gridEnd,
             Type units) {
 
-        this("NewBirthDeathSerialSamplingModel", birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingFractionAtPresent, originTime, condition, numIntervals, gridEnd, units);
+        this("NewBirthDeathSerialSamplingModel", birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingProbability, originTime, condition, numIntervals, gridEnd, units);
     }
 
     public SpeciationModelGradientProvider getProvider() { // This is less INTRUSIVE to the exisiting file
@@ -119,7 +132,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             Parameter deathRate,
             Parameter serialSamplingRate,
             Parameter treatmentProbability,
-            Parameter samplingFractionAtPresent,
+            Parameter samplingProbability,
             Parameter originTime,
             boolean condition,
             int numIntervals,
@@ -128,25 +141,49 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
         super(modelName, units);
 
+        this.numIntervals = numIntervals;
+        this.gridEnd = gridEnd;
+        setupTimeline();
+
+        if (birthRate.getSize() != 1 && birthRate.getSize() != numIntervals) {
+            throw new RuntimeException("Length of birthRate parameter should be one or equal to the size of time parameter (size = " + numIntervals + ")");
+        }
+
+        if (deathRate.getSize() != 1 && deathRate.getSize() != numIntervals) {
+            throw new RuntimeException("Length of deathRate parameter should be one or equal to the size of time parameter (size = " + numIntervals + ")");
+        }
+
+        if (serialSamplingRate.getSize() != 1 && serialSamplingRate.getSize() != numIntervals) {
+            throw new RuntimeException("Length of serialSamplingRate parameter should be one or equal to the size of time parameter (size = " + numIntervals + ")");
+        }
+
+        if (treatmentProbability.getSize() != 1 && treatmentProbability.getSize() != numIntervals) {
+            throw new RuntimeException("Length of r parameter should be one or equal to the size of time parameter (size = " + numIntervals + ")");
+        }
+
+        if (samplingProbability.getSize() != 1 && samplingProbability.getSize() != (numIntervals)) {
+            throw new RuntimeException("Length of samplingProbability parameter should be one or equal to the size of time parameter (size = " + numIntervals + ")");
+        }
+
         this.birthRate = birthRate;
         addVariable(birthRate);
-        birthRate.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        birthRate.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, birthRate.getSize()));
 
         this.deathRate = deathRate;
         addVariable(deathRate);
-        deathRate.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        deathRate.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, deathRate.getSize()));
 
         this.serialSamplingRate = serialSamplingRate;
         addVariable(serialSamplingRate);
-        serialSamplingRate.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-
-        this.samplingFractionAtPresent = samplingFractionAtPresent;
-        addVariable(samplingFractionAtPresent);
-        samplingFractionAtPresent.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+        deathRate.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, serialSamplingRate.getSize()));
 
         this.treatmentProbability = treatmentProbability;
         addVariable(treatmentProbability);
-        treatmentProbability.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+        samplingProbability.addBounds(new Parameter.DefaultBounds(1.0, 0.0, treatmentProbability.getSize()));
+
+        this.samplingProbability = samplingProbability;
+        addVariable(samplingProbability);
+        samplingProbability.addBounds(new Parameter.DefaultBounds(1.0, 0.0, samplingProbability.getSize()));
 
         this.conditionOnSurvival = condition;
 
@@ -159,12 +196,14 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         this.savedGradient = null;
 //        this.savedTreeInterval = null;
         this.savedQ = Double.MIN_VALUE;
-        this.partialQ = new double[4];
+        this.partialQ = new double[4 * numIntervals];
         this.partialQKnown = false;
 
-        this.temp1 = new double[8];
+        this.tempA = new double[4];
         this.temp2 = new double[4];
         this.temp3 = new double[4];
+
+        this.temp33 = new double[numIntervals * 4];
 
         this.gridEnd = gridEnd;
         this.numIntervals = numIntervals;
@@ -173,17 +212,14 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     // TODO should probably be replaced and brought in line with smoothSkygrid
     private void setupTimeline() {
-        if (intervalStarts == null) {
-            intervalStarts = new double[numIntervals + 1];
+        if (intervalEnds == null) {
+            intervalEnds = new double[numIntervals];
         } else {
-            Arrays.fill(intervalStarts, 0.0);
+            Arrays.fill(intervalEnds, 0.0);
         }
 
-        intervalStarts[0] = 0.0;
-        if (numIntervals > 1) {
-            for (int idx = 1; idx <= numIntervals - 1 ; idx++) {
-                intervalStarts[idx] = (idx) * (gridEnd / numIntervals);
-            }
+        for (int idx = 0; idx <= numIntervals - 1 ; idx++) {
+            intervalEnds[idx] = (idx+1) * (gridEnd / numIntervals);
         }
     }
 
@@ -214,12 +250,12 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     public double p(int model, double t, double eAt) {
-        double ti = intervalStarts[model];
+        double ti = model == 0 ? 0 : intervalEnds[model-1];
         return p(model, lambda, mu, psi, rho, A, B, t, ti, eAt);
     }
 
     public double p(int model, double t) {
-        double ti = intervalStarts[model];
+        double ti = model == 0 ? 0 : intervalEnds[model-1];
         return p(model, lambda, mu, psi, rho, A, B, t, ti);
     }
 
@@ -238,12 +274,12 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     public double logq(int model, double t, double eAt) {
-        double ti = intervalStarts[model];
+        double ti = model == 0 ? 0 : intervalEnds[model-1];
         return logq(model, A, B, t, ti, eAt);
     }
 
     public double logq(int model, double t) {
-        double ti = intervalStarts[model];
+        double ti  = model == 0 ? 0 : intervalEnds[model-1];
         return logq(model, A, B, t, ti);
     }
 
@@ -359,35 +395,82 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         return logL;
     }
 
-    @Override
-    public double[] getBreakPoints() {
-        return new double[] { Double.POSITIVE_INFINITY };
+    private double lambda(int i) {
+        return birthRate.getValue(i);
+    }
+
+    private double mu(int i) {
+        return deathRate.getValue(i);
+    }
+
+    private double psi(int i) {
+        return serialSamplingRate.getValue(i);
+    }
+
+    private double rho(int i) {return samplingProbability.getValue(i); }
+
+    public double r(int i) {
+        return treatmentProbability.getValue(i);
     }
 
     @Override
-    public double processInterval(int model, double tYoung, double tOld, int nLineages) {
-        return nLineages * (logq(0, tOld) - logq(0, tYoung));
+    public double[] getBreakPoints() {
+        return intervalEnds;
+    }
+
+    @Override
+    public double processModelSegmentBreakPoint(int model, double intervalStart, double segmentIntervalEnd, int nLineages) {
+        return nLineages * (logq(model, segmentIntervalEnd) - logq(model, intervalStart));
     }
 
     @Override
     public void updateModelValues(int model) {
         // TODO would it be excessive to also get the log-values for these? Would save O(n) calls to Math.log()
+
+        if (model == 0) {
+            pPrevious = 1.0;
+        } else{
+            pPrevious = p(model-1, intervalEnds[model-1]);
+        }
+
         lambda = birthRate.getParameterValue(model);
         mu = deathRate.getParameterValue(model);
         psi = serialSamplingRate.getParameterValue(model);
         r = treatmentProbability.getParameterValue(model);
-        rho = samplingFractionAtPresent.getParameterValue(model);
+        rho = samplingProbability.getParameterValue(model);
+
+
         A = computeA(lambda, mu, psi);
-        B = computeB(lambda, mu, psi, rho, A, 1.0);
+        B = computeB(lambda, mu, psi, rho, A, pPrevious);
+
+        partialApartialAll();
+
+        if (partialBCurrentPartialAll == null) {
+            partialPPreviousPartialAll = new double[numIntervals][4];
+            partialPCurrentPartialAll = new double[numIntervals][4];
+            partialBCurrentPartialAll = new double[numIntervals][4];
+        }
+
+        computedBCurrent = false;
+        // computedPPrevious = false;
+        //partialBPreviousPartialAll = partialBCurrentPartialAll;
+        partialPPreviousPartialAll = partialPCurrentPartialAll;
+        // Use deep copy here, better to transform it into 1d array;
+//            for (int k=0; k<model; k++) {
+//                for (int n=0; n<4; n++) {
+//                    partialPPreviousPartialAll[k][n] = partialPCurrentPartialAll[k][n];
+//                }
+//            }
+        for (int k = 0; k <= model; k++) {
+            double ti = model == 0 ? 0 : intervalEnds[model-1];
+            double eAt = Math.exp(A * (intervalEnds[model] - ti));
+            partialPCurrentPartialAll[k] = partialPpartialAll(model , k, intervalEnds[model], eAt);
+        }
     }
 
     @Override
-    public double processOrigin(int model, double rootAge) {
-        if (originTime.getValue(0) < rootAge) {
-            return Double.NaN;
-        } else {
-            return (logq(0, originTime.getValue(0))) - logq(0, rootAge);
-        }
+    public double processInterval(int model, double tYoung, double tOld, int nLineages) {
+        return nLineages * (logq(model, tOld) - logq(model, tYoung));
     }
 
     @Override
@@ -399,19 +482,38 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     @Override
     public double processSampling(int model, double tOld) {
 
-        // double logPsi = Math.log(psi()); // TODO Notice the natural parameterization is `log psi`
-        // double r = r();
-        // double logRho = Math.log(rho()); // TODO Notice the natural parameterization is `log rho`
+        double logSampProb = 0.0;
 
-        double timeZeroTolerance = Double.MIN_VALUE;
-        boolean noSamplingAtPresent = rho < Double.MIN_VALUE;
+        double atEventTimeTolerance = Double.MIN_VALUE;
 
-        if (noSamplingAtPresent || tOld > timeZeroTolerance) {
-            return Math.log(psi) + Math.log(r + (1.0 - r) * p(0, tOld));
+        boolean sampleIsAtPresent = tOld < atEventTimeTolerance;
+        boolean samplesTakenAtPresent = rho(0) >= Double.MIN_VALUE;
+
+        boolean sampleIsAtEventTime = Math.abs(tOld - intervalEnds[model]) < atEventTimeTolerance;
+        boolean samplesTakenAtEventTime = rho(model) >= Double.MIN_VALUE;
+
+        if (sampleIsAtPresent && samplesTakenAtPresent) {
+            logSampProb = Math.log(rho(0));
+        } else if (sampleIsAtEventTime && samplesTakenAtEventTime) {
+            logSampProb = Math.log(rho(model+1));
         } else {
-            return Math.log(rho);
+            double logPsi = Math.log(psi); // TODO Notice the natural parameterization is `log psi`
+            logSampProb = logPsi + Math.log(r + (1.0 - r) * p(model,tOld));
+        }
+
+        return logSampProb;
+    }
+
+    @Override
+    public double processOrigin(int model, double rootAge) {
+        if (originTime.getValue(0) < rootAge) {
+            return Double.NaN;
+        } else {
+            return (logq(model, originTime.getValue(0))) - logq(model, rootAge);
         }
     }
+
+
 
     public double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude) {
         if (exclude.size() == 0) return calculateTreeLogLikelihood(tree);
@@ -445,32 +547,68 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     // Material from `Gradient` class
 
-    private double g1(double t) {
-        return Math.exp(-A * t) * (1 - B) + (1 + B);
+    private double g1(int model, double t) {
+        double ti = model == 0 ? 0 : intervalEnds[model-1];
+        return Math.exp((A * (t - ti)) * (1 + B) + (1 - B));
     }
 
-    private double g1(double t, double eAt) {
-        return  (1 - B) * eAt + (1 + B);
+    private double g1(int model, double t, double eAt) {
+        return  (1 + B) * eAt + (1 - B);
     }
 
     private double g2(double t, double G1) {
         return A * (1 - 2 * (1 + B) / G1);
     }
 
-    private double g2(double t) {
-        double G1 = g1(t);
-        return A * (1 - 2 * (1 + B) / G1);
+    private double g2(int model, double t) {
+
+        double G1 = g1(model, t);
+        return A * (1 - 2 * (1 - B) / G1);
     }
 
 
-    public double Q(double t){
+/*    public double Q(double t){
         // TODO why the factor of 4 and inversion here?
         double eAt = Math.exp(A * t);
         return (2.0 * (1.0 - Math.pow(B,2.0)) + (1.0/eAt) * Math.pow((1.0 - B),2.0) + eAt * Math.pow(1.0 + B,2.0));
+    }*/
+
+    //  todo: avoid calculating g1 in q
+    public double q(int model, double t) {
+        double ti  = model == 0 ? 0 : intervalEnds[model-1];;
+
+        double eA = Math.exp(A * (t - ti));
+        double sqrtDenom = eA * (1.0 + B) + (1.0 - B);
+
+        return (4.0 * eA)/(Math.pow(sqrtDenom,2.0));
+    }
+
+
+    private void partialApartialLambda(int idx1, double lambda, double mu, double psi) {
+        this.tempA[idx1] = (lambda - mu + psi) / A;
+    }
+
+    private void partialApartialMu(int idx1, double lambda, double mu, double psi) {
+        this.tempA[idx1] = (-lambda + mu + psi) / A;
+    }
+
+    private void partialApartialPsi(int idx1, double lambda, double mu, double psi) {
+        this.tempA[idx1] = (lambda + mu + psi) / A;
+    }
+
+    private void partialApartialRho(int idx1) {
+        this.tempA[idx1] = 0;
+    }
+
+    private void partialApartialAll() {
+        partialApartialLambda(0,  lambda, mu, psi);
+        partialApartialMu(1, lambda, mu, psi);
+        partialApartialPsi(2, lambda, mu, psi);
+        partialApartialRho(3);
     }
 
     // Gradient w.r.t. Rho
-    private void partialC1C2partialRho(int idx1, int idx2) {
+/*    private void partialC1C2partialRho(int idx1, int idx2) {
         // double lambda = lambda();
 
 //        double[] partialC1C2 = new double[2];
@@ -523,11 +661,11 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         this.temp1[idx2] = (A + (lambda - mu - 2 * lambda * rho - psi) * this.temp1[idx1]) / (A * A);
 
 //        return partialC1C2;
-    }
+    }*/
 
     @Override
     public Parameter getSamplingProbabilityParameter() {
-        return samplingFractionAtPresent;
+        return samplingProbability;
     }
 
     @Override
@@ -535,15 +673,20 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         return deathRate;
     }
 
+
     @Override
     public Parameter getBirthRateParameter() {
         return birthRate;
     }
 
+
+
     @Override
     public Parameter getSamplingRateParameter() {
         return serialSamplingRate;
     }
+
+
 
     @Override
     public Parameter getTreatmentProbabilityParameter() {
@@ -551,7 +694,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
 
-    // gradients for all
+/*    // gradients for all
     // (lambda, mu, psi, rho)
     public void partialC1C2partialAll() {
         // double lambda = lambda();
@@ -574,8 +717,34 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 //    public double[] partialQpartialAll(double t) {
 //        double[] buffer = new double[4];
 //        return partialQpartialAll(buffer, t);
-//    }
+//    }*/
 
+    private double[] partialBpartialAll(int i, int k, double lambda, double mu, double psi, double rho) {
+        if (computedBCurrent) {
+            return partialBCurrentPartialAll[k];
+        }
+        double[] partialB = new double[4];
+        if (k == i) {
+            double[] partialA = tempA;
+            double temp = 1 - 2 * (1 - rho) * pPrevious;
+            partialB[0] = (A * temp - partialA[0] * (temp * lambda + mu + psi)) / (A* A);
+            partialB[1] = (A - partialA[1] * (temp * lambda + mu+ psi)) / (A * A);
+            partialB[2] = (A - partialA[2] * (temp * lambda + mu + psi)) / (A * A);
+            partialB[3] = 2 * lambda * pPrevious / A;
+        } else if (k < i) {
+            for(int n = 0; n < 4; n++) {
+                partialB[n] = -2 * (1 - rho) * lambda / A * partialPPreviousPartialAll[k][n];
+            }
+        }
+        // else: k > i, all zero
+        partialBCurrentPartialAll[k] = partialB;
+        if (k == i) {
+            computedBCurrent = true;
+        }
+        return partialB;
+    }
+
+/*
     public double[] partialQpartialAll(double[] partialQ_all, double t) {
 //        double[] constants = getConstants();
 
@@ -597,94 +766,157 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         }
         return partialQ_all;
     }
+*/
 
     // (lambda, mu, psi, rho)
-    public double[] partialG2partialAll(double t, double eAt, double G1) {
+    public double[] partialG2partialAll(int model, double t, double eAt, double G1, double[] partialBStored) {
 
-//        double eAt = Math.exp(-A * t);
-        partialC1C2partialAll();
-
-        double[] partialC1C2_all = this.temp1;
+//        double eAt = Math.exp(A * (t-ti));
+        double ti = model == 0 ? 0 : intervalEnds[model-1];
+        double[] partialA = tempA;
+        double[] partialB = partialBStored;
         double[] partialG2_all = temp2; // new double[4];
-        for (int i = 0; i < 3; ++i) {
-            double partialC1 = partialC1C2_all[i*2+0];
-            double partialC2 = partialC1C2_all[i*2+1];
-            double partialG2 = G1 * ((partialC1 * (1 + B) + partialC2 * A)) -
-                    (partialC1 * t * eAt * (B - 1) + partialC2 * (1 - eAt)) * A * (1 + B);
-            // double G1 = g1(t);
-            partialG2 = -2 * partialG2 / (G1 * G1);
-            partialG2 += partialC1;
-            partialG2_all[i] = partialG2;
+        double[] temp3 = new double[3];
+        if (t == 0) {
+            for (int n = 0; n < 3; ++n) {
+                double partialG2 = partialA[n] - 2 * (G1 * (partialA[n] * (1 + B) + partialB[n] * A)) / (G1 * G1);
+                partialG2_all[n] = partialG2;
+            }
+        } else {
+            for (int n = 0; n < 3; ++n) {
+                temp3[n] = eAt * (1 + B) * partialA[n] * (t - ti) + (eAt - 1) * partialB[n];
+                double partialG2 = partialA[n] - 2 * (G1 * (partialA[n] * (1 - B) + partialB[n] * A) + (1 - B) * temp3[n] * A) / (G1 * G1);
+                partialG2_all[n] = partialG2;
+            }
         }
         partialG2_all[3] = 0; // w.r.t. rho
         return partialG2_all;
     }
 
     // (lambda, mu, psi, rho)
-    public double[] partialP0partialAll(double t, double eAt) {
-        double G1 = g1(t, eAt);
+    public double[] partialPpartialAll(int model, int k, double t, double eAt) {
+
+        double[] partialP_all = temp2; // new double[4];
+        double[] partialB = partialBpartialAll(model, k, lambda, mu, psi, rho);
         // double G1 = g1(t);
-        double[] partialG2_all = partialG2partialAll(t, eAt, G1);
+        double G1 = g1(model, t, eAt);
+        if (k == model) {
+            double[] partialG2_all = partialG2partialAll(model, t, eAt, G1, partialB);
+            double G2 = g2(t, G1);
 
-        double[] partialP0_all = temp2; // new double[4];
+            if (t == 0) {
+                partialP_all[0] = (-mu - psi + lambda * partialG2_all[0] - G2) / (2 * lambda * lambda);
+                // mu
+                partialP_all[1] = (1 + partialG2_all[1]) / (2 * lambda);
+                // psi
+                partialP_all[2] = (1 + partialG2_all[2]) / (2 * lambda);
+                // rho
+                partialP_all[3] = -A / lambda *  G1 * partialB[3] / Math.pow(G1, 2);
 
-//        double lambda = lambda();
-//        double mu = mu();
-//        double psi = psi();
-//        double[] constants = getConstants();
-        // double G1 = g1(t);
-        double G2 = g2(t,G1);
+            } else {
+                // lambda
+                partialP_all[0] = (-mu - psi - lambda * partialG2_all[0] + G2) / (2 * lambda * lambda);
+                // mu
+                partialP_all[1] = (1 - partialG2_all[1]) / (2 * lambda);
+                // psi
+                partialP_all[2] = (1 - partialG2_all[2]) / (2 * lambda);
+                // rho
+                partialP_all[3] = -A / lambda * ((1 - B) * (eAt - 1) + G1) * partialB[3] / Math.pow(G1, 2);
+            }
+        }  else if (k < model) {
+            for (int n = 0; n < 4; n++) {
+                partialP_all[n] = -A / lambda * ((1 - B) * (eAt - 1) + G1 ) * partialB[n] / Math.pow(G1,2);
+            }
+        }
 
-//        double eAt = Math.exp(-A * t); // TODO Notice this is (1) shared in many functions and (2) slow to compute
-
-        // lambda
-        partialP0_all[0] = (-mu - psi + lambda * partialG2_all[0] - G2) / (2 * lambda*lambda);
-        // mu
-        partialP0_all[1] = (1 + partialG2_all[1]) / (2 * lambda);
-        // psi
-        partialP0_all[2] = (1 + partialG2_all[2]) / (2 * lambda);
-        // rho
-        partialP0_all[3] = -A / lambda * (2 * lambda / A * (G1 - (1 - eAt) * (1 + B))) / (G1 * G1);
-
-        return partialP0_all;
+        return partialP_all;
     }
 
+    private double[] partialqpartialAll(int model, int k, double t, double[] partialq_all) {
+        if (model < k) { return partialq_all;}
+        double[] partialA = tempA;
+        double tempA1;
+        double ti = model == 0 ? 0 : intervalEnds[model-1];
+        double eAt = Math.exp(A * (t - ti));
+        double G1 = g1(model, t, eAt);
+        double[] partialB = partialBpartialAll(model, k, lambda, mu, psi, rho);
+        for (int n = 0; n < 3; n++) {
+            if (model == k) {
+                tempA1 = (t - ti) * partialA[n] * (G1 / 2 - eAt * (1 + B));
+                //tempA2 = (t - ti) * partialA[n] * temp_exp * (1 + Bi[i]);
+            } else {
+                tempA1 = 0;
+                //tempA2 = 0;
+            }
+            partialq_all[n] = 8 * eAt * (tempA1 - partialB[n] * (eAt - 1)) / (Math.pow(G1, 3));//(tempA1 - 8 * temp_exp * temp2 * (tempA2 + partialB[n] * (temp_exp - 1))) / (Math.pow(temp2, 4));
+        }
+        partialq_all[3] = -8 * eAt * partialB[3] * (eAt - 1) / (Math.pow(G1, 3));
+        return partialq_all;
+    }
     @Override
     public void precomputeGradientConstants() {
-        updateModelValues(0);
         this.savedQ = Double.MIN_VALUE;
 //        this.savedPartialQ = null;
         this.partialQKnown = false;
+        partialPPreviousPartialAll = new double[numIntervals][4];
+        partialPCurrentPartialAll = new double[numIntervals][4];
+        partialBCurrentPartialAll = new double[numIntervals][4];
     }
 
     @Override
-    public void processGradientModelSegmentBreakPoint(double[] gradient, int currentModelSegment, double intervalStart, double segmentIntervalEnd, int nLineages) {}
+    public void processGradientModelSegmentBreakPoint(double[] gradient, int currentModelSegment, double intervalStart, double segmentIntervalEnd, int nLineages) {
+        double[] partialqStart;
+        double[] partialqEnd;
+        double qStart;
+        double qEnd;
+        for (int k = 0; k <= currentModelSegment; k++) {
+            partialqStart = partialqpartialAll(currentModelSegment, k, intervalStart, temp2);
+            partialqEnd = partialqpartialAll(currentModelSegment, k, segmentIntervalEnd, temp2);
+            qStart = q(currentModelSegment, intervalStart);
+            qEnd = q(currentModelSegment, segmentIntervalEnd);
+
+            for (int n = 0; n < 4; n++) {
+                // assume lambda_1, lambda_2, ..., mu_1, mu_2, ...
+                gradient[k * 5 + n] += nLineages * (partialqEnd[n] / qEnd - partialqStart[n] / qStart);
+                //gradient[n * numIntervals + k] += nLineages * (partialqEnd[n] / qEnd - partialqStart[n] / qStart);
+            }
+        }
+    }
 
     @Override
     public void processGradientInterval(double[] gradient, int currentModelSegment, double intervalStart, double intervalEnd, int nLineages) {
         double tOld = intervalEnd;
         double tYoung = intervalStart;
-        double[] partialQ_all_old = partialQpartialAll(temp2, tOld);
+        double[] partialQ_all_old = new double[numIntervals*4];
+        double[] temp;
+        for (int k = 0; k <= currentModelSegment; k++) {
+            temp = partialqpartialAll(currentModelSegment, k, tOld, temp2);
+            System.arraycopy(temp, 0, partialQ_all_old, 4*k, 4);
+        }
         double[] partialQ_all_young;
-        double Q_Old = Q(tOld);
+        double Q_Old = q(currentModelSegment, tOld);
         double Q_young;
         if (this.savedQ != Double.MIN_VALUE) {
             Q_young = this.savedQ;
-        }
-        else {
-            Q_young = Q(tYoung);
+        } else {
+            Q_young = q(currentModelSegment, tYoung);
         }
         this.savedQ = Q_Old;
 
+        partialQ_all_young = temp33;
         if (partialQKnown) {
-            partialQ_all_young = temp3;
-            System.arraycopy(partialQ, 0, partialQ_all_young, 0, 4);
+            // TODO: Maybe change numIntervals to currentModelSegment
+            System.arraycopy(partialQ, 0, partialQ_all_young, 0, 4*numIntervals);
         } else {
-            partialQ_all_young = partialQpartialAll(temp3, tYoung);
+            for (int k = 0; k <= currentModelSegment; k++) {
+                temp = partialqpartialAll(currentModelSegment, k, tYoung, temp3);
+                System.arraycopy(temp, 0, partialQ_all_young, 4*k, 4);
+            }
             //System.arraycopy(partialQ_all_young, 0, savedPartialQ, 0, 4);
             partialQKnown = true;
         }
-        System.arraycopy(partialQ_all_old, 0, partialQ, 0, 4);
+        // TODO: Maybe change numIntervals to currentModelSegment
+        System.arraycopy(partialQ_all_old, 0, partialQ, 0, 4*numIntervals);
 
 //        if (this.savedPartialQ != null) {
 //            partialQ_all_young = this.savedPartialQ;
@@ -693,54 +925,82 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 //            partialQ_all_young = partialQpartialAll(tYoung);
 //        }
 //        this.savedPartialQ = partialQ_all_old;
-
-        for (int j = 0; j < 4; ++j) {
-            gradient[j] += nLineages*(partialQ_all_young[j] / Q_young - partialQ_all_old[j] / Q_Old);
+        for (int k = 0; k <= currentModelSegment; k++) {
+            for (int n = 0; n < 4; n++) {
+                gradient[k * 5 + n] += nLineages * (partialQ_all_old[k*numIntervals + n] / Q_Old - partialQ_all_young[k*numIntervals + n] / Q_young);
+                //gradient[n * numIntervals + k] += nLineages * (partialqEnd[n] / qEnd - partialqStart[n] / qStart);
+            }
         }
-
     }
 
     @Override
     public void processGradientSampling(double[] gradient, int currentModelSegment, double intervalEnd) {
-//        double r = r();
-        // double rho = rho();
-        // double psi = psi();
-        double t = intervalEnd;
+        double logSampProb = 0.0;
 
-        double timeZeroTolerance = Double.MIN_VALUE;
-        boolean noSamplingAtPresent = rho < Double.MIN_VALUE;
+        double atEventTimeTolerance = Double.MIN_VALUE;
 
-        if (noSamplingAtPresent || t > timeZeroTolerance) {
-            double eAt = Math.exp(-A * t);
-            double[] partialP0_all = partialP0partialAll(t, eAt);
-            double P0 = p(0, t);
-            double v = (1 - r) / ((1 - r) * P0 + r);
-            for (int j = 0; j < 4; ++j) {
-                gradient[j] += v * partialP0_all[j];
-            }
-            gradient[2] += 1 / psi;
-            gradient[4] += (1 - P0) / ((1 - r)*P0 + r);
-        } else {
+        boolean sampleIsAtPresent = intervalEnd < atEventTimeTolerance;
+        boolean samplesTakenAtPresent = rho >= Double.MIN_VALUE;
+
+        boolean sampleIsAtEventTime = Math.abs(intervalEnd - intervalEnds[currentModelSegment]) < atEventTimeTolerance;
+        boolean samplesTakenAtEventTime = rho >= Double.MIN_VALUE;
+
+        if (sampleIsAtPresent && samplesTakenAtPresent) {
+            // logSampProb = Math.log(samplingProbability(0));
             gradient[3] += 1 / rho;
+            //gradient[3*numIntervals] += 1 / rho(0);
+        } else if (sampleIsAtEventTime && samplesTakenAtEventTime) {
+            // logSampProb = Math.log(samplingProbability(currentModelSegment+1));
+            gradient[3 + 5*(currentModelSegment+1)] += 1 / rho(currentModelSegment+1);
+            //gradient[3*numIntervals + currentModelSegment+1] += 1 / rho(currentModelSegment+1);
+        } else {
+            // double logPsi = Math.log(serialSamplingRate(currentModelSegment)); // TODO Notice the natural parameterization is `log psi`
+            gradient[2 + 5*currentModelSegment] += 1 / psi;
+            //gradient[2*numIntervals + currentModelSegment] += 1 / psi(currentModelSegment);
+            //double r = treatmentProbability.getValue(currentModelSegment);
+            // logSampProb = logPsi + Math.log(r + (1.0 - r) * p(currentModelSegment,intervalEnd));
+            // partialP
+            double p_it = p(currentModelSegment, intervalEnd);
+            gradient[4 + 5*currentModelSegment] += (1 - p_it) / ((1-r)*p_it + r);
+            //gradient[4*numIntervals + currentModelSegment] += (1 - p_it) / ((1-r)*p_it + r);
+            double[] partialP;
+            for(int k = 0; k <= currentModelSegment; k++) {
+                double ti = currentModelSegment == 0 ? 0 : intervalEnds[currentModelSegment-1];
+                double eAt = Math.exp(A * (intervalEnd - ti));
+                partialP = partialPpartialAll(currentModelSegment, k, intervalEnd,  eAt);
+                for(int n = 0; n < 4; n++) {
+                    gradient[n + 5*k] += (1 - r) / ((1 - r) * p_it + r) * partialP[n];
+                    //gradient[n*numIntervals + k] += (1 - r) / ((1 - r) * p_it + r) * partialP[n];
+                }
+            }
         }
 
     }
 
     @Override
     public void processGradientCoalescence(double[] gradient, int currentModelSegment, double intervalEnd) {
-        gradient[0] += 1 / lambda;
+        gradient[currentModelSegment*5] += 1 / lambda;
     }
 
     @Override
     public void processGradientOrigin(double[] gradient, int currentModelSegment, double totalDuration) {
         double origin = originTime.getValue(0);
-        double[] partialQ_all_origin = partialQpartialAll(temp2, origin);
-        double[] partialQ_all_root = partialQpartialAll(temp3, totalDuration);
-        double Q_totalDuration = Q(totalDuration);
-        double Q_origin = Q(origin);
-        for (int i = 0; i < 4; ++i) {
-            // partialLL_all[i] = 1 / (1 - p0) * partialP0_all_origin[i];
-            gradient[i] += partialQ_all_root[i]/Q_totalDuration - partialQ_all_origin[i] / Q_origin;
+        double[] partialqOrigin;
+        double[] partialqRoot;
+        double qOrigin;
+        double qRoot;
+
+        for (int k = 0; k <= currentModelSegment; k++) {
+            partialqOrigin = partialqpartialAll(currentModelSegment, k, origin, temp2);
+            partialqRoot = partialqpartialAll(currentModelSegment, k, totalDuration, temp3);
+            qOrigin = q(currentModelSegment, origin);
+            qRoot = q(currentModelSegment, totalDuration);
+
+            for (int n = 0; n < 4; n++) {
+                // assume lambda_1, lambda_2, ..., mu_1, mu_2, ...
+                gradient[k * 5 + n] += (partialqOrigin[n] / qOrigin - partialqRoot[n] / qRoot);
+                //gradient[n * numIntervals + k] += (partialqOrigin[n] / qOrigin - partialqRoot[n] / qRoot);
+            }
         }
 
     }
@@ -750,7 +1010,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     @Override
-    public int getGradientLength() { return 5; }
+    public int getGradientLength() { return 5 * numIntervals; }
 
     private static final boolean AOS = true;
 
@@ -793,6 +1053,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             return 4 * stride + n;
         }
     }
+
+
 
     private static void swap(double[] array, final int i, final int j) {
         double tmp = array[i];

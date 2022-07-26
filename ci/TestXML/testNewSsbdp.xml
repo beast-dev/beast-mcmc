@@ -19,6 +19,7 @@
 		((A:1.0,B:2.0):1.0,(C:1.0,D:2.0):2.0)
 	</newick>
 
+
 	<!-- Generate a tree model                                                   -->
 	<treeModel id="treeModel">
 		<newick idref="startingTree"/>
@@ -51,9 +52,9 @@
 		<treatmentProbability>
 			<parameter id="bdss1.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss1.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss1.origin" value="5.123" lower="0.0"/>
 		</origin>
@@ -99,9 +100,9 @@
 		<treatmentProbability>
 			<parameter id="bdss2.treatmentProbability" value="0.0" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss2.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss2.origin" value="5.123" lower="0.0"/>
 		</origin>
@@ -147,9 +148,9 @@
 		<treatmentProbability>
 			<parameter id="bdss3.treatmentProbability" value="1.0" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss3.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss3.origin" value="5.123" lower="0.0"/>
 		</origin>
@@ -195,9 +196,9 @@
 		<treatmentProbability>
 			<parameter id="bdss4.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss4.samplingProbabilityAtPresent" value="0.0" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss4.origin" value="5.123" lower="0.0"/>
 		</origin>
@@ -243,9 +244,9 @@
 		<treatmentProbability>
 			<parameter id="bdss5.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss5.samplingProbabilityAtPresent" value="1.0" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss5.origin" value="5.123" lower="0.0"/>
 		</origin>
@@ -315,9 +316,9 @@
 		<treatmentProbability>
 			<parameter id="bdss6.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss6.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss6.origin" value="5.123" lower="0.0"/>
 		</origin>
@@ -363,9 +364,9 @@
 		<treatmentProbability>
 			<parameter id="bdss7.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss7.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss7.origin" value="5.123" lower="0.0"/>
 		</origin>
@@ -411,9 +412,9 @@
 		<treatmentProbability>
 			<parameter id="bdss8.treatmentProbability" value="0.0" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss8.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss8.origin" value="5.123" lower="0.0"/>
 		</origin>
@@ -459,9 +460,9 @@
 		<treatmentProbability>
 			<parameter id="bdss9.treatmentProbability" value="0.0" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss9.samplingProbabilityAtPresent" value="1.0" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss9.origin" value="5.123" lower="0.0"/>
 		</origin>

@@ -59,9 +59,9 @@
 		<treatmentProbability>
 			<parameter id="bdss1.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss1.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss1.origin" value="5.123" lower="0.0"/>
 		</origin>
@@ -143,9 +143,9 @@
 		<treatmentProbability>
 			<parameter id="bdss2.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss2.samplingProbabilityAtPresent" value="1" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss2.origin" value="5.123" lower="0.0"/>
 		</origin>
@@ -224,9 +224,9 @@
 		<treatmentProbability>
 			<parameter id="bdss3.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss3.samplingProbabilityAtPresent" value="0" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss3.origin" value="5.123" lower="0.0"/>
 		</origin>
@@ -296,9 +296,9 @@
 		<treatmentProbability>
 			<parameter id="bdss4.treatmentProbability" value="1" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss4.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss4.origin" value="5.123" lower="0.0"/>
 		</origin>
@@ -377,9 +377,9 @@
 		<treatmentProbability>
 			<parameter id="bdss5.treatmentProbability" value="0" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss5.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss5.origin" value="5.123" lower="0.0"/>
 		</origin>
@@ -448,9 +448,9 @@
 		<treatmentProbability>
 			<parameter id="bdss6.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss6.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss6.origin" value="5.123" lower="0.0"/>
 		</origin>
@@ -538,9 +538,9 @@
 		<treatmentProbability>
 			<parameter id="bdss7.treatmentProbability" value="1.0" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss7.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss7.origin" value="5.123" lower="0.0"/>
 		</origin>
@@ -603,9 +603,9 @@
 		<treatmentProbability>
 			<parameter id="bdss8.treatmentProbability" value="1.0" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss8.samplingProbabilityAtPresent" value="1.0" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss8.origin" value="5.123" lower="0.0"/>
 		</origin>
@@ -642,5 +642,91 @@
 		<speciationLikelihoodGradient idref="grad.deathRate8"/>
 	</report>
 
+	<!-- ########## -->
+	<!-- # CASE 7 # -->
+	<!-- ########## -->
+
+	<!-- multiple rates model with three intervals -->
+<!--	<newBirthDeathSerialSampling id="new.bdss9" units="years" hasFinalSample="false" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss9.birthRate" value ="8.47 2.88 1.82" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss9.deathRate" value ="4.89 2.67 3.23" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss9.samplingRate" value ="3.42 2.95 1.21" lower="0.0"/>
+		</samplingRate>
+		<samplingProbability>
+			<parameter id="bdss9.samplingProbability" value ="0.07  0.22  0.18" lower="0.0" upper="1.0"/>
+		</samplingProbability>
+		<treatmentProbability>
+			<parameter id="bdss9.treatmentProbability" value ="0.89 0.93 0.79" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<origin>
+			<parameter id="bdss9.origin" value="5.123" lower="0.0"/>
+		</origin>
+		<cutOff>
+			<parameter value="5.123"/>
+		</cutOff>
+		<numGridPoints>
+			<parameter value="3"/>
+		</numGridPoints>
+	</newBirthDeathSerialSampling>
+
+	<speciationLikelihood id="speciation9" useNewLoop="true">
+		<model>
+			<newBirthDeathSerialSampling idref="new.bdss9"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<speciationLikelihoodGradient id="grad.birthRate9" wrtParameter="birthRate" useNewLoop="true">
+		<speciationLikelihood idref="speciation9"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<speciationLikelihoodGradient id="grad.deathRate9" wrtParameter="deathRate" useNewLoop="true">
+		<speciationLikelihood idref="speciation9"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<speciationLikelihoodGradient id="grad.samplingRate9" wrtParameter="samplingRate" useNewLoop="true">
+		<speciationLikelihood idref="speciation9"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<speciationLikelihoodGradient id="grad.samplingProbability9" wrtParameter="samplingProbability" useNewLoop="true">
+		<speciationLikelihood idref="speciation9"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+	<speciationLikelihoodGradient id="grad.treatmentProbability9" wrtParameter="treatmentProbability" useNewLoop="true">
+		<speciationLikelihood idref="speciation9"/>
+		<treeModel idref="treeModel"/>
+	</speciationLikelihoodGradient>
+
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.birthRate9"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.deathRate9"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.samplingRate9"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.samplingProbability9"/>
+	</report>
+
+	<report>
+		<speciationLikelihoodGradient idref="grad.treatmentProbability9"/>
+	</report>-->
 
 </beast>

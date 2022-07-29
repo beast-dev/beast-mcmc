@@ -264,23 +264,17 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
      * @return the probability of no sampled descendants after time, t
      */
     // TODO do we really need 4 logq functions?
-    public static double logq(int model, double a, double b, double t, double ti, double eAt) {
-        return Math.log(4.0 * eAt) - 2.0 * Math.log(eAt * (1 + b) + (1 - b));
-    }
-
-    public static double logq(int model, double a, double b, double t, double ti) {
-        double eAt = Math.exp(a * t);
-        return logq(model, a, b, t, ti, eAt);
-    }
-
-    public double logq(int model, double t, double eAt) {
-        double ti = model == 0 ? 0 : intervalEnds[model-1];
-        return logq(model, A, B, t, ti, eAt);
-    }
-
     public double logq(int model, double t) {
-        double ti  = model == 0 ? 0 : intervalEnds[model-1];
-        return logq(model, A, B, t, ti);
+        double ti = model == 0 ? 0 : intervalEnds[model-1];
+
+        double At = A * (t - ti);
+        double eA = Math.exp(At);
+        double sqrtDenom = eA * (1.0 + B) + (1.0 - B);
+        //System.out.println(At + Math.log(4.0) - 2.0 * Math.log(sqrtDenom));
+        return At + Math.log(4.0) - 2.0 * Math.log(sqrtDenom);
+    }
+    public double logq(int model, double t, double eAt) {
+        return Math.log(4.0 * eAt) - 2.0 * Math.log(eAt * (1 + B) + (1 - B));
     }
 
     // Named as per Gavryushkina et al 2014
@@ -426,7 +420,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     @Override
     public void updateModelValues(int model) {
         // TODO would it be excessive to also get the log-values for these? Would save O(n) calls to Math.log()
-
+        this.savedQ = Double.MIN_VALUE;
+        this.partialQKnown = false;
         if (model == 0) {
             pPrevious = 1.0;
         } else{
@@ -445,26 +440,24 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
         partialApartialAll();
 
+        computedBCurrent = false;
+        // computedPPrevious = false;
+        //partialBPreviousPartialAll = partialBCurrentPartialAll;
+
         if (partialBCurrentPartialAll == null) {
             partialPPreviousPartialAll = new double[numIntervals][4];
             partialPCurrentPartialAll = new double[numIntervals][4];
             partialBCurrentPartialAll = new double[numIntervals][4];
         }
 
-        computedBCurrent = false;
-        // computedPPrevious = false;
-        //partialBPreviousPartialAll = partialBCurrentPartialAll;
-        partialPPreviousPartialAll = partialPCurrentPartialAll;
-        // Use deep copy here, better to transform it into 1d array;
-//            for (int k=0; k<model; k++) {
-//                for (int n=0; n<4; n++) {
-//                    partialPPreviousPartialAll[k][n] = partialPCurrentPartialAll[k][n];
-//                }
-//            }
-        for (int k = 0; k <= model; k++) {
-            double ti = model == 0 ? 0 : intervalEnds[model-1];
-            double eAt = Math.exp(A * (intervalEnds[model] - ti));
-            partialPCurrentPartialAll[k] = partialPpartialAll(model , k, intervalEnds[model], eAt);
+        if (numIntervals > 1) {
+            partialPPreviousPartialAll = partialPCurrentPartialAll;
+
+            for (int k = 0; k <= model; k++) {
+                double ti = model == 0 ? 0 : intervalEnds[model - 1];
+                double eAt = Math.exp(A * (intervalEnds[model] - ti));
+                partialPCurrentPartialAll[k] = partialPpartialAll(model, k, intervalEnds[model], eAt);
+            }
         }
     }
 
@@ -484,13 +477,12 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
         double logSampProb = 0.0;
 
-        double atEventTimeTolerance = Double.MIN_VALUE;
 
-        boolean sampleIsAtPresent = tOld < atEventTimeTolerance;
-        boolean samplesTakenAtPresent = rho(0) >= Double.MIN_VALUE;
+        boolean sampleIsAtPresent = tOld <= 0;
+        boolean samplesTakenAtPresent = rho(0) >= 0;
 
-        boolean sampleIsAtEventTime = Math.abs(tOld - intervalEnds[model]) < atEventTimeTolerance;
-        boolean samplesTakenAtEventTime = rho(model) >= Double.MIN_VALUE;
+        boolean sampleIsAtEventTime = Math.abs(tOld - intervalEnds[model]) <= 0;
+        boolean samplesTakenAtEventTime = rho(model) >= 0;
 
         if (sampleIsAtPresent && samplesTakenAtPresent) {
             logSampProb = Math.log(rho);
@@ -781,7 +773,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     // (lambda, mu, psi, rho)
     public double[] partialPpartialAll(int model, int k, double t, double eAt) {
 
-        double[] partialP_all = temp2; // new double[4];
+        double[] partialP_all = new double[4];
         double[] partialB = partialBpartialAll(model, k, lambda, mu, psi, rho);
         // double G1 = g1(t);
         double G1 = g1(model, t, eAt);
@@ -840,13 +832,13 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public void processGradientModelSegmentBreakPoint(double[] gradient, int currentModelSegment, double intervalStart, double segmentIntervalEnd, int nLineages) {
-        double[] partialqStart;
-        double[] partialqEnd;
+        double[] partialqStart = new double[4];
+        double[] partialqEnd = new double[4];
         double qStart;
         double qEnd;
         for (int k = 0; k <= currentModelSegment; k++) {
-            partialqStart = partialqpartialAll(currentModelSegment, k, intervalStart, temp2);
-            partialqEnd = partialqpartialAll(currentModelSegment, k, segmentIntervalEnd, temp2);
+            partialqpartialAll(currentModelSegment, k, intervalStart, partialqStart);
+            partialqpartialAll(currentModelSegment, k, segmentIntervalEnd, partialqEnd);
             qStart = q(currentModelSegment, intervalStart);
             qEnd = q(currentModelSegment, segmentIntervalEnd);
 
@@ -863,9 +855,10 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double tOld = intervalEnd;
         double tYoung = intervalStart;
         double[] partialQ_all_old = new double[numIntervals*4];
-        double[] temp;
+        double[] temp = new double[4];
         for (int k = 0; k <= currentModelSegment; k++) {
-            temp = partialqpartialAll(currentModelSegment, k, tOld, temp2);
+            // temp = partialqpartialAll(currentModelSegment, k, tOld, temp2);
+            partialqpartialAll(currentModelSegment, k, tOld, temp);
             System.arraycopy(temp, 0, partialQ_all_old, 4*k, 4);
         }
         double[] partialQ_all_young;
@@ -902,7 +895,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 //        this.savedPartialQ = partialQ_all_old;
         for (int k = 0; k <= currentModelSegment; k++) {
             for (int n = 0; n < 4; n++) {
-                gradient[k * 5 + n] += nLineages * (partialQ_all_old[k*numIntervals + n] / Q_Old - partialQ_all_young[k*numIntervals + n] / Q_young);
+                gradient[k * 5 + n] += nLineages * (partialQ_all_old[k*4+ n] / Q_Old - partialQ_all_young[k*4 + n] / Q_young);
                 //gradient[n * numIntervals + k] += nLineages * (partialqEnd[n] / qEnd - partialqStart[n] / qStart);
             }
         }
@@ -911,13 +904,11 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     @Override
     public void processGradientSampling(double[] gradient, int currentModelSegment, double intervalEnd) {
 
-        double atEventTimeTolerance = Double.MIN_VALUE;
+        boolean sampleIsAtPresent = intervalEnd <= 0;
+        boolean samplesTakenAtPresent = rho(0) >= 0;
 
-        boolean sampleIsAtPresent = intervalEnd < atEventTimeTolerance;
-        boolean samplesTakenAtPresent = rho(0) >= Double.MIN_VALUE;
-
-        boolean sampleIsAtEventTime = Math.abs(intervalEnd - intervalEnds[currentModelSegment]) < atEventTimeTolerance;
-        boolean samplesTakenAtEventTime = rho(currentModelSegment) >= Double.MIN_VALUE;
+        boolean sampleIsAtEventTime = Math.abs(intervalEnd - intervalEnds[currentModelSegment]) <= 0;
+        boolean samplesTakenAtEventTime = rho(currentModelSegment) >= 0;
 
         if (sampleIsAtPresent && samplesTakenAtPresent) {
             gradient[3] += 1 / rho;

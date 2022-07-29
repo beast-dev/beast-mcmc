@@ -34,10 +34,7 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A phylogenetic birth-death-sampling model which includes serial sampling, sampling at present, and the possibility of treatmentProbability.
@@ -1042,4 +1039,132 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     // Some useful JVM flags: -XX:+PrintCompilation -XX:+UnlockDiagnosticVMOptions -XX:+PrintInlining
+
+    public abstract class ParameterPack implements Iterable<Parameter> {
+
+        public class Constant extends ParameterPack {
+
+            public Constant(Parameter birthRate,
+                            Parameter deathRate,
+                            Parameter samplingRate,
+                            Parameter samplingProbability,
+                            Parameter treatmentProbability,
+                            Parameter originTime) {
+                super(birthRate, deathRate, samplingRate, samplingProbability, treatmentProbability, originTime, null);
+            }
+
+            public double getBirthRate(int model) { return birthRate.getParameterValue(0); }
+
+            public double getDeathRate(int model) { return deathRate.getParameterValue(0); }
+
+            public double getSamplingRate(int model) { return samplingRate.getParameterValue(0); }
+
+            public double getSamplingProbability(int model) { return samplingProbability.getParameterValue(0); }
+
+            public double getTreatmentProbability(int model) { return treatmentProbability.getParameterValue(0); }
+        }
+
+        public class Episodic extends ParameterPack {
+
+            public Episodic(Parameter birthRate,
+                            Parameter deathRate,
+                            Parameter samplingRate,
+                            Parameter samplingProbability,
+                            Parameter treatmentProbability,
+                            Parameter originTime,
+                            Parameter grid) {
+                super(birthRate, deathRate, samplingRate, samplingProbability, treatmentProbability, originTime, grid);
+            }
+
+            public double getBirthRate(int model) { return birthRate.getParameterValue(model); }
+
+            public double getDeathRate(int model) { return deathRate.getParameterValue(model); }
+
+            public double getSamplingRate(int model) { return samplingRate.getParameterValue(model); }
+
+            public double getSamplingProbability(int model) { return samplingProbability.getParameterValue(model); }
+
+            public double getTreatmentProbability(int model) { return treatmentProbability.getParameterValue(model); }
+        }
+
+        final Parameter birthRate;
+        final Parameter deathRate;
+        final Parameter samplingRate;
+        final Parameter samplingProbability;
+        final Parameter treatmentProbability;
+        final Parameter originTime;
+        final Parameter grid;
+
+        final int dim;
+
+        final List<Parameter> parameterList = new ArrayList<>();
+
+        private ParameterPack(Parameter birthRate,
+                              Parameter deathRate,
+                              Parameter samplingRate,
+                              Parameter samplingProbability,
+                              Parameter treatmentProbability,
+                              Parameter originTime,
+                              Parameter grid) {
+
+            this.birthRate = birthRate;
+            this.deathRate = deathRate;
+            this.samplingRate = samplingRate;
+            this.samplingProbability = samplingProbability;
+            this.treatmentProbability = treatmentProbability;
+            this.originTime = originTime;
+            this.grid = grid;
+
+            this.dim = grid == null ? 1 : grid.getDimension() + 1;
+
+            addIfNotNull(birthRate, Double.POSITIVE_INFINITY, 0.0, dim);
+            addIfNotNull(deathRate, Double.POSITIVE_INFINITY, 0.0, dim);
+            addIfNotNull(samplingRate, Double.POSITIVE_INFINITY, 0.0, dim);
+            addIfNotNull(samplingProbability, 1.0, 0.0, dim);
+            addIfNotNull(treatmentProbability, 1.0, 0.0, dim);
+            addIfNotNull(originTime, Double.POSITIVE_INFINITY, 0.0, 1);
+        }
+
+        public abstract double getBirthRate(int model);
+        public abstract double getDeathRate(int model);
+        public abstract double getSamplingRate(int model);
+        public abstract double getSamplingProbability(int model);
+        public abstract double getTreatmentProbability(int model);
+
+        public double getOriginTime() {
+            return originTime.getParameterValue(0);
+        }
+
+        public double[] getGrid() {
+            double[] value = new double[dim + 1];
+            value[0] = 0.0;
+            for (int i = 1; i < dim; ++i) {
+                value[i] = grid.getParameterValue(i - 1);
+            }
+            value[dim] = Double.POSITIVE_INFINITY;
+
+            return value;
+        }
+
+        private void addIfNotNull(Parameter parameter, double upper, double lower, int dim) {
+            if (parameter != null) {
+
+                if (parameter.getDimension() != dim) {
+                    throw new IllegalArgumentException("Parameter '" + parameter.getId() + "' has the wrong dimension");
+                }
+
+                parameterList.add(parameter);
+                parameter.addBounds(new Parameter.DefaultBounds(upper, lower, dim));
+            }
+        }
+
+        public boolean contains(Variable variable) {
+            return parameterList.contains((Parameter) variable);
+        }
+
+        @Override
+        public Iterator<Parameter> iterator() {
+            return parameterList.iterator();
+        }
+    }
 }

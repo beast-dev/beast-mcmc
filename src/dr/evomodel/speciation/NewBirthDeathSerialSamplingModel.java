@@ -69,7 +69,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     // there are numIntervals intervalStarts, implicitly intervalStarts[-1] == 0
     int numIntervals;
     double gridEnd;
-    double[] intervalEnds = null;
+    double[] intervalStarts = null;
 
     // TODO if we want to supplant other birth-death models, need an ENUM, and choice of options
     // Minimally, need survival of 1 lineage (passable default for SSBDP) and nTaxa (which is current option for non-serially-sampled BDP)
@@ -212,14 +212,14 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     // TODO should probably be replaced and brought in line with smoothSkygrid
     private void setupTimeline() {
-        if (intervalEnds == null) {
-            intervalEnds = new double[numIntervals];
+        if (intervalStarts == null) {
+            intervalStarts = new double[numIntervals];
         } else {
-            Arrays.fill(intervalEnds, 0.0);
+            Arrays.fill(intervalStarts, 0.0);
         }
 
         for (int idx = 0; idx <= numIntervals - 1 ; idx++) {
-            intervalEnds[idx] = (idx+1) * (gridEnd / numIntervals);
+            intervalStarts[idx] = idx * (gridEnd / numIntervals);
         }
     }
 
@@ -239,24 +239,24 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
      */
     // TODO make this take in the most recent break time as an argument or the model index so we can obtain said time
     // TODO do we really need 4 p functions?
-    public static double p(int model, double lambda, double mu, double psi, double rho, double a, double b, double t, double ti, double eAt) {
+    public static double p(int model, double lambda, double mu, double psi, double rho, double a, double b, double t, double tkMinus1, double eAt) {
         double eAt1B = eAt * (1.0 + b);
         return (lambda + mu + psi - a * ((eAt1B - (1.0 - b)) / (eAt1B + (1.0 - b)))) / (2.0 * lambda);
     }
 
-    public static double p(int model, double lambda, double mu, double psi, double rho, double a, double b, double t, double ti) {
-        double eAt = Math.exp(a * (t - ti));
-        return p(model, lambda, mu, psi, rho, a, b, t, ti, eAt);
+    public static double p(int model, double lambda, double mu, double psi, double rho, double a, double b, double t, double tkMinus1) {
+        double eAt = Math.exp(a * (t - tkMinus1));
+        return p(model, lambda, mu, psi, rho, a, b, t, tkMinus1, eAt);
     }
 
     public double p(int model, double t, double eAt) {
-        double ti = model == 0 ? 0 : intervalEnds[model-1];
-        return p(model, lambda, mu, psi, rho, A, B, t, ti, eAt);
+        double tkMinus1 = intervalStarts[model];
+        return p(model, lambda, mu, psi, rho, A, B, t, tkMinus1, eAt);
     }
 
     public double p(int model, double t) {
-        double ti = model == 0 ? 0 : intervalEnds[model-1];
-        return p(model, lambda, mu, psi, rho, A, B, t, ti);
+        double tkMinus1 = intervalStarts[model];
+        return p(model, lambda, mu, psi, rho, A, B, t, tkMinus1);
     }
 
     /**
@@ -265,9 +265,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
      */
     // TODO do we really need 4 logq functions?
     public double logq(int model, double t) {
-        double ti = model == 0 ? 0 : intervalEnds[model-1];
+        double tkMinus1 = intervalStarts[model];
 
-        double At = A * (t - ti);
+        double At = A * (t - tkMinus1);
         double eA = Math.exp(At);
         double sqrtDenom = eA * (1.0 + B) + (1.0 - B);
         //System.out.println(At + Math.log(4.0) - 2.0 * Math.log(sqrtDenom));
@@ -409,7 +409,12 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public double[] getBreakPoints() {
-        return intervalEnds;
+        double[] breakPoints = new double[numIntervals];
+        for (int idx = 0; idx <= numIntervals - 2 ; idx++) {
+            breakPoints[idx] = intervalStarts[idx + 1];
+        }
+        breakPoints[numIntervals-1] = originTime.getValue(0);
+        return breakPoints;
     }
 
     @Override
@@ -425,7 +430,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         if (model == 0) {
             pPrevious = 1.0;
         } else{
-            pPrevious = p(model-1, intervalEnds[model-1]);
+            pPrevious = p(model-1, intervalStarts[model]);
         }
 
         lambda = birthRate.getParameterValue(model);
@@ -450,13 +455,12 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             partialBCurrentPartialAll = new double[numIntervals][4];
         }
 
-        if (numIntervals > 1) {
+        if (numIntervals > 1 & model < numIntervals - 1) {
             partialPPreviousPartialAll = partialPCurrentPartialAll;
-
-            for (int k = 0; k <= model; k++) {
-                double ti = model == 0 ? 0 : intervalEnds[model - 1];
-                double eAt = Math.exp(A * (intervalEnds[model] - ti));
-                partialPCurrentPartialAll[k] = partialPpartialAll(model, k, intervalEnds[model], eAt);
+            for (int parameterIndex = 0; parameterIndex  <= model; parameterIndex ++) {
+                double tkMinus1 = intervalStarts[model];
+                double eAt = Math.exp(A * (intervalStarts[model+1] - tkMinus1));
+                partialPCurrentPartialAll[parameterIndex] = partialPpartialAll(model, parameterIndex, intervalStarts[model+1], eAt);
             }
         }
     }
@@ -481,7 +485,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         boolean sampleIsAtPresent = tOld <= 0;
         boolean samplesTakenAtPresent = rho(0) >= 0;
 
-        boolean sampleIsAtEventTime = Math.abs(tOld - intervalEnds[model]) <= 0;
+        boolean sampleIsAtEventTime = Math.abs(tOld - intervalStarts[model+1]) <= 0;
         boolean samplesTakenAtEventTime = rho(model) >= 0;
 
         if (sampleIsAtPresent && samplesTakenAtPresent) {
@@ -557,9 +561,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     //  todo: avoid calculating g1 in q
     public double q(int model, double t) {
-        double ti  = model == 0 ? 0 : intervalEnds[model-1];;
+        double tkMinus1 =  intervalStarts[model];
 
-        double eA = Math.exp(A * (t - ti));
+        double eA = Math.exp(A * (t - tkMinus1));
         double sqrtDenom = eA * (1.0 + B) + (1.0 - B);
 
         return (4.0 * eA)/(Math.pow(sqrtDenom,2.0));
@@ -701,26 +705,26 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 //        return partialQpartialAll(buffer, t);
 //    }*/
 
-    private double[] partialBpartialAll(int i, int k, double lambda, double mu, double psi, double rho) {
+    private double[] partialBpartialAll(int model, int parameterIndex, double lambda, double mu, double psi, double rho) {
         if (computedBCurrent) {
-            return partialBCurrentPartialAll[k];
+            return partialBCurrentPartialAll[parameterIndex];
         }
         double[] partialB = new double[4];
-        if (k == i) {
+        if (parameterIndex == model) {
             double[] partialA = tempA;
             double temp = 1 - 2 * (1 - rho) * pPrevious;
             partialB[0] = (A * temp - partialA[0] * (temp * lambda + mu + psi)) / (A* A);
             partialB[1] = (A - partialA[1] * (temp * lambda + mu+ psi)) / (A * A);
             partialB[2] = (A - partialA[2] * (temp * lambda + mu + psi)) / (A * A);
             partialB[3] = 2 * lambda * pPrevious / A;
-        } else if (k < i) {
-            for(int n = 0; n < 4; n++) {
-                partialB[n] = -2 * (1 - rho) * lambda / A * partialPPreviousPartialAll[k][n];
+        } else if (parameterIndex < model) {
+            for(int numParameter = 0; numParameter < 4; numParameter++) {
+                partialB[numParameter] = -2 * (1 - rho) * lambda / A * partialPPreviousPartialAll[parameterIndex][numParameter];
             }
         }
         // else: k > i, all zero
-        partialBCurrentPartialAll[k] = partialB;
-        if (k == i) {
+        partialBCurrentPartialAll[parameterIndex] = partialB;
+        if (parameterIndex == model) {
             computedBCurrent = true;
         }
         return partialB;
@@ -754,16 +758,16 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     public double[] partialG2partialAll(int model, double t, double eAt, double G1, double[] partialBStored) {
 
 //        double eAt = Math.exp(A * (t-ti));
-        double ti = model == 0 ? 0 : intervalEnds[model-1];
+        double tkMius1 = intervalStarts[model];
         double[] partialA = tempA;
         double[] partialB = partialBStored;
         double[] partialG2_all = temp2; // new double[4];
         double[] temp3 = new double[3];
 
-        for (int n = 0; n < 3; ++n) {
-            temp3[n] = eAt * (1 + B) * partialA[n] * (t - ti) + (eAt - 1) * partialB[n];
-            double partialG2 = partialA[n] - 2 * (G1 * (partialA[n] * (1 - B) - partialB[n] * A) - (1 - B) * temp3[n] * A) / (G1 * G1);
-            partialG2_all[n] = partialG2;
+        for (int numParameter = 0; numParameter < 3; ++numParameter) {
+            temp3[numParameter] = eAt * (1 + B) * partialA[numParameter] * (t - tkMius1) + (eAt - 1) * partialB[numParameter];
+            double partialG2 = partialA[numParameter] - 2 * (G1 * (partialA[numParameter] * (1 - B) - partialB[numParameter] * A) - (1 - B) * temp3[numParameter] * A) / (G1 * G1);
+            partialG2_all[numParameter] = partialG2;
             }
 
         partialG2_all[3] = 0; // w.r.t. rho
@@ -771,13 +775,13 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     // (lambda, mu, psi, rho)
-    public double[] partialPpartialAll(int model, int k, double t, double eAt) {
+    public double[] partialPpartialAll(int model, int parameterIndex, double t, double eAt) {
 
         double[] partialP_all = new double[4];
-        double[] partialB = partialBpartialAll(model, k, lambda, mu, psi, rho);
+        double[] partialB = partialBpartialAll(model, parameterIndex, lambda, mu, psi, rho);
         // double G1 = g1(t);
         double G1 = g1(model, t, eAt);
-        if (k == model) {
+        if (parameterIndex == model) {
             double[] partialG2_all = partialG2partialAll(model, t, eAt, G1, partialB);
             double G2 = g2(t, G1);
 
@@ -790,32 +794,32 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
                 // rho
             partialP_all[3] = -A / lambda * ((1 - B) * (eAt - 1) + G1) * partialB[3] / Math.pow(G1, 2);
 
-        }  else if (k < model) {
-            for (int n = 0; n < 4; n++) {
-                partialP_all[n] = -A / lambda * ((1 - B) * (eAt - 1) + G1 ) * partialB[n] / Math.pow(G1,2);
+        }  else if (parameterIndex < model) {
+            for (int numParameter = 0; numParameter < 4; numParameter++) {
+                partialP_all[numParameter] = -A / lambda * ((1 - B) * (eAt - 1) + G1 ) * partialB[numParameter] / Math.pow(G1,2);
             }
         }
 
         return partialP_all;
     }
 
-    private double[] partialqpartialAll(int model, int k, double t, double[] partialq_all) {
-        if (model < k) { return partialq_all;}
+    private double[] partialqpartialAll(int model, int parameterIndex, double t, double[] partialq_all) {
+        if (model < parameterIndex) { return partialq_all;}
         double[] partialA = tempA;
         double tempA1;
-        double ti = model == 0 ? 0 : intervalEnds[model-1];
-        double eAt = Math.exp(A * (t - ti));
+        double tkMinus1 = intervalStarts[model];
+        double eAt = Math.exp(A * (t - tkMinus1));
         double G1 = g1(model, t, eAt);
-        double[] partialB = partialBpartialAll(model, k, lambda, mu, psi, rho);
-        for (int n = 0; n < 3; n++) {
-            if (model == k) {
-                tempA1 = (t - ti) * partialA[n] * (G1 / 2 - eAt * (1 + B));
+        double[] partialB = partialBpartialAll(model, parameterIndex, lambda, mu, psi, rho);
+        for (int numParameter = 0; numParameter < 3; numParameter++) {
+            if (model == parameterIndex) {
+                tempA1 = (t - tkMinus1) * partialA[numParameter] * (G1 / 2 - eAt * (1 + B));
                 //tempA2 = (t - ti) * partialA[n] * temp_exp * (1 + Bi[i]);
             } else {
                 tempA1 = 0;
                 //tempA2 = 0;
             }
-            partialq_all[n] = 8 * eAt * (tempA1 - partialB[n] * (eAt - 1)) / (Math.pow(G1, 3));//(tempA1 - 8 * temp_exp * temp2 * (tempA2 + partialB[n] * (temp_exp - 1))) / (Math.pow(temp2, 4));
+            partialq_all[numParameter] = 8 * eAt * (tempA1 - partialB[numParameter] * (eAt - 1)) / (Math.pow(G1, 3));//(tempA1 - 8 * temp_exp * temp2 * (tempA2 + partialB[n] * (temp_exp - 1))) / (Math.pow(temp2, 4));
         }
         partialq_all[3] = -8 * eAt * partialB[3] * (eAt - 1) / (Math.pow(G1, 3));
         return partialq_all;
@@ -856,10 +860,10 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double tYoung = intervalStart;
         double[] partialQ_all_old = new double[numIntervals*4];
         double[] temp = new double[4];
-        for (int k = 0; k <= currentModelSegment; k++) {
+        for (int parameterIndex = 0; parameterIndex <= currentModelSegment; parameterIndex++) {
             // temp = partialqpartialAll(currentModelSegment, k, tOld, temp2);
-            partialqpartialAll(currentModelSegment, k, tOld, temp);
-            System.arraycopy(temp, 0, partialQ_all_old, 4*k, 4);
+            partialqpartialAll(currentModelSegment, parameterIndex, tOld, temp);
+            System.arraycopy(temp, 0, partialQ_all_old, 4*parameterIndex, 4);
         }
         double[] partialQ_all_young;
         double Q_Old = q(currentModelSegment, tOld);
@@ -876,9 +880,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             // TODO: Maybe change numIntervals to currentModelSegment
             System.arraycopy(partialQ, 0, partialQ_all_young, 0, 4*numIntervals);
         } else {
-            for (int k = 0; k <= currentModelSegment; k++) {
-                temp = partialqpartialAll(currentModelSegment, k, tYoung, temp3);
-                System.arraycopy(temp, 0, partialQ_all_young, 4*k, 4);
+            for (int parameterIndex = 0; parameterIndex <= currentModelSegment; parameterIndex++) {
+                temp = partialqpartialAll(currentModelSegment, parameterIndex, tYoung, temp3);
+                System.arraycopy(temp, 0, partialQ_all_young, 4*parameterIndex, 4);
             }
             //System.arraycopy(partialQ_all_young, 0, savedPartialQ, 0, 4);
             partialQKnown = true;
@@ -893,9 +897,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 //            partialQ_all_young = partialQpartialAll(tYoung);
 //        }
 //        this.savedPartialQ = partialQ_all_old;
-        for (int k = 0; k <= currentModelSegment; k++) {
-            for (int n = 0; n < 4; n++) {
-                gradient[k * 5 + n] += nLineages * (partialQ_all_old[k*4+ n] / Q_Old - partialQ_all_young[k*4 + n] / Q_young);
+        for (int parameterIndex = 0; parameterIndex <= currentModelSegment; parameterIndex++) {
+            for (int numParameter = 0; numParameter < 4; numParameter++) {
+                gradient[parameterIndex * 5 + numParameter] += nLineages * (partialQ_all_old[parameterIndex*4+ numParameter] / Q_Old - partialQ_all_young[parameterIndex*4 + numParameter] / Q_young);
                 //gradient[n * numIntervals + k] += nLineages * (partialqEnd[n] / qEnd - partialqStart[n] / qStart);
             }
         }
@@ -907,7 +911,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         boolean sampleIsAtPresent = intervalEnd <= 0;
         boolean samplesTakenAtPresent = rho(0) >= 0;
 
-        boolean sampleIsAtEventTime = Math.abs(intervalEnd - intervalEnds[currentModelSegment]) <= 0;
+        boolean sampleIsAtEventTime = Math.abs(intervalEnd - intervalStarts[currentModelSegment+1]) <= 0;
         boolean samplesTakenAtEventTime = rho(currentModelSegment) >= 0;
 
         if (sampleIsAtPresent && samplesTakenAtPresent) {
@@ -924,12 +928,12 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             gradient[4 + 5*currentModelSegment] += (1 - p_it) / ((1-r)*p_it + r);
             //gradient[4*numIntervals + currentModelSegment] += (1 - p_it) / ((1-r)*p_it + r);
             double[] partialP;
-            for(int k = 0; k <= currentModelSegment; k++) {
-                double ti = currentModelSegment == 0 ? 0 : intervalEnds[currentModelSegment-1];
-                double eAt = Math.exp(A * (intervalEnd - ti));
-                partialP = partialPpartialAll(currentModelSegment, k, intervalEnd,  eAt);
+            for(int parameterIndex = 0; parameterIndex <= currentModelSegment; parameterIndex++) {
+                double tkMinus1 = intervalStarts[currentModelSegment];
+                double eAt = Math.exp(A * (intervalEnd - tkMinus1));
+                partialP = partialPpartialAll(currentModelSegment, parameterIndex, intervalEnd,  eAt);
                 for(int n = 0; n < 4; n++) {
-                    gradient[n + 5*k] += (1 - r) / ((1 - r) * p_it + r) * partialP[n];
+                    gradient[n + 5*parameterIndex] += (1 - r) / ((1 - r) * p_it + r) * partialP[n];
                     //gradient[n*numIntervals + k] += (1 - r) / ((1 - r) * p_it + r) * partialP[n];
                 }
             }
@@ -950,14 +954,14 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double qOrigin;
         double qRoot;
 
-        for (int k = 0; k <= currentModelSegment; k++) {
-            partialqOrigin = partialqpartialAll(currentModelSegment, k, origin, temp2);
-            partialqRoot = partialqpartialAll(currentModelSegment, k, totalDuration, temp3);
+        for (int parameterIndex = 0; parameterIndex <= currentModelSegment; parameterIndex++) {
+            partialqOrigin = partialqpartialAll(currentModelSegment, parameterIndex, origin, temp2);
+            partialqRoot = partialqpartialAll(currentModelSegment, parameterIndex, totalDuration, temp3);
             qOrigin = q(currentModelSegment, origin);
             qRoot = q(currentModelSegment, totalDuration);
 
-            for (int n = 0; n < 4; n++) {
-                gradient[k * 5 + n] += (partialqOrigin[n] / qOrigin - partialqRoot[n] / qRoot);
+            for (int numParameter = 0; numParameter < 4; numParameter++) {
+                gradient[parameterIndex * 5 + numParameter] += (partialqOrigin[numParameter] / qOrigin - partialqRoot[numParameter] / qRoot);
                 //gradient[n * numIntervals + k] += (partialqOrigin[n] / qOrigin - partialqRoot[n] / qRoot);
             }
         }

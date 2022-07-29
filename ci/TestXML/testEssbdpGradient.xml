@@ -47,7 +47,7 @@
     <!-- ########## -->
 
     <!-- multiple rates model with three intervals -->
-    <episodicSeriallySampledBirthDeathModel id="new.bdss1" units="years" hasFinalSample="false" conditionOnSurvival="false">
+    <newBirthDeathSerialSampling id="new.bdss1" units="years" hasFinalSample="false" conditionOnSurvival="false">
         <birthRate>
             <parameter id="bdss1.birthRate" value ="8.47 2.88 1.82" lower="0.0"/>
         </birthRate>
@@ -72,7 +72,7 @@
         <numGridPoints>
             <parameter value="3"/>
         </numGridPoints>
-    </episodicSeriallySampledBirthDeathModel>
+    </newBirthDeathSerialSampling>
 
     <speciationLikelihood id="speciation1" useNewLoop="true">
         <model>
@@ -109,7 +109,7 @@
     </speciationLikelihoodGradient>
 
 
-<!--    <report>
+    <report>
         <speciationLikelihoodGradient idref="grad.birthRate1"/>
     </report>
 
@@ -127,7 +127,7 @@
 
     <report>
         <speciationLikelihoodGradient idref="grad.treatmentProbability1"/>
-    </report>-->
+    </report>
 
 
 </beast>

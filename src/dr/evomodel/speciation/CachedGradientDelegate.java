@@ -64,7 +64,7 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
         double[] gradient = new double[provider.getGradientLength()];
 
         provider.precomputeGradientConstants(); // TODO hopefully get rid of this
-        provider.updateModelValues(0);
+        provider.updateGradientModelValues(0);
 
         double[] modelBreakPoints = provider.getBreakPoints();
         assert modelBreakPoints[modelBreakPoints.length - 1] == Double.POSITIVE_INFINITY;
@@ -85,7 +85,7 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
                 provider.processGradientModelSegmentBreakPoint(gradient, currentModelSegment, intervalStart, segmentIntervalEnd, nLineages);
                 intervalStart = segmentIntervalEnd;
                 ++currentModelSegment;
-                provider.updateModelValues(currentModelSegment);
+                provider.updateGradientModelValues(currentModelSegment);
             }
 
             if (intervalEnd > intervalStart) {

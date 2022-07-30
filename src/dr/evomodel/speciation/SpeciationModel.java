@@ -112,7 +112,7 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
         throw new RuntimeException("Not implemented");
     }
 
-    public void updateModelValues(int model) {
+    public void updateLikelihoodModelValues(int model) {
         throw new RuntimeException("Not implemented");
     }
 

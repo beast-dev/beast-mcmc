@@ -44,7 +44,8 @@ import java.util.Set;
  */
 public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements SpeciationModelGradientProvider, Citable {
     // TODO should we pre-emptively put the combinatorial constant in here? It only really matters when inferring a tree where there may/may not be sampled ancestors
-
+    // TODO don't check if rho >= minVal, just 0 (likelihood won't blow up unless it's _exactly_ 0
+    // TODO the "is time t event time ti" can/should probably get moved to the point at which we pass the tree to the birth-death model
     // extant sampling proportion
     Parameter samplingFractionAtPresent;
 

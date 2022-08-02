@@ -334,28 +334,19 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         this.partialQKnown = false;
 
         dACompute(dA);
+        
+        dBCompute(model, dB);
 
-        computedBCurrent = false;
- 
         if (numIntervals > 1 && model < numIntervals - 1) {
 
-            dBCompute(model, dB);
-
-            // Compute dG2
-
-            double end = modelStartTimes[model+1];
+            double end = modelStartTimes[model + 1];
             double start = modelStartTimes[model];
             double eAt = Math.exp(A * (end - start));
-            double G1 = g1(model, end, eAt);
 
-            for (int p = 0; p < 3; ++p) {
-                double term1 = eAt * (1 + B) * dA[p] * (end - start) + (eAt - 1) * dB[model * 4 + p];
-                dG2[p] = dA[p] - 2 * (G1 * (dA[p] * (1 - B) - dB[model * 4 + p] * A) - (1 - B) * term1 * A) / (G1 * G1);
-            }
-
-            dPCompute(model, modelStartTimes[model + 1], eAt, dPModelEnd);
-            computedBCurrent = true;
+            dPCompute(model, end, start, eAt, dPModelEnd);
         }
+        
+        computedBCurrent = true;
     }
 
     @Override
@@ -487,24 +478,30 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             }
         }
 
-        double temp = 1 - 2 * (1 - rho) * previousP;
+        double term1 = 1 - 2 * (1 - rho) * previousP;
 
-        dB[model * 4 + 0] = (A * temp - dA[0] * (temp * lambda + mu + psi)) / (A * A);
-        dB[model * 4 + 1] = (A - dA[1] * (temp * lambda + mu + psi)) / (A * A);
-        dB[model * 4 + 2] = (A - dA[2] * (temp * lambda + mu + psi)) / (A * A);
+        dB[model * 4 + 0] = (A * term1 - dA[0] * (term1 * lambda + mu + psi)) / (A * A);
+        dB[model * 4 + 1] = (A - dA[1] * (term1 * lambda + mu + psi)) / (A * A);
+        dB[model * 4 + 2] = (A - dA[2] * (term1 * lambda + mu + psi)) / (A * A);
         dB[model * 4 + 3] = 2 * lambda * previousP / A;
     }
 
-    private void dPCompute(int model, double t, double eAt, double[] dP) {
+    private void dPCompute(int model, double t, double intervalStart, double eAt, double[] dP) {
 
         double G1 = g1(model, t, eAt);
-        double G2 = g2(t, G1);
 
         for (int k = 0; k  < model; k ++) {
             for (int p = 0; p < 4; p++) {
                 dP[k * 4 + p] = -A / lambda * ((1 - B) * (eAt - 1) + G1) * dB[k * 4 + p] / (G1 * G1);
             }
         }
+
+        for (int p = 0; p < 3; ++p) { // TODO Only dG1[1] and dG2[2] are used
+            double term1 = eAt * (1 + B) * dA[p] * (t - intervalStart) + (eAt - 1) * dB[model * 4 + p];
+            dG2[p] = dA[p] - 2 * (G1 * (dA[p] * (1 - B) - dB[model * 4 + p] * A) - (1 - B) * term1 * A) / (G1 * G1);
+        }
+
+        double G2 = g2(t, G1);
 
         dP[model * 4 + 0] = (-mu - psi - lambda * dG2[0] + G2) / (2 * lambda * lambda);
         dP[model * 4 + 1] = (1 - dG2[1]) / (2 * lambda);
@@ -625,7 +622,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
             double eAt = Math.exp(A * (intervalEnd - modelStartTimes[currentModelSegment]));
 
-            dPCompute(currentModelSegment, intervalEnd, eAt, this.dPIntervalEnd);
+            dPCompute(currentModelSegment, intervalEnd, modelStartTimes[currentModelSegment], eAt, this.dPIntervalEnd);
 
             double term1 = (1 - r) / ((1 - r) * p_it + r);
 

@@ -151,7 +151,7 @@ public class PriorParsers {
                 throw new XMLParseException("Uniform prior " + xo.getName() + " cannot take a bound at infinity, " +
                         "because it returns 1/(high-low) = 1/inf");
 
-            DistributionLikelihood likelihood = new DistributionLikelihood(new UniformDistribution(lower, upper));
+            DistributionLikelihood likelihood = new DistributionLikelihood(new UniformDistribution(lower, upper), true);
             if (DEBUG) {
                 System.out.println("Uniform prior: " + xo.getChildCount());
             }

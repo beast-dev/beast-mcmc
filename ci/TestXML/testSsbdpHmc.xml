@@ -519,9 +519,9 @@
 		<treatmentProbability>
 			<parameter id="bdss.treatmentProbability" value="0.47" lower="0.0" upper="1.0"/>
 		</treatmentProbability>
-		<samplingProbabilityAtPresent>
+		<samplingProbability>
 			<parameter id="bdss.samplingProbabilityAtPresent" value="0.42" lower="0.0" upper="1.0"/>
-		</samplingProbabilityAtPresent>
+		</samplingProbability>
 		<origin>
 			<parameter id="bdss.origin" value="30.123" lower="0.0"/>
 		</origin>

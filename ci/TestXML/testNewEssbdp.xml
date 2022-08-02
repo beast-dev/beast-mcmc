@@ -47,7 +47,7 @@
 	<!-- ########## -->
 
 	<!-- constant rate model with only one interval -->
-	<episodicSeriallySampledBirthDeathModel id="new.bdss1" units="years" hasFinalSample="false" conditionOnSurvival="false">
+	<newBirthDeathSerialSampling id="new.bdss1" units="years" hasFinalSample="false" conditionOnSurvival="false">
 		<birthRate>
 			<parameter id="bdss1.birthRate" value="8.472" lower="0.0"/>
 		</birthRate>
@@ -72,7 +72,7 @@
 		<numGridPoints>
 			<parameter value="1"/>
 		</numGridPoints>
-	</episodicSeriallySampledBirthDeathModel>
+	</newBirthDeathSerialSampling>
 
 
 	<speciationLikelihood id="speciation1" useNewLoop="true">
@@ -105,7 +105,7 @@
 	<!-- ########## -->
 
 	<!-- constant rate model with three intervals -->
-	<episodicSeriallySampledBirthDeathModel id="new.bdss2" units="years" hasFinalSample="false" conditionOnSurvival="false">
+	<newBirthDeathSerialSampling id="new.bdss2" units="years" hasFinalSample="false" conditionOnSurvival="false">
 		<birthRate>
 			<parameter id="bdss2.birthRate" value ="8.472 8.472 8.472" lower="0.0"/>
 		</birthRate>
@@ -130,7 +130,7 @@
 		<numGridPoints>
 			<parameter value="3"/>
 		</numGridPoints>
-	</episodicSeriallySampledBirthDeathModel>
+	</newBirthDeathSerialSampling>
 
 
 	<speciationLikelihood id="speciation2" useNewLoop="true">
@@ -163,7 +163,7 @@
 	<!-- ########## -->
 
 	<!-- multiple rates model with three intervals -->
-	<episodicSeriallySampledBirthDeathModel id="new.bdss3" units="years" hasFinalSample="false" conditionOnSurvival="false">
+	<newBirthDeathSerialSampling id="new.bdss3" units="years" hasFinalSample="false" conditionOnSurvival="false">
 		<birthRate>
 			<parameter id="bdss3.birthRate" value ="8.47 2.88 1.82" lower="0.0"/>
 		</birthRate>
@@ -188,7 +188,7 @@
 		<numGridPoints>
 			<parameter value="3"/>
 		</numGridPoints>
-	</episodicSeriallySampledBirthDeathModel>
+	</newBirthDeathSerialSampling>
 
 
 	<speciationLikelihood id="speciation3" useNewLoop="true">
@@ -211,7 +211,65 @@
 		</actual>
 		<!-- computed in RevBayes -->
 		<expected>
-			-66.30970351360976
+			0
 		</expected>
 	</assertEqual>
+
+	<!-- ########## -->
+	<!-- # CASE 4 # -->
+	<!-- ########## -->
+
+	<!-- multiple rates model with three intervals and one intensive sampling event at t1 = 2 -->
+	<newBirthDeathSerialSampling id="new.bdss4" units="years" hasFinalSample="false" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss4.birthRate" value ="8.47 2.88 1.82" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss4.deathRate" value ="4.89 2.67 3.23" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss4.samplingRate" value ="3.42 2.95 1.21" lower="0.0"/>
+		</samplingRate>
+		<samplingProbability>
+			<parameter id="bdss4.samplingProbability" value ="0.07  0.22  0.18" lower="0.0" upper="1.0"/>
+		</samplingProbability>
+		<treatmentProbability>
+			<parameter id="bdss4.treatmentProbability" value ="0.89 0.93 0.79" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<origin>
+			<parameter id="bdss4.origin" value="6.0" lower="0.0"/>
+		</origin>
+		<cutOff>
+			<parameter value="6.0"/>
+		</cutOff>
+		<numGridPoints>
+			<parameter value="3"/>
+		</numGridPoints>
+	</newBirthDeathSerialSampling>
+
+
+	<speciationLikelihood id="speciation4" useNewLoop="true">
+		<model>
+			<birthDeathSerialSampling idref="new.bdss4"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<assertEqual tolerance="1e4" verbose="true" charactersToStrip="\[\],">
+		<message>
+			check multiple rate three interval case with intensive sampling event
+		</message>
+		<actual regex="lnL:\s(.*?)\n">
+			<report>
+				<speciationLikelihood idref="speciation4"/>
+			</report>
+		</actual>
+		<!-- computed in RevBayes -->
+		<expected>
+			0
+		</expected>
+	</assertEqual>
+
 </beast>

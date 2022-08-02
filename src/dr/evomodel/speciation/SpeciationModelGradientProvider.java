@@ -92,7 +92,7 @@ public interface SpeciationModelGradientProvider {
 
     default void logConditioningProbability(double[] gradient) { throw new RuntimeException("Not yet implemented"); }
 
-    default void updateModelValues(int currentModelSegment) { throw new RuntimeException("Not yet implemented"); }
+    default void updateGradientModelValues(int currentModelSegment) { throw new RuntimeException("Not yet implemented"); }
 
     default int getGradientLength() { throw new RuntimeException("Not yet implemented"); }
 }

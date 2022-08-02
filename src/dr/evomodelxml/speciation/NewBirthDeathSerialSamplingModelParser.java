@@ -36,14 +36,17 @@ import java.util.logging.Logger;
 public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser {
 
     public static final String BIRTH_DEATH_SERIAL_MODEL = "newBirthDeathSerialSampling";
+    public static final String NUM_GRID_POINTS = "numGridPoints";
+    public static final String CUT_OFF = "cutOff";
     public static final String LAMBDA = "birthRate";
     public static final String MU = "deathRate";
     public static final String PSI = "samplingRate";
-    public static final String RHO = "samplingProbabilityAtPresent";
+    public static final String RHO = "samplingProbability";
     public static final String R = "treatmentProbability";
     public static final String ORIGIN = "origin";
     public static final String TREE_TYPE = "type";
     public static final String CONDITION = "conditionOnSurvival";
+
     public static final String BDSS = "bdss";
 
     public String getParserName() {
@@ -55,18 +58,19 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
         final String modelName = xo.getId();
         final Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
+        final Parameter cutoff = xo.hasChildNamed(CUT_OFF) ? (Parameter) xo.getElementFirstChild(CUT_OFF) : new Parameter.Default(Double.POSITIVE_INFINITY);
+        final Parameter numGridPoints = xo.hasChildNamed(NUM_GRID_POINTS) ? (Parameter) xo.getElementFirstChild(NUM_GRID_POINTS): new Parameter.Default(1.0);
+
         final Parameter lambda = (Parameter) xo.getElementFirstChild(LAMBDA);
-        final Parameter mu     = (Parameter) xo.getElementFirstChild(MU);
-        final Parameter psi    = (Parameter) xo.getElementFirstChild(PSI);
+        final Parameter mu = (Parameter) xo.getElementFirstChild(MU);
+        final Parameter psi = (Parameter) xo.getElementFirstChild(PSI);
+
         final Parameter rho    = xo.hasChildNamed(RHO) ? (Parameter) xo.getElementFirstChild(RHO) : new Parameter.Default(0.0);
         final Parameter r      = xo.hasChildNamed(R) ? (Parameter) xo.getElementFirstChild(R) : new Parameter.Default(1.0);
 
         final Parameter origin = (Parameter) xo.getElementFirstChild(ORIGIN);;
 
         Boolean condition = xo.getAttribute(CONDITION, false);
-
-        final double cutoff = Double.POSITIVE_INFINITY;
-        int numGridPoints = 1;
 
         String citeThisModel;
         if ( r.getParameterValue(0) < Double.MIN_VALUE ) {
@@ -79,7 +83,7 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
 
         Logger.getLogger("dr.evomodel").info(citeThisModel);
 
-        return new NewBirthDeathSerialSamplingModel(modelName, lambda, mu, psi, r, rho, origin, condition, numGridPoints, cutoff, units);
+        return new NewBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units);
     }
 
     //************************************************************************

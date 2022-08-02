@@ -129,5 +129,91 @@
         <speciationLikelihoodGradient idref="grad.treatmentProbability1"/>
     </report>
 
+    <!-- ########## -->
+    <!-- # CASE 2 # -->
+    <!-- ########## -->
+
+    <!-- multiple rates model with three intervals and one intensive sampling event at t1 = 2 -->
+    <newBirthDeathSerialSampling id="new.bdss2" units="years" hasFinalSample="false" conditionOnSurvival="false">
+        <birthRate>
+            <parameter id="bdss2.birthRate" value ="8.47 2.88 1.82" lower="0.0"/>
+        </birthRate>
+        <deathRate>
+            <parameter id="bdss2.deathRate" value ="4.89 2.67 3.23" lower="0.0"/>
+        </deathRate>
+        <samplingRate>
+            <parameter id="bdss2.samplingRate" value ="3.42 2.95 1.21" lower="0.0"/>
+        </samplingRate>
+        <samplingProbability>
+            <parameter id="bdss2.samplingProbability" value ="0.07  0.22  0.18" lower="0.0" upper="1.0"/>
+        </samplingProbability>
+        <treatmentProbability>
+            <parameter id="bdss2.treatmentProbability" value ="0.89 0.93 0.79" lower="0.0" upper="1.0"/>
+        </treatmentProbability>
+        <origin>
+            <parameter id="bdss2.origin" value="6.0" lower="0.0"/>
+        </origin>
+        <cutOff>
+            <parameter value="6.0"/>
+        </cutOff>
+        <numGridPoints>
+            <parameter value="3"/>
+        </numGridPoints>
+    </newBirthDeathSerialSampling>
+
+    <speciationLikelihood id="speciation2" useNewLoop="true">
+        <model>
+            <newBirthDeathSerialSampling idref="new.bdss2"/>
+        </model>
+        <speciesTree>
+            <treeModel idref="treeModel"/>
+        </speciesTree>
+    </speciationLikelihood>
+
+    <speciationLikelihoodGradient id="grad.birthRate2" wrtParameter="birthRate" useNewLoop="true">
+        <speciationLikelihood idref="speciation2"/>
+        <treeModel idref="treeModel"/>
+    </speciationLikelihoodGradient>
+
+    <speciationLikelihoodGradient id="grad.deathRate2" wrtParameter="deathRate" useNewLoop="true">
+        <speciationLikelihood idref="speciation2"/>
+        <treeModel idref="treeModel"/>
+    </speciationLikelihoodGradient>
+
+    <speciationLikelihoodGradient id="grad.samplingRate2" wrtParameter="samplingRate" useNewLoop="true">
+        <speciationLikelihood idref="speciation2"/>
+        <treeModel idref="treeModel"/>
+    </speciationLikelihoodGradient>
+
+    <speciationLikelihoodGradient id="grad.samplingProbability2" wrtParameter="samplingProbability" useNewLoop="true">
+        <speciationLikelihood idref="speciation2"/>
+        <treeModel idref="treeModel"/>
+    </speciationLikelihoodGradient>
+
+    <speciationLikelihoodGradient id="grad.treatmentProbability2" wrtParameter="treatmentProbability" useNewLoop="true">
+        <speciationLikelihood idref="speciation2"/>
+        <treeModel idref="treeModel"/>
+    </speciationLikelihoodGradient>
+
+
+    <report>
+        <speciationLikelihoodGradient idref="grad.birthRate2"/>
+    </report>
+
+    <report>
+        <speciationLikelihoodGradient idref="grad.deathRate2"/>
+    </report>
+
+    <report>
+        <speciationLikelihoodGradient idref="grad.samplingRate2"/>
+    </report>
+
+    <report>
+        <speciationLikelihoodGradient idref="grad.samplingProbability2"/>
+    </report>
+
+    <report>
+        <speciationLikelihoodGradient idref="grad.treatmentProbability2"/>
+    </report>
 
 </beast>

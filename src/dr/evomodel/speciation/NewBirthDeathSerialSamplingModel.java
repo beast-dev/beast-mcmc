@@ -83,16 +83,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     double rho;
     double rho0; // TODO remove
 
-    double dAdLambda; // 0
-    double dAdMu; // 1
-    double dAdPsi; // 2
-    double dAdRho; // 3
-
-    double dG1dLambda;
-    double dG2dMu;
-    double dG2dPsi;
-    double dG2dRho;
-
     private double[] savedGradient;
     private double savedQ;
     private double[] partialQ;
@@ -113,7 +103,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     private double[][] partialBCurrentPartialAll;
 
-    private double[][] dP;
+    private double[][] dPIntervalEnd;
+    private double[][] dPModelEnd;
 
 //    private double[][] partialPCurrentPartialAll;
 
@@ -420,7 +411,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             for (int k = 0; k  <= model; k ++) {
 //                double tkMinus1 = modelStartTimes[model];
 //                double eAt = Math.exp(A * (modelStartTimes[model+1] - tkMinus1));
-                this.dP[k] = dP(model, k, modelStartTimes[model+1], eAt);
+                this.dPModelEnd[k] = dP(model, k, modelStartTimes[model+1], eAt, dPModelEnd);
             }
         }
     }
@@ -557,7 +548,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             
             for (int k = 0; k < currentModel; ++k) {
                 for (int p = 0; p < 4; p++) {
-                    dB[k * 4 + p] = -2 * (1 - rho) * lambda / A * dP[k][p];
+                    dB[k * 4 + p] = -2 * (1 - rho) * lambda / A * //dP[k][p];
+                    dPModelEnd[k][p];
 //                            partialPCurrentPartialAll[k][p];
                 }
             }
@@ -586,7 +578,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             dB[3] = 2 * lambda * previousP / A;
         } else {
             for(int p = 0; p < 4; p++) {
-                dB[p] = -2 * (1 - rho) * lambda / A * dP[k][p];
+                dB[p] = -2 * (1 - rho) * lambda / A *
+                dPModelEnd[k][p];
+                        //dP[k][p];
 //                        partialPPreviousPartialAll[k][p];
             }
         }
@@ -620,10 +614,10 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 //    }
 
     // (lambda, mu, psi, rho)
-    public double[] dP(int model, int k, double t, double eAt) {
+    public double[] dP(int model, int k, double t, double eAt, double[][] storage) {
 
-        double[] dP = // this.dP[k];
-         new double[4]; // TODO Fix this allocation, why is this important?
+        double[] dP = storage[k]; //this.dP[k];
+     //    new double[4]; // TODO Fix this allocation, why is this important?
 
         double[] dB = dB(model, k, lambda, mu, psi, rho);
         // double G1 = g1(t);
@@ -688,7 +682,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         this.savedQ = Double.MIN_VALUE;
         this.partialQKnown = false;
         
-        dP = new double[numIntervals][4];
+        dPIntervalEnd = new double[numIntervals][4];
+        dPModelEnd = new double[numIntervals][4];
 //        partialPCurrentPartialAll = new double[numIntervals][4];
         partialBCurrentPartialAll = new double[numIntervals][4];
     }
@@ -783,17 +778,17 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
             for (int k = 0; k <= currentModelSegment; k++) {
 
-                double[] dP = dP(currentModelSegment, k, intervalEnd,  eAt);
+                dP(currentModelSegment, k, intervalEnd,  eAt, this.dPIntervalEnd);
 //                for(int n = 0; n < 4; n++) {
 //                    gradient[n + 5*parameterIndex] += (1 - r) / ((1 - r) * p_it + r) * partialP[n];
 //                }
 
                 double term1 = (1 - r) / ((1 - r) * p_it + r);
 
-                gradient[birthIndex(k, numIntervals)] += term1 * dP[0];
-                gradient[deathIndex(k, numIntervals)] += term1 * dP[1];
-                gradient[samplingIndex(k, numIntervals)] += term1 * dP[2];
-                gradient[fractionIndex(k, numIntervals)] += term1 * dP[3];
+                gradient[birthIndex(k, numIntervals)] += term1 * dPIntervalEnd[k][0];
+                gradient[deathIndex(k, numIntervals)] += term1 * dPIntervalEnd[k][1];
+                gradient[samplingIndex(k, numIntervals)] += term1 * dPIntervalEnd[k][2];
+                gradient[fractionIndex(k, numIntervals)] += term1 * dPIntervalEnd[k][3];
             }
         }
 

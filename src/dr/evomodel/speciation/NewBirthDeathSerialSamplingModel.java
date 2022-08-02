@@ -29,6 +29,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -94,8 +95,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     private double[] temp33;
 
     private double[] dA;
-    private double[] tempB;
-
+    private double[] dB;
     private double[] dG2;
 
     boolean computedBCurrent;
@@ -103,8 +103,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     private double[][] partialBCurrentPartialAll;
 
-    private double[][] dPIntervalEnd;
-    private double[][] dPModelEnd;
+    private double[] dPIntervalEnd;
+    private double[] dPModelEnd;
 
 //    private double[][] partialPCurrentPartialAll;
 
@@ -209,7 +209,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         this.temp2 = new double[4];
         this.temp3 = new double[4];
 
-        this.tempB = new double[numIntervals * 4];
+        this.dB = new double[numIntervals * 4];
 
         this.temp33 = new double[numIntervals * 4];
 
@@ -339,6 +339,12 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         B = computeB(lambda, mu, psi, rho, A, previousP);
     }
 
+    private void dACompute(double[] dA) {
+        dA[0] = (lambda - mu + psi) / A;
+        dA[1] = (-lambda + mu + psi) / A;
+        dA[2] = (lambda + mu + psi) / A;
+    }
+
     @Override
     public void updateGradientModelValues(int model) {
 
@@ -346,27 +352,19 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         
         this.savedQ = Double.MIN_VALUE; // TODO What is this all about?
         this.partialQKnown = false;
-        
-        dA[0] = (lambda - mu + psi) / A;
-        dA[1] = (-lambda + mu + psi) / A;
-        dA[2] = (lambda + mu + psi) / A;
+
+        dACompute(dA);
 
         computedBCurrent = false;
         dBKnown = false;
  
         if (numIntervals > 1 & model < numIntervals - 1) {
 
-//            double[][] tmp = partialPPreviousPartialAll; // TODO Why is this not a swap?
-//            dP = partialPCurrentPartialAll;
-//            System.arraycopy(partialPCurrentPartialAll, 0, partialPPreviousPartialAll, 0,
-//                    partialPCurrentPartialAll.length); // TODO don't need all of it
-//            partialPCurrentPartialAll = tmp;
-
             // TODO Compute dP and dB
 
             double[] dP = new double[4 * numIntervals];
 
-            double[] dB = dB(model);
+            dBCompute(model, dB);
 
             // Check dB
 //            for (int k = 0; k <= model; ++k) {
@@ -385,34 +383,17 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             double G1 = g1(model, end, eAt);
 
             for (int p = 0; p < 3; ++p) {
-                double term1 = eAt * (1 + B) * dA[p] * (end - start) + (eAt - 1) * dB[p];
-                dG2[p] = dA[p] - 2 * (G1 * (dA[p] * (1 - B) - dB[p] * A) - (1 - B) * term1 * A) / (G1 * G1);
+                double term1 = eAt * (1 + B) * dA[p] * (end - start) + (eAt - 1) * dB[model * 4 + p];
+                dG2[p] = dA[p] - 2 * (G1 * (dA[p] * (1 - B) - dB[model * 4 + p] * A) - (1 - B) * term1 * A) / (G1 * G1);
             }
 //            dG2[3] = 0.0;
 
-//            for (int k = 0; k  <= model; k ++) {
-//
-//
-//
-//
-//
-//                if (k == model) {
-//                    double[] dG2t = partialG2partialAll(model, t, eAt, G1, partialB);
-//
-//
-//
-//                }
-//            }
-
-
-
+            dPCompute(model, modelStartTimes[model + 1], eAt, dPModelEnd);
 
             // OLD CODE
-            for (int k = 0; k  <= model; k ++) {
-//                double tkMinus1 = modelStartTimes[model];
-//                double eAt = Math.exp(A * (modelStartTimes[model+1] - tkMinus1));
-                this.dPModelEnd[k] = dP(model, k, modelStartTimes[model+1], eAt, dPModelEnd);
-            }
+//            for (int k = 0; k  <= model; k ++) {
+//                        dPCompute(model, k, modelStartTimes[model+1], eAt, dPModelEnd);
+//            }
         }
     }
 
@@ -533,31 +514,22 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         return treatmentProbability;
     }
 
-    private double[] dB(int currentModel) {
+    private void dBCompute(int model, double[] dB) {
 
-        double[] dB = tempB;
+        double[] dPPrevious = dPModelEnd;
 
-        if (!dBKnown) {
+        double temp = 1 - 2 * (1 - rho) * previousP;
 
-            double temp = 1 - 2 * (1 - rho) * previousP;
+        dB[model * 4 + 0] = (A * temp - dA[0] * (temp * lambda + mu + psi)) / (A * A);
+        dB[model * 4 + 1] = (A - dA[1] * (temp * lambda + mu + psi)) / (A * A);
+        dB[model * 4 + 2] = (A - dA[2] * (temp * lambda + mu + psi)) / (A * A);
+        dB[model * 4 + 3] = 2 * lambda * previousP / A;
 
-            dB[currentModel * 4 + 0] = (A * temp - dA[0] * (temp * lambda + mu + psi)) / (A * A);
-            dB[currentModel * 4 + 1] = (A - dA[1] * (temp * lambda + mu + psi)) / (A * A);
-            dB[currentModel * 4 + 2] = (A - dA[2] * (temp * lambda + mu + psi)) / (A * A);
-            dB[currentModel * 4 + 3] = 2 * lambda * previousP / A;
-            
-            for (int k = 0; k < currentModel; ++k) {
-                for (int p = 0; p < 4; p++) {
-                    dB[k * 4 + p] = -2 * (1 - rho) * lambda / A * //dP[k][p];
-                    dPModelEnd[k][p];
-//                            partialPCurrentPartialAll[k][p];
-                }
+        for (int k = 0; k < model; ++k) {
+            for (int p = 0; p < 4; p++) {
+                dB[k * 4 + p] = -2 * (1 - rho) * lambda / A * dPPrevious[k * 4 + p];
             }
-
-//            dBKnown = true;
         }
-
-        return dB;
     }
 
     private double[] dB(int model, int k, double lambda, double mu, double psi, double rho) {
@@ -579,7 +551,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         } else {
             for(int p = 0; p < 4; p++) {
                 dB[p] = -2 * (1 - rho) * lambda / A *
-                dPModelEnd[k][p];
+                dPModelEnd[k * 4 + p];
                         //dP[k][p];
 //                        partialPPreviousPartialAll[k][p];
             }
@@ -594,53 +566,63 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         return dB;
     }
 
-    // (lambda, mu, psi, rho)
-//    public double[] partialG2partialAll(int model, double t, double eAt, double G1, double[] partialBStored) {
-//
-//        double tkMius1 = modelStartTimes[model];
-//        double[] partialA = tempA;
-//        double[] partialB = partialBStored;
-//        double[] partialG2_all = temp2; // new double[4];
-//        double[] temp3 = new double[3];
-//
-//        for (int numParameter = 0; numParameter < 3; ++numParameter) {
-//            temp3[numParameter] = eAt * (1 + B) * partialA[numParameter] * (t - tkMius1) + (eAt - 1) * partialB[numParameter];
-//            double partialG2 = partialA[numParameter] - 2 * (G1 * (partialA[numParameter] * (1 - B) - partialB[numParameter] * A) - (1 - B) * temp3[numParameter] * A) / (G1 * G1);
-//            partialG2_all[numParameter] = partialG2;
-//            }
-//
-//        partialG2_all[3] = 0; // w.r.t. rho
-//        return partialG2_all;
-//    }
+    public void dPCompute(int model, int k, double t, double eAt, double[] dP) {
 
-    // (lambda, mu, psi, rho)
-    public double[] dP(int model, int k, double t, double eAt, double[][] storage) {
+        double[] dBnotused = dB(model, k, lambda, mu, psi, rho);
 
-        double[] dP = storage[k]; //this.dP[k];
-     //    new double[4]; // TODO Fix this allocation, why is this important?
+//        System.err.println("new: " + new WrappedVector.Raw(dB));
+//        System.err.println("old: " + new WrappedVector.View(new WrappedVector.Raw(this.dB), k * 4, 4));
+//        System.err.println();
 
-        double[] dB = dB(model, k, lambda, mu, psi, rho);
         // double G1 = g1(t);
         double G1 = g1(model, t, eAt);
 
         if (k == model) {
-//            double[] partialG2_all = partialG2partialAll(model, t, eAt, G1, partialB);
-            double[] dG2 = this.dG2;
             double G2 = g2(t, G1);
 
-            dP[0] = (-mu - psi - lambda * dG2[0] + G2) / (2 * lambda * lambda);
-            dP[1] = (1 - dG2[1]) / (2 * lambda);
-            dP[2] = (1 - dG2[2]) / (2 * lambda);
-            dP[3] = -A / lambda * ((1 - B) * (eAt - 1) + G1) * dB[3] / (G1 * G1);
+            dP[k * 4 + 0] = (-mu - psi - lambda * dG2[0] + G2) / (2 * lambda * lambda);
+            dP[k * 4 + 1] = (1 - dG2[1]) / (2 * lambda);
+            dP[k * 4 + 2] = (1 - dG2[2]) / (2 * lambda);
+            dP[k * 4 + 3] = -A / lambda * ((1 - B) * (eAt - 1) + G1) * this.dB[k * 4 + 3] / (G1 * G1);
 
         }  else //if (k < model)
             {
             for (int p = 0; p < 4; p++) {
-                dP[p] = -A / lambda * ((1 - B) * (eAt - 1) + G1 ) * dB[p] / (G1 * G1);
+                dP[k * 4 + p] = -A / lambda * ((1 - B) * (eAt - 1) + G1 ) * this.dB[k * 4 + p] / (G1 * G1);
             }
         }
+    }
 
-        return dP;
+    private void dPCompute(int model, double t, double eAt, double[] dP) {
+
+        double G1 = g1(model, t, eAt); // TODO Move to signature
+
+        for (int k = 0; k  < model; k ++) {
+
+            double[] test = dB(model, k, lambda, mu, psi, rho);  // TODO Find side-effect
+
+            System.err.println("new: " + new WrappedVector.View(new WrappedVector.Raw(dB), k * 4, 4));
+            System.err.println("old: " + new WrappedVector.Raw(test));
+            System.err.println();
+
+
+                for (int p = 0; p < 4; p++) {
+                    dP[k * 4 + p] = -A / lambda * ((1 - B) * (eAt - 1) + G1) * dB[k * 4 + p] / (G1 * G1);
+                }
+        }
+
+        double[] test = dB(model, model, lambda, mu, psi, rho);
+
+        System.err.println("new: " + new WrappedVector.View(new WrappedVector.Raw(dB), model * 4, 4));
+        System.err.println("old: " + new WrappedVector.Raw(test));
+        System.err.println();
+
+        double G2 = g2(t, G1);
+
+        dP[model * 4 + 0] = (-mu - psi - lambda * dG2[0] + G2) / (2 * lambda * lambda);
+        dP[model * 4 + 1] = (1 - dG2[1]) / (2 * lambda);
+        dP[model * 4 + 2] = (1 - dG2[2]) / (2 * lambda);
+        dP[model * 4 + 3] = -A / lambda * ((1 - B) * (eAt - 1) + G1) * dB[model * 4 + 3] / (G1 * G1);
     }
 
     int count = 0;
@@ -682,8 +664,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         this.savedQ = Double.MIN_VALUE;
         this.partialQKnown = false;
         
-        dPIntervalEnd = new double[numIntervals][4];
-        dPModelEnd = new double[numIntervals][4];
+        dPIntervalEnd = new double[numIntervals * 4];
+        dPModelEnd = new double[numIntervals * 4];
 //        partialPCurrentPartialAll = new double[numIntervals][4];
         partialBCurrentPartialAll = new double[numIntervals][4];
     }
@@ -776,19 +758,21 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
             double eAt = Math.exp(A * (intervalEnd - modelStartTimes[currentModelSegment]));
 
+            dPCompute(currentModelSegment, intervalEnd, eAt, this.dPIntervalEnd);
+
             for (int k = 0; k <= currentModelSegment; k++) {
 
-                dP(currentModelSegment, k, intervalEnd,  eAt, this.dPIntervalEnd);
+//                dPCompute(currentModelSegment, k, intervalEnd,  eAt, this.dPIntervalEnd);
 //                for(int n = 0; n < 4; n++) {
 //                    gradient[n + 5*parameterIndex] += (1 - r) / ((1 - r) * p_it + r) * partialP[n];
 //                }
 
                 double term1 = (1 - r) / ((1 - r) * p_it + r);
 
-                gradient[birthIndex(k, numIntervals)] += term1 * dPIntervalEnd[k][0];
-                gradient[deathIndex(k, numIntervals)] += term1 * dPIntervalEnd[k][1];
-                gradient[samplingIndex(k, numIntervals)] += term1 * dPIntervalEnd[k][2];
-                gradient[fractionIndex(k, numIntervals)] += term1 * dPIntervalEnd[k][3];
+                gradient[birthIndex(k, numIntervals)] += term1 * dPIntervalEnd[k * 4 + 0];
+                gradient[deathIndex(k, numIntervals)] += term1 * dPIntervalEnd[k * 4 + 1];
+                gradient[samplingIndex(k, numIntervals)] += term1 * dPIntervalEnd[k * 4 + 2];
+                gradient[fractionIndex(k, numIntervals)] += term1 * dPIntervalEnd[k * 4 + 3];
             }
         }
 

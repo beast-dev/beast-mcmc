@@ -81,7 +81,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     double psi;
     double r;
     double rho;
-    double rho0; // TODO remove
+    //double rho0; // TODO remove
 
     private double savedQ;
     private double[] partialQ;
@@ -321,7 +321,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         psi = serialSamplingRate.getParameterValue(model);
         r = treatmentProbability.getParameterValue(model);
         rho = samplingProbability.getParameterValue(model);
-        rho0 = samplingProbability.getParameterValue(0); // TODO Remove
+        //rho0 = samplingProbability.getParameterValue(0); // TODO Remove
 
         A = computeA(lambda, mu, psi);
         B = computeB(lambda, mu, psi, rho, A, previousP);
@@ -366,15 +366,15 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
         double logSampProb;
 
-        boolean sampleIsAtPresent = tOld <= 0;
-        boolean samplesTakenAtPresent = rho0 > 0;
+        //boolean sampleIsAtPresent = tOld <= 0;
+        //boolean samplesTakenAtPresent = rho0 > 0;
 
         boolean sampleIsAtEventTime = Math.abs(tOld - modelStartTimes[model]) <= 0;
         boolean samplesTakenAtEventTime = rho > 0;
 
-        if (sampleIsAtPresent && samplesTakenAtPresent) {
-            logSampProb = Math.log(rho);
-        } else if (sampleIsAtEventTime && samplesTakenAtEventTime) {
+        //if (sampleIsAtPresent && samplesTakenAtPresent) {
+            //logSampProb = Math.log(rho);
+        if (sampleIsAtEventTime && samplesTakenAtEventTime) {
             logSampProb = Math.log(rho);
         } else {
             double logPsi = Math.log(psi); // TODO Notice the natural parameterization is `log psi`
@@ -515,10 +515,10 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     private void dQCompute(int model, double t, double[] dQ) {
 
-        if (!computedBCurrent) { // TODO Remove side-effects
+/*        if (!computedBCurrent) { // TODO Remove side-effects
             dBCompute(model, dB);
             computedBCurrent = true;
-        }
+        }*/
 
         double dwell = t - modelStartTimes[model];
         double eAt = Math.exp(A * dwell);
@@ -613,16 +613,16 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     @Override
     public void processGradientSampling(double[] gradient, int currentModelSegment, double intervalEnd) {
 
-        boolean sampleIsAtPresent = intervalEnd <= 0;
-        boolean samplesTakenAtPresent = rho0 > 0;
+        //boolean sampleIsAtPresent = intervalEnd <= 0;
+        //boolean samplesTakenAtPresent = rho0 > 0;
 
         //TODO: need to confirm intensive sampling case is correct
         boolean sampleIsAtEventTime = Math.abs(intervalEnd - modelStartTimes[currentModelSegment]) <= 0;
         boolean samplesTakenAtEventTime = rho > 0;
 
-        if (sampleIsAtPresent && samplesTakenAtPresent) {
-            gradient[fractionIndex(0, numIntervals)] += 1 / rho;
-        } else if (sampleIsAtEventTime && samplesTakenAtEventTime) {
+        //if (sampleIsAtPresent && samplesTakenAtPresent) {
+            //gradient[fractionIndex(0, numIntervals)] += 1 / rho;
+        if (sampleIsAtEventTime && samplesTakenAtEventTime) {
             gradient[fractionIndex(currentModelSegment, numIntervals)] += 1 / rho; // TODO Need to test!
         } else {
             gradient[samplingIndex(currentModelSegment, numIntervals)] += 1 / psi;

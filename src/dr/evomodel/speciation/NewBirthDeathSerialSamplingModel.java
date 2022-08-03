@@ -84,13 +84,14 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     double rho0; // TODO remove
 
     private double savedQ;
-    private final double[] partialQ;
+    private double[] partialQ;
     private boolean partialQKnown;
 
     private final double[] dQStart;
     private final double[] dQEnd;
 
-    private final double[] temp33;
+    private double[] temp33;
+    private final double[] temp44;
 
     private final double[] dA;
     private final double[] dB;
@@ -201,6 +202,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         this.dQEnd = new double[numIntervals * 4];
 
         this.temp33 = new double[numIntervals * 4];
+        this.temp44 = new double[numIntervals * 4];
 
         this.dPIntervalEnd = new double[numIntervals * 4];
         this.dPModelEnd = new double[numIntervals * 4];
@@ -567,7 +569,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     public void processGradientInterval(double[] gradient, int currentModelSegment,
                                         double intervalStart, double intervalEnd, int nLineages) {
 
-        double[] partialQ_all_old = new double[numIntervals * 4]; // TODO Remove allocation
+        double[] partialQ_all_old = temp44;
 
         dQCompute(currentModelSegment, intervalEnd, partialQ_all_old);
 
@@ -580,18 +582,21 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             Q_young = q(currentModelSegment, intervalStart);
         }
         this.savedQ = Q_Old;
-
-        partialQ_all_young = temp33;
-
+        
         if (partialQKnown) {
-            // TODO: Maybe change numIntervals to currentModelSegment
-            System.arraycopy(partialQ, 0, partialQ_all_young, 0, 4 * numIntervals);
+            // Only need 1 copy + 1 swap (instead of 2 copies)
+            double[] tmp = partialQ;
+            partialQ = temp33;
+            temp33 = tmp;
+
+            partialQ_all_young = temp33;
+//            System.arraycopy(partialQ, 0, partialQ_all_young, 0, 4 * (currentModelSegment + 1));
         } else {
+            partialQ_all_young = temp33;
             dQCompute(currentModelSegment, intervalStart, partialQ_all_young);
             partialQKnown = true;
         }
-        // TODO: Maybe change numIntervals to currentModelSegment
-        System.arraycopy(partialQ_all_old, 0, partialQ, 0, 4 * numIntervals);
+        System.arraycopy(partialQ_all_old, 0, partialQ, 0, 4 * (currentModelSegment + 1));
 
         for (int k = 0; k <= currentModelSegment; k++) {
             for (int p = 0; p < 4; p++) {

@@ -492,15 +492,17 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
         double G1 = g1(model, t, eAt);
 
+        double term1 = -A / lambda * ((1 - B) * (eAt - 1) + G1) / (G1 * G1);
+
         for (int k = 0; k  < model; k ++) {
             for (int p = 0; p < 4; p++) {
-                dP[k * 4 + p] = -A / lambda * ((1 - B) * (eAt - 1) + G1) * dB[k * 4 + p] / (G1 * G1);
+                dP[k * 4 + p] = term1 * dB[k * 4 + p];
             }
         }
 
         for (int p = 0; p < 3; ++p) { // TODO Only dG1[1] and dG2[2] are used
-            double term1 = eAt * (1 + B) * dA[p] * (t - intervalStart) + (eAt - 1) * dB[model * 4 + p];
-            dG2[p] = dA[p] - 2 * (G1 * (dA[p] * (1 - B) - dB[model * 4 + p] * A) - (1 - B) * term1 * A) / (G1 * G1);
+            double term2 = eAt * (1 + B) * dA[p] * (t - intervalStart) + (eAt - 1) * dB[model * 4 + p];
+            dG2[p] = dA[p] - 2 * (G1 * (dA[p] * (1 - B) - dB[model * 4 + p] * A) - (1 - B) * term2 * A) / (G1 * G1);
         }
 
         double G2 = g2(t, G1);
@@ -526,18 +528,21 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double term2 = G1 / 2 - eAt * (1 + B);
         double term3 = eAt - 1;
         double term4 = G1 * G1 * G1;
+        double term5 = -term1 * term3 / term4;
 
         for (int k = 0; k < model; ++k) {
-            dQ[k * 4 + 0] = -term1 * dB[k * 4 + 0] * term3 / term4;
-            dQ[k * 4 + 1] = -term1 * dB[k * 4 + 1] * term3 / term4;
-            dQ[k * 4 + 2] = -term1 * dB[k * 4 + 2] * term3 / term4;
-            dQ[k * 4 + 3] = -term1 * dB[k * 4 + 3] * term3 / term4;
+            for (int p = 0; p < 4; ++p) {
+                dQ[k * 4 + p] = term5 * dB[k * 4 + p];
+            }
         }
 
-        dQ[model * 4 + 0] = term1 * (dwell * dA[0] * term2 - dB[model * 4 + 0] * term3) / term4;
-        dQ[model * 4 + 1] = term1 * (dwell * dA[1] * term2 - dB[model * 4 + 1] * term3) / term4;
-        dQ[model * 4 + 2] = term1 * (dwell * dA[2] * term2 - dB[model * 4 + 2] * term3) / term4;
-        dQ[model * 4 + 3] = -term1 * dB[model * 4 + 3] * term3 / term4;
+        double term6 = term1 / term4;
+        double term7 = dwell * term2;
+
+        dQ[model * 4 + 0] = term6 * (dA[0] * term7 - dB[model * 4 + 0] * term3);
+        dQ[model * 4 + 1] = term6 * (dA[1] * term7 - dB[model * 4 + 1] * term3);
+        dQ[model * 4 + 2] = term6 * (dA[2] * term7 - dB[model * 4 + 2] * term3);
+        dQ[model * 4 + 3] = term5 * dB[model * 4 + 3];
     }
 
     @Override

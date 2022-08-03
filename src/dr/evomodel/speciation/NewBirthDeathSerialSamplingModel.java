@@ -441,7 +441,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         return A * (1 - 2 * (1 - B) / G1);
     }
 
-    //  todo: avoid calculating g1 in q
     public double q(int model, double t) {
         double tkMinus1 =  modelStartTimes[model];
 
@@ -536,7 +535,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     private void dQCompute(int model, double t, double[] dQ) {
 
-/*        if (!computedBCurrent) { // TODO Remove side-effects
+        /* if (!computedBCurrent) { // TODO Remove side-effects
             dBCompute(model, dB);
             computedBCurrent = true;
         }*/
@@ -569,10 +568,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     private void dQCompute(int model, double t, double[] dQ, double eAt) {
 
-/*        if (!computedBCurrent) { // TODO Remove side-effects
-            dBCompute(model, dB);
-            computedBCurrent = true;
-        }*/
 
         double dwell = t - modelStartTimes[model];
         // double eAt = Math.exp(A * dwell);
@@ -685,6 +680,10 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             gradient[samplingIndex(currentModelSegment, numIntervals)] += 1 / psi;
 
             //double p_it = p(currentModelSegment, intervalEnd);
+            if (intervalEnd == modelStartTimes[currentModelSegment]) {
+                eAt_Old = Math.exp(A * (intervalEnd - modelStartTimes[currentModelSegment]));
+            }
+
             double p_it = p(eAt_Old);
 
             gradient[treatmentIndex(currentModelSegment, numIntervals)] +=  (1 - p_it) / ((1 - r) * p_it + r);

@@ -40,7 +40,8 @@ import java.util.*;
  */
 public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements SpeciationModelGradientProvider, Citable {
     // TODO should we pre-emptively put the combinatorial constant in here? It only really matters when inferring a tree where there may/may not be sampled ancestors
-
+    // TODO don't check if rho >= minVal, just 0 (likelihood won't blow up unless it's _exactly_ 0
+    // TODO the "is time t event time ti" can/should probably get moved to the point at which we pass the tree to the birth-death model
     // extant sampling proportion
     Parameter samplingProbability;
 
@@ -312,7 +313,14 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public double processModelSegmentBreakPoint(int model, double intervalStart, double intervalEnd, int nLineages) {
-        return nLineages * (logQ(model, intervalEnd) - logQ(model, intervalStart));
+        double lnL = nLineages * (logQ(model, intervalEnd) - logQ(model, intervalStart));
+        if ( samplingProbability.getValue(model + 1) > 0.0 ) {
+            // Add in probability of un-sampled lineages
+            // We don't need this at t=0 because all lineages in the tree are sampled
+            // TODO: check if we're right about how many lineages are actually alive at this time. Are we inadvertently over-counting or under-counting due to samples added at this _exact_ time?
+            lnL += nLineages * Math.log(1.0 - samplingProbability.getValue(model + 1));
+        }
+        return lnL;
     }
 
     @Override

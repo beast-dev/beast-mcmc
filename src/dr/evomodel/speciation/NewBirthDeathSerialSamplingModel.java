@@ -596,6 +596,13 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
                         (dQEnd[k * 4 + p] / qEnd - dQStart[k * 4 + p] / qStart);
             }
         }
+
+        if ( samplingProbability.getValue(currentModelSegment + 1) > 0.0 ) {
+            // Add in probability of un-sampled lineages
+            // We don't need this at t=0 because all lineages in the tree are sampled
+            // TODO: check if we're right about how many lineages are actually alive at this time. Are we inadvertently over-counting or under-counting due to samples added at this _exact_ time?
+            gradient[fractionIndex(currentModelSegment+1, numIntervals)] -= nLineages * 1 / (1.0 - samplingProbability.getValue(currentModelSegment + 1));
+        }
     }
 
     @Override

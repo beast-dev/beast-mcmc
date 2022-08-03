@@ -31,9 +31,7 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 import dr.inference.operators.AdaptationMode;
 import dr.inferencexml.operators.hmc.ReflectiveHamiltonianMonteCarloOperatorParser;
-import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.ReadableVector;
-import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
 import dr.xml.Reportable;
@@ -119,29 +117,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
             while (collapsedTime < functionalStepSize) {
                 ReflectionEvent event = nextEvent(position, momentum, functionalStepSize - collapsedTime, isAtBoundary);
 
-                if (DEBUG) {
-                    SymmetricMatrix C = SymmetricMatrix.compoundCorrelationSymmetricMatrix(position, 11); //TODO: remove
-                    try {
-                        System.out.println("starting det: " + C.determinant());
-                    } catch (IllegalDimension illegalDimension) {
-                        illegalDimension.printStackTrace();
-                        throw new RuntimeException();
-                    }
-                }
-
                 isAtBoundary = event.doReflection(position, momentum);
-
-                if (DEBUG) {
-                    System.out.println("event: " + event.getType());
-                    SymmetricMatrix C = SymmetricMatrix.compoundCorrelationSymmetricMatrix(position, 11); //TODO: remove
-                    try {
-                        System.out.println("ending det: " + C.determinant());
-                    } catch (IllegalDimension illegalDimension) {
-                        illegalDimension.printStackTrace();
-                        throw new RuntimeException();
-                    }
-                }
-
                 collapsedTime += event.getEventTime();
             }
             setParameter(position);
@@ -190,9 +166,6 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
             if (timeToReflection > intervalLength) {
                 return new ReflectionEvent(ReflectionType.None, intervalLength, Double.NaN, new int[0]);
             } else {
-                if (DEBUG) {
-                    System.out.println("!!!!!!!!!!!!!!!REFLECTION!!!!!!!!!!!!!!!");
-                }
                 double[] boundaryPosition = new double[position.length];
                 for (int i = 0; i < position.length; i++) {
                     boundaryPosition[i] = position[i] + timeToReflection * velocity[i];
@@ -373,7 +346,22 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
         }
 
         public boolean doReflection(double[] position, WrappedVector momentum) {
+
+            if (DEBUG) {
+                System.out.println("time: " + eventTime);
+                System.out.print("start: ");
+                Utils.printArray(position);
+                System.out.println(momentum);
+            }
+
             type.doReflection(position, preconditioning, momentum, eventLocation, indices, normalVector, eventTime, remainingTime);
+
+            if (DEBUG) {
+                System.out.print("end: ");
+                Utils.printArray(position);
+                System.out.println(momentum);
+            }
+
             return type.isAtBoundary();
         }
 
@@ -387,13 +375,6 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
                               double eventLocation[], int[] indices, double[] normalVector, double time,
                               double remainingTime) {
 
-
-                if (DEBUG) {
-                    System.out.println("time: " + time);
-                    System.out.print("start: ");
-                    Utils.printArray(position);
-                    System.out.println(momentum);
-                }
 
                 updatePosition(position, preconditioning, momentum, time);
                 double vn = 0;
@@ -411,23 +392,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
                     position[i] = eventLocation[i];
                 }
 
-                if (DEBUG) {
-                    System.out.print("end: ");
-                    Utils.printArray(position);
-                    System.out.println(momentum);
-                }
 
-//                if (BOUNCE) {
-//                    double t = Math.min(remainingTime, 1e-11); //TODO: need to make sure I'm not leaving the space again, also need to update time later
-////                    System.out.println("bounce time: " + t);
-//                    updatePosition(position, preconditioning, momentum, t);
-//                }
-
-                if (DEBUG) {
-                    System.out.print("bounce: ");
-                    Utils.printArray(position);
-                    System.out.println(momentum);
-                }
             }
         },
         Reflection {
@@ -461,16 +426,8 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
                               double eventLocation[], int[] indices, double[] normalVector, double time,
                               double remainginTime) {
 
-                if (DEBUG) {
-                    System.out.println("time: " + time);
-                    System.out.print("start: ");
-                    Utils.printArray(position);
-                }
                 updatePosition(position, preconditioning, momentum, time);
-                if (DEBUG) {
-                    System.out.print("end: ");
-                    Utils.printArray(position);
-                }
+
             }
 
             @Override
@@ -489,7 +446,6 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
         abstract void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum,
                                    double eventLocation[], int[] indices, double[] normalVector, double time, double remainingTime);
 
-        private static final boolean BOUNCE = true;
 
         public boolean isAtBoundary() {
             return true;

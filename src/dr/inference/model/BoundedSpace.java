@@ -146,9 +146,6 @@ public interface BoundedSpace extends GeneralBoundsProvider {
             double[] values = new double[nReal];
             System.arraycopy(allValues, 0, values, 0, nReal);
 
-//            ColtEigenSystem eigenSystem = new ColtEigenSystem(dim);
-//            EigenDecomposition decomposition = eigenSystem.decomposeMatrix(Z.toComponents()); //TODO: only need largest magnitude eigenvalues
-//            double[] values = decomposition.getEigenValues();
             if (DEBUG) {
                 System.out.println("Raw matrix to decompose: ");
                 System.out.println(Z);
@@ -219,13 +216,7 @@ public interface BoundedSpace extends GeneralBoundsProvider {
             }
 
             if (isAtBoundary) {
-                if (DEBUG) {
-                    System.out.println("minNegative: " + minNegative);
-                    System.out.println("minNegative2: " + minNegative2);
-                    System.out.println("minPositive: " + minPositive);
-                    System.out.println("minPositive2: " + minPositive2);
 
-                }
                 if (Math.abs(minNegative) < minPositive) {
                     if (Math.abs(minNegative) < BOUNDARY_TOL) {
                         minNegative = minNegative2;
@@ -239,13 +230,7 @@ public interface BoundedSpace extends GeneralBoundsProvider {
                         throw new RuntimeException("isAtBoundary = true but does not appear to be near boundary");
                     }
                 }
-                if (DEBUG) {
-                    System.out.println("minNegative: " + minNegative);
-                    System.out.println("minNegative2: " + minNegative2);
-                    System.out.println("minPositive: " + minPositive);
-                    System.out.println("minPositive2: " + minPositive2);
 
-                }
             }
 
             minPositive = -minPositive;
@@ -297,13 +282,6 @@ public interface BoundedSpace extends GeneralBoundsProvider {
                     throw new RuntimeException();
                 }
 
-//                if (detY < -TOL || detY > 1) {
-//                    throw new RuntimeException("invalid starting position");
-//                }
-//
-//                if (absMax > 1.0) {
-//                    throw new RuntimeException("Invalid ending position");
-//                }
             }
 
             return new IntersectionDistances(minNegative, minPositive);

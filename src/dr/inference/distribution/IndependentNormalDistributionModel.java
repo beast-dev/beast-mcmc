@@ -4,6 +4,7 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 import dr.inference.operators.repeatedMeasures.MultiplicativeGammaGibbsHelper;
 import dr.math.distributions.NormalDistribution;
+import dr.xml.Reportable;
 
 /**
  * @author Max Tolkoff
@@ -12,12 +13,15 @@ import dr.math.distributions.NormalDistribution;
  */
 
 public class IndependentNormalDistributionModel extends AbstractModelLikelihood implements NormalStatisticsProvider,
-        MultiplicativeGammaGibbsHelper {
+        MultiplicativeGammaGibbsHelper, GradientWrtParameterProvider, Reportable {
     Parameter mean;
     Parameter variance;
     Parameter precision;
     Parameter data;
     boolean usePrecision;
+
+    public static String INDEPENDENT_NORMAL_DISTRIBUTION_MODEL = "independentNormalDistributionModel";
+
 
     public IndependentNormalDistributionModel(String id, Parameter mean, Parameter variance, Parameter precision, Parameter data) {
         super(id);
@@ -71,12 +75,7 @@ public class IndependentNormalDistributionModel extends AbstractModelLikelihood 
     public double getLogLikelihood() {
         double sum = 0;
         for (int i = 0; i < data.getDimension(); i++) {
-            double sd;
-            if (usePrecision) {
-                sd = Math.sqrt(1 / precision.getParameterValue(i));
-            } else {
-                sd = Math.sqrt(variance.getParameterValue(i));
-            }
+            double sd = getNormalSD(i);
             sum += NormalDistribution.logPdf(data.getParameterValue(i),
                     mean.getParameterValue(i),
                     sd);
@@ -137,5 +136,43 @@ public class IndependentNormalDistributionModel extends AbstractModelLikelihood 
     @Override
     public int getColumnDimension() {
         return data.getDimension();
+    }
+
+    @Override
+    public Likelihood getLikelihood() {
+        return this;
+    }
+
+    @Override
+    public Parameter getParameter() {
+        return data;
+    }
+
+    @Override
+    public int getDimension() {
+        return data.getDimension();
+    }
+
+    @Override
+    public double[] getGradientLogDensity() {
+        double[] grad = new double[getDimension()];
+        for (int i = 0; i < getDimension(); i++) {
+            double sd = getNormalSD(i);
+            grad[i] = NormalDistribution.gradLogPdf(data.getParameterValue(i), mean.getParameterValue(i), sd);
+        }
+        return grad;
+    }
+
+    @Override
+    public String getReport() {
+        StringBuilder sb = new StringBuilder(INDEPENDENT_NORMAL_DISTRIBUTION_MODEL + " report:\n");
+        sb.append("\tlogLikelihood: " + getLogLikelihood() + "\n");
+        sb.append("\tgradient: ");
+        double[] grad = getGradientLogDensity();
+        for (int i = 0; i < grad.length; i++) {
+            sb.append(grad[i] + " ");
+        }
+        sb.append("\n\n");
+        return sb.toString();
     }
 }

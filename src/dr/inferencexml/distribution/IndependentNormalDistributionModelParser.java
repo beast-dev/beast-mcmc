@@ -4,8 +4,9 @@ import dr.inference.distribution.IndependentNormalDistributionModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
+import static dr.inference.distribution.IndependentNormalDistributionModel.INDEPENDENT_NORMAL_DISTRIBUTION_MODEL;
+
 public class IndependentNormalDistributionModelParser extends AbstractXMLObjectParser {
-    public static String INDEPENDENT_NORMAL_DISTRIBUTION_MODEL = "independentNormalDistributionModel";
     public static String MEAN = "mean";
     public static String VARIANCE = "variance";
     public static String PRECISION = "precision";
@@ -17,11 +18,11 @@ public class IndependentNormalDistributionModelParser extends AbstractXMLObjectP
         String id = xo.getStringAttribute(ID);
         Parameter mean = (Parameter) xo.getChild(MEAN).getChild(Parameter.class);
         Parameter precision = null;
-        if(xo.getChild(PRECISION) != null){
+        if (xo.getChild(PRECISION) != null) {
             precision = (Parameter) xo.getChild(PRECISION).getChild(Parameter.class);
         }
         Parameter variance = null;
-        if(xo.getChild(VARIANCE) != null){
+        if (xo.getChild(VARIANCE) != null) {
             variance = (Parameter) xo.getChild(VARIANCE).getChild(Parameter.class);
         }
         Parameter data = (Parameter) xo.getChild(DATA).getChild(Parameter.class);

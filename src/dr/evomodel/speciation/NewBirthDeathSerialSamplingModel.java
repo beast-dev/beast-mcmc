@@ -313,7 +313,14 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public double processModelSegmentBreakPoint(int model, double intervalStart, double intervalEnd, int nLineages) {
-        return nLineages * (logQ(model, intervalEnd) - logQ(model, intervalStart));
+        double lnL = nLineages * (logQ(model, intervalEnd) - logQ(model, intervalStart));
+        if ( samplingProbability.getValue(model + 1) > 0.0 ) {
+            // Add in probability of un-sampled lineages
+            // We don't need this at t=0 because all lineages in the tree are sampled
+            // TODO: check if we're right about how many lineages are actually alive at this time. Are we inadvertently over-counting or under-counting due to samples added at this _exact_ time?
+            lnL += nLineages * Math.log(1.0 - samplingProbability.getValue(model + 1));
+        }
+        return lnL;
     }
 
     @Override

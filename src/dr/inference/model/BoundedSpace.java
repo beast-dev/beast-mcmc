@@ -1,13 +1,13 @@
 package dr.inference.model;
 
 import dr.app.bss.Utils;
-import dr.evomodel.substmodel.ColtEigenSystem;
-import dr.evomodel.substmodel.EigenDecomposition;
+import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.EJMLUtils;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
+import org.ejml.data.Complex64F;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
 import org.ejml.interfaces.decomposition.CholeskyDecomposition;
@@ -19,12 +19,12 @@ public interface BoundedSpace extends GeneralBoundsProvider {
 
     boolean isWithinBounds(double[] values);
 
-    IntersectionDistances distancesToBoundary(double[] origin, double[] direction);
+    IntersectionDistances distancesToBoundary(double[] origin, double[] direction, boolean isAtBoundary) throws HamiltonianMonteCarloOperator.NumericInstabilityException;
 
     double[] getNormalVectorAtBoundary(double[] position);
 
-    default double forwardDistanceToBoundary(double[] origin, double[] direction) {
-        return distancesToBoundary(origin, direction).forwardDistance;
+    default double forwardDistanceToBoundary(double[] origin, double[] direction, boolean isAtBoundary) throws HamiltonianMonteCarloOperator.NumericInstabilityException {
+        return distancesToBoundary(origin, direction, isAtBoundary).forwardDistance;
     }
 
     class IntersectionDistances {
@@ -43,7 +43,8 @@ public interface BoundedSpace extends GeneralBoundsProvider {
     class Correlation implements BoundedSpace {
 
         private static final boolean DEBUG = false;
-        private static final double TOL = 1e-10;
+        private static final double TOL = 0;
+        private static final double BOUNDARY_TOL = 1e-6;
         private final int dim;
 
         public Correlation(int dim) {
@@ -128,9 +129,32 @@ public interface BoundedSpace extends GeneralBoundsProvider {
                 throw new RuntimeException("illegal dimensions");
             }
 
-            ColtEigenSystem eigenSystem = new ColtEigenSystem(dim);
-            EigenDecomposition decomposition = eigenSystem.decomposeMatrix(Z.toComponents()); //TODO: only need largest magnitude eigenvalues
-            double[] values = decomposition.getEigenValues();
+            double[] z = Z.toArrayComponents(); //TODO: CLEAN THIS UP!!!!!
+            DenseMatrix64F A = DenseMatrix64F.wrap(dim, dim, z);
+            org.ejml.interfaces.decomposition.EigenDecomposition<DenseMatrix64F> factory = new DecompositionFactory().eig(dim, false, false);
+            if (!factory.decompose(A)) throw new RuntimeException("Eigen decomposition failed.");
+            double[] allValues = new double[dim];
+            int nReal = 0;
+            for (int i = 0; i < dim; i++) {
+                Complex64F ev = factory.getEigenvalue(i);
+                if (ev.isReal()) {
+                    allValues[nReal] = ev.real;
+                    nReal++;
+                }
+            }
+
+            double[] values = new double[nReal];
+            System.arraycopy(allValues, 0, values, 0, nReal);
+
+//            ColtEigenSystem eigenSystem = new ColtEigenSystem(dim);
+//            EigenDecomposition decomposition = eigenSystem.decomposeMatrix(Z.toComponents()); //TODO: only need largest magnitude eigenvalues
+//            double[] values = decomposition.getEigenValues();
+            if (DEBUG) {
+                System.out.println("Raw matrix to decompose: ");
+                System.out.println(Z);
+                System.out.print("Raw eigenvalues: ");
+                Utils.printArray(values);
+            }
             for (int i = 0; i < values.length; i++) {
                 values[i] = 1 / values[i];
             }
@@ -140,31 +164,87 @@ public interface BoundedSpace extends GeneralBoundsProvider {
         }
 
         @Override
-        public IntersectionDistances distancesToBoundary(double[] origin, double[] direction) {
+        public IntersectionDistances distancesToBoundary(double[] origin, double[] direction, boolean isAtBoundary) throws HamiltonianMonteCarloOperator.NumericInstabilityException {
 
-            if (!isWithinBounds(origin)) { //TODO: make this optional?
-                SymmetricMatrix C = compoundCorrelationSymmetricMatrix(origin, dim);
-                System.out.println(C);
-                try {
-                    System.out.println(C.determinant());
-                } catch (IllegalDimension illegalDimension) {
-                    illegalDimension.printStackTrace();
+            if (!isWithinBounds(origin)) {
+                if (isAtBoundary) {
+                    //TODO: remove below
+                    SymmetricMatrix C = compoundCorrelationSymmetricMatrix(origin, dim);
+                    double det = 0;
+                    try {
+                        det = C.determinant();
+                    } catch (IllegalDimension illegalDimension) {
+                        illegalDimension.printStackTrace();
+                    }
+
+                    if (Math.abs(det) > BOUNDARY_TOL) {
+                        System.out.println(det);
+                        throw new HamiltonianMonteCarloOperator.NumericInstabilityException();
+                    }
+                } else {
+                    SymmetricMatrix C = compoundCorrelationSymmetricMatrix(origin, dim);
+                    System.out.println(C);
+                    try {
+                        System.out.println(C.determinant());
+                    } catch (IllegalDimension illegalDimension) {
+                        illegalDimension.printStackTrace();
+                    }
+
+                    throw new HamiltonianMonteCarloOperator.NumericInstabilityException();
                 }
 
-                throw new RuntimeException("Starting position is outside of bounds");
             }
 
 
             double values[] = robustTrajectoryEigenValues(origin, direction);
 
             double minNegative = Double.NEGATIVE_INFINITY;
+            double minNegative2 = Double.NEGATIVE_INFINITY;
             double minPositive = Double.POSITIVE_INFINITY;
+            double minPositive2 = Double.POSITIVE_INFINITY;
+
             for (int i = 0; i < values.length; i++) {
                 double value = values[i];
                 if (value < -TOL && value > minNegative) {
+                    minNegative2 = minNegative;
                     minNegative = value;
+                } else if (value < -TOL && value > minNegative2) {
+                    minNegative2 = value;
                 } else if (value >= TOL & value < minPositive) {
+                    minPositive2 = minPositive;
                     minPositive = value;
+                } else if (value >= TOL && value < minPositive2) {
+                    minPositive2 = value;
+                }
+            }
+
+            if (isAtBoundary) {
+                if (DEBUG) {
+                    System.out.println("minNegative: " + minNegative);
+                    System.out.println("minNegative2: " + minNegative2);
+                    System.out.println("minPositive: " + minPositive);
+                    System.out.println("minPositive2: " + minPositive2);
+
+                }
+                if (Math.abs(minNegative) < minPositive) {
+                    if (Math.abs(minNegative) < BOUNDARY_TOL) {
+                        minNegative = minNegative2;
+                    } else {
+                        throw new RuntimeException("isAtBoundary = true but does not appear to be near boundary");
+                    }
+                } else {
+                    if (minPositive < BOUNDARY_TOL) {
+                        minPositive = minPositive2;
+                    } else {
+                        throw new RuntimeException("isAtBoundary = true but does not appear to be near boundary");
+                    }
+                }
+                if (DEBUG) {
+                    System.out.println("minNegative: " + minNegative);
+                    System.out.println("minNegative2: " + minNegative2);
+                    System.out.println("minPositive: " + minPositive);
+                    System.out.println("minPositive2: " + minPositive2);
+
                 }
             }
 
@@ -217,13 +297,13 @@ public interface BoundedSpace extends GeneralBoundsProvider {
                     throw new RuntimeException();
                 }
 
-                if (detY < -TOL || detY > 1) {
-                    throw new RuntimeException("invalid starting position");
-                }
-
-                if (absMax > 1.0) {
-                    throw new RuntimeException("Invalid ending position");
-                }
+//                if (detY < -TOL || detY > 1) {
+//                    throw new RuntimeException("invalid starting position");
+//                }
+//
+//                if (absMax > 1.0) {
+//                    throw new RuntimeException("Invalid ending position");
+//                }
             }
 
             return new IntersectionDistances(minNegative, minPositive);

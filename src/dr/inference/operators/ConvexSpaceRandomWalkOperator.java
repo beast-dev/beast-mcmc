@@ -2,6 +2,7 @@ package dr.inference.operators;
 
 import dr.inference.model.BoundedSpace;
 import dr.inference.model.Parameter;
+import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import jebl.math.Random;
@@ -190,7 +191,12 @@ public class ConvexSpaceRandomWalkOperator extends AbstractAdaptableOperator {
             sample[varInds.get(i)] = varSample[i];
         }
 
-        BoundedSpace.IntersectionDistances distances = space.distancesToBoundary(values, sample);
+        BoundedSpace.IntersectionDistances distances;
+        try {
+            distances = space.distancesToBoundary(values, sample, false);
+        } catch (HamiltonianMonteCarloOperator.NumericInstabilityException e) {
+            throw new RuntimeException("position outside of bounded space at beginning of operator move");
+        }
 //        double u1 = Random.nextDouble() * distances.forwardDistance;
 //        for (int i = 0; i < values.length; i++) {
 //            sample[i] = values[i] + (sample[i] - values[i]) * u1;

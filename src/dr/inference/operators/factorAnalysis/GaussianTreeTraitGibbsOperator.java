@@ -3,14 +3,10 @@ package dr.inference.operators.factorAnalysis;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
 
 public class GaussianTreeTraitGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 
@@ -19,7 +15,8 @@ public class GaussianTreeTraitGibbsOperator extends SimpleMCMCOperator implement
     private final Parameter traitParameter;
     private final TreeDataLikelihood treeDataLikelihood;
 
-    public GaussianTreeTraitGibbsOperator(TreeDataLikelihood treeDataLikelihood, Parameter parameter, String traitName) {
+    public GaussianTreeTraitGibbsOperator(TreeDataLikelihood treeDataLikelihood, Parameter parameter, double weight) {
+        setWeight(weight);
         this.traitParameter = parameter;
         this.treeDataLikelihood = treeDataLikelihood;
         ContinuousDataLikelihoodDelegate delegate = (ContinuousDataLikelihoodDelegate) treeDataLikelihood.getDataLikelihoodDelegate();
@@ -44,20 +41,24 @@ public class GaussianTreeTraitGibbsOperator extends SimpleMCMCOperator implement
     public static final AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            String traitName = xo.getStringAttribute(TreeTraitParserUtilities.TRAIT_NAME);
             TreeDataLikelihood likelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-            return new GaussianTreeTraitGibbsOperator(likelihood, parameter, traitName);
+            double weight = xo.getDoubleAttribute(WEIGHT);
+            return new GaussianTreeTraitGibbsOperator(likelihood, parameter, weight);
         }
 
         @Override
         public XMLSyntaxRule[] getSyntaxRules() {
-            return new XMLSyntaxRule[0];
+            return new XMLSyntaxRule[]{
+                    new ElementRule(TreeDataLikelihood.class),
+                    new ElementRule(Parameter.class),
+                    AttributeRule.newDoubleRule(WEIGHT)
+            };
         }
 
         @Override
         public String getParserDescription() {
-            return null;
+            return "samples traits at the tips of the tree from their full conditional distribution";
         }
 
         @Override

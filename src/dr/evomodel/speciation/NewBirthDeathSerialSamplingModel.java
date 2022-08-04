@@ -441,7 +441,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         ));
     }
 
-    private double g1(int model, double t, double eAt) {
+    private double g1(double eAt) {
         return  (1 + B) * eAt + (1 - B);
     }
 
@@ -450,22 +450,13 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     public double q(int model, double t) {
-        double tkMinus1 =  modelStartTimes[model];
-
-        double eAt = Math.exp(A * (t - tkMinus1));
-        double sqrtDenom = eAt * (1.0 + B) + (1.0 - B); // TODO This is g1
-
-        return 4 * eAt / (sqrtDenom * sqrtDenom);
+        double eAt = Math.exp(A * (t - modelStartTimes[model]));
+        return q(eAt);
     }
 
-
     public double q(double eAt) {
-        // double tkMinus1 =  modelStartTimes[model];
-
-        // double eAt = Math.exp(A * (t - tkMinus1));
-        double sqrtDenom = eAt * (1.0 + B) + (1.0 - B); // TODO This is g1
-
-        return 4 * eAt / (sqrtDenom * sqrtDenom);
+        double sqrtDenominator = g1(eAt);
+        return 4 * eAt / (sqrtDenominator * sqrtDenominator);
     }
 
 
@@ -518,7 +509,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     private void dPCompute(int model, double t, double intervalStart, double eAt, double[] dP) {
 
-        double G1 = g1(model, t, eAt);
+        double G1 = g1(eAt);
 
         double term1 = -A / lambda * ((1 - B) * (eAt - 1) + G1) / (G1 * G1);
 
@@ -550,7 +541,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     private void dQCompute(int model, double t, double[] dQ, double eAt) {
 
         double dwell = t - modelStartTimes[model];
-        double G1 = g1(model, t, eAt);
+        double G1 = g1(eAt);
 
         double term1 = 8 * eAt;
         double term2 = G1 / 2 - eAt * (1 + B);

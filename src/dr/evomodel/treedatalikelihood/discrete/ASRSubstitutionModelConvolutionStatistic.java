@@ -72,11 +72,11 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         NodeRef nodeAncestor = tree.getParent(nodeDescendant);
 
         double rate = branchRates.getBranchRate(tree,nodeDescendant);
-        double time = tree.getNodeHeight(nodeDescendant);
+        double branchTime = tree.getNodeHeight(nodeAncestor) - tree.getNodeHeight(nodeDescendant);
 
-        UnivariateMinimum optimized = optimizeTimes(nodeDescendant, nodeAncestor, rate, time);
-
-        return (1.0 - optimized.minx) * time;
+        UnivariateMinimum optimized = optimizeTimes(nodeDescendant, nodeAncestor, rate, branchTime);
+        
+        return (1.0 - optimized.minx) * branchTime;
     }
 
     @Override

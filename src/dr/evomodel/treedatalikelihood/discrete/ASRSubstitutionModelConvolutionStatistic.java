@@ -9,6 +9,8 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
+import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.model.Statistic;
 import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
@@ -33,10 +35,12 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
                                                     SubstitutionModel subsModelDescendant,
                                                     BranchRateModel branchRates,
                                                     TaxonList mrcaTaxaDescendant,
-                                                    boolean bootstrap
+                                                    boolean bootstrap,
+                                                    GammaDistributionModel prior
                                      ) throws TreeUtils.MissingTaxonException {
         this.name = name;
         this.bootstrap = bootstrap;
+        this.prior = prior;
         this.asrLikelihood = asrLike;
         this.substitutionModelAncestor = subsModelAncestor;
         this.substitutionModelDescendant = subsModelDescendant;
@@ -75,7 +79,8 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         double branchTime = tree.getNodeHeight(nodeAncestor) - tree.getNodeHeight(nodeDescendant);
 
         UnivariateMinimum optimized = optimizeTimes(nodeDescendant, nodeAncestor, rate, branchTime);
-        
+
+//        System.err.println("proportion = " + (1.0 - optimized.minx) + "; branch duration = " + branchTime + "; branchRate = " + rate);
         return (1.0 - optimized.minx) * branchTime;
     }
 
@@ -90,7 +95,7 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         return sb.toString();
     }
 
-    private double computeLogLikelihood(double distance1, double distance2, int[] ancestorStates, int[] descendantStates) {
+    private double computeLogLikelihood(double distance1, double distance2, double rate, int[] ancestorStates, int[] descendantStates) {
         int nStates = dataType.getStateCount();
 
         double[] tpm1 = new double[nStates * nStates];
@@ -118,6 +123,14 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
             double sum = 0.0;
             lnL += logTpm[ancestorStates[s] * nStates + descendantStates[s]];
         }
+
+        if (prior != null) {
+            double tmp = lnL;
+//            System.err.println("lnL = " + tmp);
+            lnL += prior.logPdf(distance2/rate);
+//            System.err.println("lnPrior = " + (lnL - tmp));
+        }
+
         return lnL;
     }
 
@@ -149,7 +162,7 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
             public double evaluate(double argument) {
                 double d1 = argument * rate * time;
                 double d2 = (1.0 - argument) * rate * time;
-                double lnL = computeLogLikelihood(d1, d2, nodeStatesAncestor, nodeStatesDescendant);
+                double lnL = computeLogLikelihood(d1, d2, rate, nodeStatesAncestor, nodeStatesDescendant);
 
                 return -lnL;
             }
@@ -179,5 +192,6 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
     private final Tree tree;
     private final DataType dataType;
     private final boolean bootstrap;
+    private final GammaDistributionModel prior;
     private final String name;
 }

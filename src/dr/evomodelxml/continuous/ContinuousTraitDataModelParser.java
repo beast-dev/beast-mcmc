@@ -28,6 +28,10 @@ public class ContinuousTraitDataModelParser extends AbstractXMLObjectParser {
     }
 
     public static ContinuousTraitDataModel parseContinuousTraitDataModel(XMLObject xo) throws XMLParseException {
+        return parseContinuousTraitDataModel(xo, null);
+    }
+
+    public static ContinuousTraitDataModel parseContinuousTraitDataModel(XMLObject xo, PrecisionType precisionType) throws XMLParseException {
         Tree treeModel = (Tree) xo.getChild(Tree.class);
         boolean[] missingIndicators;
         final String traitName;
@@ -52,12 +56,15 @@ public class ContinuousTraitDataModelParser extends AbstractXMLObjectParser {
         traitName = returnValue.traitName;
         useMissingIndices = returnValue.useMissingIndices;
 
-        PrecisionType precisionType = PrecisionType.SCALAR;
+        if (precisionType == null) {
+            precisionType = PrecisionType.SCALAR;
 
-        if (xo.getAttribute(FORCE_FULL_PRECISION, false) ||
-                (useMissingIndices && !xo.getAttribute(FORCE_COMPLETELY_MISSING, false))) {
-            precisionType = PrecisionType.FULL;
+            if (xo.getAttribute(FORCE_FULL_PRECISION, false) ||
+                    (useMissingIndices && !xo.getAttribute(FORCE_COMPLETELY_MISSING, false))) {
+                precisionType = PrecisionType.FULL;
+            }
         }
+
 
         if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
             utilities.jitter(xo, dim, missingIndicators);

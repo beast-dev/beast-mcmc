@@ -289,12 +289,6 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
             MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(TreeModel.class);
             final ContinuousTraitPartialsProvider subModel;
 
-            if (xo.hasChildNamed(TreeTraitParserUtilities.TRAIT_PARAMETER)) {
-                subModel = ContinuousTraitDataModelParser.parseContinuousTraitDataModel(xo);
-            } else {
-                subModel = (ContinuousTraitPartialsProvider) xo.getChild(ContinuousTraitPartialsProvider.class);
-            }
-
 
             XMLObject cxo = xo.getChild(PRECISION);
             MatrixParameterInterface samplingPrecision = (MatrixParameterInterface)
@@ -312,8 +306,6 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
             }
 
 
-            String modelName = subModel.getModelName();
-
             boolean scaleByTipHeight = xo.getAttribute(SCALE_BY_TIP_HEIGHT, false);
 
             int dimTrait = samplingPrecision.getColumnDimension();
@@ -324,6 +316,19 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
             } else {
                 precisionType = PrecisionType.SCALAR;
             }
+
+            if (xo.hasChildNamed(TreeTraitParserUtilities.TRAIT_PARAMETER)) {
+                subModel = ContinuousTraitDataModelParser.parseContinuousTraitDataModel(xo, precisionType);
+            } else {
+                subModel = (ContinuousTraitPartialsProvider) xo.getChild(ContinuousTraitPartialsProvider.class);
+                if (subModel.getPrecisionType() != precisionType) {
+                    throw new XMLParseException("Precision type of " + REPEATED_MEASURES_MODEL + " is " +
+                            precisionType.getClass() + ", but the precision type of the child model " +
+                            subModel.getModelName() + " is " + subModel.getPrecisionType().getClass());
+                }
+            }
+            String modelName = subModel.getModelName();
+
 
             if (!scaleByTipHeight) {
                 return new RepeatedMeasuresTraitDataModel(

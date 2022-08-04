@@ -243,24 +243,10 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
      * @param eAt precomputed exp(A * (t - t_i))
      * @return the probability of no sampled descendants after time, t
      */
-    // TODO make this take in the most recent break time as an argument or the model index so we can obtain said time
-    // TODO do we really need 4 p functions?
-    private static double p(double lambda, double mu, double psi, double rho, double a, double b, double t, double tkMinus1, double eAt) {
-        double eAt1B = eAt * (1.0 + b);
-        return (lambda + mu + psi - a * ((eAt1B - (1.0 - b)) / (eAt1B + (1.0 - b)))) / (2.0 * lambda);
-    }
 
-    private static double p(double lambda, double mu, double psi, double rho, double a, double b, double t, double tkMinus1) {
-        double eAt = Math.exp(a * (t - tkMinus1));
-        double eAt1B = eAt * (1.0 + b);
-        return (lambda + mu + psi - a * ((eAt1B - (1.0 - b)) / (eAt1B + (1.0 - b)))) / (2.0 * lambda);
-    }
-    
     private double p(int model, double t) {
-        double tkMinus1 = modelStartTimes[model];
-        double eAt = Math.exp(A * (t - tkMinus1));
-        double eAt1B = eAt * (1.0 + B);
-        return (lambda + mu + psi - A * ((eAt1B - (1.0 - B)) / (eAt1B + (1.0 - B)))) / (2.0 * lambda);
+        double eAt = Math.exp(A * (t - modelStartTimes[model]));
+        return p(eAt);
     }
 
     private double p(double eAt) {
@@ -269,11 +255,10 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     private double logQ(int model, double time) {
-
         double At = A * (time - modelStartTimes[model]);
-        double eA = Math.exp(At);
-        double sqrtDenom = eA * (1 + B) + (1 - B);
-        return At + log4 - 2 * Math.log(sqrtDenom); // TODO log4 (additive constant) is not needed since we always see logQ(a) - logQ(b)
+        double eAt = Math.exp(At);
+        double sqrtDenominator = g1(eAt);
+        return At + log4 - 2 * Math.log(sqrtDenominator); // TODO log4 (additive constant) is not needed since we always see logQ(a) - logQ(b)
     }
 
     private static final double log4 = Math.log(4.0);
@@ -384,18 +369,13 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
         double logSampProb;
 
-        //boolean sampleIsAtPresent = tOld <= 0;
-        //boolean samplesTakenAtPresent = rho0 > 0;
-
         boolean sampleIsAtEventTime = Math.abs(tOld - modelStartTimes[model]) <= 0;
         boolean samplesTakenAtEventTime = rho > 0;
 
-        //if (sampleIsAtPresent && samplesTakenAtPresent) {
-            //logSampProb = Math.log(rho);
         if (sampleIsAtEventTime && samplesTakenAtEventTime) {
             logSampProb = Math.log(rho);
         } else {
-            double logPsi = Math.log(psi); // TODO Notice the natural parameterization is `log psi`
+            double logPsi = Math.log(psi);
             logSampProb = logPsi + Math.log(r + (1.0 - r) * p(model,tOld));
         }
 
@@ -445,7 +425,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         return  (1 + B) * eAt + (1 - B);
     }
 
-    private double g2(double t, double G1) {
+    private double g2(double G1) {
         return A * (1 - 2 * (1 - B) / G1);
     }
 
@@ -524,7 +504,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             dG2[p] = dA[p] - 2 * (G1 * (dA[p] * (1 - B) - dB[model * 4 + p] * A) - (1 - B) * term2 * A) / (G1 * G1);
         }
 
-        double G2 = g2(t, G1);
+        double G2 = g2(G1);
 
         dP[model * 4 + 0] = (-mu - psi - lambda * dG2[0] + G2) / (2 * lambda * lambda);
         dP[model * 4 + 1] = (1 - dG2[1]) / (2 * lambda);
@@ -592,7 +572,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             // Add in probability of un-sampled lineages
             // We don't need this at t=0 because all lineages in the tree are sampled
             // TODO: check if we're right about how many lineages are actually alive at this time. Are we inadvertently over-counting or under-counting due to samples added at this _exact_ time?
-            gradient[fractionIndex(currentModelSegment+1, numIntervals)] -= nLineages * 1 / (1.0 - samplingProbability.getValue(currentModelSegment + 1));
+            gradient[fractionIndex(currentModelSegment+1, numIntervals)] -= nLineages / (1.0 - samplingProbability.getValue(currentModelSegment + 1));
         }
     }
 

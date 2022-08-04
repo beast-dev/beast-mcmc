@@ -1,6 +1,5 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -9,11 +8,11 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
+import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Statistic;
 import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
 import dr.math.UnivariateMinimum;
-import dr.math.matrixAlgebra.Vector;
 import dr.xml.Reportable;
 
 import java.util.Set;
@@ -33,10 +32,12 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
                                                     SubstitutionModel subsModelDescendant,
                                                     BranchRateModel branchRates,
                                                     TaxonList mrcaTaxaDescendant,
-                                                    boolean bootstrap
+                                                    boolean bootstrap,
+                                                    ParametricDistributionModel prior
                                      ) throws TreeUtils.MissingTaxonException {
         this.name = name;
         this.bootstrap = bootstrap;
+        this.prior = prior;
         this.asrLikelihood = asrLike;
         this.substitutionModelAncestor = subsModelAncestor;
         this.substitutionModelDescendant = subsModelDescendant;
@@ -72,11 +73,12 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         NodeRef nodeAncestor = tree.getParent(nodeDescendant);
 
         double rate = branchRates.getBranchRate(tree,nodeDescendant);
-        double time = tree.getNodeHeight(nodeDescendant);
+        double branchTime = tree.getNodeHeight(nodeAncestor) - tree.getNodeHeight(nodeDescendant);
 
-        UnivariateMinimum optimized = optimizeTimes(nodeDescendant, nodeAncestor, rate, time);
+        UnivariateMinimum optimized = optimizeTimes(nodeDescendant, nodeAncestor, rate, branchTime);
 
-        return (1.0 - optimized.minx) * time;
+//        System.err.println("proportion = " + (1.0 - optimized.minx) + "; branch duration = " + branchTime + "; branchRate = " + rate);
+        return (1.0 - optimized.minx) * branchTime;
     }
 
     @Override
@@ -90,7 +92,7 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         return sb.toString();
     }
 
-    private double computeLogLikelihood(double distance1, double distance2, int[] ancestorStates, int[] descendantStates) {
+    private double computeLogLikelihood(double distance1, double distance2, double rate, int[] ancestorStates, int[] descendantStates) {
         int nStates = dataType.getStateCount();
 
         double[] tpm1 = new double[nStates * nStates];
@@ -118,6 +120,11 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
             double sum = 0.0;
             lnL += logTpm[ancestorStates[s] * nStates + descendantStates[s]];
         }
+
+        if (prior != null) {
+            lnL += prior.logPdf(distance2/rate);
+        }
+
         return lnL;
     }
 
@@ -149,7 +156,7 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
             public double evaluate(double argument) {
                 double d1 = argument * rate * time;
                 double d2 = (1.0 - argument) * rate * time;
-                double lnL = computeLogLikelihood(d1, d2, nodeStatesAncestor, nodeStatesDescendant);
+                double lnL = computeLogLikelihood(d1, d2, rate, nodeStatesAncestor, nodeStatesDescendant);
 
                 return -lnL;
             }
@@ -179,5 +186,6 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
     private final Tree tree;
     private final DataType dataType;
     private final boolean bootstrap;
+    private final ParametricDistributionModel prior;
     private final String name;
 }

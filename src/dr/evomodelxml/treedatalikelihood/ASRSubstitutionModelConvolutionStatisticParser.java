@@ -34,7 +34,11 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.discrete.ASRSubstitutionModelConvolutionStatistic;
 import dr.evomodel.treedatalikelihood.discrete.SequenceDistanceStatistic;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
+import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.GammaDistributionModel;
+import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Statistic;
+import dr.math.distributions.GammaDistribution;
 import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.xml.*;
 
@@ -50,6 +54,7 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
     private static final String MRCA = "mrca";
     public static final String TAXA = "taxa";
     public static final String BOOT = "bootstrap";
+    public static final String PRIOR = "prior";
 
     public String getParserName() { return STATISTIC; }
 
@@ -77,6 +82,11 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
             mrcaTaxa = parseTaxonListOrTaxa(xo.getChild(MRCA));
         }
 
+        ParametricDistributionModel prior = null;
+        if ( xo.hasChildNamed(PRIOR) ) {
+            prior = (ParametricDistributionModel) xo.getElementFirstChild(PRIOR);
+        }
+
 //        TaxonList mrcaTaxa = null;
 //        if (xo.hasChildNamed(MRCA)) {
 //            mrcaTaxa = (TaxonList) xo.getElementFirstChild(MRCA);
@@ -91,7 +101,8 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
                     subsModelDescendant,
                     branchRates,
                     mrcaTaxa,
-                    boot);
+                    boot,
+                    prior);
         } catch (TreeUtils.MissingTaxonException e) {
             throw new XMLParseException("Unable to find taxon-set.");
         }
@@ -104,7 +115,7 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
     //************************************************************************
 
     public String getParserDescription() {
-        return "Estimates (via maximum likelihood) branch time prior to MRCA at which substitution regime shifts from ancestor to descendant model.";
+        return "Estimates (via ML or MAP) branch time prior to MRCA at which substitution regime shifts from ancestor to descendant model.";
     }
 
     public Class getReturnType() { return SequenceDistanceStatistic.class; }
@@ -119,6 +130,7 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
             new ElementRule(BranchRateModel.class, false),
             new ElementRule(MRCA,
                     new XMLSyntaxRule[]{new ElementRule(Taxa.class)}, false),
+            new ElementRule(PRIOR, GammaDistributionModel.class, "A prior for the convolution time (measured in time before descendant node).", true),
     };
 
 }

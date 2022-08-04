@@ -1,6 +1,5 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -9,13 +8,11 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
-import dr.inference.distribution.DistributionLikelihood;
-import dr.inference.distribution.GammaDistributionModel;
+import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Statistic;
 import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
 import dr.math.UnivariateMinimum;
-import dr.math.matrixAlgebra.Vector;
 import dr.xml.Reportable;
 
 import java.util.Set;
@@ -36,7 +33,7 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
                                                     BranchRateModel branchRates,
                                                     TaxonList mrcaTaxaDescendant,
                                                     boolean bootstrap,
-                                                    GammaDistributionModel prior
+                                                    ParametricDistributionModel prior
                                      ) throws TreeUtils.MissingTaxonException {
         this.name = name;
         this.bootstrap = bootstrap;
@@ -125,10 +122,7 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         }
 
         if (prior != null) {
-            double tmp = lnL;
-//            System.err.println("lnL = " + tmp);
             lnL += prior.logPdf(distance2/rate);
-//            System.err.println("lnPrior = " + (lnL - tmp));
         }
 
         return lnL;
@@ -192,6 +186,6 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
     private final Tree tree;
     private final DataType dataType;
     private final boolean bootstrap;
-    private final GammaDistributionModel prior;
+    private final ParametricDistributionModel prior;
     private final String name;
 }

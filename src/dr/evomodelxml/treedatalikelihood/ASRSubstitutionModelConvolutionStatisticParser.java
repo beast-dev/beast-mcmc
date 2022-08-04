@@ -36,6 +36,7 @@ import dr.evomodel.treedatalikelihood.discrete.SequenceDistanceStatistic;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.GammaDistributionModel;
+import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Statistic;
 import dr.math.distributions.GammaDistribution;
 import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
@@ -81,9 +82,9 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
             mrcaTaxa = parseTaxonListOrTaxa(xo.getChild(MRCA));
         }
 
-        GammaDistributionModel gammaPriorModel = null;
+        ParametricDistributionModel prior = null;
         if ( xo.hasChildNamed(PRIOR) ) {
-            gammaPriorModel = (GammaDistributionModel) xo.getElementFirstChild(PRIOR);
+            prior = (ParametricDistributionModel) xo.getElementFirstChild(PRIOR);
         }
 
 //        TaxonList mrcaTaxa = null;
@@ -101,7 +102,7 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
                     branchRates,
                     mrcaTaxa,
                     boot,
-                    gammaPriorModel);
+                    prior);
         } catch (TreeUtils.MissingTaxonException e) {
             throw new XMLParseException("Unable to find taxon-set.");
         }
@@ -129,7 +130,7 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
             new ElementRule(BranchRateModel.class, false),
             new ElementRule(MRCA,
                     new XMLSyntaxRule[]{new ElementRule(Taxa.class)}, false),
-            new ElementRule(PRIOR, GammaDistributionModel.class, "A gamma prior for the convolution time (measured in time before descendant node).", true),
+            new ElementRule(PRIOR, GammaDistributionModel.class, "A prior for the convolution time (measured in time before descendant node).", true),
     };
 
 }

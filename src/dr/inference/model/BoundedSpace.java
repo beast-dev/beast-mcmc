@@ -11,6 +11,7 @@ import org.ejml.data.Complex64F;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
 import org.ejml.interfaces.decomposition.CholeskyDecomposition;
+import org.ejml.ops.CommonOps;
 
 import static dr.math.matrixAlgebra.SymmetricMatrix.compoundCorrelationSymmetricMatrix;
 import static dr.math.matrixAlgebra.SymmetricMatrix.compoundSymmetricMatrix;
@@ -43,12 +44,25 @@ public interface BoundedSpace extends GeneralBoundsProvider {
     class Correlation implements BoundedSpace {
 
         private static final boolean DEBUG = false;
+        private static final boolean CHECK_WITHIN_BOUNDS = false;
         private static final double TOL = 0;
-        private static final double BOUNDARY_TOL = 1e-6;
+        private static final double BOUNDARY_TOL = 1e-9;
         private final int dim;
+
+        private final DenseMatrix64F C;
+        private final DenseMatrix64F V;
+        private final DenseMatrix64F Cinv;
+        private final DenseMatrix64F CinvV;
 
         public Correlation(int dim) {
             this.dim = dim;
+            this.V = new DenseMatrix64F(dim, dim);
+            this.C = new DenseMatrix64F(dim, dim);
+            for (int i = 0; i < dim; i++) {
+                C.set(i, i, 1);
+            }
+            this.Cinv = new DenseMatrix64F(dim, dim);
+            this.CinvV = new DenseMatrix64F(dim, dim);
         }
 
 
@@ -116,23 +130,24 @@ public interface BoundedSpace extends GeneralBoundsProvider {
             double[] x = new double[origin.length];
             System.arraycopy(direction, 0, x, 0, x.length); //TODO: is this necessary?
 
-            SymmetricMatrix Y = compoundCorrelationSymmetricMatrix(origin, dim);
-            SymmetricMatrix X = compoundSymmetricMatrix(0.0, x, dim);
-
-//        SymmetricMatrix Xinv = X.inverse();
-            SymmetricMatrix Yinv = Y.inverse();
-            final Matrix Z;
-
-            try {
-                Z = Yinv.product(X);
-            } catch (IllegalDimension illegalDimension) {
-                throw new RuntimeException("illegal dimensions");
+            int ind = 0;
+            for (int i = 0; i < dim; i++) {
+                for (int j = (i + 1); j < dim; j++) {
+                    C.set(i, j, origin[ind]);
+                    C.set(j, i, origin[ind]);
+                    V.set(i, j, direction[ind]);
+                    V.set(j, i, direction[ind]);
+                    ind++;
+                }
             }
 
-            double[] z = Z.toArrayComponents(); //TODO: CLEAN THIS UP!!!!!
-            DenseMatrix64F A = DenseMatrix64F.wrap(dim, dim, z);
+            CommonOps.invert(C, Cinv);
+            CommonOps.mult(Cinv, V, CinvV);
+
             org.ejml.interfaces.decomposition.EigenDecomposition<DenseMatrix64F> factory = new DecompositionFactory().eig(dim, false, false);
-            if (!factory.decompose(A)) throw new RuntimeException("Eigen decomposition failed.");
+
+            if (!factory.decompose(CinvV)) throw new RuntimeException("Eigen decomposition failed.");
+
             double[] allValues = new double[dim];
             int nReal = 0;
             for (int i = 0; i < dim; i++) {
@@ -148,7 +163,7 @@ public interface BoundedSpace extends GeneralBoundsProvider {
 
             if (DEBUG) {
                 System.out.println("Raw matrix to decompose: ");
-                System.out.println(Z);
+                System.out.println(CinvV);
                 System.out.print("Raw eigenvalues: ");
                 Utils.printArray(values);
             }
@@ -163,15 +178,15 @@ public interface BoundedSpace extends GeneralBoundsProvider {
         @Override
         public IntersectionDistances distancesToBoundary(double[] origin, double[] direction, boolean isAtBoundary) throws HamiltonianMonteCarloOperator.NumericInstabilityException {
 
-            if (!isWithinBounds(origin)) {
+            if (CHECK_WITHIN_BOUNDS && !isWithinBounds(origin)) { // don't automatically check that it's inside the boundary
                 if (isAtBoundary) {
-                    //TODO: remove below
                     SymmetricMatrix C = compoundCorrelationSymmetricMatrix(origin, dim);
-                    double det = 0;
+                    double det;
                     try {
                         det = C.determinant();
                     } catch (IllegalDimension illegalDimension) {
                         illegalDimension.printStackTrace();
+                        throw new RuntimeException();
                     }
 
                     if (Math.abs(det) > BOUNDARY_TOL) {
@@ -185,11 +200,11 @@ public interface BoundedSpace extends GeneralBoundsProvider {
                         System.out.println(C.determinant());
                     } catch (IllegalDimension illegalDimension) {
                         illegalDimension.printStackTrace();
+                        throw new RuntimeException();
                     }
 
                     throw new HamiltonianMonteCarloOperator.NumericInstabilityException();
                 }
-
             }
 
 

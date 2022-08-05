@@ -157,6 +157,7 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
 //                new boolean[3],
                 true,
                 dimTrait,
+                1,
                 samplingPrecisionParameter,
                 PrecisionType.FULL);
 
@@ -166,6 +167,7 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
                 missingIndicators,
                 true,
                 dimTrait,
+                1,
                 samplingPrecisionParameterFull,
                 PrecisionType.FULL);
 

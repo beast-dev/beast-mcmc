@@ -50,9 +50,11 @@ public class TreeScaledRepeatedMeasuresTraitDataModel extends RepeatedMeasuresTr
                                                     boolean[] missingIndicators,
                                                     boolean useMissingIndices,
                                                     final int dimTrait,
+                                                    final int numTraits,
                                                     MatrixParameterInterface samplingPrecision,
                                                     PrecisionType precisionType) {
-        super(name, childModel, parameter, missingIndicators, useMissingIndices, dimTrait, samplingPrecision, precisionType);
+        super(name, childModel, parameter, missingIndicators, useMissingIndices, dimTrait, numTraits,
+                samplingPrecision, precisionType);
     }
 
     @Override

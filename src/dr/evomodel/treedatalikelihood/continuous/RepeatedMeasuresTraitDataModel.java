@@ -81,10 +81,11 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                                           boolean[] missindIndicators,
                                           boolean useMissingIndices,
                                           final int dimTrait,
+                                          final int numTraits,
                                           MatrixParameterInterface samplingPrecision,
                                           PrecisionType precisionType) {
 
-        super(name, parameter, missindIndicators, useMissingIndices, dimTrait, precisionType);
+        super(name, parameter, missindIndicators, useMissingIndices, dimTrait, numTraits, precisionType);
 
         this.childModel = childModel;
         this.traitName = name;
@@ -329,6 +330,12 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
             }
             String modelName = subModel.getModelName();
 
+            if (subModel.getTraitDimension() != dimTrait) {
+                throw new XMLParseException("sub-model has trait dimension " + subModel.getTraitDimension() +
+                        ", but sampling precision has dimension " + dimTrait);
+            }
+
+            int numTraits = subModel.getTraitCount();
 
             if (!scaleByTipHeight) {
                 return new RepeatedMeasuresTraitDataModel(
@@ -339,6 +346,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 //                    missingIndicators,
                         true,
                         dimTrait,
+                        numTraits,
 //                    diffusionModel.getPrecisionParameter().getRowDimension(),
                         samplingPrecision,
                         precisionType
@@ -351,6 +359,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                         subModel.getDataMissingIndicators(),
                         true,
                         dimTrait,
+                        subModel.getTraitCount(),
                         samplingPrecision,
                         precisionType
                 );

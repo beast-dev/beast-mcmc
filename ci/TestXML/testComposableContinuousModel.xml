@@ -342,4 +342,56 @@
         </expected>
     </assertEqual>
 
+
+<!--############################################## tree -> residual -> factor ######################################################-->
+
+    <repeatedMeasuresModel id="repeatedMeasures3" traitName="trait3">
+        <treeModel idref="treeModel"/>
+        <integratedFactorModel idref="latentFactor3"/>
+        <samplingPrecision>
+            <matrixParameter id="samplingPrecision3">
+                <parameter value="1.3534670681033156 -0.22717502822231528"/>
+                <parameter value="-0.22717502822231528 1.1166382635809298"/>
+            </matrixParameter>
+        </samplingPrecision>
+    </repeatedMeasuresModel>
+
+
+
+    <traitDataLikelihood allowIdentical="true" cacheBranches="true" id="traitLikelihoodHierarchical"
+                         traitName="traits.joint" useTreeLength="false" scaleByTime="false" reportAsMultivariate="true"
+                         allowSingular="false">
+        <multivariateDiffusionModel idref="diffusionModelJoint"/>
+        <treeModel idref="treeModel"/>
+        <jointPartialsProvider>
+            <continuousTraitDataModel idref="dataModel1"/>
+            <repeatedMeasuresModel idref="repeatedMeasures2"/>
+            <repeatedMeasuresModel idref="repeatedMeasures3"/>
+        </jointPartialsProvider>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0 0 0 0 0 0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001" dimension="1"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+
+    <likelihood id="likelihoodHierarchical">
+        <traitDataLikelihood idref="traitLikelihoodHierarchical"/>
+        <integratedFactorModel idref="latentFactor3"/>
+    </likelihood>
+
+    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+        <message>
+            Check log likelihood of joint model
+        </message>
+        <actual regex="likelihood:\s+(.*)\n">
+            <likelihood idref="likelihoodHierarchical"/>
+        </actual>
+        <expected>
+            -219.43720322982512
+        </expected>
+    </assertEqual>
 </beast>

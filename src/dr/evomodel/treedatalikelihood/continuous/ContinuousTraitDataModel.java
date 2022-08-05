@@ -57,6 +57,18 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
                                     boolean[] missingIndicators,
                                     boolean useMissingIndices,
                                     final int dimTrait, PrecisionType precisionType) {
+
+        this(name, parameter, missingIndicators, useMissingIndices, dimTrait,
+                parameter.getParameter(0).getDimension() / dimTrait,
+                precisionType);
+    }
+
+    public ContinuousTraitDataModel(String name,
+                                    CompoundParameter parameter,
+                                    boolean[] missingIndicators,
+                                    boolean useMissingIndices,
+                                    final int dimTrait, final int numTraits,
+                                    PrecisionType precisionType) {
         super(name);
         this.parameter = parameter;
         addVariable(parameter);
@@ -66,7 +78,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         this.missingIndicators = (useMissingIndices ? missingIndicators : new boolean[missingIndicators.length]);
 
         this.dimTrait = dimTrait;
-        this.numTraits = getParameter().getParameter(0).getDimension() / dimTrait;
+        this.numTraits = numTraits;
         this.precisionType = precisionType;
 
 

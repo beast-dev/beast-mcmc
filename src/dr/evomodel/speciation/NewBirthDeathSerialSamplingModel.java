@@ -95,6 +95,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     private final double[] temp44;
 
     private double eAt_Old;
+    private double eAt_End;
 
     private final double[] dA;
     private final double[] dB;
@@ -234,16 +235,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         // Do nothing
     }
 
-    /**
-     * @param lambda   birth rate
-     * @param mu   death rate
-     * @param psi   proportion sampled at final time point
-     * @param rho rate of sampling per lineage per unit time
-     * @param t   time
-     * @param eAt precomputed exp(A * (t - t_i))
-     * @return the probability of no sampled descendants after time, t
-     */
-
     private double p(int model, double t) {
         double eAt = Math.exp(A * (t - modelStartTimes[model]));
         return p(eAt);
@@ -308,6 +299,14 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         return lnL;
     }
 
+    private void updateParameterValues(int model) {
+        lambda = birthRate.getParameterValue(model);
+        mu = deathRate.getParameterValue(model);
+        psi = serialSamplingRate.getParameterValue(model);
+        r = treatmentProbability.getParameterValue(model);
+        rho = samplingProbability.getParameterValue(model);
+    }
+
     @Override
     public void updateLikelihoodModelValues(int model) {
         
@@ -319,12 +318,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             previousP = p(model - 1, modelStartTime);
         }
 
-        lambda = birthRate.getParameterValue(model);
-        mu = deathRate.getParameterValue(model);
-        psi = serialSamplingRate.getParameterValue(model);
-        r = treatmentProbability.getParameterValue(model);
-        rho = samplingProbability.getParameterValue(model);
-        //rho0 = samplingProbability.getParameterValue(0); // TODO Remove
+        updateParameterValues(model);
+
 
         A = computeA(lambda, mu, psi);
         B = computeB(lambda, mu, psi, rho, A, previousP);
@@ -333,7 +328,18 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     @Override
     public void updateGradientModelValues(int model) {
 
-        updateLikelihoodModelValues(model);
+        modelStartTime = modelStartTimes[model];
+
+        if (model == 0) {
+            previousP = 1.0;
+        } else{
+            previousP = p(eAt_End);
+        }
+
+        updateParameterValues(model);
+
+        A = computeA(lambda, mu, psi);
+        B = computeB(lambda, mu, psi, rho, A, previousP);
         
         this.savedQ = Double.MIN_VALUE; // TODO What is this all about?
         this.partialQKnown = false;
@@ -346,9 +352,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
             double end = modelStartTimes[model + 1];
             double start = modelStartTimes[model];
-            double eAt = Math.exp(A * (end - start));
-
-            dPCompute(model, end, start, eAt, dPModelEnd);
+            eAt_End = Math.exp(A * (end - start));
+            dPCompute(model, end, start, eAt_End, dPModelEnd);
         }
         
         computedBCurrent = true;
@@ -559,7 +564,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double qEnd = q(currentModelSegment, intervalEnd);
 
         dQCompute(currentModelSegment, intervalStart, dQStart);
-        dQCompute(currentModelSegment, intervalEnd, dQEnd);
+        dQCompute(currentModelSegment, intervalEnd, dQEnd, eAt_End);
 
         for (int k = 0; k <= currentModelSegment; ++k) {
             for (int p = 0; p < 4; ++p) {

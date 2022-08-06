@@ -115,10 +115,11 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         double getPopulationSizeInverse(double time) {
             double sum = 0;
             for(int i = 0; i < gridPointParameter.getDimension(); i++) {
-                sum += smoothFunction.getSmoothValue(time, gridPointParameter.getParameterValue(i),
+                double increment = smoothFunction.getSmoothValue(time, gridPointParameter.getParameterValue(i),
                         i == 0 ? Math.exp(-logPopSizeParameter.getParameterValue(0)) : 0.0,
-                        Math.exp(-logPopSizeParameter.getParameterValue(i + 1)) - Math.exp(-logPopSizeParameter.getParameterValue(i)),
+                        i == 0 ? Math.exp(-logPopSizeParameter.getParameterValue(1)) : Math.exp(-logPopSizeParameter.getParameterValue(i + 1)) - Math.exp(-logPopSizeParameter.getParameterValue(i)),
                         smoothRate.getParameterValue(0));
+                sum += increment;
             }
             return sum;
         }
@@ -133,7 +134,6 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
     public void setUnits(Type units) {
 
     }
-
     @Override
     protected double calculateLogLikelihood() {
         assert(trees.size() == 1);
@@ -157,16 +157,31 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
                 for (int k = 0; k < gridPointParameter.getDimension(); k++) {
                     final double stepLocation3 = gridPointParameter.getParameterValue(k);
                     final double preStepValue3 = k == 0 ? Math.exp(-logPopSizeParameter.getParameterValue(0)) : 0;
-                    final double postStepValue3 = Math.exp(-logPopSizeParameter.getParameterValue(k + 1)) - Math.exp(-logPopSizeParameter.getParameterValue(k));
-                    integralBit += smoothFunction.getTripleProductIntegration(startTime, endTime,
+                    final double postStepValue3 = k == 0? Math.exp(-logPopSizeParameter.getParameterValue(1)) :
+                            Math.exp(-logPopSizeParameter.getParameterValue(k + 1)) - Math.exp(-logPopSizeParameter.getParameterValue(k));
+                    final double analytic = 0.5 * smoothFunction.getTripleProductIntegration(startTime, endTime,
                             stepLocation1, preStepValue1, postStepValue1,
                             stepLocation2, preStepValue2, postStepValue2,
                             stepLocation3, preStepValue3, postStepValue3,
                             smoothRate.getParameterValue(0));
+                    integralBit += analytic;
                 }
             }
         }
         return logPopulationSizeInverse + integralBit;
+    }
+
+    public static double getReciprocalPopSizeInInterval(double time, SmoothLineageCount lineageCount,
+                                                        SmoothSkygridPopulationSizeInverse populationSizeInverse) {
+        return 0.5 * lineageCount.getLineageCount(time) * (lineageCount.getLineageCount(time) - 1) * populationSizeInverse.getPopulationSizeInverse(time);
+    }
+
+    public SmoothLineageCount getLineageCount() {
+        return lineageCount;
+    }
+
+    public SmoothSkygridPopulationSizeInverse getPopulationSizeInverse() {
+        return populationSizeInverse;
     }
 
     @Override

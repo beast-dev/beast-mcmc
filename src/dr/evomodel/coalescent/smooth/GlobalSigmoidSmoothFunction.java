@@ -56,8 +56,8 @@ class GlobalSigmoidSmoothFunction {
                 return tripleProductIntegrationCase3(endTime, stepLocation1, postStepValue1, stepLocation2, postStepValue2, stepLocation3, preStepValue3, postStepValue3, smoothRate)
                         - tripleProductIntegrationCase3(startTime, stepLocation1, postStepValue1, stepLocation2, postStepValue2, stepLocation3, preStepValue3, postStepValue3, smoothRate);
             } else if (numSameStepLocations == 1) {
-                return tripleProductIntegrationCase4(endTime, stepLocation1, postStepValue1, stepLocation3, preStepValue3, postStepValue3, smoothRate)
-                        - tripleProductIntegrationCase4(startTime, stepLocation1, postStepValue1, stepLocation3, preStepValue3, postStepValue3, smoothRate);
+                return tripleProductIntegrationCase4(endTime, stepLocation1, postStepValue1, postStepValue2, stepLocation3, preStepValue3, postStepValue3, smoothRate)
+                        - tripleProductIntegrationCase4(startTime, stepLocation1, postStepValue1, postStepValue2, stepLocation3, preStepValue3, postStepValue3, smoothRate);
             }
         }
         if (numPreStepZeros == 1) {
@@ -95,7 +95,7 @@ class GlobalSigmoidSmoothFunction {
         - (preStepValue3 - postStepValue3) * exponentialStepLocation3 * (exponentialTime + exponentialStepLocation1)
                 * (-preStepValue2 * exponentialStepLocation1 + postStepValue2 * exponentialStepLocation3) *
                 Math.log(exponentialStepLocation3 / exponentialTime + 1));
-        final double denominator = (exponentialTime + exponentialStepLocation1) * (exponentialStepLocation1 - exponentialStepLocation3) * (exponentialStepLocation1 - exponentialStepLocation3) * smoothRateTime;
+        final double denominator = (exponentialTime + exponentialStepLocation1) * (exponentialStepLocation1 - exponentialStepLocation3) * (exponentialStepLocation1 - exponentialStepLocation3) * smoothRate;
         return numerator / denominator;
     }
 
@@ -120,6 +120,7 @@ class GlobalSigmoidSmoothFunction {
 
     private double tripleProductIntegrationCase4(double time,
                                                  double stepLocation1, double postStepValue1,
+                                                 double postStepValue2,
                                                  double stepLocation3, double preStepValue3, double postStepValue3,
                                                  double smoothRate) {
         final double exponentialStepLocation1 = Math.exp(smoothRate * stepLocation1);
@@ -127,17 +128,13 @@ class GlobalSigmoidSmoothFunction {
         final double exponentialTime = Math.exp(smoothRate * time);
         final double smoothRateTime = smoothRate * time;
 
-        final double numerator = postStepValue1 * postStepValue1 * (
-                (exponentialStepLocation1 - exponentialStepLocation3) * (preStepValue3 * exponentialTime * exponentialStepLocation3
-                        + postStepValue3 * (-smoothRateTime * exponentialStepLocation1 * exponentialStepLocation3
-                        + smoothRateTime * exponentialStepLocation1 * exponentialStepLocation1
-                        + (smoothRateTime - 1) * exponentialTime * exponentialStepLocation1
-                        - smoothRateTime * exponentialTime * exponentialStepLocation3))
-                + (exponentialStepLocation1 + exponentialTime) * (preStepValue3 * exponentialStepLocation3 * exponentialStepLocation3
-                        + postStepValue3 * (exponentialStepLocation1 * exponentialStepLocation1 - 2 * exponentialStepLocation1 * exponentialStepLocation3)) * Math.log(exponentialStepLocation1 / exponentialTime + 1)
-                - (preStepValue3 - postStepValue3) * exponentialStepLocation3 * exponentialStepLocation3 * (exponentialTime + exponentialStepLocation1) * Math.log(exponentialStepLocation3 / exponentialTime + 1)
-                );
-        final double denominator = smoothRate * (exponentialTime + exponentialStepLocation1) * (exponentialStepLocation1 - exponentialStepLocation3) * (exponentialStepLocation1 - exponentialStepLocation3);
+        final double numerator = postStepValue1 * postStepValue2 * (
+                (1-exponentialStepLocation3/exponentialStepLocation1)*(preStepValue3*exponentialTime/exponentialStepLocation1
+                        + postStepValue3*smoothRateTime*(exponentialStepLocation1/exponentialStepLocation3 - exponentialTime/exponentialStepLocation1 - 1 + exponentialTime/exponentialStepLocation3)
+                        - postStepValue3*exponentialTime/exponentialStepLocation3)
+                + (1 + exponentialTime/exponentialStepLocation1)*(preStepValue3*exponentialStepLocation3/exponentialStepLocation1 + postStepValue3*(exponentialStepLocation1/exponentialStepLocation3-2))*Math.log(1+exponentialStepLocation1/exponentialTime)
+                - (preStepValue3 - postStepValue3)*exponentialStepLocation3/exponentialStepLocation1*(1+exponentialTime/exponentialStepLocation1)*Math.log(1+exponentialStepLocation3/exponentialTime));
+        final double denominator = smoothRate * (1 + exponentialTime/exponentialStepLocation1)*(1-exponentialStepLocation3/exponentialStepLocation1)*(exponentialStepLocation1/exponentialStepLocation3-1);
         return numerator / denominator;
     }
 

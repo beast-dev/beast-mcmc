@@ -186,12 +186,16 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
 
     @Override
     public int getNumberOfCoalescentEvents() {
-        return 0;
+        int sum = 0;
+        for (Tree tree : trees) {
+            sum += tree.getInternalNodeCount();
+        }
+        return sum;
     }
 
     @Override
     public double getCoalescentEventsStatisticValue(int i) {
-        return 0;
+        throw new RuntimeException("Not yet implemented.");
     }
 
 

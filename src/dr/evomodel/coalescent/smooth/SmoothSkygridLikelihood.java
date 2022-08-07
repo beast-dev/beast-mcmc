@@ -153,13 +153,13 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
             for (int j = 0; j < tree.getNodeCount(); j++) {
                 final double stepLocation2 = tree.getNodeHeight(tree.getNode(j));
                 final double preStepValue2 = j == 0 ? -1 : 0;
-                final double postStepValue2 = (i < tree.getExternalNodeCount() ? 1 : -1) + preStepValue2;
+                final double postStepValue2 = (j < tree.getExternalNodeCount() ? 1 : -1) + preStepValue2;
                 for (int k = 0; k < gridPointParameter.getDimension(); k++) {
                     final double stepLocation3 = gridPointParameter.getParameterValue(k);
                     final double preStepValue3 = k == 0 ? Math.exp(-logPopSizeParameter.getParameterValue(0)) : 0;
                     final double postStepValue3 = k == 0? Math.exp(-logPopSizeParameter.getParameterValue(1)) :
                             Math.exp(-logPopSizeParameter.getParameterValue(k + 1)) - Math.exp(-logPopSizeParameter.getParameterValue(k));
-                    final double analytic = 0.5 * smoothFunction.getTripleProductIntegration(startTime, endTime,
+                    final double analytic = -0.5 * smoothFunction.getTripleProductIntegration(startTime, endTime,
                             stepLocation1, preStepValue1, postStepValue1,
                             stepLocation2, preStepValue2, postStepValue2,
                             stepLocation3, preStepValue3, postStepValue3,

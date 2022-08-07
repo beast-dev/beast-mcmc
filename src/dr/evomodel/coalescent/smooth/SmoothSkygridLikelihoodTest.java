@@ -1,6 +1,7 @@
 package dr.evomodel.coalescent.smooth;
 
 import dr.evolution.io.NewickImporter;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
@@ -46,6 +47,7 @@ public class SmoothSkygridLikelihoodTest extends TestCase {
         Tree tree = trees.get(0);
         double startTime = 0.0;
         double endTime = tree.getNodeHeight(tree.getRoot());
+        double sum = 0;
 
         for (int i = 0; i < tree.getNodeCount(); i++) {
             final double stepLocation1 = tree.getNodeHeight(tree.getNode(i));
@@ -54,7 +56,7 @@ public class SmoothSkygridLikelihoodTest extends TestCase {
             for (int j = 0; j < tree.getNodeCount(); j++) {
                 final double stepLocation2 = tree.getNodeHeight(tree.getNode(j));
                 final double preStepValue2 = j == 0 ? -1 : 0;
-                final double postStepValue2 = (i < tree.getExternalNodeCount() ? 1 : -1) + preStepValue2;
+                final double postStepValue2 = (j < tree.getExternalNodeCount() ? 1 : -1) + preStepValue2;
                 for (int k = 0; k < gridPointParameter.getDimension(); k++) {
                     final double stepLocation3 = gridPointParameter.getParameterValue(k);
                     final double preStepValue3 = k == 0 ? Math.exp(-logPopSizeParameter.getParameterValue(0)) : 0;
@@ -65,6 +67,7 @@ public class SmoothSkygridLikelihoodTest extends TestCase {
                             stepLocation2, preStepValue2, postStepValue2,
                             stepLocation3, preStepValue3, postStepValue3,
                             smoothRate.getParameterValue(0));
+                    sum += analytic;
                     UnivariateRealFunction f = v -> getTripleSigmoidProduct(v, stepLocation1, preStepValue1, postStepValue1, stepLocation2, preStepValue2, postStepValue2,stepLocation3, preStepValue3, postStepValue3, smoothRate.getParameterValue(0));
                     double numeric = 0.5 * integrator.integrate(f, 0.0, endTime);
 
@@ -73,9 +76,57 @@ public class SmoothSkygridLikelihoodTest extends TestCase {
             }
         }
 
+        final double time = 0.6;
+        double testValues[] = getSigmoidProductSum(time, tree);
+        final double numericSum = likelihood.getReciprocalPopSizeInInterval(time, likelihood.getLineageCount(), likelihood.getPopulationSizeInverse());
+        int nodeIndex = 4;
+        final double smoothK = smoothFunction.getSmoothValue(time, tree.getNodeHeight(tree.getNode(nodeIndex)), 0, 1, smoothRate.getParameterValue(0));
+        final double smoothKMinusOne = smoothFunction.getSmoothValue(time, tree.getNodeHeight(tree.getNode(nodeIndex)), -1, 0, smoothRate.getParameterValue(0));
+        assertEquals(smoothK - 1, smoothKMinusOne, 1E-5);
+        assertEquals(testValues[1], likelihood.getLineageCount().getLineageCount(time), 1e-5);
+        assertEquals(testValues[2], likelihood.getLineageCount().getLineageCount(time) - 1, 1e-5);
+        assertEquals(testValues[0], numericSum, 1e-5);
+
 
         final double lnL = likelihood.calculateLogLikelihood();
+        UnivariateRealFunction f = v -> likelihood.getReciprocalPopSizeInInterval(v, likelihood.getLineageCount(), likelihood.getPopulationSizeInverse());
+        final double integralBit = -integrator.integrate(f, 0.0, endTime);
+        double multiplierBit = 0;
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+            NodeRef node = tree.getNode(i + tree.getExternalNodeCount());
+            multiplierBit += Math.log(likelihood.getPopulationSizeInverse().getPopulationSizeInverse(tree.getNodeHeight(node)));
+        }
+        assertEquals(lnL, integralBit + multiplierBit, 1e-6);
 
+    }
+
+    private double[] getSigmoidProductSum(double time, Tree tree) {
+        double testSum = 0;
+        double testK = 0;
+        double kMinusOne = 0;
+
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            final double stepLocation1 = tree.getNodeHeight(tree.getNode(i));
+            final double preStepValue1 = 0;
+            final double postStepValue1 = i < tree.getExternalNodeCount() ? 1 : -1;
+            testK += smoothFunction.getSmoothValue(time, stepLocation1, preStepValue1, postStepValue1,smoothRate.getParameterValue(0));
+            kMinusOne = 0;
+            for (int j = 0; j < tree.getNodeCount(); j++) {
+                final double stepLocation2 = tree.getNodeHeight(tree.getNode(j));
+                final double preStepValue2 = j == 0 ? -1 : 0;
+                final double postStepValue2 = (j < tree.getExternalNodeCount() ? 1 : -1) + preStepValue2;
+                kMinusOne += smoothFunction.getSmoothValue(time, stepLocation2, preStepValue2, postStepValue2, smoothRate.getParameterValue(0));
+                for (int k = 0; k < gridPointParameter.getDimension(); k++) {
+                    final double stepLocation3 = gridPointParameter.getParameterValue(k);
+                    final double preStepValue3 = k == 0 ? Math.exp(-logPopSizeParameter.getParameterValue(0)) : 0;
+                    final double postStepValue3 = k == 0? Math.exp(-logPopSizeParameter.getParameterValue(1)) :
+                            Math.exp(-logPopSizeParameter.getParameterValue(k + 1)) - Math.exp(-logPopSizeParameter.getParameterValue(k));
+                    testSum += 0.5 * getTripleSigmoidProduct(time, stepLocation1, preStepValue1, postStepValue1, stepLocation2, preStepValue2, postStepValue2,
+                            stepLocation3, preStepValue3, postStepValue3, smoothRate.getParameterValue(0));
+                }
+            }
+        }
+        return new double[]{testSum, testK, kMinusOne};
     }
 
     public static double getTripleSigmoidProduct(double time,

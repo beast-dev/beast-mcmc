@@ -18,7 +18,7 @@ import dr.xml.Reportable;
 import java.util.Set;
 
 /**
- * A statistic that returns the ML estimate of the times spent in two substitution models along a branch.
+ * A statistic that returns the ML or MAP estimate of the times spent in two substitution models along a branch.
  *
  * @return The length of time before the descendant node at which the shift is estimated to occur.
  *
@@ -77,7 +77,6 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
 
         UnivariateMinimum optimized = optimizeTimes(nodeDescendant, nodeAncestor, rate, branchTime);
 
-//        System.err.println("proportion = " + (1.0 - optimized.minx) + "; branch duration = " + branchTime + "; branchRate = " + rate);
         return (1.0 - optimized.minx) * branchTime;
     }
 
@@ -117,11 +116,11 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
 
         double lnL = 0.0;
         for (int s = 0; s < ancestorStates.length; s++) {
-            double sum = 0.0;
             lnL += logTpm[ancestorStates[s] * nStates + descendantStates[s]];
         }
 
         if (prior != null) {
+            // Prior is on (absolute) time of convolution before given MRCA
             lnL += prior.logPdf(distance2/rate);
         }
 

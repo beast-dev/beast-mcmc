@@ -290,7 +290,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     @Override
     public double processModelSegmentBreakPoint(int model, double intervalStart, double intervalEnd, int nLineages) {
         double lnL = nLineages * (logQ(model, intervalEnd) - logQ(model, intervalStart));
-        if ( samplingProbability.getValue(model + 1) > 0.0 ) {
+        if ( samplingProbability.getValue(model + 1) > 0.0 && samplingProbability.getValue(model + 1) < 1.0) {
             // Add in probability of un-sampled lineages
             // We don't need this at t=0 because all lineages in the tree are sampled
             // TODO: check if we're right about how many lineages are actually alive at this time. Are we inadvertently over-counting or under-counting due to samples added at this _exact_ time?
@@ -560,20 +560,21 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     public void processGradientModelSegmentBreakPoint(double[] gradient, int currentModelSegment,
                                                       double intervalStart, double intervalEnd, int nLineages) {
 
-        double qStart = q(currentModelSegment, intervalStart);
+        double qStart = q(eAt_Old);
+/*        double qStart = q(currentModelSegment, intervalStart);*/
         double qEnd = q(currentModelSegment, intervalEnd);
 
-        dQCompute(currentModelSegment, intervalStart, dQStart);
+/*        dQCompute(currentModelSegment, intervalStart, dQStart);*/
         dQCompute(currentModelSegment, intervalEnd, dQEnd, eAt_End);
 
         for (int k = 0; k <= currentModelSegment; ++k) {
             for (int p = 0; p < 4; ++p) {
                 gradient[genericIndex(k, p, numIntervals)] += nLineages *
-                        (dQEnd[k * 4 + p] / qEnd - dQStart[k * 4 + p] / qStart);
+                        (dQEnd[k * 4 + p] / qEnd - temp44[k * 4 + p] / qStart);
             }
         }
 
-        if ( samplingProbability.getValue(currentModelSegment + 1) > 0.0 ) {
+        if ( samplingProbability.getValue(currentModelSegment + 1) > 0.0 && samplingProbability.getValue(currentModelSegment + 1) < 1.0) {
             // Add in probability of un-sampled lineages
             // We don't need this at t=0 because all lineages in the tree are sampled
             // TODO: check if we're right about how many lineages are actually alive at this time. Are we inadvertently over-counting or under-counting due to samples added at this _exact_ time?

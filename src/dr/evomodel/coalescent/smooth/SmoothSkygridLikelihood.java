@@ -1,20 +1,38 @@
+/*
+ * SmoothSkygridLikelihood.java
+ *
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.coalescent.smooth;
 
-import dr.evolution.coalescent.IntervalList;
-import dr.evolution.coalescent.TreeIntervals;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
-import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
-import dr.math.NumericalDerivative;
-import dr.math.UnivariateFunction;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
-import org.apache.commons.math.analysis.UnivariateRealFunction;
-import org.apache.commons.math.analysis.integration.RombergIntegrator;
-import org.apache.commons.math.analysis.integration.UnivariateRealIntegrator;
 
 import java.util.Arrays;
 import java.util.List;
@@ -22,210 +40,164 @@ import java.util.List;
 /**
  * A likelihood function for a smooth skygrid coalescent process that nicely works with the newer tree intervals
  *
- * @author Marc A. Suchard
  * @author Xiang Ji
+ * @author Yuwei Bao
+ * @author Marc A. Suchard
  */
-
 public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implements Citable {
 
-    private final List<IntervalList> intervalList;
+    private final List<Tree> trees;
     private final Parameter logPopSizeParameter;
     private final Parameter gridPointParameter;
-    private final double[] gridPoints;
-    private final int numGridIntervals;
+    private final Parameter smoothRate;
+    private final SmoothSkygridPopulationSizeInverse populationSizeInverse;
+    private final SmoothLineageCount lineageCount;
 
+    private final GlobalSigmoidSmoothFunction smoothFunction;
 
-
-    private Type units;
-
-    private double[] coalescentCount;
-    private double[] coalescentIntensity;
-
-    private double[] savedCoalescentCount;
-    private double[] savedCoalescentIntensity;
-
-    private final static UnivariateRealIntegrator integrator = new RombergIntegrator();
-//    private final static UnivariateRealIntegrator integrator = new SimpsonIntegrator();
-
-    public SmoothSkygridLikelihood(String name, List<IntervalList> intervalList,
+    public SmoothSkygridLikelihood(String name,
+                                   List<Tree> trees,
                                    Parameter logPopSizeParameter,
-                                   Parameter gridPointParameter) {
-
+                                   Parameter gridPointParameter,
+                                   Parameter smoothRate) {
         super(name);
-        this.intervalList = intervalList;
+        this.trees = trees;
         this.logPopSizeParameter = logPopSizeParameter;
         this.gridPointParameter = gridPointParameter;
-        this.gridPoints = gridPointParameter.getParameterValues();
-        this.numGridIntervals = gridPoints.length + 2;
+        this.smoothRate = smoothRate;
+        this.smoothFunction = new GlobalSigmoidSmoothFunction();
+        this.populationSizeInverse = new SmoothSkygridPopulationSizeInverse(logPopSizeParameter, gridPointParameter, smoothFunction, smoothRate);
+        this.lineageCount = new SmoothLineageCount(trees.get(0), smoothFunction, smoothRate);
+    }
 
-        addVariable(logPopSizeParameter);
-        addVariable(gridPointParameter);
+    class SmoothLineageCount {
 
-        this.units = intervalList.get(0).getUnits();
+        private final Tree tree;
+        private final GlobalSigmoidSmoothFunction smoothFunction;
 
-        for (IntervalList intervals : intervalList) {
-            if (intervals instanceof Model) {
-                addModel((Model) intervals);
-            }
-            if (intervals.getUnits() != units) {
-                throw new IllegalArgumentException("All intervalLists must have the same units.");
-            }
+        private final Parameter smoothRate;
+
+        SmoothLineageCount(Tree tree, GlobalSigmoidSmoothFunction smoothFunction, Parameter smoothRate) {
+            this.tree = tree;
+            this.smoothFunction = smoothFunction;
+            this.smoothRate = smoothRate;
         }
 
-        if (!checkValidParameters(logPopSizeParameter, gridPointParameter)) {
-            throw new IllegalArgumentException("Invalid initial parameters");
-        }
-
-        this.addKeyword("smooth0skygrid");
-        if (intervalList.size() > 1) {
-            this.addKeyword("multilocus");
+        double getLineageCount(double time) {
+            double sum = 0;
+            for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+                sum += smoothFunction.getSmoothValue(time, tree.getNodeHeight(tree.getNode(i)), 0.0, 1.0, smoothRate.getParameterValue(0));
+            }
+            for (int i = tree.getExternalNodeCount(); i < tree.getNodeCount(); i++) {
+                sum += smoothFunction.getSmoothValue(time, tree.getNodeHeight(tree.getNode(i)), 0.0, -1.0, smoothRate.getParameterValue(0));
+            }
+            return sum;
         }
     }
 
-    private List<TreeIntervals> debugIntervalList;
-    public void setDebugIntervalList(List<TreeIntervals> intervals) {
-        debugIntervalList = intervals;
-    }
+    class SmoothSkygridPopulationSizeInverse {
 
-    public static boolean checkValidParameters(Parameter logPopSizes, Parameter gridPoints) {
-        return (logPopSizes.getDimension() == gridPoints.getDimension() + 1) &&
-                checkStrictlyIncreasing(gridPoints);
-    }
+        private final Parameter logPopSizeParameter;
+        private final Parameter gridPointParameter;
+        private final GlobalSigmoidSmoothFunction smoothFunction;
+        private final Parameter smoothRate;
 
-    private static boolean checkStrictlyIncreasing(Parameter gridPoints) {
-        double lastValue = gridPoints.getParameterValue(0);
-        for (int index = 1; index < gridPoints.getDimension(); ++index) {
-            double thisValue = gridPoints.getParameterValue(index);
-            if (thisValue <= lastValue) {
-                return false;
-            }
-            lastValue = thisValue;
+        SmoothSkygridPopulationSizeInverse(Parameter logPopSizeParameter,
+                                           Parameter gridPointParameter,
+                                           GlobalSigmoidSmoothFunction smoothFunction,
+                                           Parameter smoothRate) {
+            this.logPopSizeParameter = logPopSizeParameter;
+            this.gridPointParameter = gridPointParameter;
+            this.smoothRate = smoothRate;
+            this.smoothFunction = smoothFunction;
         }
-        return true;
+
+        double getPopulationSizeInverse(double time) {
+            double sum = 0;
+            for(int i = 0; i < gridPointParameter.getDimension(); i++) {
+                double increment = smoothFunction.getSmoothValue(time, gridPointParameter.getParameterValue(i),
+                        i == 0 ? Math.exp(-logPopSizeParameter.getParameterValue(0)) : 0.0,
+                        i == 0 ? Math.exp(-logPopSizeParameter.getParameterValue(1)) : Math.exp(-logPopSizeParameter.getParameterValue(i + 1)) - Math.exp(-logPopSizeParameter.getParameterValue(i)),
+                        smoothRate.getParameterValue(0));
+                sum += increment;
+            }
+            return sum;
+        }
     }
 
     @Override
     public Type getUnits() {
-        return units;
+        return null;
     }
 
     @Override
     public void setUnits(Type units) {
-        this.units = units;
-        for (IntervalList intervals : intervalList) {
-            intervals.setUnits(units);
-        }
-    }
 
-    public String toString() {
-        return Double.toString(getLogLikelihood());
     }
-
     @Override
     protected double calculateLogLikelihood() {
-        if (!intervalsKnown) {
-            computeSufficientStatistics();
-            intervalsKnown = true;
+        assert(trees.size() == 1);
+        Tree tree = trees.get(0);
+        double logPopulationSizeInverse = 0;
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+            NodeRef node = tree.getNode(tree.getExternalNodeCount() + i);
+            logPopulationSizeInverse += Math.log(populationSizeInverse.getPopulationSizeInverse(tree.getNodeHeight(node)));
         }
-
-        return 0;
-    }
-
-    class Event {
-        double integratedIntensity;
-        double logReciprocalPopSize;
-        int lineages;
-    }
-    
-    private void computeSufficientStatistics() {
-
-        for (IntervalList intervals : intervalList) {
-
-            // Find first grid-interval for tree
-            double previousIntervalTimeOnTime = intervals.getStartTime();
-            int currentGridIndex = 0;
-            while (previousIntervalTimeOnTime > gridPoints[currentGridIndex]) {
-                ++currentGridIndex;
-            }
-
-            // Interate over tree-intervals in time-order
-            for (int j = 0; j < intervals.getIntervalCount() - 1; ++j) {
-                double currentIntervalTimeOnTree = intervals.getIntervalTime(j);
-                int currentIntervalLineageCount = intervals.getLineageCount(j);
-
-                while(intervals.getIntervalTime(j + 1) > gridPoints[currentGridIndex]) {
-                    // Do somethimg until end of internval
+        double integralBit = 0;
+        final double startTime = 0;
+        final double endTime = tree.getNodeHeight(tree.getRoot());
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            final double stepLocation1 = tree.getNodeHeight(tree.getNode(i));
+            final double preStepValue1 = 0;
+            final double postStepValue1 = i < tree.getExternalNodeCount() ? 1 : -1;
+            for (int j = 0; j < tree.getNodeCount(); j++) {
+                final double stepLocation2 = tree.getNodeHeight(tree.getNode(j));
+                final double preStepValue2 = j == 0 ? -1 : 0;
+                final double postStepValue2 = (j < tree.getExternalNodeCount() ? 1 : -1) + preStepValue2;
+                for (int k = 0; k < gridPointParameter.getDimension(); k++) {
+                    final double stepLocation3 = gridPointParameter.getParameterValue(k);
+                    final double preStepValue3 = k == 0 ? Math.exp(-logPopSizeParameter.getParameterValue(0)) : 0;
+                    final double postStepValue3 = k == 0? Math.exp(-logPopSizeParameter.getParameterValue(1)) :
+                            Math.exp(-logPopSizeParameter.getParameterValue(k + 1)) - Math.exp(-logPopSizeParameter.getParameterValue(k));
+                    final double analytic = -0.5 * smoothFunction.getTripleProductIntegration(startTime, endTime,
+                            stepLocation1, preStepValue1, postStepValue1,
+                            stepLocation2, preStepValue2, postStepValue2,
+                            stepLocation3, preStepValue3, postStepValue3,
+                            smoothRate.getParameterValue(0));
+                    integralBit += analytic;
                 }
-                // Do something with last bit of time
-
-                
             }
-
-            // Handle last tree-interval here
-
         }
-
-        throw new RuntimeException("Not yet implemented");
+        return logPopulationSizeInverse + integralBit;
     }
 
-    @Override
-    protected void storeState() {
-        super.storeState();
-
-        if (savedCoalescentCount == null) {
-            savedCoalescentCount = new double[coalescentCount.length];
-            savedCoalescentIntensity = new double[coalescentIntensity.length];
-        }
-
-        System.arraycopy(coalescentCount, 0, savedCoalescentCount, 0, coalescentCount.length);
-        System.arraycopy(coalescentIntensity, 0, savedCoalescentIntensity, 0, coalescentIntensity.length);
+    public static double getReciprocalPopSizeInInterval(double time, SmoothLineageCount lineageCount,
+                                                        SmoothSkygridPopulationSizeInverse populationSizeInverse) {
+        return 0.5 * lineageCount.getLineageCount(time) * (lineageCount.getLineageCount(time) - 1) * populationSizeInverse.getPopulationSizeInverse(time);
     }
 
-    @Override
-    protected void restoreState() {
-        super.restoreState();
-
-        double[] tmp = coalescentCount;
-        coalescentCount = savedCoalescentCount;
-        savedCoalescentCount = tmp;
-
-        tmp = coalescentIntensity;
-        coalescentIntensity = savedCoalescentIntensity;
-        savedCoalescentIntensity = tmp;
+    public SmoothLineageCount getLineageCount() {
+        return lineageCount;
     }
 
-    @Override
-    protected void handleVariableChangedEvent(Variable variable, int index,
-                                              Parameter.ChangeType type) {
-        super.handleVariableChangedEvent(variable, index, type);
-
-        if (variable == gridPointParameter) {
-            throw new RuntimeException("Not yet implemented");
-        }
-
-        if (variable == logPopSizeParameter) {
-            likelihoodKnown = false; // intervals are, however, still known
-        }
-    }
-
-    protected void handleModelChangedEvent(Model model, Object object, int index) {
-        super.handleModelChangedEvent(model, object, index);
-
-        if (model instanceof IntervalList) {
-            intervalsKnown = false;
-            likelihoodKnown = false;
-        }
+    public SmoothSkygridPopulationSizeInverse getPopulationSizeInverse() {
+        return populationSizeInverse;
     }
 
     @Override
     public int getNumberOfCoalescentEvents() {
-        throw new RuntimeException("Not yet implemented");
+        int sum = 0;
+        for (Tree tree : trees) {
+            sum += tree.getInternalNodeCount();
+        }
+        return sum;
     }
 
     @Override
     public double getCoalescentEventsStatisticValue(int i) {
-        throw new RuntimeException("Not yet implemented");
+        throw new RuntimeException("Not yet implemented.");
     }
+
 
     @Override
     public Citation.Category getCategory() {
@@ -242,6 +214,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         return Arrays.asList(CommonCitations.GILL_2013_IMPROVING,
                 new Citation(
                         new Author[] {
+                                new Author( "Y", "Bao"),
                                 new Author("MA", "Suchard"),
                                 new Author( "X", "Ji"),
                         },
@@ -250,206 +223,4 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         );
     }
 
-    public static double getIntensityInInterval(double time1, double time2,
-                                                double startTime, double endTime,
-                                                double startValue, double endValue,
-                                                double beta) throws Exception {
-
-        assert time1 >= startTime && time2 >= startTime;
-        assert time1 <= endTime && time2 <= endTime;
-        assert time1 != time2;
-
-        if (beta == 1.0) {
-            return getAnalyticIntensityForLinearModel(time1, time2, startTime, endTime, startValue, endValue);
-        } else if (beta == 0.0) {
-            return getAnalyticIntensityForConstantModel(time1, time2, startTime, endTime, startValue, endValue);
-        } else if (beta == Double.POSITIVE_INFINITY) {
-            return getAnalyticIntensityForShiftedSkygridModel(time1, time2, startTime, endTime, startValue, endValue);
-        } else {
-            return getNumericIntensityInInterval(time1, time2, startTime, endTime, startValue, endValue, beta);
-        }
-    }
-
-    public static double getAnalyticIntensityForShiftedSkygridModel(double time1, double time2,
-                                                                     double startTime, double endTime,
-                                                                     double startValue, double endValue) {
-        double midPoint = (startTime + endTime) * 0.5;
-        if (time1 < midPoint) {
-            if (time2 <= midPoint) {
-                return (time2 - time1) / Math.exp(startValue);
-            } else {
-                return (midPoint - time1) / Math.exp(startValue) + (time2 - midPoint) / Math.exp(endValue);
-            }
-        } else {
-            return (time2 - time1) / Math.exp(endValue);
-        }
-    }
-
-    public static double getAnalyticIntensityForConstantModel(double time1, double time2,
-                                                               double startTime, double endTime,
-                                                               double startValue, double endValue) {
-        return (time2 - time1) / Math.exp((startValue + endValue) * 0.5);
-    }
-
-    public static double[] getGradientWrtLogPopSizesInInterval(double time1, double time2,
-                                                              double startTime, double endTime,
-                                                              double startValue, double endValue,
-                                                              double beta) throws Exception {
-        double integratedFunctional = getNumericFunctionalInInterval(time1, time2,
-                startTime, endTime, startValue, endValue, beta);
-
-        double integratedIntensity = getNumericIntensityInInterval(time1, time2,
-                startTime, endTime, startValue, endValue, beta);
-
-        return new double[] { integratedFunctional - integratedIntensity, -integratedFunctional };
-    }
-
-    public static double[] getGradientWrtLogPopSizesInIntervalViaCentralDifference(double time1, double time2,
-                                                                                   double startTime, double endTime,
-                                                                                   double startValue, double endValue,
-                                                                                   double beta) {
-
-        double gradStartValue = NumericalDerivative.firstDerivative(new UnivariateFunction() {
-            @Override
-            public double evaluate(double x) {
-                try {
-                    return getIntensityInInterval(time1, time2, startTime, endTime, x, endValue, beta);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return 0;
-            }
-
-            @Override
-            public double getLowerBound() {
-                return Double.NEGATIVE_INFINITY;
-            }
-
-            @Override
-            public double getUpperBound() {
-                return Double.POSITIVE_INFINITY;
-            }
-        }, startValue);
-
-        double gradEndValue = NumericalDerivative.firstDerivative(new UnivariateFunction() {
-            @Override
-            public double evaluate(double x) {
-                try {
-                    return getIntensityInInterval(time1, time2, startTime, endTime, startValue, x, beta);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return 0;
-            }
-
-            @Override
-            public double getLowerBound() {
-                return Double.NEGATIVE_INFINITY;
-            }
-
-            @Override
-            public double getUpperBound() {
-                return Double.POSITIVE_INFINITY;
-            }
-        }, endValue);
-
-        return new double[] { gradStartValue, gradEndValue };
-    }
-
-    public static double getNumericIntensityInInterval(double time1, double time2,
-                                                       double startTime, double endTime,
-                                                       double startValue, double endValue,
-                                                       double beta) throws Exception {
-        UnivariateRealFunction f = v -> getReciprocalPopSizeInInterval(v, startTime, endTime,
-                startValue, endValue, beta);
-        return integrator.integrate(f, time1, time2);
-    }
-
-    public static double getNumericFunctionalInInterval(double time1, double time2,
-                                                        double startTime, double endTime,
-                                                        double startValue, double endValue,
-                                                        double beta) throws Exception {
-        UnivariateRealFunction f = v -> getReciprocalPopSizeInInterval(v, startTime, endTime,
-                startValue, endValue, beta) / (1.0 + getScaledOdds(v, startTime, endTime, beta));
-        return integrator.integrate(f, time1, time2);
-    }
-
-    public static double getNumericLogPopSizeIntensity(double time1, double time2,
-                                                       double startTime, double endTime,
-                                                       double beta) throws Exception {
-        UnivariateRealFunction f = v -> getLogPopSizeIntensity(v, startTime, endTime, beta);
-        return integrator.integrate(f, time1, time2);
-    }
-
-    public static double getAnalyticIntensityForLinearModel(double time1, double time2,
-                                                            double startTime, double endTime,
-                                                            double startValue, double endValue) {
-        double slope = (endValue - startValue) / (endTime - startTime);
-        time1 -= startTime;
-        time2 -= startTime;
-        double e1 = Math.exp(-slope * time1 - startValue);
-        double e2 = Math.exp(-slope * time2 - startValue);
-        return (e1 - e2) / slope;
-    }
-
-    public static double getReciprocalPopSizeInInterval(double time,
-                                                        double startTime, double endTime,
-                                                        double startValue, double endValue,
-                                                        double beta) {
-        return Math.exp(-getLogPopSizeInInterval(time, startTime, endTime, startValue, endValue, beta));
-    }
-
-    public static double getPopSizeInInterval(double time,
-                                              double startTime, double endTime,
-                                              double startValue, double endValue,
-                                              double beta) {
-        return Math.exp(getLogPopSizeInInterval(time, startTime, endTime, startValue, endValue, beta));
-    }
-
-    public static double getLogPopSizeIntensity(double time,
-                                                double startTime, double endTime,
-                                                double beta) {
-        return Math.exp(-getLogPopSizeWeight(time, startTime, endTime, beta));
-    }
-
-    public static double getLogPopSizeWeight(double time,
-                                             double startTime, double endTime,
-                                             double beta) {
-        assert time >= startTime;
-        assert time <= endTime;
-
-        if (time == startTime) { // Avoid divide-by-zero
-            if (beta == 0.0) {
-                return 2.0;
-            } else {
-                return Double.POSITIVE_INFINITY;
-            }
-        }
-
-        return 1.0 + getScaledOdds(time, startTime, endTime, beta);
-    }
-
-    public static double getLogPopSizeInInterval(double time,
-                                                 double startTime, double endTime,
-                                                 double startValue, double endValue,
-                                                 double beta) {
-        assert time >= startTime;
-        assert time <= endTime;
-
-        if (time == startTime) { // Avoid divide-by-zero
-            if (beta == 0.0) {
-                return (startValue + endValue) * 0.5;
-            } else {
-                return startValue;
-            }
-        }
-
-        double scaledOdds = getScaledOdds(time, startTime, endTime, beta);
-        return startValue + (endValue - startValue) / (1.0 + scaledOdds);
-    }
-
-    private static double getScaledOdds(double time, double startTime, double endTime, double beta) {
-        double timeOdds = (endTime - time) / (time - startTime);
-        return Math.pow(timeOdds, beta);
-    }
 }

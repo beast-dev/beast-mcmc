@@ -95,6 +95,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     private final double[] temp44;
 
     private double eAt_Old;
+    private double eAt_End;
 
     private final double[] dA;
     private final double[] dB;
@@ -234,16 +235,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         // Do nothing
     }
 
-    /**
-     * @param lambda   birth rate
-     * @param mu   death rate
-     * @param psi   proportion sampled at final time point
-     * @param rho rate of sampling per lineage per unit time
-     * @param t   time
-     * @param eAt precomputed exp(A * (t - t_i))
-     * @return the probability of no sampled descendants after time, t
-     */
-
     private double p(int model, double t) {
         double eAt = Math.exp(A * (t - modelStartTimes[model]));
         return p(eAt);
@@ -299,13 +290,21 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     @Override
     public double processModelSegmentBreakPoint(int model, double intervalStart, double intervalEnd, int nLineages) {
         double lnL = nLineages * (logQ(model, intervalEnd) - logQ(model, intervalStart));
-        if ( samplingProbability.getValue(model + 1) > 0.0 ) {
+        if ( samplingProbability.getValue(model + 1) > 0.0 && samplingProbability.getValue(model + 1) < 1.0) {
             // Add in probability of un-sampled lineages
             // We don't need this at t=0 because all lineages in the tree are sampled
             // TODO: check if we're right about how many lineages are actually alive at this time. Are we inadvertently over-counting or under-counting due to samples added at this _exact_ time?
             lnL += nLineages * Math.log(1.0 - samplingProbability.getValue(model + 1));
         }
         return lnL;
+    }
+
+    private void updateParameterValues(int model) {
+        lambda = birthRate.getParameterValue(model);
+        mu = deathRate.getParameterValue(model);
+        psi = serialSamplingRate.getParameterValue(model);
+        r = treatmentProbability.getParameterValue(model);
+        rho = samplingProbability.getParameterValue(model);
     }
 
     @Override
@@ -319,12 +318,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             previousP = p(model - 1, modelStartTime);
         }
 
-        lambda = birthRate.getParameterValue(model);
-        mu = deathRate.getParameterValue(model);
-        psi = serialSamplingRate.getParameterValue(model);
-        r = treatmentProbability.getParameterValue(model);
-        rho = samplingProbability.getParameterValue(model);
-        //rho0 = samplingProbability.getParameterValue(0); // TODO Remove
+        updateParameterValues(model);
+
 
         A = computeA(lambda, mu, psi);
         B = computeB(lambda, mu, psi, rho, A, previousP);
@@ -333,7 +328,18 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     @Override
     public void updateGradientModelValues(int model) {
 
-        updateLikelihoodModelValues(model);
+        modelStartTime = modelStartTimes[model];
+
+        if (model == 0) {
+            previousP = 1.0;
+        } else{
+            previousP = p(eAt_End);
+        }
+
+        updateParameterValues(model);
+
+        A = computeA(lambda, mu, psi);
+        B = computeB(lambda, mu, psi, rho, A, previousP);
         
         this.savedQ = Double.MIN_VALUE; // TODO What is this all about?
         this.partialQKnown = false;
@@ -346,9 +352,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
             double end = modelStartTimes[model + 1];
             double start = modelStartTimes[model];
-            double eAt = Math.exp(A * (end - start));
-
-            dPCompute(model, end, start, eAt, dPModelEnd);
+            eAt_End = Math.exp(A * (end - start));
+            dPCompute(model, end, start, eAt_End, dPModelEnd);
         }
         
         computedBCurrent = true;
@@ -555,20 +560,21 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     public void processGradientModelSegmentBreakPoint(double[] gradient, int currentModelSegment,
                                                       double intervalStart, double intervalEnd, int nLineages) {
 
-        double qStart = q(currentModelSegment, intervalStart);
+        double qStart = q(eAt_Old);
+/*        double qStart = q(currentModelSegment, intervalStart);*/
         double qEnd = q(currentModelSegment, intervalEnd);
 
-        dQCompute(currentModelSegment, intervalStart, dQStart);
-        dQCompute(currentModelSegment, intervalEnd, dQEnd);
+/*        dQCompute(currentModelSegment, intervalStart, dQStart);*/
+        dQCompute(currentModelSegment, intervalEnd, dQEnd, eAt_End);
 
         for (int k = 0; k <= currentModelSegment; ++k) {
             for (int p = 0; p < 4; ++p) {
                 gradient[genericIndex(k, p, numIntervals)] += nLineages *
-                        (dQEnd[k * 4 + p] / qEnd - dQStart[k * 4 + p] / qStart);
+                        (dQEnd[k * 4 + p] / qEnd - temp44[k * 4 + p] / qStart);
             }
         }
 
-        if ( samplingProbability.getValue(currentModelSegment + 1) > 0.0 ) {
+        if ( samplingProbability.getValue(currentModelSegment + 1) > 0.0 && samplingProbability.getValue(currentModelSegment + 1) < 1.0) {
             // Add in probability of un-sampled lineages
             // We don't need this at t=0 because all lineages in the tree are sampled
             // TODO: check if we're right about how many lineages are actually alive at this time. Are we inadvertently over-counting or under-counting due to samples added at this _exact_ time?

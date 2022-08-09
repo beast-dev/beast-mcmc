@@ -130,7 +130,7 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
             new ElementRule(BranchRateModel.class, false),
             new ElementRule(MRCA,
                     new XMLSyntaxRule[]{new ElementRule(Taxa.class)}, false),
-            new ElementRule(PRIOR, GammaDistributionModel.class, "A prior for the convolution time (measured in time before descendant node).", true),
+            new ElementRule(PRIOR, ParametricDistributionModel.class, "A prior for the convolution time (measured in time before descendant node).", true),
     };
 
 }

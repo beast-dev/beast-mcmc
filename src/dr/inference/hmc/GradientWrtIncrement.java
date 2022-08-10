@@ -99,6 +99,7 @@ public class GradientWrtIncrement implements GradientWrtParameterProvider, Repor
         // The gradient with respect to the increments
         double[] incrementGrad = new double[dim];
 
+        // TODO: is this only right for log-transforms?
         incrementGrad[dim - 1] = grad[dim - 1] * gradScaleParameter[dim - 1];
         for (int i = dim - 2; i > -1; i--) {
             incrementGrad[i] = grad[i] * gradScaleParameter[i] + incrementGrad[i + 1];

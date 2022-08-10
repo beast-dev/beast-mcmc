@@ -270,12 +270,16 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
         return i * stateCount + j;
     }
 
+    Double getReportTolerance() {
+        return null;
+    }
+
     @Override
     public String getReport() {
 
         StringBuilder sb = new StringBuilder();
 
-        String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, null);
+        String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, getReportTolerance());
         sb.append(message);
 
         if (DEBUG_CROSS_PRODUCTS) {

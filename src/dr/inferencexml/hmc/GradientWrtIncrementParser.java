@@ -43,7 +43,7 @@ import java.util.List;
  */
 public class GradientWrtIncrementParser extends AbstractXMLObjectParser {
 
-    public final static String GRAD_INCREMENTS = "gradientWrtIncrements";
+    public final static String GRAD_INCREMENTS = "gradientWrtIncrements1D";
     public final static String INCREMENT_TRANSFORM = "incrementTransformType";
 
     @Override

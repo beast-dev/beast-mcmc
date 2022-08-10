@@ -3,6 +3,7 @@ package dr.inference.hmc;
 import dr.evomodel.speciation.SpeciationLikelihoodGradient;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.math.MachineAccuracy;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
 
@@ -22,13 +23,13 @@ public class GradientWrtIncrement implements GradientWrtParameterProvider, Repor
                 return Math.exp(x);
             }
 
-            public double[] parameterFromIncrements(double[] x) {
-                double[] fx = new double[x.length];
-                fx[0] = x[0];
-                for (int i = 1; i < x.length; i++) {
-                    fx[i] = fx[i-1] + x[i];
+            public double[] parameterFromIncrements(double[] delta) {
+                double[] fx = new double[delta.length];
+                fx[0] = delta[0];
+                for (int i = 1; i < delta.length; i++) {
+                    fx[i] = fx[i-1] + delta[i];
                 }
-                for (int i = 0; i < x.length; i++) {
+                for (int i = 0; i < delta.length; i++) {
                     fx[i] = Math.exp(fx[i]);
                 }
                 return fx;
@@ -98,10 +99,9 @@ public class GradientWrtIncrement implements GradientWrtParameterProvider, Repor
         // The gradient with respect to the increments
         double[] incrementGrad = new double[dim];
 
-        // Accumulate over vector
-        incrementGrad[0] = grad[0] * type.getDerivativeOfInverseTransform(gradScaleParameter[0]);
-        for (int i = 1; i < dim; i++) {
-            incrementGrad[i] = incrementGrad[i - 1] + grad[i] * type.getDerivativeOfInverseTransform(gradScaleParameter[i]);
+        incrementGrad[dim - 1] = grad[dim - 1] * gradScaleParameter[dim - 1];
+        for (int i = dim - 2; i > -1; i--) {
+            incrementGrad[i] = grad[i] * gradScaleParameter[i] + incrementGrad[i + 1];
         }
 
         return incrementGrad;
@@ -114,7 +114,11 @@ public class GradientWrtIncrement implements GradientWrtParameterProvider, Repor
         sb.append("Gradient WRT increments: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity())).append("\n");
         sb.append("Gradient WRT parameters: ").append(new dr.math.matrixAlgebra.Vector(gradient.getGradientLogDensity())).append("\n");
         sb.append("Increments: ").append(new dr.math.matrixAlgebra.Vector(incrementParameter.getParameterValues())).append("\n");
-        sb.append("Parameters: ").append(new dr.math.matrixAlgebra.Vector(type.parameterFromIncrements(gradient.getParameter().getParameterValues()))).append("\n");
+        sb.append("Parameters: ").append(new dr.math.matrixAlgebra.Vector(type.parameterFromIncrements(incrementParameter.getParameterValues()))).append("\n");
+
+        sb.append("Numerical gradient: ").append(new dr.math.matrixAlgebra.Vector(
+                new CheckGradientNumerically(this, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, MachineAccuracy.SQRT_EPSILON, MachineAccuracy.SQRT_EPSILON).getNumericalGradient()
+        )).append("\n");
 
         return sb.toString();
     }

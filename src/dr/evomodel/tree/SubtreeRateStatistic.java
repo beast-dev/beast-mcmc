@@ -36,10 +36,7 @@ import dr.inference.model.Statistic;
 import dr.math.matrixAlgebra.Vector;
 import dr.stats.DiscreteStatistics;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A statistic that tracks the mean, variance and coefficent of variation of the rates in a subtree (or the complement thereof).
@@ -83,6 +80,10 @@ public class SubtreeRateStatistic extends TreeStatistic {
     }
 
     private boolean useBranch(NodeRef node) {
+        if ( node == tree.getRoot() ) {
+            return false;
+        }
+
         boolean use = taxa.contains(tree.getNodeTaxon(node));
 
         if ( !includeStem && node == TreeUtils.getCommonAncestorNode(tree, leafSet) ) {
@@ -101,6 +102,8 @@ public class SubtreeRateStatistic extends TreeStatistic {
         if ( useBranch(node) ) {
             rates.add(branchRateModel.getBranchRate(tree,node));
             branchLengths.add(tree.getBranchLength(node));
+        }
+        if (tree.getChildCount(node) > 0) {
             for (int i = 0; i < tree.getChildCount(node); i++) {
                 getRates(rates, branchLengths, tree.getChild(node,i));
             }
@@ -112,8 +115,8 @@ public class SubtreeRateStatistic extends TreeStatistic {
      */
     public double getStatisticValue(int dim) {
 
-        List<Double> rateList = null;
-        List<Double> branchLengthList = null;
+        List<Double> rateList = new ArrayList<Double>();
+        List<Double> branchLengthList = new ArrayList<Double>();
 
         // Get rates and branch lengths for just this subtree
         getRates(rateList, branchLengthList, tree.getRoot());

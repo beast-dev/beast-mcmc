@@ -37,6 +37,7 @@ import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;
+import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.math.distributions.GammaDistribution;
 import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
@@ -51,6 +52,8 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
     public static String STATISTIC = "asrSubstitutionModelConvolutionStatistic";
     public static String SUBS_MODEL_ANCESTOR = "substitutionModelAncestor";
     public static String SUBS_MODEL_DESCENDANT = "substitutionModelDescendant";
+    public static String RATE_ANCESTOR = "rateAncestor";
+    public static String RATE_DESCENDANT = "rateDescendant";
     private static final String MRCA = "mrca";
     public static final String TAXA = "taxa";
     public static final String BOOT = "bootstrap";
@@ -87,6 +90,24 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
             prior = (ParametricDistributionModel) xo.getElementFirstChild(PRIOR);
         }
 
+        Statistic rateAncestor = null;
+        if (xo.hasChildNamed(RATE_ANCESTOR)) {
+            rateAncestor = (Statistic) xo.getChild(RATE_ANCESTOR).getChild(0);
+            if (rateAncestor.getDimension() != 1) {
+                throw new RuntimeException("If providing ancestor rate, it must be a 1-dimensional statistic.");
+            }
+
+        }
+
+        Statistic rateDescendant = null;
+        if (xo.hasChildNamed(RATE_DESCENDANT)) {
+            rateDescendant = (Statistic) xo.getChild(RATE_DESCENDANT).getChild(0);
+            if (rateDescendant.getDimension() != 1) {
+                throw new RuntimeException("If providing descendent rate, it must be a 1-dimensional statistic.");
+            }
+
+        }
+
 //        TaxonList mrcaTaxa = null;
 //        if (xo.hasChildNamed(MRCA)) {
 //            mrcaTaxa = (TaxonList) xo.getElementFirstChild(MRCA);
@@ -100,6 +121,8 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
                     subsModelAncestor,
                     subsModelDescendant,
                     branchRates,
+                    rateAncestor,
+                    rateDescendant,
                     mrcaTaxa,
                     boot,
                     prior);
@@ -128,6 +151,8 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
             new ElementRule(SUBS_MODEL_ANCESTOR, SubstitutionModel.class, "Substitution model for the ancestral portion of the branch.", false),
             new ElementRule(SUBS_MODEL_DESCENDANT, SubstitutionModel.class, "Substitution model for the more recent portion of the branch.", false),
             new ElementRule(BranchRateModel.class, false),
+            new ElementRule(RATE_ANCESTOR, Statistic.class, "If provided, this will be used as the evolutionary rate for the ancestral portion of the branch instead of the rate provided by the BranchRateModel.", true),
+            new ElementRule(RATE_DESCENDANT, Statistic.class, "If provided, this will be used as the evolutionary rate for the descendant portion of the branch instead of the rate provided by the BranchRateModel.", true),
             new ElementRule(MRCA,
                     new XMLSyntaxRule[]{new ElementRule(Taxa.class)}, false),
             new ElementRule(PRIOR, ParametricDistributionModel.class, "A prior for the convolution time (measured in time before descendant node).", true),

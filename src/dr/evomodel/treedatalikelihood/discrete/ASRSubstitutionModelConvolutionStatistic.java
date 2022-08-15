@@ -9,6 +9,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.inference.distribution.ParametricDistributionModel;
+import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
@@ -31,6 +32,8 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
                                                     SubstitutionModel subsModelAncestor,
                                                     SubstitutionModel subsModelDescendant,
                                                     BranchRateModel branchRates,
+                                                    Statistic rateAncestor,
+                                                    Statistic rateDescendant,
                                                     TaxonList mrcaTaxaDescendant,
                                                     boolean bootstrap,
                                                     ParametricDistributionModel prior
@@ -42,6 +45,8 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         this.substitutionModelAncestor = subsModelAncestor;
         this.substitutionModelDescendant = subsModelDescendant;
         this.branchRates = branchRates;
+        this.rateAncestor = rateAncestor;
+        this.rateDescendant = rateDescendant;
         this.dataType = subsModelAncestor.getFrequencyModel().getDataType();
         if ( dataType != substitutionModelDescendant.getFrequencyModel().getDataType()) { throw new RuntimeException("Incompatible datatypes in substitution models for ASRSubstitutionModelConvolution.");}
         this.tree = asrLikelihood.getTreeModel();
@@ -72,10 +77,11 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         NodeRef nodeDescendant = getNode(leafSetDescendant);
         NodeRef nodeAncestor = tree.getParent(nodeDescendant);
 
-        double rate = branchRates.getBranchRate(tree,nodeDescendant);
+        double[] rates = getRates(nodeDescendant);
+
         double branchTime = tree.getNodeHeight(nodeAncestor) - tree.getNodeHeight(nodeDescendant);
 
-        UnivariateMinimum optimized = optimizeTimes(nodeDescendant, nodeAncestor, rate, branchTime);
+        UnivariateMinimum optimized = optimizeTimes(nodeDescendant, nodeAncestor, rates, branchTime);
 
         return (1.0 - optimized.minx) * branchTime;
     }
@@ -90,8 +96,27 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
 
         return sb.toString();
     }
+    
+    // Gets rates for ancestral and descendant (in that order) portions of the branch
+    private double[] getRates(NodeRef node) {
+        double[] rates = new double[2];
 
-    private double computeLogLikelihood(double distance1, double distance2, double rate, int[] ancestorStates, int[] descendantStates) {
+        if ( rateAncestor != null ) {
+            rates[0] = rateAncestor.getStatisticValue(0);
+        } else {
+            rates[0] = branchRates.getBranchRate(tree,node);
+        }
+
+        if ( rateDescendant != null ) {
+            rates[1] = rateDescendant.getStatisticValue(0);
+        } else {
+            rates[1] = branchRates.getBranchRate(tree,node);
+        }
+
+        return rates;
+    }
+    
+    private double computeLogLikelihood(double distance1, double distance2, double rateDescendant, int[] ancestorStates, int[] descendantStates) {
         int nStates = dataType.getStateCount();
 
         double[] tpm1 = new double[nStates * nStates];
@@ -121,7 +146,7 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
 
         if (prior != null) {
             // Prior is on (absolute) time of convolution before given MRCA
-            lnL += prior.logPdf(distance2/rate);
+            lnL += prior.logPdf(distance2/rateDescendant);
         }
 
         return lnL;
@@ -131,7 +156,7 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         return (leafSet != null) ? TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
     }
 
-    private UnivariateMinimum optimizeTimes(NodeRef nodeDescendant, NodeRef nodeAncestor, double rate, double time) {
+    private UnivariateMinimum optimizeTimes(NodeRef nodeDescendant, NodeRef nodeAncestor, double[] rates, double time) {
         int[] nodeStatesAncestor = asrLikelihood.getStatesForNode(tree, nodeAncestor);
         int[] nodeStatesDescendant = asrLikelihood.getStatesForNode(tree, nodeDescendant);
 
@@ -153,9 +178,9 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         UnivariateFunction f = new UnivariateFunction() {
             @Override
             public double evaluate(double argument) {
-                double d1 = argument * rate * time;
-                double d2 = (1.0 - argument) * rate * time;
-                double lnL = computeLogLikelihood(d1, d2, rate, nodeStatesAncestor, nodeStatesDescendant);
+                double d1 = argument * rates[0] * time;
+                double d2 = (1.0 - argument) * rates[1] * time;
+                double lnL = computeLogLikelihood(d1, d2, rates[1], nodeStatesAncestor, nodeStatesDescendant);
 
                 return -lnL;
             }
@@ -177,8 +202,10 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         return minimum;
     }
 
-    private AncestralStateBeagleTreeLikelihood asrLikelihood;
     private BranchRateModel branchRates;
+    private final Statistic rateAncestor;
+    private final Statistic rateDescendant;
+    private AncestralStateBeagleTreeLikelihood asrLikelihood;
     private SubstitutionModel substitutionModelAncestor;
     private SubstitutionModel substitutionModelDescendant;
     private final Set<String> leafSetDescendant;

@@ -183,13 +183,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
                         traitName, treeModel, diffusionModel, dataModel, rootPrior, rateTransformation, delegate);
 
                 treeDataLikelihood.addTraits(new ProcessSimulation(treeDataLikelihood, fullConditionalDelegate).getTreeTraits());
-                int[] partitionDimensions = dataModel.getPartitionDimensions();
-                if (partitionDimensions != null) {
-                    PartitionedTreeTraitProvider partitionedProvider =
-                            new PartitionedTreeTraitProvider(treeDataLikelihood.getTreeTraits(), partitionDimensions);
-                    treeDataLikelihood.addTraits(partitionedProvider.getTreeTraits());
-                }
-
 
 //                String partialTraitName = getPartiallyMissingTraitName(traitName);
 //
@@ -201,6 +194,14 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 //
 //                treeDataLikelihood.addTraits(partialTraitProvider.getTreeTraits());
             }
+
+            int[] partitionDimensions = dataModel.getPartitionDimensions();
+            if (partitionDimensions != null) {
+                PartitionedTreeTraitProvider partitionedProvider =
+                        new PartitionedTreeTraitProvider(treeDataLikelihood.getTreeTraits(), partitionDimensions);
+                treeDataLikelihood.addTraits(partitionedProvider.getTreeTraits());
+            }
+
         }
 
         return treeDataLikelihood;

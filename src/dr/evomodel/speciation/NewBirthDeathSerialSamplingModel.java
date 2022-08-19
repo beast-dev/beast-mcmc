@@ -378,7 +378,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         boolean samplesTakenAtEventTime = rho > 0;
 
         if (sampleIsAtEventTime && samplesTakenAtEventTime) {
-            logSampProb = Math.log(rho) + Math.log(r + (1.0 - r) * p(model,tOld));
+            logSampProb = Math.log(rho);
+//            logSampProb = Math.log(rho) + Math.log(r + (1.0 - r) * p(model,tOld));
         } else {
             double logPsi = Math.log(psi);
             logSampProb = logPsi + Math.log(r + (1.0 - r) * p(model,tOld));

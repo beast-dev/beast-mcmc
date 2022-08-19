@@ -91,9 +91,17 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
 
         StringBuilder sb = new StringBuilder("ASRSubstitutionModelConvolutionStatistic Report\n\n");
 
-        sb.append(getStatisticValue(0));
+        sb.append("Estimated time of shift before common ancestor: ").append(getStatisticValue(0)).append("\n");
+        sb.append("Using rates: ").append(new dr.math.matrixAlgebra.Vector(getRates(getNode(leafSetDescendant)))).append("\n");
+        sb.append("Using substitution models named: ").append(substitutionModelAncestor.getId()).append(", ").append(substitutionModelDescendant.getId()).append("\n");
+        sb.append("Using taxon set: ").append(leafSetDescendant).append("\n");
+        sb.append("Using prior? ").append((prior != null)).append("\n");
+        if (prior != null) {
+            sb.append("  Using prior of type: ").append((prior.getModelName())).append("\n");
+            sb.append("  Using prior named: ").append((prior.getId())).append("\n");
+        }
+        sb.append("Using bootstrap? ").append((bootstrap)).append("\n");
         sb.append("\n\n");
-
         return sb.toString();
     }
     
@@ -181,6 +189,9 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
                 double d1 = argument * rates[0] * time;
                 double d2 = (1.0 - argument) * rates[1] * time;
                 double lnL = computeLogLikelihood(d1, d2, rates[1], nodeStatesAncestor, nodeStatesDescendant);
+//                System.err.println("Optimizing: time = " + time + ", rates[0] = " +
+//                        rates[0] + ", rates[1] = " + rates[1] + ", proportion = " + argument +
+//                        ", dist1 = " + d1 + ", dist2 = " + d2 + ", lnL = " + lnL);
 
                 return -lnL;
             }

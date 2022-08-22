@@ -120,23 +120,28 @@ public class ModelCompressedBigFastTreeIntervals extends AbstractModel implement
         double eventTime;
 
         int modelIndex = 0;
-        int compressedIndex = 0;
+        int compressedIndex = -1;
         for (int treeIndex = 0; treeIndex < treeIntervals.getIntervalCount(); treeIndex++) {
             treeIntervalStartTime = treeIntervals.getIntervalTime(treeIndex);
             waitTime = treeIntervals.getInterval(treeIndex);
             eventTime = treeIntervalStartTime + waitTime;
-            System.err.println("interval starting at " + treeIntervalStartTime + " with duration " + waitTime);
+//            System.err.println("interval starting at " + treeIntervalStartTime + " with duration " + waitTime + " starting with " + nLineages + " lineages and ending with a " + treeIntervals.getIntervalType(treeIndex));
+
+            if (Math.abs(eventTime - modelIntervalTime) < epsilon) {
+                eventTime = modelIntervalTime;
+                if (Math.abs(treeIntervalStartTime - modelIntervalTime) < epsilon) {
+                    waitTime = 0.0;
+                }
+            }
 
             if (eventTime > modelIntervalTime) {
                 modelIndex++;
                 modelIntervalTime = modelIntervals[modelIndex];
             }
 
-            if (Math.abs(eventTime - modelIntervalTime) < epsilon) {
-                eventTime = modelIntervalTime;
-            }
-            
-            if (eventTime > tmpStartTimes[compressedIndex]) {
+            if (waitTime > 0.0) {
+                compressedIndex++;
+//                System.err.println("  waitTime > 0.0");
                 tmpStartTimes[compressedIndex] = treeIntervalStartTime;
                 if (compressedIndex == 0) {
                     tmpWaitTimes[compressedIndex] = eventTime - treeIntervalStartTime;
@@ -148,23 +153,25 @@ public class ModelCompressedBigFastTreeIntervals extends AbstractModel implement
             if (treeIntervals.getIntervalType(treeIndex) == IntervalType.SAMPLE) {
                 nLineages++;
                 tmpSampleCounts[compressedIndex]++;
+//                System.err.println("  tmpSampleCounts[" + compressedIndex + "] = " + tmpSampleCounts[compressedIndex]);
             } else if (treeIntervals.getIntervalType(treeIndex) == IntervalType.COALESCENT) {
                 tmpCoalescentCounts[compressedIndex]++;
                 nLineages--;
+//                System.err.println("  tmpCoalescentCounts[" + compressedIndex + "] = " + tmpCoalescentCounts[compressedIndex]);
             } else {
                 throw new RuntimeException("Tree includes unexpected event type.");
             }
             
-            tmpLineageCounts[compressedIndex] = nLineages;
+            tmpLineageCounts[compressedIndex] = nLineages + tmpCoalescentCounts[compressedIndex] - tmpSampleCounts[compressedIndex];
 
-            if (eventTime > tmpStartTimes[compressedIndex]) {
-                compressedIndex++;
-            }
+//            if (eventTime > tmpStartTimes[compressedIndex]) {
+//                compressedIndex++;
+//            }
 
         }
 
         // clean up
-        intervalCount = compressedIndex;
+        intervalCount = compressedIndex + 1;
         intervalsKnown = true;
 
 
@@ -174,12 +181,12 @@ public class ModelCompressedBigFastTreeIntervals extends AbstractModel implement
         coalescentCounts = Arrays.copyOf(tmpCoalescentCounts,intervalCount);
         sampleCounts = Arrays.copyOf(tmpSampleCounts,intervalCount);
 
-        System.err.println("Reporting on times after:");
-        System.err.println(new dr.math.matrixAlgebra.Vector(startTimes));
-        System.err.println(new dr.math.matrixAlgebra.Vector(waitTimes));
-        System.err.println(new dr.math.matrixAlgebra.Vector(sampleCounts));
-        System.err.println(new dr.math.matrixAlgebra.Vector(coalescentCounts));
-        System.err.println(new dr.math.matrixAlgebra.Vector(lineageCounts));
+//        System.err.println("Reporting on times:");
+//        System.err.println("start " + new dr.math.matrixAlgebra.Vector(startTimes));
+//        System.err.println("waits " + new dr.math.matrixAlgebra.Vector(waitTimes));
+//        System.err.println("samps " + new dr.math.matrixAlgebra.Vector(sampleCounts));
+//        System.err.println("coals " + new dr.math.matrixAlgebra.Vector(coalescentCounts));
+//        System.err.println("linea " + new dr.math.matrixAlgebra.Vector(lineageCounts));
     }
 
     private Type units = Type.GENERATIONS;

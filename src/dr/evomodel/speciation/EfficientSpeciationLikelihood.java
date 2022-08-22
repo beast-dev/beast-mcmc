@@ -31,6 +31,7 @@ import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.util.Taxon;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.bigfasttree.ModelCompressedBigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 
@@ -45,7 +46,9 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
 
     private final BigFastTreeIntervals treeIntervals;
     private final TreeTraitProvider.Helper treeTraits = new TreeTraitProvider.Helper();
-    
+
+    private final ModelCompressedBigFastTreeIntervals compressedTreeIntervals;
+
     private boolean intervalsKnown;
 
     public EfficientSpeciationLikelihood(Tree tree, SpeciationModel speciationModel, Set<Taxon> exclude, String id) {
@@ -56,6 +59,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         }
 
         treeIntervals = new BigFastTreeIntervals((TreeModel)tree);
+        compressedTreeIntervals = new ModelCompressedBigFastTreeIntervals(treeIntervals, speciationModel.getBreakPoints(), 1e-5);
 
         addModel(treeIntervals);
     }
@@ -118,6 +122,56 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
 
             } else {
                 throw new RuntimeException("Birth-death tree includes non birth/death/sampling event.");
+            }
+        }
+
+        // origin branch is a fake branch that doesn't exist in the tree, now compute its contribution
+        logL += speciationModel.processOrigin(currentModelSegment, treeIntervals.getTotalDuration());
+
+        logL += speciationModel.logConditioningProbability();
+
+        return logL;
+    }
+
+    double calculateLogLikelihoodCompressed() {
+
+        speciationModel.updateLikelihoodModelValues(0);
+
+        // TODO: store/restore
+        compressedTreeIntervals.calculateIntervals();
+
+        double[] modelBreakPoints = speciationModel.getBreakPoints();
+        assert modelBreakPoints[modelBreakPoints.length - 1] == Double.POSITIVE_INFINITY;
+
+        int currentModelSegment = 0;
+
+        double logL = speciationModel.processSampling(0, treeIntervals.getStartTime()); // TODO Fix for getStartTime() != 0.0
+
+        for (int i = 0; i < compressedTreeIntervals.getIntervalCount(); ++i) {
+
+            double intervalStart = compressedTreeIntervals.getIntervalTime(i);
+            final double intervalEnd = intervalStart + compressedTreeIntervals.getInterval(i);
+            final int nLineages = compressedTreeIntervals.getLineageCount(i);
+
+            while (intervalEnd >= modelBreakPoints[currentModelSegment]) { // TODO Maybe it's >= ?
+
+                final double segmentIntervalEnd = modelBreakPoints[currentModelSegment];
+                logL += speciationModel.processModelSegmentBreakPoint(currentModelSegment, intervalStart, segmentIntervalEnd, nLineages);
+                intervalStart = segmentIntervalEnd;
+                ++currentModelSegment;
+                speciationModel.updateLikelihoodModelValues(currentModelSegment);
+            }
+
+            if (intervalEnd > intervalStart) {
+                logL += speciationModel.processInterval(currentModelSegment, intervalStart, intervalEnd, nLineages);
+            }
+
+            // Interval ends with a coalescent or sampling event at time intervalEnd
+            if (compressedTreeIntervals.getSampleEvents(i) > 0) {
+                logL += compressedTreeIntervals.getSampleEvents(i) * speciationModel.processSampling(currentModelSegment, intervalEnd);
+            }
+            if (compressedTreeIntervals.getCoalescentEvents(i) > 0) {
+                logL += compressedTreeIntervals.getCoalescentEvents(i) * speciationModel.processCoalescence(currentModelSegment,intervalEnd);
             }
         }
 

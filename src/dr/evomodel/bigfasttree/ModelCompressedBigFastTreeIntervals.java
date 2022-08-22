@@ -70,7 +70,11 @@ public class ModelCompressedBigFastTreeIntervals extends AbstractModel implement
 
 
     public int getSampleEvents(int i) {
-        return sampleCounts[i];
+        if (i < 0) {
+            return sampleCountAt0;
+        } else {
+            return sampleCounts[i];
+        }
     }
 
     @Override
@@ -111,17 +115,37 @@ public class ModelCompressedBigFastTreeIntervals extends AbstractModel implement
 
         // TODO probably off by 1 in modelIntervals
 
-        int nLineages = 1;
+
+        // TODO what Eldritch horror do we risk summoning if we use this approach?
+        int nLineages = 0;
+        int idx = 0;
+        double treeIntervalStartTime = treeIntervals.getIntervalTime(idx);
+        double waitTime = treeIntervals.getInterval(idx);
+        double eventTime = treeIntervalStartTime + waitTime;
+        // > 1 sample taken at time 0
+        if ( eventTime < epsilon ) {
+            while (eventTime < epsilon) {
+                nLineages++;
+                treeIntervalStartTime = treeIntervals.getIntervalTime(idx);
+                waitTime = treeIntervals.getInterval(idx);
+                eventTime = treeIntervalStartTime + waitTime;
+                idx++;
+            }
+            sampleCountAt0 = nLineages;
+            idx--;
+        } else {
+            nLineages = 1;
+            sampleCountAt0 = 1;
+            idx = 0;
+        }
+
+        System.err.println("Starting with " + sampleCountAt0 + " lineages");
+
         double modelIntervalTime = modelIntervals[0];
         tmpStartTimes[0] = treeIntervals.getStartTime();
-
-        double treeIntervalStartTime;
-        double waitTime;
-        double eventTime;
-
         int modelIndex = 0;
         int compressedIndex = -1;
-        for (int treeIndex = 0; treeIndex < treeIntervals.getIntervalCount(); treeIndex++) {
+        for (int treeIndex = idx; treeIndex < treeIntervals.getIntervalCount(); treeIndex++) {
             treeIntervalStartTime = treeIntervals.getIntervalTime(treeIndex);
             waitTime = treeIntervals.getInterval(treeIndex);
             eventTime = treeIntervalStartTime + waitTime;
@@ -181,12 +205,12 @@ public class ModelCompressedBigFastTreeIntervals extends AbstractModel implement
         coalescentCounts = Arrays.copyOf(tmpCoalescentCounts,intervalCount);
         sampleCounts = Arrays.copyOf(tmpSampleCounts,intervalCount);
 
-//        System.err.println("Reporting on times:");
-//        System.err.println("start " + new dr.math.matrixAlgebra.Vector(startTimes));
-//        System.err.println("waits " + new dr.math.matrixAlgebra.Vector(waitTimes));
-//        System.err.println("samps " + new dr.math.matrixAlgebra.Vector(sampleCounts));
-//        System.err.println("coals " + new dr.math.matrixAlgebra.Vector(coalescentCounts));
-//        System.err.println("linea " + new dr.math.matrixAlgebra.Vector(lineageCounts));
+        System.err.println("Reporting on times:");
+        System.err.println("start " + new dr.math.matrixAlgebra.Vector(startTimes));
+        System.err.println("waits " + new dr.math.matrixAlgebra.Vector(waitTimes));
+        System.err.println("samps " + new dr.math.matrixAlgebra.Vector(sampleCounts));
+        System.err.println("coals " + new dr.math.matrixAlgebra.Vector(coalescentCounts));
+        System.err.println("linea " + new dr.math.matrixAlgebra.Vector(lineageCounts));
     }
 
     private Type units = Type.GENERATIONS;
@@ -229,6 +253,7 @@ public class ModelCompressedBigFastTreeIntervals extends AbstractModel implement
     private double[] startTimes;
     private double[] waitTimes;
     private int[] coalescentCounts;
+    private int sampleCountAt0;
     private int[] sampleCounts;
     private int[] lineageCounts;
     private IntervalType[] types;

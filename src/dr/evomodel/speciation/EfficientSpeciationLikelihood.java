@@ -47,7 +47,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
     private final BigFastTreeIntervals treeIntervals;
     private final TreeTraitProvider.Helper treeTraits = new TreeTraitProvider.Helper();
 
-    private final ModelCompressedBigFastTreeIntervals compressedTreeIntervals;
+//    private final ModelCompressedBigFastTreeIntervals compressedTreeIntervals;
 
     private boolean intervalsKnown;
 
@@ -59,7 +59,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         }
 
         treeIntervals = new BigFastTreeIntervals((TreeModel)tree);
-        compressedTreeIntervals = new ModelCompressedBigFastTreeIntervals(treeIntervals, speciationModel.getBreakPoints(), 1e-5);
+//        compressedTreeIntervals = new ModelCompressedBigFastTreeIntervals(treeIntervals, speciationModel.getBreakPoints(), 1e-5);
 
         addModel(treeIntervals);
     }

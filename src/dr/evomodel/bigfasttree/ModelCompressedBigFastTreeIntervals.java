@@ -9,6 +9,7 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class ModelCompressedBigFastTreeIntervals extends AbstractModel implements Units, IntervalList {
@@ -67,6 +68,11 @@ public class ModelCompressedBigFastTreeIntervals extends AbstractModel implement
         return lineageCounts[i];
     }
 
+
+    public int getSampleEvents(int i) {
+        return sampleCounts[i];
+    }
+
     @Override
     public int getCoalescentEvents(int i) {
         return coalescentCounts[i];
@@ -97,30 +103,29 @@ public class ModelCompressedBigFastTreeIntervals extends AbstractModel implement
 
     @Override
     public void calculateIntervals() {
-        waitTimes = new double[treeIntervals.getIntervalCount()];
-        startTimes = new double[treeIntervals.getIntervalCount()];
-        lineageCounts = new int[treeIntervals.getIntervalCount()];
-        coalescentCounts = new int[treeIntervals.getIntervalCount()];
-        sampleCounts = new int[treeIntervals.getIntervalCount()];
+        double[] tmpWaitTimes = new double[treeIntervals.getIntervalCount()];
+        double[] tmpStartTimes = new double[treeIntervals.getIntervalCount()];
+        int[] tmpLineageCounts = new int[treeIntervals.getIntervalCount()];
+        int[] tmpCoalescentCounts = new int[treeIntervals.getIntervalCount()];
+        int[] tmpSampleCounts = new int[treeIntervals.getIntervalCount()];
 
         // TODO probably off by 1 in modelIntervals
 
         int nLineages = 1;
         double modelIntervalTime = modelIntervals[0];
-        startTimes[0] = treeIntervals.getStartTime();
+        tmpStartTimes[0] = treeIntervals.getStartTime();
 
         double treeIntervalStartTime;
         double waitTime;
         double eventTime;
 
-
-        // handle rest
         int modelIndex = 0;
         int compressedIndex = 0;
         for (int treeIndex = 0; treeIndex < treeIntervals.getIntervalCount(); treeIndex++) {
             treeIntervalStartTime = treeIntervals.getIntervalTime(treeIndex);
             waitTime = treeIntervals.getInterval(treeIndex);
             eventTime = treeIntervalStartTime + waitTime;
+            System.err.println("interval starting at " + treeIntervalStartTime + " with duration " + waitTime);
 
             if (eventTime > modelIntervalTime) {
                 modelIndex++;
@@ -131,65 +136,50 @@ public class ModelCompressedBigFastTreeIntervals extends AbstractModel implement
                 eventTime = modelIntervalTime;
             }
             
-            if (eventTime > startTimes[compressedIndex]) {
-                startTimes[compressedIndex] = treeIntervalStartTime;
+            if (eventTime > tmpStartTimes[compressedIndex]) {
+                tmpStartTimes[compressedIndex] = treeIntervalStartTime;
                 if (compressedIndex == 0) {
-                    waitTimes[compressedIndex] = eventTime - treeIntervalStartTime;
+                    tmpWaitTimes[compressedIndex] = eventTime - treeIntervalStartTime;
                 } else {
-                    waitTimes[compressedIndex] = treeIntervalStartTime - startTimes[compressedIndex - 1];
+                    tmpWaitTimes[compressedIndex] = treeIntervalStartTime - tmpStartTimes[compressedIndex - 1];
                 }
             }
             
             if (treeIntervals.getIntervalType(treeIndex) == IntervalType.SAMPLE) {
                 nLineages++;
-                sampleCounts[compressedIndex]++;
+                tmpSampleCounts[compressedIndex]++;
             } else if (treeIntervals.getIntervalType(treeIndex) == IntervalType.COALESCENT) {
-                coalescentCounts[compressedIndex]++;
+                tmpCoalescentCounts[compressedIndex]++;
                 nLineages--;
             } else {
                 throw new RuntimeException("Tree includes unexpected event type.");
             }
             
-            lineageCounts[compressedIndex] = nLineages;
+            tmpLineageCounts[compressedIndex] = nLineages;
 
-            if (eventTime > startTimes[compressedIndex]) {
+            if (eventTime > tmpStartTimes[compressedIndex]) {
                 compressedIndex++;
             }
 
-//            if (eventTime == startTimes[compressedIndex - 1]) { // this event is concurrent with the last one
-//                if (treeIntervals.getIntervalType(treeIndex) == IntervalType.SAMPLE) {
-//                    sampleCounts[compressedIndex]++;
-//                } else if (treeIntervals.getIntervalType(treeIndex) == IntervalType.COALESCENT) {
-//                    coalescentCounts[compressedIndex]++;
-//                } else {
-//                    throw new RuntimeException("Tree includes unexpected event type.");
-//                }
-//            } else { // this is a new event
-//                startTimes[compressedIndex] = treeIntervalStartTime;
-//                waitTimes[compressedIndex] = treeIntervalStartTime - startTimes[compressedIndex - 1];
-//                
-//                compressedIndex++;
-//            }
         }
 
         // clean up
-        double[] tmpIntervals = new double[compressedIndex - 1];
-        System.arraycopy(startTimes,0,tmpIntervals,0,compressedIndex - 1);
-        startTimes = tmpIntervals;
+        intervalCount = compressedIndex;
+        intervalsKnown = true;
 
-        System.arraycopy(waitTimes,0,tmpIntervals,0,compressedIndex - 1);
-        waitTimes = tmpIntervals;
 
-        int[] tmpCounts = new int[compressedIndex - 1];
-        System.arraycopy(sampleCounts,0,tmpCounts,0,compressedIndex - 1);
-        sampleCounts = tmpCounts;
+        startTimes = Arrays.copyOf(tmpStartTimes,intervalCount);
+        waitTimes = Arrays.copyOf(tmpWaitTimes,intervalCount);
+        lineageCounts = Arrays.copyOf(tmpLineageCounts,intervalCount);
+        coalescentCounts = Arrays.copyOf(tmpCoalescentCounts,intervalCount);
+        sampleCounts = Arrays.copyOf(tmpSampleCounts,intervalCount);
 
-        System.arraycopy(coalescentCounts,0,tmpCounts,0,compressedIndex - 1);
-        coalescentCounts = tmpCounts;
-
-        System.arraycopy(lineageCounts,0,tmpCounts,0,compressedIndex - 1);
-        lineageCounts = tmpCounts;
-
+        System.err.println("Reporting on times after:");
+        System.err.println(new dr.math.matrixAlgebra.Vector(startTimes));
+        System.err.println(new dr.math.matrixAlgebra.Vector(waitTimes));
+        System.err.println(new dr.math.matrixAlgebra.Vector(sampleCounts));
+        System.err.println(new dr.math.matrixAlgebra.Vector(coalescentCounts));
+        System.err.println(new dr.math.matrixAlgebra.Vector(lineageCounts));
     }
 
     private Type units = Type.GENERATIONS;

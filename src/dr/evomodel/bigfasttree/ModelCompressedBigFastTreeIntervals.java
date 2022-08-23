@@ -139,7 +139,7 @@ public class ModelCompressedBigFastTreeIntervals extends AbstractModel implement
             idx = 0;
         }
 
-        System.err.println("Starting with " + sampleCountAt0 + " lineages");
+//        System.err.println("Starting with " + sampleCountAt0 + " lineages");
 
         double modelIntervalTime = modelIntervals[0];
         tmpStartTimes[0] = treeIntervals.getStartTime();
@@ -188,10 +188,6 @@ public class ModelCompressedBigFastTreeIntervals extends AbstractModel implement
             
             tmpLineageCounts[compressedIndex] = nLineages + tmpCoalescentCounts[compressedIndex] - tmpSampleCounts[compressedIndex];
 
-//            if (eventTime > tmpStartTimes[compressedIndex]) {
-//                compressedIndex++;
-//            }
-
         }
 
         // clean up
@@ -205,12 +201,12 @@ public class ModelCompressedBigFastTreeIntervals extends AbstractModel implement
         coalescentCounts = Arrays.copyOf(tmpCoalescentCounts,intervalCount);
         sampleCounts = Arrays.copyOf(tmpSampleCounts,intervalCount);
 
-        System.err.println("Reporting on times:");
-        System.err.println("start " + new dr.math.matrixAlgebra.Vector(startTimes));
-        System.err.println("waits " + new dr.math.matrixAlgebra.Vector(waitTimes));
-        System.err.println("samps " + new dr.math.matrixAlgebra.Vector(sampleCounts));
-        System.err.println("coals " + new dr.math.matrixAlgebra.Vector(coalescentCounts));
-        System.err.println("linea " + new dr.math.matrixAlgebra.Vector(lineageCounts));
+//        System.err.println("Reporting on times:");
+//        System.err.println("start " + new dr.math.matrixAlgebra.Vector(startTimes));
+//        System.err.println("waits " + new dr.math.matrixAlgebra.Vector(waitTimes));
+//        System.err.println("samps " + new dr.math.matrixAlgebra.Vector(sampleCounts));
+//        System.err.println("coals " + new dr.math.matrixAlgebra.Vector(coalescentCounts));
+//        System.err.println("linea " + new dr.math.matrixAlgebra.Vector(lineageCounts));
     }
 
     private Type units = Type.GENERATIONS;

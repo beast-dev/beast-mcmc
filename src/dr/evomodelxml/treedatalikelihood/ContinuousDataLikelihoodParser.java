@@ -195,8 +195,9 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 //                treeDataLikelihood.addTraits(partialTraitProvider.getTreeTraits());
             }
 
+            //TODO: remove below (should let ConditionalTraitSimulationHelper figure everything out)
             int[] partitionDimensions = dataModel.getPartitionDimensions();
-            if (partitionDimensions != null) {
+            if (partitionDimensions.length > 1) {
                 PartitionedTreeTraitProvider partitionedProvider =
                         new PartitionedTreeTraitProvider(treeDataLikelihood.getTreeTraits(), partitionDimensions);
                 treeDataLikelihood.addTraits(partitionedProvider.getTreeTraits());

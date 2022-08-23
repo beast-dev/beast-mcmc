@@ -72,6 +72,12 @@ public interface ContinuousTraitPartialsProvider {
 
     boolean usesMissingIndices();
 
+    ContinuousTraitPartialsProvider[] getChildModels();
+
+    default double[] drawTraitsBelowConditionalOnDataAndTraitsAbove(double[] aboveTraits) {
+        throw new RuntimeException("Conditional sampling not yet implemented for " + this.getClass());
+    }
+
     default boolean getDefaultAllowSingular() {
         return false;
     }
@@ -81,7 +87,7 @@ public interface ContinuousTraitPartialsProvider {
     }
 
     default int[] getPartitionDimensions() {
-        return null;
+        return new int[]{getTraitDimension()};
     }
 
     default void addTreeAndRateModel(Tree treeModel, ContinuousRateTransformation rateTransformation) {

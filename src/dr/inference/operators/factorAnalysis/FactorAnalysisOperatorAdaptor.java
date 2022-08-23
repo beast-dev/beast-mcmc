@@ -1,7 +1,7 @@
 package dr.inference.operators.factorAnalysis;
 
-import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.ConditionalTraitSimulationHelper;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.Matrix;
@@ -9,9 +9,6 @@ import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 
 import java.util.ArrayList;
-
-import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
-import static dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser.FACTOR_NAME;
 
 /**
  * @author Marc A. Suchard
@@ -237,11 +234,11 @@ public interface FactorAnalysisOperatorAdaptor {
 
         private final IntegratedFactorAnalysisLikelihood factorLikelihood;
         private final TreeDataLikelihood treeLikelihood;
+        private final ConditionalTraitSimulationHelper factorSimulationHelper;
 
         private final Parameter precision;
         private final CompoundParameter data;
 
-        private final TreeTrait factorTrait;
         private double[] factors;
 
         public IntegratedFactors(IntegratedFactorAnalysisLikelihood factorLikelihood,
@@ -252,10 +249,15 @@ public interface FactorAnalysisOperatorAdaptor {
 
             this.precision = factorLikelihood.getPrecision();
             this.data = factorLikelihood.getParameter();
+            this.factorSimulationHelper = new ConditionalTraitSimulationHelper(treeLikelihood);
 
-            factorTrait = treeLikelihood.getTreeTrait(factorLikelihood.getTipTraitName());
+            //TODO: (below)
+//            if (factorSimulationHelper.getTreeTrait().getTraitName() != factorLikelihood.getTipTraitName()) {
+//                throw new RuntimeException("Tip trait names must match: '" +
+//                        factorSimulationHelper.getTreeTrait().getTraitName() + "' != '" +
+//                        factorLikelihood.getTipTraitName());
+//            }
 
-            assert (factorTrait != null);
         }
 
         @Override
@@ -290,7 +292,7 @@ public interface FactorAnalysisOperatorAdaptor {
 
         @Override
         public void drawFactors() {
-            factors = (double[]) factorTrait.getTrait(treeLikelihood.getTree(), null);
+            factors = factorSimulationHelper.drawTraitsAbove(factorLikelihood);
 
             if (DEBUG) {
                 System.err.println("factors: " + new Vector(factors));

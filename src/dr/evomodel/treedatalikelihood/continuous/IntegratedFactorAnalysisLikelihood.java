@@ -233,6 +233,11 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     @Override
+    public ContinuousTraitPartialsProvider[] getChildModels() {
+        return new ContinuousTraitPartialsProvider[0]; // LFM is not currently extendible
+    }
+
+    @Override
     public boolean getDefaultAllowSingular() {
         return true;
     }

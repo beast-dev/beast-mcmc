@@ -39,10 +39,7 @@ import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.matrixAlgebra.CholeskyDecomposition;
-import dr.math.matrixAlgebra.IllegalDimension;
-import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.*;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
@@ -273,6 +270,60 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     @Override
     public void chainRuleWrtVariance(double[] gradient, NodeRef node) {
         // Do nothing
+    }
+
+    @Override
+    public ContinuousTraitPartialsProvider[] getChildModels() {
+        return new ContinuousTraitPartialsProvider[]{childModel};
+    }
+
+    @Override
+    public double[] drawTraitsBelowConditionalOnDataAndTraitsAbove(double[] aboveTraits) {
+        if (numTraits > 1) {
+            throw new RuntimeException("not yet implemented");
+        }
+
+        double[] belowTraits = new double[aboveTraits.length];
+        int nTaxa = belowTraits.length / dimTrait;
+
+        DenseMatrix64F P = DenseMatrix64F.wrap(dimTrait, dimTrait, samplingPrecisionParameter.getParameterValues());
+        DenseMatrix64F Q = new DenseMatrix64F(dimTrait, dimTrait);
+        DenseMatrix64F V = new DenseMatrix64F(dimTrait, dimTrait);
+
+        double[] p0 = new double[dimTrait * dimTrait];
+        DenseMatrix64F P0 = DenseMatrix64F.wrap(dimTrait, dimTrait, p0);
+
+        int[] wrappedIndices = new int[dimTrait];
+        for (int i = 0; i < dimTrait; i++) {
+            wrappedIndices[i] = i;
+        }
+
+        WrappedVector n = new WrappedVector.Raw(new double[dimTrait]);
+
+        int offset = 0;
+        for (int i = 0; i < nTaxa; i++) {
+            double[] partial = childModel.getTipPartial(i, false);
+            System.arraycopy(partial, precisionType.getPrecisionOffset(dimTrait), p0, 0,
+                    precisionType.getPrecisionLength(dimTrait));
+
+            WrappedVector.Indexed m0 = new WrappedVector.Indexed(partial, precisionType.getMeanOffset(dimTrait), wrappedIndices, dimTrait);
+            WrappedVector.Indexed x = new WrappedVector.Indexed(aboveTraits, offset, wrappedIndices, dimTrait);
+
+
+            CommonOps.add(P0, P, Q);
+            MissingOps.safeInvert2(Q, V, false);
+
+            MissingOps.weightedAverage(m0, P0, x, P, n, V, dimTrait);
+
+            for (int j = 0; j < dimTrait; j++) {
+                belowTraits[offset + j] = n.get(j);
+            }
+
+            offset += dimTrait;
+
+        }
+
+        return belowTraits;
     }
 
 

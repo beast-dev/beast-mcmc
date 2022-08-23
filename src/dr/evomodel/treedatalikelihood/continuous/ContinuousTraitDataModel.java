@@ -128,6 +128,11 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     }
 
     @Override
+    public ContinuousTraitPartialsProvider[] getChildModels() {
+        return new ContinuousTraitPartialsProvider[0];
+    }
+
+    @Override
     public List<Integer> getMissingIndices() {
         return ContinuousTraitPartialsProvider.indicatorToIndices(missingIndicators); // TODO: finish deprecating
     }

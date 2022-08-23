@@ -167,11 +167,7 @@ public class ModelCompressedBigFastTreeIntervals extends AbstractModel implement
                 compressedIndex++;
 //                System.err.println("  waitTime > 0.0");
                 tmpStartTimes[compressedIndex] = treeIntervalStartTime;
-                if (compressedIndex == 0) {
-                    tmpWaitTimes[compressedIndex] = eventTime - treeIntervalStartTime;
-                } else {
-                    tmpWaitTimes[compressedIndex] = treeIntervalStartTime - tmpStartTimes[compressedIndex - 1];
-                }
+                tmpWaitTimes[compressedIndex] = waitTime;
             }
             
             if (treeIntervals.getIntervalType(treeIndex) == IntervalType.SAMPLE) {
@@ -183,7 +179,7 @@ public class ModelCompressedBigFastTreeIntervals extends AbstractModel implement
                 nLineages--;
 //                System.err.println("  tmpCoalescentCounts[" + compressedIndex + "] = " + tmpCoalescentCounts[compressedIndex]);
             } else {
-                throw new RuntimeException("Tree includes unexpected event type.");
+//                throw new RuntimeException("Tree includes unexpected event type.");
             }
             
             tmpLineageCounts[compressedIndex] = nLineages + tmpCoalescentCounts[compressedIndex] - tmpSampleCounts[compressedIndex];

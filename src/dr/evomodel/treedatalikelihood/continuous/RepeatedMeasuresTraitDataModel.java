@@ -315,9 +315,9 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 
             MissingOps.weightedAverage(m0, P0, x, P, n, V, dimTrait);
 
-            for (int j = 0; j < dimTrait; j++) {
-                belowTraits[offset + j] = n.get(j);
-            }
+            double[] sample = MissingOps.nextPossiblyDegenerateNormal(n, V);
+
+            System.arraycopy(sample, 0, belowTraits, offset, dimTrait);
 
             offset += dimTrait;
 

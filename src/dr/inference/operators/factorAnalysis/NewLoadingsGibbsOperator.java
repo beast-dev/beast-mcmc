@@ -374,6 +374,11 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
     @Override
     public String getReport() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(adaptor.getReport());
+        sb.append("\n\n");
+
+
         int repeats = 20000;
 
         int nFac = adaptor.getNumberOfFactors();
@@ -419,7 +424,6 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             }
         }
 
-        StringBuilder sb = new StringBuilder();
         sb.append(getOperatorName() + "Report:\n");
         sb.append("Loadings mean:\n");
         sb.append(new Vector(loadMean));

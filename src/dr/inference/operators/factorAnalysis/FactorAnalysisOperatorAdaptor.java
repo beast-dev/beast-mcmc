@@ -14,7 +14,7 @@ import java.util.ArrayList;
  * @author Marc A. Suchard
  * @author Gabriel Hassler
  */
-public interface FactorAnalysisOperatorAdaptor {
+public interface FactorAnalysisOperatorAdaptor extends Reportable {
 
     int getNumberOfTaxa();
 
@@ -325,6 +325,57 @@ public interface FactorAnalysisOperatorAdaptor {
             likelihoods.add(factorLikelihood);
             likelihoods.add(treeLikelihood);
             return likelihoods;
+        }
+
+        @Override
+        public String getReport() {
+            int repeats = 10000;
+
+            int nTaxa = treeLikelihood.getTree().getExternalNodeCount();
+            int nFactors = factorLikelihood.getNumberOfFactors();
+            int dim = nFactors * nTaxa;
+
+            double[] mean = new double[dim];
+            double[][] cov = new double[dim][dim];
+
+            for (int i = 0; i < repeats; i++) {
+                drawFactors();
+                for (int j = 0; j < dim; j++) {
+                    mean[j] += factors[j];
+                    cov[j][j] += factors[j] * factors[j];
+
+                    for (int k = (j + 1); k < dim; k++) {
+                        cov[j][k] += factors[j] * factors[k];
+                        cov[k][j] = cov[j][k];
+                    }
+                }
+            }
+
+            for (int i = 0; i < dim; i++) {
+                mean[i] /= repeats;
+                for (int j = 0; j < dim; j++) {
+                    cov[i][j] /= repeats;
+                }
+            }
+
+            for (int i = 0; i < dim; i++) {
+                for (int j = 0; j < dim; j++) {
+                    cov[i][j] -= mean[i] * mean[j];
+                }
+            }
+
+            StringBuilder sb = new StringBuilder(this.getClass() + " report:\n");
+            sb.append("Factor mean:\n");
+            sb.append(new Vector(mean));
+            sb.append("\n\n");
+            sb.append("Factor covariance:\n");
+            sb.append(new Matrix(cov));
+            sb.append("\n\nTaxon order:");
+            for (int i = 0; i < nTaxa; i++) {
+                sb.append(" " + treeLikelihood.getTree().getTaxonId(i));
+            }
+
+            return sb.toString();
         }
 
         private static final boolean DEBUG = false;

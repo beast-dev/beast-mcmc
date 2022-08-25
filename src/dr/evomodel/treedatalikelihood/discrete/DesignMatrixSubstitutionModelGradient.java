@@ -67,7 +67,8 @@ public class DesignMatrixSubstitutionModelGradient extends GlmSubstitutionModelG
         whichEffect = findDesignMatrix(matrix);
 
         if (glm.getFixedEffect(whichEffect).getDimension() != 1 ||
-                glm.getFixedEffectIndicator(whichEffect).getDimension() != 1) {
+                (glm.getFixedEffectIndicator(whichEffect) != null &&
+                glm.getFixedEffectIndicator(whichEffect).getDimension() != 1)) {
             throw new IllegalArgumentException("Not yet implemented");
         }
     }

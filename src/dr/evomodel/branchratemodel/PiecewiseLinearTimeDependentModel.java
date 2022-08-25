@@ -139,16 +139,18 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
 //        }
 
         int currentEpoch = 0;
-        while (child > scale.transformTime(breaks[currentEpoch])) {
+        while (child > scale.inverseTransformTime(breaks[currentEpoch])) {
             ++currentEpoch;
         }
 
         double integral = 0.0;
         double currentTime = child;
-        while (scale.transformTime(breaks[currentEpoch]) <= parent) {
-            integral += integrate(currentTime, scale.transformTime(breaks[currentEpoch]),
+        while (scale.inverseTransformTime(breaks[currentEpoch]) <= parent) {
+            integral += integrate(currentTime,
+                    scale.inverseTransformTime(breaks[currentEpoch]
+                    ),
                     slopes[currentEpoch], intercepts[currentEpoch]);
-            currentTime = scale.transformTime(breaks[currentEpoch]);
+            currentTime = scale.inverseTransformTime(breaks[currentEpoch]);
             ++currentEpoch;
         }
 
@@ -235,6 +237,11 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
             }
 
             @Override
+            double inverseTransformTime(double time) {
+                return time;
+            }
+
+            @Override
             double inverseTransformRate(double rate) {
                 return log10 * rate;
             }
@@ -257,6 +264,11 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
             }
 
             @Override
+            double inverseTransformTime(double time) {
+                return Math.pow(10, time);
+            }
+
+            @Override
             double inverseTransformRate(double rate) {
                 return log10 * rate;
             }
@@ -273,6 +285,8 @@ public class PiecewiseLinearTimeDependentModel extends AbstractModel implements 
         }
 
         abstract double transformTime(double time);
+
+        abstract double inverseTransformTime(double time);
 
         abstract double inverseTransformRate(double rate);
 

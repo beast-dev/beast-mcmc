@@ -648,7 +648,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             gradient[fractionIndex(currentModelSegment, numIntervals)] += 1 / rho; // TODO Need to test!
         } else {
             gradient[samplingIndex(currentModelSegment, numIntervals)] += 1 / psi;
+        }
 
+        if (!sampleIsAtEventTime | currentModelSegment > 0) {
             //double p_it = p(currentModelSegment, intervalEnd);
             if (intervalEnd == modelStartTimes[currentModelSegment]) {
                 eAt_Old = Math.exp(A * (intervalEnd - modelStartTimes[currentModelSegment]));

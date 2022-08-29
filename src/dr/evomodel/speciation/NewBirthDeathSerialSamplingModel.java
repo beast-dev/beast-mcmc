@@ -376,7 +376,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
         double logSampProb;
 
-        boolean sampleIsAtEventTime = Math.abs(tOld - modelStartTimes[model]) <= 1E-5;
+        boolean sampleIsAtEventTime = tOld == modelStartTimes[model];
         boolean samplesTakenAtEventTime = rho > 0;
 
         if (sampleIsAtEventTime && samplesTakenAtEventTime) {
@@ -641,7 +641,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         //boolean samplesTakenAtPresent = rho0 > 0;
 
         //TODO: need to confirm intensive sampling case is correct
-        boolean sampleIsAtEventTime = Math.abs(intervalEnd - modelStartTimes[currentModelSegment]) <= 1E-5;
+        boolean sampleIsAtEventTime = intervalEnd == modelStartTimes[currentModelSegment];
         boolean samplesTakenAtEventTime = rho > 0;
 
         //if (sampleIsAtPresent && samplesTakenAtPresent) {

@@ -56,7 +56,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
             throw new IllegalArgumentException("Must currently provide a TreeModel");
         }
 
-        fixTimes();
+//        fixTimes();
 
         treeIntervals = new BigFastTreeIntervals((TreeModel)tree);
 

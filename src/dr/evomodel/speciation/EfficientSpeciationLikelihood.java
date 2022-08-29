@@ -26,9 +26,7 @@
 package dr.evomodel.speciation;
 
 import dr.evolution.coalescent.IntervalType;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
+import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.bigfasttree.ModelCompressedBigFastTreeIntervals;
@@ -47,9 +45,9 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
     private final BigFastTreeIntervals treeIntervals;
     private final TreeTraitProvider.Helper treeTraits = new TreeTraitProvider.Helper();
 
-    private final ModelCompressedBigFastTreeIntervals compressedTreeIntervals;
-
     private boolean intervalsKnown;
+
+    private final double TOLERANCE = 1e-5;
 
     public EfficientSpeciationLikelihood(Tree tree, SpeciationModel speciationModel, Set<Taxon> exclude, String id) {
         super(tree, speciationModel, exclude, id);
@@ -58,8 +56,9 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
             throw new IllegalArgumentException("Must currently provide a TreeModel");
         }
 
+        fixTimes();
+
         treeIntervals = new BigFastTreeIntervals((TreeModel)tree);
-        compressedTreeIntervals = new ModelCompressedBigFastTreeIntervals(treeIntervals, speciationModel.getBreakPoints(), 1e-5);
 
         addModel(treeIntervals);
     }
@@ -133,55 +132,32 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         return logL;
     }
 
-    double calculateLogLikelihoodCompressed() {
+    private void fixTimes() {
 
-        speciationModel.updateLikelihoodModelValues(0);
+        FlexibleTree binaryTree = new FlexibleTree(tree, true);
 
-        // TODO: store/restore
-        compressedTreeIntervals.calculateIntervals();
-
-        double[] modelBreakPoints = speciationModel.getBreakPoints();
-        assert modelBreakPoints[modelBreakPoints.length - 1] == Double.POSITIVE_INFINITY;
-
-        int currentModelSegment = 0;
-
-        double logL = compressedTreeIntervals.getSampleEvents(-1) * speciationModel.processSampling(0, treeIntervals.getStartTime()); // TODO Fix for getStartTime() != 0.0
-
-        for (int i = 0; i < compressedTreeIntervals.getIntervalCount(); ++i) {
-
-            double intervalStart = compressedTreeIntervals.getIntervalTime(i);
-            final double intervalEnd = intervalStart + compressedTreeIntervals.getInterval(i);
-            final int nLineages = compressedTreeIntervals.getLineageCount(i);
-
-
-            while (intervalEnd >= modelBreakPoints[currentModelSegment]) { // TODO Maybe it's >= ?
-
-                final double segmentIntervalEnd = modelBreakPoints[currentModelSegment];
-                logL += speciationModel.processModelSegmentBreakPoint(currentModelSegment, intervalStart, segmentIntervalEnd, nLineages);
-                intervalStart = segmentIntervalEnd;
-                ++currentModelSegment;
-                speciationModel.updateLikelihoodModelValues(currentModelSegment);
-            }
-
-            if (intervalEnd > intervalStart) {
-                logL += speciationModel.processInterval(currentModelSegment, intervalStart, intervalEnd, nLineages);
-            }
-
-            // Interval ends with a coalescent or sampling event at time intervalEnd
-            if (compressedTreeIntervals.getSampleEvents(i) > 0) {
-                logL += compressedTreeIntervals.getSampleEvents(i) * speciationModel.processSampling(currentModelSegment, intervalEnd);
-            }
-            if (compressedTreeIntervals.getCoalescentEvents(i) > 0) {
-                logL += compressedTreeIntervals.getCoalescentEvents(i) * speciationModel.processCoalescence(currentModelSegment,intervalEnd);
+        double[] intervalTimes = speciationModel.getBreakPoints();
+        for (int i = 0; i < binaryTree.getExternalNodeCount(); i++) {
+            // TODO we can be lazy since we only do this once but a linear search is still sad
+            NodeRef node = binaryTree.getNode(i);
+            double thisTipTime = binaryTree.getNodeHeight(node);
+//            System.err.println("Working on tip " + i + " at time " + thisTipTime);
+            // TODO
+            if (thisTipTime < TOLERANCE) {
+//                System.err.println("Adusting time " + thisTipTime + " to 0.0");
+                binaryTree.setNodeHeight(node,0.0);
+            } else {
+                for (int j = 0; j < intervalTimes.length; j++) {
+                    if (Math.abs(thisTipTime - intervalTimes[j]) < TOLERANCE) {
+//                        System.err.println("Adusting time " + thisTipTime + " to " + intervalTimes[j]);
+                        binaryTree.setNodeHeight(node,intervalTimes[j]);
+                        break;
+                    }
+                }
             }
         }
-
-        // origin branch is a fake branch that doesn't exist in the tree, now compute its contribution
-        logL += speciationModel.processOrigin(currentModelSegment, treeIntervals.getTotalDuration());
-
-        logL += speciationModel.logConditioningProbability();
-
-        return logL;
+        tree = binaryTree;
+//        System.err.println("Adjusted tip times to match interval times.");
     }
 
     // Super-clean interface (just one intrusive function) and a better place, since `Likelihood`s have gradients (`Model`s do not).

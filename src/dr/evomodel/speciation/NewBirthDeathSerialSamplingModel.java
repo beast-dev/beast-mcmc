@@ -278,7 +278,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     @Override
-    public double[] getBreakPoints() {   // TODO Fix, this is all messed up; we should hold one set of values [0, ..., \infty]
+    public double[] getBreakPoints() {
+        // TODO Fix, this is all messed up; we should hold one set of values [0, ..., \infty]
+        // TODO when fixing this, also fix EfficientSpeciationLikelihood.fixTimes()
         double[] breakPoints = new double[numIntervals];
         System.arraycopy(modelStartTimes, 1, breakPoints, 0, numIntervals - 1);
 

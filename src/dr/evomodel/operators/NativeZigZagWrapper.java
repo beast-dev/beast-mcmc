@@ -33,15 +33,15 @@ public class NativeZigZagWrapper {
                                                                  double[] velocity,
                                                                  double[] action,
                                                                  double[] gradient,
-                                                                 double[] moment) {
-        return NativeZigZag.INSTANCE.getNextEvent(instanceNumber, position, velocity, action, gradient, moment);
+                                                                 double[] momentum) {
+        return NativeZigZag.INSTANCE.getNextEvent(instanceNumber, position, velocity, action, gradient, momentum);
     }
 
     public MinimumTravelInformation getNextIrreversibleEvent(double[] position,
                                                              double[] velocity,
                                                              double[] action,
                                                              double[] gradient) {
-        return NativeZigZag.INSTANCE.getNextEventIrreversible(instanceNumber, position, velocity, action, gradient);
+        throw new RuntimeException("not implemented yet");
     }
 
     public void updateReversibleDynamics(double[] position,

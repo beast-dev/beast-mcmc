@@ -376,7 +376,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
         double logSampProb;
 
-        boolean sampleIsAtEventTime = Math.abs(tOld - modelStartTimes[model]) <= 0;
+        boolean sampleIsAtEventTime = Math.abs(tOld - modelStartTimes[model]) <= 1E-5;
         boolean samplesTakenAtEventTime = rho > 0;
 
         if (sampleIsAtEventTime && samplesTakenAtEventTime) {
@@ -561,21 +561,25 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         this.partialQKnown = false;
     }
 
-    @Override
     public void processGradientModelSegmentBreakPoint(double[] gradient, int currentModelSegment,
                                                       double intervalStart, double intervalEnd, int nLineages) {
+        double qStart;
+        if (eAt_Old == 0) {
+            qStart = q(currentModelSegment, intervalStart);
+        } else {
+            qStart = q(eAt_Old);
+        }
 
-        double qStart = q(eAt_Old);
-/*        double qStart = q(currentModelSegment, intervalStart);*/
+        /*        double qStart = q(currentModelSegment, intervalStart);*/
         double qEnd = q(currentModelSegment, intervalEnd);
 
-/*        dQCompute(currentModelSegment, intervalStart, dQStart);*/
+        dQCompute(currentModelSegment, intervalStart, dQStart);
         dQCompute(currentModelSegment, intervalEnd, dQEnd, eAt_End);
 
         for (int k = 0; k <= currentModelSegment; ++k) {
             for (int p = 0; p < 4; ++p) {
                 gradient[genericIndex(k, p, numIntervals)] += nLineages *
-                        (dQEnd[k * 4 + p] / qEnd - temp44[k * 4 + p] / qStart);
+                        (dQEnd[k * 4 + p] / qEnd - dQStart[k * 4 + p] / qStart);
             }
         }
 
@@ -637,7 +641,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         //boolean samplesTakenAtPresent = rho0 > 0;
 
         //TODO: need to confirm intensive sampling case is correct
-        boolean sampleIsAtEventTime = Math.abs(intervalEnd - modelStartTimes[currentModelSegment]) <= 0;
+        boolean sampleIsAtEventTime = Math.abs(intervalEnd - modelStartTimes[currentModelSegment]) <= 1E-5;
         boolean samplesTakenAtEventTime = rho > 0;
 
         //if (sampleIsAtPresent && samplesTakenAtPresent) {
@@ -646,7 +650,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             gradient[fractionIndex(currentModelSegment, numIntervals)] += 1 / rho; // TODO Need to test!
         } else {
             gradient[samplingIndex(currentModelSegment, numIntervals)] += 1 / psi;
+        }
 
+        if (!sampleIsAtEventTime | currentModelSegment > 0) {
             //double p_it = p(currentModelSegment, intervalEnd);
             if (intervalEnd == modelStartTimes[currentModelSegment]) {
                 eAt_Old = Math.exp(A * (intervalEnd - modelStartTimes[currentModelSegment]));

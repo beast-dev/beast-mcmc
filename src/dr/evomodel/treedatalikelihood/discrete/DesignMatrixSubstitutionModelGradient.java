@@ -1,7 +1,7 @@
 /*
- * DiscreteTraitBranchRateGradient.java
+ * DesignMatrixSubstitutionModelGradient.java
  *
- * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -52,7 +52,10 @@ public class DesignMatrixSubstitutionModelGradient extends GlmSubstitutionModelG
 
         this.parameter = parameter;
 
-        int dim = parameter.getUnmaskedParameter().getDimension();
+        Parameter unmasked = parameter.getUnmaskedParameter();
+        int dim = getEffectDimension(unmasked);
+        whichEffect = findDesignMatrix(matrix);
+
         int asymmetricCount = stateCount * (stateCount - 1);
         if (dim == asymmetricCount) {
             // Asymmetric
@@ -63,15 +66,9 @@ public class DesignMatrixSubstitutionModelGradient extends GlmSubstitutionModelG
         } else {
             throw new IllegalArgumentException("Unable to determine random design matrix count");
         }
-
-        whichEffect = findDesignMatrix(matrix);
-
-        if (glm.getFixedEffect(whichEffect).getDimension() != 1 ||
-                (glm.getFixedEffectIndicator(whichEffect) != null &&
-                glm.getFixedEffectIndicator(whichEffect).getDimension() != 1)) {
-            throw new IllegalArgumentException("Not yet implemented");
-        }
     }
+
+    String getType() { return "design"; }
 
     private int findDesignMatrix(DesignMatrix matrix) {
         for (int i = 0; i < glm.getNumberOfFixedEffects(); ++i) {
@@ -115,11 +112,12 @@ public class DesignMatrixSubstitutionModelGradient extends GlmSubstitutionModelG
                                           double[] differentials, double[] generator, double[] pi,
                                           boolean normalize, double normalizationConstant) {
 
+        int whichCoefficient = indexK(k);
 
-        double coefficient = glm.getFixedEffect(whichEffect).getParameterValue(0);
+        double coefficient = glm.getFixedEffect(whichEffect).getParameterValue(whichCoefficient);
         Parameter indicator = glm.getFixedEffectIndicator(whichEffect);
         if (indicator != null) {
-            coefficient *= indicator.getParameterValue(0);
+            coefficient *= indicator.getParameterValue(whichCoefficient);
         }
 
         double element = generator[indexIJ(k)] * coefficient;
@@ -132,22 +130,33 @@ public class DesignMatrixSubstitutionModelGradient extends GlmSubstitutionModelG
         return total;
     }
 
+    private static int getEffectDimension(Parameter parameter) {
+        return (parameter instanceof DesignMatrix) ?
+                ((DesignMatrix) parameter).getRowDimension() :
+                parameter.getDimension();
+    }
+
     private int[][] makeDesignMap() {
         int[][] map = new int[parameter.getDimension()][];
 
         int k = 0, l = 0;
-        for (int i = 0; i < stateCount; ++i) {
-            for (int j = i + 1; j < stateCount; ++j) {
-                if (parameter.getParameterMaskValue(l++) == 1.0) {
-                    map[k++] = new int[]{i, j};
+        Parameter effect = glm.getFixedEffect(whichEffect);
+
+        for (int m = 0; m < effect.getDimension(); ++m) {
+
+            for (int i = 0; i < stateCount; ++i) {
+                for (int j = i + 1; j < stateCount; ++j) {
+                    if (parameter.getParameterMaskValue(l++) == 1.0) {
+                        map[k++] = new int[] {i, j, m};
+                    }
                 }
             }
-        }
 
-        for (int j = 0; j < stateCount; ++j) {
-            for (int i = j + 1; i < stateCount; ++i) {
-                if (parameter.getParameterMaskValue(l++) == 1.0) {
-                    map[k++] = new int[]{i, j};
+            for (int j = 0; j < stateCount; ++j) {
+                for (int i = j + 1; i < stateCount; ++i) {
+                    if (parameter.getParameterMaskValue(l++) == 1.0) {
+                        map[k++] = new int[] {i, j, m};
+                    }
                 }
             }
         }
@@ -168,5 +177,10 @@ public class DesignMatrixSubstitutionModelGradient extends GlmSubstitutionModelG
     private int indexI(int k) {
         final int[] indices = mapEffectToIndices[k];
         return indices[0];
+    }
+
+    private int indexK(int k) {
+        final int[] indices = mapEffectToIndices[k];
+        return indices[2];
     }
 }

@@ -55,6 +55,7 @@ public class MaskedParameterParser extends AbstractXMLObjectParser {
         if (cxo != null) {
             mask = (Parameter) cxo.getChild(Parameter.class);
         } else if (xo.getAttribute(BUILD, false)) {
+            int total = 0;
             boolean isNaMissing = xo.getAttribute(IS_NA_MISSING, false);
             mask = new Parameter.Default(parameter.getDimension(), 0.0);
             for (int i = 0; i < parameter.getDimension(); i++) {
@@ -63,12 +64,15 @@ public class MaskedParameterParser extends AbstractXMLObjectParser {
                     parameter.setParameterValue(i, 0.0);
                     Logger.getLogger("dr.inferencexml.model").info("Setting dim " + (i + 1) + " in " +
                             parameter.getId() + " to 0.0");
+                    ++total;
 
                 }
                 if (!isNaMissing && parameter.getParameterValue(i) == 0) {
                     mask.setParameterValue(i, 1.0);
+                    ++total;
                 }
             }
+            Logger.getLogger("dr.inferencexml.model").info("Found in total " + total + " missing values\n");
         }
         else {
             int from = xo.getAttribute(FROM, 1) - 1;

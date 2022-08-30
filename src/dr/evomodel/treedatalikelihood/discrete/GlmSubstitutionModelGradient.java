@@ -101,6 +101,8 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
         assert (treeTraitProvider != null);
     }
 
+    String getType() { return "fixed"; }
+
     private int determineSubstitutionNumber(BranchModel branchModel,
                                             OldGLMSubstitutionModel substitutionModel) {
 

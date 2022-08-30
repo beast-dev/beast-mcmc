@@ -26,12 +26,11 @@
 package dr.evomodel.speciation;
 
 import dr.evolution.coalescent.IntervalType;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
+import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.bigfasttree.ModelCompressedBigFastTreeIntervals;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 
@@ -47,19 +46,20 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
     private final BigFastTreeIntervals treeIntervals;
     private final TreeTraitProvider.Helper treeTraits = new TreeTraitProvider.Helper();
 
-    private final ModelCompressedBigFastTreeIntervals compressedTreeIntervals;
-
     private boolean intervalsKnown;
+
+    private final double TOLERANCE = 1e-5;
 
     public EfficientSpeciationLikelihood(Tree tree, SpeciationModel speciationModel, Set<Taxon> exclude, String id) {
         super(tree, speciationModel, exclude, id);
 
-        if (!(tree instanceof TreeModel)) {
-            throw new IllegalArgumentException("Must currently provide a TreeModel");
+        if (!(tree instanceof DefaultTreeModel)) {
+            throw new IllegalArgumentException("Must currently provide a DefaultTreeModel");
         }
 
+        fixTimes();
+
         treeIntervals = new BigFastTreeIntervals((TreeModel)tree);
-        compressedTreeIntervals = new ModelCompressedBigFastTreeIntervals(treeIntervals, speciationModel.getBreakPoints(), 1e-5);
 
         addModel(treeIntervals);
     }
@@ -133,46 +133,61 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         return logL;
     }
 
-    double calculateLogLikelihoodCompressed() {
+    double calculateLogLikelihood2() {
 
         speciationModel.updateLikelihoodModelValues(0);
-
-        // TODO: store/restore
-        compressedTreeIntervals.calculateIntervals();
 
         double[] modelBreakPoints = speciationModel.getBreakPoints();
         assert modelBreakPoints[modelBreakPoints.length - 1] == Double.POSITIVE_INFINITY;
 
         int currentModelSegment = 0;
 
-        double logL = compressedTreeIntervals.getSampleEvents(-1) * speciationModel.processSampling(0, treeIntervals.getStartTime()); // TODO Fix for getStartTime() != 0.0
+        double logL = speciationModel.processSampling(0, treeIntervals.getStartTime()); // TODO Fix for getStartTime() != 0.0
 
-        for (int i = 0; i < compressedTreeIntervals.getIntervalCount(); ++i) {
+        boolean abort = false;
 
-            double intervalStart = compressedTreeIntervals.getIntervalTime(i);
-            final double intervalEnd = intervalStart + compressedTreeIntervals.getInterval(i);
-            final int nLineages = compressedTreeIntervals.getLineageCount(i);
+        for (int i = 0; i < treeIntervals.getIntervalCount() && !abort; ++i) {
 
+            double intervalStart = treeIntervals.getIntervalTime(i);
+            // We can't do floating point arithmetic if we want to make use of fixTimes() making tips exactly at event times
+            double intervalEnd = getIntervalEnd(i);
 
-            while (intervalEnd >= modelBreakPoints[currentModelSegment]) { // TODO Maybe it's >= ?
+            int nLineages = treeIntervals.getLineageCount(i);
 
+            // This implicitly defines the number of unsampled survivors at an event-sampling time to be
+            // the number of lineages spanning the tree interval immediately before it, not counting
+            // any samples taken at that time (or, in edge cases, births), so lacking sampled ancestors
+            // this is exactly the number we want to use in the unsampling probability
+            while (intervalEnd >= modelBreakPoints[currentModelSegment] && !abort) {
                 final double segmentIntervalEnd = modelBreakPoints[currentModelSegment];
                 logL += speciationModel.processModelSegmentBreakPoint(currentModelSegment, intervalStart, segmentIntervalEnd, nLineages);
                 intervalStart = segmentIntervalEnd;
                 ++currentModelSegment;
                 speciationModel.updateLikelihoodModelValues(currentModelSegment);
+
+                // handle any events that perfectly coincide with this event time
+                // de-facto override of ++
+                while (intervalEnd == segmentIntervalEnd) {
+                    logL += processEvent(i,currentModelSegment,intervalEnd);
+                    ++i;
+                    if (i >= treeIntervals.getIntervalCount()) {
+                        abort = true;
+                        break;
+                    }
+                    intervalStart = treeIntervals.getIntervalTime(i);
+                    intervalEnd = getIntervalEnd(i);
+                    nLineages = treeIntervals.getLineageCount(i);
+                }
+
             }
 
-            if (intervalEnd > intervalStart) {
-                logL += speciationModel.processInterval(currentModelSegment, intervalStart, intervalEnd, nLineages);
-            }
+            if ( !abort ) {
+                if (intervalEnd > intervalStart) {
+                    logL += speciationModel.processInterval(currentModelSegment, intervalStart, intervalEnd, nLineages);
+                }
 
-            // Interval ends with a coalescent or sampling event at time intervalEnd
-            if (compressedTreeIntervals.getSampleEvents(i) > 0) {
-                logL += compressedTreeIntervals.getSampleEvents(i) * speciationModel.processSampling(currentModelSegment, intervalEnd);
-            }
-            if (compressedTreeIntervals.getCoalescentEvents(i) > 0) {
-                logL += compressedTreeIntervals.getCoalescentEvents(i) * speciationModel.processCoalescence(currentModelSegment,intervalEnd);
+                // Interval ends with a coalescent or sampling event at time intervalEnd
+                logL += processEvent(i,currentModelSegment,intervalEnd);
             }
         }
 
@@ -182,6 +197,63 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         logL += speciationModel.logConditioningProbability();
 
         return logL;
+    }
+
+    private double getIntervalEnd(int i) {
+//        System.err.println("getIntervalEnd(" + i + "); interval starts at " + treeIntervals.getIntervalTime(i));
+        double intervalEnd;
+        if (i < treeIntervals.getIntervalCount() - 1) {
+            intervalEnd = treeIntervals.getIntervalTime(i+1);
+        } else {
+            intervalEnd = treeIntervals.getIntervalTime(i) + treeIntervals.getInterval(i);
+        }
+        return intervalEnd;
+    }
+
+    private double processEvent(int i, int currentModelSegment, double intervalEnd) {
+//        System.err.println("Processing event " + i + " in segment " + currentModelSegment + " ending at " + intervalEnd);
+//        // TODO add method to get number of breaks to avoid this malarkey
+//        int fuck = 0;
+//        if ( currentModelSegment >= speciationModel.getBreakPoints().length ) {
+//            currentModelSegment = speciationModel.getBreakPoints().length;
+//        }
+        double logL = 0.0;
+        if (treeIntervals.getIntervalType(i) == IntervalType.SAMPLE) {
+            logL += speciationModel.processSampling(currentModelSegment, intervalEnd);
+        } else if (treeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
+            logL += speciationModel.processCoalescence(currentModelSegment,intervalEnd);
+        } else {
+            throw new RuntimeException("Birth-death tree includes non birth/death/sampling event.");
+        }
+        return logL;
+    }
+
+    private void fixTimes() {
+
+        DefaultTreeModel cleanTree = new DefaultTreeModel(tree);
+
+        double[] intervalTimes = speciationModel.getBreakPoints();
+        for (int i = 0; i < cleanTree.getExternalNodeCount(); i++) {
+            // TODO we can be lazy since we only do this once but a linear search is still sad
+            NodeRef node = cleanTree.getNode(i);
+            double thisTipTime = cleanTree.getNodeHeight(node);
+//            System.err.println("Working on tip " + i + " at time " + thisTipTime);
+            // TODO
+            if (thisTipTime < TOLERANCE) {
+//                System.err.println("Adusting time " + thisTipTime + " to 0.0");
+                cleanTree.setNodeHeight(node,0.0);
+            } else {
+                for (int j = 0; j < intervalTimes.length; j++) {
+                    if (Math.abs(thisTipTime - intervalTimes[j]) < TOLERANCE) {
+//                        System.err.println("Adusting time " + thisTipTime + " to " + intervalTimes[j]);
+                        cleanTree.setNodeHeight(node,intervalTimes[j]);
+                        break;
+                    }
+                }
+            }
+        }
+        tree = cleanTree;
+//        System.err.println("Adjusted tip times to match interval times.");
     }
 
     // Super-clean interface (just one intrusive function) and a better place, since `Likelihood`s have gradients (`Model`s do not).

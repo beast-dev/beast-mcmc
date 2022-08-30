@@ -278,7 +278,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     @Override
-    public double[] getBreakPoints() {   // TODO Fix, this is all messed up; we should hold one set of values [0, ..., \infty]
+    public double[] getBreakPoints() {
+        // TODO Fix, this is all messed up; we should hold one set of values [0, ..., \infty]
+        // TODO when fixing this, also fix EfficientSpeciationLikelihood.fixTimes()
         double[] breakPoints = new double[numIntervals];
         System.arraycopy(modelStartTimes, 1, breakPoints, 0, numIntervals - 1);
 
@@ -374,7 +376,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
         double logSampProb;
 
-        boolean sampleIsAtEventTime = Math.abs(tOld - modelStartTimes[model]) <= 1E-5;
+        boolean sampleIsAtEventTime = tOld == modelStartTimes[model];
         boolean samplesTakenAtEventTime = rho > 0;
 
         if (sampleIsAtEventTime && samplesTakenAtEventTime) {
@@ -639,7 +641,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         //boolean samplesTakenAtPresent = rho0 > 0;
 
         //TODO: need to confirm intensive sampling case is correct
-        boolean sampleIsAtEventTime = Math.abs(intervalEnd - modelStartTimes[currentModelSegment]) <= 1E-5;
+        boolean sampleIsAtEventTime = intervalEnd == modelStartTimes[currentModelSegment];
         boolean samplesTakenAtEventTime = rho > 0;
 
         //if (sampleIsAtPresent && samplesTakenAtPresent) {
@@ -648,7 +650,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             gradient[fractionIndex(currentModelSegment, numIntervals)] += 1 / rho; // TODO Need to test!
         } else {
             gradient[samplingIndex(currentModelSegment, numIntervals)] += 1 / psi;
+        }
 
+        if (!sampleIsAtEventTime | currentModelSegment > 0) {
             //double p_it = p(currentModelSegment, intervalEnd);
             if (intervalEnd == modelStartTimes[currentModelSegment]) {
                 eAt_Old = Math.exp(A * (intervalEnd - modelStartTimes[currentModelSegment]));

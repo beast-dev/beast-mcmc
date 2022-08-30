@@ -256,7 +256,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Rep
     /**
      * The tree.
      */
-    final Tree tree;
+    Tree tree;
     private final Set<Taxon> exclude;
 
     private CalibrationPoints calibration;

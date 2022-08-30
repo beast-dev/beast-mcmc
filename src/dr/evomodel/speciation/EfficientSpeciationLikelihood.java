@@ -133,6 +133,101 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         return logL;
     }
 
+    double calculateLogLikelihood2() {
+
+        speciationModel.updateLikelihoodModelValues(0);
+
+        double[] modelBreakPoints = speciationModel.getBreakPoints();
+        assert modelBreakPoints[modelBreakPoints.length - 1] == Double.POSITIVE_INFINITY;
+
+        int currentModelSegment = 0;
+
+        double logL = speciationModel.processSampling(0, treeIntervals.getStartTime()); // TODO Fix for getStartTime() != 0.0
+
+        boolean abort = false;
+
+        for (int i = 0; i < treeIntervals.getIntervalCount() && !abort; ++i) {
+
+            double intervalStart = treeIntervals.getIntervalTime(i);
+            // We can't do floating point arithmetic if we want to make use of fixTimes() making tips exactly at event times
+            double intervalEnd = getIntervalEnd(i);
+
+            int nLineages = treeIntervals.getLineageCount(i);
+
+            // This implicitly defines the number of unsampled survivors at an event-sampling time to be
+            // the number of lineages spanning the tree interval immediately before it, not counting
+            // any samples taken at that time (or, in edge cases, births), so lacking sampled ancestors
+            // this is exactly the number we want to use in the unsampling probability
+            while (intervalEnd >= modelBreakPoints[currentModelSegment] && !abort) {
+                final double segmentIntervalEnd = modelBreakPoints[currentModelSegment];
+                logL += speciationModel.processModelSegmentBreakPoint(currentModelSegment, intervalStart, segmentIntervalEnd, nLineages);
+                intervalStart = segmentIntervalEnd;
+                ++currentModelSegment;
+                speciationModel.updateLikelihoodModelValues(currentModelSegment);
+
+                // handle any events that perfectly coincide with this event time
+                // de-facto override of ++
+                while (intervalEnd == segmentIntervalEnd) {
+                    logL += processEvent(i,currentModelSegment,intervalEnd);
+                    ++i;
+                    if (i >= treeIntervals.getIntervalCount()) {
+                        abort = true;
+                        break;
+                    }
+                    intervalStart = treeIntervals.getIntervalTime(i);
+                    intervalEnd = getIntervalEnd(i);
+                    nLineages = treeIntervals.getLineageCount(i);
+                }
+
+            }
+
+            if ( !abort ) {
+                if (intervalEnd > intervalStart) {
+                    logL += speciationModel.processInterval(currentModelSegment, intervalStart, intervalEnd, nLineages);
+                }
+
+                // Interval ends with a coalescent or sampling event at time intervalEnd
+                logL += processEvent(i,currentModelSegment,intervalEnd);
+            }
+        }
+
+        // origin branch is a fake branch that doesn't exist in the tree, now compute its contribution
+        logL += speciationModel.processOrigin(currentModelSegment, treeIntervals.getTotalDuration());
+
+        logL += speciationModel.logConditioningProbability();
+
+        return logL;
+    }
+
+    private double getIntervalEnd(int i) {
+//        System.err.println("getIntervalEnd(" + i + "); interval starts at " + treeIntervals.getIntervalTime(i));
+        double intervalEnd;
+        if (i < treeIntervals.getIntervalCount() - 1) {
+            intervalEnd = treeIntervals.getIntervalTime(i+1);
+        } else {
+            intervalEnd = treeIntervals.getIntervalTime(i) + treeIntervals.getInterval(i);
+        }
+        return intervalEnd;
+    }
+
+    private double processEvent(int i, int currentModelSegment, double intervalEnd) {
+//        System.err.println("Processing event " + i + " in segment " + currentModelSegment + " ending at " + intervalEnd);
+//        // TODO add method to get number of breaks to avoid this malarkey
+//        int fuck = 0;
+//        if ( currentModelSegment >= speciationModel.getBreakPoints().length ) {
+//            currentModelSegment = speciationModel.getBreakPoints().length;
+//        }
+        double logL = 0.0;
+        if (treeIntervals.getIntervalType(i) == IntervalType.SAMPLE) {
+            logL += speciationModel.processSampling(currentModelSegment, intervalEnd);
+        } else if (treeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
+            logL += speciationModel.processCoalescence(currentModelSegment,intervalEnd);
+        } else {
+            throw new RuntimeException("Birth-death tree includes non birth/death/sampling event.");
+        }
+        return logL;
+    }
+
     private void fixTimes() {
 
         DefaultTreeModel cleanTree = new DefaultTreeModel(tree);

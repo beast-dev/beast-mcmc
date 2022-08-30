@@ -55,7 +55,9 @@ public class NativeZigZag {
                        NativeZigZagOptions options,
                        double[] mask,
                        double[] observed,
-                       double[] parameterSign) {
+                       double[] parameterSign,
+                       double[] lb,
+                       double[] ub) {
 
 
         if ((mask != null && dimension != mask.length) ||
@@ -65,8 +67,7 @@ public class NativeZigZag {
         if (mask == null){
             mask = allOneMask(dimension);
         }
-
-        int result = create(dimension, options, mask, observed, parameterSign);
+        int result = create(dimension, options, mask, parameterSign, lb, ub);
         if (result < 0) {
             throw new RuntimeException("Unable to create instance");
         }
@@ -85,8 +86,9 @@ public class NativeZigZag {
     private native int create(int dimension,
                               NativeZigZagOptions options,
                               double[] mask,
-                              double[] observed,
-                              double[] parameterSign);
+                              double[] parameterSign,
+                              double[] lowerBounds,
+                              double[] upperBounds);
 
     native int operate(int instanceNumber,
                        PrecisionColumnProvider columnProvider,
@@ -137,11 +139,11 @@ public class NativeZigZag {
                                double[] column,
                                double eventTime, int eventIndex, int eventType);
 
-    native MinimumTravelInformation getNextEventIrreversible(int instanceNumber,
-                                                             double[] position,
-                                                             double[] velocity,
-                                                             double[] action,
-                                                             double[] gradient);
+//    native MinimumTravelInformation getNextEventIrreversible(int instanceNumber,
+//                                                             double[] position,
+//                                                             double[] velocity,
+//                                                             double[] action,
+//                                                             double[] gradient);
     static {
         System.loadLibrary("zig_zag");
         INSTANCE = new NativeZigZag();

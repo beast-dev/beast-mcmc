@@ -290,6 +290,15 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     @Override
+    public double processUnsampledLineages(int nLineages, int sampledLineages) {
+        double lnL = 0;
+        if (rho > 0.0 && rho < 1.0) {
+            lnL += (nLineages - sampledLineages) * Math.log(1.0 - rho);
+        }
+        return lnL;
+    }
+
+    @Override
     public double processModelSegmentBreakPoint(int model, double intervalStart, double intervalEnd, int nLineages) {
         double lnL = nLineages * (logQ(model, intervalEnd) - logQ(model, intervalStart));
         if ( samplingProbability.getValue(model + 1) > 0.0 && samplingProbability.getValue(model + 1) < 1.0) {

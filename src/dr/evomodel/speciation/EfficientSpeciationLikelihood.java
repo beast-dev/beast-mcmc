@@ -50,6 +50,8 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
 
     private final double TOLERANCE = 1e-5;
 
+    private int nSampledLineages = 0;
+
     public EfficientSpeciationLikelihood(Tree tree, SpeciationModel speciationModel, Set<Taxon> exclude, String id) {
         super(tree, speciationModel, exclude, id);
 
@@ -178,7 +180,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
                     intervalEnd = getIntervalEnd(i);
                     nLineages = treeIntervals.getLineageCount(i);
                 }
-
+                logL += speciationModel.processUnsampledLineages(nLineages, nSampledLineages);
             }
 
             if ( !abort ) {
@@ -188,6 +190,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
 
                 // Interval ends with a coalescent or sampling event at time intervalEnd
                 logL += processEvent(i,currentModelSegment,intervalEnd);
+                nSampledLineages = 0;
             }
         }
 
@@ -220,6 +223,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         double logL = 0.0;
         if (treeIntervals.getIntervalType(i) == IntervalType.SAMPLE) {
             logL += speciationModel.processSampling(currentModelSegment, intervalEnd);
+            nSampledLineages ++;
         } else if (treeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
             logL += speciationModel.processCoalescence(currentModelSegment,intervalEnd);
         } else {

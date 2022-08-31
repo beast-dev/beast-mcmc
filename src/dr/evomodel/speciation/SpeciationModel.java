@@ -120,10 +120,6 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
         throw new RuntimeException("Not implemented");
     }
 
-    public double processUnsampledLineages(int nLineages, int sampledLineages) {
-        throw new RuntimeException("Not implemented");
-    }
-
     public double processCoalescence(int model, double tOld) {
         throw new RuntimeException("Not implemented");
     }

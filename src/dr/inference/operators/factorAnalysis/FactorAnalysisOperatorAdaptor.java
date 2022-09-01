@@ -91,7 +91,7 @@ public interface FactorAnalysisOperatorAdaptor extends Reportable {
 
         @Override
         public String getReport() {
-            int repeats = 10000;
+            int repeats = 20000;
             int nFac = getNumberOfFactors();
             int nTaxa = getNumberOfTaxa();
             int dim = nFac * nTaxa;

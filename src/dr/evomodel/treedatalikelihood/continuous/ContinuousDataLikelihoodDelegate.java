@@ -83,6 +83,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     private boolean allowSingular = false;
 
     private TreeDataLikelihood callbackLikelihood = null;
+    private ConditionalTraitSimulationHelper extensionHelper = null;
 
     public ContinuousDataLikelihoodDelegate(Tree tree,
                                             DiffusionProcessDelegate diffusionProcessDelegate,
@@ -303,6 +304,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     public TreeDataLikelihood getCallbackLikelihood() {
         return callbackLikelihood;
+    }
+
+    public ConditionalTraitSimulationHelper getExtensionHelper() {
+        return extensionHelper;
     }
 
     public PrecisionType getPrecisionType() {
@@ -653,6 +658,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     @Override
     public void setCallback(TreeDataLikelihood treeDataLikelihood) {
         this.callbackLikelihood = treeDataLikelihood;
+    }
+
+    public void setExtensionHelper() {
+        this.extensionHelper = new ConditionalTraitSimulationHelper(callbackLikelihood);
     }
 
     @Override

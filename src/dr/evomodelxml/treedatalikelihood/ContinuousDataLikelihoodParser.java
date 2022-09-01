@@ -205,6 +205,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
         }
 
+        delegate.setExtensionHelper();
+
         return treeDataLikelihood;
     }
 

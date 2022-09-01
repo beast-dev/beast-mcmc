@@ -2,6 +2,7 @@ package dr.inference.operators.factorAnalysis;
 
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ConditionalTraitSimulationHelper;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.Matrix;
@@ -249,7 +250,8 @@ public interface FactorAnalysisOperatorAdaptor extends Reportable {
 
             this.precision = factorLikelihood.getPrecision();
             this.data = factorLikelihood.getParameter();
-            this.factorSimulationHelper = new ConditionalTraitSimulationHelper(treeLikelihood);
+            this.factorSimulationHelper =
+                    ((ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate()).getExtensionHelper();
 
             //TODO: (below)
 //            if (factorSimulationHelper.getTreeTrait().getTraitName() != factorLikelihood.getTipTraitName()) {

@@ -2,6 +2,8 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.math.matrixAlgebra.Vector;
+import dr.xml.Reportable;
 
 import java.util.HashMap;
 
@@ -11,7 +13,7 @@ import java.util.HashMap;
  */
 
 
-public class ConditionalTraitSimulationHelper {
+public class ConditionalTraitSimulationHelper implements Reportable {
 
     private final TreeDataLikelihood treeLikelihood;
     private final TreeTrait treeTrait;
@@ -62,6 +64,7 @@ public class ConditionalTraitSimulationHelper {
         int dimTrait = model.getTraitDimension();
 
         if (model == topDataModel) {
+            treeLikelihood.fireModelChanged();
             return (double[]) treeTrait.getTrait(treeLikelihood.getTree(), null);
         }
 
@@ -77,7 +80,7 @@ public class ConditionalTraitSimulationHelper {
 
         int fullOffset = helper.traitOffset;
         int thisOffset = 0;
-        int dimAbove = helper.parent.getDataDimension();
+        int dimAbove = helper.parent.getTraitDimension();
         for (int i = 0; i < nTaxa; i++) {
             System.arraycopy(fullTraitsAbove, fullOffset, traitsAbove, thisOffset, helper.traitDimension);
             fullOffset += dimAbove;
@@ -90,6 +93,30 @@ public class ConditionalTraitSimulationHelper {
     public double[] drawTraitsBelow(ContinuousTraitPartialsProvider model) {
         double[] aboveTraits = drawTraitsAbove(model);
         return model.drawTraitsBelowConditionalOnDataAndTraitsAbove(aboveTraits);
+    }
+
+
+    @Override
+    public String getReport() {
+        int repeats = 10000;
+
+        double[] mean = drawTraitsAbove(topDataModel);
+        for (int i = 1; i < repeats; i++) {
+            double[] draw = drawTraitsAbove(topDataModel);
+            for (int j = 0; j < draw.length; j++) {
+                mean[j] += draw[j];
+            }
+        }
+
+        for (int i = 0; i < mean.length; i++) {
+            mean[i] /= repeats;
+        }
+
+        StringBuilder sb = new StringBuilder("Trait simulation report:\n\ttree trait mean: ");
+        sb.append(new Vector(mean));
+        sb.append("\n");
+
+        return sb.toString();
     }
 
 

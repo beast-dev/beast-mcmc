@@ -33,6 +33,8 @@ import dr.evomodel.bigfasttree.ModelCompressedBigFastTreeIntervals;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
+import dr.math.MathUtils;
+import dr.math.distributions.BetaDistribution;
 
 import java.util.Set;
 
@@ -156,6 +158,34 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
                     }
                 }
             }
+        }
+        boolean adjustedBirths = false;
+        for (int i = 0; i < cleanTree.getInternalNodeCount(); i++) {
+            // TODO we can be lazy since we only do this once but a linear search is still sad
+            NodeRef node = cleanTree.getInternalNode(i);
+            double thisNodeTime = cleanTree.getNodeHeight(node);
+            if (thisNodeTime == 0.0) {
+                adjustedBirths = true;
+                System.err.println("Some births were found at time 0.0 and moved (by no more than " + TOLERANCE + ") to avoid numerical issues.");
+                cleanTree.setNodeHeight(node, TOLERANCE * MathUtils.nextBeta(2.0,1.0));
+            } else {
+                for (int j = 0; j < intervalTimes.length; j++) {
+                    if (thisNodeTime == intervalTimes[j]) {
+                        adjustedBirths = true;
+                        double bound = thisNodeTime > TOLERANCE ? TOLERANCE : thisNodeTime;
+                        double dt = bound * MathUtils.nextBeta(2.0,1.0);
+                        if( MathUtils.nextBoolean() ) {
+                            dt = -dt;
+                        }
+                        System.err.println("Adusting time " + thisNodeTime + " to " + (thisNodeTime + dt));
+                        cleanTree.setNodeHeight(node,thisNodeTime + dt);
+                        break;
+                    }
+                }
+            }
+        }
+        if (adjustedBirths) {
+            System.err.println("Some births were exactly at event-sampling times and have been moved (by no more than " + TOLERANCE + ") to avoid numerical issues.");
         }
         tree = cleanTree;
 //        System.err.println("Adjusted tip times to match interval times.");

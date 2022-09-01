@@ -446,7 +446,7 @@
         <message>
             Check extended traits of joint model
         </message>
-        <actual regex="factor mean:\s+(.*)\n">
+        <actual regex="Factor mean:\s+(.*)\n">
             <cachedReport idref="loadingsOpReport"/>
         </actual>
         <expected>

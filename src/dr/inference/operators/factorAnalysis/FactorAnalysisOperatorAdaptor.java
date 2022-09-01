@@ -91,7 +91,7 @@ public interface FactorAnalysisOperatorAdaptor extends Reportable {
 
         @Override
         public String getReport() {
-            int repeats = 1000000;
+            int repeats = 10000;
             int nFac = getNumberOfFactors();
             int nTaxa = getNumberOfTaxa();
             int dim = nFac * nTaxa;
@@ -107,12 +107,12 @@ public interface FactorAnalysisOperatorAdaptor extends Reportable {
                 for (int j = 0; j < nTaxa; j++) {
                     for (int k = 0; k < nFac; k++) {
                         double x = getFactorValue(k, j);
-                        sums[k * nTaxa + j] += x;
+                        sums[k + j * nFac] += x;
 
                         for (int l = 0; l < nTaxa; l++) {
                             for (int m = 0; m < nFac; m++) {
                                 double y = getFactorValue(m, l);
-                                sumSquares[k * nTaxa + j][m * nTaxa + l] += x * y;
+                                sumSquares[k + j * nFac][m + l * nFac] += x * y;
                             }
                         }
                     }
@@ -332,50 +332,9 @@ public interface FactorAnalysisOperatorAdaptor extends Reportable {
 
             StringBuilder sb = new StringBuilder(factorSimulationHelper.getReport());
             sb.append("\n\n");
-
-            int repeats = 10000;
-
-            int nTaxa = treeLikelihood.getTree().getExternalNodeCount();
-            int nFactors = factorLikelihood.getNumberOfFactors();
-            int dim = nFactors * nTaxa;
-
-            double[] mean = new double[dim];
-//            double[][] cov = new double[dim][dim];
-
-            for (int i = 0; i < repeats; i++) {
-                drawFactors();
-                for (int j = 0; j < dim; j++) {
-                    mean[j] += factors[j];
-//                    cov[j][j] += factors[j] * factors[j];
-//
-//                    for (int k = (j + 1); k < dim; k++) {
-//                        cov[j][k] += factors[j] * factors[k];
-//                        cov[k][j] = cov[j][k];
-//                    }
-                }
-            }
-
-            for (int i = 0; i < dim; i++) {
-                mean[i] /= repeats;
-//                for (int j = 0; j < dim; j++) {
-//                    cov[i][j] /= repeats;
-//                }
-            }
-
-//            for (int i = 0; i < dim; i++) {
-//                for (int j = 0; j < dim; j++) {
-//                    cov[i][j] -= mean[i] * mean[j];
-//                }
-//            }
-
-            sb.append(this.getClass() + " report:\n");
-            sb.append("\tfactor mean: ");
-            sb.append(new Vector(mean));
-//            sb.append("\n\n");
-//            sb.append("\tFactor covariance:\n");
-//            sb.append(new Matrix(cov));
-            sb.append("\n\nTaxon order:");
-            for (int i = 0; i < nTaxa; i++) {
+            sb.append(super.getReport());
+            sb.append("Taxon order:");
+            for (int i = 0; i < getNumberOfTaxa(); i++) {
                 sb.append(" " + treeLikelihood.getTree().getTaxonId(i));
             }
 

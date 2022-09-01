@@ -65,7 +65,7 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
         for (int i = 0; i < providers.length; i++) {
             subTraitMissingInds[i] = providers[i].getTraitMissingIndicators();
             subDataMissingInds[i] = providers[i].getDataMissingIndicators();
-            traitDims[i] = providers[i].getDataDimension();
+            dataDims[i] = providers[i].getDataDimension();
             traitDims[i] = providers[i].getTraitDimension();
         }
 

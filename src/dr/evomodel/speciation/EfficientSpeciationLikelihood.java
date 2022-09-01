@@ -140,7 +140,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         double[] intervalTimes = speciationModel.getBreakPoints();
         for (int i = 0; i < cleanTree.getExternalNodeCount(); i++) {
             // TODO we can be lazy since we only do this once but a linear search is still sad
-            NodeRef node = cleanTree.getNode(i);
+            NodeRef node = cleanTree.getExternalNode(i);
             double thisTipTime = cleanTree.getNodeHeight(node);
 //            System.err.println("Working on tip " + i + " at time " + thisTipTime);
             // TODO

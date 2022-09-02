@@ -19,7 +19,7 @@
 
 
 	<newick id="startingTree" usingHeights="true" usingDates="false">
-		((A:0.5,B:2.0):0.5,(C:1.0,D:2.0):2.0);
+		((A:0.5,B:2.0):1.5,(C:0.5,D:1.5):2.5);
 	</newick>
 
 
@@ -96,7 +96,7 @@
 		</actual>
 		<!-- computed in RevBayes -->
 		<expected>
-			-59.216119802848595555
+			-62.743773800135031138
 		</expected>
 	</assertEqual>
 
@@ -154,7 +154,7 @@
 		</actual>
 		<!-- computed in RevBayes -->
 		<expected>
-			-59.216119802848574238
+			-62.743773800135016927
 		</expected>
 	</assertEqual>
 
@@ -212,7 +212,7 @@
 		</actual>
 		<!-- computed in RevBayes -->
 		<expected>
-			-62.239121438612940551
+			-66.967407559018624852
 		</expected>
 	</assertEqual>
 
@@ -269,7 +269,7 @@
 		</actual>
 		<!-- computed in RevBayes -->
 		<expected>
-			-70.90398591801184125
+			-77.863729276278291991
 		</expected>
 	</assertEqual>
 

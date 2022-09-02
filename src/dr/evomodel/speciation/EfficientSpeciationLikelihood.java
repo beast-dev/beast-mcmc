@@ -177,7 +177,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
                         if( MathUtils.nextBoolean() ) {
                             dt = -dt;
                         }
-                        System.err.println("Adusting time " + thisNodeTime + " to " + (thisNodeTime + dt));
+//                        System.err.println("Adusting time " + thisNodeTime + " to " + (thisNodeTime + dt));
                         cleanTree.setNodeHeight(node,thisNodeTime + dt);
                         break;
                     }

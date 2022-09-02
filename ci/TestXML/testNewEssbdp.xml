@@ -19,7 +19,7 @@
 
 
 	<newick id="startingTree" usingHeights="true" usingDates="false">
-		((A:1.0,B:2.0):1.0,(C:1.0,D:2.0):2.0)
+		((A:0.5,B:1.5):1.0,(C:1.0,D:2.0):2.0);
 	</newick>
 
 
@@ -94,9 +94,9 @@
 				<speciationLikelihood idref="speciation1"/>
 			</report>
 		</actual>
-		<!-- computed in NewSsbdp -->
+		<!-- computed in RevBayes -->
 		<expected>
-			-66.30970351360976
+			-59.216119790061711115
 		</expected>
 	</assertEqual>
 
@@ -152,9 +152,9 @@
 				<speciationLikelihood idref="speciation2"/>
 			</report>
 		</actual>
-		<!-- computed in NewSsbdp -->
+		<!-- computed in RevBayes -->
 		<expected>
-			-66.30970351360976
+			-59.216119790061689798
 		</expected>
 	</assertEqual>
 
@@ -201,7 +201,7 @@
 		</speciesTree>
 	</speciationLikelihood>
 
-	<assertEqual tolerance="1e4" verbose="true" charactersToStrip="\[\],">
+	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
 		<message>
 			check multiple rate three interval case
 		</message>
@@ -212,7 +212,7 @@
 		</actual>
 		<!-- computed in RevBayes -->
 		<expected>
-			0
+			-61.705441734213742677
 		</expected>
 	</assertEqual>
 
@@ -269,7 +269,7 @@
 		</actual>
 		<!-- computed in RevBayes -->
 		<expected>
-			0
+			-72.886316544331634759
 		</expected>
 	</assertEqual>
 

@@ -130,8 +130,8 @@ public interface WrappedVector extends ReadableVector, WritableVector {
 
         final private int[] indices;
 
-        public Indexed(double[] buffer, int offset, int[] indices, int dim) {
-            super(buffer, offset, dim);
+        public Indexed(double[] buffer, int offset, int[] indices) {
+            super(buffer, offset, indices.length);
             this.indices = indices;
         }
 

@@ -311,8 +311,8 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
             System.arraycopy(partial, precisionType.getPrecisionOffset(dimTrait), p0, 0,
                     precisionType.getPrecisionLength(dimTrait));
 
-            WrappedVector.Indexed m0 = new WrappedVector.Indexed(partial, precisionType.getMeanOffset(dimTrait), wrappedIndices, dimTrait);
-            WrappedVector.Indexed x = new WrappedVector.Indexed(aboveTraits, offset, wrappedIndices, dimTrait);
+            WrappedVector.Indexed m0 = new WrappedVector.Indexed(partial, precisionType.getMeanOffset(dimTrait), wrappedIndices);
+            WrappedVector.Indexed x = new WrappedVector.Indexed(aboveTraits, offset, wrappedIndices);
 
 
             CommonOps.add(P0, P, Q);

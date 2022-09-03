@@ -252,7 +252,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                         MultivariateNormalDistribution.nextMultivariateNormalCholesky(
                                 cM2, // input mean
                                 new WrappedMatrix.WrappedDenseMatrix(cC2), 1.0, // input variance
-                                new WrappedVector.Indexed(sample, offsetSample, missing, missing.length), // output sample
+                                new WrappedVector.Indexed(sample, offsetSample, missing), // output sample
                                 tmpEpsilon);
                     } else {
                         double[][] cC2 = getCholeskyOfVariance(cV2.getData(), missing.length);
@@ -261,7 +261,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                         MultivariateNormalDistribution.nextMultivariateNormalCholesky(
                                 cM2, // input mean
                                 new WrappedMatrix.ArrayOfArray(cC2), 1.0, // input variance
-                                new WrappedVector.Indexed(sample, offsetSample, missing, missing.length), // output sample
+                                new WrappedVector.Indexed(sample, offsetSample, missing), // output sample
                                 tmpEpsilon);
                     }
 

@@ -1109,7 +1109,7 @@ public class MissingOps {
                 dim, dim);
 
 
-        WrappedVector.Indexed subMean = new WrappedVector.Indexed(buffer, 0, latentIndices, nonZeroCount);
+        WrappedVector.Indexed subMean = new WrappedVector.Indexed(buffer, 0, latentIndices);
 
 
         double[] latentDraw = MultivariateNormalDistribution.nextMultivariateNormalVariance(

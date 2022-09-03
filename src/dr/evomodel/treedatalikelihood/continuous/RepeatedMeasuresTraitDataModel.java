@@ -51,7 +51,7 @@ import java.util.Arrays;
  * @author Marc A. Suchard
  * @author Gabriel Hassler
  */
-public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel implements ContinuousTraitPartialsProvider,
+public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel implements FullPrecisionContinuousTraitPartialsProvider,
         ModelExtensionProvider.NormalExtensionProvider {
 
     private final String traitName;
@@ -247,12 +247,17 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         return getExtensionVariance();
     }
 
+    @Override
+    public MatrixParameterInterface getExtensionPrecision() {
+        return getExtensionPrecisionParameter(); //TODO: deprecate
+    }
+
     public void getMeanTipVariances(DenseMatrix64F samplingVariance, DenseMatrix64F samplingComponent) {
         CommonOps.scale(1.0, samplingVariance, samplingComponent);
     }
 
     @Override
-    public MatrixParameterInterface getExtensionPrecision() {
+    public MatrixParameterInterface getExtensionPrecisionParameter() {
         checkVariableChanged();
         return samplingPrecisionParameter;
     }
@@ -313,7 +318,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
             CommonOps.add(P0, P, Q);
             MissingOps.safeInvert2(Q, V, false);
 
-            MissingOps.weightedAverage(m0, P0, x, P, n, V, dimTrait);
+            MissingOps.safeWeightedAverage(m0, P0, x, P, n, V, dimTrait);
 
             double[] sample = MissingOps.nextPossiblyDegenerateNormal(n, V);
 

@@ -1,10 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
-import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.inference.model.MatrixParameterInterface;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
@@ -19,10 +16,9 @@ import org.ejml.ops.CommonOps;
 public class RepeatedMeasuresWishartStatistics implements ConjugateWishartStatisticsProvider {
 
 
-    private final ModelExtensionProvider.NormalExtensionProvider traitModel;
+    private final FullPrecisionContinuousTraitPartialsProvider traitModel;
     private final Tree tree;
-    private final TreeTrait tipTrait;
-    private final ContinuousExtensionDelegate extensionDelegate;
+    private final ConditionalTraitSimulationHelper extensionHelper;
     private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
     private final double[] outerProduct;
     private final int dimTrait;
@@ -30,15 +26,14 @@ public class RepeatedMeasuresWishartStatistics implements ConjugateWishartStatis
     private final double[] buffer;
     private boolean forceResample;
 
-    public RepeatedMeasuresWishartStatistics(ModelExtensionProvider.NormalExtensionProvider traitModel,
+    public RepeatedMeasuresWishartStatistics(FullPrecisionContinuousTraitPartialsProvider traitModel,
                                              TreeDataLikelihood treeLikelihood,
                                              boolean forceResample) {
         this.traitModel = traitModel;
         this.tree = treeLikelihood.getTree();
 
-        this.tipTrait = treeLikelihood.getTreeTrait(traitModel.getTipTraitName());
         this.likelihoodDelegate = (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate();
-        this.extensionDelegate = traitModel.getExtensionDelegate(likelihoodDelegate, tipTrait, tree);
+        this.extensionHelper = likelihoodDelegate.getExtensionHelper();
 
         this.dimTrait = traitModel.getTraitDimension();
         this.nTaxa = tree.getExternalNodeCount();
@@ -53,7 +48,7 @@ public class RepeatedMeasuresWishartStatistics implements ConjugateWishartStatis
 
     @Override
     public MatrixParameterInterface getPrecisionParameter() {
-        return traitModel.getExtensionPrecision();
+        return traitModel.getExtensionPrecisionParameter();
     }
 
     @Override
@@ -62,12 +57,15 @@ public class RepeatedMeasuresWishartStatistics implements ConjugateWishartStatis
         if (forceResample) {
             likelihoodDelegate.fireModelChanged();
         }
-        double[] treeValues = traitModel.transformTreeTraits((double[]) tipTrait.getTrait(tree, null));
-        double[] dataValues = extensionDelegate.getExtendedValues(treeValues);
+
+        ConditionalTraitSimulationHelper.JointSamples traits = extensionHelper.drawTraitsAboveAndBelow(traitModel);
+
+        double[] valuesAbove = traits.getTraitsAbove();
+        double[] valuesBelow = traits.getTraitsBelow();
 
         DenseMatrix64F XminusY = DenseMatrix64F.wrap(nTaxa, dimTrait, buffer);
-        DenseMatrix64F X = DenseMatrix64F.wrap(nTaxa, dimTrait, treeValues);
-        DenseMatrix64F Y = DenseMatrix64F.wrap(nTaxa, dimTrait, dataValues);
+        DenseMatrix64F X = DenseMatrix64F.wrap(nTaxa, dimTrait, valuesAbove);
+        DenseMatrix64F Y = DenseMatrix64F.wrap(nTaxa, dimTrait, valuesBelow);
 
         CommonOps.subtract(X, Y, XminusY);
 

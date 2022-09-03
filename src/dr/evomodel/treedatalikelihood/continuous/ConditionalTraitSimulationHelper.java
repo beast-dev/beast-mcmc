@@ -95,6 +95,31 @@ public class ConditionalTraitSimulationHelper implements Reportable {
         return model.drawTraitsBelowConditionalOnDataAndTraitsAbove(aboveTraits);
     }
 
+    public class JointSamples {
+
+        private final double[] traitsAbove;
+        private final double[] traitsBelow;
+
+        public JointSamples(double[] traitsAbove, double[] traitsBelow) {
+            this.traitsAbove = traitsAbove;
+            this.traitsBelow = traitsBelow;
+        }
+
+        public double[] getTraitsAbove() {
+            return traitsAbove;
+        }
+
+        public double[] getTraitsBelow() {
+            return traitsBelow;
+        }
+    }
+
+    public JointSamples drawTraitsAboveAndBelow(ContinuousTraitPartialsProvider model) {
+        double[] aboveTraits = drawTraitsAbove(model);
+        double[] belowTraits = model.drawTraitsBelowConditionalOnDataAndTraitsAbove(aboveTraits);
+        return new JointSamples(aboveTraits, belowTraits);
+    }
+
 
     @Override
     public String getReport() {

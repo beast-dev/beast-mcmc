@@ -33,6 +33,7 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
+import dr.xml.Reportable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -44,7 +45,7 @@ import java.util.List;
  * @author Yuwei Bao
  * @author Marc A. Suchard
  */
-public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implements Citable {
+public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implements Citable, Reportable {
 
     private final List<Tree> trees;
     private final Parameter logPopSizeParameter;
@@ -68,6 +69,11 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         this.smoothFunction = new GlobalSigmoidSmoothFunction();
         this.populationSizeInverse = new SmoothSkygridPopulationSizeInverse(logPopSizeParameter, gridPointParameter, smoothFunction, smoothRate);
         this.lineageCount = new SmoothLineageCount(trees.get(0), smoothFunction, smoothRate);
+    }
+
+    @Override
+    public String getReport() {
+        return "smoothSkygrid(" + getLogLikelihood() + ")";
     }
 
     class SmoothLineageCount {

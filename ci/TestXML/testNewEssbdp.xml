@@ -355,10 +355,6 @@
 	</treeModel>
 
 
-<!--	&lt;!&ndash; ########## &ndash;&gt;-->
-<!--	&lt;!&ndash; # CASE 6 # &ndash;&gt;-->
-<!--	&lt;!&ndash; ########## &ndash;&gt;-->
-
 <!--	<newBirthDeathSerialSampling id="new.bdss6" units="years" hasFinalSample="false" conditionOnSurvival="false">-->
 <!--		<birthRate>-->
 <!--			<parameter id="bdss6.birthRate" value ="8.47 2.88 1.82" lower="0.0"/>-->
@@ -411,9 +407,9 @@
 <!--		</expected>-->
 <!--	</assertEqual>-->
 
-<!--	&lt;!&ndash; ########## &ndash;&gt;-->
-<!--	&lt;!&ndash; # CASE 7 # &ndash;&gt;-->
-<!--	&lt;!&ndash; ########## &ndash;&gt;-->
+<!--	 ########## -->
+<!--	 # CASE 7 # -->
+<!--	 ########## -->
 
 <!--	<newBirthDeathSerialSampling id="new.bdss7" units="years" hasFinalSample="false" conditionOnSurvival="false">-->
 <!--		<birthRate>-->

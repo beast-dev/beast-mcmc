@@ -354,116 +354,116 @@
 		</nodeHeights>
 	</treeModel>
 
-<!--	&lt;!&ndash;	 ########## &ndash;&gt;-->
-<!--	&lt;!&ndash;	 # CASE 6 # &ndash;&gt;-->
-<!--	&lt;!&ndash;	 ########## &ndash;&gt;-->
+	<!--	 ########## -->
+	<!--	 # CASE 6 # -->
+	<!--	 ########## -->
 
-<!--	<newBirthDeathSerialSampling id="new.bdss6" units="years" hasFinalSample="false" conditionOnSurvival="false">-->
-<!--		<birthRate>-->
-<!--			<parameter id="bdss6.birthRate" value ="8.47 2.88 1.82" lower="0.0"/>-->
-<!--		</birthRate>-->
-<!--		<deathRate>-->
-<!--			<parameter id="bdss6.deathRate" value ="4.89 2.67 3.23" lower="0.0"/>-->
-<!--		</deathRate>-->
-<!--		<samplingRate>-->
-<!--			<parameter id="bdss6.samplingRate" value ="3.42 2.95 1.21" lower="0.0"/>-->
-<!--		</samplingRate>-->
-<!--		<samplingProbability>-->
-<!--			<parameter id="bdss6.samplingProbability" value ="0.07  0.22  0.18" lower="0.0" upper="1.0"/>-->
-<!--		</samplingProbability>-->
-<!--		<treatmentProbability>-->
-<!--			<parameter id="bdss6.treatmentProbability" value ="0.89 0.93 0.79" lower="0.0" upper="1.0"/>-->
-<!--		</treatmentProbability>-->
-<!--		<origin>-->
-<!--			<parameter id="bdss6.origin" value="5.123" lower="0.0"/>-->
-<!--		</origin>-->
-<!--		<cutOff>-->
-<!--			<parameter value="6.0"/>-->
-<!--		</cutOff>-->
-<!--		<numGridPoints>-->
-<!--			<parameter value="3"/>-->
-<!--		</numGridPoints>-->
-<!--	</newBirthDeathSerialSampling>-->
-
-
-<!--	<speciationLikelihood id="speciation6" useNewLoop="true">-->
-<!--		<model>-->
-<!--			<birthDeathSerialSampling idref="new.bdss6"/>-->
-<!--		</model>-->
-<!--		<speciesTree>-->
-<!--			<treeModel idref="treeModel2"/>-->
-<!--		</speciesTree>-->
-<!--	</speciationLikelihood>-->
-
-<!--	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">-->
-<!--		<message>-->
-<!--			check multiple samples at every sampling event-->
-<!--		</message>-->
-<!--		<actual regex="lnL:\s(.*?)\n">-->
-<!--			<report>-->
-<!--				<speciationLikelihood idref="speciation6"/>-->
-<!--			</report>-->
-<!--		</actual>-->
-<!--		&lt;!&ndash; computed in RevBayes &ndash;&gt;-->
-<!--		<expected>-->
-<!--			-115.15763143730394802-->
-<!--		</expected>-->
-<!--	</assertEqual>-->
-
-<!--&lt;!&ndash;	 ########## &ndash;&gt;-->
-<!--&lt;!&ndash;	 # CASE 7 # &ndash;&gt;-->
-<!--&lt;!&ndash;	 ########## &ndash;&gt;-->
-
-<!--	<newBirthDeathSerialSampling id="new.bdss7" units="years" hasFinalSample="false" conditionOnSurvival="false">-->
-<!--		<birthRate>-->
-<!--			<parameter id="bdss7.birthRate" value ="8.47 2.88 1.82" lower="0.0"/>-->
-<!--		</birthRate>-->
-<!--		<deathRate>-->
-<!--			<parameter id="bdss7.deathRate" value ="4.89 2.67 3.23" lower="0.0"/>-->
-<!--		</deathRate>-->
-<!--		<samplingRate>-->
-<!--			<parameter id="bdss7.samplingRate" value ="3.42 2.95 1.21" lower="0.0"/>-->
-<!--		</samplingRate>-->
-<!--		<samplingProbability>-->
-<!--			<parameter id="bdss7.samplingProbability" value ="0.07  0.22  0.18" lower="0.0" upper="1.0"/>-->
-<!--		</samplingProbability>-->
-<!--		<treatmentProbability>-->
-<!--			<parameter id="bdss7.treatmentProbability" value ="0.89 0.93 0.79" lower="0.0" upper="1.0"/>-->
-<!--		</treatmentProbability>-->
-<!--		<origin>-->
-<!--			<parameter id="bdss7.origin" value="5.123" lower="0.0"/>-->
-<!--		</origin>-->
-<!--		<cutOff>-->
-<!--			<parameter value="18.0"/>-->
-<!--		</cutOff>-->
-<!--		<numGridPoints>-->
-<!--			<parameter value="3"/>-->
-<!--		</numGridPoints>-->
-<!--	</newBirthDeathSerialSampling>-->
+	<newBirthDeathSerialSampling id="new.bdss6" units="years" hasFinalSample="false" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss6.birthRate" value ="8.47 2.88 1.82" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss6.deathRate" value ="4.89 2.67 3.23" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss6.samplingRate" value ="3.42 2.95 1.21" lower="0.0"/>
+		</samplingRate>
+		<samplingProbability>
+			<parameter id="bdss6.samplingProbability" value ="0.07  0.22  0.18" lower="0.0" upper="1.0"/>
+		</samplingProbability>
+		<treatmentProbability>
+			<parameter id="bdss6.treatmentProbability" value ="0.89 0.93 0.79" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<origin>
+			<parameter id="bdss6.origin" value="5.123" lower="0.0"/>
+		</origin>
+		<cutOff>
+			<parameter value="6.0"/>
+		</cutOff>
+		<numGridPoints>
+			<parameter value="3"/>
+		</numGridPoints>
+	</newBirthDeathSerialSampling>
 
 
-<!--	<speciationLikelihood id="speciation7" useNewLoop="true">-->
-<!--		<model>-->
-<!--			<birthDeathSerialSampling idref="new.bdss7"/>-->
-<!--		</model>-->
-<!--		<speciesTree>-->
-<!--			<treeModel idref="treeModel2"/>-->
-<!--		</speciesTree>-->
-<!--	</speciationLikelihood>-->
+	<speciationLikelihood id="speciation6" useNewLoop="true">
+		<model>
+			<birthDeathSerialSampling idref="new.bdss6"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel2"/>
+		</speciesTree>
+	</speciationLikelihood>
 
-<!--	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">-->
-<!--		<message>-->
-<!--			check 2 grid points beyond origin-->
-<!--		</message>-->
-<!--		<actual regex="lnL:\s(.*?)\n">-->
-<!--			<report>-->
-<!--				<speciationLikelihood idref="speciation7"/>-->
-<!--			</report>-->
-<!--		</actual>-->
-<!--		&lt;!&ndash; computed in RevBayes &ndash;&gt;-->
-<!--		<expected>-->
-<!--			-136.35872826819391435-->
-<!--		</expected>-->
-<!--	</assertEqual>-->
+	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+		<message>
+			check multiple samples at every sampling event
+		</message>
+		<actual regex="lnL:\s(.*?)\n">
+			<report>
+				<speciationLikelihood idref="speciation6"/>
+			</report>
+		</actual>
+		<!-- computed in RevBayes -->
+		<expected>
+			-110.50367108714641518
+		</expected>
+	</assertEqual>
+
+<!--	 ########## -->
+<!--	 # CASE 7 # -->
+<!--	 ########## -->
+
+	<newBirthDeathSerialSampling id="new.bdss7" units="years" hasFinalSample="false" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss7.birthRate" value ="8.47 2.88 1.82" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss7.deathRate" value ="4.89 2.67 3.23" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss7.samplingRate" value ="3.42 2.95 1.21" lower="0.0"/>
+		</samplingRate>
+		<samplingProbability>
+			<parameter id="bdss7.samplingProbability" value ="0.07  0.22  0.18" lower="0.0" upper="1.0"/>
+		</samplingProbability>
+		<treatmentProbability>
+			<parameter id="bdss7.treatmentProbability" value ="0.89 0.93 0.79" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<origin>
+			<parameter id="bdss7.origin" value="5.123" lower="0.0"/>
+		</origin>
+		<cutOff>
+			<parameter value="18.0"/>
+		</cutOff>
+		<numGridPoints>
+			<parameter value="3"/>
+		</numGridPoints>
+	</newBirthDeathSerialSampling>
+
+
+	<speciationLikelihood id="speciation7" useNewLoop="true">
+		<model>
+			<birthDeathSerialSampling idref="new.bdss7"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel2"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+		<message>
+			check 2 grid points beyond origin
+		</message>
+		<actual regex="lnL:\s(.*?)\n">
+			<report>
+				<speciationLikelihood idref="speciation7"/>
+			</report>
+		</actual>
+		<!-- computed in RevBayes -->
+		<expected>
+			-131.70476791803639571
+		</expected>
+	</assertEqual>
 
 </beast>

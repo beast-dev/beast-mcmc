@@ -354,6 +354,9 @@
 		</nodeHeights>
 	</treeModel>
 
+<!--	&lt;!&ndash;	 ########## &ndash;&gt;-->
+<!--	&lt;!&ndash;	 # CASE 6 # &ndash;&gt;-->
+<!--	&lt;!&ndash;	 ########## &ndash;&gt;-->
 
 <!--	<newBirthDeathSerialSampling id="new.bdss6" units="years" hasFinalSample="false" conditionOnSurvival="false">-->
 <!--		<birthRate>-->
@@ -407,9 +410,9 @@
 <!--		</expected>-->
 <!--	</assertEqual>-->
 
-<!--	 ########## -->
-<!--	 # CASE 7 # -->
-<!--	 ########## -->
+<!--&lt;!&ndash;	 ########## &ndash;&gt;-->
+<!--&lt;!&ndash;	 # CASE 7 # &ndash;&gt;-->
+<!--&lt;!&ndash;	 ########## &ndash;&gt;-->
 
 <!--	<newBirthDeathSerialSampling id="new.bdss7" units="years" hasFinalSample="false" conditionOnSurvival="false">-->
 <!--		<birthRate>-->

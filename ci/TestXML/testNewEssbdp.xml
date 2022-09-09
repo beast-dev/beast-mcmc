@@ -466,4 +466,60 @@
 		</expected>
 	</assertEqual>
 
+	<!--	 ########## -->
+	<!--	 # CASE 8 # -->
+	<!--	 ########## -->
+
+	<newBirthDeathSerialSampling id="new.bdss8" units="years" hasFinalSample="false" conditionOnSurvival="false">
+		<birthRate>
+			<parameter id="bdss8.birthRate" value ="8.47 2.88 1.82" lower="0.0"/>
+		</birthRate>
+		<deathRate>
+			<parameter id="bdss8.deathRate" value ="4.89 2.67 3.23" lower="0.0"/>
+		</deathRate>
+		<samplingRate>
+			<parameter id="bdss8.samplingRate" value ="3.42 2.95 1.21" lower="0.0"/>
+		</samplingRate>
+		<samplingProbability>
+			<parameter id="bdss8.samplingProbability" value ="0.07  0.22  0.18" lower="0.0" upper="1.0"/>
+		</samplingProbability>
+		<treatmentProbability>
+			<parameter id="bdss8.treatmentProbability" value ="0.89 0.93 0.79" lower="0.0" upper="1.0"/>
+		</treatmentProbability>
+		<origin>
+			<parameter id="bdss8.origin" value="9.123" lower="0.0"/>
+		</origin>
+		<cutOff>
+			<parameter value="18.0"/>
+		</cutOff>
+		<numGridPoints>
+			<parameter value="3"/>
+		</numGridPoints>
+	</newBirthDeathSerialSampling>
+
+
+	<speciationLikelihood id="speciation8" useNewLoop="true">
+		<model>
+			<birthDeathSerialSampling idref="new.bdss8"/>
+		</model>
+		<speciesTree>
+			<treeModel idref="treeModel2"/>
+		</speciesTree>
+	</speciationLikelihood>
+
+	<assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+		<message>
+			check long origin
+		</message>
+		<actual regex="lnL:\s(.*?)\n">
+			<report>
+				<speciationLikelihood idref="speciation8"/>
+			</report>
+		</actual>
+		<!-- computed in RevBayes -->
+		<expected>
+			-161.58170731197213854
+		</expected>
+	</assertEqual>
+
 </beast>

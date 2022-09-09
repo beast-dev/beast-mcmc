@@ -397,7 +397,25 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         if (originTime.getValue(0) < rootAge) {
             return Double.NaN;
         } else {
-            return (logQ(model, originTime.getValue(0))) - logQ(model, rootAge);
+            double[] modelBreakPoints = getBreakPoints();
+            double logL = 0.0;
+
+            double origin = originTime.getValue(0);
+            double intervalStart = rootAge;
+            double segmentIntervalEnd = modelBreakPoints[model];
+
+            while (origin >= segmentIntervalEnd) { // TODO Maybe it's >= ?
+                logL += processModelSegmentBreakPoint(model, intervalStart, segmentIntervalEnd, 1);
+                intervalStart = segmentIntervalEnd;
+                ++model;
+                updateLikelihoodModelValues(model);
+                segmentIntervalEnd = modelBreakPoints[model];
+            }
+            if (intervalStart < origin) {
+                logL += logQ(model, origin) - logQ(model, intervalStart);
+            }
+
+            return logL;
         }
     }
 

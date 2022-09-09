@@ -554,7 +554,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         double eAt = Math.exp(A * (t - modelStartTimes[model]));
         dQCompute(model, t, dQ, eAt);
     }
-    
+
     private void dQCompute(int model, double t, double[] dQ, double eAt) {
 
         double dwell = t - modelStartTimes[model];
@@ -638,7 +638,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             Q_young = q(currentModelSegment, intervalStart);
         }
         this.savedQ = Q_Old;
-        
+
         if (partialQKnown) {
             // Only need 1 copy + 1 swap (instead of 2 copies)
             double[] tmp = partialQ;
@@ -714,21 +714,36 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
         double origin = originTime.getValue(0);
 
-        double qOrigin = q(currentModelSegment, origin);
-        double qRoot = q(currentModelSegment, totalDuration);
+        double[] modelBreakPoints = getBreakPoints();
 
-        double[] dQOrigin = dQEnd;
-        double[] dQRoot = dQStart;
+        double intervalStart = totalDuration;
 
-        dQCompute(currentModelSegment, origin, dQOrigin);
-        dQCompute(currentModelSegment, totalDuration, dQRoot);
-
-        for (int k = 0; k <= currentModelSegment; k++) {
-            gradient[birthIndex(k, numIntervals)] += dQOrigin[k * 4 + 0] / qOrigin - dQRoot[k * 4 + 0] / qRoot;
-            gradient[deathIndex(k, numIntervals)] += dQOrigin[k * 4 + 1] / qOrigin - dQRoot[k * 4 + 1] / qRoot;
-            gradient[samplingIndex(k, numIntervals)] += dQOrigin[k * 4 + 2] / qOrigin - dQRoot[k * 4 + 2] / qRoot;
-            gradient[fractionIndex(k, numIntervals)] += dQOrigin[k * 4 + 3] / qOrigin - dQRoot[k * 4 + 3] / qRoot;
+        while (origin >= modelBreakPoints[currentModelSegment]) { // TODO Maybe it's >= ?
+            final double segmentIntervalEnd = modelBreakPoints[currentModelSegment];
+            processGradientModelSegmentBreakPoint(gradient, currentModelSegment, intervalStart, segmentIntervalEnd, 1);
+            intervalStart = segmentIntervalEnd;
+            ++currentModelSegment;
+            updateGradientModelValues(currentModelSegment);
         }
+        if (intervalStart < origin) {
+            double qOrigin = q(currentModelSegment, origin);
+            double qIntervalStart = q(currentModelSegment, intervalStart);
+
+            double[] dQOrigin = dQEnd;
+            double[] dQIntervalStart = dQStart;
+
+            dQCompute(currentModelSegment, origin, dQOrigin);
+            dQCompute(currentModelSegment, intervalStart, dQIntervalStart);
+
+            for (int k = 0; k <= currentModelSegment; k++) {
+                gradient[birthIndex(k, numIntervals)] += dQOrigin[k * 4 + 0] / qOrigin - dQIntervalStart[k * 4 + 0] / qIntervalStart;
+                gradient[deathIndex(k, numIntervals)] += dQOrigin[k * 4 + 1] / qOrigin - dQIntervalStart[k * 4 + 1] / qIntervalStart;
+                gradient[samplingIndex(k, numIntervals)] += dQOrigin[k * 4 + 2] / qOrigin - dQIntervalStart[k * 4 + 2] / qIntervalStart;
+                gradient[fractionIndex(k, numIntervals)] += dQOrigin[k * 4 + 3] / qOrigin - dQIntervalStart[k * 4 + 3] / qIntervalStart;
+            }
+        }
+
+
     }
 
     @Override

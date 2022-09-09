@@ -268,7 +268,16 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     public double logConditioningProbability() {
         double logP = 0.0;
         if ( conditionOnSurvival ) {
-            logP -= Math.log(1.0 - p(0, originTime.getParameterValue(0)));
+            double origin = originTime.getParameterValue(0);
+            double[] modelBreakPoints = getBreakPoints();
+            int idx = modelBreakPoints.length - 2;
+            double intervalStart = modelBreakPoints[idx];
+            // Origin is probably near the last index, so we do a linear search forwards in time from there
+            while ( origin < intervalStart) {
+                --idx;
+                intervalStart = modelBreakPoints[idx];
+            }
+            logP -= Math.log(1.0 - p(idx, origin));
         }
         return logP;
     }

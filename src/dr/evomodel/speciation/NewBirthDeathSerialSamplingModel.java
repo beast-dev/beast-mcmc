@@ -729,17 +729,14 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             double qOrigin = q(currentModelSegment, origin);
             double qIntervalStart = q(currentModelSegment, intervalStart);
 
-            double[] dQOrigin = dQEnd;
-            double[] dQIntervalStart = dQStart;
-
-            dQCompute(currentModelSegment, origin, dQOrigin);
-            dQCompute(currentModelSegment, intervalStart, dQIntervalStart);
+            dQCompute(currentModelSegment, origin, dQEnd);
+            dQCompute(currentModelSegment, intervalStart, dQStart);
 
             for (int k = 0; k <= currentModelSegment; k++) {
-                gradient[birthIndex(k, numIntervals)] += dQOrigin[k * 4 + 0] / qOrigin - dQIntervalStart[k * 4 + 0] / qIntervalStart;
-                gradient[deathIndex(k, numIntervals)] += dQOrigin[k * 4 + 1] / qOrigin - dQIntervalStart[k * 4 + 1] / qIntervalStart;
-                gradient[samplingIndex(k, numIntervals)] += dQOrigin[k * 4 + 2] / qOrigin - dQIntervalStart[k * 4 + 2] / qIntervalStart;
-                gradient[fractionIndex(k, numIntervals)] += dQOrigin[k * 4 + 3] / qOrigin - dQIntervalStart[k * 4 + 3] / qIntervalStart;
+                gradient[birthIndex(k, numIntervals)] += dQEnd[k * 4 + 0] / qOrigin - dQStart[k * 4 + 0] / qIntervalStart;
+                gradient[deathIndex(k, numIntervals)] += dQEnd[k * 4 + 1] / qOrigin - dQStart[k * 4 + 1] / qIntervalStart;
+                gradient[samplingIndex(k, numIntervals)] += dQEnd[k * 4 + 2] / qOrigin - dQStart[k * 4 + 2] / qIntervalStart;
+                gradient[fractionIndex(k, numIntervals)] += dQEnd[k * 4 + 3] / qOrigin - dQStart[k * 4 + 3] / qIntervalStart;
             }
         }
 
@@ -748,7 +745,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public void logConditioningProbability(double[] gradient) {
-        throw new RuntimeException("Cannot yet condition ESSBDP for gradient.");
+        if ( conditionOnSurvival ) {
+            throw new RuntimeException("Cannot yet condition ESSBDP for gradient.");
+        }
     }
 
     @Override

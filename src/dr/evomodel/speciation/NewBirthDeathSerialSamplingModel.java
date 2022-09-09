@@ -748,6 +748,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     @Override
     public void logConditioningProbability(double[] gradient) {
+        throw new RuntimeException("Cannot yet condition ESSBDP for gradient.");
     }
 
     @Override

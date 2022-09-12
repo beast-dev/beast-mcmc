@@ -37,10 +37,9 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.*;
+import dr.evomodelxml.continuous.ContinuousTraitDataModelParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.List;
@@ -62,15 +61,12 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
     private static final String OPTIMAL_TRAITS = AbstractMultivariateTraitLikelihood.OPTIMAL_TRAITS;
 
     private static final String RECONSTRUCT_TRAITS = "reconstructTraits";
-    private static final String FORCE_COMPLETELY_MISSING = "forceCompletelyMissing";
     private static final String ALLOW_SINGULAR = "allowSingular";
-    public static final String FORCE_FULL_PRECISION = "forceFullPrecision";
     private static final String FORCE_DRIFT = "forceDrift";
     private static final String FORCE_OU = "forceOU";
 
     private static final String STRENGTH_OF_SELECTION_MATRIX = "strengthOfSelectionMatrix";
 
-    private static final String INTEGRATED_PROCESS = "integratedProcess";
 
     public static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
 
@@ -101,55 +97,17 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
                 treeModel, scaleByTime, useTreeLength);
 
-        final int dim = diffusionModel.getPrecisionmatrix().length;
-
         final String traitName;
-        boolean[] missingIndicators;
-//        Parameter sampleMissingParameter = null;
+
         ContinuousTraitPartialsProvider dataModel;
-        boolean useMissingIndices = true;
-        boolean integratedProcess = xo.getAttribute(INTEGRATED_PROCESS, false);
 
         if (xo.hasChildNamed(TreeTraitParserUtilities.TRAIT_PARAMETER)) {
-            TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
-
-            TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                    utilities.parseTraitsFromTaxonAttributes(xo, treeModel, true);
-            CompoundParameter traitParameter = returnValue.traitParameter;
-            missingIndicators = returnValue.getMissingIndicators();
-//            sampleMissingParameter = returnValue.sampleMissingParameter;
-            traitName = returnValue.traitName;
-            useMissingIndices = returnValue.useMissingIndices;
-
-            PrecisionType precisionType = PrecisionType.SCALAR;
-
-            if (xo.getAttribute(FORCE_FULL_PRECISION, false) ||
-                    (useMissingIndices && !xo.getAttribute(FORCE_COMPLETELY_MISSING, false))) {
-                precisionType = PrecisionType.FULL;
-            }
-
-            if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
-                utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndicators);
-            }
-
-//            System.err.println("Using precisionType == " + precisionType + " for data model.");
-
-            if (!integratedProcess) {
-                dataModel = new ContinuousTraitDataModel(traitName,
-                        traitParameter,
-                        missingIndicators, useMissingIndices,
-                        dim, precisionType);
-            } else {
-                dataModel = new IntegratedProcessTraitDataModel(traitName,
-                        traitParameter,
-                        missingIndicators, useMissingIndices,
-                        dim, precisionType);
-            }
+            dataModel = ContinuousTraitDataModelParser.parseContinuousTraitDataModel(xo);
         } else {  // Has ContinuousTraitPartialsProvider
             dataModel = (ContinuousTraitPartialsProvider) xo.getChild(ContinuousTraitPartialsProvider.class);
-            traitName = xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME);
         }
 
+        traitName = xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME);
         dataModel.setTipTraitName(getTipTraitName(traitName)); // TODO: not an ideal solution as the trait name could be set differently later
 
         ConjugateRootTraitPrior rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(xo, dataModel.getTraitDimension());
@@ -179,6 +137,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         DiffusionProcessDelegate diffusionProcessDelegate;
+        boolean integratedProcess = dataModel instanceof IntegratedProcessTraitDataModel; //TODO: can add to interface if that would be better
         if ((optimalTraitsModels != null && elasticModel != null) || xo.getAttribute(FORCE_OU, false)) {
             if (!integratedProcess) {
                 diffusionProcessDelegate = new OUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel);
@@ -206,43 +165,24 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         if (reconstructTraits) {
 
 //            if (missingIndices != null && missingIndices.size() == 0) {
-            if (!useMissingIndices) {
 
-                ProcessSimulationDelegate simulationDelegate =
-                        delegate.getPrecisionType() == PrecisionType.SCALAR ?
-                                new ConditionalOnTipsRealizedDelegate(traitName, treeModel,
-                                        diffusionModel, dataModel, rootPrior, rateTransformation, delegate) :
-                                new MultivariateConditionalOnTipsRealizedDelegate(traitName, treeModel,
-                                        diffusionModel, dataModel, rootPrior, rateTransformation, delegate);
+            ProcessSimulationDelegate simulationDelegate =
+                    delegate.getPrecisionType() == PrecisionType.SCALAR ?
+                            new ConditionalOnTipsRealizedDelegate(traitName, treeModel,
+                                    diffusionModel, dataModel, rootPrior, rateTransformation, delegate) :
+                            new MultivariateConditionalOnTipsRealizedDelegate(traitName, treeModel,
+                                    diffusionModel, dataModel, rootPrior, rateTransformation, delegate);
 
-                TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, simulationDelegate);
+            TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, simulationDelegate);
 
-                treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
+            treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
 
-            } else {
-
-                ProcessSimulationDelegate simulationDelegate =
-                        delegate.getPrecisionType() == PrecisionType.SCALAR ?
-                                new ConditionalOnTipsRealizedDelegate(traitName, treeModel,
-                                        diffusionModel, dataModel, rootPrior, rateTransformation, delegate) :
-                                new MultivariateConditionalOnTipsRealizedDelegate(traitName, treeModel,
-                                        diffusionModel, dataModel, rootPrior, rateTransformation, delegate);
-
-                TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, simulationDelegate);
-
-                treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
+            if (dataModel.usesMissingIndices()) {
 
                 ProcessSimulationDelegate fullConditionalDelegate = new TipRealizedValuesViaFullConditionalDelegate(
                         traitName, treeModel, diffusionModel, dataModel, rootPrior, rateTransformation, delegate);
 
                 treeDataLikelihood.addTraits(new ProcessSimulation(treeDataLikelihood, fullConditionalDelegate).getTreeTraits());
-                int[] partitionDimensions = dataModel.getPartitionDimensions();
-                if (partitionDimensions != null) {
-                    PartitionedTreeTraitProvider partitionedProvider =
-                            new PartitionedTreeTraitProvider(treeDataLikelihood.getTreeTraits(), partitionDimensions);
-                    treeDataLikelihood.addTraits(partitionedProvider.getTreeTraits());
-                }
-
 
 //                String partialTraitName = getPartiallyMissingTraitName(traitName);
 //
@@ -254,7 +194,18 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 //
 //                treeDataLikelihood.addTraits(partialTraitProvider.getTreeTraits());
             }
+
+            //TODO: remove below (should let ConditionalTraitSimulationHelper figure everything out)
+            int[] partitionDimensions = dataModel.getPartitionDimensions();
+            if (partitionDimensions.length > 1) {
+                PartitionedTreeTraitProvider partitionedProvider =
+                        new PartitionedTreeTraitProvider(treeDataLikelihood.getTreeTraits(), partitionDimensions);
+                treeDataLikelihood.addTraits(partitionedProvider.getTreeTraits());
+            }
+
         }
+
+        delegate.setExtensionHelper();
 
         return treeDataLikelihood;
     }
@@ -276,12 +227,10 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(MultivariateDiffusionModel.class),
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(CONJUGATE_ROOT_PRIOR, ConjugateRootTraitPrior.rules),
-            new XORRule(
-                    new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
-                            new ElementRule(Parameter.class),
-                    }),
+            new XORRule(new XMLSyntaxRule[]{
+                    new AndRule(ContinuousTraitDataModelParser.rules),
                     new ElementRule(ContinuousTraitPartialsProvider.class)
-            ),
+            }),
             new ElementRule(DRIFT_MODELS, new XMLSyntaxRule[]{
                     new ElementRule(BranchRateModel.class, 1, Integer.MAX_VALUE),
             }, true),
@@ -294,12 +243,9 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
             AttributeRule.newBooleanRule(RECIPROCAL_RATES, true),
             AttributeRule.newBooleanRule(RECONSTRUCT_TRAITS, true),
-            AttributeRule.newBooleanRule(FORCE_COMPLETELY_MISSING, true),
             AttributeRule.newBooleanRule(ALLOW_SINGULAR, true),
-            AttributeRule.newBooleanRule(FORCE_FULL_PRECISION, true),
             AttributeRule.newBooleanRule(FORCE_DRIFT, true),
             AttributeRule.newBooleanRule(FORCE_OU, true),
-            AttributeRule.newBooleanRule(INTEGRATED_PROCESS, true),
             AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME, true),
             TreeTraitParserUtilities.jitterRules(true),
     };

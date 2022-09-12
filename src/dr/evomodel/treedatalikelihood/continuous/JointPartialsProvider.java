@@ -6,7 +6,6 @@ import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
-import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
@@ -28,7 +27,8 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
     private final int dataDim;
 
     private final List<Integer> missingIndices;
-    private final boolean[] missingIndicators;
+    private final boolean[] missingDataIndicators;
+    private final boolean[] missingTraitIndicators;
 
     private final boolean defaultAllowSingular;
     private final Boolean computeDeterminant; // TODO: Maybe pass as argument?
@@ -56,8 +56,26 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
         this.traitDim = traitDim;
         this.dataDim = dataDim;
 
-        this.missingIndicators = setupMissingIndicators();
-        this.missingIndices = ContinuousTraitPartialsProvider.indicatorToIndices(missingIndicators);
+
+        boolean[][] subTraitMissingInds = new boolean[providers.length][0];
+        boolean[][] subDataMissingInds = new boolean[providers.length][0];
+        int[] traitDims = new int[providers.length];
+        int[] dataDims = new int[providers.length];
+
+        for (int i = 0; i < providers.length; i++) {
+            subTraitMissingInds[i] = providers[i].getTraitMissingIndicators();
+            subDataMissingInds[i] = providers[i].getDataMissingIndicators();
+            dataDims[i] = providers[i].getDataDimension();
+            traitDims[i] = providers[i].getTraitDimension();
+        }
+
+        int nTaxa = providers[0].getParameter().getParameterCount();
+
+
+        this.missingDataIndicators = mergeIndicators(subDataMissingInds, dataDims, nTaxa, dataDim);
+        this.missingTraitIndicators = mergeIndicators(subTraitMissingInds, traitDims, nTaxa, traitDim);
+
+        this.missingIndices = ContinuousTraitPartialsProvider.indicatorToIndices(missingDataIndicators);
 
         this.defaultAllowSingular = setDefaultAllowSingular();
         this.computeDeterminant = defaultAllowSingular; // TODO: not perfect behavior, should be based on actual value of `allowSingular`
@@ -80,18 +98,36 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
     }
 
 
-    private boolean[] setupMissingIndicators() {
-        int nTaxa = providers[0].getParameter().getParameterCount();
-        boolean[] indicators = new boolean[dataDim * nTaxa];
-        boolean[][] subIndicators = new boolean[providers.length][0];
-        for (int i = 0; i < providers.length; i++) {
-            subIndicators[i] = providers[i].getDataMissingIndicators();
-        }
+//    private boolean[] setupMissingIndicators() {
+//        int nTaxa = providers[0].getParameter().getParameterCount();
+//        boolean[] indicators = new boolean[dataDim * nTaxa];
+//        boolean[][] subIndicators = new boolean[providers.length][0];
+//        for (int i = 0; i < providers.length; i++) {
+//            subIndicators[i] = providers[i].getDataMissingIndicators();
+//        }
+//        for (int taxonI = 0; taxonI < nTaxa; taxonI++) {
+//            int offset = taxonI * dataDim;
+//
+//            for (int providerI = 0; providerI < providers.length; providerI++) {
+//                int srcDim = providers[providerI].getDataDimension();
+//                int srcOffset = taxonI * srcDim;
+//                System.arraycopy(subIndicators[providerI], srcOffset, indicators, offset, srcDim);
+//                offset += srcDim;
+//            }
+//        }
+//
+//        return indicators;
+//    }
+
+    private boolean[] mergeIndicators(boolean[][] subIndicators, int[] dims, int nTaxa, int dim) {
+
+        boolean[] indicators = new boolean[dim * nTaxa];
+
         for (int taxonI = 0; taxonI < nTaxa; taxonI++) {
-            int offset = taxonI * dataDim;
+            int offset = taxonI * dim;
 
             for (int providerI = 0; providerI < providers.length; providerI++) {
-                int srcDim = providers[providerI].getDataDimension();
+                int srcDim = dims[providerI];
                 int srcOffset = taxonI * srcDim;
                 System.arraycopy(subIndicators[providerI], srcOffset, indicators, offset, srcDim);
                 offset += srcDim;
@@ -99,6 +135,11 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
         }
 
         return indicators;
+    }
+
+    @Override
+    public boolean[] getTraitMissingIndicators() {
+        return missingTraitIndicators;
     }
 
 
@@ -142,6 +183,11 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
             dims[i] = providers[i].getTraitDimension();
         }
         return dims;
+    }
+
+    @Override
+    public double[] drawTraitsBelowConditionalOnDataAndTraitsAbove(double[] aboveTraits) {
+        return aboveTraits;
     }
 
     @Override
@@ -218,12 +264,26 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
 
     @Override
     public boolean[] getDataMissingIndicators() {
-        return missingIndicators;
+        return missingDataIndicators;
     }
 
     @Override
     public CompoundParameter getParameter() {
         return jointDataParameter;
+    }
+
+    @Override
+    public boolean usesMissingIndices() {
+        boolean useMissingIndices = false;
+        for (ContinuousTraitPartialsProvider provider : providers) {
+            useMissingIndices = useMissingIndices || provider.usesMissingIndices();
+        }
+        return useMissingIndices;
+    }
+
+    @Override
+    public ContinuousTraitPartialsProvider[] getChildModels() {
+        return providers;
     }
 
     @Override

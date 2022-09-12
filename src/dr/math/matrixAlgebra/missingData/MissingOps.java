@@ -1,6 +1,7 @@
 package dr.math.matrixAlgebra.missingData;
 
 import dr.inference.model.MatrixParameterInterface;
+import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
 import org.ejml.alg.dense.decomposition.lu.LUDecompositionAlt_D64;
 import org.ejml.alg.dense.linsol.lu.LinearSolverLu_D64;
@@ -1068,6 +1069,60 @@ public class MissingOps {
             }
         }
     }
+
+    public static double[] nextPossiblyDegenerateNormal(ReadableVector mean, DenseMatrix64F variance) {
+        int dim = mean.getDim();
+
+        if (variance.numCols != dim || variance.numRows != dim) {
+            throw new RuntimeException("Variance is a " + variance.numRows + "x" + variance.numCols +
+                    " matrix but mean has dimension " + dim);
+        }
+
+        int zeroCount = countZeroDiagonals(variance);
+        int nonZeroCount = countFiniteNonZeroDiagonals(variance);
+        if (zeroCount + nonZeroCount != dim) {
+            throw new RuntimeException("At least one diagonal element of the variance is infinity. " +
+                    "Cannot sample from distribution with infinite variance");
+        }
+
+
+        double[] buffer = ReadableVector.Utils.toArray(mean);
+
+
+        if (nonZeroCount == dim) {
+            double[][] cholesky = CholeskyDecomposition.execute(variance.data, 0, dim);
+            return MultivariateNormalDistribution.nextMultivariateNormalCholesky(buffer, cholesky);
+        }
+
+        int[] latentIndices = new int[nonZeroCount];
+
+        int latI = 0;
+        for (int i = 0; i < dim; i++) {
+            if (variance.get(i, i) > 0) {
+                latentIndices[latI] = i;
+                latI++;
+            }
+        }
+
+        WrappedMatrix.Indexed subVar = new WrappedMatrix.Indexed(variance.data, 0,
+                latentIndices, latentIndices,
+                dim, dim);
+
+
+        WrappedVector.Indexed subMean = new WrappedVector.Indexed(buffer, 0, latentIndices);
+
+
+        double[] latentDraw = MultivariateNormalDistribution.nextMultivariateNormalVariance(
+                ReadableVector.Utils.toArray(subMean), ReadableMatrix.Utils.toMatrixArray(subVar));
+
+        for (int i = 0; i < latentIndices.length; i++) {
+            buffer[latentIndices[i]] = latentDraw[i];
+        }
+
+        return buffer;
+    }
+
+
 }
 
 //    public static void safeSolveSymmPosDef(DenseMatrix64F A,

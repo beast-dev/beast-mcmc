@@ -45,13 +45,16 @@ public class TreeScaledRepeatedMeasuresTraitDataModel extends RepeatedMeasuresTr
     private ContinuousRateTransformation rateTransformation;
 
     public TreeScaledRepeatedMeasuresTraitDataModel(String name,
+                                                    ContinuousTraitPartialsProvider childModel,
                                                     CompoundParameter parameter,
                                                     boolean[] missingIndicators,
                                                     boolean useMissingIndices,
                                                     final int dimTrait,
+                                                    final int numTraits,
                                                     MatrixParameterInterface samplingPrecision,
                                                     PrecisionType precisionType) {
-        super(name, parameter, missingIndicators, useMissingIndices, dimTrait, samplingPrecision, precisionType);
+        super(name, childModel, parameter, missingIndicators, useMissingIndices, dimTrait, numTraits,
+                samplingPrecision, precisionType);
     }
 
     @Override

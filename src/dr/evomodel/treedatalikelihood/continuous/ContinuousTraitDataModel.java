@@ -48,6 +48,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     final PrecisionType precisionType;
 
     private final boolean[] missingIndicators;
+    private boolean useMissingIndices;
 
     private String tipTraitName = null;
 
@@ -56,15 +57,28 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
                                     boolean[] missingIndicators,
                                     boolean useMissingIndices,
                                     final int dimTrait, PrecisionType precisionType) {
+
+        this(name, parameter, missingIndicators, useMissingIndices, dimTrait,
+                parameter.getParameter(0).getDimension() / dimTrait,
+                precisionType);
+    }
+
+    public ContinuousTraitDataModel(String name,
+                                    CompoundParameter parameter,
+                                    boolean[] missingIndicators,
+                                    boolean useMissingIndices,
+                                    final int dimTrait, final int numTraits,
+                                    PrecisionType precisionType) {
         super(name);
         this.parameter = parameter;
         addVariable(parameter);
 
         this.originalMissingIndicators = missingIndicators;
+        this.useMissingIndices = true;
         this.missingIndicators = (useMissingIndices ? missingIndicators : new boolean[missingIndicators.length]);
 
         this.dimTrait = dimTrait;
-        this.numTraits = getParameter().getParameter(0).getDimension() / dimTrait;
+        this.numTraits = numTraits;
         this.precisionType = precisionType;
 
 
@@ -106,6 +120,16 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     @Override
     public CompoundParameter getParameter() {
         return parameter;
+    }
+
+    @Override
+    public boolean usesMissingIndices() {
+        return useMissingIndices;
+    }
+
+    @Override
+    public ContinuousTraitPartialsProvider[] getChildModels() {
+        return new ContinuousTraitPartialsProvider[0];
     }
 
     @Override

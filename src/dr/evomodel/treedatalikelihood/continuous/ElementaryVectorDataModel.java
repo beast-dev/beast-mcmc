@@ -102,6 +102,16 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
         return traitParameter;
     }
 
+    @Override
+    public boolean usesMissingIndices() {
+        return false;
+    }
+
+    @Override
+    public ContinuousTraitPartialsProvider[] getChildModels() {
+        return new ContinuousTraitPartialsProvider[0];
+    }
+
     public void setTipTraitDimParameters(int tip, int trait, int dim) {
         tipIndicator.setParameterValue(trait, tip);
 

@@ -205,5 +205,14 @@ public interface ReadableVector {
 
             return Math.sqrt(innerProduct(vector, vector));
         }
+
+        public static double[] toArray(ReadableVector v) {
+            int dim = v.getDim();
+            double[] x = new double[dim];
+            for (int i = 0; i < dim; i++) {
+                x[i] = v.get(i);
+            }
+            return x;
+        }
     }
 }

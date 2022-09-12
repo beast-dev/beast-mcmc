@@ -1,5 +1,6 @@
 package dr.inference.operators.repeatedMeasures;
 
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ConditionalTraitSimulationHelper;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
@@ -16,6 +17,8 @@ import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Attribute;
 
 import java.util.List;
+
+import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.getTipTraitName;
 
 /**
  * @author Marc A. Suchard
@@ -109,6 +112,7 @@ public interface GammaGibbsProvider {
         private final ModelExtensionProvider.NormalExtensionProvider dataModel;
         private final TreeDataLikelihood treeLikelihood;
         private final ConditionalTraitSimulationHelper traitProvider;
+        private final TreeTrait tipTrait;
         private final CompoundParameter traitParameter;
         private final Parameter precisionParameter;
         private final boolean[] missingVector;
@@ -117,13 +121,21 @@ public interface GammaGibbsProvider {
         private boolean hasCheckedDimension = false;
 
         public NormalExtensionGibbsProvider(ModelExtensionProvider.NormalExtensionProvider dataModel,
-                                            TreeDataLikelihood treeLikelihood) {
+                                            TreeDataLikelihood treeLikelihood,
+                                            String traitName) {
             this.dataModel = dataModel;
             this.treeLikelihood = treeLikelihood;
             this.traitParameter = dataModel.getParameter();
             this.missingVector = dataModel.getDataMissingIndicators();
-            this.traitProvider = ((ContinuousDataLikelihoodDelegate)
-                    treeLikelihood.getDataLikelihoodDelegate()).getExtensionHelper();
+
+            if (traitName == null) {
+                this.tipTrait = null;
+                this.traitProvider = ((ContinuousDataLikelihoodDelegate)
+                        treeLikelihood.getDataLikelihoodDelegate()).getExtensionHelper();
+            } else {
+                this.tipTrait = treeLikelihood.getTreeTrait(getTipTraitName(traitName));
+                this.traitProvider = null;
+            }
 
 
             MatrixParameterInterface matrixParameter = dataModel.getExtensionPrecision();
@@ -182,7 +194,8 @@ public interface GammaGibbsProvider {
 
         @Override
         public void drawValues() {
-            double[] tipTraits = traitProvider.drawTraitsAbove(dataModel);
+            double[] tipTraits = tipTrait == null ? traitProvider.drawTraitsAbove(dataModel) :
+                    (double[]) tipTrait.getTrait(treeLikelihood.getTree(), null);
             tipValues = dataModel.transformTreeTraits(tipTraits);
             if (DEBUG) {
                 System.err.println("tipValues: " + new WrappedVector.Raw(tipValues));

@@ -1,8 +1,8 @@
 package dr.inference.operators.repeatedMeasures;
 
-import dr.evolution.tree.TreeTrait;
-import dr.evomodel.continuous.MatrixShrinkageLikelihood;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.ConditionalTraitSimulationHelper;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.LogNormalDistributionModel;
@@ -16,8 +16,6 @@ import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Attribute;
 
 import java.util.List;
-
-import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
 
 /**
  * @author Marc A. Suchard
@@ -110,9 +108,9 @@ public interface GammaGibbsProvider {
 
         private final ModelExtensionProvider.NormalExtensionProvider dataModel;
         private final TreeDataLikelihood treeLikelihood;
+        private final ConditionalTraitSimulationHelper traitProvider;
         private final CompoundParameter traitParameter;
         private final Parameter precisionParameter;
-        private final TreeTrait tipTrait;
         private final boolean[] missingVector;
 
         private double[] tipValues;
@@ -123,8 +121,10 @@ public interface GammaGibbsProvider {
             this.dataModel = dataModel;
             this.treeLikelihood = treeLikelihood;
             this.traitParameter = dataModel.getParameter();
-            this.tipTrait = treeLikelihood.getTreeTrait(dataModel.getTipTraitName());
             this.missingVector = dataModel.getDataMissingIndicators();
+            this.traitProvider = ((ContinuousDataLikelihoodDelegate)
+                    treeLikelihood.getDataLikelihoodDelegate()).getExtensionHelper();
+
 
             MatrixParameterInterface matrixParameter = dataModel.getExtensionPrecision();
 
@@ -182,7 +182,7 @@ public interface GammaGibbsProvider {
 
         @Override
         public void drawValues() {
-            double[] tipTraits = (double[]) tipTrait.getTrait(treeLikelihood.getTree(), null);
+            double[] tipTraits = traitProvider.drawTraitsAbove(dataModel);
             tipValues = dataModel.transformTreeTraits(tipTraits);
             if (DEBUG) {
                 System.err.println("tipValues: " + new WrappedVector.Raw(tipValues));

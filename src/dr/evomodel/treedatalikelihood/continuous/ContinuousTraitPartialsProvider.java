@@ -78,6 +78,10 @@ public interface ContinuousTraitPartialsProvider {
         throw new RuntimeException("Conditional sampling not yet implemented for " + this.getClass());
     }
 
+    default double[] transformTreeTraits(double[] traits) {
+        return traits;
+    }
+
     default boolean getDefaultAllowSingular() {
         return false;
     }

@@ -115,8 +115,15 @@ public class ConditionalTraitSimulationHelper implements Reportable {
     }
 
     public JointSamples drawTraitsAboveAndBelow(ContinuousTraitPartialsProvider model) {
+        return drawTraitsAboveAndBelow(model, false);
+    }
+
+    public JointSamples drawTraitsAboveAndBelow(ContinuousTraitPartialsProvider model, boolean transformAbove) {
         double[] aboveTraits = drawTraitsAbove(model);
         double[] belowTraits = model.drawTraitsBelowConditionalOnDataAndTraitsAbove(aboveTraits);
+        if (transformAbove) {
+            aboveTraits = model.transformTreeTraits(aboveTraits); //TODO: this is probably done twice for something like a latent factor model. can be more efficient
+        }
         return new JointSamples(aboveTraits, belowTraits);
     }
 

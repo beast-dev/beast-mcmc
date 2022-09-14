@@ -1,6 +1,5 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.math.distributions.WishartSufficientStatistics;
@@ -17,29 +16,24 @@ public class RepeatedMeasuresWishartStatistics implements ConjugateWishartStatis
 
 
     private final FullPrecisionContinuousTraitPartialsProvider traitModel;
-    private final Tree tree;
     private final ConditionalTraitSimulationHelper extensionHelper;
     private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
     private final double[] outerProduct;
     private final int dimTrait;
-    private final int nTaxa;
-    private final double[] buffer;
+    private double[] buffer;
     private boolean forceResample;
 
     public RepeatedMeasuresWishartStatistics(FullPrecisionContinuousTraitPartialsProvider traitModel,
                                              TreeDataLikelihood treeLikelihood,
                                              boolean forceResample) {
         this.traitModel = traitModel;
-        this.tree = treeLikelihood.getTree();
 
         this.likelihoodDelegate = (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate();
         this.extensionHelper = likelihoodDelegate.getExtensionHelper();
 
         this.dimTrait = traitModel.getTraitDimension();
-        this.nTaxa = tree.getExternalNodeCount();
 
         this.outerProduct = new double[dimTrait * dimTrait];
-        this.buffer = new double[nTaxa * dimTrait];
 
         this.forceResample = forceResample;
 
@@ -58,14 +52,21 @@ public class RepeatedMeasuresWishartStatistics implements ConjugateWishartStatis
             likelihoodDelegate.fireModelChanged();
         }
 
-        ConditionalTraitSimulationHelper.JointSamples traits = extensionHelper.drawTraitsAboveAndBelow(traitModel);
+        ConditionalTraitSimulationHelper.JointSamples traits = extensionHelper.drawTraitsAboveAndBelow(traitModel, true);
 
         double[] valuesAbove = traits.getTraitsAbove();
         double[] valuesBelow = traits.getTraitsBelow();
 
-        DenseMatrix64F XminusY = DenseMatrix64F.wrap(nTaxa, dimTrait, buffer);
-        DenseMatrix64F X = DenseMatrix64F.wrap(nTaxa, dimTrait, valuesAbove);
-        DenseMatrix64F Y = DenseMatrix64F.wrap(nTaxa, dimTrait, valuesBelow);
+        int nTipsTotal = valuesAbove.length / dimTrait;
+
+        if (buffer == null) {
+            buffer = new double[dimTrait * nTipsTotal];
+        }
+
+
+        DenseMatrix64F XminusY = DenseMatrix64F.wrap(nTipsTotal, dimTrait, buffer);
+        DenseMatrix64F X = DenseMatrix64F.wrap(nTipsTotal, dimTrait, valuesAbove);
+        DenseMatrix64F Y = DenseMatrix64F.wrap(nTipsTotal, dimTrait, valuesBelow);
 
         CommonOps.subtract(X, Y, XminusY);
 
@@ -74,7 +75,7 @@ public class RepeatedMeasuresWishartStatistics implements ConjugateWishartStatis
         CommonOps.multTransA(XminusY, XminusY, outerProductMat);
 
 
-        return new WishartSufficientStatistics(nTaxa, outerProduct);
+        return new WishartSufficientStatistics(nTipsTotal, outerProduct);
     }
 
     public void setForceResample(Boolean b) {

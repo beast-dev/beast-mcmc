@@ -33,8 +33,6 @@ import dr.inference.model.MatrixParameterInterface;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
-import java.util.List;
-
 /**
  * @author Marc A. Suchard
  * @author Paul Bastide
@@ -55,6 +53,11 @@ public class TreeScaledRepeatedMeasuresTraitDataModel extends RepeatedMeasuresTr
                                                     PrecisionType precisionType) {
         super(name, childModel, parameter, missingIndicators, useMissingIndices, dimTrait, numTraits,
                 samplingPrecision, precisionType);
+
+        if (!(childModel instanceof ContinuousTraitDataModel)) {
+            throw new RuntimeException("not yet implemented for alternative child models. " +
+                    "(can't just scale the partial in super.getTipPartial)");
+        }
     }
 
     @Override

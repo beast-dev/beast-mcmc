@@ -19,7 +19,7 @@ public class ContinuousTraitDataModelParser extends AbstractXMLObjectParser {
     public static final String FORCE_FULL_PRECISION = "forceFullPrecision";
 
 
-    private static final String NUM_TRAITS = "numTraits";
+    public static final String NUM_TRAITS = "numTraits";
 
 
     @Override

@@ -204,6 +204,7 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
         int varOffset = precisionType.getVarianceOffset(traitDim);
         int effDimDim = precisionType.getEffectiveDimensionOffset(traitDim);
         int detDim = precisionType.getDeterminantOffset(traitDim);
+        int remDim = precisionType.getRemainderOffset(traitDim);
 
         WrappedMatrix.Indexed precWrap = wrapBlockDiagonalMatrix(partial, precOffset, 0, traitDim); //TODO: this only works for precisionType.FULL, make general
         WrappedMatrix.Indexed varWrap = wrapBlockDiagonalMatrix(partial, varOffset, 0, traitDim); //TODO: see above
@@ -245,6 +246,10 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
                 }
 
                 partial[detDim] += subDet;
+            }
+
+            if (precisionType.hasRemainder()) {
+                partial[remDim] += subPartial[precisionType.getRemainderOffset(subDim)];
             }
         }
 

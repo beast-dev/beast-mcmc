@@ -79,6 +79,17 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     }
 
     @Override
+    public void setPostOrderPartial(int bufferIndex, double[] partial) {
+        super.setPostOrderPartial(bufferIndex, partial);
+
+        int remOffset = PrecisionType.FULL.getRemainderOffset(dimTrait);
+        for (int trait = 0; trait < numTraits; trait++) {
+            remainders[bufferIndex * numTraits + trait] = partial[dimPartialForTrait * trait + remOffset];
+        }
+
+    }
+
+    @Override
     public void setDiffusionPrecision(int precisionIndex, final double[] matrix, double logDeterminant) {
         super.setDiffusionPrecision(precisionIndex, matrix, logDeterminant);
 
@@ -695,10 +706,10 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, int precisionIndex,
                                            final double[] logLikelihoods,
                                            boolean incrementOuterProducts, boolean isIntegratedProcess) {
-        assert(logLikelihoods.length == numTraits);
+        assert (logLikelihoods.length == numTraits);
 
         assert (!incrementOuterProducts);
-        assert(!isIntegratedProcess);
+        assert (!isIntegratedProcess);
 
         if (DEBUG) {
             System.err.println("Root calculation for " + rootBufferIndex);

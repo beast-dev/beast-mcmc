@@ -197,12 +197,12 @@ public enum PrecisionType {
 
         @Override
         public int getPrecisionLength(int dimTrait) {
-            return super.getSingleMatrixLength(dimTrait);
+            return super.getMatrixLength(dimTrait);
         }
 
         @Override
         public int getVarianceLength(int dimTrait) {
-            return super.getSingleMatrixLength(dimTrait);
+            return super.getMatrixLength(dimTrait);
         }
 
         @Override
@@ -248,7 +248,7 @@ public enum PrecisionType {
 
         @Override
         public int getPartialsDimension(int dimTrait) {
-            return dimTrait + 2 * getSingleMatrixLength(dimTrait) + 4;
+            return dimTrait + 2 * getMatrixLength(dimTrait) + 4;
         }
     };
 
@@ -270,7 +270,7 @@ public enum PrecisionType {
         return power;
     }
 
-    public int getSingleMatrixLength(int dimTrait) {
+    protected int getMatrixLength(int dimTrait) {
         int length = 1;
         final int pow = getPower();
         for (int i = 0; i < pow; ++i) {
@@ -280,7 +280,7 @@ public enum PrecisionType {
     }
 
     public int getPrecisionLength(int dimTrait) {
-        return getSingleMatrixLength(dimTrait);
+        return getMatrixLength(dimTrait);
     }
 
     public int getVarianceLength(int dimTrait) {
@@ -334,7 +334,7 @@ public enum PrecisionType {
     abstract public double[] getScaledPrecision(double[] partial, int offset, double[] diffusionPrecision, int dimTrait);
 
     public int getPartialsDimension(int dimTrait) {
-        return this.getSingleMatrixLength(dimTrait) + dimTrait;
+        return this.getMatrixLength(dimTrait) + dimTrait;
     }
 
     public boolean hasEffectiveDimension() {

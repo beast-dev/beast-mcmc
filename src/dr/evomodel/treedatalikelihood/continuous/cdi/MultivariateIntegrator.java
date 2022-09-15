@@ -152,8 +152,8 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         int jbo = dimPartial * jBuffer;
 
         // Determine matrix offsets
-        final int imo = dimMatrix * iMatrix;
-        final int jmo = dimMatrix * jMatrix;
+        final int imo = iMatrix;
+        final int jmo = jMatrix;
 
         // Read variance increments along descendant branches of k
         final double vi = branchLengths[imo];
@@ -284,8 +284,8 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         int jbo = dimPartial * jBuffer;
 
         // Determine matrix offsets
-        final int imo = dimMatrix * iMatrix;
-        final int jmo = dimMatrix * jMatrix;
+        final int imo = iMatrix;
+        final int jmo = jMatrix;
 
         // Read variance increments along descendant branches of k
         final double vi = branchLengths[imo];

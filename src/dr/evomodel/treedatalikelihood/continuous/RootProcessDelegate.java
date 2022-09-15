@@ -112,7 +112,7 @@ public interface RootProcessDelegate extends Model {
             double[] mean = prior.getMean();
             final int dimTrait = mean.length;
 
-            final int length = dimTrait + precisionType.getMatrixLength(dimTrait);
+            final int length = precisionType.getPartialsDimension(dimTrait);
             double[] partial = new double[length * numTraits];
 
             int offset = 0;

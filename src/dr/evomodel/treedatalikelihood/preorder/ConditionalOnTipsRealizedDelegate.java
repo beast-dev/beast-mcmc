@@ -36,7 +36,7 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
 
         this.likelihoodDelegate = likelihoodDelegate;
         this.cdi = likelihoodDelegate.getIntegrator();
-        this.dimPartial = dimTrait + likelihoodDelegate.getPrecisionType().getMatrixLength(dimTrait);
+        this.dimPartial = likelihoodDelegate.getPrecisionType().getPartialsDimension(dimTrait);
         partialNodeBuffer = new double[numTraits * dimPartial];
         partialPriorBuffer = new double[numTraits * dimPartial];
 

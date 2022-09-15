@@ -22,7 +22,7 @@ public class NormalSufficientStatistics {
                                       DenseMatrix64F Pd,
                                       PrecisionType precisionType) {
 
-        int partialOffset = (dim + precisionType.getMatrixLength(dim)) * index;
+        int partialOffset = (precisionType.getPartialsDimension(dim)) * index;
         this.mean = MissingOps.wrap(buffer, partialOffset, dim, 1);
         this.precision = DenseMatrix64F.wrap(dim, dim,
                 precisionType.getScaledPrecision(buffer, partialOffset, Pd.data, dim));

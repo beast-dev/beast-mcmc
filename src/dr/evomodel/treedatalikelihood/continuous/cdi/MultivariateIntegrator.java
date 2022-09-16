@@ -385,7 +385,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 //                final DenseMatrix64F Vk = new DenseMatrix64F(dimTrait, dimTrait);
             final DenseMatrix64F Vk = matrix5;
             //TODO: should saveInvert put an infinity on the diagonal of Vk?
-            InversionResult ck = safeInvert2(Pk, Vk, true);
+            InversionResult ck = safeInvertPrecision(Pk, Vk, true);
 
             // B. Partial mean
 //                for (int g = 0; g < dimTrait; ++g) {

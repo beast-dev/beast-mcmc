@@ -226,7 +226,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             CommonOps.add(Pk, Pjp, Pip);
 
             final DenseMatrix64F Vip = matrix1;
-            safeInvert2(Pip, Vip, false);
+            safeInvertPrecision(Pip, Vip, false);
 
             final double[] delta = vectorDelta;
             computeDelta(jbo, jdo, delta);
@@ -517,7 +517,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F tmp1 = matrix0;
             CommonOps.add(Pi, Pdi, tmp1);
             final DenseMatrix64F tmp2 = matrix1;
-            safeInvert2(tmp1, tmp2, false);
+            safeInvertPrecision(tmp1, tmp2, false);
             CommonOps.mult(tmp2, Pi, tmp1);
             idMinusA(tmp1);
             if (getDeterminant) ci = safeDeterminant(tmp1, true);

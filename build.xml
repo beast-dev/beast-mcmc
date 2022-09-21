@@ -255,11 +255,36 @@
             </fileset>
         </jar>
 
+        <!-- Put everything in ${build} into the tempest-lib.jar file -->
+        <jar jarfile="${dist}/tempest-lib.jar">
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+            </manifest>
+            <fileset dir="${build}">
+                <include name="dr/app/beauti/tipdatepanel/**/*.class"/>
+                <include name="dr/app/beauti/util/**/*.class"/>
+                <include name="dr/app/beauti/options/**/*.class"/>
+                <include name="dr/app/gui/**/*.class"/>
+                <include name="dr/app/tools/*.class"/>
+                <include name="dr/app/util/*.class"/>
+                <include name="dr/evolution/tree/**/*.class"/>
+                <include name="dr/evolution/io/*.class"/>
+                <include name="dr/evolution/util/*.class"/>
+                <include name="dr/math/**/*.class"/>
+                <include name="dr/stats/**/*.class"/>
+                <include name="dr/util/**/*.class"/>
+            </fileset>
+        </jar>
     </target>
 
     <!-- used to copy the compiled trace.jar into place in the Tracer lib folder -->
     <target name="copy_trace_jar" depends="dist" >
         <copy file="${dist}/trace.jar" todir="../Tracer/lib"/>
+    </target>
+
+    <!-- used to copy the compiled tempest-lib.jar into place in the Tempest lib folder -->
+    <target name="copy_tempest-lib_jar" depends="dist" >
+        <copy file="${dist}/tempest-lib.jar" todir="../Tempest/lib"/>
     </target>
 
     <!-- run beast.jar -->

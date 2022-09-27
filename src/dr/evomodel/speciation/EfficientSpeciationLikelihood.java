@@ -59,7 +59,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
             throw new IllegalArgumentException("Must currently provide a DefaultTreeModel");
         }
 
-        fixTimes();
+        tree = fixTimes(tree);
 
         treeIntervals = new BigFastTreeIntervals((TreeModel)tree);
 
@@ -135,7 +135,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         return logL;
     }
 
-    private void fixTimes() {
+    private Tree fixTimes(Tree tree) {
 
         DefaultTreeModel cleanTree = new DefaultTreeModel(tree);
 
@@ -189,6 +189,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         }
         tree = cleanTree;
 //        System.err.println("Adjusted tip times to match interval times.");
+        return tree;
     }
 
     // Super-clean interface (just one intrusive function) and a better place, since `Likelihood`s have gradients (`Model`s do not).

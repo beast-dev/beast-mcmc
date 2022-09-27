@@ -35,6 +35,7 @@ import dr.evomodelxml.continuous.ContinuousTraitDataModelParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.*;
+import dr.math.matrixAlgebra.missingData.InversionResult;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
@@ -72,6 +73,8 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     private final int nRepeats;
     private ArrayList<Integer>[] relevantRepeats;
     private final int nObservedTips;
+
+    private final static double LOG2PI = Math.log(Math.PI * 2);
 
 
     public RepeatedMeasuresTraitDataModel(String name,
@@ -201,6 +204,8 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         DenseMatrix64F Pm = new DenseMatrix64F(dimTrait, 1);
         DenseMatrix64F m = new DenseMatrix64F(dimTrait, 1);
 
+        double remainder = 0;
+
 
         for (int i : relevantRepeats[taxonIndex]) {
 
@@ -217,27 +222,55 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                 }
             }
 
-            MissingOps.safeInvert2(Vi, Pi, false);
+            InversionResult result = MissingOps.safeInvert2(Vi, Pi, true);
+
             CommonOps.addEquals(P, Pi);
 
 //            System.arraycopy(partial, meanOffset, mi.data, 0, dimTrait);
+            double sumSquares = 0;
+
             for (int row = 0; row < dimTrait; row++) {
+
+                int offset = offsetInc * i + meanOffset;
+                double mr = partial[offset + row];
+
                 double value = 0;
                 for (int col = 0; col < dimTrait; col++) {
-                    value += Pi.get(row, col) * partial[offsetInc * i + meanOffset + col];
+                    double mc = partial[offset + col];
+                    double x = Pi.get(row, col) * mc;
+                    value += x;
+                    sumSquares += x * mr;
                 }
                 Pm.add(row, 0, value);
             }
+
+            remainder -= result.getEffectiveDimension() * LOG2PI + sumSquares + result.getLogDeterminant();
+
         }
 
+
         MissingOps.safeSolve(P, Pm, m, false);
-        MissingOps.safeInvert2(P, V, false); //TODO: don't invert twice
+        InversionResult result = MissingOps.safeInvertPrecision(P, V, true); //TODO: don't invert twice
+        if (result.getReturnCode() == InversionResult.Code.NOT_OBSERVED) {
+            remainder = 0;
+        } else {
+            double sumSquares = 0;
+            for (int row = 0; row < dimTrait; row++) {
+                for (int col = 0; col < dimTrait; col++) {
+                    sumSquares += m.get(row, 0) * m.get(col, 0) * P.get(row, col);
+                }
+            }
+
+            remainder += result.getEffectiveDimension() * LOG2PI + sumSquares - result.getLogDeterminant();
+        }
+
 
         partial = new double[offsetInc];
 
         System.arraycopy(m.data, 0, partial, precisionType.getMeanOffset(dimTrait), dimTrait);
         System.arraycopy(P.data, 0, partial, precisionType.getPrecisionOffset(dimTrait), varDim);
         System.arraycopy(V.data, 0, partial, precisionType.getVarianceOffset(dimTrait), varDim);
+        precisionType.fillRemainderInPartials(partial, 0, 0.5 * remainder, dimTrait);
 
         return partial;
     }

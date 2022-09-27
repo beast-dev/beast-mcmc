@@ -45,7 +45,7 @@ import java.util.stream.IntStream;
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public class ActionBeagleDelegate implements Beagle {
+public class OldActionBeagleDelegate implements Beagle {
 
     public static final boolean DEBUG = false;
     public static final boolean SCALING = true;
@@ -77,15 +77,15 @@ public class ActionBeagleDelegate implements Beagle {
     private final DMatrixRMaj[] autoScalingBuffers;
     private final Tree treeModel;
 
-    public ActionBeagleDelegate(Tree treeModel,
-                                int partialsBufferCount,
-                                int patternCount,
-                                int stateCount,
-                                int categoryCount,
-                                int partialsSize,
-                                int scaleBufferCount,
-                                PartialsRescalingScheme rescalingScheme,
-                                ActionEvolutionaryProcessDelegate evolutionaryProcessDelegate) {
+    public OldActionBeagleDelegate(Tree treeModel,
+                                   int partialsBufferCount,
+                                   int patternCount,
+                                   int stateCount,
+                                   int categoryCount,
+                                   int partialsSize,
+                                   int scaleBufferCount,
+                                   PartialsRescalingScheme rescalingScheme,
+                                   ActionEvolutionaryProcessDelegate evolutionaryProcessDelegate) {
         this.treeModel = treeModel;
         this.tipCount = treeModel.getExternalNodeCount();
         this.partialsBufferCount = partialsBufferCount + 1;

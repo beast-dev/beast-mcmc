@@ -5,7 +5,7 @@ import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.evomodel.treedatalikelihood.action.ActionBeagleDelegate;
+import dr.evomodel.treedatalikelihood.action.OldActionBeagleDelegate;
 import dr.evomodel.treedatalikelihood.action.ActionEvolutionaryProcessDelegate;
 import dr.evomodel.treedatalikelihood.action.HomogeneousActionSubstitutionModelDelegate;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
@@ -16,7 +16,7 @@ import org.newejml.ops.DConvertMatrixStruct;
 import test.dr.math.MathTestCase;
 
 public class ActionBeagleTest extends MathTestCase {
-    private ActionBeagleDelegate beagle;
+    private OldActionBeagleDelegate beagle;
     private double[] stationaryFrequency;
     private DMatrixSparseTriplet Q;
 
@@ -57,7 +57,7 @@ public class ActionBeagleTest extends MathTestCase {
         HKY hky = new HKY(kappa, frequencyModel);
         PartialsRescalingScheme rescalingScheme = PartialsRescalingScheme.AUTO;
         ActionEvolutionaryProcessDelegate evolutionaryProcessDelegate = new HomogeneousActionSubstitutionModelDelegate(hky, 5);
-        this.beagle = new ActionBeagleDelegate(new DefaultTreeModel("void tree"), partialsBufferCount, patternCount,
+        this.beagle = new OldActionBeagleDelegate(new DefaultTreeModel("void tree"), partialsBufferCount, patternCount,
                 stateCount, categoryCount, partialsSize, partialsBufferCount + 1,
                 rescalingScheme, evolutionaryProcessDelegate);
         evolutionaryProcessDelegate.updateSubstitutionModels(beagle, false);

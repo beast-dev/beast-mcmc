@@ -34,7 +34,7 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
-import dr.evomodel.treedatalikelihood.action.ActionBeagleDelegate;
+import dr.evomodel.treedatalikelihood.action.OldActionBeagleDelegate;
 import dr.evomodel.treedatalikelihood.action.ActionEvolutionaryProcessDelegate;
 import dr.evomodel.treedatalikelihood.action.ActionSubstitutionModelDelegate;
 import dr.evomodel.treedatalikelihood.action.HomogeneousActionSubstitutionModelDelegate;
@@ -410,7 +410,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
 
             beagle = USE_ACTION ?
-                    new ActionBeagleDelegate(tree, numPartials, patternCount,
+                    new OldActionBeagleDelegate(tree, numPartials, patternCount,
                     stateCount, categoryCount, stateCount * patternCount * categoryCount, numScaleBuffers,
                     rescalingScheme, (ActionEvolutionaryProcessDelegate) evolutionaryProcessDelegate) :
                     BeagleFactory.loadBeagleInstance(

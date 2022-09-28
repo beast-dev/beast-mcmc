@@ -196,6 +196,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         int varOffset = precisionType.getVarianceOffset(dimTrait);
         int meanOffset = precisionType.getMeanOffset(dimTrait);
         int varDim = precisionType.getVarianceLength(dimTrait);
+        int remOffset = precisionType.getRemainderOffset(dimTrait);
 
         DenseMatrix64F Pi = new DenseMatrix64F(dimTrait, dimTrait);
         DenseMatrix64F Vi = new DenseMatrix64F(dimTrait, dimTrait);
@@ -243,6 +244,8 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                 }
                 Pm.add(row, 0, value);
             }
+
+            remainder += partial[offsetInc * i + remOffset];
 
             remainder -= result.getEffectiveDimension() * LOG2PI + sumSquares + result.getLogDeterminant();
 

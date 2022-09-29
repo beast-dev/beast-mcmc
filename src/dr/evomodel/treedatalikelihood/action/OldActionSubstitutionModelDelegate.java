@@ -1,35 +1,67 @@
+/*
+ * ActionSubstitutionModelDelegate.java
+ *
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.treedatalikelihood.action;
 
 import beagle.Beagle;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.treedatalikelihood.EvolutionaryProcessDelegate;
 import dr.evomodel.treedatalikelihood.PreOrderSettings;
+import org.newejml.data.DMatrixSparseCSC;
+import org.newejml.sparse.csc.CommonOps_DSCC;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+/**
+ * @author Xiang Ji
+ * @author Marc Suchard
+ */
+public class OldActionSubstitutionModelDelegate implements ActionEvolutionaryProcessDelegate{
 
-public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDelegate {
-
-    private final Tree tree;
+    private final double[] branchLengths;
+    private DMatrixSparseCSC[] sparseQs;
+    private DMatrixSparseCSC[] scaledQs;
+    private Tree tree;
     private final BranchModel branchModel;
     private final int nodeCount;
-
     private final int stateCount;
 
-    private final HashMap<SubstitutionModel, Integer> eigenIndexMap;
-
-    public ActionSubstitutionModelDelegate (Tree tree,
-                                            BranchModel branchModel,
-                                            int nodeCount) {
+    public OldActionSubstitutionModelDelegate(Tree tree,
+                                              BranchModel branchModel,
+                                              int nodeCount) {
+        this.branchLengths = new double[nodeCount];
         this.tree = tree;
         this.branchModel = branchModel;
         this.nodeCount = nodeCount;
-        this.stateCount = branchModel.getRootFrequencyModel().getFrequencyCount();
-        this.eigenIndexMap = new HashMap<>();
-        for (int i = 0; i < getSubstitutionModelCount(); i++) {
-            eigenIndexMap.put(branchModel.getSubstitutionModels().get(i), i);
+        this.stateCount = branchModel.getRootSubstitutionModel().getFrequencyModel().getFrequencyCount();
+        this.sparseQs = new DMatrixSparseCSC[nodeCount];
+        for (int i = 0; i < nodeCount; i++) {
+            sparseQs[i] = new DMatrixSparseCSC(stateCount, stateCount, 10 * stateCount);
+        }
+        this.scaledQs = new DMatrixSparseCSC[nodeCount];
+        for (int i = 0; i < nodeCount; i++) {
+            scaledQs[i] = new DMatrixSparseCSC(stateCount, stateCount, 10 * stateCount);
         }
     }
 
@@ -40,7 +72,7 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public int getEigenBufferCount() {
-        return branchModel.getSubstitutionModels().size();
+        return 0;
     }
 
     @Override
@@ -70,7 +102,7 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public void cacheInfinitesimalMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
-        throw new RuntimeException("Not yet implemented!");
+
     }
 
     @Override
@@ -127,47 +159,28 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public void updateSubstitutionModels(Beagle beagle, boolean flipBuffers) {
-
-        double[] tmpQ = new double[stateCount * stateCount];
-        for (int i = 0; i < getSubstitutionModelCount(); i++) {
-            SubstitutionModel substitutionModel = getSubstitutionModel(i);
-            substitutionModel.getInfinitesimalMatrix(tmpQ);
-
-            ArrayList positions = new ArrayList<Double>();
-            ArrayList values = new ArrayList<Double>();
-            int nonZeros = 0;
-            for (int row = 0; row < stateCount; row++) {
-                for (int col = 0; col < stateCount; col++) {
-                    if (tmpQ[row * stateCount + col] != 0) {
-                        positions.add((double) row);
-                        positions.add((double) col);
-                        values.add(tmpQ[row * stateCount + col]);
-                        nonZeros++;
+        final int stateCount = branchModel.getRootSubstitutionModel().getFrequencyModel().getFrequencyCount();
+        for (int i = 0; i < nodeCount; i++) {
+            DMatrixSparseCSC sparseQ = sparseQs[i];
+            SubstitutionModel substitutionModel = getSubstitutionModelForBranch(i);
+            sparseQ.zero();
+            double[] Q = new double[stateCount * stateCount];
+            substitutionModel.getInfinitesimalMatrix(Q);
+            for (int j = 0; j < stateCount; j++) {
+                for (int k = 0; k < stateCount; k++) {
+                    final double entryValue = Q[j * stateCount + k];
+                    if (entryValue != 0.0) {
+                        sparseQ.set(j, k, Q[j * stateCount + k]);
                     }
                 }
             }
-            double[] inPositions = new double[positions.size()];
-            double[] inValues = new double[values.size()];
-            for (int j = 0; j < nonZeros; j++) {
-                inPositions[2 * j] = (double) positions.get(2 * j);
-                inPositions[2 * j + 1] = (double) positions.get(2 * j + 1);
-                inValues[j] = (double) values.get(j);
-            }
-
-            beagle.setEigenDecomposition(i, inPositions, new double[]{nonZeros},  inValues);
         }
-
-    }
-
-    private int getEigenIndexForBranch(int branchIndex) {
-        SubstitutionModel substitutionModel = getSubstitutionModelForBranch(branchIndex);
-        return eigenIndexMap.get(substitutionModel);
     }
 
     @Override
     public void updateTransitionMatrices(Beagle beagle, int[] branchIndices, double[] edgeLengths, int updateCount, boolean flipBuffers) {
         for (int i = 0; i < updateCount; i++) {
-            beagle.updateTransitionMatrices(getEigenIndexForBranch(branchIndices[i]), new int[]{branchIndices[i]}, null, null, new double[]{edgeLengths[i]}, 1);
+            branchLengths[branchIndices[i]] = edgeLengths[i];
         }
     }
 
@@ -184,5 +197,11 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
     @Override
     public void restoreState() {
 
+    }
+
+    @Override
+    public DMatrixSparseCSC getScaledInstantaneousMatrix(int nodeIndex, double categoryRate) {
+        CommonOps_DSCC.scale(branchLengths[nodeIndex] * categoryRate, sparseQs[nodeIndex], scaledQs[nodeIndex]);
+        return scaledQs[nodeIndex];
     }
 }

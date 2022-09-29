@@ -34,10 +34,7 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
-import dr.evomodel.treedatalikelihood.action.OldActionBeagleDelegate;
-import dr.evomodel.treedatalikelihood.action.ActionEvolutionaryProcessDelegate;
 import dr.evomodel.treedatalikelihood.action.ActionSubstitutionModelDelegate;
-import dr.evomodel.treedatalikelihood.action.HomogeneousActionSubstitutionModelDelegate;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -71,7 +68,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     private static final boolean DEBUG = false; // write debug information to stdOut
 
-    private final boolean USE_ACTION = false;  //TODO: move into constructor
+    private final boolean USE_ACTION = true;  //TODO: move into constructor
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -186,20 +183,24 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             if (settings.branchInfinitesimalDerivative) {
                 evolutionaryProcessDelegate = USE_ACTION ?
+//                        new OldActionSubstitutionModelDelegate(tree, branchModel, nodeCount) :
                         new ActionSubstitutionModelDelegate(tree, branchModel, nodeCount) :
                         new SubstitutionModelDelegate(tree, branchModel, settings);
             } else {
 
                 if (branchModel.getSubstitutionModels().size() == 1) {
                     evolutionaryProcessDelegate = USE_ACTION ?
-                            new HomogeneousActionSubstitutionModelDelegate(branchModel.getSubstitutionModels().get(0), nodeCount) :
+//                            new HomogeneousActionSubstitutionModelDelegate(branchModel.getSubstitutionModels().get(0), nodeCount) :
+                            new ActionSubstitutionModelDelegate(tree, branchModel, nodeCount) :
                             new HomogenousSubstitutionModelDelegate(tree, branchModel);
                 } else {
                     // use a more general delegate that allows different substitution models on different branches and
                     // can do matrix convolution.
 
                     // TODO: the constructor should take the delegate and the delegate should wrap the branchModel
-                    evolutionaryProcessDelegate = USE_ACTION ? new ActionSubstitutionModelDelegate(tree, branchModel, nodeCount) :
+                    evolutionaryProcessDelegate = USE_ACTION ?
+//                            new OldActionSubstitutionModelDelegate(tree, branchModel, nodeCount) :
+                            new ActionSubstitutionModelDelegate(tree, branchModel, nodeCount) :
                             new SubstitutionModelDelegate(tree, branchModel, settings);
                 }
             }
@@ -327,6 +328,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 preferenceFlags |= BeagleFlag.THREADING_CPP.getMask();
             }
 
+            if (USE_ACTION) {
+                preferenceFlags |= BeagleFlag.BEAGLE_FLAG_COMPUTATION_ACTION.getMask();
+            }
+
             if (BeagleFlag.VECTOR_SSE.isSet(preferenceFlags) && (stateCount != 4)
                     && !forceVectorization && !IS_ODD_STATE_SSE_FIXED()
                     ) {
@@ -409,10 +414,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             // end auto resource selection
 
 
-            beagle = USE_ACTION ?
-                    new OldActionBeagleDelegate(tree, numPartials, patternCount,
-                    stateCount, categoryCount, stateCount * patternCount * categoryCount, numScaleBuffers,
-                    rescalingScheme, (ActionEvolutionaryProcessDelegate) evolutionaryProcessDelegate) :
+            beagle =
+//                    USE_ACTION ?
+//                    new OldActionBeagleDelegate(tree, numPartials, patternCount,
+//                    stateCount, categoryCount, stateCount * patternCount * categoryCount, numScaleBuffers,
+//                    rescalingScheme, (ActionEvolutionaryProcessDelegate) evolutionaryProcessDelegate) :
                     BeagleFactory.loadBeagleInstance(
                     tipCount,
                     numPartials,

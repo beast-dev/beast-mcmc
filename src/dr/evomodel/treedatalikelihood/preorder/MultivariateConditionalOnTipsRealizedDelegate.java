@@ -208,9 +208,11 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                     final DenseMatrix64F cP0 = new DenseMatrix64F(missing.length, missing.length);
                     gatherRowsAndColumns(P0, cP0, missing, missing);
 
+                    final WrappedVector M1 = (WrappedVector) getMeanBranch(offsetParent);
+
                     final WrappedVector cM2 = transform.getConditionalMean(
                             partialNodeBuffer, offsetPartial, // Tip value
-                            sample, offsetParent); // Parent value
+                            M1.getBuffer(), 0); // Parent value (actualized)
 
                     final DenseMatrix64F cP1 = transform.getConditionalPrecision();
 
@@ -245,7 +247,6 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                     if (DEBUG) {
                         final WrappedVector M0 = new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait);
 
-                        final WrappedVector M1 = new WrappedVector.Raw(sample, offsetParent, dimTrait);
                         final DenseMatrix64F P1 = new DenseMatrix64F(dimTrait, dimTrait);
                         CommonOps.scale(branchPrecision, Pd, P1);
 

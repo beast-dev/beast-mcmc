@@ -61,8 +61,8 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
 
         this.doubletRates = new Parameter.Default("expandedRates",new double[240]);
         this.doubletRatesRefx = new Parameter.Default("expandedRatesRefx",new double[240]);
-        this.doubletSubstitutionModel = new ComplexSubstitutionModel("expandedRateMatrix", doubletDataType, doubletFreqs, this.doubletRates);
-        this.doubletSubstitutionModelRefx = new ComplexSubstitutionModel("expandedRateMatrixRefx", doubletDataType, doubletFreqs, this.doubletRates);
+        this.doubletSubstitutionModel = new ComplexSubstitutionModel("expandedRateMatrix", doubletDataType, doubletFreqs, doubletRates);
+        this.doubletSubstitutionModelRefx = new ComplexSubstitutionModel("expandedRateMatrixRefx", doubletDataType, doubletFreqs, doubletRatesRefx);
 
         // We normalize by hand to get doublets normalized per site
         doubletSubstitutionModel.setNormalization(false);
@@ -96,6 +96,15 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
         double[] rates = getRates(nodeDescendant);
 
         double branchTime = tree.getNodeHeight(nodeAncestor) - tree.getNodeHeight(nodeDescendant);
+
+        updateSubstitutionRateMatrices();
+        double[] tmp = new double[256];
+        doubletSubstitutionModel.getInfinitesimalMatrix(tmp);
+//        System.err.println(new dr.math.matrixAlgebra.Vector(tmp));
+//        System.err.println(new dr.math.matrixAlgebra.Matrix(tmp,16,16));
+        doubletSubstitutionModelRefx.getInfinitesimalMatrix(tmp);
+//        System.err.println(new dr.math.matrixAlgebra.Vector(tmp));
+//        System.err.println(new dr.math.matrixAlgebra.Matrix(tmp,16,16));
 
         UnivariateMinimum optimized = optimizeTimes(nodeDescendant, nodeAncestor, rates, branchTime);
 
@@ -159,8 +168,15 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
         return from;
     }
 
-    private void updateTransitionRateParameters(double[] matrixIID) {
+    private void updateTransitionRateParameters() {
         // TODO this is a really ugly function
+        double[] matrixIID = new double[16];
+        subsModel.getInfinitesimalMatrix(matrixIID);
+
+//        System.err.println(new dr.math.matrixAlgebra.Vector(matrixIID));
+//        System.err.println("\n\n\n");
+//        System.err.println(new dr.math.matrixAlgebra.Matrix(matrixIID,4,4));
+
         double[] freqsIID = subsModel.getFrequencyModel().getFrequencies();
         double[] freqs = doubletFreqs.getFrequencies();
 
@@ -173,58 +189,68 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
             for (int j = i+1; j < 16; j++) {
                 int[] from = getDoublet(i);
                 int[] to = getDoublet(j);
+//                System.err.println("idx = " + idx +"; i = " + i + "; j = " + j + "; from = (" + from[0] + "," + from[1] + "); to = (" + to[0] + "," + to[1] + ")");
                 if (from[0] != to[0] && from[1] == to[1]) {
-                    double bfProd = freqs[from[0]] * freqsIID[to[0]];
+                    double bfProd = freqs[from[0]] * freqs[to[0]];
                     // infinitesimal matrix has stationary frequencies added but we don't want them
                     double rate = matrixIID[flatIndex(from[0], to[0])]/freqsIID[to[0]];
+//                    System.err.println("  (0) rate = " + rate + "; idx = " + idx + "; refx = " + randomEffects.getParameterValue(idx));
                     sum1 += rate * bfProd;
-                    doubletRates.setParameterValue(i, rate);
-                    rate *= Math.exp(randomEffects.getValue(i));
+                    doubletRates.setParameterValue(idx, rate);
+                    rate *= Math.exp(randomEffects.getParameterValue(idx));
                     sum2 += rate * bfProd;
-                    doubletRatesRefx.setParameterValue(i, rate);
+                    doubletRatesRefx.setParameterValue(idx, rate);
+//                    System.err.println("rate * refx = " + rate);
                 } else if (from[0] == to[0] && from[1] != to[1]) {
-                    double bfProd = freqsIID[from[1]] * freqsIID[to[1]];
+                    double bfProd = freqs[from[0]] * freqs[to[0]];
                     // infinitesimal matrix has stationary frequencies added but we don't want them
                     double rate = matrixIID[flatIndex(from[1], to[1])]/freqsIID[to[1]];
+//                    System.err.println("  (1) rate = " + rate + "; idx = " + idx + "; refx = " + randomEffects.getParameterValue(idx));
                     sum1 += rate * bfProd;
-                    doubletRates.setParameterValue(i, rate);
-                    rate *= Math.exp(randomEffects.getValue(i));
+                    doubletRates.setParameterValue(idx, rate);
+                    rate *= Math.exp(randomEffects.getParameterValue(idx));
                     sum2 += rate * bfProd;
-                    doubletRatesRefx.setParameterValue(i, rate);
+                    doubletRatesRefx.setParameterValue(idx, rate);
+//                    System.err.println("rate * refx = " + rate);
                 } else {
-                    doubletRates.setParameterValue(i, 0.0);
-                    doubletRatesRefx.setParameterValue(i, 0.0);
+                    doubletRates.setParameterValue(idx, 0.0);
+                    doubletRatesRefx.setParameterValue(idx, 0.0);
                 }
                 idx++;
             }
         }
-
+//        System.err.println("\n>>>LOWER<<<\n");
         // lower triangular
-        for (int i = 1; i < 16; i++) {
-            for (int j = 0; j < i; j++) {
+        for (int j = 0; j < 15; j++) {
+            for (int i = j+1; i < 16; i++) {
                 int[] from = getDoublet(i);
                 int[] to = getDoublet(j);
+//                System.err.println("idx = " + idx +"; i = " + i + "; j = " + j + "; from = (" + from[0] + "," + from[1] + "); to = (" + to[0] + "," + to[1] + ")");
                 if (from[0] != to[0] && from[1] == to[1]) {
-                    double bfProd = freqs[from[0]] * freqsIID[to[0]];
+                    double bfProd = freqs[from[0]] * freqs[to[0]];
                     // infinitesimal matrix has stationary frequencies added but we don't want them
                     double rate = matrixIID[flatIndex(from[0], to[0])]/freqsIID[to[0]];
+//                    System.err.println("  (0) rate = " + rate + "; idx = " + idx + "; refx = " + randomEffects.getParameterValue(idx));
                     sum1 += rate * bfProd;
-                    doubletRates.setParameterValue(i, rate);
-                    rate *= Math.exp(randomEffects.getValue(i));
+                    doubletRates.setParameterValue(idx, rate);
+                    rate *= Math.exp(randomEffects.getParameterValue(idx));
                     sum2 += rate * bfProd;
-                    doubletRatesRefx.setParameterValue(i, rate);
+                    doubletRatesRefx.setParameterValue(idx, rate);
+//                    System.err.println("rate * refx = " + rate);
                 } else if (from[0] == to[0] && from[1] != to[1]) {
-                    double bfProd = freqsIID[from[1]] * freqsIID[to[1]];
+                    double bfProd = freqs[from[0]] * freqs[to[0]];
                     // infinitesimal matrix has stationary frequencies added but we don't want them
                     double rate = matrixIID[flatIndex(from[1], to[1])]/freqsIID[to[1]];
+//                    System.err.println("  (1) rate = " + rate + "; idx = " + idx + "; refx = " + randomEffects.getParameterValue(idx));
                     sum1 += rate * bfProd;
-                    doubletRates.setParameterValue(i, rate);
-                    rate *= Math.exp(randomEffects.getValue(i));
+                    doubletRates.setParameterValue(idx, rate);
+                    rate *= Math.exp(randomEffects.getParameterValue(idx));
                     sum2 += rate * bfProd;
-                    doubletRatesRefx.setParameterValue(i, rate);
+                    doubletRatesRefx.setParameterValue(idx, rate);
+//                    System.err.println("rate * refx = " + rate);
                 } else {
-                    doubletRates.setParameterValue(i, 0.0);
-                    doubletRatesRefx.setParameterValue(i, 0.0);
+                    doubletRates.setParameterValue(idx, 0.0);
+                    doubletRatesRefx.setParameterValue(idx, 0.0);
                 }
                 idx++;
             }
@@ -241,10 +267,7 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
     private void updateSubstitutionRateMatrices() {
         // get doublet frequencies from site frequencies
         updateFrequencyModel(subsModel.getFrequencyModel().getFrequencies());
-
-        double[] rateMatrixIIDFlat = new double[16];
-        subsModel.getInfinitesimalMatrix(rateMatrixIIDFlat);
-        updateTransitionRateParameters(rateMatrixIIDFlat);
+        updateTransitionRateParameters();
     }
 
     // Gets rates for ancestral and descendant (in that order) portions of the branch
@@ -270,7 +293,6 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
 
         double[] freqsIID = subsModel.getFrequencyModel().getFrequencies();
 
-        updateSubstitutionRateMatrices();
         double[] tpm1 = new double[256];
         double[] tpm2 = new double[256];
 

@@ -45,6 +45,7 @@ public class BranchSpecificBranchModelParser extends AbstractXMLObjectParser {
     public static final String EXTERNAL_BRANCHES = "externalBranches";
     public static final String BACKBONE = "backbone";
     public static final String STEM_WEIGHT = "stemWeight";
+    private static final String ALLOW_SINGLETON = "allowSingleton";
 
     public String getParserName() {
         return BRANCH_SPECIFIC_SUBSTITUTION_MODEL;
@@ -69,7 +70,8 @@ public class BranchSpecificBranchModelParser extends AbstractXMLObjectParser {
                     substitutionModel = (SubstitutionModel) xoc.getChild(SubstitutionModel.class);
                     TaxonList taxonList = (TaxonList) xoc.getChild(TaxonList.class);
 
-                    if (taxonList.getTaxonCount() == 1) {
+                    boolean allowSingleton = xoc.getAttribute(ALLOW_SINGLETON, false);
+                    if (!allowSingleton && taxonList.getTaxonCount() == 1) {
                         throw new XMLParseException("A clade must be defined by at least two taxa");
                     }
 
@@ -139,6 +141,7 @@ public class BranchSpecificBranchModelParser extends AbstractXMLObjectParser {
             new ElementRule(CLADE,
                     new XMLSyntaxRule[]{
                             AttributeRule.newDoubleRule(STEM_WEIGHT, true, "What proportion of the stem branch to include [0 <= w <= 1] (default 0)."),
+                            AttributeRule.newBooleanRule(ALLOW_SINGLETON, true),
                             new ElementRule(Taxa.class, "A set of taxa which defines a clade to apply a different site model to"),
                             new ElementRule(SubstitutionModel.class, "The substitution model"),
                     }, 0, Integer.MAX_VALUE),

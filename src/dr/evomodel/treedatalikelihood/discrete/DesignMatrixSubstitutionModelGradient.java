@@ -36,7 +36,7 @@ import dr.inference.model.Parameter;
 /**
  * @author Marc A. Suchard
  */
-public class DesignMatrixSubstitutionModelGradient extends GlmSubstitutionModelGradient {
+public class DesignMatrixSubstitutionModelGradient extends AbstractGlmSubstitutionModelGradient {
 
     private final int whichEffect;
     private final MaskedParameter parameter;

@@ -57,7 +57,7 @@ import java.util.List;
  */
 
 @SuppressWarnings("deprecation")
-public class GlmSubstitutionModelGradient implements GradientWrtParameterProvider, Reportable,
+public abstract class AbstractGlmSubstitutionModelGradient implements GradientWrtParameterProvider, Reportable,
         Loggable, Citable {
 
     protected final TreeDataLikelihood treeDataLikelihood;
@@ -71,10 +71,10 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
     private final ParameterMap parameterMap;
     private final int whichSubstitutionModel;
 
-    public GlmSubstitutionModelGradient(String traitName,
-                                        TreeDataLikelihood treeDataLikelihood,
-                                        BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                        OldGLMSubstitutionModel substitutionModel) {
+    public AbstractGlmSubstitutionModelGradient(String traitName,
+                                                TreeDataLikelihood treeDataLikelihood,
+                                                BeagleDataLikelihoodDelegate likelihoodDelegate,
+                                                OldGLMSubstitutionModel substitutionModel) {
 
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
@@ -302,8 +302,8 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
         return  sb.toString();
     }
 
-    private static final boolean COUNT_TOTAL_OPERATIONS = true;
-    private static final boolean DEBUG_CROSS_PRODUCTS = true;
+    private static final boolean COUNT_TOTAL_OPERATIONS = false;
+    private static final boolean DEBUG_CROSS_PRODUCTS = false;
 
     private double[] savedDifferentials;
 

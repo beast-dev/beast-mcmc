@@ -29,17 +29,12 @@ import dr.evomodel.substmodel.OldGLMSubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.distribution.GeneralizedLinearModel;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.DesignMatrix;
 import dr.inference.model.Parameter;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Marc A. Suchard
  */
-public class RandomEffectsSubstitutionModelGradient extends GlmSubstitutionModelGradient {
+public class RandomEffectsSubstitutionModelGradient extends AbstractGlmSubstitutionModelGradient {
 
     private final int[][] mapEffectToIndices;
 

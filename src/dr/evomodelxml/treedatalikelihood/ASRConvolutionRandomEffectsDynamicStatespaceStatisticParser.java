@@ -53,7 +53,8 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatisticParser extends
 
     public static String STATISTIC = "hackyStateSpaceConvolutionStatistic";
     public static String RANDOM_EFFECTS = "randomEffects";
-    public static String SUBS_MODEL = "substitutionModel";
+    public static String SUBS_MODEL_ANCESTOR = "substitutionModelAncestor";
+    public static String SUBS_MODEL_DESCENDANT = "substitutionModelDescendant";
     public static String RATE_ANCESTOR = "rateAncestor";
     public static String RATE_DESCENDANT = "rateDescendant";
     private static final String MRCA = "mrca";
@@ -67,9 +68,14 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatisticParser extends
 
         AncestralStateBeagleTreeLikelihood asrLike = (AncestralStateBeagleTreeLikelihood) xo.getChild(AncestralStateBeagleTreeLikelihood.class);
 
-        SubstitutionModel subsModel = null;
-        if (xo.hasChildNamed(SUBS_MODEL)) {
-            subsModel = (SubstitutionModel) xo.getChild(SUBS_MODEL).getChild(0);
+        SubstitutionModel subsModelAncestor = null;
+        if (xo.hasChildNamed(SUBS_MODEL_ANCESTOR)) {
+            subsModelAncestor = (SubstitutionModel) xo.getChild(SUBS_MODEL_ANCESTOR).getChild(0);
+        }
+
+        SubstitutionModel subsModelDescendant = null;
+        if (xo.hasChildNamed(SUBS_MODEL_DESCENDANT)) {
+            subsModelDescendant = (SubstitutionModel) xo.getChild(SUBS_MODEL_DESCENDANT).getChild(0);
         }
 
         Parameter randomEffects = (Parameter) xo.getChild(RANDOM_EFFECTS).getChild(0);
@@ -114,7 +120,8 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatisticParser extends
             stat = new ASRConvolutionRandomEffectsDynamicStatespaceStatistic(
                     name,
                     asrLike,
-                    subsModel,
+                    subsModelAncestor,
+                    subsModelDescendant,
                     randomEffects,
                     branchRates,
                     rateAncestor,
@@ -142,8 +149,9 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatisticParser extends
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
             new ElementRule(AncestralStateBeagleTreeLikelihood.class, false),
-            new ElementRule(SUBS_MODEL, SubstitutionModel.class, "Substitution model without random effects.", false),
-            new ElementRule(RANDOM_EFFECTS, Parameter.class, "The (log-scale) random effects added for the second half of the branch.", true),
+            new ElementRule(SUBS_MODEL_ANCESTOR, SubstitutionModel.class, "Substitution model for the ancestral portion of the branch, taken as the template for the expanded state-space model.", false),
+            new ElementRule(SUBS_MODEL_DESCENDANT, SubstitutionModel.class, "Substitution model for the more recent portion of the branch.", false),
+            new ElementRule(RANDOM_EFFECTS, Parameter.class, "The (log-scale) random effects added for the expanded statespace on the second half of the branch.", true),
             new ElementRule(BranchRateModel.class, false),
             new ElementRule(RATE_ANCESTOR, Statistic.class, "If provided, this will be used as the evolutionary rate for the ancestral portion of the branch instead of the rate provided by the BranchRateModel.", true),
             new ElementRule(RATE_DESCENDANT, Statistic.class, "If provided, this will be used as the evolutionary rate for the descendant portion of the branch instead of the rate provided by the BranchRateModel.", true),

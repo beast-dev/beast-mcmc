@@ -106,6 +106,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     private final double[] dPIntervalEnd;
     private final double[] dPModelEnd;
 
+    private final double[] dPModelEnd_prev;
+
     public NewBirthDeathSerialSamplingModel(
             Parameter birthRate,
             Parameter deathRate,
@@ -210,6 +212,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
         this.dPIntervalEnd = new double[numIntervals * 4];
         this.dPModelEnd = new double[numIntervals * 4];
+        this.dPModelEnd_prev = new double[numIntervals * 4];
 
         this.gridEnd = gridEnd;
         this.numIntervals = numIntervals;
@@ -359,6 +362,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         
         dBCompute(model, dB);
 
+        System.arraycopy(dPModelEnd, 0, dPModelEnd_prev, 0, numIntervals * 4);
+
         if (numIntervals > 1 && model < numIntervals - 1) {
 
             double end = modelStartTimes[model + 1];
@@ -391,7 +396,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         if (sampleIsAtEventTime && samplesTakenAtEventTime) {
             logSampProb = Math.log(rho);
             if (model > 0) {
-                logSampProb = Math.log(rho) + Math.log(r + (1.0 - r) * p(model,tOld));
+                logSampProb = Math.log(rho) + Math.log(r + ((1.0 - r) * previousP));
             }
         } else {
             double logPsi = Math.log(psi);
@@ -679,7 +684,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             gradient[samplingIndex(currentModelSegment, numIntervals)] += 1 / psi;
         }
 
-        if (!sampleIsAtEventTime | currentModelSegment > 0) {
+        if (!sampleIsAtEventTime ) {
             //double p_it = p(currentModelSegment, intervalEnd);
             if (intervalEnd == modelStartTimes[currentModelSegment]) {
                 eAt_Old = Math.exp(A * (intervalEnd - modelStartTimes[currentModelSegment]));
@@ -700,6 +705,20 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
                 gradient[deathIndex(k, numIntervals)] += term1 * dPIntervalEnd[k * 4 + 1];
                 gradient[samplingIndex(k, numIntervals)] += term1 * dPIntervalEnd[k * 4 + 2];
                 gradient[fractionIndex(k, numIntervals)] += term1 * dPIntervalEnd[k * 4 + 3];
+            }
+        }
+
+        if (sampleIsAtEventTime && currentModelSegment > 0) {
+
+            gradient[treatmentIndex(currentModelSegment, numIntervals)] +=  (1 - previousP) / ((1 - r) * previousP + r);
+
+            double term1 = (1 - r) / ((1 - r) * previousP + r);
+
+            for (int k = 0; k < currentModelSegment; k++) {
+                gradient[birthIndex(k, numIntervals)] += term1 * dPModelEnd_prev[k * 4 + 0];
+                gradient[deathIndex(k, numIntervals)] += term1 * dPModelEnd_prev[k * 4 + 1];
+                gradient[samplingIndex(k, numIntervals)] += term1 * dPModelEnd_prev[k * 4 + 2];
+                gradient[fractionIndex(k, numIntervals)] += term1 * dPModelEnd_prev[k * 4 + 3];
             }
         }
     }

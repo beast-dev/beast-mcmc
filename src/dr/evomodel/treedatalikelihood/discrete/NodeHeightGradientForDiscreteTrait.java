@@ -101,6 +101,10 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
         return result;
     }
 
+    protected int getParameterIndexFromNode(NodeRef node) {
+        return indexHelper.getParameterIndexFromNodeNumber(node.getNumber());
+    }
+
     @Override
     public String getReport() {
 

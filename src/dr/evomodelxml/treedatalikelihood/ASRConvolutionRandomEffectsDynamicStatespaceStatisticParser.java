@@ -52,7 +52,9 @@ package dr.evomodelxml.treedatalikelihood;
 public class ASRConvolutionRandomEffectsDynamicStatespaceStatisticParser extends AbstractXMLObjectParser {
 
     public static String STATISTIC = "hackyStateSpaceConvolutionStatistic";
-    public static String RANDOM_EFFECTS = "randomEffects";
+    public static String NUC1 = "firstNucleotide";
+    public static String NUC2 = "secondNucleotide";
+    public static String DINUC_EFFECTS = "dinucleotideEffects";
     public static String SUBS_MODEL_ANCESTOR = "substitutionModelAncestor";
     public static String SUBS_MODEL_DESCENDANT = "substitutionModelDescendant";
     public static String RATE_ANCESTOR = "rateAncestor";
@@ -77,8 +79,6 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatisticParser extends
         if (xo.hasChildNamed(SUBS_MODEL_DESCENDANT)) {
             subsModelDescendant = (SubstitutionModel) xo.getChild(SUBS_MODEL_DESCENDANT).getChild(0);
         }
-
-        Parameter randomEffects = (Parameter) xo.getChild(RANDOM_EFFECTS).getChild(0);
 
         BranchRateModel branchRates = (BranchRateModel)xo.getChild(BranchRateModel.class);
 
@@ -110,6 +110,22 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatisticParser extends
 
         }
 
+        Parameter firstNuc = (Parameter) xo.getChild(NUC1).getChild(0);
+        int nDi = firstNuc.getParameterValues().length;
+        int[] firstNucleotide = new int[nDi];
+        for (int i = 0; i < nDi; i++) {
+            firstNucleotide[i] = (int) firstNuc.getParameterValue(i);
+        }
+
+        Parameter secondNuc = (Parameter) xo.getChild(NUC1).getChild(0);
+        if ( secondNuc.getParameterValues().length != nDi) { throw new RuntimeException("Number of dinucleotides specified in first and second do not match."); }
+        int[] secondNucleotide = new int[nDi];
+        for (int i = 0; i < nDi; i++) {
+            secondNucleotide[i] = (int) secondNuc.getParameterValue(i);
+        }
+
+        Parameter dinucleotideEffects = (Parameter) xo.getChild(DINUC_EFFECTS).getChild(0);
+
 //        TaxonList mrcaTaxa = null;
 //        if (xo.hasChildNamed(MRCA)) {
 //            mrcaTaxa = (TaxonList) xo.getElementFirstChild(MRCA);
@@ -122,7 +138,9 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatisticParser extends
                     asrLike,
                     subsModelAncestor,
                     subsModelDescendant,
-                    randomEffects,
+                    dinucleotideEffects,
+                    firstNucleotide,
+                    secondNucleotide,
                     branchRates,
                     rateAncestor,
                     rateDescendant,

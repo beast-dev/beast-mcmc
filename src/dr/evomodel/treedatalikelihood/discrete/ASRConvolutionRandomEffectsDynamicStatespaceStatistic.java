@@ -36,7 +36,9 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
                                                     AncestralStateBeagleTreeLikelihood asrLike,
                                                     SubstitutionModel subsModelAncestor,
                                                     SubstitutionModel subsModelDescendant,
-                                                    Parameter randomEffects,
+                                                    Parameter dinucleotideEffects,
+                                                    int[] firstNucleotide,
+                                                    int[] secondNucleotide,
                                                     BranchRateModel branchRates,
                                                     Statistic rateAncestor,
                                                     Statistic rateDescendant,
@@ -48,7 +50,10 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
         this.asrLikelihood = asrLike;
         this.subsModelAncestor = subsModelAncestor;
         this.subsModelDescendant = subsModelDescendant;
-        this.randomEffects = randomEffects;
+        this.dinucleotideEffects = dinucleotideEffects;
+        this.firstNucleotide = firstNucleotide;
+        this.secondNucleotide = secondNucleotide;
+        this.singleEffect = dinucleotideEffects.getParameterValues().length == 1;
         this.branchRates = branchRates;
         this.rateAncestor = rateAncestor;
         this.rateDescendant = rateDescendant;
@@ -131,6 +136,14 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
         return sb.toString();
     }
 
+    private boolean checkValidity(NodeRef nodeAncestor, NodeRef nodeDescendant) {
+        // TODO should we be checking that there are no overlapping reading frames of dinucleotides? Or no pairs of mutations? Probably the first...
+        int[] nodeStatesAncestor = asrLikelihood.getStatesForNode(tree, nodeAncestor);
+        int[] nodeStatesDescendant = asrLikelihood.getStatesForNode(tree, nodeDescendant);
+
+        return false;
+    }
+
     private void updateFrequencyModel(double[] freqsIID) {
         double[] freqsDoublet = new double[16];
         int idx = 0;
@@ -200,10 +213,10 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
                     double bfProd = freqs[from[0]] * freqs[to[0]];
                     // infinitesimal matrix has stationary frequencies added but we don't want them
                     double rate = matrixIID[flatIndex(from[0], to[0])]/freqsIID[to[0]];
-//                    System.err.println("  (0) rate = " + rate + "; idx = " + idx + "; refx = " + randomEffects.getParameterValue(idx));
+//                    System.err.println("  (0) rate = " + rate + "; idx = " + idx + "; refx = " + dinucleotideEffects.getParameterValue(idx));
                     sum1 += rate * bfProd;
                     doubletRates.setParameterValue(idx, rate);
-                    rate *= Math.exp(randomEffects.getParameterValue(idx));
+                    rate *= Math.exp(dinucleotideEffects.getParameterValue(idx));
                     sum2 += rate * bfProd;
                     doubletRatesRefx.setParameterValue(idx, rate);
 //                    System.err.println("rate * refx = " + rate);
@@ -211,10 +224,10 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
                     double bfProd = freqs[from[0]] * freqs[to[0]];
                     // infinitesimal matrix has stationary frequencies added but we don't want them
                     double rate = matrixIID[flatIndex(from[1], to[1])]/freqsIID[to[1]];
-//                    System.err.println("  (1) rate = " + rate + "; idx = " + idx + "; refx = " + randomEffects.getParameterValue(idx));
+//                    System.err.println("  (1) rate = " + rate + "; idx = " + idx + "; refx = " + dinucleotideEffects.getParameterValue(idx));
                     sum1 += rate * bfProd;
                     doubletRates.setParameterValue(idx, rate);
-                    rate *= Math.exp(randomEffects.getParameterValue(idx));
+                    rate *= Math.exp(dinucleotideEffects.getParameterValue(idx));
                     sum2 += rate * bfProd;
                     doubletRatesRefx.setParameterValue(idx, rate);
 //                    System.err.println("rate * refx = " + rate);
@@ -236,10 +249,10 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
                     double bfProd = freqs[from[0]] * freqs[to[0]];
                     // infinitesimal matrix has stationary frequencies added but we don't want them
                     double rate = matrixIID[flatIndex(from[0], to[0])]/freqsIID[to[0]];
-//                    System.err.println("  (0) rate = " + rate + "; idx = " + idx + "; refx = " + randomEffects.getParameterValue(idx));
+//                    System.err.println("  (0) rate = " + rate + "; idx = " + idx + "; refx = " + dinucleotideEffects.getParameterValue(idx));
                     sum1 += rate * bfProd;
                     doubletRates.setParameterValue(idx, rate);
-                    rate *= Math.exp(randomEffects.getParameterValue(idx));
+                    rate *= Math.exp(dinucleotideEffects.getParameterValue(idx));
                     sum2 += rate * bfProd;
                     doubletRatesRefx.setParameterValue(idx, rate);
 //                    System.err.println("rate * refx = " + rate);
@@ -247,10 +260,10 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
                     double bfProd = freqs[from[0]] * freqs[to[0]];
                     // infinitesimal matrix has stationary frequencies added but we don't want them
                     double rate = matrixIID[flatIndex(from[1], to[1])]/freqsIID[to[1]];
-//                    System.err.println("  (1) rate = " + rate + "; idx = " + idx + "; refx = " + randomEffects.getParameterValue(idx));
+//                    System.err.println("  (1) rate = " + rate + "; idx = " + idx + "; refx = " + dinucleotideEffects.getParameterValue(idx));
                     sum1 += rate * bfProd;
                     doubletRates.setParameterValue(idx, rate);
-                    rate *= Math.exp(randomEffects.getParameterValue(idx));
+                    rate *= Math.exp(dinucleotideEffects.getParameterValue(idx));
                     sum2 += rate * bfProd;
                     doubletRatesRefx.setParameterValue(idx, rate);
 //                    System.err.println("rate * refx = " + rate);
@@ -345,15 +358,15 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
         lnL += lastLnL;
         for (int s = 1; s < ancestorStates.length; s++) {
             if ( ancestorStates[s] != descendantStates[s] ) {
-                // Assign GA pairs to the dinucleotide model
+                // Assign GA pairs to the dinucleotide model (GA->AA is an APOBEC dinucleotide signature)
                 if (ancestorStates[s] == 2 && ancestorStates[s + 1] == 0) {
                     int ancestralDoublet = doubletFromNucs(ancestorStates[s], ancestorStates[s + 1]);
                     int descendantDoublet = doubletFromNucs(descendantStates[s], descendantStates[s + 1]);
                     lastLnL = logTpmDoublet[16 * ancestralDoublet + descendantDoublet];
                     // Skip next site, we've already computed its likelihood
                     s++;
-                // Assign TT pairs to the dinucleotide model
-                } else if (ancestorStates[s] == 3 && ancestorStates[s - 1] == 3) {
+                // Assign TC pairs to the dinucleotide model (TC->TT is an APOBEC dinucleotide signature)
+                } else if (ancestorStates[s - 1] == 3 && ancestorStates[s] == 1) {
                     // Remove last site and add it to the doublet model
                     lnL -= lastLnL;
                     int ancestralDoublet = doubletFromNucs(ancestorStates[s - 1], ancestorStates[s]);
@@ -428,7 +441,10 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
     private final ParametricDistributionModel prior;
     private final String name;
     private final FrequencyModel doubletFreqs;
-    private final Parameter randomEffects;
+    private final Parameter dinucleotideEffects;
+    private final boolean singleEffect;
+    private final int[] firstNucleotide;
+    private final int[] secondNucleotide;
     private final Parameter doubletRates;
     private final Parameter doubletRatesRefx;
     private final ComplexSubstitutionModel doubletSubstitutionModel;

@@ -169,7 +169,7 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatisticParser extends
             new ElementRule(AncestralStateBeagleTreeLikelihood.class, false),
             new ElementRule(SUBS_MODEL_ANCESTOR, SubstitutionModel.class, "Substitution model for the ancestral portion of the branch, taken as the template for the expanded state-space model.", false),
             new ElementRule(SUBS_MODEL_DESCENDANT, SubstitutionModel.class, "Substitution model for the more recent portion of the branch.", false),
-            new ElementRule(RANDOM_EFFECTS, Parameter.class, "The (log-scale) random effects added for the expanded statespace on the second half of the branch.", true),
+            new ElementRule(DINUC_EFFECTS, Parameter.class, "The (log-scale) random effects added for the expanded statespace on the second half of the branch.", true),
             new ElementRule(BranchRateModel.class, false),
             new ElementRule(RATE_ANCESTOR, Statistic.class, "If provided, this will be used as the evolutionary rate for the ancestral portion of the branch instead of the rate provided by the BranchRateModel.", true),
             new ElementRule(RATE_DESCENDANT, Statistic.class, "If provided, this will be used as the evolutionary rate for the descendant portion of the branch instead of the rate provided by the BranchRateModel.", true),

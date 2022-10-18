@@ -212,7 +212,6 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
     protected void acceptState() {
     }
 
-
     private void setupNodeMaps() {
         if (clades.size() > 0) {
             setupNodeMaps(treeModel, treeModel.getRoot(), new BitSet());

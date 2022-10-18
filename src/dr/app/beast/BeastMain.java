@@ -378,6 +378,7 @@ public class BeastMain {
                         new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
                         new Arguments.Option("beagle_double", "BEAGLE: use double precision if available"),
                         new Arguments.Option("beagle_async", "BEAGLE: use asynchronous kernels if available"),
+                        new Arguments.Option("beagle_low_memory", "BEAGLE: use lower memory pre-order traversal kernels"),
                         new Arguments.StringOption("beagle_scaling", new String[]{"default", "dynamic", "delayed", "always", "none"},
                                 false, "BEAGLE: specify scaling scheme to use"),
                         new Arguments.Option("beagle_delay_scaling_off", "BEAGLE: don't wait until underflow for scaling option"),
@@ -588,6 +589,10 @@ public class BeastMain {
         }
         if (arguments.hasOption("beagle_async")) {
             beagleFlags |= BeagleFlag.COMPUTATION_ASYNCH.getMask();
+        }
+
+        if (arguments.hasOption("beagle_low_memory")) {
+            beagleFlags |= BeagleFlag.PREORDER_TRANSPOSE_LOW_MEMORY.getMask();
         }
 
         if (arguments.hasOption("beagle_order")) {

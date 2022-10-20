@@ -1,6 +1,7 @@
 package dr.inference.operators.shrinkage;
 
 import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.shrinkage.BayesianBridgeRNG;
 import dr.inference.distribution.shrinkage.JointBayesianBridgeDistributionModel;
 import dr.inference.model.Statistic;
 import dr.math.distributions.GammaDistribution;
@@ -99,8 +100,53 @@ public class BayesianBridgeGlobalScaleEffectivePriorSampler extends Statistic.Ab
         return 1;
     }
 
+    private double sampleGlobalScalePrior() {
+        double priorShape = globalScalePrior.getShape();
+        double priorScale = globalScalePrior.getScale();
+        double exponent = bridge.getExponent().getParameterValue(0);
+
+        double phi = GammaDistribution.nextGamma(priorShape, priorScale); // sample
+
+        double draw = Math.pow(phi, -1.0 / exponent); //global scale = phi^(-1/exponent) and phi ~ gamma
+        // (phi := nu and global scale := tau in Bayesian Bridge, Polson et al. (2012)
+        // bridge.setGlobalScale(draw);
+        return draw;
+    }
+
+    private double absSumBeta(double[] betaDraw) {
+
+        double exponent = bridge.getExponent().getParameterValue(0);
+        double sum = 0.0;
+        for (int i = 0; i < bridge.getDimension(); ++i) {
+            if (true) {
+                sum += Math.pow(Math.abs(betaDraw[i]), exponent);
+            }
+        }
+        return sum;
+    }
+    private double sampleGlobalScale(double[] betaDraw) {
+
+        double priorShape = globalScalePrior.getShape();
+        double priorScale = globalScalePrior.getScale();
+        double exponent = bridge.getExponent().getParameterValue(0);
+        double effectiveDim = bridge.getDimension();
+        double shape = effectiveDim / exponent;
+        double rate = absSumBeta(betaDraw);
+
+        if (priorShape > 0.0) {
+            shape += priorShape;
+            rate += 1.0 / priorScale;
+        }
+
+        double phi = GammaDistribution.nextGamma(shape, 1.0 / rate);
+        double globalScaleDraw = Math.pow(phi, -1.0 / exponent);
+        return globalScaleDraw;
+    }
+
     @Override
     public double getStatisticValue(int dim) {
-        return 0;
+        double globalScaleDraw = sampleGlobalScalePrior();
+        double[] betaDraw = bridge.nextRandom(globalScaleDraw);
+        return sampleGlobalScale(betaDraw);
     }
 }

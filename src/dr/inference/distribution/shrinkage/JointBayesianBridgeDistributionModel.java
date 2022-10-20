@@ -99,6 +99,20 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
         return draws;
     }
 
+    public double[] nextRandom(double globalScaleDraw) {
+        double[] draws;
+        if ( slabWidth != null) {
+            draws = BayesianBridgeRNG.nextRandom(globalScaleDraw, exponent.getParameterValue(0), slabWidth.getParameterValue(0), dim);
+        } else {
+            draws = BayesianBridgeRNG.nextRandom(globalScaleDraw, exponent.getParameterValue(0), dim);
+        }
+        return draws;
+    }
+
+//    public void setGlobalScale(double draw) {
+//        globalScale.setParameterValue(0, draw);
+//    }
+
     private final Parameter localScale;
     private final Parameter slabWidth;
 }

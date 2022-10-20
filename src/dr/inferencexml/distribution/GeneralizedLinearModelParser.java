@@ -114,8 +114,6 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
 
             glm.addScaleParameter(scaleParameter, scaleDesign);
         }
-
-        checkFullRankOfMatrix = xo.getAttribute(CHECK_FULL_RANK,true);
 //        System.err.println("START 0");
         addIndependentParameters(xo, glm, dependentParam);
 //        System.err.println("START 1");
@@ -129,6 +127,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
             }
         }
 //        System.err.println("PASSED B");
+        checkFullRankOfMatrix = xo.getAttribute(CHECK_FULL_RANK,true);
 //        System.err.println("PASSED C");
         return glm;
     }

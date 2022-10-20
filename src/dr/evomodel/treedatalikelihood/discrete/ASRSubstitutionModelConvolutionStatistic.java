@@ -30,8 +30,7 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
                                                                  AncestralStateBeagleTreeLikelihood asrLike,
                                                                  SubstitutionModel subsModelAncestor,
                                                                  SubstitutionModel subsModelDescendant,
-                                                                 int[] pairFirstCharacters,
-                                                                 int[] pairSecondCharacters,
+                                                                 int[] doublets,
                                                                  SubstitutionModel pairedSubsModelAncestor,
                                                                  SubstitutionModel pairedSubsModelDescendant,
                                                                  BranchRateModel branchRates,
@@ -55,13 +54,13 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         this.tree = asrLikelihood.getTreeModel();
         this.leafSetDescendant = (mrcaTaxaDescendant != null) ? TreeUtils.getLeavesForTaxa(tree, mrcaTaxaDescendant) : null;
         // Check validity of paired data model
-        this.pairFirstCharacters = pairFirstCharacters;
-        this.pairSecondCharacters = pairSecondCharacters;
+        this.doublets = doublets;
         this.pairedSubstitutionModelAncestor = pairedSubsModelAncestor;
         this.pairedSubstitutionModelDescendant = pairedSubsModelDescendant;
         this.isPartitioned = pairedSubsModelAncestor != null;
         this.doubletsAreSafe = (!isPartitioned || !doubletsCanOverlap()) ? true : false;
         if (isPartitioned) {
+            if (doublets.length % 2 != 0) { throw new RuntimeException("Improperly specified doublets"); }
             if ( bootstrap) { throw new RuntimeException("Cannot currently bootstrap context-dependent models."); }
             if ( (pairedSubsModelAncestor != null && pairedSubsModelAncestor == null) || pairedSubsModelAncestor == null && pairedSubsModelAncestor != null) { throw new RuntimeException("If specifying models for doublets must specify ancestral and descendant models."); }
             if ( pairedSubsModelAncestor.getFrequencyModel().getFrequencies().length != pairedSubsModelDescendant.getFrequencyModel().getFrequencies().length ) { throw new RuntimeException("Doublet models do not match in size."); }
@@ -122,6 +121,13 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
             sb.append("  Using prior named: ").append((prior.getId())).append("\n");
         }
         sb.append("Using bootstrap? ").append((bootstrap)).append("\n");
+        if (isPartitioned) {
+            sb.append("Using partitioned model for doublets: \n");
+            for (int i = 0; i < doublets.length / 2; i++) {
+                sb.append("  ").append(dataType.getChar(doublets[2 * i])).append(dataType.getChar(doublets[2 * i + 1])).append("\n");
+            }
+            sb.append("Using doublet substitution models named: ").append(pairedSubstitutionModelAncestor.getId()).append(", ").append(pairedSubstitutionModelDescendant.getId()).append("\n");
+        }
         sb.append("\n\n");
         return sb.toString();
     }
@@ -162,8 +168,9 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
 
         boolean pair = false;
 
-        for (int i = 0; i < pairFirstCharacters.length; i++) {
-            if ( first == pairFirstCharacters[i] && second == pairSecondCharacters[i] ) {
+        int nDoublets = doublets.length / 2;
+        for (int i = 0; i < nDoublets; i++) {
+            if ( first == doublets[2 * i] && second == doublets[2 * i + 1] ) {
                 pair = true;
                 break;
             }
@@ -172,10 +179,11 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
     }
 
     private boolean doubletsCanOverlap() {
+        int nDoublets = doublets.length / 2;
         boolean overlapPossible = false;
-        for (int i = 0; i < pairFirstCharacters.length; i++) {
-            for (int j= 0; j < pairSecondCharacters.length; j++) {
-                if (pairFirstCharacters[i] == pairSecondCharacters[j]) {
+        for (int i = 0; i < nDoublets; i++) {
+            for (int j= 0; j < nDoublets; j++) {
+                if (doublets[2 * i] == doublets[2 * j + 1]) {
                     overlapPossible = true;
                     break;
                 }
@@ -330,8 +338,7 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
     private final boolean bootstrap;
     private final ParametricDistributionModel prior;
     private final String name;
-    private final int[] pairFirstCharacters;
-    private final int[] pairSecondCharacters;
+    private final int[] doublets;
     private final boolean isPartitioned;
     private final boolean doubletsAreSafe;
 }

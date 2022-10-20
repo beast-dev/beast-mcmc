@@ -46,7 +46,7 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
     public static String STATISTIC = "asrSubstitutionModelConvolutionStatistic";
     public static String SUBS_MODEL_ANCESTOR = "substitutionModelAncestor";
     public static String SUBS_MODEL_DESCENDANT = "substitutionModelDescendant";
-    public static String PAIR_FIRST = "firstPairedCharacter";
+    public static String DOUBLETS = "doublets";
     public static String PAIR_SECOND = "secondPairedCharacter";
     public static String PAIR_SUBS_MODEL_ANCESTOR = "doubletSubstitutionModelAncestor";
     public static String PAIR_SUBS_MODEL_DESCENDANT = "doubletSubstitutionModelDescendant";
@@ -74,14 +74,9 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
             subsModelDescendant = (SubstitutionModel) xo.getChild(SUBS_MODEL_DESCENDANT).getChild(0);
         }
 
-        int[] firstPairedCharacter = new int[0];
-        if ( xo.hasAttribute(PAIR_FIRST) ) {
-            firstPairedCharacter = xo.getIntegerArrayAttribute(PAIR_FIRST);
-        }
-
-        int[] secondPairedCharacter = new int[0];
-        if ( xo.hasAttribute(PAIR_SECOND) ) {
-            secondPairedCharacter = xo.getIntegerArrayAttribute(PAIR_SECOND);
+        int[] doublets = new int[0];
+        if ( xo.hasAttribute(DOUBLETS) ) {
+            doublets = xo.getIntegerArrayAttribute(DOUBLETS);
         }
 
         SubstitutionModel pairedSubsModelAncestor = null;
@@ -138,8 +133,7 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
                     asrLike,
                     subsModelAncestor,
                     subsModelDescendant,
-                    firstPairedCharacter,
-                    secondPairedCharacter,
+                    doublets,
                     pairedSubsModelAncestor,
                     pairedSubsModelDescendant,
                     branchRates,
@@ -172,8 +166,7 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
             new ElementRule(AncestralStateBeagleTreeLikelihood.class, false),
             new ElementRule(SUBS_MODEL_ANCESTOR, SubstitutionModel.class, "Substitution model for the ancestral portion of the branch.", false),
             new ElementRule(SUBS_MODEL_DESCENDANT, SubstitutionModel.class, "Substitution model for the more recent portion of the branch.", false),
-            AttributeRule.newIntegerArrayRule(PAIR_FIRST, true), // Vector of first elements in all doublets to be partitioned
-            AttributeRule.newIntegerArrayRule(PAIR_SECOND, true), // Vector of second elements in all doublets to be partitioned
+            AttributeRule.newIntegerArrayRule(DOUBLETS, true), // Integer codes for all doublets as "doublet1.1 doublet1.2 ... doubletn.1 doubletn.2"
             new ElementRule(PAIR_SUBS_MODEL_ANCESTOR, SubstitutionModel.class, "Optional doublet substitution model for the ancestral portion of the branch (results in a partitioned context-dependent model).", true),
             new ElementRule(PAIR_SUBS_MODEL_DESCENDANT, SubstitutionModel.class, "Optional doublet substitution model for the more recent portion of the branch (results in a partitioned context-dependent model).", true),
             new ElementRule(BranchRateModel.class, false),

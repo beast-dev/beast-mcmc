@@ -74,13 +74,13 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
             subsModelDescendant = (SubstitutionModel) xo.getChild(SUBS_MODEL_DESCENDANT).getChild(0);
         }
 
-        int[] firstPairedCharacter = null;
-        if ( xo.hasChildNamed(PAIR_FIRST) ) {
+        int[] firstPairedCharacter = new int[0];
+        if ( xo.hasAttribute(PAIR_FIRST) ) {
             firstPairedCharacter = xo.getIntegerArrayAttribute(PAIR_FIRST);
         }
 
-        int[] secondPairedCharacter = null;
-        if ( xo.hasChildNamed(PAIR_SECOND) ) {
+        int[] secondPairedCharacter = new int[0];
+        if ( xo.hasAttribute(PAIR_SECOND) ) {
             secondPairedCharacter = xo.getIntegerArrayAttribute(PAIR_SECOND);
         }
 

@@ -258,6 +258,7 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
                 int from = getDoublet(ancestorStates[s], ancestorStates[s + 1], nStates);
                 int to = getDoublet(descendantStates[s], descendantStates[s + 1], nStates);
                 lnL += logPairedTpm[from * nStatesSquared + to];
+                s++;
             } else {
                 lnL += logTpm[ancestorStates[s] * nStates + descendantStates[s]];
             }

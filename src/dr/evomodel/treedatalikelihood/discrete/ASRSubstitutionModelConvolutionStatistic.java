@@ -231,8 +231,9 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         if ( isPartitioned ) {
             double[] pairedTpm1 = new double[nStatesSquared * nStatesSquared];
             double[] pairedTpm2 = new double[nStatesSquared * nStatesSquared];
-            pairedSubstitutionModelAncestor.getTransitionProbabilities(distance1, pairedTpm1);
-            pairedSubstitutionModelDescendant.getTransitionProbabilities(distance2, pairedTpm2);
+            // The doublet model is normalized to 1 substitution per character, but that's 1/2 substitution per site in the alignment, so we double the rate to compensate
+            pairedSubstitutionModelAncestor.getTransitionProbabilities(distance1 * 2.0, pairedTpm1);
+            pairedSubstitutionModelDescendant.getTransitionProbabilities(distance2 * 2.0, pairedTpm2);
 
             // Do the matrix convolution
             convolveMatrices(pairedTpm1, pairedTpm2, pairedTpm, nStates);

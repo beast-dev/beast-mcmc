@@ -1,27 +1,21 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
-        import dr.evolution.datatype.Codons;
-        import dr.evolution.datatype.DataType;
-        import dr.evolution.datatype.GeneralDataType;
-        import dr.evolution.datatype.Nucleotides;
-        import dr.evolution.tree.NodeRef;
-        import dr.evolution.tree.Tree;
-        import dr.evolution.tree.TreeUtils;
-        import dr.evolution.util.TaxonList;
-        import dr.evomodel.branchratemodel.BranchRateModel;
-        import dr.evomodel.substmodel.*;
-        import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
-        import dr.inference.distribution.ParametricDistributionModel;
-        import dr.inference.glm.GeneralizedLinearModel;
-        import dr.inference.hmc.CompoundGradient;
-        import dr.inference.model.Parameter;
-        import dr.inference.model.Statistic;
-        import dr.math.MathUtils;
-        import dr.math.UnivariateFunction;
-        import dr.math.UnivariateMinimum;
-        import dr.xml.Reportable;
+import dr.evolution.datatype.DataType;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.TaxonList;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
+import dr.inference.distribution.ParametricDistributionModel;
+import dr.inference.model.Statistic;
+import dr.math.MathUtils;
+import dr.math.UnivariateFunction;
+import dr.math.UnivariateMinimum;
+import dr.xml.Reportable;
 
-        import java.util.Set;
+import java.util.Set;
 
 /**
  * A statistic that returns the ML or MAP estimate of the times spent in two substitution models along a branch.
@@ -33,48 +27,46 @@ package dr.evomodel.treedatalikelihood.discrete;
 public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Statistic.Abstract implements Reportable {
 
     public ASRConvolutionRandomEffectsDynamicStatespaceStatistic(String name,
-                                                    AncestralStateBeagleTreeLikelihood asrLike,
-                                                    SubstitutionModel subsModelAncestor,
-                                                    SubstitutionModel subsModelDescendant,
-                                                    Parameter dinucleotideEffects,
-                                                    int[] firstNucleotide,
-                                                    int[] secondNucleotide,
-                                                    BranchRateModel branchRates,
-                                                    Statistic rateAncestor,
-                                                    Statistic rateDescendant,
-                                                    TaxonList mrcaTaxaDescendant,
-                                                    ParametricDistributionModel prior
+                                                                 AncestralStateBeagleTreeLikelihood asrLike,
+                                                                 SubstitutionModel subsModelAncestor,
+                                                                 SubstitutionModel subsModelDescendant,
+                                                                 int[] pairFirstCharacters,
+                                                                 int[] pairSecondCharacters,
+                                                                 SubstitutionModel pairedSubsModelAncestor,
+                                                                 SubstitutionModel pairedSubsModelDescendant,
+                                                                 BranchRateModel branchRates,
+                                                                 Statistic rateAncestor,
+                                                                 Statistic rateDescendant,
+                                                                 TaxonList mrcaTaxaDescendant,
+                                                                 boolean bootstrap,
+                                                                 ParametricDistributionModel prior
     ) throws TreeUtils.MissingTaxonException {
         this.name = name;
+        this.bootstrap = bootstrap;
         this.prior = prior;
         this.asrLikelihood = asrLike;
-        this.subsModelAncestor = subsModelAncestor;
-        this.subsModelDescendant = subsModelDescendant;
-        this.dinucleotideEffects = dinucleotideEffects;
-        this.firstNucleotide = firstNucleotide;
-        this.secondNucleotide = secondNucleotide;
-        this.singleEffect = dinucleotideEffects.getParameterValues().length == 1;
+        this.substitutionModelAncestor = subsModelAncestor;
+        this.substitutionModelDescendant = subsModelDescendant;
         this.branchRates = branchRates;
         this.rateAncestor = rateAncestor;
         this.rateDescendant = rateDescendant;
+        this.dataType = subsModelAncestor.getFrequencyModel().getDataType();
+        if ( dataType != substitutionModelDescendant.getFrequencyModel().getDataType()) { throw new RuntimeException("Incompatible datatypes in substitution models for ASRSubstitutionModelConvolution.");}
         this.tree = asrLikelihood.getTreeModel();
         this.leafSetDescendant = (mrcaTaxaDescendant != null) ? TreeUtils.getLeavesForTaxa(tree, mrcaTaxaDescendant) : null;
-
-        if (!(subsModelAncestor.getFrequencyModel().getDataType() instanceof Nucleotides)) {throw new RuntimeException("This statistic only works for DNA data");}
-        if (!(subsModelDescendant.getFrequencyModel().getDataType() instanceof Nucleotides)) {throw new RuntimeException("This statistic only works for DNA data");}
-
-        double[] freqs = new double[16];
-        for (int i = 0; i < 16; i++) {freqs[i] = 1.0/16.0;}
-        this.doubletFreqs = new FrequencyModel(doubletDataType,freqs);
-
-        this.doubletRates = new Parameter.Default("expandedRates",new double[240]);
-        this.doubletRatesRefx = new Parameter.Default("expandedRatesRefx",new double[240]);
-        this.doubletSubstitutionModel = new ComplexSubstitutionModel("expandedRateMatrix", doubletDataType, doubletFreqs, doubletRates);
-        this.doubletSubstitutionModelRefx = new ComplexSubstitutionModel("expandedRateMatrixRefx", doubletDataType, doubletFreqs, doubletRatesRefx);
-
-        // We normalize by hand to get doublets normalized per site
-        doubletSubstitutionModel.setNormalization(false);
-        doubletSubstitutionModelRefx.setNormalization(false);
+        // Check validity of paired data model
+        this.pairFirstCharacters = pairFirstCharacters;
+        this.pairSecondCharacters = pairSecondCharacters;
+        this.pairedSubstitutionModelAncestor = pairedSubsModelAncestor;
+        this.pairedSubstitutionModelDescendant = pairedSubsModelDescendant;
+        this.isPartitioned = pairedSubsModelAncestor != null;
+        this.doubletsAreSafe = (!isPartitioned || !doubletsCanOverlap()) ? true : false;
+        if (isPartitioned) {
+            if ( bootstrap) { throw new RuntimeException("Cannot currently bootstrap context-dependent models."); }
+            if ( (pairedSubsModelAncestor != null && pairedSubsModelAncestor == null) || pairedSubsModelAncestor == null && pairedSubsModelAncestor != null) { throw new RuntimeException("If specifying models for doublets must specify ancestral and descendant models."); }
+            if ( pairedSubsModelAncestor.getFrequencyModel().getFrequencies().length != pairedSubsModelDescendant.getFrequencyModel().getFrequencies().length ) { throw new RuntimeException("Doublet models do not match in size."); }
+            if ( pairedSubsModelAncestor.getFrequencyModel().getFrequencies().length != dataType.getStateCount() * dataType.getStateCount() ) { throw new RuntimeException("Doublet models are not sized for doublets."); }
+        }
     }
 
     public int getDimension() {
@@ -101,18 +93,14 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
         NodeRef nodeDescendant = getNode(leafSetDescendant);
         NodeRef nodeAncestor = tree.getParent(nodeDescendant);
 
+        if (!doubletsAreSafe && doubletsOverlapOnSequence(nodeAncestor)) {
+            // We cannot technically apply this but to avoid mucking up a whole MCMC chain we'll just return NaN
+            return Double.NaN;
+        }
+
         double[] rates = getRates(nodeDescendant);
 
         double branchTime = tree.getNodeHeight(nodeAncestor) - tree.getNodeHeight(nodeDescendant);
-
-        updateSubstitutionRateMatrices();
-        double[] tmp = new double[256];
-        doubletSubstitutionModel.getInfinitesimalMatrix(tmp);
-//        System.err.println(new dr.math.matrixAlgebra.Vector(tmp));
-//        System.err.println(new dr.math.matrixAlgebra.Matrix(tmp,16,16));
-        doubletSubstitutionModelRefx.getInfinitesimalMatrix(tmp);
-//        System.err.println(new dr.math.matrixAlgebra.Vector(tmp));
-//        System.err.println(new dr.math.matrixAlgebra.Matrix(tmp,16,16));
 
         UnivariateMinimum optimized = optimizeTimes(nodeDescendant, nodeAncestor, rates, branchTime);
 
@@ -122,181 +110,20 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
     @Override
     public String getReport() {
 
-        StringBuilder sb = new StringBuilder("ASRSubstitutionModelConvolutionStatistic Report\n\n");
+        StringBuilder sb = new StringBuilder("hackyStatespaceStatistic Report\n\n");
 
         sb.append("Estimated time of shift before common ancestor: ").append(getStatisticValue(0)).append("\n");
         sb.append("Using rates: ").append(new dr.math.matrixAlgebra.Vector(getRates(getNode(leafSetDescendant)))).append("\n");
+        sb.append("Using substitution models named: ").append(substitutionModelAncestor.getId()).append(", ").append(substitutionModelDescendant.getId()).append("\n");
         sb.append("Using taxon set: ").append(leafSetDescendant).append("\n");
         sb.append("Using prior? ").append((prior != null)).append("\n");
         if (prior != null) {
             sb.append("  Using prior of type: ").append((prior.getModelName())).append("\n");
             sb.append("  Using prior named: ").append((prior.getId())).append("\n");
         }
+        sb.append("Using bootstrap? ").append((bootstrap)).append("\n");
         sb.append("\n\n");
         return sb.toString();
-    }
-
-    private boolean checkValidity(NodeRef nodeAncestor, NodeRef nodeDescendant) {
-        // TODO should we be checking that there are no overlapping reading frames of dinucleotides? Or no pairs of mutations? Probably the first...
-        int[] nodeStatesAncestor = asrLikelihood.getStatesForNode(tree, nodeAncestor);
-        int[] nodeStatesDescendant = asrLikelihood.getStatesForNode(tree, nodeDescendant);
-
-        return false;
-    }
-
-    private void updateFrequencyModel(double[] freqsIID) {
-        double[] freqsDoublet = new double[16];
-        int idx = 0;
-        double sum = 0.0;
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                freqsDoublet[idx] = freqsIID[i] * freqsIID[j];
-                sum += freqsDoublet[idx];
-                idx++;
-            }
-        }
-        for (int i = 0; i < freqsDoublet.length; i++) {
-            freqsDoublet[i] /= sum;
-            doubletFreqs.setFrequency(i,freqsDoublet[i]);
-        }
-    }
-
-//    private int flatIndex(int i, int j) {
-//        int k = 0;
-//        if (i > j) {
-//            k += 6;
-//            int tmp = i;
-//            i = j;
-//            j = tmp;
-//        }
-//        k += (4*(4-1)/2) - (4-i)*((4-i)-1)/2 + j - i - 1;
-//        return k;
-//    }
-
-    private int flatIndex(int i, int j) {
-        return 4 * i + j;
-    }
-
-    private int[] nucsFromDoublet(int i) {
-        int[] nucs = new int[2];
-        nucs[0] = Math.floorDiv(i, 4);
-        nucs[1] = i - (nucs[0] * 4);
-        return nucs;
-    }
-
-    private int doubletFromNucs(int nuc1, int nuc2) {
-        return 4 * nuc1 + nuc2;
-    }
-
-    private void updateTransitionRateParameters() {
-        // TODO this is a really ugly function
-        double[] matrixIID = new double[16];
-        subsModelAncestor.getInfinitesimalMatrix(matrixIID);
-
-//        System.err.println(new dr.math.matrixAlgebra.Vector(matrixIID));
-//        System.err.println("\n\n\n");
-//        System.err.println(new dr.math.matrixAlgebra.Matrix(matrixIID,4,4));
-
-        double[] freqsIID = subsModelAncestor.getFrequencyModel().getFrequencies();
-        double[] freqs = doubletFreqs.getFrequencies();
-
-        double sum1 = 0.0;
-        double sum2 = 0.0;
-
-        int idx = 0;
-        // upper triangular
-        for (int i = 0; i < 15; i++) {
-            for (int j = i+1; j < 16; j++) {
-                int[] from = nucsFromDoublet(i);
-                int[] to = nucsFromDoublet(j);
-                if (from[0] != to[0] && from[1] == to[1]) {
-                    double bfProd = freqs[from[0]] * freqs[to[0]];
-                    // infinitesimal matrix has stationary frequencies added but we don't want them
-                    double rate = matrixIID[flatIndex(from[0], to[0])]/freqsIID[to[0]];
-//                    System.err.println("  (0) rate = " + rate + "; idx = " + idx + "; refx = " + dinucleotideEffects.getParameterValue(idx));
-                    sum1 += rate * bfProd;
-                    doubletRates.setParameterValue(idx, rate);
-                    rate *= Math.exp(dinucleotideEffects.getParameterValue(idx));
-                    sum2 += rate * bfProd;
-                    doubletRatesRefx.setParameterValue(idx, rate);
-//                    System.err.println("rate * refx = " + rate);
-                } else if (from[0] == to[0] && from[1] != to[1]) {
-                    double bfProd = freqs[from[0]] * freqs[to[0]];
-                    // infinitesimal matrix has stationary frequencies added but we don't want them
-                    double rate = matrixIID[flatIndex(from[1], to[1])]/freqsIID[to[1]];
-//                    System.err.println("  (1) rate = " + rate + "; idx = " + idx + "; refx = " + dinucleotideEffects.getParameterValue(idx));
-                    sum1 += rate * bfProd;
-                    doubletRates.setParameterValue(idx, rate);
-                    rate *= Math.exp(dinucleotideEffects.getParameterValue(idx));
-                    sum2 += rate * bfProd;
-                    doubletRatesRefx.setParameterValue(idx, rate);
-//                    System.err.println("rate * refx = " + rate);
-                } else {
-                    doubletRates.setParameterValue(idx, 0.0);
-                    doubletRatesRefx.setParameterValue(idx, 0.0);
-                }
-                idx++;
-            }
-        }
-//        System.err.println("\n>>>LOWER<<<\n");
-        // lower triangular
-        for (int j = 0; j < 15; j++) {
-            for (int i = j+1; i < 16; i++) {
-                int[] from = nucsFromDoublet(i);
-                int[] to = nucsFromDoublet(j);
-//                System.err.println("idx = " + idx +"; i = " + i + "; j = " + j + "; from = (" + from[0] + "," + from[1] + "); to = (" + to[0] + "," + to[1] + ")");
-                if (from[0] != to[0] && from[1] == to[1]) {
-                    double bfProd = freqs[from[0]] * freqs[to[0]];
-                    // infinitesimal matrix has stationary frequencies added but we don't want them
-                    double rate = matrixIID[flatIndex(from[0], to[0])]/freqsIID[to[0]];
-//                    System.err.println("  (0) rate = " + rate + "; idx = " + idx + "; refx = " + dinucleotideEffects.getParameterValue(idx));
-                    sum1 += rate * bfProd;
-                    doubletRates.setParameterValue(idx, rate);
-                    rate *= Math.exp(dinucleotideEffects.getParameterValue(idx));
-                    sum2 += rate * bfProd;
-                    doubletRatesRefx.setParameterValue(idx, rate);
-//                    System.err.println("rate * refx = " + rate);
-                } else if (from[0] == to[0] && from[1] != to[1]) {
-                    double bfProd = freqs[from[0]] * freqs[to[0]];
-                    // infinitesimal matrix has stationary frequencies added but we don't want them
-                    double rate = matrixIID[flatIndex(from[1], to[1])]/freqsIID[to[1]];
-//                    System.err.println("  (1) rate = " + rate + "; idx = " + idx + "; refx = " + dinucleotideEffects.getParameterValue(idx));
-                    sum1 += rate * bfProd;
-                    doubletRates.setParameterValue(idx, rate);
-                    rate *= Math.exp(dinucleotideEffects.getParameterValue(idx));
-                    sum2 += rate * bfProd;
-                    doubletRatesRefx.setParameterValue(idx, rate);
-//                    System.err.println("rate * refx = " + rate);
-                } else {
-                    doubletRates.setParameterValue(idx, 0.0);
-                    doubletRatesRefx.setParameterValue(idx, 0.0);
-                }
-                idx++;
-            }
-        }
-
-        // TODO is this the right normalization?
-        for (int i = 0; i < 240; i++) {
-            doubletRates.setParameterValue(i, doubletRates.getParameterValue(i)/sum1);
-            doubletRatesRefx.setParameterValue(i, doubletRatesRefx.getParameterValue(i)/sum2);
-        }
-
-    }
-
-    private void updateSubstitutionRateMatrices() {
-        // get doublet frequencies from site frequencies
-        updateFrequencyModel(subsModelAncestor.getFrequencyModel().getFrequencies());
-        updateTransitionRateParameters();
-    }
-
-    private void doConvolution(double[] tpm1, double[] tpm2, double[] tpm, int nStates) {
-        for (int i = 0; i < nStates; i++) {
-            for (int j = 0; j < nStates; j++) {
-                for (int k = 0; k < nStates; k++) {
-                    tpm[i * nStates + j] += tpm1[i * nStates + k] * tpm2[k * nStates + j];
-                }
-            }
-        }
     }
 
     // Gets rates for ancestral and descendant (in that order) portions of the branch
@@ -318,68 +145,113 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
         return rates;
     }
 
-    private double computeLogLikelihood(double distance1, double distance2, double rateDescendant, int[] ancestorStates, int[] descendantStates) {
+    private void convolveMatrices(double[] tpm1, double[] tpm2, double[] tpm, int nStates) {
+        for (int i = 0; i < nStates; i++) {
+            for (int j = 0; j < nStates; j++) {
+                for (int k = 0; k < nStates; k++) {
+                    tpm[i * nStates + j] += tpm1[i * nStates + k] * tpm2[k * nStates + j];
+                }
+            }
+        }
+    }
 
-        double[] freqsIID = subsModelAncestor.getFrequencyModel().getFrequencies();
-
-        double[] tpmDoublet1 = new double[256];
-        double[] tpmDoublet2 = new double[256];
-        doubletSubstitutionModel.getTransitionProbabilities(distance1, tpmDoublet1);
-        doubletSubstitutionModelRefx.getTransitionProbabilities(distance2, tpmDoublet2);
-
-        double[] tpmPerSite1 = new double[16];
-        double[] tpmPerSite2 = new double[16];
-        subsModelAncestor.getTransitionProbabilities(distance1, tpmPerSite1);
-        subsModelDescendant.getTransitionProbabilities(distance2, tpmPerSite2);
-
-        // Do the matrix convolution
-        double[] tpmDoublet = new double[256];
-        double[] tpmPerSite = new double[16];
-
-        doConvolution(tpmDoublet1, tpmDoublet2, tpmDoublet, 16);
-        doConvolution(tpmPerSite1, tpmPerSite2, tpmPerSite, 4);
-
-
-        double[] logTpmPerSite = new double[16];
-        for (int i = 0; i < 16; i++) {
-            logTpmPerSite[i] = Math.log(tpmPerSite[i]);
+    private boolean isPair(int first, int second) {
+        if (!isPartitioned) {
+            return false;
         }
 
-        double[] logTpmDoublet = new double[256];
-        for (int i = 0; i < 256; i++) {
-            logTpmDoublet[i] = Math.log(tpmDoublet[i]);
+        boolean pair = false;
+
+        for (int i = 0; i < pairFirstCharacters.length; i++) {
+            if ( first == pairFirstCharacters[i] && second == pairSecondCharacters[i] ) {
+                pair = true;
+                break;
+            }
+        }
+        return pair;
+    }
+
+    private boolean doubletsCanOverlap() {
+        boolean overlapPossible = false;
+        for (int i = 0; i < pairFirstCharacters.length; i++) {
+            for (int j= 0; j < pairSecondCharacters.length; j++) {
+                if (pairFirstCharacters[i] == pairSecondCharacters[j]) {
+                    overlapPossible = true;
+                    break;
+                }
+            }
+        }
+        return overlapPossible;
+    }
+
+    private boolean doubletsOverlapOnSequence(NodeRef node) {
+        int[] states = asrLikelihood.getStatesForNode(tree, node);
+        boolean overlapping = false;
+        boolean lastWasPair = false;
+        for (int i = 0; i < states.length - 1; i++) {
+            if ( isPair(states[i], states[i+1]) ) {
+                if ( lastWasPair ) {
+                    overlapping = true;
+                    break;
+                } else {
+                    lastWasPair = true;
+                }
+            } else {
+                lastWasPair = false;
+            }
+        }
+
+        return overlapping;
+    }
+
+    private int getDoublet(int first, int second, int nStates) {
+        return first * nStates + second;
+    }
+
+    private double computeLogLikelihood(double distance1, double distance2, double rateDescendant, int[] ancestorStates, int[] descendantStates) {
+        int nStates = dataType.getStateCount();
+        int nStatesSquared = nStates * nStates;
+
+        double[] tpm1 = new double[nStatesSquared];
+        double[] tpm2 = new double[nStatesSquared];
+        substitutionModelAncestor.getTransitionProbabilities(distance1, tpm1);
+        substitutionModelDescendant.getTransitionProbabilities(distance2, tpm2);
+
+        // Do the matrix convolution
+        double[] tpm= new double[nStates * nStates];
+        convolveMatrices(tpm1, tpm2, tpm, nStates);
+
+        double[] logTpm = new double[nStates * nStates];
+        for (int i = 0; i < nStates * nStates; i++) {
+            logTpm[i] = Math.log(tpm[i]);
+        }
+
+        double[] pairedTpm = new double[nStatesSquared * nStatesSquared];
+        double[] logPairedTpm = new double[nStatesSquared * nStatesSquared];
+        if ( isPartitioned ) {
+            double[] pairedTpm1 = new double[nStatesSquared * nStatesSquared];
+            double[] pairedTpm2 = new double[nStatesSquared * nStatesSquared];
+            pairedSubstitutionModelAncestor.getTransitionProbabilities(distance1, pairedTpm1);
+            pairedSubstitutionModelDescendant.getTransitionProbabilities(distance2, pairedTpm2);
+
+            // Do the matrix convolution
+            convolveMatrices(pairedTpm1, pairedTpm2, pairedTpm, nStates);
+
+            for (int i = 0; i < nStatesSquared * nStatesSquared; i++) {
+                logPairedTpm[i] = Math.log(pairedTpm1[i]);
+            }
         }
 
         double lnL = 0.0;
-
-        // TODO always check that we don't have 2 in a row mutations first!!!!
-
-        double lastLnL = logTpmPerSite[4 * ancestorStates[0] + descendantStates[0]];
-        lnL += lastLnL;
-        for (int s = 1; s < ancestorStates.length; s++) {
-            if ( ancestorStates[s] != descendantStates[s] ) {
-                // Assign GA pairs to the dinucleotide model (GA->AA is an APOBEC dinucleotide signature)
-                if (ancestorStates[s] == 2 && ancestorStates[s + 1] == 0) {
-                    int ancestralDoublet = doubletFromNucs(ancestorStates[s], ancestorStates[s + 1]);
-                    int descendantDoublet = doubletFromNucs(descendantStates[s], descendantStates[s + 1]);
-                    lastLnL = logTpmDoublet[16 * ancestralDoublet + descendantDoublet];
-                    // Skip next site, we've already computed its likelihood
-                    s++;
-                // Assign TC pairs to the dinucleotide model (TC->TT is an APOBEC dinucleotide signature)
-                } else if (ancestorStates[s - 1] == 3 && ancestorStates[s] == 1) {
-                    // Remove last site and add it to the doublet model
-                    lnL -= lastLnL;
-                    int ancestralDoublet = doubletFromNucs(ancestorStates[s - 1], ancestorStates[s]);
-                    int descendantDoublet = doubletFromNucs(descendantStates[s - 1], descendantStates[s]);
-                    lastLnL = logTpmDoublet[16 * ancestralDoublet + descendantDoublet];
-                // Everything else gets the single site model
-                } else {
-                    lastLnL = logTpmPerSite[4 * ancestorStates[s] + descendantStates[s]];
-                }
+        int nextToLast = ancestorStates.length - 1;
+        for (int s = 0; s < ancestorStates.length; s++) {
+            if (s < nextToLast && isPair(ancestorStates[s],ancestorStates[s+1])) {
+                int from = getDoublet(ancestorStates[s], ancestorStates[s + 1], nStates);
+                int to = getDoublet(descendantStates[s], descendantStates[s + 1], nStates);
+                lnL += logPairedTpm[from * nStatesSquared + to];
             } else {
-                lastLnL = logTpmPerSite[4 * ancestorStates[s] + descendantStates[s]];
+                lnL += logTpm[ancestorStates[s] * nStates + descendantStates[s]];
             }
-            lnL += lastLnL;
         }
 
         if (prior != null) {
@@ -399,6 +271,19 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
         int[] nodeStatesDescendant = asrLikelihood.getStatesForNode(tree, nodeDescendant);
 
         int nStates = nodeStatesAncestor.length;
+
+        if ( bootstrap ) {
+            int[] tmp1 = new int[nStates];
+            int[] tmp2 = new int[nStates];
+            System.arraycopy(nodeStatesAncestor,0, tmp1,0, nStates);
+            System.arraycopy(nodeStatesDescendant,0, tmp2,0, nStates);
+
+            for (int i = 0; i < nStates; i++) {
+                int idx = MathUtils.nextInt(nStates);
+                nodeStatesAncestor[i] = tmp1[idx];
+                nodeStatesDescendant[i] = tmp2[idx];
+            }
+        }
 
         UnivariateFunction f = new UnivariateFunction() {
             @Override
@@ -434,21 +319,18 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatistic extends Stati
     private final Statistic rateAncestor;
     private final Statistic rateDescendant;
     private AncestralStateBeagleTreeLikelihood asrLikelihood;
-    private SubstitutionModel subsModelAncestor;
-    private SubstitutionModel subsModelDescendant;
+    private SubstitutionModel substitutionModelAncestor;
+    private SubstitutionModel substitutionModelDescendant;
+    private SubstitutionModel pairedSubstitutionModelAncestor;
+    private SubstitutionModel pairedSubstitutionModelDescendant;
     private final Set<String> leafSetDescendant;
     private final Tree tree;
+    private final DataType dataType;
+    private final boolean bootstrap;
     private final ParametricDistributionModel prior;
     private final String name;
-    private final FrequencyModel doubletFreqs;
-    private final Parameter dinucleotideEffects;
-    private final boolean singleEffect;
-    private final int[] firstNucleotide;
-    private final int[] secondNucleotide;
-    private final Parameter doubletRates;
-    private final Parameter doubletRatesRefx;
-    private final ComplexSubstitutionModel doubletSubstitutionModel;
-    private final ComplexSubstitutionModel doubletSubstitutionModelRefx;
-    private final String[] sixteen = {"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"};
-    private final DataType doubletDataType = new GeneralDataType(sixteen);
+    private final int[] pairFirstCharacters;
+    private final int[] pairSecondCharacters;
+    private final boolean isPartitioned;
+    private final boolean doubletsAreSafe;
 }

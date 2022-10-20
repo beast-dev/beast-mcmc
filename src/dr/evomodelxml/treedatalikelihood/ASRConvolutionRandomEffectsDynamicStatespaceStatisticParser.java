@@ -25,42 +25,36 @@
 
 package dr.evomodelxml.treedatalikelihood;
 
-        import dr.evolution.alignment.PatternList;
-        import dr.evolution.tree.TreeUtils;
-        import dr.evolution.util.Taxa;
-        import dr.evolution.util.TaxonList;
-        import dr.evomodel.branchratemodel.BranchRateModel;
-        import dr.evomodel.substmodel.GLMSubstitutionModel;
-        import dr.evomodel.substmodel.SubstitutionModel;
-        import dr.evomodel.treedatalikelihood.discrete.ASRConvolutionRandomEffectsDynamicStatespaceStatistic;
-        import dr.evomodel.treedatalikelihood.discrete.ASRSubstitutionModelConvolutionStatistic;
-        import dr.evomodel.treedatalikelihood.discrete.SequenceDistanceStatistic;
-        import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
-        import dr.inference.distribution.DistributionLikelihood;
-        import dr.inference.distribution.GammaDistributionModel;
-        import dr.inference.distribution.ParametricDistributionModel;
-        import dr.inference.model.Parameter;
-        import dr.inference.model.Statistic;
-        import dr.math.distributions.GammaDistribution;
-        import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
-        import dr.xml.*;
+import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.Taxa;
+import dr.evolution.util.TaxonList;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.treedatalikelihood.discrete.ASRConvolutionRandomEffectsDynamicStatespaceStatistic;
+import dr.evomodel.treedatalikelihood.discrete.SequenceDistanceStatistic;
+import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
+import dr.inference.distribution.ParametricDistributionModel;
+import dr.inference.model.Statistic;
+import dr.xml.*;
 
-        import static dr.evomodelxml.tree.MonophylyStatisticParser.parseTaxonListOrTaxa;
+import static dr.evomodelxml.tree.MonophylyStatisticParser.parseTaxonListOrTaxa;
 
 /**
  */
 public class ASRConvolutionRandomEffectsDynamicStatespaceStatisticParser extends AbstractXMLObjectParser {
 
-    public static String STATISTIC = "hackyStateSpaceConvolutionStatistic";
-    public static String NUC1 = "firstNucleotide";
-    public static String NUC2 = "secondNucleotide";
-    public static String DINUC_EFFECTS = "dinucleotideEffects";
+    public static String STATISTIC = "hackyStateSpaceStatistic";
     public static String SUBS_MODEL_ANCESTOR = "substitutionModelAncestor";
     public static String SUBS_MODEL_DESCENDANT = "substitutionModelDescendant";
+    public static String PAIR_FIRST = "firstPairedCharacter";
+    public static String PAIR_SECOND = "secondPairedCharacter";
+    public static String PAIR_SUBS_MODEL_ANCESTOR = "doubletSubstitutionModelAncestor";
+    public static String PAIR_SUBS_MODEL_DESCENDANT = "doubletSubstitutionModelDescendant";
     public static String RATE_ANCESTOR = "rateAncestor";
     public static String RATE_DESCENDANT = "rateDescendant";
     private static final String MRCA = "mrca";
     public static final String TAXA = "taxa";
+    public static final String BOOT = "bootstrap";
     public static final String PRIOR = "prior";
 
     public String getParserName() { return STATISTIC; }
@@ -80,7 +74,29 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatisticParser extends
             subsModelDescendant = (SubstitutionModel) xo.getChild(SUBS_MODEL_DESCENDANT).getChild(0);
         }
 
+        int[] firstPairedCharacter = null;
+        if ( xo.hasChildNamed(PAIR_FIRST) ) {
+            firstPairedCharacter = xo.getIntegerArrayAttribute(PAIR_FIRST);
+        }
+
+        int[] secondPairedCharacter = null;
+        if ( xo.hasChildNamed(PAIR_SECOND) ) {
+            secondPairedCharacter = xo.getIntegerArrayAttribute(PAIR_SECOND);
+        }
+
+        SubstitutionModel pairedSubsModelAncestor = null;
+        if (xo.hasChildNamed(PAIR_SUBS_MODEL_ANCESTOR)) {
+            pairedSubsModelAncestor = (SubstitutionModel) xo.getChild(PAIR_SUBS_MODEL_ANCESTOR).getChild(0);
+        }
+
+        SubstitutionModel pairedSubsModelDescendant = null;
+        if (xo.hasChildNamed(PAIR_SUBS_MODEL_DESCENDANT)) {
+            pairedSubsModelDescendant = (SubstitutionModel) xo.getChild(PAIR_SUBS_MODEL_DESCENDANT).getChild(0);
+        }
+
         BranchRateModel branchRates = (BranchRateModel)xo.getChild(BranchRateModel.class);
+
+        boolean boot = xo.getAttribute(BOOT, false);
 
         TaxonList mrcaTaxa = null;
         if (xo.hasChildNamed(MRCA)) {
@@ -110,22 +126,6 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatisticParser extends
 
         }
 
-        Parameter firstNuc = (Parameter) xo.getChild(NUC1).getChild(0);
-        int nDi = firstNuc.getParameterValues().length;
-        int[] firstNucleotide = new int[nDi];
-        for (int i = 0; i < nDi; i++) {
-            firstNucleotide[i] = (int) firstNuc.getParameterValue(i);
-        }
-
-        Parameter secondNuc = (Parameter) xo.getChild(NUC1).getChild(0);
-        if ( secondNuc.getParameterValues().length != nDi) { throw new RuntimeException("Number of dinucleotides specified in first and second do not match."); }
-        int[] secondNucleotide = new int[nDi];
-        for (int i = 0; i < nDi; i++) {
-            secondNucleotide[i] = (int) secondNuc.getParameterValue(i);
-        }
-
-        Parameter dinucleotideEffects = (Parameter) xo.getChild(DINUC_EFFECTS).getChild(0);
-
 //        TaxonList mrcaTaxa = null;
 //        if (xo.hasChildNamed(MRCA)) {
 //            mrcaTaxa = (TaxonList) xo.getElementFirstChild(MRCA);
@@ -138,13 +138,15 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatisticParser extends
                     asrLike,
                     subsModelAncestor,
                     subsModelDescendant,
-                    dinucleotideEffects,
-                    firstNucleotide,
-                    secondNucleotide,
+                    firstPairedCharacter,
+                    secondPairedCharacter,
+                    pairedSubsModelAncestor,
+                    pairedSubsModelDescendant,
                     branchRates,
                     rateAncestor,
                     rateDescendant,
                     mrcaTaxa,
+                    boot,
                     prior);
         } catch (TreeUtils.MissingTaxonException e) {
             throw new XMLParseException("Unable to find taxon-set.");
@@ -166,10 +168,14 @@ public class ASRConvolutionRandomEffectsDynamicStatespaceStatisticParser extends
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+            AttributeRule.newBooleanRule(BOOT, true, "Should the ASR be bootstrapped to account for uncertainty in the MLE?"),
             new ElementRule(AncestralStateBeagleTreeLikelihood.class, false),
-            new ElementRule(SUBS_MODEL_ANCESTOR, SubstitutionModel.class, "Substitution model for the ancestral portion of the branch, taken as the template for the expanded state-space model.", false),
+            new ElementRule(SUBS_MODEL_ANCESTOR, SubstitutionModel.class, "Substitution model for the ancestral portion of the branch.", false),
             new ElementRule(SUBS_MODEL_DESCENDANT, SubstitutionModel.class, "Substitution model for the more recent portion of the branch.", false),
-            new ElementRule(DINUC_EFFECTS, Parameter.class, "The (log-scale) random effects added for the expanded statespace on the second half of the branch.", true),
+            AttributeRule.newIntegerArrayRule(PAIR_FIRST, true), // Vector of first elements in all doublets to be partitioned
+            AttributeRule.newIntegerArrayRule(PAIR_SECOND, true), // Vector of second elements in all doublets to be partitioned
+            new ElementRule(PAIR_SUBS_MODEL_ANCESTOR, SubstitutionModel.class, "Optional doublet substitution model for the ancestral portion of the branch (results in a partitioned context-dependent model).", true),
+            new ElementRule(PAIR_SUBS_MODEL_DESCENDANT, SubstitutionModel.class, "Optional doublet substitution model for the more recent portion of the branch (results in a partitioned context-dependent model).", true),
             new ElementRule(BranchRateModel.class, false),
             new ElementRule(RATE_ANCESTOR, Statistic.class, "If provided, this will be used as the evolutionary rate for the ancestral portion of the branch instead of the rate provided by the BranchRateModel.", true),
             new ElementRule(RATE_DESCENDANT, Statistic.class, "If provided, this will be used as the evolutionary rate for the descendant portion of the branch instead of the rate provided by the BranchRateModel.", true),

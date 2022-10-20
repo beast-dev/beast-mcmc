@@ -8,13 +8,16 @@ public class PreOrderSettings {
     boolean branchRateDerivative;
     boolean branchInfinitesimalDerivative;
 
-    public PreOrderSettings(boolean usePreOrder, boolean branchRateDerivative, boolean branchInfinitesimalDerivative) {
+    boolean useAction;
+
+    public PreOrderSettings(boolean usePreOrder, boolean branchRateDerivative, boolean branchInfinitesimalDerivative,
+                            boolean useAction) {
         this.usePreOrder = usePreOrder;
         this.branchRateDerivative = branchRateDerivative;
         this.branchInfinitesimalDerivative = branchInfinitesimalDerivative;
     }
 
     public static PreOrderSettings getDefault() {
-        return new PreOrderSettings(false, false, false);
+        return new PreOrderSettings(false, false, false, false);
     }
 }

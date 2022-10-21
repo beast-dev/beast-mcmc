@@ -143,10 +143,20 @@ public class BayesianBridgeGlobalScaleEffectivePriorSampler extends Statistic.Ab
         return globalScaleDraw;
     }
 
+    private double[] nextRandom() {
+        double[] draws;
+        double globalScaleDraw = sampleGlobalScalePrior();
+        if ( bridge.getSlabWidth() != null) {
+            draws = BayesianBridgeRNG.nextRandom(globalScaleDraw, bridge.getExponent().getParameterValue(0), bridge.getSlabWidth().getParameterValue(0), bridge.getDimension());
+        } else {
+            draws = BayesianBridgeRNG.nextRandom(globalScaleDraw, bridge.getExponent().getParameterValue(0), bridge.getDimension());
+        }
+        return draws;
+    }
+
     @Override
     public double getStatisticValue(int dim) {
-        double globalScaleDraw = sampleGlobalScalePrior();
-        double[] betaDraw = bridge.nextRandom(globalScaleDraw);
+        double[] betaDraw = nextRandom();
         return sampleGlobalScale(betaDraw);
     }
 }

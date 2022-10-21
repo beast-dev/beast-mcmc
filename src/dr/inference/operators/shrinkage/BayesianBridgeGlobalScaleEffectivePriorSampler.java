@@ -5,6 +5,7 @@ import dr.inference.distribution.shrinkage.BayesianBridgeRNG;
 import dr.inference.distribution.shrinkage.JointBayesianBridgeDistributionModel;
 import dr.inference.model.Statistic;
 import dr.math.distributions.GammaDistribution;
+import dr.inference.operators.shrinkage.BayesianBridgeShrinkageOperator;
 import dr.xml.*;
 
 /**
@@ -14,13 +15,15 @@ import dr.xml.*;
 
 public class BayesianBridgeGlobalScaleEffectivePriorSampler extends Statistic.Abstract implements Reportable {
     public static final String PRIOR_SAMPLER = "bayesianBridgeGlobalScaleEffectivePriorSampler";
-
+    BayesianBridgeShrinkageOperator operator;
     JointBayesianBridgeDistributionModel bridge;
+
     private final GammaDistribution globalScalePrior;
 
     public BayesianBridgeGlobalScaleEffectivePriorSampler(JointBayesianBridgeDistributionModel tempBridge, GammaDistribution globalScalePrior) {
         this.bridge = new JointBayesianBridgeDistributionModel(tempBridge.getGlobalScale(), tempBridge.getLocalScale(), tempBridge.getExponent(), tempBridge.getSlabWidth(), tempBridge.getDimension(), false);
         this.globalScalePrior = globalScalePrior;
+        this.operator = new BayesianBridgeShrinkageOperator(bridge, globalScalePrior, null, 0.0);
     }
 
     // **************************************************************
@@ -100,47 +103,17 @@ public class BayesianBridgeGlobalScaleEffectivePriorSampler extends Statistic.Ab
         return 1;
     }
 
+    // TODO we could consider making a class for this, e.g. PowerTransformedGamma
+    // If we then let this be an additional option for the Gibbs operator, this would let us specify the correct prior to be logged in the jointDensity
     private double sampleGlobalScalePrior() {
         double priorShape = globalScalePrior.getShape();
         double priorScale = globalScalePrior.getScale();
         double exponent = bridge.getExponent().getParameterValue(0);
 
-        double phi = GammaDistribution.nextGamma(priorShape, priorScale); // sample
+        double phi = GammaDistribution.nextGamma(priorShape, priorScale);
 
-        double draw = Math.pow(phi, -1.0 / exponent); //global scale = phi^(-1/exponent) and phi ~ gamma
-        // (phi := nu and global scale := tau in Bayesian Bridge, Polson et al. (2012)
-        // bridge.setGlobalScale(draw);
+        double draw = Math.pow(phi, -1.0 / exponent);
         return draw;
-    }
-
-    private double absSumBeta(double[] betaDraw) {
-
-        double exponent = bridge.getExponent().getParameterValue(0);
-        double sum = 0.0;
-        for (int i = 0; i < bridge.getDimension(); ++i) {
-            if (true) {
-                sum += Math.pow(Math.abs(betaDraw[i]), exponent);
-            }
-        }
-        return sum;
-    }
-    private double sampleGlobalScale(double[] betaDraw) {
-
-        double priorShape = globalScalePrior.getShape();
-        double priorScale = globalScalePrior.getScale();
-        double exponent = bridge.getExponent().getParameterValue(0);
-        double effectiveDim = bridge.getDimension();
-        double shape = effectiveDim / exponent;
-        double rate = absSumBeta(betaDraw);
-
-        if (priorShape > 0.0) {
-            shape += priorShape;
-            rate += 1.0 / priorScale;
-        }
-
-        double phi = GammaDistribution.nextGamma(shape, 1.0 / rate);
-        double globalScaleDraw = Math.pow(phi, -1.0 / exponent);
-        return globalScaleDraw;
     }
 
     private double[] nextRandom() {
@@ -156,7 +129,14 @@ public class BayesianBridgeGlobalScaleEffectivePriorSampler extends Statistic.Ab
 
     @Override
     public double getStatisticValue(int dim) {
+        double exponent = bridge.getExponent().getParameterValue(0);
         double[] betaDraw = nextRandom();
-        return sampleGlobalScale(betaDraw);
+
+        double sum = 0.0;
+        for (int i = 0; i < bridge.getDimension(); ++i) {
+            sum += Math.pow(Math.abs(betaDraw[i]), exponent);
+        }
+
+        return operator.drawGlobalScale(globalScalePrior.getShape(), globalScalePrior.getScale(), exponent, bridge.getDimension(), sum);
     }
 }

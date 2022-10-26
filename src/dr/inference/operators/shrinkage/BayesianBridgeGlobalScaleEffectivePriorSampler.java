@@ -23,7 +23,7 @@ public class BayesianBridgeGlobalScaleEffectivePriorSampler extends Statistic.Ab
     public BayesianBridgeGlobalScaleEffectivePriorSampler(JointBayesianBridgeDistributionModel tempBridge, GammaDistribution globalScalePrior) {
         this.bridge = new JointBayesianBridgeDistributionModel(tempBridge.getGlobalScale(), tempBridge.getLocalScale(), tempBridge.getExponent(), tempBridge.getSlabWidth(), tempBridge.getDimension(), false);
         this.globalScalePrior = globalScalePrior;
-        this.operator = new BayesianBridgeShrinkageOperator(bridge, globalScalePrior, null, 0.0);
+        this.operator = new BayesianBridgeShrinkageOperator(bridge, globalScalePrior, null, Double.MIN_VALUE);
     }
 
     // **************************************************************

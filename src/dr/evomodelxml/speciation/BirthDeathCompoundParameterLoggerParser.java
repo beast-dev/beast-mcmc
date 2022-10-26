@@ -29,12 +29,10 @@ import dr.evomodel.speciation.NewBirthDeathSerialSamplingModel;
 import dr.evomodel.speciation.BirthDeathCompoundParameterLogger;
 import dr.xml.*;
 
-/**
- * Parses an element from an DOM document into a SpeciationModel. Recognises YuleModel.
- */
 public class BirthDeathCompoundParameterLoggerParser extends AbstractXMLObjectParser {
 
     public static final String BDSS_COMPOUND_PARAMETER = "birthDeathCompoundParameterLogger";
+    public static final String TYPE = "compoundParameterType";
 
 
     public String getParserName() {
@@ -45,7 +43,18 @@ public class BirthDeathCompoundParameterLoggerParser extends AbstractXMLObjectPa
 
         NewBirthDeathSerialSamplingModel bdss = (NewBirthDeathSerialSamplingModel) xo.getChild(NewBirthDeathSerialSamplingModel.class);
 
-        return new BirthDeathCompoundParameterLogger(bdss);
+        BirthDeathCompoundParameterLogger.BDPCompoundParameterType type = parseFromString(xo.getStringAttribute(TYPE));
+
+        return new BirthDeathCompoundParameterLogger(bdss, type);
+    }
+
+    public  BirthDeathCompoundParameterLogger.BDPCompoundParameterType parseFromString(String text) throws XMLParseException {
+        for (BirthDeathCompoundParameterLogger.BDPCompoundParameterType type : BirthDeathCompoundParameterLogger.BDPCompoundParameterType.values()) {
+            if (type.getName().toLowerCase().compareToIgnoreCase(text) == 0) {
+                return type;
+            }
+        }
+        throw new XMLParseException("Unknown type '" + text + "'");
     }
 
     //************************************************************************
@@ -65,6 +74,7 @@ public class BirthDeathCompoundParameterLoggerParser extends AbstractXMLObjectPa
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(NewBirthDeathSerialSamplingModel.class, "The birth-death model containing the natural parameters (lambda, mu, psi, r).")
+            new ElementRule(NewBirthDeathSerialSamplingModel.class, "The birth-death model containing the natural parameters (lambda, mu, psi, r)."),
+            new StringAttributeRule(TYPE,"What compound parameter should be computed? Allowed: effectiveReproductiveNumber.")
     };
 }

@@ -98,6 +98,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private long totalEvaluationCount = 0;
     private boolean releaseSingleton = true;
 
+    public static final boolean NEVER_CACHE_TRANSITION_MATRICES = false;
+
     /**
      *
      * @param tree Used for configuration - shouldn't be watched for changes
@@ -765,7 +767,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     branchUpdateIndices,
                     branchLengths,
                     branchUpdateCount,
-                    flip);
+                    NEVER_CACHE_TRANSITION_MATRICES ? false : flip);
         }
 
         if (COUNT_CALCULATIONS) {

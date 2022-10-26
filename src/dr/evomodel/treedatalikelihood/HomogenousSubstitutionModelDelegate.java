@@ -33,6 +33,8 @@ import dr.evomodel.substmodel.SubstitutionModel;
 
 import java.io.Serializable;
 
+import static dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.NEVER_CACHE_TRANSITION_MATRICES;
+
 /**
  * A simple substitution model delegate with the same substitution model over the whole tree
  * @author Andrew Rambaut
@@ -84,7 +86,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
         eigenBufferHelper = new BufferIndexHelper(eigenCount, 0, partitionNumber);
 
         // two matrices for each node less the root
-        matrixBufferHelper = new BufferIndexHelper(nodeCount, 0, partitionNumber);
+        matrixBufferHelper = new BufferIndexHelper(nodeCount, NEVER_CACHE_TRANSITION_MATRICES ? nodeCount : 0, /*partitionNumber*/ 0);
 
         this.settings = settings;
 
@@ -241,6 +243,9 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
                 matrixBufferHelper.flipOffset(branchIndices[i]);
             }
             probabilityIndices[i] = matrixBufferHelper.getOffsetIndex(branchIndices[i]);
+//            if (probabilityIndices[i] != branchIndices[i]) {
+//                System.err.println(probabilityIndices[i] + " " + branchIndices[i]);
+//            }
         }// END: i loop
 
         beagle.updateTransitionMatrices(eigenBufferHelper.getOffsetIndex(0),
@@ -254,8 +259,10 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
 
     @Override
     public void flipTransitionMatrices(int[] branchIndices, int updateCount) {
-        for (int i = 0; i < updateCount; i++) {
-            matrixBufferHelper.flipOffset(branchIndices[i]);
+        if (!NEVER_CACHE_TRANSITION_MATRICES) {
+            for (int i = 0; i < updateCount; i++) {
+                matrixBufferHelper.flipOffset(branchIndices[i]);
+            }
         }
     }
 

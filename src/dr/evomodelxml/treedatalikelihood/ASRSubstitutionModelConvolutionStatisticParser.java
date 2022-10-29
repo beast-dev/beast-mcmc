@@ -47,6 +47,7 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
     public static String SUBS_MODEL_ANCESTOR = "substitutionModelAncestor";
     public static String SUBS_MODEL_DESCENDANT = "substitutionModelDescendant";
     public static String DOUBLETS = "doublets";
+    public static String DOUBLETS_TO = "doubletsTo";
     public static String PAIR_SECOND = "secondPairedCharacter";
     public static String PAIR_SUBS_MODEL_ANCESTOR = "doubletSubstitutionModelAncestor";
     public static String PAIR_SUBS_MODEL_DESCENDANT = "doubletSubstitutionModelDescendant";
@@ -77,6 +78,11 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
         int[] doublets = new int[0];
         if ( xo.hasAttribute(DOUBLETS) ) {
             doublets = xo.getIntegerArrayAttribute(DOUBLETS);
+        }
+
+        int[] doubletsTo = new int[0];
+        if ( xo.hasAttribute(DOUBLETS_TO) ) {
+            doubletsTo = xo.getIntegerArrayAttribute(DOUBLETS_TO);
         }
 
         SubstitutionModel pairedSubsModelAncestor = null;
@@ -134,6 +140,7 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
                     subsModelAncestor,
                     subsModelDescendant,
                     doublets,
+                    doubletsTo,
                     pairedSubsModelAncestor,
                     pairedSubsModelDescendant,
                     branchRates,
@@ -167,6 +174,7 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
             new ElementRule(SUBS_MODEL_ANCESTOR, SubstitutionModel.class, "Substitution model for the ancestral portion of the branch.", false),
             new ElementRule(SUBS_MODEL_DESCENDANT, SubstitutionModel.class, "Substitution model for the more recent portion of the branch.", false),
             AttributeRule.newIntegerArrayRule(DOUBLETS, true), // Integer codes for all doublets as "doublet1.1 doublet1.2 ... doubletn.1 doubletn.2"
+            AttributeRule.newIntegerArrayRule(DOUBLETS_TO, true), // Optional codes for specifying to only partition doublets mutating from doublets to doubletsTo
             new ElementRule(PAIR_SUBS_MODEL_ANCESTOR, SubstitutionModel.class, "Optional doublet substitution model for the ancestral portion of the branch (results in a partitioned context-dependent model).", true),
             new ElementRule(PAIR_SUBS_MODEL_DESCENDANT, SubstitutionModel.class, "Optional doublet substitution model for the more recent portion of the branch (results in a partitioned context-dependent model).", true),
             new ElementRule(BranchRateModel.class, false),

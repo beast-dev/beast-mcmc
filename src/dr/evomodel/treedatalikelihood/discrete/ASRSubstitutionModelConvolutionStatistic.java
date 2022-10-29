@@ -31,6 +31,7 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
                                                                  SubstitutionModel subsModelAncestor,
                                                                  SubstitutionModel subsModelDescendant,
                                                                  int[] doublets,
+                                                                 int[] doubletsTo,
                                                                  SubstitutionModel pairedSubsModelAncestor,
                                                                  SubstitutionModel pairedSubsModelDescendant,
                                                                  BranchRateModel branchRates,
@@ -55,9 +56,11 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         this.leafSetDescendant = (mrcaTaxaDescendant != null) ? TreeUtils.getLeavesForTaxa(tree, mrcaTaxaDescendant) : null;
         // Check validity of paired data model
         this.doublets = doublets;
+        this.doubletsTo = doubletsTo;
         this.pairedSubstitutionModelAncestor = pairedSubsModelAncestor;
         this.pairedSubstitutionModelDescendant = pairedSubsModelDescendant;
         this.isPartitioned = pairedSubsModelAncestor != null;
+        this.partitionConditionalOnEndState = doubletsTo.length > 0;
         this.doubletsAreSafe = (!isPartitioned || !doubletsCanOverlap()) ? true : false;
         if (isPartitioned) {
             if (doublets.length % 2 != 0) { throw new RuntimeException("Improperly specified doublets"); }
@@ -65,6 +68,7 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
             if ( (pairedSubsModelAncestor != null && pairedSubsModelAncestor == null) || pairedSubsModelAncestor == null && pairedSubsModelAncestor != null) { throw new RuntimeException("If specifying models for doublets must specify ancestral and descendant models."); }
             if ( pairedSubsModelAncestor.getFrequencyModel().getFrequencies().length != pairedSubsModelDescendant.getFrequencyModel().getFrequencies().length ) { throw new RuntimeException("Doublet models do not match in size."); }
             if ( pairedSubsModelAncestor.getFrequencyModel().getFrequencies().length != dataType.getStateCount() * dataType.getStateCount() ) { throw new RuntimeException("Doublet models are not sized for doublets."); }
+            if ( partitionConditionalOnEndState && doublets.length != doubletsTo.length ) {throw new RuntimeException("Length of doublets and doubletsTo do not match.");}
         }
     }
 
@@ -109,7 +113,7 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
     @Override
     public String getReport() {
 
-        StringBuilder sb = new StringBuilder("hackyStatespaceStatistic Report\n\n");
+        StringBuilder sb = new StringBuilder("asrSubstitutionModelConvolutionStatistic Report\n\n");
 
         sb.append("Estimated time of shift before common ancestor: ").append(getStatisticValue(0)).append("\n");
         sb.append("Using rates: ").append(new dr.math.matrixAlgebra.Vector(getRates(getNode(leafSetDescendant)))).append("\n");
@@ -127,6 +131,50 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
                 sb.append("  ").append(dataType.getChar(doublets[2 * i])).append(dataType.getChar(doublets[2 * i + 1])).append("\n");
             }
             sb.append("Using doublet substitution models named: ").append(pairedSubstitutionModelAncestor.getId()).append(", ").append(pairedSubstitutionModelDescendant.getId()).append("\n");
+//            int n = dataType.getStateCount();
+//            double[] tmp = new double[n * n * n * n];
+//            double[][] tmp2 = new double[n * n][n * n];
+//            pairedSubstitutionModelAncestor.getInfinitesimalMatrix(tmp);
+//            int k = 0;
+//            for (int i = 0; i < n * n; i++) {
+//                for (int j = 0; j < n * n; j++) {
+//                    tmp2[i][j] = tmp[k];
+//                    ++k;
+//                }
+//            }
+//            sb.append("\n").append(new dr.math.matrixAlgebra.Matrix(tmp2)).append("\n");
+//            pairedSubstitutionModelDescendant.getInfinitesimalMatrix(tmp);
+//            k = 0;
+//            for (int i = 0; i < n * n; i++) {
+//                for (int j = 0; j < n * n; j++) {
+//                    tmp2[i][j] = tmp[k];
+//                    ++k;
+//                }
+//            }
+//            sb.append("\n").append(new dr.math.matrixAlgebra.Matrix(tmp2));
+//
+//
+//            NodeRef nodeDescendant = getNode(leafSetDescendant);
+//            NodeRef nodeAncestor = tree.getParent(nodeDescendant);
+//            int[] ancestorStates = asrLikelihood.getStatesForNode(tree, nodeAncestor);
+//            int[] descendantStates = asrLikelihood.getStatesForNode(tree, nodeDescendant);
+//            int nextToLast = ancestorStates.length - 1;
+//            int[] countEachPaired = new int[doublets.length / 2];
+//            int countPaired = 0;
+//            int countUnpaired = 0;
+//            for (int s = 0; s < ancestorStates.length; s++) {
+//                if (s < nextToLast && isPair(ancestorStates[s],ancestorStates[s+1])) {
+//                    countEachPaired[whichPair(ancestorStates[s],ancestorStates[s+1])]++;
+//                    countPaired += 2;
+//                    s++;
+//                } else {
+//                    countUnpaired++;
+//                }
+//            }
+//            sb.append("\nAssigned " + countPaired + " sites to the doublet model and " + countUnpaired + " sites to the singlet model.\n");
+//            for (int i = 0; i < doublets.length / 2; i++) {
+//                sb.append("There are " + countEachPaired[i] + " sites assigned to the doublet " + doublets[2 * i] + "," + doublets[2 * i + 1] + "\n");
+//            }
         }
         sb.append("\n\n");
         return sb.toString();
@@ -172,6 +220,46 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         for (int i = 0; i < nDoublets; i++) {
             if ( first == doublets[2 * i] && second == doublets[2 * i + 1] ) {
                 pair = true;
+                break;
+            }
+        }
+        return pair;
+    }
+
+    private boolean doPartition(int from1, int from2, int to1, int to2) {
+        if ( !partitionConditionalOnEndState ) {
+            return isPair(from1, from2);
+        }
+
+        if (!isPartitioned) {
+            return false;
+        }
+
+        boolean partition = false;
+
+        int nDoublets = doublets.length / 2;
+        for (int i = 0; i < nDoublets; i++) {
+            if ( from1 == doublets[2 * i] && from2 == doublets[2 * i + 1] &&
+                   to1 == doubletsTo[2 * i] && to2 == doubletsTo[2 * i + 1] ) {
+                partition = true;
+                break;
+            }
+        }
+        return partition;
+
+    }
+
+    private int whichPair(int first, int second) {
+        if (!isPartitioned) {
+            return -1;
+        }
+
+        int pair = -1;
+
+        int nDoublets = doublets.length / 2;
+        for (int i = 0; i < nDoublets; i++) {
+            if ( first == doublets[2 * i] && second == doublets[2 * i + 1] ) {
+                pair = i;
                 break;
             }
         }
@@ -243,6 +331,50 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
             pairedSubstitutionModelAncestor.getTransitionProbabilities(distance1 * 2.0, pairedTpm1);
             pairedSubstitutionModelDescendant.getTransitionProbabilities(distance2 * 2.0, pairedTpm2);
 
+            double[] x1 = new double[nStatesSquared * nStatesSquared];
+            double[] x2 = new double[nStatesSquared * nStatesSquared];
+            double[][] ratios = new double[nStatesSquared][nStatesSquared];
+            pairedSubstitutionModelAncestor.getInfinitesimalMatrix(x1);
+            pairedSubstitutionModelDescendant.getInfinitesimalMatrix(x2);
+//            int k = 0;
+//            for (int i = 0; i < nStatesSquared; i++) {
+//                for (int j = 0; j < nStatesSquared; j++) {
+//                    ratios[i][j] = x2[k]/x1[k];
+//                    k++;
+//                }
+//            }
+//            System.err.println(new dr.math.matrixAlgebra.Matrix(ratios));
+//
+//            int k = 0;
+//            for (int i = 0; i < nStatesSquared; i++) {
+//                for (int j = 0; j < nStatesSquared; j++) {
+//                    ratios[i][j] = x1[k];
+//                    k++;
+//                }
+//            }
+//            System.err.println(new dr.math.matrixAlgebra.Matrix(ratios));
+//
+//            k = 0;
+//            for (int i = 0; i < nStatesSquared; i++) {
+//                for (int j = 0; j < nStatesSquared; j++) {
+//                    ratios[i][j] = x2[k];
+//                    k++;
+//                }
+//            }
+//            System.err.println(new dr.math.matrixAlgebra.Matrix(ratios));
+
+            int k = 0;
+            double[] x3 = new double[nStatesSquared];
+            substitutionModelAncestor.getInfinitesimalMatrix(x3);
+            ratios = new double[nStates][nStates];
+            for (int i = 0; i < nStates; i++) {
+                for (int j = 0; j < nStates; j++) {
+                    ratios[i][j] = x3[k];
+                    k++;
+                }
+            }
+            System.err.println(new dr.math.matrixAlgebra.Matrix(ratios));
+
             // Do the matrix convolution
             convolveMatrices(pairedTpm1, pairedTpm2, pairedTpm, nStates);
 
@@ -253,16 +385,19 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
 
         double lnL = 0.0;
         int nextToLast = ancestorStates.length - 1;
+        int countPartitioned = 0;
         for (int s = 0; s < ancestorStates.length; s++) {
-            if (s < nextToLast && isPair(ancestorStates[s],ancestorStates[s+1])) {
+            if (s < nextToLast && doPartition(ancestorStates[s], ancestorStates[s + 1], descendantStates[s], descendantStates[s + 1])) {
                 int from = getDoublet(ancestorStates[s], ancestorStates[s + 1], nStates);
                 int to = getDoublet(descendantStates[s], descendantStates[s + 1], nStates);
                 lnL += logPairedTpm[from * nStatesSquared + to];
                 s++;
+                countPartitioned += 2;
             } else {
                 lnL += logTpm[ancestorStates[s] * nStates + descendantStates[s]];
             }
         }
+//        System.err.println("Partitioning: put " + countPartitioned + " sites into doublet model out of a total of " + ancestorStates.length);
 
         if (prior != null) {
             // Prior is on (absolute) time of convolution before given MRCA
@@ -294,6 +429,8 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
                 nodeStatesDescendant[i] = tmp2[idx];
             }
         }
+
+//        System.err.println("rates[0] = " + rates[0] + "rates[1] = " + rates[1] + "; time = " + time);
 
         UnivariateFunction f = new UnivariateFunction() {
             @Override
@@ -340,6 +477,8 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
     private final ParametricDistributionModel prior;
     private final String name;
     private final int[] doublets;
+    private final int[] doubletsTo;
     private final boolean isPartitioned;
+    private final boolean partitionConditionalOnEndState;
     private final boolean doubletsAreSafe;
 }

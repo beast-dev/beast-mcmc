@@ -134,9 +134,9 @@ public class BayesianBridgeGlobalScaleEffectivePriorSampler extends Statistic.Ab
 
         double sum = 0.0;
         for (int i = 0; i < bridge.getDimension(); ++i) {
-            sum += Math.pow(Math.abs(betaDraw[i]), exponent);
+            sum += Math.pow(betaDraw[i], 2);
         }
 
-        return operator.drawGlobalScale(globalScalePrior.getShape(), globalScalePrior.getScale(), exponent, bridge.getDimension(), sum);
+        return sum;
     }
 }

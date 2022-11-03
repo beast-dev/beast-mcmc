@@ -48,7 +48,6 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
     public static String SUBS_MODEL_DESCENDANT = "substitutionModelDescendant";
     public static String DOUBLETS = "doublets";
     public static String DOUBLETS_TO = "doubletsTo";
-    public static String PAIR_SECOND = "secondPairedCharacter";
     public static String PAIR_SUBS_MODEL_ANCESTOR = "doubletSubstitutionModelAncestor";
     public static String PAIR_SUBS_MODEL_DESCENDANT = "doubletSubstitutionModelDescendant";
     public static String RATE_ANCESTOR = "rateAncestor";
@@ -57,6 +56,8 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
     public static final String TAXA = "taxa";
     public static final String BOOT = "bootstrap";
     public static final String PRIOR = "prior";
+    public static final String DISTANCE = "takeDistanceAsFixed";
+    public static final String PRESENT = "anchorToPresent";
 
     public String getParserName() { return STATISTIC; }
 
@@ -98,6 +99,8 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
         BranchRateModel branchRates = (BranchRateModel)xo.getChild(BranchRateModel.class);
 
         boolean boot = xo.getAttribute(BOOT, false);
+        boolean takeDistanceAsFixed = xo.getAttribute(DISTANCE, false);
+        boolean anchorAtPresent = xo.getAttribute(PRESENT, true);
 
         TaxonList mrcaTaxa = null;
         if (xo.hasChildNamed(MRCA)) {
@@ -146,6 +149,8 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
                     branchRates,
                     rateAncestor,
                     rateDescendant,
+                    takeDistanceAsFixed,
+                    anchorAtPresent,
                     mrcaTaxa,
                     boot,
                     prior);
@@ -183,6 +188,8 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
             new ElementRule(MRCA,
                     new XMLSyntaxRule[]{new ElementRule(Taxa.class)}, false),
             new ElementRule(PRIOR, ParametricDistributionModel.class, "A prior for the convolution time (measured in time before descendant node).", true),
+            AttributeRule.newBooleanRule(DISTANCE, true, "If true, the distance along the branch (branchRate * branchTime) is taken as fixed, the rates/times may be modified."),
+            AttributeRule.newBooleanRule(PRESENT, true, "If using distance, should the descendant (rather than ancestral) rate be taken to be fixed?"),
     };
 
 }

@@ -9,6 +9,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.inference.distribution.ParametricDistributionModel;
+import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
@@ -37,6 +38,8 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
                                                                  BranchRateModel branchRates,
                                                                  Statistic rateAncestor,
                                                                  Statistic rateDescendant,
+                                                                 boolean takeDistanceAsFixed,
+                                                                 boolean anchorAtPresent,
                                                                  TaxonList mrcaTaxaDescendant,
                                                                  boolean bootstrap,
                                                                  ParametricDistributionModel prior
@@ -50,6 +53,8 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         this.branchRates = branchRates;
         this.rateAncestor = rateAncestor;
         this.rateDescendant = rateDescendant;
+        this.takeDistanceAsFixed = takeDistanceAsFixed;
+        this.anchorAtPresent = anchorAtPresent;
         this.dataType = subsModelAncestor.getFrequencyModel().getDataType();
         if ( dataType != substitutionModelDescendant.getFrequencyModel().getDataType()) { throw new RuntimeException("Incompatible datatypes in substitution models for ASRSubstitutionModelConvolution.");}
         this.tree = asrLikelihood.getTreeModel();
@@ -101,11 +106,10 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
             return Double.NaN;
         }
 
-        double[] rates = getRates(nodeDescendant);
+        double branchTime = getBranchTime(nodeDescendant);
+//                tree.getNodeHeight(nodeAncestor) - tree.getNodeHeight(nodeDescendant);
 
-        double branchTime = tree.getNodeHeight(nodeAncestor) - tree.getNodeHeight(nodeDescendant);
-
-        UnivariateMinimum optimized = optimizeTimes(nodeDescendant, nodeAncestor, rates, branchTime);
+        UnivariateMinimum optimized = optimizeTimes(nodeDescendant, nodeAncestor, branchTime);
 
         return (1.0 - optimized.minx) * branchTime;
     }
@@ -116,7 +120,7 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         StringBuilder sb = new StringBuilder("asrSubstitutionModelConvolutionStatistic Report\n\n");
 
         sb.append("Estimated time of shift before common ancestor: ").append(getStatisticValue(0)).append("\n");
-        sb.append("Using rates: ").append(new dr.math.matrixAlgebra.Vector(getRates(getNode(leafSetDescendant)))).append("\n");
+        sb.append("Using rates: ").append(new dr.math.matrixAlgebra.Vector(getRates(getNode(leafSetDescendant), 0.0))).append("\n");
         sb.append("Using substitution models named: ").append(substitutionModelAncestor.getId()).append(", ").append(substitutionModelDescendant.getId()).append("\n");
         sb.append("Using taxon set: ").append(leafSetDescendant).append("\n");
         sb.append("Using prior? ").append((prior != null)).append("\n");
@@ -177,11 +181,30 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
 //            }
         }
         sb.append("\n\n");
+
+//        NodeRef nodeDescendant = getNode(leafSetDescendant);
+//        NodeRef nodeAncestor = tree.getParent(nodeDescendant);
+//        int[] ancestorStates = asrLikelihood.getStatesForNode(tree, nodeAncestor);
+//        int[] descendantStates = asrLikelihood.getStatesForNode(tree, nodeDescendant);
+//        double branchTime = getBranchTime(nodeDescendant);
+//        double[] lnL = new double[101];
+//        for (int i = 0; i < 101; i++) {
+////            double p = 0.9 + ((double)i)/1000.0;
+//            double p = ((double)i)/100.0;
+//            double[] rates = getRates(nodeDescendant, p);
+//            lnL[i] = computeLogLikelihood(p * rates[0] * branchTime, (1.0 - p) * rates[1] * branchTime, rates[1], ancestorStates, descendantStates);
+//        }
+//        sb.append(new dr.math.matrixAlgebra.Vector(lnL));
+
         return sb.toString();
     }
 
+    private double getBranchTime(NodeRef nodeDescendant) {
+        return tree.getNodeHeight(tree.getParent(nodeDescendant)) - tree.getNodeHeight(nodeDescendant);
+    }
+
     // Gets rates for ancestral and descendant (in that order) portions of the branch
-    private double[] getRates(NodeRef node) {
+    private double[] getRawRates(NodeRef node) {
         double[] rates = new double[2];
 
         if ( rateAncestor != null ) {
@@ -194,6 +217,21 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
             rates[1] = rateDescendant.getStatisticValue(0);
         } else {
             rates[1] = branchRates.getBranchRate(tree,node);
+        }
+
+        return rates;
+    }
+
+    private double[] getRates(NodeRef node, double prop) {
+        double[] rates = getRawRates(node);
+
+        if ( takeDistanceAsFixed ) {
+            double branchRate = branchRates.getBranchRate(tree,node);
+            if ( anchorAtPresent ) {
+                rates[0] = (branchRate - rates[1] * (1.0 - prop)) / prop;
+            } else {
+                rates[1] = (branchRate - rates[0] * prop) / (1.0 - prop);
+            }
         }
 
         return rates;
@@ -336,44 +374,6 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
             double[][] ratios = new double[nStatesSquared][nStatesSquared];
             pairedSubstitutionModelAncestor.getInfinitesimalMatrix(x1);
             pairedSubstitutionModelDescendant.getInfinitesimalMatrix(x2);
-//            int k = 0;
-//            for (int i = 0; i < nStatesSquared; i++) {
-//                for (int j = 0; j < nStatesSquared; j++) {
-//                    ratios[i][j] = x2[k]/x1[k];
-//                    k++;
-//                }
-//            }
-//            System.err.println(new dr.math.matrixAlgebra.Matrix(ratios));
-//
-//            int k = 0;
-//            for (int i = 0; i < nStatesSquared; i++) {
-//                for (int j = 0; j < nStatesSquared; j++) {
-//                    ratios[i][j] = x1[k];
-//                    k++;
-//                }
-//            }
-//            System.err.println(new dr.math.matrixAlgebra.Matrix(ratios));
-//
-//            k = 0;
-//            for (int i = 0; i < nStatesSquared; i++) {
-//                for (int j = 0; j < nStatesSquared; j++) {
-//                    ratios[i][j] = x2[k];
-//                    k++;
-//                }
-//            }
-//            System.err.println(new dr.math.matrixAlgebra.Matrix(ratios));
-
-            int k = 0;
-            double[] x3 = new double[nStatesSquared];
-            substitutionModelAncestor.getInfinitesimalMatrix(x3);
-            ratios = new double[nStates][nStates];
-            for (int i = 0; i < nStates; i++) {
-                for (int j = 0; j < nStates; j++) {
-                    ratios[i][j] = x3[k];
-                    k++;
-                }
-            }
-            System.err.println(new dr.math.matrixAlgebra.Matrix(ratios));
 
             // Do the matrix convolution
             convolveMatrices(pairedTpm1, pairedTpm2, pairedTpm, nStates);
@@ -411,7 +411,7 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         return (leafSet != null) ? TreeUtils.getCommonAncestorNode(tree, leafSet) : tree.getRoot();
     }
 
-    private UnivariateMinimum optimizeTimes(NodeRef nodeDescendant, NodeRef nodeAncestor, double[] rates, double time) {
+    private UnivariateMinimum optimizeTimes(NodeRef nodeDescendant, NodeRef nodeAncestor, double time) {
         int[] nodeStatesAncestor = asrLikelihood.getStatesForNode(tree, nodeAncestor);
         int[] nodeStatesDescendant = asrLikelihood.getStatesForNode(tree, nodeDescendant);
 
@@ -435,6 +435,7 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
         UnivariateFunction f = new UnivariateFunction() {
             @Override
             public double evaluate(double argument) {
+                double[] rates = getRates(nodeDescendant, argument);
                 double d1 = argument * rates[0] * time;
                 double d2 = (1.0 - argument) * rates[1] * time;
                 double lnL = computeLogLikelihood(d1, d2, rates[1], nodeStatesAncestor, nodeStatesDescendant);
@@ -447,12 +448,26 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
 
             @Override
             public double getLowerBound() {
-                return 0;
+                double lb = 0.0;
+                if ( takeDistanceAsFixed && anchorAtPresent ) {
+                    double branchRate = branchRates.getBranchRate(tree,nodeDescendant);
+                    double[] rates = getRawRates(nodeDescendant);
+                    lb = 1.0 - branchRate / rates[1];
+//                    System.err.println("Computing lower bound of " + lb + " with branchRate = " + branchRate + " and rates[1] = " + rates[1]  + " and branchTime = " + getBranchTime(nodeDescendant));
+                }
+                return lb;
             }
 
             @Override
             public double getUpperBound() {
-                return 1.0;
+                double ub = 1.0;
+                if ( takeDistanceAsFixed && !anchorAtPresent ) {
+                    double branchRate = branchRates.getBranchRate(tree,nodeDescendant);
+                    double[] rates = getRawRates(nodeDescendant);
+                    ub = branchRate / rates[0];
+                }
+//                System.err.println("Computing upper bound of " + ub);
+                return ub;
             }
         };
 
@@ -481,4 +496,6 @@ public class ASRSubstitutionModelConvolutionStatistic extends Statistic.Abstract
     private final boolean isPartitioned;
     private final boolean partitionConditionalOnEndState;
     private final boolean doubletsAreSafe;
+    private final boolean takeDistanceAsFixed;
+    private final boolean anchorAtPresent;
 }

@@ -25,7 +25,6 @@
 
 package dr.evomodelxml.treedatalikelihood;
 
-import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
@@ -34,13 +33,8 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.discrete.ASRSubstitutionModelConvolutionStatistic;
 import dr.evomodel.treedatalikelihood.discrete.SequenceDistanceStatistic;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
-import dr.inference.distribution.DistributionLikelihood;
-import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;
-import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
-import dr.math.distributions.GammaDistribution;
-import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.xml.*;
 
 import static dr.evomodelxml.tree.MonophylyStatisticParser.parseTaxonListOrTaxa;
@@ -52,6 +46,10 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
     public static String STATISTIC = "asrSubstitutionModelConvolutionStatistic";
     public static String SUBS_MODEL_ANCESTOR = "substitutionModelAncestor";
     public static String SUBS_MODEL_DESCENDANT = "substitutionModelDescendant";
+    public static String DOUBLETS = "doublets";
+    public static String PAIR_SECOND = "secondPairedCharacter";
+    public static String PAIR_SUBS_MODEL_ANCESTOR = "doubletSubstitutionModelAncestor";
+    public static String PAIR_SUBS_MODEL_DESCENDANT = "doubletSubstitutionModelDescendant";
     public static String RATE_ANCESTOR = "rateAncestor";
     public static String RATE_DESCENDANT = "rateDescendant";
     private static final String MRCA = "mrca";
@@ -74,6 +72,21 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
         SubstitutionModel subsModelDescendant = null;
         if (xo.hasChildNamed(SUBS_MODEL_DESCENDANT)) {
             subsModelDescendant = (SubstitutionModel) xo.getChild(SUBS_MODEL_DESCENDANT).getChild(0);
+        }
+
+        int[] doublets = new int[0];
+        if ( xo.hasAttribute(DOUBLETS) ) {
+            doublets = xo.getIntegerArrayAttribute(DOUBLETS);
+        }
+
+        SubstitutionModel pairedSubsModelAncestor = null;
+        if (xo.hasChildNamed(PAIR_SUBS_MODEL_ANCESTOR)) {
+            pairedSubsModelAncestor = (SubstitutionModel) xo.getChild(PAIR_SUBS_MODEL_ANCESTOR).getChild(0);
+        }
+
+        SubstitutionModel pairedSubsModelDescendant = null;
+        if (xo.hasChildNamed(PAIR_SUBS_MODEL_DESCENDANT)) {
+            pairedSubsModelDescendant = (SubstitutionModel) xo.getChild(PAIR_SUBS_MODEL_DESCENDANT).getChild(0);
         }
 
         BranchRateModel branchRates = (BranchRateModel)xo.getChild(BranchRateModel.class);
@@ -120,6 +133,9 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
                     asrLike,
                     subsModelAncestor,
                     subsModelDescendant,
+                    doublets,
+                    pairedSubsModelAncestor,
+                    pairedSubsModelDescendant,
                     branchRates,
                     rateAncestor,
                     rateDescendant,
@@ -150,6 +166,9 @@ public class ASRSubstitutionModelConvolutionStatisticParser extends AbstractXMLO
             new ElementRule(AncestralStateBeagleTreeLikelihood.class, false),
             new ElementRule(SUBS_MODEL_ANCESTOR, SubstitutionModel.class, "Substitution model for the ancestral portion of the branch.", false),
             new ElementRule(SUBS_MODEL_DESCENDANT, SubstitutionModel.class, "Substitution model for the more recent portion of the branch.", false),
+            AttributeRule.newIntegerArrayRule(DOUBLETS, true), // Integer codes for all doublets as "doublet1.1 doublet1.2 ... doubletn.1 doubletn.2"
+            new ElementRule(PAIR_SUBS_MODEL_ANCESTOR, SubstitutionModel.class, "Optional doublet substitution model for the ancestral portion of the branch (results in a partitioned context-dependent model).", true),
+            new ElementRule(PAIR_SUBS_MODEL_DESCENDANT, SubstitutionModel.class, "Optional doublet substitution model for the more recent portion of the branch (results in a partitioned context-dependent model).", true),
             new ElementRule(BranchRateModel.class, false),
             new ElementRule(RATE_ANCESTOR, Statistic.class, "If provided, this will be used as the evolutionary rate for the ancestral portion of the branch instead of the rate provided by the BranchRateModel.", true),
             new ElementRule(RATE_DESCENDANT, Statistic.class, "If provided, this will be used as the evolutionary rate for the descendant portion of the branch instead of the rate provided by the BranchRateModel.", true),

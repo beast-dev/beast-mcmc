@@ -2,6 +2,8 @@ package dr.inference.distribution.shrinkage;
 
 import dr.inference.model.Parameter;
 import dr.inference.model.PriorPreconditioningProvider;
+import dr.math.MathUtils;
+import dr.math.distributions.GammaDistribution;
 import dr.math.distributions.NormalDistribution;
 
 /**
@@ -85,6 +87,21 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
         }
         return hessian;
     }
+
+    @Override
+    public double[] nextRandom() {
+        double[] draws;
+        if ( slabWidth != null) {
+            draws = BayesianBridgeRNG.nextRandom(globalScale.getParameterValue(0), exponent.getParameterValue(0), slabWidth.getParameterValue(0), dim);
+        } else {
+            draws = BayesianBridgeRNG.nextRandom(globalScale.getParameterValue(0), exponent.getParameterValue(0), dim);
+        }
+        return draws;
+    }
+
+//    public void setGlobalScale(double draw) {
+//        globalScale.setParameterValue(0, draw);
+//    }
 
     private final Parameter localScale;
     private final Parameter slabWidth;

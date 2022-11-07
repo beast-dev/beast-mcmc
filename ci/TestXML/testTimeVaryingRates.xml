@@ -182,11 +182,23 @@
 	</coalescentLikelihood>
 
 	<!-- The strict clock (Uniform rates across branches)                        -->
+<!-- 
 	<strictClockBranchRates id="branchRates">
 		<rate>
 			<parameter id="clock.rate" value="2E-2" lower="0.0"/>
 		</rate>
 	</strictClockBranchRates>
+ -->
+	
+	<timeVaryingRates id="branchRates">
+		<treeModel idref="treeModel"/>
+		<rate>
+			<parameter id="clock.rate" value="2E-2 2E-3" lower="0.0"/>
+		</rate>
+		<gridPoints>
+			<parameter id="grid" value="10"/>
+		</gridPoints>
+	</timeVaryingRates>
 
 	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
 	<HKYModel id="hky">

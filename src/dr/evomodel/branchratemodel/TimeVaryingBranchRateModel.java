@@ -1,7 +1,7 @@
 /*
- * RandomLocalClockModel.java
+ * TimeVaryingBranchRateModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,6 +27,8 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTraitProvider;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.TimeVaryingBranchRateModelParser;
 import dr.inference.model.Model;
@@ -36,7 +38,6 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -47,7 +48,7 @@ import java.util.List;
 
 public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implements DifferentiableBranchRates, Citable {
 
-    private final TreeModel treeModel;
+    private final Tree tree;
     private final Parameter rates;
     private final Parameter gridPoints;
 
@@ -57,22 +58,29 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
     private double[] nodeRates;
     private double[] storedNodeRates;
 
-    public TimeVaryingBranchRateModel(TreeModel treeModel,
+    private final double[] times;
+
+    public TimeVaryingBranchRateModel(Tree tree,
                                       Parameter rates,
                                       Parameter gridPoints) {
 
         super(TimeVaryingBranchRateModelParser.PARSER_NAME);
 
-        this.treeModel = treeModel;
+        this.tree = tree;
         this.rates = rates;
         this.gridPoints = gridPoints;
 
-        addModel(treeModel);
+        if (tree instanceof TreeModel) {
+            addModel((TreeModel) tree);
+        }
+
         addVariable(rates);
         addVariable(gridPoints);
 
-        nodeRates = new double[treeModel.getNodeCount()];
-        storedNodeRates = new double[treeModel.getNodeCount()];
+        nodeRates = new double[tree.getNodeCount()];
+        storedNodeRates = new double[tree.getNodeCount()];
+
+        times = computeTimes();
 
         nodeRatesKnown = false;
     }
@@ -80,14 +88,20 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
     @Override
     public double getBranchRate(final Tree tree, final NodeRef node) {
 
-        assert tree == treeModel;
+        assert tree == this.tree;
 
         if (!nodeRatesKnown) { // lazy evaluation
             calculateNodeRates();
             nodeRatesKnown = true;
         }
 
-        return 0.0; // TODO
+        return nodeRates[getParameterIndexFromNode(node)];
+    }
+
+    @Override
+    public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+        // TODO
+        return new double[rates.getDimension()];
     }
 
     @Override
@@ -101,7 +115,71 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
     }
 
     private void calculateNodeRates() {
-        // TODO
+
+        NodeRef root = tree.getRoot();
+        double rootHeight = tree.getNodeHeight(root);
+
+        int epochIndex = times.length - 1;
+        while (times[epochIndex] >= rootHeight) {
+            --epochIndex;
+        }
+
+        traverseTreeByBranch(rootHeight, tree.getChild(root, 0), epochIndex);
+        traverseTreeByBranch(rootHeight, tree.getChild(root, 1), epochIndex);
+    }
+
+    public String toString() {
+        TreeTraitProvider[] treeTraitProviders = {this};
+        return TreeUtils.newick(tree, treeTraitProviders);
+    }
+
+    private void traverseTreeByBranch(double parentHeight, NodeRef child, int epochIndex) {
+
+        // TODO needs testing / debugging
+
+        final double childHeight = tree.getNodeHeight(child);
+
+        double currentHeight = parentHeight;
+        double branchRateNumerator = 0.0;
+        double branchRateDenominator = 0.0;
+
+        final double weightedRate;
+        if (currentHeight > childHeight) {
+
+            while (times[epochIndex] > childHeight) {
+                double timeLength = currentHeight - times[epochIndex];
+                double rate = rates.getParameterValue(epochIndex);
+
+                branchRateNumerator += rate * timeLength;
+                branchRateDenominator += timeLength;
+                currentHeight = times[epochIndex];
+
+                --epochIndex;
+            }
+
+            double timeLength = currentHeight - childHeight;
+            double rate = rates.getParameterValue(epochIndex);
+
+            branchRateNumerator += rate * timeLength;
+            branchRateDenominator += timeLength;
+
+            weightedRate = branchRateNumerator / branchRateDenominator;
+        } else {
+            weightedRate = times[epochIndex];
+        }
+
+        nodeRates[getParameterIndexFromNode(child)] = weightedRate;
+
+        if (!tree.isExternal(child)) {
+            traverseTreeByBranch(childHeight, tree.getChild(child, 0), epochIndex);
+            traverseTreeByBranch(childHeight, tree.getChild(child, 1), epochIndex);
+        }
+    }
+
+    private double[] computeTimes() {
+        double[] times = new double[rates.getDimension()];
+        System.arraycopy(gridPoints.getParameterValues(), 0, times, 1, gridPoints.getDimension());
+        return times;
     }
 
     @Override
@@ -112,6 +190,11 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
 
     @Override
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+
+        if (variable == gridPoints) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
         nodeRatesKnown = false;
         fireModelChanged();
     }
@@ -152,13 +235,6 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
     @Override
     public ArbitraryBranchRates.BranchRateTransform getTransform() {
         throw new RuntimeException("Not yet implemented");
-    }
-
-    @Override
-    public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
-        // TODO
-        double[] result = new double[rates.getDimension()];
-        return result;
     }
 
     @Override

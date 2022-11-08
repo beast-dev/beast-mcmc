@@ -1,5 +1,6 @@
 package dr.evomodelxml.branchratemodel;
 
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.TimeVaryingBranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
@@ -20,7 +21,7 @@ public class TimeVaryingBranchRateModelParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        Tree tree = (Tree) xo.getChild(Tree.class);
         Parameter rates = (Parameter) xo.getElementFirstChild(RATES);
         Parameter gridPoints = getGridPoints(xo);
 
@@ -52,7 +53,7 @@ public class TimeVaryingBranchRateModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(TreeModel.class),
+            new ElementRule(Tree.class),
             new ElementRule(RATES, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),

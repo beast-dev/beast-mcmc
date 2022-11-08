@@ -8,8 +8,67 @@
 <!--       http://beast.bio.ed.ac.uk/                                        -->
 <beast>
 
+	<taxa id="dummy">
+		<taxon id="A"/>
+		<taxon id="B"/>
+		<taxon id="C"/>
+	</taxa>
+	
+	<newick id="dummyTree" usingDates="false" usingHeights="true">
+		((A:1,B:1):1,C:3)
+	</newick>
+	
+	<timeVaryingRates id="dummyRates1">
+		<newick idref="dummyTree"/>
+		<rate>
+			<parameter id="dummyRate1" value="1 2" lower="0.0"/>
+		</rate>
+		<gridPoints>
+			<parameter id="dummyGrid1" value="1.5"/>
+		</gridPoints>
+	</timeVaryingRates>
+		
+    <assertEqual verbose="true" charactersToStrip="\n">
+    	<message>
+    		Tree1
+    	</message>
+    	<actual regex="(.*?)\n">
+	    	<report>
+	    		<timeVaryingRates idref="dummyRates1"/>
+	    	</report>
+    	</actual>
+    	<expected>
+    		((A:[&#38;rate=1.5]1.0,B:[&#38;rate=1.5]1.0):[&#38;rate=2.0]1.0,C:[&#38;rate=1.5]3.0);
+		</expected>
+    </assertEqual>	
+
+	<timeVaryingRates id="dummyRates2">
+		<newick idref="dummyTree"/>
+		<rate>
+			<parameter id="dummyRate2" value="1 2" lower="0.0"/>
+		</rate>
+		<gridPoints>
+			<parameter id="dummyGrid2" value="2.0"/>
+		</gridPoints>
+	</timeVaryingRates>
+	
+    <assertEqual verbose="true" charactersToStrip="\n">
+    	<message>
+    		Tree2
+    	</message>
+    	<actual regex="(.*?)\n">
+	    	<report>
+	    		<timeVaryingRates idref="dummyRates2"/>
+	    	</report>
+    	</actual>
+    	<expected>
+			((A:[&#38;rate=1.0]1.0,B:[&#38;rate=1.0]1.0):[&#38;rate=2.0]1.0,C:[&#38;rate=1.3333333333333333]3.0);
+    	</expected>
+    </assertEqual>	    
+	
 	<!-- The list of taxa to be analysed (can also include dates/ages).          -->
 	<!-- ntax=17                                                                 -->
+<!-- 
 	<taxa id="taxa">
 		<taxon id="D4Brazi82">
 			<date value="1982.0" direction="forwards" units="years"/>
@@ -64,8 +123,8 @@
 		</taxon>
 	</taxa>
 
-	<!-- The sequence alignment (each sequence refers to a taxon above).         -->
-	<!-- ntax=17 nchar=1485                                                      -->
+	<!~~ The sequence alignment (each sequence refers to a taxon above).         ~~>
+	<!~~ ntax=17 nchar=1485                                                      ~~>
 	<alignment id="alignment" dataType="nucleotide">
 		<sequence>
 			<taxon idref="D4Brazi82"/>
@@ -137,27 +196,27 @@
 		</sequence>
 	</alignment>
 
-	<!-- The unique patterns from 1 to end                                       -->
-	<!-- npatterns=138                                                           -->
+	<!~~ The unique patterns from 1 to end                                       ~~>
+	<!~~ npatterns=138                                                           ~~>
 	<patterns id="patterns" from="1" strip="false">
 		<alignment idref="alignment"/>
 	</patterns>
 
-	<!-- A prior assumption that the population size has remained constant       -->
-	<!-- throughout the time spanned by the genealogy.                           -->
+	<!~~ A prior assumption that the population size has remained constant       ~~>
+	<!~~ throughout the time spanned by the genealogy.                           ~~>
 	<constantSize id="constant" units="years">
 		<populationSize>
 			<parameter id="constant.popSize" value="380.0" lower="0.0"/>
 		</populationSize>
 	</constantSize>
 
-	<!-- Generate a random starting tree under the coalescent process            -->
+	<!~~ Generate a random starting tree under the coalescent process            ~~>
 	<coalescentSimulator id="startingTree">
 		<taxa idref="taxa"/>
 		<constantSize idref="constant"/>
 	</coalescentSimulator>
 
-	<!-- Generate a tree model                                                   -->
+	<!~~ Generate a tree model                                                   ~~>
 	<treeModel id="treeModel">
 		<coalescentTree idref="startingTree"/>
 		<rootHeight>
@@ -171,7 +230,7 @@
 		</nodeHeights>
 	</treeModel>
 
-	<!-- Generate a coalescent likelihood                                        -->
+	<!~~ Generate a coalescent likelihood                                        ~~>
 	<coalescentLikelihood id="coalescent">
 		<model>
 			<constantSize idref="constant"/>
@@ -181,14 +240,14 @@
 		</populationTree>
 	</coalescentLikelihood>
 
-	<!-- The strict clock (Uniform rates across branches)                        -->
-<!-- 
+	<!~~ The strict clock (Uniform rates across branches)                        ~~>
+<!~~ 
 	<strictClockBranchRates id="branchRates">
 		<rate>
 			<parameter id="clock.rate" value="2E-2" lower="0.0"/>
 		</rate>
 	</strictClockBranchRates>
- -->
+ ~~>
 	
 	<timeVaryingRates id="branchRates">
 		<treeModel idref="treeModel"/>
@@ -200,7 +259,7 @@
 		</gridPoints>
 	</timeVaryingRates>
 
-	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
+	<!~~ The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             ~~>
 	<HKYModel id="hky">
 		<frequencies>
 			<frequencyModel dataType="nucleotide">
@@ -214,14 +273,14 @@
 		</kappa>
 	</HKYModel>
 
-	<!-- site model                                                              -->
+	<!~~ site model                                                              ~~>
 	<siteModel id="siteModel">
 		<substitutionModel>
 			<HKYModel idref="hky"/>
 		</substitutionModel>
 	</siteModel>
 
-	<!-- Likelihood for tree given sequence data                                 -->
+	<!~~ Likelihood for tree given sequence data                                 ~~>
 	<treeDataLikelihood id="treeLikelihood" useAmbiguities="false" usePreOrder="true">
 		<patterns idref="patterns"/>
 		<treeModel idref="treeModel"/>
@@ -250,4 +309,5 @@
 			<report idref="gradientReport"/>
     	</expected>
     </assertEqual>
+ -->
 </beast>

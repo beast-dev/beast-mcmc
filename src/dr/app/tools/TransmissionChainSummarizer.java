@@ -411,13 +411,13 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
             // If parent is in different state and node is in given state, get earliest jump and add to branch length
             if(!parentState.equalsIgnoreCase(state) && nodeState.equalsIgnoreCase(state)){
                 Object[] jumps = readCJH(node, tree);
-                Object[] earliestJump;
+                Object[] mostRecentJump;
                 if(jumps != null){
-                    earliestJump = getEarliestJump(jumps);
-                    if(!nodeState.equalsIgnoreCase((String) earliestJump[2])){
-                        throw new RuntimeException("Persistent chain state, "+nodeStateAnnotation+" and destination of earliest jump"+(String) earliestJump[1]+" do not match!");
+                    mostRecentJump = getMostRecentJump(jumps);
+                    if(!nodeState.equalsIgnoreCase((String) mostRecentJump[2])){
+                        throw new RuntimeException("Persistent chain state, "+ nodeState +" (parent state: "+ parentState +") and destination of earliest jump "+(String) mostRecentJump[2]+" do not match!");
                     }
-                    jumpHeight = (Double) earliestJump[0];
+                    jumpHeight = (Double) mostRecentJump[0];
                 }
                 totalBranchLength = jumpHeight - tree.getNodeHeight(node);
             }
@@ -428,7 +428,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                 if(jumps != null){
                     earliestJump = getEarliestJump(jumps);
                     if(!parentState.equalsIgnoreCase((String) earliestJump[1])){
-                        throw new RuntimeException("Persistent chain state, "+nodeStateAnnotation+" and source of earliest jump"+(String) earliestJump[1]+" do not match!");
+                        throw new RuntimeException("Persistent chain state, "+ parentState +" and source of earliest jump "+(String) earliestJump[1]+" do not match!");
                     }
                     jumpHeight = (Double) earliestJump[0];
                 }

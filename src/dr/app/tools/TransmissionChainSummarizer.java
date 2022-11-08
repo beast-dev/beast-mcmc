@@ -115,6 +115,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
         int numberOfPersistentDescendantsOfSameState;
         String persistentDescendantIds;
         double lengthOfTransmissionChain;
+        double totalBranchLength;
         double rootHeight;
         boolean isExternal;
         String jumpsToDifferentState;
@@ -133,6 +134,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                 "numberOfPersistentDescendantsOfSameState\t"+
                 "persistentDescendantsOfSameState\t"+
                 "lengthOfTransmissionChain\t"+
+                "totalBranchLength\t"+
                 "rootHeight\t"+
                 "isExternal\t"+
                 "jumpsToDifferentState";
@@ -150,6 +152,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                 int numberOfPersistentDescendantsOfSameState,
                 String persistentDescendantIds,
                 double lengthOfTransmissionChain,
+                double totalBranchLength,
                 double rootHeight,
                 boolean isExternal,
                 String jumpsToDifferentState
@@ -166,6 +169,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
             this.numberOfPersistentDescendantsOfSameState = numberOfPersistentDescendantsOfSameState;
             this.persistentDescendantIds = persistentDescendantIds;
             this.lengthOfTransmissionChain = lengthOfTransmissionChain;
+            this.totalBranchLength = totalBranchLength;
             this.rootHeight = rootHeight;
             this.isExternal = isExternal;
             this.jumpsToDifferentState = jumpsToDifferentState;
@@ -186,6 +190,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                     String.valueOf(numberOfPersistentDescendantsOfSameState),
                     persistentDescendantIds,
                     String.valueOf(lengthOfTransmissionChain),
+                    String.valueOf(totalBranchLength),
                     String.valueOf(rootHeight),
                     String.valueOf(isExternal),
                     jumpsToDifferentState
@@ -309,6 +314,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                     persistentDescendants.size(),
                     idstoString(tree, persistentDescendants),
                     (introductionTime - heightOfTransmissionChain)/rootHeight,
+                    getTotalBranchLength(tree, node, currentState, nodeStateAnnotation),
                     rootHeight,
                     tree.isExternal(node),
                     convertToJson(map)
@@ -392,6 +398,55 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
         return numberOfBranches;
     }
 
+    // Get total branch length i.e, total branch length of the transmission chain in the same state
+    // TODO: Merge traversals into one for total number of branches and branchLength
+    private double getTotalBranchLength(Tree tree, NodeRef node, String state, String nodeStateAnnotation){
+        int childCount = tree.getChildCount(node);
+        double totalBranchLength = tree.getBranchLength(node); // If parent and child are in the given state
+        String nodeState = getMergedState(tree, node, nodeStateAnnotation);
+        if(!tree.isRoot(node)){
+            NodeRef parentNode = tree.getParent(node);
+            String parentState = getMergedState(tree, parentNode, nodeStateAnnotation);
+            double jumpHeight = 0;
+            // If parent is in different state and node is in given state, get earliest jump and add to branch length
+            if(!parentState.equalsIgnoreCase(state) && nodeState.equalsIgnoreCase(state)){
+                Object[] jumps = readCJH(node, tree);
+                Object[] earliestJump;
+                if(jumps != null){
+                    earliestJump = getEarliestJump(jumps);
+                    if(!nodeState.equalsIgnoreCase((String) earliestJump[2])){
+                        throw new RuntimeException("Persistent chain state, "+nodeStateAnnotation+" and destination of earliest jump"+(String) earliestJump[1]+" do not match!");
+                    }
+                    jumpHeight = (Double) earliestJump[0];
+                }
+                totalBranchLength = jumpHeight - tree.getNodeHeight(node);
+            }
+            // If parent is in given state and node is in different state, get earliest jump and add to branch length
+            if(parentState.equalsIgnoreCase(state) && !nodeState.equalsIgnoreCase(state)){
+                Object[] jumps = readCJH(node, tree);
+                Object[] earliestJump;
+                if(jumps != null){
+                    earliestJump = getEarliestJump(jumps);
+                    if(!parentState.equalsIgnoreCase((String) earliestJump[1])){
+                        throw new RuntimeException("Persistent chain state, "+nodeStateAnnotation+" and source of earliest jump"+(String) earliestJump[1]+" do not match!");
+                    }
+                    jumpHeight = (Double) earliestJump[0];
+                }
+                totalBranchLength = tree.getNodeHeight(parentNode) - jumpHeight;
+            }
+        }
+
+        // If node is in different state don't traverse children
+        if(!nodeState.equalsIgnoreCase(state))
+            return totalBranchLength;
+        for (int i = 0; i < childCount; i++) {
+            NodeRef childNode = tree.getChild(node, i);
+            if(tree.getNodeHeight(childNode) < this.timeSlice)
+                continue;
+            totalBranchLength += getTotalBranchLength(tree, childNode, state, nodeStateAnnotation);
+        }
+        return totalBranchLength;
+    }
 
     private double traversePersistentChain(
             Tree tree,

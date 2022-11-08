@@ -100,8 +100,13 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
 
     @Override
     public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
-        // TODO
-        return new double[rates.getDimension()];
+
+        assert from == 0;
+        assert to == gradient.length - 1;
+
+        double[] result = new double[rates.getDimension()];
+        calculateNodeGradient(result); // TODO do we need to pass `value` as well?
+        return result;
     }
 
     @Override
@@ -124,16 +129,26 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             --epochIndex;
         }
 
-        traverseTreeByBranch(rootHeight, tree.getChild(root, 0), epochIndex);
-        traverseTreeByBranch(rootHeight, tree.getChild(root, 1), epochIndex);
+        traverseTreeByBranchForRates(rootHeight, tree.getChild(root, 0), epochIndex);
+        traverseTreeByBranchForRates(rootHeight, tree.getChild(root, 1), epochIndex);
     }
 
-    public String toString() {
-        TreeTraitProvider[] treeTraitProviders = {this};
-        return TreeUtils.newick(tree, treeTraitProviders);
+    private void calculateNodeGradient(double[] gradient) {
+
+        // TODO remove code duplication with `calculateNodeRates`
+        NodeRef root = tree.getRoot();
+        double rootHeight = tree.getNodeHeight(root);
+
+        int epochIndex = times.length - 1;
+        while (times[epochIndex] >= rootHeight) {
+            --epochIndex;
+        }
+
+        traverseTreeByBranchForGradient(gradient, rootHeight, tree.getChild(root, 0), epochIndex);
+        traverseTreeByBranchForGradient(gradient, rootHeight, tree.getChild(root, 1), epochIndex);
     }
 
-    private void traverseTreeByBranch(double parentHeight, NodeRef child, int epochIndex) {
+    private void traverseTreeByBranchForRates(double parentHeight, NodeRef child, int epochIndex) {
 
         // TODO needs testing / debugging
 
@@ -171,9 +186,13 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         nodeRates[getParameterIndexFromNode(child)] = weightedRate;
 
         if (!tree.isExternal(child)) {
-            traverseTreeByBranch(childHeight, tree.getChild(child, 0), epochIndex);
-            traverseTreeByBranch(childHeight, tree.getChild(child, 1), epochIndex);
+            traverseTreeByBranchForRates(childHeight, tree.getChild(child, 0), epochIndex);
+            traverseTreeByBranchForRates(childHeight, tree.getChild(child, 1), epochIndex);
         }
+    }
+
+    private void traverseTreeByBranchForGradient(double[] gradient, double parentHeight, NodeRef child, int epochIndex) {
+        // TODO -- will look like `traverseTreeByBranchForRates`.  We will remove code duplication later.
     }
 
     private double[] computeTimes() {
@@ -263,5 +282,10 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
                         Citation.Status.IN_PREPARATION
                 )
         );
+    }
+
+    public String toString() {
+        TreeTraitProvider[] treeTraitProviders = {this};
+        return TreeUtils.newick(tree, treeTraitProviders);
     }
 }

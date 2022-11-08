@@ -64,7 +64,32 @@
     	<expected>
 			((A:[&#38;rate=1.0]1.0,B:[&#38;rate=1.0]1.0):[&#38;rate=2.0]1.0,C:[&#38;rate=1.3333333333333333]3.0);
     	</expected>
-    </assertEqual>	    
+    </assertEqual>	  
+    
+    
+	<timeVaryingRates id="dummyRates3">
+		<newick idref="dummyTree"/>
+		<rate>
+			<parameter id="dummyRate3" value="1 2" lower="0.0"/>
+		</rate>
+		<gridPoints>
+			<parameter id="dummyGrid3" value="5.0"/>
+		</gridPoints>
+	</timeVaryingRates>
+	
+    <assertEqual verbose="true" charactersToStrip="\n">
+    	<message>
+    		Tree3
+    	</message>
+    	<actual regex="(.*?)\n">
+	    	<report>
+	    		<timeVaryingRates idref="dummyRates3"/>
+	    	</report>
+    	</actual>
+    	<expected>
+    		((A:[&#38;rate=1.0]1.0,B:[&#38;rate=1.0]1.0):[&#38;rate=1.0]1.0,C:[&#38;rate=1.0]3.0);		
+    	</expected>
+    </assertEqual>	       
 	
 	<!-- The list of taxa to be analysed (can also include dates/ages).          -->
 	<!-- ntax=17                                                                 -->

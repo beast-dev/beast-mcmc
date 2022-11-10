@@ -41,7 +41,7 @@ import org.w3c.dom.Element;
  */
 
 public class LogNormalDistributionModel extends AbstractModel implements
-        ParametricDistributionModel, GradientProvider, HessianProvider, PriorPreconditioningProvider {
+        ParametricDistributionModel, GradientProvider, HessianProvider {
 
     public enum Parameterization {
         MU_SIGMA,
@@ -362,11 +362,6 @@ public class LogNormalDistributionModel extends AbstractModel implements
             return Double.POSITIVE_INFINITY;
         }
     };
-
-    @Override
-    public double getStandardDeviation(int index) {
-        return getStdev();
-    }
 
     @Override
     public int getDimension() { return 1; }

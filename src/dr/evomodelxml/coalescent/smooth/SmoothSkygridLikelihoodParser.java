@@ -73,7 +73,7 @@ public class SmoothSkygridLikelihoodParser extends AbstractXMLObjectParser {
         }
     }
 
-    private Parameter getGridPoints(XMLObject xo) throws XMLParseException {
+    public static Parameter getGridPoints(XMLObject xo) throws XMLParseException {
         Parameter gridPoints;
         if (xo.getChild(GRID_POINTS) != null) {
             gridPoints = (Parameter) xo.getElementFirstChild(GRID_POINTS);

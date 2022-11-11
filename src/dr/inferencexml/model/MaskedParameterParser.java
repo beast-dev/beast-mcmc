@@ -45,6 +45,7 @@ public class MaskedParameterParser extends AbstractXMLObjectParser {
     public static final String BUILD = "build";
     private static final String SIGNAL_DEPENDENTS = "signalDependents";
     private static final String IS_NA_MISSING = "isNaMissing";
+    private static final String VALUE = "value";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -58,14 +59,22 @@ public class MaskedParameterParser extends AbstractXMLObjectParser {
             int total = 0;
             boolean isNaMissing = xo.getAttribute(IS_NA_MISSING, false);
             mask = new Parameter.Default(parameter.getDimension(), 0.0);
+            double[] defaultFillValue = new double[]{ 0.0 };
+            if (xo.hasAttribute(VALUE)) {
+                defaultFillValue = xo.getDoubleArrayAttribute(VALUE);
+            }
+            int offset = 0;
             for (int i = 0; i < parameter.getDimension(); i++) {
                 if (isNaMissing && Double.isNaN(parameter.getParameterValue(i))) {
                     mask.setParameterValue(i, 1.0);
-                    parameter.setParameterValue(i, 0.0);
+                    double value = defaultFillValue[offset++];
+                    if (offset == defaultFillValue.length) {
+                        offset = 0;
+                    }
+                    parameter.setParameterValue(i, value);
                     Logger.getLogger("dr.inferencexml.model").info("Setting dim " + (i + 1) + " in " +
-                            parameter.getId() + " to 0.0");
+                            parameter.getId() + " to " + value);
                     ++total;
-
                 }
                 if (!isNaMissing && parameter.getParameterValue(i) == 0) {
                     mask.setParameterValue(i, 1.0);
@@ -123,6 +132,7 @@ public class MaskedParameterParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(EVERY, true),
             AttributeRule.newBooleanRule(SIGNAL_DEPENDENTS, true),
             AttributeRule.newBooleanRule(IS_NA_MISSING, true),
+            AttributeRule.newDoubleArrayRule(VALUE, true),
     };
 
     public String getParserDescription() {

@@ -57,7 +57,7 @@ import java.util.List;
  */
 
 @SuppressWarnings("deprecation")
-public abstract class FixedEffectSubstitutionModelGradient extends AbstractGlmSubstitutionModelGradient {
+public class FixedEffectSubstitutionModelGradient extends AbstractGlmSubstitutionModelGradient {
 
     public FixedEffectSubstitutionModelGradient(String traitName,
                                                 TreeDataLikelihood treeDataLikelihood,

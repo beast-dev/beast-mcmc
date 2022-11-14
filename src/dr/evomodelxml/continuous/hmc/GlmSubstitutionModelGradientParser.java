@@ -69,8 +69,7 @@ public class GlmSubstitutionModelGradientParser extends AbstractXMLObjectParser 
                 throw new XMLParseException("No fixed effects in '" + substitutionModel.getId() + "'");
             }
             return new FixedEffectSubstitutionModelGradient(traitName, treeDataLikelihood,
-                    (BeagleDataLikelihoodDelegate) delegate, substitutionModel) {
-            };
+                    (BeagleDataLikelihoodDelegate) delegate, substitutionModel);
         } else if (effectsString.equalsIgnoreCase("random")) {
             if (substitutionModel.getGeneralizedLinearModel().getNumberOfRandomEffects() < 1) {
                 throw new XMLParseException("No random effects in '" + substitutionModel.getId() + "'");

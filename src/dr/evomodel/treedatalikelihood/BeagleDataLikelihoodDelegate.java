@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
+import static dr.evomodel.treedatalikelihood.SubstitutionModelDelegate.BUFFER_POOL_SIZE_DEFAULT;
 
 /**
  * BeagleDataLikelihoodDelegate
@@ -176,8 +177,18 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
             scaleBufferHelper = new BufferIndexHelper(getSingleScaleBufferCount(), 0);
 
+            if (extraBufferOrder == null) {
+                extraBufferOrder = parseSystemPropertyIntegerArray(EXTRA_BUFFER_COUNT_PROPERTY);
+            }
+
+            int extraBufferCount = BUFFER_POOL_SIZE_DEFAULT;
+            if (extraBufferOrder.size() > 0) {
+                extraBufferCount = extraBufferOrder.get(instanceCount % extraBufferOrder.size());
+            }
+
             if (settings.branchInfinitesimalDerivative) {
-                evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, settings);
+                evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, 0,
+                        extraBufferCount, settings);
             } else {
 
                 if (branchModel.getSubstitutionModels().size() == 1) {
@@ -187,7 +198,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     // can do matrix convolution.
 
                     // TODO: the constructor should take the delegate and the delegate should wrap the branchModel
-                    evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, settings);
+                    evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, 0,
+                            extraBufferCount, settings);
                 }
             }
 
@@ -214,9 +226,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             }
             if (scalingOrder == null) {
                 scalingOrder = parseSystemPropertyStringArray(SCALING_PROPERTY);
-            }
-            if (extraBufferOrder == null) {
-                extraBufferOrder = parseSystemPropertyIntegerArray(EXTRA_BUFFER_COUNT_PROPERTY);
             }
 
             // first set the rescaling scheme to use from the parser

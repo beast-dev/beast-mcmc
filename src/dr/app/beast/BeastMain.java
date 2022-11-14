@@ -379,6 +379,7 @@ public class BeastMain {
                         new Arguments.Option("beagle_double", "BEAGLE: use double precision if available"),
                         new Arguments.Option("beagle_async", "BEAGLE: use asynchronous kernels if available"),
                         new Arguments.Option("beagle_low_memory", "BEAGLE: use lower memory pre-order traversal kernels"),
+                        new Arguments.StringOption("beagle_extra_buffer_count", "buffer_count", "BEAGLE: reserve extra transition matrix buffers for convolutions"),
                         new Arguments.StringOption("beagle_scaling", new String[]{"default", "dynamic", "delayed", "always", "none"},
                                 false, "BEAGLE: specify scaling scheme to use"),
                         new Arguments.Option("beagle_delay_scaling_off", "BEAGLE: don't wait until underflow for scaling option"),
@@ -622,6 +623,10 @@ public class BeastMain {
             } else if (arguments.getStringOption("beagle_multipartition").toLowerCase().equals("off")) {
                 System.setProperty("beagle.multipartition.extensions", Boolean.FALSE.toString());
             }
+        }
+
+        if (arguments.hasOption("beagle_extra_buffer_count")) {
+            System.setProperty("beagle.extra.buffer.count", arguments.getStringOption("beagle_extra_buffer_count"));
         }
 
         // ============= Other settings =============

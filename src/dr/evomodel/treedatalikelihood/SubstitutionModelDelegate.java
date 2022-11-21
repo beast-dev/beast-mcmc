@@ -54,7 +54,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     public double updateTime;
     public double convolveTime;
 
-    private static final int BUFFER_POOL_SIZE_DEFAULT = 100;
+    static final int BUFFER_POOL_SIZE_DEFAULT = 100;
 
     private final Tree tree;
     private final List<SubstitutionModel> substitutionModelList;

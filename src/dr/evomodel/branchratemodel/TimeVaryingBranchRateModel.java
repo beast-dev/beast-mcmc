@@ -133,9 +133,34 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
 
         traverseTreeByBranchForRates(rootHeight, tree.getChild(root, 0), epochIndex);
         traverseTreeByBranchForRates(rootHeight, tree.getChild(root, 1), epochIndex);
+
+        if (TEST) {
+            double[] copy = new double[nodeRates.length];
+            System.arraycopy(nodeRates, 0, copy, 0, nodeRates.length);
+
+
+            GenericFunction func = new GenericFunction.PiecewiseConstant(rates, nodeRates);
+            func.reset();
+
+            traverseTreeByBranchGeneric(rootHeight, tree.getChild(root, 0), epochIndex, func);
+            traverseTreeByBranchGeneric(rootHeight, tree.getChild(root, 1), epochIndex, func);
+
+            for (int i = 0; i < copy.length; ++i) {
+                if (copy[i] != nodeRates[i]) {
+                    System.err.println("Error!");
+                    System.exit(-1);
+                }
+            }
+        }
     }
 
+
     private void calculateNodeGradient(double[] gradientWrtRates, double[] gradientWrtNodes) {
+
+    private static final boolean TEST = false;
+
+    private void calculateNodeGradient(double[] gradient) {
+
 
         // TODO remove code duplication with `calculateNodeRates`
         NodeRef root = tree.getRoot();
@@ -182,7 +207,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
 
             weightedRate = branchRateNumerator / branchRateDenominator;
         } else {
-            weightedRate = times[epochIndex];
+            weightedRate = rates.getParameterValue(epochIndex);
         }
 
         nodeRates[getParameterIndexFromNode(child)] = weightedRate;
@@ -289,5 +314,91 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
     public String toString() {
         TreeTraitProvider[] treeTraitProviders = {this};
         return TreeUtils.newick(tree, treeTraitProviders);
+    }
+
+    interface GenericFunction {
+
+        void reset();
+
+        void increment(int epochIndex, double startTime, double endTime);
+
+        double getExpectedRate();
+
+        double getDefaultRate(int epochIndex);
+
+        void action(int epochIndex, int nodeIndex, double rate);
+
+        class PiecewiseConstant implements GenericFunction {
+
+            final private Parameter rates;
+            final private double[] nodeRates;
+            private double branchRateNumerator;
+            private double branchRateDenominator;
+
+            PiecewiseConstant(Parameter rates, double[] nodeRates) {
+                this.rates = rates;
+                this.nodeRates = nodeRates;
+            }
+
+            @Override
+            public void reset() {
+                branchRateNumerator = 0.0;
+                branchRateDenominator = 0.0;
+            }
+
+            @Override
+            public void increment(int epochIndex, double startTime, double endTime) {
+                double timeLength = startTime - endTime;
+                double rate = rates.getParameterValue(epochIndex);
+
+                branchRateNumerator += rate * timeLength;
+                branchRateDenominator += timeLength;
+            }
+
+            @Override
+            public double getExpectedRate() {
+                return branchRateNumerator / branchRateDenominator;
+            }
+
+            @Override
+            public double getDefaultRate(int epochIndex) {
+                return rates.getParameterValue(epochIndex);
+            }
+
+            @Override
+            public void action(int epochIndex, int nodeIndex, double rate) {
+                nodeRates[nodeIndex] = rate;
+            }
+        }
+    }
+
+    private void traverseTreeByBranchGeneric(double currentHeight, NodeRef child, int epochIndex,
+                                             GenericFunction generic) {
+
+        final double childHeight = tree.getNodeHeight(child);
+        generic.reset();
+
+        final double rate;
+        if (currentHeight > childHeight) {
+
+            while (times[epochIndex] > childHeight) {
+                generic.increment(epochIndex, currentHeight, times[epochIndex]);
+                currentHeight = times[epochIndex];
+
+                --epochIndex;
+            }
+
+            generic.increment(epochIndex, currentHeight, childHeight);
+            rate = generic.getExpectedRate();
+        } else {
+            rate = generic.getDefaultRate(epochIndex);
+        }
+
+        generic.action(epochIndex, getParameterIndexFromNode(child), rate);
+
+        if (!tree.isExternal(child)) {
+            traverseTreeByBranchGeneric(childHeight, tree.getChild(child, 0), epochIndex, generic);
+            traverseTreeByBranchGeneric(childHeight, tree.getChild(child, 1), epochIndex, generic);
+        }
     }
 }

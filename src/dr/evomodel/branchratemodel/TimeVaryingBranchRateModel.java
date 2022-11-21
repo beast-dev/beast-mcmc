@@ -105,7 +105,9 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         assert to == gradient.length - 1;
 
         double[] result = new double[rates.getDimension()];
-        calculateNodeGradient(result); // TODO do we need to pass `value` as well?
+
+        // result = M * gradient
+        calculateNodeGradient(result, gradient); // TODO do we need to pass `value` as well?
         return result;
     }
 
@@ -133,7 +135,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         traverseTreeByBranchForRates(rootHeight, tree.getChild(root, 1), epochIndex);
     }
 
-    private void calculateNodeGradient(double[] gradient) {
+    private void calculateNodeGradient(double[] gradientWrtRates, double[] gradientWrtNodes) {
 
         // TODO remove code duplication with `calculateNodeRates`
         NodeRef root = tree.getRoot();
@@ -144,8 +146,8 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             --epochIndex;
         }
 
-        traverseTreeByBranchForGradient(gradient, rootHeight, tree.getChild(root, 0), epochIndex);
-        traverseTreeByBranchForGradient(gradient, rootHeight, tree.getChild(root, 1), epochIndex);
+        traverseTreeByBranchForGradient(gradientWrtRates, gradientWrtNodes, rootHeight, tree.getChild(root, 0), epochIndex);
+        traverseTreeByBranchForGradient(gradientWrtRates, gradientWrtNodes, rootHeight, tree.getChild(root, 1), epochIndex);
     }
 
     private void traverseTreeByBranchForRates(double parentHeight, NodeRef child, int epochIndex) {
@@ -191,7 +193,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         }
     }
 
-    private void traverseTreeByBranchForGradient(double[] gradient, double parentHeight, NodeRef child, int epochIndex) {
+    private void traverseTreeByBranchForGradient(double[] gradientWrtRates, double[] gradientWrtNodes, double parentHeight, NodeRef child, int epochIndex) {
         // TODO -- will look like `traverseTreeByBranchForRates`.  We will remove code duplication later.
     }
 

@@ -99,14 +99,14 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
     }
 
     @Override
-    public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+    public double[] updateGradientLogDensity(double[] gradientWrtBranches, double[] value, int from, int to) {
 
         assert from == 0;
-        assert to == gradient.length - 1;
+        assert to == gradientWrtBranches.length - 1;
 
-        double[] result = new double[rates.getDimension()];
-        calculateNodeGradient(result); // TODO do we need to pass `value` as well?
-        return result;
+        double[] gradientWrtRates = new double[rates.getDimension()];
+        calculateNodeGradient(gradientWrtRates, gradientWrtBranches); // TODO do we need to pass `value` as well?
+        return gradientWrtRates;
     }
 
     @Override
@@ -136,8 +136,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             double[] copy = new double[nodeRates.length];
             System.arraycopy(nodeRates, 0, copy, 0, nodeRates.length);
 
-
-            GenericFunction func = new GenericFunction.PiecewiseConstant(rates, nodeRates);
+            GenericFunction func = new GenericFunction.Rates(nodeRates, new FunctionalForm.PiecewiseConstant(rates));
             func.reset();
 
             traverseTreeByBranchGeneric(rootHeight, tree.getChild(root, 0), epochIndex, func);
@@ -152,9 +151,9 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         }
     }
 
-    private static final boolean TEST = false;
+    private static final boolean TEST = true;
 
-    private void calculateNodeGradient(double[] gradient) {
+    private void calculateNodeGradient(double[] gradientWrtRates, double[] gradientWrtBranches) {
 
         // TODO remove code duplication with `calculateNodeRates`
         NodeRef root = tree.getRoot();
@@ -165,8 +164,8 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             --epochIndex;
         }
 
-        traverseTreeByBranchForGradient(gradient, rootHeight, tree.getChild(root, 0), epochIndex);
-        traverseTreeByBranchForGradient(gradient, rootHeight, tree.getChild(root, 1), epochIndex);
+        traverseTreeByBranchForGradient(gradientWrtRates, gradientWrtBranches, rootHeight, tree.getChild(root, 0), epochIndex);
+        traverseTreeByBranchForGradient(gradientWrtRates, gradientWrtBranches, rootHeight, tree.getChild(root, 1), epochIndex);
     }
 
     private void traverseTreeByBranchForRates(double parentHeight, NodeRef child, int epochIndex) {
@@ -212,8 +211,59 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         }
     }
 
-    private void traverseTreeByBranchForGradient(double[] gradient, double parentHeight, NodeRef child, int epochIndex) {
+    private void traverseTreeByBranchForGradient(double[] gradientWrtRates, double[] gradientWrtBranches,
+                                                 double parentHeight, NodeRef child, int epochIndex) {
         // TODO -- will look like `traverseTreeByBranchForRates`.  We will remove code duplication later.
+
+        // TODO needs testing / debugging
+
+        final double childHeight = tree.getNodeHeight(child);
+        final double branchLength = parentHeight - childHeight;
+
+        double currentHeight = parentHeight;
+        double branchRateNumerator = 0.0;
+        double branchRateDenominator = 0.0;
+
+        final double weightedRate;
+        if (currentHeight > childHeight) {
+
+            while (times[epochIndex] > childHeight) {
+                double timeLength = currentHeight - times[epochIndex];
+                double rate = rates.getParameterValue(epochIndex);
+
+                branchRateNumerator += rate * timeLength;
+                branchRateDenominator += timeLength;
+                currentHeight = times[epochIndex];
+
+                gradientWrtRates[epochIndex] += gradientWrtBranches[getParameterIndexFromNode(child)]
+                        * timeLength / branchLength;
+
+                --epochIndex;
+            }
+
+            double timeLength = currentHeight - childHeight;
+            double rate = rates.getParameterValue(epochIndex);
+
+            branchRateNumerator += rate * timeLength;
+            branchRateDenominator += timeLength;
+
+            gradientWrtRates[epochIndex] += gradientWrtBranches[getParameterIndexFromNode(child)]
+                    * timeLength / branchLength;
+
+//            weightedRate = branchRateNumerator / branchRateDenominator;
+        } else {
+//            weightedRate = rates.getParameterValue(epochIndex);
+        }
+
+//        nodeRates[getParameterIndexFromNode(child)] = weightedRate;
+
+        if (!tree.isExternal(child)) {
+            traverseTreeByBranchForGradient(gradientWrtRates, gradientWrtBranches,
+                    childHeight, tree.getChild(child, 0), epochIndex);
+            traverseTreeByBranchForGradient(gradientWrtRates, gradientWrtBranches,
+                    childHeight, tree.getChild(child, 1), epochIndex);
+        }
+
     }
 
     private double[] computeTimes() {
@@ -310,7 +360,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         return TreeUtils.newick(tree, treeTraitProviders);
     }
 
-    interface GenericFunction {
+    interface FunctionalForm {
 
         void reset();
 
@@ -320,18 +370,14 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
 
         double getDefaultRate(int epochIndex);
 
-        void action(int epochIndex, int nodeIndex, double rate);
-
-        class PiecewiseConstant implements GenericFunction {
+        class PiecewiseConstant implements FunctionalForm {
 
             final private Parameter rates;
-            final private double[] nodeRates;
             private double branchRateNumerator;
             private double branchRateDenominator;
 
-            PiecewiseConstant(Parameter rates, double[] nodeRates) {
+            PiecewiseConstant(Parameter rates) {
                 this.rates = rates;
-                this.nodeRates = nodeRates;
             }
 
             @Override
@@ -357,6 +403,77 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             @Override
             public double getDefaultRate(int epochIndex) {
                 return rates.getParameterValue(epochIndex);
+            }
+        }
+
+        abstract class PiecewiseLinear implements FunctionalForm { }
+    }
+
+    interface GenericFunction {
+
+        void reset();
+
+        void increment(int epochIndex, double startTime, double endTime);
+
+        double getExpectedRate();
+
+        double getDefaultRate(int epochIndex);
+
+        void action(int epochIndex, int nodeIndex, double rate);
+
+        abstract class AbstractGenericFunction implements GenericFunction {
+
+            final FunctionalForm functionalForm;
+
+            AbstractGenericFunction(FunctionalForm functionalForm) {
+                this.functionalForm = functionalForm;
+            }
+
+            @Override
+            public void reset() {
+                functionalForm.reset();
+            }
+
+            @Override
+            public void increment(int epochIndex, double startTime, double endTime) {
+                functionalForm.increment(epochIndex, startTime, endTime);
+            }
+
+            @Override
+            public double getExpectedRate() {
+                return functionalForm.getExpectedRate();
+            }
+
+            @Override
+            public double getDefaultRate(int epochIndex) {
+                return functionalForm.getDefaultRate(epochIndex);
+            }
+        }
+
+        class Gradient extends AbstractGenericFunction {
+
+            final private double[] gradientEpochs;
+            final private double[] gradientNodes;
+
+            Gradient(double[] gradientEpochs, double[] gradientNodes, FunctionalForm functionalForm) {
+                super(functionalForm);
+                this.gradientEpochs = gradientEpochs;
+                this.gradientNodes = gradientNodes;
+            }
+
+            @Override
+            public void action(int epochIndex, int nodeIndex, double rate) {
+
+            }
+        }
+
+        class Rates extends AbstractGenericFunction {
+
+            final private double[] nodeRates;
+
+            Rates(double[] nodeRates, FunctionalForm functionalForm) {
+                super(functionalForm);
+                this.nodeRates = nodeRates;
             }
 
             @Override

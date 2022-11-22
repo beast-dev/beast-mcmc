@@ -157,6 +157,8 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
 
     private void calculateNodeGradient(double[] gradientWrtRates, double[] gradientWrtNodes) {
 
+    }
+
     private static final boolean TEST = false;
 
     private void calculateNodeGradient(double[] gradient) {
@@ -171,8 +173,8 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             --epochIndex;
         }
 
-        traverseTreeByBranchForGradient(gradientWrtRates, gradientWrtNodes, rootHeight, tree.getChild(root, 0), epochIndex);
-        traverseTreeByBranchForGradient(gradientWrtRates, gradientWrtNodes, rootHeight, tree.getChild(root, 1), epochIndex);
+//        traverseTreeByBranchForGradient(gradientWrtRates, gradientWrtNodes, rootHeight, tree.getChild(root, 0), epochIndex);
+//        traverseTreeByBranchForGradient(gradientWrtRates, gradientWrtNodes, rootHeight, tree.getChild(root, 1), epochIndex);
     }
 
     private void traverseTreeByBranchForRates(double parentHeight, NodeRef child, int epochIndex) {

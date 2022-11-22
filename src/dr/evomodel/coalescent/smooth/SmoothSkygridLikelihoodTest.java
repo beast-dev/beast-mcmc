@@ -40,6 +40,35 @@ public class SmoothSkygridLikelihoodTest extends TestCase {
         this.smoothRate = new Parameter.Default(20.0);
     }
 
+    public void testNewFormulation() throws Exception {
+        SmoothSkygridLikelihood likelihood = new SmoothSkygridLikelihood("SmoothSkygridLikelihoodTest",
+                trees, logPopSizeParameter, gridPointParameter, smoothRate);
+
+        Tree tree = trees.get(0);
+        final double startTime = 0.0;
+        final double endTime = tree.getNodeHeight(tree.getRoot());
+
+        final double stepLocation1 = tree.getNodeHeight(tree.getNode(1));
+        final double stepLocation2 = tree.getNodeHeight(tree.getNode(3));
+
+        GlobalSigmoidSmoothFunction sigmoidSmoothFunction = new GlobalSigmoidSmoothFunction();
+        final double analytic = sigmoidSmoothFunction.getDoubleProductIntegration(startTime, endTime, stepLocation1,
+                stepLocation2, smoothRate.getParameterValue(0));
+
+        UnivariateRealFunction f = v -> getPairSigmoidProduct(v, stepLocation1, stepLocation2, smoothRate.getParameterValue(0));
+        final double numeric = integrator.integrate(f, startTime, endTime);
+
+        double diff = analytic - numeric;
+    }
+
+    public static double getPairSigmoidProduct(double time,
+                                                 double stepLocation1, double stepLocation2,
+                                                 double smoothRate) {
+        GlobalSigmoidSmoothFunction sigmoidSmoothFunction = new GlobalSigmoidSmoothFunction();
+        return sigmoidSmoothFunction.getSmoothValue(time, stepLocation1, 0, 1, smoothRate) *
+                sigmoidSmoothFunction.getSmoothValue(time, stepLocation2, 0, 1, smoothRate);
+    }
+
     public void testSmoothSkygridLikelihood () throws ConvergenceException, FunctionEvaluationException {
         SmoothSkygridLikelihood likelihood = new SmoothSkygridLikelihood("SmoothSkygridLikelihoodTest",
                 trees, logPopSizeParameter, gridPointParameter, smoothRate);

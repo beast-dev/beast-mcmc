@@ -32,6 +32,38 @@ class GlobalSigmoidSmoothFunction {
         return (postStepValue + preStepValue * exponential) / (1 + exponential);
     }
 
+    public double getSingleIntegration(double startTime, double endTime,
+                                       double stepLocation, double smoothRate) {
+        final double exponent = Math.exp(smoothRate * (endTime - stepLocation));
+        if (Double.isInfinite(exponent)) {
+            return endTime - stepLocation;
+        } else {
+            final double ratio = (1 + exponent) / (1 + Math.exp(smoothRate * (startTime - stepLocation)));
+            return Math.log(ratio) / smoothRate;
+        }
+    }
+
+    public double getDoubleProductIntegration(double startTime, double endTime,
+                                              double stepLocation1, double stepLocation2,
+                                              double smoothRate) {
+        final double firstTerm = endTime - startTime;
+        final double secondTermMultiplier = 1.0 / (1.0 - Math.exp(smoothRate * (stepLocation2 - stepLocation1)));
+        final double thirdTermMultiplier = 1.0 / (1.0 - Math.exp(smoothRate * (stepLocation1 - stepLocation2)));
+        return firstTerm + secondTermMultiplier * doubleProductSingleRatio(startTime, endTime, stepLocation1, smoothRate)
+                + thirdTermMultiplier * doubleProductSingleRatio(startTime, endTime, stepLocation2, smoothRate);
+    }
+
+    private double doubleProductSingleRatio(double startTime, double endTime,
+                                            double stepLocation, double smoothRate) {
+        final double exponent = Math.exp(smoothRate * (stepLocation - startTime));
+        final double others = Math.log(1 + Math.exp(smoothRate * (stepLocation - endTime))) / smoothRate;
+        if (Double.isInfinite(exponent)) {
+            return others - (stepLocation - startTime);
+        } else {
+            return others - Math.log(1.0 + exponent) / smoothRate;
+        }
+    }
+
     public double getTripleProductIntegration(double startTime, double endTime,
                                               double stepLocation1, double preStepValue1, double postStepValue1,
                                               double stepLocation2, double preStepValue2, double postStepValue2,

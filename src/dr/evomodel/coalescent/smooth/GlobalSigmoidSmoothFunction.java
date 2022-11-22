@@ -29,7 +29,7 @@ class GlobalSigmoidSmoothFunction {
 
     public double getSmoothValue(double x, double stepLocation, double preStepValue, double postStepValue, double smoothRate) {
         final double exponential = Math.exp(-smoothRate * (x - stepLocation));
-        return (postStepValue + preStepValue * exponential) / (1 + exponential);
+        return (postStepValue - preStepValue) / (1 + exponential) + preStepValue;
     }
 
     public double getSingleIntegration(double startTime, double endTime,

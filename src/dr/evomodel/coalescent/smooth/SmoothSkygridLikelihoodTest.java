@@ -3,6 +3,8 @@ package dr.evomodel.coalescent.smooth;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import junit.framework.TestCase;
@@ -17,7 +19,7 @@ import java.util.List;
 
 public class SmoothSkygridLikelihoodTest extends TestCase {
 
-    private List<Tree> trees;
+    private List<TreeModel> trees;
     private Parameter logPopSizeParameter;
     private Parameter gridPointParameter;
     private Parameter smoothRate;
@@ -32,7 +34,7 @@ public class SmoothSkygridLikelihoodTest extends TestCase {
 
         NewickImporter importer = new NewickImporter("(0:2.0,(1:1.0,2:1.0):1.0);");
         this.trees = new ArrayList<>();
-        this.trees.add(importer.importTree(null));
+        this.trees.add(new DefaultTreeModel(importer.importTree(null)));
 
         this.logPopSizeParameter = new Parameter.Default("logPopSize", new double[]{2.0, 1.5, 2.2});
         this.gridPointParameter = new Parameter.Default("logPopSize", new double[]{0.8, 1.6});
@@ -52,7 +54,7 @@ public class SmoothSkygridLikelihoodTest extends TestCase {
         final double stepLocation2 = tree.getNodeHeight(tree.getNode(3));
 
         GlobalSigmoidSmoothFunction sigmoidSmoothFunction = new GlobalSigmoidSmoothFunction();
-        final double analytic = sigmoidSmoothFunction.getDoubleProductIntegration(startTime, endTime, stepLocation1,
+        final double analytic = sigmoidSmoothFunction.getPairProductIntegration(startTime, endTime, stepLocation1,
                 stepLocation2, smoothRate.getParameterValue(0));
 
         UnivariateRealFunction f = v -> getPairSigmoidProduct(v, stepLocation1, stepLocation2, smoothRate.getParameterValue(0));

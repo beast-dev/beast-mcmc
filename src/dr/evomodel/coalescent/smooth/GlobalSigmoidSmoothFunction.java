@@ -43,9 +43,9 @@ class GlobalSigmoidSmoothFunction {
         }
     }
 
-    public double getDoubleProductIntegration(double startTime, double endTime,
-                                              double stepLocation1, double stepLocation2,
-                                              double smoothRate) {
+    public double getPairProductIntegration(double startTime, double endTime,
+                                            double stepLocation1, double stepLocation2,
+                                            double smoothRate) {
         final double firstTerm = endTime - startTime;
         final double secondTermMultiplier = 1.0 / (1.0 - Math.exp(smoothRate * (stepLocation2 - stepLocation1)));
         final double thirdTermMultiplier = 1.0 / (1.0 - Math.exp(smoothRate * (stepLocation1 - stepLocation2)));

@@ -171,23 +171,28 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         }
         singleSigmoidIntegralSums *= firstInversePopulationSize;
 
+        int maxGridIndex = gridPointParameter.getDimension() - 1;
+        while (gridPointParameter.getParameterValue(maxGridIndex) > endTime && maxGridIndex > 0) {
+            maxGridIndex--;
+        }
+
         double pairSigmoidIntegralSums = 0;
 
-        for (int j = 0; j < logPopSizeParameter.getSize() - 1; j++) {
+        for (int j = 0; j < maxGridIndex + 1; j++) {
             final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j));
             final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j + 1));
             final double gridTime = gridPointParameter.getParameterValue(j);
             pairSigmoidIntegralSums += intervals.getLineageCount(0) * (intervals.getLineageCount(0) - 1) * (nextPopSizeInverse - currentPopSizeInverse) *
-                    smoothFunction.getPairProductIntegration(startTime, endTime, intervals.getLineageCount(0), gridTime, smoothRate.getParameterValue(0));
+                    smoothFunction.getPairProductIntegration(startTime, endTime, intervals.getIntervalTime(0), gridTime, smoothRate.getParameterValue(0));
         }
 
         for (int i = 1; i < intervals.getIntervalCount(); i++) {
 
-            final double lineageCountDifference = intervals.getLineageCount(i) * (intervals.getLineageCount(i) - 1)
-                    - intervals.getLineageCount(i - 1) * (intervals.getLineageCount(i - 1) - 1);
+            final double lineageCountDifference = ((double) intervals.getLineageCount(i) * (intervals.getLineageCount(i) - 1)
+                    - intervals.getLineageCount(i - 1) * (intervals.getLineageCount(i - 1) - 1)) / 2;
             final double intervalTime = intervals.getIntervalTime(i);
 
-            for (int j = 0; j < logPopSizeParameter.getSize() - 1; j++) {
+            for (int j = 0; j < maxGridIndex + 1; j++) {
                 final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j));
                 final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j + 1));
                 final double gridTime = gridPointParameter.getParameterValue(j);

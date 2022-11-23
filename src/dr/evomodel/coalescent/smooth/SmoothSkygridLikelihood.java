@@ -154,7 +154,8 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         double logPopulationSizeInverse = 0;
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
             NodeRef node = tree.getNode(tree.getExternalNodeCount() + i);
-            logPopulationSizeInverse += Math.log(populationSizeInverse.getPopulationSizeInverse(tree.getNodeHeight(node)));
+//            logPopulationSizeInverse += Math.log(populationSizeInverse.getPopulationSizeInverse(tree.getNodeHeight(node)));
+            logPopulationSizeInverse += Math.log(getSmoothPopulationSizeInverse(tree.getNodeHeight(node), tree.getNodeHeight(tree.getRoot())));
         }
 
         final double startTime = 0;
@@ -171,10 +172,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         }
         singleSigmoidIntegralSums *= firstInversePopulationSize;
 
-        int maxGridIndex = gridPointParameter.getDimension() - 1;
-        while (gridPointParameter.getParameterValue(maxGridIndex) > endTime && maxGridIndex > 0) {
-            maxGridIndex--;
-        }
+        int maxGridIndex = getMaxGridIndex(endTime);
 
         double pairSigmoidIntegralSums = 0;
 
@@ -202,6 +200,30 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         }
 
         return logPopulationSizeInverse - singleSigmoidIntegralSums - pairSigmoidIntegralSums;
+    }
+
+    private int getMaxGridIndex(double endTime) {
+        int maxGridIndex = gridPointParameter.getDimension() - 1;
+        while (gridPointParameter.getParameterValue(maxGridIndex) > endTime && maxGridIndex > 0) {
+            maxGridIndex--;
+        }
+        return maxGridIndex;
+    }
+
+    private double getSmoothPopulationSizeInverse(double t, double endTime) {
+        int maxGridIndex = getMaxGridIndex(endTime);
+
+        double populationSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(0));
+
+        for (int j = 0; j < maxGridIndex + 1; j++) {
+            final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j));
+            final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j + 1));
+            final double gridTime = gridPointParameter.getParameterValue(j);
+            populationSizeInverse += (nextPopSizeInverse - currentPopSizeInverse) *
+                    smoothFunction.getSmoothValue(t, gridTime, 0, 1, smoothRate.getParameterValue(0));
+        }
+
+        return populationSizeInverse;
     }
 
     private double oldCalculateLogLikelihood() {

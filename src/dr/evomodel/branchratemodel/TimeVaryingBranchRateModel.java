@@ -124,7 +124,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         throw new RuntimeException("Not yet implemented");
     }
 
-    @Deprecated
+    @Deprecated @SuppressWarnings("unused")
     private void calculateNodeRates() {
 
         NodeRef root = tree.getRoot();
@@ -139,7 +139,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         traverseTreeByBranchForRates(rootHeight, tree.getChild(root, 1), epochIndex);
     }
 
-    @Deprecated
+    @Deprecated @SuppressWarnings("unused")
     private void calculateNodeGradient(double[] gradientWrtRates, double[] gradientWrtBranches) {
 
         // TODO remove code duplication with `calculateNodeRates`
@@ -199,6 +199,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         }
     }
 
+    @SuppressWarnings("unused")
     private void traverseTreeByBranchForGradient(double[] gradientWrtRates, double[] gradientWrtBranches,
                                                  double parentHeight, NodeRef child, int epochIndex) {
         // Waiting for Pratyusa to attempt
@@ -343,6 +344,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             }
         }
 
+        @SuppressWarnings("unused")
         abstract class PiecewiseLinear implements FunctionalForm { }
     }
 

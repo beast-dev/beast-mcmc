@@ -91,7 +91,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         assert tree == this.tree;
 
         if (!nodeRatesKnown) { // lazy evaluation
-            GenericFunction func = new GenericFunction.Rates(nodeRates, new FunctionalForm.PiecewiseConstant(rates));
+            Traversal func = new Traversal.Rates(nodeRates, new FunctionalForm.PiecewiseConstant(rates));
             calculateNodeGeneric(func);
             nodeRatesKnown = true;
         }
@@ -107,7 +107,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
 
         double[] gradientWrtRates = new double[rates.getDimension()];
 
-        GenericFunction func = new GenericFunction.Gradient(
+        Traversal func = new Traversal.Gradient(
                 gradientWrtRates, gradientWrtBranches, new FunctionalForm.PiecewiseConstant(rates));
         calculateNodeGeneric(func);
 
@@ -346,7 +346,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         abstract class PiecewiseLinear implements FunctionalForm { }
     }
 
-    interface GenericFunction {
+    interface Traversal {
 
         void reset();
 
@@ -354,11 +354,11 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
 
         void store(int epochIndex, int nodeIndex, double branchLength);
 
-        abstract class AbstractGenericFunction implements GenericFunction {
+        abstract class AbstractTraversal implements Traversal {
 
             final FunctionalForm functionalForm;
 
-            AbstractGenericFunction(FunctionalForm functionalForm) {
+            AbstractTraversal(FunctionalForm functionalForm) {
                 this.functionalForm = functionalForm;
             }
 
@@ -368,7 +368,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             }
         }
 
-        class Gradient extends AbstractGenericFunction {
+        class Gradient extends AbstractTraversal {
 
             final private double[] gradientEpochs;
             final private double[] gradientNodes;
@@ -390,7 +390,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             public void store(int epochIndex, int nodeIndex, double rate) { }
         }
 
-        class Rates extends AbstractGenericFunction {
+        class Rates extends AbstractTraversal {
 
             final private double[] nodeRates;
 
@@ -412,7 +412,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         }
     }
 
-    private void calculateNodeGeneric(GenericFunction generic) {
+    private void calculateNodeGeneric(Traversal generic) {
 
         NodeRef root = tree.getRoot();
         double rootHeight = tree.getNodeHeight(root);
@@ -428,7 +428,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
 
 
     private void traverseTreeByBranchGeneric(double currentHeight, NodeRef child, int epochIndex,
-                                             GenericFunction generic) {
+                                             Traversal generic) {
 
         final double childHeight = tree.getNodeHeight(child);
         final double branchLength = currentHeight - childHeight;

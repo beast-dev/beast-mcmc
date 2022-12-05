@@ -123,45 +123,72 @@
 		</nodeHeights>
 	</treeModel>
 
-	<HKYModel id="hky">
+	<HKYModel id="hky1">
 		<frequencies>
 			<frequencyModel dataType="nucleotide">
 				<frequencies>
-					<parameter id="frequencies" value="0.25 0.25 0.25 0.25"/>
+					<parameter id="frequencies1" value="0.25 0.25 0.25 0.25"/>
 				</frequencies>
 			</frequencyModel>
 		</frequencies>
 		<kappa>
-			<parameter id="kappa" value="2.0" lower="0.0"/>
+			<parameter id="kappa1" value="2.0" lower="0.0"/>
 		</kappa>
 	</HKYModel>
 
-	<siteModel id="siteModel">
+	<siteModel id="dummySiteModel">
 		<substitutionModel>
-			<HKYModel idref="hky"/>
+			<HKYModel idref="hky1"/>
 		</substitutionModel>
 	</siteModel>
 
-	<treeDataLikelihood id="dummyTreeLikelihood" useAmbiguities="false" usePreOrder="true">
+	<treeDataLikelihood id="dummyTreeLikelihood1" useAmbiguities="false" usePreOrder="true">
 		<patterns idref="dummyPatterns"/>
 		<treeModel idref="dummyTreeModel"/>
-		<siteModel idref="siteModel"/>
+		<siteModel idref="dummySiteModel"/>
 		<timeVaryingRates idref="dummyRates1"/>
 	</treeDataLikelihood>
 
-
-		<branchRateGradient id="dummyGradient" traitName="Sequence" useHessian="false">
-			<treeDataLikelihood idref="dummyTreeLikelihood"/>
-		</branchRateGradient>
-
+	<branchRateGradient id="dummyGradient1" traitName="Sequence" useHessian="false">
+		<treeDataLikelihood idref="dummyTreeLikelihood1"/>
+	</branchRateGradient>
 
 	<report>
-		<branchRateGradient idref="dummyGradient"/>
+		<branchRateGradient idref="dummyGradient1"/>
+	</report>
+	
+	<treeDataLikelihood id="dummyTreeLikelihood2" useAmbiguities="false" usePreOrder="true">
+		<patterns idref="dummyPatterns"/>
+		<treeModel idref="dummyTreeModel"/>
+		<siteModel idref="dummySiteModel"/>
+		<timeVaryingRates idref="dummyRates2"/>
+	</treeDataLikelihood>
+
+	<branchRateGradient id="dummyGradient2" traitName="Sequence" useHessian="false">
+		<treeDataLikelihood idref="dummyTreeLikelihood2"/>
+	</branchRateGradient>
+
+	<report>
+		<branchRateGradient idref="dummyGradient2"/>
+	</report>	
+
+	<treeDataLikelihood id="dummyTreeLikelihood3" useAmbiguities="false" usePreOrder="true">
+		<patterns idref="dummyPatterns"/>
+		<treeModel idref="dummyTreeModel"/>
+		<siteModel idref="dummySiteModel"/>
+		<timeVaryingRates idref="dummyRates3"/>
+	</treeDataLikelihood>
+
+	<branchRateGradient id="dummyGradient3" traitName="Sequence" useHessian="false">
+		<treeDataLikelihood idref="dummyTreeLikelihood3"/>
+	</branchRateGradient>
+
+	<report>
+		<branchRateGradient idref="dummyGradient3"/>
 	</report>
 
 	<!-- The list of taxa to be analysed (can also include dates/ages).          -->
 	<!-- ntax=17                                                                 -->
-<!-- 
 	<taxa id="taxa">
 		<taxon id="D4Brazi82">
 			<date value="1982.0" direction="forwards" units="years"/>
@@ -216,8 +243,8 @@
 		</taxon>
 	</taxa>
 
-	<!~~ The sequence alignment (each sequence refers to a taxon above).         ~~>
-	<!~~ ntax=17 nchar=1485                                                      ~~>
+	<!-- The sequence alignment (each sequence refers to a taxon above).         -->
+	<!-- ntax=17 nchar=1485                                                      -->
 	<alignment id="alignment" dataType="nucleotide">
 		<sequence>
 			<taxon idref="D4Brazi82"/>
@@ -289,27 +316,27 @@
 		</sequence>
 	</alignment>
 
-	<!~~ The unique patterns from 1 to end                                       ~~>
-	<!~~ npatterns=138                                                           ~~>
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=138                                                           -->
 	<patterns id="patterns" from="1" strip="false">
 		<alignment idref="alignment"/>
 	</patterns>
 
-	<!~~ A prior assumption that the population size has remained constant       ~~>
-	<!~~ throughout the time spanned by the genealogy.                           ~~>
+	<!-- A prior assumption that the population size has remained constant       -->
+	<!-- throughout the time spanned by the genealogy.                           -->
 	<constantSize id="constant" units="years">
 		<populationSize>
 			<parameter id="constant.popSize" value="380.0" lower="0.0"/>
 		</populationSize>
 	</constantSize>
 
-	<!~~ Generate a random starting tree under the coalescent process            ~~>
+	<!-- Generate a random starting tree under the coalescent process            -->
 	<coalescentSimulator id="startingTree">
 		<taxa idref="taxa"/>
 		<constantSize idref="constant"/>
 	</coalescentSimulator>
 
-	<!~~ Generate a tree model                                                   ~~>
+	<!-- Generate a tree model                                                   -->
 	<treeModel id="treeModel">
 		<coalescentTree idref="startingTree"/>
 		<rootHeight>
@@ -323,7 +350,7 @@
 		</nodeHeights>
 	</treeModel>
 
-	<!~~ Generate a coalescent likelihood                                        ~~>
+	<!-- Generate a coalescent likelihood                                        -->
 	<coalescentLikelihood id="coalescent">
 		<model>
 			<constantSize idref="constant"/>
@@ -332,27 +359,18 @@
 			<treeModel idref="treeModel"/>
 		</populationTree>
 	</coalescentLikelihood>
-
-	<!~~ The strict clock (Uniform rates across branches)                        ~~>
-<!~~ 
-	<strictClockBranchRates id="branchRates">
-		<rate>
-			<parameter id="clock.rate" value="2E-2" lower="0.0"/>
-		</rate>
-	</strictClockBranchRates>
- ~~>
 	
 	<timeVaryingRates id="branchRates">
 		<treeModel idref="treeModel"/>
 		<rate>
-			<parameter id="clock.rate" value="2E-2 2E-3" lower="0.0"/>
+			<parameter id="clock.rate" value="1E-2 2E-2 3E-3 4E-2 5E-3 6E-4" lower="0.0"/>
 		</rate>
 		<gridPoints>
-			<parameter id="grid" value="10"/>
+			<parameter id="grid" value="100 200 300 400 500" />
 		</gridPoints>
 	</timeVaryingRates>
 
-	<!~~ The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             ~~>
+	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
 	<HKYModel id="hky">
 		<frequencies>
 			<frequencyModel dataType="nucleotide">
@@ -366,14 +384,14 @@
 		</kappa>
 	</HKYModel>
 
-	<!~~ site model                                                              ~~>
+	<!-- site model                                                              -->
 	<siteModel id="siteModel">
 		<substitutionModel>
 			<HKYModel idref="hky"/>
 		</substitutionModel>
 	</siteModel>
 
-	<!~~ Likelihood for tree given sequence data                                 ~~>
+	<!-- Likelihood for tree given sequence data                                 -->
 	<treeDataLikelihood id="treeLikelihood" useAmbiguities="false" usePreOrder="true">
 		<patterns idref="patterns"/>
 		<treeModel idref="treeModel"/>
@@ -402,5 +420,5 @@
 			<report idref="gradientReport"/>
     	</expected>
     </assertEqual>
- -->
+
 </beast>

@@ -153,13 +153,9 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             }
         }
     }
-
-
-    private void calculateNodeGradient(double[] gradientWrtRates, double[] gradientWrtNodes) {
-
     private static final boolean TEST = false;
 
-    private void calculateNodeGradient(double[] gradient) {
+    private void calculateNodeGradient(double[]gradientWrtRates, double[] gradientWrtNodes) {
 
 
         // TODO remove code duplication with `calculateNodeRates`
@@ -220,6 +216,32 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
 
     private void traverseTreeByBranchForGradient(double[] gradientWrtRates, double[] gradientWrtNodes, double parentHeight, NodeRef child, int epochIndex) {
         // TODO -- will look like `traverseTreeByBranchForRates`.  We will remove code duplication later.
+
+        final double childHeight = tree.getNodeHeight(child);
+
+        double currentHeight = parentHeight;
+
+        if (currentHeight > childHeight) {
+
+            while (times[epochIndex] > childHeight) {
+                double timeLength = currentHeight - times[epochIndex];
+                gradientWrtRates[epochIndex] += gradientWrtNodes[getParameterIndexFromNode(child)]*(timeLength/(parentHeight-childHeight));
+                currentHeight = times[epochIndex];
+                --epochIndex;
+            }
+
+            double timeLength = currentHeight - childHeight;
+            gradientWrtRates[epochIndex] += gradientWrtNodes[getParameterIndexFromNode(child)]*(timeLength/(parentHeight-childHeight));
+
+
+        }
+
+
+        if (!tree.isExternal(child)) {
+            traverseTreeByBranchForGradient(gradientWrtRates, gradientWrtNodes, childHeight, tree.getChild(child, 0), epochIndex);
+            traverseTreeByBranchForGradient(gradientWrtRates, gradientWrtNodes, childHeight, tree.getChild(child, 1), epochIndex);
+        }
+
     }
 
     private double[] computeTimes() {

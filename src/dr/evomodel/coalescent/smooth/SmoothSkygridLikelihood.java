@@ -27,14 +27,14 @@ package dr.evomodel.coalescent.smooth;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
-import dr.util.Author;
-import dr.util.Citable;
-import dr.util.Citation;
-import dr.util.CommonCitations;
+import dr.util.*;
 import dr.xml.Reportable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -47,17 +47,19 @@ import java.util.List;
  */
 public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implements Citable, Reportable {
 
-    private final List<Tree> trees;
+    private final List<TreeModel> trees;
     private final Parameter logPopSizeParameter;
     private final Parameter gridPointParameter;
     private final Parameter smoothRate;
     private final SmoothSkygridPopulationSizeInverse populationSizeInverse;
-    private final SmoothLineageCount lineageCount;
+    private final OldSmoothLineageCount lineageCount;
 
     private final GlobalSigmoidSmoothFunction smoothFunction;
 
+    private final List<BigFastTreeIntervals> intervalsList;
+
     public SmoothSkygridLikelihood(String name,
-                                   List<Tree> trees,
+                                   List<TreeModel> trees,
                                    Parameter logPopSizeParameter,
                                    Parameter gridPointParameter,
                                    Parameter smoothRate) {
@@ -68,7 +70,11 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         this.smoothRate = smoothRate;
         this.smoothFunction = new GlobalSigmoidSmoothFunction();
         this.populationSizeInverse = new SmoothSkygridPopulationSizeInverse(logPopSizeParameter, gridPointParameter, smoothFunction, smoothRate);
-        this.lineageCount = new SmoothLineageCount(trees.get(0), smoothFunction, smoothRate);
+        this.lineageCount = new OldSmoothLineageCount(trees.get(0), smoothFunction, smoothRate);
+        intervalsList = new ArrayList<>();
+        for (int i = 0; i < trees.size(); i++) {
+            intervalsList.add(new BigFastTreeIntervals(trees.get(i)));
+        }
     }
 
     @Override
@@ -76,14 +82,14 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         return "smoothSkygrid(" + getLogLikelihood() + ")";
     }
 
-    class SmoothLineageCount {
+    class OldSmoothLineageCount {
 
         private final Tree tree;
         private final GlobalSigmoidSmoothFunction smoothFunction;
 
         private final Parameter smoothRate;
 
-        SmoothLineageCount(Tree tree, GlobalSigmoidSmoothFunction smoothFunction, Parameter smoothRate) {
+        OldSmoothLineageCount(Tree tree, GlobalSigmoidSmoothFunction smoothFunction, Parameter smoothRate) {
             this.tree = tree;
             this.smoothFunction = smoothFunction;
             this.smoothRate = smoothRate;
@@ -144,6 +150,85 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
     protected double calculateLogLikelihood() {
         assert(trees.size() == 1);
         Tree tree = trees.get(0);
+        BigFastTreeIntervals intervals = intervalsList.get(0);
+        double logPopulationSizeInverse = 0;
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+            NodeRef node = tree.getNode(tree.getExternalNodeCount() + i);
+//            logPopulationSizeInverse += Math.log(populationSizeInverse.getPopulationSizeInverse(tree.getNodeHeight(node)));
+            logPopulationSizeInverse += Math.log(getSmoothPopulationSizeInverse(tree.getNodeHeight(node), tree.getNodeHeight(tree.getRoot())));
+        }
+
+        final double startTime = 0;
+        final double endTime = tree.getNodeHeight(tree.getRoot());
+
+        final double firstInversePopulationSize = Math.exp(-logPopSizeParameter.getParameterValue(0));
+        double singleSigmoidIntegralSums =  ((double) intervals.getLineageCount(0) * (intervals.getLineageCount(0) - 1))
+                * smoothFunction.getSingleIntegration(startTime, endTime, intervals.getIntervalTime(0), smoothRate.getParameterValue(0));
+        for (int i = 1; i < intervals.getIntervalCount(); i++) {
+            final double lineageCountDifference = ((double) intervals.getLineageCount(i) * (intervals.getLineageCount(i) - 1)
+                    - intervals.getLineageCount(i - 1) * (intervals.getLineageCount(i - 1) - 1)) / 2;
+            final double smoothIntegral = smoothFunction.getSingleIntegration(startTime, endTime, intervals.getIntervalTime(i), smoothRate.getParameterValue(0));
+            singleSigmoidIntegralSums += lineageCountDifference * smoothIntegral;
+        }
+        singleSigmoidIntegralSums *= firstInversePopulationSize;
+
+        int maxGridIndex = getMaxGridIndex(endTime);
+
+        double pairSigmoidIntegralSums = 0;
+
+        for (int j = 0; j < maxGridIndex + 1; j++) {
+            final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j));
+            final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j + 1));
+            final double gridTime = gridPointParameter.getParameterValue(j);
+            pairSigmoidIntegralSums += intervals.getLineageCount(0) * (intervals.getLineageCount(0) - 1) * (nextPopSizeInverse - currentPopSizeInverse) *
+                    smoothFunction.getPairProductIntegration(startTime, endTime, intervals.getIntervalTime(0), gridTime, smoothRate.getParameterValue(0));
+        }
+
+        for (int i = 1; i < intervals.getIntervalCount(); i++) {
+
+            final double lineageCountDifference = ((double) intervals.getLineageCount(i) * (intervals.getLineageCount(i) - 1)
+                    - intervals.getLineageCount(i - 1) * (intervals.getLineageCount(i - 1) - 1)) / 2;
+            final double intervalTime = intervals.getIntervalTime(i);
+
+            for (int j = 0; j < maxGridIndex + 1; j++) {
+                final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j));
+                final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j + 1));
+                final double gridTime = gridPointParameter.getParameterValue(j);
+                pairSigmoidIntegralSums += lineageCountDifference * (nextPopSizeInverse - currentPopSizeInverse) *
+                        smoothFunction.getPairProductIntegration(startTime, endTime, intervalTime, gridTime, smoothRate.getParameterValue(0));
+            }
+        }
+
+        return logPopulationSizeInverse - singleSigmoidIntegralSums - pairSigmoidIntegralSums;
+    }
+
+    private int getMaxGridIndex(double endTime) {
+        int maxGridIndex = gridPointParameter.getDimension() - 1;
+        while (gridPointParameter.getParameterValue(maxGridIndex) > endTime && maxGridIndex > 0) {
+            maxGridIndex--;
+        }
+        return maxGridIndex;
+    }
+
+    private double getSmoothPopulationSizeInverse(double t, double endTime) {
+        int maxGridIndex = getMaxGridIndex(endTime);
+
+        double populationSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(0));
+
+        for (int j = 0; j < maxGridIndex + 1; j++) {
+            final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j));
+            final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j + 1));
+            final double gridTime = gridPointParameter.getParameterValue(j);
+            populationSizeInverse += (nextPopSizeInverse - currentPopSizeInverse) *
+                    smoothFunction.getSmoothValue(t, gridTime, 0, 1, smoothRate.getParameterValue(0));
+        }
+
+        return populationSizeInverse;
+    }
+
+    private double oldCalculateLogLikelihood() {
+        assert(trees.size() == 1);
+        Tree tree = trees.get(0);
         double logPopulationSizeInverse = 0;
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
             NodeRef node = tree.getNode(tree.getExternalNodeCount() + i);
@@ -177,12 +262,13 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         return logPopulationSizeInverse + integralBit;
     }
 
-    public static double getReciprocalPopSizeInInterval(double time, SmoothLineageCount lineageCount,
+
+    public static double getReciprocalPopSizeInInterval(double time, OldSmoothLineageCount lineageCount,
                                                         SmoothSkygridPopulationSizeInverse populationSizeInverse) {
         return 0.5 * lineageCount.getLineageCount(time) * (lineageCount.getLineageCount(time) - 1) * populationSizeInverse.getPopulationSizeInverse(time);
     }
 
-    public SmoothLineageCount getLineageCount() {
+    public OldSmoothLineageCount getLineageCount() {
         return lineageCount;
     }
 

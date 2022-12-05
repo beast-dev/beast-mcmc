@@ -153,6 +153,9 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             }
         }
     }
+
+
+
     private static final boolean TEST = false;
 
     private void calculateNodeGradient(double[]gradientWrtRates, double[] gradientWrtNodes) {

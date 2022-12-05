@@ -89,8 +89,76 @@
     	<expected>
     		((A:[&#38;rate=1.0]1.0,B:[&#38;rate=1.0]1.0):[&#38;rate=1.0]1.0,C:[&#38;rate=1.0]3.0);		
     	</expected>
-    </assertEqual>	       
-	
+    </assertEqual>
+
+	<alignment id="dummyAlignment" dataType="nucleotide">
+		<sequence>
+			<taxon idref="A"/>
+			A
+		</sequence>
+		<sequence>
+			<taxon idref="B"/>
+			A
+		</sequence>
+		<sequence>
+			<taxon idref="C"/>
+			G
+		</sequence>
+	</alignment>
+
+	<patterns id="dummyPatterns" from="1" strip="false">
+		<alignment idref="dummyAlignment"/>
+	</patterns>
+
+	<treeModel id="dummyTreeModel">
+		<newick idref="dummyTree"/>
+		<rootHeight>
+			<parameter id="dtreeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="dtreeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="dtreeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+	</treeModel>
+
+	<HKYModel id="hky">
+		<frequencies>
+			<frequencyModel dataType="nucleotide">
+				<frequencies>
+					<parameter id="frequencies" value="0.25 0.25 0.25 0.25"/>
+				</frequencies>
+			</frequencyModel>
+		</frequencies>
+		<kappa>
+			<parameter id="kappa" value="2.0" lower="0.0"/>
+		</kappa>
+	</HKYModel>
+
+	<siteModel id="siteModel">
+		<substitutionModel>
+			<HKYModel idref="hky"/>
+		</substitutionModel>
+	</siteModel>
+
+	<treeDataLikelihood id="dummyTreeLikelihood" useAmbiguities="false" usePreOrder="true">
+		<patterns idref="dummyPatterns"/>
+		<treeModel idref="dummyTreeModel"/>
+		<siteModel idref="siteModel"/>
+		<timeVaryingRates idref="dummyRates1"/>
+	</treeDataLikelihood>
+
+
+		<branchRateGradient id="dummyGradient" traitName="Sequence" useHessian="false">
+			<treeDataLikelihood idref="dummyTreeLikelihood"/>
+		</branchRateGradient>
+
+
+	<report>
+		<branchRateGradient idref="dummyGradient"/>
+	</report>
+
 	<!-- The list of taxa to be analysed (can also include dates/ages).          -->
 	<!-- ntax=17                                                                 -->
 <!-- 

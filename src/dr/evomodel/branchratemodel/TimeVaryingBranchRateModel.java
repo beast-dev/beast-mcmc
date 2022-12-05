@@ -151,7 +151,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         }
     }
 
-    private static final boolean TEST = true;
+    private static final boolean TEST = false;
 
     private void calculateNodeGradient(double[] gradientWrtRates, double[] gradientWrtBranches) {
 
@@ -211,57 +211,34 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         }
     }
 
-    private void traverseTreeByBranchForGradient(double[] gradientWrtRates, double[] gradientWrtBranches,
+    private void traverseTreeByBranchForGradient(double[] gradientWrtRates, double[] gradientWrtNodes,
                                                  double parentHeight, NodeRef child, int epochIndex) {
         // TODO -- will look like `traverseTreeByBranchForRates`.  We will remove code duplication later.
 
-        // TODO needs testing / debugging
-
         final double childHeight = tree.getNodeHeight(child);
-        final double branchLength = parentHeight - childHeight;
 
         double currentHeight = parentHeight;
-        double branchRateNumerator = 0.0;
-        double branchRateDenominator = 0.0;
 
-        final double weightedRate;
         if (currentHeight > childHeight) {
 
             while (times[epochIndex] > childHeight) {
                 double timeLength = currentHeight - times[epochIndex];
-                double rate = rates.getParameterValue(epochIndex);
 
-                branchRateNumerator += rate * timeLength;
-                branchRateDenominator += timeLength;
+                gradientWrtRates[epochIndex] += gradientWrtNodes[getParameterIndexFromNode(child)] *
+                        (timeLength / (parentHeight - childHeight));
                 currentHeight = times[epochIndex];
-
-                gradientWrtRates[epochIndex] += gradientWrtBranches[getParameterIndexFromNode(child)]
-                        * timeLength / branchLength;
 
                 --epochIndex;
             }
 
             double timeLength = currentHeight - childHeight;
-            double rate = rates.getParameterValue(epochIndex);
-
-            branchRateNumerator += rate * timeLength;
-            branchRateDenominator += timeLength;
-
-            gradientWrtRates[epochIndex] += gradientWrtBranches[getParameterIndexFromNode(child)]
-                    * timeLength / branchLength;
-
-//            weightedRate = branchRateNumerator / branchRateDenominator;
-        } else {
-//            weightedRate = rates.getParameterValue(epochIndex);
+            gradientWrtRates[epochIndex] += gradientWrtNodes[getParameterIndexFromNode(child)] *
+                    (timeLength / (parentHeight - childHeight));
         }
 
-//        nodeRates[getParameterIndexFromNode(child)] = weightedRate;
-
         if (!tree.isExternal(child)) {
-            traverseTreeByBranchForGradient(gradientWrtRates, gradientWrtBranches,
-                    childHeight, tree.getChild(child, 0), epochIndex);
-            traverseTreeByBranchForGradient(gradientWrtRates, gradientWrtBranches,
-                    childHeight, tree.getChild(child, 1), epochIndex);
+            traverseTreeByBranchForGradient(gradientWrtRates, gradientWrtNodes, childHeight, tree.getChild(child, 0), epochIndex);
+            traverseTreeByBranchForGradient(gradientWrtRates, gradientWrtNodes, childHeight, tree.getChild(child, 1), epochIndex);
         }
 
     }

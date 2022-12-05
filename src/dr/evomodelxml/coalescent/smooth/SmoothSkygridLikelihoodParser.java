@@ -2,7 +2,6 @@ package dr.evomodelxml.coalescent.smooth;
 
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.TreeIntervals;
-import dr.evolution.tree.Tree;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.coalescent.smooth.OldSmoothSkygridLikelihood;
 import dr.evomodel.coalescent.smooth.SmoothSkygridLikelihood;
@@ -62,10 +61,10 @@ public class SmoothSkygridLikelihoodParser extends AbstractXMLObjectParser {
             likelihood.setDebugIntervalList(debugIntervalList);
             return likelihood;
         } else {
-            List<Tree> trees = new ArrayList<>();
+            List<TreeModel> trees = new ArrayList<>();
             XMLObject cxo = xo.getChild(POPULATION_TREE);
             for (int i = 0; i < cxo.getChildCount(); i++) {
-                trees.add((Tree) cxo.getChild(i));
+                trees.add((TreeModel) cxo.getChild(i));
             }
             Parameter smoothRate = (Parameter) xo.getElementFirstChild(SMOOTH_RATE);
             SmoothSkygridLikelihood likelihood = new SmoothSkygridLikelihood(xo.getId(), trees, logPopSizes, gridPoints, smoothRate);
@@ -138,7 +137,7 @@ public class SmoothSkygridLikelihoodParser extends AbstractXMLObjectParser {
 
                     new AndRule(
                             new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
-                                    new ElementRule(Tree.class, 1, Integer.MAX_VALUE)
+                                    new ElementRule(TreeModel.class, 1, Integer.MAX_VALUE)
                             }),
                             new ElementRule(SMOOTH_RATE, new XMLSyntaxRule[]{
                                     new ElementRule(Parameter.class, "Smooth rate for sigmoid functions")

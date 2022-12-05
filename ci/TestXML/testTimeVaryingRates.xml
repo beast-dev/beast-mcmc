@@ -185,8 +185,7 @@
 
 	<report>
 		<branchRateGradient idref="dummyGradient3"/>
-	</report>	
-
+	</report>
 
 	<!-- The list of taxa to be analysed (can also include dates/ages).          -->
 	<!-- ntax=17                                                                 -->
@@ -360,20 +359,11 @@
 			<treeModel idref="treeModel"/>
 		</populationTree>
 	</coalescentLikelihood>
-
-	<!-- The strict clock (Uniform rates across branches)                        -->
-<!-- 
-	<strictClockBranchRates id="branchRates">
-		<rate>
-			<parameter id="clock.rate" value="2E-2" lower="0.0"/>
-		</rate>
-	</strictClockBranchRates>
- -->
 	
 	<timeVaryingRates id="branchRates">
 		<treeModel idref="treeModel"/>
 		<rate>
-			<parameter id="clock.rate" value="1E-2 2E-3 3E-2 4E-3 5E-2 6E-3" lower="0.0"/>
+			<parameter id="clock.rate" value="1E-2 2E-2 3E-3 4E-2 5E-3 6E-4" lower="0.0"/>
 		</rate>
 		<gridPoints>
 			<parameter id="grid" value="100 200 300 400 500" />

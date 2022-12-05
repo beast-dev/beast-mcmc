@@ -103,7 +103,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
     public double[] updateGradientLogDensity(double[] gradientWrtBranches, double[] value, int from, int to) {
 
         assert from == 0;
-        assert to == gradientWrtBranches.length - 1;
+        assert to == rates.getDimension() - 1;
 
         double[] gradientWrtRates = new double[rates.getDimension()];
 
@@ -427,7 +427,6 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         traverseTreeByBranchGeneric(rootHeight, tree.getChild(root, 0), epochIndex, generic);
         traverseTreeByBranchGeneric(rootHeight, tree.getChild(root, 1), epochIndex, generic);
     }
-
 
     private void traverseTreeByBranchGeneric(double currentHeight, NodeRef child, int epochIndex,
                                              Traversal generic) {

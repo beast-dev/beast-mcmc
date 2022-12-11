@@ -15,6 +15,7 @@ public class PreOrderSettings {
         this.usePreOrder = usePreOrder;
         this.branchRateDerivative = branchRateDerivative;
         this.branchInfinitesimalDerivative = branchInfinitesimalDerivative;
+        this.useAction = useAction;
     }
 
     public static PreOrderSettings getDefault() {

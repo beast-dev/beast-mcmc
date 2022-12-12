@@ -449,7 +449,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
         // This should be the default output in tree logs
         TreeTrait sumOverSitesTrait = new TreeTrait.SumAcrossArrayD(
-                codonLabeling.getText(),
+                prefix + codonLabeling.getText(),
                 baseTrait) {
             @Override
             public boolean getLoggable() {

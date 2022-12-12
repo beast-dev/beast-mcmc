@@ -190,7 +190,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
         //this.neutralSubstitutionModel = null; // new ComplexSubstitutionModel();
 
-        this.prefix = prefix;
+        this.prefix = prefix == null ? "" : prefix;
 
         setupTraits();
     }
@@ -314,7 +314,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         TreeTrait baseTrait = new TreeTrait.DA() {
 
             public String getTraitName() {
-                return BASE_TRAIT_PREFIX + codonLabeling.getText();
+                return prefix + BASE_TRAIT_PREFIX + codonLabeling.getText();
             }
 
             public Intent getIntent() {
@@ -334,7 +334,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
             TreeTrait stringTrait = new TreeTrait.SA() {
 
                 public String getTraitName() {
-                    return COMPLETE_HISTORY_PREFIX + codonLabeling.getText();
+                    return prefix + COMPLETE_HISTORY_PREFIX + codonLabeling.getText();
                 }
 
                 public Intent getIntent() {
@@ -401,7 +401,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         if (!TRIAL) {
             unconditionedSum = new TreeTrait.D() {
                 public String getTraitName() {
-                    return UNCONDITIONED_PREFIX + codonLabeling.getText();
+                    return prefix + UNCONDITIONED_PREFIX + codonLabeling.getText();
                 }
 
                 public Intent getIntent() {
@@ -419,7 +419,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         } else {
             unconditionedSum = new TreeTrait.DA() {
                 public String getTraitName() {
-                    return UNCONDITIONED_PREFIX + codonLabeling.getText();
+                    return prefix + UNCONDITIONED_PREFIX + codonLabeling.getText();
                 }
 
                 public Intent getIntent() {
@@ -437,7 +437,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         }
 
         TreeTrait sumOverTreeTrait = new TreeTrait.SumOverTreeDA(
-                SITE_SPECIFIC_PREFIX + codonLabeling.getText(),
+                prefix + SITE_SPECIFIC_PREFIX + codonLabeling.getText(),
                 baseTrait,
                 includeExternalBranches,
                 includeInternalBranches) {
@@ -458,8 +458,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         };
 
         // This should be the default output in columns logs
-        String name = prefix != null ? prefix + TOTAL_PREFIX + codonLabeling.getText() :
-                TOTAL_PREFIX + codonLabeling.getText();
+        String name = prefix + TOTAL_PREFIX + codonLabeling.getText();
         TreeTrait sumOverSitesAndTreeTrait = new TreeTrait.SumOverTreeD(
                 name,
                 sumOverSitesTrait,
@@ -487,7 +486,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
             TreeTrait unconditionedBase = new TreeTrait.DA() {
 
                 public String getTraitName() {
-                    return UNCONDITIONED_PER_BRANCH_PREFIX + codonLabeling.getText();
+                    return prefix + UNCONDITIONED_PER_BRANCH_PREFIX + codonLabeling.getText();
                 }
 
                 public Intent getIntent() {
@@ -504,7 +503,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
             };
 
             TreeTrait sumUnconditionedOverSitesTrait = new TreeTrait.SumAcrossArrayD(
-                    UNCONDITIONED_PER_BRANCH_PREFIX + codonLabeling.getText(),
+                    prefix + UNCONDITIONED_PER_BRANCH_PREFIX + codonLabeling.getText(),
                     unconditionedBase) {
                 @Override
                 public boolean getLoggable() {
@@ -512,8 +511,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                 }
             };
 
-            String nameU = prefix != null ? prefix + UNCONDITIONED_TOTAL_PREFIX + codonLabeling.getText() :
-                    UNCONDITIONED_TOTAL_PREFIX + codonLabeling.getText();
+            String nameU = prefix + UNCONDITIONED_TOTAL_PREFIX + codonLabeling.getText();
             TreeTrait sumUnconditionedOverSitesAndTreeTrait = new TreeTrait.SumOverTreeD(
                     nameU,
                     sumUnconditionedOverSitesTrait,

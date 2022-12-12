@@ -424,8 +424,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
 
             @Override
             public double transform(double raw, Tree tree, NodeRef node) {
-                double rate = location.getEffect(tree, node) * Math.exp(raw);
-                return rate;
+                return location.getEffect(tree, node) * Math.exp(raw);
             }
 
             @Override

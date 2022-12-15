@@ -47,6 +47,8 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
     public static final String TREE_TYPE = "type";
     public static final String CONDITION = "conditionOnSurvival";
 
+    public static final String GRADIENT_FLAG = "gradientFlag";
+
     public static final String BDSS = "bdss";
 
     public String getParserName() {
@@ -68,9 +70,18 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
         final Parameter rho    = xo.hasChildNamed(RHO) ? (Parameter) xo.getElementFirstChild(RHO) : new Parameter.Default(0.0);
         final Parameter r      = xo.hasChildNamed(R) ? (Parameter) xo.getElementFirstChild(R) : new Parameter.Default(1.0);
 
-        final Parameter origin = (Parameter) xo.getElementFirstChild(ORIGIN);;
+        final Parameter origin = (Parameter) xo.getElementFirstChild(ORIGIN);
 
         Boolean condition = xo.getAttribute(CONDITION, false);
+
+        final boolean[] gradientFlags = new boolean[5];
+
+        gradientFlags[0] = xo.getChild(LAMBDA).getAttribute(GRADIENT_FLAG, true).booleanValue();
+        gradientFlags[1] = xo.getChild(MU).getAttribute(GRADIENT_FLAG, true).booleanValue();
+        gradientFlags[2] = xo.getChild(PSI).getAttribute(GRADIENT_FLAG, true).booleanValue();
+        gradientFlags[3] = xo.getChild(RHO).getAttribute(GRADIENT_FLAG, true).booleanValue();
+        gradientFlags[4] = xo.getChild(R).getAttribute(GRADIENT_FLAG, true).booleanValue();
+
 
         String citeThisModel;
         if ( r.getParameterValue(0) < Double.MIN_VALUE ) {
@@ -83,7 +94,10 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
 
         Logger.getLogger("dr.evomodel").info(citeThisModel);
 
-        return new NewBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units);
+        // return new NewBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units);
+        NewBirthDeathSerialSamplingModel model = new NewBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units);
+        model.setupGradientFlags(gradientFlags);
+        return model;
     }
 
     //************************************************************************
@@ -126,6 +140,7 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
             new ElementRule(R, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(RHO, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(CONDITION, new XMLSyntaxRule[]{new ElementRule(boolean.class)}, true),
+            new ElementRule(GRADIENT_FLAG, new XMLSyntaxRule[]{new ElementRule(boolean.class)}, true),
             XMLUnits.SYNTAX_RULES[0]
     };
 }

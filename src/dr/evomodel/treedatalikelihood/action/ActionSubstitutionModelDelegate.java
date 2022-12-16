@@ -45,17 +45,17 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public int getMatrixBufferCount() {
-        return 2 * nodeCount - 2;
+        return nodeCount - 1;
     }
 
     @Override
     public int getInfinitesimalMatrixBufferIndex(int branchIndex) {
-        return branchIndex;
+        return eigenIndexMap.get(getSubstitutionModelForBranch(branchIndex));
     }
 
     @Override
     public int getInfinitesimalSquaredMatrixBufferIndex(int branchIndex) {
-        throw new RuntimeException("Not yet implemented!");
+        return getMatrixBufferCount() + getInfinitesimalMatrixBufferIndex(branchIndex);
     }
 
     @Override
@@ -70,12 +70,12 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public void cacheInfinitesimalMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
-        throw new RuntimeException("Not yet implemented!");
+        beagle.setDifferentialMatrix(getInfinitesimalMatrixBufferIndex(bufferIndex), differentialMatrix);
     }
 
     @Override
     public void cacheInfinitesimalSquaredMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
-        throw new RuntimeException("Not yet implemented!");
+        beagle.setDifferentialMatrix(getInfinitesimalSquaredMatrixBufferIndex(bufferIndex), differentialMatrix);
     }
 
     @Override
@@ -85,9 +85,25 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public int getCachedMatrixBufferCount(PreOrderSettings settings) {
-        throw new RuntimeException("Not yet implemented!");
+        int matrixBufferCount = getInfinitesimalMatrixBufferCount(settings) + getDifferentialMassMatrixBufferCount(settings);
+        return matrixBufferCount;
     }
 
+    private int getInfinitesimalMatrixBufferCount(PreOrderSettings settings) {
+        if (settings.branchRateDerivative) {
+            return 2 * getEigenBufferCount();
+        } else {
+            return 0;
+        }
+    }
+
+    private int getDifferentialMassMatrixBufferCount(PreOrderSettings settings) {
+        if (settings.branchInfinitesimalDerivative) {
+            return 2 * (nodeCount - 1);
+        } else {
+            return 0;
+        }
+    }
     @Override
     public int getSubstitutionModelCount() {
         return branchModel.getSubstitutionModels().size();

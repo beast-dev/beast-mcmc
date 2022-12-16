@@ -4,11 +4,11 @@ package dr.evomodel.treedatalikelihood;
  * @author Marc A. Suchard
  */
 public class PreOrderSettings {
-    boolean usePreOrder;
-    boolean branchRateDerivative;
-    boolean branchInfinitesimalDerivative;
+    public boolean usePreOrder;
+    public boolean branchRateDerivative;
+    public boolean branchInfinitesimalDerivative;
 
-    boolean useAction;
+    public boolean useAction;
 
     public PreOrderSettings(boolean usePreOrder, boolean branchRateDerivative, boolean branchInfinitesimalDerivative,
                             boolean useAction) {

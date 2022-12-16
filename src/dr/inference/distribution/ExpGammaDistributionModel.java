@@ -44,7 +44,7 @@ import org.apache.commons.math.special.Gamma;
 public class ExpGammaDistributionModel extends AbstractModel
         implements ParametricDistributionModel, GradientProvider, HessianProvider, PriorPreconditioningProvider {
 
-    public static final String EXP_GAMMA_DISTRIBUTION_MODEL = "ExpGammaDistributionModel";
+    public static final String EXP_GAMMA_DISTRIBUTION_MODEL = "expGammaDistributionModel";
 
     /**
      * Construct a gamma distribution model.
@@ -144,9 +144,9 @@ public class ExpGammaDistributionModel extends AbstractModel
         return 1;
     }
 
-    public double gradGammaPdf(double x, double shape, double scale) {
-        return (Math.pow(x, shape - 2.0) * Math.exp(-x / scale) * (shape - 1) * scale - x) / scale;
-    }
+//    public double gradGammaPdf(double x, double shape, double scale) {
+//        return (Math.pow(x, shape - 2.0) * Math.exp(-x / scale) * (shape - 1) * scale - x) / scale;
+//    }
 
     public double hessianGammaPdf(double x, double shape, double scale) {
         double numerator = Math.pow(x, shape - 3.0) * Math.exp(-x / scale);
@@ -164,7 +164,7 @@ public class ExpGammaDistributionModel extends AbstractModel
         double scale = getScale();
         for (int i = 0; i < x.length; ++i) {
             double expX = Math.exp(x[i]);
-            result[i] = expX * gradGammaPdf(expX, shape, scale) / GammaDistribution.pdf(expX, shape, scale);
+            result[i] = shape - expX / scale;
         }
         return result;
     }
@@ -179,11 +179,12 @@ public class ExpGammaDistributionModel extends AbstractModel
         double scale = getScale();
 
         for (int i = 0; i < x.length; ++i) {
-            double expX = Math.exp(x[i]);
-            double fExpX = GammaDistribution.pdf(expX, shape, scale);
-            double fPrimeExpX = gradGammaPdf(expX, shape, scale);
-            double fPrimePrimeExpX = hessianGammaPdf(expX, shape, scale);
-            result[i] = expX * (fExpX * (expX * fPrimePrimeExpX + fPrimeExpX) - expX * fPrimeExpX * fPrimeExpX) / (fExpX * fExpX);
+            throw new RuntimeException("Not yet implemented");
+//            double expX = Math.exp(x[i]);
+//            double fExpX = GammaDistribution.pdf(expX, shape, scale);
+//            double fPrimeExpX = gradGammaPdf(expX, shape, scale);
+//            double fPrimePrimeExpX = hessianGammaPdf(expX, shape, scale);
+//            result[i] = expX * (fExpX * (expX * fPrimePrimeExpX + fPrimeExpX) - expX * fPrimeExpX * fPrimeExpX) / (fExpX * fExpX);
         }
         return result;
     }

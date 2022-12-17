@@ -38,6 +38,8 @@ public class TransformedMultivariateParameter extends TransformedParameter {
     private double[] unTransformedValues;
 //    private double[] storedTransformedValues; //TODO store/restore mechanism for TransformedParameter ?
 
+    private boolean valuesKnown = false;
+
     public TransformedMultivariateParameter(Parameter parameter, Transform.MultivariableTransform transform) {
         this(parameter, transform, false);
     }
@@ -53,15 +55,24 @@ public class TransformedMultivariateParameter extends TransformedParameter {
         return transformedValues[dim];
     }
 
+    protected void storeValues() {
+        super.storeValues();
+    }
+
+    protected void restoreValues() {
+        super.restoreValues();
+        valuesKnown = false;
+    }
+
+    public void variableChangedEvent(Variable variable, int index, ChangeType type) {
+        valuesKnown = false;
+        // Propogate change up model graph
+        fireParameterChangedEvent(index, type);
+    }
+
     public void setParameterValue(int dim, double value) {
-        update();
-        transformedValues[dim] = value;
-        unTransformedValues = inverse(transformedValues);
-        // Need to update all values
-        parameter.setParameterValueNotifyChangedAll(0, unTransformedValues[0]); // Warn everyone is changed
-        for (int i = 1; i < parameter.getDimension(); i++) {
-            parameter.setParameterValueQuietly(i, unTransformedValues[i]); // Do the rest quietly
-        }
+        setParameterValueQuietly(dim, value);
+        parameter.fireParameterChangedEvent();
     }
 
     public void setParameterValueQuietly(int dim, double value) {
@@ -79,30 +90,24 @@ public class TransformedMultivariateParameter extends TransformedParameter {
     }
 
     public void addBounds(Bounds<Double> bounds) {
-//        parameter.addBounds(new DefaultBounds(null, null));
-//        throw new RuntimeException("Should not call addBounds() on transformed parameter");
         // TODO: Check bounds of the parameter ?  XJ: bounds can be quite arbitrary in this case.  I decided to allow manual setup through parser.
         transformedBounds = bounds;
     }
 
-//    public Bounds<Double> getBounds() {
-////        throw new RuntimeException("Should not call addBounds() on transformed parameter");
-//        return new DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, parameter.getDimension());
-//    }
-
     private void update() {
-        if (hasChanged()) {
+        if (!valuesKnown) {
             unTransformedValues = parameter.getParameterValues();
             transformedValues = transform(unTransformedValues);
+            valuesKnown = true;
         }
     }
 
-    private boolean hasChanged() {
-        for (int i = 0; i < unTransformedValues.length; i++) {
-            if (parameter.getParameterValue(i) != unTransformedValues[i]) {
-                return true;
-            }
-        }
-        return false;
-    }
+//    private boolean hasChanged() {
+//        for (int i = 0; i < unTransformedValues.length; i++) {
+//            if (parameter.getParameterValue(i) != unTransformedValues[i]) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 }

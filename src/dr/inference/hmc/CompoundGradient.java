@@ -62,7 +62,17 @@ public class CompoundGradient implements GradientWrtParameterProvider, Derivativ
             dimension = parameter.getDimension();
         } else {
             List<Likelihood> likelihoodList = new ArrayList<>();
-            CompoundParameter compoundParameter = new CompoundParameter("hmc");
+
+            CompoundParameter compoundParameter = new CompoundParameter("hmc") {
+                public void fireParameterChangedEvent() {
+                    doNotPropagateChangeUp = true;
+                    for (Parameter p : uniqueParameters) {
+                        p.fireParameterChangedEvent();
+                    }
+                    doNotPropagateChangeUp = false;
+                    fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
+                }
+            };
 
             int dim = 0;
             for (GradientWrtParameterProvider grad : derivativeList) {

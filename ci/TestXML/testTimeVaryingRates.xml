@@ -359,11 +359,24 @@
 			<treeModel idref="treeModel"/>
 		</populationTree>
 	</coalescentLikelihood>
-	
+
+	<compoundParameter id="clockRateIncrements">
+		<parameter id="tmp0" value="-6"/>
+		<parameter id="tmp1" dimension="5" value="0.2"/>
+	</compoundParameter>
+
+	<transformedVectorSumTransform id="clock.rate" dim="6" incrementTransformType="log">
+		<compoundParameter idref="clockRateIncrements"/>
+	</transformedVectorSumTransform>
+
+	<report>
+		<transformedVectorSumTransform idref="clock.rate"/>
+	</report>
 	<timeVaryingRates id="branchRates">
 		<treeModel idref="treeModel"/>
 		<rate>
-			<parameter id="clock.rate" value="1E-2 2E-2 3E-3 4E-2 5E-3 6E-4" lower="0.0"/>
+<!--			<parameter id="clock.rate" value="1E-2 2E-2 3E-3 4E-2 5E-3 6E-4" lower="0.0"/>-->
+			<parameter idref="clock.rate"/>
 		</rate>
 		<gridPoints>
 			<parameter id="grid" value="100 200 300 400 500" />
@@ -390,6 +403,40 @@
 			<HKYModel idref="hky"/>
 		</substitutionModel>
 	</siteModel>
+
+
+	<bayesianBridge id="timeVaryingRatePrior">
+		<parameter idref="tmp1"/>
+		<globalScale>
+			<parameter id="timeVaryingRatePrior.globalScale" value="0.1" lower="0.0"/>
+		</globalScale>
+		<localScale>
+			<parameter id="timeVaryingRatePrior.localScale" value="0.1" dimension="5"/>
+		</localScale>
+		<exponent>
+			<parameter value="0.25"/>
+		</exponent>
+	</bayesianBridge>
+
+	<gammaPrior id="timeVaryingRateDeltaGlobalScalePrior" shape="1.0" scale="10.0">
+		<parameter idref="timeVaryingRatePrior.globalScale"/>
+	</gammaPrior>
+
+	<normalPrior id="logClockRateAtPresentPrior" mean="-8" stdev="5">
+		<parameter idref="tmp0"/>
+	</normalPrior>
+
+	<compoundGradient id="grad.bdss.prior">
+				<gradient>
+					<normalPrior idref="logClockRateAtPresentPrior"/>
+					<parameter idref="tmp0"/>
+				</gradient>
+				<bayesianBridge idref="timeVaryingRatePrior"/>
+	</compoundGradient>
+
+	<report>
+		<compoundGradient idref="grad.bdss.prior"/>
+	</report>
 
 	<!-- Likelihood for tree given sequence data                                 -->
 	<treeDataLikelihood id="treeLikelihood" useAmbiguities="false" usePreOrder="true">
@@ -420,5 +467,21 @@
 			<report idref="gradientReport"/>
     	</expected>
     </assertEqual>
+
+	<jointGradient id="jointGradient">
+		<gradientWrtIncrements1D id="test" incrementTransformType="log">
+			<branchRateGradient idref="gradient"/> <!-- wrt clock.rate -->
+			<compoundParameter idref="clockRateIncrements"/>
+		</gradientWrtIncrements1D>
+		<compoundGradient idref="grad.bdss.prior"/> <!-- wrt log.inverse.scan [tmp0, tmp1] -->
+	</jointGradient>
+
+	<report>
+		<gradient idref="test"/>
+	</report>
+
+<!--	<report>-->
+<!--		<jointGradient idref="jointGradient"/>-->
+<!--	</report>-->
 
 </beast>

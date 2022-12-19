@@ -47,7 +47,7 @@ public class TransformedVectorSumTransform extends Transform.MultivariateTransfo
 
     @Override
     protected double[] inverse(double[] values) {
-        return type.parameterFromIncrements(values);
+        return type.incrementsFromParameter(values);
     }
 
     @Override

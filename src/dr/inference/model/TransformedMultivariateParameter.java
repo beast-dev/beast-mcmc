@@ -101,13 +101,4 @@ public class TransformedMultivariateParameter extends TransformedParameter {
             valuesKnown = true;
         }
     }
-
-//    private boolean hasChanged() {
-//        for (int i = 0; i < unTransformedValues.length; i++) {
-//            if (parameter.getParameterValue(i) != unTransformedValues[i]) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
 }

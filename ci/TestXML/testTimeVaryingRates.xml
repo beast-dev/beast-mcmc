@@ -446,11 +446,9 @@
 		<strictClockBranchRates idref="branchRates"/>
 	</treeDataLikelihood>
 
-	<numericalHessian id="gradient">
-	    <branchRateGradient traitName="Sequence" useHessian="false">
-    	    <treeDataLikelihood idref="treeLikelihood"/>
-	    </branchRateGradient>
-    </numericalHessian>
+	<branchRateGradient id="gradient" traitName="Sequence" useHessian="false">
+    	<treeDataLikelihood idref="treeLikelihood"/>
+	</branchRateGradient>
 
     <report id="gradientReport">
         <branchRateGradient idref="gradient"/>
@@ -476,12 +474,19 @@
 		<compoundGradient idref="grad.bdss.prior"/> <!-- wrt log.inverse.scan [tmp0, tmp1] -->
 	</jointGradient>
 
-	<report>
-		<gradient idref="test"/>
+	<report id="jointGradientReport">
+		<jointGradient idref="jointGradient"/>
 	</report>
-
-<!--	<report>-->
-<!--		<jointGradient idref="jointGradient"/>-->
-<!--	</report>-->
-
+	
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\],">
+    	<message>
+    		Check joint gradient
+    	</message>
+    	<actual regex="analytic:(.*?)\n">
+	    	<report idref="jointGradientReport"/>
+    	</actual>
+    	<expected regex="numeric :(.*?)\n">
+			<report idref="jointGradientReport"/>
+    	</expected>
+    </assertEqual>
 </beast>

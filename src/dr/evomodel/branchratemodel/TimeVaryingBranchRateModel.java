@@ -284,7 +284,11 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
 
     @Override
     public int getParameterIndexFromNode(NodeRef node) {
-        return node.getNumber(); // TODO Unsure if this is correct
+        int nodeNumber = node.getNumber();
+        if (nodeNumber > tree.getRoot().getNumber()) {
+            --nodeNumber;
+        }
+        return nodeNumber;
     }
 
     @Override

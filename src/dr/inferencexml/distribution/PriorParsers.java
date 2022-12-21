@@ -28,7 +28,9 @@ package dr.inferencexml.distribution;
 import dr.inference.distribution.CauchyDistribution;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
+import dr.inference.distribution.PreconditioningDistributionLikelihood;
 import dr.inference.model.Likelihood;
+import dr.inference.model.PriorPreconditioningProvider;
 import dr.inference.model.Statistic;
 import dr.math.distributions.*;
 import dr.util.Attribute;
@@ -510,7 +512,7 @@ public class PriorParsers {
             double mean = xo.getDoubleAttribute(MEAN);
             double stdev = xo.getDoubleAttribute(STDEV);
 
-            DistributionLikelihood likelihood = new DistributionLikelihood(new NormalDistribution(mean, stdev));
+            DistributionLikelihood likelihood = new PreconditioningDistributionLikelihood(new NormalDistribution(mean, stdev));
             for (int j = 0; j < xo.getChildCount(); j++) {
                 if (xo.getChild(j) instanceof Statistic) {
                     likelihood.addData((Statistic) xo.getChild(j));

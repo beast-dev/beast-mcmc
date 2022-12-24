@@ -59,6 +59,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
     private double[] storedNodeRates;
 
     private final double[] times;
+    private final FunctionalForm functionalForm;
 
     public TimeVaryingBranchRateModel(Tree tree,
                                       Parameter rates,
@@ -81,6 +82,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         storedNodeRates = new double[tree.getNodeCount()];
 
         times = computeTimes();
+        functionalForm = new FunctionalForm.PiecewiseConstant(rates);
 
         nodeRatesKnown = false;
     }
@@ -91,7 +93,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         assert tree == this.tree;
 
         if (!nodeRatesKnown) { // lazy evaluation
-            Traversal func = new Traversal.Rates(nodeRates, new FunctionalForm.PiecewiseConstant(rates));
+            Traversal func = new Traversal.Rates(nodeRates, functionalForm);
             calculateNodeGeneric(func);
             nodeRatesKnown = true;
         }
@@ -107,8 +109,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
 
         double[] gradientWrtRates = new double[rates.getDimension()];
 
-        Traversal func = new Traversal.Gradient(
-                gradientWrtRates, gradientWrtBranches, new FunctionalForm.PiecewiseConstant(rates));
+        Traversal func = new Traversal.Gradient(gradientWrtRates, gradientWrtBranches, functionalForm);
         calculateNodeGeneric(func);
 
         return gradientWrtRates; 
@@ -116,7 +117,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
 
     @Override
     public double getBranchRateDifferential(final Tree tree, final NodeRef node) {
-        return 1.0; // TODO
+        return 1.0;
     }
 
     @Override
@@ -190,7 +191,8 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
     }
 
     @Override
-    public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value, int from, int to) {
+    public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value,
+                                                    int from, int to) {
         throw new RuntimeException("Not yet implemented");
     }
 
@@ -228,18 +230,27 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
 
         void incrementRate(int epochIndex, double startTime, double endTime);
 
-        double gradientWeight(double startTime, double endTime, double branchLength);
+        double gradientWeight(int epochIndex, double startTime, double endTime, double branchLength);
+
+        double getRateParameter(int epochIndex);
 
         double rateNumerator();
 
-        class PiecewiseConstant implements FunctionalForm {
+        abstract class Base implements FunctionalForm {
 
-            final private Parameter rates;
+            final Parameter parameter;
+
+            Base(Parameter parameter) {
+                this.parameter = parameter;
+            }
+        }
+
+        class PiecewiseConstant extends Base {
 
             private double branchRateNumerator;
 
-            PiecewiseConstant(Parameter rates) {
-                this.rates = rates;
+            PiecewiseConstant(Parameter parameter) {
+                super(parameter);
             }
 
             @Override
@@ -248,11 +259,14 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             }
 
             @Override
+            public double getRateParameter(int epochIndex) {
+                return parameter.getParameterValue(epochIndex);
+            }
+
+            @Override
             public void incrementRate(int epochIndex, double startTime, double endTime) {
                 double timeLength = startTime - endTime;
-                double rate = rates.getParameterValue(epochIndex);
-
-                branchRateNumerator += rate * timeLength;
+                branchRateNumerator += getRateParameter(epochIndex) * timeLength;
             }
 
             @Override
@@ -261,14 +275,41 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             }
 
             @Override
-            public double gradientWeight(double startTIme, double endTime, double branchLength) {
+            public double gradientWeight(int epochIndex, double startTIme, double endTime, double branchLength) {
                 double timeLength = startTIme - endTime;
                 return timeLength / branchLength;
             }
         }
 
         @SuppressWarnings("unused")
+        class PiecewiseLogConstant extends PiecewiseConstant {
+
+            PiecewiseLogConstant(Parameter parameter) {
+                super(parameter);
+            }
+
+            @Override
+            public double getRateParameter(int epochIndex) {
+                return Math.exp(super.getRateParameter(epochIndex));
+            }
+
+            @Override
+            public double gradientWeight(int epochIndex, double startTime, double endTime, double branchLength) {
+                return super.gradientWeight(epochIndex, startTime, endTime, branchLength) *
+                        getRateParameter(epochIndex);  // TODO Currently untested
+            }
+        }
+
+        @SuppressWarnings("unused")
         abstract class PiecewiseLinear implements FunctionalForm { }
+
+        @SuppressWarnings("unused")
+        abstract class Integrable extends Base {
+
+            Integrable(Parameter parameter) {
+                super(parameter);
+            }
+        }
     }
 
     interface Traversal {
@@ -308,7 +349,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             public void increment(int epochIndex, int childIndex,
                                   double startTime, double endTime, double branchLength) {
                 gradientEpochs[epochIndex] += gradientNodes[childIndex] *
-                        functionalForm.gradientWeight(startTime, endTime, branchLength);
+                        functionalForm.gradientWeight(epochIndex, startTime, endTime, branchLength);
             }
 
             @Override

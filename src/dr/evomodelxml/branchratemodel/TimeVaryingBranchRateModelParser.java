@@ -2,9 +2,9 @@ package dr.evomodelxml.branchratemodel;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.TimeVaryingBranchRateModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.inference.model.Parameter;
+import dr.evomodel.branchratemodel.TimeVaryingBranchRateModel.FunctionalForm.Type;
 import dr.xml.*;
 
 import static dr.evomodelxml.coalescent.smooth.SmoothSkygridLikelihoodParser.getGridPoints;
@@ -18,6 +18,8 @@ public class TimeVaryingBranchRateModelParser extends AbstractXMLObjectParser {
     private static final String NUM_GRID_POINTS = GMRFSkyrideLikelihoodParser.NUM_GRID_POINTS;
     private static final String CUT_OFF = GMRFSkyrideLikelihoodParser.CUT_OFF;
 
+    private static final String FUNCTIONAL_FORM = "functionalForm";
+
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -29,7 +31,9 @@ public class TimeVaryingBranchRateModelParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Rates dimension != gridPoints dimension + 1");
         }
 
-        return new TimeVaryingBranchRateModel(tree, rates, gridPoints);
+        Type type = Type.parse(xo.getAttribute(FUNCTIONAL_FORM, Type.PIECEWISE_CONSTANT.getName()));
+
+        return new TimeVaryingBranchRateModel(type, tree, rates, gridPoints);
     }
 
     @Override
@@ -70,5 +74,6 @@ public class TimeVaryingBranchRateModelParser extends AbstractXMLObjectParser {
                             })
                     )
             ),
+            AttributeRule.newStringRule(FUNCTIONAL_FORM, true),
     };
 }

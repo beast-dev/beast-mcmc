@@ -61,7 +61,8 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
     private final double[] times;
     private final FunctionalForm functionalForm;
 
-    public TimeVaryingBranchRateModel(Tree tree,
+    public TimeVaryingBranchRateModel(FunctionalForm.Type type,
+                                      Tree tree,
                                       Parameter rates,
                                       Parameter gridPoints) {
 
@@ -82,7 +83,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         storedNodeRates = new double[tree.getNodeCount()];
 
         times = computeTimes();
-        functionalForm = new FunctionalForm.PiecewiseConstant(rates);
+        functionalForm = type.factory(rates);
 
         nodeRatesKnown = false;
     }
@@ -224,7 +225,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         return TreeUtils.newick(tree, treeTraitProviders);
     }
 
-    interface FunctionalForm {
+    public interface FunctionalForm {
 
         void reset();
 
@@ -235,6 +236,38 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         double getRateParameter(int epochIndex);
 
         double rateNumerator();
+
+        enum Type {
+            PIECEWISE_CONSTANT("piecewiseConstant") {
+                @Override
+                FunctionalForm factory(Parameter parameter) {
+                    return new PiecewiseConstant(parameter);
+                }
+            },
+            PIECEWISE_LOG_CONSTANT("piecewiseLogConstant") {
+                @Override
+                FunctionalForm factory(Parameter parameter) {
+                    return new PiecewiseLogConstant(parameter);
+                }
+            };
+
+            private final String name;
+
+            Type(String name) { this.name = name; }
+
+            public String getName() { return name; }
+
+            abstract FunctionalForm factory(Parameter parameter);
+
+            public static Type parse(String string) {
+                for (Type type : Type.values()) {
+                    if (type.name.equalsIgnoreCase(string)) {
+                        return type;
+                    }
+                }
+                throw new IllegalArgumentException("Unknown FunctionalForm.Type");
+            }
+        }
 
         abstract class Base implements FunctionalForm {
 
@@ -281,7 +314,6 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             }
         }
 
-        @SuppressWarnings("unused")
         class PiecewiseLogConstant extends PiecewiseConstant {
 
             PiecewiseLogConstant(Parameter parameter) {
@@ -296,7 +328,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             @Override
             public double gradientWeight(int epochIndex, double startTime, double endTime, double branchLength) {
                 return super.gradientWeight(epochIndex, startTime, endTime, branchLength) *
-                        getRateParameter(epochIndex);  // TODO Currently untested
+                        getRateParameter(epochIndex);
             }
         }
 

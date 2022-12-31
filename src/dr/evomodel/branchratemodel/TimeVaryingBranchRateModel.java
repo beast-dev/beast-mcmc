@@ -29,8 +29,10 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.tree.TreeUtils;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.TimeVaryingBranchRateModelParser;
+import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -50,7 +52,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
 
     private final Tree tree;
     private final Parameter rates;
-    private final Parameter gridPoints;
+    private final EpochTimeProvider epochTimeProvider;
 
     private boolean nodeRatesKnown;
     private boolean storedNodeRatesKnown;
@@ -65,19 +67,26 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
                                       Tree tree,
                                       Parameter rates,
                                       Parameter gridPoints) {
+        this(type, tree, rates, new EpochTimeProvider.ParameterWrapper(gridPoints));
+    }
+
+    public TimeVaryingBranchRateModel(FunctionalForm.Type type,
+                                      Tree tree,
+                                      Parameter rates,
+                                      EpochTimeProvider epochTimeProvider) {
 
         super(TimeVaryingBranchRateModelParser.PARSER_NAME);
 
         this.tree = tree;
         this.rates = rates;
-        this.gridPoints = gridPoints;
+        this.epochTimeProvider = epochTimeProvider;
 
         if (tree instanceof TreeModel) {
             addModel((TreeModel) tree);
         }
 
         addVariable(rates);
-        addVariable(gridPoints);
+        addModel(epochTimeProvider);
 
         nodeRates = new double[tree.getNodeCount()];
         storedNodeRates = new double[tree.getNodeCount()];
@@ -125,26 +134,23 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
     public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
         throw new RuntimeException("Not yet implemented");
     }
-    
+
     private double[] computeTimes() {
-        double[] times = new double[rates.getDimension()];
-        System.arraycopy(gridPoints.getParameterValues(), 0, times, 1, gridPoints.getDimension());
-        return times;
+        return epochTimeProvider.getEpochTimes();
     }
 
     @Override
     public void handleModelChangedEvent(Model model, Object object, int index) {
         nodeRatesKnown = false;
         fireModelChanged();
+
+        if (model != tree) {
+            throw new IllegalArgumentException("How did we get here?");
+        }
     }
 
     @Override
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-
-        if (variable == gridPoints) {
-            throw new RuntimeException("Not yet implemented");
-        }
-
         nodeRatesKnown = false;
         fireModelChanged();
     }
@@ -213,6 +219,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
                 new Citation(
                         new Author[]{
                                 new Author("P", "Datta"),
+                                new Author("P", "Lemey"),
                                 new Author("MA", "Suchard"),
                         },
                         Citation.Status.IN_PREPARATION
@@ -223,6 +230,98 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
     public String toString() {
         TreeTraitProvider[] treeTraitProviders = {this};
         return TreeUtils.newick(tree, treeTraitProviders);
+    }
+
+    public interface EpochTimeProvider extends Model {
+
+        double[] getEpochTimes();
+
+        class ParameterWrapper extends AbstractModel implements EpochTimeProvider {
+
+            private final Parameter epochTimes;
+
+            public ParameterWrapper(Parameter epochTimes) {
+                super("ParameterWrapper");
+
+                this.epochTimes = epochTimes;
+                addVariable(epochTimes);
+            }
+
+            @Override
+            public double[] getEpochTimes() {
+                double[] times = new double[epochTimes.getDimension() + 1];
+                System.arraycopy(epochTimes.getParameterValues(), 0, times, 1, epochTimes.getDimension());
+                return times;
+            }
+
+            @Override
+            protected void handleModelChangedEvent(Model model, Object object, int index) {
+                throw new IllegalArgumentException("Should not be called");
+            }
+
+            @Override
+            protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+                assert variable == epochTimes;
+
+                fireModelChanged(epochTimes);
+            }
+
+            @Override
+            protected void storeState() { }
+
+            @Override
+            protected void restoreState() { }
+
+            @Override
+            protected void acceptState() { }
+        }
+
+        @SuppressWarnings("unused")
+        class IntervalWrapper extends AbstractModel implements EpochTimeProvider {
+
+            private final BigFastTreeIntervals intervals;
+
+            public IntervalWrapper(BigFastTreeIntervals intervals) {
+                super("IntervalWrapper");
+
+                this.intervals = intervals;
+                addModel(intervals);
+            }
+
+            @Override
+            public double[] getEpochTimes() {
+                int count = intervals.getIntervalCount();
+
+                double[] times = new double[count];
+
+                for (int i = 0; i < count; ++i) {
+                    times[i] = intervals.getIntervalTime(i);
+                }
+
+                return times;
+            }
+
+            @Override
+            protected void handleModelChangedEvent(Model model, Object object, int index) {
+                assert model == intervals;
+
+                fireModelChanged(model);
+            }
+
+            @Override
+            protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+                throw new IllegalArgumentException("Should not be called");
+            }
+
+            @Override
+            protected void storeState() { }
+
+            @Override
+            protected void restoreState() { }
+
+            @Override
+            protected void acceptState() { }
+        }
     }
 
     public interface FunctionalForm {

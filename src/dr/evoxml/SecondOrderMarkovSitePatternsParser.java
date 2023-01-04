@@ -27,7 +27,7 @@ package dr.evoxml;
 
 import dr.evolution.alignment.SecondOrderMarkovSitePatterns;
 import dr.evolution.alignment.SitePatterns;
-import dr.evolution.datatype.PairedDataType;
+import dr.evomodel.substmodel.SecondOrderMarkovSubstitutionModel;
 import dr.xml.*;
 
 /**
@@ -42,7 +42,7 @@ public class SecondOrderMarkovSitePatternsParser extends AbstractXMLObjectParser
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         final SitePatterns siteList = (SitePatterns) xo.getChild(SitePatterns.class);
-        return new SecondOrderMarkovSitePatterns(new PairedDataType(siteList.getDataType()), siteList);
+        return new SecondOrderMarkovSitePatterns(new SecondOrderMarkovSubstitutionModel.SecondOrderMarkovPairedDataType(siteList.getDataType()), siteList);
     }
 
     @Override

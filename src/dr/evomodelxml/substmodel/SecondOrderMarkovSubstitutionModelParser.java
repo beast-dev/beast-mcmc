@@ -25,7 +25,6 @@
 
 package dr.evomodelxml.substmodel;
 
-import dr.evolution.datatype.PairedDataType;
 import dr.evomodel.substmodel.BaseSubstitutionModel;
 import dr.evomodel.substmodel.SecondOrderMarkovSubstitutionModel;
 import dr.xml.*;
@@ -42,7 +41,7 @@ public class SecondOrderMarkovSubstitutionModelParser extends AbstractXMLObjectP
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         BaseSubstitutionModel baseSubstitutionModel = (BaseSubstitutionModel) xo.getChild(BaseSubstitutionModel.class);
-        PairedDataType dataType = new PairedDataType(baseSubstitutionModel.getDataType());
+        SecondOrderMarkovSubstitutionModel.SecondOrderMarkovPairedDataType dataType = new SecondOrderMarkovSubstitutionModel.SecondOrderMarkovPairedDataType(baseSubstitutionModel.getDataType());
         return new SecondOrderMarkovSubstitutionModel(NAME + "(" + baseSubstitutionModel.getModelName() + ")",
                 dataType, baseSubstitutionModel);
     }

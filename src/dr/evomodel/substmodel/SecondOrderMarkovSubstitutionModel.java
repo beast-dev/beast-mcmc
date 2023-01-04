@@ -37,12 +37,14 @@ import java.util.Arrays;
 public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel {
     
     private final BaseSubstitutionModel baseSubstitutionModel;
+    private final SecondOrderMarkovPairedDataType pairedDataType;
     
     public SecondOrderMarkovSubstitutionModel(String name,
-                                              DataType dataType,
+                                              SecondOrderMarkovPairedDataType dataType,
                                               BaseSubstitutionModel baseSubstitutionModel) {
         super(name, dataType, new SecondOrderMarkovFrequencyModel(SecondOrderMarkovFrequencyModel.NAME, baseSubstitutionModel, dataType));
         this.baseSubstitutionModel = baseSubstitutionModel;
+        this.pairedDataType = (SecondOrderMarkovPairedDataType) getFrequencyModel().getDataType();
     }
 
     @Override
@@ -86,12 +88,12 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel {
             for (int currentState = 0; currentState < baseNumberStates; currentState++) {
 
                 if (previousState != currentState) {
-                    final int fromState = previousState * baseNumberStates + currentState;
+                    final int fromState = pairedDataType.getState(previousState, currentState);
                     Arrays.fill(matrix[fromState], 0);
 
                     for (int nextState = 0; nextState < baseNumberStates; nextState++) {
                         if (nextState != currentState) {
-                            final int toState = currentState * baseNumberStates + nextState;
+                            final int toState = pairedDataType.getState(currentState, nextState);
 
                             matrix[fromState][toState] = infinitesimalMatrix[currentState * baseNumberStates + nextState];
 
@@ -108,7 +110,7 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel {
         public static final String NAME = "SecondOrderMarkovFrequencyModel";
         private final BaseSubstitutionModel baseSubstitutionModel;
 
-        private final DataType dataType;
+        private final SecondOrderMarkovPairedDataType dataType;
 
         private final int stateCount;
 
@@ -117,11 +119,11 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel {
 
         public SecondOrderMarkovFrequencyModel(String name,
                                                BaseSubstitutionModel substitutionModel,
-                                               DataType dataType) {
+                                               SecondOrderMarkovPairedDataType dataType) {
             super(name);
             this.baseSubstitutionModel = substitutionModel;
             this.dataType = dataType;
-            this.stateCount = baseSubstitutionModel.stateCount * baseSubstitutionModel.stateCount;
+            this.stateCount = dataType.getStateCount();
             this.frequencies = new double[stateCount];
         }
 
@@ -156,6 +158,39 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel {
             return dataType;
         }
 
+    }
+
+    public static class SecondOrderMarkovPairedDataType extends DataType {
+
+        private final DataType baseDataType;
+
+        public SecondOrderMarkovPairedDataType (DataType baseDataType) {
+            this.baseDataType = baseDataType;
+            stateCount = baseDataType.getStateCount() * (baseDataType.getStateCount() - 1);
+            ambiguousStateCount = stateCount;
+        }
+
+        public final int getState(int previousState, int currentState) {
+            if (baseDataType.isAmbiguousState(previousState) || baseDataType.isAmbiguousState(currentState)) {
+                return getUnknownState();
+            }
+            return previousState * (baseDataType.getStateCount() - 1) + currentState;
+        }
+
+        @Override
+        public char[] getValidChars() {
+            return null;
+        }
+
+        @Override
+        public String getDescription() {
+            return null;
+        }
+
+        @Override
+        public int getType() {
+            return -1;
+        }
     }
 
 

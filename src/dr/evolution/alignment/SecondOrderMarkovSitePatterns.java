@@ -25,8 +25,7 @@
 
 package dr.evolution.alignment;
 
-import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.PairedDataType;
+import dr.evomodel.substmodel.SecondOrderMarkovSubstitutionModel;
 
 /**
  * @author Xiang Ji
@@ -35,13 +34,13 @@ import dr.evolution.datatype.PairedDataType;
  */
 public class SecondOrderMarkovSitePatterns extends UncertainSiteList {
 
-    private final PairedDataType dataType;
+    private final SecondOrderMarkovSubstitutionModel.SecondOrderMarkovPairedDataType dataType;
     private final SitePatterns sitePatterns;
 
-    public SecondOrderMarkovSitePatterns(DataType dataType,
+    public SecondOrderMarkovSitePatterns(SecondOrderMarkovSubstitutionModel.SecondOrderMarkovPairedDataType dataType,
                                          SitePatterns sitePatterns) {
         super(dataType, sitePatterns);
-        this.dataType = new PairedDataType(sitePatterns.getDataType());
+        this.dataType = dataType;
         this.sitePatterns = sitePatterns;
         setUncertainSitePatterns();
     }
@@ -77,7 +76,8 @@ public class SecondOrderMarkovSitePatterns extends UncertainSiteList {
 
     private void fillPartial(double[] partials, int observedState) {
         for (int previousState = 0; previousState < sitePatterns.getStateCount(); previousState++) {
-            partials[dataType.getState(previousState, observedState)] = 1.0;
+            if (previousState != observedState)
+                partials[dataType.getState(previousState, observedState)] = 1.0;
         }
     }
 

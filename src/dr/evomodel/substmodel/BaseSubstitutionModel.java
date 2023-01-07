@@ -353,7 +353,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
      * This avoids potential problems later when eigenvalues
      * are computed.
      */
-    private void checkFrequencies() {
+    protected void checkFrequencies() {
         // required frequency difference
         double MINFDIFF = getMINFDIFF();
 
@@ -407,7 +407,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         return copy;
     }
 
-    private final double q[][];
+    protected final double q[][];
     protected EigenDecomposition eigenDecomposition;
     private EigenDecomposition storedEigenDecomposition;
 

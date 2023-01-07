@@ -26,6 +26,8 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
+import dr.evomodel.substmodel.spectra.SpectraJNIWrapper;
+import dr.xml.Reportable;
 
 import java.util.Arrays;
 
@@ -34,17 +36,24 @@ import java.util.Arrays;
  * @author Jeff Thorne
  * @author Marc A. Suchard
  */
-public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel {
+public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel implements Reportable {
     
     private final BaseSubstitutionModel baseSubstitutionModel;
     private final SecondOrderMarkovPairedDataType pairedDataType;
+
+    private Boolean matrixKnown = false;
     
     public SecondOrderMarkovSubstitutionModel(String name,
                                               SecondOrderMarkovPairedDataType dataType,
                                               BaseSubstitutionModel baseSubstitutionModel) {
-        super(name, dataType, new SecondOrderMarkovFrequencyModel(SecondOrderMarkovFrequencyModel.NAME, baseSubstitutionModel, dataType));
+        super(name, dataType, new SecondOrderMarkovFrequencyModel(SecondOrderMarkovFrequencyModel.NAME, dataType));
         this.baseSubstitutionModel = baseSubstitutionModel;
         this.pairedDataType = (SecondOrderMarkovPairedDataType) getFrequencyModel().getDataType();
+        ((SecondOrderMarkovFrequencyModel) getFrequencyModel()).linkSecondOrderMarkovSubstitutionModel(this);
+    }
+
+    protected void checkFrequencies() {
+
     }
 
     @Override
@@ -69,7 +78,9 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel {
 
     @Override
     protected double setupMatrix() {
-        super.setupMatrix();
+        if (!matrixKnown) {
+            setupQMatrix(relativeRates, null, q);
+        }
         return 1.0;
     }
 
@@ -102,13 +113,67 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel {
                 }
             }
         }
+        matrixKnown = true;
+    }
 
+    public int getSparseQMatrix(int[] indices, double[] values, boolean transpose) {
+        int nonZeroCount = 0;
+        setupMatrix();
+        for (int row = 0; row < getFrequencyModel().getFrequencyCount(); row++) {
+            double rowSum = 0.0;
+            for (int col = 0; col < getFrequencyModel().getFrequencyCount(); col++) {
+                if (q[row][col] != 0) {
+                    indices[nonZeroCount * 2] = transpose ? col : row;
+                    indices[nonZeroCount * 2 + 1] = transpose ? row : col;
+                    values[nonZeroCount] = q[row][col];
+                    if (q[row][col] > 0)
+                        rowSum += q[row][col];
+                    nonZeroCount++;
+                }
+            }
+            if (rowSum > 0) {
+                indices[nonZeroCount * 2] = row;
+                indices[nonZeroCount * 2 + 1] = row;
+                values[nonZeroCount] = -rowSum;
+                nonZeroCount++;
+            }
+        }
+        return nonZeroCount;
+    }
+
+    public int getSparseEmbeddedMarkovChain(int[] indices, double[] values, boolean transpose) {
+        int nonZeroCount = 0;
+        setupMatrix();
+        for (int row = 0; row < getFrequencyModel().getFrequencyCount(); row++) {
+            double rowSum = 0.0;
+            for (int col = 0; col < getFrequencyModel().getFrequencyCount(); col++) {
+                if (row != col) rowSum += q[row][col];
+            }
+            for (int col = 0; col < getFrequencyModel().getFrequencyCount(); col++) {
+                if (row != col && q[row][col] != 0) {
+                    indices[nonZeroCount * 2] = transpose ? col : row;
+                    indices[nonZeroCount * 2 + 1] = transpose ? row : col;
+                    values[nonZeroCount] = q[row][col]/rowSum;
+                    nonZeroCount++;
+                }
+            }
+        }
+        return nonZeroCount;
+    }
+
+    @Override
+    public String getReport() {
+
+        SpectraJNIWrapper spectra = SpectraJNIWrapper.loadLibrary();
+
+        return spectra.getVersion();
     }
 
     public static class SecondOrderMarkovFrequencyModel extends FrequencyModel {
 
         public static final String NAME = "SecondOrderMarkovFrequencyModel";
-        private final BaseSubstitutionModel baseSubstitutionModel;
+
+        private SecondOrderMarkovSubstitutionModel secondOrderMarkovSubstitutionModel = null;
 
         private final SecondOrderMarkovPairedDataType dataType;
 
@@ -117,22 +182,52 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel {
         private boolean frequencyKnown = false;
         private double[] frequencies;
 
+        private final SpectraJNIWrapper spectra;
+
         public SecondOrderMarkovFrequencyModel(String name,
-                                               BaseSubstitutionModel substitutionModel,
                                                SecondOrderMarkovPairedDataType dataType) {
             super(name);
-            this.baseSubstitutionModel = substitutionModel;
             this.dataType = dataType;
             this.stateCount = dataType.getStateCount();
             this.frequencies = new double[stateCount];
+            this.spectra = SpectraJNIWrapper.loadLibrary();
+            spectra.createInstance(1, stateCount);
+        }
+
+        public void linkSecondOrderMarkovSubstitutionModel(SecondOrderMarkovSubstitutionModel substitutionModel) {
+            this.secondOrderMarkovSubstitutionModel = substitutionModel;
         }
 
         public double[] getFrequencies() {
 
             if (!frequencyKnown) {
-                final double unif = 1.0 / stateCount;
+
+                if (secondOrderMarkovSubstitutionModel == null) {
+                    throw new RuntimeException("Paired subsitution model unknown.");
+                }
+
+                double[] values = new double[dataType.getStateCount() * dataType.getStateCount()];
+                int[] indices = new int[2 * dataType.getStateCount() * dataType.getStateCount()];
+
+                int nonZeroCount = secondOrderMarkovSubstitutionModel.getSparseQMatrix(indices, values, true);
+//                int nonZeroCount = secondOrderMarkovSubstitutionModel.getSparseEmbeddedMarkovChain(indices, values, false);
+
+                spectra.setMatrix(0, indices, values, nonZeroCount);
+
+                int numEigens = 1;
+                double[] eigenValues = new double[2 * numEigens];
+                double[] eigenVectors = new double[2 * stateCount * numEigens];
+                spectra.getEigenVectors(0,numEigens , 1E-7, eigenValues, eigenVectors);
+
+                double sum = 0;
                 for (int i = 0; i < stateCount; i++) {
-                    frequencies[i] = unif;
+                    sum += eigenVectors[2 * i];
+                }
+                //TODO: check if all entries are of the same sign
+                //TODO: check if eigen value is close to 0
+                sum = sum == 0 ? 1.0 : sum;
+                for (int i = 0; i < stateCount; i++) {
+                    frequencies[i] = eigenVectors[2 * i] / sum;
                 }
                 frequencyKnown = true;
             }
@@ -171,10 +266,12 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel {
         }
 
         public final int getState(int previousState, int currentState) {
-            if (baseDataType.isAmbiguousState(previousState) || baseDataType.isAmbiguousState(currentState)) {
+            if (baseDataType.isAmbiguousState(previousState) || baseDataType.isAmbiguousState(currentState) || previousState == currentState) {
                 return getUnknownState();
             }
-            return previousState * (baseDataType.getStateCount() - 1) + currentState;
+            return previousState < currentState ?
+                    previousState * (baseDataType.getStateCount() - 1) + currentState - 1 :
+                    previousState * (baseDataType.getStateCount() - 1) + currentState;
         }
 
         @Override

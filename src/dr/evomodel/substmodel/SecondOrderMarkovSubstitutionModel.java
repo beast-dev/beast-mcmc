@@ -27,6 +27,7 @@ package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.evomodel.substmodel.spectra.SpectraJNIWrapper;
+import dr.inference.model.Parameter;
 import dr.xml.Reportable;
 
 import java.util.Arrays;
@@ -41,15 +42,19 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel im
     private final BaseSubstitutionModel baseSubstitutionModel;
     private final SecondOrderMarkovPairedDataType pairedDataType;
 
+    private final ReversionRate reversionRate;
+
     private Boolean matrixKnown = false;
     
     public SecondOrderMarkovSubstitutionModel(String name,
                                               SecondOrderMarkovPairedDataType dataType,
-                                              BaseSubstitutionModel baseSubstitutionModel) {
+                                              BaseSubstitutionModel baseSubstitutionModel,
+                                              ReversionRate rate) {
         super(name, dataType, new SecondOrderMarkovFrequencyModel(SecondOrderMarkovFrequencyModel.NAME, dataType));
         this.baseSubstitutionModel = baseSubstitutionModel;
         this.pairedDataType = (SecondOrderMarkovPairedDataType) getFrequencyModel().getDataType();
         ((SecondOrderMarkovFrequencyModel) getFrequencyModel()).linkSecondOrderMarkovSubstitutionModel(this);
+        this.reversionRate = rate;
     }
 
     protected void checkFrequencies() {
@@ -106,7 +111,7 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel im
                         if (nextState != currentState) {
                             final int toState = pairedDataType.getState(currentState, nextState);
 
-                            matrix[fromState][toState] = infinitesimalMatrix[currentState * baseNumberStates + nextState];
+                            matrix[fromState][toState] = infinitesimalMatrix[currentState * baseNumberStates + nextState] + reversionRate.getReversionRate(fromState, toState);
 
                         }
                     }
@@ -167,6 +172,18 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel im
         SpectraJNIWrapper spectra = SpectraJNIWrapper.loadLibrary();
 
         return spectra.getVersion();
+    }
+
+    public static class ReversionRate {
+        private Parameter reversionRate;
+
+        public ReversionRate(Parameter reversionRate) {
+            this.reversionRate = reversionRate;
+        }
+
+        public double getReversionRate(int fromState, int toState) {
+            return reversionRate.getParameterValue(0);
+        }
     }
 
     public static class SecondOrderMarkovFrequencyModel extends FrequencyModel {

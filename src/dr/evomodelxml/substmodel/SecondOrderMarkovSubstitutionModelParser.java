@@ -27,6 +27,7 @@ package dr.evomodelxml.substmodel;
 
 import dr.evomodel.substmodel.BaseSubstitutionModel;
 import dr.evomodel.substmodel.SecondOrderMarkovSubstitutionModel;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 /**
@@ -41,9 +42,11 @@ public class SecondOrderMarkovSubstitutionModelParser extends AbstractXMLObjectP
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         BaseSubstitutionModel baseSubstitutionModel = (BaseSubstitutionModel) xo.getChild(BaseSubstitutionModel.class);
+        Parameter reversionRateParameter = (Parameter) xo.getChild(Parameter.class);
         SecondOrderMarkovSubstitutionModel.SecondOrderMarkovPairedDataType dataType = new SecondOrderMarkovSubstitutionModel.SecondOrderMarkovPairedDataType(baseSubstitutionModel.getDataType());
+        SecondOrderMarkovSubstitutionModel.ReversionRate reversionRate = new SecondOrderMarkovSubstitutionModel.ReversionRate(reversionRateParameter);
         return new SecondOrderMarkovSubstitutionModel(NAME + "(" + baseSubstitutionModel.getModelName() + ")",
-                dataType, baseSubstitutionModel);
+                dataType, baseSubstitutionModel, reversionRate);
     }
 
     @Override
@@ -53,6 +56,7 @@ public class SecondOrderMarkovSubstitutionModelParser extends AbstractXMLObjectP
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(BaseSubstitutionModel.class),
+            new ElementRule(Parameter.class),
     };
 
     @Override

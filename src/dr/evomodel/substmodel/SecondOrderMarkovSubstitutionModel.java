@@ -102,7 +102,7 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel im
 
         for (int previousState = 0; previousState < baseNumberStates; previousState++) {
             for (int currentState = 0; currentState < baseNumberStates; currentState++) {
-
+                double rowSum = 0;
                 if (previousState != currentState) {
                     final int fromState = pairedDataType.getState(previousState, currentState);
                     Arrays.fill(matrix[fromState], 0);
@@ -110,11 +110,16 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel im
                     for (int nextState = 0; nextState < baseNumberStates; nextState++) {
                         if (nextState != currentState) {
                             final int toState = pairedDataType.getState(currentState, nextState);
+                            final double transitionRate = infinitesimalMatrix[currentState * baseNumberStates + nextState] + reversionRate.getReversionRate(fromState, toState);
 
-                            matrix[fromState][toState] = infinitesimalMatrix[currentState * baseNumberStates + nextState] + reversionRate.getReversionRate(fromState, toState);
+                            matrix[fromState][toState] = transitionRate;
 
+                            if (transitionRate > 0) {
+                                rowSum += transitionRate;
+                            }
                         }
                     }
+                    matrix[fromState][fromState] = -rowSum;
                 }
             }
         }
@@ -125,22 +130,13 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel im
         int nonZeroCount = 0;
         setupMatrix();
         for (int row = 0; row < getFrequencyModel().getFrequencyCount(); row++) {
-            double rowSum = 0.0;
             for (int col = 0; col < getFrequencyModel().getFrequencyCount(); col++) {
                 if (q[row][col] != 0) {
                     indices[nonZeroCount * 2] = transpose ? col : row;
                     indices[nonZeroCount * 2 + 1] = transpose ? row : col;
                     values[nonZeroCount] = q[row][col];
-                    if (q[row][col] > 0)
-                        rowSum += q[row][col];
                     nonZeroCount++;
                 }
-            }
-            if (rowSum > 0) {
-                indices[nonZeroCount * 2] = row;
-                indices[nonZeroCount * 2 + 1] = row;
-                values[nonZeroCount] = -rowSum;
-                nonZeroCount++;
             }
         }
         return nonZeroCount;
@@ -150,15 +146,11 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel im
         int nonZeroCount = 0;
         setupMatrix();
         for (int row = 0; row < getFrequencyModel().getFrequencyCount(); row++) {
-            double rowSum = 0.0;
-            for (int col = 0; col < getFrequencyModel().getFrequencyCount(); col++) {
-                if (row != col) rowSum += q[row][col];
-            }
             for (int col = 0; col < getFrequencyModel().getFrequencyCount(); col++) {
                 if (row != col && q[row][col] != 0) {
                     indices[nonZeroCount * 2] = transpose ? col : row;
                     indices[nonZeroCount * 2 + 1] = transpose ? row : col;
-                    values[nonZeroCount] = q[row][col]/rowSum;
+                    values[nonZeroCount] = -q[row][col]/q[row][row];
                     nonZeroCount++;
                 }
             }

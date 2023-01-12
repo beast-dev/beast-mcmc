@@ -44,9 +44,9 @@ public class SecondOrderMarkovSubstitutionModelParser extends AbstractXMLObjectP
         BaseSubstitutionModel baseSubstitutionModel = (BaseSubstitutionModel) xo.getChild(BaseSubstitutionModel.class);
         Parameter reversionRateParameter = (Parameter) xo.getChild(Parameter.class);
         SecondOrderMarkovSubstitutionModel.SecondOrderMarkovPairedDataType dataType = new SecondOrderMarkovSubstitutionModel.SecondOrderMarkovPairedDataType(baseSubstitutionModel.getDataType());
-        SecondOrderMarkovSubstitutionModel.ReversionRate reversionRate = new SecondOrderMarkovSubstitutionModel.ReversionRate(reversionRateParameter);
+        SecondOrderMarkovSubstitutionModel.ReversionRateModel reversionRateModel = new SecondOrderMarkovSubstitutionModel.ReversionRateModel(reversionRateParameter, dataType);
         return new SecondOrderMarkovSubstitutionModel(NAME + "(" + baseSubstitutionModel.getModelName() + ")",
-                dataType, baseSubstitutionModel, reversionRate);
+                dataType, baseSubstitutionModel, reversionRateModel);
     }
 
     @Override

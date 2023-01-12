@@ -27,7 +27,7 @@ package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.evomodel.substmodel.spectra.SpectraJNIWrapper;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.Reportable;
 
 import java.util.Arrays;
@@ -42,19 +42,20 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel im
     private final BaseSubstitutionModel baseSubstitutionModel;
     private final SecondOrderMarkovPairedDataType pairedDataType;
 
-    private final ReversionRate reversionRate;
+    private final ReversionRateModel reversionRateModel;
 
     private Boolean matrixKnown = false;
     
     public SecondOrderMarkovSubstitutionModel(String name,
                                               SecondOrderMarkovPairedDataType dataType,
                                               BaseSubstitutionModel baseSubstitutionModel,
-                                              ReversionRate rate) {
+                                              ReversionRateModel rate) {
         super(name, dataType, new SecondOrderMarkovFrequencyModel(SecondOrderMarkovFrequencyModel.NAME, dataType));
         this.baseSubstitutionModel = baseSubstitutionModel;
         this.pairedDataType = (SecondOrderMarkovPairedDataType) getFrequencyModel().getDataType();
         ((SecondOrderMarkovFrequencyModel) getFrequencyModel()).linkSecondOrderMarkovSubstitutionModel(this);
-        this.reversionRate = rate;
+        this.reversionRateModel = rate;
+        addModel(rate);
     }
 
     protected void checkFrequencies() {
@@ -110,7 +111,7 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel im
                     for (int nextState = 0; nextState < baseNumberStates; nextState++) {
                         if (nextState != currentState) {
                             final int toState = pairedDataType.getState(currentState, nextState);
-                            final double transitionRate = infinitesimalMatrix[currentState * baseNumberStates + nextState] + reversionRate.getReversionRate(fromState, toState);
+                            final double transitionRate = infinitesimalMatrix[currentState * baseNumberStates + nextState] + reversionRateModel.getReversionRate(fromState, toState);
 
                             matrix[fromState][toState] = transitionRate;
 
@@ -166,19 +167,53 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel im
         return spectra.getVersion();
     }
 
-    public static class ReversionRate {
+    public static class ReversionRateModel extends AbstractModel {
         private Parameter reversionRate;
+        private SecondOrderMarkovPairedDataType dataType;
 
-        public ReversionRate(Parameter reversionRate) {
+        private static String NAME = "ReversionRateModel";
+
+        public ReversionRateModel(Parameter reversionRate,
+                                  SecondOrderMarkovPairedDataType dataType) {
+            super(NAME);
             this.reversionRate = reversionRate;
+            this.dataType = dataType;
+            addVariable(reversionRate);
         }
 
         public double getReversionRate(int fromState, int toState) {
-            return reversionRate.getParameterValue(0);
+            final int[] fromStateSeparate = dataType.separateState(fromState);
+            final int[] toStateSeparate = dataType.separateState(toState);
+            return fromStateSeparate[0] == toStateSeparate[1] ? reversionRate.getParameterValue(0) : 0.0;
+        }
+
+        @Override
+        protected void handleModelChangedEvent(Model model, Object object, int index) {
+
+        }
+
+        @Override
+        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+
+        }
+
+        @Override
+        protected void storeState() {
+
+        }
+
+        @Override
+        protected void restoreState() {
+
+        }
+
+        @Override
+        protected void acceptState() {
+
         }
     }
 
-    public static class SecondOrderMarkovFrequencyModel extends FrequencyModel {
+    public static class SecondOrderMarkovFrequencyModel extends FrequencyModel implements ModelListener {
 
         public static final String NAME = "SecondOrderMarkovFrequencyModel";
 
@@ -205,6 +240,15 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel im
 
         public void linkSecondOrderMarkovSubstitutionModel(SecondOrderMarkovSubstitutionModel substitutionModel) {
             this.secondOrderMarkovSubstitutionModel = substitutionModel;
+            this.secondOrderMarkovSubstitutionModel.addModelListener(this);
+        }
+
+        public void handleModelChangedEvent(Model model, Object object, int index) {
+            frequencyKnown = false;
+        }
+
+        public void modelRestored(Model model) {
+            frequencyKnown = false;
         }
 
         public double[] getFrequencies() {
@@ -281,6 +325,13 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel im
             return previousState < currentState ?
                     previousState * (baseDataType.getStateCount() - 1) + currentState - 1 :
                     previousState * (baseDataType.getStateCount() - 1) + currentState;
+        }
+
+        public int[] separateState(int jointState) {
+            final int previousState = jointState / baseDataType.getStateCount();
+            final int residue = jointState % baseDataType.getStateCount();
+            final int currentState = residue < previousState ? residue : residue + 1;
+            return new int[]{previousState, currentState};
         }
 
         @Override

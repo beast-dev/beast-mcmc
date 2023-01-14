@@ -59,7 +59,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
             throw new IllegalArgumentException("Must currently provide a DefaultTreeModel");
         }
 
-        tree = fixTimes(tree);
+        fixTimes();
 
         treeIntervals = new BigFastTreeIntervals((TreeModel)tree);
 
@@ -135,9 +135,10 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         return logL;
     }
 
-    private Tree fixTimes(Tree tree) {
+    private void fixTimes() {
 
-        DefaultTreeModel cleanTree = new DefaultTreeModel(tree);
+        // DefaultTreeModel cleanTree = new DefaultTreeModel(tree);
+        TreeModel cleanTree = getTreeModel();
 
         double[] intervalTimes = speciationModel.getBreakPoints();
         for (int i = 0; i < cleanTree.getExternalNodeCount(); i++) {
@@ -187,9 +188,8 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         if (adjustedBirths) {
             System.err.println("Some births were exactly at event-sampling times and have been moved (by no more than " + TOLERANCE + ") to avoid numerical issues.");
         }
-        tree = cleanTree;
+        // tree = cleanTree;
 //        System.err.println("Adjusted tip times to match interval times.");
-        return tree;
     }
 
     // Super-clean interface (just one intrusive function) and a better place, since `Likelihood`s have gradients (`Model`s do not).

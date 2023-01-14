@@ -48,7 +48,8 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
-public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implements DifferentiableBranchRates, Citable {
+public class TimeVaryingBranchRateModel extends AbstractBranchRateModel
+        implements DifferentiableBranchRates, Citable {
 
     private final Tree tree;
     private final Parameter rates;
@@ -60,7 +61,6 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
     private double[] nodeRates;
     private double[] storedNodeRates;
 
-    private final double[] times;
     private final FunctionalForm functionalForm;
 
     public TimeVaryingBranchRateModel(FunctionalForm.Type type,
@@ -91,7 +91,6 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         nodeRates = new double[tree.getNodeCount()];
         storedNodeRates = new double[tree.getNodeCount()];
 
-        times = computeTimes();
         functionalForm = type.factory(rates);
 
         nodeRatesKnown = false;
@@ -133,10 +132,6 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
     @Override
     public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
         throw new RuntimeException("Not yet implemented");
-    }
-
-    private double[] computeTimes() {
-        return epochTimeProvider.getEpochTimes();
     }
 
     @Override
@@ -236,7 +231,31 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
 
         double[] getEpochTimes();
 
-        class ParameterWrapper extends AbstractModel implements EpochTimeProvider {
+        abstract class AbstractEpochTimeProvider extends AbstractModel implements EpochTimeProvider {
+
+            double[] times;
+            boolean timesKnown;
+
+            public AbstractEpochTimeProvider(String name) {
+                super(name);
+            }
+
+            @Override
+            protected void acceptState() { }
+
+            @Override
+            public double[] getEpochTimes() {
+                if (!timesKnown) {
+                    computeTimes();
+                    timesKnown = true;
+                }
+                return times;
+            }
+
+            abstract void computeTimes();
+        }
+
+        class ParameterWrapper extends AbstractEpochTimeProvider {
 
             private final Parameter epochTimes;
 
@@ -248,10 +267,12 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             }
 
             @Override
-            public double[] getEpochTimes() {
-                double[] times = new double[epochTimes.getDimension() + 1];
-                System.arraycopy(epochTimes.getParameterValues(), 0, times, 1, epochTimes.getDimension());
-                return times;
+            void computeTimes() {
+                if (times == null) {
+                    times = new double[epochTimes.getDimension() + 1];
+                }
+                System.arraycopy(epochTimes.getParameterValues(), 0, times, 1,
+                        epochTimes.getDimension());
             }
 
             @Override
@@ -263,21 +284,21 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
                 assert variable == epochTimes;
 
-                fireModelChanged(epochTimes);
+                timesKnown = false;
+                fireModelChanged();
             }
 
             @Override
             protected void storeState() { }
 
             @Override
-            protected void restoreState() { }
-
-            @Override
-            protected void acceptState() { }
+            protected void restoreState() {
+                timesKnown = false;
+            }
         }
 
         @SuppressWarnings("unused")
-        class IntervalWrapper extends AbstractModel implements EpochTimeProvider {
+        class IntervalWrapper extends AbstractEpochTimeProvider {
 
             private final BigFastTreeIntervals intervals;
 
@@ -289,23 +310,24 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             }
 
             @Override
-            public double[] getEpochTimes() {
+            void computeTimes() {
                 int count = intervals.getIntervalCount();
 
-                double[] times = new double[count];
+                if (times == null) {
+                    times = new double[count];
+                }
 
                 for (int i = 0; i < count; ++i) {
                     times[i] = intervals.getIntervalTime(i);
                 }
-
-                return times;
             }
 
             @Override
             protected void handleModelChangedEvent(Model model, Object object, int index) {
                 assert model == intervals;
 
-                fireModelChanged(model);
+                timesKnown = false;
+                fireModelChanged();
             }
 
             @Override
@@ -314,13 +336,14 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             }
 
             @Override
-            protected void storeState() { }
+            protected void storeState() {
+                // TODO
+            }
 
             @Override
-            protected void restoreState() { }
-
-            @Override
-            protected void acceptState() { }
+            protected void restoreState() {
+                // TODO
+            }
         }
     }
 
@@ -511,6 +534,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
 
     private void calculateNodeGeneric(Traversal generic) {
 
+        double[] times = epochTimeProvider.getEpochTimes();
         NodeRef root = tree.getRoot();
         double rootHeight = tree.getNodeHeight(root);
 
@@ -519,16 +543,16 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
             --epochIndex;
         }
 
-        traverseTreeByBranchGeneric(rootHeight, tree.getChild(root, 0), epochIndex, generic);
-        traverseTreeByBranchGeneric(rootHeight, tree.getChild(root, 1), epochIndex, generic);
+        traverseTreeByBranchGeneric(times, rootHeight, tree.getChild(root, 0), epochIndex, generic);
+        traverseTreeByBranchGeneric(times, rootHeight, tree.getChild(root, 1), epochIndex, generic);
     }
 
-    private void traverseTreeByBranchGeneric(double currentHeight, NodeRef child, int epochIndex,
+    private void traverseTreeByBranchGeneric(double[] times, double currentHeight, NodeRef child, int epochIndex,
                                              Traversal generic) {
 
         final double childHeight = tree.getNodeHeight(child);
         final double branchLength = currentHeight - childHeight;
-        final int childIndex =  getParameterIndexFromNode(child);
+        final int childIndex = getParameterIndexFromNode(child);
 
         generic.reset();
 
@@ -547,8 +571,8 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel implemen
         generic.store(epochIndex, childIndex, branchLength);
 
         if (!tree.isExternal(child)) {
-            traverseTreeByBranchGeneric(childHeight, tree.getChild(child, 0), epochIndex, generic);
-            traverseTreeByBranchGeneric(childHeight, tree.getChild(child, 1), epochIndex, generic);
+            traverseTreeByBranchGeneric(times, childHeight, tree.getChild(child, 0), epochIndex, generic);
+            traverseTreeByBranchGeneric(times, childHeight, tree.getChild(child, 1), epochIndex, generic);
         }
     }
 }

@@ -47,7 +47,8 @@ import java.util.List;
 
 public class MarkovModulatedFrequencyModel extends FrequencyModel {
 
-    MarkovModulatedFrequencyModel(String name, List<FrequencyModel> freqModels, Parameter switchingRates) {
+    MarkovModulatedFrequencyModel(String name, List<FrequencyModel> freqModels, Parameter switchingRates,
+                                  Parameter relativeWeight) {
         super(name);
         this.freqModels = freqModels;
         int freqCount = 0;
@@ -72,6 +73,12 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
 
         DoubleMatrix2D d = new DenseDoubleMatrix2D(numBaseModel, numBaseModel);
         d.set(0, 0, 1.0);
+
+        this.relativeWeight = relativeWeight;
+        if (relativeWeight != null) {
+            addVariable(relativeWeight);
+        }
+        checkRelativeWeight();
     }
 
     public void setFrequency(int i, double value) {
@@ -81,7 +88,13 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
     public double getFrequency(int index) {
         int whichModel = index / stateCount;
         int whichState = index % stateCount;
-        double relativeFreq = freqModels.get(whichModel).getFrequency(whichState) / numBaseModel;
+        double relativeFreq = freqModels.get(whichModel).getFrequency(whichState);
+
+        if (relativeWeight != null) {
+            relativeFreq *= relativeWeight.getParameterValue(whichModel);
+        } else {
+            relativeFreq /= numBaseModel;
+        }
 
         // Scale by stationary distribution over hidden classes
         if (numBaseModel > 1) {
@@ -168,6 +181,18 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
         }
     }
 
+    private void checkRelativeWeight() {
+        if (relativeWeight != null) {
+            double sum = 0.0;
+            for (double x : relativeWeight.getParameterValues()) {
+                sum += x;
+            }
+            if (sum != 1.0) {
+                throw new IllegalArgumentException("Relative weights must sum to 1.0");
+            }
+        }
+    }
+
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         fireModelChanged();
     }
@@ -186,6 +211,7 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
     private final int totalFreqCount;
     private final int stateCount;
     private final Parameter switchingRates;
+    private final Parameter relativeWeight;
 
     private double[] baseStationaryDistribution;
     private double[] storedBaseStationaryDistribution;

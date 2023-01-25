@@ -25,9 +25,11 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.CompoundParameter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -42,17 +44,44 @@ public interface ContinuousTraitPartialsProvider {
 
     int getTraitDimension();
 
+    String getTipTraitName();
+
+    void setTipTraitName(String name);
+
+    default int getDataDimension() {
+        return getTraitDimension();
+    }
+
     PrecisionType getPrecisionType();
 
     double[] getTipPartial(int taxonIndex, boolean fullyObserved);
 
-    List<Integer> getMissingIndices();
+    @Deprecated
+    List<Integer> getMissingIndices(); // use getTraitMissingIndicators() instead
 
-    boolean[] getMissingIndicator();
+    boolean[] getDataMissingIndicators(); // returns null for no missing data
+
+    default boolean[] getTraitMissingIndicators() { // returns null for no missing traits
+        return getDataMissingIndicators();
+    }
 
     CompoundParameter getParameter();
 
     String getModelName();
+
+    default boolean getDefaultAllowSingular() {
+        return false;
+    }
+
+    default boolean suppliesWishartStatistics() {
+        return true;
+    }
+
+    default int[] getPartitionDimensions() { return null;}
+
+    default void addTreeAndRateModel(Tree treeModel, ContinuousRateTransformation rateTransformation) {
+        // Do nothing
+    }
 
     static boolean[] indicesToIndicator(List<Integer> indices, int n) {
 
@@ -69,4 +98,17 @@ public interface ContinuousTraitPartialsProvider {
         return indicator;
 
     }
+
+    static List<Integer> indicatorToIndices(boolean[] indicators) { //TODO: test
+        List<Integer> indices = new ArrayList<>();
+
+        for (int i = 0; i < indicators.length; i++) {
+            if (indicators[i]) {
+                indices.add(i);
+            }
+        }
+
+        return indices;
+    }
+
 }

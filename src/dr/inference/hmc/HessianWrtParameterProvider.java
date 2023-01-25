@@ -90,14 +90,22 @@ public interface HessianWrtParameterProvider extends GradientWrtParameterProvide
 
         private final boolean checkValues;
         private final double tolerance;
+        private final double smallThreshold;
 
         CheckHessianNumerically(HessianWrtParameterProvider provider,
-                                        Double nullableTolerance) {
+                                Double nullableTolerance,
+                                Double nullableSmallNumberThreshold) {
             this.provider = provider;
             this.numericProvider = new NumericalHessianFromGradient(provider);
 
             this.checkValues = nullableTolerance != null;
             this.tolerance = checkValues ? nullableTolerance : 0.0;
+            this.smallThreshold = nullableSmallNumberThreshold != null ? nullableSmallNumberThreshold : 0.0;
+        }
+
+        CheckHessianNumerically(HessianWrtParameterProvider provider,
+                                Double nullableTolerance) {
+            this(provider, nullableTolerance, null);
         }
 
         public String getReport() throws MismatchException {
@@ -105,7 +113,7 @@ public interface HessianWrtParameterProvider extends GradientWrtParameterProvide
             double[] analytic = provider.getDiagonalHessianLogDensity();
             double[] numeric = numericProvider.getDiagonalHessianLogDensity();
 
-            return GradientWrtParameterProvider.makeReport("Hessian\n", analytic, numeric, checkValues, tolerance);
+            return GradientWrtParameterProvider.makeReport("Hessian\n", analytic, numeric, checkValues, tolerance, smallThreshold);
         }
     }
 

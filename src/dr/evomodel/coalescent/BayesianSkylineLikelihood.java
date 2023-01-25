@@ -65,6 +65,7 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
                                      Parameter popSizeParameter,
                                      Parameter groupSizeParameter,
                                      int type) {
+
         super(BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD);
 
         // adding the key word to the the model means the keyword will be logged in the
@@ -324,6 +325,10 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
         groupEnds[getGroupCount()-1] = timeEnd;
 
         return groupEnds;
+    }
+
+    public Tree getTree() {
+        return tree;
     }
 
     private double getGroupHeight(int groupIndex) {

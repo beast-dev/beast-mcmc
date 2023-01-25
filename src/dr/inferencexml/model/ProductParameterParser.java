@@ -27,34 +27,62 @@ package dr.inferencexml.model;
 
 import dr.inference.model.Parameter;
 import dr.inference.model.ProductParameter;
+import dr.inference.model.ScaledParameter;
 import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
+ *
  */
 public class ProductParameterParser extends AbstractXMLObjectParser {
 
     public static final String PRODUCT_PARAMETER = "productParameter";
+    public static final String SCALE = "scale";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         List<Parameter> paramList = new ArrayList<Parameter>();
         int dim = -1;
         for (int i = 0; i < xo.getChildCount(); ++i) {
-            Parameter parameter = (Parameter) xo.getChild(i);
-            if (dim == -1) {
-                dim = parameter.getDimension();
-            } else {
-                if (parameter.getDimension() != dim) {
-                    throw new XMLParseException("All parameters in product '" + xo.getId() + "' must be the same length");
+            if (xo.getChild(i) instanceof Parameter) {
+                Parameter parameter = (Parameter) xo.getChild(i);
+                if (dim == -1) {
+                    dim = parameter.getDimension();
+                } else {
+                    if (parameter.getDimension() != dim) {
+                        throw new XMLParseException("All parameters in product '" + xo.getId() +
+                                "' must be the same length");
+                    }
                 }
+                paramList.add(parameter);
             }
-            paramList.add(parameter);
         }
 
-        return new ProductParameter(paramList);
+        ProductParameter prodParam = new ProductParameter(paramList);
+
+        if (xo.hasChildNamed(SCALE)) {
+            Parameter scaleParam = (Parameter) xo.getChild(SCALE).getChild(Parameter.class);
+
+            if (scaleParam.getDimension() != 1) {
+                throw new XMLParseException("The scale parameter must be one-dimensional.");
+            }
+
+            Parameter vecParam;
+
+            if (paramList.size() == 1) { //Don't pass a product parameter if you don't need to
+                vecParam = paramList.get(0);
+            } else {
+                vecParam = prodParam;
+            }
+
+
+            return new ScaledParameter(scaleParam, vecParam);
+        } else {
+            return prodParam;
+        }
+
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -62,7 +90,10 @@ public class ProductParameterParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(Parameter.class,1,Integer.MAX_VALUE),
+            new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
+            new ElementRule(SCALE, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }, true)
     };
 
     public String getParserDescription() {

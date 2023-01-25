@@ -271,9 +271,11 @@ public class PartitionTreePrior extends PartitionOptions {
                 "demographic.indicators", OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
         createOperatorUsing2Parameters("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF Skyride", "skyride.logPopSize",
                 "skyride.precision", OperatorType.GMRF_GIBBS_OPERATOR, 2, 2);
-        createOperatorUsing2Parameters("gmrfSkyGridGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for Bayesian SkyGrid", "skygrid.logPopSize",
+        createOperatorUsing2Parameters("gmrfSkyGridGibbsOperator", "skygrid.logPopSize", "Gibbs sampler for Bayesian SkyGrid", "skygrid.logPopSize",
                 "skygrid.precision", OperatorType.SKY_GRID_GIBBS_OPERATOR, 1.0, 2);
-        createScaleOperator("skygrid.precision", "description", 0.75, 1.0);
+        createScaleOperator("skygrid.precision", "skygrid precision", 0.75, 1.0);
+        createOperatorUsing2Parameters("gmrfSkyGridHMCOperator", "Multiple", "HMC transition kernel for Bayesian SkyGrid", "skygrid.logPopSize",
+                "skygrid.precision", OperatorType.SKY_GRID_HMC_OPERATOR, 1.0, 2);
 
         createScaleOperator("yule.birthRate", demoTuning, demoWeights);
 
@@ -341,10 +343,10 @@ public class PartitionTreePrior extends PartitionOptions {
             params.add(getParameter("demographic.populationSizeChanges"));
             params.add(getParameter("demographic.populationMean"));
         } else if (nodeHeightPrior == TreePriorType.GMRF_SKYRIDE) {
-//            params.add(getParameter("skyride.popSize")); // force user to use GMRF, not allowed to change
+            // params.add(getParameter("skyride.popSize")); // force user to use GMRF prior, not allowed to change
             params.add(getParameter("skyride.precision"));
         } else if (nodeHeightPrior == TreePriorType.SKYGRID) {
-//            params.add(getParameter("skyride.popSize")); // force user to use GMRF, not allowed to change
+            // params.add(getParameter("skygrid.logPopSize")); // force user to use GMRF prior, not allowed to change
             params.add(getParameter("skygrid.precision"));
         } else if (nodeHeightPrior == TreePriorType.YULE || nodeHeightPrior == TreePriorType.YULE_CALIBRATION) {
             params.add(getParameter("yule.birthRate"));
@@ -416,8 +418,12 @@ public class PartitionTreePrior extends PartitionOptions {
         } else if (nodeHeightPrior == TreePriorType.GMRF_SKYRIDE) {
             ops.add(getOperator("gmrfGibbsOperator"));
         } else if (nodeHeightPrior == TreePriorType.SKYGRID) {
-            ops.add(getOperator("gmrfSkyGridGibbsOperator"));
-            ops.add(getOperator("skygrid.precision"));
+            if (options.operatorSetType == OperatorSetType.HMC) {
+                ops.add(getOperator("gmrfSkyGridHMCOperator"));
+            } else {
+                ops.add(getOperator("gmrfSkyGridGibbsOperator"));
+                ops.add(getOperator("skygrid.precision"));
+            }
         } else if (nodeHeightPrior == TreePriorType.EXTENDED_SKYLINE) {
             ops.add(getOperator("demographic.populationMean"));
             ops.add(getOperator("demographic.popSize"));

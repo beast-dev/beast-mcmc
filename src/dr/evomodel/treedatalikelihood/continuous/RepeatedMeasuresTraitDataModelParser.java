@@ -51,10 +51,9 @@ public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParse
         TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
 
         TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                utilities.parseTraitsFromTaxonAttributes(xo, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME,
-                        treeModel, true);
+                utilities.parseTraitsFromTaxonAttributes(xo, treeModel, true);
         CompoundParameter traitParameter = returnValue.traitParameter;
-        List<Integer> missingIndices = returnValue.missingIndices;
+        boolean[] missingIndicators = returnValue.getMissingIndicators();
 
         XMLObject cxo = xo.getChild(PRECISION);
         MatrixParameterInterface samplingPrecision = (MatrixParameterInterface)
@@ -70,8 +69,7 @@ public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParse
         if (!chol.isSPD()) {
             throw new XMLParseException(PRECISION + " must be a positive definite matrix.");
         }
-
-
+        
         String traitName = returnValue.traitName;
         //TODO diffusionModel was only used for the dimension.
         // But this should be the same as the samplingPrecision dimension ?
@@ -87,8 +85,7 @@ public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParse
         return new RepeatedMeasuresTraitDataModel(
                 traitName,
                 traitParameter,
-                missingIndices,
-//                    missingIndicators,
+                    missingIndicators,
                 true,
                 samplingPrecision.getColumnDimension(),
 //                    diffusionModel.getPrecisionParameter().getRowDimension(),

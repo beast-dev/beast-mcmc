@@ -29,12 +29,15 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MomentDistributionModel;
+import dr.inference.distribution.NormalDistributionModel;
+import dr.inference.distribution.NormalStatisticsProvider;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.operators.factorAnalysis.LoadingsGibbsOperator;
-import dr.inference.operators.factorAnalysis.LoadingsGibbsTruncatedOperator;
-import dr.inference.operators.factorAnalysis.FactorAnalysisOperatorAdaptor;
-import dr.inference.operators.factorAnalysis.NewLoadingsGibbsOperator;
+import dr.inference.model.Parameter;
+import dr.inference.operators.factorAnalysis.*;
+import dr.math.distributions.Distribution;
+import dr.math.distributions.NormalDistribution;
+import dr.util.Attribute;
 import dr.xml.*;
 
 /**
@@ -52,6 +55,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
     private final static String NUM_THREADS = "numThreads";
     private final static String MODE = "newMode";
     private final static String CONSTRAINT = "constraint";
+    private final static String SPARSITY_CONSTRAINT = "sparsity";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -73,7 +77,23 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
         }
 
         // Get priors
-        DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
+        DistributionLikelihood priorDistLike = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
+
+        NormalStatisticsProvider prior = null;
+
+        if (priorDistLike != null) {
+            Distribution priorDist = priorDistLike.getDistribution();
+            if (priorDist instanceof NormalStatisticsProvider) {
+                prior = (NormalStatisticsProvider) priorDist;
+            } else {
+                throw new XMLParseException("The prior distribution with id " + priorDistLike.getId() +
+                        " is not normally distributed. This operator requires a normal prior.");
+            }
+        } else {
+            prior = (NormalStatisticsProvider) xo.getChild(NormalStatisticsProvider.class); //Should be null if doesn't exist
+        }
+
+
         MomentDistributionModel prior2 = (MomentDistributionModel) xo.getChild(MomentDistributionModel.class);
 
         DistributionLikelihood cutoffPrior = null;
@@ -90,22 +110,20 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
         if (prior != null) {
             if (useNewMode) {
 
-                final FactorAnalysisOperatorAdaptor adaptor;
-                if (LFM != null) {
-                    adaptor = new FactorAnalysisOperatorAdaptor.SampledFactors(LFM);
-                } else {
-                    IntegratedFactorAnalysisLikelihood integratedLikelihood = (IntegratedFactorAnalysisLikelihood)
-                            xo.getChild(IntegratedFactorAnalysisLikelihood.class);
-                    TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-                    adaptor = new FactorAnalysisOperatorAdaptor.IntegratedFactors(integratedLikelihood, treeLikelihood);
-                }
+                FactorAnalysisStatisticsProvider statisticsProvider =
+                        LoadingsOperatorParserUtilities.parseAdaptorAndStatistics(xo);
 
                 NewLoadingsGibbsOperator.ConstrainedSampler sampler = NewLoadingsGibbsOperator.ConstrainedSampler.parse(
                         xo.getAttribute(CONSTRAINT, NewLoadingsGibbsOperator.ConstrainedSampler.NONE.getName())
                 );
 
-                return new NewLoadingsGibbsOperator(adaptor, prior, weight, randomScan, WorkingPrior,
-                        multiThreaded, numThreads, sampler);
+                NewLoadingsGibbsOperator.ColumnDimProvider dimProvider =
+                        NewLoadingsGibbsOperator.ColumnDimProvider.parse(xo.getAttribute(SPARSITY_CONSTRAINT,
+                                NewLoadingsGibbsOperator.ColumnDimProvider.UPPER_TRIANGULAR.getName())
+                        );
+
+                return new NewLoadingsGibbsOperator(statisticsProvider, prior, weight, randomScan, WorkingPrior,
+                        multiThreaded, numThreads, sampler, dimProvider);
             } else {
 //                return new LoadingsGibbsOperator(LFM, prior, weight, randomScan, WorkingPrior, multiThreaded, numThreads);
                 return null;
@@ -117,30 +135,26 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
-        return rules;
+        return XMLSyntaxRule.Utils.concatenate(LoadingsOperatorParserUtilities.statisticsProviderRules, newRules);
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private XMLSyntaxRule[] newRules = new XMLSyntaxRule[]{
             new XORRule(
-                    new ElementRule(LatentFactorModel.class),
-                    new AndRule(
-                            new ElementRule(IntegratedFactorAnalysisLikelihood.class),
-                            new ElementRule(TreeDataLikelihood.class)
-                    )
-            ),
-            new XORRule(
-                    new ElementRule(DistributionLikelihood.class),
-                    new AndRule(
-                            new ElementRule(MomentDistributionModel.class),
-                            new ElementRule(CUTOFF_PRIOR, new XMLSyntaxRule[] {
-                                    new ElementRule(DistributionLikelihood.class)
-                            }))
+                    new XMLSyntaxRule[]{
+                            new ElementRule(DistributionLikelihood.class),
+                            new ElementRule(NormalStatisticsProvider.class),
+                            new AndRule(
+                                    new ElementRule(MomentDistributionModel.class),
+                                    new ElementRule(CUTOFF_PRIOR, new XMLSyntaxRule[]{
+                                            new ElementRule(DistributionLikelihood.class)
+                                    }))}
             ),
             AttributeRule.newDoubleRule(WEIGHT),
             AttributeRule.newBooleanRule(MULTI_THREADED, true),
             AttributeRule.newIntegerRule(NUM_THREADS, true),
             AttributeRule.newBooleanRule(MODE, true),
             AttributeRule.newStringRule(CONSTRAINT, true),
+            AttributeRule.newStringRule(SPARSITY_CONSTRAINT, true),
             new ElementRule(WORKING_PRIOR, new XMLSyntaxRule[]{
                     new ElementRule(DistributionLikelihood.class)
             }, true),

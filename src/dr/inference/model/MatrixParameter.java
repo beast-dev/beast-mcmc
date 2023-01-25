@@ -79,6 +79,13 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
         return new MatrixParameter(name, parameters);
     }
 
+    public static MatrixParameterInterface checkMatrixAndRecast(CompoundParameter compoundParameter) {
+        if (compoundParameter instanceof MatrixParameterInterface) {
+            return (MatrixParameterInterface) compoundParameter;
+        }
+        return recast(compoundParameter.getId(), compoundParameter);
+    }
+
     public double getParameterValue(int row, int col) {
         return getParameter(col).getParameterValue(row);
     }
@@ -497,8 +504,8 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
 
 
     private boolean dimensionsEstablished = false;
-    private int columnDimension = 0;
-    private int rowDimension = 0;
+    protected int columnDimension = 0;
+    protected int rowDimension = 0;
 
     // **************************************************************
     // XMLElement IMPLEMENTATION

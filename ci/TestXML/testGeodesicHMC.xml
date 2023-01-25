@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    <matrixParameter id="X">
+        <parameter
+                value="-0.08032379702908181 0.19237738479250088 0.15932701607944252 -0.04940859439381497 0.5385678141060061 -0.25528637483426475 -0.15497261766370693 0.5270733313186051 0.019645664557815315 0.5208431027505155"/>
+        <parameter
+                value="-0.1029989501750626 0.6935280492106076 -0.17807128856558754 0.1276285012772287 0.11962958879721763 -0.11755749319631781 -0.41959205166997526 -0.014803167895001218 -0.1170855862851587 -0.4922346820661918"/>
+        <parameter
+                value="0.09220023508012402 0.2746548252337606 0.003397311846830453 -0.1410740952584737 -0.4213478680773495 0.2842652650120244 -0.4947457553985013 -0.2460812292976453 0.06759287927564045 0.5726355765181484"/>
+    </matrixParameter>
+
+    <distributionLikelihood id="X.prior">
+        <data>
+            <matrixParameter idref="X"/>
+        </data>
+        <distribution>
+            <normalDistributionModel>
+                <mean>
+                    <parameter value="1"/>
+                </mean>
+                <stdev>
+                    <parameter value="1e-1"/>
+                </stdev>
+            </normalDistributionModel>
+        </distribution>
+    </distributionLikelihood>
+
+    <matrixParameter id="X2">
+        <parameter
+                value="0.493455088117869 0.36650737416505685 0.25825794846476957 0.5491844754186053 0.07045409427523874 0.8097294092697422 0.0440037078319353 0.4011287874856475 0.5946913215939602 0.39774101545014373"/>
+        <parameter
+                value="0.0 -0.15884399720937747 0.652961792956753 0.10719200613559837 0.01377473559397506 0.37136116194340774 -0.3517437924931275 0.38913757342569566 0.3163436638616506 0.15360806975785263"/>
+        <parameter
+                value="0.0 -0.31285084606200164 0.269601487985706 -0.5938963970126111 0.29517178092178753 -0.3642186596035088 0.4304781910294112 0.207817759798675 0.1562357226201307 -0.06352596234120933"/>
+    </matrixParameter>
+
+    <distributionLikelihood id="X2.prior">
+        <data>
+            <matrixParameter idref="X2"/>
+        </data>
+        <distribution>
+            <normalDistributionModel>
+                <mean>
+                    <parameter value="1"/>
+                </mean>
+                <stdev>
+                    <parameter value="1e-1"/>
+                </stdev>
+            </normalDistributionModel>
+        </distribution>
+    </distributionLikelihood>
+
+    <operators id="operators">
+        <geodesicHamiltonianMonteCarloOperator id="geodesicHMC" weight="1.0" nSteps="5" stepSize="0.05"
+                                               drawVariance="1.0"
+                                               autoOptimize="false"
+                                               gradientCheckCount="100" gradientCheckTolerance="1e-2">
+            <gradient>
+                <distributionLikelihood idref="X.prior"/>
+                <matrixParameter idref="X"/>
+            </gradient>
+
+            <matrixParameter idref="X"/>
+            <graphicalParameterBounds>
+                <parameter value="0"/>
+            </graphicalParameterBounds>
+
+        </geodesicHamiltonianMonteCarloOperator>
+
+        <geodesicHamiltonianMonteCarloOperator id="constrainedGeodesicHMC" weight="1.0" nSteps="5" stepSize="0.05"
+                                               drawVariance="1.0"
+                                               autoOptimize="false"
+                                               gradientCheckCount="100" gradientCheckTolerance="1e-2">
+            <gradient>
+                <distributionLikelihood idref="X2.prior"/>
+                <matrixParameter idref="X2"/>
+            </gradient>
+
+            <matrixParameter idref="X2"/>
+            <graphicalParameterBounds>
+                <parameter value="0"/>
+            </graphicalParameterBounds>
+            <mask>
+                <parameter value="0 0 0 0 0 0 0 0 0 0
+                                  0 1 1 1 1 1 1 1 1 1
+                                  0 1 1 1 1 1 1 1 1 1"/>
+            </mask>
+        </geodesicHamiltonianMonteCarloOperator>
+    </operators>
+
+    <cachedReport id="gdHMC">
+        <geodesicHamiltonianMonteCarloOperator idref="geodesicHMC"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="gdHMC"/>
+    </report>
+
+    <assertEqual verbose="true" tolerance="1e-4" charactersToStrip="{}">
+        <message>
+            check geodesic leapfrog position
+        </message>
+        <actual regex="(?s)final position:\s*(.*?)\n\n">
+            <cachedReport idref="gdHMC"/>
+        </actual>
+        <expected>
+            -0.181314 -0.627619 -0.302442
+            0.680691 -0.261439 -0.0480654
+            -0.131925 -0.455502 -0.325809
+            0.267774 -0.104319 -0.180902
+            0.271192 0.111662 -0.561838
+            0.202814 -0.311839 0.314318
+            -0.0616983 0.0999747 -0.247963
+            0.367584 0.191271 -0.220852
+            0.396632 0.0637276 0.285482
+            0.0613069 -0.398781 0.4014
+        </expected>
+    </assertEqual>
+
+    <assertEqual verbose="true" tolerance="1e-4" charactersToStrip="{}">
+        <message>
+            check geodesic leapfrog ratio
+        </message>
+        <actual regex="hastings ratio:\s*(.*)\n">
+            <cachedReport idref="gdHMC"/>
+        </actual>
+        <expected>
+            -7251.556582506859
+        </expected>
+    </assertEqual>
+
+    <cachedReport id="gdHMCconstrained">
+        <geodesicHamiltonianMonteCarloOperator idref="constrainedGeodesicHMC"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="gdHMCconstrained"/>
+    </report>
+
+    <assertEqual verbose="true" tolerance="1e-4" charactersToStrip="{}">
+        <message>
+            check geodesic leapfrog position
+        </message>
+        <actual regex="(?s)final position:\s*(.*?)\n\n">
+            <cachedReport idref="gdHMCconstrained"/>
+        </actual>
+        <expected>
+            0.493455    0.0         0.0
+            0.366507   -0.0777171  -0.710874
+            0.258258    0.484568   -0.207693
+            0.549184   -0.332651   -0.439306
+            0.0704541   0.431457   -0.284058
+            0.809729   -0.136926   -0.111447
+            0.0440037   0.496013   -0.23261
+            0.401129    0.342257    0.150644
+            0.594691    0.277649    0.209471
+            0.397741    0.0577559   0.211527
+        </expected>
+    </assertEqual>
+
+    <assertEqual verbose="true" tolerance="1e-4" charactersToStrip="{}">
+        <message>
+            check geodesic leapfrog ratio
+        </message>
+        <actual regex="hastings ratio:\s*(.*)\n">
+            <cachedReport idref="gdHMCconstrained"/>
+        </actual>
+        <expected>
+            208.1681216287634
+        </expected>
+    </assertEqual>
+
+
+    <!--    <mcmc id="mcmc" chainLength="10000" autoOptimize="true">-->
+    <!--        <posterior id="posterior">-->
+    <!--            <prior id="prior">-->
+    <!--                <distributionLikelihood idref="X.prior"/>-->
+    <!--            </prior>-->
+    <!--        </posterior>-->
+    <!--        <operators idref="operators"/>-->
+    <!--        <log id="screenLog" logEvery="1000">-->
+    <!--            <column label="prior" dp="4" width="12">-->
+    <!--                <prior idref="prior"/>-->
+    <!--            </column>-->
+    <!--        </log>-->
+    <!--        <log id="fileLog" fileName="geodesic.log" logEvery="10">-->
+    <!--            <distributionLikelihood idref="X.prior"/>-->
+    <!--            <parameter idref="X"/>-->
+    <!--        </log>-->
+    <!--    </mcmc>-->
+</beast>
+
+<!--JULIA CODE BELOW-->
+
+<!--
+
+using Distributions, LinearAlgebra, Random
+
+Random.seed!(666)
+
+function project!(M::AbstractMatrix{Float64}, L::AbstractMatrix{Float64})
+    M .-= 0.5 * L * (L' * M + M' * L)
+end
+
+function geo_hmc(X::Matrix{Float64}, V::Matrix{Float64},
+                 x_dist::MultivariateDistribution,
+                 n_steps::Int,
+                 step_size::Float64,
+                 k::Int,
+                 p::Int)
+    project!(V, X)
+    h = 0.5 * sum([v * v for v in V])
+    for i = 1:n_steps
+        V += 0.5 * step_size * reshape(gradlogpdf(x_dist, vec(X)), p, k)
+        display(V)
+        project!(V, X)
+        geodesic!(X, V, step_size)
+        V += 0.5 * step_size * reshape(gradlogpdf(x_dist, vec(X)), p, k)
+        project!(V, X)
+    end
+    h2 = 0.5 * sum([v * v for v in V])
+    return h, h2, X
+end
+
+function geodesic!(X::Matrix{Float64}, V::Matrix{Float64}, t::Float64)
+    A = X' * V
+    S = V' * V
+    exptA = exp(-t * A)
+    p, k = size(X)
+
+    rng1 = 1:k
+    rng2 = (k + 1):(2 * k)
+
+    Y = zeros(2 * k, 2 * k)
+    Y[rng1, rng1] .= exptA
+    Y[rng2, rng2] .= exptA
+
+    Z = zeros(2 * k, 2 * k)
+    Z[rng1, rng1] .= A
+    Z[rng1, rng2] .= -S
+    Z[rng2, rng1] .= Diagonal(ones(k))
+    Z[rng2, rng2] .= A
+
+    XV = [X V] * exp(t * Z) * Y
+
+    X .= XV[:, rng1]
+    V .= XV[:, rng2]
+end
+
+k = 3
+p = 10
+
+n = k * p
+μ = 1.0
+σ2 = 0.01
+
+dist = MvNormal(μ * ones(n), Diagonal(σ2 * ones(n)))
+
+X = randn(p, k)
+X = svd(X).U
+X0 = copy(X)
+@show X' * X
+M = Matrix{Float64}(reshape(0:(n - 1), p, k))
+
+h, h2, X_new = geo_hmc(X, copy(M), dist, 5, 0.05, k, p)
+hastings_ratio = h - h2
+
+keep_cols = [2, 3]
+keep_rows = collect(2:p)
+k2 = length(keep_cols)
+p2 = length(keep_rows)
+n2 = k2 * p2
+
+M2 = M[keep_rows, keep_cols]
+X2 = svd(randn(p2, k2)).U
+X02 = zeros(p, k)
+X02[:, 1] .= rand(p)
+X02[keep_rows, keep_cols] .= X2
+dist2 = MvNormal(μ * ones(n2), Diagonal(σ2 * ones(n2)))
+
+h, h2, X2_new = geo_hmc(X2 ,M2, dist2, 5, 0.05, k2, p2)
+hastings_ratio2 = h - h2
+Xsub = copy(X02)
+Xsub[keep_rows, keep_cols] .= X2_new
+
+-->

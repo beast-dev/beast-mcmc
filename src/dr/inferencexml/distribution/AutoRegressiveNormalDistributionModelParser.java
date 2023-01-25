@@ -26,7 +26,6 @@
 package dr.inferencexml.distribution;
 
 import dr.inference.distribution.AutoRegressiveNormalDistributionModel;
-import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 

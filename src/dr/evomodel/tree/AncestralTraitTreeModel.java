@@ -261,8 +261,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         newNode.parent = parentNode;
         storeNode(newNode);
 
-        NodeRef originalChild0 = treeModel.getChild(originalNode, 0);
-        NodeRef originalChild1 = treeModel.getChild(originalNode, 1);
+
 
         ShadowNode recurse0 = newNode;
         ShadowNode recurse1 = newNode;
@@ -311,6 +310,8 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         }
 
         if (!treeModel.isExternal(originalNode)) {
+            NodeRef originalChild0 = treeModel.getChild(originalNode, 0);
+            NodeRef originalChild1 = treeModel.getChild(originalNode, 1);
             recurse0.child0 = buildRecursivelyShadowTree(originalChild0, recurse0);
             recurse1.child1 = buildRecursivelyShadowTree(originalChild1, recurse1);
         }
@@ -338,10 +339,10 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         return treeModel instanceof AbstractModel && ((AbstractModel) treeModel).isVariable();
     }
 
-    private Parameter getNodeHeightParameter(NodeRef iNode) {
-        assert (iNode != null);
-        return  ((DefaultTreeModel.Node) iNode).getHeightParameter();
-    }
+//    private Parameter getNodeHeightParameter(NodeRef iNode) {
+//        assert (iNode != null);
+//        return  ((DefaultTreeModel.Node) iNode).getHeightParameter();
+//    }
 
     public double getNodeHeight(NodeRef iNode) {
         assert (iNode != null);
@@ -441,8 +442,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
             if (hasAncestralPathTaxa) {
                 // swallow copy
-                savedAncestralPathNodeHeightParameters = (HashMap<Parameter, NodeRef>)
-                        ancestralPathNodeHeightParameters.clone();
+                savedAncestralPathNodeNumbers = new HashSet<Integer>(ancestralPathNodeNumbers);
             }
         }
     }
@@ -464,9 +464,9 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             root = nodes[storedRootNumber];
 
             if (hasAncestralPathTaxa) {
-                HashMap<Parameter, NodeRef> tmpMap = ancestralPathNodeHeightParameters;
-                ancestralPathNodeHeightParameters = savedAncestralPathNodeHeightParameters;
-                savedAncestralPathNodeHeightParameters = tmpMap;
+                Set<Integer> tmpSet = ancestralPathNodeNumbers;
+                ancestralPathNodeNumbers = savedAncestralPathNodeNumbers;
+                savedAncestralPathNodeNumbers = tmpSet;
             }
         }
     }
@@ -497,6 +497,8 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         @Override public boolean isNodeParameterChanged() { return event.isNodeParameterChanged(); }
 
         @Override public boolean isHeightChanged() { return event.isHeightChanged(); }
+
+        @Override public boolean isOnlyHeightChanged() { return event.isOnlyHeightChanged(); }
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -509,6 +511,29 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
             if (object instanceof TreeChangedEvent) {
                 final TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
+
+
+                if (ancestors.size() == 1 && ancestors.get(0).isAtRoot()) {
+
+                    final NodeRef originalNode = treeChangedEvent.getNode();
+                    final ShadowNode shadow = nodes[mapOriginalToShadowNumber(originalNode.getNumber())];
+
+                    fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow), index);
+
+                    if (shadow.child0 != null) {
+                        fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow.child0), index);
+                    }
+
+                    if (shadow.child1 != null) {
+                        fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow.child1), index);
+                    }
+
+                    if (!treeChangedEvent.isOnlyHeightChanged() && originalNode != treeModel.getRoot()) {
+                        validShadowTree = false;
+                    }
+
+                    return; // Early exit
+                }
 
                 if (treeChangedEvent.isTreeChanged()) {
 
@@ -550,6 +575,35 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                             }
                         }
 
+                        if (hasAncestralPathTaxa) {
+                            if (treeChangedEvent.isHeightChanged()) {
+                                NodeRef realNode = treeChangedEvent.getNode();
+                                if (ancestralPathNodeNumbers.contains(treeChangedEvent.getNode().getNumber())) {
+                                    ShadowNode node = nodes[mapOriginalToShadowNumber(originalNode.getNumber())];
+
+                                    if (NEW_APPROACH2) {
+                                        if (isExtraNode(node.parent) ||
+                                                isExtraNode(node.child0) || isExtraNode(node.child1)) {
+                                            validShadowTree = false;
+                                            double height = treeModel.getNodeHeight(realNode);
+                                            if ((node.parent != null && height > getNodeHeight(node.parent))
+                                                    || (node.child0 != null && height < getNodeHeight(node.child0))
+                                                    || (node.child1 != null && height < getNodeHeight(node.child1))) {
+                                                fireModelChanged(new TreeChangedEvent.WholeTree()); // This appears to work
+                                            }
+                                        }
+                                    } else {
+
+                                        if (isExtraNode(node.parent) ||
+                                                isExtraNode(node.child0) || isExtraNode(node.child1)) {
+                                            validShadowTree = false;
+                                            fireModelChanged(new TreeChangedEvent.WholeTree()); // Not used
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         object = new RemappedTreeChangeEvent(treeChangedEvent, shadow);
 
                     }
@@ -561,38 +615,38 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
             } else if (object instanceof Parameter) {
 
-                if (hasAncestralPathTaxa) {
-
-                    Parameter parameter = (Parameter) object;
-                    if (ancestralPathNodeHeightParameters.containsKey(parameter)) {
-
-                        NodeRef originalNode = ancestralPathNodeHeightParameters.get(parameter);
-                        ShadowNode node = nodes[mapOriginalToShadowNumber(originalNode.getNumber())];
-
-                        if (NEW_APPROACH2) {
-
-                            if (isExtraNode(node.parent) ||
-                                    isExtraNode(node.child0) || isExtraNode(node.child1)) {
-                                validShadowTree = false;
-                                double height = parameter.getParameterValue(0);
-                                if ((node.parent != null && height > getNodeHeight(node.parent))
-                                        || (node.child0 != null && height < getNodeHeight(node.child0))
-                                        || (node.child1 != null && height < getNodeHeight(node.child1))) {
-
-                                    fireModelChanged(new TreeChangedEvent.WholeTree()); // This appears to work
-                                }
-                            }
-
-                        } else {
-
-                            if (isExtraNode(node.parent) ||
-                                    isExtraNode(node.child0) || isExtraNode(node.child1)) {
-                                validShadowTree = false;
-                                fireModelChanged(new TreeChangedEvent.WholeTree()); // Not used
-                            }
-                        }
-                    }
-                }
+//                if (hasAncestralPathTaxa) {
+//
+//                    Parameter parameter = (Parameter) object;
+//                    if (ancestralPathNodeHeightParameters.containsKey(parameter)) {
+//
+//                        NodeRef originalNode = ancestralPathNodeHeightParameters.get(parameter);
+//                        ShadowNode node = nodes[mapOriginalToShadowNumber(originalNode.getNumber())];
+//
+//                        if (NEW_APPROACH2) {
+//
+//                            if (isExtraNode(node.parent) ||
+//                                    isExtraNode(node.child0) || isExtraNode(node.child1)) {
+//                                validShadowTree = false;
+//                                double height = parameter.getParameterValue(0);
+//                                if ((node.parent != null && height > getNodeHeight(node.parent))
+//                                        || (node.child0 != null && height < getNodeHeight(node.child0))
+//                                        || (node.child1 != null && height < getNodeHeight(node.child1))) {
+//
+//                                    fireModelChanged(new TreeChangedEvent.WholeTree()); // This appears to work
+//                                }
+//                            }
+//
+//                        } else {
+//
+//                            if (isExtraNode(node.parent) ||
+//                                    isExtraNode(node.child0) || isExtraNode(node.child1)) {
+//                                validShadowTree = false;
+//                                fireModelChanged(new TreeChangedEvent.WholeTree()); // Not used
+//                            }
+//                        }
+//                    }
+//                }
             } else {
                 throw new IllegalArgumentException("TreeModel should not generate other objects");
             }
@@ -939,7 +993,11 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
     }
 
     private Taxon getTaxonByTreeIndex(int index) {
-        return ancestors.get(index - treeExternalCount).getTaxon();
+        if (index >= externalCount ) {
+            return null;
+        } else {
+            return ancestors.get(index - treeExternalCount).getTaxon();
+        }
     }
 
     private void setupClamps() {
@@ -957,12 +1015,12 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         map.put(index, list);
     }
 
-    private void addAncestralNodeHeightParameter(NodeRef node) {
-        Parameter parameter = getNodeHeightParameter(node);
-        if (parameter != null) {
-            ancestralPathNodeHeightParameters.put(parameter, node);
-        }
-    }
+//    private void addAncestralNodeHeightParameter(NodeRef node) {
+//        Parameter parameter = getNodeHeightParameter(node);
+//        if (parameter != null) {
+//            ancestralPathNodeHeightParameters.put(parameter, node);
+//        }
+//    }
 
 //    private void addAllAncestralNodeHeightParameterBelow(NodeRef node) {
 //        addAncestralNodeHeightParameter(node);
@@ -976,7 +1034,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                                           Map<Integer, List<AncestralTaxonInTree>> nodeToClampMap) {
 
         hasAncestralPathTaxa = false;
-        ancestralPathNodeHeightParameters.clear();
+        ancestralPathNodeNumbers.clear();
 
         for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
             NodeRef node = tree.getExternalNode(i);
@@ -987,7 +1045,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                 AncestralTaxonInTree partials = clampList.get(tip);
                 partials.setTipNode(node);
 
-                addAncestralNodeHeightParameter(node);
+                ancestralPathNodeNumbers.add(node.getNumber());
 
                 double pathHeight = partials.getHeight();
                 assert (pathHeight > 0.0);
@@ -999,14 +1057,14 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                 while (parentHeight < pathHeight && parent != tree.getRoot()) {
                     node = parent;
 
-                    addAncestralNodeHeightParameter(node);
+                    ancestralPathNodeNumbers.add(node.getNumber());;
 
                     parent = tree.getParent(parent);
                     parentHeight = tree.getNodeHeight(parent);
                     isChild0 = tree.getChild(parent, 0) == node;
                 }
 
-                addAncestralNodeHeightParameter(parent);
+                ancestralPathNodeNumbers.add(parent.getNumber());
 
                 partials.setNode(parent, isChild0 ? 0 : 1);
                 addAncestralTaxonToMap(nodeToClampMap, parent.getNumber(), partials);
@@ -1051,8 +1109,8 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
     final private Map<BitSet, AncestralTaxonInTree> clampList = new HashMap<>();
     final private Map<Integer, List<AncestralTaxonInTree>> nodeToClampMap = new HashMap<>();
 
-    private HashMap<Parameter, NodeRef> ancestralPathNodeHeightParameters = new HashMap<>();
-    private HashMap<Parameter, NodeRef> savedAncestralPathNodeHeightParameters = new HashMap<>();
+    private Set<Integer> ancestralPathNodeNumbers = new HashSet<>();
+    private Set<Integer> savedAncestralPathNodeNumbers = new HashSet<>();
 
     private boolean hasAncestralPathTaxa = false;
     private boolean validShadowTree = false;

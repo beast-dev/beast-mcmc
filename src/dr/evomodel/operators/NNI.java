@@ -30,6 +30,7 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainableTreeOperator;
 import dr.evomodelxml.operators.NNIParser;
 import dr.math.MathUtils;
 
@@ -41,7 +42,7 @@ import dr.math.MathUtils;
  * @author Sebastian Hoehna
  * @version 1.0
  */
-public class NNI extends AbstractTreeOperator {
+public class NNI extends AbstractTreeOperator implements ConstrainableTreeOperator {
 
     private TreeModel tree = null;
 
@@ -52,14 +53,16 @@ public class NNI extends AbstractTreeOperator {
         this.tree = tree;
         setWeight(weight);
     }
-
+    public double doOperation(){
+        return doOperation(tree);
+    }
     /*
      * (non-Javadoc)
      * 
      * @see dr.inference.operators.SimpleMCMCOperator#doOperation()
      */
     @Override
-    public double doOperation() {
+    public double doOperation(TreeModel tree) {
         final int nNodes = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
 

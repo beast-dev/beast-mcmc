@@ -39,7 +39,7 @@ public class RepeatedMeasuresWishartStatistics implements ConjugateWishartStatis
         this.traitName = traitModel.getTraitName();
         this.tree = treeLikelihood.getTree();
 
-        this.tipTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + traitName);
+        this.tipTrait = treeLikelihood.getTreeTrait(traitModel.getTipTraitName());
         this.likelihoodDelegate = (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate();
         this.extensionDelegate = traitModel.getExtensionDelegate(likelihoodDelegate, tipTrait, tree);
 

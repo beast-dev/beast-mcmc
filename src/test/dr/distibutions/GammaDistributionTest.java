@@ -34,7 +34,7 @@ public class GammaDistributionTest extends TestCase{
         double qtotErr = 0;
 
         Random random = new Random(37);
-        MathUtils.setSeed(38);
+        MathUtils.setSeed(666);
 
         for(int i = 0; i < numberOfTests; i++){
             final double mean = .01 + (3-0.01) * random.nextDouble();

@@ -67,7 +67,8 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
             OperatorSetType.NEW_TREE_MIX,
             OperatorSetType.ADAPTIVE_MULTIVARIATE,
             OperatorSetType.FIXED_TREE,
-            OperatorSetType.CUSTOM
+            OperatorSetType.CUSTOM,
+            OperatorSetType.HMC
     });
 
     public List<Operator> operators = new ArrayList<Operator>();

@@ -29,13 +29,13 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
+import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleBranchGradientDelegate;
 
 /**
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class BranchSubstitutionParameterDelegate extends AbstractDiscreteTraitDelegate {
+public class BranchSubstitutionParameterDelegate extends AbstractBeagleBranchGradientDelegate {
 
     private final BranchRateModel branchRateModel;
     private final BranchDifferentialMassProvider branchDifferentialMassProvider;

@@ -32,9 +32,9 @@ public enum OperatorSetType {
 
     DEFAULT("classic operator mix"),
     FIXED_TREE_TOPOLOGY("fixed tree topology"),
+    FIXED_TREE("fixed tree"),
     NEW_TREE_MIX("new tree operator mix"),
     ADAPTIVE_MULTIVARIATE("adaptive multivariate"),
-    FIXED_TREE("fixed tree"),
     CUSTOM("custom operator mix"),
     HMC("Hamiltonian Monte Carlo");
 

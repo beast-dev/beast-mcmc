@@ -176,20 +176,22 @@ public class PartitionTreeModel extends PartitionOptions {
             boolean HMCinUse = false;
 
             // if not a fixed tree then sample tree space
-            if (options.operatorSetType == OperatorSetType.DEFAULT) {
-                defaultInUse = true;
-                branchesInUse = true;
-            } else if (options.operatorSetType == OperatorSetType.NEW_TREE_MIX) {
-                newTreeOperatorsInUse = true;
-            } else if (options.operatorSetType == OperatorSetType.FIXED_TREE_TOPOLOGY) {
-                branchesInUse = true;
-            } else if (options.operatorSetType == OperatorSetType.ADAPTIVE_MULTIVARIATE) {
-                newTreeOperatorsInUse = true;
-                adaptiveMultivariateInUse = true;
-            } else if (options.operatorSetType == OperatorSetType.HMC) {
-                HMCinUse = true;
-            } else {
-                throw new IllegalArgumentException("Unknown operator set type");
+            if (options.operatorSetType != OperatorSetType.FIXED_TREE) {
+                if (options.operatorSetType == OperatorSetType.DEFAULT) {
+                    defaultInUse = true;
+                    branchesInUse = true;
+                } else if (options.operatorSetType == OperatorSetType.NEW_TREE_MIX) {
+                    newTreeOperatorsInUse = true;
+                } else if (options.operatorSetType == OperatorSetType.FIXED_TREE_TOPOLOGY) {
+                    branchesInUse = true;
+                } else if (options.operatorSetType == OperatorSetType.ADAPTIVE_MULTIVARIATE) {
+                    newTreeOperatorsInUse = true;
+                    adaptiveMultivariateInUse = true;
+                } else if (options.operatorSetType == OperatorSetType.HMC) {
+                    HMCinUse = true;
+                } else {
+                    throw new IllegalArgumentException("Unknown operator set type");
+                }
             }
 
             getOperator("subtreeSlide").setUsed(defaultInUse);
@@ -198,6 +200,7 @@ public class PartitionTreeModel extends PartitionOptions {
             getOperator("wilsonBalding").setUsed(defaultInUse);
 
             getOperator("treeModel.rootHeight").setUsed(branchesInUse);
+            getOperator("treeModel.allInternalNodeHeights").setUsed(branchesInUse);
             getOperator("uniformHeights").setUsed(branchesInUse);
 
             getOperator("subtreeLeap").setUsed(newTreeOperatorsInUse);

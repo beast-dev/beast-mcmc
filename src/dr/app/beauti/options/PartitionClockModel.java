@@ -200,7 +200,7 @@ public class PartitionClockModel extends PartitionOptions {
         createOperator("uniformBranchRateDistributionIndex", "branchRates.distributionIndex", "Performs a uniform draw of the distribution index",
                 "branchRates.distributionIndex", OperatorType.INTEGER_UNIFORM, 0, branchWeights / 3);
 
-        createUpDownOperator("upDownRateHeights", "Substitution rate and heights",
+        createUpDownOperator("upDownRateHeights", "Evolutionary rate and heights",
                 "Scales substitution rates inversely to node heights of the tree",
                 getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
                 getParameter("clock.rate"), OperatorType.UP_DOWN, demoTuning, rateWeights);
@@ -218,7 +218,7 @@ public class PartitionClockModel extends PartitionOptions {
                 getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
                 getParameter(ClockType.UCGD_MEAN), OperatorType.UP_DOWN, demoTuning, rateWeights);
 
-        createUpDownOperator("microsatUpDownRateHeights", "Substitution rate and heights",
+        createUpDownOperator("microsatUpDownRateHeights", "Evolutionary rate and heights",
                 "Scales substitution rates inversely to node heights of the tree",
                 getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
                 getParameter("clock.rate"), OperatorType.MICROSAT_UP_DOWN, demoTuning, branchWeights);

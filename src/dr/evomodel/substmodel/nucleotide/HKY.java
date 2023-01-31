@@ -322,19 +322,31 @@ public class HKY extends BaseSubstitutionModel implements Citable,
 
 
     public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
-
-        byte[] rateMap = new byte[rateCount];
-        Arrays.fill(rateMap, (byte) 0);
-        rateMap[1] = rateMap[4] = 1;
-
-        for (int i = 0; i < rateCount; ++i) {
-            differentialRates[i] = wrt.getRate(rateMap[i]) / normalizingConstant;
-        }
+        double[] relativeRates = new double[rateCount];
+        setupRelativeRates(relativeRates);
+        wrt.setupDifferentialRates(differentialRates, relativeRates, normalizingConstant);
     }
 
     @Override
-    public double getWeightedNormalizationGradient(WrtParameter wrtParameter, double[][] differentialMassMatrix, double[] frequencies) {
-        return getNormalizationValue(differentialMassMatrix, frequencies);
+    public void setupDifferentialFrequency(WrtParameter wrt, double[] differentialFrequency) {
+        wrt.setupDifferentialFrequencies(differentialFrequency, getFrequencyModel().getFrequencies());
+    }
+
+    @Override
+    public double getWeightedNormalizationGradient(WrtParameter wrtParameter, double[][] differentialMassMatrix, double[] differentialFrequencies) {
+        double[] frequencies = getFrequencyModel().getFrequencies();
+        double[] Q = new double[stateCount * stateCount];
+        getInfinitesimalMatrix(Q);
+        double[] QDiagonal = new double[stateCount];
+        for (int i = 0; i < stateCount; i++) {
+            QDiagonal[i] = Q[i * stateCount + i];
+        }
+        double[] differentialMassMatrixDiagonal = new double[stateCount];
+        for (int i = 0; i < stateCount; i++) {
+            differentialMassMatrixDiagonal[i] = differentialMassMatrix[i][i];
+        }
+        //TODO: fix numeric gradient for Frequencies?
+        return ((WrtHKYModelParameter) wrtParameter).getWeightedNormalizationGradient(differentialMassMatrixDiagonal, QDiagonal, differentialFrequencies, frequencies);
     }
 
     @Override
@@ -343,10 +355,18 @@ public class HKY extends BaseSubstitutionModel implements Citable,
     }
 
     @Override
-    public WrtParameter factory(Parameter parameter) {
+    public WrtParameter factory(Parameter parameter, int dim) {
         WrtHKYModelParameter wrt;
         if (parameter == kappaParameter) {
             wrt = WrtHKYModelParameter.KAPPA;
+        } else if (parameter == freqModel.getFrequencyParameter()) {
+            switch(dim) {
+                case 0:
+                    wrt = WrtHKYModelParameter.FREQ_A;
+                    break;
+                default:
+                    throw new RuntimeException("Not yet implemented!");
+            }
         } else {
             throw new RuntimeException("Not yet implemented!");
         }
@@ -355,6 +375,11 @@ public class HKY extends BaseSubstitutionModel implements Citable,
 
     enum WrtHKYModelParameter implements WrtParameter {
         KAPPA {
+            @Override
+            double getWeightedNormalizationGradient(double[] differentialMassMatrixDiagonal, double[] infinitesimalMatrixDiagonal, double[] differentialFrequencies, double[] frequencies) {
+                return getInnerProduct(differentialMassMatrixDiagonal, frequencies);
+            }
+
             @Override
             public double getRate(int switchCase) {
                 switch (switchCase) {
@@ -368,6 +393,64 @@ public class HKY extends BaseSubstitutionModel implements Citable,
             public double getNormalizationDifferential() {
                 return 1.0;
             }
+
+            @Override
+            public void setupDifferentialFrequencies(double[] differentialFrequencies, double[] frequencies) {
+                System.arraycopy(frequencies, 0, differentialFrequencies, 0, frequencies.length);
+            }
+
+            @Override
+            public void setupDifferentialRates(double[] differentialRates, double[] relativeRates, double normalizingConstant) {
+                byte[] rateMap = new byte[relativeRates.length];
+                Arrays.fill(rateMap, (byte) 0);
+                rateMap[1] = rateMap[4] = 1;
+
+                for (int i = 0; i < relativeRates.length; ++i) {
+                    differentialRates[i] = getRate(rateMap[i]) / normalizingConstant;
+                }
+            }
+
+        },
+        FREQ_A {
+            @Override
+            double getWeightedNormalizationGradient(double[] differentialMassMatrixDiagonal, double[] infinitesimalMatrixDiagonal, double[] differentialFrequencies, double[] frequencies) {
+                return getInnerProduct(differentialMassMatrixDiagonal, frequencies) + getInnerProduct(infinitesimalMatrixDiagonal, differentialFrequencies);
+            }
+
+            @Override
+            public double getRate(int switchCase) {
+                return 0;
+            }
+
+            @Override
+            public double getNormalizationDifferential() {
+                return 1.0;
+            }
+
+            @Override
+            public void setupDifferentialFrequencies(double[] differentialFrequencies, double[] frequencies) {
+                Arrays.fill(differentialFrequencies, 0);
+                differentialFrequencies[0] = 1.0;
+            }
+
+            @Override
+            public void setupDifferentialRates(double[] differentialRates, double[] relativeRates, double normalizingConstant) {
+                for (int i = 0; i < relativeRates.length; i++) {
+                    differentialRates[i] = relativeRates[i] / normalizingConstant;
+                }
+            }
+        };
+
+        abstract double getWeightedNormalizationGradient(double[] differentialMassMatrixDiagonal, double[] infinitesimalMatrixDiagonal,
+                                                         double[] differentialFrequencies, double[] frequencies);
+
+        public double getInnerProduct(double[] frequencies, double[] diagonals) {
+            double subst = 0.0;
+
+            for (int i = 0; i < frequencies.length; i++)
+                subst -= frequencies[i] * diagonals[i];
+
+            return subst;
         }
     }
 }

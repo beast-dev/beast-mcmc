@@ -89,11 +89,17 @@ public class MathUtils {
 			}
 
 		}
-		for (int i = 0; i < pdf.length; i++) {
-			System.out.println(i + "\t" + pdf[i]);
+
+		// fallen through so throw error...
+		StringBuilder sb = new StringBuilder("pdf=[");
+		sb.append(pdf[0]);
+		for (int i = 1; i < pdf.length; i++) {
+			sb.append(",");
+			sb.append(pdf[i]);
 		}
+		sb.append("]");
 		throw new Error("randomChoicePDF falls through -- negative, infinite or NaN components in input " +
-				"distribution, or all zeroes?");
+				"distribution, or all zeroes? " + sb.toString());
 	}
 
 	/**
@@ -466,22 +472,46 @@ public class MathUtils {
 		if (x.length != y.length) return false;
 
 		for (int i = 0, dim = x.length; i < dim; ++i) {
-			if (!(Math.abs(x[i] - y[i]) <= tolerance)) return false;
+			if (Double.isNaN(x[i]) || Double.isNaN(y[i])) return false;
+			if (Math.abs(x[i] - y[i]) > tolerance) return false;
 		}
 
 		return true;
+	}
+
+	public static boolean isClose(double x, double y, double tolerance) {
+		return Math.abs(x - y) < tolerance;
 	}
 
 	public static boolean isRelativelyClose(double[] x, double[] y, double relativeTolerance) {
 		if (x.length != y.length) return false;
 
 		for (int i = 0, dim = x.length; i < dim; ++i) {
-			double relativeDifference = 2 * (x[i] - y[i]) / (x[i] + y[i]);
-			if (Math.abs(relativeDifference) > relativeTolerance) {
+			if (!isRelativelyClose(x[i], y[i], relativeTolerance)) {
 				return false;
 			}
 		}
 
 		return true;
 	}
+
+	public static boolean isRelativelyClose(double x, double y, double relativeTolerance) {
+		double relativeDifference = 2 * (x - y) / (x + y);
+		if (Math.abs(relativeDifference) > relativeTolerance) {
+			return false;
+		}
+
+		return true;
+	}
+
+    public static double maximum(double[] array) {
+        double max = array[0];
+        for (double x : array) {
+            if (x > max) {
+                max = x;
+            }
+        }
+
+        return max;
+    }
 }

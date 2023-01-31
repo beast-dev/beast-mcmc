@@ -40,6 +40,7 @@ import dr.xml.Reportable;
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
+@Deprecated   // What is this class?
 public class LocalBranchRates extends ArbitraryBranchRates implements Reportable {
 
     private TreeModel tree;

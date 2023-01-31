@@ -26,7 +26,6 @@
 package dr.evomodel.continuous.hmc;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
@@ -57,7 +56,7 @@ public class TreePrecisionColumnProvider extends AbstractModel
     final Tree tree;
     private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
     private final ContinuousTraitPartialsProvider tipData;
-    private final Map<Integer, double[]> treeCache = new HashMap<Integer, double[]>();
+    private final Map<Integer, double[]> treeCache = new HashMap<>();
 
     private final int numTaxa;
     private final int dimTrait;
@@ -77,8 +76,8 @@ public class TreePrecisionColumnProvider extends AbstractModel
 
         assert (likelihoodDelegate.getTraitCount() == 1);
 
-        if (tree instanceof TreeModel) {
-            addModel((TreeModel) tree);
+        if (tree instanceof Model) {
+            addModel((Model) tree);
         }
     }
 
@@ -111,8 +110,12 @@ public class TreePrecisionColumnProvider extends AbstractModel
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
-            treeCache.clear();
+            clearTreeCache();
         }
+    }
+
+    protected void clearTreeCache() {
+        treeCache.clear();
     }
 
     @Override

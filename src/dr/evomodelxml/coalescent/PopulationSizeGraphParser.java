@@ -31,6 +31,7 @@ import dr.xml.*;
 
 /**
  */
+@Deprecated
 public class PopulationSizeGraphParser extends AbstractXMLObjectParser {
 
     public static String POPGRAPH_STATISTIC = "popGraph";

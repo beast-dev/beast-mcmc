@@ -26,6 +26,7 @@
 package dr.oldevomodelxml.substmodel;
 
 import dr.evolution.datatype.Microsatellite;
+import dr.inference.model.ParameterParser;
 import dr.oldevomodel.substmodel.AsymmetricQuadraticModel;
 import dr.oldevomodel.substmodel.FrequencyModel;
 import dr.inference.model.Parameter;
@@ -91,12 +92,7 @@ public class AsymQuadModelParser extends AbstractXMLObjectParser{
 
     private Parameter processModelParameter(XMLObject xo,
                                           String parameterName)throws XMLParseException{
-        Parameter param = null;
-        if(xo.hasChildNamed(parameterName)){
-            XMLObject paramXO = xo.getChild(parameterName);
-            param =(Parameter) paramXO.getChild(Parameter.class);           
-        }
-        return param;
+        return ParameterParser.getOptionalParameter(xo, parameterName);
     }
 
     public String getParserDescription() {

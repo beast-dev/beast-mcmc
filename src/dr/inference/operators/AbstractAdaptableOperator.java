@@ -66,6 +66,11 @@ public abstract class AbstractAdaptableOperator extends SimpleMCMCOperator imple
     }
 
     @Override
+    public final void setAdaptationCount(long count) {
+        adaptationCount = count;
+    }
+
+    @Override
     public final void setAdaptableParameter(double value) {
         setAdaptableParameterValue(value);
         adaptationCount ++;

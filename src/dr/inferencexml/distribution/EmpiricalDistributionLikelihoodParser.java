@@ -25,11 +25,16 @@
 
 package dr.inferencexml.distribution;
 
+import dr.inference.distribution.EmpiricalDistributionData;
 import dr.inference.distribution.EmpiricalDistributionLikelihood;
 import dr.inference.distribution.SplineInterpolatedLikelihood;
 import dr.inference.model.Likelihood;
+import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.xml.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -41,38 +46,82 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
     public static final String DATA = "data";
     public static final String FROM = "from";
     public static final String TO = "to";
-    public static final String SPLINE_INTERPOLATION = "splineInterpolation";
-    public static final String DEGREE = "degree";
-    public static final String INVERSE = "inverse";
-    public static final String READ_BY_COLUMN = "readByColumn";
+    private static final String SPLINE_INTERPOLATION = "splineInterpolation";
+    private static final String DEGREE = "degree";
+    private static final String INVERSE = "inverse";
+    private static final String READ_BY_COLUMN = "readByColumn";
     public static final String OFFSET="offset";
     public static final String LOWER = "lower";
     public static final String UPPER = "upper";
+
+    private static final String FILE_INFORMATION = "fileInformation";
+    private static final String RAW_VALUES = "grid";
+    private static final String LIKELIHOOD = "logLikelihood";
+    private static final String VALUES = "value";
+    private static final String DENSITY_IN_LOG_SPACE = "densityInLogSpace";
 
     public String getParserName() {
         return EmpiricalDistributionLikelihood.EMPIRICAL_DISTRIBUTION_LIKELIHOOD;
     }
 
+    private Parameter getRawValues(String name, XMLObject xo) throws XMLParseException {
+        return getRawValues(xo.getChild(name));
+    }
+
+    private Parameter getRawValues(XMLObject cxo) throws XMLParseException {
+        Parameter parameter;
+        if (cxo.getChild(0) instanceof Parameter) {
+            parameter = (Parameter) cxo.getChild(Parameter.class);
+        } else {
+            parameter = new Parameter.Default(cxo.getDoubleArrayChild(0));
+        }
+        return parameter;
+    }
+
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        String fileName = xo.getStringAttribute(FILE_NAME);
-
-        boolean splineInterpolation = xo.getAttribute(SPLINE_INTERPOLATION,false);
-        int degree = xo.getAttribute(DEGREE,3); // Default is cubic-spline
-
-        boolean inverse = xo.getAttribute(INVERSE,false);
-
-        boolean byColumn = xo.getAttribute(READ_BY_COLUMN,true);
+        boolean splineInterpolation = xo.getAttribute(SPLINE_INTERPOLATION, false);
+        int degree = xo.getAttribute(DEGREE, 3); // Default is cubic-spline
+        boolean inverse = xo.getAttribute(INVERSE, false);
 
         EmpiricalDistributionLikelihood likelihood;
+        if (xo.hasChildNamed(FILE_INFORMATION)) {
 
-        if (splineInterpolation) {
-            if( degree < 1 )
-                throw new XMLParseException("Spline degree must be greater than zero!");
-            likelihood = new SplineInterpolatedLikelihood(fileName,degree,inverse,byColumn);
-        } else
-            //likelihood = new EmpiricalDistributionLikelihood(fileName,inverse,byColumn);
-            throw new XMLParseException("Only spline-interpolated empirical distributions are currently support");
+            String fileName = xo.getStringAttribute(FILE_NAME);
+            boolean byColumn = xo.getAttribute(READ_BY_COLUMN, true);
+
+            if (splineInterpolation) {
+                if (degree < 1)
+                    throw new XMLParseException("Spline degree must be greater than zero!");
+                likelihood = new SplineInterpolatedLikelihood(fileName, degree, inverse, byColumn);
+            } else
+                //likelihood = new EmpiricalDistributionLikelihood(fileName,inverse,byColumn);
+                throw new XMLParseException("Only spline-interpolated empirical distributions are currently support");
+
+        } else {
+
+            List<EmpiricalDistributionData> dataList = new ArrayList<>();
+
+            for (int i = 0; i < xo.getChildCount(); ++i) {
+                XMLObject cxo = (XMLObject) xo.getChild(i);
+                if (cxo.getName().equals(RAW_VALUES)) {
+                    Parameter thetaParameter = getRawValues(VALUES, cxo);
+                    Parameter likelihoodParameter = getRawValues(LIKELIHOOD, cxo);
+
+                    if (likelihoodParameter.getDimension() != thetaParameter.getDimension()) {
+                        throw new XMLParseException("Unequal grid lengths");
+                    }
+
+                    boolean densityInLogSpace = cxo.getAttribute(DENSITY_IN_LOG_SPACE, true);
+
+                    dataList.add(new EmpiricalDistributionData(
+                            thetaParameter.getParameterValues(), likelihoodParameter.getParameterValues(),
+                            densityInLogSpace));
+                }
+            }
+
+            likelihood = new SplineInterpolatedLikelihood(dataList, degree, inverse);
+        }
 
         XMLObject cxo1 = xo.getChild(DATA);
         final int from = cxo1.getAttribute(FROM, -1);
@@ -94,6 +143,11 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
             } else {
                 throw new XMLParseException("illegal element in " + cxo1.getName() + " element");
             }
+        }
+
+        if (likelihood.getDistributionDimension() != 1 &&
+                (likelihood.getDistributionDimension() != likelihood.getDimension())) {
+            throw new XMLParseException("Data dimension != distribution dimension");
         }
 
         double offset = cxo1.getAttribute(OFFSET,0); 
@@ -118,15 +172,36 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newStringRule(FILE_NAME),
-            AttributeRule.newBooleanRule(SPLINE_INTERPOLATION,true),
-            AttributeRule.newIntegerRule(DEGREE,true),
-            AttributeRule.newBooleanRule(INVERSE,true),
-            AttributeRule.newBooleanRule(READ_BY_COLUMN,true),
+
+            AttributeRule.newBooleanRule(SPLINE_INTERPOLATION, true),
+            AttributeRule.newIntegerRule(DEGREE, true),
+            AttributeRule.newBooleanRule(INVERSE, true),
+            new XORRule(
+                    new ElementRule(FILE_INFORMATION, new XMLSyntaxRule[]{
+                            AttributeRule.newBooleanRule(READ_BY_COLUMN, true),
+                            AttributeRule.newStringRule(FILE_NAME),
+                    }),
+                    new ElementRule(RAW_VALUES, new XMLSyntaxRule[]{
+                            AttributeRule.newBooleanRule(DENSITY_IN_LOG_SPACE, true),
+                            new ElementRule(LIKELIHOOD,
+                                    new XMLSyntaxRule[]{
+                                            new XORRule(
+                                                    new ElementRule(Parameter.class),
+                                                    new ElementRule(Double.class) // TODO Fix for array
+                                            )}),
+                            new ElementRule(VALUES,
+                                    new XMLSyntaxRule[]{
+                                            new XORRule(
+                                                    new ElementRule(Parameter.class),
+                                                    new ElementRule(Double.class) // TODO Fix for array
+                                            )}
+                            ),
+
+                    }, 1, Integer.MAX_VALUE)),
             new ElementRule(DATA, new XMLSyntaxRule[]{
                     AttributeRule.newIntegerRule(FROM, true),
                     AttributeRule.newIntegerRule(TO, true),
-                    AttributeRule.newDoubleRule(OFFSET,true),
+                    AttributeRule.newDoubleRule(OFFSET, true),
                     AttributeRule.newDoubleRule(LOWER, true),
                     AttributeRule.newDoubleRule(UPPER, true),
                     new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)

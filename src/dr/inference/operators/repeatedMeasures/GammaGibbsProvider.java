@@ -1,10 +1,8 @@
 package dr.inference.operators.repeatedMeasures;
 
 import dr.evolution.tree.TreeTrait;
+import dr.evomodel.continuous.MatrixShrinkageLikelihood;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
-import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.LogNormalDistributionModel;
@@ -16,7 +14,6 @@ import dr.inference.model.Parameter;
 import dr.math.distributions.Distribution;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Attribute;
-import org.ejml.data.DenseMatrix64F;
 
 import java.util.List;
 
@@ -39,7 +36,7 @@ public interface GammaGibbsProvider {
         final public int observationCount;
         final public double sumOfSquaredErrors;
 
-        SufficientStatistics(int observationCount, double sumOfSquaredErrors) {
+        public SufficientStatistics(int observationCount, double sumOfSquaredErrors) {
             this.observationCount = observationCount;
             this.sumOfSquaredErrors = sumOfSquaredErrors;
         }
@@ -118,16 +115,15 @@ public interface GammaGibbsProvider {
         private final TreeTrait tipTrait;
         private final boolean[] missingVector;
 
-        private double tipValues[];
+        private double[] tipValues;
 
         public NormalExtensionGibbsProvider(ModelExtensionProvider.NormalExtensionProvider dataModel,
-                                            TreeDataLikelihood treeLikelihood,
-                                            String traitName) {
+                                            TreeDataLikelihood treeLikelihood) {
             this.dataModel = dataModel;
             this.treeLikelihood = treeLikelihood;
             this.traitParameter = dataModel.getParameter();
-            this.tipTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + traitName);
-            this.missingVector = dataModel.getMissingIndicator();
+            this.tipTrait = treeLikelihood.getTreeTrait(dataModel.getTipTraitName());
+            this.missingVector = dataModel.getDataMissingIndicators();
 
             MatrixParameterInterface matrixParameter = dataModel.getExtensionPrecision();
 
@@ -186,5 +182,61 @@ public interface GammaGibbsProvider {
 
         private static final boolean DEBUG = false;
     }
+
+    class MultiplicativeGammaGibbsProvider implements GammaGibbsProvider {
+        // TODO: add citation to "Sparse Bayesian infinite factor models BY A. BHATTACHARYA AND D. B. DUNSON, Biometrika (2011)"
+
+        private final Parameter rowMultipliers;
+        private final MultiplicativeGammaGibbsHelper helper;
+
+        public MultiplicativeGammaGibbsProvider(Parameter rowMultipliers,
+                                                MultiplicativeGammaGibbsHelper helper) {
+            this.rowMultipliers = rowMultipliers;
+            this.helper = helper;
+        }
+
+
+        @Override
+        public SufficientStatistics getSufficientStatistics(int dim) {
+
+
+            double rateSum = 0;
+
+            int k = helper.getColumnDimension();
+            int p = helper.getRowDimension();
+
+            for (int i = dim; i < k; i++) {
+                double globalConst = gpMult(i + 1, dim);
+                double sumSquares = helper.computeSumSquaredErrors(i);
+
+                rateSum += globalConst * sumSquares;
+            }
+
+            return new SufficientStatistics(p * (k - dim), rateSum);
+
+        }
+
+        @Override
+        public Parameter getPrecisionParameter() {
+            return rowMultipliers;
+        }
+
+        @Override
+        public void drawValues() {
+            // do nothing
+        }
+
+        private double gpMult(int multTo, int skip) { // TODO: probably could be more efficient
+            double value = 1.0;
+            for (int i = 0; i < multTo; i++) {
+                if (i != skip) { // TODO: could remove 'if' statement with two for loops (probably doesn't matter)
+                    value *= rowMultipliers.getParameterValue(i);
+                }
+            }
+            return value;
+        }
+
+    }
+
 
 }

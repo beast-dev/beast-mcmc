@@ -27,7 +27,6 @@ package dr.evomodel.treedatalikelihood;
 
 import beagle.Beagle;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.PreOrderSettings;
 
 /**
  * Implementations of this interface are used to delegate control of substitution

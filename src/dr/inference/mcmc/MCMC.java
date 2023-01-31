@@ -161,7 +161,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
                 if (initialStateLoader != null) {
                     double[] savedLnL = new double[1];
 
-                    initialStateLoader.loadState(mc, savedLnL);
+                    loadedState = initialStateLoader.loadState(mc, savedLnL);
 
                     mc.setCurrentLength(loadedState);
 
@@ -175,14 +175,15 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
             long chainLength = getChainLength();
 
-            //this also potentially gets the new adapationDelay of a possibly increased chain length
-            final long adapationDelay = getAdaptationDelay();
+            //this also potentially gets the new adaptationDelay of a possibly increased chain length
+            final long adaptationDelay = getAdaptationDelay();
 
-            //assume that saved state has passed the adapationDelay
-            //TODO: discuss whether we want to save the adapationDelay or chainLength to file
-            if (adapationDelay > loadedState) {
-                mc.runChain(adapationDelay - loadedState, true);
-                chainLength -= adapationDelay;
+            //assume that saved state has passed the adaptationDelay
+            //TODO: discuss whether we want to save the adaptationDelay or chainLength to file
+//            System.out.println("adaptationDelay = " + adaptationDelay + " vs. loadedState = " +loadedState);
+            if (adaptationDelay > loadedState) {
+                mc.runChain(adaptationDelay - loadedState, true);
+                chainLength -= adaptationDelay;
 
                 for (int i = 0; i < schedule.getOperatorCount(); i++) {
                     schedule.getOperator(i).reset();

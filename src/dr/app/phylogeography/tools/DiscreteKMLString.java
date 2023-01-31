@@ -25,14 +25,19 @@
 
 package dr.app.phylogeography.tools;
 
-import jebl.evolution.trees.RootedTree;
 import jebl.evolution.graphs.Node;
 import jebl.evolution.taxa.Taxon;
+import jebl.evolution.trees.RootedTree;
+import jebl.evolution.trees.RootedTreeUtils;
+
 
 import java.io.PrintWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * @author Philippe Lemey
@@ -86,8 +91,10 @@ public class DiscreteKMLString {
 
     //treeSlices
     //String treeSliceBranchColor = "FFFF00"; //red: 0000FF green: 00FF00 magenta: FF00FF white: FFFFFF yellow: 00FFFF cyan: FFFF00
-    double treeSliceBranchWidth = 3.5;
-    boolean showBranchAtMidPoint = false; // shows complete branch for slice if time is more recent than the branch's midpoint
+//    double treeSliceBranchWidth = 3.5;
+//   boolean showBranchAtMidPoint = false; // shows complete branch for slice if time is more recent than the branch's midpoint
+
+    Set sampledTaxaSet;
 
     //everything is written to separate buffers, and than collected in structured KML document by compileBuffer
     StringBuffer branchesBuffer = new StringBuffer();
@@ -123,9 +130,13 @@ public class DiscreteKMLString {
         stateCoordinates = locationCoordinates;
         stateNames = locationNames;
 
+//        if (mostRecentDate - (treeToExport.getHeight(treeToExport.getRootNode())*timeScaler) < 0) {
+//            ancient = true;
+//        }
         if (mostRecentDate - (treeToExport.getHeight(treeToExport.getRootNode())*timeScaler) < 0) {
             ancient = true;
         }
+
     }
 
     public DiscreteKMLString(RootedTree tree, String annotation, String name, double date, String[][] stateLocations, String startBranchColor, String endBranchColor, double timeScaler){
@@ -203,7 +214,7 @@ public class DiscreteKMLString {
         }
     }
 
-    public DiscreteKMLString(RootedTree tree, String annotation, String[][] stateLocations, String name, double date, double timeScaler, double divider, double branchWidthConstant, double branchWidthMultiplier, boolean useStateProbability, double branchWidth, String startBranchColor, String endBranchColor, String branchColor, boolean useHeights, boolean usePosterior, boolean arcBranches, boolean arcTimeHeight, double altitudeFactor, boolean temporary, int numberOfIntervals, double radius, String circleOpacity, boolean coordinatesForTaxa, String[][] taxaCoordinates, boolean makeTreeSlices) {
+    public DiscreteKMLString(RootedTree tree, String annotation, String[][] stateLocations, String name, double date, double timeScaler, double divider, double branchWidthConstant, double branchWidthMultiplier, boolean useStateProbability, double branchWidth, String startBranchColor, String endBranchColor, String branchColor, boolean useHeights, boolean usePosterior, boolean arcBranches, boolean arcTimeHeight, double altitudeFactor, boolean temporary, int numberOfIntervals, double radius, String circleOpacity, boolean coordinatesForTaxa, String[][] taxaCoordinates, boolean makeTreeSlices, Set sampledTaxaSet) {
         treeToExport = tree;
         this.annotation = annotation;
         documentName = name;
@@ -258,6 +269,9 @@ public class DiscreteKMLString {
             this.radius = radius;
         }
         this.circleOpacity = circleOpacity;
+
+        this.sampledTaxaSet = sampledTaxaSet;
+
 
         //System.out.println(useHeights+"\t"+startBranchColor+"\t"+endBranchColor);
 
@@ -316,233 +330,238 @@ public class DiscreteKMLString {
         heightMinAndMax[0] = 0;
         heightMinAndMax[1] = treeToExport.getHeight(treeToExport.getRootNode());
 
-        for (Node node : treeToExport.getNodes()) {
-            nodeNumber++;
-            String state = ((((String)node.getAttribute(annotation)).replaceAll("\"","")).replaceAll(" ","")).trim();
-            //in case the location state is a concatenation of other states (occurs when they get the same posterior prob)
-            if (state.contains("+")) {
-                state = state.substring(0,state.indexOf("+"));
-            }
+        for (Node node: treeToExport.getNodes()){
 
-
-            if (!treeToExport.isRoot(node)) {
-
-                Node parentNode = treeToExport.getParent(node);
-
-                // test to see node has the attribute
-                Object testAttribute = parentNode.getAttribute(annotation);
-                if (testAttribute == null) {
-                    System.err.print("An internal node has no state attribute; make sure to set the posterior probability limit to 0 when annotating an MCC tree in TreeAnnotator!");        
+            if (sampledTaxa(sampledTaxaSet,treeToExport,node)){
+                nodeNumber++;
+                String state = ((String)node.getAttribute(annotation)).replaceAll("\"","").replaceAll(" ","").trim();
+                //in case the location state is a concatenation of other states (occurs when they get the same posterior prob)
+                if (state.contains("+")) {
+                    state = state.substring(0,state.indexOf("+"));
                 }
 
-                String parentState = ((((String)parentNode.getAttribute(annotation)).replaceAll("\"","")).replaceAll(" ","")).trim();
 
-                if (parentState.contains("+")) {
-                    parentState = parentState.substring(0,parentState.indexOf('+'));
-                }
+                if (!treeToExport.isRoot(node)) {
 
-                boolean considerTaxonCoordinateForThisNode = false;
-                if (coordinatesForTaxa) {
-                    if (treeToExport.isExternal(node)) {
-                        if (taxonHasSeparateCoordinate(treeToExport.getTaxon(node),taxaNames)){
-                            considerTaxonCoordinateForThisNode = true;
-                        }
+                    Node parentNode = treeToExport.getParent(node);
+                    // test to see node has the attribute
+                    Object testAttribute = parentNode.getAttribute(annotation);
+                    if (testAttribute == null) {
+                        System.err.print("An internal node has no state attribute; make sure to set the posterior probability limit to 0 when annotating an MCC tree in TreeAnnotator!");
                     }
-                }
 
-                if (!(state.toLowerCase()).equals(parentState.toLowerCase()) || considerTaxonCoordinateForThisNode) {
+                    String parentState = ((((String)parentNode.getAttribute(annotation)).replaceAll("\"","")).replaceAll(" ","")).trim();
 
-                    double stateProbability = (Double)node.getAttribute(annotation+".prob");
-                    double latitude = getCoordinate(state, stateNames, stateCoordinates, 0);
-                    double longitude = getCoordinate(state, stateNames, stateCoordinates, 1);
-                    double posteriorProb = 1;
-                    if (!treeToExport.isExternal(node)) {
-                        posteriorProb = (Double)node.getAttribute("posterior");
-                    } else {
-                        if (considerTaxonCoordinateForThisNode) {
-                            latitude  = getTaxaCoordinate(treeToExport.getTaxon(node), taxaNames, taxaCoordinates, 0);
-                            longitude  = getTaxaCoordinate(treeToExport.getTaxon(node), taxaNames, taxaCoordinates, 1);
+                    if (parentState.contains("+")) {
+                        parentState = parentState.substring(0,parentState.indexOf('+'));
+                    }
+
+                    boolean considerTaxonCoordinateForThisNode = false;
+                    if (coordinatesForTaxa) {
+                        if (treeToExport.isExternal(node)) {
+                            if (taxonHasSeparateCoordinate(treeToExport.getTaxon(node),taxaNames)){
+                                considerTaxonCoordinateForThisNode = true;
+                            }
                         }
                     }
 
-                    if ((latitude == 0) && (longitude == 0)) {
-                        System.err.println(state+" has no coordinate??");
-                    }
+                    if (!(state.toLowerCase()).equals(parentState.toLowerCase()) || considerTaxonCoordinateForThisNode) {
 
-                    double parentStateProbability = (Double)parentNode.getAttribute(annotation+".prob");
-                    double parentLatitude = getCoordinate(parentState, stateNames, stateCoordinates, 0);
-                    double parentLongitude = getCoordinate(parentState, stateNames, stateCoordinates, 1);
-
-                    //System.out.println(latitude+"\t"+parentLatitude+"\t"+longitude+"\t"+parentLongitude);
-
-                    // distance used for chopping up and altitude
-                    double distance = (3958*Math.PI*Math.sqrt((parentLatitude-latitude)*(parentLatitude-latitude)+Math.cos(parentLatitude/57.29578)*Math.cos(latitude/57.29578)*(parentLongitude-longitude)*(parentLongitude-longitude))/180);
-                    double maxAltitude;
-                    if (arcTimeHeight) {
-                        maxAltitude = (treeToExport.getHeight(parentNode) - treeToExport.getHeight(node))*altitudeFactor;
-                    } else {
-                        maxAltitude = distance*altitudeFactor;
-                    }
-                    // check if we have to go through the 180
-                    boolean longitudeBreak = longitudeBreak(longitude,parentLongitude);
-                    double latitudeDifference = parentLatitude - latitude;
-                    double longitudeDifference;
-                    if (!longitudeBreak) {
-                        longitudeDifference = parentLongitude - longitude;
-                    } else {
-                        if (parentLongitude < 0){
-                            longitudeDifference = (180+parentLongitude) + (180-longitude);
+                        double stateProbability = (Double)node.getAttribute(annotation+".prob");
+                        double latitude = getCoordinate(state, stateNames, stateCoordinates, 0);
+                        double longitude = getCoordinate(state, stateNames, stateCoordinates, 1);
+                        double posteriorProb = 1;
+                        if (!treeToExport.isExternal(node)) {
+                            posteriorProb = (Double)node.getAttribute("posterior");
                         } else {
-                            longitudeDifference = (180-parentLongitude) + (180+longitude);
-                        }                       
-                    }
-
-                    branchesBuffer.append("\t<Folder>\r");
-
-                    branchesBuffer.append("\t\t\t<name>branch"+ nodeNumber +"</name>\r");
-                    //System.out.println("branch "+nodeNumber+"\t+state+"+"\t"+latitude+"\t"+longitude+"\t"+parentLatitude+"\t"+parentLongitude);
-
-                    //divider dependent on distance
-                    //divider = (2*(int)(distance/25));
-
-                    double currentLongitude1 = 0;
-                    double currentLongitude2 = 0;
-                    for (int a = 0; a < divider; a ++) {
-
-                        branchesBuffer.append("\t\t<Placemark>\r");
-
-                        branchesBuffer.append("\t\t\t<name>branch"+ nodeNumber +"_part"+(a+1)+"</name>\r");
-
-                        branchesBuffer.append("\t\t\t<TimeSpan>\r");
-                        //convert height of the branch segment to a real date (based on th date for the most recent sample)
-                        double date = mostRecentDate - ((treeToExport.getHeight(node)*timeScaler) + (a + 1) *
-                            (((treeToExport.getHeight(parentNode)*timeScaler) - ((treeToExport.getHeight(node))*timeScaler))/divider));
-                        //used to make branches dissapear over time
-                        double endDate = mostRecentDate - ((treeToExport.getHeight(node)*timeScaler) - (divider-(a + 1)) *
-                            (((treeToExport.getHeight(parentNode)*timeScaler) - ((treeToExport.getHeight(node))*timeScaler))/divider));
-                        if (endDate > mostRecentDate) {
-                            endDate = mostRecentDate;
+                            if (considerTaxonCoordinateForThisNode) {
+                                latitude  = getTaxaCoordinate(treeToExport.getTaxon(node), taxaNames, taxaCoordinates, 0);
+                                longitude  = getTaxaCoordinate(treeToExport.getTaxon(node), taxaNames, taxaCoordinates, 1);
+                            }
                         }
-                        String[] yearMonthDay = convertToYearMonthDay(date);
-                        String[] endYearMonthDay = convertToYearMonthDay(endDate);
-                        //System.out.println(yearMonthDay[0]+"\t"+date+"\t"+mostRecentDate+"\t"+(treeToExport.getHeight(node) + (a + 1) * ((treeToExport.getHeight(parentNode) - (treeToExport.getHeight(node)))/divider))+"\t"+date);
-                        if (ancient) {
-                            branchesBuffer.append("\t\t\t\t<begin>"+Math.round(date)+"</begin>\r");
+
+                        if ((latitude == 0) && (longitude == 0)) {
+                            System.err.println(state+" has no coordinate??");
+                        }
+
+                        double parentStateProbability = (Double)parentNode.getAttribute(annotation+".prob");
+                        double parentLatitude = getCoordinate(parentState, stateNames, stateCoordinates, 0);
+                        double parentLongitude = getCoordinate(parentState, stateNames, stateCoordinates, 1);
+
+                        //System.out.println(latitude+"\t"+parentLatitude+"\t"+longitude+"\t"+parentLongitude);
+
+                        // distance used for chopping up and altitude
+                        double distance = (3958*Math.PI*Math.sqrt((parentLatitude-latitude)*(parentLatitude-latitude)+Math.cos(parentLatitude/57.29578)*Math.cos(latitude/57.29578)*(parentLongitude-longitude)*(parentLongitude-longitude))/180);
+                        double maxAltitude;
+                        if (arcTimeHeight) {
+                            maxAltitude = (treeToExport.getHeight(parentNode) - treeToExport.getHeight(node))*altitudeFactor;
+                            maxAltitude = (treeToExport.getHeight(parentNode) - treeToExport.getHeight(node))*altitudeFactor;
                         } else {
-                            branchesBuffer.append("\t\t\t\t<begin>"+yearMonthDay[0]+"-"+yearMonthDay[1]+"-"+yearMonthDay[2]+"</begin>\r");
+                            maxAltitude = distance*altitudeFactor;
+                        }
+                        // check if we have to go through the 180
+                        boolean longitudeBreak = longitudeBreak(longitude,parentLongitude);
+                        double latitudeDifference = parentLatitude - latitude;
+                        double longitudeDifference;
+                        if (!longitudeBreak) {
+                            longitudeDifference = parentLongitude - longitude;
+                        } else {
+                            if (parentLongitude < 0){
+                                longitudeDifference = (180+parentLongitude) + (180-longitude);
+                            } else {
+                                longitudeDifference = (180-parentLongitude) + (180+longitude);
+                            }
                         }
 
-                        if (temporary) {
+                        branchesBuffer.append("\t<Folder>\r");
+
+                        branchesBuffer.append("\t\t\t<name>branch"+ nodeNumber +"</name>\r");
+                        //System.out.println("branch "+nodeNumber+"\t+state+"+"\t"+latitude+"\t"+longitude+"\t"+parentLatitude+"\t"+parentLongitude);
+
+                        //divider dependent on distance
+                        //divider = (2*(int)(distance/25));
+
+                        double currentLongitude1 = 0;
+                        double currentLongitude2 = 0;
+                        for (int a = 0; a < divider; a ++) {
+
+                            branchesBuffer.append("\t\t<Placemark>\r");
+
+                            branchesBuffer.append("\t\t\t<name>branch"+ nodeNumber +"_part"+(a+1)+"</name>\r");
+
+                            branchesBuffer.append("\t\t\t<TimeSpan>\r");
+                            //convert height of the branch segment to a real date (based on th date for the most recent sample)
+                            double date = mostRecentDate - ((treeToExport.getHeight(node)*timeScaler) + (a + 1) *
+                                    (((treeToExport.getHeight(parentNode)*timeScaler) - ((treeToExport.getHeight(node))*timeScaler))/divider));
+                            //used to make branches dissapear over time
+                            double endDate = mostRecentDate - ((treeToExport.getHeight(node)*timeScaler) - (divider-(a + 1)) *
+                                    (((treeToExport.getHeight(parentNode)*timeScaler) - ((treeToExport.getHeight(node))*timeScaler))/divider));
+                            if (endDate > mostRecentDate) {
+                                endDate = mostRecentDate;
+                            }
+                            String[] yearMonthDay = convertToYearMonthDay(date);
+                            String[] endYearMonthDay = convertToYearMonthDay(endDate);
+                            //System.out.println(yearMonthDay[0]+"\t"+date+"\t"+mostRecentDate+"\t"+(treeToExport.getHeight(node) + (a + 1) * ((treeToExport.getHeight(parentNode) - (treeToExport.getHeight(node)))/divider))+"\t"+date);
                             if (ancient) {
-                                branchesBuffer.append("\t\t\t\t<end>"+Math.round(endDate)+"</end>\r");
+                                branchesBuffer.append("\t\t\t\t<begin>"+Math.round(date)+"</begin>\r");
                             } else {
-                                branchesBuffer.append("\t\t\t\t<end>"+endYearMonthDay[0]+"-"+endYearMonthDay[1]+"-"+endYearMonthDay[2]+"</end>\r");
+                                branchesBuffer.append("\t\t\t\t<begin>"+yearMonthDay[0]+"-"+yearMonthDay[1]+"-"+yearMonthDay[2]+"</begin>\r");
                             }
-                        }
-                        branchesBuffer.append("\t\t\t</TimeSpan>\r");
 
-                        branchesBuffer.append("\t\t\t<styleUrl>#branch"+ nodeNumber +"_part"+(a+1)+"_style</styleUrl>\r");
-                        // branchesBuffer.append("\t\t\t<styleUrl>#surfaceTreeBranch"+nodeNumber+"_style</styleUrl>\r");
-                        branchesBuffer.append("\t\t\t<LineString>\r");
-
-                        if (arcBranches) {
-                            branchesBuffer.append("\t\t\t\t<altitudeMode>absolute</altitudeMode>\r");
-                            branchesBuffer.append("\t\t\t\t<tessellate>1</tessellate>\r");
-                        } else {
-                            branchesBuffer.append("\t\t\t\t<altitudeMode>clampToGround</altitudeMode>\r");
-                        }
-
-                        branchesBuffer.append("\t\t\t\t<coordinates>\r");
-
-                        if (longitudeBreak) {
-
-                            if (longitude > 0) {
-                                currentLongitude1 = longitude+a*(longitudeDifference/divider);
-
-                                if (currentLongitude1 < 180) {
-                                   branchesBuffer.append("\t\t\t\t\t"+currentLongitude1+",");
-                                   //System.out.println("1 currentLongitude1 < 180\t"+currentLongitude1+"\t"+longitude);
-
+                            if (temporary) {
+                                if (ancient) {
+                                    branchesBuffer.append("\t\t\t\t<end>"+Math.round(endDate)+"</end>\r");
                                 } else {
-                                   branchesBuffer.append("\t\t\t\t\t"+(-180-(180-currentLongitude1))+",");
-                                   //System.out.println("2 currentLongitude1 > 180\t"+currentLongitude1+"\t"+(-180-(180-currentLongitude1))+"\t"+longitude);
+                                    branchesBuffer.append("\t\t\t\t<end>"+endYearMonthDay[0]+"-"+endYearMonthDay[1]+"-"+endYearMonthDay[2]+"</end>\r");
                                 }
-                            } else {
-                                currentLongitude1 = longitude-a*(longitudeDifference/divider);
+                            }
+                            branchesBuffer.append("\t\t\t</TimeSpan>\r");
 
-                                if (currentLongitude1 > (-180)) {
-                                    branchesBuffer.append("\t\t\t\t\t"+currentLongitude1+",");
-                                    //System.out.println("currentLongitude1 > -180\t"+currentLongitude1+"\t"+longitude);
-                                 } else {
-                                    branchesBuffer.append("\t\t\t\t\t"+(180+(currentLongitude1+180))+",");
-                                    //System.out.println("currentLongitude1 > -180\t"+(180+(currentLongitude1+180))+"\t"+longitude);
-                                 }
+                            branchesBuffer.append("\t\t\t<styleUrl>#branch"+ nodeNumber +"_part"+(a+1)+"_style</styleUrl>\r");
+                            // branchesBuffer.append("\t\t\t<styleUrl>#surfaceTreeBranch"+nodeNumber+"_style</styleUrl>\r");
+                            branchesBuffer.append("\t\t\t<LineString>\r");
+
+                            if (arcBranches) {
+                                branchesBuffer.append("\t\t\t\t<altitudeMode>absolute</altitudeMode>\r");
+                                branchesBuffer.append("\t\t\t\t<tessellate>1</tessellate>\r");
+                            } else {
+                                branchesBuffer.append("\t\t\t\t<altitudeMode>clampToGround</altitudeMode>\r");
                             }
 
-                        } else {
-                            branchesBuffer.append("\t\t\t\t\t"+(longitude+a*(longitudeDifference/divider))+",");
-                        }
-                        branchesBuffer.append((latitude+a*(latitudeDifference/divider))+",");
-                        branchesBuffer.append((maxAltitude*Math.sin(Math.acos(1 - a*(1.0/(divider/2.0)))))+"\r");
+                            branchesBuffer.append("\t\t\t\t<coordinates>\r");
 
-                        if (longitudeBreak) {
+                            if (longitudeBreak) {
 
-                            if (longitude > 0) {
-                                currentLongitude2 = longitude+(a+1)*(longitudeDifference/divider);
+                                if (longitude > 0) {
+                                    currentLongitude1 = longitude+a*(longitudeDifference/divider);
 
-                                if (currentLongitude2 < 180) {
-                                   branchesBuffer.append("\t\t\t\t\t"+(currentLongitude2)+",");
+                                    if (currentLongitude1 < 180) {
+                                        branchesBuffer.append("\t\t\t\t\t"+currentLongitude1+",");
+                                        //System.out.println("1 currentLongitude1 < 180\t"+currentLongitude1+"\t"+longitude);
+
+                                    } else {
+                                        branchesBuffer.append("\t\t\t\t\t"+(-180-(180-currentLongitude1))+",");
+                                        //System.out.println("2 currentLongitude1 > 180\t"+currentLongitude1+"\t"+(-180-(180-currentLongitude1))+"\t"+longitude);
+                                    }
                                 } else {
-                                   branchesBuffer.append("\t\t\t\t\t"+(-180-(180-currentLongitude2))+",");
+                                    currentLongitude1 = longitude-a*(longitudeDifference/divider);
+
+                                    if (currentLongitude1 > (-180)) {
+                                        branchesBuffer.append("\t\t\t\t\t"+currentLongitude1+",");
+                                        //System.out.println("currentLongitude1 > -180\t"+currentLongitude1+"\t"+longitude);
+                                    } else {
+                                        branchesBuffer.append("\t\t\t\t\t"+(180+(currentLongitude1+180))+",");
+                                        //System.out.println("currentLongitude1 > -180\t"+(180+(currentLongitude1+180))+"\t"+longitude);
+                                    }
                                 }
+
                             } else {
-                                currentLongitude2 = longitude-(a+1)*(longitudeDifference/divider);
-
-                                if (currentLongitude2 > (-180)) {
-                                    branchesBuffer.append("\t\t\t\t\t"+currentLongitude2+",");
-                                 } else {
-                                    branchesBuffer.append("\t\t\t\t\t"+(180+(currentLongitude2+180))+",");
-                                 }
+                                branchesBuffer.append("\t\t\t\t\t"+(longitude+a*(longitudeDifference/divider))+",");
                             }
+                            branchesBuffer.append((latitude+a*(latitudeDifference/divider))+",");
+                            branchesBuffer.append((maxAltitude*Math.sin(Math.acos(1 - a*(1.0/(divider/2.0)))))+"\r");
 
-                        } else {
-                            branchesBuffer.append("\t\t\t\t\t"+(longitude+(a+1)*(longitudeDifference/divider))+",");
+                            if (longitudeBreak) {
+
+                                if (longitude > 0) {
+                                    currentLongitude2 = longitude+(a+1)*(longitudeDifference/divider);
+
+                                    if (currentLongitude2 < 180) {
+                                        branchesBuffer.append("\t\t\t\t\t"+(currentLongitude2)+",");
+                                    } else {
+                                        branchesBuffer.append("\t\t\t\t\t"+(-180-(180-currentLongitude2))+",");
+                                    }
+                                } else {
+                                    currentLongitude2 = longitude-(a+1)*(longitudeDifference/divider);
+
+                                    if (currentLongitude2 > (-180)) {
+                                        branchesBuffer.append("\t\t\t\t\t"+currentLongitude2+",");
+                                    } else {
+                                        branchesBuffer.append("\t\t\t\t\t"+(180+(currentLongitude2+180))+",");
+                                    }
+                                }
+
+                            } else {
+                                branchesBuffer.append("\t\t\t\t\t"+(longitude+(a+1)*(longitudeDifference/divider))+",");
+                            }
+                            branchesBuffer.append((latitude+(a+1)*(latitudeDifference/divider))+",");
+                            branchesBuffer.append((maxAltitude*Math.sin(Math.acos(1 - (a+1)*(1.0/(divider/2.0)))))+"\r");
+
+                            branchesBuffer.append("\t\t\t\t</coordinates>\r");
+
+                            branchesBuffer.append("\t\t\t</LineString>\r");
+                            branchesBuffer.append("\t\t</Placemark>\r");
+
+                            styleBuffer.append("\t<Style id=\"branch"+ nodeNumber +"_part"+(a+1)+"_style\">\r");
+                            styleBuffer.append("\t\t<LineStyle>\r");
+                            if (useStateProbability) {
+                                double stateprobabilityDifference = (stateProbability - parentStateProbability)/divider;
+                                styleBuffer.append("\t\t\t<width>"+(branchWidthConstant+(parentStateProbability+((a + 1)*stateprobabilityDifference))*branchWidthMultiplier)+"</width>\r");
+                            } else {
+                                styleBuffer.append("\t\t\t<width>"+branchWidth+"</width>\r");
+                            }
+                            if (useHeights){
+                                styleBuffer.append("\t\t\t<color>"+"FF"+ ContinuousKML.getKMLColor((treeToExport.getHeight(node) + (a + 1) *
+                                                ((treeToExport.getHeight(parentNode) - (treeToExport.getHeight(node)))/divider)),
+                                        heightMinAndMax, startBranchColor, endBranchColor)+"</color>\r");
+                            } else if (usePosterior){
+                                styleBuffer.append("\t\t\t<color>"+"FF"+ ContinuousKML.getKMLColor(posteriorProb,
+                                        posteriorMinAndMax, startBranchColor, endBranchColor)+"</color>\r");
+                            } else {
+                                styleBuffer.append("\t\t\t<color>"+"FF"+branchColor+"</color>\r");
+                            }
+                            styleBuffer.append("\t\t</LineStyle>\r");
+                            styleBuffer.append("\t</Style>\r");
+
                         }
-                        branchesBuffer.append((latitude+(a+1)*(latitudeDifference/divider))+",");
-                        branchesBuffer.append((maxAltitude*Math.sin(Math.acos(1 - (a+1)*(1.0/(divider/2.0)))))+"\r");
-
-                        branchesBuffer.append("\t\t\t\t</coordinates>\r");
-
-                        branchesBuffer.append("\t\t\t</LineString>\r");
-                        branchesBuffer.append("\t\t</Placemark>\r");
-
-                        styleBuffer.append("\t<Style id=\"branch"+ nodeNumber +"_part"+(a+1)+"_style\">\r");
-                        styleBuffer.append("\t\t<LineStyle>\r");
-                        if (useStateProbability) {
-                            double stateprobabilityDifference = (stateProbability - parentStateProbability)/divider;
-                            styleBuffer.append("\t\t\t<width>"+(branchWidthConstant+(parentStateProbability+((a + 1)*stateprobabilityDifference))*branchWidthMultiplier)+"</width>\r");
-                        } else {
-                            styleBuffer.append("\t\t\t<width>"+branchWidth+"</width>\r");
-                        }
-                        if (useHeights){
-                            styleBuffer.append("\t\t\t<color>"+"FF"+ ContinuousKML.getKMLColor((treeToExport.getHeight(node) + (a + 1) *
-                                    ((treeToExport.getHeight(parentNode) - (treeToExport.getHeight(node)))/divider)),
-                                    heightMinAndMax, startBranchColor, endBranchColor)+"</color>\r");
-                        } else if (usePosterior){
-                            styleBuffer.append("\t\t\t<color>"+"FF"+ ContinuousKML.getKMLColor(posteriorProb,
-                                    posteriorMinAndMax, startBranchColor, endBranchColor)+"</color>\r");
-                        } else {
-                            styleBuffer.append("\t\t\t<color>"+"FF"+branchColor+"</color>\r");
-                        }
-                        styleBuffer.append("\t\t</LineStyle>\r");
-                        styleBuffer.append("\t</Style>\r");
-
+                        branchesBuffer.append("\t</Folder>\r");
                     }
-                    branchesBuffer.append("\t</Folder>\r");
-                }
 
+                }
             }
+
         }
+
     }
 
     public void writeTreeToKML(double time, double treeSliceBranchWidth, boolean showBranchAtMidPoint) {
@@ -558,102 +577,105 @@ public class DiscreteKMLString {
         heightMinAndMax[1] = treeToExport.getHeight(treeToExport.getRootNode());
 
         for (Node node : treeToExport.getNodes()) {
-            nodeNumber++;
-            String state = ((((String)node.getAttribute(annotation)).replaceAll("\"","")).replaceAll(" ","")).trim();
 
-            //in case the location state is a concatenation of other states (occurs when they get the same posterior prob)
-            if (state.contains("+")) {
-                state = state.substring(0,state.indexOf("+"));
-            }
+            if (sampledTaxa(sampledTaxaSet,treeToExport,node)){
+                nodeNumber++;
+                String state = ((((String)node.getAttribute(annotation)).replaceAll("\"","")).replaceAll(" ","")).trim();
 
-
-            if (!treeToExport.isRoot(node)) {
-
-                Node parentNode = treeToExport.getParent(node);
-                String parentState = ((((String)parentNode.getAttribute(annotation)).replaceAll("\"","")).replaceAll(" ","")).trim();
-
-                if (parentState.contains("+")) {
-                    parentState = parentState.substring(0,parentState.indexOf('+'));
+                //in case the location state is a concatenation of other states (occurs when they get the same posterior prob)
+                if (state.contains("+")) {
+                    state = state.substring(0,state.indexOf("+"));
                 }
 
-                if (!(state.toLowerCase()).equals(parentState.toLowerCase())) {
 
-                    double latitude = getCoordinate(state, stateNames, stateCoordinates, 0);
-                    double longitude = getCoordinate(state, stateNames, stateCoordinates, 1);
-                    //System.out.println(latitude+"\t"+longitude);
-                    if ((latitude == 0) && (longitude == 0)) {
-                        System.err.println(state+" has no coordinate??");
+                if (!treeToExport.isRoot(node)) {
+
+                    Node parentNode = treeToExport.getParent(node);
+                    String parentState = ((((String)parentNode.getAttribute(annotation)).replaceAll("\"","")).replaceAll(" ","")).trim();
+
+                    if (parentState.contains("+")) {
+                        parentState = parentState.substring(0,parentState.indexOf('+'));
                     }
-                    double nodeHeight = treeToExport.getHeight(node);
 
-                    double parentLatitude = getCoordinate(parentState, stateNames, stateCoordinates, 0);
-                    double parentLongitude = getCoordinate(parentState, stateNames, stateCoordinates, 1);
-                    double parentHeight = treeToExport.getHeight(treeToExport.getParent(node))
-                            ;
+                    if (!(state.toLowerCase()).equals(parentState.toLowerCase())) {
 
-                    boolean longitudeBreak = longitudeBreak(longitude,parentLongitude);
-                    //System.out.println(latitude+"\t"+parentLatitude+"\t"+longitude+"\t"+parentLongitude);
+                        double latitude = getCoordinate(state, stateNames, stateCoordinates, 0);
+                        double longitude = getCoordinate(state, stateNames, stateCoordinates, 1);
+                        //System.out.println(latitude+"\t"+longitude);
+                        if ((latitude == 0) && (longitude == 0)) {
+                            System.err.println(state+" has no coordinate??");
+                        }
+                        double nodeHeight = treeToExport.getHeight(node);
 
-                    if ((parentHeight > time) && (nodeHeight <= time)) {
-                        //extrapolate lat/long
+                        double parentLatitude = getCoordinate(parentState, stateNames, stateCoordinates, 0);
+                        double parentLongitude = getCoordinate(parentState, stateNames, stateCoordinates, 1);
+                        double parentHeight = treeToExport.getHeight(treeToExport.getParent(node))
+                                ;
 
-                        if (!showBranchAtMidPoint) {
+                        boolean longitudeBreak = longitudeBreak(longitude,parentLongitude);
+                        //System.out.println(latitude+"\t"+parentLatitude+"\t"+longitude+"\t"+parentLongitude);
 
-                            latitude = parentLatitude + (latitude-parentLatitude)*((parentHeight-time)/(parentHeight-nodeHeight));
+                        if ((parentHeight > time) && (nodeHeight <= time)) {
+                            //extrapolate lat/long
 
-                            if (longitudeBreak) {
-                                if (longitude > 0) {
-                                    double currentLongitude = parentLongitude - ((180-longitude)+(180+parentLongitude))*((parentHeight-time)/(parentHeight-nodeHeight));
+                            if (!showBranchAtMidPoint) {
 
-                                    if (currentLongitude < -180) {
-                                       longitude = (180+(180+currentLongitude));
-                                       //System.out.print("break1"+currentLongitude+"\t"+longitude);
+                                latitude = parentLatitude + (latitude-parentLatitude)*((parentHeight-time)/(parentHeight-nodeHeight));
+
+                                if (longitudeBreak) {
+                                    if (longitude > 0) {
+                                        double currentLongitude = parentLongitude - ((180-longitude)+(180+parentLongitude))*((parentHeight-time)/(parentHeight-nodeHeight));
+
+                                        if (currentLongitude < -180) {
+                                            longitude = (180+(180+currentLongitude));
+                                            //System.out.print("break1"+currentLongitude+"\t"+longitude);
+                                        } else {
+                                            longitude = currentLongitude;
+                                            //System.out.print("break2"+currentLongitude+"\t"+longitude);
+                                        }
                                     } else {
-                                       longitude = currentLongitude;
-                                       //System.out.print("break2"+currentLongitude+"\t"+longitude);
+                                        double currentLongitude = parentLongitude + ((180-parentLongitude)+(180+longitude))*((parentHeight-time)/(parentHeight-nodeHeight));
+                                        if (currentLongitude > 180) {
+                                            longitude = (-180-(180-currentLongitude));
+                                            //System.out.print("break3"+currentLongitude+"\t"+longitude);
+                                        } else {
+                                            longitude = currentLongitude;
+                                            //System.out.print("break4"+longitude);
+                                        }
                                     }
+                                    //System.out.print("\t"+state+"_"+longitude+"\t"+parentState+"\r");
                                 } else {
-                                   double currentLongitude = parentLongitude + ((180-parentLongitude)+(180+longitude))*((parentHeight-time)/(parentHeight-nodeHeight));
-                                    if (currentLongitude > 180) {
-                                        longitude = (-180-(180-currentLongitude));
-                                        //System.out.print("break3"+currentLongitude+"\t"+longitude);
-                                     } else {
-                                        longitude = currentLongitude;
-                                        //System.out.print("break4"+longitude);
-                                     }
+                                    longitude = parentLongitude + (longitude-parentLongitude)*((parentHeight-time)/(parentHeight-nodeHeight));
                                 }
-                                //System.out.print("\t"+state+"_"+longitude+"\t"+parentState+"\r");
-                            } else {
-                                longitude = parentLongitude + (longitude-parentLongitude)*((parentHeight-time)/(parentHeight-nodeHeight));
                             }
+                        }
+
+                        if (((parentHeight*timeScaler > time) && !(showBranchAtMidPoint)) || (showBranchAtMidPoint && (time < ((nodeHeight+((parentHeight-nodeHeight)/2.0))*timeScaler)))) {
+                            treeSliceBuffer.append("\t\t<Placemark>\r");
+                            treeSliceBuffer.append("\t\t\t<name>branch"+ nodeNumber +"_"+parentState+"_"+state+"</name>\r");
+                            //style
+                            treeSliceBuffer.append("\t\t\t<styleUrl>#tree"+time+"branch"+nodeNumber+"_style</styleUrl>\r");
+                            // branchesBuffer.append("\t\t\t<styleUrl>#surfaceTreeBranch"+nodeNumber+"_style</styleUrl>\r");
+                            treeSliceBuffer.append("\t\t\t<LineString>\r");
+                            treeSliceBuffer.append("\t\t\t\t<altitudeMode>clampToGround</altitudeMode>\r");
+                            treeSliceBuffer.append("\t\t\t\t<coordinates>\r");
+                            treeSliceBuffer.append("\t\t\t\t\t"+longitude+","+latitude+",0\r");
+                            treeSliceBuffer.append("\t\t\t\t\t"+parentLongitude+","+parentLatitude+",0\r");
+                            treeSliceBuffer.append("\t\t\t\t</coordinates>\r");
+                            treeSliceBuffer.append("\t\t\t</LineString>\r");
+
+                            treeSliceBuffer.append("\t\t</Placemark>\r");
+                            styleBuffer.append("\t<Style id=\"tree"+ time +"branch"+ nodeNumber +"_style\">\r");
+                            styleBuffer.append("\t\t<LineStyle>\r");
+                            styleBuffer.append("\t\t\t<width>"+treeSliceBranchWidth+"</width>\r");
+                            styleBuffer.append("\t\t\t<color>"+"FF"+ ContinuousKML.getKMLColor((nodeHeight+((parentHeight-nodeHeight)/2.0)),
+                                    heightMinAndMax, startBranchColor, endBranchColor)+"</color>\r");
+                            styleBuffer.append("\t\t</LineStyle>\r");
+                            styleBuffer.append("\t</Style>\r");
                         }
                     }
 
-                    if (((parentHeight*timeScaler > time) && !(showBranchAtMidPoint)) || (showBranchAtMidPoint && (time < ((nodeHeight+((parentHeight-nodeHeight)/2.0))*timeScaler)))) {
-                        treeSliceBuffer.append("\t\t<Placemark>\r");
-                        treeSliceBuffer.append("\t\t\t<name>branch"+ nodeNumber +"_"+parentState+"_"+state+"</name>\r");
-                        //style
-                        treeSliceBuffer.append("\t\t\t<styleUrl>#tree"+time+"branch"+nodeNumber+"_style</styleUrl>\r");
-                        // branchesBuffer.append("\t\t\t<styleUrl>#surfaceTreeBranch"+nodeNumber+"_style</styleUrl>\r");
-                        treeSliceBuffer.append("\t\t\t<LineString>\r");
-                        treeSliceBuffer.append("\t\t\t\t<altitudeMode>clampToGround</altitudeMode>\r");
-                        treeSliceBuffer.append("\t\t\t\t<coordinates>\r");
-                        treeSliceBuffer.append("\t\t\t\t\t"+longitude+","+latitude+",0\r");
-                        treeSliceBuffer.append("\t\t\t\t\t"+parentLongitude+","+parentLatitude+",0\r");
-                        treeSliceBuffer.append("\t\t\t\t</coordinates>\r");
-                        treeSliceBuffer.append("\t\t\t</LineString>\r");
-
-                        treeSliceBuffer.append("\t\t</Placemark>\r");
-                        styleBuffer.append("\t<Style id=\"tree"+ time +"branch"+ nodeNumber +"_style\">\r");
-                        styleBuffer.append("\t\t<LineStyle>\r");
-                        styleBuffer.append("\t\t\t<width>"+treeSliceBranchWidth+"</width>\r");
-                        styleBuffer.append("\t\t\t<color>"+"FF"+ ContinuousKML.getKMLColor((nodeHeight+((parentHeight-nodeHeight)/2.0)),
-                                    heightMinAndMax, startBranchColor, endBranchColor)+"</color>\r");
-                        styleBuffer.append("\t\t</LineStyle>\r");
-                        styleBuffer.append("\t</Style>\r");
-                    }
                 }
-
             }
         }
         treeSliceBuffer.append("\t</Folder>\r");
@@ -893,6 +915,7 @@ public class DiscreteKMLString {
         return min;
 
     }
+
     //http://bbs.keyhole.com/ubb/showflat.php/Cat/0/Number/23634/page/vc/fpart/all/vc/1
     private void writeCircle(double centerLat, double centerLong, int numberOfPoints, double radius, String centerState, double beginDate, double endDate, StringBuffer buffer) {
 
@@ -1068,4 +1091,34 @@ public class DiscreteKMLString {
         }
         return longitudeBreak;
     }
+
+    private static boolean sampledTaxa(Set sampledTaxaSet, RootedTree treeToExport, Node node) {
+        boolean proceed = false;
+        if (sampledTaxaSet != null) {
+            if (treeToExport.isExternal(node)) {
+                String taxon = treeToExport.getTaxon(node).getName();
+                if (sampledTaxaSet.contains(taxon)) {
+                    proceed = true;
+                }
+            } else {
+                Set leafNodeSet = RootedTreeUtils.getDescendantTips(treeToExport, node);
+                Set<String> leafTaxaSet = new HashSet<>();
+                if (leafNodeSet.size() > 0) {
+                    Iterator iter1 = leafNodeSet.iterator();
+                    while (iter1.hasNext()) {
+                        String taxon = treeToExport.getTaxon((Node) iter1.next()).toString();
+                        leafTaxaSet.add(taxon);
+                    }
+                }
+                leafTaxaSet.retainAll(sampledTaxaSet);
+                if (leafTaxaSet.size() > 0) {
+                    proceed = true;
+                }
+            }
+        } else {
+            proceed = true;
+        }
+        return proceed;
+    }
+
 }

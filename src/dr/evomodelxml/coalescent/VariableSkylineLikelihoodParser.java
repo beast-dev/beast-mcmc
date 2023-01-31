@@ -35,6 +35,7 @@ import java.util.logging.Logger;
 
 /**
  */
+@Deprecated
 public class VariableSkylineLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String SKYLINE_LIKELIHOOD = "ovariableSkyLineLikelihood";

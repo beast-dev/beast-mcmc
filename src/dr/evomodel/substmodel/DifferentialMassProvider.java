@@ -35,7 +35,7 @@ public interface DifferentialMassProvider {
 
     double[] getDifferentialMassMatrix(double time);
 
-    class DifferentialWrapper implements DifferentialMassProvider {
+    public class DifferentialWrapper implements DifferentialMassProvider {
 
 
         private final DifferentiableSubstitutionModel baseModel;
@@ -62,6 +62,10 @@ public interface DifferentialMassProvider {
             double getRate(int switchCase);
 
             double getNormalizationDifferential();
+
+            void setupDifferentialFrequencies(double[] differentialFrequencies, double[] frequencies);
+
+            void setupDifferentialRates(double[] differentialRates, double[] relativeRates, double normalizingConstant);
         }
     }
 }

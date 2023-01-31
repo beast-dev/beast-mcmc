@@ -25,8 +25,6 @@
 
 package dr.math.matrixAlgebra;
 
-
-import dr.inference.model.FastMatrixParameter;
 import dr.inference.model.Parameter;
 
 /**
@@ -119,6 +117,27 @@ public interface ReadableVector {
         public int getDim() { return vector.getDim(); }
     }
 
+    class View implements ReadableVector {
+
+        final private ReadableVector buffer;
+        final private int offset;
+        final private int length;
+
+        public View(ReadableVector buffer, int offset, int length) {
+            this.buffer = buffer;
+            this.offset = offset;
+            this.length = length;
+        }
+
+        @Override
+        public double get(int i) {
+            return buffer.get(offset + i);
+        }
+
+        @Override
+        public int getDim() { return length; }
+    }
+
     class Utils {
 
         public static void setParameter(double[] value, Parameter parameter) {
@@ -170,7 +189,7 @@ public interface ReadableVector {
 
             assert (lhs.getDim() == rhs.getDim());
             double[] l = lhs.getBuffer();
-            double[] r = lhs.getBuffer();
+            double[] r = rhs.getBuffer();
             int lOffset = lhs.getOffset();
             int rOffset = rhs.getOffset();
 

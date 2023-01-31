@@ -25,27 +25,22 @@
 
 package dr.evomodel.treelikelihood;
 
-import dr.evolution.datatype.HiddenCodons;
+import dr.evolution.datatype.*;
+import dr.evolution.tree.*;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.UncertainSiteList;
-import dr.evolution.datatype.Codons;
-import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.GeneralDataType;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * @author Marc Suchard
@@ -53,7 +48,6 @@ import java.util.Set;
  */
 
 public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood implements TreeTraitProvider, AncestralStateTraitProvider {
-
 //    public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
 //                                              BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,
 //                                              BranchRateModel branchRateModel, boolean useAmbiguities,
@@ -65,7 +59,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 //                dataType, tag, substModel, false, true);
 //    }
 
-    public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
+    public AncestralStateBeagleTreeLikelihood(PatternList patternList, MutableTreeModel treeModel,
                                               BranchModel branchModel,
                                               SiteRateModel siteRateModel,
                                               BranchRateModel branchRateModel,
@@ -78,11 +72,12 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                                               final String tag,
 //                                              SubstitutionModel substModel,
                                               boolean useMAP,
-                                              boolean returnML) {
+                                              boolean returnML,
+                                              boolean conditionalProbabilitiesInLogSpace) {
 
         super(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, scalingScheme, delayRescalingUntilUnderflow,
                 partialsRestrictions);
-
+        this.conditionalProbabilitiesInLogSpace = conditionalProbabilitiesInLogSpace;
         this.dataType = dataType;
 //        this.tag = tag;
 
@@ -117,6 +112,9 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         this.useMAP = useMAP;
         this.returnMarginalLogLikelihood = returnML;
 
+        boolean stripHiddenState = false; // TODO Pass as option
+        this.formatter = new CodeFormatter(dataType, stripHiddenState);
+
         treeTraits.addTrait(new TreeTrait.IA() {
             public String getTraitName() {
                 return tag;
@@ -135,11 +133,29 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
             }
 
             public String getTraitString(Tree tree, NodeRef node) {
-                return formattedState(getStatesForNode(tree, node), dataType);
+                return formattedState(getStatesForNode(tree, node), formatter);
             }
         });
 
     }
+    public AncestralStateBeagleTreeLikelihood(PatternList patternList, MutableTreeModel treeModel,
+                                              BranchModel branchModel,
+                                              SiteRateModel siteRateModel,
+                                              BranchRateModel branchRateModel,
+                                              TipStatesModel tipStatesModel,
+                                              boolean useAmbiguities,
+                                              PartialsRescalingScheme scalingScheme,
+                                              boolean delayRescalingUntilUnderflow,
+                                              Map<Set<String>, Parameter> partialsRestrictions,
+                                              final DataType dataType,
+                                              final String tag,
+//                                              SubstitutionModel substModel,
+                                              boolean useMAP,
+                                              boolean returnML){
+        this(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities,
+                scalingScheme, delayRescalingUntilUnderflow, partialsRestrictions, dataType, tag, useMAP, returnML, false);
+    }
+
 
     private double[] getPartials(PatternList patternList, int sequenceIndex) {
         double[] partials = new double[patternCount * stateCount];
@@ -235,9 +251,13 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
             }
             return choice;
         } else {
+            if(conditionalProbabilitiesInLogSpace){
+                return MathUtils.randomChoiceLogPDF(measure);
+            }
             return MathUtils.randomChoicePDF(measure);
         }
     }
+
 
     public void makeDirty() {
         super.makeDirty();
@@ -268,33 +288,37 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
     }
 
     public String formattedState(int[] state) {
-        return formattedState(state, dataType);
+        return formattedState(state, formatter);
     }
 
-    private static String formattedState(int[] state, DataType dataType) {
+    private static String formattedState(int[] state, CodeFormatter formatter) {
         StringBuffer sb = new StringBuffer();
         sb.append("\"");
-        if (dataType instanceof GeneralDataType) {
-            boolean first = true;
-            for (int i : state) {
-                if (!first) {
-                    sb.append(" ");
-                } else {
-                    first = false;
-                }
-
-                sb.append(dataType.getCode(i));
-            }
-
-        } else {
-            for (int i : state) {
-                if (dataType instanceof Codons) {
-                    sb.append(dataType.getTriplet(i));
-                } else {
-                    sb.append(dataType.getChar(i));
-                }
-            }
+        formatter.reset();
+        for (int i : state) {
+            sb.append(formatter.getCodeString(i));
         }
+//        if (dataType instanceof GeneralDataType) {
+//            boolean first = true;
+//            for (int i : state) {
+//                if (!first) {
+//                    sb.append(" ");
+//                } else {
+//                    first = false;
+//                }
+//
+//                sb.append(dataType.getCode(i));
+//            }
+//
+//        } else {
+//            for (int i : state) {
+//                if (dataType instanceof Codons) {
+//                    sb.append(dataType.getTriplet(i));
+//                } else {
+//                    sb.append(dataType.getChar(i));
+//                }
+//            }
+//        }
         sb.append("\"");
         return sb.toString();
     }
@@ -378,7 +402,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         jointLogLikelihood = storedJointLogLikelihood;
     }
 
-    public void traverseSample(TreeModel tree, NodeRef node, int[] parentState, int[] rateCategory) {
+    public void traverseSample(Tree tree, NodeRef node, int[] parentState, int[] rateCategory) {
 
         int nodeNum = node.getNumber();
 
@@ -423,13 +447,19 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     }
 
                     // Sample root character state
-                    int partialsIndex = (rateCategory == null ? 0 : rateCategory[j]) * stateCount * patternCount;
-                    System.arraycopy(partials, partialsIndex + j * stateCount, conditionalProbabilities, 0, stateCount);
+                    int partialsIndex = (rateCategory == null ? 0 : rateCategory[j]) * stateCount * patternCount + j * stateCount;
+
 
                     double[] frequencies = substitutionModelDelegate.getRootStateFrequencies(); // TODO May have more than one set of frequencies
+
                     for (int i = 0; i < stateCount; i++) {
-                        conditionalProbabilities[i] *= frequencies[i];
+                         if (conditionalProbabilitiesInLogSpace) {
+                             conditionalProbabilities[i] = Math.log(partials[partialsIndex + i]) + Math.log(frequencies[i]);
+                         } else {
+                             conditionalProbabilities[i] = partials[partialsIndex + i] * frequencies[i];
+                         }
                     }
+
                     try {
                         state[j] = drawChoice(conditionalProbabilities);
                     } catch (Error e) {
@@ -472,9 +502,16 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     int matrixIndex = category * stateCount * stateCount;
                     int partialIndex = category * stateCount * patternCount;
 
-                    for (int i = 0; i < stateCount; i++)
-                        conditionalProbabilities[i] = partialLikelihood[partialIndex + childIndex + i]
-                                * probabilities[matrixIndex + parentIndex + i];
+                    for (int i = 0; i < stateCount; i++) {
+                        if (conditionalProbabilitiesInLogSpace) {
+                            conditionalProbabilities[i] = Math.log(partialLikelihood[partialIndex + childIndex + i])
+                                    + Math.log(probabilities[matrixIndex + parentIndex + i]);
+                        } else {
+                            conditionalProbabilities[i] = partialLikelihood[partialIndex + childIndex + i]
+                                    * probabilities[matrixIndex + parentIndex + i];
+                        }
+
+                    }
 
                     state[j] = drawChoice(conditionalProbabilities);
                     reconstructedStates[nodeNum][j] = state[j];
@@ -508,9 +545,13 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     int category = rateCategory == null ? 0 : rateCategory[j];
                     int matrixIndex = category * stateCount * stateCount;
 
-                    System.arraycopy(probabilities, parentIndex + matrixIndex, conditionalProbabilities, 0, stateCount);
-                    for (int k = 0; k < stateCount; ++k) {
-                        conditionalProbabilities[k] *= partials[j * stateCount + k];
+                    int probabilityIndex = parentIndex + matrixIndex;
+                    for (int k = 0; k < stateCount; k++) {
+                        if(conditionalProbabilitiesInLogSpace){
+                            conditionalProbabilities[k] = Math.log(probabilities[probabilityIndex + k])+ Math.log(partials[j * stateCount + k]);
+                        }else{
+                            conditionalProbabilities[k] = probabilities[probabilityIndex + k]* partials[j * stateCount + k];
+                        }
                     }
                     reconstructedStates[nodeNum][j] = drawChoice(conditionalProbabilities);
 
@@ -548,6 +589,12 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                                 }
                             }
                         }
+
+                        if (conditionalProbabilitiesInLogSpace) {
+                            for (int k = 0; k < stateCount; k++) {
+                                conditionalProbabilities[k] = Math.log(conditionalProbabilities[k]);
+                            }
+                        }
                         reconstructedStates[nodeNum][j] = drawChoice(conditionalProbabilities);
                     }
 
@@ -561,7 +608,6 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     }
                 }
             }
-
             hookCalculation(tree, parent, node, parentState, reconstructedStates[nodeNum], null, rateCategory);
         }
     }
@@ -593,8 +639,47 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
     private double[] partials;
 
     protected int[] rateCategory = null;
+    private final boolean conditionalProbabilitiesInLogSpace;
 //    private double[] rootPartials;
 //    private int[][] cumulativeScaleBuffers;
 //    private int scaleBufferIndex;
 
+    private class CodeFormatter {
+
+         private final DataType dataType;
+         private final Function<String, String> appender;
+         private final Function<Integer, String> getter;
+         private boolean first = true;
+
+         CodeFormatter(DataType dataType, boolean stripHiddenState) {
+             this.dataType = dataType;
+
+             this.appender = (dataType instanceof GeneralDataType) ?
+                     (codeString) -> codeString + " " : Function.identity();
+
+             if (dataType instanceof HiddenCodons) {
+                 this.getter = (stripHiddenState) ?
+                         ((HiddenCodons) dataType)::getTripletWithoutHiddenCode :
+                         dataType::getTriplet;
+             } else if (dataType instanceof HiddenDataType && stripHiddenState) {
+                 this.getter = ((HiddenDataType) dataType)::getCodeWithoutHiddenState;
+             } else {
+                 this.getter = dataType::getCode;
+             }
+         }
+
+         String getCodeString(int state) {
+             String code = getter.apply(state);
+             if (first) {
+                 first = false;
+             } else {
+                 code = appender.apply(code);
+             }
+             return code;
+         }
+
+         void reset() { first = true; }
+     }
+
+     private final CodeFormatter formatter;
 }

@@ -8,6 +8,8 @@ import dr.inference.model.Parameter;
 /**
  * @author Marc A. Suchard
  */
+
+@Deprecated
 public class AutoCorrelatedRatesWithBayesianBridge implements BayesianBridgeStatisticsProvider {
 
     private final AutoCorrelatedBranchRatesDistribution rates;
@@ -37,6 +39,11 @@ public class AutoCorrelatedRatesWithBayesianBridge implements BayesianBridgeStat
     @Override
     public Parameter getExponent() {
         return prior.getExponent();
+    }
+
+    @Override
+    public Parameter getSlabWidth() {
+        return prior.getSlabWidth();
     }
 
     @Override

@@ -34,6 +34,7 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
+import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
@@ -65,7 +66,7 @@ public class OldStructuredCoalescentLikelihood extends AbstractCoalescentLikelih
                                           GeneralSubstitutionModel generalSubstitutionModel, int subIntervals,
                                           TaxonList includeSubtree, List<TaxonList> excludeSubtrees) throws TreeUtils.MissingTaxonException {
 
-        super(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT, tree, includeSubtree, excludeSubtrees);
+        super(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT, new TreeIntervals(tree, includeSubtree, excludeSubtrees));
 
         this.treeModel = (TreeModel)tree;
         this.patternList = patternList;
@@ -135,14 +136,6 @@ public class OldStructuredCoalescentLikelihood extends AbstractCoalescentLikelih
         }
 
         logLikelihood = traverseTree(treeModel, treeModel.getRoot(), patternList);
-        return logLikelihood;
-    }
-
-    public double getLogLikelihood() {
-        if (!likelihoodKnown) {
-            logLikelihood = calculateLogLikelihood();
-            likelihoodKnown = true;
-        }
         return logLikelihood;
     }
 
@@ -726,6 +719,16 @@ public class OldStructuredCoalescentLikelihood extends AbstractCoalescentLikelih
     public void makeDirty() {
         likelihoodKnown = false;
         matricesKnown = false;
+    }
+
+    @Override
+    public int getNumberOfCoalescentEvents() {
+        throw new RuntimeException("Method getNumberOfCoalescentEvents() in OldStructuredCoalescentLikelihood not supported.");
+    }
+
+    @Override
+    public double getCoalescentEventsStatisticValue(int i) {
+        throw new RuntimeException("Method getNumberOfCoalescentEvents() in OldStructuredCoalescentLikelihood not supported.");
     }
 
     /**

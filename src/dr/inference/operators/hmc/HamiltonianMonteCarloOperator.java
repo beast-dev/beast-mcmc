@@ -27,18 +27,18 @@ package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PathGradient;
+import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.inference.operators.AbstractAdaptableOperator;
-import dr.inference.operators.AdaptationMode;
-import dr.inference.operators.GeneralOperator;
-import dr.inference.operators.PathDependent;
+import dr.inference.operators.*;
 import dr.math.MathUtils;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
+
+import java.util.ArrayList;
 
 /**
  * @author Max Tolkoff
@@ -47,46 +47,63 @@ import dr.util.Transform;
  */
 
 public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
-        implements GeneralOperator, PathDependent {
+        implements GeneralOperator, PathDependent, ReversibleHMCProvider {
 
     final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
     LeapFrogEngine leapFrogEngine;
     protected final Parameter parameter;
     protected final MassPreconditioner preconditioning;
+    protected final MassPreconditionScheduler preconditionScheduler;
     private final Options runtimeOptions;
     protected final double[] mask;
     protected final Transform transform;
 
-    HamiltonianMonteCarloOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
-                                  Parameter parameter, Transform transform, Parameter mask,
-                                  double stepSize, int nSteps,
-                                  double randomStepCountFraction,
-                                  double gradientCheckTolerance) {
-        this(mode, weight, gradientProvider,
-                parameter, transform, mask,
-                new Options(stepSize, nSteps, randomStepCountFraction,
-                        0, 0, 0,
-                        0, gradientCheckTolerance,
-                        10, 0.1),
-                MassPreconditioner.Type.NONE
-        );
-    }
+//    public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
+//                                         GradientWrtParameterProvider gradientProvider,
+//                                         Parameter parameter, Transform transform, Parameter maskParameter,
+//                                         Options runtimeOptions,
+//                                         MassPreconditioner.Type preconditioningType) {
+//
+//        super(mode, runtimeOptions.targetAcceptanceProbability);
+//
+//        setWeight(weight);
+//
+//        this.gradientProvider = gradientProvider;
+//        this.runtimeOptions = runtimeOptions;
+//        this.stepSize = runtimeOptions.initialStepSize;
+//        this.preconditioning = preconditioningType.factory(gradientProvider, transform, runtimeOptions);
+//        this.parameter = parameter;
+//        this.mask = buildMask(maskParameter);
+//        this.transform = transform;
+//
+//        this.leapFrogEngine = constructLeapFrogEngine(transform);
+//    }
+public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
+                                     GradientWrtParameterProvider gradientProvider,
+                                     Parameter parameter, Transform transform, Parameter maskParameter,
+                                     Options runtimeOptions,
+                                     MassPreconditioner preconditioner) {
+    this(mode, weight, gradientProvider, parameter, transform, maskParameter, runtimeOptions,
+            preconditioner, MassPreconditionScheduler.Type.DEFAULT);
+}
 
     public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
                                          GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform, Parameter maskParameter,
                                          Options runtimeOptions,
-                                         MassPreconditioner.Type preconditioningType) {
+                                         MassPreconditioner preconditioner,
+                                         MassPreconditionScheduler.Type preconditionSchedulerType) {
 
-        super(mode, 0.8); // Stan default
+        super(mode, runtimeOptions.targetAcceptanceProbability);
 
         setWeight(weight);
 
         this.gradientProvider = gradientProvider;
         this.runtimeOptions = runtimeOptions;
         this.stepSize = runtimeOptions.initialStepSize;
-        this.preconditioning = preconditioningType.factory(gradientProvider, transform, runtimeOptions);
+        this.preconditioning = preconditioner;
+        this.preconditionScheduler = preconditionSchedulerType.factory(runtimeOptions, (AdaptableMCMCOperator) this);
         this.parameter = parameter;
         this.mask = buildMask(maskParameter);
         this.transform = transform;
@@ -104,16 +121,10 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
     @Override
     public String getOperatorName() {
-        return "Vanilla HMC operator";
+        return "VanillaHMC(" + parameter.getParameterName() + ")";
     }
 
-    private boolean shouldUpdatePreconditioning() {
-        return ((runtimeOptions.preconditioningUpdateFrequency > 0)
-                && (((getCount() % runtimeOptions.preconditioningUpdateFrequency == 0)
-                    && (getCount() > runtimeOptions.preconditioningDelay))));
-    }
-
-    private static double[] buildMask(Parameter maskParameter) {
+    protected double[] buildMask(Parameter maskParameter) {
 
         if (maskParameter == null) return null;
 
@@ -140,23 +151,36 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
         if (shouldCheckGradient()) {
             checkGradient(joint);
-
         }
 
-        if (shouldUpdatePreconditioning()) {
-            preconditioning.storeSecant(
-                    new WrappedVector.Raw(leapFrogEngine.getLastGradient()),
-                    new WrappedVector.Raw(leapFrogEngine.getLastPosition())
-            );
-            preconditioning.updateMass();
+        if (preconditionScheduler.shouldUpdatePreconditioning()) {
+            updatePreconditioning();
         }
 
         try {
             return leapFrog();
         } catch (NumericInstabilityException e) {
             return Double.NEGATIVE_INFINITY;
+        } catch (ArithmeticException e) {
+            if (REJECT_ARITHMETIC_EXCEPTION) {
+                return Double.NEGATIVE_INFINITY;
+            } else {
+                throw e;
+            }
         }
     }
+
+    private void updatePreconditioning() {
+
+        double[] lastGradient = leapFrogEngine.getLastGradient();
+        double[] lastPosition = leapFrogEngine.getLastPosition();
+        if (preconditionScheduler.shouldStoreSecant(lastGradient, lastPosition)) {
+            preconditioning.storeSecant(new WrappedVector.Raw(lastGradient), new WrappedVector.Raw(lastPosition));
+        }
+        preconditioning.updateMass();
+    }
+
+    private static final boolean REJECT_ARITHMETIC_EXCEPTION = true;
 
     @Override
     public void setPathParameter(double beta) {
@@ -197,16 +221,16 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             ++iterations;
         }
 
-        if (!acceptableSize) {
+        if (!acceptableSize && iterations < runtimeOptions.checkStepSizeMaxIterations) {
             throw new RuntimeException("Unable to find acceptable initial HMC step-size");
         }
     }
 
-    private boolean shouldCheckGradient() {
+    boolean shouldCheckGradient() {
         return getCount() < runtimeOptions.gradientCheckCount;
     }
 
-    private void checkGradient(final Likelihood joint) {
+    void checkGradient(final Likelihood joint) {
 
         if (parameter.getDimension() != gradientProvider.getDimension()) {
             throw new RuntimeException("Unequal dimensions");
@@ -256,7 +280,8 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
                 String sb = "Gradients do not match:\n" +
                         "\tAnalytic: " + new WrappedVector.Raw(analyticalGradientOriginal) + "\n" +
-                        "\tNumeric : " + new WrappedVector.Raw(numericGradientOriginal) + "\n";
+                        "\tNumeric : " + new WrappedVector.Raw(numericGradientOriginal) + "\n" +
+                        gradientMismatchInformation(analyticalGradientOriginal, numericGradientOriginal);
                 throw new RuntimeException(sb);
             }
 
@@ -274,7 +299,8 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                         "\tAnalytic: " + new WrappedVector.Raw(analyticalGradientTransformed) + "\n" +
                         "\tNumeric : " + new WrappedVector.Raw(numericGradientTransformed) + "\n" +
                         "\tParameter : " + new WrappedVector.Raw(parameter.getParameterValues()) + "\n" +
-                        "\tTransformed Parameter : " + new WrappedVector.Raw(transformedParameter) + "\n";
+                        "\tTransformed Parameter : " + new WrappedVector.Raw(transformedParameter) + "\n" +
+                        gradientMismatchInformation(analyticalGradientTransformed, numericGradientTransformed);
                 throw new RuntimeException(sb);
             }
         }
@@ -282,6 +308,47 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         ReadableVector.Utils.setParameter(restoredParameterValue, parameter);
     }
 
+    private String gradientMismatchInformation(double[] analyticGradient, double[] numericGradient) {
+        int n = analyticGradient.length;
+        double maxDiff = 0;
+        int maxInd = -1;
+        double meanDiff = 0;
+        ArrayList<Integer> overIndices = new ArrayList<>();
+        double[] absDiffs = new double[n];
+
+        for (int i = 0; i < n; i++) {
+            double absDiff = Math.abs(analyticGradient[i] - numericGradient[i]);
+            absDiffs[i] = absDiff;
+            meanDiff += absDiff;
+            if (absDiff > runtimeOptions.gradientCheckTolerance) {
+                overIndices.add(i);
+            }
+            if (absDiff > maxDiff) {
+                maxDiff = absDiff;
+                maxInd = i;
+            }
+        }
+
+
+        meanDiff /= n;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("\tMaximum aboslute difference: " + maxDiff + " (at index " + (maxInd) + ")\n");
+        sb.append("\tAverage absolute difference: " + meanDiff + "\n");
+        sb.append("\tList of all values exceeding the tolerance:\n");
+        sb.append("\t\tindex    analytic    numeric    absolute difference\n");
+
+        int ind = 0;
+        String spacer = "    ";
+        for (int i : overIndices) {
+
+            sb.append("\t\t" + overIndices.get(ind) + spacer + analyticGradient[i] + spacer + numericGradient[i] +
+                    spacer + absDiffs[i] + "\n");
+            ind++;
+        }
+
+        return sb.toString();
+    }
 
     static double[] mask(double[] vector, double[] mask) {
 
@@ -289,7 +356,9 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
         if (mask != null) {
             for (int i = 0; i < vector.length; ++i) {
-                vector[i] *= mask[i];
+                if (mask[i] == 0.0) {
+                    vector[i] = 0.0;
+                }
             }
         }
 
@@ -302,7 +371,9 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
         if (mask != null) {
             for (int i = 0; i < vector.getDim(); ++i) {
-                vector.set(i, vector.get(i) * mask[i]);
+                if (mask[i] == 0.0) {
+                    vector.set(i, 0.0);
+                }
             }
         }
 
@@ -311,37 +382,69 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
     private static final boolean DEBUG = false;
 
-    public static class Options {
+    public static class Options implements MassPreconditioningOptions {
 
         final double initialStepSize;
         final int nSteps;
         final double randomStepCountFraction;
-        final int preconditioningUpdateFrequency;
-        final int preconditioningDelay;
-        final int preconditioningMemory;
         final int gradientCheckCount;
+        final MassPreconditioningOptions preconditioningOptions;
         final double gradientCheckTolerance;
         final int checkStepSizeMaxIterations;
         final double checkStepSizeReductionFactor;
+        final double targetAcceptanceProbability;
+        final InstabilityHandler instabilityHandler;
 
         public Options(double initialStepSize, int nSteps, double randomStepCountFraction,
-                       int preconditioningUpdateFrequency, int preconditioningDelay, int preconditioningMemory,
+                       MassPreconditioningOptions preconditioningOptions,
                        int gradientCheckCount, double gradientCheckTolerance,
-                       int checkStepSizeMaxIterations, double checkStepSizeReductionFactor) {
+                       int checkStepSizeMaxIterations, double checkStepSizeReductionFactor,
+                       double targetAcceptanceProbability, InstabilityHandler instabilityHandler) {
             this.initialStepSize = initialStepSize;
             this.nSteps = nSteps;
             this.randomStepCountFraction = randomStepCountFraction;
-            this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
-            this.preconditioningDelay = preconditioningDelay;
-            this.preconditioningMemory = preconditioningMemory;
             this.gradientCheckCount = gradientCheckCount;
             this.gradientCheckTolerance = gradientCheckTolerance;
             this.checkStepSizeMaxIterations = checkStepSizeMaxIterations;
             this.checkStepSizeReductionFactor = checkStepSizeReductionFactor;
+            this.targetAcceptanceProbability = targetAcceptanceProbability;
+            this.instabilityHandler = instabilityHandler;
+            this.preconditioningOptions = preconditioningOptions;
+        }
+
+        @Override
+        public int preconditioningUpdateFrequency() {
+            return preconditioningOptions.preconditioningUpdateFrequency();
+        }
+
+        @Override
+        public int preconditioningDelay() {
+            return preconditioningOptions.preconditioningDelay();
+        }
+
+        @Override
+        public int preconditioningMaxUpdate() {
+            return preconditioningOptions.preconditioningMaxUpdate();
+        }
+
+        @Override
+        public int preconditioningMemory() {
+            return preconditioningOptions.preconditioningMemory();
+        }
+
+        @Override
+        public Parameter preconditioningEigenLowerBound() {
+            throw new RuntimeException("Not yet implemented.");
+        }
+
+        @Override
+        public Parameter preconditioningEigenUpperBound() {
+            throw new RuntimeException("Not yet implemented.");
         }
     }
 
-    static class NumericInstabilityException extends Exception { }
+    public static class NumericInstabilityException extends Exception {
+    }
 
     private int getNumberOfSteps() {
         int count = runtimeOptions.nSteps;
@@ -352,7 +455,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         return count;
     }
 
-    double getKineticEnergy(ReadableVector momentum) {
+    public double getKineticEnergy(ReadableVector momentum) {
 
         final int dim = momentum.getDim();
 
@@ -369,8 +472,14 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             System.err.println("HMC step size: " + stepSize);
         }
 
-        final double[] position = leapFrogEngine.getInitialPosition();
         final WrappedVector momentum = mask(preconditioning.drawInitialMomentum(), mask);
+        return leapFrogGivenMomentum(momentum);
+    }
+
+    protected double leapFrogGivenMomentum(WrappedVector momentum) throws NumericInstabilityException {
+        leapFrogEngine.updateMask();
+        final double[] position = leapFrogEngine.getInitialPosition();
+        leapFrogEngine.projectMomentum(momentum.getBuffer(), position); //if momentum restricted to subspace
 
         final double prop = getKineticEnergy(momentum) +
                 leapFrogEngine.getParameterLogJacobian();
@@ -427,9 +536,9 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         return stepSize;
     }
 
-    enum InstabilityHandler {
+    public enum InstabilityHandler {
 
-        REJECT {
+        REJECT("reject") {
             @Override
             void checkValue(double x) throws NumericInstabilityException {
                 if (Double.isNaN(x)) throw new NumericInstabilityException();
@@ -450,10 +559,12 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 //            }
 
             @Override
-            boolean checkPositionTransform() { return true; }
+            boolean checkPositionTransform() {
+                return true;
+            }
         },
 
-        DEBUG {
+        DEBUG("debug") {
             @Override
             void checkValue(double x) throws NumericInstabilityException {
                 if (Double.isNaN(x)) {
@@ -479,10 +590,12 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 //            }
 
             @Override
-            boolean checkPositionTransform() { return true; }
+            boolean checkPositionTransform() {
+                return true;
+            }
         },
 
-        IGNORE {
+        IGNORE("ignore") {
             @Override
             void checkValue(double x) {
                 // Do nothing
@@ -499,12 +612,31 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 //            }
 
             @Override
-            boolean checkPositionTransform() { return false; }
+            boolean checkPositionTransform() {
+                return false;
+            }
         };
 
+        private final String name;
+
+        InstabilityHandler(String name) {
+            this.name = name;
+        }
+
+        public static InstabilityHandler factory(String match) {
+            for (InstabilityHandler type : InstabilityHandler.values()) {
+                if (match.equalsIgnoreCase(type.name)) {
+                    return type;
+                }
+            }
+            return null;
+        }
+
         abstract void checkValue(double x) throws NumericInstabilityException;
-//        abstract void checkEqual(double x, double y, double eps) throws NumericInstabilityException;
+
+        //        abstract void checkEqual(double x, double y, double eps) throws NumericInstabilityException;
         abstract void checkPosition(Transform transform, double[] unTransformedPosition) throws NumericInstabilityException;
+
         abstract boolean checkPositionTransform();
     }
 
@@ -512,7 +644,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         if (DEBUG) {
             return InstabilityHandler.DEBUG;
         } else {
-            return InstabilityHandler.REJECT;
+            return runtimeOptions.instabilityHandler;
         }
     }
 
@@ -541,6 +673,10 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         double[] getLastGradient();
 
         double[] getLastPosition();
+
+        void projectMomentum(double[] momentum, double[] position);
+
+        void updateMask();
 
         class Default implements LeapFrogEngine {
 
@@ -583,6 +719,16 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             }
 
             @Override
+            public void projectMomentum(double[] momentum, double[] position) {
+                // do nothing
+            }
+
+            @Override
+            public void updateMask() {
+                // do nothing
+            }
+
+            @Override
             public void updateMomentum(double[] position, double[] momentum, double[] gradient,
                                        double functionalStepSize) throws NumericInstabilityException {
 
@@ -616,13 +762,13 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
         class WithTransform extends Default {
 
-            final private Transform transform;
+            final protected Transform transform;
             double[] unTransformedPosition;
 
-            private WithTransform(Parameter parameter, Transform transform,
-                                  InstabilityHandler instabilityHandler,
-                                  MassPreconditioner preconditioning,
-                                  double[] mask) {
+            WithTransform(Parameter parameter, Transform transform,
+                          InstabilityHandler instabilityHandler,
+                          MassPreconditioner preconditioning,
+                          double[] mask) {
                 super(parameter, instabilityHandler, preconditioning, mask);
                 this.transform = transform;
             }
@@ -679,5 +825,100 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 //
 //            private double EPS = 10e-10;
         }
+    }
+
+    @Override
+    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum,
+                                                 WrappedVector gradient, int direction, double time) {
+
+        preconditionScheduler.forceUpdateCount();
+        //providerUpdatePreconditioning();
+
+        try {
+            leapFrogEngine.updateMomentum(position.getBuffer(), momentum.getBuffer(),
+                    mask(gradient.getBuffer(), mask), time * direction / 2);
+            leapFrogEngine.updatePosition(position.getBuffer(), momentum, time * direction);
+            updateGradient(gradient);
+            leapFrogEngine.updateMomentum(position.getBuffer(), momentum.getBuffer(),
+                    mask(gradient.getBuffer(), mask), time * direction / 2);
+        } catch (NumericInstabilityException e) {
+            handleInstability();
+        }
+    }
+
+    @Override
+    public void providerUpdatePreconditioning() {
+        updatePreconditioning();
+    }
+
+    public void updateGradient(WrappedVector gradient) {
+        double[] buffer = gradientProvider.getGradientLogDensity();
+        for (int i = 0; i < buffer.length; i++) {
+            gradient.set(i, buffer[i]);
+        }
+    }
+
+    @Override
+    public double[] getInitialPosition() {
+
+        return leapFrogEngine.getInitialPosition();
+    }
+
+    @Override
+    public double getParameterLogJacobian() {
+        return leapFrogEngine.getParameterLogJacobian();
+    }
+
+    @Override
+    public Transform getTransform() {
+        return transform;
+    }
+
+    @Override
+    public GradientWrtParameterProvider getGradientProvider() {
+        return gradientProvider;
+    }
+
+    @Override
+    public void setParameter(double[] position) {
+        leapFrogEngine.setParameter(position);
+    }
+
+    @Override
+    public WrappedVector drawMomentum() {
+        return mask(preconditioning.drawInitialMomentum(), mask);
+    }
+
+    @Override
+    public double getJointProbability(WrappedVector momentum) {
+        return gradientProvider.getLikelihood().getLogLikelihood() - getKineticEnergy(momentum) - getParameterLogJacobian();
+    }
+
+    @Override
+    public double getLogLikelihood() {
+        return gradientProvider.getLikelihood().getLogLikelihood();
+    }
+
+    @Override
+    public double getStepSize() {
+        return stepSize;
+    }
+
+    public int getNumGradientEvent(){
+        return 0;
+    }
+
+    @Override
+    public int getNumBoundaryEvent() {
+        return 0;
+    }
+
+    @Override
+    public double[] getMask() {
+        return mask;
+    }
+
+    protected void handleInstability() {
+        throw new RuntimeException("Numerical instability; need to handle"); // TODO
     }
 }

@@ -26,20 +26,21 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.Tree;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
+import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleBranchGradientDelegate;
 
 /**
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class DiscreteTraitBranchRateDelegate extends AbstractDiscreteTraitDelegate {
+public class DiscreteTraitBranchRateDelegate extends AbstractBeagleBranchGradientDelegate {
 
-    public static String GRADIENT_TRAIT_NAME = "BranchRateGradient";
-    public static String HESSIAN_TRAIT_NAME = "BranchRateHessian";
+    static final String GRADIENT_TRAIT_NAME = "BranchRateGradient";
+    static final String HESSIAN_TRAIT_NAME = "BranchRateHessian";
 
-    public DiscreteTraitBranchRateDelegate(String name, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate) {
+    DiscreteTraitBranchRateDelegate(String name, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree, likelihoodDelegate);
     }
 
@@ -48,7 +49,8 @@ public class DiscreteTraitBranchRateDelegate extends AbstractDiscreteTraitDelega
             double[] infinitesimalMatrix = new double[stateCount * stateCount];
             SubstitutionModel substitutionModel = evolutionaryProcessDelegate.getSubstitutionModel(i);
             substitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
-            double[] scaledInfinitesimalMatrix = scaleInfinitesimalMatrixByRates(infinitesimalMatrix, DifferentialChoice.GRADIENT);
+
+            double[] scaledInfinitesimalMatrix = scaleInfinitesimalMatrixByRates(infinitesimalMatrix, DifferentialChoice.GRADIENT, siteRateModel);
             evolutionaryProcessDelegate.cacheInfinitesimalMatrix(beagle, i, scaledInfinitesimalMatrix);
             if (cacheSquaredMatrix) {
                 double[] infinitesimalMatrixSquared = new double[stateCount * stateCount];
@@ -61,30 +63,23 @@ public class DiscreteTraitBranchRateDelegate extends AbstractDiscreteTraitDelega
                         infinitesimalMatrixSquared[l * stateCount + j] = sumOverState;
                     }
                 }
-                double[] scaledInfinitesimalMatrixSquared = scaleInfinitesimalMatrixByRates(infinitesimalMatrixSquared, DifferentialChoice.HESSIAN);
+                double[] scaledInfinitesimalMatrixSquared = scaleInfinitesimalMatrixByRates(infinitesimalMatrixSquared, DifferentialChoice.HESSIAN, siteRateModel);
                 evolutionaryProcessDelegate.cacheInfinitesimalSquaredMatrix(beagle, i, scaledInfinitesimalMatrixSquared);
             }
         }
     }
 
-    private double[] scaleInfinitesimalMatrixByRates(double[] infinitesimalMatrix, DifferentialChoice differentialChoice) {
+    static double[] scaleInfinitesimalMatrixByRates(double[] infinitesimalMatrix, DifferentialChoice differentialChoice,
+                                                    SiteRateModel siteRateModel) {
 
-        final int matrixSize = stateCount * stateCount;
-
-        if (infinitesimalMatrix.length != matrixSize) {
-            throw new RuntimeException("Dimension mismatch when preparing scaled differential matrix for branchRateGradient calculations.");
-        }
-
+        final int matrixSize = infinitesimalMatrix.length;
         double[] scaledInfinitesimalMatrix = new double[matrixSize * siteRateModel.getCategoryCount()];
 
         for (int i = 0; i < siteRateModel.getCategoryCount(); i++) {
-
             final double rate = siteRateModel.getRateForCategory(i);
 
             for (int j = 0; j < matrixSize; j++) {
-
                 scaledInfinitesimalMatrix[matrixSize * i + j] = infinitesimalMatrix[j] * differentialChoice.getRateScale(rate);
-
             }
         }
 
@@ -108,6 +103,7 @@ public class DiscreteTraitBranchRateDelegate extends AbstractDiscreteTraitDelega
         abstract double getRateScale(double rate);
     }
 
+    @SuppressWarnings("unused")
     public static String getName(String name) {
         return GRADIENT_TRAIT_NAME;
     }

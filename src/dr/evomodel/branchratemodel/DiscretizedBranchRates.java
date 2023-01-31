@@ -40,9 +40,7 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -59,12 +57,12 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
     // some reason.
     private static final boolean DEFAULT_CACHE_RATES = false;
 
-    public static final String RATECATEGORY = "rateCat";
+    private static final String RATE_CATEGORY = "rateCat";
 
     private final ParametricDistributionModel distributionModel;
 
     // The rate categories of each branch
-    final TreeParameterModel rateCategories;
+    private final TreeParameterModel rateCategories;
 
     private final int categoryCount;
     private final double step;
@@ -78,11 +76,11 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
     private double scaleFactor = 1.0;
     private double storedScaleFactor;
 
-    private boolean updateRateCategories = true;
+    private boolean updateRateCategories;
     private int currentRateArrayIndex = 0;
     private int storedRateArrayIndex;
 
-    private boolean cacheRates = DEFAULT_CACHE_RATES;
+    private boolean cacheRates;
 
     private TreeTrait[] traits;
 
@@ -200,7 +198,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
         TreeTrait<Integer> rateCategory = new TreeTrait<Integer>() {
             @Override
             public String getTraitName() {
-                return RATECATEGORY;
+                return RATE_CATEGORY;
             }
 
             @Override
@@ -230,7 +228,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
 
             @Override
             public String toString() {
-                return RATECATEGORY;
+                return RATE_CATEGORY;
             }
         };
 
@@ -311,6 +309,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
         return rates[currentRateArrayIndex][rateCategory] * scaleFactor;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public final int getBranchRateCategory(final Tree tree, final NodeRef node) {
 
         assert !tree.isRoot(node) : "root node doesn't have a rate category!";
@@ -319,10 +318,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
             setupRates();
         }
 
-        int rateCategory = (int) (rateCategories.getNodeValue(tree, node) + 0.5);
-
-        return rateCategory;
-
+        return (int) (rateCategories.getNodeValue(tree, node) + 0.5);
     }
 
     /**
@@ -350,6 +346,10 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
     @Override
     public TreeTrait[] getTreeTraits() {
         return traits;
+    }
+
+    public ParametricDistributionModel getParametricDistributionModel() {
+        return distributionModel;
     }
 
     public double getLogLikelihood() {

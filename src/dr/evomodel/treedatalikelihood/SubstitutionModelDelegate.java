@@ -29,7 +29,6 @@ import beagle.Beagle;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.PreOrderSettings;
 import dr.evolution.tree.Tree;
 import dr.util.Timer;
 
@@ -197,17 +196,17 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public void cacheInfinitesimalMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
-        beagle.setTransitionMatrix(getInfinitesimalMatrixBufferIndex(bufferIndex), differentialMatrix, 0.0);
+        beagle.setDifferentialMatrix(getInfinitesimalMatrixBufferIndex(bufferIndex), differentialMatrix);
     }
 
     @Override
     public void cacheInfinitesimalSquaredMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
-        beagle.setTransitionMatrix(getInfinitesimalSquaredMatrixBufferIndex(bufferIndex), differentialMatrix, 0.0);
+        beagle.setDifferentialMatrix(getInfinitesimalSquaredMatrixBufferIndex(bufferIndex), differentialMatrix);
     }
 
     @Override
     public void cacheFirstOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[] differentialMassMatrix) {
-        beagle.setTransitionMatrix(getFirstOrderDifferentialMatrixBufferIndex(branchIndex), differentialMassMatrix, 0.0);
+        beagle.setDifferentialMatrix(getFirstOrderDifferentialMatrixBufferIndex(branchIndex), differentialMassMatrix);
     }
 
     private int getSquaredInfinitesimalMatrixBufferIndexByEigenIndex(int eigenIndex) {

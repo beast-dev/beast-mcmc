@@ -127,13 +127,19 @@ public class CommonCitations {
             Citation.Status.PUBLISHED
     );
 
-    public static Citation SUCHARD_2012 = new Citation(
+    public static Citation SUCHARD_2020_MMM = new Citation(
             new Author[]{
-                    new Author("MA", "Suchard"),
+                    new Author("G", "Baele"),
+                    new Author("MS", "Gill"),
+                    new Author("P", "Bastide"),
                     new Author("P", "Lemey"),
-                    new Author("V", "Minin"),
+                    new Author("MA", "Suchard")
             },
-            Citation.Status.IN_PREPARATION
+            "Markov-modulated continuous-time Markov chains to identify site- and branch-specific evolutionary variation in BEAST",
+            2020,
+            "Systematic Biology",
+            "https://doi.org/10.1093/sysbio/syaa037",
+            "10.1093/sysbio/syaa037"
     );
 
     public static Citation SHAPIRO_2012 = new Citation(
@@ -180,6 +186,30 @@ public class CommonCitations {
             "PLoS Pathogens",
             10,
             "e100392"
+    );
+
+    public static Citation LEMEY_2020_ACCOMMODATING = new Citation(
+            new Author[] {
+                    new Author("P", "Lemey"),
+                    new Author("SL", "Hong"),
+                    new Author("V", "Hill"),
+                    new Author("G", "Baele"),
+                    new Author("C", "Poletto"),
+                    new Author("V", "Colizza"),
+                    new Author("A", "O'Toole"),
+                    new Author("JT", "McCrone"),
+                    new Author("KG", "Andersen"),
+                    new Author("M", "Worobey"),
+                    new Author("MI", "Nelson"),
+                    new Author("A", "Rambaut"),
+                    new Author("MA", "Suchard"),
+            },
+            "Accommodating individual travel history and unsampled diversity in Bayesian phylogeographic inference of SARS-CoV-2",
+            2020,
+            "Nature Communications",
+            11,
+            5110, -1,
+            Citation.Status.PUBLISHED
     );
 
     public static Citation MININ_2008_COUNTING = new Citation(
@@ -298,6 +328,27 @@ public class CommonCitations {
             61, 170, 173,
             "10.1093/sysbio/syr100");
 
+    public static Citation AYRES_2019_BEAGLE = new Citation(
+            new Author[] {
+                    new Author("DL", "Ayres"),
+                    new Author("MP", "Cummings"),
+                    new Author("G", "Baele"),
+                    new Author("AE", "Darling"),
+                    new Author("PO", "Lewis"),
+                    new Author("DL", "Swofford"),
+                    new Author("JP", "Huelsenbeck"),
+                    new Author("P", "Lemey"),
+                    new Author("A", "Rambaut"),
+                    new Author("MA", "Suchard")
+            },
+            "BEAGLE 3: Improved performance, scaling and usability for a high-performance computing library for statistical phylogenetics",
+            2019,
+            "Systematic Biology",
+            68,
+            1052, 1061,
+            Citation.Status.PUBLISHED
+    );
+
     public static Citation VRANCKEN_2015_SIMULTANEOUSLY = new Citation(
             new Author[] {
                     new Author("B", "Vrancken"),
@@ -314,5 +365,42 @@ public class CommonCitations {
             6,
             67, 82,
             Citation.Status.PUBLISHED
+    );
+
+    public static Citation PYBUS_2012_UNIFYING = new Citation(
+            new Author[] {
+                    new Author("OG", "Pybus"),
+                    new Author("MA", "Suchard"),
+                    new Author("P", "Lemey"),
+                    new Author("F", "Bernadin"),
+                    new Author("A", "Rambaut"),
+                    new Author("FW", "Crawford"),
+                    new Author("RR", "Gray"),
+                    new Author("N", "Arinaminpathy"),
+                    new Author("S", "Stramer"),
+                    new Author("MP", "Busch"),
+                    new Author("E", "Delwart")
+            },
+            "Unifying the spatial epidemiology and evolution of emerging epidemics",
+            2012,
+            "Proceedings of the National Academy of Sciences",
+            109,
+            15066, 15071,
+            Citation.Status.PUBLISHED
+    );
+
+    public static Citation GILL_2013_IMPROVING = new Citation(
+            new Author[]{
+                    new Author("MS", "Gill"),
+                    new Author("P", "Lemey"),
+                    new Author("NR", "Faria"),
+                    new Author("A", "Rambaut"),
+                    new Author("B", "Shapiro"),
+                    new Author("MA", "Suchard")
+            },
+            "Improving Bayesian population dynamics inference: a coalescent-based model for multiple loci",
+            2013,
+            "Mol Biol Evol",
+            30, 713, 724
     );
 }

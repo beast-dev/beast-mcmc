@@ -25,8 +25,8 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
+import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Bounds;
 import dr.inference.model.Model;
@@ -37,15 +37,16 @@ import dr.inference.model.Variable;
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
+@Deprecated
 public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightTransformDelegate {
 
-    private GMRFSkyrideLikelihood skyrideLikelihood;
+    private OldGMRFSkyrideLikelihood skyrideLikelihood;
     private Parameter coalescentIntervals;
     private OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping;
 
     public NodeHeightToCoalescentIntervalsDelegate(TreeModel treeModel,
                                                    Parameter nodeHeights,
-                                                   GMRFSkyrideLikelihood skyrideLikelihood) {
+                                                   OldGMRFSkyrideLikelihood skyrideLikelihood) {
 
         super(treeModel, nodeHeights);
 
@@ -56,6 +57,16 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
         addVariable(coalescentIntervals);
 
         this.proxyValuesKnown = false;
+    }
+
+    @Override
+    public double[] setMaskByHeightDifference(double threshold) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public double[] setMaskByRatio(double threshold) {
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
@@ -76,8 +87,9 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
         for (int i = 0; i < values.length; i++) {
             int[] nodeNumbers = intervalNodeMapping.getNodeNumbersForInterval(i);
             currentHeight += values[i];
-            TreeModel.Node node = (TreeModel.Node) tree.getNode(nodeNumbers[nodeNumbers.length - 1]);
-            node.heightParameter.setParameterValueQuietly(0, currentHeight);
+//            TreeModel.Node node = (TreeModel.Node) tree.getNode(nodeNumbers[nodeNumbers.length - 1]);
+//            node.heightParameter.setParameterValueQuietly(0, currentHeight);
+            tree.setNodeHeightQuietly(tree.getNode(nodeNumbers[nodeNumbers.length - 1]), currentHeight);
         }
         tree.pushTreeChangedEvent();
         return nodeHeights.getParameterValues();
@@ -91,6 +103,21 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
     @Override
     Parameter getParameter() {
         return coalescentIntervals;
+    }
+
+    @Override
+    double getLogJacobian(double[] values) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    double[] updateGradientLogDensity(double[] gradient, double[] value) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override

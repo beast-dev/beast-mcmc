@@ -26,10 +26,10 @@
 package dr.evomodel.treedatalikelihood;
 
 
-import dr.evolution.alignment.Patterns;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.siteratemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
@@ -52,8 +52,6 @@ import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
-import dr.oldevomodel.sitemodel.GammaSiteModel;
-import dr.util.MessageLogHandler;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -136,10 +134,12 @@ public class DataLikelihoodTester {
                 treeModel,
                 patterns,
                 branchModel,
-                siteRateModel, false,
+                siteRateModel,
+                false,
+                false,
                 PartialsRescalingScheme.NONE,
                 false,
-                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
+                PreOrderSettings.getDefault());
 
         TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(
                 dataLikelihoodDelegate,
@@ -161,10 +161,12 @@ public class DataLikelihoodTester {
                 treeModel,
                 patterns,
                 branchModel2,
-                siteRateModel2, false,
+                siteRateModel2,
+                false,
+                false,
                 PartialsRescalingScheme.NONE,
                 false,
-                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
+                PreOrderSettings.getDefault());
 
         treeDataLikelihood = new TreeDataLikelihood(
                 dataLikelihoodDelegate,
@@ -461,10 +463,12 @@ public class DataLikelihoodTester {
                 treeModel,
                 patterns,
                 branchModel,
-                siteRateModel, false,
+                siteRateModel,
+                false,
+                false,
                 PartialsRescalingScheme.NONE,
                 false,
-                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
+                PreOrderSettings.getDefault());
 
         TreeDataLikelihood treeDataLikelihoodOne = new TreeDataLikelihood(
                 dataLikelihoodDelegateOne,
@@ -487,10 +491,12 @@ public class DataLikelihoodTester {
                 treeModel,
                 morePatterns,
                 branchModel2,
-                siteRateModel2, false,
+                siteRateModel2,
+                false,
+                false,
                 PartialsRescalingScheme.NONE,
                 false,
-                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
+                PreOrderSettings.getDefault());
 
         TreeDataLikelihood treeDataLikelihoodTwo = new TreeDataLikelihood(
                 dataLikelihoodDelegateTwo,
@@ -624,7 +630,7 @@ public class DataLikelihoodTester {
         NewickImporter importer = new NewickImporter(t);
         Tree tree = importer.importTree(null);
 
-        return new TreeModel(tree);//treeModel
+        return new DefaultTreeModel(tree);//treeModel
     }
 
     static private String sequences[][] = {

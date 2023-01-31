@@ -25,6 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodelxml.continuous.hmc.NodeHeightTransformParser;
@@ -36,6 +37,7 @@ import dr.inference.model.Parameter;
  * @author Xiang Ji
  */
 public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel {
+    //TODO: remove this class when finished with everything
     protected TreeModel tree;
     protected Parameter nodeHeights;
     protected TreeParameterModel indexHelper;
@@ -47,16 +49,28 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
         this.nodeHeights = nodeHeights;
         indexHelper = new TreeParameterModel(treeModel, new Parameter.Default(tree.getNodeCount() - 1), false);
         addVariable(nodeHeights);
+        treeModel.addModel(this);
+        treeModel.addModelRestoreListener(this);
+        treeModel.addModelListener(this);
     }
+
+    abstract public double[] setMaskByHeightDifference(double threshold);
+
+    abstract public double[] setMaskByRatio(double threshold);
 
     public void setNodeHeights(double[] nodeHeights) {
         if (nodeHeights.length != this.nodeHeights.getDimension()) {
             throw new RuntimeException("Dimension mismatch!");
         }
+
         for (int i = 0; i < nodeHeights.length; i++) {
             this.nodeHeights.setParameterValueQuietly(i, nodeHeights[i]);
         }
-        tree.pushTreeChangedEvent();
+        tree.pushTreeChangedEvent(TreeChangedEvent.create());
+    }
+
+    public Parameter getNodeHeights() {
+        return nodeHeights;
     }
 
     @Override
@@ -81,5 +95,11 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
     abstract String getReport();
 
     abstract Parameter getParameter();
+
+    abstract double getLogJacobian(double[] values);
+
+    abstract double[] updateGradientLogDensity(double[] gradient, double[] value);
+
+    abstract double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to);
 
 }

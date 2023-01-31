@@ -29,6 +29,7 @@ import cern.jet.random.Gamma;
 import cern.jet.random.engine.MersenneTwister;
 import cern.jet.random.engine.RandomEngine;
 import dr.inference.model.GradientProvider;
+import dr.inference.model.HessianProvider;
 import dr.math.GammaFunction;
 import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
@@ -48,7 +49,7 @@ import java.util.List;
  * @author Gerton Lunter
  * @version $Id: GammaDistribution.java,v 1.9 2006/03/30 11:12:47 rambaut Exp $
  */
-public class GammaDistribution implements Distribution, GradientProvider {
+public class GammaDistribution implements Distribution, GradientProvider, HessianProvider {
     //
     // Public stuff
     //
@@ -490,7 +491,6 @@ public class GammaDistribution implements Distribution, GradientProvider {
     }
 
     public static double gradLogPdf(double x, double shape, double scale) {
-        // TODO Check
 
         if (x < 0) {
             return 0;
@@ -508,7 +508,20 @@ public class GammaDistribution implements Distribution, GradientProvider {
     }
 
     public static double hessianLogPdf(double x, double shape, double scale) {
-        throw new RuntimeException("Not yet implemented");
+
+        if (x < 0) {
+            return 0;
+        }
+
+        if (shape == -0.5) {
+            return -0.5 / (x * x);
+        } else if (shape == 0.0) {
+            return 1.0 / (x * x);
+        } else if (shape == 1.0) {
+            return 0.0;
+        } else  {
+            return (1.0 - shape) / (x * x);
+        }
     }
 
     // Private
@@ -902,6 +915,21 @@ public class GammaDistribution implements Distribution, GradientProvider {
             result[i] = gradLogPdf(x[i], shape, scale);
         }
         return result;
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+        double[] result = new double[x.length];                      
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = hessianLogPdf(x[i], shape, scale);
+        }
+        return result;
+    }
+
+    @Override
+    public double[][] getHessianLogDensity(Object obj) {
+        return HessianProvider.expandDiagonals(getDiagonalHessianLogDensity(obj));
     }
 }
 

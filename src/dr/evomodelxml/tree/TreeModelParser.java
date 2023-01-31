@@ -31,6 +31,7 @@ import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
@@ -124,7 +125,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
     }
 
     public String getParserName() {
-        return TreeModel.TREE_MODEL;
+        return DefaultTreeModel.TREE_MODEL;
     }
 
     /**
@@ -136,7 +137,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
         boolean fixHeights = xo.getAttribute(FIX_HEIGHTS, false);
         boolean fixTree = xo.getAttribute(FIX_TREE, false);
 
-        TreeModel treeModel = new TreeModel(xo.getId(), tree, fixHeights, fixTree);
+        DefaultTreeModel treeModel = new DefaultTreeModel(xo.getId(), tree, fixHeights, fixTree);
 
         Logger.getLogger("dr.evomodel").info("\nCreating the tree model, '" + xo.getId() + "'");
 
@@ -269,7 +270,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
         return treeModel;
     }
 
-    public static void parseNodeTraits(XMLObject cxo, TreeModel treeModel) throws XMLParseException {
+    public static void parseNodeTraits(XMLObject cxo, DefaultTreeModel treeModel) throws XMLParseException {
 
         boolean rootNode = cxo.getAttribute(ROOT_NODE, false);
         boolean internalNodes = cxo.getAttribute(INTERNAL_NODES, false);
@@ -352,7 +353,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return TreeModel.class;
+        return DefaultTreeModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

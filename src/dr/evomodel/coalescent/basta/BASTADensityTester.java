@@ -1,7 +1,7 @@
 /*
  * BASTADensityTester.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -39,6 +39,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
@@ -58,7 +59,7 @@ public class BASTADensityTester {
         NewickImporter importer = new NewickImporter(t);
         Tree tree = importer.importTree(null);
 
-        return new TreeModel(tree);//treeModel
+        return new DefaultTreeModel(tree);//treeModel
     }
 
     static private String sequences[][] = {
@@ -200,15 +201,12 @@ public class BASTADensityTester {
         StructuredCoalescentLikelihood structured = null;
 
         try {
-            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, migrationModel, subIntervals, includeSubtree, excludeSubtrees);
+            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns,null, "", migrationModel, subIntervals, includeSubtree, excludeSubtrees, false);
         } catch (TreeUtils.MissingTaxonException missing) {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }
 
-        System.out.println("\nStructured coalescent lnL = " + structured.calculateLogLikelihood());
-
-
-
+        System.out.println("Structured coalescent lnL = " + structured.calculateLogLikelihood() + "\n");
 
 
         System.out.println("EXAMPLE 2: 5 taxa (2 identical sampling dates) with 2 demes");
@@ -234,15 +232,12 @@ public class BASTADensityTester {
         patterns.addPattern(pattern);
 
         try {
-            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, migrationModel, subIntervals, includeSubtree, excludeSubtrees);
+            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, null, "", migrationModel, subIntervals, includeSubtree, excludeSubtrees, false);
         } catch (TreeUtils.MissingTaxonException missing) {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }
 
-        System.out.println("\nStructured coalescent lnL = " + structured.calculateLogLikelihood());
-
-
-
+        System.out.println("Structured coalescent lnL = " + structured.calculateLogLikelihood() + "\n");
 
 
         System.out.println("EXAMPLE 3: 6 taxa (2 identical sampling dates) with 3 demes");
@@ -304,15 +299,12 @@ public class BASTADensityTester {
         migrationModel = new SVSComplexSubstitutionModel("migrationModel", dataType, freqModel, ratesParameter, null);
 
         try {
-            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, migrationModel, subIntervals, includeSubtree, excludeSubtrees);
+            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, null, "", migrationModel, subIntervals, includeSubtree, excludeSubtrees, false);
         } catch (TreeUtils.MissingTaxonException missing) {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }
 
-        System.out.println("\nStructured coalescent lnL = " + structured.calculateLogLikelihood());
-
-
-
+        System.out.println("Structured coalescent lnL = " + structured.calculateLogLikelihood() + "\n");
 
 
         System.out.println("EXAMPLE 4: 6 taxa (2 identical sampling dates) with 3 demes and simple branch lengths");
@@ -324,13 +316,15 @@ public class BASTADensityTester {
         }
 
         try {
-            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, migrationModel, subIntervals, includeSubtree, excludeSubtrees);
+            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, null, "", migrationModel, subIntervals, includeSubtree, excludeSubtrees, false);
         } catch (TreeUtils.MissingTaxonException missing) {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }
 
-        System.out.println("\nStructured coalescent lnL = " + structured.calculateLogLikelihood());
+        System.out.println("Structured coalescent lnL = " + structured.calculateLogLikelihood() + "\n");
 
+
+        System.out.println("EXAMPLE 5: 6 taxa (2 identical sampling dates) with 3 demes and simple (but different than in EXAMPLE 4) branch lengths");
 
         try {
             treeModel = createSpecifiedTree("(((((AF189018Indonesia2005:1.5,AJ842306France2004:0.5):0.75,AB192965Japan2004:1.25):3.25,FM212660Cameroon2007:7.5):5.0,AF071228Spain1997:2.5):1.0,AF105975Portugal1995:1.5)");
@@ -339,12 +333,12 @@ public class BASTADensityTester {
         }
 
         try {
-            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, migrationModel, subIntervals, includeSubtree, excludeSubtrees);
+            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, null, "", migrationModel, subIntervals, includeSubtree, excludeSubtrees, false);
         } catch (TreeUtils.MissingTaxonException missing) {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }
 
-        System.out.println("\nStructured coalescent lnL = " + structured.calculateLogLikelihood());
+        System.out.println("Structured coalescent lnL = " + structured.calculateLogLikelihood() + "\n");
 
     }
 

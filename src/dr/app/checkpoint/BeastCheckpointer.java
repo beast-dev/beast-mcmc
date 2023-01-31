@@ -26,6 +26,7 @@
 package dr.app.checkpoint;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovchain.MarkovChain;
@@ -62,6 +63,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
     public final static String SAVE_STEM = "save.state.stem";
 
     public final static String FORCE_RESUME = "force.resume";
+    public final static String CHECKPOINT_SEED = "checkpoint.seed";
+
+    public final static String FULL_CHECKPOINT_PRECISION = "full.checkpoint.precision";
 
     private final String loadStateFileName;
     private final String saveStateFileName;
@@ -69,6 +73,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
     private final String stemFileName;
 
     private boolean forceResume = false;
+
+    private final boolean useFullPrecision;
 
     public BeastCheckpointer() {
         loadStateFileName = System.getProperty(LOAD_STATE_FILE, null);
@@ -86,6 +92,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
             final long saveStateEvery = Long.parseLong(System.getProperty(SAVE_STATE_EVERY));
             listeners.add(new StateSaverChainListener(BeastCheckpointer.this, saveStateEvery,true));
         }
+
+        useFullPrecision = (System.getProperty(FULL_CHECKPOINT_PRECISION) != null) &&
+                System.getProperty(FULL_CHECKPOINT_PRECISION).equalsIgnoreCase("true");
 
         Factory.INSTANCE = new Factory() {
             @Override
@@ -160,7 +169,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
             //first perform a simple check for equality of two doubles
             //when this test fails, go over the digits
             if (forceResume) {
-                System.out.println("Forcing analysis to resume regardless of recomputed likelihood values.");
+                System.out.println("Forcing analysis to resume regardless of recomputed likelihood values ("  + lnL + " vs. " + savedLnL + ").");
             } else if (lnL != savedLnL) {
 
                 System.out.println("COMPARING LIKELIHOODS: " + lnL + " vs. " + savedLnL);
@@ -203,8 +212,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
                                 "Try resuming the analysis by using the same starting seed as for the original BEAST run.");
                     } else {
                         System.out.println("Saved lnL does not match recomputed value for loaded state: stored lnL: " + savedLnL +
-                        ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +
-                        "\nThreshold of " + threshold + " for restarting analysis not exceeded; continuing ...");
+                                ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +
+                                "\nThreshold of " + threshold + " for restarting analysis not exceeded; continuing ...");
                     }
                 }
 
@@ -223,7 +232,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
         OutputStream fileOut = null;
         try {
             fileOut = new FileOutputStream(file);
-            PrintStream out = new PrintStream(fileOut);
+            PrintStream out = useFullPrecision ? new CheckpointPrintStream(fileOut) : new PrintStream(fileOut);
 
             ArrayList<TreeParameterModel> traitModels = new ArrayList<TreeParameterModel>();
 
@@ -252,6 +261,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         out.print("\t");
                         out.print(parameter.getParameterUntransformedValue(dim));
                     }
+                    out.print("\n");
                 }
             }
 
@@ -267,6 +277,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 if (operator instanceof AdaptableMCMCOperator) {
                     out.print("\t");
                     out.print(((AdaptableMCMCOperator)operator).getAdaptableParameter());
+                    out.print("\t");
+                    out.print(((AdaptableMCMCOperator)operator).getAdaptationCount());
                 }
                 out.println();
             }
@@ -274,7 +286,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
             //check up front if there are any TreeParameterModel objects
             for (Model model : Model.CONNECTED_MODEL_SET) {
                 if (model instanceof TreeParameterModel) {
-                    //System.out.println("\nDetected TreeParameterModel: " + ((TreeParameterModel) model).toString());
+                    if (DEBUG) {
+                        System.out.println("\nSave TreeParameterModel: " + model.getClass().getSimpleName());
+                    }
                     traitModels.add((TreeParameterModel) model);
                 }
             }
@@ -361,6 +375,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
     }
 
     protected long readStateFromFile(File file, MarkovChain markovChain, double[] lnL) {
+
+        DoubleParser parser = useFullPrecision ? DoubleParser.HEX : DoubleParser.TEXT;
+
         OperatorSchedule operatorSchedule = markovChain.getSchedule();
 
         long state = -1;
@@ -407,7 +424,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
                     throw new RuntimeException("Unable to read lnL from state file");
                 }
                 if (lnL != null) {
-                    lnL[0] = Double.parseDouble(fields[1]);
+                    lnL[0] = parser.parseDouble(fields[1]);
                 }
             } catch (NumberFormatException nfe) {
                 throw new RuntimeException("Unable to read lnL from state file");
@@ -415,52 +432,62 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
             for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
 
-                line = in.readLine();
-                fields = line.split("\t");
-                //if (!fields[0].equals(parameter.getParameterName())) {
-                //  System.err.println("Unable to match state parameter: " + fields[0] + ", expecting " + parameter.getParameterName());
-                //}
-                int dimension = Integer.parseInt(fields[2]);
+                if (!parameter.isImmutable()) {
+                    line = in.readLine();
+                    fields = line.split("\t");
+                    //if (!fields[0].equals(parameter.getParameterName())) {
+                    //  System.err.println("Unable to match state parameter: " + fields[0] + ", expecting " + parameter.getParameterName());
+                    //}
+                    int dimension = Integer.parseInt(fields[2]);
 
-                if (dimension != parameter.getDimension()) {
-                    System.err.println("Unable to match state parameter dimension: " + dimension + ", expecting " + parameter.getDimension() + " for parameter: " + parameter.getParameterName());
-                    System.err.print("Read from file: ");
-                    for (int i = 0; i < fields.length; i++) {
-                        System.err.print(fields[i] + "\t");
+                    if (dimension != parameter.getDimension()) {
+                        System.err.println("Unable to match state parameter dimension: " + dimension + ", expecting " + parameter.getDimension() + " for parameter: " + parameter.getParameterName());
+                        System.err.print("Read from file: ");
+                        for (int i = 0; i < fields.length; i++) {
+                            System.err.print(fields[i] + "\t");
+                        }
+                        System.err.println();
                     }
-                    System.err.println();
-                }
 
-                if (fields[1].equals("branchRates.categories.rootNodeNumber")) {
-                    // System.out.println("eek");
-                    double value = Double.parseDouble(fields[3]);
-                    parameter.setParameterValue(0, value);
-                    if (DEBUG) {
-                        System.out.println("restoring " + fields[1] + " with value " + value);
-                    }
-                } else {
-                    if (DEBUG) {
-                        System.out.print("restoring " + fields[1] + " with values ");
-                    }
-                    for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                        parameter.setParameterUntransformedValue(dim, Double.parseDouble(fields[dim + 3]));
+                    if (fields[1].equals("branchRates.categories.rootNodeNumber")) {
+                        // System.out.println("eek");
+                        double value = parser.parseDouble(fields[3]);
+                        parameter.setParameterValue(0, value);
                         if (DEBUG) {
-                            System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
+                            System.out.println("restoring " + fields[1] + " with value " + value);
+                        }
+                    } else {
+                        if (DEBUG) {
+                            System.out.print("restoring " + fields[1] + " with values ");
+                        }
+                        for (int dim = 0; dim < parameter.getDimension(); dim++) {
+                            try {
+                                parameter.setParameterUntransformedValue(dim, parser.parseDouble(fields[dim + 3]));
+                            } catch (RuntimeException rte) {
+                                System.err.println(rte);
+                                continue;
+                            }
+                            if (DEBUG) {
+                                System.out.print(parser.parseDouble(fields[dim + 3]) + " ");
+                            }
+                        }
+                        if (DEBUG) {
+                            System.out.println();
                         }
                     }
-                    if (DEBUG) {
-                        System.out.println();
-                    }
                 }
-
             }
 
             for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
+                //TODO we can no longer assume these are in the right order
+                //TODO best parse all the "operator" lines and store them so we can mix and match within this for loop
+                //TODO does not only apply to the operators but also to the parameters
+                //TODO test using additional tip-date sampling compared to previous run
                 MCMCOperator operator = operatorSchedule.getOperator(i);
                 line = in.readLine();
                 fields = line.split("\t");
                 if (!fields[1].equals(operator.getOperatorName())) {
-                    throw new RuntimeException("Unable to match operator: " + fields[1]);
+                    throw new RuntimeException("Unable to match " + operator.getOperatorName() + " operator: " + fields[1]);
                 }
                 if (fields.length < 4) {
                     throw new RuntimeException("Operator missing values: " + fields[1]);
@@ -468,16 +495,17 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 operator.setAcceptCount(Integer.parseInt(fields[2]));
                 operator.setRejectCount(Integer.parseInt(fields[3]));
                 if (operator instanceof AdaptableMCMCOperator) {
-                    if (fields.length != 5) {
+                    if (fields.length != 6) {
                         throw new RuntimeException("Coercable operator missing parameter: " + fields[1]);
                     }
-                    ((AdaptableMCMCOperator)operator).setAdaptableParameter(Double.parseDouble(fields[4]));
+                    ((AdaptableMCMCOperator)operator).setAdaptableParameter(parser.parseDouble(fields[4]));
+                    ((AdaptableMCMCOperator)operator).setAdaptationCount(Long.parseLong(fields[5]));
                 }
             }
 
             // load the tree models last as we get the node heights from the tree (not the parameters which
             // which may not be associated with the right node
-            Set<String> expectedTreeModelNames = new HashSet<String>();
+            Set<String> expectedTreeModelNames = new LinkedHashSet<>();
 
             //store list of TreeModels for debugging purposes
             ArrayList<TreeModel> treeModelList = new ArrayList<TreeModel>();
@@ -501,6 +529,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
                 //first add all TreeParameterModels to a list
                 if (model instanceof TreeParameterModel) {
+                    if (DEBUG) {
+                        System.out.println("\nLoad TreeParameterModel: " + model.getClass().getSimpleName());
+                    }
                     traitModels.add((TreeParameterModel)model);
                 }
 
@@ -544,7 +575,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         for (int i = 0; i < nodeCount; i++) {
                             line = in.readLine();
                             fields = line.split("\t");
-                            nodeHeights[i] = Double.parseDouble(fields[1]);
+                            nodeHeights[i] = parser.parseDouble(fields[1]);
                             if (i < taxaNames.length) {
                                 taxaNames[i] = fields[2];
                             }
@@ -587,8 +618,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
                                 // childOrder[i] = Integer.parseInt(fields[2]);
                                 childOrder[Integer.parseInt(fields[0])] = Integer.parseInt(fields[2]);
                                 for (int j = 0; j < linkedModels.get(model.getId()).size(); j++) {
-                                    //   traitValues[j][i] = Double.parseDouble(fields[3+j]);
-                                    traitValues[j][Integer.parseInt(fields[0])] = Double.parseDouble(fields[3+j]);
+                                    //   traitValues[j][i] = parser.parseDouble(fields[3+j]);
+                                    traitValues[j][Integer.parseInt(fields[0])] = parser.parseDouble(fields[3+j]);
                                 }
                             }
                         }
@@ -602,6 +633,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         ((TreeModel) model).beginTreeEdit();
                         ((TreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
                         if (traitModels.size() > 0) {
+                            System.out.println("adopting " + traitModels.size() + " trait models to treeModel " + ((TreeModel)model).getId());
                             ((TreeModel) model).adoptTraitData(parents, traitModels, traitValues, taxaNames);
                         }
                         ((TreeModel) model).endTreeEdit();
@@ -641,7 +673,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 }
             }
 
-            if (rngState != null) {
+            if (System.getProperty(BeastCheckpointer.CHECKPOINT_SEED) != null) {
+                MathUtils.setSeed(Long.parseLong(System.getProperty(BeastCheckpointer.CHECKPOINT_SEED)));
+            } else if (rngState != null) {
                 MathUtils.setRandomState(rngState);
             }
 
@@ -658,6 +692,86 @@ public class BeastCheckpointer implements StateLoaderSaver {
         }
 
         return state;
+    }
+
+    class CheckpointPrintStream extends PrintStream {
+        public CheckpointPrintStream(OutputStream out) {
+            super(out);
+        }
+
+        public void print(double d) {
+            String byteString = Long.toHexString(Double.doubleToRawLongBits(d));
+            super.print(d + "/" + byteString);
+        }
+
+        public void println(double d) {
+            String byteString = Long.toHexString(Double.doubleToRawLongBits(d));
+            super.println(d + "/" + byteString);
+        }
+    }
+
+    enum DoubleParser {
+        TEXT {
+            public double parseDouble(String string) {
+                return Double.parseDouble(string);
+            }
+        },
+        HEX {
+            public double parseDouble(String string) {
+                String[] strings = string.split("/");
+                return convertHexStrToDouble(strings[1]);
+            }
+
+            private double convertHexStrToDouble(String input) {
+                // convert the input to positive, as needed
+                String s2 = preprocess(input);
+                boolean negative = true;
+                // if the original equals the new string, then it is not negative
+                if (input.equalsIgnoreCase(s2)) {
+                    negative = false;
+                }
+
+                // convert the hex string to long
+                long doubleAsLongReverse = Long.parseLong(s2, 16);
+
+                // Convert the long back into the original double
+                double doubleOutput = Double.longBitsToDouble(doubleAsLongReverse);
+
+                // return as a negative value, as needed
+                if (negative) {
+                    return -doubleOutput;
+                } else {
+                    return doubleOutput;
+                }
+            }
+
+            private String preprocess(String doubleAsHexString) {
+                // get the first char and convert it to an int
+                String s0 = doubleAsHexString.substring(0, 1);
+                int int1 = Integer.parseInt(s0, 16);
+
+                // if the int is < 8, then the string is not negative
+                // and is returned without further processing
+                if (int1 < 8) {
+                    return doubleAsHexString;
+                }
+
+                // otherwise subtract 8
+                int1 = int1 - 8;
+                s0 = Integer.toString(int1);
+
+                // don't prepend a "0"
+                if (int1 == 0) {
+                    s0 = "";
+                }
+
+                // return the string with a new inital char
+                return s0 + doubleAsHexString.substring(1);
+            }
+
+        };
+
+        public abstract double parseDouble(String string);
     }
 
 }

@@ -28,6 +28,7 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.Bounds;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
@@ -39,7 +40,7 @@ import dr.xml.Reportable;
 public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameterProvider, Reportable {
 
     private final AutoCorrelatedBranchRatesDistribution distribution;
-    private final ArbitraryBranchRates branchRates;
+    private final DifferentiableBranchRates branchRates;
     private final Tree tree;
 
     private final AutoCorrelatedBranchRatesDistribution.BranchVarianceScaling scaling;
@@ -47,6 +48,9 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
 
     private Parameter parameter;
     private double[] cachedIncrements;
+
+    private double [] uppers;
+    private double [] lowers;
 
     public AutoCorrelatedGradientWrtIncrements(AutoCorrelatedBranchRatesDistribution distribution) {
         this.distribution = distribution;
@@ -78,11 +82,15 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
     public double[] getGradientLogDensity() {
 
         double[] gradientWrtIncrements = distribution.getGradientWrtIncrements();
-        if (units.needsIncrementCorrection()) {
+        if (units.needsIncrementCorrection(distribution.wrtIncrements)) {
             recursePostOrderToCorrectGradient(tree.getRoot(), gradientWrtIncrements);
         }
 
         return gradientWrtIncrements;
+    }
+
+    public AutoCorrelatedBranchRatesDistribution getDistribution() {
+        return distribution;
     }
 
     private int recursePostOrderToCorrectGradient(NodeRef node, double[] gradientWrtIncrements) {
@@ -115,26 +123,30 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
         return new Parameter.Proxy("increments", distribution.getDimension()) {
 
             @Override
-            public double getParameterValue(int dim) {
-                return distribution.getIncrement(dim);
+            public double getParameterValue(int index) {
+                return distribution.getIncrement(index);
             }
 
             @Override
-            public void setParameterValue(int dim, double value) {
-                throw new RuntimeException("Do not set single value at a time");
+            public void setParameterValue(int index, double value) {
+                for (int i = 0; i < dim; ++i) {
+                    setParameterValueQuietly(i, i == index ? value : distribution.getIncrement(i));
+                }
+
+                fireParameterChangedEvent(index, ChangeType.VALUE_CHANGED);
             }
 
             @Override
-            public void setParameterValueQuietly(int dim, double value) {
+            public void setParameterValueQuietly(int index, double value) {
                 if (cachedIncrements == null) {
                     cachedIncrements = new double[getDimension()];
                 }
 
-                cachedIncrements[dim] = value;
+                cachedIncrements[index] = value;
             }
 
             @Override
-            public void setParameterValueNotifyChangedAll(int dim, double value) {
+            public void setParameterValueNotifyChangedAll(int index, double value) {
                 throw new RuntimeException("Do not set single value at a time");
             }
 
@@ -150,6 +162,31 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
 
                 rateParameter.fireParameterChangedEvent();
             }
+
+            @Override
+            public String toString() {
+                StringBuilder sb = new StringBuilder(String.valueOf(getParameterValue(0)));
+                for (int i = 1; i < dim; ++i) {
+                    sb.append(", ").append(getParameterValue(i));
+                }
+                return sb.toString();
+            }
+
+            @Override
+            public Bounds<Double> getBounds() {
+                if (bounds == null) {
+                    uppers = new double[dim];
+                    lowers = new double[dim];
+                    for (int i = 0; i < dim; i++) {
+                        uppers[i] = Double.POSITIVE_INFINITY;
+                        lowers[i] = Double.NEGATIVE_INFINITY;
+                    }
+                    bounds = new DefaultBounds(uppers, lowers);
+                }
+                return bounds;
+            }
+
+            private Bounds<Double> bounds;
         };
     }
 

@@ -187,13 +187,23 @@ public class NexusExporter implements TreeExporter {
         out.println(";");
     }
 
-    public Map<String, Integer> writeNexusHeader(Tree tree) {
-        int taxonCount = tree.getTaxonCount();
+    protected int getTaxonCount(Tree tree) {
+        return tree.getTaxonCount();
+    }
+
+    protected List<String> getTaxonNames(Tree tree) {
         List<String> names = new ArrayList<String>();
 
         for (int i = 0; i < tree.getTaxonCount(); i++) {
             names.add(tree.getTaxonId(i));
         }
+
+        return names;
+    }
+
+    public Map<String, Integer> writeNexusHeader(Tree tree) {
+        int taxonCount = getTaxonCount(tree);
+        List<String> names = getTaxonNames(tree);
 
         if (sorted) Collections.sort(names);
 

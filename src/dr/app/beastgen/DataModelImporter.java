@@ -50,6 +50,7 @@ import org.jdom.JDOMException;
 import java.io.*;
 import java.util.*;
 import java.util.List;
+import java.util.logging.Logger;
 
 
 /**
@@ -88,6 +89,7 @@ public class DataModelImporter {
             if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
                 // is a NEXUS file
                 importNexusFile(file, guesser, dataModel);
+                importFromTreeFile(file.getAbsolutePath(), dataModel);
             } else if ((line != null && line.trim().startsWith("" + FastaImporter.FASTA_FIRST_CHAR))) {
                 // is a FASTA file
                 importFastaFile(file, guesser, dataModel);
@@ -95,7 +97,7 @@ public class DataModelImporter {
                 // assume it is a BEAST XML file and see if that works...
                 importBEASTFile(file, guesser, dataModel);
 //            } else {
-//                // assume it is a tab-delimited traits file and see if that works...
+                // assume it is a tab-delimited traits file and see if that works...
 //                importTraits(file);
             } else {
                 throw new ImportException("Unrecognized format for imported file.");
@@ -279,6 +281,7 @@ public class DataModelImporter {
 
     public Map importFromTreeFile(String fileName, Map dataModel) throws IOException, Importer.ImportException {
         Tree tree = null;
+        List trees=new ArrayList();
         try {
             Reader reader = new FileReader(fileName);
 
@@ -292,10 +295,16 @@ public class DataModelImporter {
 
             if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
                 // is a NEXUS file
-                NexusImporter importer = new NexusImporter(reader);
-                tree = importer.importNextTree();
-
-            } else {
+                    NexusImporter importer = new NexusImporter(reader);
+                    while (importer.hasTree()) {
+                        tree = importer.importNextTree();
+                        HashMap<String, String> treeMap = new HashMap<String, String>();
+                        treeMap.put("id", tree.getId());
+                        treeMap.put("tree", TreeUtils.newick(tree));
+                        //TODO check that tree taxa are in the input list - if not throw a warning.
+                        trees.add(treeMap);
+                    }
+                } else {
                 NewickImporter importer = new NewickImporter(reader);
                 tree = importer.importNextTree();
             }
@@ -307,6 +316,9 @@ public class DataModelImporter {
 
         if (tree != null) {
             dataModel.put("tree", TreeUtils.newick(tree));
+        }
+        if (trees.size() > 0) {
+            dataModel.put("trees", trees);
         }
 
         return dataModel;
@@ -321,48 +333,35 @@ public class DataModelImporter {
     /**
      * Reads a tsv or csv file and adds the attributes to the taxon in the taxonList
      *
-     * Note: Any taxon in the tsv but not in the taxon list will be added.
      * @param fileName - The name of a tsv file with headers where the first column is taxon and the second is the set name
      * @param taxonList - A taxonList with name's matching the those in the first column of the tsv.
      * @throws IOException
      */
     public void addTraitsFromFile(String fileName, TaxonList taxonList) throws IOException{
 
-                // JT- Currently this needs to be called after the taxa are made but before the data model is constructed.
-                // In the current implementation this function needs to be called within setData and so the trait tsv is
-                // passed as a parameter to all the importers.
-        Map traits = new HashMap();
+        // JT- Currently this needs to be called after the taxa are made but before the data model is constructed.
         //  For each attribute get the unique entries and store in an attribute entry
-         ArrayList<Map> attributes = new ArrayList<>();
         try {
             DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(fileName));
             String[] taxonNames = dataTable.getRowLabels();
             String[] traitNames = dataTable.getColumnLabels();
 
-
-            // For each taxon get the attribute and assign them in the taxa list
-            // if the taxon is not in the list add it
+            // For each taxon get the attribute and assign them in the taxon list
+            // if the taxon is not in the list thow a warning
             Set<String> taxonSet = TaxonList.Utils.getTaxonListIdSet(taxonList);
             // a work around since we can't add taxon directly to a taxonList
-            Taxa taxa =new Taxa(taxonList);
             for (int i = 0; i <dataTable.getRowCount() ; i++) {
                 String taxonName = taxonNames[i];
                 String[] taxonData = dataTable.getRow(i);
 
-                Taxon t;
-
-                if(taxonSet.contains(taxonName)){
-                    t = taxonList.getTaxon(taxonList.getTaxonIndex(taxonName));
-                }else{
-                    t = new Taxon(taxonName);
-                    taxa.addTaxon(t);
+                if(!taxonSet.contains(taxonName)){
+                    Logger.getLogger("dr.app.beastgen").warning("Taxon "+taxonName+ " from " +fileName+" was not found in input file. It will be ignored.");
+                }else {
+                    Taxon t = taxonList.getTaxon(taxonList.getTaxonIndex(taxonName));
+                    for (int j = 0; j < traitNames.length; j++) {
+                        t.setAttribute(traitNames[j], taxonData[j]);
+                    }
                 }
-
-                for (int j = 0; j <traitNames.length ; j++) {
-                    t.setAttribute(traitNames[j],taxonData[j]);
-                }
-                //recasting as TaxonList
-                taxonList = (TaxonList) taxa;
             }
 
         }catch (IOException e){
@@ -462,13 +461,13 @@ public class DataModelImporter {
                 while(attributeIterator.hasNext()){
                     String attributeName = attributeIterator.next();
                     if(!attributeMap.containsKey(attributeName)){
-                        attributeMap.put(attributeName,new HashSet<>());
+                        attributeMap.put(attributeName,new HashSet());
                     }
                    attributeMap.get(attributeName).add(taxon.getAttribute(attributeName));
                 }
             }
             // Now convert the map to the long form used in the dataModel
-            ArrayList<Map> taxaAttributes = new ArrayList<>();
+            ArrayList<Map> taxaAttributes = new ArrayList<Map>();
             for(Map.Entry<String,HashSet> attribute :attributeMap.entrySet()) {
                 Map thisAttribute =new HashMap();
                 thisAttribute.put("id",attribute.getKey());
@@ -496,8 +495,11 @@ public class DataModelImporter {
             dataModel.put("taxonSets", tss);
         }
 
-        dataModel.put("alignment", createAlignment(alignment));
-        dataModel.put("site_count", Integer.toString(alignment.getSiteCount()));
+        if(alignment!=null){
+            dataModel.put("alignment", createAlignment(alignment));
+            dataModel.put("site_count", Integer.toString(alignment.getSiteCount()));
+        }
+
 
         dataModel.put("filename", fileName);
         dataModel.put("filename_stem", fileNameStem);
@@ -549,11 +551,12 @@ public class DataModelImporter {
         t.put("id", taxon.getId());
         if (taxon.getDate() != null) {
             t.put("date", Double.toString(taxon.getDate().getTimeValue()));
+            t.put("uncertainty", Double.toString(taxon.getDate().getUncertainty()));
         }
 
         //Add attributes if present
         Iterator<String> attributeIterator = taxon.getAttributeNames();
-        ArrayList<Map> attributes = new ArrayList<>();
+        ArrayList<Map> attributes = new ArrayList<Map>();
         while(attributeIterator.hasNext()){
             String attributeName = attributeIterator.next();
             Map attribute = new HashMap();

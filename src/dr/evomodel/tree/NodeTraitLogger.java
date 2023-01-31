@@ -52,7 +52,7 @@ public class NodeTraitLogger extends TreeTraitProvider.Helper {
         // need to find all the traits here....
 	}
 
-	public static String[] getAllNodeTraitLabels(TreeModel tree) {
+	public static String[] getAllNodeTraitLabels(DefaultTreeModel tree) {
 
 		Map<String, Parameter> traits = tree.getTraitMap(tree.getRoot());
 		List<String> labels = new ArrayList<String>();
@@ -69,7 +69,7 @@ public class NodeTraitLogger extends TreeTraitProvider.Helper {
 		return labels.toArray(new String[labels.size()]);
 	}
 
-	public static String[] getAllNodeTraitValues(TreeModel tree, NodeRef node) {
+	public static String[] getAllNodeTraitValues(DefaultTreeModel tree, NodeRef node) {
 
 		Map<String, Parameter> traits = tree.getTraitMap(node);
 		List<String> values = new ArrayList<String>();

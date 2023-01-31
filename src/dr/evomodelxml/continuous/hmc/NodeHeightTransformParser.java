@@ -27,11 +27,15 @@ package dr.evomodelxml.continuous.hmc;
 
 
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
 import dr.inference.model.Parameter;
+import dr.util.Transform;
 import dr.xml.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -44,57 +48,81 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
     private static final String NODEHEIGHT = "nodeHeights";
     private static final String RATIO = "ratios";
     private static final String COALESCENT_INTERVAL = "coalescentIntervals";
+    private static final String REAL_LINE = "realLine";
+    private static final String WITH_ROOT = "withRoot";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         XMLObject cxo = xo.getChild(NODEHEIGHT);
-        Parameter nodeHeightParameter = (Parameter) cxo.getChild(Parameter.class);
+
+        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
         Parameter ratioParameter = null;
         if (xo.hasChildNamed(RATIO)) {
             ratioParameter = (Parameter) xo.getChild(RATIO).getChild(Parameter.class);
+            ratioParameter.setId("ratio(" + tree.getId() + ")");
         }
 
         if (ratioParameter != null) {
             if (ratioParameter.getDimension() == 1) {
-                ratioParameter.setDimension(nodeHeightParameter.getDimension());
+                ratioParameter.setDimension(tree.getInternalNodeCount() - 1);
             }
             ratioParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, ratioParameter.getDimension()));
         }
 
         Parameter coalescentIntervals = null;
-        GMRFSkyrideLikelihood skyrideLikelihood = null;
+        OldGMRFSkyrideLikelihood skyrideLikelihood = null;
         if (xo.hasChildNamed(COALESCENT_INTERVAL)) {
             cxo = xo.getChild(COALESCENT_INTERVAL);
-            skyrideLikelihood = (GMRFSkyrideLikelihood) cxo.getChild(GMRFSkyrideLikelihood.class);
+            skyrideLikelihood = (OldGMRFSkyrideLikelihood) cxo.getChild(OldGMRFSkyrideLikelihood.class);
         }
 
-        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-        BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+        boolean withRoot = xo.getBooleanAttribute(WITH_ROOT);
 
-        NodeHeightTransform nodeHeightTransform;
+        Transform nodeHeightTransform;
         if (ratioParameter != null) {
-            nodeHeightTransform = new NodeHeightTransform(nodeHeightParameter, ratioParameter, tree, branchRateModel);
+            NodeHeightTransform transform = new NodeHeightTransform(ratioParameter, tree, branchRateModel, withRoot);
+            if (xo.getChild(RATIO).getAttribute(REAL_LINE, false)) {
+
+                List<Transform> transforms = new ArrayList<Transform>();
+                if (withRoot) {
+                    transforms.add(new Transform.LogTransform());
+                }
+                for (int i = 0; i < ratioParameter.getDimension(); i++) {
+                    transforms.add(new Transform.LogitTransform());
+                }
+                nodeHeightTransform = new Transform.ComposeMultivariable(new Transform.Array(transforms, null), transform);
+            } else {
+                nodeHeightTransform = transform;
+            }
         } else {
+            Parameter nodeHeightParameter = (Parameter) cxo.getChild(Parameter.class);
             nodeHeightTransform = new NodeHeightTransform(nodeHeightParameter, tree, skyrideLikelihood);
-            coalescentIntervals = nodeHeightTransform.getParameter();
+            coalescentIntervals = ((NodeHeightTransform) nodeHeightTransform).getParameter();
             cxo = xo.getChild(COALESCENT_INTERVAL);
             coalescentIntervals.setId(cxo.getId());
             cxo.setNativeObject(coalescentIntervals);
         }
-        nodeHeightTransform.transform(nodeHeightParameter.getParameterValues(), 0, nodeHeightParameter.getDimension());
+
         return nodeHeightTransform;
     }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
-                new XORRule(new ElementRule(RATIO, Parameter.class, "The ratio parameter"),
-                        new ElementRule(COALESCENT_INTERVAL, GMRFSkyrideLikelihood.class, "Construct a proxy parameter for coalescent intervals from the Skyride likelihood.")
-                        ),
-                new ElementRule(NODEHEIGHT, Parameter.class, "The nodeHeight parameter"),
+                new XORRule(
+                        new ElementRule(RATIO, Parameter.class, "The ratio parameter"),
+                        new AndRule(
+                                new ElementRule(COALESCENT_INTERVAL, OldGMRFSkyrideLikelihood.class,
+                                        "Construct a proxy parameter for coalescent intervals from the Skyride likelihood."),
+                                new ElementRule(NODEHEIGHT, Parameter.class, "The nodeHeight parameter")
+                        )
+                ),
                 new ElementRule(TreeModel.class),
-                new ElementRule(BranchRateModel.class)
+                new ElementRule(BranchRateModel.class),
+                AttributeRule.newBooleanRule(REAL_LINE, true),
+                AttributeRule.newBooleanRule(WITH_ROOT),
         };
     }
 
@@ -105,7 +133,7 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return NodeHeightTransform.class;
+        return Transform.class;
     }
 
     @Override

@@ -45,7 +45,7 @@ import dr.xml.Reportable;
  */
 
 //TODO: combine this with HyperParameterBranchRateGradient to remove code duplication
-public abstract class HyperParameterBranchSubstitutionParameterGradient extends DiscreteTraitBranchSubstitutionParameterGradient
+public abstract class HyperParameterBranchSubstitutionParameterGradient extends BranchSubstitutionParameterGradient
         implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
 
     protected final ArbitraryBranchRates.BranchRateTransform locationScaleTransform;
@@ -56,13 +56,15 @@ public abstract class HyperParameterBranchSubstitutionParameterGradient extends 
                                                              BeagleDataLikelihoodDelegate likelihoodDelegate,
                                                              BranchParameter branchParameter,
                                                              Parameter hyperParameter,
+                                                             Double tolerance,
                                                              boolean useHessian) {
 
-        super(traitName, treeDataLikelihood, likelihoodDelegate,  branchParameter, useHessian);
+        super(traitName, treeDataLikelihood, likelihoodDelegate,  null, null, tolerance, useHessian, 0);
 
-        locationScaleTransform = branchParameter.getTransform();
+        throw new RuntimeException("Not yet fixed.");
+//        locationScaleTransform = branchParameter.getTransform();
 
-        this.hyperParameter = hyperParameter;
+//        this.hyperParameter = hyperParameter;
     }
 
     @Override
@@ -99,9 +101,9 @@ public abstract class HyperParameterBranchSubstitutionParameterGradient extends 
 
     @Override
     public double[] getDiagonalHessianLogDensity() {
-        // cannot avoid calculating full hessian in this case, use numerical method for now
-        // TODO: maybe add Hessian into BEAGLE ?
-        return NumericalDerivative.diagonalHessian(numeric, branchParameter.getParameterValues());
+        // cannot avoid calculating full hessian in this case
+        // TODO: maybe add full Hessian into BEAGLE ?
+        throw new RuntimeException("Not yet implemented");
     }
 
     protected double getChainGradient(Tree tree, NodeRef node) {
@@ -113,11 +115,6 @@ public abstract class HyperParameterBranchSubstitutionParameterGradient extends 
 
     public int getDimension() {
         return hyperParameter.getDimension();
-    }
-
-    @Override
-    public String getReport() {
-        return getReport(hyperParameter);
     }
 
     public Parameter getParameter() {

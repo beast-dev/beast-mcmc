@@ -26,7 +26,7 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.continuous.hmc.NodeHeightTransformParser;
 import dr.inference.model.Parameter;
@@ -41,22 +41,38 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
 
     private AbstractNodeHeightTransformDelegate nodeHeightTransformDelegate;
     private TreeModel tree;
+    private Parameter nodeHeights;
 
-    public NodeHeightTransform(Parameter nodeHeights,
-                               Parameter ratios,
+    public NodeHeightTransform(Parameter ratios,
                                TreeModel tree,
-                               BranchRateModel branchrateModel) {
-        super(nodeHeights.getDimension());
+                               BranchRateModel branchrateModel,
+                               boolean withRoot) {
+        super(tree.getInternalNodeCount(), withRoot ? tree.getInternalNodeCount() : tree.getInternalNodeCount() - 1);
         this.tree = tree;
-        this.nodeHeightTransformDelegate = new NodeHeightToRatiosTransformDelegate(tree, nodeHeights, ratios, branchrateModel);
+        if (withRoot) {
+            this.nodeHeights = new NodeHeightProxyParameter("nodeHeightToFullRatiosProxyParameter", tree, true);
+            this.nodeHeightTransformDelegate = new NodeHeightToRatiosFullTransformDelegate(tree, nodeHeights, ratios, branchrateModel);
+        } else {
+            this.nodeHeights = new NodeHeightProxyParameter("nodeHeightToRatiosProxyParameter", tree, false);
+            this.nodeHeightTransformDelegate = new NodeHeightToRatiosTransformDelegate(tree, nodeHeights, ratios, branchrateModel);
+        }
     }
 
+    @Deprecated
     public NodeHeightTransform(Parameter nodeHeights,
                                TreeModel tree,
-                               GMRFSkyrideLikelihood skyrideLikelihood) {
+                               OldGMRFSkyrideLikelihood skyrideLikelihood) {
         super(nodeHeights.getDimension());
         this.tree = tree;
         this.nodeHeightTransformDelegate = new NodeHeightToCoalescentIntervalsDelegate(tree, nodeHeights, skyrideLikelihood);
+    }
+
+    public AbstractNodeHeightTransformDelegate getNodeHeightTransformDelegate() {
+        return nodeHeightTransformDelegate;
+    }
+
+    public Parameter getNodeHeights() {
+        return nodeHeightTransformDelegate.getNodeHeights();
     }
 
     public Parameter getParameter() {
@@ -110,9 +126,23 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
 
     @Override
     protected double getLogJacobian(double[] values) {
-        throw new RuntimeException("Not yet implemented!");
+        return nodeHeightTransformDelegate.getLogJacobian(values);
     }
 
+    @Override
+    protected double[] updateGradientLogDensity(double[] gradient, double[] value) {
+        return nodeHeightTransformDelegate.updateGradientLogDensity(gradient, value);
+    }
+
+    @Override
+    public double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
+        return nodeHeightTransformDelegate.updateGradientUnWeightedLogDensity(gradient, value, from, to);
+    }
+
+    @Override
+    public double[] updateGradientInverseUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
+        return nodeHeightTransformDelegate.updateGradientUnWeightedLogDensity(gradient, inverse(value, from, to), from, to);
+    }
 
     @Override
     public String getReport() {

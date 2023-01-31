@@ -248,17 +248,43 @@
                 <include name="dr/evolution/coalescent/*.class"/>
                 <include name="dr/evolution/util/*.class"/>
                 <include name="dr/inference/trace/*.class"/>
+                <include name="dr/inference/model/**/*.class"/>
                 <include name="dr/math/**/*.class"/>
                 <include name="dr/stats/**/*.class"/>
                 <include name="dr/util/**/*.class"/>
             </fileset>
         </jar>
 
+        <!-- Put everything in ${build} into the tempest-lib.jar file -->
+        <jar jarfile="${dist}/tempest-lib.jar">
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+            </manifest>
+            <fileset dir="${build}">
+                <include name="dr/app/beauti/tipdatepanel/**/*.class"/>
+                <include name="dr/app/beauti/util/**/*.class"/>
+                <include name="dr/app/beauti/options/**/*.class"/>
+                <include name="dr/app/gui/**/*.class"/>
+                <include name="dr/app/tools/*.class"/>
+                <include name="dr/app/util/*.class"/>
+                <include name="dr/evolution/tree/**/*.class"/>
+                <include name="dr/evolution/io/*.class"/>
+                <include name="dr/evolution/util/*.class"/>
+                <include name="dr/math/**/*.class"/>
+                <include name="dr/stats/**/*.class"/>
+                <include name="dr/util/**/*.class"/>
+            </fileset>
+        </jar>
     </target>
 
     <!-- used to copy the compiled trace.jar into place in the Tracer lib folder -->
     <target name="copy_trace_jar" depends="dist" >
         <copy file="${dist}/trace.jar" todir="../Tracer/lib"/>
+    </target>
+
+    <!-- used to copy the compiled tempest-lib.jar into place in the Tempest lib folder -->
+    <target name="copy_tempest-lib_jar" depends="dist" >
+        <copy file="${dist}/tempest-lib.jar" todir="../Tempest/lib"/>
     </target>
 
     <!-- run beast.jar -->
@@ -311,9 +337,9 @@
                     <exclude name="test/dr/evomodel/substmodel/ProductChainSubstitutionModelTest.java"/>
                     <exclude name="test/dr/evomodel/substmodel/StateHistoryTest.java"/>
                     <exclude name="test/dr/evomodel/substmodel/TwoStateOccupancyMarkovRewardsTest.java"/>
-                    <exclude name="test/dr/evomodel/treedatalikelihood/continuous/BranchSpecificGradientTest.java"/>
-                    <exclude name="test/dr/evomodel/treedatalikelihood/continuous/ContinuousDataLikelihoodDelegateTest.java"/>
-                    <exclude name="test/dr/evomodel/treedatalikelihood/hmc/PrecisionGradientTest.java"/>
+                    <!-- <exclude name="test/dr/evomodel/treedatalikelihood/continuous/BranchSpecificGradientTest.java"/> -->
+                    <!-- <exclude name="test/dr/evomodel/treedatalikelihood/continuous/ContinuousDataLikelihoodDelegateTest.java"/> -->
+                    <!-- <exclude name="test/dr/evomodel/treedatalikelihood/hmc/PrecisionGradientTest.java"/> -->
                     <exclude name="test/dr/multidimensionalscaling/MDSRotationTest.java"/>
                     <exclude name="test/dr/evomodel/branchratemodel/StrictClockTest.java"/>
 <!--                    <exclude name="test/dr/evomodel/substmodel/TimeIrreversibleTest.java"/>--> <!--sometimes fails-->
@@ -348,11 +374,11 @@
     <!--
     <property name="version" value="1.9"/>
      -->
-    <property name="version" value="1.10.4"/>
+    <property name="version" value="1.10.5pre"/>
     <property name="jvm_version" value="1.7+"/>
 
-    <property name="version_number" value="1.10.4"/>
-    <property name="copyright" value="Copyright 2002-2018"/>
+    <property name="version_number" value="1.10.5"/>
+    <property name="copyright" value="Copyright 2002-2019"/>
 
     <property name="release_dir" value="release"/>
     <property name="BEAST_name" value="BEAST"/>
@@ -661,7 +687,7 @@
 					useJavaXKey="true"
                     icon="${common_dir}/icons/beast.icns"
                     jvmversion="${jvm_version}"
-                    vmoptions="-Xmx2048M"
+                    vmoptions="-Xmx2048M -Djava.library.path=/usr/local/lib"
                     arguments="-window -working -options"
                     highresolutioncapable="true"
                     version="${version}"

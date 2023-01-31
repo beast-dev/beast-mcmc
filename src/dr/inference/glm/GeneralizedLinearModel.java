@@ -271,6 +271,12 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
         return independentParameter.indexOf(effect);
     }
 
+    public List<Parameter> getIndependentParameter() { return independentParameter; }
+
+    public List<Parameter> getIndependentParameterDelta() { return independentParameterDelta; }
+
+    public List<DesignMatrix> getDesignMatrix() { return designMatrix; }
+
     public double[][] getX(int j) {
         return designMatrix.get(j).getParameterAsMatrix();
     }

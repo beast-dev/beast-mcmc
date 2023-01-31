@@ -27,13 +27,16 @@ package dr.inferencexml.distribution.shrinkage;
 
 import dr.inference.distribution.shrinkage.*;
 import dr.inference.model.Parameter;
+import dr.inference.model.DuplicatedParameter;
+import dr.inference.model.ParameterParser;
 import dr.xml.*;
 
 import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.*;
 
 public class BayesianBridgeDistributionModelParser extends AbstractXMLObjectParser {
 
-    private static final String BAYESIAN_BRIDGE_DISTRIBUTION = "bayesianBridgeDistribution";
+    public static final String BAYESIAN_BRIDGE_DISTRIBUTION = "bayesianBridgeDistribution";
+    private static final String DIMENSION = "dim";
 
     public String getParserName() {
         return BAYESIAN_BRIDGE_DISTRIBUTION;
@@ -45,18 +48,39 @@ public class BayesianBridgeDistributionModelParser extends AbstractXMLObjectPars
         Parameter globalScale = (Parameter) globalXo.getChild(Parameter.class);
 
         Parameter localScale = null;
+        int dim;
         if (xo.hasChildNamed(LOCAL_SCALE)) {
             XMLObject localXo = xo.getChild(LOCAL_SCALE);
             localScale = (Parameter) localXo.getChild(Parameter.class);
+            if(localScale instanceof DuplicatedParameter) {
+              throw new XMLParseException("Local scale cannot be a duplicated parameter");
+            }
+            dim = localScale.getDimension();
+
+            if (xo.hasAttribute(DIMENSION) && (xo.getIntegerAttribute(DIMENSION) != dim)) {
+                throw new XMLParseException("Invalid dimensions");
+            }
+        } else {
+            dim = xo.getAttribute(DIMENSION, 1);
         }
 
         XMLObject exponentXo = xo.getChild(EXPONENT);
         Parameter exponent = (Parameter) exponentXo.getChild(Parameter.class);
 
+        Parameter slabWidth = ParameterParser.getOptionalParameter(xo, SLAB_WIDTH);
+
+        boolean includeNormalizingConstant = xo.getAttribute(NORMALIZATION_CONSTANT, false);
+
+        if (localScale == null && slabWidth != null) {
+            throw new XMLParseException("Slab-regularization is only available under the joint Bayesian bridge");
+        }
+
         if (localScale != null) {
-            return new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent);
+            return new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent, slabWidth,
+                    dim, includeNormalizingConstant);
         } else {
-            return new MarginalBayesianBridgeDistributionModel(globalScale, exponent);
+            return new MarginalBayesianBridgeDistributionModel(globalScale, exponent,
+                    dim, includeNormalizingConstant);
         }
     }
 
@@ -75,6 +99,9 @@ public class BayesianBridgeDistributionModelParser extends AbstractXMLObjectPars
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(LOCAL_SCALE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(SLAB_WIDTH,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),               
+            AttributeRule.newIntegerRule(DIMENSION, true),
     };
 
     public String getParserDescription() {

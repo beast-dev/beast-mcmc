@@ -51,6 +51,7 @@ package dr.evomodel.alloppnet.speciation;
  *         Date: 01/09/2013
  */
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
 import dr.evolution.tree.Tree;
@@ -171,6 +172,11 @@ public class BirthDeathCollapseModel extends SpeciationModel implements Citable 
     public double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude) {
         // not implemented.
         return Double.NEGATIVE_INFINITY;
+    }
+
+    @Override
+    public double getNodeGradient(Tree tree, NodeRef node) {
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override

@@ -27,6 +27,8 @@ package dr.evolution.alignment;
 
 import dr.evomodel.substmodel.SecondOrderMarkovSubstitutionModel;
 
+import java.util.Arrays;
+
 /**
  * @author Xiang Ji
  * @author Jeff Thorne
@@ -75,9 +77,13 @@ public class SecondOrderMarkovSitePatterns extends UncertainSiteList {
     }
 
     private void fillPartial(double[] partials, int observedState) {
-        for (int previousState = 0; previousState < sitePatterns.getStateCount(); previousState++) {
-            if (previousState != observedState)
-                partials[dataType.getState(previousState, observedState)] = 1.0;
+        if (observedState == -1 || observedState > sitePatterns.getStateCount() - 1) {
+            Arrays.fill(partials, 1.0);
+        } else {
+            for (int previousState = 0; previousState < sitePatterns.getStateCount(); previousState++) {
+                if (previousState != observedState)
+                    partials[dataType.getState(previousState, observedState)] = 1.0;
+            }
         }
     }
 

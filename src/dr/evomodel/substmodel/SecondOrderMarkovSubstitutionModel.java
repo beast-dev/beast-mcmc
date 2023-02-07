@@ -25,6 +25,7 @@
 
 package dr.evomodel.substmodel;
 
+import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.substmodel.spectra.SpectraJNIWrapper;
 import dr.inference.model.*;
@@ -318,10 +319,26 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel im
             ambiguousStateCount = stateCount;
         }
 
+        private int[] separateCodon(int codonState) {
+            final int third = codonState % 4;
+            final int oneNTwo = codonState / 4;
+            final int first = oneNTwo / 4;
+            final int second = oneNTwo % 4;
+            return new int[]{first, second, third};
+        }
+
         public final int getState(int previousState, int currentState) {
-            if (baseDataType.isAmbiguousState(previousState) || baseDataType.isAmbiguousState(currentState) || previousState == currentState) {
-                return getUnknownState();
+            if (baseDataType instanceof Codons) {
+                if (previousState > baseDataType.getStateCount() - 1) {
+                    final int[] nts = separateCodon(previousState);
+                    previousState = ((Codons) baseDataType).getState(nts[0], nts[1], nts[2]);
+                }
+                if (currentState > baseDataType.getStateCount() - 1) {
+                    final int[] nts = separateCodon(currentState);
+                    currentState = ((Codons) baseDataType).getState(nts[0], nts[1], nts[2]);
+                }
             }
+
             return previousState < currentState ?
                     previousState * (baseDataType.getStateCount() - 1) + currentState - 1 :
                     previousState * (baseDataType.getStateCount() - 1) + currentState;

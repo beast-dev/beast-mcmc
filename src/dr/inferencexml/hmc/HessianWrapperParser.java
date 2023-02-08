@@ -57,7 +57,7 @@ public class HessianWrapperParser  extends AbstractXMLObjectParser {
             final Parameter parameter = mdl.getDataParameter();
 
             return new HessianWrtParameterProvider.ParameterWrapper(provider, parameter, mdl);
-        } else {
+        } else if (obj instanceof DistributionLikelihood) {
             DistributionLikelihood dl = (DistributionLikelihood) obj;
             if (!(dl.getDistribution() instanceof HessianProvider)) {
                 throw new XMLParseException("Not a hessian provider");
@@ -69,6 +69,9 @@ public class HessianWrapperParser  extends AbstractXMLObjectParser {
             // TODO Ensure that parameter and data inside provider are the same.
 
             return new HessianWrtParameterProvider.ParameterWrapper(provider, parameter, dl);
+        } else {
+            assert(obj instanceof HessianWrtParameterProvider);
+            return obj;
         }
     }
 
@@ -77,11 +80,14 @@ public class HessianWrapperParser  extends AbstractXMLObjectParser {
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
                 new XORRule(
-                        new ElementRule(MultivariateDistributionLikelihood.class),
-                        new AndRule(
-                                new ElementRule(DistributionLikelihood.class),
-                                new ElementRule(Parameter.class)
-                        )
+                        new XORRule(
+                                new ElementRule(MultivariateDistributionLikelihood.class),
+                                new AndRule(
+                                        new ElementRule(DistributionLikelihood.class),
+                                        new ElementRule(Parameter.class)
+                                )
+                        ),
+                        new ElementRule(HessianWrtParameterProvider.class)
                 )
         };
     }

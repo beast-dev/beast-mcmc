@@ -28,6 +28,7 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovjumps.TwoStateOccupancyMarkovReward;
@@ -62,7 +63,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
     // state 20000	-5510.2520
     // 83.4%  3156  +     4    dr.inference.markovjumps.SericolaSeriesMarkovReward.accumulatePdf
 
-    private final TreeModel tree;
+    private final DefaultTreeModel tree;
     private final BranchRateModel nonLatentRateModel;
     private final Parameter latentTransitionRateParameter;
     private final Parameter latentTransitionFrequencyParameter;
@@ -92,7 +93,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
     private boolean[] storedUpdateCategory;
 
     public LatentStateBranchRateModel(String name,
-                                              TreeModel treeModel,
+                                              DefaultTreeModel treeModel,
                                               BranchRateModel nonLatentRateModel,
                                               Parameter latentTransitionRateParameter,
                                               Parameter latentTransitionFrequencyParameter,
@@ -163,7 +164,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
     }
 
     public LatentStateBranchRateModel(String name,
-                                      TreeModel treeModel,
+                                      DefaultTreeModel treeModel,
                                       BranchRateModel nonLatentRateModel,
                                       Parameter latentTransitionRateParameter,
                                       Parameter latentTransitionFrequencyParameter,

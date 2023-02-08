@@ -26,7 +26,7 @@
 package dr.evomodelxml.branchratemodel;
 
 import dr.evomodel.branchratemodel.*;
-import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -52,7 +52,7 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
 
 
         BranchRateModel nonLatentRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
-        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        DefaultTreeModel tree = (DefaultTreeModel) xo.getChild(DefaultTreeModel.class);
         Parameter latentTransitionRateParameter = (Parameter) xo.getElementFirstChild(LATENT_TRANSITION_RATE);
         Parameter latentTransitionFrequencyParameter = (Parameter) xo.getElementFirstChild(LATENT_TRANSITION_FREQUENCY);
 
@@ -105,7 +105,7 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 
             new ElementRule(BranchRateModel.class, "A branch rate model to provide the rates for the non-latent state"),
-            new ElementRule(TreeModel.class, "The tree on which this will operate"),
+            new ElementRule(DefaultTreeModel.class, "The tree on which this will operate"),
             new ElementRule(CountableBranchCategoryProvider.class, true),
             new ElementRule(LATENT_TRANSITION_RATE, Parameter.class, "A parameter which gives the instantaneous rate of switching to and from the latent state", false),
             new ElementRule(LATENT_TRANSITION_FREQUENCY, Parameter.class, "A parameter which gives the rate bias of switching to and from the latent state", false),

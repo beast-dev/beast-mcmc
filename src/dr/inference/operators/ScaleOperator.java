@@ -176,7 +176,11 @@ public class ScaleOperator extends AbstractAdaptableOperator {
             }
 
             final double oldValue = variable.getValue(index);
-            final double offset = bounds.getLowerLimit(index);
+            double offset = bounds.getLowerLimit(index);
+
+            if (offset == Double.NEGATIVE_INFINITY) {
+                offset = -bounds.getUpperLimit(index);
+            }
 
             if (oldValue == 0) {
                 Logger.getLogger("dr.inference").severe("The " + ScaleOperatorParser.SCALE_OPERATOR +

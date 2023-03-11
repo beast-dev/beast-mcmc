@@ -27,17 +27,13 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.ClockDistributionType;
 import dr.app.beauti.types.ClockType;
-import dr.app.beauti.types.OperatorSetType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.inference.model.Statistic;
 import dr.inference.model.StatisticParser;
 import dr.oldevomodel.clock.RateEvolutionLikelihood;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.*;
 import dr.oldevomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.tree.RateCovarianceStatisticParser;
@@ -52,8 +48,6 @@ import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.model.SumStatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
-
-import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -347,7 +341,8 @@ public class ClockModelGenerator extends Generator {
                 writer.writeOpenTag(
                         tag,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, prefix + BranchRateModel.BRANCH_RATES)                        }
+                                new Attribute.Default<String>(XMLParser.ID, prefix + BranchRateModel.BRANCH_RATES)
+                        }
                 );
 
                 writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
@@ -377,6 +372,52 @@ public class ClockModelGenerator extends Generator {
 
                 writeCovarianceStatistic(writer, tag, prefix, treePrefix);
                 break;
+
+            case MIXED_EFFECTS_CLOCK:
+                writer.writeComment("The mixed effects clock model (Bletsa et al., Virus Evol., 2019)");
+
+                tag = CompoundParameterParser.COMPOUND_PARAMETER;
+
+                //first write the CompoundParameter XML bit
+                writer.writeOpenTag(tag,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffectsParser.FIXED_EFFECTS)
+                        }
+                );
+
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffectsParser.INTERCEPT),
+                        new Attribute.Default<String>(ParameterParser.VALUE, "-0.01")}, true);
+                int parameterNumber = 1;
+                for (Taxa taxonSet : options.taxonSets) {
+                    if (options.taxonSetsMono.get(taxonSet)) {
+                        writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffectsParser.COEFFICIENT + parameterNumber),
+                                new Attribute.Default<String>(ParameterParser.VALUE, "0.01")}, true);
+                    }
+                }
+
+                writer.writeCloseTag(tag);
+
+                //continue with the fixedEffects XML block
+                tag = BranchSpecificFixedEffectsParser.FIXED_EFFECTS;
+
+
+
+                writer.writeCloseTag(tag);
+
+                //and then the arbitraryBranchRates
+                tag = ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES;
+
+
+
+                writer.writeCloseTag(tag);
+
+
+
+
+                break;
+
             default:
                 throw new IllegalArgumentException("Unknown clock model");
         }

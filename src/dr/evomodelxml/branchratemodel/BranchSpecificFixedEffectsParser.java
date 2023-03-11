@@ -52,7 +52,9 @@ import static dr.evomodelxml.branchratemodel.BranchCategoriesParser.*;
  */
 public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
 
-    private static final String FIXED_EFFECTS = "fixedEffects";
+    public static final String FIXED_EFFECTS = "fixedEffects";
+    public static final String INTERCEPT = "intercept";
+    public static final String COEFFICIENT = "coefficient";
     private static final String INCLUDE_INTERCEPT = "includeIntercept";
     private static final String TIME_DEPENDENT_EFFECT = "timeEffect";
     private static final String CATEGORY = "category";

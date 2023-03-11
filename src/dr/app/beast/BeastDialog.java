@@ -49,6 +49,7 @@ public class BeastDialog {
 
     private final WholeNumberField seedText = new WholeNumberField((long) 1, Long.MAX_VALUE);
     private final JCheckBox overwriteCheckBox = new JCheckBox("Allow overwriting of log files");
+    private final JCheckBox chkptCheckBox  = new JCheckBox("Default");
     private final JCheckBox beagleCheckBox = new JCheckBox("The BEAGLE library is required to run BEAST:");
     private final JCheckBox beagleInfoCheckBox = new JCheckBox("Show list of available BEAGLE resources and Quit");
     private final JComboBox beagleResourceCombo = new JComboBox(new Object[]{"CPU", "GPU"});
@@ -133,6 +134,18 @@ public class BeastDialog {
                 "<html>Specify whether BEAST will overwrite existing log files<br>" +
                       "with the same name.</html>");
         optionPanel.addComponent(overwriteCheckBox);
+
+        optionPanel.addSeparator();
+
+        final JButton chkptButton = new JButton("Specific settings");
+        chkptCheckBox.setToolTipText("<html>By default, a checkpoint file will be written every one million<br>" +
+                "iterations. No previous checkpointed file will be loaded<br>" +
+                "and no custom file name can be provided.</html>");
+
+        JPanel chkptPanel = new JPanel(new BorderLayout(0, 0));
+        chkptPanel.add(chkptCheckBox, BorderLayout.WEST);
+        chkptPanel.add(chkptButton, BorderLayout.CENTER);
+        optionPanel.addComponentWithLabel("Checkpointing:", chkptPanel);
 
         optionPanel.addSeparator();
 

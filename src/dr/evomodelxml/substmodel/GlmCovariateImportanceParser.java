@@ -76,7 +76,7 @@ public class GlmCovariateImportanceParser extends AbstractXMLObjectParser {
             AttributeRule.newStringRule("parameterColumn", true),
             AttributeRule.newIntegerRule("burnIn", true),
             new ElementRule(TreeDataLikelihood.class),
-            new ElementRule(OldGMRFSkyrideLikelihood.class),
+            new ElementRule(OldGLMSubstitutionModel.class),
     };
 
     public String getParserDescription() {

@@ -1,7 +1,7 @@
 /*
- * WorkingPriorParsers.java
+ * GlmCovariateImportanceParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,9 +25,14 @@
 
 package dr.evomodelxml.substmodel;
 
+import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
+import dr.evomodel.substmodel.GlmCovariateImportance;
+import dr.evomodel.substmodel.OldGLMSubstitutionModel;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
-import dr.inference.model.Likelihood;
+import dr.inference.distribution.shrinkage.OldBayesianBridgeLikelihood;
+import dr.inference.loggers.Loggable;
 import dr.inference.model.Statistic;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
@@ -54,8 +59,35 @@ public class GlmCovariateImportanceParser extends AbstractXMLObjectParser {
         return PARSER_NAME;
     }
 
-
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+        TreeDataLikelihood likelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+        OldGLMSubstitutionModel substitutionModel = (OldGLMSubstitutionModel) xo.getChild(OldBayesianBridgeLikelihood.class);
+
+        return new GlmCovariateImportance(likelihood, substitutionModel);
+    }
+
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
+    }
+
+    private final XMLSyntaxRule[] rules = {
+            AttributeRule.newStringRule("fileName", true),
+            AttributeRule.newStringRule("parameterColumn", true),
+            AttributeRule.newIntegerRule("burnIn", true),
+            new ElementRule(TreeDataLikelihood.class),
+            new ElementRule(OldGMRFSkyrideLikelihood.class),
+    };
+
+    public String getParserDescription() {
+        return "Calculates model deviance for each fixed effect in a phylogeographic GLM";
+    }
+
+    public Class getReturnType() {
+        return Loggable.class;
+    }
+
+    private Object readLog(XMLObject xo) throws XMLParseException {
 
         String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
 
@@ -164,32 +196,17 @@ public class GlmCovariateImportanceParser extends AbstractXMLObjectParser {
 
             }
 
-        } catch (FileNotFoundException fnfe) {
+        } catch (
+                FileNotFoundException fnfe) {
             throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
-        } catch (java.io.IOException ioe) {
+        } catch (
+                java.io.IOException ioe) {
             throw new XMLParseException(ioe.getMessage());
-        } catch (TraceException e) {
+        } catch (
+                TraceException e) {
             throw new XMLParseException(e.getMessage());
         }
-    }
 
-    public XMLSyntaxRule[] getSyntaxRules() {
-        return rules;
-    }
-
-    private final XMLSyntaxRule[] rules = {
-            AttributeRule.newStringRule("fileName"),
-            AttributeRule.newStringRule("parameterColumn"),
-            AttributeRule.newIntegerRule("burnin"),
-            new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
-    };
-
-    public String getParserDescription() {
-        return "Calculates the reference prior probability of some data under a given normal distribution.";
-    }
-
-    public Class getReturnType() {
-        return Likelihood.class;
     }
 }
 

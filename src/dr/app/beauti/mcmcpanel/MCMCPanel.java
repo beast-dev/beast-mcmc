@@ -76,6 +76,7 @@ public class MCMCPanel extends BeautiPanel {
 
     JTextArea logFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".log");
     JTextArea treeFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".trees");
+    JTextArea checkpointFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".chkpt");
 //    JCheckBox allowOverwriteLogCheck = new JCheckBox("Allow to overwrite the existing log file");
 
 //    JCheckBox mapTreeLogCheck = new JCheckBox("Create tree file containing the MAP tree:");
@@ -206,6 +207,11 @@ public class MCMCPanel extends BeautiPanel {
         optionsPanel.addComponentWithLabel("Trees file name:", treeFileNameField);
         treeFileNameField.setEditable(false);
 
+        checkpointFileNameField.setColumns(32);
+        optionsPanel.addComponentWithLabel("Checkpoint file name:", checkpointFileNameField);
+        checkpointFileNameField.setEditable(false);
+        checkpointFileNameField.setToolTipText("<html>Checkpointing enables continuing your BEAST analysis should<br>" +
+                "the ESS values prove insufficient upon inspecting the log file(s).</html>");
 
 //        addComponent(mapTreeLogCheck);
 //        mapTreeLogCheck.setOpaque(false);
@@ -509,6 +515,9 @@ public class MCMCPanel extends BeautiPanel {
             updateTreeFileNameList();
             treeFileNameField.setText(displayTreeList(options.treeFileName));
 
+            options.checkpointFileName = options.fileNameStem + ".chkpt";
+            checkpointFileNameField.setText(options.checkpointFileName);
+
             if (options.substTreeLog) {
                 substTreeFileNameField.setText(displayTreeList(options.substTreeFileName));
             } else {
@@ -539,6 +548,7 @@ public class MCMCPanel extends BeautiPanel {
 //            fileNameStemField.setEnabled(false);
             logFileNameField.setText(DEFAULT_FILE_NAME_STEM + ".log");
             treeFileNameField.setText(DEFAULT_FILE_NAME_STEM + ".trees");
+            checkpointFileNameField.setText(DEFAULT_FILE_NAME_STEM + ".chkpt");
 //            mapTreeLogCheck.setEnabled(false);
 //            mapTreeFileNameField.setEnabled(false);
 //            mapTreeFileNameField.setText("untitled");
@@ -564,6 +574,7 @@ public class MCMCPanel extends BeautiPanel {
     public void getOptions(BeautiOptions options) {
         options.fileNameStem = fileNameStemField.getText();
         options.logFileName = logFileNameField.getText();
+        options.checkpointFileName = checkpointFileNameField.getText();
 
 //        options.mapTreeLog = mapTreeLogCheck.isSelected();
 //        options.mapTreeFileName = mapTreeFileNameField.getText();

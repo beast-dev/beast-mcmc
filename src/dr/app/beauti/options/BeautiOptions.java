@@ -140,6 +140,7 @@ public class BeautiOptions extends ModelOptions {
         chainLength = 10000000;
         logEvery = 1000;
         echoEvery = 1000;
+        checkpointEvery = 1000000;
         burnIn = 100000;
         fileName = null;
         autoOptimize = true;
@@ -1335,6 +1336,7 @@ public class BeautiOptions extends ModelOptions {
     public int chainLength = 10000000;
     public int logEvery = 1000;
     public int echoEvery = 1000;
+    public int checkpointEvery = 1000000;
     public int burnIn = 100000;
     public String fileName = null;
     public boolean autoOptimize = true;

@@ -42,6 +42,7 @@ import dr.evomodelxml.branchratemodel.*;
 import dr.evomodelxml.tree.TreeLengthStatisticParser;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.inference.model.CompoundLikelihood;
+import dr.inferencexml.loggers.CheckpointLoggerParser;
 import dr.oldevomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
@@ -501,6 +502,22 @@ public class LogGenerator extends Generator {
         writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
     }
 
+    /**
+     * write current state of chain to checkpoint file
+     *
+     * @param writer XMLWriter
+     */
+    public void writeCheckpointToFile(XMLWriter writer) {
+        writer.writeComment("write state of Markov chain to checkpoint file");
+
+        writer.writeTag(CheckpointLoggerParser.LOG_CHECKPOINT,
+                new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, "checkpointFileLog"),
+                        new Attribute.Default<String>(CheckpointLoggerParser.CHECKPOINT_EVERY, options.checkpointEvery + ""),
+                        new Attribute.Default<String>(CheckpointLoggerParser.FILE_NAME, options.checkpointFileName),
+                        new Attribute.Default<Boolean>(LoggerParser.ALLOW_OVERWRITE_LOG, options.allowOverwriteLog)
+                }, true);
+    }
 
     private void writeTreeTraits(XMLWriter writer, PartitionTreeModel tree) {
         for (PartitionClockModel model : options.getPartitionClockModels(options.getDataPartitions(tree))) {

@@ -862,6 +862,9 @@ public class BeastGenerator extends Generator {
         // write tree log to file
         logGenerator.writeTreeLogToFile(writer);
 
+        //write current state of chain to checkpoint file
+        logGenerator.writeCheckpointToFile(writer);
+
         writer.writeCloseTag("mcmc");
     }
 

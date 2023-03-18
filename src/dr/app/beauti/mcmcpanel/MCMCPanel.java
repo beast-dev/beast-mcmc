@@ -61,6 +61,7 @@ public class MCMCPanel extends BeautiPanel {
     WholeNumberField chainLengthField = new WholeNumberField(1, Integer.MAX_VALUE);
     WholeNumberField echoEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
     WholeNumberField logEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
+    WholeNumberField checkpointEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
 
     JCheckBox samplePriorCheckBox = new JCheckBox("Sample from prior only - create empty alignment");
     JComboBox performMLECombo = new JComboBox(new String[] {"None", "path sampling/stepping-stone sampling", "generalized stepping-stone sampling"});
@@ -153,6 +154,22 @@ public class MCMCPanel extends BeautiPanel {
 
             public void keyReleased(KeyEvent e) {
                 options.logEvery = logEveryField.getValue();
+                frame.setDirty();
+            }
+        });
+
+        checkpointEveryField.setValue(1000000);
+        checkpointEveryField.setColumns(10);
+        optionsPanel.addComponentWithLabel("Checkpoint every:", checkpointEveryField);
+        checkpointEveryField.addKeyListener(new java.awt.event.KeyListener() {
+            public void keyTyped(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
+
+            public void keyReleased(KeyEvent e) {
+                options.checkpointEvery = checkpointEveryField.getValue();
                 frame.setDirty();
             }
         });
@@ -474,6 +491,7 @@ public class MCMCPanel extends BeautiPanel {
         chainLengthField.setValue(options.chainLength);
         echoEveryField.setValue(options.echoEvery);
         logEveryField.setValue(options.logEvery);
+        checkpointEveryField.setValue(options.checkpointEvery);
 
         if (options.fileNameStem != null) {
             fileNameStemField.setText(options.fileNameStem);

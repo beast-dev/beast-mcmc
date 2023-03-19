@@ -30,28 +30,45 @@ import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
+import dr.inference.model.DesignMatrix;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
+import dr.xml.Reportable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
  * @author Philippe Lemey
  */
-public class GlmCovariateImportance implements Loggable {
+public class GlmCovariateImportance implements Loggable, Reportable {
 
     private final Likelihood likelihood;
     private final GeneralizedLinearModel glm;
+
     private final int dim;
+    private final List<Parameter> covariates;
 
     private double currentLogLikelihood = Double.NaN;
     private LogColumn[] columns;
 
-    public GlmCovariateImportance(TreeDataLikelihood likelihood,
+    public GlmCovariateImportance(Likelihood likelihood,
                                   OldGLMSubstitutionModel glmSubstitutionModel) {
         this.likelihood = likelihood;
         this.glm = glmSubstitutionModel.getGeneralizedLinearModel();
-        this.dim = glm.getNumberOfFixedEffects();
+        covariates = new ArrayList<>();
+        int dim = 0;
+        for (int i = 0; i < glm.getNumberOfFixedEffects(); ++i) {
+            DesignMatrix design = glm.getDesignMatrix(i);
+            int d = design.getColumnDimension();
+            dim += d;
+            for (int j = 0; j < d; ++j) {
+                covariates.add(design.getParameter(j));
+            }
+        }
+        this.dim = dim;
     }
 
     private double getDeviance(int index) {
@@ -61,21 +78,41 @@ public class GlmCovariateImportance implements Loggable {
             }
 
             currentLogLikelihood = likelihood.getLogLikelihood();
-            glm.storeModelState();
         } else if (Double.isNaN(currentLogLikelihood)) {
             throw new IllegalStateException("GlmCovariateImportance computation is already in-process");
         }
 
-        permute(index);
-        double deviance = likelihood.getLogLikelihood() - currentLogLikelihood;
+        boolean doPermutation = true;
+        if (index != dim) {
+
+            if (glm.getNumberOfFixedEffects() > 1) {
+                throw new IllegalArgumentException("Not yet implemented");
+            }
+
+            double coefficient = glm.getFixedEffect(0).getParameterValue(index);
+            if (glm.getFixedEffectIndicator(0) != null) {
+                coefficient *= glm.getFixedEffectIndicator(0).getParameterValue(index);
+            }
+
+            if (coefficient == 0.0) {
+                doPermutation = false;
+            }
+        }
+
+        final double deviance;
+        if (doPermutation) {
+
+            glm.storeModelState();
+            permute(index);
+            deviance = currentLogLikelihood - likelihood.getLogLikelihood();
+            glm.restoreModelState();
+            glm.fireModelChanged();
+            
+        } else {
+            deviance = 0.0;
+        }
 
         if (index == dim) {
-            glm.restoreModelState();
-            likelihood.makeDirty(); // TODO may not be necessary
-            double test = likelihood.getLogLikelihood();
-            if (test != currentLogLikelihood) {
-                throw new IllegalStateException("Unable to restore model after covariate permutation");
-            }
             currentLogLikelihood = Double.NaN;
         }
 
@@ -93,7 +130,7 @@ public class GlmCovariateImportance implements Loggable {
     }
 
     private void permuteOneImpl(int index) {
-        Parameter covariate = glm.getFixedEffect(index);
+        Parameter covariate = covariates.get(index);
         double[] values = covariate.getParameterValues();
         shuffle(values);
 
@@ -126,7 +163,8 @@ public class GlmCovariateImportance implements Loggable {
 
             for (int i = 0; i < dim + 1; ++i) {
                 final int index = i;
-                columns[i + 1] = new NumberColumn("deviance" + index) {
+                String name = "deviance" + (index < dim ? index + 1 : "All");
+                columns[i + 1] = new NumberColumn(name) {
                     @Override
                     public double getDoubleValue() {
                         return getDeviance(index);
@@ -135,5 +173,19 @@ public class GlmCovariateImportance implements Loggable {
             }
         }
         return columns;
+    }
+
+    @Override
+    public String getReport() {
+
+        StringBuilder sb = new StringBuilder();
+        LogColumn[] columns = getColumns();
+        for (int i = 0; i < columns.length; ++i) {
+            String label = columns[i].getLabel();
+            String value = columns[i].getFormatted();
+            System.err.println(label + ": " + value);
+            sb.append(label).append(": ").append(value).append("\n");
+        }
+        return sb.toString();
     }
 }

@@ -25,14 +25,14 @@
 
 package dr.evomodelxml.substmodel;
 
-import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodel.substmodel.GlmCovariateImportance;
 import dr.evomodel.substmodel.OldGLMSubstitutionModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
-import dr.inference.distribution.shrinkage.OldBayesianBridgeLikelihood;
 import dr.inference.loggers.Loggable;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Statistic;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
@@ -61,8 +61,12 @@ public class GlmCovariateImportanceParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        TreeDataLikelihood likelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-        OldGLMSubstitutionModel substitutionModel = (OldGLMSubstitutionModel) xo.getChild(OldBayesianBridgeLikelihood.class);
+        Likelihood likelihood = (Likelihood) xo.getChild(TreeDataLikelihood.class);
+        if (likelihood == null) {
+            likelihood = (Likelihood) xo.getChild(BeagleTreeLikelihood.class);
+        }
+
+        OldGLMSubstitutionModel substitutionModel = (OldGLMSubstitutionModel) xo.getChild(OldGLMSubstitutionModel.class);
 
         return new GlmCovariateImportance(likelihood, substitutionModel);
     }
@@ -75,7 +79,9 @@ public class GlmCovariateImportanceParser extends AbstractXMLObjectParser {
             AttributeRule.newStringRule("fileName", true),
             AttributeRule.newStringRule("parameterColumn", true),
             AttributeRule.newIntegerRule("burnIn", true),
-            new ElementRule(TreeDataLikelihood.class),
+            new XORRule(
+                    new ElementRule(TreeDataLikelihood.class),
+                    new ElementRule(BeagleTreeLikelihood.class)),
             new ElementRule(OldGLMSubstitutionModel.class),
     };
 

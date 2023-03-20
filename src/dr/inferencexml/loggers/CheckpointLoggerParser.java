@@ -27,10 +27,7 @@ package dr.inferencexml.loggers;
 
 import dr.app.checkpoint.BeastCheckpointer;
 import dr.util.FileHelpers;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
 
 /**
  * @author Guy Baele
@@ -40,14 +37,23 @@ public class CheckpointLoggerParser extends AbstractXMLObjectParser {
 
     public static final String LOG_CHECKPOINT = "logCheckpoint";
     public static final String CHECKPOINT_EVERY = "checkpointEvery";
+    public static final String CHECKPOINT_FINAL = "checkpointFinal";
     public static final String FILE_NAME = FileHelpers.FILE_NAME;
+    public static final String ALLOW_OVERWRITE_LOG = "overwrite";
 
     /**
      * @return an object based on the XML element it was passed.
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        //TODO actually write some code
-        return null;
+        final String fileName = xo.getStringAttribute(FILE_NAME);
+
+        final int checkpointEvery = xo.getIntegerAttribute(CHECKPOINT_EVERY);
+
+        final int checkpointFinal = xo.getIntegerAttribute(CHECKPOINT_FINAL);
+
+        final boolean overwrite = xo.getBooleanAttribute(ALLOW_OVERWRITE_LOG);
+
+        return BeastCheckpointer.getInstance(fileName, checkpointEvery, checkpointFinal, overwrite);
     }
 
     //************************************************************************
@@ -63,7 +69,10 @@ public class CheckpointLoggerParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-
+            AttributeRule.newLongIntegerRule(CHECKPOINT_EVERY),
+            AttributeRule.newLongIntegerRule(CHECKPOINT_FINAL),
+            AttributeRule.newBooleanRule(ALLOW_OVERWRITE_LOG, true),
+            new StringAttributeRule(FILE_NAME, "The name of the file to checkpoint to.", false)
     };
 
     public String getParserDescription() {
@@ -71,7 +80,6 @@ public class CheckpointLoggerParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        //TODO is this right?
         return BeastCheckpointer.class;
     }
 

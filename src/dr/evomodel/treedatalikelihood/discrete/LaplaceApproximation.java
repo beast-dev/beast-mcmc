@@ -95,12 +95,12 @@ public class LaplaceApproximation implements Reportable {
             } else {
                 sb.append("Covariance matrix: ").append(new dr.math.matrixAlgebra.Matrix(covarianceMatrix));
             }
-            if (estimateKL) {
-                sb.append("KL(approximation||posterior) = ").append(KL).append("\n");
-            }
-            if (computeML) {
-                sb.append("log(marginal likelihood) = ").append(ML).append("\n");
-            }
+//            if (estimateKL) {
+//                sb.append("KL(approximation||posterior) = ").append(KL).append("\n");
+//            }
+//            if (computeML) {
+//                sb.append("log(marginal likelihood) = ").append(ML).append("\n");
+//            }
             sb.append("Time to compute Hessian: ").append(time).append("s\n");
         }
 

@@ -157,7 +157,11 @@ public class BeastMain {
 
             // Install the checkpointer. This creates a factory that returns
             // appropriate savers and loaders according to the user's options.
-            new BeastCheckpointer();
+            //new BeastCheckpointer();
+            if (Boolean.parseBoolean(System.getProperty("checkpointOverrule"))) {
+                BeastCheckpointer.getInstance(null, -1, -1, false);
+                Logger.getLogger("dr.apps.beast").info("Overriding checkpointing settings in the provided XML file");
+            }
 
             if (!useMC3) {
                 // just parse the file running all threads...
@@ -841,7 +845,6 @@ public class BeastMain {
                     "with models in BEAST, please upgrade to BEAGLE v3.x at http://github.com/beagle-dev/beagle-lib/\n");
         }
 
-
         if (beagleShowInfo) {
             BeagleInfo.printResourceList();
             return;
@@ -859,7 +862,6 @@ public class BeastMain {
             }
 
             String inputFileName = null;
-
 
             if (args2.length > 0) {
                 inputFileName = args2[0];

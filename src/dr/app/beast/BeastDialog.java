@@ -25,6 +25,7 @@
 
 package dr.app.beast;
 
+import dr.app.checkpoint.BeastCheckpointer;
 import dr.app.gui.FileDrop;
 import dr.app.gui.components.WholeNumberField;
 import jam.html.SimpleLinkListener;
@@ -39,8 +40,13 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.File;
 
+/**
+ * @author Andrew Rambaut
+ * @author Guy Baele
+ */
 
 public class BeastDialog {
     private final JFrame frame;
@@ -49,7 +55,6 @@ public class BeastDialog {
 
     private final WholeNumberField seedText = new WholeNumberField((long) 1, Long.MAX_VALUE);
     private final JCheckBox overwriteCheckBox = new JCheckBox("Allow overwriting of log files");
-    private final JCheckBox chkptCheckBox  = new JCheckBox("Default");
     private final JCheckBox beagleCheckBox = new JCheckBox("The BEAGLE library is required to run BEAST:");
     private final JCheckBox beagleInfoCheckBox = new JCheckBox("Show list of available BEAGLE resources and Quit");
     private final JComboBox beagleResourceCombo = new JComboBox(new Object[]{"CPU", "GPU"});
@@ -137,13 +142,89 @@ public class BeastDialog {
 
         optionPanel.addSeparator();
 
-        final JButton chkptButton = new JButton("Specific settings");
-        chkptCheckBox.setToolTipText("<html>By default, a checkpoint file will be written every one million<br>" +
-                "iterations. No previous checkpointed file will be loaded<br>" +
-                "and no custom file name can be provided.</html>");
+        final JButton chkptButton = new JButton("Custom settings");
+        chkptButton.setToolTipText("<html>By default, a checkpoint file will be written according to the<br>" +
+                "specifications in your XML file. No previous checkpointed file<br>" +
+                "will be loaded and no custom file name can be provided.</html>");
+
+        chkptButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JDialog dialog = new JDialog(frame, "Checkpointing settings");
+                dialog.setLocationRelativeTo(chkptButton);
+                dialog.setModal(true);
+                dialog.setAlwaysOnTop(true);
+
+                OptionsPanel chkptPanel = new OptionsPanel(0, 3);
+                //chkptPanel.setLayout(new BorderLayout());
+                chkptPanel.setOpaque(false);
+                JCheckBox overruleXML = new JCheckBox();
+                overruleXML.setToolTipText("This will ignore the checkpointing settings in your XML file.");
+                overruleXML.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent actionEvent) {
+                        if (overruleXML.isSelected()) {
+                            System.setProperty("checkpointOverrule", Boolean.TRUE.toString());
+                        } else {
+                            System.setProperty("checkpointOverrule", Boolean.FALSE.toString());
+                        }
+                    }
+                });
+                chkptPanel.addComponentWithLabel("Overrule XML checkpointing settings", overruleXML);
+
+                chkptPanel.addSeparator();
+
+                JTextField checkpointInput = new JTextField(15);
+                checkpointInput.addKeyListener(new java.awt.event.KeyListener() {
+                    public void keyTyped(KeyEvent e) {
+                    }
+
+                    public void keyPressed(KeyEvent e) {
+                    }
+
+                    public void keyReleased(KeyEvent e) {
+                        System.setProperty(BeastCheckpointer.LOAD_STATE_FILE, checkpointInput.getText());
+                    }
+                });
+
+                JTextField checkpointOutput = new JTextField(15);
+                checkpointOutput.addKeyListener(new java.awt.event.KeyListener() {
+                    public void keyTyped(KeyEvent e) {
+                    }
+
+                    public void keyPressed(KeyEvent e) {
+                    }
+
+                    public void keyReleased(KeyEvent e) {
+                        System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, checkpointOutput.getText());
+                    }
+                });
+
+                WholeNumberField checkpointEvery = new WholeNumberField(1, Integer.MAX_VALUE);
+                checkpointEvery.addKeyListener(new java.awt.event.KeyListener() {
+                    public void keyTyped(KeyEvent e) {
+                    }
+
+                    public void keyPressed(KeyEvent e) {
+                    }
+
+                    public void keyReleased(KeyEvent e) {
+                        System.setProperty(BeastCheckpointer.SAVE_STATE_EVERY, checkpointEvery.getValue() + "");
+                    }
+                });
+                checkpointEvery.setValue(1000000);
+                checkpointEvery.setColumns(10);
+
+                chkptPanel.addComponentWithLabel("Load previous checkpoint file: ", checkpointInput);
+                chkptPanel.addComponentWithLabel("Save new checkpoint file (will overwrite): ", checkpointOutput);
+                chkptPanel.addComponentWithLabel("Save checkpoint every: ", checkpointEvery);
+
+                dialog.add(chkptPanel);
+                dialog.pack();
+                dialog.setVisible(true);
+            }
+        });
 
         JPanel chkptPanel = new JPanel(new BorderLayout(0, 0));
-        chkptPanel.add(chkptCheckBox, BorderLayout.WEST);
         chkptPanel.add(chkptButton, BorderLayout.CENTER);
         optionPanel.addComponentWithLabel("Checkpointing:", chkptPanel);
 

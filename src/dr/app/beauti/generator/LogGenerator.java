@@ -513,7 +513,8 @@ public class LogGenerator extends Generator {
         writer.writeTag(CheckpointLoggerParser.LOG_CHECKPOINT,
                 new Attribute[]{
                         new Attribute.Default<String>(XMLParser.ID, "checkpointFileLog"),
-                        new Attribute.Default<String>(CheckpointLoggerParser.CHECKPOINT_EVERY, options.checkpointEvery + ""),
+                        new Attribute.Default<Integer>(CheckpointLoggerParser.CHECKPOINT_EVERY, options.checkpointEvery),
+                        new Attribute.Default<Integer>(CheckpointLoggerParser.CHECKPOINT_FINAL, options.chainLength),
                         new Attribute.Default<String>(CheckpointLoggerParser.FILE_NAME, options.checkpointFileName),
                         new Attribute.Default<Boolean>(LoggerParser.ALLOW_OVERWRITE_LOG, options.allowOverwriteLog)
                 }, true);

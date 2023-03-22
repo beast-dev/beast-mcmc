@@ -25,11 +25,14 @@
 
 package dr.app.treestat.statistics;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Alexei Drummond
@@ -59,6 +62,60 @@ public class GammaStatistic extends AbstractTreeSummaryStatistic {
 
         double gamma = ((sum / (n-2.0)) - (T / 2.0)) / (T * Math.sqrt(1.0 / (12.0 * (n - 2.0))));
         return new double[] { gamma };
+    }
+
+    public static double getSummaryStatisticForSubtree(Tree tree, NodeRef node) {
+
+        int n = TreeUtils.getExternalNodes(tree, node).size();
+        double[] g = getIntervalsSubtree(tree, node);
+
+        double T = 0; // total branch length
+        double sum = 0.0;
+        if ( n >= 2) {
+            for (int j = 2; j <= n; j++) {
+                T += j * g[j-2];
+            }
+            for (int i = 2; i < n; i++) {
+                for (int k = 2; k <= i; k++) {
+                    sum += k * g[k-2];
+                }
+            }
+        }
+
+        double gamma = ((sum / (n-2.0)) - (T / 2.0)) / (T * Math.sqrt(1.0 / (12.0 * (n - 2.0))));
+        return gamma;
+    }
+    private static void getInternalHeights(Tree tree, NodeRef node, List<Double> heights) {
+        if (!tree.isExternal(node))
+            heights.add(tree.getNodeHeight(node));
+        NodeRef childNode;
+        for (int i = 0; i < tree.getChildCount(node); i++) {
+            childNode = tree.getChild(node, i);
+            if(tree.isExternal(childNode))
+                continue;
+            heights.add(tree.getNodeHeight(childNode));
+            getInternalHeights(tree, childNode, heights);
+        }
+    }
+    private static double[] getIntervalsSubtree(Tree tree, NodeRef node) {
+
+        List<Double> heights = new ArrayList<Double>();
+        getInternalHeights(tree, node, heights);
+        Collections.sort(heights, Collections.reverseOrder());
+
+        double[] intervals = new double[heights.size()];
+
+        for (int i = 0; i < intervals.length - 1; i++) {
+            double height1 = heights.get(i);
+            double height2 = heights.get(i + 1);
+
+            intervals[i] = height1 - height2;
+        }
+        if (intervals.length > 0)
+            intervals[intervals.length - 1] = heights.get(intervals.length - 1);
+
+        return intervals;
+
     }
 
     /**

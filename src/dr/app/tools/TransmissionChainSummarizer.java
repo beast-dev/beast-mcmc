@@ -1,6 +1,9 @@
 package dr.app.tools;
 
+import cern.jet.stat.Gamma;
 import dr.app.beast.BeastVersion;
+import dr.app.treestat.statistics.GammaStatistic;
+import dr.app.treestat.statistics.TreeSummaryStatistic;
 import dr.app.util.Arguments;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -119,6 +122,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
         double rootHeight;
         boolean isExternal;
         String jumpsToDifferentState;
+        double gammaStatistic;
 
         private static final String DELIMITER = "\t";
 
@@ -137,7 +141,8 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                 "totalBranchLength\t"+
                 "rootHeight\t"+
                 "isExternal\t"+
-                "jumpsToDifferentState";
+                "jumpsToDifferentState\t" +
+                "gammaStatistic";
 
         private Row(
                 String treeId,
@@ -155,7 +160,8 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                 double totalBranchLength,
                 double rootHeight,
                 boolean isExternal,
-                String jumpsToDifferentState
+                String jumpsToDifferentState,
+                double gammaStatistic
         ) {
             this.treeId = treeId;
             this.currentNodeID = currentNodeID;
@@ -173,6 +179,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
             this.rootHeight = rootHeight;
             this.isExternal = isExternal;
             this.jumpsToDifferentState = jumpsToDifferentState;
+            this.gammaStatistic = gammaStatistic;
         }
 
         public String toString() {
@@ -193,7 +200,8 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                     String.valueOf(totalBranchLength),
                     String.valueOf(rootHeight),
                     String.valueOf(isExternal),
-                    jumpsToDifferentState
+                    jumpsToDifferentState,
+                    String.valueOf(gammaStatistic)
             );
         }
     }
@@ -317,7 +325,8 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
                     getTotalBranchLength(tree, node, currentState, nodeStateAnnotation),
                     rootHeight,
                     tree.isExternal(node),
-                    convertToJson(map)
+                    convertToJson(map),
+                    GammaStatistic.getSummaryStatisticForSubtree(tree, node)
                 );
             ps.println(row);
 

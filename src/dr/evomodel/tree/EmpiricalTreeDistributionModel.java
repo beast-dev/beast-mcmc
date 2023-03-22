@@ -86,6 +86,14 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel implements 
         });
     }
 
+    public void resetTree(Tree tree, int index, boolean setAsCurrent) {
+        trees[index] = tree;
+        if (setAsCurrent) {
+            currentTree = trees[index];
+            fireModelChanged();
+        }
+    }
+
     protected void storeState() {
         storedCurrentTree = currentTree;
         storedCurrentTreeIndex = currentTreeIndex;

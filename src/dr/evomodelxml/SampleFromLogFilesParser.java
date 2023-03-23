@@ -25,11 +25,7 @@
 
 package dr.evomodelxml;
 
-import dr.evolution.io.Importer;
-import dr.evolution.io.NewickImporter;
-import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeTraceAnalysis;
@@ -39,7 +35,6 @@ import dr.inference.model.Parameter;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
 import dr.math.MathUtils;
-import dr.util.FileHelpers;
 import dr.xml.*;
 
 import java.io.*;
@@ -57,7 +52,6 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
     private final static String PARSER_NAME = "sampleFromLogFiles";
     private final static String SAMPLE_BLOCK = "sample";
     private final static String EXECUTE = "execute";
-    private final static String BURN_IN = "burnIn";
     private final static String FILE_NAME = "fileName";
     private final static String COLUMN_NAME = "columnName";
     private final static String FIRST_SAMPLE = "firstSample";
@@ -69,12 +63,13 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
     }
 
     class TreeBinding {
-        TreeModel treeModel;
-        Tree[] trees;
 
-        public TreeBinding(TreeModel treeModel, Tree[] trees) {
+        Tree[] trees;
+        EmpiricalTreeDistributionModel treeModel;
+
+        public TreeBinding(EmpiricalTreeDistributionModel treeModel) {
             this.treeModel = treeModel;
-            this.trees = trees;
+            this.trees = treeModel.getTrees();
         }
     }
 
@@ -92,8 +87,8 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
 
     class Action {
 
-        private List<TreeBinding> treeBindings = new ArrayList<>();
-        private List<ParameterBinding> parameterBindings = new ArrayList<>();
+        final private List<TreeBinding> treeBindings = new ArrayList<>();
+        final private List<ParameterBinding> parameterBindings = new ArrayList<>();
 
         private final LogColumn[] log;
 
@@ -117,9 +112,7 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
             TreeModel treeModel = binding.treeModel;
             if (treeModel instanceof EmpiricalTreeDistributionModel) {
                 EmpiricalTreeDistributionModel tree = (EmpiricalTreeDistributionModel) treeModel;
-                tree.resetTree(binding.trees[sample], 0, true);
-                treeModel.fireModelChanged();
-//                System.err.println(treeModel);
+                tree.setTree(sample);
             } else {
                 throw new RuntimeException("Not yet implemented");
             }
@@ -280,40 +273,18 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
         
         for (XMLObject cxo : xo.getAllChildren(SAMPLE_BLOCK)) {
 
-            String fileName = cxo.getStringAttribute(FILE_NAME);
 
-            TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
+
+            EmpiricalTreeDistributionModel treeModel = (EmpiricalTreeDistributionModel) cxo.getChild(TreeModel.class);
             Parameter parameter = (Parameter) cxo.getChild(Parameter.class);
 
             if (treeModel != null) {
 
-                Logger.getLogger("dr.evomodelxml").info("Reading tree model from " + fileName);
-
-                TaxonList taxa = (TaxonList)xo.getChild(TaxonList.class);
-
-                final File file = FileHelpers.getFile(fileName);
-
-                Tree[] trees = null;
-                NexusImporter importer = null;
-                try {
-                    FileReader reader = new FileReader(file);
-                    importer = new NexusImporter(reader);
-
-                    trees = importer.importTrees(taxa, true); // Re-order taxon numbers to original TaxonList order
-                    reader.close();
-
-                } catch (FileNotFoundException e) {
-                    throw new XMLParseException(e.getMessage());
-                } catch (IOException e) {
-                    throw new XMLParseException(e.getMessage());
-                } catch (Importer.ImportException e) {
-                    throw new XMLParseException(e.getMessage());
-                }
-
-                action.addTreeBinding(new TreeBinding(treeModel, trees));
+                action.addTreeBinding(new TreeBinding(treeModel));
 
             } else if (parameter != null) {
-
+                
+                String fileName = cxo.getStringAttribute(FILE_NAME);
                 String columnName = cxo.getStringAttribute(COLUMN_NAME);
                 Logger.getLogger("dr.evomodelxml").info("Reading " + columnName + " from " + fileName);
 
@@ -364,10 +335,14 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
             AttributeRule.newLongIntegerRule(FIRST_SAMPLE, true),
             AttributeRule.newLongIntegerRule(LAST_SAMPLE, true),
             AttributeRule.newIntegerRule(NUMBER_SAMPLES, true),
-            new ElementRule(SAMPLE_BLOCK, new XMLSyntaxRule[] {
-                    new StringAttributeRule(FILE_NAME, "name of a tree log file", "trees.log"),
-            }, 1, Integer.MAX_VALUE),
-            AttributeRule.newIntegerRule(BURN_IN, true),
+            new ElementRule(SAMPLE_BLOCK,
+                    new XMLSyntaxRule[]{
+                            new XORRule(
+                                    new ElementRule(EmpiricalTreeDistributionModel.class),
+                                    new ElementRule(Parameter.class)),
+                            new StringAttributeRule(FILE_NAME, "File name", true),
+                            new StringAttributeRule(COLUMN_NAME, "Column name", true),
+                    }, 1, Integer.MAX_VALUE),
             new ElementRule(EXECUTE, new XMLSyntaxRule[] {
                     new ElementRule(Loggable.class, 1, Integer.MAX_VALUE),
             }),

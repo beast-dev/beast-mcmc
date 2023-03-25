@@ -25,12 +25,14 @@
 
 package dr.evomodelxml;
 
+import dr.app.beast.BeastVersion;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeTraceAnalysis;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
+import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.model.Parameter;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
@@ -38,11 +40,10 @@ import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
+
+import static dr.inferencexml.loggers.LoggerParser.getLogFile;
 
 /**
  * @author Marc Suchard
@@ -91,9 +92,41 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
         final private List<ParameterBinding> parameterBindings = new ArrayList<>();
 
         private final LogColumn[] log;
+        private final TabDelimitedFormatter formatter;
+        private final boolean printToScreen;
 
-        public Action(Loggable loggable) {
-            this.log = loggable.getColumns();
+        public Action(List<Loggable> loggable, PrintWriter printWriter,
+                      boolean printStatus) {
+
+            int dim = 0;
+            for (Loggable log : loggable) {
+                dim += log.getColumns().length;
+            }
+
+            log = new LogColumn[dim];
+
+            int index = 0;
+            for (Loggable log : loggable) {
+                LogColumn[] columns = log.getColumns();
+                for (LogColumn column : columns) {
+                    this.log[index] = column;
+                    ++index;
+                }
+            }
+
+            formatter = new TabDelimitedFormatter(printWriter);
+            this.printToScreen = printStatus;
+//            printTitle();
+        }
+
+        private void printTitle() {
+            final BeastVersion version = new BeastVersion();
+
+            String title = "BEAST " + version.getVersionString() + "\n" +
+                    "Generated " + (new Date()) + " [seed=" + MathUtils.getSeed() + "]\n" +
+                    System.getProperty("command_line", "");
+
+            formatter.logHeading(title);
         }
 
         private void setParameter(ParameterBinding binding, int sample) {
@@ -109,13 +142,8 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
         }
 
         private void setTree(TreeBinding binding, int sample) {
-            TreeModel treeModel = binding.treeModel;
-            if (treeModel instanceof EmpiricalTreeDistributionModel) {
-                EmpiricalTreeDistributionModel tree = (EmpiricalTreeDistributionModel) treeModel;
-                tree.setTree(sample);
-            } else {
-                throw new RuntimeException("Not yet implemented");
-            }
+            EmpiricalTreeDistributionModel treeModel = binding.treeModel;
+            treeModel.setTree(sample);
         }
 
         private class StateInfo {
@@ -205,13 +233,16 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
             int lastIndex = (int)((lastSample - info.firstState) / info.stepSize);
             int range = lastIndex - firstIndex + 1;
 
-            System.out.println();
+            printTitle();
 
-            System.out.print("sample\tstate");
-            for (int i = 0; i < log.length; ++i) {
-                System.out.print("\t" + log[i].getLabel());
+            List<String> labels = new ArrayList<>();
+            labels.add("sample");
+            labels.add("state");
+
+            for (LogColumn column : log) {
+                labels.add(column.getLabel());
             }
-            System.out.println();
+            formatter.logLabels(labels.toArray(new String[0]));
 
             for (int i = 0; i < numberSamples; ++i) {
 
@@ -225,12 +256,21 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
                     setTree(binding, sample);
                 }
 
-                System.out.print(i + "\t" + info.getState(sample));
-                for (int j = 0; j < log.length; ++j) {
-                    System.out.print("\t" + log[j].getFormatted());
+                List<String> values = new ArrayList<>();
+                values.add(Integer.toString(i));
+                values.add(Long.toString(info.getState(sample)));
+
+                for (LogColumn column : log) {
+                    values.add(column.getFormatted());
                 }
-                System.out.println();
+                formatter.logValues(values.toArray(new String[0]));
+
+                if (printToScreen) {
+                    Logger.getLogger("dr.evomodelxml").info("Iteration " + i + " completed.");
+                }
             }
+
+            formatter.stopLogging();
         }
 
         public void addTreeBinding(TreeBinding treeBinding) {
@@ -268,12 +308,22 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         XMLObject cxoExecute = xo.getChild(EXECUTE);
-        Loggable loggable = (Loggable) cxoExecute.getChild(Loggable.class);
-        Action action = new Action(loggable);
+        List<Loggable> loggable = new ArrayList<>();
+
+        for (int i = 0; i < cxoExecute.getChildCount(); ++i) {
+            Object obj = cxoExecute.getChild(i);
+            if (obj instanceof Loggable) {
+                loggable.add((Loggable) obj);
+            }
+        }
+
+        final PrintWriter pw = getLogFile(xo, getParserName());
+
+        boolean printStatus = xo.hasAttribute(FILE_NAME);
+
+        Action action = new Action(loggable, pw, printStatus);
         
         for (XMLObject cxo : xo.getAllChildren(SAMPLE_BLOCK)) {
-
-
 
             EmpiricalTreeDistributionModel treeModel = (EmpiricalTreeDistributionModel) cxo.getChild(TreeModel.class);
             Parameter parameter = (Parameter) cxo.getChild(Parameter.class);
@@ -335,6 +385,7 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
             AttributeRule.newLongIntegerRule(FIRST_SAMPLE, true),
             AttributeRule.newLongIntegerRule(LAST_SAMPLE, true),
             AttributeRule.newIntegerRule(NUMBER_SAMPLES, true),
+            AttributeRule.newStringRule(FILE_NAME, true),
             new ElementRule(SAMPLE_BLOCK,
                     new XMLSyntaxRule[]{
                             new XORRule(

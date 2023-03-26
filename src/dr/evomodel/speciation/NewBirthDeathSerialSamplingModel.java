@@ -147,7 +147,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
         this.numIntervals = numIntervals;
         this.gridEnd = gridEnd;
-        setupTimeline();
+        // setupTimeline();
 
         if (birthRate.getSize() != 1 && birthRate.getSize() != numIntervals) {
             throw new RuntimeException("Length of birthRate parameter should be one or equal to the size of time parameter (size = " + numIntervals + ")");
@@ -222,7 +222,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         this.gradientFlags = new boolean[5];
         Arrays.fill(gradientFlags, Boolean.TRUE);
 
-        setupTimeline();
+        // setupTimeline();
     }
 
     public void setupGradientFlags (boolean[] gradientFlags) {
@@ -230,16 +230,21 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     // TODO should probably be replaced and brought in line with smoothSkygrid
-    private void setupTimeline() {
-        if (modelStartTimes == null) {
-            modelStartTimes = new double[numIntervals];
+    public void setupTimeline(double[] times) {
+        if (this.modelStartTimes == null) {
+            this.modelStartTimes = new double[numIntervals];
         } else {
-            Arrays.fill(modelStartTimes, 0.0);
+            Arrays.fill(this.modelStartTimes, 0.0);
         }
-
-        modelStartTimes[0] = 0;
-        for (int idx = 1; idx <= numIntervals - 1 ; idx++) {
-            modelStartTimes[idx] = idx * (gridEnd / numIntervals);
+        if (times != null) {
+            if (times.length != this.numIntervals) {
+                throw new IllegalArgumentException("grids has the wrong dimension " + times.length + ", not matching number of intervals " + this.numIntervals + "!");
+            }
+            this.modelStartTimes = times;
+        } else {
+            for (int idx = 1; idx <= numIntervals - 1 ; idx++) {
+                modelStartTimes[idx] = idx * (gridEnd / numIntervals);
+            }
         }
     }
 

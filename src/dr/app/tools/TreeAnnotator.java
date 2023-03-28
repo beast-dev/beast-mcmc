@@ -268,7 +268,7 @@ public class TreeAnnotator {
                 break;
             }
             case HIPSTR: {
-                progressStream.println("Finding maximum marginal credibility tree...");
+                progressStream.println("Finding highest independent posterior subtree reconstruction (HIPSTR) tree...");
                 targetTree = new FlexibleTree(getHIPSTRTree(cladeSystem));
                 break;
             }

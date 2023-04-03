@@ -32,6 +32,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeTraceAnalysis;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
+import dr.inference.loggers.Logger;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.model.Parameter;
 import dr.inference.trace.LogFileTraces;
@@ -41,7 +42,6 @@ import dr.xml.*;
 
 import java.io.*;
 import java.util.*;
-import java.util.logging.Logger;
 
 import static dr.inferencexml.loggers.LoggerParser.getLogFile;
 
@@ -91,11 +91,12 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
         final private List<TreeBinding> treeBindings = new ArrayList<>();
         final private List<ParameterBinding> parameterBindings = new ArrayList<>();
 
+        private final List<Logger> loggers;
         private final LogColumn[] log;
         private final TabDelimitedFormatter formatter;
         private final boolean printToScreen;
 
-        public Action(List<Loggable> loggable, PrintWriter printWriter,
+        public Action(List<Loggable> loggable, List<Logger> loggers, PrintWriter printWriter,
                       boolean printStatus) {
 
             int dim = 0;
@@ -116,7 +117,8 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
 
             formatter = new TabDelimitedFormatter(printWriter);
             this.printToScreen = printStatus;
-//            printTitle();
+
+            this.loggers = loggers;
         }
 
         private void printTitle() {
@@ -244,6 +246,10 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
             }
             formatter.logLabels(labels.toArray(new String[0]));
 
+            for (Logger logger : loggers) {
+                logger.startLogging();
+            }
+
             for (int i = 0; i < numberSamples; ++i) {
 
                 int sample = firstIndex + MathUtils.nextInt(range);
@@ -265,12 +271,20 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
                 }
                 formatter.logValues(values.toArray(new String[0]));
 
+                for (Logger logger : loggers) {
+                    logger.log(info.getState(sample));
+                }
+
                 if (printToScreen) {
-                    Logger.getLogger("dr.evomodelxml").info("Iteration " + i + " completed.");
+                    java.util.logging.Logger.getLogger("dr.evomodelxml").info("Iteration " + i + " completed.");
                 }
             }
 
             formatter.stopLogging();
+
+            for (Logger logger : loggers) {
+                logger.stopLogging();
+            }
         }
 
         public void addTreeBinding(TreeBinding treeBinding) {
@@ -309,11 +323,16 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
 
         XMLObject cxoExecute = xo.getChild(EXECUTE);
         List<Loggable> loggable = new ArrayList<>();
+        ArrayList<Logger> loggers = new ArrayList<>();
 
         for (int i = 0; i < cxoExecute.getChildCount(); ++i) {
             Object obj = cxoExecute.getChild(i);
             if (obj instanceof Loggable) {
                 loggable.add((Loggable) obj);
+            }
+
+            if (obj instanceof Logger) {
+                loggers.add((Logger) obj);
             }
         }
 
@@ -321,7 +340,7 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
 
         boolean printStatus = xo.hasAttribute(FILE_NAME);
 
-        Action action = new Action(loggable, pw, printStatus);
+        Action action = new Action(loggable, loggers, pw, printStatus);
         
         for (XMLObject cxo : xo.getAllChildren(SAMPLE_BLOCK)) {
 
@@ -336,7 +355,7 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
                 
                 String fileName = cxo.getStringAttribute(FILE_NAME);
                 String columnName = cxo.getStringAttribute(COLUMN_NAME);
-                Logger.getLogger("dr.evomodelxml").info("Reading " + columnName + " from " + fileName);
+                java.util.logging.Logger.getLogger("dr.evomodelxml").info("Reading " + columnName + " from " + fileName);
 
                 LogFileTraces traces = getCachedLogFile(fileName);
 

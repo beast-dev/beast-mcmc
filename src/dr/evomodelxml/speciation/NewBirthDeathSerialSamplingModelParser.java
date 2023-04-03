@@ -49,6 +49,8 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
 
     public static final String GRADIENT_FLAG = "gradientFlag";
 
+    public static final String GRIDS = "grids";
+
     public static final String BDSS = "bdss";
 
     public String getParserName() {
@@ -82,6 +84,8 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
         gradientFlags[3] = xo.getChild(RHO).getAttribute(GRADIENT_FLAG, true).booleanValue();
         gradientFlags[4] = xo.getChild(R).getAttribute(GRADIENT_FLAG, true).booleanValue();
 
+        final Parameter grids = xo.hasChildNamed(GRIDS) ? (Parameter) xo.getElementFirstChild(GRIDS): null;
+
 
         String citeThisModel;
         if ( r.getParameterValue(0) < Double.MIN_VALUE ) {
@@ -97,6 +101,7 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
         // return new NewBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units);
         NewBirthDeathSerialSamplingModel model = new NewBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units);
         model.setupGradientFlags(gradientFlags);
+        model.setupTimeline(grids != null ? grids.getParameterValues(): null);
         return model;
     }
 

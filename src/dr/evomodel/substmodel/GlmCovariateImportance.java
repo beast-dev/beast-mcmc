@@ -37,7 +37,9 @@ import dr.math.MathUtils;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Marc A. Suchard
@@ -54,19 +56,33 @@ public class GlmCovariateImportance implements Loggable, Reportable {
     private double currentLogLikelihood = Double.NaN;
     private LogColumn[] columns;
 
+    class IndexPair {
+        int fixedEffectIndex;
+        int parameterValueIndex;
+
+        IndexPair(int effect, int index) {
+            this.fixedEffectIndex = effect;
+            this.parameterValueIndex = index;
+        }
+    }
+
+    private final Map<Integer, IndexPair> parameterMap;
+
     public GlmCovariateImportance(Likelihood likelihood,
                                   OldGLMSubstitutionModel glmSubstitutionModel) {
         this.likelihood = likelihood;
         this.glm = glmSubstitutionModel.getGeneralizedLinearModel();
         covariates = new ArrayList<>();
+        parameterMap = new HashMap<>();
         int dim = 0;
         for (int i = 0; i < glm.getNumberOfFixedEffects(); ++i) {
             DesignMatrix design = glm.getDesignMatrix(i);
             int d = design.getColumnDimension();
-            dim += d;
             for (int j = 0; j < d; ++j) {
                 covariates.add(design.getParameter(j));
+                parameterMap.put(dim + j, new IndexPair(i, j));
             }
+            dim += d;
         }
         this.dim = dim;
     }
@@ -85,13 +101,10 @@ public class GlmCovariateImportance implements Loggable, Reportable {
         boolean doPermutation = true;
         if (index != dim) {
 
-            if (glm.getNumberOfFixedEffects() > 1) {
-                throw new IllegalArgumentException("Not yet implemented");
-            }
-
-            double coefficient = glm.getFixedEffect(0).getParameterValue(index);
-            if (glm.getFixedEffectIndicator(0) != null) {
-                coefficient *= glm.getFixedEffectIndicator(0).getParameterValue(index);
+            IndexPair indexPair = parameterMap.get(index);
+            double coefficient = glm.getFixedEffect(indexPair.fixedEffectIndex).getParameterValue(indexPair.parameterValueIndex);
+            if (glm.getFixedEffectIndicator(indexPair.fixedEffectIndex) != null) {
+                coefficient *= glm.getFixedEffectIndicator(indexPair.fixedEffectIndex).getParameterValue(indexPair.parameterValueIndex);
             }
 
             if (coefficient == 0.0) {

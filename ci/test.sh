@@ -1,7 +1,5 @@
 #!/bin/bash
 
-BEAGLE_LIB=/usr/local/lib/
-
 passed=true
 failedFiles=()
 

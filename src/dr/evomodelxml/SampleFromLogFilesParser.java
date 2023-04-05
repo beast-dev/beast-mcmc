@@ -25,19 +25,16 @@
 
 package dr.evomodelxml;
 
-import dr.app.beast.BeastVersion;
-import dr.evolution.tree.Tree;
+import dr.evomodel.SampleFromLogFiles;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeTraceAnalysis;
-import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.Logger;
-import dr.inference.loggers.TabDelimitedFormatter;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
-import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.io.*;
@@ -58,242 +55,11 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
     private final static String FIRST_SAMPLE = "firstSample";
     private final static String LAST_SAMPLE = "lastSample";
     private final static String NUMBER_SAMPLES = "numberOfSamples";
+    private final static String CHECK_BLOCK = "check";
+    private final static String TOLERANCE = "tolerance";
 
     public String getParserName() {
         return PARSER_NAME;
-    }
-
-    class TreeBinding {
-
-        Tree[] trees;
-        EmpiricalTreeDistributionModel treeModel;
-
-        public TreeBinding(EmpiricalTreeDistributionModel treeModel) {
-            this.treeModel = treeModel;
-            this.trees = treeModel.getTrees();
-        }
-    }
-
-    class ParameterBinding {
-        Parameter parameter;
-        LogFileTraces traces;
-        int index;
-
-        public ParameterBinding(Parameter parameter, LogFileTraces traces, int index) {
-            this.parameter = parameter;
-            this.traces = traces;
-            this.index = index;
-        }
-    }
-
-    class Action {
-
-        final private List<TreeBinding> treeBindings = new ArrayList<>();
-        final private List<ParameterBinding> parameterBindings = new ArrayList<>();
-
-        private final List<Logger> loggers;
-        private final LogColumn[] log;
-        private final TabDelimitedFormatter formatter;
-        private final boolean printToScreen;
-
-        public Action(List<Loggable> loggable, List<Logger> loggers, PrintWriter printWriter,
-                      boolean printStatus) {
-
-            int dim = 0;
-            for (Loggable log : loggable) {
-                dim += log.getColumns().length;
-            }
-
-            log = new LogColumn[dim];
-
-            int index = 0;
-            for (Loggable log : loggable) {
-                LogColumn[] columns = log.getColumns();
-                for (LogColumn column : columns) {
-                    this.log[index] = column;
-                    ++index;
-                }
-            }
-
-            formatter = new TabDelimitedFormatter(printWriter);
-            this.printToScreen = printStatus;
-
-            this.loggers = loggers;
-        }
-
-        private void printTitle() {
-            final BeastVersion version = new BeastVersion();
-
-            String title = "BEAST " + version.getVersionString() + "\n" +
-                    "Generated " + (new Date()) + " [seed=" + MathUtils.getSeed() + "]\n" +
-                    System.getProperty("command_line", "");
-
-            formatter.logHeading(title);
-        }
-
-        private void setParameter(ParameterBinding binding, int sample) {
-            Parameter parameter = binding.parameter;
-            LogFileTraces traces = binding.traces;
-            int index = binding.index;
-
-            for (int i = 0; i < parameter.getDimension(); ++i) {
-                parameter.setParameterValueQuietly(i,
-                        traces.getTrace(index + i).getValue(sample));
-            }
-            parameter.fireParameterChangedEvent();
-        }
-
-        private void setTree(TreeBinding binding, int sample) {
-            EmpiricalTreeDistributionModel treeModel = binding.treeModel;
-            treeModel.setTree(sample);
-        }
-
-        private class StateInfo {
-            long firstState;
-            long maxState;
-            long stepSize;
-            int stateCount;
-
-            public StateInfo(long firstState, long maxState, long stepSize) {
-                this.firstState = firstState;
-                this.maxState = maxState;
-                this.stepSize = stepSize;
-                this.stateCount = (int) ((maxState - firstState) / stepSize) + 1;
-            }
-
-            public long getState(int sample) {
-                return sample * stepSize + firstState;
-            }
-        }
-
-        private StateInfo ensureCompatibleLogs() {
-
-            StateInfo info = null;
-
-            if (parameterBindings.size() > 0) {
-                ParameterBinding pb = parameterBindings.get(0);
-                long maxState = pb.traces.getMaxState();
-                long stepSize = pb.traces.getStepSize();
-                long firstState = pb.traces.getFirstState();
-
-                info = new StateInfo(firstState, maxState, stepSize);
-
-                for (int i = 1; i < parameterBindings.size(); ++i) {
-                    ParameterBinding x = parameterBindings.get(i);
-                    if (x.traces.getMaxState() != info.maxState ||
-                            x.traces.getStepSize() != info.stepSize ||
-                            x.traces.getFirstState() != info.firstState) {
-                        throw new RuntimeException("Mis-balanced log file");
-                    }
-                }
-            }
-
-            if (treeBindings.size() > 0) {
-                for (TreeBinding tb : treeBindings) {
-
-                    int stateCount = tb.trees.length;
-
-                    String id0 = tb.trees[0].getId();
-                    String id1 = tb.trees[1].getId();
-                    String idN = tb.trees[stateCount - 1].getId();
-
-                    long state0 = Long.parseLong(id0.replace("STATE_", ""));
-                    long state1 = Long.parseLong(id1.replace("STATE_", ""));
-                    long stateN = Long.parseLong(idN.replace("STATE_", ""));
-
-                    if (info == null) {
-                        info = new StateInfo(state0, stateN, state1 - state0);
-                    }
-
-                    if (stateN != info.maxState ||
-                            state0 != info.firstState ||
-                            (state1 - state0) != info.stepSize ||
-                            stateCount != info.stateCount) {
-                        throw new RuntimeException("Mis-balanced tree log file");
-                    }
-                }
-            }
-
-            return info;
-        }
-
-        public void run(long firstSample,
-                        long lastSample,
-                        int numberSamples) {
-
-            StateInfo info = ensureCompatibleLogs();
-
-            if (firstSample == -1L) {
-                firstSample = info.firstState;
-            }
-
-            if (lastSample == -1L) {
-                lastSample = info.maxState;
-            }
-
-            int firstIndex = (int)((firstSample - info.firstState) / info.stepSize);
-            int lastIndex = (int)((lastSample - info.firstState) / info.stepSize);
-            int range = lastIndex - firstIndex + 1;
-
-            printTitle();
-
-            List<String> labels = new ArrayList<>();
-            labels.add("sample");
-            labels.add("state");
-
-            for (LogColumn column : log) {
-                labels.add(column.getLabel());
-            }
-            formatter.logLabels(labels.toArray(new String[0]));
-
-            for (Logger logger : loggers) {
-                logger.startLogging();
-            }
-
-            for (int i = 0; i < numberSamples; ++i) {
-
-                int sample = firstIndex + MathUtils.nextInt(range);
-
-                for (ParameterBinding binding : parameterBindings) {
-                    setParameter(binding, sample);
-                }
-
-                for (TreeBinding binding : treeBindings) {
-                    setTree(binding, sample);
-                }
-
-                List<String> values = new ArrayList<>();
-                values.add(Integer.toString(i));
-                values.add(Long.toString(info.getState(sample)));
-
-                for (LogColumn column : log) {
-                    values.add(column.getFormatted());
-                }
-                formatter.logValues(values.toArray(new String[0]));
-
-                for (Logger logger : loggers) {
-                    logger.log(info.getState(sample));
-                }
-
-                if (printToScreen) {
-                    java.util.logging.Logger.getLogger("dr.evomodelxml").info("Iteration " + i + " completed.");
-                }
-            }
-
-            formatter.stopLogging();
-
-            for (Logger logger : loggers) {
-                logger.stopLogging();
-            }
-        }
-
-        public void addTreeBinding(TreeBinding treeBinding) {
-            treeBindings.add(treeBinding);
-        }
-
-        public void addParameterBinding(ParameterBinding parameterBinding) {
-            parameterBindings.add(parameterBinding);
-        }
     }
 
     private final Map<String, LogFileTraces> logCache = new HashMap<>();
@@ -308,9 +74,7 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
             traces.setBurnIn(0);
             try {
                 traces.loadTraces();
-            } catch (TraceException e) {
-                throw new XMLParseException(e.getMessage());
-            } catch (IOException e) {
+            } catch (TraceException | IOException e) {
                 throw new XMLParseException(e.getMessage());
             }
 
@@ -340,7 +104,7 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
 
         boolean printStatus = xo.hasAttribute(FILE_NAME);
 
-        Action action = new Action(loggable, loggers, pw, printStatus);
+        SampleFromLogFiles action = new SampleFromLogFiles(loggable, loggers, pw, printStatus);
         
         for (XMLObject cxo : xo.getAllChildren(SAMPLE_BLOCK)) {
 
@@ -349,13 +113,14 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
 
             if (treeModel != null) {
 
-                action.addTreeBinding(new TreeBinding(treeModel));
+                action.addTreeBinding(new SampleFromLogFiles.TreeBinding(treeModel));
 
             } else if (parameter != null) {
                 
                 String fileName = cxo.getStringAttribute(FILE_NAME);
                 String columnName = cxo.getStringAttribute(COLUMN_NAME);
-                java.util.logging.Logger.getLogger("dr.evomodelxml").info("Reading " + columnName + " from " + fileName);
+                java.util.logging.Logger.getLogger("dr.evomodelxml").info("Reading " + columnName
+                        + " from " + fileName);
 
                 LogFileTraces traces = getCachedLogFile(fileName);
 
@@ -371,8 +136,37 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
                     throw new XMLParseException("Column '" + columnName + "' can not be found in " + fileName);
                 }
 
-                action.addParameterBinding(new ParameterBinding(parameter, traces, traceIndexParameter));
+                action.addParameterBinding(new SampleFromLogFiles.ParameterBinding(
+                        parameter, traces, traceIndexParameter));
             }
+        }
+
+        for (XMLObject cxo : xo.getAllChildren(CHECK_BLOCK)) {
+
+            Likelihood likelihood = (Likelihood) cxo.getChild(Likelihood.class);
+
+            String fileName = cxo.getStringAttribute(FILE_NAME);
+            String columnName = cxo.getStringAttribute(COLUMN_NAME);
+            java.util.logging.Logger.getLogger("dr.evomodelxml").info("Reading " + columnName
+                    + " from " + fileName);
+
+            LogFileTraces traces = getCachedLogFile(fileName);
+
+            int traceIndexParameter = -1;
+            for (int j = 0; j < traces.getTraceCount(); j++) {
+                String traceName = traces.getTraceName(j);
+                if (traceName.trim().equals(columnName)) {
+                    traceIndexParameter = j;
+                }
+            }
+
+            if (traceIndexParameter == -1) {
+                throw new XMLParseException("Column '" + columnName + "' can not be found in " + fileName);
+            }
+
+            double tolerance = cxo.getAttribute(TOLERANCE, 1E-6);
+            action.addCheckBinding(new SampleFromLogFiles.CheckBinding(likelihood, traces,
+                    traceIndexParameter, tolerance));
         }
 
         long firstSample = xo.getAttribute(FIRST_SAMPLE, -1L);
@@ -416,5 +210,12 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
             new ElementRule(EXECUTE, new XMLSyntaxRule[] {
                     new ElementRule(Loggable.class, 1, Integer.MAX_VALUE),
             }),
+            new ElementRule(CHECK_BLOCK,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Likelihood.class),
+                            new StringAttributeRule(FILE_NAME, "File name"),
+                            new StringAttributeRule(COLUMN_NAME, "Likelihood column name"),
+                            AttributeRule.newDoubleRule(TOLERANCE, true),
+                    }, 0, Integer.MAX_VALUE),
     };
 }

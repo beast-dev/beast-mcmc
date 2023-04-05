@@ -25,7 +25,6 @@
 
 package dr.evomodel.substmodel;
 
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
@@ -48,6 +47,7 @@ import java.util.Map;
 public class GlmCovariateImportance implements Loggable, Reportable {
 
     private final Likelihood likelihood;
+    @SuppressWarnings("deprecation")
     private final GeneralizedLinearModel glm;
 
     private final int dim;
@@ -56,7 +56,7 @@ public class GlmCovariateImportance implements Loggable, Reportable {
     private double currentLogLikelihood = Double.NaN;
     private LogColumn[] columns;
 
-    class IndexPair {
+    static class IndexPair {
         int fixedEffectIndex;
         int parameterValueIndex;
 
@@ -68,6 +68,7 @@ public class GlmCovariateImportance implements Loggable, Reportable {
 
     private final Map<Integer, IndexPair> parameterMap;
 
+    @SuppressWarnings("deprecation")
     public GlmCovariateImportance(Likelihood likelihood,
                                   OldGLMSubstitutionModel glmSubstitutionModel) {
         this.likelihood = likelihood;
@@ -193,10 +194,9 @@ public class GlmCovariateImportance implements Loggable, Reportable {
 
         StringBuilder sb = new StringBuilder();
         LogColumn[] columns = getColumns();
-        for (int i = 0; i < columns.length; ++i) {
-            String label = columns[i].getLabel();
-            String value = columns[i].getFormatted();
-            System.err.println(label + ": " + value);
+        for (LogColumn column : columns) {
+            String label = column.getLabel();
+            String value = column.getFormatted();
             sb.append(label).append(": ").append(value).append("\n");
         }
         return sb.toString();

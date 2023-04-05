@@ -116,57 +116,21 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
                 action.addTreeBinding(new SampleFromLogFiles.TreeBinding(treeModel));
 
             } else if (parameter != null) {
-                
-                String fileName = cxo.getStringAttribute(FILE_NAME);
-                String columnName = cxo.getStringAttribute(COLUMN_NAME);
-                java.util.logging.Logger.getLogger("dr.evomodelxml").info("Reading " + columnName
-                        + " from " + fileName);
 
-                LogFileTraces traces = getCachedLogFile(fileName);
-
-                int traceIndexParameter = -1;
-                for (int j = 0; j < traces.getTraceCount(); j++) {
-                    String traceName = traces.getTraceName(j);
-                    if (traceName.trim().equals(columnName)) {
-                        traceIndexParameter = j;
-                    }
-                }
-
-                if (traceIndexParameter == -1) {
-                    throw new XMLParseException("Column '" + columnName + "' can not be found in " + fileName);
-                }
-
+                LogIndex logIndex = parseBlock(cxo);
                 action.addParameterBinding(new SampleFromLogFiles.ParameterBinding(
-                        parameter, traces, traceIndexParameter));
+                        parameter, logIndex.traces, logIndex.traceIndexParameter));
             }
         }
 
         for (XMLObject cxo : xo.getAllChildren(CHECK_BLOCK)) {
 
             Likelihood likelihood = (Likelihood) cxo.getChild(Likelihood.class);
-
-            String fileName = cxo.getStringAttribute(FILE_NAME);
-            String columnName = cxo.getStringAttribute(COLUMN_NAME);
-            java.util.logging.Logger.getLogger("dr.evomodelxml").info("Reading " + columnName
-                    + " from " + fileName);
-
-            LogFileTraces traces = getCachedLogFile(fileName);
-
-            int traceIndexParameter = -1;
-            for (int j = 0; j < traces.getTraceCount(); j++) {
-                String traceName = traces.getTraceName(j);
-                if (traceName.trim().equals(columnName)) {
-                    traceIndexParameter = j;
-                }
-            }
-
-            if (traceIndexParameter == -1) {
-                throw new XMLParseException("Column '" + columnName + "' can not be found in " + fileName);
-            }
-
+            LogIndex logIndex = parseBlock(cxo);
             double tolerance = cxo.getAttribute(TOLERANCE, 1E-6);
-            action.addCheckBinding(new SampleFromLogFiles.CheckBinding(likelihood, traces,
-                    traceIndexParameter, tolerance));
+
+            action.addCheckBinding(new SampleFromLogFiles.CheckBinding(likelihood, logIndex.traces,
+                    logIndex.traceIndexParameter, tolerance));
         }
 
         long firstSample = xo.getAttribute(FIRST_SAMPLE, -1L);
@@ -176,6 +140,40 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
         action.run(firstSample, lastSample, numberSamples);
 
         return null;
+    }
+
+    class LogIndex {
+        LogFileTraces traces;
+        int traceIndexParameter;
+
+        LogIndex(LogFileTraces traces, int traceIndexParameter) {
+            this.traces = traces;
+            this.traceIndexParameter = traceIndexParameter;
+        }
+    }
+
+    private LogIndex parseBlock(XMLObject cxo) throws XMLParseException {
+
+        String fileName = cxo.getStringAttribute(FILE_NAME);
+        String columnName = cxo.getStringAttribute(COLUMN_NAME);
+        java.util.logging.Logger.getLogger("dr.evomodelxml").info("Reading " + columnName
+                + " from " + fileName);
+
+        LogFileTraces traces = getCachedLogFile(fileName);
+
+        int traceIndexParameter = -1;
+        for (int j = 0; j < traces.getTraceCount(); j++) {
+            String traceName = traces.getTraceName(j);
+            if (traceName.trim().equals(columnName)) {
+                traceIndexParameter = j;
+            }
+        }
+
+        if (traceIndexParameter == -1) {
+            throw new XMLParseException("Column '" + columnName + "' can not be found in " + fileName);
+        }
+
+        return new LogIndex(traces, traceIndexParameter);
     }
 
     //************************************************************************

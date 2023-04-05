@@ -82,7 +82,7 @@ public class CoalescentSimulatorParser extends AbstractXMLObjectParser {
         if (taxonLists.size() == 0) {
             if (subtrees.size() == 1) {
                 return subtrees.get(0);
-            } if (constraintsTree==null){
+            } else if (subtrees.size() == 0 && constraintsTree==null) {
                 throw new XMLParseException("Expected at least one taxonList or two subtrees or a constraints tree in "
                         + getParserName() + " element.");
             }

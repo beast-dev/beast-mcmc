@@ -993,7 +993,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                         new Attribute.Default<String>(PriorParsers.MEAN, "" + Math.log(2)),
                                         new Attribute.Default<String>(PriorParsers.OFFSET, "" + 0.0)
                                 });
-                        writer.writeIDref("statistic", model.getPrefix() + ClockType.LOCAL_CLOCK + ".changes");
+                        writer.writeIDref("statistic", model.getPrefix() + "rateChanges");
                         writer.writeCloseTag(PriorParsers.POISSON_PRIOR);
 
                         writer.writeOpenTag(PriorParsers.GAMMA_PRIOR,

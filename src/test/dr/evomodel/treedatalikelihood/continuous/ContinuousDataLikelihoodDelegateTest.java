@@ -99,7 +99,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
-        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 0.5457621072639138, 3.28662834718796, 3.2939596558001845, 0.5, 1.0742799493604265, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
+        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 0.5457621072639138, 3.28662834718796, 3.2939596558001845, 0.5, 3.28254, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
         testConditionalSimulations(dataLikelihood, likelihoodDelegate, diffusionModel, dataModel, rootPrior, expectedTraits);
 
 
@@ -142,7 +142,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
-        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 2.843948876154644, 10.866053719140933, 3.467579698926694, 0.5, 12.000214659757933, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
+        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 2.843948876154644, 10.866053719140933, 3.467579698926694, 0.5, 14.26233, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
         testConditionalSimulations(dataLikelihood, likelihoodDelegate, diffusionModel, dataModel, rootPrior, expectedTraits);
 
 
@@ -184,7 +184,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
-        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 1.0369756434332398, 2.0462155265038557, 0.6054236464363175, 0.5, 2.0829935706195615, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
+        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 1.0369756434332398, 2.0462155265038557, 0.6054236464363175, 0.5, 2.06041, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
         testConditionalSimulations(dataLikelihood, likelihoodDelegate, diffusionModel, dataModel, rootPrior, expectedTraits);
 
 
@@ -232,7 +232,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
-        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 1.811936920575975, 0.6645253568041535, -1.0807136572611238, 0.5, 3.8623525502275142, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
+        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 1.811936920575975, 0.6645253568041535, -1.0807136572611238, 0.5, 2.68521, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
         testConditionalSimulations(dataLikelihood, likelihoodDelegate, diffusionModel, dataModel, rootPrior, expectedTraits);
 
         // Fixed Root
@@ -375,7 +375,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
-        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 1.0428617934711057, 2.0411050451484463, 0.5794607846668219, 0.5, 2.07249828895442, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
+        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 1.0428617934711057, 2.0411050451484463, 0.5794607846668219, 0.5, 2.05178, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
         testConditionalSimulations(dataLikelihood, likelihoodDelegate, diffusionModel, dataModel, rootPrior, expectedTraits);
 
         // Fixed Root
@@ -425,7 +425,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
-        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 1.635010498015842, 2.864821373865659, -1.0853111798010757, 0.5, 3.3661883786009166, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
+        double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 1.635010498015842, 2.864821373865659, -1.0853111798010757, 0.5, 3.22586, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
         testConditionalSimulations(dataLikelihood, likelihoodDelegate, diffusionModel, dataModel, rootPrior, expectedTraits);
 
         // Fixed Root

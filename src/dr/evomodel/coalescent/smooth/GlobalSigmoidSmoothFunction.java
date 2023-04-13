@@ -32,6 +32,17 @@ class GlobalSigmoidSmoothFunction {
         return (postStepValue - preStepValue) / (1 + exponential) + preStepValue;
     }
 
+    public double getDerivative(double x, double stepLocation, double preStepValue, double postStepValue, double smoothRate) {
+        final double exponential = Math.exp(-smoothRate * (x - stepLocation));
+        return (smoothRate * (postStepValue - preStepValue) * exponential / (1 + exponential) / (1 + exponential));
+    }
+
+    public double getLogDerivative(double x, double stepLocation, double preStepValue, double postStepValue, double smoothRate) {
+        final double exponential = Math.exp(smoothRate * (x - stepLocation));
+        final double result = Double.isInfinite(exponential) ? 0.0 : smoothRate * (postStepValue - preStepValue) / (postStepValue + preStepValue * exponential) / (1.0 + exponential);
+        return result;
+    }
+
     public double getSingleIntegration(double startTime, double endTime,
                                        double stepLocation, double smoothRate) {
         final double exponent = Math.exp(smoothRate * (endTime - stepLocation));
@@ -43,6 +54,15 @@ class GlobalSigmoidSmoothFunction {
         }
     }
 
+    public double getSingleIntegrationDerivative(double startTime, double endTime, double stepLocation, double smoothRate) {
+        final double exponent = Math.exp(smoothRate * (endTime - stepLocation));
+        if (Double.isInfinite(exponent)) {
+            return -1;
+        } else {
+            return 1.0 / (1.0 + Math.exp(-smoothRate * (startTime - stepLocation))) - 1.0 / (1.0 + Math.exp(-smoothRate * (endTime - stepLocation)));
+        }
+    }
+
     public double getPairProductIntegration(double startTime, double endTime,
                                             double stepLocation1, double stepLocation2,
                                             double smoothRate) {
@@ -51,6 +71,25 @@ class GlobalSigmoidSmoothFunction {
         final double thirdTermMultiplier = 1.0 / (1.0 - Math.exp(smoothRate * (stepLocation1 - stepLocation2)));
         return firstTerm + secondTermMultiplier * doubleProductSingleRatio(startTime, endTime, stepLocation1, smoothRate)
                 + thirdTermMultiplier * doubleProductSingleRatio(startTime, endTime, stepLocation2, smoothRate);
+    }
+
+    public double getPairProductIntegrationDerivative(double nodeTime, double startTime, double endTime,
+                                            double stepLocation1, double stepLocation2,
+                                            double smoothRate) {
+        final double inverse = 1.0 / (1.0 - Math.exp(smoothRate * (stepLocation2 - stepLocation1)));
+        final double gridNodeExponential = Math.exp(smoothRate * (stepLocation2 - nodeTime));
+        final double startNodeExponential = Math.exp(smoothRate * (nodeTime - startTime));
+        final double endNodeExponential = Math.exp(smoothRate * (nodeTime - endTime));
+        final double first = - gridNodeExponential / ((1 - gridNodeExponential) * (1 - gridNodeExponential))
+                * (getLogOnePlusExponential(nodeTime, endTime, smoothRate) - getLogOnePlusExponential(nodeTime, startTime, smoothRate));
+        final double second = 1.0 / (1.0 - gridNodeExponential) * (1.0 / (1.0 + endNodeExponential) - 1.0 / (1.0 + startNodeExponential));
+        final double third = gridNodeExponential / ((1.0 - gridNodeExponential) * (1.0 - gridNodeExponential))
+                * (getLogOnePlusExponential(stepLocation2, endTime, smoothRate) - getLogOnePlusExponential(stepLocation2, startTime, smoothRate));
+        return first + second + third;
+    }
+
+    private double getLogOnePlusExponential(double t1, double t2, double smoothRate) {
+        return Math.log(1.0 + Math.exp(smoothRate * (t1 - t2)));
     }
 
     private double doubleProductSingleRatio(double startTime, double endTime,

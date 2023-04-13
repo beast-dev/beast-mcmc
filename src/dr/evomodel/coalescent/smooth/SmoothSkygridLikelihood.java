@@ -25,6 +25,7 @@
 
 package dr.evomodel.coalescent.smooth;
 
+import dr.evolution.coalescent.IntervalList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
@@ -74,12 +75,24 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         intervalsList = new ArrayList<>();
         for (int i = 0; i < trees.size(); i++) {
             intervalsList.add(new BigFastTreeIntervals(trees.get(i)));
+            addModel(intervalsList.get(i));
         }
+
+        for (TreeModel tree:trees) {
+            addModel(tree);
+        }
+        addVariable(logPopSizeParameter);
+        addVariable(gridPointParameter);
+        addVariable(smoothRate);
     }
 
     @Override
     public String getReport() {
         return "smoothSkygrid(" + getLogLikelihood() + ")";
+    }
+
+    public Tree getTree(int nt) {
+        return trees.get(nt);
     }
 
     class OldSmoothLineageCount {
@@ -146,9 +159,43 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
     public void setUnits(Type units) {
 
     }
+
+    public double[] getGradientWrtNodeHeight() {
+        assert(trees.size() == 1);
+        Tree tree = trees.get(0);
+        BigFastTreeIntervals intervals = intervalsList.get(0);
+
+        double[] gradient = new double[tree.getInternalNodeCount()];
+
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+            NodeRef node = tree.getNode(tree.getExternalNodeCount() + i);
+            gradient[i] += getLogSmoothPopulationSizeInverseDerivative(tree.getNodeHeight(node), tree.getNodeHeight(tree.getRoot()));
+        }
+
+        final double startTime = 0;
+        final double endTime = tree.getNodeHeight(tree.getRoot());
+
+        for (int i = 0; i < tree.getInternalNodeCount() - 1; i++) {
+            NodeRef node = tree.getNode(tree.getExternalNodeCount() + i);
+            final int intervalNum = intervals.getIntervalIndexForNode(node.getNumber());
+            assert(intervalNum > 0);
+            final double lineageCountDifference = ((double) intervals.getLineageCount(intervalNum) * (intervals.getLineageCount(intervalNum) - 1)
+                    - intervals.getLineageCount(intervalNum - 1) * (intervals.getLineageCount(intervalNum - 1) - 1)) / 2;
+            gradient[i] += lineageCountDifference * smoothFunction.getSingleIntegrationDerivative(startTime, endTime, tree.getNodeHeight(node), smoothRate.getParameterValue(0));
+        }
+
+        return gradient;
+    }
+
     @Override
     protected double calculateLogLikelihood() {
         assert(trees.size() == 1);
+        if (!intervalsKnown) {
+            for(IntervalList intervalList : intervalsList){
+                intervalList.calculateIntervals();
+            }
+            intervalsKnown = true;
+        }
         Tree tree = trees.get(0);
         BigFastTreeIntervals intervals = intervalsList.get(0);
         double logPopulationSizeInverse = 0;
@@ -224,6 +271,22 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         }
 
         return populationSizeInverse;
+    }
+
+    private double getLogSmoothPopulationSizeInverseDerivative(double t, double endTime) {
+        int maxGridIndex = getMaxGridIndex(endTime);
+
+        double derivative = 0;
+
+        for (int j = 0; j < maxGridIndex + 1; j++) {
+            final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j));
+            final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j + 1));
+            final double gridTime = gridPointParameter.getParameterValue(j);
+            derivative += (nextPopSizeInverse - currentPopSizeInverse) *
+                    smoothFunction.getLogDerivative(t, gridTime, 0, 1, smoothRate.getParameterValue(0));
+        }
+
+        return derivative;
     }
 
     private double oldCalculateLogLikelihood() {

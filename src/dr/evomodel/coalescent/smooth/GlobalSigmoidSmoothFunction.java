@@ -34,7 +34,8 @@ class GlobalSigmoidSmoothFunction {
 
     public double getDerivative(double x, double stepLocation, double preStepValue, double postStepValue, double smoothRate) {
         final double exponential = Math.exp(-smoothRate * (x - stepLocation));
-        return (smoothRate * (postStepValue - preStepValue) * exponential / (1 + exponential) / (1 + exponential));
+        final double result = Double.isInfinite(exponential) ? 0.0 : (smoothRate * (postStepValue - preStepValue) * exponential / (1 + exponential) / (1 + exponential));
+        return result;
     }
 
     public double getLogDerivative(double x, double stepLocation, double preStepValue, double postStepValue, double smoothRate) {

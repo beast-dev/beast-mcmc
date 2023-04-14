@@ -169,7 +169,8 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
 
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
             NodeRef node = tree.getNode(tree.getExternalNodeCount() + i);
-            gradient[i] += getLogSmoothPopulationSizeInverseDerivative(tree.getNodeHeight(node), tree.getNodeHeight(tree.getRoot()));
+            gradient[i] += getLogSmoothPopulationSizeInverseDerivative(tree.getNodeHeight(node), tree.getNodeHeight(tree.getRoot()))
+                    / getSmoothPopulationSizeInverse(tree.getNodeHeight(node), tree.getNodeHeight(tree.getRoot()));
         }
 
         final double startTime = 0;
@@ -283,7 +284,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
             final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j + 1));
             final double gridTime = gridPointParameter.getParameterValue(j);
             derivative += (nextPopSizeInverse - currentPopSizeInverse) *
-                    smoothFunction.getLogDerivative(t, gridTime, 0, 1, smoothRate.getParameterValue(0));
+                    smoothFunction.getDerivative(t, gridTime, 0, 1, smoothRate.getParameterValue(0));
         }
 
         return derivative;

@@ -59,8 +59,17 @@
         <parameter id="samplingRateDelta" dimension="54" value="0.01"/>
     </compoundParameter>
 
-    <transformedVectorSumTransform id="bdss.samplingRate" dim="55" incrementTransformType="log">
+    <transformedVectorSumTransform id="bdss.samplingRate" dim="55" incrementTransformType="logit" lower="0.0" upper="0.587405">
         <compoundParameter idref="samplingRate.increments"/>
+    </transformedVectorSumTransform>
+
+    <compoundParameter id="treatmentProbability.increments">
+        <parameter id="treatmentProbabilityAtPresent" value="-2.0"/>
+        <parameter id="treatmentProbabilityDelta" dimension="54" value="0.01"/>
+    </compoundParameter>
+
+    <transformedVectorSumTransform id="bdss.treatmentProbability" dim="55" incrementTransformType="logit" lower="0.0" upper="1.0">
+        <compoundParameter idref="treatmentProbability.increments"/>
     </transformedVectorSumTransform>
 
     <newBirthDeathSerialSampling id="bdss" units="years" hasFinalSample="false" conditionOnSurvival="false">
@@ -80,7 +89,7 @@
             </compoundParameter>
         </samplingProbability>
         <treatmentProbability>
-            <parameter id="bdss.treatmentProbability" value="0.0" dimension="55" lower="0.0" upper="1.0"/>
+            <parameter idref="bdss.treatmentProbability"/>
         </treatmentProbability>
         <origin>
             <parameter id="bdss.origin" value="55.114793" lower="0.0"/>
@@ -289,7 +298,7 @@
     </cachedReport>
 
     <cachedReport id="samplingRateReport">
-        <gradientWrtIncrements1D incrementTransformType="log">
+        <gradientWrtIncrements1D incrementTransformType="logit" lower="0.0" upper="0.587405">
             <speciationLikelihoodGradient wrtParameter="samplingRate" useNewLoop="true">
                 <speciationLikelihood idref="speciation"/>
                 <treeModel idref="treeModel"/>
@@ -298,9 +307,20 @@
         </gradientWrtIncrements1D>
     </cachedReport>
 
-<!--    <report>-->
-<!--        <cachedReport idref="samplingRateReport"/>-->
-<!--    </report>-->
+<!--    // TODO: numerical and analytical gradients not equal!-->
+<!--    <cachedReport id="treatmentProbabilityReport">-->
+<!--        <gradientWrtIncrements1D incrementTransformType="log">-->
+<!--            <speciationLikelihoodGradient wrtParameter="treatmentProbability" useNewLoop="true">-->
+<!--                <speciationLikelihood idref="speciation"/>-->
+<!--                <treeModel idref="treeModel"/>-->
+<!--            </speciationLikelihoodGradient>-->
+<!--            <compoundParameter idref="treatmentProbability.increments"/>-->
+<!--        </gradientWrtIncrements1D>-->
+<!--    </cachedReport>-->
+
+    <report>
+        <cachedReport idref="samplingRateReport"/>
+    </report>
 
     <assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
         <message>

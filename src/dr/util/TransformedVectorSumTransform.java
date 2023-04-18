@@ -1,6 +1,7 @@
 package dr.util;
 
 import dr.inference.hmc.GradientWrtIncrement;
+import dr.inference.hmc.IncrementTransformType;
 import dr.inference.model.Parameter;
 import dr.inference.model.TransformedMultivariateParameter;
 import dr.xml.AbstractXMLObjectParser;
@@ -11,10 +12,10 @@ import dr.xml.XMLSyntaxRule;
 public class TransformedVectorSumTransform extends Transform.MultivariateTransform {
 
     private static final String NAME = "transformedVectorSumTransform";
-    private final GradientWrtIncrement.IncrementTransformType type;
+    private final IncrementTransformType type;
     private final int dim;
 
-    public TransformedVectorSumTransform(int dim, GradientWrtIncrement.IncrementTransformType type) {
+    public TransformedVectorSumTransform(int dim, IncrementTransformType type) {
         super(dim);
         this.dim = dim;
         this.type = type;
@@ -82,7 +83,16 @@ public class TransformedVectorSumTransform extends Transform.MultivariateTransfo
             int dim = param.getDimension();
 
             String ttype = (String) xo.getAttribute(INCREMENT_TRANSFORM);
-            GradientWrtIncrement.IncrementTransformType type = GradientWrtIncrement.IncrementTransformType.factory(ttype);
+            double upper = Double.POSITIVE_INFINITY;
+            double lower = Double.NEGATIVE_INFINITY;
+
+            if( xo.hasAttribute("upper") && xo.hasAttribute("lower")) {
+                upper = xo.getDoubleAttribute("upper");
+                lower = xo.getDoubleAttribute("lower");
+            }
+
+            // Get upper and lower from xml
+            IncrementTransformType type = IncrementTransformType.factory(ttype, upper, lower);
 
             TransformedVectorSumTransform transform = new TransformedVectorSumTransform(dim, type);
 

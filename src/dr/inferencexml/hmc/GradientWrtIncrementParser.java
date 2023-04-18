@@ -32,6 +32,7 @@ import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.hmc.CompoundDerivative;
 import dr.inference.hmc.GradientWrtIncrement;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.IncrementTransformType;
 import dr.inference.model.*;
 import dr.xml.*;
 
@@ -57,11 +58,20 @@ public class GradientWrtIncrementParser extends AbstractXMLObjectParser {
         GradientWrtParameterProvider gradient = (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
 
         String ttype = (String) xo.getAttribute(INCREMENT_TRANSFORM);
-        GradientWrtIncrement.IncrementTransformType type = GradientWrtIncrement.IncrementTransformType.factory(ttype);
+        double upper = Double.POSITIVE_INFINITY;
+        double lower = Double.NEGATIVE_INFINITY;
+
+        if( xo.hasAttribute("upper") && xo.hasAttribute("lower")) {
+            upper = xo.getDoubleAttribute("upper");
+            lower = xo.getDoubleAttribute("lower");
+        }
+
+        // Get upper and lower from xml
+        IncrementTransformType type = IncrementTransformType.factory(ttype, upper, lower);
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-        return new GradientWrtIncrement(gradient, parameter, type);
+         return new GradientWrtIncrement(gradient, parameter, type);
     }
 
     @Override

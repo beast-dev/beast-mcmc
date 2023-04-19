@@ -32,8 +32,8 @@ import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.hmc.CompoundDerivative;
 import dr.inference.hmc.GradientWrtIncrement;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.IncrementTransformType;
 import dr.inference.model.*;
-import dr.util.Transform;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -41,7 +41,6 @@ import java.util.List;
 
 /**
  * @author Andy Magee
- * @author Yucai Shao
  */
 public class GradientWrtIncrementParser extends AbstractXMLObjectParser {
 
@@ -58,28 +57,21 @@ public class GradientWrtIncrementParser extends AbstractXMLObjectParser {
 
         GradientWrtParameterProvider gradient = (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
 
+        String ttype = (String) xo.getAttribute(INCREMENT_TRANSFORM);
         double upper = Double.POSITIVE_INFINITY;
         double lower = Double.NEGATIVE_INFINITY;
+
         if( xo.hasAttribute("upper") && xo.hasAttribute("lower")) {
             upper = xo.getDoubleAttribute("upper");
             lower = xo.getDoubleAttribute("lower");
         }
 
-        Transform incrementTransform = null;
-        String ttype = (String) xo.getAttribute(INCREMENT_TRANSFORM);
-        if (ttype.equalsIgnoreCase("log")) {
-            incrementTransform = Transform.LOG;
-        } else if (ttype.equalsIgnoreCase("logit")) {
-            incrementTransform = new Transform.ScaledLogitTransform(upper, lower);
-        } else if (ttype.equalsIgnoreCase("none")) {
-            incrementTransform = new Transform.NoTransform();
-        } else {
-            throw new RuntimeException("Invalid transform type");
-        }
+        // Get upper and lower from xml
+        IncrementTransformType type = IncrementTransformType.factory(ttype, upper, lower);
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-         return new GradientWrtIncrement(gradient, parameter, incrementTransform);
+         return new GradientWrtIncrement(gradient, parameter, type);
     }
 
     @Override
@@ -90,7 +82,7 @@ public class GradientWrtIncrementParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             new ElementRule(GradientWrtParameterProvider.class,"The gradient with respect to the (non-increment) parameters."),
             new ElementRule(Parameter.class,"The increments."),
-            new StringAttributeRule(INCREMENT_TRANSFORM,"The transformation to get from the parameter to the increments, f in increments[i] = f(parameter[i]) - f(parameter[i - 1]).",false)
+            new StringAttributeRule(INCREMENT_TRANSFORM,"The transformation to get from the parameter to the increments, f in increments[i] = f(parameter[i]) - f(parameter[i - 1])")
     };
 
     @Override

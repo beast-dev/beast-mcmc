@@ -1,5 +1,7 @@
 package dr.util;
 
+import dr.inference.hmc.GradientWrtIncrement;
+import dr.inference.hmc.IncrementTransformType;
 import dr.inference.model.Parameter;
 import dr.inference.model.TransformedMultivariateParameter;
 import dr.xml.AbstractXMLObjectParser;
@@ -10,13 +12,13 @@ import dr.xml.XMLSyntaxRule;
 public class TransformedVectorSumTransform extends Transform.MultivariateTransform {
 
     private static final String NAME = "transformedVectorSumTransform";
-    private final Transform incrementTransform;
+    private final IncrementTransformType type;
     private final int dim;
 
-    public TransformedVectorSumTransform(int dim, Transform incrementTransform) {
+    public TransformedVectorSumTransform(int dim, IncrementTransformType type) {
         super(dim);
         this.dim = dim;
-        this.incrementTransform = incrementTransform;
+        this.type = type;
     }
 
     @Override
@@ -41,21 +43,12 @@ public class TransformedVectorSumTransform extends Transform.MultivariateTransfo
 
     @Override
     protected double[] transform(double[] values) {
-        double[] fx = new double[values.length];
-        fx[0] = values[0];
-        for (int i = 1; i < values.length; i++) {
-            fx[i] = fx[i-1] + values[i];
-        }
-        return incrementTransform.inverse(fx, 0, values.length);
+        return type.parameterFromIncrements(values);
     }
 
     @Override
     protected double[] inverse(double[] values) {
-        double[] increments = incrementTransform.transform(values,0, values.length);
-        for (int i = 1; i < values.length; i++) {
-            increments[i] = values[i] - values[i - 1];
-        }
-        return increments;
+        return type.incrementsFromParameter(values);
     }
 
     @Override
@@ -89,26 +82,19 @@ public class TransformedVectorSumTransform extends Transform.MultivariateTransfo
 
             int dim = param.getDimension();
 
+            String ttype = (String) xo.getAttribute(INCREMENT_TRANSFORM);
             double upper = Double.POSITIVE_INFINITY;
             double lower = Double.NEGATIVE_INFINITY;
+
             if( xo.hasAttribute("upper") && xo.hasAttribute("lower")) {
                 upper = xo.getDoubleAttribute("upper");
                 lower = xo.getDoubleAttribute("lower");
             }
 
-            Transform incrementTransform = null;
-            String ttype = (String) xo.getAttribute(INCREMENT_TRANSFORM);
-            if (ttype.equalsIgnoreCase("log")) {
-                incrementTransform = Transform.LOG;
-            } else if (ttype.equalsIgnoreCase("logit")) {
-                incrementTransform = new Transform.ScaledLogitTransform(upper, lower);
-            } else if (ttype.equalsIgnoreCase("none")) {
-                incrementTransform = new Transform.NoTransform();
-            } else {
-                throw new RuntimeException("Invalid transform type");
-            }
+            // Get upper and lower from xml
+            IncrementTransformType type = IncrementTransformType.factory(ttype, upper, lower);
 
-            TransformedVectorSumTransform transform = new TransformedVectorSumTransform(dim, incrementTransform);
+            TransformedVectorSumTransform transform = new TransformedVectorSumTransform(dim, type);
 
             return new TransformedMultivariateParameter(param, transform);
         }

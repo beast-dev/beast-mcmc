@@ -53,7 +53,7 @@ public class TransformedVectorSumTransform extends Transform.MultivariateTransfo
     protected double[] inverse(double[] values) {
         double[] increments = incrementTransform.transform(values,0, values.length);
         for (int i = 1; i < values.length; i++) {
-            increments[i] = increments[i] - increments[i - 1];
+            increments[i] = values[i] - values[i - 1];
         }
         return increments;
     }

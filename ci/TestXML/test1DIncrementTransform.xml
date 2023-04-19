@@ -318,11 +318,19 @@
 <!--        </gradientWrtIncrements1D>-->
 <!--    </cachedReport>-->
 
-    <report>
-        <cachedReport idref="samplingRateReport"/>
-    </report>
+<!--    <report>-->
+<!--        <cachedReport idref="birthRateReport"/>-->
+<!--    </report>-->
 
-    <assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+<!--    <report>-->
+<!--        <cachedReport idref="deathRateReport"/>-->
+<!--    </report>-->
+
+<!--    <report>-->
+<!--        <cachedReport idref="samplingRateReport"/>-->
+<!--    </report>-->
+
+    <assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
         <message>
             check birth rate
         </message>
@@ -334,7 +342,7 @@
         </expected>
     </assertEqual>
 
-    <assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+    <assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
         <message>
             check death rate
         </message>
@@ -346,7 +354,7 @@
         </expected>
     </assertEqual>
 
-    <assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+    <assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
         <message>
             check sampling rate
         </message>

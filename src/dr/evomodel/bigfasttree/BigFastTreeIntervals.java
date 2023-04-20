@@ -12,7 +12,6 @@ import dr.inference.model.Variable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class BigFastTreeIntervals extends AbstractModel implements Units, IntervalList {
@@ -68,6 +67,13 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
             calculateIntervals();
         }
         return events.getInterval(i + 1);
+    }
+
+    public int getIntervalIndexForNode(int nodeNum) {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        return events.getNodePosition(nodeNum);
     }
 
     @Override

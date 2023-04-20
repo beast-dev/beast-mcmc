@@ -36,14 +36,13 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
-import dr.inference.state.Factory;
-import dr.inference.state.StateLoader;
-import dr.inference.state.StateLoaderSaver;
-import dr.inference.state.StateSaverChainListener;
+import dr.inference.state.*;
 import dr.math.MathUtils;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -63,6 +62,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
     public final static String SAVE_STATE_AT = "save.state.at";
     public final static String SAVE_STATE_EVERY = "save.state.every";
     public final static String SAVE_STEM = "save.state.stem";
+    public final static String SAVE_STATE_TIME = "save.state.time";
 
     public final static String FORCE_RESUME = "force.resume";
     public final static String CHECKPOINT_SEED = "checkpoint.seed";
@@ -93,6 +93,12 @@ public class BeastCheckpointer implements StateLoaderSaver {
         if (System.getProperty(SAVE_STATE_EVERY) != null) {
             final long saveStateEvery = Long.parseLong(System.getProperty(SAVE_STATE_EVERY));
             listeners.add(new StateSaverChainListener(BeastCheckpointer.this, saveStateEvery,true));
+        }
+        if (System.getProperty(SAVE_STATE_TIME) != null) {
+            LocalTime saveTime = LocalTime.parse(System.getProperty(SAVE_STATE_TIME),
+                    DateTimeFormatter.ofPattern("HH:mm:ss"));
+            int saveSeconds = saveTime.toSecondOfDay();
+            listeners.add(new TimedStateSaverChainListener(BeastCheckpointer.this, saveSeconds));
         }
 
         useFullPrecision = (System.getProperty(FULL_CHECKPOINT_PRECISION) != null) &&

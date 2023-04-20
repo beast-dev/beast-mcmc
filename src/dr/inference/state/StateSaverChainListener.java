@@ -31,7 +31,7 @@ import dr.inference.model.Model;
 
 public class StateSaverChainListener implements MarkovChainListener {
 
-    private StateSaver stateSaver;
+    protected StateSaver stateSaver;
 
     public StateSaverChainListener(StateSaver stateSaver, final long writeState, final boolean isRepeating) {
         this.stateSaver = stateSaver;

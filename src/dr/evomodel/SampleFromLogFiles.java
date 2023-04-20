@@ -316,4 +316,3 @@ public class SampleFromLogFiles {
         }
     }
 }
-

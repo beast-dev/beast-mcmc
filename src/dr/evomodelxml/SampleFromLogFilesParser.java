@@ -142,7 +142,7 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
         return null;
     }
 
-    class LogIndex {
+    static class LogIndex {
         LogFileTraces traces;
         int traceIndexParameter;
 

@@ -396,6 +396,7 @@ public class BeastMain {
                         new Arguments.StringOption("load_state", "FILENAME", "Specify a filename to load a saved state from"),
                         new Arguments.StringOption("save_stem", "FILENAME", "Specify a stem for the filenames to save states to"),
                         new Arguments.LongOption("save_at", "Specify a state at which to save a state file"),
+                        new Arguments.StringOption("save_time", "HH:mm:ss", "Specify a length of time after which to save a state file"),
                         new Arguments.LongOption("save_every", "Specify a frequency to save the state file"),
                         new Arguments.StringOption("save_state", "FILENAME", "Specify a filename to save state to"),
                         new Arguments.Option("full_checkpoint_precision", "Use hex-encoded doubles in checkpoint files"),
@@ -683,6 +684,11 @@ public class BeastMain {
             if (arguments.hasOption("save_at")) {
                 long saveAt = arguments.getLongOption("save_at");
                 System.setProperty(BeastCheckpointer.SAVE_STATE_AT, Long.toString(saveAt));
+            }
+
+            if (arguments.hasOption("save_time")) {
+                String saveTime = arguments.getStringOption("save_time");
+                System.setProperty(BeastCheckpointer.SAVE_STATE_TIME, saveTime);
             }
 
             if (arguments.hasOption("save_every")) {

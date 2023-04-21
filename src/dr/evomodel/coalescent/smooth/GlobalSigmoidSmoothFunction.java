@@ -60,7 +60,16 @@ class GlobalSigmoidSmoothFunction {
         if (Double.isInfinite(exponent)) {
             return -1;
         } else {
-            return 1.0 / (1.0 + Math.exp(-smoothRate * (startTime - stepLocation))) - 1.0 / (1.0 + Math.exp(-smoothRate * (endTime - stepLocation)));
+            return 1.0 / (1.0 + Math.exp(-smoothRate * (startTime - stepLocation))) - exponent / (1.0 + exponent);
+        }
+    }
+
+    public double getSingleIntegrationDerivativeWrtEndTime(double startTime, double endTime, double stepLocation, double smoothRate) {
+        final double exponent = Math.exp(smoothRate * (endTime - stepLocation));
+        if (Double.isInfinite(exponent)) {
+            return 1.0;
+        } else {
+            return exponent / (1.0 + exponent);
         }
     }
 

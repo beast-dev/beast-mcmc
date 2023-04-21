@@ -175,17 +175,38 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
 
         final double startTime = 0;
         final double endTime = tree.getNodeHeight(tree.getRoot());
+        final double firstInversePopulationSize = Math.exp(-logPopSizeParameter.getParameterValue(0));
+
+        double rootDerivative = 0;
 
         for (int i = 0; i < tree.getInternalNodeCount() - 1; i++) {
             NodeRef node = tree.getNode(tree.getExternalNodeCount() + i);
             final int intervalNum = intervals.getIntervalIndexForNode(node.getNumber());
             assert(intervalNum > 0);
-            final double lineageCountDifference = ((double) intervals.getLineageCount(intervalNum) * (intervals.getLineageCount(intervalNum) - 1)
-                    - intervals.getLineageCount(intervalNum - 1) * (intervals.getLineageCount(intervalNum - 1) - 1)) / 2;
-            gradient[i] += lineageCountDifference * smoothFunction.getSingleIntegrationDerivative(startTime, endTime, tree.getNodeHeight(node), smoothRate.getParameterValue(0));
+            final double lineageCountDifference = getLineageCountDifference(intervalNum, intervals);
+            gradient[i] += - firstInversePopulationSize * lineageCountDifference * smoothFunction.getSingleIntegrationDerivative(startTime, endTime, tree.getNodeHeight(node), smoothRate.getParameterValue(0));
+        }
+        for (int i = 0; i < intervals.getIntervalCount(); i++) {
+            NodeRef node = tree.getNode(i);
+            final int intervalNum = intervals.getIntervalIndexForNode(node.getNumber());
+                final double lineageCountDifference = getLineageCountDifference(intervalNum, intervals);
+                rootDerivative += -lineageCountDifference * smoothFunction.getSingleIntegrationDerivativeWrtEndTime(startTime, endTime, tree.getNodeHeight(node), smoothRate.getParameterValue(0));
         }
 
+        gradient[tree.getInternalNodeCount() - 1] += firstInversePopulationSize * rootDerivative;
+
         return gradient;
+    }
+
+    private double getLineageCountDifference(int intervalIndex, BigFastTreeIntervals intervals) {
+        if (intervalIndex == 0) {
+            return ((double) intervals.getLineageCount(0) * (intervals.getLineageCount(0) - 1)) / 2.0;
+        } else if (intervalIndex == intervals.getIntervalCount()) {
+            return -((double) intervals.getLineageCount(intervalIndex - 1) * (intervals.getLineageCount(intervalIndex - 1) - 1)) / 2.0;
+        } else {
+            return ((double) intervals.getLineageCount(intervalIndex) * (intervals.getLineageCount(intervalIndex) - 1)
+            - intervals.getLineageCount(intervalIndex - 1) * (intervals.getLineageCount(intervalIndex - 1) - 1)) / 2.0;
+        }
     }
 
     @Override
@@ -210,11 +231,10 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         final double endTime = tree.getNodeHeight(tree.getRoot());
 
         final double firstInversePopulationSize = Math.exp(-logPopSizeParameter.getParameterValue(0));
-        double singleSigmoidIntegralSums =  ((double) intervals.getLineageCount(0) * (intervals.getLineageCount(0) - 1))
+        double singleSigmoidIntegralSums =  getLineageCountDifference(0, intervals)
                 * smoothFunction.getSingleIntegration(startTime, endTime, intervals.getIntervalTime(0), smoothRate.getParameterValue(0));
-        for (int i = 1; i < intervals.getIntervalCount(); i++) {
-            final double lineageCountDifference = ((double) intervals.getLineageCount(i) * (intervals.getLineageCount(i) - 1)
-                    - intervals.getLineageCount(i - 1) * (intervals.getLineageCount(i - 1) - 1)) / 2;
+        for (int i = 1; i < intervals.getIntervalCount() + 1; i++) {
+            final double lineageCountDifference = getLineageCountDifference(i, intervals);
             final double smoothIntegral = smoothFunction.getSingleIntegration(startTime, endTime, intervals.getIntervalTime(i), smoothRate.getParameterValue(0));
             singleSigmoidIntegralSums += lineageCountDifference * smoothIntegral;
         }
@@ -228,14 +248,13 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
             final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j));
             final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j + 1));
             final double gridTime = gridPointParameter.getParameterValue(j);
-            pairSigmoidIntegralSums += intervals.getLineageCount(0) * (intervals.getLineageCount(0) - 1) * (nextPopSizeInverse - currentPopSizeInverse) *
+            pairSigmoidIntegralSums += getLineageCountDifference(0, intervals) * (nextPopSizeInverse - currentPopSizeInverse) *
                     smoothFunction.getPairProductIntegration(startTime, endTime, intervals.getIntervalTime(0), gridTime, smoothRate.getParameterValue(0));
         }
 
-        for (int i = 1; i < intervals.getIntervalCount(); i++) {
+        for (int i = 1; i < intervals.getIntervalCount() + 1; i++) {
 
-            final double lineageCountDifference = ((double) intervals.getLineageCount(i) * (intervals.getLineageCount(i) - 1)
-                    - intervals.getLineageCount(i - 1) * (intervals.getLineageCount(i - 1) - 1)) / 2;
+            final double lineageCountDifference = getLineageCountDifference(i, intervals);
             final double intervalTime = intervals.getIntervalTime(i);
 
             for (int j = 0; j < maxGridIndex + 1; j++) {

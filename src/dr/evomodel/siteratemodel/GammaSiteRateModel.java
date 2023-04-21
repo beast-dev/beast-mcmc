@@ -263,7 +263,6 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
         if (shapeParameter != null) {
 
             final double a = shapeParameter.getParameterValue(0);
-            final double f = (1.0 + categoryWidthParameter.getParameterValue(0));
             double mean = 0.0;
             double sum = 0.0;
             final int gammaCatCount = categoryCount - cat;
@@ -279,10 +278,10 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
                 mean += categoryRates[i + cat];
 
                 if (categoryWidthParameter != null && categoryWidthType == CategoryWidthType.GEOMETRIC && i > 0) {
-                    categoryProportions[i + cat] = categoryProportions[i + cat - 1] * f;
+                    categoryProportions[i + cat] = categoryProportions[i + cat - 1] * (1.0 + categoryWidthParameter.getParameterValue(0));
                 } else if (categoryWidthParameter != null && categoryWidthType == CategoryWidthType.FASTEST &&
                         i == (gammaCatCount - 1)) {
-                    categoryProportions[i + cat] = f;
+                    categoryProportions[i + cat] = (1.0 + categoryWidthParameter.getParameterValue(0));
                 } else {
                     categoryProportions[i + cat] = 1.0;
                 }

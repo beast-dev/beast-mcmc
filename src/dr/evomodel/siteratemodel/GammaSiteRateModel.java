@@ -436,6 +436,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
     public static void setEqualRates(double[] categoryRates, double[] categoryProportions, double alpha, int catCount, int offset) {
         for (int i = 0; i < catCount; i++) {
             categoryRates[i + offset] = GammaDistribution.quantile((2.0 * i + 1.0) / (2.0 * catCount), alpha, 1.0 / alpha);
+            categoryProportions[i + offset] = 1.0;
         }
 
         normalize(categoryRates, categoryProportions);

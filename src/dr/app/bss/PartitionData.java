@@ -1079,7 +1079,9 @@ public class PartitionData implements Serializable {
 
 			siteModel = new GammaSiteRateModel(name,
 					siteRateModelParameterValues[1],
-					(int) siteRateModelParameterValues[0], siteRateModelParameterValues[2]);
+					(int) siteRateModelParameterValues[0],
+					GammaSiteRateModel.DiscretizationType.EVEN,
+					siteRateModelParameterValues[2]);
 
 		} else {
 

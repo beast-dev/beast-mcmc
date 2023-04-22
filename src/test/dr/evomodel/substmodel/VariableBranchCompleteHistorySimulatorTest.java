@@ -33,7 +33,7 @@ public class VariableBranchCompleteHistorySimulatorTest extends CompleteHistoryS
 
         Parameter mu = new Parameter.Default(1, 0.5);
         Parameter alpha = new Parameter.Default(1, 0.5);
-        GammaSiteRateModel siteModel = new GammaSiteRateModel("gammaModel", mu, alpha, 4, null);
+        GammaSiteRateModel siteModel = new GammaSiteRateModel("gammaModel", mu, 1.0, alpha, 4, GammaSiteRateModel.DiscretizationType.EVEN, null);
         siteModel.setSubstitutionModel(hky);
         BranchRateModel branchRateModel = new DefaultBranchRateModel();
 

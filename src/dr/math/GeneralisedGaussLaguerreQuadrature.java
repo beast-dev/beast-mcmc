@@ -168,5 +168,12 @@ public class GeneralisedGaussLaguerreQuadrature implements Integral {
 
     }
 
+    public double[] getAbscissae() {
+        return abscissae;
+    }
+
+    public double[] getCoefficients() {
+        return coefficients;
+    }
 
 }

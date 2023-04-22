@@ -78,12 +78,10 @@ public class ProductChainSubstitutionModelTest extends MathTestCase {
         baseModels.add(substModel1);
 
         SiteRateModel rateModel0 = new GammaSiteRateModel("rate0",
-                new Parameter.Default(new double[]{0.5}),
-                null, -1, null);
+                new Parameter.Default(new double[]{0.5}));
 
         SiteRateModel rateModel1 = new GammaSiteRateModel("rate0",
-                new Parameter.Default(new double[]{2}), // Runs twice as fast
-                null, -1, null);
+                new Parameter.Default(new double[]{2})); // Runs twice as fast
 
         List<SiteRateModel> rateModels = new ArrayList<SiteRateModel>();
         rateModels.add(rateModel0);

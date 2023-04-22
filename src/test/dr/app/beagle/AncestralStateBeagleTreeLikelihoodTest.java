@@ -83,7 +83,7 @@ public class AncestralStateBeagleTreeLikelihoodTest extends TraceCorrelationAsse
         FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
         HKY hky = new HKY(kappa, f);
 
-        GammaSiteRateModel siteRateModel = new GammaSiteRateModel("gammaModel", mu, null, -1, null);
+        GammaSiteRateModel siteRateModel = new GammaSiteRateModel("gammaModel", mu);
         siteRateModel.setSubstitutionModel(hky);
 
         BranchModel branchModel = new HomogeneousBranchModel(

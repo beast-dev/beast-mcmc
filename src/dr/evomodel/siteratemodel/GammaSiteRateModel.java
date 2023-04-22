@@ -142,8 +142,6 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
         this.categoryWidthParameter = categoryWidthParameter;
         this.categoryWidthType = categoryWidthType;
         if (categoryWidthParameter != null) {
-            this.categoryCount += 1;
-
             addVariable(categoryWidthParameter);
             categoryWidthParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         }

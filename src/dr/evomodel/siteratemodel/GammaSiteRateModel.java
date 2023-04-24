@@ -454,7 +454,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
         mean /= categoryRates.length;
 
         for(int i = 0; i < categoryRates.length; i++) {
-            //categoryRates[i] /= mean;
+            categoryRates[i] /= mean;
             categoryProportions[i] /= sum;
         }
     }

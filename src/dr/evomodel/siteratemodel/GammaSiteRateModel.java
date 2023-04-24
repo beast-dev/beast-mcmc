@@ -442,6 +442,11 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
         normalize(categoryRates, categoryProportions);
     }
 
+    /**
+     * Gives the category rates a mean of 1.0 and the proportions sum to 1.0
+     * @param categoryRates
+     * @param categoryProportions
+     */
     public static void normalize(double[] categoryRates, double[] categoryProportions) {
         double mean = 0.0;
         double sum = 0.0;
@@ -452,7 +457,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
         mean /= categoryRates.length;
 
         for(int i = 0; i < categoryRates.length; i++) {
-            categoryRates[i] /= mean;
+            //categoryRates[i] /= mean;
             categoryProportions[i] /= sum;
         }
     }
@@ -482,13 +487,23 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
         // Table 3 from Felsenstein 2001, JME
         // Rates and probabilities chosen by the quadrature method for six rates and coefficient of
         // variation of rates among sites 1 (a 4 1)
-        // Probability  Rate
-        // 0.278        0.264
-        // 0.494        0.898
-        // 0.203        1.938
-        // 0.025        3.459
-        // 0.00076      5.617
-        // 0.000003     8.823
+        // Rate     Probability
+        // 0.264    0.278
+        // 0.898    0.494
+        // 1.938    0.203
+        // 3.459    0.025
+        // 5.617    0.00076
+        // 8.823    0.000003
+
+        // Output (without setting rates to mean of 1)
+        // Quadrature, alpha = 1.0
+        // cat	rate	proportion
+        // 0	0.26383406085556455	0.27765014202987454
+        // 1	0.8981499048217043	0.49391058305035496
+        // 2	1.938320760238456	0.20300429674372977
+        // 3	3.459408283352361	0.02466882036918974
+        // 4	5.617305214541558	7.6304276746353E-4
+        // 5	8.822981776190357	3.1150393875275343E-6
 
         setEqualRates(categoryRates, categoryProportions, 0.1, catCount, 0);
         System.out.println();

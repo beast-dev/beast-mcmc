@@ -57,8 +57,6 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
     public static final String GAMMA_CATEGORIES = "gammaCategories";
     public static final String PROPORTION_INVARIANT = "proportionInvariant";
     public static final String DISCRETIZATION = "discretization";
-    public static final String EVEN = "even";
-    public static final String QUADRATURE = "quadrature";
 
     public String getParserName() {
         return SITE_MODEL;

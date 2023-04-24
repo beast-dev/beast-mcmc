@@ -199,7 +199,7 @@ public class GeneralDataType extends DataType implements Identifiable {
 
         boolean[] stateSet = new boolean[stateCount];
 
-        if (state < states.size()) {
+        if (state >= 0 && state < states.size()) {
             State s = states.get(state);
 
             for (int i = 0; i < stateCount; i++) {

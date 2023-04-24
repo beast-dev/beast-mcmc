@@ -45,12 +45,12 @@ import java.util.List;
 
 public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, Citable {
 
+    private static final DiscretizationType DEFAULT_DISCRETIZATION = DiscretizationType.EQUAL;
+
     public enum DiscretizationType {
         EQUAL,
         QUADRATURE
-    }
-
-    ;
+    };
 
     public GammaSiteRateModel(String name) {
         this(name,
@@ -61,23 +61,23 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
                 null);
     }
 
-    public GammaSiteRateModel(String name, double alpha, int categoryCount, DiscretizationType discretizationType) {
+    public GammaSiteRateModel(String name, double alpha, int categoryCount) {
         this(name,
                 null,
                 1.0,
                 new Parameter.Default(alpha),
                 categoryCount,
-                discretizationType,
+                DEFAULT_DISCRETIZATION,
                 null);
     }
 
-    public GammaSiteRateModel(String name, double alpha, int categoryCount, DiscretizationType discretizationType, double pInvar) {
+    public GammaSiteRateModel(String name, double alpha, int categoryCount, double pInvar) {
         this(name,
                 null,
                 1.0,
                 new Parameter.Default(alpha),
                 categoryCount,
-                discretizationType,
+                DEFAULT_DISCRETIZATION,
                 new Parameter.Default(pInvar));
     }
 

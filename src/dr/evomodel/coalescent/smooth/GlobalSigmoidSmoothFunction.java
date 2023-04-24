@@ -34,7 +34,7 @@ class GlobalSigmoidSmoothFunction {
 
     public double getDerivative(double x, double stepLocation, double preStepValue, double postStepValue, double smoothRate) {
         final double exponential = Math.exp(-smoothRate * (x - stepLocation));
-        final double result = Double.isInfinite(exponential) ? 0.0 : (smoothRate * (postStepValue - preStepValue) * exponential / (1 + exponential) / (1 + exponential));
+        final double result = Double.isInfinite(exponential) ? 0.0 : (smoothRate * (postStepValue - preStepValue) / (1.0 + 1.0 / exponential) / (1 + exponential));
         return result;
     }
 
@@ -64,7 +64,7 @@ class GlobalSigmoidSmoothFunction {
         }
     }
 
-    public double getSingleIntegrationDerivativeWrtEndTime(double startTime, double endTime, double stepLocation, double smoothRate) {
+    public double getSingleIntegrationDerivativeWrtEndTime(double endTime, double stepLocation, double smoothRate) {
         final double exponent = Math.exp(smoothRate * (endTime - stepLocation));
         if (Double.isInfinite(exponent)) {
             return 1.0;
@@ -83,23 +83,40 @@ class GlobalSigmoidSmoothFunction {
                 + thirdTermMultiplier * doubleProductSingleRatio(startTime, endTime, stepLocation2, smoothRate);
     }
 
-    public double getPairProductIntegrationDerivative(double nodeTime, double startTime, double endTime,
+    public double getPairProductIntegrationDerivativeWrtEndTime(double startTime, double endTime,
                                             double stepLocation1, double stepLocation2,
                                             double smoothRate) {
-        final double inverse = 1.0 / (1.0 - Math.exp(smoothRate * (stepLocation2 - stepLocation1)));
-        final double gridNodeExponential = Math.exp(smoothRate * (stepLocation2 - nodeTime));
-        final double startNodeExponential = Math.exp(smoothRate * (nodeTime - startTime));
-        final double endNodeExponential = Math.exp(smoothRate * (nodeTime - endTime));
-        final double first = - gridNodeExponential / ((1 - gridNodeExponential) * (1 - gridNodeExponential))
-                * (getLogOnePlusExponential(nodeTime, endTime, smoothRate) - getLogOnePlusExponential(nodeTime, startTime, smoothRate));
+        final double gridNodeExponential = Math.exp(smoothRate * (stepLocation2 - stepLocation1));
+        final double first = 1.0;
+        final double secondTermMultiplier = 1.0 / (1.0 - Math.exp(smoothRate * (stepLocation2 - stepLocation1)));
+        final double thirdTermMultiplier = 1.0 / (1.0 - Math.exp(smoothRate * (stepLocation1 - stepLocation2)));
+
+        return first + secondTermMultiplier * doubleProductSingleRatioDerivativeWrtEndTime(startTime, endTime, stepLocation1, smoothRate)
+                + thirdTermMultiplier * doubleProductSingleRatioDerivativeWrtEndTime(startTime, endTime, stepLocation2, smoothRate);
+    }
+
+    public double getPairProductIntegrationDerivative(double startTime, double endTime,
+                                            double stepLocation1, double stepLocation2,
+                                            double smoothRate) {
+
+        final double gridNodeExponential = Math.exp(smoothRate * (stepLocation2 - stepLocation1));
+        final double startNodeExponential = Math.exp(smoothRate * (startTime - stepLocation1));
+        final double endNodeExponential = Math.exp(smoothRate * (endTime - stepLocation1));
+        final double first = Double.isInfinite(gridNodeExponential) ? 0.0 : - gridNodeExponential / ((1 - gridNodeExponential) * (1 - gridNodeExponential))
+                * (getLogOnePlusExponential(stepLocation1, endTime, smoothRate) - getLogOnePlusExponential(stepLocation1, startTime, smoothRate));
         final double second = 1.0 / (1.0 - gridNodeExponential) * (1.0 / (1.0 + endNodeExponential) - 1.0 / (1.0 + startNodeExponential));
-        final double third = gridNodeExponential / ((1.0 - gridNodeExponential) * (1.0 - gridNodeExponential))
+        final double third = Double.isInfinite(gridNodeExponential) ? 0.0 : gridNodeExponential / ((1.0 - gridNodeExponential) * (1.0 - gridNodeExponential))
                 * (getLogOnePlusExponential(stepLocation2, endTime, smoothRate) - getLogOnePlusExponential(stepLocation2, startTime, smoothRate));
         return first + second + third;
     }
 
     private double getLogOnePlusExponential(double t1, double t2, double smoothRate) {
-        return Math.log(1.0 + Math.exp(smoothRate * (t1 - t2)));
+        final double exponential = Math.exp(smoothRate * (t1 - t2));
+        if (Double.isInfinite(exponential)) {
+            return smoothRate * (t1 - t2);
+        } else {
+            return Math.log(1.0 + Math.exp(smoothRate * (t1 - t2)));
+        }
     }
 
     private double doubleProductSingleRatio(double startTime, double endTime,
@@ -110,6 +127,16 @@ class GlobalSigmoidSmoothFunction {
             return others - (stepLocation - startTime);
         } else {
             return others - Math.log(1.0 + exponent) / smoothRate;
+        }
+    }
+
+    private double doubleProductSingleRatioDerivativeWrtEndTime(double startTime, double endTime,
+                                            double stepLocation, double smoothRate) {
+        final double exponent = Math.exp(smoothRate * (stepLocation - endTime));
+        if (Double.isInfinite(exponent)) {
+            return -1.0;
+        } else {
+            return - exponent / (1.0 + exponent);
         }
     }
 

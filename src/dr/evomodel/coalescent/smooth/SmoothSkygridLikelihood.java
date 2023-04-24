@@ -179,21 +179,65 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
 
         double rootDerivative = 0;
 
-        for (int i = 0; i < tree.getInternalNodeCount() - 1; i++) {
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
             NodeRef node = tree.getNode(tree.getExternalNodeCount() + i);
-            final int intervalNum = intervals.getIntervalIndexForNode(node.getNumber());
-            assert(intervalNum > 0);
-            final double lineageCountDifference = getLineageCountDifference(intervalNum, intervals);
-            gradient[i] += - firstInversePopulationSize * lineageCountDifference * smoothFunction.getSingleIntegrationDerivative(startTime, endTime, tree.getNodeHeight(node), smoothRate.getParameterValue(0));
-        }
-        for (int i = 0; i < intervals.getIntervalCount(); i++) {
-            NodeRef node = tree.getNode(i);
-            final int intervalNum = intervals.getIntervalIndexForNode(node.getNumber());
+
+            if (!tree.isRoot(node)) {
+                final int intervalNum = intervals.getIntervalIndexForNode(node.getNumber());
                 final double lineageCountDifference = getLineageCountDifference(intervalNum, intervals);
-                rootDerivative += -lineageCountDifference * smoothFunction.getSingleIntegrationDerivativeWrtEndTime(startTime, endTime, tree.getNodeHeight(node), smoothRate.getParameterValue(0));
+                gradient[i] += - firstInversePopulationSize * lineageCountDifference * smoothFunction.getSingleIntegrationDerivative(startTime, endTime, tree.getNodeHeight(node), smoothRate.getParameterValue(0));
+            }
+
         }
 
-        gradient[tree.getInternalNodeCount() - 1] += firstInversePopulationSize * rootDerivative;
+
+            for (int i = 0; i < intervals.getIntervalCount(); i++) {
+                NodeRef node = tree.getNode(i);
+                final int intervalNum = intervals.getIntervalIndexForNode(node.getNumber());
+                final double lineageCountDifference = getLineageCountDifference(intervalNum, intervals);
+                rootDerivative += -lineageCountDifference * smoothFunction.getSingleIntegrationDerivativeWrtEndTime(endTime, tree.getNodeHeight(node), smoothRate.getParameterValue(0));
+            }
+
+        gradient[tree.getRoot().getNumber() - tree.getExternalNodeCount()] += firstInversePopulationSize * rootDerivative;
+
+
+        int maxGridIndex = getMaxGridIndex(endTime);
+
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+
+            final NodeRef node = tree.getNode(i + tree.getExternalNodeCount());
+
+            final int intervalIndex = intervals.getIntervalIndexForNode(node.getNumber());
+            final double lineageCountDifference = getLineageCountDifference(intervalIndex, intervals);
+            double thisDerivative = 0;
+
+            for (int j = 0; j < maxGridIndex + 1; j++) {
+                final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j));
+                final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j + 1));
+                final double gridTime = gridPointParameter.getParameterValue(j);
+                thisDerivative += (nextPopSizeInverse - currentPopSizeInverse) *
+                        smoothFunction.getPairProductIntegrationDerivative(startTime, endTime, tree.getNodeHeight(node), gridTime, smoothRate.getParameterValue(0));
+            }
+
+            gradient[i] -= lineageCountDifference * thisDerivative;
+
+        }
+
+        rootDerivative = 0.0;
+        for (int i = 0; i <  intervals.getIntervalCount() + 1; i++) { //
+
+            final double lineageCountDifference = getLineageCountDifference(i, intervals);
+            final double intervalTime = intervals.getIntervalTime(i);
+
+            for (int j = 0; j < maxGridIndex + 1; j++) {
+                final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j));
+                final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j + 1));
+                final double gridTime = gridPointParameter.getParameterValue(j);
+                rootDerivative -= lineageCountDifference * (nextPopSizeInverse - currentPopSizeInverse) *
+                        smoothFunction.getPairProductIntegrationDerivativeWrtEndTime(startTime, endTime, intervalTime, gridTime, smoothRate.getParameterValue(0));
+            }
+        }
+        gradient[tree.getRoot().getNumber() - tree.getExternalNodeCount()] += rootDerivative;
 
         return gradient;
     }

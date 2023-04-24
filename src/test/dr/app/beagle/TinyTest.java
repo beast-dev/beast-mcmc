@@ -38,7 +38,7 @@ public class TinyTest extends TraceCorrelationAssert {
 
         //siteModel
         double alpha = 0.5;
-        GammaSiteRateModel siteRateModel = new GammaSiteRateModel("gammaModel", alpha, 4, GammaSiteRateModel.DiscretizationType.EVEN);
+        GammaSiteRateModel siteRateModel = new GammaSiteRateModel("gammaModel", alpha, 4, GammaSiteRateModel.DiscretizationType.EQUAL);
         siteRateModel.setSubstitutionModel(hky);
         Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
         siteRateModel.setRelativeRateParameter(mu);

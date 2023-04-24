@@ -25,7 +25,6 @@
 
 package dr.evomodelxml.siteratemodel;
 
-import java.util.Locale;
 import java.util.logging.Logger;
 
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
@@ -88,7 +87,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
             }
         }
 
-        GammaSiteRateModel.DiscretizationType type = GammaSiteRateModel.DiscretizationType.EVEN;
+        GammaSiteRateModel.DiscretizationType type = GammaSiteRateModel.DiscretizationType.EQUAL;
 
         Parameter shapeParam = null;
         int catCount = 4;
@@ -99,17 +98,17 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
             try {
                 type = GammaSiteRateModel.DiscretizationType.valueOf(
                         cxo.getStringAttribute(DISCRETIZATION).toUpperCase());
-                if (type == GammaSiteRateModel.DiscretizationType.EVEN) {
-                    msg += "\n  even discretization of gamma distribution";
-                } else {
-                    msg += "\n  quadrature discretization of gamma distribution";
-                }
             } catch (IllegalArgumentException eae) {
                 throw new XMLParseException("Unknown category width type: " + cxo.getStringAttribute(DISCRETIZATION));
             }
             shapeParam = (Parameter) cxo.getChild(Parameter.class);
 
             msg += "\n  " + catCount + " category discrete gamma with initial shape = " + shapeParam.getParameterValue(0);
+            if (type == GammaSiteRateModel.DiscretizationType.EQUAL) {
+                msg += "\n  using equal weight discretization of gamma distribution";
+            } else {
+                msg += "\n  using Gauss-Laguerre quadrature discretization of gamma distribution";
+            }
         }
 
         Parameter invarParam = null;

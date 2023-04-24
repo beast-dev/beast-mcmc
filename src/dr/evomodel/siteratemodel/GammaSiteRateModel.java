@@ -26,9 +26,7 @@
 package dr.evomodel.siteratemodel;
 
 import dr.inference.model.*;
-import dr.math.GammaFunction;
 import dr.math.GeneralisedGaussLaguerreQuadrature;
-import dr.math.UnivariateFunction;
 import dr.math.distributions.GammaDistribution;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.util.Author;
@@ -36,7 +34,6 @@ import dr.util.Citable;
 import dr.util.Citation;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -49,7 +46,7 @@ import java.util.List;
 public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, Citable {
 
     public enum DiscretizationType {
-        EVEN,
+        EQUAL,
         QUADRATURE
     }
 
@@ -60,7 +57,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
                 null,
                 1.0,
                 null,
-                0, DiscretizationType.EVEN,
+                0, DiscretizationType.EQUAL,
                 null);
     }
 

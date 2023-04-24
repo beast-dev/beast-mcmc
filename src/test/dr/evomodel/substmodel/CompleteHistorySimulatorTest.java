@@ -51,7 +51,7 @@ public class CompleteHistorySimulatorTest extends MathTestCase {
 
         Parameter mu = new Parameter.Default(1, 0.5);
         Parameter alpha = new Parameter.Default(1, 0.5);
-        GammaSiteRateModel siteModel = new GammaSiteRateModel("gammaModel", mu, 1.0, alpha, 4, GammaSiteRateModel.DiscretizationType.EVEN, null);
+        GammaSiteRateModel siteModel = new GammaSiteRateModel("gammaModel", mu, 1.0, alpha, 4, GammaSiteRateModel.DiscretizationType.EQUAL, null);
         siteModel.setSubstitutionModel(hky);
         BranchRateModel branchRateModel = new DefaultBranchRateModel();
 
@@ -93,7 +93,7 @@ public class CompleteHistorySimulatorTest extends MathTestCase {
 
         Parameter mu = new Parameter.Default(1, 0.5);
         Parameter alpha = new Parameter.Default(1, 0.5);
-        GammaSiteRateModel siteModel = new GammaSiteRateModel("gammaModel", mu, 1.0, alpha, 4, GammaSiteRateModel.DiscretizationType.EVEN, null);
+        GammaSiteRateModel siteModel = new GammaSiteRateModel("gammaModel", mu, 1.0, alpha, 4, GammaSiteRateModel.DiscretizationType.EQUAL, null);
         siteModel.setSubstitutionModel(codonModel);
         BranchRateModel branchRateModel = new DefaultBranchRateModel();
 

@@ -36,6 +36,7 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.trace.LogFileTraces;
 import dr.math.MathUtils;
+import dr.util.Timer;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -56,6 +57,8 @@ public class SampleFromLogFiles {
     private final LogColumn[] log;
     private final TabDelimitedFormatter formatter;
     private final boolean printToScreen;
+
+    private final Timer timer = new Timer();
 
     public SampleFromLogFiles(List<Loggable> loggable, List<Logger> loggers, PrintWriter printWriter,
                   boolean printStatus) {
@@ -226,6 +229,8 @@ public class SampleFromLogFiles {
             logger.startLogging();
         }
 
+        timer.start();
+
         for (int i = 0; i < numberSamples; ++i) {
 
             int sample = firstIndex + MathUtils.nextInt(range);
@@ -260,11 +265,17 @@ public class SampleFromLogFiles {
             }
         }
 
+        timer.stop();
+
         formatter.stopLogging();
 
         for (Logger logger : loggers) {
             logger.stopLogging();
         }
+    }
+           //dr.util.Timer
+    public Timer getTimer() {
+        return timer;
     }
 
     public void addTreeBinding(TreeBinding treeBinding) {

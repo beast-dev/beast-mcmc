@@ -139,7 +139,7 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
 
         action.run(firstSample, lastSample, numberSamples);
 
-        return null;
+        return action;
     }
 
     static class LogIndex {
@@ -185,7 +185,7 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return TreeTraceAnalysis.class;
+        return SampleFromLogFiles.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

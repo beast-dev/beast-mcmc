@@ -48,6 +48,7 @@ import dr.util.Citation;
 import dr.util.CommonCitations;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -211,7 +212,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
     }
 
     private void computeAllExpectedCounts() {
-        for (int i = 0; i < tree.getNodeCount(); i++) {
+        for (int i = 0; i < tree.getNodeCount(); i++) { // TODO WERTHEIM parallelization potential
             NodeRef child = tree.getNode(i);
             if (!tree.isRoot(child)) {
                 computedCounts[child.getNumber()] = computeExpectedCountsForBranch(child);
@@ -244,18 +245,13 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
             markovJumps.getSubstitutionModel().getTransitionProbabilities(branchRateTime, condMeanMatrix);
         }
 
-        for (int i = 0; i < numCodons; i++) {
+        for (int i = 0; i < numCodons; i++) { // TODO WERTHEIM parallelization potential
 
             // Construct this child and parent codon
-
             final int childState = getCanonicalState(childSeq0[i], childSeq1[i], childSeq2[i]);
             final int parentState = getCanonicalState(parentSeq0[i], parentSeq1[i], parentSeq2[i]);
 
-//            final int vChildState = getVladimirState(childSeq0[i], childSeq1[i], childSeq2[i]);
-//            final int vParentState = getVladimirState(parentSeq0[i], parentSeq1[i], parentSeq2[i]);
-
             final double codonCount;
-
             if (!useUniformization) {
                 codonCount = condMeanMatrix[parentState * 64 + childState];
             } else {
@@ -568,7 +564,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
             unconditionedCountsPerBranch = new double[tree.getNodeCount()][numCodons];
         }
         double[] rootDistribution = getUnconditionalRootDistribution();
-        for (int i = 0; i < tree.getNodeCount(); i++) {
+        for (int i = 0; i < tree.getNodeCount(); i++) { // TODO WERTHEIM parallelization potential
             NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
                 final double expectedLength = getExpectedBranchLength(node);
@@ -616,11 +612,14 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         }
     }
 
+    private static final boolean REMOVE_REDUNDANT_UNCONDITIONED_WORK = true;
+
     private void fillInUnconditionalTraitValues(double expectedLength, double[] freq, double[] out) {
         final int stateCount = 64;
         double[] lambda = new double[stateCount * stateCount];
         fillInUnconditionalQMatrix(lambda);
-        for (int i = 0; i < numCodons; i++) {
+
+        if (REMOVE_REDUNDANT_UNCONDITIONED_WORK) {
             final int startingState = MathUtils.randomChoicePDF(freq);
             StateHistory history = StateHistory.simulateUnconditionalOnEndingState(
                     0.0,
@@ -629,7 +628,19 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                     lambda,
                     stateCount
             );
-            out[i] = markovJumps.getProcessForSimulant(history);
+            Arrays.fill(out, markovJumps.getProcessForSimulant(history));
+        } else {
+            for (int i = 0; i < numCodons; i++) { // TODO WERTHEIM parallelization potential
+                final int startingState = MathUtils.randomChoicePDF(freq);
+                StateHistory history = StateHistory.simulateUnconditionalOnEndingState(
+                        0.0,
+                        startingState,
+                        expectedLength,
+                        lambda,
+                        stateCount
+                );
+                out[i] = markovJumps.getProcessForSimulant(history);
+            }
         }
     }
 

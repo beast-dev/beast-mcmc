@@ -30,10 +30,10 @@ import java.util.Arrays;
 /**
  * @author Marc Suchard
  * @author Vladimir Minin
- *
+ * <p>
  * A base class for implementing Markov chain-induced counting processes (markovjumps) in BEAST using BEAGLE
  * This work is supported by NSF grant 0856099
- *
+ * <p>
  * Minin VN and Suchard MA (2008) Counting labeled transitions in continous-time Markov models of evolution.
  * Journal of Mathematical Biology, 56, 391-412.
  *
@@ -278,10 +278,10 @@ public class MarkovJumpsCore {
         }
     }
 
-    private int stateCount;
-    private int stateCount2;
-    private double[] auxInt;
-    private double[] tmp1;
-    private double[] tmp2;
-    private double[] expEvalScalar;
+    private final int stateCount;
+    private final int stateCount2;
+    private final double[] auxInt;
+    private final double[] tmp1;
+    private final double[] tmp2;
+    private final double[] expEvalScalar;
 }

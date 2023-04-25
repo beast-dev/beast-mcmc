@@ -78,7 +78,7 @@ public class SmoothSkygridGradient implements GradientWrtParameterProvider, Repo
 
     @Override
     public String getReport() {
-        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, tolerance);
+        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, tolerance, 1E-3);
     }
 
     public enum WrtParameter {

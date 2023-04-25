@@ -87,7 +87,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
             }
         }
 
-        GammaSiteRateModel.DiscretizationType type = GammaSiteRateModel.DiscretizationType.EQUAL;
+        GammaSiteRateModel.DiscretizationType type = GammaSiteRateModel.DEFAULT_DISCRETIZATION;
 
         Parameter shapeParam = null;
         int catCount = 4;
@@ -95,11 +95,13 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
             XMLObject cxo = xo.getChild(GAMMA_SHAPE);
             catCount = cxo.getIntegerAttribute(GAMMA_CATEGORIES);
 
-            try {
-                type = GammaSiteRateModel.DiscretizationType.valueOf(
-                        cxo.getStringAttribute(DISCRETIZATION).toUpperCase());
-            } catch (IllegalArgumentException eae) {
-                throw new XMLParseException("Unknown category width type: " + cxo.getStringAttribute(DISCRETIZATION));
+            if ( cxo.hasAttribute(DISCRETIZATION)) {
+                try {
+                    type = GammaSiteRateModel.DiscretizationType.valueOf(
+                            cxo.getStringAttribute(DISCRETIZATION).toUpperCase());
+                } catch (IllegalArgumentException eae) {
+                    throw new XMLParseException("Unknown category width type: " + cxo.getStringAttribute(DISCRETIZATION));
+                }
             }
             shapeParam = (Parameter) cxo.getChild(Parameter.class);
 

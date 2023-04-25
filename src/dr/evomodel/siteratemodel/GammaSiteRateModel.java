@@ -45,7 +45,7 @@ import java.util.List;
 
 public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, Citable {
 
-    private static final DiscretizationType DEFAULT_DISCRETIZATION = DiscretizationType.EQUAL;
+    public static final DiscretizationType DEFAULT_DISCRETIZATION = DiscretizationType.EQUAL;
 
     public enum DiscretizationType {
         EQUAL,
@@ -414,6 +414,15 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
 
     private static GeneralisedGaussLaguerreQuadrature quadrature = null;
 
+    /**
+     * Set the rates and proportions using a Gauss-Laguerre Quadrature, as proposed by Felsenstein 2001, JME
+     *
+     * @param categoryRates
+     * @param categoryProportions
+     * @param alpha
+     * @param catCount
+     * @param offset
+     */
     public static void setQuatratureRates(double[] categoryRates, double[] categoryProportions, double alpha, int catCount, int offset) {
         if (quadrature == null) {
             quadrature = new GeneralisedGaussLaguerreQuadrature(catCount);
@@ -430,6 +439,14 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
         normalize(categoryRates, categoryProportions);
     }
 
+    /**
+     * set the rates as equally spaced quantiles represented by the mean as proposed by Yang 1994
+     * @param categoryRates
+     * @param categoryProportions
+     * @param alpha
+     * @param catCount
+     * @param offset
+     */
     public static void setEqualRates(double[] categoryRates, double[] categoryProportions, double alpha, int catCount, int offset) {
         for (int i = 0; i < catCount; i++) {
             categoryRates[i + offset] = GammaDistribution.quantile((2.0 * i + 1.0) / (2.0 * catCount), alpha, 1.0 / alpha);

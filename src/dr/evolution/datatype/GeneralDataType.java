@@ -127,7 +127,13 @@ public class GeneralDataType extends DataType implements Identifiable {
 
     @Override
     public char[] getValidChars() {
-        return null;
+        char[] validChars = new char[stateMap.size()];
+        int i = 0;
+        for (String state : stateMap.keySet()) {
+            validChars[i] = state.charAt(0);
+            i++;
+        }
+        return validChars;
     }
 
     /**

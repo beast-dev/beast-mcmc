@@ -132,7 +132,7 @@ public class Sequence implements Identifiable, Attributable {
     /**
      * search invalid character in the sequence by given data type, and return its index
      */
-    public int getInvalidChar() {
+    public int getInvalidChar(DataType dataType) {
         final char[] validChars = dataType.getValidChars();
         if (validChars != null) {
             String validString = new String(validChars);

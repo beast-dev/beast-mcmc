@@ -28,13 +28,13 @@ package dr.evomodelxml;
 import dr.evomodel.SampleFromLogFiles;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.TreeTraceAnalysis;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.Logger;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
+import dr.util.Transform;
 import dr.xml.*;
 
 import java.io.*;
@@ -57,6 +57,7 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
     private final static String NUMBER_SAMPLES = "numberOfSamples";
     private final static String CHECK_BLOCK = "check";
     private final static String TOLERANCE = "tolerance";
+    private final static String TRANSFORM = "transform";
 
     public String getParserName() {
         return PARSER_NAME;
@@ -119,7 +120,7 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
 
                 LogIndex logIndex = parseBlock(cxo);
                 action.addParameterBinding(new SampleFromLogFiles.ParameterBinding(
-                        parameter, logIndex.traces, logIndex.traceIndexParameter));
+                        parameter, logIndex.traces, logIndex.traceIndexParameter, logIndex.transform));
             }
         }
 
@@ -143,12 +144,14 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
     }
 
     static class LogIndex {
-        LogFileTraces traces;
-        int traceIndexParameter;
+        final LogFileTraces traces;
+        final int traceIndexParameter;
+        final Transform transform;
 
-        LogIndex(LogFileTraces traces, int traceIndexParameter) {
+        LogIndex(LogFileTraces traces, int traceIndexParameter, Transform transform) {
             this.traces = traces;
             this.traceIndexParameter = traceIndexParameter;
+            this.transform = transform;
         }
     }
 
@@ -173,7 +176,23 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Column '" + columnName + "' can not be found in " + fileName);
         }
 
-        return new LogIndex(traces, traceIndexParameter);
+        String transformName = cxo.getAttribute(TRANSFORM, "none");
+        Transform transform = null;
+        for (Transform.Type type: Transform.Type.values()) {
+            if (transformName.equalsIgnoreCase(type.getName())) {
+                transform = type.getTransform();
+            }
+        }
+
+        if (transform == null) {
+            throw new XMLParseException("Unrecognized transform type, " + transformName);
+        }
+
+        if (transform instanceof Transform.NoTransform) {
+            transform = null;
+        }
+
+        return new LogIndex(traces, traceIndexParameter, transform);
     }
 
     //************************************************************************
@@ -202,8 +221,9 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
                             new XORRule(
                                     new ElementRule(EmpiricalTreeDistributionModel.class),
                                     new ElementRule(Parameter.class)),
-                            new StringAttributeRule(FILE_NAME, "File name", true),
-                            new StringAttributeRule(COLUMN_NAME, "Column name", true),
+                            new StringAttributeRule(FILE_NAME, "File name"),
+                            new StringAttributeRule(COLUMN_NAME, "Column name"),
+                            new StringAttributeRule(TRANSFORM, "Transform column value", true)
                     }, 1, Integer.MAX_VALUE),
             new ElementRule(EXECUTE, new XMLSyntaxRule[] {
                     new ElementRule(Loggable.class, 1, Integer.MAX_VALUE),

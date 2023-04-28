@@ -37,6 +37,7 @@ import dr.inference.model.Parameter;
 import dr.inference.trace.LogFileTraces;
 import dr.math.MathUtils;
 import dr.util.Timer;
+import dr.util.Transform;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -99,10 +100,14 @@ public class SampleFromLogFiles {
         Parameter parameter = binding.parameter;
         LogFileTraces traces = binding.traces;
         int index = binding.index;
+        Transform transform = binding.transform;
 
         for (int i = 0; i < parameter.getDimension(); ++i) {
-            parameter.setParameterValueQuietly(i,
-                    traces.getTrace(index + i).getValue(sample));
+            double value = traces.getTrace(index + i).getValue(sample);
+            if (transform != null) {
+                value = transform.transform(value);
+            }
+            parameter.setParameterValueQuietly(i, value);
         }
         parameter.fireParameterChangedEvent();
     }
@@ -305,11 +310,13 @@ public class SampleFromLogFiles {
         Parameter parameter;
         LogFileTraces traces;
         int index;
+        Transform transform;
 
-        public ParameterBinding(Parameter parameter, LogFileTraces traces, int index) {
+        public ParameterBinding(Parameter parameter, LogFileTraces traces, int index, Transform transform) {
             this.parameter = parameter;
             this.traces = traces;
             this.index = index;
+            this.transform = transform;
         }
     }
 

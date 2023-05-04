@@ -217,8 +217,9 @@ public class BeastMain {
                 logger.setLevel(Level.ALL);
 
                 MCMCMC mc3 = new MCMCMC(chains, options);
-                Thread thread = new Thread(mc3);
-                thread.start();
+//                Thread thread = new Thread(mc3);
+//                thread.start();
+                mc3.run();
             }
 
         } catch (java.io.IOException ioe) {

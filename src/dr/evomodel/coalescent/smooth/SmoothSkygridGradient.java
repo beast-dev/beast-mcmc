@@ -28,6 +28,8 @@ package dr.evomodel.coalescent.smooth;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
@@ -37,7 +39,7 @@ import dr.xml.Reportable;
  * @author Yuwei Bao
  * @author Marc A. Suchard
  */
-public class SmoothSkygridGradient implements GradientWrtParameterProvider, Reportable {
+public class SmoothSkygridGradient implements GradientWrtParameterProvider, Reportable, Loggable {
 
     private final SmoothSkygridLikelihood skygridLikelihood;
 
@@ -79,6 +81,11 @@ public class SmoothSkygridGradient implements GradientWrtParameterProvider, Repo
     @Override
     public String getReport() {
         return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, tolerance, 1E-3);
+    }
+
+    @Override
+    public LogColumn[] getColumns() {
+        return Loggable.getColumnsFromReport(this, "SmoothSkygridGradient check");
     }
 
     public enum WrtParameter {

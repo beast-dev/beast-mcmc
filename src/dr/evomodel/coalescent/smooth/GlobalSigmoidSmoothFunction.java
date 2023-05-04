@@ -140,6 +140,34 @@ class GlobalSigmoidSmoothFunction {
         }
     }
 
+
+    public double getInverseOneMinusExponential(double x, double smoothRate) {
+        final double exponential = Math.exp(smoothRate * x);
+        if (Double.isInfinite(exponential)) {
+            return 0.0;
+        } else {
+            return 1.0 / (1.0 - exponential);
+        }
+    }
+
+    public double getInverseOnePlusExponential(double x, double smoothRate) {
+        final double exponential = Math.exp(smoothRate * x);
+        if (Double.isInfinite(exponential)) {
+            return 0.0;
+        } else {
+            return 1.0 / (1.0 + exponential);
+        }
+    }
+
+    public double getLogOnePlusExponential(double x, double smoothRate) {
+        final double exponential = Math.exp(smoothRate * x);
+        if (Double.isInfinite(exponential)) {
+            return smoothRate * x;
+        } else {
+            return Math.log(1 + exponential);
+        }
+    }
+
     public double getTripleProductIntegration(double startTime, double endTime,
                                               double stepLocation1, double preStepValue1, double postStepValue1,
                                               double stepLocation2, double preStepValue2, double postStepValue2,

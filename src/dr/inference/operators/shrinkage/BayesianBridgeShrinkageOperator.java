@@ -89,7 +89,7 @@ public class BayesianBridgeShrinkageOperator extends SimpleMCMCOperator implemen
         return draw;
     }
 
-    private void sampleGlobalScale() {
+    public void sampleGlobalScale() {
         double draw = drawGlobalScale(globalScalePrior.getShape(), globalScalePrior.getScale(), regressionExponent.getParameterValue(0), effectiveDim, absSumBeta());
 
         globalScale.setParameterValue(0, draw);
@@ -124,7 +124,7 @@ public class BayesianBridgeShrinkageOperator extends SimpleMCMCOperator implemen
         return sum;
     }
 
-    private double drawSingleLocalScale(double global, double exponent, double coefficient) {
+    public double drawSingleLocalScale(double global, double exponent, double coefficient) {
         double draw = ExponentialTiltedStableDistribution.nextTiltedStable(
                 exponent / 2, Math.pow(coefficient / global, 2));
         draw = Math.sqrt(1 / (2 * draw));

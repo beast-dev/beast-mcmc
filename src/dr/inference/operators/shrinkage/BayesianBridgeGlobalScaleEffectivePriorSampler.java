@@ -65,7 +65,7 @@ public class BayesianBridgeGlobalScaleEffectivePriorSampler extends Statistic.Ab
 
         @Override
         public String getParserDescription() {
-            return "Samples from the \"effective prior\" of the global scale for a shrunken-shoulder-regularized Bayesian Bridge distribution.";
+            return "Samples from the conditional of the global scale (conditioned on the shrunken-shoulder-regularization) for a Bayesian Bridge distribution.";
         }
 
         @Override

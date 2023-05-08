@@ -32,7 +32,10 @@ import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
-import dr.util.*;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.CommonCitations;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
@@ -256,10 +259,10 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
 
 
 
-    private double calculateLogLikelihood2() {
+    protected double calculateLogLikelihood() {
         assert(trees.size() == 1);
         if (!likelihoodKnown) {
-            Tree tree = trees.get(0);
+            TreeModel tree = trees.get(0);
             final double startTime = 0;
             final double endTime = tree.getNodeHeight(tree.getRoot());
             final int maxGridIndex = getMaxGridIndex(endTime);
@@ -269,14 +272,46 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
             double[] tmpC = new double[tree.getNodeCount()];
             double[] tmpD = new double[maxGridIndex];
             double[] tmpE = new double[maxGridIndex];
+            double[] tmpLineageEffect = new double[tree.getNodeCount()];
+            double[] tmpTimes = new double[tree.getNodeCount()];
+            int[] tmpCounts = new int[tree.getNodeCount()];
 
-            for (int i = 0; i < tree.getNodeCount(); i++) {
-                final double timeI = tree.getNodeHeight(tree.getNode(i));
+            NodeRef[] nodes = new NodeRef[tree.getNodeCount()];
+            System.arraycopy(tree.getNodes(), 0, nodes, 0, tree.getNodeCount());
+            Arrays.parallelSort(nodes, (a, b) -> Double.compare(tree.getNodeHeight(a), tree.getNodeHeight(b)));
+
+            double lastTime = tree.getNodeHeight(nodes[0]);
+            double currentLineageEffect = getLineageCountEffect(tree, 0);
+            int currentCount = 1;
+            int index = 0;
+            tmpTimes[index] = lastTime;
+            for (int i = 1; i < nodes.length; i++) {
+                NodeRef node = nodes[i];
+                final double time = tree.getNodeHeight(node);
+                if (time == lastTime) {
+                    currentCount++;
+                    currentLineageEffect += getLineageCountEffect(tree, node.getNumber());
+                } else {
+                    tmpLineageEffect[index] = currentLineageEffect;
+                    tmpCounts[index] = currentCount;
+                    index++;
+                    tmpTimes[index] = time;
+                    currentCount = 1;
+                    currentLineageEffect = getLineageCountEffect(tree, node.getNumber());
+                    lastTime = time;
+                }
+            }
+            tmpLineageEffect[index] = currentLineageEffect;
+            tmpCounts[index] = currentCount;
+            final int uniqueTimes = index + 1;
+
+            for (int i = 0; i < uniqueTimes; i++) {
+                final double timeI = tmpTimes[i];
                 double sum = 0;
-                for (int j = 0; j < tree.getNodeCount(); j++) {
+                for (int j = 0; j < uniqueTimes; j++) {
                     if (j != i) {
-                        final double timeJ = tree.getNodeHeight(tree.getNode(j));
-                        final double lineageCountEffect = getLineageCountEffect(tree, j);
+                        final double timeJ = tmpTimes[j];
+                        final double lineageCountEffect = tmpLineageEffect[j];
                         final double thisInverse = smoothFunction.getInverseOneMinusExponential(timeJ - timeI, smoothRate.getParameterValue(0));
                         sum += lineageCountEffect * thisInverse;
                     }
@@ -284,8 +319,8 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
                 tmpA[i] = sum;
             }
 
-            for (int i = 0; i < tree.getNodeCount(); i++) {
-                final double timeI = tree.getNodeHeight(tree.getNode(i));
+            for (int i = 0; i < uniqueTimes; i++) {
+                final double timeI = tmpTimes[i];
                 double sum = 0;
                 for (int k = 0; k < maxGridIndex; k++) {
                     final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k));
@@ -297,8 +332,8 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
                 tmpB[i] = sum;
             }
 
-            for (int i = 0; i < tree.getNodeCount(); i++) {
-                final double timeI = tree.getNodeHeight(tree.getNode(i));
+            for (int i = 0; i < uniqueTimes; i++) {
+                final double timeI = tmpTimes[i];
                 final double logDiff = smoothFunction.getLogOnePlusExponential(timeI - endTime, smoothRate.getParameterValue(0)) -
                         smoothFunction.getLogOnePlusExponential(timeI - startTime, smoothRate.getParameterValue(0));
                 tmpC[i] = logDiff;
@@ -309,9 +344,9 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
                 tmpD[k] = smoothFunction.getLogOnePlusExponential(gridTime - endTime, smoothRate.getParameterValue(0)) -
                         smoothFunction.getLogOnePlusExponential(gridTime - startTime, smoothRate.getParameterValue(0));
                 double sum = 0;
-                for (int i = 0; i < tree.getNodeCount(); i++) {
-                    final double timeI = tree.getNodeHeight(tree.getNode(i));
-                    final double lineageCountEffect = getLineageCountEffect(tree, i);
+                for (int i = 0; i < uniqueTimes; i++) {
+                    final double timeI = tmpTimes[i];
+                    final double lineageCountEffect = tmpLineageEffect[i];
                     sum += smoothFunction.getInverseOneMinusExponential(timeI - gridTime, smoothRate.getParameterValue(0)) *
                             lineageCountEffect;
                 }
@@ -319,8 +354,8 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
             }
 
             double tripleIntegrationSum = 0;
-            for (int i = 0; i < tree.getNodeCount(); i++) {
-                final double lineageCountEffect = getLineageCountEffect(tree, i);
+            for (int i = 0; i < uniqueTimes; i++) {
+                final double lineageCountEffect = tmpLineageEffect[i];
                 tripleIntegrationSum += lineageCountEffect * tmpA[i] * tmpB[i] * tmpC[i];
             }
             tripleIntegrationSum *= 2;
@@ -332,9 +367,9 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
             }
 
             double firstDoubleIntegrationSum = 0;
-            for (int i = 0; i < tree.getNodeCount(); i++) {
-                final double lineageCountEffect = getLineageCountEffect(tree, i);
-                final double timeI = tree.getNodeHeight(tree.getNode(i));
+            for (int i = 0; i < uniqueTimes; i++) {
+                final double lineageCountEffect = tmpTimes[i];
+                final double timeI = tmpTimes[i];
                 firstDoubleIntegrationSum += lineageCountEffect * tmpA[i] * tmpC[i];
                 firstDoubleIntegrationSum += 0.5 * (smoothFunction.getInverseOnePlusExponential(endTime - timeI, smoothRate.getParameterValue(0)) -
                         smoothFunction.getInverseOnePlusExponential(startTime - timeI, smoothRate.getParameterValue(0))) +
@@ -345,8 +380,8 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
             firstDoubleIntegrationSum += 0.5 * endTime;
 
             double secondDoubleIntegrationSum = 0;
-            for (int i = 0; i < tree.getNodeCount(); i++) {
-                final double lineageCountEffect = getLineageCountEffect(tree, i);
+            for (int i = 0; i < uniqueTimes; i++) {
+                final double lineageCountEffect = tmpLineageEffect[i];
                 secondDoubleIntegrationSum += 0.5 * tmpB[i] * tmpC[i] * lineageCountEffect;
             }
 
@@ -360,14 +395,15 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
             secondDoubleIntegrationSum += 0.5 * endTime * (Math.exp(-logPopSizeParameter.getParameterValue(maxGridIndex)) - Math.exp(-logPopSizeParameter.getParameterValue(0)));
 
             double singleIntegration = 0;
-            for (int i = 0; i < tree.getNodeCount(); i++) {
-                final double timeI = tree.getNodeHeight(tree.getNode(i));
+            for (int i = 0; i < uniqueTimes; i++) {
+                final double timeI = tmpTimes[i];
                 singleIntegration += smoothFunction.getLogOnePlusExponential(endTime - timeI, smoothRate.getParameterValue(0)) -
                         smoothFunction.getLogOnePlusExponential(startTime - timeI, smoothRate.getParameterValue(0));
             }
             singleIntegration *= 0.5 * Math.exp(-logPopSizeParameter.getParameterValue(0));
 
             logLikelihood = singleIntegration + firstDoubleIntegrationSum + secondDoubleIntegrationSum + tripleIntegrationSum;
+            likelihoodKnown = true;
         }
         return logLikelihood;
     }
@@ -380,8 +416,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         }
     }
 
-    @Override
-    protected double calculateLogLikelihood() {
+    protected double calculateLogLikelihood2() {
         assert(trees.size() == 1);
         if (!intervalsKnown) {
             for(IntervalList intervalList : intervalsList){

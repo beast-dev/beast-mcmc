@@ -169,6 +169,21 @@ class GlobalSigmoidSmoothFunction {
     }
 
     public double getTripleProductIntegration(double startTime, double endTime,
+                                              double stepLocation1, double stepLocation2, double stepLocation3,
+                                              double smoothRate) {
+        final double result = (getInverseOneMinusExponential(stepLocation2 - stepLocation1, smoothRate)
+                * getInverseOneMinusExponential(stepLocation3 - stepLocation1, smoothRate) *
+                (getLogOnePlusExponential(stepLocation1 - endTime, smoothRate) - getLogOnePlusExponential(stepLocation1 - startTime, smoothRate))
+                + getInverseOneMinusExponential(stepLocation3 - stepLocation2, smoothRate)
+                * getInverseOneMinusExponential(stepLocation1 - stepLocation2, smoothRate) *
+                (getLogOnePlusExponential(stepLocation2 - endTime, smoothRate) - getLogOnePlusExponential(stepLocation2 - startTime, smoothRate))
+                + getInverseOneMinusExponential(stepLocation1 - stepLocation3, smoothRate)
+                * getInverseOneMinusExponential(stepLocation2 - stepLocation3, smoothRate) *
+                (getLogOnePlusExponential(stepLocation3 - endTime, smoothRate) - getLogOnePlusExponential(stepLocation3 - startTime, smoothRate))) / smoothRate;
+        return result;
+    }
+
+    public double getTripleProductIntegration(double startTime, double endTime,
                                               double stepLocation1, double preStepValue1, double postStepValue1,
                                               double stepLocation2, double preStepValue2, double postStepValue2,
                                               double stepLocation3, double preStepValue3, double postStepValue3,

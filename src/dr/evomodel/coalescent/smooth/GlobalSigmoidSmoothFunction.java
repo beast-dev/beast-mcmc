@@ -73,12 +73,18 @@ class GlobalSigmoidSmoothFunction {
         }
     }
 
+    public double getQuadraticIntegration(double startTime, double endTime,
+                                          double stepLocation, double smoothRate) {
+        return (getInverseOnePlusExponential(endTime - stepLocation, smoothRate) - getInverseOnePlusExponential(startTime - stepLocation, smoothRate) +
+                getLogOnePlusExponential(endTime - stepLocation, smoothRate) - getLogOnePlusExponential(startTime - stepLocation, smoothRate)) / smoothRate;
+    }
+
     public double getPairProductIntegration(double startTime, double endTime,
                                             double stepLocation1, double stepLocation2,
                                             double smoothRate) {
         final double firstTerm = endTime - startTime;
-        final double secondTermMultiplier = 1.0 / (1.0 - Math.exp(smoothRate * (stepLocation2 - stepLocation1)));
-        final double thirdTermMultiplier = 1.0 / (1.0 - Math.exp(smoothRate * (stepLocation1 - stepLocation2)));
+        final double secondTermMultiplier = getInverseOneMinusExponential(stepLocation2 - stepLocation1, smoothRate);
+        final double thirdTermMultiplier = getInverseOneMinusExponential(stepLocation1 - stepLocation2, smoothRate);
         return firstTerm + secondTermMultiplier * doubleProductSingleRatio(startTime, endTime, stepLocation1, smoothRate)
                 + thirdTermMultiplier * doubleProductSingleRatio(startTime, endTime, stepLocation2, smoothRate);
     }
@@ -181,6 +187,20 @@ class GlobalSigmoidSmoothFunction {
                 * getInverseOneMinusExponential(stepLocation2 - stepLocation3, smoothRate) *
                 (getLogOnePlusExponential(stepLocation3 - endTime, smoothRate) - getLogOnePlusExponential(stepLocation3 - startTime, smoothRate))) / smoothRate;
         return result;
+    }
+
+    public double getTripleProductWithQuadraticIntegration(double startTime, double endTime,
+                                                           double stepLocation12, double stepLocation3,
+                                                           double smoothRate) {
+        final double first = endTime - startTime;
+        final double second = getInverseOneMinusExponential(stepLocation3 - stepLocation12, smoothRate)
+                * (getInverseOnePlusExponential(stepLocation12 - startTime, smoothRate) -
+                getInverseOnePlusExponential(stepLocation12 - endTime, smoothRate));
+        final double thirdMultiplier = ((2.0 - getInverseOneMinusExponential(stepLocation3 - stepLocation12, smoothRate)) * getInverseOneMinusExponential(stepLocation3 - stepLocation12, smoothRate));
+        final double third = thirdMultiplier * (getLogOnePlusExponential(stepLocation12 - endTime, smoothRate) - getLogOnePlusExponential(stepLocation12 - startTime, smoothRate));
+        final double fourthMultiplier = getInverseOneMinusExponential(stepLocation12 - stepLocation3, smoothRate) * getInverseOneMinusExponential(stepLocation12 - stepLocation3, smoothRate);
+        final double fourth = fourthMultiplier * (getLogOnePlusExponential(stepLocation3 - endTime, smoothRate) - getLogOnePlusExponential(stepLocation3 - startTime, smoothRate));
+        return first + (second + third + fourth) / smoothRate;
     }
 
     public double getTripleProductIntegration(double startTime, double endTime,

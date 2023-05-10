@@ -7,6 +7,7 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegat
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.JointPartialsProvider;
+import dr.inference.model.CompoundParameter;
 import dr.util.TaskPool;
 import dr.xml.*;
 
@@ -73,6 +74,21 @@ public class IntegratedLoadingsGradientParser extends AbstractXMLObjectParser {
         ContinuousTraitPartialsProvider partialsProvider = (JointPartialsProvider) xo.getChild(JointPartialsProvider.class);
         if (partialsProvider == null) partialsProvider = factorAnalysis;
 
+        // for IntegratedLoadingsAndPrecisionGradient
+        CompoundParameter parameter = (CompoundParameter) xo.getChild(CompoundParameter.class);
+        if (parameter != null) {
+            if (parameter.getParameterCount() != 2) {
+                throw new XMLParseException("The parameter must have two elements, " +
+                        "the first being the loadings matrix and the second being the precision matrix.");
+            }
+            if (parameter.getParameter(0) != factorAnalysis.getLoadings()) {
+                throw new XMLParseException("The first element of the parameter must be the loadings matrix.");
+            }
+            if (parameter.getParameter(1) != factorAnalysis.getPrecision()) {
+                throw new XMLParseException("The second element of the parameter must be the precision matrix.");
+            }
+        }
+
 
         // TODO Check dimensions, parameters, etc.
 
@@ -83,7 +99,8 @@ public class IntegratedLoadingsGradientParser extends AbstractXMLObjectParser {
                 partialsProvider,
                 taskPool,
                 threadProvider,
-                remainderCompProvider);
+                remainderCompProvider,
+                parameter);
 
     }
 
@@ -93,7 +110,8 @@ public class IntegratedLoadingsGradientParser extends AbstractXMLObjectParser {
                                                  ContinuousTraitPartialsProvider jointPartialsProvider,
                                                  TaskPool taskPool,
                                                  IntegratedLoadingsGradient.ThreadUseProvider threadUseProvider,
-                                                 IntegratedLoadingsGradient.RemainderCompProvider remainderCompProvider)
+                                                 IntegratedLoadingsGradient.RemainderCompProvider remainderCompProvider,
+                                                 CompoundParameter parameter)
             throws XMLParseException {
 
         return new IntegratedLoadingsGradient(

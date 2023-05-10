@@ -40,7 +40,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     protected final int dimPartials;
     private final Tree tree;
     private final Likelihood likelihood;
-    private final double[] data;
+    protected final double[] data;
     private final boolean[] missing;
     private final ThreadUseProvider threadUseProvider;
     private final RemainderCompProvider remainderCompProvider;
@@ -132,7 +132,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         return dimFactors * dimTrait;
     }
 
-    private int getGradientDimension() {
+    protected int getGradientDimension() {
         return dimFactors * dimTrait;
     }
 
@@ -375,7 +375,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         for (int factor = 0; factor < dimFactors; ++factor) {
             for (int trait = 0; trait < dimTrait; ++trait) {
                 int ind = factor * dimTrait + trait;
-                gradArray[index][factor * dimTrait + trait] +=
+                gradArray[index][ind] +=
                         (fty[ind] - ftfl[ind]) * rawGamma[trait];
             }
         }
@@ -383,14 +383,14 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     }
 
 
-    private void computeGradientForOneTaxon(final int index,
-                                            final int taxon,
-                                            final ReadableMatrix loadings,
-                                            final double[] transposedLoadings,
-                                            final ReadableVector gamma,
-                                            final double[] rawGamma,
-                                            final WrappedNormalSufficientStatistics statistic,
-                                            final double[][] gradArray) {
+    protected void computeGradientForOneTaxon(final int index,
+                                              final int taxon,
+                                              final ReadableMatrix loadings,
+                                              final double[] transposedLoadings,
+                                              final ReadableVector gamma,
+                                              final double[] rawGamma,
+                                              final WrappedNormalSufficientStatistics statistic,
+                                              final double[][] gradArray) {
 
         if (TIMING) {
             stopWatches[0].start();
@@ -507,8 +507,8 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
     }
 
-    private StopWatch[] stopWatches;
-    private static final boolean TIMING = false;
+    protected StopWatch[] stopWatches;
+    protected static final boolean TIMING = false;
 
     private static final boolean DEBUG = false;
 

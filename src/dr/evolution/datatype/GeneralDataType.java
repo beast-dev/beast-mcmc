@@ -127,8 +127,18 @@ public class GeneralDataType extends DataType implements Identifiable {
 
     @Override
     public char[] getValidChars() {
-        return null;
+        if (validChars == null) {
+            validChars = new char[stateMap.size()];
+            int i = 0;
+            for (String state : stateMap.keySet()) {
+                validChars[i] = state.charAt(0);
+                i++;
+            }
+        }
+        return validChars;
     }
+
+    private char[] validChars = null;
 
     /**
      * Get state corresponding to a code
@@ -197,27 +207,33 @@ public class GeneralDataType extends DataType implements Identifiable {
      */
     public boolean[] getStateSet(int state) {
 
-        boolean[] stateSet = new boolean[stateCount];
+        boolean[] stateSet = stateSetMap.get(state);
 
-        if (state < states.size()) {
-            State s = states.get(state);
+        if (stateSet == null) {
+            stateSet = new boolean[stateCount];
+            if (state >= 0 && state < states.size()) {
+                State s = states.get(state);
 
-            for (int i = 0; i < stateCount; i++) {
-                stateSet[i] = false;
+                for (int i = 0; i < stateCount; i++) {
+                    stateSet[i] = false;
+                }
+                for (int i = 0, n = s.ambiguities.length; i < n; i++) {
+                    stateSet[s.ambiguities[i]] = true;
+                }
+            } else if (state == states.size()) {
+                for (int i = 0; i < stateCount; i++) {
+                    stateSet[i] = true;
+                }
+            } else {
+                throw new IllegalArgumentException("invalid state index");
             }
-            for (int i = 0, n = s.ambiguities.length; i < n; i++) {
-                stateSet[s.ambiguities[i]] = true;
-            }
-        } else if (state == states.size()) {
-            for (int i = 0; i < stateCount; i++) {
-                stateSet[i] = true;
-            }
-        } else {
-            throw new IllegalArgumentException("invalid state index");
+            stateSetMap.put(state, stateSet);
         }
 
         return stateSet;
     }
+
+    private Map<Integer, boolean[]> stateSetMap = new HashMap<>();
 
     /**
      * description of data type

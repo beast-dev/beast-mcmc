@@ -420,7 +420,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     }
 
     /**
-     * @return true if the pattern is invariant
+     * @return true if the pattern contains a gap state
      */
     private boolean isGapped(int[] pattern) {
         int len = pattern.length;
@@ -434,7 +434,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     }
 
     /**
-     * @return true if the pattern is invariant
+     * @return true if the pattern contains an ambiguous state
      */
     private boolean isAmbiguous(int[] pattern) {
         int len = pattern.length;
@@ -448,7 +448,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     }
 
     /**
-     * @return true if the pattern is invariant
+     * @return true if the pattern contains an unknown state
      */
     private boolean isUnknown(int[] pattern) {
         int len = pattern.length;

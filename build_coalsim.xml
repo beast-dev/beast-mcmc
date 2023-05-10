@@ -8,7 +8,7 @@
     <property name="build" location="build"/>
     <property name="lib" location="lib"/>
     <property name="dist" location="dist"/>
-                                                                                2
+
     <property environment="env"/>
 
     <target name="init">

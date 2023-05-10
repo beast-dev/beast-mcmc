@@ -32,7 +32,6 @@ import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.tree.CTMCScalePriorParser;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
 import dr.inference.model.ParameterParser;
@@ -41,6 +40,7 @@ import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.inferencexml.model.OneOnXPriorParser;
 import dr.util.Attribute;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,8 +51,14 @@ import java.util.Map;
  */
 public class ParameterPriorGenerator extends Generator {
 
+    //map parameters to prior IDs, for use with HMC
+    private HashMap<String, String> mapParameterToPrior;
+
     public ParameterPriorGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
+        //TODO don't like this being here, but will see how things pan out as more HMC approaches are added
+        mapParameterToPrior = new HashMap<String, String>();
+        mapParameterToPrior.put("skygrid.precision", "skygrid.precision.prior");
     }
 
     /**
@@ -62,7 +68,6 @@ public class ParameterPriorGenerator extends Generator {
      */
     public void writeParameterPriors(XMLWriter writer) {
         boolean first = true;
-
 
         for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : options.taxonSetsMono.entrySet()) {
             if (taxaBooleanEntry.getValue()) {
@@ -79,7 +84,6 @@ public class ParameterPriorGenerator extends Generator {
         }
 
         List<Parameter> parameters = options.selectParameters();
-
 
         for (Parameter parameter : parameters) {
             if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR ||
@@ -112,6 +116,18 @@ public class ParameterPriorGenerator extends Generator {
      * @param writer    the writer
      */
     public void writeParameterPrior(Parameter parameter, XMLWriter writer) {
+
+        //if models need to have a prior defined before the priors block
+        /*if (reservedParameters.contains(parameter.getName())) {
+
+            return;
+        }*/
+
+        if (mapParameterToPrior.keySet().contains(parameter.getName())) {
+            writePriorIdref(writer, parameter, mapParameterToPrior.get(parameter.getName()));
+            return;
+        }
+
         if (parameter.priorType == PriorType.NONE_FIXED) {
             return;
         }
@@ -346,6 +362,25 @@ public class ParameterPriorGenerator extends Generator {
             writer.writeIDref("statistic", parameter.getName());
         } else {
             writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+        }
+    }
+
+    private void writePriorIdref(XMLWriter writer, Parameter parameter, String priorID) {
+        switch (parameter.priorType) {
+            case GAMMA_PRIOR:
+                writer.writeIDref(PriorParsers.GAMMA_PRIOR, priorID);
+                break;
+            case LOGNORMAL_PRIOR:
+                writer.writeIDref(PriorParsers.LOG_NORMAL_PRIOR, priorID);
+                break;
+            case EXPONENTIAL_PRIOR:
+                writer.writeIDref(PriorParsers.EXPONENTIAL_PRIOR, priorID);
+                break;
+            case INVERSE_GAMMA_PRIOR:
+                writer.writeIDref(PriorParsers.INVGAMMA_PRIOR_CORRECT, priorID);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown or invalid prior defined on " + parameter.getName());
         }
     }
 

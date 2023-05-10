@@ -41,8 +41,8 @@ import dr.xml.*;
  */
 public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
 
-    private static final String NAME = "gmrfSkyrideGradient";
-    private static final String WRT_PARAMETER = "wrtParameter";
+    public static final String NAME = "gmrfSkyrideGradient";
+    public static final String WRT_PARAMETER = "wrtParameter";
 
     private static final String COALESCENT_INTERVAL = "coalescentInterval";
     private static final String NODE_HEIGHTS = "nodeHeights";

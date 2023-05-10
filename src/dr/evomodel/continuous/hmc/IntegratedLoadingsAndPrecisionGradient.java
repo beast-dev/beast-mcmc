@@ -53,17 +53,35 @@ public class IntegratedLoadingsAndPrecisionGradient extends IntegratedLoadingsGr
         double[] ftfl = components.ftfl;
 
 
-        for (int factor = 0; factor < dimFactors; ++factor) {
-            for (int trait = 0; trait < dimTrait; ++trait) {
-                int ind = factor * dimTrait + trait;
-                gradArray[index][offset + trait] +=
-                        (2 * fty[ind] - ftfl[ind]) * transposedLoadings[ind];
-            }
-        }
         for (int trait = 0; trait < dimTrait; ++trait) {
-            double dat = data[taxon * dimTrait + trait];
-            gradArray[index][offset + trait] += dat * dat + 1 / rawGamma[trait]; //TODO: need to deal w/ missing data
+            int dataInd = taxon * dimTrait + trait;
+            if (factorAnalysisLikelihood.getDataMissingIndicators()[dataInd]) {
+                continue;
+            }
+            double dat = data[dataInd];
+            gradArray[index][offset + trait] += 0.5 * (1 / rawGamma[trait] - dat * dat);
+
+            for (int factor = 0; factor < dimFactors; ++factor) {
+                int loadingsInd = trait * dimFactors + factor;
+                int ind = factor * dimTrait + trait;
+
+                gradArray[index][offset + trait] +=
+                        (fty[ind] - 0.5 * ftfl[ind]) * transposedLoadings[loadingsInd];
+            }
+//            gradArray[index][offset + trait] +=
+//                    (fty[ind] - 0.5 * ftfl[ind]) * transposedLoadings[ind];
         }
+//        for (int factor = 0; factor < dimFactors; ++factor) {
+//            for (int trait = 0; trait < dimTrait; ++trait) {
+//                int ind = factor * dimTrait + trait;
+//                gradArray[index][offset + trait] +=
+//                        (fty[ind] - 0.5 * ftfl[ind]) * transposedLoadings[ind];
+//            }
+//        }
+//        for (int trait = 0; trait < dimTrait; ++trait) {
+//            double dat = data[taxon * dimTrait + trait];
+//            gradArray[index][offset + trait] += 0.5 * (1 / rawGamma[trait] - dat * dat); //TODO: need to deal w/ missing data
+//        }
     }
 
     @Override

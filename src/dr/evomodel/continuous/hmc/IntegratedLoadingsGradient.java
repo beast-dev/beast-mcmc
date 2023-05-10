@@ -33,7 +33,7 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.weightedAverage;
 public class IntegratedLoadingsGradient implements GradientWrtParameterProvider, VariableListener, Reportable {
 
     private final TreeTrait<List<WrappedNormalSufficientStatistics>> fullConditionalDensity;
-    private final IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood;
+    protected final IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood;
     private final ContinuousTraitPartialsProvider partialsProvider;
     protected final int dimTrait;
     protected final int dimFactors;

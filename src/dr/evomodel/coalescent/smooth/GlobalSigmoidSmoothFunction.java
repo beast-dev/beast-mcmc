@@ -46,13 +46,7 @@ class GlobalSigmoidSmoothFunction {
 
     public double getSingleIntegration(double startTime, double endTime,
                                        double stepLocation, double smoothRate) {
-        final double exponent = Math.exp(smoothRate * (endTime - stepLocation));
-        if (Double.isInfinite(exponent)) {
-            return endTime - stepLocation;
-        } else {
-            final double ratio = (1 + exponent) / (1 + Math.exp(smoothRate * (startTime - stepLocation)));
-            return Math.log(ratio) / smoothRate;
-        }
+        return (getLogOnePlusExponential(endTime - stepLocation, smoothRate) - getLogOnePlusExponential(startTime - stepLocation, smoothRate)) / smoothRate;
     }
 
     public double getSingleIntegrationDerivative(double startTime, double endTime, double stepLocation, double smoothRate) {

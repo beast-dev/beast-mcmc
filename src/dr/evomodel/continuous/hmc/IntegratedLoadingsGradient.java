@@ -322,6 +322,37 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         return new MeanAndMoment(mean, moment);
     }
 
+    private void computeLoadingsGradientForOneTaxon(final int index,
+                                                    final int taxon,
+                                                    final double[] transposedLoadings,
+                                                    final double[] rawGamma,
+                                                    final double[][] gradArray,
+                                                    ReadableVector mean,
+                                                    double[] moment) {
+        for (int factor = 0; factor < dimFactors; ++factor) {
+            double factorMean = mean.get(factor);
+
+            for (int trait = 0; trait < dimTrait; ++trait) {
+                if (!missing[taxon * dimTrait + trait]) {
+
+                    double product = 0.0;
+                    for (int k = 0; k < dimFactors; ++k) {
+                        product += moment[factor * dimFactors + k] // secondMoment.get(factor, k)
+                                * transposedLoadings[trait * dimFactors + k]; // loadings.get(k, trait);
+                    }
+
+                    gradArray[index][factor * dimTrait + trait] +=
+                            (factorMean // mean.get(factor)
+                                    * data[taxon * dimTrait + trait] //y.get(trait)
+                                    - product)
+//                                         - product.get(factor, trait))
+                                    * rawGamma[trait]; // gamma.get(trait);
+
+                }
+            }
+        }
+    }
+
 
     private void computeGradientForOneTaxon(final int index,
                                             final int taxon,
@@ -346,28 +377,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
             stopWatches[1].start();
         }
 
-        for (int factor = 0; factor < dimFactors; ++factor) {
-            double factorMean = mean.get(factor);
-
-            for (int trait = 0; trait < dimTrait; ++trait) {
-                if (!missing[taxon * dimTrait + trait]) {
-
-                    double product = 0.0;
-                    for (int k = 0; k < dimFactors; ++k) {
-                        product += moment[factor * dimFactors + k] // secondMoment.get(factor, k)
-                                * transposedLoadings[trait * dimFactors + k]; // loadings.get(k, trait);
-                    }
-
-                    gradArray[index][factor * dimTrait + trait] +=
-                            (factorMean // mean.get(factor)
-                                    * data[taxon * dimTrait + trait] //y.get(trait)
-                                    - product)
-//                                         - product.get(factor, trait))
-                                    * rawGamma[trait]; // gamma.get(trait);
-
-                }
-            }
-        }
+        computeLoadingsGradientForOneTaxon(index, taxon, transposedLoadings, rawGamma, gradArray, mean, moment);
 
         if (TIMING) {
             stopWatches[1].stop();

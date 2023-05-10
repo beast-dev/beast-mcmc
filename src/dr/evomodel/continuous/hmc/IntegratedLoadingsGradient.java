@@ -253,19 +253,19 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         return join(gradients);
     }
 
+    protected class MeanAndMoment {
+        public final ReadableVector mean;
+        public final double[] moment;
 
-    private void computeGradientForOneTaxon(final int index,
-                                            final int taxon,
-                                            final ReadableMatrix loadings,
-                                            final double[] transposedLoadings,
-                                            final ReadableVector gamma,
-                                            final double[] rawGamma,
-                                            final WrappedNormalSufficientStatistics statistic,
-                                            final double[][] gradArray) {
-
-        if (TIMING) {
-            stopWatches[0].start();
+        public MeanAndMoment(ReadableVector mean, double[] moment) {
+            this.mean = mean;
+            this.moment = moment;
         }
+    }
+
+    protected MeanAndMoment getMeanAndMoment(final int taxon,
+                                             final WrappedNormalSufficientStatistics statistic) {
+
 
 //        final WrappedVector y = getTipData(taxon);
         final WrappedNormalSufficientStatistics dataKernel = getTipKernel(taxon);
@@ -318,6 +318,28 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         }
 
         double[] moment = ReadableMatrix.Utils.toArray(secondMoment);
+
+        return new MeanAndMoment(mean, moment);
+    }
+
+
+    private void computeGradientForOneTaxon(final int index,
+                                            final int taxon,
+                                            final ReadableMatrix loadings,
+                                            final double[] transposedLoadings,
+                                            final ReadableVector gamma,
+                                            final double[] rawGamma,
+                                            final WrappedNormalSufficientStatistics statistic,
+                                            final double[][] gradArray) {
+
+        if (TIMING) {
+            stopWatches[0].start();
+        }
+
+        final MeanAndMoment meanAndMoment = getMeanAndMoment(taxon, statistic);
+        final ReadableVector mean = meanAndMoment.mean;
+        final double[] moment = meanAndMoment.moment;
+
 
         if (TIMING) {
             stopWatches[0].stop();

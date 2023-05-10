@@ -322,13 +322,25 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         return new MeanAndMoment(mean, moment);
     }
 
-    private void computeLoadingsGradientForOneTaxon(final int index,
-                                                    final int taxon,
-                                                    final double[] transposedLoadings,
-                                                    final double[] rawGamma,
-                                                    final double[][] gradArray,
-                                                    ReadableVector mean,
-                                                    double[] moment) {
+    protected class GradientComponents {
+        public final double[] fty;
+        public final double[] ftfl;
+
+        public GradientComponents(double[] fty, double[] ftfl) {
+            this.fty = fty;
+            this.ftfl = ftfl;
+        }
+    }
+
+    protected GradientComponents computeGradientComponents(final int taxon,
+                                                           final double[] transposedLoadings,
+                                                           final MeanAndMoment meanAndMoment) {
+
+        final ReadableVector mean = meanAndMoment.mean;
+        final double[] moment = meanAndMoment.moment;
+
+        double fty[] = new double[dimFactors * dimTrait];
+        double ftfl[] = new double[dimFactors * dimTrait];
         for (int factor = 0; factor < dimFactors; ++factor) {
             double factorMean = mean.get(factor);
 
@@ -341,16 +353,33 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                                 * transposedLoadings[trait * dimFactors + k]; // loadings.get(k, trait);
                     }
 
-                    gradArray[index][factor * dimTrait + trait] +=
-                            (factorMean // mean.get(factor)
-                                    * data[taxon * dimTrait + trait] //y.get(trait)
-                                    - product)
-//                                         - product.get(factor, trait))
-                                    * rawGamma[trait]; // gamma.get(trait);
+                    int ind = factor * dimTrait + trait;
+
+                    fty[ind] += factorMean * data[taxon * dimTrait + trait];
+                    ftfl[ind] += product;
 
                 }
             }
         }
+
+        return new GradientComponents(fty, ftfl);
+    }
+
+    protected void computeLoadingsGradientForOneTaxon(int index,
+                                                      GradientComponents components,
+                                                      double[] rawGamma,
+                                                      double[][] gradArray) {
+
+        double[] fty = components.fty;
+        double[] ftfl = components.ftfl;
+        for (int factor = 0; factor < dimFactors; ++factor) {
+            for (int trait = 0; trait < dimTrait; ++trait) {
+                int ind = factor * dimTrait + trait;
+                gradArray[index][factor * dimTrait + trait] +=
+                        (fty[ind] - ftfl[ind]) * rawGamma[trait];
+            }
+        }
+
     }
 
 
@@ -368,16 +397,14 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         }
 
         final MeanAndMoment meanAndMoment = getMeanAndMoment(taxon, statistic);
-        final ReadableVector mean = meanAndMoment.mean;
-        final double[] moment = meanAndMoment.moment;
-
 
         if (TIMING) {
             stopWatches[0].stop();
             stopWatches[1].start();
         }
 
-        computeLoadingsGradientForOneTaxon(index, taxon, transposedLoadings, rawGamma, gradArray, mean, moment);
+        GradientComponents components = computeGradientComponents(taxon, transposedLoadings, meanAndMoment);
+        computeLoadingsGradientForOneTaxon(index, components, rawGamma, gradArray);
 
         if (TIMING) {
             stopWatches[1].stop();

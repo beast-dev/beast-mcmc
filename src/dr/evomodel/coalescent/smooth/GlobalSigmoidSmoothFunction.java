@@ -179,7 +179,8 @@ class GlobalSigmoidSmoothFunction {
                 (getLogOnePlusExponential(stepLocation2 - endTime, smoothRate) - getLogOnePlusExponential(stepLocation2 - startTime, smoothRate))
                 + getInverseOneMinusExponential(stepLocation1 - stepLocation3, smoothRate)
                 * getInverseOneMinusExponential(stepLocation2 - stepLocation3, smoothRate) *
-                (getLogOnePlusExponential(stepLocation3 - endTime, smoothRate) - getLogOnePlusExponential(stepLocation3 - startTime, smoothRate))) / smoothRate;
+                (getLogOnePlusExponential(stepLocation3 - endTime, smoothRate) - getLogOnePlusExponential(stepLocation3 - startTime, smoothRate))) / smoothRate
+                + endTime - startTime;
         return result;
     }
 

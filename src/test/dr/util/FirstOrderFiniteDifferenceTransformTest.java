@@ -4,6 +4,7 @@ import dr.inference.model.Parameter;
 import dr.math.MachineAccuracy;
 import dr.math.MathUtils;
 import dr.util.FirstOrderFiniteDifferenceTransform;
+import dr.util.Transform;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -17,15 +18,16 @@ public class FirstOrderFiniteDifferenceTransformTest extends TestCase {
     private double[] logisticScale;
 
 
-    private final FirstOrderFiniteDifferenceTransform noneFOFDT = new FirstOrderFiniteDifferenceTransform(d, FirstOrderFiniteDifferenceTransform.IncrementTransform.NONE, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-    private final FirstOrderFiniteDifferenceTransform logFOFDT = new FirstOrderFiniteDifferenceTransform(d, FirstOrderFiniteDifferenceTransform.IncrementTransform.LOG, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-    private final FirstOrderFiniteDifferenceTransform logitFOFDT = new FirstOrderFiniteDifferenceTransform(d, FirstOrderFiniteDifferenceTransform.IncrementTransform.LOGIT, 0.0, 3.14159);
+    private final FirstOrderFiniteDifferenceTransform noneFOFDT = new FirstOrderFiniteDifferenceTransform(d, new Transform.NoTransform());
+    private final FirstOrderFiniteDifferenceTransform logFOFDT = new FirstOrderFiniteDifferenceTransform(d, new Transform.LogTransform());
+    private final FirstOrderFiniteDifferenceTransform logitFOFDT = new FirstOrderFiniteDifferenceTransform(d, new Transform.ScaledLogitTransform(Math.PI, Math.E));
 
     public FirstOrderFiniteDifferenceTransformTest(String name) { super(name); }
 
     public void setUp() throws Exception {
         super.setUp();
 
+        // Set up values on all scales
         unconstrained = new double[d];
         sumScale = new double[d];
         exponentialScale = new double[d];

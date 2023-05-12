@@ -37,184 +37,16 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
         return null;
     }
 
-    //TODO: seems like we should be able to replace this with use of Transform.java functions?
-    public enum IncrementTransform {
-        LOG("log") {
-            public double transform(double x, double upper, double lower) {
-                return Math.log(x);
-            }
+    private final Transform.UnivariableTransform incrementTransform;
 
-            public double inverse(double x, double upper, double lower) {
-                return Math.exp(x);
-            }
-
-//            public double derivativeOfTransform(double x, double upper, double lower) {
-//                return 1.0 / x;
-//            }
-
-            public double grad(double x, double upper, double lower) {
-                return x;
-            }
-
-            public double updateGradientLogDensity(double gradient, double value, double upper, double lower) {
-                return gradient * value + 1.0;
-            }
-
-            public double derivativeOfTransform(double x, double upper, double lower) {
-                return 1.0 / x;
-            }
-
-            public double secondDerivativeOfTransform(double x, double upper, double lower) {
-                return 1.0 / (x * x);
-            }
-
-            public double derivativeOfInverseTransform(double x, double upper, double lower) {
-                return Math.exp(x);
-            }
-
-            public double secondDerivativeOfInverseTransform(double x, double upper, double lower) {
-                return Math.exp(x);
-            }
-
-            public boolean isInteriorDomain(double x, double upper, double lower) {
-                return x >= 0;
-            }
-
-        },
-        LOGIT("logit") {
-            public double transform(double x, double upper, double lower) {
-                throw new RuntimeException("not yet implemented");
-            }
-
-            public double inverse(double x, double upper, double lower) {
-                throw new RuntimeException("not yet implemented");
-            }
-
-            public double grad(double x, double upper, double lower) {
-                throw new RuntimeException("not yet implemented");
-            }
-
-            public double updateGradientLogDensity(double gradient, double value, double upper, double lower) {
-                throw new RuntimeException("not yet implemented");
-            }
-
-            public double derivativeOfTransform(double x, double upper, double lower) {
-                double scaledX = (x - lower) / (upper - lower);
-                return (upper - lower) * scaledX * (1-scaledX);
-            }
-
-            public double secondDerivativeOfTransform(double x, double upper, double lower) {
-                throw new RuntimeException("Not yet implemented");
-            }
-
-            public double derivativeOfInverseTransform(double y, double upper, double lower) {
-                double inverse = 1 / (1 + Math.exp(-y));
-                return (upper-lower) * inverse * (1 - inverse);
-            }
-
-            public double secondDerivativeOfInverseTransform(double x, double upper, double lower) {
-                throw new RuntimeException("Not yet implemented");
-            }
-
-            public boolean isInteriorDomain(double x, double upper, double lower) {
-                return x >= lower && x <= upper;
-            }
-
-            // Helper functions
-            private double getScaledLogit(double x, double upper, double lower) {
-                double u = (x - lower / (upper - lower));
-                return Math.log(u / (1 - u));
-            }
-
-            private double getScaledSigmoid(double y, double upper, double lower) {
-                double inverse = 1 / (1 + Math.exp(-y));
-                return lower + (upper-lower) * inverse;
-            }
-
-        },
-        NONE("none") {
-            public double transform(double x, double upper, double lower) {
-                return x;
-            }
-
-            public double inverse(double x, double upper, double lower) {
-                return x;
-            }
-
-            public double grad(double x, double upper, double lower) {
-                throw new RuntimeException("not yet implemented");
-            }
-
-            public double updateGradientLogDensity(double gradient, double value, double upper, double lower) {
-                throw new RuntimeException("not yet implemented");
-            }
-
-            public double derivativeOfTransform(double x, double upper, double lower) {
-                return 1.0;
-            }
-
-            public double secondDerivativeOfTransform(double x, double upper, double lower) {
-                return 0.0;
-            }
-
-            public double derivativeOfInverseTransform(double x, double upper, double lower) {
-                return 1.0;
-            }
-
-            public double secondDerivativeOfInverseTransform(double x, double upper, double lower) {
-                return 0.0;
-            }
-
-            public boolean isInteriorDomain(double x, double upper, double lower) {
-                return true;
-            }
-
-        };
-
-        IncrementTransform(String transformType) {
-            this.transformType = transformType;
-        }
-
-        public String getTransformType() {return transformType;}
-
-        private String transformType;
-        public abstract double transform(double x, double upper, double lower);
-        public abstract double inverse(double x, double upper, double lower);
-        public abstract double grad(double x, double upper, double lower);
-        public abstract double updateGradientLogDensity(double gradient, double value, double upper, double lower);
-        public abstract double derivativeOfTransform(double x, double upper, double lower);
-        public abstract double secondDerivativeOfTransform(double x, double upper, double lower);
-        public abstract double derivativeOfInverseTransform(double x, double upper, double lower);
-        public abstract double secondDerivativeOfInverseTransform(double x, double upper, double lower);
-        public abstract boolean isInteriorDomain(double x, double upper, double lower);
-
-        public static FirstOrderFiniteDifferenceTransform.IncrementTransform factory(String match) {
-            for (FirstOrderFiniteDifferenceTransform.IncrementTransform transform : FirstOrderFiniteDifferenceTransform.IncrementTransform.values()) {
-                if (match.equalsIgnoreCase(transform.getTransformType())) {
-                    return transform;
-                }
-            }
-            return null;
-        }
-    }
-
-    private final IncrementTransform incrementTransform;
-    private final double upper;
-    private final double lower;
-
-    public FirstOrderFiniteDifferenceTransform(int dim, IncrementTransform incrementTransform, double upper, double lower) {
+    public FirstOrderFiniteDifferenceTransform(int dim, Transform.UnivariableTransform incrementTransform) {
         super(dim);
         this.incrementTransform = incrementTransform;
-        this.upper = upper;
-        this.lower = lower;
     }
 
     @Override
     protected double[] transform(double[] values) {
-        double[] incrementTransformedValues = values.clone();
-        for (int i = 0; i < values.length; i++) {
-            incrementTransformedValues[i] = incrementTransform.transform(values[i], upper, lower);
-        }
+        double[] incrementTransformedValues = incrementTransform.transform(values, 0, dim);
         double[] increments = new double[values.length];
         increments[0] = incrementTransformedValues[0];
         for (int i = 1; i < values.length; i++) {
@@ -245,11 +77,11 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
     @Override
     protected double[] inverse(double[] values) {
         double[] fx = new double[values.length];
-        fx[0] = incrementTransform.inverse(values[0], upper, lower);
+        fx[0] = incrementTransform.inverse(values[0]);
         double s = values[0];
         for (int i = 1; i < values.length; i++) {
             s += values[i];
-            fx[i] = incrementTransform.inverse(s, upper, lower);
+            fx[i] = incrementTransform.inverse(s);
         }
         return fx;
     }
@@ -261,12 +93,7 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
 
     @Override
     public boolean isInInteriorDomain(double[] values) {
-        for (int i = 0; i < values.length; i++) {
-            if ( !incrementTransform.isInteriorDomain(values[i], upper, lower)) {
-                return false;
-            }
-        }
-        return true;
+        return incrementTransform.isInInteriorDomain(values, 0, dim);
     }
 
     public String getTransformName() {
@@ -306,7 +133,7 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
         double logJacobian = 0.0;
         // Transform is lower triangular
         for (int i = 0; i < values.length; i++) {
-            logJacobian += Math.log(incrementTransform.derivativeOfTransform(values[i], upper, lower));
+            logJacobian += Math.log(incrementTransform.derivative(values[i]));
         }
         return logJacobian;
     }
@@ -327,12 +154,12 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
         for (int i = 0; i < values.length; i++) {
             s += values[i];
             cumSum[i] = s;
-            jacobianDiagonal[i] = incrementTransform.derivativeOfInverseTransform(s, upper, lower);
+            jacobianDiagonal[i] = incrementTransform.gradientInverse(s);
         }
         double[] gradient = new double[values.length];
         double tmp = 0.0;
         for (int i = values.length - 1; i > -1; i--) {
-            tmp += (1.0 / jacobianDiagonal[i]) * incrementTransform.secondDerivativeOfInverseTransform(cumSum[i], upper, lower);
+            tmp += (1.0 / jacobianDiagonal[i]) * incrementTransform.secondDerivativeInverse(cumSum[i]);
             gradient[i] = tmp;
 //            gradient[i] = 1.0 / jacobianDiagonal[i] * incrementTransform.secondDerivativeOfInverseTransform(s, upper, lower);
         }
@@ -357,7 +184,7 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
         // Inverse transform is lower triangular
         for (int i = 0; i < values.length; i++) {
             s += values[i];
-            logJacobian += Math.log(incrementTransform.derivativeOfInverseTransform(s, upper, lower));
+            logJacobian += Math.log(incrementTransform.gradientInverse(s));
         }
         return logJacobian;
     }
@@ -371,7 +198,7 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
         for (int i = 0; i < dim; i++) {
             s += values[i];
             for (int j = 0; j < i + 1; j++) {
-                jacobian[j][i] = incrementTransform.derivativeOfInverseTransform(s, upper, lower);
+                jacobian[j][i] = incrementTransform.gradientInverse(s);
             }
         }
 //        System.err.println(new dr.math.matrixAlgebra.Matrix(jacobian));
@@ -400,18 +227,24 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
 //            if (transform == null) {
 //                transform = new Transform.NoTransform();
 //            }
-            double upper = xo.getAttribute("upper", Double.POSITIVE_INFINITY);
-            double lower = xo.getAttribute("lower", Double.NEGATIVE_INFINITY);
+            double upper = xo.getAttribute("upper", 1.0);
+            double lower = xo.getAttribute("lower", 0.0);
 
             String ttype = (String) xo.getAttribute(INCREMENT_TRANSFORM, "none");
-            FirstOrderFiniteDifferenceTransform.IncrementTransform transform = FirstOrderFiniteDifferenceTransform.IncrementTransform.factory(ttype);
-            if (transform == FirstOrderFiniteDifferenceTransform.IncrementTransform.factory("logit") && !(Double.isFinite(lower) && Double.isFinite(upper))) {
-                throw new RuntimeException("Logit transform on increments requires finite upper and lower bounds.");
+            UnivariableTransform incrementTransform;
+            if ( ttype.equalsIgnoreCase("none") ) {
+                incrementTransform = new Transform.NoTransform();
+            } else if ( ttype.equalsIgnoreCase("log") ) {
+                incrementTransform = new Transform.LogTransform();
+            } else if ( ttype.equalsIgnoreCase("logit") ) {
+                incrementTransform = new Transform.ScaledLogitTransform(lower, upper);
+            } else {
+                throw new RuntimeException("Invalid option for "+ INCREMENT_TRANSFORM);
             }
 
             int dim = xo.getIntegerAttribute(DIMENSION);
 
-            return new FirstOrderFiniteDifferenceTransform(dim, transform, upper, lower);
+            return new FirstOrderFiniteDifferenceTransform(dim, incrementTransform);
 
         }
 

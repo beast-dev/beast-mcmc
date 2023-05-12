@@ -32,6 +32,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.shrinkage.BayesianBridgeDistributionModelParser;
 import dr.util.FirstOrderFiniteDifferenceTransform;
+import dr.util.Transform;
 import dr.xml.*;
 
 public class BayesianBridgeMarkovRandomFieldLikelihoodParser extends AbstractXMLObjectParser {
@@ -55,18 +56,24 @@ public class BayesianBridgeMarkovRandomFieldLikelihoodParser extends AbstractXML
 
         ParametricDistributionModel firstElementDistribution = (ParametricDistributionModel) xo.getChild(FIRST_ELEMENT_DISTRIBUTION).getChild(0);
 
-        double upper = xo.getAttribute("upper", Double.POSITIVE_INFINITY);
-        double lower = xo.getAttribute("lower", Double.NEGATIVE_INFINITY);
+        double upper = xo.getAttribute("upper", 1.0);
+        double lower = xo.getAttribute("lower", 0.0);
 
         String ttype = (String) xo.getAttribute(INCREMENT_TRANSFORM, "none");
-        FirstOrderFiniteDifferenceTransform.IncrementTransform incrementTransform = FirstOrderFiniteDifferenceTransform.IncrementTransform.factory(ttype);
-        if (incrementTransform == FirstOrderFiniteDifferenceTransform.IncrementTransform.factory("logit") && !(Double.isFinite(lower) && Double.isFinite(upper))) {
-            throw new RuntimeException("Logit transform on increments requires finite upper and lower bounds.");
+        Transform.UnivariableTransform incrementTransform;
+        if ( ttype.equalsIgnoreCase("none") ) {
+            incrementTransform = new Transform.NoTransform();
+        } else if ( ttype.equalsIgnoreCase("log") ) {
+            incrementTransform = new Transform.LogTransform();
+        } else if ( ttype.equalsIgnoreCase("logit") ) {
+            incrementTransform = new Transform.ScaledLogitTransform(lower, upper);
+        } else {
+            throw new RuntimeException("Invalid option for "+ INCREMENT_TRANSFORM);
         }
 
         int dim = variables.getDimension();
 
-        FirstOrderFiniteDifferenceTransform transform = new FirstOrderFiniteDifferenceTransform(dim, incrementTransform, upper, lower);
+        FirstOrderFiniteDifferenceTransform transform = new FirstOrderFiniteDifferenceTransform(dim, incrementTransform);
 
         return new BayesianBridgeMarkovRandomFieldLikelihood(variables, bridge, firstElementDistribution, transform);
     }

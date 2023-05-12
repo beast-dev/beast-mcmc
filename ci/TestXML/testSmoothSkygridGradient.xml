@@ -1826,9 +1826,9 @@
 		<smoothSkygridLikelihood idref="smoothSkygrid"/>
 	</smoothSkygridGradient>
 	
-	<report>
-		<smoothSkygridGradient idref="smoothSkygridGradient"/>
-	</report>
+<!--	<report>-->
+<!--		<smoothSkygridGradient idref="smoothSkygridGradient"/>-->
+<!--	</report>-->
 
 
 

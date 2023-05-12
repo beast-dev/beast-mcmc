@@ -350,21 +350,6 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
 
         return gradient;
     }
-    public double[] getNumericalGradientLogJacobianInverse(double[] values) {
-        double h = 1e-10;
-        double[] tmpv = values.clone();
-        double[] numGrad = new double[dim];
-        for (int i = 0; i < dim; i++) {
-            tmpv[i] = values[i] + h;
-            double fx_plus_h = getLogJacobianInverse(tmpv);
-            tmpv[i] = values[i] - h;
-            double fx_minus_h = getLogJacobianInverse(tmpv);
-            tmpv[i] = values[i];
-            numGrad[i] = (fx_plus_h - fx_minus_h)/(2 * h);
-        }
-        tmpv = inverse(tmpv);
-        return numGrad;
-    }
 
     public double getLogJacobianInverse(double[] values) {
         double logJacobian = 0.0;
@@ -392,30 +377,6 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
 //        System.err.println(new dr.math.matrixAlgebra.Matrix(jacobian));
 //        double[][] numJacob = computeNumericalJacobianInverse(values);
 //        System.err.println(new dr.math.matrixAlgebra.Matrix(numJacob));
-        return jacobian;
-    }
-
-    // jacobian[j][i] = d x_i / d y_j
-    private double[][] computeNumericalJacobianInverse(double[] values) {
-        double h = 1e-10;
-        double[] y = values.clone();
-        double[] x = inverse(values);
-
-        double[][] jacobian = new double[dim][dim];
-
-        for (int i = 0; i < dim; i++) {
-            for (int j = 0; j < dim; j++) {
-                y[j] = values[j] + h;
-                x = inverse(y);
-                double tmp = x[i];
-                y[j] = values[j] - h;
-                x = inverse(y);
-                tmp -= x[i];
-                y[j] = values[j];
-                jacobian[j][i] = tmp/(2.0 * h);
-            }
-        }
-
         return jacobian;
     }
 

@@ -31,12 +31,13 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.*;
 import dr.util.FirstOrderFiniteDifferenceTransform;
+import dr.xml.Reportable;
 
 import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.BAYESIAN_BRIDGE;
 
 public class BayesianBridgeMarkovRandomFieldLikelihood extends AbstractModelLikelihood implements
         BayesianBridgeStatisticsProvider, PriorPreconditioningProvider,
-        GradientWrtParameterProvider, HessianWrtParameterProvider {
+        GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable {
 
     public BayesianBridgeMarkovRandomFieldLikelihood(Parameter variables,
                                                                 BayesianBridgeDistributionModel bridge,
@@ -247,4 +248,12 @@ public class BayesianBridgeMarkovRandomFieldLikelihood extends AbstractModelLike
     private final ParametricDistributionModel firstElementDistribution;
     private final int dim;
     private final FirstOrderFiniteDifferenceTransform transform;
+
+    /*********************
+     * Reportable interface
+     *********************/
+    @Override
+    public String getReport() {
+        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, 1e-6, 1E-3);
+    }
 }

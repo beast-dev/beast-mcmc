@@ -1,0 +1,40 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <parameter id="parameter1" value="0.1 1.2 3.0 3.0 7.1231 8.312" lower="0.0"/>
+
+    <bayesianBridgeMarkovRandomField id="MRF1" type="log">
+        <parameter idref="parameter1"/>
+        <firstElementDistribution>
+            <normalDistributionModel>
+                <mean>
+                    <parameter value="0.0"/>
+                </mean>
+                <stdev>
+                    <parameter value="1.0"/>
+                </stdev>
+            </normalDistributionModel>
+        </firstElementDistribution>
+        <incrementDistribution>
+            <bayesianBridgeDistribution id="bridge">
+                <globalScale>
+                    <parameter id="globalScale" value="1.0" lower="0.0"/>
+                </globalScale>
+                <localScale>
+                    <parameter id="localScale" value="1.0" dimension="5"/>
+                </localScale>
+                <exponent>
+                    <parameter value="1.0"/>
+                </exponent>
+                <!-- <slabWidth>
+                    <parameter value="2.0"/>
+                </slabWidth> -->
+            </bayesianBridgeDistribution>
+        </incrementDistribution>
+    </bayesianBridgeMarkovRandomField>
+
+    <report>
+        <bayesianBridgeMarkovRandomField idref="MRF1"/>
+    </report>
+
+</beast>

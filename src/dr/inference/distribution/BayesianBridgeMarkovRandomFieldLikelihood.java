@@ -34,11 +34,11 @@ import dr.util.FirstOrderFiniteDifferenceTransform;
 
 import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.BAYESIAN_BRIDGE;
 
-public class DirectionalBayesianBridgeMarkovRandomFieldLikelihood extends AbstractModelLikelihood implements
+public class BayesianBridgeMarkovRandomFieldLikelihood extends AbstractModelLikelihood implements
         BayesianBridgeStatisticsProvider, PriorPreconditioningProvider,
         GradientWrtParameterProvider, HessianWrtParameterProvider {
 
-    public DirectionalBayesianBridgeMarkovRandomFieldLikelihood(Parameter variables,
+    public BayesianBridgeMarkovRandomFieldLikelihood(Parameter variables,
                                                                 BayesianBridgeDistributionModel bridge,
                                                                 ParametricDistributionModel firstElementDistribution,
                                                                 FirstOrderFiniteDifferenceTransform transform) {

@@ -25,7 +25,7 @@
 
 package dr.inferencexml.distribution;
 
-import dr.inference.distribution.DirectionalBayesianBridgeMarkovRandomFieldLikelihood;
+import dr.inference.distribution.BayesianBridgeMarkovRandomFieldLikelihood;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.distribution.shrinkage.*;
 import dr.inference.model.Parameter;
@@ -34,9 +34,9 @@ import dr.inferencexml.distribution.shrinkage.BayesianBridgeDistributionModelPar
 import dr.util.FirstOrderFiniteDifferenceTransform;
 import dr.xml.*;
 
-public class DirectionalBayesianBridgeMarkovRandomFieldLikelihoodParser extends AbstractXMLObjectParser {
+public class BayesianBridgeMarkovRandomFieldLikelihoodParser extends AbstractXMLObjectParser {
 
-    public static final String NAME = "directionalBayesianBridgeMarkovRandomField";
+    public static final String NAME = "bayesianBridgeMarkovRandomField";
     public static final String BAYESIAN_BRIDGE_DISTRIBUTION = "incrementDistribution";
     public static final String FIRST_ELEMENT_DISTRIBUTION = "firstElementDistribution";
     public static final String INCREMENT_TRANSFORM = "type";
@@ -68,7 +68,7 @@ public class DirectionalBayesianBridgeMarkovRandomFieldLikelihoodParser extends 
 
         FirstOrderFiniteDifferenceTransform transform = new FirstOrderFiniteDifferenceTransform(dim, incrementTransform, upper, lower);
 
-        return new DirectionalBayesianBridgeMarkovRandomFieldLikelihood(variables, bridge, firstElementDistribution, transform);
+        return new BayesianBridgeMarkovRandomFieldLikelihood(variables, bridge, firstElementDistribution, transform);
     }
 
     //************************************************************************

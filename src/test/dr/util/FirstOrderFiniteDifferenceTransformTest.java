@@ -43,17 +43,17 @@ public class FirstOrderFiniteDifferenceTransformTest extends TestCase {
 
     }
 
-    private double getH(double x) {
+    public static double getH(double x) {
         // As in NumericalDerivative.java
         return MachineAccuracy.SQRT_EPSILON*(Math.abs(x) + 1.0);
     }
 
-    private double getRelativeTolerance(double x) {
+    public static double getRelativeTolerance(double x, double acceptableProportionateError) {
         return Math.abs(x) * acceptableProportionateError;
     }
 
     // jacobian[j][i] = d x_i / d y_j
-    private double[][] computeNumericalJacobianInverse(double[] values, FirstOrderFiniteDifferenceTransform transform) {
+    public static double[][] computeNumericalJacobianInverse(double[] values, Transform.MultivariateTransform transform) {
         int dim = transform.getDimension();
         double[] y = values.clone();
         double[] x = transform.inverse(values, 0, dim);
@@ -77,22 +77,27 @@ public class FirstOrderFiniteDifferenceTransformTest extends TestCase {
         return jacobian;
     }
 
-    public double[] getNumericalGradientLogJacobianInverse(double[] values, FirstOrderFiniteDifferenceTransform transform) {
+    public static double getLogJacobianInverse(double[] values, Transform.MultivariateTransform transform, int dim) {
+        return -transform.getLogJacobian(transform.inverse(values, 0, dim), 0, dim);
+    }
+
+    public static double[] getNumericalGradientLogJacobianInverse(double[] values, Transform.MultivariateTransform transform) {
         int dim = transform.getDimension();
         double[] tmpv = values.clone();
         double[] numGrad = new double[dim];
         for (int i = 0; i < dim; i++) {
             double h = getH(values[i]);
             tmpv[i] = values[i] + h;
-            double fx_plus_h = transform.getLogJacobianInverse(tmpv);
+            double fx_plus_h = getLogJacobianInverse(tmpv, transform, dim);
             tmpv[i] = values[i] - h;
-            double fx_minus_h = transform.getLogJacobianInverse(tmpv);
+            double fx_minus_h = getLogJacobianInverse(tmpv, transform, dim);
             tmpv[i] = values[i];
             numGrad[i] = (fx_plus_h - fx_minus_h)/(2 * h);
         }
 //        tmpv = transform.inverse(tmpv, 0, dim);
         return numGrad;
     }
+
 
     public void testForward() {
         double[] transformed = noneFOFDT.transform(sumScale, 0, d);
@@ -130,7 +135,7 @@ public class FirstOrderFiniteDifferenceTransformTest extends TestCase {
         numericJacobianInverse = computeNumericalJacobianInverse(sumScale, noneFOFDT);
         for (int i = 0; i < d; i++) {
             for (int j = 0; j < d; j++) {
-                assertEquals(numericJacobianInverse[i][j], jacobianInverse[i][j], getRelativeTolerance(jacobianInverse[i][j]));
+                assertEquals(numericJacobianInverse[i][j], jacobianInverse[i][j], getRelativeTolerance(jacobianInverse[i][j], acceptableProportionateError));
             }
         }
 
@@ -138,7 +143,7 @@ public class FirstOrderFiniteDifferenceTransformTest extends TestCase {
         numericJacobianInverse = computeNumericalJacobianInverse(exponentialScale, logFOFDT);
         for (int i = 0; i < d; i++) {
             for (int j = 0; j < d; j++) {
-                assertEquals(numericJacobianInverse[i][j], jacobianInverse[i][j], getRelativeTolerance(jacobianInverse[i][j]));
+                assertEquals(numericJacobianInverse[i][j], jacobianInverse[i][j], getRelativeTolerance(jacobianInverse[i][j], acceptableProportionateError));
             }
         }
 
@@ -151,13 +156,13 @@ public class FirstOrderFiniteDifferenceTransformTest extends TestCase {
         gradLogJacobianInv = noneFOFDT.getGradientLogJacobianInverse(sumScale);
         numGradLogJacobianInv = getNumericalGradientLogJacobianInverse(sumScale, noneFOFDT);
         for (int i = 0; i < d; i++) {
-            assertEquals(numGradLogJacobianInv[i], gradLogJacobianInv[i], getRelativeTolerance(gradLogJacobianInv[i]));
+            assertEquals(numGradLogJacobianInv[i], gradLogJacobianInv[i], getRelativeTolerance(gradLogJacobianInv[i], acceptableProportionateError));
         }
 
         gradLogJacobianInv = logFOFDT.getGradientLogJacobianInverse(exponentialScale);
         numGradLogJacobianInv = getNumericalGradientLogJacobianInverse(exponentialScale, logFOFDT);
         for (int i = 0; i < d; i++) {
-            assertEquals(numGradLogJacobianInv[i], gradLogJacobianInv[i], getRelativeTolerance(gradLogJacobianInv[i]));
+            assertEquals(numGradLogJacobianInv[i], gradLogJacobianInv[i], getRelativeTolerance(gradLogJacobianInv[i], acceptableProportionateError));
         }
 
     }

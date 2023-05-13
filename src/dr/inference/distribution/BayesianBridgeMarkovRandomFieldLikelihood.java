@@ -90,8 +90,8 @@ public class BayesianBridgeMarkovRandomFieldLikelihood extends AbstractModelLike
         double logPdf = 0.0;
         logPdf += firstElementDistribution.logPdf(transformedVariables[0]);
         logPdf += bridge.logPdf(transformedVariables[1]);
-//        logPdf += transform.getLogJacobian(variables.getParameterValues());
-        logPdf -= transform.getLogJacobianInverse(transform.transform(variables.getParameterValues(),0,dim));
+        logPdf += transform.getLogJacobian(variables.getParameterValues());
+//        logPdf -= transform.getLogJacobianInverse(transform.transform(variables.getParameterValues(),0,dim));
         return logPdf;
     }
 
@@ -231,6 +231,7 @@ public class BayesianBridgeMarkovRandomFieldLikelihood extends AbstractModelLike
      * PriorPreconditioningProvider interface
      *********************/
     @Override
+    // NB: Prior preconditioning only makes sense if the HMC operator is using a firstOrderFiniteDifferenceTransform
     public double getStandardDeviation(int index) {
         if (bridge instanceof PriorPreconditioningProvider && firstElementDistribution instanceof PriorPreconditioningProvider) {
             if (index == 0) {

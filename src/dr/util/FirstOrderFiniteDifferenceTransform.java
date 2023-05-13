@@ -97,7 +97,7 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
     }
 
     public String getTransformName() {
-        return "FiniteDifference";
+        return "firstOrderFiniteDifference";
     }
 
     @Override
@@ -164,30 +164,20 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
 //            gradient[i] = 1.0 / jacobianDiagonal[i] * incrementTransform.secondDerivativeOfInverseTransform(s, upper, lower);
         }
 
-//        double[] numGrad = getNumericalGradientLogJacobianInverse(values);
-//        System.err.println("\n");
-//        System.err.println("Values:              " + new dr.math.matrixAlgebra.Vector(values));
-//        System.err.println("Transformed values:  " + new dr.math.matrixAlgebra.Vector(transform(values)));
-//        System.err.println("Jacobian:            " + getLogJacobian(values));
-//        System.err.println("Jacobian's Diagonal: " + new dr.math.matrixAlgebra.Vector(jacobianDiagonal));
-//        System.err.println("Jacobian of inverse: " + getLogJacobianInverse(values));
-//        System.err.println("Numerical gradient:  " + new dr.math.matrixAlgebra.Vector(numGrad));
-//        System.err.println("Analytical gradient: " + new dr.math.matrixAlgebra.Vector(gradient));
-//        System.err.println("\n");
-
         return gradient;
     }
 
-    public double getLogJacobianInverse(double[] values) {
-        double logJacobian = 0.0;
-        double s = 0.0;
-        // Inverse transform is lower triangular
-        for (int i = 0; i < values.length; i++) {
-            s += values[i];
-            logJacobian += Math.log(incrementTransform.gradientInverse(s));
-        }
-        return logJacobian;
-    }
+//    // TODO: deprecate
+//    public double getLogJacobianInverse(double[] values) {
+//        double logJacobian = 0.0;
+//        double s = 0.0;
+//        // Inverse transform is lower triangular
+//        for (int i = 0; i < values.length; i++) {
+//            s += values[i];
+//            logJacobian += Math.log(incrementTransform.gradientInverse(s));
+//        }
+//        return logJacobian;
+//    }
 
     @Override
     // jacobian[j][i] = d x_i / d y_j

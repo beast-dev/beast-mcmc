@@ -110,23 +110,23 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
         throw new RuntimeException("Not yet implemented.");
     }
 
-//    @Override
-//    protected double[] updateGradientLogDensity(double[] gradient, double[] values) {
-//
-//        double[] updated = new double[dim];
-//        double[] transformedValues = transform(values);
-//        updated[dim - 1] = gradient[dim - 1] * incrementTransform.derivativeOfInverseTransform(transformedValues[dim - 1], upper, lower);
-//        for (int i = dim - 2; i > -1; i--) {
-//            updated[i] = gradient[i] * incrementTransform.derivativeOfInverseTransform(transformedValues[i], upper, lower) + updated[i + 1];
-//        }
-//        double[] gradLogJacobian = getGradientLogJacobianInverse(values);
-//        for (int i = dim - 1; i > -1; i--) {
-//            updated[i] += gradLogJacobian[i];
-//        }
-//
-//        return updated;
-//
-//    }
+    @Override
+    protected double[] updateGradientLogDensity(double[] gradient, double[] values) {
+
+        double[] updated = new double[dim];
+        double[] transformedValues = transform(values);
+        updated[dim - 1] = gradient[dim - 1] * incrementTransform.gradientInverse(transformedValues[dim - 1]);
+        for (int i = dim - 2; i > -1; i--) {
+            updated[i] = gradient[i] * incrementTransform.gradientInverse(transformedValues[i]) + updated[i + 1];
+        }
+        double[] gradLogJacobian = getGradientLogJacobianInverse(values);
+        for (int i = dim - 1; i > -1; i--) {
+            updated[i] += gradLogJacobian[i];
+        }
+
+        return updated;
+
+    }
 
     @Override
     public double getLogJacobian(double[] values) {

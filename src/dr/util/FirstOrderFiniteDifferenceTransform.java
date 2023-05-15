@@ -111,6 +111,8 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
     }
 
     @Override
+    // values: the untransformed values
+    // gradient: the gradient wrt the (untransformed) values
     protected double[] updateGradientLogDensity(double[] gradient, double[] values) {
         double[] updated = new double[dim];
         double[] transformedValues = transform(values);
@@ -127,7 +129,7 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
             updated[i] = gradient[i] * jacobianInverseFirstRow[i] + updated[i+1];
         }
 
-        double[] gradLogJacobian = getGradientLogJacobianInverse(values);
+        double[] gradLogJacobian = getGradientLogJacobianInverse(transformedValues);
         for (int i = dim - 1; i > -1; i--) {
             updated[i] += gradLogJacobian[i];
         }

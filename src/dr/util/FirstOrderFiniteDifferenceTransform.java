@@ -112,13 +112,21 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
 
     @Override
     protected double[] updateGradientLogDensity(double[] gradient, double[] values) {
-
         double[] updated = new double[dim];
         double[] transformedValues = transform(values);
-        updated[dim - 1] = gradient[dim - 1] * incrementTransform.gradientInverse(transformedValues[dim - 1]);
-        for (int i = dim - 2; i > -1; i--) {
-            updated[i] = gradient[i] * incrementTransform.gradientInverse(transformedValues[i]) + updated[i + 1];
+
+        double[] jacobianInverseFirstRow = new double[dim];
+        double s = 0.0;
+        for (int i = 0; i < dim; i++) {
+            s += transformedValues[i];
+            jacobianInverseFirstRow[i] = incrementTransform.gradientInverse(s);
         }
+
+        updated[dim - 1] = gradient[dim - 1] * jacobianInverseFirstRow[dim - 1];
+        for (int i = dim - 2; i > -1; i--) {
+            updated[i] = gradient[i] * jacobianInverseFirstRow[i] + updated[i+1];
+        }
+
         double[] gradLogJacobian = getGradientLogJacobianInverse(values);
         for (int i = dim - 1; i > -1; i--) {
             updated[i] += gradLogJacobian[i];
@@ -140,13 +148,6 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
 
     @Override
     public double[] getGradientLogJacobianInverse(double[] values) {
-
-//        // If x are the original values and y=f(x) are the transformed values,
-//        // this is d/dy det(log(Jacobian(y->x))
-//        // Call the incrementTransform g
-//        // y[i] = g(x[i]) - g(x[i-1])
-//        // x[i] = g^-1(sum_k=1^i y[i])
-//        // The transform is triangular, so we only need the diagonals
         // jacobianDiagonal == diagonal of Jacobian of inverse transform
         double[] jacobianDiagonal = new double[values.length];
         double s = 0.0;
@@ -161,23 +162,10 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
         for (int i = values.length - 1; i > -1; i--) {
             tmp += (1.0 / jacobianDiagonal[i]) * incrementTransform.secondDerivativeInverse(cumSum[i]);
             gradient[i] = tmp;
-//            gradient[i] = 1.0 / jacobianDiagonal[i] * incrementTransform.secondDerivativeOfInverseTransform(s, upper, lower);
         }
 
         return gradient;
     }
-
-//    // TODO: deprecate
-//    public double getLogJacobianInverse(double[] values) {
-//        double logJacobian = 0.0;
-//        double s = 0.0;
-//        // Inverse transform is lower triangular
-//        for (int i = 0; i < values.length; i++) {
-//            s += values[i];
-//            logJacobian += Math.log(incrementTransform.gradientInverse(s));
-//        }
-//        return logJacobian;
-//    }
 
     @Override
     // jacobian[j][i] = d x_i / d y_j
@@ -191,9 +179,6 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
                 jacobian[j][i] = incrementTransform.gradientInverse(s);
             }
         }
-//        System.err.println(new dr.math.matrixAlgebra.Matrix(jacobian));
-//        double[][] numJacob = computeNumericalJacobianInverse(values);
-//        System.err.println(new dr.math.matrixAlgebra.Matrix(numJacob));
         return jacobian;
     }
 

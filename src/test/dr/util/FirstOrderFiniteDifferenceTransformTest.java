@@ -48,7 +48,7 @@ public class FirstOrderFiniteDifferenceTransformTest extends TestCase {
         return MachineAccuracy.SQRT_EPSILON*(Math.abs(x) + 1.0);
     }
 
-    public static double getRelativeTolerance(double x, double acceptableProportionateError) {
+    public static double getTolerance(double x, double acceptableProportionateError) {
         return Math.abs(x) * acceptableProportionateError;
     }
 
@@ -98,6 +98,25 @@ public class FirstOrderFiniteDifferenceTransformTest extends TestCase {
         return numGrad;
     }
 
+    public static double[] updateGradLogDens(double[] gradient, double[] value, double[] gradientLogJacobianInverse, Transform.MultivariateTransform transform) {
+        // values = untransformed (R)
+        double[] transformedValues = transform.transform(value, 0, value.length);
+        double[][] jacobianInverse = transform.computeJacobianMatrixInverse(transformedValues);
+        double[] updatedGradient = new double[gradient.length];
+        for (int i = 0; i < gradient.length; i++) {
+            for (int j = 0; j < gradient.length; j++) {
+                updatedGradient[i] += jacobianInverse[i][j] * gradient[j];
+            }
+        }
+//        double[] gradientLogJacobianInverse = transform.getGradientLogJacobianInverse(transformedValues);
+        // Add gradient log jacobian
+        for (int i = 0; i < gradient.length; i++) {
+            updatedGradient[i] += gradientLogJacobianInverse[i];
+        }
+        return updatedGradient;
+    }
+
+
 
     public void testForward() {
         double[] transformed = noneFOFDT.transform(sumScale, 0, d);
@@ -135,7 +154,7 @@ public class FirstOrderFiniteDifferenceTransformTest extends TestCase {
         numericJacobianInverse = computeNumericalJacobianInverse(sumScale, noneFOFDT);
         for (int i = 0; i < d; i++) {
             for (int j = 0; j < d; j++) {
-                assertEquals(numericJacobianInverse[i][j], jacobianInverse[i][j], getRelativeTolerance(jacobianInverse[i][j], acceptableProportionateError));
+                assertEquals(numericJacobianInverse[i][j], jacobianInverse[i][j], getTolerance(jacobianInverse[i][j], acceptableProportionateError));
             }
         }
 
@@ -143,7 +162,7 @@ public class FirstOrderFiniteDifferenceTransformTest extends TestCase {
         numericJacobianInverse = computeNumericalJacobianInverse(exponentialScale, logFOFDT);
         for (int i = 0; i < d; i++) {
             for (int j = 0; j < d; j++) {
-                assertEquals(numericJacobianInverse[i][j], jacobianInverse[i][j], getRelativeTolerance(jacobianInverse[i][j], acceptableProportionateError));
+                assertEquals(numericJacobianInverse[i][j], jacobianInverse[i][j], getTolerance(jacobianInverse[i][j], acceptableProportionateError));
             }
         }
 
@@ -156,29 +175,47 @@ public class FirstOrderFiniteDifferenceTransformTest extends TestCase {
         gradLogJacobianInv = noneFOFDT.getGradientLogJacobianInverse(sumScale);
         numGradLogJacobianInv = getNumericalGradientLogJacobianInverse(sumScale, noneFOFDT);
         for (int i = 0; i < d; i++) {
-            assertEquals(numGradLogJacobianInv[i], gradLogJacobianInv[i], getRelativeTolerance(gradLogJacobianInv[i], acceptableProportionateError));
+            assertEquals(numGradLogJacobianInv[i], gradLogJacobianInv[i], getTolerance(gradLogJacobianInv[i], acceptableProportionateError));
         }
 
         gradLogJacobianInv = logFOFDT.getGradientLogJacobianInverse(exponentialScale);
         numGradLogJacobianInv = getNumericalGradientLogJacobianInverse(exponentialScale, logFOFDT);
         for (int i = 0; i < d; i++) {
-            assertEquals(numGradLogJacobianInv[i], gradLogJacobianInv[i], getRelativeTolerance(gradLogJacobianInv[i], acceptableProportionateError));
+            assertEquals(numGradLogJacobianInv[i], gradLogJacobianInv[i], getTolerance(gradLogJacobianInv[i], acceptableProportionateError));
+        }
+    }
+
+    public void testUpdateGradient() {
+        // An arbitrary value to take as the gradient
+        double[] gradient = new double[d];
+        for (int i = 0; i < d; i++) {
+            gradient[i] = (((double)i) - 3.0) * 42.0;
+        }
+
+        double[] gradLogJacobian = noneFOFDT.getGradientLogJacobianInverse(sumScale);
+        double[] updatedFullMatrix = updateGradLogDens(gradient, sumScale, gradLogJacobian, noneFOFDT);
+        double[] updated = noneFOFDT.updateGradientLogDensity(gradient, sumScale, 0, d);
+        for (int i = 0; i < d; i++) {
+            assertEquals(updatedFullMatrix[i], updated[i], getTolerance(updated[i], acceptableProportionateError));
+        }
+
+        gradLogJacobian = logFOFDT.getGradientLogJacobianInverse(exponentialScale);
+        updatedFullMatrix = updateGradLogDens(gradient, exponentialScale, gradLogJacobian, logFOFDT);
+        updated = logFOFDT.updateGradientLogDensity(gradient, exponentialScale, 0, d);
+        for (int i = 0; i < d; i++) {
+            assertEquals(updatedFullMatrix[i], updated[i], getTolerance(updated[i], acceptableProportionateError));
         }
 
     }
 
     public void testFirstOrderFiniteDifferenceTransform() {
-
-
-//        System.err.println("unconstrained (\"transformed\") values: " + new dr.math.matrixAlgebra.Vector(unconstrained));
-
         // TODO: add test of logit-scale to all these components!
         // TODO: add test of updateGradientLogDensity once O(n) implementation is complete
         testForward();
         testReverse();
         testJacobian();
         testGradientLogJacobian();
-
+        testUpdateGradient();
     }
 
     public static Test suite() {

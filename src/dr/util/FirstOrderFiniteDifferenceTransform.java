@@ -111,8 +111,10 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
     }
 
     @Override
+    // This gets called on the untransformed values to update the gradient to the transformed space
     // values: the untransformed values
     // gradient: the gradient wrt the (untransformed) values
+    // see for example updateMomentum(), line 789 of HamiltonianMonteCarloOperator.java
     protected double[] updateGradientLogDensity(double[] gradient, double[] values) {
         double[] updated = new double[dim];
         double[] transformedValues = transform(values);
@@ -143,12 +145,13 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
         double logJacobian = 0.0;
         // Transform is lower triangular
         for (int i = 0; i < values.length; i++) {
-            logJacobian += Math.log(incrementTransform.derivative(values[i]));
+            logJacobian += Math.log(incrementTransform.derivativeOfTransformWrtValue(values[i]));
         }
         return logJacobian;
     }
 
     @Override
+    // called on the transformed values
     public double[] getGradientLogJacobianInverse(double[] values) {
         // jacobianDiagonal == diagonal of Jacobian of inverse transform
         double[] jacobianDiagonal = new double[values.length];
@@ -162,7 +165,7 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
         double[] gradient = new double[values.length];
         double tmp = 0.0;
         for (int i = values.length - 1; i > -1; i--) {
-            tmp += (1.0 / jacobianDiagonal[i]) * incrementTransform.secondDerivativeInverse(cumSum[i]);
+            tmp += (1.0 / jacobianDiagonal[i]) * incrementTransform.secondDerivativeOfInverseTransformWrtValue(cumSum[i]);
             gradient[i] = tmp;
         }
 
@@ -170,6 +173,7 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
     }
 
     @Override
+    // Gets called on *transformed* values, as per Transform.updateGradientInverseUnWeightedLogDensity()
     // jacobian[j][i] = d x_i / d y_j
     public double[][] computeJacobianMatrixInverse(double[] values) {
         double[][] jacobian = new double[dim][dim];

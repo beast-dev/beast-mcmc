@@ -46,19 +46,19 @@ public class InverseFirstOrderFiniteDifferenceTransformTest extends TestCase {
     }
 
     public void testForward() {
-//        assertEquals(-0.1666666666666667, sumScale[0], 1e-8);
-//        assertEquals(-0.2500000000000000, sumScale[1], 1e-8);
-//        assertEquals(-0.2500000000000000, sumScale[2], 1e-8);
-//        assertEquals(-0.1666666666666667, sumScale[3], 1e-8);
-//        assertEquals( 0.0000000000000000, sumScale[4], 1e-8);
-//        assertEquals( 0.2500000000000000, sumScale[5], 1e-8);
-//
-//        assertEquals(0.8464817248906141, exponentialScale[0], 1e-8);
-//        assertEquals(0.7788007830714049, exponentialScale[1], 1e-8);
-//        assertEquals(0.7788007830714049, exponentialScale[2], 1e-8);
-//        assertEquals(0.8464817248906140, exponentialScale[3], 1e-8);
-//        assertEquals(1.0000000000000000, exponentialScale[4], 1e-8);
-//        assertEquals(1.2840254166877414, exponentialScale[5], 1e-8);
+        assertEquals(-0.1666666666666667, sumScale[0], 1e-8);
+        assertEquals(-0.2500000000000000, sumScale[1], 1e-8);
+        assertEquals(-0.2500000000000000, sumScale[2], 1e-8);
+        assertEquals(-0.1666666666666667, sumScale[3], 1e-8);
+        assertEquals( 0.0000000000000000, sumScale[4], 1e-8);
+        assertEquals( 0.2500000000000000, sumScale[5], 1e-8);
+
+        assertEquals(0.8464817248906141, exponentialScale[0], 1e-8);
+        assertEquals(0.7788007830714049, exponentialScale[1], 1e-8);
+        assertEquals(0.7788007830714049, exponentialScale[2], 1e-8);
+        assertEquals(0.8464817248906140, exponentialScale[3], 1e-8);
+        assertEquals(1.0000000000000000, exponentialScale[4], 1e-8);
+        assertEquals(1.2840254166877414, exponentialScale[5], 1e-8);
     }
 
     public void testReverse() {
@@ -73,6 +73,7 @@ public class InverseFirstOrderFiniteDifferenceTransformTest extends TestCase {
         }
     }
 
+    // computeJacobianMatrixInverse is called on the transformed values
     public void testJacobian() {
         double[][] jacobianInverse = new double[d][d];
         double[][] numericJacobianInverse = new double[d][d];
@@ -87,6 +88,7 @@ public class InverseFirstOrderFiniteDifferenceTransformTest extends TestCase {
 
         jacobianInverse = logIFOFDT.computeJacobianMatrixInverse(exponentialScale);
         numericJacobianInverse = FirstOrderFiniteDifferenceTransformTest.computeNumericalJacobianInverse(exponentialScale, logIFOFDT);
+
         for (int i = 0; i < d; i++) {
             for (int j = 0; j < d; j++) {
                 assertEquals(numericJacobianInverse[i][j], jacobianInverse[i][j], FirstOrderFiniteDifferenceTransformTest.getTolerance(jacobianInverse[i][j], acceptableProportionateError));
@@ -95,6 +97,7 @@ public class InverseFirstOrderFiniteDifferenceTransformTest extends TestCase {
 
     }
 
+    // getGradientLogJacobianInverse is called on the transformed values
     public void testGradientLogJacobian() {
         double[] gradLogJacobianInv = new double[d];
         double[] numGradLogJacobianInv = new double[d];
@@ -113,18 +116,37 @@ public class InverseFirstOrderFiniteDifferenceTransformTest extends TestCase {
 
     }
 
-    public void testFirstOrderFiniteDifferenceTransform() {
+    private void test1UpdateGradient(double[] gradient, double[] untransformed, InverseFirstOrderFiniteDifferenceTransform transform) {
+        double[] transformed = transform.transform(untransformed, 0, d);
+        double[] gradLogJacobian = transform.getGradientLogJacobianInverse(transformed);
+        double[] updatedFullMatrix = FirstOrderFiniteDifferenceTransformTest.updateGradLogDens(gradient, untransformed, gradLogJacobian, transform);
+        double[] updated = transform.updateGradientLogDensity(gradient, untransformed, 0, d);
+        for (int i = 0; i < d; i++) {
+            assertEquals(updatedFullMatrix[i], updated[i], FirstOrderFiniteDifferenceTransformTest.getTolerance(updated[i], acceptableProportionateError));
+        }
+    }
+
+    // updateGradientLogDensity is called on the untransformed scale
+    public void testUpdateGradient() {
+        // An arbitrary value to take as the gradient
+        double[] gradient = new double[d];
+        for (int i = 0; i < d; i++) {
+            gradient[i] = (((double)i) - 3.0) * 42.0;
+        }
+
+        test1UpdateGradient(gradient, unconstrained, noneIFOFDT);
+        test1UpdateGradient(gradient, unconstrained, logIFOFDT);
+
+    }
 
 
-//        System.err.println("unconstrained (\"transformed\") values: " + new dr.math.matrixAlgebra.Vector(unconstrained));
-
+    public void testInverseFirstOrderFiniteDifferenceTransform() {
         // TODO: add test of logit-scale to all these components!
-        // TODO: add test of updateGradientLogDensity once O(n) implementation is complete
         testForward();
         testReverse();
         testJacobian();
         testGradientLogJacobian();
-
+        testUpdateGradient();
     }
 
     public static Test suite() {

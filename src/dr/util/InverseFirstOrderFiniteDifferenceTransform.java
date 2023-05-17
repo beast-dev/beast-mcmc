@@ -104,15 +104,15 @@ public class InverseFirstOrderFiniteDifferenceTransform extends Transform.Multiv
 //
 //        double[] updated = new double[dim];
 //        double[] transformedValues = transform(values);
-//        updated[dim - 1] = gradient[dim - 1] * incrementTransform.derivativeOfInverseTransform(transformedValues[dim - 1], upper, lower);
-//        for (int i = dim - 2; i > -1; i--) {
-//            updated[i] = gradient[i] * incrementTransform.derivativeOfInverseTransform(transformedValues[i], upper, lower) + updated[i + 1];
+//        double[] components = new double[dim];
+//        for (int i = 0; i < dim; i++) {
+//            components[i] = gradient[i] * incrementTransform.derivativeOfTransformWrtValue(transformedValues[i]);
 //        }
 //        double[] gradLogJacobian = getGradientLogJacobianInverse(values);
-//        for (int i = dim - 1; i > -1; i--) {
-//            updated[i] += gradLogJacobian[i];
+//        updated[dim - 1] = components[dim - 1]- gradLogJacobian[dim - 1];
+//        for (int i = dim - 2; i > -1; i--) {
+//            updated[i] = components[i] - components[i + 1] - gradLogJacobian[i];
 //        }
-//
 //        return updated;
 //
 //    }
@@ -137,9 +137,9 @@ public class InverseFirstOrderFiniteDifferenceTransform extends Transform.Multiv
         double[] gradient = new double[dim];
 
         for (int i = 0; i < dim - 1; i++) {
-            gradient[i] = (gradLogJacobian[i] - gradLogJacobian[i+1]) * incrementTransform.derivative(values[i]);
+            gradient[i] = (gradLogJacobian[i] - gradLogJacobian[i+1]) * incrementTransform.derivativeOfTransformWrtValue(values[i]);
         }
-        gradient[dim - 1] = gradLogJacobian[dim - 1] * incrementTransform.derivative(values[dim - 1]);
+        gradient[dim - 1] = gradLogJacobian[dim - 1] * incrementTransform.derivativeOfTransformWrtValue(values[dim - 1]);
 
         return gradient;
     }
@@ -150,10 +150,10 @@ public class InverseFirstOrderFiniteDifferenceTransform extends Transform.Multiv
         double[][] jacobian = new double[dim][dim];
         // Is this transposed wrong?
         for (int i = 0; i < dim - 1; i++) {
-            jacobian[i][i] = incrementTransform.derivative(values[i]);
-            jacobian[i][i+1] = -incrementTransform.derivative(values[i]);
+            jacobian[i][i] = incrementTransform.derivativeOfTransformWrtValue(values[i]);
+            jacobian[i][i+1] = -incrementTransform.derivativeOfTransformWrtValue(values[i]);
         }
-        jacobian[dim - 1][dim - 1] = incrementTransform.derivative(values[dim - 1]);
+        jacobian[dim - 1][dim - 1] = incrementTransform.derivativeOfTransformWrtValue(values[dim - 1]);
         return jacobian;
     }
 

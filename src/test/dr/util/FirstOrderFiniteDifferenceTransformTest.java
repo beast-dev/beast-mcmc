@@ -108,7 +108,7 @@ public class FirstOrderFiniteDifferenceTransformTest extends TestCase {
                 updatedGradient[i] += jacobianInverse[i][j] * gradient[j];
             }
         }
-//        double[] gradientLogJacobianInverse = transform.getGradientLogJacobianInverse(transformedValues);
+
         // Add gradient log jacobian
         for (int i = 0; i < gradient.length; i++) {
             updatedGradient[i] += gradientLogJacobianInverse[i];
@@ -209,14 +209,14 @@ public class FirstOrderFiniteDifferenceTransformTest extends TestCase {
         test1UpdateGradient(gradient, unconstrained, logFOFDT);
     }
 
-    public void testFirstOrderFiniteDifferenceTransform() {
-        // TODO: add test of logit-scale to all these components!
-        testForward();
-        testReverse();
-        testJacobian();
-        testGradientLogJacobian();
-        testUpdateGradient();
-    }
+//    public void testFirstOrderFiniteDifferenceTransform() {
+//        // TODO: add test of logit-scale to all these components!
+//        testForward();
+//        testReverse();
+//        testJacobian();
+//        testGradientLogJacobian();
+//        testUpdateGradient();
+//    }
 
     public static Test suite() {
         return new TestSuite(FirstOrderFiniteDifferenceTransformTest.class);

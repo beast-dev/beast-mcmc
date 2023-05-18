@@ -99,23 +99,24 @@ public class InverseFirstOrderFiniteDifferenceTransform extends Transform.Multiv
         throw new RuntimeException("Not yet implemented.");
     }
 
-//    @Override
-//    protected double[] updateGradientLogDensity(double[] gradient, double[] values) {
-//
-//        double[] updated = new double[dim];
-//        double[] transformedValues = transform(values);
-//        double[] components = new double[dim];
-//        for (int i = 0; i < dim; i++) {
-//            components[i] = gradient[i] * incrementTransform.derivativeOfTransformWrtValue(transformedValues[i]);
-//        }
-//        double[] gradLogJacobian = getGradientLogJacobianInverse(values);
-//        updated[dim - 1] = components[dim - 1]- gradLogJacobian[dim - 1];
-//        for (int i = dim - 2; i > -1; i--) {
-//            updated[i] = components[i] - components[i + 1] - gradLogJacobian[i];
-//        }
-//        return updated;
-//
-//    }
+    @Override
+    protected double[] updateGradientLogDensity(double[] gradient, double[] values) {
+
+        double[] updated = new double[dim];
+        double[] transformedValues = transform(values);
+        double[] components = new double[dim];
+        for (int i = 0; i < dim - 1; i++) {
+            components[i] = (gradient[i] - gradient[i+1]) * incrementTransform.derivativeOfTransformWrtValue(transformedValues[i]);
+        }
+        components[dim - 1] = gradient[dim - 1] * incrementTransform.derivativeOfTransformWrtValue(transformedValues[dim - 1]);
+        double[] gradLogJacobian = getGradientLogJacobianInverse(transformedValues);
+        // Why is this +gradLogJacobian and not -?
+        for (int i = 0; i < dim; i++) {
+            updated[i] = components[i] + gradLogJacobian[i];
+        }
+        return updated;
+
+    }
 
     @Override
     public double getLogJacobian(double[] values) {

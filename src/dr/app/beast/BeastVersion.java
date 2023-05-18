@@ -55,12 +55,12 @@ public class BeastVersion implements Version, Citable {
      */
     private static final String VERSION = "1.10.5";
 
-    private static final String DATE_STRING = "2002-2019";
+    private static final String DATE_STRING = "2002-2023";
 
     private static final boolean IS_PRERELEASE = true;
 
     // this is now being manually updated since the move to GitHub. 7 digits of GitHub hash.
-    private static final String REVISION = "23570d1";
+    private static final String REVISION = "8a10723";
 
     public String getVersion() {
         return VERSION;

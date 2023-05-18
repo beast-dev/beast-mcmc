@@ -127,8 +127,8 @@ public class BayesianBridgeMarkovRandomFieldLikelihood extends AbstractModelLike
     @Override
     public double getCoefficient(int i) {
         // This treats the first, non-Bridge, variable as a Bridge Coefficient
-        // There must therefore be a mask on this variable to prevent it contributing
-        return transform.transform(variables.getParameterValues(),0,dim)[i];
+        // There must therefore be a mask on this variable to prevent it contributing to the Gibbs sampler
+        return transform.inverse(variables.getParameterValues(),0,dim)[i];
     }
 
     @Override

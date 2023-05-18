@@ -30,7 +30,7 @@ import dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.*;
-import dr.util.FirstOrderFiniteDifferenceTransform;
+import dr.util.InverseFirstOrderFiniteDifferenceTransform;
 import dr.xml.Reportable;
 
 import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.BAYESIAN_BRIDGE;
@@ -42,7 +42,7 @@ public class BayesianBridgeMarkovRandomFieldLikelihood extends AbstractModelLike
     public BayesianBridgeMarkovRandomFieldLikelihood(Parameter variables,
                                                                 BayesianBridgeDistributionModel bridge,
                                                                 ParametricDistributionModel firstElementDistribution,
-                                                                FirstOrderFiniteDifferenceTransform transform) {
+                                                                InverseFirstOrderFiniteDifferenceTransform transform) {
 
         super(BAYESIAN_BRIDGE);
 
@@ -57,8 +57,8 @@ public class BayesianBridgeMarkovRandomFieldLikelihood extends AbstractModelLike
         addVariable(variables);
     }
 
-    private double[][] getTransformedValues() {
-        double[] concatenated = transform.transform(variables.getParameterValues(), 0, dim);
+    private double[][] getUnconstrainedValues() {
+        double[] concatenated = transform.inverse(variables.getParameterValues(), 0, dim);
 
         double[][] values = new double[2][];
         values[0] = new double[1];
@@ -86,18 +86,17 @@ public class BayesianBridgeMarkovRandomFieldLikelihood extends AbstractModelLike
 
     @Override
     public double getLogLikelihood() {
-        double[][] transformedVariables = getTransformedValues();
+        double[][] unconstrained = getUnconstrainedValues();
         double logPdf = 0.0;
-        logPdf += firstElementDistribution.logPdf(transformedVariables[0]);
-        logPdf += bridge.logPdf(transformedVariables[1]);
-        logPdf += transform.getLogJacobian(variables.getParameterValues());
-//        logPdf -= transform.getLogJacobianInverse(transform.transform(variables.getParameterValues(),0,dim));
+        logPdf += firstElementDistribution.logPdf(unconstrained[0]);
+        logPdf += bridge.logPdf(unconstrained[1]);
+        logPdf -= transform.getLogJacobian(transform.inverse(variables.getParameterValues(),0,dim));
         return logPdf;
     }
 
     @Override
     public double[] getGradientLogDensity() {
-        double[][] transformedVariables = getTransformedValues();
+        double[][] transformedVariables = getUnconstrainedValues();
         double[] grad = new double[dim];
 
         grad[0] = ((GradientProvider)firstElementDistribution).getGradientLogDensity(transformedVariables[0])[0];
@@ -107,32 +106,8 @@ public class BayesianBridgeMarkovRandomFieldLikelihood extends AbstractModelLike
             grad[i + 1] = bridgeGrad[i];
         }
 
-        double[] adjusted = new double[dim];
-        double[] transformed = transform.transform(variables.getParameterValues(),0,dim);
-        double[] gradLogJacobian = transform.getGradientLogJacobianInverse(transformed);
-        for (int i = 0; i < dim - 1; i++) {
-            // Hard-coding for log-transform for now
-            double transformDeriv = 1/variables.getParameterValue(i);
-            adjusted[i] = transformDeriv * (grad[i] - grad[i+1]) - transformDeriv * (gradLogJacobian[i] - gradLogJacobian[i + 1]);
-        }
-        double transformDeriv = 1/variables.getParameterValue(dim - 1);
-        adjusted[dim - 1] = transformDeriv * grad[dim - 1] - transformDeriv * gradLogJacobian[dim - 1];
+        return transform.updateGradientLogDensity(grad, transform.inverse(variables.getParameterValues(), 0, dim), 0, dim);
 
-        return adjusted;
-
-//        double h = 1e-9;
-//        double two_h = 2.0 * h;
-//        double[] grad = new double[dim];
-//        for (int i = 0; i < dim; i++) {
-//            double tmp = variables.getParameterValue(i);
-//            variables.setParameterValueQuietly(i,tmp + h);
-//            double lnL_fwd = getLogLikelihood();
-//            variables.setParameterValueQuietly(i,tmp - h);
-//            double lnL_bwd = getLogLikelihood();
-//            variables.setParameterValueQuietly(i, tmp);
-//            grad[i] = (lnL_fwd - lnL_bwd)/two_h;
-//        }
-//        return grad;
     }
 
     @Override
@@ -248,7 +223,7 @@ public class BayesianBridgeMarkovRandomFieldLikelihood extends AbstractModelLike
     private final BayesianBridgeDistributionModel bridge;
     private final ParametricDistributionModel firstElementDistribution;
     private final int dim;
-    private final FirstOrderFiniteDifferenceTransform transform;
+    private final InverseFirstOrderFiniteDifferenceTransform transform;
 
     /*********************
      * Reportable interface

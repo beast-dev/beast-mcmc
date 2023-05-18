@@ -32,6 +32,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.shrinkage.BayesianBridgeDistributionModelParser;
 import dr.util.FirstOrderFiniteDifferenceTransform;
+import dr.util.InverseFirstOrderFiniteDifferenceTransform;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -73,7 +74,7 @@ public class BayesianBridgeMarkovRandomFieldLikelihoodParser extends AbstractXML
 
         int dim = variables.getDimension();
 
-        FirstOrderFiniteDifferenceTransform transform = new FirstOrderFiniteDifferenceTransform(dim, incrementTransform);
+        InverseFirstOrderFiniteDifferenceTransform transform = new InverseFirstOrderFiniteDifferenceTransform(dim, incrementTransform);
 
         return new BayesianBridgeMarkovRandomFieldLikelihood(variables, bridge, firstElementDistribution, transform);
     }

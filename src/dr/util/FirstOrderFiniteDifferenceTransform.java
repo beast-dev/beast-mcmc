@@ -150,28 +150,50 @@ public class FirstOrderFiniteDifferenceTransform extends Transform.MultivariateT
         return logJacobian;
     }
 
+//    @Override
+//    // called on the transformed values
+//    public double[] getGradientLogJacobianInverse(double[] values) {
+//        // jacobianDiagonal == diagonal of Jacobian of inverse transform
+//        double[] jacobianDiagonal = new double[values.length];
+//        double s = 0.0;
+//        double[] cumSum = new double[dim];
+//        for (int i = 0; i < values.length; i++) {
+//            s += values[i];
+//            cumSum[i] = s;
+//            jacobianDiagonal[i] = incrementTransform.gradientInverse(s);
+//        }
+//        double[] gradient = new double[values.length];
+//        double tmp = 0.0;
+//        for (int i = values.length - 1; i > -1; i--) {
+//            tmp += (1.0 / jacobianDiagonal[i]) * incrementTransform.secondDerivativeOfInverseTransformWrtValue(cumSum[i]);
+//            gradient[i] = tmp;
+//        }
+//
+//        return gradient;
+//    }
+
     @Override
     // called on the transformed values
     public double[] getGradientLogJacobianInverse(double[] values) {
         // jacobianDiagonal == diagonal of Jacobian of inverse transform
-        double[] jacobianDiagonal = new double[values.length];
+        double[] logJacobianDiagonal = new double[values.length];
         double s = 0.0;
         double[] cumSum = new double[dim];
         for (int i = 0; i < values.length; i++) {
             s += values[i];
             cumSum[i] = s;
-            jacobianDiagonal[i] = incrementTransform.gradientInverse(s);
+            logJacobianDiagonal[i] = incrementTransform.logGradientInverse(s);
         }
         double[] gradient = new double[values.length];
         double tmp = 0.0;
         for (int i = values.length - 1; i > -1; i--) {
-            tmp += (1.0 / jacobianDiagonal[i]) * incrementTransform.secondDerivativeOfInverseTransformWrtValue(cumSum[i]);
+            // Avoid Inf/Inf errors
+            tmp += Math.exp(-logJacobianDiagonal[i] + incrementTransform.logSecondDerivativeOfInverseTransformWrtValue(cumSum[i]));
             gradient[i] = tmp;
         }
 
         return gradient;
     }
-
     @Override
     // Gets called on *transformed* values, as per Transform.updateGradientInverseUnWeightedLogDensity()
     // jacobian[j][i] = d x_i / d y_j

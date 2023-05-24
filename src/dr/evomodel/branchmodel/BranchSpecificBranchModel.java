@@ -268,8 +268,10 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
                     Mapping ancestralMapping = nodeMap.get(node);
 
                     if (ancestralMapping != null) {
-                        ancestralIndex = ancestralMapping.getOrder()[0];
+                        // If this 0 < stemWeight < 1 node has a mapping already, getOrder() should produce [index, ancestralIndex] as defined below
+                        ancestralIndex = ancestralMapping.getOrder()[1];
                     } else {
+                        // This may not work if there are nested models?
                         ancestralIndex = 0;
                     }
 

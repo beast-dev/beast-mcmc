@@ -60,6 +60,7 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
 
     private final SubstitutionModel rootSubstitutionModel;
     private final List<SubstitutionModel> substitutionModels = new ArrayList<SubstitutionModel>();
+    private final List<Parameter> stemWeightParameters = new ArrayList<Parameter>();
 
     private boolean requiresMatrixConvolution = false;
 
@@ -83,7 +84,7 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
      * @param stemWeight the proportion of the stem branch to include in this model (0, 1)
      * @throws TreeUtils.MissingTaxonException
      */
-    public void addClade(TaxonList taxonList, SubstitutionModel substitutionModel, double stemWeight) throws TreeUtils.MissingTaxonException {
+    public void addClade(TaxonList taxonList, SubstitutionModel substitutionModel, double stemWeight, Parameter stemWeightParameter) throws TreeUtils.MissingTaxonException {
         int index = substitutionModels.indexOf(substitutionModel);
         if (index == -1) {
             index = substitutionModels.size();
@@ -91,17 +92,32 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
             addModel(substitutionModel);
         }
 
+        if (stemWeightParameter != null) {
+            int stemIndex = stemWeightParameters.indexOf(stemWeightParameter);
+            if (stemIndex == -1) {
+                stemIndex = substitutionModels.size();
+                stemWeightParameters.add(stemWeightParameter);
+                addVariable(stemWeightParameter);
+            }
+        }
+
         BitSet tips = TreeUtils.getTipsBitSetForTaxa(treeModel, taxonList);
-        Clade clade = new Clade(index, tips, stemWeight);
+        Clade clade = new Clade(index, tips, stemWeight, stemWeightParameter);
         clades.put(tips, clade);
 
-        if (stemWeight > 0.0 && stemWeight < 1.0) {
+        if (stemWeightParameter != null || (stemWeight > 0.0 && stemWeight < 1.0)) {
             requiresMatrixConvolution = true;
         }
 
-        Logger.getLogger("dr.evomodel.branchmodel")
-                .info("\tAdding substitution model for clade defined by " + taxonList.getId() +
-                        " with stem-weight = " + stemWeight);
+        if (stemWeightParameter == null) {
+            Logger.getLogger("dr.evomodel.branchmodel")
+                    .info("\tAdding substitution model for clade defined by " + taxonList.getId() +
+                            " with stem-weight = " + stemWeight);
+        } else {
+            Logger.getLogger("dr.evomodel.branchmodel")
+                    .info("\tAdding substitution model for clade defined by " + taxonList.getId() +
+                            " with variable stem-weight parameter " + stemWeightParameter.getParameterName());
+        }
     }
 
     public void addExternalBranches(TaxonList taxonList, SubstitutionModel substitutionModel) throws TreeUtils.MissingTaxonException {
@@ -198,6 +214,10 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if ( stemWeightParameters.contains(variable) && clades.size() > 0) {
+            updateNodeMaps = true;
+        }
+//        fireModelChanged();
     }
 
     protected void storeState() {
@@ -315,10 +335,11 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
 
     private class Clade {
 
-        Clade(int index, BitSet tips, double stemWeight) {
+        Clade(int index, BitSet tips, double stemWeight, Parameter stemWeightParameter) {
             this.index = index;
             this.tips = tips;
             this.stemWeight = stemWeight;
+            this.stemWeightParameter = stemWeightParameter;
         }
 
         public int getIndex() {
@@ -330,12 +351,17 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
         }
 
         public double getStemWeight() {
-            return stemWeight;
+            if (stemWeightParameter != null) {
+                return stemWeightParameter.getParameterValues()[0];
+            } else {
+                return stemWeight;
+            }
         }
 
         private final int index;
         private final BitSet tips;
         private final double stemWeight;
+        Parameter stemWeightParameter;
     }
 
 }

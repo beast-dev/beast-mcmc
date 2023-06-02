@@ -69,10 +69,12 @@ public class SubtreeRateStatisticParser extends AbstractXMLObjectParser {
 
         final boolean includeStem = xo.getAttribute("includeStem", false);
 
+        final boolean trackGeneticDistance = xo.getAttribute("trackGeneticDistance", false);
+
         final String mode = xo.getStringAttribute(MODE);
 
         try {
-            return new SubtreeRateStatistic(name, tree, branchRateModel, mode, mrcaTaxa, complement, includeStem);
+            return new SubtreeRateStatistic(name, tree, branchRateModel, mode, mrcaTaxa, complement, includeStem, trackGeneticDistance);
         } catch (TreeUtils.MissingTaxonException e) {
             throw new XMLParseException("Unable to find taxon-set.");
         }
@@ -103,7 +105,8 @@ public class SubtreeRateStatisticParser extends AbstractXMLObjectParser {
             new ElementRule(MRCA,
                     new XMLSyntaxRule[]{new ElementRule(Taxa.class)}, "Taxa that define the subtree.", false),
             AttributeRule.newBooleanRule("complement", true, "If true, computes statistics for all branches not in the subtree."),
-            AttributeRule.newBooleanRule("includeStem", true, "Should stem branch be included in the subtree defined by the MRCA of the taxa?")
+            AttributeRule.newBooleanRule("includeStem", true, "Should stem branch be included in the subtree defined by the MRCA of the taxa?"),
+            AttributeRule.newBooleanRule("trackGeneticDistance", true, "Allows the length of the subtree (or complement) in geneticDistance to be tracked instead of the rate. Overrides argument \"mode\".")
     };
 
 }

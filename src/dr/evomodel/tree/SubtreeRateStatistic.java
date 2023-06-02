@@ -51,13 +51,15 @@ public class SubtreeRateStatistic extends TreeStatistic {
                                 String mode,
                                 TaxonList mrcaTaxa,
                                 boolean complement,
-                                boolean includeStem) throws TreeUtils.MissingTaxonException {
+                                boolean includeStem,
+                                boolean returnGeneticDistance) throws TreeUtils.MissingTaxonException {
         super(name);
         this.tree = tree;
         this.branchRateModel = branchRateModel;
         this.mode = mode;
         this.complement = complement;
         this.includeStem = includeStem;
+        this.returnGeneticDistance = returnGeneticDistance;
 
         this.taxa = new HashSet<>();
         for (Taxon taxon : mrcaTaxa) {
@@ -79,33 +81,43 @@ public class SubtreeRateStatistic extends TreeStatistic {
         return 1;
     }
 
-    private boolean useBranch(NodeRef node) {
-        if ( node == tree.getRoot() ) {
-            return false;
+    private void addBranchesToClade(boolean[] use, NodeRef node) {
+        for (int i = 0; i < tree.getChildCount(node); i++) {
+            NodeRef child = tree.getChild(node, i);
+            use[child.getNumber()] = true;
+            if ( !tree.isExternal(node) ) {
+                addBranchesToClade(use, child);
+            }
         }
+    }
 
-        boolean use = taxa.contains(tree.getNodeTaxon(node));
+    private boolean[] getBranchesToUse() {
+        boolean[] use = new boolean[tree.getNodeCount()];
+        NodeRef node = TreeUtils.getCommonAncestorNode(tree, leafSet);
 
-        if ( !includeStem && node == TreeUtils.getCommonAncestorNode(tree, leafSet) ) {
-            use = false;
+        if ( includeStem ) {
+            use[node.getNumber()] = true;
         }
+        addBranchesToClade(use, node);
 
-        if ( complement ) {
-            use = !use;
+        if (complement) {
+            for (int i = 0; i < use.length; i++) {
+                use[i] = !use[i];
+            }
+            use[tree.getRoot().getNumber()] = false;
         }
 
         return use;
     }
 
     // Recursively add rates and branch lengths
-    private void getRates(List<Double> rates, List<Double> branchLengths, NodeRef node) {
-        if ( useBranch(node) ) {
-            rates.add(branchRateModel.getBranchRate(tree,node));
-            branchLengths.add(tree.getBranchLength(node));
-        }
-        if (tree.getChildCount(node) > 0) {
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-                getRates(rates, branchLengths, tree.getChild(node,i));
+    private void getRates(List<Double> rates, List<Double> branchLengths) {
+        boolean[] use = getBranchesToUse();
+        for (int i = 0; i < use.length; i++) {
+            if (use[i]) {
+                NodeRef node = tree.getNode(i);
+                rates.add(branchRateModel.getBranchRate(tree,node));
+                branchLengths.add(tree.getBranchLength(node));
             }
         }
     }
@@ -119,7 +131,7 @@ public class SubtreeRateStatistic extends TreeStatistic {
         List<Double> branchLengthList = new ArrayList<Double>();
 
         // Get rates and branch lengths for just this subtree
-        getRates(rateList, branchLengthList, tree.getRoot());
+        getRates(rateList, branchLengthList);
 
         double[] rates = new double[rateList.size()];
         double[] branchLengths = new double[rateList.size()];
@@ -128,8 +140,14 @@ public class SubtreeRateStatistic extends TreeStatistic {
             branchLengths[i] = branchLengthList.get(i);
         }
 
+        if ( returnGeneticDistance ) {
+            double distance = 0;
+            for (int i = 0; i < rates.length; i++) {
+                distance += rates[i] * branchLengths[i];
+            }
+            return distance;
         // as RateStatistic.java
-        if (mode.equals(RateStatisticParser.MEAN)) {
+        } else if (mode.equals(RateStatisticParser.MEAN)) {
             double totalWeightedRate = 0.0;
             double totalTreeLength = 0.0;
             for (int i = 0; i < rates.length; i++) {
@@ -152,6 +170,7 @@ public class SubtreeRateStatistic extends TreeStatistic {
     private BranchRateModel branchRateModel;
     private boolean complement;
     private final boolean includeStem;
+    private final boolean returnGeneticDistance;
     private String mode;
     private final Set<Taxon>  taxa;
     private final Set<String> leafSet;

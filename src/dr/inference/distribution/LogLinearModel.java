@@ -27,6 +27,8 @@ package dr.inference.distribution;
 
 import dr.inference.model.Parameter;
 
+import java.util.List;
+
 /**
  * @author Marc A. Suchard
  */
@@ -60,5 +62,21 @@ public class LogLinearModel extends GeneralizedLinearModel {
 
     public boolean requiresScale() {
         return false;
+    }
+
+    @Override
+    public LogLinearModel factory(List<Parameter> oldIndependentParameter, List<Parameter> newIndependentParameter)  {
+        LogLinearModel newGLM = new LogLinearModel(dependentParam);
+        for (int i = 0; i < numRandomEffects; i++) {
+            newGLM.addRandomEffectsParameter(randomEffects.get(i));
+        }
+        for (int i = 0; i < numIndependentVariables; i++) {
+            Parameter currentIndependentParameter = independentParam.get(i);
+            final int index = oldIndependentParameter.indexOf(currentIndependentParameter);
+            if (index != -1) {
+                newGLM.addIndependentParameter(newIndependentParameter.get(index), designMatrix.get(i), independentParam.get(i));
+            }
+        }
+        return newGLM;
     }
 }

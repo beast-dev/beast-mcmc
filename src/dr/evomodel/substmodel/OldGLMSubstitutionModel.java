@@ -32,6 +32,7 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
@@ -41,7 +42,7 @@ import java.util.*;
  * @author Marc A. Suchard
  */
 @Deprecated
-public class OldGLMSubstitutionModel extends ComplexSubstitutionModel {
+public class OldGLMSubstitutionModel extends ComplexSubstitutionModel implements ParameterReplaceableSubstitutionModel {
 
     public OldGLMSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
                                    LogLinearModel glm) {
@@ -110,4 +111,14 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel {
 
     private final LogLinearModel glm;
     private final double[] testProbabilities;
+
+    @Override
+    public ParameterReplaceableSubstitutionModel factory(List<Parameter> oldParameters, List<Parameter> newParameters) {
+
+        LogLinearModel newGLM = glm.factory(oldParameters, newParameters);
+
+        OldGLMSubstitutionModel newGLMSubstitutionModel = new OldGLMSubstitutionModel(getModelName(), dataType, freqModel, newGLM);
+
+        return newGLMSubstitutionModel;
+    }
 }

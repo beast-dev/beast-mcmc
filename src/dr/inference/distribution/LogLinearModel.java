@@ -75,6 +75,8 @@ public class LogLinearModel extends GeneralizedLinearModel {
             final int index = oldIndependentParameter.indexOf(currentIndependentParameter);
             if (index != -1) {
                 newGLM.addIndependentParameter(newIndependentParameter.get(index), designMatrix.get(i), independentParam.get(i));
+            } else {
+                newGLM.addIndependentParameter(currentIndependentParameter, designMatrix.get(i), independentParam.get(i));
             }
         }
         return newGLM;

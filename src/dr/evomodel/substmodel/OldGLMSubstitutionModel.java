@@ -33,6 +33,7 @@ import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
@@ -42,7 +43,7 @@ import java.util.*;
  * @author Marc A. Suchard
  */
 @Deprecated
-public class OldGLMSubstitutionModel extends ComplexSubstitutionModel implements ParameterReplaceableSubstitutionModel {
+public class OldGLMSubstitutionModel extends ComplexSubstitutionModel implements ParameterReplaceableSubstitutionModel, DifferentiableSubstitutionModel{
 
     public OldGLMSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
                                    LogLinearModel glm) {
@@ -120,5 +121,66 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel implements
         OldGLMSubstitutionModel newGLMSubstitutionModel = new OldGLMSubstitutionModel(getModelName(), dataType, freqModel, newGLM);
 
         return newGLMSubstitutionModel;
+    }
+
+    @Override
+    public WrappedMatrix getInfinitesimalDifferentialMatrix(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt) {
+        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
+    }
+
+    enum WrtOldGLMSubstitutionModelParameter implements DifferentialMassProvider.DifferentialWrapper.WrtParameter {
+        INDEPENDENT_PARAMETER {
+            @Override
+            void setDim(int dim) {
+                this.dim = dim;
+            }
+
+            private int dim;
+
+            @Override
+            public double getRate(int switchCase) {
+                throw new RuntimeException("Should not be called.");
+            }
+
+            @Override
+            public double getNormalizationDifferential() {
+                return 0;
+            }
+
+            @Override
+            public void setupDifferentialFrequencies(double[] differentialFrequencies, double[] frequencies) {
+                System.arraycopy(frequencies, 0, differentialFrequencies, 0, frequencies.length);
+            }
+
+            @Override
+            public void setupDifferentialRates(double[] differentialRates, double[] relativeRates, double normalizingConstant) {
+
+            }
+        };
+        abstract void setDim(int dim);
+    }
+
+    @Override
+    public DifferentialMassProvider.DifferentialWrapper.WrtParameter factory(Parameter parameter, int dim) {
+        WrtOldGLMSubstitutionModelParameter wrtParameter = WrtOldGLMSubstitutionModelParameter.INDEPENDENT_PARAMETER;
+        wrtParameter.setDim(dim);
+        return wrtParameter;
+    }
+
+    @Override
+    public void setupDifferentialRates(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
+        double[] relativeRates = new double[rateCount];
+        setupRelativeRates(relativeRates);
+        wrt.setupDifferentialRates(differentialRates, relativeRates, normalizingConstant);
+    }
+
+    @Override
+    public void setupDifferentialFrequency(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[] differentialFrequency) {
+
+    }
+
+    @Override
+    public double getWeightedNormalizationGradient(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[][] differentialMassMatrix, double[] frequencies) {
+        return 0;
     }
 }

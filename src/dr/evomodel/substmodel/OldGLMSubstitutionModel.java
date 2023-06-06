@@ -167,27 +167,29 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel implements
             }
 
             @Override
-            public void setupDifferentialRates(double[] differentialRates, double[] relativeRates, double normalizingConstant) {
+            public void setupDifferentialRates(double[] differentialRates, double[] Q, double normalizingConstant) {
                 final double[] covariate = glm.getDesignMatrix(fixedEffectIndex).getColumnValues(dim);
 
-                System.arraycopy(covariate, 0, differentialRates, 0, covariate.length);
+//                System.arraycopy(covariate, 0, differentialRates, 0, covariate.length);
 
-//                int k = 0;
-//                for (int i = 0; i < stateCount; ++i) {
-//                    for (int j = i + 1; j < stateCount; ++j) {
-//
-//                        differentialRates[index(i, j)] = covariate[k++];
-//
-//                    }
-//                }
-//
-//                for (int j = 0; j < stateCount; ++j) {
-//                    for (int i = j + 1; i < stateCount; ++i) {
-//
-//                        differentialRates[index(i, j)] = covariate[k++];
-//
-//                    }
-//                }
+                int k = 0;
+                for (int i = 0; i < stateCount; ++i) {
+                    for (int j = i + 1; j < stateCount; ++j) {
+
+                        differentialRates[k] = covariate[k] * Q[index(i, j)];
+                        k++;
+
+                    }
+                }
+
+                for (int j = 0; j < stateCount; ++j) {
+                    for (int i = j + 1; i < stateCount; ++i) {
+
+                        differentialRates[k] = covariate[k] * Q[index(i, j)];
+                        k++;
+
+                    }
+                }
 
             }
             private int index(int i, int j) {
@@ -220,9 +222,9 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel implements
 
     @Override
     public void setupDifferentialRates(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
-        double[] relativeRates = new double[rateCount];
-        setupRelativeRates(relativeRates);
-        wrt.setupDifferentialRates(differentialRates, relativeRates, normalizingConstant);
+        final double[] Q = new double[stateCount * stateCount];
+        getInfinitesimalMatrix(Q);
+        wrt.setupDifferentialRates(differentialRates, Q, normalizingConstant);
     }
 
     @Override
@@ -232,6 +234,14 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel implements
 
     @Override
     public double getWeightedNormalizationGradient(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[][] differentialMassMatrix, double[] frequencies) {
-        return 0;
+        double derivative = 0;
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) {
+                if (i != j) {
+                    derivative +=differentialMassMatrix[i][j];
+                }
+            }
+        }
+        return derivative;
     }
 }

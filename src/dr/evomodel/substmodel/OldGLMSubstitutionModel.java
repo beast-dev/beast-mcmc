@@ -135,8 +135,14 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel implements
                 this.dim = dim;
             }
 
-            private int dim;
+            void setEffectIndex(int fixedEffectIndex) {
+                this.fixedEffectIndex = fixedEffectIndex;
+            }
 
+            private int dim;
+            private int fixedEffectIndex;
+            private int stateCount;
+            private LogLinearModel glm;
             @Override
             public double getRate(int switchCase) {
                 throw new RuntimeException("Should not be called.");
@@ -152,18 +158,63 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel implements
                 System.arraycopy(frequencies, 0, differentialFrequencies, 0, frequencies.length);
             }
 
+            public void setStateCount(int stateCount) {
+                this.stateCount = stateCount;
+            }
+
+            public void setGLM(LogLinearModel glm) {
+                this.glm = glm;
+            }
+
             @Override
             public void setupDifferentialRates(double[] differentialRates, double[] relativeRates, double normalizingConstant) {
+                final double[] covariate = glm.getDesignMatrix(fixedEffectIndex).getColumnValues(dim);
 
+                System.arraycopy(covariate, 0, differentialRates, 0, covariate.length);
+
+//                int k = 0;
+//                for (int i = 0; i < stateCount; ++i) {
+//                    for (int j = i + 1; j < stateCount; ++j) {
+//
+//                        differentialRates[index(i, j)] = covariate[k++];
+//
+//                    }
+//                }
+//
+//                for (int j = 0; j < stateCount; ++j) {
+//                    for (int i = j + 1; i < stateCount; ++i) {
+//
+//                        differentialRates[index(i, j)] = covariate[k++];
+//
+//                    }
+//                }
+
+            }
+            private int index(int i, int j) {
+                return i * stateCount + j;
             }
         };
         abstract void setDim(int dim);
+        abstract void setEffectIndex(int effectIndex);
+        abstract void setStateCount(int stateCount);
+
+        abstract void setGLM(LogLinearModel glm);
+
+
     }
 
     @Override
     public DifferentialMassProvider.DifferentialWrapper.WrtParameter factory(Parameter parameter, int dim) {
+        assert(dim == 0);
         WrtOldGLMSubstitutionModelParameter wrtParameter = WrtOldGLMSubstitutionModelParameter.INDEPENDENT_PARAMETER;
+        final int effectIndex = glm.getEffectNumber(parameter);
+        if (effectIndex == -1) {
+            throw new RuntimeException("Only implemented for single dimensions, break up beta to one for each block for now please.");
+        }
         wrtParameter.setDim(dim);
+        wrtParameter.setEffectIndex(effectIndex);
+        wrtParameter.setStateCount(stateCount);
+        wrtParameter.setGLM(glm);
         return wrtParameter;
     }
 
@@ -176,7 +227,7 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel implements
 
     @Override
     public void setupDifferentialFrequency(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[] differentialFrequency) {
-
+        wrt.setupDifferentialFrequencies(differentialFrequency, getFrequencyModel().getFrequencies());
     }
 
     @Override

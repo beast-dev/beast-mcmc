@@ -224,6 +224,12 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel implements
     public void setupDifferentialRates(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
         final double[] Q = new double[stateCount * stateCount];
         getInfinitesimalMatrix(Q);
+        double[] frequencies = getFrequencyModel().getFrequencies();
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) {
+                Q[i * stateCount + j] /= frequencies[j];
+            }
+        }
         wrt.setupDifferentialRates(differentialRates, Q, normalizingConstant);
     }
 
@@ -236,11 +242,13 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel implements
     public double getWeightedNormalizationGradient(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[][] differentialMassMatrix, double[] frequencies) {
         double derivative = 0;
         for (int i = 0; i < stateCount; i++) {
+            double currentRow = 0;
             for (int j = 0; j < stateCount; j++) {
                 if (i != j) {
-                    derivative +=differentialMassMatrix[i][j];
+                    currentRow +=differentialMassMatrix[i][j];
                 }
             }
+            derivative += currentRow * frequencies[i];
         }
         return derivative;
     }

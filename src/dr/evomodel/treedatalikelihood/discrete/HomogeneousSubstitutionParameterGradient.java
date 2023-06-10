@@ -86,7 +86,8 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
                     treeDataLikelihood.getTree(),
                     likelihoodDelegate,
                     treeDataLikelihood.getBranchRateModel(),
-                    branchDifferentialMassProvider);
+                    branchDifferentialMassProvider,
+                    BranchSubstitutionParameterDelegate.DifferentialCase.EXACT);
             TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
         }

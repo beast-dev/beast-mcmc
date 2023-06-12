@@ -125,12 +125,14 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
 
     @Override
     public double getBranchRateDifferential(final Tree tree, final NodeRef node) {
-        throw new RuntimeException("Chain rule requires all rate dimensions.");
+        checkDifferentiability();
+        return differentiableBranchRateModel.getBranchRateDifferential(tree, node);
     }
 
     @Override
     public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
-        throw new RuntimeException("Chain rule requires all rate dimensions.");
+        checkDifferentiability();
+        return differentiableBranchRateModel.getBranchRateSecondDifferential(tree, node);
     }
 
     @Override

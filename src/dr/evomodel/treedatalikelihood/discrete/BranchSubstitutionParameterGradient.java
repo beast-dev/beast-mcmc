@@ -159,25 +159,28 @@ public class BranchSubstitutionParameterGradient
 
     @Override
     public double[] getGradientLogDensity() {
-        double[] result = new double[getDimension()];
-
-        double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
-
-        for (int i = 0; i < tree.getNodeCount(); ++i) {
-            NodeRef node = tree.getNode(i);
-            if (!tree.isRoot(node)) {
-                final int destinationIndex = branchRateModel.getParameterIndexFromNode(node);
-                result[destinationIndex] = gradient[destinationIndex] *
-                        branchRateModel.getBranchRateDifferential(tree, node);
-            }
-            // TODO Handle root node at most point
-        }
-
         if (COUNT_TOTAL_OPERATIONS) {
             ++getGradientLogDensityCount;
         }
 
-        return result;
+//        double[] result = new double[getDimension()];
+
+        double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
+
+        return branchRateModel.updateGradientLogDensity(gradient, null, 0, gradient.length);
+
+//        for (int i = 0; i < tree.getNodeCount(); ++i) {
+//            NodeRef node = tree.getNode(i);
+//            if (!tree.isRoot(node)) {
+//                final int destinationIndex = branchRateModel.getParameterIndexFromNode(node);
+//                result[destinationIndex] = gradient[destinationIndex] *
+//                        branchRateModel.getBranchRateDifferential(tree, node);
+//            }
+//            // TODO Handle root node at most point
+//        }
+
+
+//        return result;
     }
 
     protected double getChainGradient(Tree tree, NodeRef node) {

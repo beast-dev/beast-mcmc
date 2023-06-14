@@ -46,12 +46,14 @@ public class DifferentiableSubstitutionModelUtil {
 
         getTripleMatrixMultiplication(stateCount, inverseEigenVectors, differentialMassMatrix, eigenVectors);
 
+        setZeros(differentialMassMatrix);
+
         for (int i = 0; i < stateCount; i++) {
             for (int j = 0; j < stateCount; j++) {
                 if (i == j || eigenValues[i] == eigenValues[j]) {
                     differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * time);
                 } else {
-                    differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * (1.0 - Math.exp((eigenValues[j] - eigenValues[i]) * time)) / (eigenValues[i] - eigenValues[j]));
+                    differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) == 0 ? 0 : differentialMassMatrix.get(i, j) * (1.0 - Math.exp((eigenValues[j] - eigenValues[i]) * time)) / (eigenValues[i] - eigenValues[j]));
                 }
             }
         }
@@ -67,6 +69,18 @@ public class DifferentiableSubstitutionModelUtil {
         return outputArray;
 
     }
+
+    private static void setZeros(WrappedMatrix matrix) {
+        for (int i = 0; i < matrix.getMinorDim(); i++) {
+            for (int j = 0; j < matrix.getMinorDim(); j++) {
+                if (Math.abs(matrix.get(i, j)) < threshold) {
+                    matrix.set(i, j, 0);
+                }
+            }
+        }
+    }
+
+    static final double threshold = 1E-10;  //TODO: very bad magic threshold number
 
     private static void getTripleMatrixMultiplication(int stateCount, ReadableMatrix leftMatrix,
                                                       WrappedMatrix middleMatrix, ReadableMatrix rightMatrix) {

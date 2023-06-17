@@ -1,7 +1,7 @@
 /*
  * MCMCMC.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -98,6 +98,7 @@ public class MCMCMC implements Runnable {
             acceptor.setTemperature(mcmcmcOptions.getChainTemperatures()[i]);
         }
 
+        scheme = new ParallelTempering.OriginalFlavor();
     }
 
     public void run() {
@@ -167,8 +168,12 @@ public class MCMCMC implements Runnable {
             if (chains[coldChain].getCurrentLength() < getChainLength()) {
                 int oldColdChain = coldChain;
 
-                // attempt to swap two chains' temperatures
-                coldChain = swapChainTemperatures();
+                // attempt to swap two or more chains' temperatures
+                if (USE_PARALLEL_TEMPERING_SCHEME) {
+                    coldChain = scheme.swapChainTemperatures();
+                } else {
+                    coldChain = swapChainTemperatures();
+                }
 
                 // if the cold chain was involved in a swap then we need to change the
                 // listener that does the logging and the destinations for the coldChainLoggers.
@@ -460,5 +465,8 @@ public class MCMCMC implements Runnable {
     private final MCLogger[][] mcLoggers;
     private final OperatorSchedule[] schedules;
     private int coldChain;
+
+    private final ParallelTempering scheme;
+    private static final boolean USE_PARALLEL_TEMPERING_SCHEME = false;
 }
 

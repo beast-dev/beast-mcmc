@@ -68,7 +68,7 @@ public class MCMCMC implements Runnable {
         this.mcmcOptions = mcmcs[coldChain].getOptions();
 
         // Get all the loggers out of all the chains. We will only use the
-        // loggers of the cold chain but we need to swap the formatters around
+        // loggers of the cold chain, but we need to swap the formatters around
         // so that which every chain is cold always writes to the same destination.
         mcLoggers = new MCLogger[mcmcs.length][];
         for (int i = 0; i < mcmcs.length; i++) {
@@ -96,10 +96,17 @@ public class MCMCMC implements Runnable {
             chains[i] = mcmcs[i].getMarkovChain();
             MCMCCriterion acceptor = ((MCMCCriterion) chains[i].getAcceptor());
             acceptor.setTemperature(mcmcmcOptions.getChainTemperatures()[i]);
+            acceptor.setRank(i);
         }
 
-        scheme = new ParallelTempering.OriginalFlavor();
+        if (USE_PARALLEL_TEMPERING_SCHEME) {
+            scheme = new ParallelTempering.OriginalFlavor(chains, schedules, mcmcmcOptions);
+        } else {
+            scheme = null;
+        }
     }
+
+    private static final boolean DEBUG_IN_SERIES = false;
 
     public void run() {
         currentState = 0;
@@ -143,34 +150,42 @@ public class MCMCMC implements Runnable {
         MCMCMCRunner[] threads = new MCMCMCRunner[chains.length];
         for (int i = 0; i < chains.length; i++) {
             threads[i] = new MCMCMCRunner(chains[i], mcmcmcOptions.getSwapChainsEvery(), getChainLength(), false);
-            threads[i].start();
+            if (!DEBUG_IN_SERIES) {
+                threads[i].start();
+            }
         }
 
         while (chains[coldChain].getCurrentLength() < getChainLength()) {
 
-            // wait for all the threads to complete their alloted chain length
-            boolean allDone;
-            do {
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    //
+            if (DEBUG_IN_SERIES) {
+                for (int i = 0; i < chains.length; ++i) {
+                    threads[i].runSubChain();
                 }
-
-                allDone = true;
-                for (int i = 0; i < chains.length; i++) {
-                    if (!threads[i].isChainDone()) {
-                        allDone = false;
+            } else {
+                // wait for all the threads to complete their alloted chain length
+                boolean allDone;
+                do {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        //
                     }
-                }
-            } while (!allDone);
+
+                    allDone = true;
+                    for (int i = 0; i < chains.length; i++) {
+                        if (!threads[i].isChainDone()) {
+                            allDone = false;
+                        }
+                    }
+                } while (!allDone);
+            }
 
             if (chains[coldChain].getCurrentLength() < getChainLength()) {
                 int oldColdChain = coldChain;
 
                 // attempt to swap two or more chains' temperatures
                 if (USE_PARALLEL_TEMPERING_SCHEME) {
-                    coldChain = scheme.swapChainTemperatures();
+                    coldChain = scheme.swapChainTemperatures(coldChain);
                 } else {
                     coldChain = swapChainTemperatures();
                 }
@@ -384,7 +399,7 @@ public class MCMCMC implements Runnable {
         }
 
         /**
-         * Called when a new new best posterior state is found.
+         * Called when a new best posterior state is found.
          */
         public synchronized void bestState(long state, MarkovChain markovChain, Model bestModel) {
             currentState = state;

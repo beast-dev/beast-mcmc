@@ -32,6 +32,7 @@ import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
 import dr.math.MathUtils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -190,45 +191,69 @@ public interface ParallelTempering {
     abstract class New extends Base {
 
         private final DirectionSelector directionSelector;
+        private final HalfIndexSelector indexSelector;
+        private final int halfK;
         private boolean evenStep;
 
         public New(MarkovChain[] chains, OperatorSchedule[] schedules, MCMCMCOptions options,
-                   DirectionSelector directionSelector) {
+                   DirectionSelector directionSelector,
+                   HalfIndexSelector indexSelector) {
             super(chains, schedules, options);
             this.directionSelector = directionSelector;
+            this.indexSelector = indexSelector;
+
+            int length = options.getChainTemperatures().length;
+            if (isOdd(length)) {
+                throw new IllegalArgumentException("Only even # of temperatures are allowed");
+            }
+            halfK = length / 2;
+
             this.evenStep = MathUtils.nextBoolean();
+        }
+
+        private static boolean isOdd(int i) {
+            return (i & 1) == 1;
         }
 
         @Override
         List<IndexPair> getPairsToSwap() {
 
             evenStep = directionSelector.next(evenStep);
+            int[] halfIndices = indexSelector.indices(halfK);
 
-            throw new RuntimeException("Not yet implemented");
+            List<IndexPair> pairs = new ArrayList<>();
+            for (int halfIndex : halfIndices) {
+                pairs.add(new IndexPair(
+                        2 * halfIndex + (evenStep ? 0 : 1),
+                        2 * halfIndex + (evenStep ? 1 : 0)
+                ));
+            }
+
+            return pairs;
         }
     }
 
     class DeterministicSingleSwap extends New {
         public DeterministicSingleSwap(MarkovChain[] chains, OperatorSchedule[] schedules, MCMCMCOptions options) {
-            super(chains, schedules, options, DirectionSelector.DETERMINISTIC);
+            super(chains, schedules, options, DirectionSelector.DETERMINISTIC, HalfIndexSelector.ONE);
         }
     }
 
     class DeterministicMultipleSwap extends New {
         public DeterministicMultipleSwap(MarkovChain[] chains, OperatorSchedule[] schedules, MCMCMCOptions options) {
-            super(chains, schedules, options, DirectionSelector.DETERMINISTIC);
+            super(chains, schedules, options, DirectionSelector.DETERMINISTIC, HalfIndexSelector.ALL);
         }
     }
 
     class StochasticSingleSwap extends New {
         public StochasticSingleSwap(MarkovChain[] chains, OperatorSchedule[] schedules, MCMCMCOptions options) {
-            super(chains, schedules, options, DirectionSelector.STOCHASTIC);
+            super(chains, schedules, options, DirectionSelector.STOCHASTIC, HalfIndexSelector.ONE);
         }
     }
 
     class StochasticMultipleSwap extends New {
         public StochasticMultipleSwap(MarkovChain[] chains, OperatorSchedule[] schedules, MCMCMCOptions options) {
-            super(chains, schedules, options, DirectionSelector.STOCHASTIC);
+            super(chains, schedules, options, DirectionSelector.STOCHASTIC, HalfIndexSelector.ALL);
         }
     }
 
@@ -247,5 +272,30 @@ public interface ParallelTempering {
         };
 
         abstract boolean next(boolean last);
+    }
+
+    enum HalfIndexSelector {
+        ONE {
+            @Override
+            int[] indices(int size) {
+                return new int[]{ MathUtils.nextInt(size) };
+            }
+        },
+        ALL {
+            @Override
+            int[] indices(int size) {
+                if (all == null) {
+                    all = new int[size];
+                    for (int i = 0; i < size; ++i) {
+                        all[i] = i;
+                    }
+                }
+                return all;
+            }
+        };
+
+        abstract int[] indices(int size);
+
+        private static int[] all = null;
     }
 }

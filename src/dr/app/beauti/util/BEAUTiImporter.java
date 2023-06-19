@@ -410,7 +410,7 @@ public class BEAUTiImporter {
                 j++;
             }
         }
-        setData(file.getName(), taxa, null, null, null, null, importedTraits, null);
+        setData(file.getName(), taxa, null, null, null, null, importedTraits, null, true);
     }
 
     public void importTaxaFromTraits(final File file) throws Exception {
@@ -429,8 +429,7 @@ public class BEAUTiImporter {
         SimpleAlignment dummyAlignment = new SimpleAlignment();
         dummyAlignment.setDataType(new DummyDataType());
 
-        setData(file.getName(), taxa, dummyAlignment, null, null, null, null, null);
-
+        setData(file.getName(), taxa, dummyAlignment, null, null, null, null, null, true);
     }
 
     public void importNewickFile(final File file) throws Exception {
@@ -581,12 +580,21 @@ public class BEAUTiImporter {
         return true;
     }
 
-    // for Alignment
     private void setData(String fileName, TaxonList taxonList, Alignment alignment,
                          List<CharSet> charSets,
                          List<NexusApplicationImporter.TaxSet> taxSets,
                          PartitionSubstitutionModel model,
                          List<TraitData> traits, List<Tree> trees) throws ImportException, IllegalArgumentException {
+        setData(fileName, taxonList, alignment, charSets, taxSets, model, traits, trees, false);
+    }
+
+    // for Alignment
+    private void setData(String fileName, TaxonList taxonList, Alignment alignment,
+                         List<CharSet> charSets,
+                         List<NexusApplicationImporter.TaxSet> taxSets,
+                         PartitionSubstitutionModel model,
+                         List<TraitData> traits, List<Tree> trees,
+                         Boolean allowEmpty) throws ImportException, IllegalArgumentException {
         String fileNameStem = Utils.trimExtensions(fileName,
                 new String[]{"NEX", "NEXUS", "FA", "FAS", "FASTA", "TRE", "TREE", "XML", "TXT"});
         if (options.fileNameStem == null || options.fileNameStem.equals(MCMCPanel.DEFAULT_FILE_NAME_STEM)) {
@@ -594,14 +602,17 @@ public class BEAUTiImporter {
         }
 
         // check the alignment before adding it...
-        if (alignment.getSiteCount() == 0) {
+        if (!allowEmpty && alignment.getSiteCount() == 0) {
             // sequences are different lengths
             throw new ImportException("This alignment is of zero length");
         }
-        for (Sequence seq : alignment.getSequences()) {
-            if (seq.getLength() != alignment.getSiteCount()) {
-                // sequences are different lengths
-                throw new ImportException("The sequences in the alignment file are of different lengths - BEAST requires aligned sequences");
+
+        if (alignment != null) {
+            for (Sequence seq : alignment.getSequences()) {
+                if (seq.getLength() != alignment.getSiteCount()) {
+                    // sequences are different lengths
+                    throw new ImportException("The sequences in the alignment file are of different lengths - BEAST requires aligned sequences");
+                }
             }
         }
 

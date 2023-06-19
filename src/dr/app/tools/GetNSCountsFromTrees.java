@@ -8,6 +8,7 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.inference.trace.TraceException;
 import dr.util.Version;
 
@@ -19,6 +20,7 @@ import java.util.*;
  */
 public class GetNSCountsFromTrees {
 
+    //TODO: allow to add parent and descendent node discrete state
     private final static Version version = new BeastVersion();
     public static final String BURNIN = "burnin";
     public static final String totalcN = "N";
@@ -31,7 +33,7 @@ public class GetNSCountsFromTrees {
     public static final String BRANCHINFO = "branchInfo";
     public static final String[] falseTrue = {"false", "true"};
     public static final String BRANCHSET = "branchSet";
-    //    public static final String CLADETAXA = "cladeTaxa";
+//    public static final String CLADETAXA = "cladeTaxa";
     public static final String INCLUDECLADES = "includeClades";
     public static final String CLADESTEM = "cladeStem";
     public static final String EXCLUDECLADESTEM = "excludeCladeStem";
@@ -42,18 +44,11 @@ public class GetNSCountsFromTrees {
     public static final String CODONSITELIST = "codonSiteList";
     public static final String MRSD = "mrsd";
     public static final String EXCLUDECLADES = "excludeClades";
-    public static final String PREFIX = "prefix";
-    public static final String HEIGHT_ABOVE = "heightAbove";
-    public static final String HEIGHT_BELOW = "heightBelow";
-    public static final String TIME_BEFORE = "timeBefore";
-    public static final String TIME_AFTER = "timeAfter";
-    public static final String DISCRETE_TRAIT_STATE_SET = "discreteTraitStateSet";
-    public static final String DISCRETE_TRAIT_ATTRIBUTE = "discreteTraitAttribute";
 
-    public GetNSCountsFromTrees (int burnin, String inputFileName, String outputFileName, boolean branchInfo,
-                                 BranchSet branchSet, List<Set> inclusionSets, boolean cladeStem, boolean zeroBranches,
-                                 boolean summary, int sites, double mrsd, List<Set> exclusionSets, boolean excludeCladeStems,
-                                 double[] siteList, String prefix, double heightAbove, double heightBelow, String discreteTrait, String[] stateSet) throws IOException {
+    public GetNSCountsFromTrees(int burnin, String inputFileName, String outputFileName, boolean branchInfo,
+                                BranchSet branchSet, List<Set> inclusionSets, boolean cladeStem, boolean zeroBranches, boolean summary,
+                                int sites, double mrsd, List<Set> exclusionSets, boolean excludeCladeStems,
+                                double[] siteList) throws IOException {
 
         File inputFile = new File(inputFileName);
         if (inputFile.isFile()){
@@ -64,42 +59,17 @@ public class GetNSCountsFromTrees {
         }
 
         this.branchInfo = branchInfo;
-        // in case you would like to ignore branches without N or S substitutions (can't remember why I thought this could be useful)
         this.zeroBranches = zeroBranches;
         this.summary = summary;
         this.mrsd = mrsd;
         this.cladeStem = cladeStem;
         this.excludeCladeStems = excludeCladeStems;
-        this.discreteTrait = discreteTrait;
 
         this.sites = sites;
         if (siteList!=null){
             this.sites = (siteList.length)*3;
-            progressStream.println("Sites set based on site list provided (dN/dS may not be adequate as uN and uS does not account for site list)");
+            progressStream.println("number of sites set based on site list provided");
         }
-
-        if (heightAbove > 0 || heightBelow < Double.MAX_VALUE) {
-            timeConstraints = true;
-        } else {
-            timeConstraints = false;
-        }
-
-        if (prefix!=null){
-            prefixTotalcN = prefix+"."+totalcN;
-            prefixTotalcS = prefix+"."+totalcS;
-            prefixTotaluN = prefix+"."+totaluN;
-            prefixTotaluS = prefix+"."+totaluS;
-            prefixHistoryN = prefix+"."+historyN;
-            prefixHistoryS = prefix+"."+historyS;
-        } else {
-            prefixTotalcN = totalcN;
-            prefixTotalcS = totalcS;
-            prefixTotaluN = totaluN;
-            prefixTotaluS = totaluS;
-            prefixHistoryN = historyN;
-            prefixHistoryS = historyS;
-        }
-
 //        resultsStream = System.out;
 
         if (outputFileName != null) {
@@ -113,12 +83,11 @@ public class GetNSCountsFromTrees {
             resultsStream = new PrintStream(new File(inputFileName+".NSout.txt"));
         }
 
-        analyze(inputFile, burnin, branchSet, inclusionSets, exclusionSets, siteList, stateSet, heightAbove, heightBelow);
+        analyze(inputFile, burnin, branchSet, inclusionSets, exclusionSets, siteList);
 
     }
 
-    private void analyze(File inputFile, int burnin, BranchSet branchSet, List<Set> inclusionSets, List<Set> exclusionSets,
-                         double[] siteList, String[] stateSet, double heightAbove, double heightBelow){
+    private void analyze(File inputFile, int burnin, BranchSet branchSet, List<Set> inclusionSets, List<Set> exclusionSets, double[] siteList){
 
         if (summary) {
             resultsStream.print("tree"+SEP+"cN"+SEP+"uN"+SEP+"cS"+SEP+"uS"+SEP+"cNrate"+SEP+"cSrate"+SEP+"dN/dS"+"\n");
@@ -152,7 +121,7 @@ public class GetNSCountsFromTrees {
                 Tree tree = importer.importNextTree();
 
                 if(count>=burnin) {
-                    getNSCounts(tree, treeUsed, branchSet, inclusionSets, exclusionSets, siteList, stateSet, heightAbove, heightBelow);
+                    getNSCounts(tree, treeUsed, branchSet, inclusionSets, exclusionSets, siteList);
                     treeUsed ++;
                 }
                 count++;
@@ -174,8 +143,7 @@ public class GetNSCountsFromTrees {
         }
     }
 
-    private void getNSCounts(Tree tree, int treeUsed, BranchSet branchSet, List<Set> inclusionSets,  List<Set> exclusionSets,
-                             double[] siteList, String[] stateSet, double heightAbove, double heightBelow){
+    private void getNSCounts(Tree tree, int treeUsed, BranchSet branchSet, List<Set> inclusionSets,  List<Set> exclusionSets, double[] siteList){
         int count = 0;
         double cN = 0;
         double uN = 0;
@@ -187,91 +155,33 @@ public class GetNSCountsFromTrees {
             NodeRef node = tree.getNode(x);
             if (!tree.isRoot(node)){
                 count ++;
-                if (nodeToConsider(tree, node, branchSet, inclusionSets, exclusionSets, stateSet, heightAbove, heightBelow)){
+                if (nodeToConsider(tree, node, branchSet, inclusionSets, exclusionSets)){
                     double branchLength = tree.getBranchLength(node);
-                    if (timeConstraints){
-                        double nodeHeight = tree.getNodeHeight(node);
-                        double parentNodeHeight = tree.getNodeHeight(tree.getParent(node));
-                        double upperHeight = parentNodeHeight;
-                        double lowerHeight = nodeHeight;
-                        if (heightBelow < Double.MAX_VALUE) {
-                             if (parentNodeHeight > heightBelow) {
-                                upperHeight = heightBelow;
-                             }
-                        }
-                        if (heightAbove > 0){
-                            if(nodeHeight < heightAbove) {
-                                lowerHeight = heightAbove;
-                            }
-                        }
-                        if ((upperHeight - lowerHeight)>0){
-                            branchLength = upperHeight - lowerHeight;
-                        }
-                    }
                     length += branchLength;
-
-                    Object totalNObject = tree.getNodeAttribute(node, prefixTotalcN);
-                    Object totalSObject = tree.getNodeAttribute(node, prefixTotalcS);
-                    //in case N and S would not be annotated
+                    Object totalNObject = tree.getNodeAttribute(node, totalcN);
+                    Object totalSObject = tree.getNodeAttribute(node, totalcS);
                     if (totalNObject!=null && totalSObject!=null) {
-                        //System.out.println("Hallo");
-                        double totalN = (Double) totalNObject;
+                         double totalN = (Double) totalNObject;
                         double totalS = (Double) totalSObject;
-                        double totaluN = (Double) tree.getNodeAttribute(node, prefixTotaluN);
-                        double totaluS = (Double) tree.getNodeAttribute(node, prefixTotaluS);
-                        if(siteList==null && !timeConstraints){
+                        double totaluNObject = (Double) tree.getNodeAttribute(node, totaluN);
+                        double totaluSObject = (Double) tree.getNodeAttribute(node, totaluS);
+                        if(siteList==null){
                             cN += totalN;
                             cS += totalS;
                         }
-                        uN += totaluN;
-                        uS += totaluS;
+                        uN += totaluNObject;
+                        uS += totaluSObject;
                         if (totalN > 0) {
-                            Object[] allNObject = (Object[]) tree.getNodeAttribute(node, prefixHistoryN);
+                            Object[] allNObject = (Object[]) tree.getNodeAttribute(node, historyN);
                             for (int a = 0; a < allNObject.length; a++) {
                                 Object[] singleNObject = (Object[]) allNObject[a];
                                 boolean proceedAgain = false;
                                 if(siteList==null) {
-                                    if (!timeConstraints){
-                                        proceedAgain = true;
-                                    } else {
-                                        boolean timeCompatible = true;
-                                        if (heightBelow < Double.MAX_VALUE){
-                                            if((Double) singleNObject[1] > heightBelow){
-                                                timeCompatible = false;
-                                            }
-                                        }
-                                        if (heightAbove > 0){
-                                            if((Double) singleNObject[1] < heightAbove) {
-                                                timeCompatible = false;
-                                            }
-                                        }
-                                        if (timeCompatible){
-                                            proceedAgain = true;
-                                            cN ++;
-                                        }
-                                    }
+                                    proceedAgain = true;
                                 } else {
                                     if (inSiteList((Integer)singleNObject[0], siteList)) {
-                                        if (!timeConstraints){
-                                            proceedAgain = true;
-                                            cN ++;
-                                        } else {
-                                            boolean timeCompatible = true;
-                                            if (heightBelow < Double.MAX_VALUE){
-                                                if((Double) singleNObject[1] > heightBelow){
-                                                    timeCompatible = false;
-                                                }
-                                            }
-                                            if (heightAbove > 0){
-                                                if((Double) singleNObject[1] < heightAbove) {
-                                                    timeCompatible = false;
-                                                }
-                                            }
-                                            if (timeCompatible){
-                                                proceedAgain = true;
-                                                cN ++;
-                                            }
-                                        }
+                                        proceedAgain = true;
+                                        cN ++;
                                     }
                                 }
                                 if(!summary && proceedAgain){
@@ -284,7 +194,7 @@ public class GetNSCountsFromTrees {
                                     }
                                     resultsStream.print(singleNObject[2] + SEP + singleNObject[3] + SEP);
                                     if (branchInfo) {
-                                        resultsStream.print(branchLength + SEP + totalN + SEP + totaluN + "\n");
+                                        resultsStream.print(branchLength + SEP + totalN + SEP + totaluNObject + "\n");
                                     } else {
                                         resultsStream.print("\n");
                                     }
@@ -293,52 +203,16 @@ public class GetNSCountsFromTrees {
                             }
                         }
                         if (totalS > 0) {
-                            Object[] allSObject = (Object[]) tree.getNodeAttribute(node, prefixHistoryS);
+                            Object[] allSObject = (Object[]) tree.getNodeAttribute(node, historyS);
                             for (int a = 0; a < allSObject.length; a++) {
                                 Object[] singleSObject = (Object[]) allSObject[a];
                                 boolean proceedAgain = false;
                                 if(siteList==null) {
-                                    if (!timeConstraints){
-                                        proceedAgain = true;
-                                    } else {
-                                        boolean timeCompatible = true;
-                                        if (heightBelow < Double.MAX_VALUE){
-                                            if((Double) singleSObject[1] > heightBelow){
-                                                timeCompatible = false;
-                                            }
-                                        }
-                                        if (heightAbove > 0){
-                                            if((Double) singleSObject[1] < heightAbove) {
-                                                timeCompatible = false;
-                                            }
-                                        }
-                                        if (timeCompatible){
-                                            proceedAgain = true;
-                                            cS ++;
-                                        }
-                                    }
+                                    proceedAgain = true;
                                 } else {
                                     if (inSiteList((Integer)singleSObject[0], siteList)) {
-                                        if (!timeConstraints){
-                                            proceedAgain = true;
-                                            cS ++;
-                                        } else {
-                                            boolean timeCompatible = true;
-                                            if (heightBelow < Double.MAX_VALUE){
-                                                if((Double) singleSObject[1] > heightBelow){
-                                                    timeCompatible = false;
-                                                }
-                                            }
-                                            if (heightAbove > 0){
-                                                if((Double) singleSObject[1] < heightAbove) {
-                                                    timeCompatible = false;
-                                                }
-                                            }
-                                            if (timeCompatible){
-                                                proceedAgain = true;
-                                                cS ++;
-                                            }
-                                        }
+                                        proceedAgain = true;
+                                        cS ++;
                                     }
                                 }
                                 if(!summary && proceedAgain){
@@ -351,7 +225,7 @@ public class GetNSCountsFromTrees {
                                     }
                                     resultsStream.print(singleSObject[2] + SEP + singleSObject[3] + SEP);
                                     if (branchInfo) {
-                                        resultsStream.print(branchLength + SEP + totalS + SEP + totaluS + "\n");
+                                        resultsStream.print(branchLength + SEP + totalS + SEP + totaluSObject + "\n");
                                     } else {
                                         resultsStream.print("\n");
                                     }
@@ -359,7 +233,6 @@ public class GetNSCountsFromTrees {
                             }
                         }
 
-                        //in case you do not wish to print out zero branch lengths
                         if ((totalN+totalS)==0){
                             if (zeroBranches) {
                                 if (!summary){
@@ -376,9 +249,7 @@ public class GetNSCountsFromTrees {
                                 length -= branchLength;
                             }
                         }
-                    }  else {
-                        System.err.println("No N or S annotations?");
-                        System.exit(-1);
+                        //tree,branch,S/N,position,oriState,destState,time,branchLength,totalBranchcN,totalcS,totaluN,totaluS,summaryTine
                     }
                 }
             }
@@ -389,8 +260,7 @@ public class GetNSCountsFromTrees {
         }
     }
 
-    private boolean nodeToConsider(Tree tree, NodeRef node, BranchSet branchSet, List<Set> inclusionSets,  List<Set> exclusionSets,
-                                   String[] stateSet, double heightAbove, double heightBelow){
+    private boolean nodeToConsider(Tree tree, NodeRef node, BranchSet branchSet, List<Set> inclusionSets,  List<Set> exclusionSets){
         boolean nodeToConsider = false;
         if (branchSet == BranchSet.ALL) {
             nodeToConsider = true;
@@ -427,35 +297,6 @@ public class GetNSCountsFromTrees {
                 }
             }
         }
-
-        // making sure it is a branch that maintains a specified state = node and parent state are a specified state.
-        if(nodeToConsider && stateSet!=null) {
-            nodeToConsider = false;
-            String nodeState = ((String)tree.getNodeAttribute(node, discreteTrait)).replaceAll("\"","");
-            String parentNodeState = ((String)tree.getNodeAttribute(tree.getParent(node), discreteTrait)).replaceAll("\"","");;
-            if (nodeState.equals(parentNodeState)){
-//                System.out.println(nodeState);
-                for (String state: stateSet){
-                    if (state.equalsIgnoreCase(nodeState)){
-                        nodeToConsider = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        //partially accounting for specified time constraints
-        if (nodeToConsider && timeConstraints) {
-            double nodeHeight = tree.getNodeHeight(node);
-            double parentNodeHeight = tree.getNodeHeight(tree.getParent(node));
-            if(parentNodeHeight < heightAbove){
-                nodeToConsider = false;
-            }
-            if(nodeHeight > heightBelow){
-                nodeToConsider = false;
-            }
-        }
-
         return nodeToConsider;
     }
 
@@ -496,7 +337,7 @@ public class GetNSCountsFromTrees {
 
         if (tree.isExternal(node)) return false;
 
-        Set leafSet = Tree.Utils.getDescendantLeaves(tree, node);
+        Set leafSet = TreeUtils.getDescendantLeaves(tree, node);
         int size = leafSet.size();
 
         leafSet.retainAll(targetSet);
@@ -506,7 +347,7 @@ public class GetNSCountsFromTrees {
             // if all leaves below are in target then check just above.
             if (leafSet.size() == size) {
 
-                Set superLeafSet = Tree.Utils.getDescendantLeaves(tree, tree.getParent(node));
+                Set superLeafSet = TreeUtils.getDescendantLeaves(tree, tree.getParent(node));
                 superLeafSet.removeAll(targetSet);
 
                 // the branch is on ancestral path if the super tree has some non-targets in it
@@ -518,7 +359,7 @@ public class GetNSCountsFromTrees {
     }
 
     private static boolean inClade(Tree tree, NodeRef node, Set targetSet, boolean includeStem) {
-        Set leafSet = Tree.Utils.getDescendantLeaves(tree, node);
+        Set leafSet = TreeUtils.getDescendantLeaves(tree, node);
 
         leafSet.removeAll(targetSet);
 
@@ -527,7 +368,7 @@ public class GetNSCountsFromTrees {
             if (includeStem){
                 return true;
             }  else {
-                Set parentLeafSet = Tree.Utils.getDescendantLeaves(tree, tree.getParent(node));
+                Set parentLeafSet = TreeUtils.getDescendantLeaves(tree, tree.getParent(node));
                 parentLeafSet.removeAll(targetSet);
                 if (parentLeafSet.size() == 0){
                     return true;
@@ -541,12 +382,12 @@ public class GetNSCountsFromTrees {
     }
 
     private static boolean isMRCAnode(Tree tree, NodeRef node, Set targetSet) {
-        NodeRef mrca = Tree.Utils.getCommonAncestorNode(tree, targetSet);
+        NodeRef mrca = TreeUtils.getCommonAncestorNode(tree, targetSet);
         if (node.equals(mrca)){
             return true;
         } else {
             return false;
-        }
+         }
     }
 
     private boolean branchInfo;
@@ -556,17 +397,8 @@ public class GetNSCountsFromTrees {
     private double mrsd;
     private boolean cladeStem;
     private boolean excludeCladeStems;
-    private String discreteTrait;
-    private boolean timeConstraints;
     private static PrintStream progressStream = System.err;
     private PrintStream resultsStream;
-
-    public String prefixTotalcN;
-    public String prefixTotalcS;
-    public String prefixTotaluN;
-    public String prefixTotaluS;
-    public String prefixHistoryN;
-    public String prefixHistoryS;
 
     enum BranchSet {
         ALL,
@@ -669,15 +501,6 @@ public class GetNSCountsFromTrees {
                         new Arguments.StringOption(EXCLUDECLADES, "clade exclusion files", "specifies files with taxa that define clades to be excluded"),
                         new Arguments.IntegerOption(SITESUM, "the number of nucleotide sites to summarize rates in per site per time unit [default = 1]"),
                         new Arguments.StringOption(CODONSITELIST, "list of sites", "sites for which the summary is restricted to"),
-                        new Arguments.StringOption(PREFIX, "annotation prefix", "specifies a prefix that is used for the annotations (e.g. to distinguish partition-specific annotations"),
-
-                        new Arguments.RealOption(HEIGHT_ABOVE, "specifies a boundary above which the height must be to be included in the summary [default=none]"),
-                        new Arguments.RealOption(HEIGHT_BELOW, "specifies a boundary below which the height must be to be included in the summary [default=none]"),
-                        new Arguments.RealOption(TIME_BEFORE, "specifies a boundary before which the time must be to be included in the summary [default=none]"),
-                        new Arguments.RealOption(TIME_AFTER, "specifies a boundary after which the time must be to be included in the summary [default=none]"),
-
-                        new Arguments.StringOption(DISCRETE_TRAIT_ATTRIBUTE, "discrete trait attribute", "specifies the string used as attribute for the discrete trait state"),
-                        new Arguments.StringOption(DISCRETE_TRAIT_STATE_SET, "discrete trait state set", "specifies which discrete trait states that branches need to maintain to be considered for the summary"),
                         new Arguments.Option("help", "option to print this message")
                 });
 
@@ -716,9 +539,9 @@ public class GetNSCountsFromTrees {
         if (set == set.BACKBONE) {
             if (arguments.hasOption(BACKBONETAXA)) {
                 String[] fileList = parseVariableLengthStringArray(arguments.getStringOption(BACKBONETAXA));
-                for (String singleSet : fileList) {
+                for (String singleSet: fileList){
                     inclusionSets.add(getTargetSet(singleSet));
-                    progressStream.println("getting target set for backbone inclusion: " + singleSet);
+                    progressStream.println("getting target set for backbone inclusion: "+singleSet);
                 }
             } else {
                 progressStream.println("you want to get summaries for (a) backbone(s), but no files with taxa to define it are provided??");
@@ -733,9 +556,9 @@ public class GetNSCountsFromTrees {
 
             if (arguments.hasOption(INCLUDECLADES)) {
                 String[] fileList = parseVariableLengthStringArray(arguments.getStringOption(INCLUDECLADES));
-                for (String singleSet : fileList) {
+                for (String singleSet: fileList){
                     inclusionSets.add(getTargetSet(singleSet));
-                    progressStream.println("getting target set for clade inclusion: " + singleSet);
+                    progressStream.println("getting target set for clade inclusion: "+singleSet);
                 }
             } else {
                 progressStream.println("you want to get summaries for one or more clades, but no files with taxa to define it are provided??");
@@ -745,7 +568,7 @@ public class GetNSCountsFromTrees {
         if (set == set.SINGLEBRANCH) {
             if (arguments.hasOption(INCLUDECLADES)) {
                 String[] fileList = parseVariableLengthStringArray(arguments.getStringOption(INCLUDECLADES));
-                if (fileList.length > 1) {
+                if (fileList.length > 1){
                     progressStream.println("more than one clade set is specified for a summary of a single branch??");
                     System.exit(-1);
                 } else {
@@ -796,9 +619,9 @@ public class GetNSCountsFromTrees {
         List<Set> exclusionSets = new ArrayList();
         if (arguments.hasOption(EXCLUDECLADES)) {
             String[] fileList = parseVariableLengthStringArray(arguments.getStringOption(EXCLUDECLADES));
-            for (String singleSet : fileList) {
+            for (String singleSet: fileList){
                 exclusionSets.add(getTargetSet(singleSet));
-                progressStream.println("getting target set for clade exclusion: " + singleSet);
+                progressStream.println("getting target set for clade exclusion: "+singleSet);
             }
         }
 
@@ -806,48 +629,6 @@ public class GetNSCountsFromTrees {
         if (arguments.hasOption(CODONSITELIST)) {
             siteList = parseVariableLengthDoubleArray(arguments.getStringOption(CODONSITELIST));
             progressStream.println("site list provided: note that dN/dS will not be accurately estimated because the neutral expectation to get dN/dS (uN and uS) is for all sites along a branch.");
-        }
-
-        String prefix = arguments.getStringOption(PREFIX);
-
-        double heightAbove = 0;
-        if (arguments.hasOption(HEIGHT_ABOVE)) {
-            heightAbove = arguments.getRealOption(HEIGHT_ABOVE);
-        } else if (arguments.hasOption(TIME_BEFORE)) {
-            if (mrsd > 0){
-                heightAbove = mrsd - arguments.getRealOption(TIME_BEFORE);
-            } else {
-                System.err.println(TIME_BEFORE +" is specified but no mrsd (>0)??");
-                System.exit(-1);
-            }
-        }
-
-        double heightBelow = Double.MAX_VALUE;
-        if (arguments.hasOption(HEIGHT_BELOW)) {
-            heightBelow = arguments.getRealOption(HEIGHT_BELOW);
-        } else if (arguments.hasOption(TIME_AFTER)) {
-            if (mrsd > 0){
-                heightBelow = mrsd - arguments.getRealOption(TIME_AFTER);
-            } else {
-                System.err.println(TIME_AFTER +" is specified but no mrsd (>0)??");
-                System.exit(-1);
-            }
-        }
-
-        String discreteTrait = null;
-        if (arguments.hasOption(DISCRETE_TRAIT_ATTRIBUTE)) {
-            discreteTrait = arguments.getStringOption(DISCRETE_TRAIT_ATTRIBUTE);
-            progressStream.println("discrete trait attribute provided is "+discreteTrait);
-        }
-
-        String[] stateSet = null;
-        if (arguments.hasOption(DISCRETE_TRAIT_STATE_SET)) {
-            stateSet = parseVariableLengthStringArray(arguments.getStringOption(DISCRETE_TRAIT_STATE_SET));
-            if (discreteTrait==null){
-                System.err.println("stateSet provided nut no discrete trait attribute provided??");
-                System.exit(-1);
-            }
-            progressStream.println("discrete trait state set provided for summary; first state in set = "+stateSet[0]);
         }
 
         String inputFileName = null;
@@ -880,9 +661,7 @@ public class GetNSCountsFromTrees {
             burnin = Integer.parseInt(br.readLine());
         }
 
-        new GetNSCountsFromTrees(burnin, inputFileName, outputFileName, branchInfo, set, inclusionSets, cladeStem, zeroBranches,
-                summary, sites, mrsd, exclusionSets, excludeCladeStems,
-                siteList, prefix, heightAbove, heightBelow, discreteTrait, stateSet);
+        new GetNSCountsFromTrees(burnin, inputFileName, outputFileName, branchInfo, set, inclusionSets, cladeStem, zeroBranches, summary, sites, mrsd, exclusionSets, excludeCladeStems, siteList);
 
         System.exit(0);
     }

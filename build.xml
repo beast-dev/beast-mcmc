@@ -74,7 +74,8 @@
                fork="true"
                includeantruntime="false"
                memoryinitialsize="256m"
-               memorymaximumsize="1024m">
+               memorymaximumsize="1024m"
+               encoding="UTF-8">
             <include name="dr/app/beast/**"/>
             <include name="dr/app/beauti/**"/>
             <include name="dr/app/bss/**"/>

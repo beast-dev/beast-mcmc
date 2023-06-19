@@ -113,20 +113,26 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
         addModel(branchRates);
     }
 
-    public void addCladeClock(TaxonList taxonList, Parameter rateParameter, boolean isRelativeRate, double stemProportion, boolean excludeClade) throws TreeUtils.MissingTaxonException {
+    public void addCladeClock(TaxonList taxonList, Parameter rateParameter, boolean isRelativeRate, Parameter stemParameter, boolean excludeClade) throws TreeUtils.MissingTaxonException {
         Set<Integer> tips = TreeUtils.getTipsForTaxa(treeModel, taxonList);
         BitSet tipBitSet = TreeUtils.getTipsBitSetForTaxa(treeModel, taxonList);
-        LocalClock clock = new LocalClock(rateParameter, isRelativeRate, tips, stemProportion, excludeClade);
+        LocalClock clock = new LocalClock(rateParameter, isRelativeRate, tips, stemParameter, excludeClade);
         localCladeClocks.put(tipBitSet, clock);
         addVariable(rateParameter);
+        if (stemParameter != null) {
+            addVariable(stemParameter);
+        }
     }
 
-    public void addCladeClock(TaxonList taxonList, BranchRateModel branchRates, boolean isRelativeRate, double stemProportion, boolean excludeClade) throws TreeUtils.MissingTaxonException {
+    public void addCladeClock(TaxonList taxonList, BranchRateModel branchRates, boolean isRelativeRate, Parameter stemParameter, boolean excludeClade) throws TreeUtils.MissingTaxonException {
         Set<Integer> tips = TreeUtils.getTipsForTaxa(treeModel, taxonList);
         BitSet tipBitSet = TreeUtils.getTipsBitSetForTaxa(treeModel, taxonList);
-        LocalClock clock = new LocalClock(branchRates, isRelativeRate, tips, stemProportion, excludeClade);
+        LocalClock clock = new LocalClock(branchRates, isRelativeRate, tips, stemParameter, excludeClade);
         localCladeClocks.put(tipBitSet, clock);
         addModel(branchRates);
+        if (stemParameter != null) {
+            addVariable(stemParameter);
+        }
     }
 
     public void addTrunkClock(TaxonList taxonList, Parameter rateParameter, Parameter indexParameter, boolean isRelativeRate) throws TreeUtils.MissingTaxonException {
@@ -389,7 +395,7 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
             this.tips = tipSet;
             this.tipList = null;
             this.type = type;
-            this.stemProportion = 1.0;
+            this.stemParameter = null;
             this.excludeClade = true;
         }
 
@@ -401,11 +407,11 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
             this.tips = tipSet;
             this.tipList = null;
             this.type = type;
-            this.stemProportion = 1.0;
+            this.stemParameter = null;
             this.excludeClade = true;
         }
 
-        LocalClock(Parameter rateParameter, boolean isRelativeRate, Set<Integer> tips, double stemProportion, boolean excludeClade) {
+        LocalClock(Parameter rateParameter, boolean isRelativeRate, Set<Integer> tips, Parameter stemParameter, boolean excludeClade) {
             this.rateParameter = rateParameter;
             this.branchRates = null;
             this.indexParameter = null;
@@ -413,11 +419,11 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
             this.tips = tips;
             this.tipList = null;
             this.type = ClockType.CLADE;
-            this.stemProportion = stemProportion;
+            this.stemParameter = stemParameter;
             this.excludeClade = excludeClade;
         }
 
-        LocalClock(BranchRateModel branchRates, boolean isRelativeRate, Set<Integer> tips, double stemProportion, boolean excludeClade) {
+        LocalClock(BranchRateModel branchRates, boolean isRelativeRate, Set<Integer> tips, Parameter stemParameter, boolean excludeClade) {
             this.rateParameter = null;
             this.branchRates = branchRates;
             this.indexParameter = null;
@@ -425,7 +431,7 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
             this.tips = tips;
             this.tipList = null;
             this.type = ClockType.CLADE;
-            this.stemProportion = stemProportion;
+            this.stemParameter = stemParameter;
             this.excludeClade = excludeClade;
         }
 
@@ -437,7 +443,7 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
             this.tips = null;
             this.tipList = tipList;
             this.type = type;
-            this.stemProportion = 1.0;
+            this.stemParameter = null;
             this.excludeClade = true;
         }
 
@@ -449,12 +455,17 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
             this.tips = null;
             this.tipList = tipList;
             this.type = type;
-            this.stemProportion = 1.0;
+            this.stemParameter = null;
             this.excludeClade = true;
         }
 
         double getStemProportion() {
-            return this.stemProportion;
+            if (stemParameter != null) {
+                return stemParameter.getParameterValue(0);
+            } else {
+                // if no parameter then default to 0 stem 
+                return 0.0;
+            }
         }
 
         boolean excludeClade() {
@@ -484,7 +495,7 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
         private final Set<Integer> tips;
         private final List<Integer> tipList;
         private final ClockType type;
-        private final double stemProportion;
+        private final Parameter stemParameter;
         private final boolean excludeClade;
     }
 

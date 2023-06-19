@@ -93,16 +93,24 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
                     }
 
                     boolean excludeClade = false;
-                    double stemProportion = 0.0;
-
+                    Parameter stemParameter = null;
+                    
                     if (xoc.hasAttribute(INCLUDE_STEM)) {
                         // if includeStem=true then assume it is the whole stem
-                        stemProportion = xoc.getBooleanAttribute(INCLUDE_STEM) ? 1.0 : 0.0;
+                        stemParameter = new Parameter.Default(xoc.getBooleanAttribute(INCLUDE_STEM) ? 1.0 : 0.0);
                     }
 
                     if (xoc.hasAttribute(STEM_PROPORTION)) {
-                        stemProportion = xoc.getDoubleAttribute(STEM_PROPORTION);
-                        if (stemProportion < 0.0 || stemProportion > 1.0) {
+                        double stemValue = xoc.getDoubleAttribute(STEM_PROPORTION);
+                        if (stemValue < 0.0 || stemValue > 1.0) {
+                            throw new XMLParseException("A stem proportion should be between 0, 1");
+                        }
+                        stemParameter = new Parameter.Default(stemValue);
+                    }
+
+                    if (xoc.hasChildNamed(STEM_PROPORTION)) {
+                        stemParameter = (Parameter) xoc.getElementFirstChild(STEM_PROPORTION);
+                        if (stemParameter.getParameterValue(0) < 0.0 || stemParameter.getParameterValue(0) > 1.0) {
                             throw new XMLParseException("A stem proportion should be between 0, 1");
                         }
                     }
@@ -113,9 +121,9 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
 
                     try {
                         if (branchRates != null) {
-                            localClockModel.addCladeClock(taxonList, branchRates, relative, stemProportion, excludeClade);
+                            localClockModel.addCladeClock(taxonList, branchRates, relative, stemParameter, excludeClade);
                         } else {
-                            localClockModel.addCladeClock(taxonList, rateParameter, relative, stemProportion, excludeClade);
+                            localClockModel.addCladeClock(taxonList, rateParameter, relative, stemParameter, excludeClade);
                         }
 
                     } catch (TreeUtils.MissingTaxonException mte) {
@@ -204,8 +212,14 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
             new ElementRule(CLADE,
                     new XMLSyntaxRule[]{
                             AttributeRule.newBooleanRule(RELATIVE, true),
-                            AttributeRule.newBooleanRule(INCLUDE_STEM, true, "determines whether or not the stem branch above this clade is included in the siteModel (default false)."),
-                            AttributeRule.newDoubleRule(STEM_PROPORTION, true, "proportion of stem to include in clade rate (default 0)."),
+                            new XORRule(
+                                    new XMLSyntaxRule[]{
+                                            AttributeRule.newBooleanRule(INCLUDE_STEM, true, "determines whether or not the stem branch above this clade is included in the siteModel (default false)."),
+                                            AttributeRule.newDoubleRule(STEM_PROPORTION, true, "proportion of stem to include in clade rate (default 0)."),
+                                            new ElementRule(STEM_PROPORTION, Parameter.class, "A parameter for the proportion of stem to include in clade rate (0 - 1)", false)
+                                    },
+                                    true
+                            ),
                             AttributeRule.newBooleanRule(EXCLUDE_CLADE, true, "determines whether to exclude actual branches of the clade from the siteModel (default false)."),
                             new ElementRule(Taxa.class, "A set of taxa which defines a clade to apply a different site model to"),
                             new XORRule(

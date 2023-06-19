@@ -26,12 +26,14 @@
 package dr.app.beauti.components.continuous;
 
 import dr.app.beauti.components.GeneratorHelper;
+import dr.app.beauti.components.XMLWriterObject;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.ContinuousDataType;
 import dr.evolution.util.Taxon;
 import dr.evomodel.continuous.TreeDataContinuousDiffusionStatistic;
+import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihoodParser;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModelParser;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresWishartStatistics;
 import dr.evomodel.treedatalikelihood.continuous.WishartStatisticsWrapper;
@@ -210,6 +212,66 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         writer.writeCloseTag("multivariateDiffusionModel");
     }
 
+
+    private void writeNormalDistributionPrior(XMLWriter writer, String id, String parameterId) {
+//        String distributionLikelihood = "distributionLikelihood";
+//        writer.writeOpenTag(distributionLikelihood);
+//
+//        String data = "data";
+//        writer.writeOpenTag(data);
+//        writer.writeIDref("parameter", parameterId);
+//        writer.writeCloseTag(data);
+//        writer.writeCloseTag(distributionLikelihood);
+        XMLWriterObject param = new XMLWriterObject("parameter", parameterId);
+        param.setAlreadyWritten(true);
+        XMLWriterObject data = new XMLWriterObject("data", param);
+        XMLWriterObject distribution = getNormalDistribution(0, 1);
+
+        XMLWriterObject prior = new XMLWriterObject(
+                "distributionLikelihood",
+                id,
+                new XMLWriterObject[]{
+                        data,
+                        new XMLWriterObject(
+                                "distribution",
+                                distribution
+                        )
+                });
+        prior.writeOrReference(writer);
+    }
+
+    private XMLWriterObject getNormalDistribution(double mean, double stdev) {
+//        writer.writeOpenTag("distribution");
+//        writer.writeOpenTag("mean");
+//        writer.writeCloseTag("mean");
+//        writer.writeOpenTag("stdev");
+//        writer.writeCloseTag("stdev");
+//        writer.writeCloseTag("");
+        XMLWriterObject distribution = new XMLWriterObject(
+                "normalDistributionModel",
+                null,
+                new XMLWriterObject[]{
+                        new XMLWriterObject("mean",
+                                new XMLWriterObject("parameter",
+                                        null,
+                                        null,
+                                        new Attribute[]{
+                                                new Attribute.Default("value", mean)
+                                        })),
+                        new XMLWriterObject("stdev",
+                                new XMLWriterObject("parameter",
+                                        null,
+                                        null,
+                                        new Attribute[]{
+                                                new Attribute.Default("value", stdev),
+                                                new Attribute.Default("lower", 0)
+                                        }))
+                }
+        );
+
+        return distribution;
+    }
+
     private void writeMultivariateWishartPrior(XMLWriter writer,
                                                String id,
                                                String precisionMatrixId,
@@ -266,8 +328,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
             if (extensionType != ContinuousModelExtensionType.NONE) {
 
-                String precisionId = repeatedMeasuresTraitDataModelParser.getBeautiParameterIDProvider(
-                        "extensionPrecision").getId(model.getName());
+
                 String treeModelId = partitionData.getPartitionTreeModel().getPrefix() + "treeModel";
 
                 if (first) {
@@ -276,8 +337,12 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                     first = false;
                 }
 
+                String precisionId;
+
                 switch (extensionType) {
                     case RESIDUAL:
+                        precisionId = repeatedMeasuresTraitDataModelParser.getBeautiParameterIDProvider(
+                                "extensionPrecision").getId(model.getName());
                         writeResidualExtensionModel(writer, partitionData, treeModelId, precisionId);
 
                         writer.writeBlankLine();
@@ -288,7 +353,34 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
                         break;
                     case LATENT_FACTORS:
-                        //TODO:
+                        precisionId = integratedFactorsParser.getBeautiParameterIDProvider(
+                                integratedFactorsParser.PRECISION).getId(model.getName());
+                        String loadingsId = integratedFactorsParser.getBeautiParameterIDProvider(
+                                integratedFactorsParser.LOADINGS).getId(model.getName());
+                        writeLatentFactorModel(writer, partitionData, treeModelId, precisionId, loadingsId);
+                        writer.writeBlankLine();
+
+                        writeNormalDistributionPrior(writer, loadingsId + ".prior", loadingsId);
+
+                        XMLWriterObject precisionPrior = new XMLWriterObject(
+                                "gammaPrior",
+                                precisionId + ".prrior",
+                                new XMLWriterObject[]{
+                                        new XMLWriterObject("parameter",
+                                                null,
+                                                null,
+                                                new Attribute[]{
+                                                        new Attribute.Default("idref", precisionId)
+                                                })
+                                },
+                                new Attribute[]{
+                                        new Attribute.Default("scale", 1),
+                                        new Attribute.Default("shape", 1)
+                                }
+                        );
+
+                        precisionPrior.writeOrReference(writer);
+                        break;
                     case NONE:
                         throw new IllegalArgumentException("Shouldn't be here");
                     default:
@@ -301,7 +393,8 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
     }
 
-    private void writeResidualExtensionModel(XMLWriter writer, AbstractPartitionData partitionData, String treeModelId, String precisionId) {
+    private void writeResidualExtensionModel(XMLWriter writer, AbstractPartitionData partitionData, String treeModelId,
+                                             String precisionId) {
         PartitionSubstitutionModel model = partitionData.getPartitionSubstitutionModel();
         int p = model.getExtendedTraitCount();
 
@@ -309,7 +402,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         writer.writeOpenTag("repeatedMeasuresModel",
                 new Attribute[]{
                         new Attribute.Default<String>("id", repeatedMeasuresTraitDataModelParser.getId(
-                                ContinuousModelExtensionType.RESIDUAL, model.getName())),
+                                model.getName())),
                         new Attribute.Default<String>("traitName", partitionData.getName())
                 });
 
@@ -319,13 +412,42 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
         writer.writeOpenTag("samplingPrecision");
 
-        GeneratorHelper.writeMatrixParameter(writer, precisionId, p);
+        GeneratorHelper.writeIdentityMatrixParameter(writer, precisionId, p);
 
 
         writer.writeCloseTag("samplingPrecision");
 
         writer.writeCloseTag("repeatedMeasuresModel");
 
+    }
+
+    private void writeLatentFactorModel(XMLWriter writer, AbstractPartitionData partitionData, String treeModelId,
+                                        String precisionId, String loadingsId) {
+
+
+        PartitionSubstitutionModel model = partitionData.getPartitionSubstitutionModel();
+        int p = model.getExtendedTraitCount();
+
+
+        writer.writeOpenTag(integratedFactorsParser.getParserTag(),
+                new Attribute[]{
+                        new Attribute.Default<String>("id", integratedFactorsParser.getId(model.getName())),
+                        new Attribute.Default<String>("traitName", partitionData.getName())
+                });
+
+        writer.writeIDref("treeModel", treeModelId);
+
+        writeTraitParameter(writer, partitionData);
+
+        writer.writeOpenTag(integratedFactorsParser.PRECISION);
+        GeneratorHelper.writeParameter(writer, precisionId, p, 1);
+        writer.writeCloseTag(integratedFactorsParser.PRECISION);
+
+        writer.writeOpenTag(integratedFactorsParser.LOADINGS);
+        GeneratorHelper.writeMatrixParameter(writer, loadingsId, 2, p); //TODO: get k from BEAUti
+        writer.writeCloseTag(integratedFactorsParser.LOADINGS);
+
+        writer.writeCloseTag(integratedFactorsParser.getParserTag());
     }
 
 
@@ -588,11 +710,10 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 writeTraitParameter(writer, partitionData);
                 break;
             case RESIDUAL:
-                writer.writeIDref("repeatedMeasuresModel", repeatedMeasuresTraitDataModelParser.getId(
-                        ContinuousModelExtensionType.RESIDUAL, model.getName()));
+                writer.writeIDref("repeatedMeasuresModel", repeatedMeasuresTraitDataModelParser.getId(model.getName()));
                 break;
             case LATENT_FACTORS:
-                //TODO
+                writer.writeIDref("integratedFactorModel", integratedFactorsParser.getId(model.getName()));
                 break;
             default:
                 throw new IllegalArgumentException("Unknown model extension type");
@@ -776,12 +897,60 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                             ContinuousModelExtensionType.RESIDUAL);
                     break;
                 case LATENT_FACTORS:
-                    //TODO
-                    throw new IllegalArgumentException("Not yet implemented");
+                    writeLatentFactorOperators(writer, component, partitionData);
+                    break;
                 default:
                     throw new IllegalArgumentException("Unknown extension type");
             }
         }
+    }
+
+    private void writeLatentFactorOperators(final XMLWriter writer,
+                                            final ContinuousComponentOptions component,
+                                            final AbstractPartitionData partitionData
+    ) {
+        PartitionSubstitutionModel model = partitionData.getPartitionSubstitutionModel();
+        XMLWriterObject loadingsGibbsOp = new XMLWriterObject(
+                "loadingsGibbsOperator",
+                null,
+                new XMLWriterObject[]{
+                        XMLWriterObject.refObj("integratedFactorModel",
+                                integratedFactorsParser.getId(model.getName())),
+                        XMLWriterObject.refObj(continuousDataLikelihoodParser.getParserTag(),
+                                continuousDataLikelihoodParser.getId(partitionData.getName())),
+                        XMLWriterObject.refObj("distributionLikelihood",
+                                integratedFactorsParser.getBeautiParameterIDProvider(
+                                        "loadings").getPriorId(model.getName()))
+                },
+                new Attribute[]{
+                        new Attribute.Default("weight", 3),
+                        new Attribute.Default("newMode", true),
+                        new Attribute.Default("sparsity", "upperTriangular")
+                }
+        );
+        loadingsGibbsOp.writeOrReference(writer);
+
+        XMLWriterObject precisionGibbsOp = new XMLWriterObject(
+                "normalGammaPrecisionGibbsOperator",
+                null,
+                new XMLWriterObject[]{
+                        new XMLWriterObject("prior", XMLWriterObject.refObj("gammaPrior",
+                                integratedFactorsParser.getBeautiParameterIDProvider(
+                                        "precision").getPriorId(model.getName()))),
+                        new XMLWriterObject("normalExtension",
+                                null,
+                                new XMLWriterObject[]{
+                                        XMLWriterObject.refObj("integratedFactorModel",
+                                                integratedFactorsParser.getId(model.getName())),
+                                        XMLWriterObject.refObj(continuousDataLikelihoodParser.getParserTag(),
+                                                continuousDataLikelihoodParser.getId(partitionData.getName()))
+                                },
+                                new Attribute[]{
+                                        new Attribute.Default("treeTraitName", partitionData.getName())
+                                })
+                }
+        );
+        precisionGibbsOp.writeOrReference(writer);
     }
 
     private void writePrecisionGibbsOperator(final XMLWriter writer,
@@ -822,8 +991,10 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
             case NONE:
                 break;
             case RESIDUAL:
-                writer.writeIDref(RepeatedMeasuresTraitDataModelParser.REPEATED_MEASURES_MODEL, repeatedMeasuresTraitDataModelParser.getId(
-                        ContinuousModelExtensionType.RESIDUAL, partitionData.getPartitionSubstitutionModel().getName()));
+                writer.writeIDref(
+                        RepeatedMeasuresTraitDataModelParser.REPEATED_MEASURES_MODEL,
+                        repeatedMeasuresTraitDataModelParser.getId(partitionData.getPartitionSubstitutionModel().getName())
+                );
                 break;
             default:
                 throw new IllegalArgumentException("Unknown or unsupported extension type");
@@ -873,8 +1044,13 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                     );
                     break;
                 case LATENT_FACTORS:
-                    //TODO
-                    throw new IllegalArgumentException("Not yet implemented");
+                    writer.writeIDref("matrixParameter",
+                            integratedFactorsParser.getBeautiParameterIDProvider(
+                                    "loadings").getId(model.getName()));
+                    writer.writeIDref("parameter",
+                            integratedFactorsParser.getBeautiParameterIDProvider(
+                                    "precision").getId(model.getName()));
+                    break;
                 case NONE:
                     break;
                 default:
@@ -906,8 +1082,14 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                             repeatedMeasuresTraitDataModelParser.getBeautiParameterIDProvider("extensionPrecision").getPriorId(model.getName()));
                     break;
                 case LATENT_FACTORS:
-                    //TODO
-                    throw new IllegalArgumentException("Not yet implemented");
+
+                    writer.writeIDref("distributionLikelihood",
+                            integratedFactorsParser.getBeautiParameterIDProvider(
+                                    "loadings").getPriorId(model.getName()));
+                    writer.writeIDref("gammaPrior",
+                            integratedFactorsParser.getBeautiParameterIDProvider(
+                                    "precision").getPriorId(model.getName()));
+                    break;
                 case NONE:
                     break;
                 default:
@@ -952,5 +1134,5 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
     private static final ContinuousDataLikelihoodParser continuousDataLikelihoodParser = new ContinuousDataLikelihoodParser();
     private static final RepeatedMeasuresTraitDataModelParser repeatedMeasuresTraitDataModelParser = new RepeatedMeasuresTraitDataModelParser();
-
+    private static final IntegratedFactorAnalysisLikelihoodParser integratedFactorsParser = new IntegratedFactorAnalysisLikelihoodParser();
 }

@@ -37,40 +37,71 @@ public class GeneratorHelper {
 //        return modelName + ".extensionPrecisionPrior";
 //    }
 
+    public static void writeParameter(XMLWriter writer, String id, double[] values) {
 
-    public static void writeMatrixParameter(XMLWriter writer, String id, int p) {
 
-        double[][] values = new double[p][p];
-        for (int i = 0; i < p; i++) {
-            values[i][i] = 1;
+        if (values.length < 1) throw new IllegalArgumentException("cannot make parameter with < 1 dimensions");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(values[0]);
+        for (int i = 1; i < values.length; i++) {
+            sb.append(" ");
+            sb.append(values[i]);
         }
 
-        int rowDim = p;
-        int colDim = p;
+        Attribute[] attributes;
+        if (id == null) {
+            attributes = new Attribute[]{
+                    new Attribute.Default<>("value", sb.toString())
+            };
+        } else {
+            attributes = new Attribute[]{
+                    new Attribute.Default<String>("id", id),
+                    new Attribute.Default<>("value", sb.toString())
+            };
+        }
+        writer.writeTag("parameter", attributes, true);
+    }
 
+    public static void writeParameter(XMLWriter writer, String id, int p, double value) {
+        double[] values = new double[p];
+        for (int i = 0; i < p; i++) {
+            values[i] = value;
+        }
+        writeParameter(writer, id, values);
+    }
+
+    public static void writeParameter(XMLWriter writer, String id, int p) {
+        writeParameter(writer, id, p, 0);
+    }
+
+
+    public static void writeMatrixParameter(XMLWriter writer, String id, double[][] values) {
+
+        int rowDim = values.length;
 
         writer.writeOpenTag("matrixParameter", new Attribute[]{
                 new Attribute.Default<>("id", id)
         });
 
         for (int i = 0; i < rowDim; i++) {
-            StringBuilder sb = new StringBuilder();
-
-            for (int j = 0; j < colDim; j++) {
-                if (j > 0) {
-                    sb.append(" ");
-                }
-
-                sb.append(values[i][j]);
-            }
-
-
-            writer.writeTag("parameter",
-                    new Attribute[]{
-                            new Attribute.Default<>("value", sb.toString())
-                    }, true);
+            writeParameter(writer, null, values[i]);
         }
         writer.writeCloseTag("matrixParameter");
+    }
+
+    public static void writeMatrixParameter(XMLWriter writer, String id, int nRows, int nCols) {
+        double[][] values = new double[nRows][nCols];
+        writeMatrixParameter(writer, id, values);
+    }
+
+    public static void writeIdentityMatrixParameter(XMLWriter writer, String id, int p) {
+
+        double[][] values = new double[p][p];
+        for (int i = 0; i < p; i++) {
+            values[i][i] = 1;
+        }
+        writeMatrixParameter(writer, id, values);
     }
 
     public static void writeMatrixInverse(XMLWriter writer, String id, String matrixId) {

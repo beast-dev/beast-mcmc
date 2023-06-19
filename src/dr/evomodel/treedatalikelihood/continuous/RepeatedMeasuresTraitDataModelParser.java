@@ -27,7 +27,6 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.app.beauti.components.BeautiModelIDProvider;
 import dr.app.beauti.components.BeautiParameterIDProvider;
-import dr.app.beauti.components.continuous.ContinuousModelExtensionType;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
@@ -38,7 +37,6 @@ import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.xml.*;
 
-import java.util.List;
 
 public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParser implements BeautiModelIDProvider {
     public static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
@@ -69,7 +67,7 @@ public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParse
         if (!chol.isSPD()) {
             throw new XMLParseException(PRECISION + " must be a positive definite matrix.");
         }
-        
+
         String traitName = returnValue.traitName;
         //TODO diffusionModel was only used for the dimension.
         // But this should be the same as the samplingPrecision dimension ?
@@ -85,7 +83,7 @@ public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParse
         return new RepeatedMeasuresTraitDataModel(
                 traitName,
                 traitParameter,
-                    missingIndicators,
+                missingIndicators,
                 true,
                 samplingPrecision.getColumnDimension(),
 //                    diffusionModel.getPrecisionParameter().getRowDimension(),
@@ -138,27 +136,27 @@ public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParse
     }
 
     public String getId(String modelName) {
-        throw new IllegalArgumentException("Should not be called");
+        return modelName + ".residualModel";
     }
 
-    public String getId(ContinuousModelExtensionType extensionType, String modelName) {
-        String extendedName;
-        switch (extensionType) {
-            case RESIDUAL:
-                extendedName = "residualModel";
-                break;
-            case LATENT_FACTORS:
-                extendedName = "factorModel";
-                break;
-            case NONE:
-                throw new IllegalArgumentException("Should not be called");
-            default:
-                throw new IllegalArgumentException("Unknown extension type");
+//    public String getId(ContinuousModelExtensionType extensionType, String modelName) {
+//        String extendedName;
+//        switch (extensionType) {
+//            case RESIDUAL:
+//                extendedName = "residualModel";
+//                break;
+//            case LATENT_FACTORS:
+//                extendedName = "factorModel";
+//                break;
+//            case NONE:
+//                throw new IllegalArgumentException("Should not be called");
+//            default:
+//                throw new IllegalArgumentException("Unknown extension type");
+//
+//        }
 
-        }
-
-        return modelName + "." + extendedName;
-    }
+//        return modelName + "." + extendedName;
+//    }
 
     private static final String PRECISION_ID = "samplingPrecision";
 

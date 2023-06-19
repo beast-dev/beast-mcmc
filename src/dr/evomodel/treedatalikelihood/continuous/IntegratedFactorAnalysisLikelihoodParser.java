@@ -1,5 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.app.beauti.components.BeautiModelIDProvider;
+import dr.app.beauti.components.BeautiParameterIDProvider;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
@@ -11,11 +13,11 @@ import dr.xml.*;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.STANDARDIZE;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TARGET_SD;
 
-public class IntegratedFactorAnalysisLikelihoodParser extends AbstractXMLObjectParser {
+public class IntegratedFactorAnalysisLikelihoodParser extends AbstractXMLObjectParser implements BeautiModelIDProvider {
 
     public static final String INTEGRATED_FACTOR_Model = "integratedFactorModel";
-    private static final String LOADINGS = "loadings";
-    private static final String PRECISION = "precision";
+    public static final String LOADINGS = "loadings";
+    public static final String PRECISION = "precision";
     private static final String NUGGET = "nugget";
     private static final String CACHE_PRECISION = "cachePrecision";
 
@@ -94,5 +96,29 @@ public class IntegratedFactorAnalysisLikelihoodParser extends AbstractXMLObjectP
     @Override
     public String getParserName() {
         return INTEGRATED_FACTOR_Model;
+    }
+
+    @Override
+    public String getParserTag() {
+        return getParserName();
+    }
+
+    @Override
+    public String getId(String modelName) {
+        return modelName + ".integratedFactorModel";
+    }
+
+    private static final String[] ALLOWABLE_PARAMETERS = new String[]{PRECISION, LOADINGS};
+
+    public BeautiParameterIDProvider getBeautiParameterIDProvider(String parameterKey) {
+        for (int i = 0; i < ALLOWABLE_PARAMETERS.length; i++) {
+            if (parameterKey.equalsIgnoreCase(ALLOWABLE_PARAMETERS[i])) {
+                if (parameterKey.equalsIgnoreCase(PRECISION)) {
+                    parameterKey = "residualPrecision";
+                }
+                return new BeautiParameterIDProvider(parameterKey);
+            }
+        }
+        throw new IllegalArgumentException("Unrecognized parameter key '" + parameterKey + "'");
     }
 }

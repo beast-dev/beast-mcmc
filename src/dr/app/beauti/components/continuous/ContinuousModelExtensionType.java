@@ -2,7 +2,7 @@ package dr.app.beauti.components.continuous;
 
 public enum ContinuousModelExtensionType {
     NONE("None"),
-    RESIDUAL("Residual variance extension"),
+    RESIDUAL("Residual variance"),
     LATENT_FACTORS("Latent factor model");
 
     ContinuousModelExtensionType(String name) {

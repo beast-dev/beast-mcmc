@@ -76,8 +76,6 @@ public interface ParallelTempering {
 
             List<IndexPair> pairs = getPairsToSwap();
 
-            System.out.println("Scoring " + pairs.size() + " pairs");
-
             for (IndexPair pair : pairs) {
 
                 boolean swap = scoreSwap(pair);
@@ -194,23 +192,27 @@ public interface ParallelTempering {
 
     abstract class New extends Base {
 
-        private final DirectionSelector directionSelector;
+        private final ParitySelector paritySelector;
         private final HalfIndexSelector indexSelector;
+        private final int K;
         private final int halfK;
         private boolean evenStep;
 
         public New(MarkovChain[] chains, OperatorSchedule[] schedules, MCMCMCOptions options,
-                   DirectionSelector directionSelector,
+                   ParitySelector directionSelector,
                    HalfIndexSelector indexSelector) {
             super(chains, schedules, options);
-            this.directionSelector = directionSelector;
+            this.paritySelector = directionSelector;
             this.indexSelector = indexSelector;
 
             int length = options.getChainTemperatures().length;
             if (isOdd(length)) {
                 throw new IllegalArgumentException("Only even # of temperatures are allowed");
             }
-            halfK = length / 2;
+            this.K = length;
+            this.halfK = length / 2;
+            this.mapRankToChain = new int[K];
+
 
             this.evenStep = MathUtils.nextBoolean();
         }
@@ -219,18 +221,29 @@ public interface ParallelTempering {
             return (i & 1) == 1;
         }
 
+        private final int[] mapRankToChain;
+
         @Override
         List<IndexPair> getPairsToSwap() {
 
-            evenStep = directionSelector.next(evenStep);
+            for (int i = 0; i < K; ++i) {
+                MCMCCriterion acceptor = ((MCMCCriterion) chains[i].getAcceptor());
+                int rank = acceptor.getRank();
+                mapRankToChain[rank] = i;
+            }
+
+            evenStep = paritySelector.next(evenStep);
             int[] halfIndices = indexSelector.indices(halfK);
 
             List<IndexPair> pairs = new ArrayList<>();
             for (int halfIndex : halfIndices) {
-                pairs.add(new IndexPair(
-                        2 * halfIndex + (evenStep ? 0 : 1),
-                        2 * halfIndex + (evenStep ? 1 : 0)
-                ));
+                int rank1 = 2 * halfIndex + (evenStep ? 0 : 1);
+                int rank2 = rank1 + 1;
+                if (rank2 >= K) {
+                    rank2 = 0;
+                }
+
+                pairs.add(new IndexPair(mapRankToChain[rank1], mapRankToChain[rank2]));
             }
 
             return pairs;
@@ -239,29 +252,29 @@ public interface ParallelTempering {
 
     class DeterministicSingleSwap extends New {
         public DeterministicSingleSwap(MarkovChain[] chains, OperatorSchedule[] schedules, MCMCMCOptions options) {
-            super(chains, schedules, options, DirectionSelector.DETERMINISTIC, HalfIndexSelector.ONE);
+            super(chains, schedules, options, ParitySelector.DETERMINISTIC, HalfIndexSelector.ONE);
         }
     }
 
     class DeterministicMultipleSwap extends New {
         public DeterministicMultipleSwap(MarkovChain[] chains, OperatorSchedule[] schedules, MCMCMCOptions options) {
-            super(chains, schedules, options, DirectionSelector.DETERMINISTIC, HalfIndexSelector.ALL);
+            super(chains, schedules, options, ParitySelector.DETERMINISTIC, HalfIndexSelector.ALL);
         }
     }
 
     class StochasticSingleSwap extends New {
         public StochasticSingleSwap(MarkovChain[] chains, OperatorSchedule[] schedules, MCMCMCOptions options) {
-            super(chains, schedules, options, DirectionSelector.STOCHASTIC, HalfIndexSelector.ONE);
+            super(chains, schedules, options, ParitySelector.STOCHASTIC, HalfIndexSelector.ONE);
         }
     }
 
     class StochasticMultipleSwap extends New {
         public StochasticMultipleSwap(MarkovChain[] chains, OperatorSchedule[] schedules, MCMCMCOptions options) {
-            super(chains, schedules, options, DirectionSelector.STOCHASTIC, HalfIndexSelector.ALL);
+            super(chains, schedules, options, ParitySelector.STOCHASTIC, HalfIndexSelector.ALL);
         }
     }
 
-    enum DirectionSelector {
+    enum ParitySelector {
         STOCHASTIC {
             @Override
             boolean next(boolean last) {

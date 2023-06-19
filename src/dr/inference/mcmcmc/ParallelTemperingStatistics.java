@@ -61,7 +61,9 @@ public class ParallelTemperingStatistics {
 
         allStatistics[rank1][rank2].add(new Statistics(criterion, success));
 
-        System.out.println(rank1 + " -> " + rank2 + " : " + success);
+        if (DEBUG) {
+            System.out.println(rank1 + " (" + index1 + ") <-> " + rank2 + " (" + index2 + ") : " + success);
+        }
     }
 
     public String getReport() {
@@ -78,6 +80,8 @@ public class ParallelTemperingStatistics {
             this.success = success;
         }
     }
+
+    private static final boolean DEBUG = false;
 
     static class StatisticsList extends ArrayList<Statistics> {}
 }

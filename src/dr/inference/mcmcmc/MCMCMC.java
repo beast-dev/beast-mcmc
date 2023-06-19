@@ -185,7 +185,6 @@ public class MCMCMC implements Runnable {
 
                 // attempt to swap two or more chains' temperatures
                 if (USE_PARALLEL_TEMPERING_SCHEME) {
-                    System.out.println("Attempt");
                     coldChain = scheme.swapChainTemperatures(coldChain);
                 } else {
                     coldChain = swapChainTemperatures();
@@ -379,6 +378,11 @@ public class MCMCMC implements Runnable {
                 formatter.setPadding(false);
 
                 //System.out.print("State " + currentState + ": ");
+//                if (coldChain != 0) {
+//                    MCMCCriterion acceptor = ((MCMCCriterion) chains[coldChain].getAcceptor());
+//                    int rank = acceptor.getRank();
+//                    System.err.println("here");
+//                }
                 for (int i = 0; i < chains.length; i++) {
                     String score;
                     if (i == coldChain) {

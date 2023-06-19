@@ -76,6 +76,8 @@ public interface ParallelTempering {
 
             List<IndexPair> pairs = getPairsToSwap();
 
+            System.out.println("Scoring " + pairs.size() + " pairs");
+
             for (IndexPair pair : pairs) {
 
                 boolean swap = scoreSwap(pair);
@@ -117,7 +119,9 @@ public interface ParallelTempering {
             double logRatio = ((score2 - score1) * temperature1) + ((score1 - score2) * temperature2);
             boolean success = (Math.log(MathUtils.nextDouble()) < logRatio);
 
-            statistics.recordStatistics(rank1, rank2, temperature1, temperature2,
+            statistics.recordStatistics(pair.index1, pair.index2,
+                    rank1, rank2,
+                    temperature1, temperature2,
                     logRatio, success);
 
             return success;

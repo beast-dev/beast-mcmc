@@ -100,7 +100,7 @@ public class MCMCMC implements Runnable {
         }
 
         if (USE_PARALLEL_TEMPERING_SCHEME) {
-            scheme = new ParallelTempering.OriginalFlavor(chains, schedules, mcmcmcOptions);
+            scheme = mcmcmcOptions.getSwapScheme().factory(chains, schedules, mcmcmcOptions);
         } else {
             scheme = null;
         }
@@ -185,6 +185,7 @@ public class MCMCMC implements Runnable {
 
                 // attempt to swap two or more chains' temperatures
                 if (USE_PARALLEL_TEMPERING_SCHEME) {
+                    System.out.println("Attempt");
                     coldChain = scheme.swapChainTemperatures(coldChain);
                 } else {
                     coldChain = swapChainTemperatures();

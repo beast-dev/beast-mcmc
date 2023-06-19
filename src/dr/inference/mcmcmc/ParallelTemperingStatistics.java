@@ -51,7 +51,8 @@ public class ParallelTemperingStatistics {
         }
     }
 
-    void recordStatistics(int rank1, int rank2,
+    void recordStatistics(int index1, int index2,
+                          int rank1, int rank2,
                           double temp1, double temp2,
                           double criterion, boolean success) {
         if (temp1 != temperatures[rank1] || temp2 != temperatures[rank2]) {
@@ -59,6 +60,8 @@ public class ParallelTemperingStatistics {
         }
 
         allStatistics[rank1][rank2].add(new Statistics(criterion, success));
+
+        System.out.println(rank1 + " -> " + rank2 + " : " + success);
     }
 
     public String getReport() {

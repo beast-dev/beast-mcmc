@@ -46,6 +46,7 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
     public static final String CLADE = "clade";
     public static final String INCLUDE_STEM = "includeStem";
     public static final String STEM_PROPORTION = "stemProportion";
+    public static final String STEM_TIME = "stemTime";
     public static final String EXCLUDE_CLADE = "excludeClade";
     public static final String EXTERNAL_BRANCHES = "externalBranches";
     public static final String TRUNK = "trunk";
@@ -94,7 +95,8 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
 
                     boolean excludeClade = false;
                     Parameter stemParameter = null;
-                    
+                    boolean stemAsTime = false;
+
                     if (xoc.hasAttribute(INCLUDE_STEM)) {
                         // if includeStem=true then assume it is the whole stem
                         stemParameter = new Parameter.Default(xoc.getBooleanAttribute(INCLUDE_STEM) ? 1.0 : 0.0);
@@ -107,12 +109,27 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
                         }
                         stemParameter = new Parameter.Default(stemValue);
                     }
+                    if (xoc.hasAttribute(STEM_TIME)) {
+                        double stemValue = xoc.getDoubleAttribute(STEM_TIME);
+                        if (stemValue < 0.0) {
+                            throw new XMLParseException("A stem time should be >= 0");
+                        }
+                        stemParameter = new Parameter.Default(stemValue);
+                        stemAsTime = true;
+                    }
 
                     if (xoc.hasChildNamed(STEM_PROPORTION)) {
                         stemParameter = (Parameter) xoc.getElementFirstChild(STEM_PROPORTION);
                         if (stemParameter.getParameterValue(0) < 0.0 || stemParameter.getParameterValue(0) > 1.0) {
                             throw new XMLParseException("A stem proportion should be between 0, 1");
                         }
+                    }
+                    if (xoc.hasChildNamed(STEM_TIME)) {
+                        stemParameter = (Parameter) xoc.getElementFirstChild(STEM_TIME);
+                        if (stemParameter.getParameterValue(0) < 0.0) {
+                            throw new XMLParseException("A stem time should be >= 0");
+                        }
+                        stemAsTime = true;
                     }
 
                     if (xoc.hasAttribute(EXCLUDE_CLADE)) {
@@ -121,9 +138,9 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
 
                     try {
                         if (branchRates != null) {
-                            localClockModel.addCladeClock(taxonList, branchRates, relative, stemParameter, excludeClade);
+                            localClockModel.addCladeClock(taxonList, branchRates, relative, stemParameter, stemAsTime, excludeClade);
                         } else {
-                            localClockModel.addCladeClock(taxonList, rateParameter, relative, stemParameter, excludeClade);
+                            localClockModel.addCladeClock(taxonList, rateParameter, relative, stemParameter, stemAsTime, excludeClade);
                         }
 
                     } catch (TreeUtils.MissingTaxonException mte) {
@@ -216,7 +233,9 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
                                     new XMLSyntaxRule[]{
                                             AttributeRule.newBooleanRule(INCLUDE_STEM, true, "determines whether or not the stem branch above this clade is included in the siteModel (default false)."),
                                             AttributeRule.newDoubleRule(STEM_PROPORTION, true, "proportion of stem to include in clade rate (default 0)."),
-                                            new ElementRule(STEM_PROPORTION, Parameter.class, "A parameter for the proportion of stem to include in clade rate (0 - 1)", false)
+                                            new ElementRule(STEM_PROPORTION, Parameter.class, "A parameter for the proportion of stem to include in clade rate (0 - 1)", false),
+                                            AttributeRule.newDoubleRule(STEM_TIME, true, "time within the stem to include in clade rate (default 0)."),
+                                            new ElementRule(STEM_TIME, Parameter.class, "A parameter for the time of stem to include in clade rate", false)
                                     },
                                     true
                             ),

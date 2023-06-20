@@ -355,16 +355,21 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                     case LATENT_FACTORS:
                         precisionId = integratedFactorsParser.getBeautiParameterIDProvider(
                                 integratedFactorsParser.PRECISION).getId(model.getName());
+                        String precisionPriorId = integratedFactorsParser.getBeautiParameterIDProvider(
+                                integratedFactorsParser.PRECISION).getPriorId(model.getName());
+
                         String loadingsId = integratedFactorsParser.getBeautiParameterIDProvider(
                                 integratedFactorsParser.LOADINGS).getId(model.getName());
+                        String loadingsPriorId = integratedFactorsParser.getBeautiParameterIDProvider(
+                                integratedFactorsParser.LOADINGS).getPriorId(model.getName());
                         writeLatentFactorModel(writer, partitionData, treeModelId, precisionId, loadingsId);
                         writer.writeBlankLine();
 
-                        writeNormalDistributionPrior(writer, loadingsId + ".prior", loadingsId);
+                        writeNormalDistributionPrior(writer, loadingsPriorId, loadingsId);
 
                         XMLWriterObject precisionPrior = new XMLWriterObject(
                                 "gammaPrior",
-                                precisionId + ".prrior",
+                                precisionPriorId,
                                 new XMLWriterObject[]{
                                         new XMLWriterObject("parameter",
                                                 null,
@@ -444,7 +449,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         writer.writeCloseTag(integratedFactorsParser.PRECISION);
 
         writer.writeOpenTag(integratedFactorsParser.LOADINGS);
-        GeneratorHelper.writeMatrixParameter(writer, loadingsId, 2, p); //TODO: get k from BEAUti
+        GeneratorHelper.writeMatrixParameter(writer, loadingsId, model.getContinuousTraitDimension(), p);
         writer.writeCloseTag(integratedFactorsParser.LOADINGS);
 
         writer.writeCloseTag(integratedFactorsParser.getParserTag());
@@ -671,7 +676,9 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                                                  String diffusionModelId,
                                                  String treeModelId) {
 
-        int traitDimension = partitionData.getTraits().size();
+        int traitDimension = partitionData.getPartitionSubstitutionModel().getContinuousTraitDimension(); //TODO: update
+
+
         writer.writeOpenTag(continuousDataLikelihoodParser.getParserTag(),
                 new Attribute[]{
                         new Attribute.Default<String>("id", continuousDataLikelihoodParser.getId(partitionData.getName())),
@@ -948,6 +955,9 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                                 new Attribute[]{
                                         new Attribute.Default("treeTraitName", partitionData.getName())
                                 })
+                },
+                new Attribute[]{
+                        new Attribute.Default("weight", 1.0)
                 }
         );
         precisionGibbsOp.writeOrReference(writer);

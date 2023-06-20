@@ -46,6 +46,7 @@ import dr.evolution.datatype.Microsatellite;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.event.*;
 import java.util.EnumSet;
@@ -127,6 +128,10 @@ public class PartitionModelPanel extends OptionsPanel {
     private RealNumberField jitterWindowText = new RealNumberField(0, Double.POSITIVE_INFINITY);
 
     private JComboBox modelExtensionCombo = new JComboBox(ContinuousModelExtensionType.values());
+    private OptionsPanel latentFactorOptions = new OptionsPanel(12, 12);
+    private JSpinner factorDimSpinner = new JSpinner(
+            new SpinnerNumberModel(1, 1, 20, 1)
+    );
 
     private JTextArea citationText;
 
@@ -412,9 +417,44 @@ public class PartitionModelPanel extends OptionsPanel {
         modelExtensionCombo.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.DESELECTED) {
+                    // do nothing
+                    return;
+                }
+                if (modelExtensionCombo.getSelectedItem() == ContinuousModelExtensionType.LATENT_FACTORS) {
+                    latentFactorOptions = new OptionsPanel();
+                    factorDimSpinner.setValue(1);
+                    latentFactorOptions.addComponentWithLabel("Latent dimension:",
+                            factorDimSpinner);
+
+                    JOptionPane optionPane = new JOptionPane(latentFactorOptions,
+                            JOptionPane.QUESTION_MESSAGE,
+                            JOptionPane.OK_CANCEL_OPTION,
+                            null,
+                            null,
+                            null);
+                    optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
+
+                    final JDialog dialog = optionPane.createDialog(frame, "Select Latent Factor Dimension");
+                    dialog.pack();
+                    dialog.setVisible(true);
+
+                    Integer value = (Integer) optionPane.getValue();
+                    if (value == JOptionPane.CANCEL_OPTION) {
+                        modelExtensionCombo.setSelectedIndex(0);
+                        factorDimSpinner.setValue(1);
+                        model.setContinuousLatentDimension(model.getExtendedTraitCount());
+                    } else {
+                        Integer k = (Integer) factorDimSpinner.getValue();
+                        model.setContinuousLatentDimension(k);
+                    }
+                } else { // just in case they originally set a factor model then changed their mind
+                    model.setContinuousLatentDimension(model.getExtendedTraitCount());
+                }
                 model.setContinuousExtensionType((ContinuousModelExtensionType) modelExtensionCombo.getSelectedItem());
             }
         });
+
 
         PanelUtils.setupComponent(useLambdaCheck);
         useLambdaCheck.addItemListener(new ItemListener() {

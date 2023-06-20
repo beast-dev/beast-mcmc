@@ -62,7 +62,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private ContinuousSubstModelType continuousSubstModelType = ContinuousSubstModelType.HOMOGENOUS;
     private ContinuousModelExtensionType continuousExtensionType = ContinuousModelExtensionType.NONE;
 
-    private final int continuousTraitCount;
+    private int continuousTraitCount;
     private final int extendedTraitCount;
 
     private final TraitData traitData;
@@ -1040,6 +1040,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public void setContinuousExtensionType(final ContinuousModelExtensionType extensionType) {
         this.continuousExtensionType = extensionType;
+    }
+
+    public void setContinuousLatentDimension(final int k) {
+        this.continuousTraitCount = k;
     }
 
     public void setIsLatitudeLongitude(boolean latitudeLongitude) {

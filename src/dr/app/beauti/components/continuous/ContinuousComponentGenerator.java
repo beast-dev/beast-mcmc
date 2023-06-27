@@ -188,6 +188,9 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                         new Attribute.Default<String>("id", precisionMatrixId)
                 });
 
+        double diagValue = (model.getContinuousExtensionType() == ContinuousModelExtensionType.LATENT_FACTORS) ? 1.0 : 0.05;
+        double offDiagValue = (model.getContinuousExtensionType() == ContinuousModelExtensionType.LATENT_FACTORS) ? 0.0 : 0.002;
+
         for (int i = 0; i < model.getContinuousTraitDimension(); i++) {
             StringBuilder sb = new StringBuilder();
             for (int j = 0; j < model.getContinuousTraitDimension(); j++) {
@@ -195,9 +198,9 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                     sb.append(" ");
                 }
                 if (i == j) {
-                    sb.append(0.05);
+                    sb.append(diagValue);
                 } else {
-                    sb.append(0.002);
+                    sb.append(offDiagValue);
                 }
             }
             writer.writeTag("parameter",
@@ -894,12 +897,13 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                                               ContinuousComponentOptions component) {
 
         for (AbstractPartitionData partitionData : component.getOptions().getDataPartitions(ContinuousDataType.INSTANCE)) {
-            writePrecisionGibbsOperator(writer, component, partitionData, ContinuousModelExtensionType.NONE);
 
             switch (partitionData.getPartitionSubstitutionModel().getContinuousExtensionType()) {
                 case NONE:
+                    writePrecisionGibbsOperator(writer, component, partitionData, ContinuousModelExtensionType.NONE);
                     break;
                 case RESIDUAL:
+                    writePrecisionGibbsOperator(writer, component, partitionData, ContinuousModelExtensionType.NONE);
                     writePrecisionGibbsOperator(writer, component, partitionData,
                             ContinuousModelExtensionType.RESIDUAL);
                     break;
@@ -1019,16 +1023,20 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
     private void writeParameterIdRefs(final XMLWriter writer, final ContinuousComponentOptions component) {
         for (AbstractPartitionData partitionData : component.getOptions().getDataPartitions(ContinuousDataType.INSTANCE)) {
             PartitionSubstitutionModel model = partitionData.getPartitionSubstitutionModel();
-            writer.writeIDref("matrixParameter", model.getName() + ".precision");
-
             String prefix = partitionData.getName() + ".";
-            if (partitionData.getTraits().size() == 2) {
-                writer.writeIDref("correlation", prefix + "correlation");
+
+            if (model.getContinuousExtensionType() != ContinuousModelExtensionType.LATENT_FACTORS) {
+                writer.writeIDref("matrixParameter", model.getName() + ".precision");
+
+                if (partitionData.getTraits().size() == 2) {
+                    writer.writeIDref("correlation", prefix + "correlation");
 //            writer.writeIDref("treeLengthStatistic", prefix + "treeLength");
 //            writer.writeIDref("productStatistic", prefix + "treeLengthPrecision1");
 //            writer.writeIDref("productStatistic", prefix + "treeLengthPrecision2");
+                }
+                writer.writeIDref("matrixInverse", prefix + "varCovar");
             }
-            writer.writeIDref("matrixInverse", prefix + "varCovar");
+
             writer.writeIDref(TreeDataContinuousDiffusionStatistic.CONTINUOUS_DIFFUSION_STATISTIC, prefix + "diffusionRate");
 
             if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.GAMMA_RRW) {

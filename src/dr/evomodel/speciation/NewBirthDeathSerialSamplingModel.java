@@ -86,9 +86,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     private boolean[] gradientFlags;
 
-    private double savedLogQ;
+    private Double savedLogQ;
 
-    private double savedQ;
+    private Double savedQ;
     private double[] partialQ;
     private boolean partialQKnown;
 
@@ -199,9 +199,9 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             originTime.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         }
 
-        this.savedLogQ = Double.MIN_VALUE;
+        this.savedLogQ = null;
 
-        this.savedQ = Double.MIN_VALUE;
+        this.savedQ = null;
         this.partialQ = new double[4 * numIntervals];
         this.partialQKnown = false;
 
@@ -329,7 +329,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             // TODO: check if we're right about how many lineages are actually alive at this time. Are we inadvertently over-counting or under-counting due to samples added at this _exact_ time?
             lnL += nLineages * Math.log(1.0 - samplingProbability.getValue(model + 1));
         }
-        this.savedLogQ = Double.MIN_VALUE;
+        this.savedLogQ = null;
         return lnL;
     }
 
@@ -339,6 +339,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         psi = serialSamplingRate.getParameterValue(model);
         r = treatmentProbability.getParameterValue(model);
         rho = samplingProbability.getParameterValue(model);
+        this.savedLogQ = null;
     }
 
     @Override
@@ -375,7 +376,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         A = computeA(lambda, mu, psi);
         B = computeB(lambda, mu, psi, rho, A, previousP);
         
-        this.savedQ = Double.MIN_VALUE; // TODO What is this all about?
+        this.savedQ = null; // TODO What is this all about?
         this.partialQKnown = false;
 
         dACompute(dA);
@@ -399,7 +400,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     public double processInterval(int model, double tYoung, double tOld, int nLineages) {
         double logQ_young;
         double logQ_old = logQ(model, tOld);
-        if ((this.savedLogQ - Double.MIN_VALUE) > 1e-30) {
+        if (this.savedLogQ != null) {
             logQ_young = this.savedLogQ;
         } else {
             logQ_young = logQ(model, tYoung);
@@ -763,7 +764,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     @Override
     public void precomputeGradientConstants() {
 
-        this.savedQ = Double.MIN_VALUE;
+        this.savedQ = null;
         this.partialQKnown = false;
     }
 
@@ -820,7 +821,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         // double Q_Old = q(currentModelSegment, intervalEnd);
         double Q_Old = q(eAt_Old);
         double Q_young;
-        if (this.savedQ != Double.MIN_VALUE) {
+        if (this.savedQ != null) {
             Q_young = this.savedQ;
         } else {
             Q_young = q(currentModelSegment, intervalStart);

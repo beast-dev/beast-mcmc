@@ -206,13 +206,9 @@ public interface ParallelTempering {
             this.indexSelector = indexSelector;
 
             int length = options.getChainTemperatures().length;
-            if (isOdd(length)) {
-                throw new IllegalArgumentException("Only even # of temperatures are allowed");
-            }
             this.K = length;
             this.halfK = length / 2;
             this.mapRankToChain = new int[K];
-
 
             this.evenStep = MathUtils.nextBoolean();
         }

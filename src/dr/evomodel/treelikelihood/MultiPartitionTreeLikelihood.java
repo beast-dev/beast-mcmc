@@ -197,7 +197,7 @@ public class MultiPartitionTreeLikelihood extends AbstractTreeLikelihood impleme
 
             substitutionModelDelegates = new SubstitutionModelDelegate[partitionCount];
             for (int i = 0; i < partitionCount; i++) {
-                substitutionModelDelegates[i] = new SubstitutionModelDelegate(treeModel, branchModel, extraBufferCount);
+                substitutionModelDelegates[i] = new SubstitutionModelDelegate(treeModel, branchModel, branchRateModel, extraBufferCount);
             }
 
             // first set the rescaling scheme to use from the parser

@@ -27,6 +27,7 @@ package dr.evomodel.treelikelihood;
 
 import beagle.Beagle;
 import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.Tree;
@@ -58,6 +59,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     private final Tree tree;
     private final List<SubstitutionModel> substitutionModelList;
     private final BranchModel branchModel;
+    private final BranchRateModel branchRateModel;
 
     private final int eigenCount;
     private final int nodeCount;
@@ -71,10 +73,18 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     private Deque<Integer> availableBuffers = new ArrayDeque<Integer>();
 
     public SubstitutionModelDelegate(Tree tree, BranchModel branchModel) {
-        this(tree, branchModel, BUFFER_POOL_SIZE_DEFAULT);
+        this(tree, branchModel, null, BUFFER_POOL_SIZE_DEFAULT);
+    }
+    
+    public SubstitutionModelDelegate(Tree tree, BranchModel branchModel, BranchRateModel branchRateModel) {
+        this(tree, branchModel, branchRateModel, BUFFER_POOL_SIZE_DEFAULT);
+    }
+    
+    public SubstitutionModelDelegate(Tree tree, BranchModel branchModel, int bufferPoolSize) {
+        this(tree, branchModel, null, bufferPoolSize);
     }
 
-    public SubstitutionModelDelegate(Tree tree, BranchModel branchModel, int bufferPoolSize) {
+    public SubstitutionModelDelegate(Tree tree, BranchModel branchModel, BranchRateModel branchRateModel, int bufferPoolSize) {
 
         if (MEASURE_RUN_TIME) {
             updateTime = 0;
@@ -86,6 +96,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
         this.substitutionModelList = branchModel.getSubstitutionModels();
 
         this.branchModel = branchModel;
+        this.branchRateModel = branchRateModel;
 
         eigenCount = substitutionModelList.size();
         nodeCount = tree.getNodeCount();
@@ -179,10 +190,6 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
                 edgeLengths[k][counts[k]] = edgeLength[i];
                 counts[k]++;
             } else {
-                double sum = 0.0;
-                for (double w : weights) {
-                    sum += w;
-                }
 
                 if (getAvailableBufferCount() < order.length) {
                     // too few buffers available, process what we have and continue...
@@ -192,6 +199,62 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
                     // reset the counts
                     for (int k = 0; k < eigenCount; k++) {
                         counts[k] = 0;
+                    }
+                }
+
+                double sum = 0.0;
+                for (double w : weights) {
+                    sum += w;
+                }
+                
+                double[] matrixWeights = new double[weights.length];
+                double[] matrixWeightsCumsum = new double[weights.length + 1];
+                double[] matrixEdgeLengths = new double[weights.length];
+                for (int j = 0; j < weights.length; j++) {
+                    matrixWeights[j] = weights[j] / sum;
+                    matrixWeightsCumsum[j + 1] = matrixWeightsCumsum[j] + matrixWeights[j];
+                    matrixEdgeLengths[j] = matrixWeights[j] * edgeLength[i];
+                }
+            
+                if (branchRateModel != null) {
+                
+                    BranchRateModel.Mapping rateMapping = branchRateModel.getBranchRateModelMapping(tree, tree.getNode(branchIndices[i]));
+                    double[] rates = rateMapping.getRates();
+                    double[] rateWeights = rateMapping.getWeights();
+                
+                    if (rates.length > 1) {
+
+                        sum = 0.0;
+                        for (double w : rateWeights) {
+                            sum += w;
+                        }
+                        double[] rateWeightsCumsum = new double[rateWeights.length + 1];
+                        for (int j = 0; j < rates.length; j++) {
+                            rateWeights[j] = rateWeights[j] / sum;
+                            rateWeightsCumsum[j + 1] = rateWeightsCumsum[j] + rateWeights[j];
+                        }
+                    
+                        double rate = branchRateModel.getBranchRate(tree, tree.getNode(branchIndices[i]));
+                        double edgeTime = edgeLength[i] / rate;
+                        
+                        int k = 0;
+                        double lastCumsum;
+                        for (int j = 0; j < weights.length; j++) {
+                        
+                            matrixEdgeLengths[j] = 0.0;
+                            lastCumsum = matrixWeightsCumsum[j];
+                            
+                            while (k < rates.length && rateWeightsCumsum[k + 1] <= matrixWeightsCumsum[j + 1]) {
+                                matrixEdgeLengths[j] += edgeTime * (rateWeightsCumsum[k + 1] - lastCumsum) * rates[k];
+                                lastCumsum = rateWeightsCumsum[k + 1];
+                                k++;
+                            }
+                            
+                            if (matrixWeightsCumsum[j + 1] > lastCumsum && k < rates.length) {
+                                matrixEdgeLengths[j] += edgeTime * (matrixWeightsCumsum[j + 1] - lastCumsum) * rates[k];
+                            }
+                            
+                        }
                     }
                 }
 
@@ -208,7 +271,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
                     int k = order[j];
                     probabilityIndices[k][counts[k]] = buffer;
-                    edgeLengths[k][counts[k]] = weights[j] * edgeLength[i] / sum;
+                    edgeLengths[k][counts[k]] = matrixEdgeLengths[j];
 //                    edgeLengths[k][counts[k]] = weights[j] ;
                     counts[k]++;
 

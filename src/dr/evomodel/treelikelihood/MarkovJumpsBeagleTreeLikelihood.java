@@ -42,6 +42,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
+import dr.inference.markovjumps.MarkovJumpsCore;
 import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
 import dr.inference.markovjumps.MarkovJumpsType;
 import dr.inference.model.Parameter;
@@ -133,10 +134,10 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         }
         addVariable(addRegisterParameter);
         final String tag = addRegisterParameter.getId();
+        
+        boolean isEpochModel = branchModel instanceof EpochBranchModel;
 
         for (int i = 0; i < substitutionModelDelegate.getSubstitutionModelCount(); ++i) {
-
-            boolean isEpochModel = branchModel instanceof EpochBranchModel;
 
             registerParameter.add(addRegisterParameter);
             MarkovJumpsSubstitutionModel mjModel;
@@ -309,12 +310,8 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                             }
                         });
                     }
-                }
-
-                if (isEpochModel) {
-                    for (int j = 0; j < markovjumps.size(); ++j) {
-                        ((UniformizedSubstitutionModel)markovjumps.get(j)).setSaveCompleteHistory(true);
-                    }
+                } else if (isEpochModel) {
+                    ((UniformizedSubstitutionModel) mjModel).setSaveCompleteHistory(true);
                 }
             }
 
@@ -415,7 +412,8 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
 
         double[] probabilities = inProbabilities;
         if (probabilities == null) { // Leaf will call this hook with a null
-            getMatrix(childNum, tmpProbabilities);
+//             getMatrix(childNum, tmpProbabilities);
+            getTransitionProbabilityMatrix(tree, childNode, tmpProbabilities, false);
             probabilities = tmpProbabilities;
         }
 
@@ -423,33 +421,116 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         final double parentTime = tree.getNodeHeight(parentNode);
         final double childTime = tree.getNodeHeight(childNode);
         final double substTime = parentTime - childTime;
+        
+        if (histories != null) {
+            Arrays.fill(histories[childNum], "{");
+        }
 
         for (int r = 0; r < markovjumps.size(); r++) {
-            MarkovJumpsSubstitutionModel thisMarkovJumps = markovjumps.get(r);
+            Arrays.fill(expectedJumps.get(r)[childNum], 0.0);
+        }
+        
+        BranchModel.Mapping mapping = branchModel.getBranchModelMapping(childNode);
+        int[] order = mapping.getOrder();
+        double[] weights = mapping.getWeights();
+        
+        if (combinedWeights.size() == 1 || (!useUniformization)) {
+            for (int r = 0; r < markovjumps.size(); r++) {
+                MarkovJumpsSubstitutionModel thisMarkovJumps = markovjumps.get(r);
 
-            final int modelNumberFromrRegistry = branchModelNumber.get(r);
-//            int dummy = 0;
-//            final int modelNumberFromTree = branchSubstitutionModel.getBranchIndex(tree, childNode, dummy);
-            // @todo AR - not sure about this - if this is an epoch this is just going to get the most
-            // @todo tipward model for the branch. I think this was what was happening before (in comment,
-            // @todo above).
-            BranchModel.Mapping mapping = branchModel.getBranchModelMapping(childNode);
+                final int modelNumberFromrRegistry = branchModelNumber.get(r);
+    //            int dummy = 0;
+    //            final int modelNumberFromTree = branchSubstitutionModel.getBranchIndex(tree, childNode, dummy);
+                // @todo AR - not sure about this - if this is an epoch this is just going to get the most
+                // @todo tipward model for the branch. I think this was what was happening before (in comment,
+                // @todo above).
 
-            if (modelNumberFromrRegistry == mapping.getOrder()[0]) {
-                if (useUniformization) {
-                    computeSampledMarkovJumpsForBranch(((UniformizedSubstitutionModel) thisMarkovJumps), substTime,
-                            branchRate, childNum, parentStates, childStates, parentTime, childTime, probabilities, scaleByTime[r],
-                            expectedJumps.get(r), rateCategory,
-                            (branchModel instanceof EpochBranchModel) || r == historyRegisterNumber
-                    );
-                } else {
-                    computeIntegratedMarkovJumpsForBranch(thisMarkovJumps, substTime, branchRate, childNum, parentStates,
-                            childStates, probabilities, condJumps, scaleByTime[r], expectedJumps.get(r), rateCategory);
+                if (modelNumberFromrRegistry == mapping.getOrder()[0]) {
+                    if (useUniformization) {
+                        computeSampledMarkovJumpsForBranch(((UniformizedSubstitutionModel) thisMarkovJumps), substTime,
+                                branchRate, childNum, parentStates, childStates, parentTime, childTime, probabilities, scaleByTime[r],
+                                expectedJumps.get(r), rateCategory, 
+                                (branchModel instanceof EpochBranchModel) || r == historyRegisterNumber);
+                    } else {
+                        computeIntegratedMarkovJumpsForBranch(thisMarkovJumps, substTime, branchRate, childNum, parentStates,
+                                childStates, probabilities, condJumps, scaleByTime[r], expectedJumps.get(r), rateCategory);
+                    }
                 }
-            } else {
-                // Fill with zeros
-                double[] result = expectedJumps.get(r)[childNum];
-                Arrays.fill(result, 0.0);
+            }
+        } else if (markovjumps.size() > 0) {
+        
+            // compute time for each piece
+            int npieces = combinedWeights.size();
+            double[] parentTimes = new double[npieces];
+            double[] childTimes = new double[npieces];
+            double[] substTimes = new double[npieces];
+            parentTimes[0] = parentTime;
+            
+            for (int j = 0; j < npieces; j++) {
+                substTimes[j] = combinedWeights.get(j);
+                childTimes[j] = parentTimes[j] - substTimes[j];
+                
+                if (j < npieces - 1) {
+                    parentTimes[j + 1] = childTimes[j];
+                }
+            }
+            
+            // sample intermediate states
+            int[][] parentStatesAll = new int[npieces][patternCount];
+            int[][] childStatesAll = new int[npieces][patternCount];
+            parentStatesAll[0] = parentStates;
+            childStatesAll[npieces - 1] = childStates;
+            
+            for (int j = 0; j < npieces - 1; j++) {
+                for (int k = 0; k < patternCount; k++) {
+                    final int category = rateCategory == null ? 0 : rateCategory[k];
+                    final int matrixIndex = category * stateCount * stateCount;
+                    final int startState = parentStatesAll[j][k];
+                    final int endState = childStates[k];
+                    double probSE = probabilitiesConvolved.get(j)[matrixIndex + startState * stateCount + endState];
+                    
+                    double[] interStateProb = new double[stateCount];
+                    double probSum = 0.0;
+                    
+                    for (int interState = 0; interState < stateCount; interState++) {
+                        double probSI = probabilitiesAlongBranch.get(j)[matrixIndex + startState * stateCount + interState];
+                        double probIE;
+                        if (j == npieces - 2) {
+                            probIE = probabilitiesAlongBranch.get(j + 1)[matrixIndex + interState * stateCount + endState];
+                        } else {
+                           probIE = probabilitiesConvolved.get(j + 1)[matrixIndex + interState * stateCount + endState];
+                        }
+                                                
+                        interStateProb[interState] = probSI * probIE / probSE;
+                        probSum += interStateProb[interState];
+                    }
+                    
+                    for (int interState = 0; interState < stateCount; interState++) {
+                        interStateProb[interState] /= probSum;
+                    }
+                    
+                    int interState = drawChoice(interStateProb);
+                    parentStatesAll[j + 1][k] = interState;
+                    childStatesAll[j][k] = interState;
+                }
+            }
+            
+            for (int j = 0; j < npieces; j++) {
+                int r = branchModelNumber.indexOf(combinedMatrixOrder.get(j));
+                MarkovJumpsSubstitutionModel thisMarkovJumps = markovjumps.get(r);
+                
+                computeSampledMarkovJumpsForBranch(((UniformizedSubstitutionModel) thisMarkovJumps), substTimes[j],
+                            combinedRates.get(j), childNum, parentStatesAll[j], childStatesAll[j], parentTimes[j], childTimes[j], probabilitiesAlongBranch.get(j), scaleByTime[r],
+                            expectedJumps.get(r), rateCategory, true);
+            }
+        }
+        
+        if (histories != null) {
+            for (int j = 0; j < patternCount; j++) {
+                if (histories[childNum][j].charAt(histories[childNum][j].length() - 1) == ',') {
+                    histories[childNum][j] = histories[childNum][j].substring(0, histories[childNum][j].length() - 1);
+                }
+                histories[childNum][j] += '}';
             }
         }
     }
@@ -483,10 +564,13 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
             if (scaleByTime) {
                 value /= branchRate * categoryRate;
             }
-            thisExpectedJumps[childNum][j] = value;
+            thisExpectedJumps[childNum][j] += value;
             if (saveHistory) {
                 int site = (useCompactHistory) ? j + 1 : -1;
-                histories[childNum][j] = thisMarkovJumps.getCompleteHistory(site, parentTime, childTime);
+                String historyTmp = thisMarkovJumps.getCompleteHistory(site, parentTime, childTime, false);
+                if (historyTmp != null && historyTmp.length() > 0) {
+                    histories[childNum][j] += historyTmp + ',';
+                }
             }
         }
     }

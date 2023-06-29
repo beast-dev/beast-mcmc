@@ -150,7 +150,7 @@ public class Partition {
 
 	private void setSubstitutionModelDelegate() {
 		substitutionModelDelegate = new SubstitutionModelDelegate(treeModel,
-				branchModel);
+				branchModel, branchRateModel);
 	}// END: setSubstitutionModelDelegate
 
 	private void setBufferHelpers() {

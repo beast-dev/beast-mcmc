@@ -612,7 +612,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         }
     }
 
-    private static final boolean REMOVE_REDUNDANT_UNCONDITIONED_WORK = true;
+    private static final boolean REMOVE_REDUNDANT_UNCONDITIONED_WORK = false;
 
     private void fillInUnconditionalTraitValues(double expectedLength, double[] freq, double[] out) {
         final int stateCount = 64;

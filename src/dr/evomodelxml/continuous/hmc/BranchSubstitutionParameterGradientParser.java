@@ -27,7 +27,6 @@ package dr.evomodelxml.continuous.hmc;
 
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.BranchSpecificSubstitutionParameterBranchModel;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;

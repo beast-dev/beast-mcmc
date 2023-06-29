@@ -34,13 +34,12 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.util.Citable;
 import dr.util.Citation;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.DoubleBinaryOperator;
-
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
 
 /**
  * @author Marc A. Suchard

@@ -33,6 +33,7 @@ import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
@@ -42,7 +43,7 @@ import java.util.*;
  * @author Marc A. Suchard
  */
 @Deprecated
-public class OldGLMSubstitutionModel extends ComplexSubstitutionModel implements ParameterReplaceableSubstitutionModel {
+public class OldGLMSubstitutionModel extends ComplexSubstitutionModel implements ParameterReplaceableSubstitutionModel, DifferentiableSubstitutionModel{
 
     public OldGLMSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
                                    LogLinearModel glm) {
@@ -120,5 +121,131 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel implements
         OldGLMSubstitutionModel newGLMSubstitutionModel = new OldGLMSubstitutionModel(getModelName(), dataType, freqModel, newGLM);
 
         return newGLMSubstitutionModel;
+    }
+
+    @Override
+    public WrappedMatrix getInfinitesimalDifferentialMatrix(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt) {
+        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
+    }
+
+    enum WrtOldGLMSubstitutionModelParameter implements DifferentialMassProvider.DifferentialWrapper.WrtParameter {
+        INDEPENDENT_PARAMETER {
+            @Override
+            void setDim(int dim) {
+                this.dim = dim;
+            }
+
+            void setEffectIndex(int fixedEffectIndex) {
+                this.fixedEffectIndex = fixedEffectIndex;
+            }
+
+            private int dim;
+            private int fixedEffectIndex;
+            private int stateCount;
+            private LogLinearModel glm;
+            @Override
+            public double getRate(int switchCase) {
+                throw new RuntimeException("Should not be called.");
+            }
+
+            @Override
+            public double getNormalizationDifferential() {
+                return 0;
+            }
+
+            @Override
+            public void setupDifferentialFrequencies(double[] differentialFrequencies, double[] frequencies) {
+//                System.arraycopy(frequencies, 0, differentialFrequencies, 0, frequencies.length);
+                Arrays.fill(differentialFrequencies, 1);
+            }
+
+            public void setStateCount(int stateCount) {
+                this.stateCount = stateCount;
+            }
+
+            public void setGLM(LogLinearModel glm) {
+                this.glm = glm;
+            }
+
+            @Override
+            public void setupDifferentialRates(double[] differentialRates, double[] Q, double normalizingConstant) {
+                final double[] covariate = glm.getDesignMatrix(fixedEffectIndex).getColumnValues(dim);
+
+//                System.arraycopy(covariate, 0, differentialRates, 0, covariate.length);
+
+                int k = 0;
+                for (int i = 0; i < stateCount; ++i) {
+                    for (int j = i + 1; j < stateCount; ++j) {
+
+                        differentialRates[k] = covariate[k] * Q[index(i, j)];
+                        k++;
+
+                    }
+                }
+
+                for (int j = 0; j < stateCount; ++j) {
+                    for (int i = j + 1; i < stateCount; ++i) {
+
+                        differentialRates[k] = covariate[k] * Q[index(i, j)];
+                        k++;
+
+                    }
+                }
+
+            }
+            private int index(int i, int j) {
+                return i * stateCount + j;
+            }
+        };
+        abstract void setDim(int dim);
+        abstract void setEffectIndex(int effectIndex);
+        abstract void setStateCount(int stateCount);
+
+        abstract void setGLM(LogLinearModel glm);
+
+
+    }
+
+    @Override
+    public DifferentialMassProvider.DifferentialWrapper.WrtParameter factory(Parameter parameter, int dim) {
+        assert(dim == 0);
+        WrtOldGLMSubstitutionModelParameter wrtParameter = WrtOldGLMSubstitutionModelParameter.INDEPENDENT_PARAMETER;
+        final int effectIndex = glm.getEffectNumber(parameter);
+        if (effectIndex == -1) {
+            throw new RuntimeException("Only implemented for single dimensions, break up beta to one for each block for now please.");
+        }
+        wrtParameter.setDim(dim);
+        wrtParameter.setEffectIndex(effectIndex);
+        wrtParameter.setStateCount(stateCount);
+        wrtParameter.setGLM(glm);
+        return wrtParameter;
+    }
+
+    @Override
+    public void setupDifferentialRates(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
+        final double[] Q = new double[stateCount * stateCount];
+        getInfinitesimalMatrix(Q);
+        wrt.setupDifferentialRates(differentialRates, Q, normalizingConstant);
+    }
+
+    @Override
+    public void setupDifferentialFrequency(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[] differentialFrequency) {
+        wrt.setupDifferentialFrequencies(differentialFrequency, getFrequencyModel().getFrequencies());
+    }
+
+    @Override
+    public double getWeightedNormalizationGradient(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[][] differentialMassMatrix, double[] differentialFrequencies) {
+        double derivative = 0;
+        double[] frequencies = getFrequencyModel().getFrequencies();
+        for (int i = 0; i < stateCount; i++) {
+            double currentRow = 0;
+            for (int j = 0; j < stateCount; j++) {
+                if (i != j) {
+                    currentRow +=differentialMassMatrix[i][j];
+                }
+            }
+            derivative += currentRow * frequencies[i];
+        }
+        return derivative;
     }
 }

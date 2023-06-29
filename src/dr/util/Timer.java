@@ -28,17 +28,21 @@ package dr.util;
 public class Timer {
 
 	private long start = 0, stop = 0;
+	private long nanoStart = 0, nanoStop = 0;
 
 	public void start() {
 		start = System.currentTimeMillis();
+		nanoStart = System.nanoTime();
 	}
 
 	public void stop() {
 		stop = System.currentTimeMillis();
+		nanoStop = System.nanoTime();
 	}
 
 	public void update() {
 		stop = System.currentTimeMillis();
+		nanoStop = System.nanoTime();
 	}
 
 	/**
@@ -53,6 +57,16 @@ public class Timer {
 	public double toSeconds() {
 		update();
 		return toSeconds(stop - start);
+	}
+
+	public double toMilliSeconds() {
+		update();
+		return stop - start;
+	}
+
+	public double toNanoSeconds() {
+		update();
+		return nanoStop - nanoStart;
 	}
 
 	public static double toSeconds(long millis) {

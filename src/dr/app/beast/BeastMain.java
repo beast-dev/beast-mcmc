@@ -81,7 +81,7 @@ public class BeastMain {
 
     public BeastMain(File inputFile, BeastConsoleApp consoleApp, int maxErrorCount, final boolean verbose,
                      boolean parserWarning, boolean strictXML, List<String> additionalParsers,
-                     boolean useMC3, double[] chainTemperatures, int swapChainsEvery) {
+                     MCMCMCOptions mc3Options) {
 
         if (inputFile == null) {
             throw new RuntimeException("Error: no input file specified");
@@ -159,15 +159,18 @@ public class BeastMain {
             // appropriate savers and loaders according to the user's options.
             new BeastCheckpointer();
 
-            if (!useMC3) {
+            if (mc3Options == null) {
                 // just parse the file running all threads...
 
                 parser.parse(fileReader, true);
 
             } else {
+
+                double[] chainTemperatures = mc3Options.getChainTemperatures();
+
                 int chainCount = chainTemperatures.length;
                 MCMC[] chains = new MCMC[chainCount];
-                MCMCMCOptions options = new MCMCMCOptions(chainTemperatures, swapChainsEvery);
+//                MCMCMCOptions options = new MCMCMCOptions(chainTemperatures, swapChainsEvery);
 
                 Logger.getLogger("dr.apps.beast").info("Starting cold chain plus hot chains with temperatures: ");
                 for (int i = 1; i < chainTemperatures.length; i++) {
@@ -183,7 +186,7 @@ public class BeastMain {
                 }
                 fileReader.close();
 
-                chainTemperatures[0] = 1.0;
+                chainTemperatures[0] = 1.0; // TODO Should perform in Mc3Options constructor
 
                 for (int i = 1; i < chainCount; i++) {
                     // parse the file once for each hot chain
@@ -216,7 +219,7 @@ public class BeastMain {
                 // restart messages
                 logger.setLevel(Level.ALL);
 
-                MCMCMC mc3 = new MCMCMC(chains, options);
+                MCMCMC mc3 = new MCMCMC(chains, mc3Options);
 //                Thread thread = new Thread(mc3);
 //                thread.start();
                 mc3.run();
@@ -393,6 +396,7 @@ public class BeastMain {
                         new Arguments.RealOption("mc3_delta", 0.0, Double.MAX_VALUE, "temperature increment parameter"),
                         new Arguments.RealArrayOption("mc3_temperatures", -1, "a comma-separated list of the hot chain temperatures"),
                         new Arguments.IntegerOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
+                        new Arguments.StringOption("mc3_scheme", "NAME", "Specify parallel tempering swap scheme"),
 
                         new Arguments.StringOption("load_state", "FILENAME", "Specify a filename to load a saved state from"),
                         new Arguments.StringOption("save_stem", "FILENAME", "Specify a stem for the filenames to save states to"),
@@ -477,6 +481,7 @@ public class BeastMain {
         boolean usingMC3 = false;
         double[] chainTemperatures = null;
         int swapChainsEvery = DEFAULT_SWAP_CHAIN_EVERY;
+        MCMCMCOptions.SwapScheme swapScheme = MCMCMCOptions.SwapScheme.ORIGINAL_FLAVOR;
 
         if (arguments.hasOption("particles")) {
             System.setProperty("smc.particle_folder", arguments.getStringOption("particles"));
@@ -543,6 +548,10 @@ public class BeastMain {
 
             if (arguments.hasOption("mc3_swap")) {
                 swapChainsEvery = arguments.getIntegerOption("mc3_swap");
+            }
+
+            if (arguments.hasOption("mc3_scheme")) {
+                swapScheme = MCMCMCOptions.SwapScheme.parse(arguments.getStringOption("mc3_scheme"));
             }
 
             usingMC3 = chainCount > 1;
@@ -930,7 +939,8 @@ public class BeastMain {
 
         try {
             new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, warnings, strictXML, additionalParsers,
-                    usingMC3, chainTemperatures, swapChainsEvery);
+                    usingMC3 ? new MCMCMCOptions(chainTemperatures, swapChainsEvery, swapScheme) : null);
+//                    usingMC3, chainTemperatures, swapChainsEvery);
         } catch (RuntimeException rte) {
             // The stack trace here is not useful
 //            rte.printStackTrace(System.err);

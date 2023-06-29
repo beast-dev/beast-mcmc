@@ -32,6 +32,7 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.*;
+import dr.util.Timer;
 import dr.xml.Reportable;
 
 /**
@@ -134,7 +135,12 @@ public class EfficientSpeciationLikelihoodGradient extends AbstractModel
 
     @Override
     public String getReport() {
-        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, 1E-3);
+        String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, 1E-3);
+        if (gradientProvider instanceof CachedGradientDelegate) {
+            message += "\n";
+            message += "Gradient calculation time is " + ((CachedGradientDelegate) gradientProvider).getGradientTime() + " nanoseconds.\n";
+        }
+        return message;
     }
 
     @Override

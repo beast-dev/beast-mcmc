@@ -35,6 +35,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.math.MathUtils;
 import dr.math.distributions.BetaDistribution;
+import dr.util.Timer;
 
 import java.util.Set;
 
@@ -48,6 +49,10 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
     private final BigFastTreeIntervals treeIntervals;
     private final TreeTraitProvider.Helper treeTraits = new TreeTraitProvider.Helper();
 
+    public static final boolean MEASURE_RUN_TIME = false;
+    public double likelihoodTime;
+    public int likelihoodCounts;
+
     private boolean intervalsKnown;
 
     private final double TOLERANCE = 1e-5;
@@ -58,6 +63,9 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         if (!(tree instanceof DefaultTreeModel)) {
             throw new IllegalArgumentException("Must currently provide a DefaultTreeModel");
         }
+
+        likelihoodTime = 0;
+        likelihoodCounts = 0;
 
         fixTimes();
 
@@ -84,7 +92,11 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
 
     @Override
     double calculateLogLikelihood() {
-
+        Timer timer;
+        if (MEASURE_RUN_TIME) {
+            timer = new Timer();
+            timer.start();
+        }
         speciationModel.updateLikelihoodModelValues(0);
 
         double[] modelBreakPoints = speciationModel.getBreakPoints();
@@ -131,6 +143,13 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         logL += speciationModel.processOrigin(currentModelSegment, treeIntervals.getTotalDuration());
 
         logL += speciationModel.logConditioningProbability();
+
+        if (MEASURE_RUN_TIME) {
+            timer.stop();
+            double timeInSeconds = timer.toNanoSeconds();
+            likelihoodTime += timeInSeconds;
+            likelihoodCounts += 1;
+        }
 
         return logL;
     }
@@ -214,5 +233,13 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
 
     public void addTrait(TreeTrait trait) {
         treeTraits.addTrait(trait);
+    }
+
+    public String getReport() {
+        String message = super.getReport();
+        message += "\n";
+        // add likelihood calculation time
+        message += "Likelihood calculation time is " + likelihoodTime / likelihoodCounts + " nanoseconds.\n";
+        return message;
     }
 }

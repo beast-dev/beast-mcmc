@@ -28,8 +28,6 @@ package dr.evomodel.treedatalikelihood.discrete;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
-import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
-import dr.evomodel.substmodel.DifferentiableSubstitutionModel;
 import dr.evomodel.substmodel.DifferentialMassProvider;
 import dr.evomodel.substmodel.OldGLMSubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
@@ -98,7 +96,8 @@ public class ArbitrarySubstitutionGeneratorGradient implements GradientWrtParame
                     treeDataLikelihood.getTree(),
                     likelihoodDelegate,
                     treeDataLikelihood.getBranchRateModel(),
-                    branchDifferentialMassProvider);
+                    branchDifferentialMassProvider,
+                    BranchSubstitutionParameterDelegate.DifferentialCase.APPROXIMATE);
             TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
         }

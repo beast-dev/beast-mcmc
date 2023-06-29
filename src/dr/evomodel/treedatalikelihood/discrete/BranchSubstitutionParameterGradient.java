@@ -116,7 +116,8 @@ public class BranchSubstitutionParameterGradient
                     treeDataLikelihood.getTree(),
                     likelihoodDelegate,
                     treeDataLikelihood.getBranchRateModel(),
-                    branchDifferentialMassProvider);
+                    branchDifferentialMassProvider,
+                    BranchSubstitutionParameterDelegate.DifferentialCase.EXACT);
             TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
         }
@@ -158,9 +159,14 @@ public class BranchSubstitutionParameterGradient
 
     @Override
     public double[] getGradientLogDensity() {
+        if (COUNT_TOTAL_OPERATIONS) {
+            ++getGradientLogDensityCount;
+        }
+
         double[] result = new double[getDimension()];
 
         double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
+
 
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             NodeRef node = tree.getNode(i);
@@ -172,11 +178,9 @@ public class BranchSubstitutionParameterGradient
             // TODO Handle root node at most point
         }
 
-        if (COUNT_TOTAL_OPERATIONS) {
-            ++getGradientLogDensityCount;
-        }
+        // TODO Ideally move all chain-ruling into branchRateModel (except branchLengths?)
+        return branchRateModel.updateGradientLogDensity(result, null, 0, gradient.length);
 
-        return result;
     }
 
     protected double getChainGradient(Tree tree, NodeRef node) {

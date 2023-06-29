@@ -34,6 +34,8 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.util.Timer;
+import dr.xml.Reportable;
 
 class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]> {
 
@@ -41,6 +43,10 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
     private final BigFastTreeIntervals treeIntervals;
     private final SpeciationModel speciationModel;
 
+    public static final boolean MEASURE_RUN_TIME = false;
+    public double gradientTime;
+
+    public int gradientCounts;
     private double[] gradient;
     private double[] storedGradient;
     private boolean gradientKnown;
@@ -55,12 +61,17 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
 
         addModel(this.treeIntervals);
         addModel(this.speciationModel);
-
+        gradientTime = 0;
+        gradientCounts = 0;
         gradientKnown = false;
     }
 
     private double[] getGradientLogDensityImpl() {
-
+        Timer timer;
+        if (MEASURE_RUN_TIME) {
+            timer = new Timer();
+            timer.start();
+        }
         double[] gradient = new double[provider.getGradientLength()];
 
         provider.precomputeGradientConstants(); // TODO hopefully get rid of this
@@ -110,6 +121,13 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
         provider.processGradientOrigin(gradient, currentModelSegment, treeIntervals.getTotalDuration());
 
         provider.logConditioningProbability(gradient);
+
+        if (MEASURE_RUN_TIME) {
+            timer.stop();
+            double timeInSeconds = timer.toNanoSeconds();
+            gradientTime += timeInSeconds;
+            gradientCounts += 1;
+        }
 
         return gradient;
     }
@@ -185,5 +203,9 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
     @Override
     protected void acceptState() {
         // Do nothing
+    }
+
+    public double getGradientTime() {
+        return gradientTime;
     }
 }

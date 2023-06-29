@@ -33,6 +33,7 @@ import dr.evolution.sequence.Sequence;
 import dr.evolution.util.Taxon;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -179,6 +180,10 @@ public abstract class WrappedAlignment extends Alignment.Abstract {
      */
     public Object getSequenceAttribute(int index, String name) {
         return alignment.getSequenceAttribute(index, name);
+    }
+
+    public List<Sequence> getSequences() {
+        return alignment.getSequences();
     }
 
     /**

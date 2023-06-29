@@ -29,6 +29,7 @@ import dr.inference.model.*;
 import dr.math.GeneralisedGaussLaguerreQuadrature;
 import dr.math.distributions.GammaDistribution;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.math.functionEval.GammaFunction;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -434,9 +435,8 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
 
         for (int i = 0; i < catCount; i++) {
             categoryRates[i + offset] = abscissae[i] / (alpha + 1);
-            categoryProportions[i + offset] = coefficients[i];
+            categoryProportions[i + offset] = coefficients[i]/GammaFunction.gamma(alpha + 1);
         }
-        normalize(categoryRates, categoryProportions);
     }
 
     /**

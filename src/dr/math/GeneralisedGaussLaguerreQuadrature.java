@@ -80,6 +80,7 @@ public class GeneralisedGaussLaguerreQuadrature implements Integral {
         for(int i=0; i<noPoints; i++){
             if(i==0){
                 z = (1.0+alpha)*(3.0+0.92*alpha)/(1.0+2.4*noPoints+1.8*alpha);
+
             } else if (i==1){
                 z += (15.0+6.25*alpha)/(1.0+0.9*alpha+2.5*noPoints);
             } else {
@@ -92,14 +93,16 @@ public class GeneralisedGaussLaguerreQuadrature implements Integral {
             for(int its = 0 ; its<maxIterations; its++){
                 p1 = 1.0;
                 p2 = 0.0;
-                for(int j=0; j<noPoints; j++){
+                for(int j=0; j<noPoints+1; j++){
                     p3 = p2;
                     p2 = p1;
                     p1 = ((2*j+1+alpha-z)*p2-(j+alpha)*p3)/(j+1);
                 }
-                pp = (noPoints*p1-(noPoints+alpha)*p2)/z;
+                // p2 is now the target. The new p1 is needed for the Wikipedia/Wolfram calculation of coefficients
+
+                pp = (noPoints*p2-(noPoints+alpha)*p3)/z;
                 double z1=z;
-                z=z1-p1/pp;
+                z=z1-p2/pp;
                 if(Math.abs(z-z1) <= eps){
                     failed = false;
                     break;
@@ -111,9 +114,12 @@ public class GeneralisedGaussLaguerreQuadrature implements Integral {
             abscissae[i] = z;
 
             coefficients[i] = -Math.exp(GammaFunction.lnGamma(alpha+noPoints) - GammaFunction.lnGamma((double)noPoints))/
-                    (pp*noPoints*p2);
+                    (pp*noPoints*p3);
 
         }
+
+
+
 
     }
 

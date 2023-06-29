@@ -109,7 +109,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
             if (type == GammaSiteRateModel.DiscretizationType.EQUAL) {
                 msg += "\n  using equal weight discretization of gamma distribution";
             } else {
-                msg += "\n  using Gauss-Laguerre quadrature discretization of gamma distribution";
+                msg += "\n  using Gauss-Laguerre quadrature discretization of gamma distribution (Felsenstein, 2012)";
             }
         }
 

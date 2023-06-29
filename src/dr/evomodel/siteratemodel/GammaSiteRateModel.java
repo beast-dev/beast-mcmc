@@ -401,7 +401,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
 
     public final static Citation CITATION_FELSENSTEIN01 = new Citation(
             new Author[]{
-                    new Author("J", "Felsenstein    ")
+                    new Author("J", "Felsenstein")
             },
             "Taking Variation of Evolutionary Rates Between Sites into Account in Inferring Phylogenies",
             2001,
@@ -509,7 +509,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
         // 5.617    0.00076
         // 8.823    0.000003
 
-        // Output (without setting rates to mean of 1)
+        // Output
         // Quadrature, alpha = 1.0
         // cat	rate	proportion
         // 0	0.26383406085556455	0.27765014202987454

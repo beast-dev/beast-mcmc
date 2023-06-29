@@ -347,15 +347,15 @@ public class SubstitutionModelGenerator extends Generator {
                 writeCodonPatternsRef(prefix, num, model.getCodonPartitionCount(), writer);
 
                 // get the data partition for this substitution model.
-               AbstractPartitionData partition = options.getDataPartitions(model).get(0);
+                AbstractPartitionData partition = options.getDataPartitions(model).get(0);
 
-               // for empirical frequencies use the entire alignment
-               if (partition instanceof PartitionData) {
-                   Alignment alignment = ((PartitionData)partition).getAlignment();
-                   writer.writeIDref(AlignmentParser.ALIGNMENT, alignment.getId());
-               } else {
-                   throw new IllegalArgumentException("Partition is missing a data partition");
-               }
+                // for empirical frequencies use the entire alignment
+                if (partition instanceof PartitionData) {
+                    Alignment alignment = ((PartitionData)partition).getAlignment();
+                    writer.writeIDref(AlignmentParser.ALIGNMENT, alignment.getId());
+                } else {
+                    throw new IllegalArgumentException("Partition is missing a data partition");
+                }
             } else {
                 for (AbstractPartitionData partition : options.getDataPartitions(model)) { //?
                     writer.writeIDref(AlignmentParser.ALIGNMENT, partition.getTaxonList().getId());
@@ -696,8 +696,13 @@ public class SubstitutionModelGenerator extends Generator {
 
 
         if (model.isGammaHetero()) {
-            writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE, new Attribute.Default<String>(
-                    GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
+            writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE,
+                    new Attribute[] {
+                            new Attribute.Default<>(GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()),
+                            new Attribute.Default<>(GammaSiteModelParser.DISCRETIZATION,
+                                    (model.isGammaHeteroEqualWeights() ? "equal" : "quadrature")),
+                    });
+
             if (num == -1 || model.isUnlinkedHeterogeneityModel()) {
 //                writeParameter(prefix + "alpha", model, writer);
                 writeParameter(num, "alpha", model, writer);
@@ -783,7 +788,11 @@ public class SubstitutionModelGenerator extends Generator {
 
         if (model.isGammaHetero()) {
             writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE,
-                    new Attribute.Default<String>(GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
+                    new Attribute[] {
+                            new Attribute.Default<>(GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()),
+                            new Attribute.Default<>(GammaSiteModelParser.DISCRETIZATION,
+                                    (model.isGammaHeteroEqualWeights() ? "equal" : "quadrature")),
+                    });
             writeParameter(prefix + "alpha", model, writer);
             writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
         }
@@ -832,8 +841,11 @@ public class SubstitutionModelGenerator extends Generator {
 
         if (model.isGammaHetero()) {
             writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE,
-                    new Attribute.Default<String>(
-                            GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
+                    new Attribute[] {
+                            new Attribute.Default<>(GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()),
+                            new Attribute.Default<>(GammaSiteModelParser.DISCRETIZATION,
+                                    (model.isGammaHeteroEqualWeights() ? "equal" : "quadrature")),
+                    });
             writeParameter("alpha", model, writer);
             writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
         }

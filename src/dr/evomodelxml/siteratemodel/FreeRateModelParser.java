@@ -26,7 +26,6 @@
 package dr.evomodelxml.siteratemodel;
 
 import dr.evomodel.siteratemodel.FreeRateModel;
-import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.siteratemodel.PdfSiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.Parameter;
@@ -40,7 +39,7 @@ public class FreeRateModelParser extends AbstractXMLObjectParser {
 
     private static final String SITE_MODEL = "freeRateModel";
     private static final String SUBSTITUTION_MODEL = "substitutionModel";
-    private static final String RATEDIFFERENCES = "rateDifferences";
+    private static final String RATE_DIFFERENCES = "rateDifferences";
     private static final String WEIGHTS = "weights";
 
     public String getParserName() {
@@ -49,7 +48,7 @@ public class FreeRateModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Parameter rateDifferences = (Parameter) xo.getElementFirstChild(RATEDIFFERENCES);
+        Parameter rateDifferences = (Parameter) xo.getElementFirstChild(RATE_DIFFERENCES);
         Parameter weights = (Parameter) xo.getElementFirstChild(WEIGHTS);
 
         PdfSiteRateModel siteRateModel = new PdfSiteRateModel(SITE_MODEL, rateDifferences, weights);
@@ -80,7 +79,7 @@ public class FreeRateModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(RATEDIFFERENCES, new XMLSyntaxRule[]{
+            new ElementRule(RATE_DIFFERENCES, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
             new ElementRule(WEIGHTS, new XMLSyntaxRule[]{

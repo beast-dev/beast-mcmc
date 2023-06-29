@@ -121,6 +121,10 @@ public interface Transform {
 
     double[] derivativeOfTransformWrtValue(double[] values, int from, int to);
 
+    double secondDerivativeOfTransformWrtValue(double value);
+
+    double[] secondDerivativeOfTransformWrtValue(double[] values, int from, int to);
+
     double secondDerivativeOfInverseTransformWrtValue(double value);
 
     double[] secondDerivativeOfInverseTransformWrtValue(double[] values, int from, int to);
@@ -315,6 +319,18 @@ public interface Transform {
             return result;
         }
 
+        public double secondDerivativeOfTransformWrtValue(double value) {
+            throw new RuntimeException("Not yet implemented.");
+        };
+
+        public double[] secondDerivativeOfTransformWrtValue(double[] values, int from, int to) {
+            double[] result = values.clone();
+            for (int i = from; i < to; ++i) {
+                result[i] = secondDerivativeOfTransformWrtValue(values[i]);
+            }
+            return result;
+        }
+
         public double secondDerivativeOfInverseTransformWrtValue(double value) {
             throw new RuntimeException("Not yet implemented.");
         }
@@ -410,6 +426,14 @@ public interface Transform {
         };
 
         public double[] derivativeOfTransformWrtValue(double[] values, int from, int to) {
+            throw new RuntimeException("Not yet implemented.");
+        }
+
+        public double secondDerivativeOfTransformWrtValue(double value) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        };
+
+        public double[] secondDerivativeOfTransformWrtValue(double[] values, int from, int to) {
             throw new RuntimeException("Not yet implemented.");
         }
 
@@ -622,6 +646,8 @@ public interface Transform {
         public double getLogJacobian(double value) { return -Math.log(value); }
 
         public double derivativeOfTransformWrtValue(double value) { return 1.0 / value; }
+
+        public double secondDerivativeOfTransformWrtValue(double value) { return -1.0 / (value * value); }
 
         public double secondDerivativeOfInverseTransformWrtValue(double value) { return Math.exp(value); }
 
@@ -1287,6 +1313,8 @@ public interface Transform {
         }
 
         public double derivativeOfTransformWrtValue(double value) { return 1.0; }
+
+        public double secondDerivativeOfTransformWrtValue(double value) { return 0.0; }
 
         public double secondDerivativeOfInverseTransformWrtValue(double value) { return 0.0; }
 

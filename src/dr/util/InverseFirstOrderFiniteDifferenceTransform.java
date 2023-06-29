@@ -128,21 +128,16 @@ public class InverseFirstOrderFiniteDifferenceTransform extends Transform.Multiv
             logJacobian += Math.log(incrementTransform.gradientInverse(s));
         }
         // Why is this inverted?
-        return -logJacobian;
+        return logJacobian;
     }
 
     @Override
     public double[] getGradientLogJacobianInverse(double[] values) {
-
-        double[] gradLogJacobian = firstOrderFiniteDifferenceTransform.getGradientLogJacobianInverse(values);
-        double[] gradient = new double[dim];
-
-        for (int i = 0; i < dim - 1; i++) {
-            gradient[i] = (gradLogJacobian[i] - gradLogJacobian[i+1]) * incrementTransform.derivativeOfTransformWrtValue(values[i]);
+        double[] grad = new double[dim];
+        for (int i = 0; i < dim; i++) {
+            grad[i] = (1.0 / incrementTransform.derivativeOfTransformWrtValue(values[i])) * incrementTransform.secondDerivativeOfTransformWrtValue(values[i]);
         }
-        gradient[dim - 1] = gradLogJacobian[dim - 1] * incrementTransform.derivativeOfTransformWrtValue(values[dim - 1]);
-
-        return gradient;
+        return grad;
     }
 
     @Override

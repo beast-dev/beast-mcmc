@@ -151,7 +151,7 @@ public class MultiPartitionDataLikelihoodParser extends AbstractXMLObjectParser 
                 for (SiteRateModel siteRateModel : siteRateModels) {
                     SubstitutionModel substitutionModel = null;
                     if (substitutionModel == null && siteRateModel instanceof GammaSiteRateModel) {
-                        // for backwards compatibility the old GammaSiteRateModel can provide the substitution model...
+                        // for backwards compatibility the old GammaSiteRateModelParser can provide the substitution model...
                         substitutionModel = ((GammaSiteRateModel)siteRateModel).getSubstitutionModel();
                     }
                     if (substitutionModel == null) {

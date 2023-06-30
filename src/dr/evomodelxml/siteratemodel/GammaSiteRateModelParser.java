@@ -40,9 +40,9 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class GammaSiteRateModel extends AbstractXMLObjectParser {
+public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
 
-    public static final String GAMMA_SITE_RATE_MODEL = "GammaSiteRateModel";
+    public static final String GAMMA_SITE_RATE_MODEL = "gammaSiteRateModel";
     public static final String SUBSTITUTION_MODEL = "substitutionModel";
     public static final String MUTATION_RATE = "mutationRate";
     public static final String SUBSTITUTION_RATE = "substitutionRate";
@@ -123,19 +123,7 @@ public class GammaSiteRateModel extends AbstractXMLObjectParser {
 
         GammaSiteRateDelegate delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParam, catCount, type, invarParam);
 
-        DiscretizedSiteRateModel siteRateModel = new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
-
-        if (xo.hasChildNamed(SUBSTITUTION_MODEL)) {
-
-//        	System.err.println("Doing the substitution model stuff");
-
-            // set this to pass it along to the OldTreeLikelihoodParser...
-            substitutionModel = (SubstitutionModel) xo.getElementFirstChild(SUBSTITUTION_MODEL);
-            siteRateModel.setSubstitutionModel(substitutionModel);
-
-        }
-
-        return siteRateModel;
+        return new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
     }
 
     //************************************************************************
@@ -160,10 +148,6 @@ public class GammaSiteRateModel extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-
-            new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
-                    new ElementRule(SubstitutionModel.class)
-            }, true),
 
             new XORRule(
                     new XORRule(

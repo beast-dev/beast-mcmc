@@ -82,11 +82,6 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
         return nuParameter.getParameterValue(0) * muWeight;
     }
 
-
-    public void setRelativeRateParameter(Parameter nu) {
-        this.nuParameter = nu;
-    }
-
     // *****************************************************************
     // Interface SiteRateModel
     // *****************************************************************
@@ -98,8 +93,7 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
     public double[] getCategoryRates() {
         synchronized (this) {
             if (!ratesKnown) {
-                delegate.getCategories(categoryRates, categoryProportions);
-                ratesKnown = true;
+                calculateCategoryRates();
             }
         }
 
@@ -109,8 +103,7 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
     public double[] getCategoryProportions() {
         synchronized (this) {
             if (!ratesKnown) {
-                delegate.getCategories(categoryRates, categoryProportions);
-                ratesKnown = true;
+                calculateCategoryRates();
             }
         }
 
@@ -120,8 +113,7 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
     public double getRateForCategory(int category) {
         synchronized (this) {
             if (!ratesKnown) {
-                delegate.getCategories(categoryRates, categoryProportions);
-                ratesKnown = true;
+                calculateCategoryRates();
             }
         }
 
@@ -131,12 +123,24 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
     public double getProportionForCategory(int category) {
         synchronized (this) {
             if (!ratesKnown) {
-                delegate.getCategories(categoryRates, categoryProportions);
-                ratesKnown = true;
+                calculateCategoryRates();
             }
         }
 
         return categoryProportions[category];
+    }
+
+    private void calculateCategoryRates() {
+
+        delegate.getCategories(categoryRates, categoryProportions);
+
+        if (nuParameter != null) {
+            double mu = getMu();
+            for (int i = 0; i < getCategoryCount(); i++)
+                categoryRates[i] *= mu;
+        }
+
+        ratesKnown = true;
     }
 
     // *****************************************************************
@@ -192,9 +196,9 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
     /**
      * mutation rate parameter
      */
-    private Parameter nuParameter;
+    private final Parameter nuParameter;
 
-    private double muWeight;
+    private final double muWeight;
 
     private boolean ratesKnown;
 

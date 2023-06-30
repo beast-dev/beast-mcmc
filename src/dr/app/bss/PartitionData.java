@@ -1058,7 +1058,7 @@ public class PartitionData implements Serializable {
 	};
 
 	public static int[][] siteRateModelParameterIndices = { {}, // NoModel
-			{ 0, 1, 2 }, // GammaSiteRateModel
+			{ 0, 1, 2 }, // GammaSiteRateModelParser
 	};
 
 	public double[] siteRateModelParameterValues = new double[] { 4.0, // GammaCategories
@@ -1075,7 +1075,7 @@ public class PartitionData implements Serializable {
 
 			siteModel = new GammaSiteRateModel(name);
 
-		} else if (this.siteRateModelIndex == 1) { // GammaSiteRateModel
+		} else if (this.siteRateModelIndex == 1) { // GammaSiteRateModelParser
 
 			siteModel = new GammaSiteRateModel(name,
 					siteRateModelParameterValues[1],

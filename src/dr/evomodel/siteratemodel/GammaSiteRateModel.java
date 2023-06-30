@@ -1,5 +1,5 @@
 /*
- * GammaSiteRateModel.java
+ * GammaSiteRateModelParser.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -289,7 +289,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
         } else if (variable == nuParameter) {
             ratesKnown = false; // MAS: I changed this because the rate parameter can affect the categories if the parameter is in siteModel and not clockModel
         } else {
-            throw new RuntimeException("Unknown variable in GammaSiteRateModel.handleVariableChangedEvent");
+            throw new RuntimeException("Unknown variable in GammaSiteRateModelParser.handleVariableChangedEvent");
         }
         listenerHelper.fireModelChanged(this, variable, index);
     }

@@ -31,6 +31,7 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.siteratemodel.DiscretizedSiteRateModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
@@ -246,7 +247,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             if (branchModel == null) {
                 SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
                 if (substitutionModel == null && siteRateModel instanceof GammaSiteRateModel) {
-                    // for backwards compatibility the old GammaSiteRateModel can provide the substitution model...
+                    // for backwards compatibility the old GammaSiteRateModelParser can provide the substitution model...
                     substitutionModel = ((GammaSiteRateModel)siteRateModel).getSubstitutionModel();
                 }
                 if (substitutionModel == null) {
@@ -278,7 +279,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 if (branchModel == null) {
                     SubstitutionModel substitutionModel = (SubstitutionModel) cxo.getChild(SubstitutionModel.class);
                     if (substitutionModel == null && siteRateModel instanceof GammaSiteRateModel) {
-                        // for backwards compatibility the old GammaSiteRateModel can provide the substitution model...
+                        // for backwards compatibility the old GammaSiteRateModelParser can provide the substitution model...
                         substitutionModel = ((GammaSiteRateModel)siteRateModel).getSubstitutionModel();
                     }
                     if (substitutionModel == null) {

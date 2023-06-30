@@ -37,7 +37,7 @@ import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.BufferIndexHelper;
 import dr.evomodelxml.treelikelihood.BeagleTreeLikelihoodParser;
-//import dr.evomodel.siteratemodel.GammaSiteRateModel;
+//import dr.evomodel.siteratemodel.GammaSiteRateModelParser;
 import dr.evomodel.siteratemodel.SiteRateModel;
 //import dr.evomodel.substmodel.FrequencyModel;
 //import dr.evomodel.substmodel.nucleotide.HKY;
@@ -1464,7 +1464,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 //            BranchRateModel branchRateModel = new StrictClockBranchRates(rate);
 //
 //            // create site model
-//            GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
+//            GammaSiteRateModelParser siteRateModel = new GammaSiteRateModelParser(
 //                    "siteModel");
 //
 //            BranchModel homogeneousBranchModel = new HomogeneousBranchModel(hky1);

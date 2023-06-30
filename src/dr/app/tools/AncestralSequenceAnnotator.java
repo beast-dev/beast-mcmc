@@ -807,7 +807,7 @@ public class AncestralSequenceAnnotator {
             }
 
             //System.out.println("alpha and pinv parameters: " + alphaParameter.getParameterValue(0) + "\t" + pInvParameter.getParameterValue(0));
-            //GammaSiteRateModel siteModel = new GammaSiteRateModel(sml.getSubstitutionModel(), new Parameter.Default(1.0), alphaParameter, categories, pInvParameter);
+            //GammaSiteRateModelParser siteModel = new GammaSiteRateModelParser(sml.getSubstitutionModel(), new Parameter.Default(1.0), alphaParameter, categories, pInvParameter);
             GammaSiteRateModel siteModel = new GammaSiteRateModel(SiteModelParser.SITE_MODEL, new Parameter.Default(1.0), 1.0, alphaParameter, categories, GammaSiteRateModel.DiscretizationType.EQUAL, pInvParameter);
             siteModel.setSubstitutionModel(sml.getSubstitutionModel());
             //SiteModel siteModel = new GammaSiteModel(sml.getSubstitutionModel(), new Parameter.Default(1.0), new Parameter.Default(1.0), 1, new Parameter.Default(0.5));
@@ -816,7 +816,7 @@ public class AncestralSequenceAnnotator {
         }
 
         /* Default with no gamma or pinv */
-        //SiteRateModel siteModel = new GammaSiteRateModel(sml.getSubstitutionModel());
+        //SiteRateModel siteModel = new GammaSiteRateModelParser(sml.getSubstitutionModel());
         GammaSiteRateModel siteModel = new GammaSiteRateModel(SiteModelParser.SITE_MODEL);
         siteModel.setSubstitutionModel(sml.getSubstitutionModel());
         return siteModel;

@@ -26,7 +26,6 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.options.*;
-import dr.evomodel.substmodel.nucleotide.GTR;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.types.FrequencyPolicyType;
@@ -34,6 +33,7 @@ import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
+import dr.evomodelxml.siteratemodel.SiteModelParser;
 import dr.evomodelxml.substmodel.BinaryCovarionModelParser;
 import dr.evomodelxml.substmodel.BinarySubstitutionModelParser;
 import dr.evomodelxml.substmodel.EmpiricalAminoAcidModelParser;
@@ -42,7 +42,6 @@ import dr.evomodelxml.substmodel.GTRParser;
 import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.evomodelxml.substmodel.TN93Parser;
-import dr.evomodelxml.siteratemodel.GammaSiteModelParser;
 import dr.inference.model.StatisticParser;
 import dr.oldevomodel.substmodel.AsymmetricQuadraticModel;
 import dr.oldevomodel.substmodel.LinearBiasModel;
@@ -628,11 +627,11 @@ public class SubstitutionModelGenerator extends Generator {
         String prefix2 = model.getPrefix();
 
         writer.writeComment("site model");
-        writer.writeOpenTag(GammaSiteModelParser.SITE_MODEL,
-                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + GammaSiteModelParser.SITE_MODEL)});
+        writer.writeOpenTag(SiteModelParser.SITE_MODEL,
+                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + SiteModelParser.SITE_MODEL)});
 
 
-        writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
+        writer.writeOpenTag(SiteModelParser.SUBSTITUTION_MODEL);
 
         if (model.isUnlinkedSubstitutionModel()) {
             switch (model.getNucSubstitutionModel()) {
@@ -674,7 +673,7 @@ public class SubstitutionModelGenerator extends Generator {
             }
         }
 
-        writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
+        writer.writeCloseTag(SiteModelParser.SUBSTITUTION_MODEL);
 
         if (options.useNuRelativeRates()) {
             Parameter parameter;
@@ -696,10 +695,10 @@ public class SubstitutionModelGenerator extends Generator {
 
 
         if (model.isGammaHetero()) {
-            writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE,
+            writer.writeOpenTag(SiteModelParser.GAMMA_SHAPE,
                     new Attribute[] {
-                            new Attribute.Default<>(GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()),
-                            new Attribute.Default<>(GammaSiteModelParser.DISCRETIZATION,
+                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()),
+                            new Attribute.Default<>(SiteModelParser.DISCRETIZATION,
                                     (model.isGammaHeteroEqualWeights() ? "equal" : "quadrature")),
                     });
 
@@ -715,11 +714,11 @@ public class SubstitutionModelGenerator extends Generator {
                     writer.writeIDref(ParameterParser.PARAMETER, prefix2 + "alpha");
                 }
             }
-            writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
+            writer.writeCloseTag(SiteModelParser.GAMMA_SHAPE);
         }
 
         if (model.isInvarHetero()) {
-            writer.writeOpenTag(GammaSiteModelParser.PROPORTION_INVARIANT);
+            writer.writeOpenTag(SiteModelParser.PROPORTION_INVARIANT);
             if (num == -1 || model.isUnlinkedHeterogeneityModel()) {
 //                writeParameter(prefix + "pInv", model, writer);
                 writeParameter(num, "pInv", model, writer);
@@ -732,13 +731,13 @@ public class SubstitutionModelGenerator extends Generator {
                     writer.writeIDref(ParameterParser.PARAMETER, prefix2 + "pInv");
                 }
             }
-            writer.writeCloseTag(GammaSiteModelParser.PROPORTION_INVARIANT);
+            writer.writeCloseTag(SiteModelParser.PROPORTION_INVARIANT);
         }
 
-        writer.writeCloseTag(GammaSiteModelParser.SITE_MODEL);
+        writer.writeCloseTag(SiteModelParser.SITE_MODEL);
 
         if (options.useNuRelativeRates()) {
-            writeMuStatistic(writer, prefix, GammaSiteModelParser.SITE_MODEL);
+            writeMuStatistic(writer, prefix, SiteModelParser.SITE_MODEL);
         }
 
     }
@@ -754,11 +753,11 @@ public class SubstitutionModelGenerator extends Generator {
         String prefix = model.getPrefix();
 
         writer.writeComment("site model");
-        writer.writeOpenTag(GammaSiteModelParser.SITE_MODEL,
-                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + GammaSiteModelParser.SITE_MODEL)});
+        writer.writeOpenTag(SiteModelParser.SITE_MODEL,
+                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + SiteModelParser.SITE_MODEL)});
 
 
-        writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
+        writer.writeOpenTag(SiteModelParser.SUBSTITUTION_MODEL);
 
         switch (model.getBinarySubstitutionModel()) {
             case BIN_SIMPLE:
@@ -774,7 +773,7 @@ public class SubstitutionModelGenerator extends Generator {
                 throw new IllegalArgumentException("Unknown substitution model.");
         }
 
-        writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
+        writer.writeCloseTag(SiteModelParser.SUBSTITUTION_MODEL);
 
         if (options.useNuRelativeRates()) {
             Parameter parameter = model.getParameter("nu");
@@ -783,28 +782,28 @@ public class SubstitutionModelGenerator extends Generator {
                 writeNuRelativeRateBlock(writer, prefix1, parameter);
             }
         } else {
-            writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
+            writeParameter(SiteModelParser.RELATIVE_RATE, "mu", model, writer);
         }
 
         if (model.isGammaHetero()) {
-            writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE,
+            writer.writeOpenTag(SiteModelParser.GAMMA_SHAPE,
                     new Attribute[] {
-                            new Attribute.Default<>(GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()),
-                            new Attribute.Default<>(GammaSiteModelParser.DISCRETIZATION,
+                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()),
+                            new Attribute.Default<>(SiteModelParser.DISCRETIZATION,
                                     (model.isGammaHeteroEqualWeights() ? "equal" : "quadrature")),
                     });
             writeParameter(prefix + "alpha", model, writer);
-            writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
+            writer.writeCloseTag(SiteModelParser.GAMMA_SHAPE);
         }
 
         if (model.isInvarHetero()) {
-            writeParameter(GammaSiteModelParser.PROPORTION_INVARIANT, "pInv", model, writer);
+            writeParameter(SiteModelParser.PROPORTION_INVARIANT, "pInv", model, writer);
         }
 
-        writer.writeCloseTag(GammaSiteModelParser.SITE_MODEL);
+        writer.writeCloseTag(SiteModelParser.SITE_MODEL);
 
         if (options.useNuRelativeRates()) {
-            writeMuStatistic(writer, prefix, GammaSiteModelParser.SITE_MODEL);
+            writeMuStatistic(writer, prefix, SiteModelParser.SITE_MODEL);
         }
 
     }
@@ -820,13 +819,13 @@ public class SubstitutionModelGenerator extends Generator {
         String prefix = model.getPrefix();
 
         writer.writeComment("site model");
-        writer.writeOpenTag(GammaSiteModelParser.SITE_MODEL, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, prefix + GammaSiteModelParser.SITE_MODEL)});
+        writer.writeOpenTag(SiteModelParser.SITE_MODEL, new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, prefix + SiteModelParser.SITE_MODEL)});
 
 
-        writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
+        writer.writeOpenTag(SiteModelParser.SUBSTITUTION_MODEL);
         writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL, prefix + "aa");
-        writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
+        writer.writeCloseTag(SiteModelParser.SUBSTITUTION_MODEL);
 
         if (options.useNuRelativeRates()) {
             Parameter parameter = model.getParameter("nu");
@@ -836,28 +835,28 @@ public class SubstitutionModelGenerator extends Generator {
             }
 
         } else {
-            writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
+            writeParameter(SiteModelParser.RELATIVE_RATE, "mu", model, writer);
         }
 
         if (model.isGammaHetero()) {
-            writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE,
+            writer.writeOpenTag(SiteModelParser.GAMMA_SHAPE,
                     new Attribute[] {
-                            new Attribute.Default<>(GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()),
-                            new Attribute.Default<>(GammaSiteModelParser.DISCRETIZATION,
+                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()),
+                            new Attribute.Default<>(SiteModelParser.DISCRETIZATION,
                                     (model.isGammaHeteroEqualWeights() ? "equal" : "quadrature")),
                     });
             writeParameter("alpha", model, writer);
-            writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
+            writer.writeCloseTag(SiteModelParser.GAMMA_SHAPE);
         }
 
         if (model.isInvarHetero()) {
-            writeParameter(GammaSiteModelParser.PROPORTION_INVARIANT, "pInv", model, writer);
+            writeParameter(SiteModelParser.PROPORTION_INVARIANT, "pInv", model, writer);
         }
 
-        writer.writeCloseTag(GammaSiteModelParser.SITE_MODEL);
+        writer.writeCloseTag(SiteModelParser.SITE_MODEL);
 
         if (options.useNuRelativeRates()) {
-            writeMuStatistic(writer, prefix, GammaSiteModelParser.SITE_MODEL);
+            writeMuStatistic(writer, prefix, SiteModelParser.SITE_MODEL);
         }
 
 
@@ -870,12 +869,12 @@ public class SubstitutionModelGenerator extends Generator {
      */
     private void writeNuRelativeRateBlock(XMLWriter writer, String prefix, Parameter parameter) {
         double weight = ((double) parameter.getParent().getDimensionWeight()) / parameter.getDimensionWeight();
-        writer.writeOpenTag(GammaSiteModelParser.RELATIVE_RATE,
-                new Attribute.Default<String>(GammaSiteModelParser.WEIGHT, "" + weight));
+        writer.writeOpenTag(SiteModelParser.RELATIVE_RATE,
+                new Attribute.Default<String>(SiteModelParser.WEIGHT, "" + weight));
         // Initial values must sum to 1.0
         double initial = 1.0 / parameter.getParent().getSubParameters().size();
         writeParameter(prefix + "nu", 1, initial, 0.0, 1.0, writer);
-        writer.writeCloseTag(GammaSiteModelParser.RELATIVE_RATE);
+        writer.writeCloseTag(SiteModelParser.RELATIVE_RATE);
     }
 
     /**

@@ -37,6 +37,7 @@ import dr.evomodel.substmodel.SubstitutionModel;
 
 public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateModel {
 
+
     /**
      * Constructor for gamma+invar distributed sites. Either shapeParameter or
      * invarParameter (or both) can be null to turn off that feature.
@@ -44,6 +45,7 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
     public DiscretizedSiteRateModel(
             String name,
             Parameter nuParameter,
+            double muWeight,
             SiteRateDelegate delegate) {
 
         super(name);

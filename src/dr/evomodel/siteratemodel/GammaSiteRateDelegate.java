@@ -46,7 +46,7 @@ import java.util.List;
 
 public class GammaSiteRateDelegate extends AbstractModel implements SiteRateDelegate, Citable {
 
-    public static final DiscretizationType DEFAULT_DISCRETIZATION = DiscretizationType.EQUAL;
+    public static final DiscretizationType DEFAULT_DISCRETIZATION = DiscretizationType.QUADRATURE;
 
     public enum DiscretizationType {
         EQUAL,

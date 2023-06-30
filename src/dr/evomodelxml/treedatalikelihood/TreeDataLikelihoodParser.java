@@ -43,6 +43,7 @@ import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodelxml.siteratemodel.OldGammaSiteModelParser;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.xml.*;
@@ -110,7 +111,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         if (patternLists.size() > 1) {
             // will currently recommend true if using GPU, CUDA or OpenCL.
             useBeagle3MultiPartition = MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_RECOMMENDED();
-    
+
             if (System.getProperty("USE_BEAGLE3_EXTENSIONS") != null) {
                 useBeagle3MultiPartition = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3_EXTENSIONS"));
             }
@@ -154,7 +155,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                         useAmbiguities,
                         scalingScheme,
                         delayRescalingUntilUnderflow
-                        );
+                );
 
                 return new TreeDataLikelihood(
                         dataLikelihoodDelegate,
@@ -164,7 +165,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 useBeagle3MultiPartition = false;
             }
 
-        } 
+        }
 
         // The multipartition data likelihood isn't available so make a set of single partition data likelihoods
         List<Likelihood> treeDataLikelihoods = new ArrayList<Likelihood>();
@@ -200,7 +201,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         return new CompoundLikelihood(treeDataLikelihoods);
-    
+
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -236,7 +237,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             hasSinglePartition = true;
             patternLists.add(patternList);
 
-            GammaSiteRateModel siteRateModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
+            SiteRateModel siteRateModel = (SiteRateModel) xo.getChild(SiteRateModel.class);
             siteRateModels.add(siteRateModel);
 
             FrequencyModel rootFreqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
@@ -244,8 +245,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             BranchModel branchModel = (BranchModel) xo.getChild(BranchModel.class);
             if (branchModel == null) {
                 SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
-                if (substitutionModel == null) {
-                    substitutionModel = siteRateModel.getSubstitutionModel();
+                if (substitutionModel == null && siteRateModel instanceof GammaSiteRateModel) {
+                    // for backwards compatibility the old GammaSiteRateModel can provide the substitution model...
+                    substitutionModel = ((GammaSiteRateModel)siteRateModel).getSubstitutionModel();
                 }
                 if (substitutionModel == null) {
                     throw new XMLParseException("No substitution model available for partition in DataTreeLikelihood: "+xo.getId());
@@ -276,6 +278,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 if (branchModel == null) {
                     SubstitutionModel substitutionModel = (SubstitutionModel) cxo.getChild(SubstitutionModel.class);
                     if (substitutionModel == null && siteRateModel instanceof GammaSiteRateModel) {
+                        // for backwards compatibility the old GammaSiteRateModel can provide the substitution model...
                         substitutionModel = ((GammaSiteRateModel)siteRateModel).getSubstitutionModel();
                     }
                     if (substitutionModel == null) {
@@ -355,14 +358,17 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newStringRule(SCALING_SCHEME,true),
 
             // really it should be this set of elements or the PARTITION elements
-            new OrRule(new AndRule(new XMLSyntaxRule[]{
-                    new ElementRule(PatternList.class, true),
-                    new ElementRule(SiteRateModel.class, true),
-                    new ElementRule(FrequencyModel.class, true),
-                    new ElementRule(BranchModel.class, true)})
-                    ,
+            new OrRule(
+                    new AndRule(new XMLSyntaxRule[]{
+                            new ElementRule(PatternList.class, true),
+                            new ElementRule(SubstitutionModel.class, true),
+                            new ElementRule(SiteRateModel.class, true),
+                            new ElementRule(FrequencyModel.class, true),
+                            new ElementRule(BranchModel.class, true)}
+                    ),
                     new ElementRule(PARTITION, new XMLSyntaxRule[] {
                             new ElementRule(PatternList.class),
+                            new ElementRule(SubstitutionModel.class, true),
                             new ElementRule(SiteRateModel.class),
                             new ElementRule(FrequencyModel.class, true),
                             new ElementRule(BranchModel.class, true)

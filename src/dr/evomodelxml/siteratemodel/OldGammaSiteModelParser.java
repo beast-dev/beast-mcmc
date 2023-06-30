@@ -1,5 +1,5 @@
 /*
- * GammaSiteModelParser.java
+ * OldGammaSiteModelParser.java
  *
  * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -25,26 +25,20 @@
 
 package dr.evomodelxml.siteratemodel;
 
-import java.util.logging.Logger;
-
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.oldevomodel.sitemodel.SiteModel;
 import dr.inference.model.Parameter;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
-import dr.xml.XORRule;
+import dr.oldevomodel.sitemodel.SiteModel;
+import dr.xml.*;
+
+import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @version $Id$
  */
-public class GammaSiteModelParser extends AbstractXMLObjectParser {
+public class OldGammaSiteModelParser extends AbstractXMLObjectParser {
 
     public static final String SITE_MODEL = SiteModel.SITE_MODEL;
     public static final String SUBSTITUTION_MODEL = "substitutionModel";

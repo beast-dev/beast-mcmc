@@ -141,14 +141,19 @@ public class MultiPartitionDataLikelihoodParser extends AbstractXMLObjectParser 
             if (DEBUG) {
                 System.out.println("branchModels == null");
             }
-            branchModels = new ArrayList<BranchModel>();
+            branchModels = new ArrayList<>();
             List<SubstitutionModel> substitutionModels = xo.getAllChildren(SubstitutionModel.class);
             if (substitutionModels.size() == 0) {
+                // no explicitly defined BranchModels so create one
                 if (DEBUG) {
                     System.out.println("substitutionModels == null");
                 }
                 for (SiteRateModel siteRateModel : siteRateModels) {
-                    SubstitutionModel substitutionModel = ((GammaSiteRateModel)siteRateModel).getSubstitutionModel();
+                    SubstitutionModel substitutionModel = null;
+                    if (substitutionModel == null && siteRateModel instanceof GammaSiteRateModel) {
+                        // for backwards compatibility the old GammaSiteRateModel can provide the substitution model...
+                        substitutionModel = ((GammaSiteRateModel)siteRateModel).getSubstitutionModel();
+                    }
                     if (substitutionModel == null) {
                         throw new XMLParseException("No substitution model available for TreeDataLikelihood: "+xo.getId());
                     }

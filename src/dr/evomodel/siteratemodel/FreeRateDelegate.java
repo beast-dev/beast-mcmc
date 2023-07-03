@@ -57,22 +57,32 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
      */
     public FreeRateDelegate(
             String name,
+            int categoryCount,
             Parameter rateParameter,
             Parameter weightParameter) {
 
         super(name);
-        
-        this.rateParameter = rateParameter;
-            this.categoryCount = rateParameter.getDimension() + 1;
-            addVariable(rateParameter);
 
-        rateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        this.categoryCount = categoryCount;
+
+        this.rateParameter = rateParameter;
+        if (this.rateParameter.getDimension() == 1) {
+            this.rateParameter.setDimension(categoryCount - 1);
+        } else if (this.rateParameter.getDimension() != categoryCount - 1) {
+            throw new IllegalArgumentException("Rate parameter should have have an initial dimension of one or category count - 1");
+        }
+        addVariable(this.rateParameter);
+        this.rateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.weightParameter = weightParameter;
-        assert categoryCount == weightParameter.getDimension() + 1;
+        if (this.weightParameter.getDimension() == 1) {
+            this.weightParameter.setDimension(categoryCount - 1);
+        } else if (this.weightParameter.getDimension() != categoryCount - 1) {
+            throw new IllegalArgumentException("Weight parameter should have have an initial dimension of one or category count - 1");
+        }
 
-        addVariable(weightParameter);
-        weightParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+        addVariable(this.weightParameter);
+        this.weightParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
     }
 
     // *****************************************************************
@@ -87,9 +97,23 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
         assert categoryRates != null && categoryRates.length == categoryCount;
         assert categoryProportions != null && categoryProportions.length == categoryCount;
 
-
         categoryRates[0] = 1.0;
-        categoryProportions[0] = 1.0;
+        double sumRate = 1.0;
+        double sumWeight = 0.0;
+        for (int i = 0; i < categoryCount - 1; i++) {
+            categoryRates[i + 1] = categoryRates[i] * rateParameter.getParameterValue(i);
+            sumRate += categoryRates[i + 1];
+
+            categoryProportions[i] = weightParameter.getParameterValue(i);
+            sumWeight += categoryProportions[i];
+        }
+        // calculate the last value
+        categoryProportions[categoryCount - 1] = 1.0 - sumWeight;
+
+        // scale so their mean is 1
+        for (int i = 0; i < categoryCount; i++) {
+            categoryRates[i] = categoryCount * categoryRates[i] / sumRate;
+        }
     }
 
     // *****************************************************************
@@ -126,7 +150,7 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
 
 
     private final int categoryCount;
-    
+
 
     @Override
     public Citation.Category getCategory() {

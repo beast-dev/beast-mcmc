@@ -435,7 +435,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
 
         for (int i = 0; i < catCount; i++) {
             categoryRates[i + offset] = abscissae[i] / (alpha + 1);
-            categoryProportions[i + offset] = coefficients[i]/GammaFunction.gamma(alpha + 1);
+            categoryProportions[i + offset] = coefficients[i] / GammaFunction.gamma(alpha + 1);
         }
     }
 

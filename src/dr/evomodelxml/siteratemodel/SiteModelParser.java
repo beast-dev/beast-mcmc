@@ -48,7 +48,7 @@ import dr.xml.XORRule;
  */
 public class SiteModelParser extends AbstractXMLObjectParser {
 
-    public static final String SITE_MODEL = "SiteModel";
+    public static final String SITE_MODEL = "siteModel";
     public static final String SUBSTITUTION_MODEL = "substitutionModel";
     public static final String MUTATION_RATE = "mutationRate";
     public static final String SUBSTITUTION_RATE = "substitutionRate";

@@ -47,8 +47,9 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
     public static final String SUBSTITUTION_RATE = "substitutionRate";
     public static final String RELATIVE_RATE = "relativeRate";
     public static final String WEIGHT = "weight";
-    public static final String RATES = "relativeRates";
+    public static final String RATES = "rates";
     public static final String CATEGORIES = "categories";
+    public static final String PARAMETERIZATION = "parameterization";
     public static final String WEIGHTS = "weights";
 
     public String getParserName() {
@@ -79,6 +80,12 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
 
         int catCount = 4;
         catCount = xo.getIntegerAttribute(CATEGORIES);
+
+        FreeRateDelegate.Parameterization parameterization = FreeRateDelegate.Parameterization.ABSOLUTE;
+        if (xo.hasAttribute(PARAMETERIZATION)) {
+            parameterization = FreeRateDelegate.Parameterization.valueOf(xo.getStringAttribute(PARAMETERIZATION));
+        }
+
         Parameter ratesParameter = (Parameter)xo.getElementFirstChild(RATES);
 
         Parameter weightsParameter = (Parameter)xo.getElementFirstChild(WEIGHTS);
@@ -90,7 +97,7 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
             Logger.getLogger("dr.evomodel").info("\nCreating free rate site rate model.");
         }
 
-        FreeRateDelegate delegate = new FreeRateDelegate("FreeRateDelegate", catCount, ratesParameter, weightsParameter);
+        FreeRateDelegate delegate = new FreeRateDelegate("FreeRateDelegate", catCount, parameterization, ratesParameter, weightsParameter);
 
         return new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
     }
@@ -118,6 +125,7 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(CATEGORIES, true),
+            AttributeRule.newStringRule(PARAMETERIZATION, true),
             new XORRule(
                     new ElementRule(SUBSTITUTION_RATE, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)

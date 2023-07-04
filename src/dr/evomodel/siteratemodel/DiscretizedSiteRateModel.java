@@ -166,6 +166,7 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         // delegate has changed so fire model changed event
+        ratesKnown = false;
         listenerHelper.fireModelChanged(this, object, index);
     }
 

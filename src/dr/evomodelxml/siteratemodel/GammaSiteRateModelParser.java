@@ -49,7 +49,7 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
     public static final String RELATIVE_RATE = "relativeRate";
     public static final String WEIGHT = "weight";
     public static final String GAMMA_SHAPE = "gammaShape";
-    public static final String GAMMA_CATEGORIES = "gammaCategories";
+    public static final String CATEGORIES = "categories";
     public static final String PROPORTION_INVARIANT = "proportionInvariant";
     public static final String DISCRETIZATION = "discretization";
 
@@ -83,29 +83,30 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
             }
         }
 
+        int catCount = 4;
+        catCount = xo.getIntegerAttribute(CATEGORIES);
+
         GammaSiteRateDelegate.DiscretizationType type = GammaSiteRateDelegate.DEFAULT_DISCRETIZATION;
+        if ( xo.hasAttribute(DISCRETIZATION)) {
+            try {
+                type = GammaSiteRateDelegate.DiscretizationType.valueOf(
+                        xo.getStringAttribute(DISCRETIZATION).toUpperCase());
+            } catch (IllegalArgumentException eae) {
+                throw new XMLParseException("Unknown category width type: " + xo.getStringAttribute(DISCRETIZATION));
+            }
+        }
 
         Parameter shapeParam = null;
-        int catCount = 4;
         if (xo.hasChildNamed(GAMMA_SHAPE)) {
             XMLObject cxo = xo.getChild(GAMMA_SHAPE);
-            catCount = cxo.getIntegerAttribute(GAMMA_CATEGORIES);
 
-            if ( cxo.hasAttribute(DISCRETIZATION)) {
-                try {
-                    type = GammaSiteRateDelegate.DiscretizationType.valueOf(
-                            cxo.getStringAttribute(DISCRETIZATION).toUpperCase());
-                } catch (IllegalArgumentException eae) {
-                    throw new XMLParseException("Unknown category width type: " + cxo.getStringAttribute(DISCRETIZATION));
-                }
-            }
             shapeParam = (Parameter) cxo.getChild(Parameter.class);
 
             msg += "\n  " + catCount + " category discrete gamma with initial shape = " + shapeParam.getParameterValue(0);
             if (type == GammaSiteRateDelegate.DiscretizationType.EQUAL) {
                 msg += "\n  using equal weight discretization of gamma distribution";
             } else {
-                msg += "\n  using Gauss-Laguerre quadrature discretization of gamma distribution (Felsenstein, 2012)";
+                msg += "\n  using Gauss-Laguerre quadrature discretization of gamma distribution (Felsenstein, 2001)";
             }
         }
 
@@ -149,6 +150,8 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
 
+            AttributeRule.newIntegerRule(CATEGORIES, false),
+            AttributeRule.newStringRule(DISCRETIZATION, true),
             new XORRule(
                     new XORRule(
                             new ElementRule(SUBSTITUTION_RATE, new XMLSyntaxRule[]{
@@ -165,8 +168,6 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
             ),
 
             new ElementRule(GAMMA_SHAPE, new XMLSyntaxRule[]{
-                    AttributeRule.newIntegerRule(GAMMA_CATEGORIES, true),
-                    AttributeRule.newStringRule(DISCRETIZATION, true),
                     new ElementRule(Parameter.class)
             }, true),
 

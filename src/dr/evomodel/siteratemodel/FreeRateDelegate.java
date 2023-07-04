@@ -72,17 +72,17 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
             throw new IllegalArgumentException("Rate parameter should have have an initial dimension of one or category count - 1");
         }
         addVariable(this.rateParameter);
-        this.rateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        this.rateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, categoryCount - 1));
 
         this.weightParameter = weightParameter;
         if (this.weightParameter.getDimension() == 1) {
-            this.weightParameter.setDimension(categoryCount - 1);
-        } else if (this.weightParameter.getDimension() != categoryCount - 1) {
-            throw new IllegalArgumentException("Weight parameter should have have an initial dimension of one or category count - 1");
+            this.weightParameter.setDimension(categoryCount);
+        } else if (this.weightParameter.getDimension() != categoryCount) {
+            throw new IllegalArgumentException("Weight parameter should have have an initial dimension of one or category count");
         }
 
         addVariable(this.weightParameter);
-        this.weightParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+        this.weightParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, categoryCount));
     }
 
     // *****************************************************************

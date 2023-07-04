@@ -48,7 +48,7 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
     public static final String RELATIVE_RATE = "relativeRate";
     public static final String WEIGHT = "weight";
     public static final String RATES = "relativeRates";
-    public static final String RATE_CATEGORIES = "rateCategories";
+    public static final String CATEGORIES = "categories";
     public static final String WEIGHTS = "weights";
 
     public String getParserName() {
@@ -78,9 +78,8 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
         }
 
         int catCount = 4;
-        XMLObject cxo = xo.getChild(RATES);
-        catCount = cxo.getIntegerAttribute(RATE_CATEGORIES);
-        Parameter ratesParameter = (Parameter)xo.getChild(Parameter.class);
+        catCount = xo.getIntegerAttribute(CATEGORIES);
+        Parameter ratesParameter = (Parameter)xo.getElementFirstChild(RATES);
 
         Parameter weightsParameter = (Parameter)xo.getElementFirstChild(WEIGHTS);
 
@@ -118,7 +117,7 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newIntegerRule(RATE_CATEGORIES, true),
+            AttributeRule.newIntegerRule(CATEGORIES, true),
             new XORRule(
                     new ElementRule(SUBSTITUTION_RATE, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)
@@ -130,7 +129,6 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
             ),
 
             new ElementRule(RATES, new XMLSyntaxRule[]{
-                    AttributeRule.newIntegerRule(RATE_CATEGORIES, false),
                     new ElementRule(Parameter.class)
             }, false),
 

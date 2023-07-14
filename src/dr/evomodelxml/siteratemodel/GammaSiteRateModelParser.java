@@ -60,7 +60,7 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         String msg = "";
-        SubstitutionModel substitutionModel;
+        SubstitutionModel substitutionModel = null;
 
         double muWeight = 1.0;
 
@@ -81,6 +81,10 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
                 muWeight = cxo.getDoubleAttribute(WEIGHT);
                 msg += " with weight: " + muWeight;
             }
+        }
+        
+        if(xo.hasChildNamed(SUBSTITUTION_MODEL)){
+            substitutionModel = (SubstitutionModel)xo.getElementFirstChild(SUBSTITUTION_MODEL);
         }
 
         int catCount = 4;
@@ -124,7 +128,11 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
 
         GammaSiteRateDelegate delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParam, catCount, type, invarParam);
 
-        return new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
+        DiscretizedSiteRateModel siteRateModel = new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
+        
+        siteRateModel.setSubstitutionModel(substitutionModel);
+        
+        return siteRateModel;
     }
 
     //************************************************************************

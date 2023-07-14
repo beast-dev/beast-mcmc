@@ -278,9 +278,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 BranchModel branchModel = (BranchModel) cxo.getChild(BranchModel.class);
                 if (branchModel == null) {
                     SubstitutionModel substitutionModel = (SubstitutionModel) cxo.getChild(SubstitutionModel.class);
-                    if (substitutionModel == null && siteRateModel instanceof GammaSiteRateModel) {
+                    if (substitutionModel == null && siteRateModel instanceof DiscretizedSiteRateModel) {
                         // for backwards compatibility the old GammaSiteRateModelParser can provide the substitution model...
-                        substitutionModel = ((GammaSiteRateModel)siteRateModel).getSubstitutionModel();
+                        substitutionModel = ((DiscretizedSiteRateModel)siteRateModel).getSubstitutionModel();
                     }
                     if (substitutionModel == null) {
                         throw new XMLParseException("No substitution model available for partition " + k + " in DataTreeLikelihood: "+xo.getId());

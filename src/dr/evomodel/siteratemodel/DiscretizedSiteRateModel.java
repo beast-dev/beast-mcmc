@@ -28,6 +28,9 @@ package dr.evomodel.siteratemodel;
 import dr.inference.model.*;
 import dr.evomodel.substmodel.SubstitutionModel;
 
+import java.util.Arrays;
+import java.util.Comparator;
+
 /**
  * DiscretizedSiteRateModel - A SiteModel that has a discrete categories of rates across sites.
  *
@@ -58,14 +61,18 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
         this.muWeight = muWeight;
 
         addStatistic(muStatistic);
+        addStatistic(ratesStatistic);
+        addStatistic(weightsStatistic);
 
         this.delegate = delegate;
         addModel(delegate);
 
         categoryRates = new double[delegate.getCategoryCount()];
         categoryProportions = new double[delegate.getCategoryCount()];
+        orderedCategories = new double[delegate.getCategoryCount()][2]; // for storing ordered rate/weight pairs
 
         ratesKnown = false;
+        orderedRatesKnown = false;
     }
 
     /**
@@ -141,14 +148,25 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
         }
 
         ratesKnown = true;
+
+        orderedRatesKnown = false;
     }
 
+    private void calculateOrderedCategories() {
+        for (int i = 0; i < categoryRates.length; i++) {
+            orderedCategories[i][0] = categoryRates[i];
+            orderedCategories[i][1] = categoryProportions[i];
+        }
+        Arrays.sort(orderedCategories, Comparator.comparingDouble(a -> a[1]));
+        orderedRatesKnown = true;
+    }
     // *****************************************************************
     // Interface ModelComponent
     // *****************************************************************
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         // delegate has changed so fire model changed event
+        ratesKnown = false;
         listenerHelper.fireModelChanged(this, object, index);
     }
 
@@ -172,7 +190,7 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
     } // no additional state needs accepting
 
 
-    private Statistic muStatistic = new Statistic.Abstract() {
+    private final Statistic muStatistic = new Statistic.Abstract() {
 
         public String getStatisticName() {
             return "mu";
@@ -192,6 +210,42 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
 
     };
 
+    private final Statistic ratesStatistic = new Statistic.Abstract() {
+
+        public String getStatisticName() {
+            return "rates";
+        }
+
+        public int getDimension() {
+            return getCategoryCount();
+        }
+
+        public double getStatisticValue(int dim) {
+            if (!orderedRatesKnown) {
+                calculateOrderedCategories();
+            }
+            return orderedCategories[dim][0];
+        }
+    };
+
+    private final Statistic weightsStatistic = new Statistic.Abstract() {
+
+        public String getStatisticName() {
+            return "weights";
+        }
+
+        public int getDimension() {
+            return getCategoryCount();
+        }
+
+        public double getStatisticValue(int dim) {
+            if (!orderedRatesKnown) {
+                calculateOrderedCategories();
+            }
+            return orderedCategories[dim][1];
+        }
+
+    };
 
     /**
      * mutation rate parameter
@@ -200,9 +254,10 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
 
     private final double muWeight;
 
-    private boolean ratesKnown;
+    private boolean ratesKnown, orderedRatesKnown;
 
     private final double[] categoryRates;
+    private final double[][] orderedCategories;
 
     private final double[] categoryProportions;
 

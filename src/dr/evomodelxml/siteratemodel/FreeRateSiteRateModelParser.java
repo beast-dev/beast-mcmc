@@ -1,7 +1,7 @@
 /*
- * SiteModelParser.java
+ * FreeRateSiteRateModelParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2023 BEAST Development Team
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,7 +26,7 @@
 package dr.evomodelxml.siteratemodel;
 
 import dr.evomodel.siteratemodel.DiscretizedSiteRateModel;
-import dr.evomodel.siteratemodel.GammaSiteRateDelegate;
+import dr.evomodel.siteratemodel.FreeRateDelegate;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.Parameter;
 import dr.oldevomodel.sitemodel.SiteModel;
@@ -35,26 +35,25 @@ import dr.xml.*;
 import java.util.logging.Logger;
 
 /**
- * This is a replacement to GammaSiteModelParser that uses the modular
- * DiscretizedSiteRateModel with a Gamma delegate.
+ * This is a FreeRateSiteRateModelParser that uses the modular
+ * DiscretizedSiteRateModel with a FreeRates delegate.
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
+public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
 
-    public static final String GAMMA_SITE_RATE_MODEL = "gammaSiteRateModel";
-    public static final String SUBSTITUTION_MODEL = "substitutionModel";
+    public static final String FREE_RATE_SITE_RATE_MODEL = "freeRateSiteRateModel";
     public static final String MUTATION_RATE = "mutationRate";
     public static final String SUBSTITUTION_RATE = "substitutionRate";
     public static final String RELATIVE_RATE = "relativeRate";
     public static final String WEIGHT = "weight";
-    public static final String GAMMA_SHAPE = "gammaShape";
+    public static final String RATES = "rates";
     public static final String CATEGORIES = "categories";
-    public static final String PROPORTION_INVARIANT = "proportionInvariant";
-    public static final String DISCRETIZATION = "discretization";
+    public static final String PARAMETERIZATION = "parameterization";
+    public static final String WEIGHTS = "weights";
 
     public String getParserName() {
-        return GAMMA_SITE_RATE_MODEL;
+        return FREE_RATE_SITE_RATE_MODEL;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -67,10 +66,6 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
         Parameter muParam = null;
         if (xo.hasChildNamed(SUBSTITUTION_RATE)) {
             muParam = (Parameter) xo.getElementFirstChild(SUBSTITUTION_RATE);
-
-            msg += "\n  with initial substitution rate = " + muParam.getParameterValue(0);
-        } else  if (xo.hasChildNamed(MUTATION_RATE)) {
-            muParam = (Parameter) xo.getElementFirstChild(MUTATION_RATE);
 
             msg += "\n  with initial substitution rate = " + muParam.getParameterValue(0);
         } else if (xo.hasChildNamed(RELATIVE_RATE)) {
@@ -86,43 +81,23 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
         int catCount = 4;
         catCount = xo.getIntegerAttribute(CATEGORIES);
 
-        GammaSiteRateDelegate.DiscretizationType type = GammaSiteRateDelegate.DEFAULT_DISCRETIZATION;
-        if ( xo.hasAttribute(DISCRETIZATION)) {
-            try {
-                type = GammaSiteRateDelegate.DiscretizationType.valueOf(
-                        xo.getStringAttribute(DISCRETIZATION).toUpperCase());
-            } catch (IllegalArgumentException eae) {
-                throw new XMLParseException("Unknown category width type: " + xo.getStringAttribute(DISCRETIZATION));
-            }
+        FreeRateDelegate.Parameterization parameterization = FreeRateDelegate.Parameterization.ABSOLUTE;
+        if (xo.hasAttribute(PARAMETERIZATION)) {
+            parameterization = FreeRateDelegate.Parameterization.valueOf(xo.getStringAttribute(PARAMETERIZATION));
         }
 
-        Parameter shapeParam = null;
-        if (xo.hasChildNamed(GAMMA_SHAPE)) {
-            XMLObject cxo = xo.getChild(GAMMA_SHAPE);
+        Parameter ratesParameter = (Parameter)xo.getElementFirstChild(RATES);
 
-            shapeParam = (Parameter) cxo.getChild(Parameter.class);
+        Parameter weightsParameter = (Parameter)xo.getElementFirstChild(WEIGHTS);
 
-            msg += "\n  " + catCount + " category discrete gamma with initial shape = " + shapeParam.getParameterValue(0);
-            if (type == GammaSiteRateDelegate.DiscretizationType.EQUAL) {
-                msg += "\n  using equal weight discretization of gamma distribution";
-            } else {
-                msg += "\n  using Gauss-Laguerre quadrature discretization of gamma distribution (Felsenstein, 2001)";
-            }
-        }
-
-        Parameter invarParam = null;
-        if (xo.hasChildNamed(PROPORTION_INVARIANT)) {
-            invarParam = (Parameter) xo.getElementFirstChild(PROPORTION_INVARIANT);
-            msg += "\n  initial proportion of invariant sites = " + invarParam.getParameterValue(0);
-        }
-
+        msg += "\n  " + catCount + " category discrete free rate site rate heterogeneity model)";
         if (msg.length() > 0) {
-            Logger.getLogger("dr.evomodel").info("\nCreating site rate model: " + msg);
+            Logger.getLogger("dr.evomodel").info("\nCreating free rate site rate model: " + msg);
         } else {
-            Logger.getLogger("dr.evomodel").info("\nCreating site rate model.");
+            Logger.getLogger("dr.evomodel").info("\nCreating free rate site rate model.");
         }
 
-        GammaSiteRateDelegate delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParam, catCount, type, invarParam);
+        FreeRateDelegate delegate = new FreeRateDelegate("FreeRateDelegate", catCount, parameterization, ratesParameter, weightsParameter);
 
         return new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
     }
@@ -132,7 +107,7 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
     //************************************************************************
 
     public String getParserDescription() {
-        return "A DiscretizedSiteRateModel that has a gamma distributed rates across sites";
+        return "A DiscretizedSiteRateModel that has freely distributed rates across sites";
     }
 
     @Override
@@ -149,31 +124,25 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-
-            AttributeRule.newIntegerRule(CATEGORIES, false),
-            AttributeRule.newStringRule(DISCRETIZATION, true),
+            AttributeRule.newIntegerRule(CATEGORIES, true),
+            AttributeRule.newStringRule(PARAMETERIZATION, true),
             new XORRule(
-                    new XORRule(
-                            new ElementRule(SUBSTITUTION_RATE, new XMLSyntaxRule[]{
-                                    new ElementRule(Parameter.class)
-                            }),
-                            new ElementRule(MUTATION_RATE, new XMLSyntaxRule[]{
-                                    new ElementRule(Parameter.class)
-                            })
-                    ),
+                    new ElementRule(SUBSTITUTION_RATE, new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class)
+                    }),
                     new ElementRule(RELATIVE_RATE, new XMLSyntaxRule[]{
                             AttributeRule.newDoubleRule(WEIGHT, true),
                             new ElementRule(Parameter.class)
                     }), true
             ),
 
-            new ElementRule(GAMMA_SHAPE, new XMLSyntaxRule[]{
+            new ElementRule(RATES, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
-            }, true),
+            }, false),
 
-            new ElementRule(PROPORTION_INVARIANT, new XMLSyntaxRule[]{
+            new ElementRule(WEIGHTS, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
-            }, true)
+            }, false)
     };
 
 }//END: class

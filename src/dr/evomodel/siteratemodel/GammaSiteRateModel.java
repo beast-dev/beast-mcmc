@@ -250,7 +250,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
             final int gammaCatCount = categoryCount - offset;
 
             if (discretizationType == DiscretizationType.QUADRATURE) {
-                setQuatratureRates(categoryRates, categoryProportions, alpha, gammaCatCount, offset);
+                setQuadratureRates(categoryRates, categoryProportions, alpha, gammaCatCount, offset);
             } else {
                 setEqualRates(categoryRates, categoryProportions, alpha, gammaCatCount, offset);
             }
@@ -424,18 +424,18 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
      * @param catCount
      * @param offset
      */
-    public static void setQuatratureRates(double[] categoryRates, double[] categoryProportions, double alpha, int catCount, int offset) {
+    public static void setQuadratureRates(double[] categoryRates, double[] categoryProportions, double alpha, int catCount, int offset) {
         if (quadrature == null) {
             quadrature = new GeneralisedGaussLaguerreQuadrature(catCount);
         }
-        quadrature.setAlpha(alpha);
+        quadrature.setAlpha(alpha-1);
 
         double[] abscissae = quadrature.getAbscissae();
         double[] coefficients = quadrature.getCoefficients();
 
         for (int i = 0; i < catCount; i++) {
-            categoryRates[i + offset] = abscissae[i] / (alpha + 1);
-            categoryProportions[i + offset] = coefficients[i] / GammaFunction.gamma(alpha + 1);
+            categoryRates[i + offset] = abscissae[i] / alpha;
+            categoryProportions[i + offset] = coefficients[i]/GammaFunction.gamma(alpha);
         }
     }
 
@@ -490,7 +490,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
             System.out.println(i + "\t"+ categoryRates[i] +"\t" + categoryProportions[i]);
         }
 
-        setQuatratureRates(categoryRates, categoryProportions, 1.0, catCount, 0);
+        setQuadratureRates(categoryRates, categoryProportions, 1.0, catCount, 0);
         System.out.println();
         System.out.println("Quadrature, alpha = 1.0");
         System.out.println("cat\trate\tproportion");
@@ -527,7 +527,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
             System.out.println(i + "\t"+ categoryRates[i] +"\t" + categoryProportions[i]);
         }
 
-        setQuatratureRates(categoryRates, categoryProportions, 0.1, catCount, 0);
+        setQuadratureRates(categoryRates, categoryProportions, 0.1, catCount, 0);
         System.out.println();
         System.out.println("Quadrature, alpha = 0.1");
         System.out.println("cat\trate\tproportion");
@@ -543,7 +543,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
             System.out.println(i + "\t"+ categoryRates[i] +"\t" + categoryProportions[i]);
         }
 
-        setQuatratureRates(categoryRates, categoryProportions, 10.0, catCount, 0);
+        setQuadratureRates(categoryRates, categoryProportions, 10.0, catCount, 0);
         System.out.println();
         System.out.println("Quadrature, alpha = 10.0");
         System.out.println("cat\trate\tproportion");

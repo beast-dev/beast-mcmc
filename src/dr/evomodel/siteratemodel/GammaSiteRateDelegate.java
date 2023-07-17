@@ -236,8 +236,6 @@ public class GammaSiteRateDelegate extends AbstractModel implements SiteRateDele
             categoryProportions[i + offset] = coefficients[i]/GammaFunction.gamma(alpha);
         }
 
-        double nothing;
-
     }
 
     /**

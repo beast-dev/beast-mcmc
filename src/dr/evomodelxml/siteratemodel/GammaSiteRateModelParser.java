@@ -131,6 +131,7 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
         DiscretizedSiteRateModel siteRateModel = new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
         
         siteRateModel.setSubstitutionModel(substitutionModel);
+        siteRateModel.addModel(substitutionModel);
         
         return siteRateModel;
     }

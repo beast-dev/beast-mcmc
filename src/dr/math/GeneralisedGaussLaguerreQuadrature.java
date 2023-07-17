@@ -109,7 +109,7 @@ public class GeneralisedGaussLaguerreQuadrature implements Integral {
                 throw new RuntimeException("Too many iterations");
             }
             abscissae[i] = z;
-            coefficients[i] = -Math.exp(GammaFunction.lnGamma(alpha+noPoints) - GammaFunction.lnGamma((double)noPoints))/
+            coefficients[i] = -Math.exp(GammaFunction.lnGamma(alpha+noPoints) - GammaFunction.lnGamma(noPoints))/
                     (pp*noPoints*p2);
 
         }

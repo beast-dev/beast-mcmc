@@ -129,9 +129,11 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
         GammaSiteRateDelegate delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParam, catCount, type, invarParam);
 
         DiscretizedSiteRateModel siteRateModel = new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
-        
-        siteRateModel.setSubstitutionModel(substitutionModel);
-        siteRateModel.addModel(substitutionModel);
+
+        if (substitutionModel != null) {
+            siteRateModel.setSubstitutionModel(substitutionModel);
+            siteRateModel.addModel(substitutionModel);
+        }
         
         return siteRateModel;
     }

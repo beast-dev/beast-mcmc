@@ -27,6 +27,7 @@ package dr.inference.operators;
 
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
+import dr.inference.model.TransformedParameter;
 import dr.inferencexml.operators.RandomWalkOperatorParser;
 import dr.math.MathUtils;
 import dr.util.Transform;
@@ -108,7 +109,13 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
         // a random point around old value within windowSize * 2
         double draw = (2.0 * MathUtils.nextDouble() - 1.0) * windowSize;
 
-        double oldValue = parameter.getParameterValue(dim);
+        double oldValue;
+
+        if(parameter instanceof TransformedParameter) {
+            oldValue = parameter.getParameterUntransformedValue(dim);
+        } else{
+            oldValue = parameter.getParameterValue(dim);
+        }
 
         final Bounds<Double> bounds = parameter.getBounds();
         final double lower = bounds.getLowerLimit(dim);
@@ -121,7 +128,11 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
             double x2 = Transform.LOGIT.inverse(Transform.LOGIT.transform(x1) + draw);
 
             // parameter takes new value scaled back into interval [lower, upper]
-            parameter.setParameterValue(dim, (x2 * (upper - lower)) + lower);
+            if(parameter instanceof TransformedParameter) {
+                parameter.setParameterUntransformedValue(dim, (x2 * (upper - lower)) + lower);
+            } else {
+                parameter.setParameterValue(dim, (x2 * (upper - lower)) + lower);
+            }
             
             // HR is the ratio of Jacobians for the before and after values in interval [0,1]
             return Transform.LOGIT.getLogJacobian(x1) - Transform.LOGIT.getLogJacobian(x2);
@@ -133,7 +144,11 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
             double x2 = Transform.LOG.inverse(Transform.LOG.transform(x1) + draw);
 
             // parameter takes new value tranlated back into interval [lower, +Inf]
-            parameter.setParameterValue(dim, x2 + lower);
+            if(parameter instanceof TransformedParameter) {
+                parameter.setParameterUntransformedValue(dim, x2 + lower);
+            } else {
+                parameter.setParameterValue(dim, x2 + lower);
+            }
 
             // HR is the ratio of Jacobians for the before and after values
             return Transform.LOG.getLogJacobian(x1) - Transform.LOG.getLogJacobian(x2);
@@ -148,7 +163,11 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
                 return Double.NEGATIVE_INFINITY;
             }
 
-            parameter.setParameterValue(dim, newValue);
+            if(parameter instanceof TransformedParameter) {
+                parameter.setParameterUntransformedValue(dim, newValue);
+            } else {
+                parameter.setParameterValue(dim, newValue);
+            }
 
             if (parameter.check()) {
                 return 0.0;

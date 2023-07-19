@@ -24,10 +24,8 @@
  */
 
 package dr.evomodel.siteratemodel;
-
 import dr.inference.model.*;
 import dr.evomodel.substmodel.SubstitutionModel;
-
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -171,11 +169,11 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == nuParameter) {
+//        if (variable == nuParameter) {
             ratesKnown = false; // MAS: I changed this because the rate parameter can affect the categories if the parameter is in siteModel and not clockModel
-        } else {
-            throw new RuntimeException("Unknown variable in DiscretizedSiteRateModel.handleVariableChangedEvent");
-        }
+//        } else {
+//            throw new RuntimeException("Unknown variable in DiscretizedSiteRateModel.handleVariableChangedEvent");
+//        }
         listenerHelper.fireModelChanged(this, variable, index);
     }
 

@@ -29,6 +29,8 @@ import dr.evomodel.siteratemodel.DiscretizedSiteRateModel;
 import dr.evomodel.siteratemodel.FreeRateDelegate;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
+import dr.inference.model.VariableListener;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.xml.*;
 
@@ -43,13 +45,14 @@ import java.util.logging.Logger;
 public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
 
     public static final String FREE_RATE_SITE_RATE_MODEL = "freeRateSiteRateModel";
+    public static final String SUBSTITUTION_MODEL = "substitutionModel";
     public static final String MUTATION_RATE = "mutationRate";
     public static final String SUBSTITUTION_RATE = "substitutionRate";
     public static final String RELATIVE_RATE = "relativeRate";
     public static final String WEIGHT = "weight";
     public static final String RATES = "rates";
     public static final String CATEGORIES = "categories";
-    public static final String PARAMETERIZATION = "parameterization";
+//    public static final String PARAMETERIZATION = "parameterization";
     public static final String WEIGHTS = "weights";
 
     public String getParserName() {
@@ -59,7 +62,7 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         String msg = "";
-        SubstitutionModel substitutionModel;
+        SubstitutionModel substitutionModel = null;
 
         double muWeight = 1.0;
 
@@ -78,16 +81,19 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
             }
         }
 
+        if(xo.hasChildNamed(SUBSTITUTION_MODEL)){
+            substitutionModel = (SubstitutionModel)xo.getElementFirstChild(SUBSTITUTION_MODEL);
+        }
+
         int catCount = 4;
         catCount = xo.getIntegerAttribute(CATEGORIES);
 
-        FreeRateDelegate.Parameterization parameterization = FreeRateDelegate.Parameterization.ABSOLUTE;
-        if (xo.hasAttribute(PARAMETERIZATION)) {
-            parameterization = FreeRateDelegate.Parameterization.valueOf(xo.getStringAttribute(PARAMETERIZATION));
-        }
+//        FreeRateDelegate.Parameterization parameterization = FreeRateDelegate.Parameterization.ABSOLUTE;
+//        if (xo.hasAttribute(PARAMETERIZATION)) {
+//            parameterization = FreeRateDelegate.Parameterization.valueOf(xo.getStringAttribute(PARAMETERIZATION));
+//        }
 
         Parameter ratesParameter = (Parameter)xo.getElementFirstChild(RATES);
-
         Parameter weightsParameter = (Parameter)xo.getElementFirstChild(WEIGHTS);
 
         msg += "\n  " + catCount + " category discrete free rate site rate heterogeneity model)";
@@ -97,9 +103,16 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
             Logger.getLogger("dr.evomodel").info("\nCreating free rate site rate model.");
         }
 
-        FreeRateDelegate delegate = new FreeRateDelegate("FreeRateDelegate", catCount, parameterization, ratesParameter, weightsParameter);
+        FreeRateDelegate delegate = new FreeRateDelegate("FreeRateDelegate", catCount,
+//                parameterization,
+                ratesParameter, weightsParameter);
 
-        return new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
+        DiscretizedSiteRateModel siteRateModel =  new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
+
+        siteRateModel.setSubstitutionModel(substitutionModel);
+        siteRateModel.addModel(substitutionModel);
+
+        return siteRateModel;
     }
 
     //************************************************************************
@@ -125,7 +138,7 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(CATEGORIES, true),
-            AttributeRule.newStringRule(PARAMETERIZATION, true),
+//            AttributeRule.newStringRule(PARAMETERIZATION, true),
             new XORRule(
                     new ElementRule(SUBSTITUTION_RATE, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)

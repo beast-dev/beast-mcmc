@@ -171,6 +171,22 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
         return BranchModel.DEFAULT;
     }
 
+    public Map<NodeRef, Mapping> getExternalNodeMap() {
+        return externalNodeMap;
+    }
+
+    public boolean getUpdateNodeMaps() {
+        return updateNodeMaps;
+    }
+
+    public void setUpdateNodeMaps(boolean update) {
+        updateNodeMaps = update;
+    }
+
+    public TreeModel getTreeModel() {
+        return treeModel;
+    }
+
     @Override
     public List<SubstitutionModel> getSubstitutionModels() {
         return substitutionModels;
@@ -190,6 +206,10 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
         return requiresMatrixConvolution;
     }
 
+    public void setRequiresMatrixConvolution(boolean isRequired) {
+        requiresMatrixConvolution = isRequired;
+    }
+
     public void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == treeModel && clades.size() > 0) {
             updateNodeMaps = true;
@@ -197,7 +217,7 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
         fireModelChanged();
     }
 
-    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
     }
 
     protected void storeState() {
@@ -212,14 +232,18 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
     protected void acceptState() {
     }
 
-    private void setupNodeMaps() {
+    void clearNodeMaps() {
+        nodeMap.clear();
+    }
+
+    void setupNodeMaps() {
         if (clades.size() > 0) {
             setupNodeMaps(treeModel, treeModel.getRoot(), new BitSet());
         }
         updateNodeMaps = false;
     }
 
-    private void setupNodeMaps(Tree tree, NodeRef node, BitSet tips) {
+    void setupNodeMaps(Tree tree, NodeRef node, BitSet tips) {
         Clade clade;
 
         if (tree.isExternal(node)) {
@@ -263,33 +287,47 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
                     });
 
                 } else {
-
-                    final int ancestralIndex;
-                    Mapping ancestralMapping = nodeMap.get(node);
-
-                    if (ancestralMapping != null) {
-                        ancestralIndex = ancestralMapping.getOrder()[0];
-                    } else {
-                        ancestralIndex = 0;
-                    }
-
-                    nodeMap.put(node, new Mapping() {
-                        @Override
-                        public int[] getOrder() {
-                            return new int[]{index, ancestralIndex};
-                        }
-
-                        @Override
-                        public double[] getWeights() {
-                            return new double[]{weight, 1.0 - weight};
-                        }
-                    });
+                    processConvolvedBranch(node, index, weight);
+                    // This appears to have the mapping order and weights in the wrong order
+//                    final int ancestralIndex;
+//                    Mapping ancestralMapping = nodeMap.get(node);
+//
+//                    if (ancestralMapping != null) {
+//                        ancestralIndex = ancestralMapping.getOrder()[0];
+//                    } else {
+//                        ancestralIndex = 0;
+//                    }
+//
+//                    nodeMap.put(node, new Mapping() {
+//                        @Override
+//                        public int[] getOrder() {
+//                            return new int[]{index, ancestralIndex};
+//                        }
+//
+//                        @Override
+//                        public double[] getWeights() {
+//                            return new double[]{weight, 1.0 - weight};
+//                        }
+//                    });
                 }
             }
         }
     }
 
-    private void setNodeMap(Tree tree, NodeRef node, final Clade clade) {
+    void processConvolvedBranch(NodeRef node, int index, double weight) {
+        final int ancestralIndex;
+        Mapping ancestralMapping = nodeMap.get(node);
+
+        if (ancestralMapping != null) {
+            ancestralIndex = ancestralMapping.getOrder()[0];
+        } else {
+            ancestralIndex = 0;
+        }
+
+        setConvolvedNodeMap(node, index, ancestralIndex, weight);
+    }
+
+    void setNodeMap(Tree tree, NodeRef node, final Clade clade) {
 
         if (!tree.isExternal(node)) {
             for (int i = 0; i < tree.getChildCount(node); i++) {
@@ -311,7 +349,22 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
         });
     }
 
-    private class Clade {
+    void setConvolvedNodeMap(NodeRef node, int index, int ancestralIndex, double weight) {
+        // This appears to be the correct ordering
+        nodeMap.put(node, new Mapping() {
+            @Override
+            public int[] getOrder() {
+                return new int[]{ancestralIndex, index};
+            }
+
+            @Override
+            public double[] getWeights() {
+                return new double[]{1.0 - weight, weight};
+            }
+        });
+    }
+
+    class Clade {
 
         Clade(int index, BitSet tips, double stemWeight) {
             this.index = index;
@@ -331,9 +384,12 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
             return stemWeight;
         }
 
+        public void setStemWeight(double weight) {
+            stemWeight = weight;
+        }
         private final int index;
         private final BitSet tips;
-        private final double stemWeight;
+        private double stemWeight;
     }
 
 }

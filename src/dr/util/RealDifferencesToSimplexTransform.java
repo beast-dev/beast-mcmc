@@ -49,26 +49,34 @@ public class RealDifferencesToSimplexTransform extends Transform.MultivariateTra
 
         double denominator = 0;
 
-        for(int i=0; i<dim; i++){
+        for(int i=0; i<=dim; i++){
             double innerSum = 0;
-            for(int j=0; j<i; j++) {
-                innerSum += values[j];
+            for(int j=0; j<=i; j++) {
+                if(j<dim){
+                    innerSum += values[j];
+                } else {
+                    innerSum += 1;
 
+                }
             }
             denominator += innerSum*weights.getParameterValue(i);
         }
 
-        denominator += weights.getParameterValue(dim);
-
-        for(int i=0; i<dim+1; i++){
+        for(int i=0; i<dim; i++){
             if(i==0){
                 out[i] = values[i]/denominator;
             } else if(i<dim) {
-                out[i] = (out[i-1] + values[i])/denominator;
-            } else {
-                out[i] = 1/denominator;
+                out[i] = (out[i-1]*denominator + values[i])/denominator;
             }
         }
+
+        double subtotal = 0;
+
+        for(int i=0; i<dim; i++){
+            subtotal += out[i]*weights.getParameterValue(i);
+        }
+
+        out[dim] = (1-subtotal)/weights.getParameterValue(dim);
 
         return(out);
 
@@ -84,22 +92,28 @@ public class RealDifferencesToSimplexTransform extends Transform.MultivariateTra
         Matrix partialsMatrix = new Matrix(dim, dim);
 
         double sqrtDenominator = 0;
-        for (int i = 0; i < dim; i++) {
-            for (int j = 0; j < i; j++) {
-                sqrtDenominator += values[j] * weights.getParameterValue(i);
+        for(int i=0; i<=dim; i++){
+            double innerSum = 0;
+            for(int j=0; j<=i; j++) {
+                if(j<dim){
+                    innerSum += values[j];
+                } else {
+                    innerSum += 1;
+                }
             }
+            sqrtDenominator += innerSum*weights.getParameterValue(i);
         }
-        sqrtDenominator += weights.getParameterValue(dim);
+
         double denominator = sqrtDenominator * sqrtDenominator;
 
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j < dim; j++) {
                 double weightSum = 0;
-                for (int d = 0; d < dim - j; d++) {
+                for (int d = j; d <= dim; d++) {
                     weightSum += weights.getParameterValue(d);
                 }
                 double valueSum = 0;
-                for (int a = 0; a < i; a++) {
+                for (int a = 0; a < i + 1; a++) {
                     valueSum += values[a];
                 }
                 if (j <= i) {

@@ -237,9 +237,11 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
 
     public String getReport() {
         String message = super.getReport();
-        message += "\n";
-        // add likelihood calculation time
-        message += "Likelihood calculation time is " + likelihoodTime / likelihoodCounts + " nanoseconds.\n";
+        if (MEASURE_RUN_TIME) {
+            message += "\n";
+            // add likelihood calculation time
+            message += "Likelihood calculation time is " + likelihoodTime / likelihoodCounts + " nanoseconds.\n";
+        }
         return message;
     }
 }

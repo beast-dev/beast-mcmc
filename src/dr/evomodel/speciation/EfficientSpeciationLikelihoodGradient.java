@@ -35,6 +35,8 @@ import dr.inference.model.*;
 import dr.util.Timer;
 import dr.xml.Reportable;
 
+import static dr.evomodel.speciation.CachedGradientDelegate.MEASURE_RUN_TIME;
+
 /**
  * @author Andy Magee
  * @author Yucai Shao
@@ -136,7 +138,7 @@ public class EfficientSpeciationLikelihoodGradient extends AbstractModel
     @Override
     public String getReport() {
         String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, 1E-3);
-        if (gradientProvider instanceof CachedGradientDelegate) {
+        if (gradientProvider instanceof CachedGradientDelegate && MEASURE_RUN_TIME) {
             message += "\n";
             message += "Gradient calculation time is " + ((CachedGradientDelegate) gradientProvider).getGradientTime() + " nanoseconds.\n";
         }

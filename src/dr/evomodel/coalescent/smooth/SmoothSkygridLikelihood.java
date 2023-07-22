@@ -31,6 +31,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.util.Author;
 import dr.util.Citable;
@@ -76,6 +77,21 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         this.populationSizeInverse = new SmoothSkygridPopulationSizeInverse(logPopSizeParameter, gridPointParameter, smoothFunction, smoothRate);
         this.lineageCount = new OldSmoothLineageCount(trees.get(0), smoothFunction, smoothRate);
         intervalsList = new ArrayList<>();
+
+        this.tmpA = new double[trees.get(0).getNodeCount()];
+        this.tmpB = new double[trees.get(0).getNodeCount()];
+        this.tmpC = new double[trees.get(0).getNodeCount()];
+        this.tmpADerivOverS = new double[trees.get(0).getNodeCount()];
+        this.tmpBDerivOverS = new double[trees.get(0).getNodeCount()];
+        this.tmpCDerivOverS = new double[trees.get(0).getNodeCount()];
+        this.tmpD = new double[gridPointParameter.getDimension()];
+        this.tmpE = new double[gridPointParameter.getDimension()];
+        this.tmpF = new double[gridPointParameter.getDimension()];
+        this.tmpLineageEffect = new double[trees.get(0).getNodeCount()];
+        this.tmpTimes = new double[trees.get(0).getNodeCount()];
+        this.tmpCounts = new int[trees.get(0).getNodeCount()];
+        this.tmpSumsKnown = false;
+
         for (int i = 0; i < trees.size(); i++) {
             intervalsList.add(new BigFastTreeIntervals(trees.get(i)));
             addModel(intervalsList.get(i));
@@ -256,23 +272,27 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         }
     }
 
-    protected double calculateLogLikelihood() {
-        assert(trees.size() == 1);
-        if (!likelihoodKnown) {
+    private double[] tmpA;
+    private double[] tmpADerivOverS;
+    private double[] tmpB;
+    private double[] tmpBDerivOverS;
+    private double[] tmpC;
+    private double[] tmpCDerivOverS;
+    private double[] tmpD;
+    private double[] tmpE;
+    private double[] tmpF;
+    private double[] tmpLineageEffect;
+    private double[] tmpTimes;
+    private int[] tmpCounts;
+    private int uniqueTimes;
+    private boolean tmpSumsKnown;
+
+    private void calculateTmpSums() {
+        if (!tmpSumsKnown) {
             TreeModel tree = trees.get(0);
             final double startTime = 0;
             final double endTime = tree.getNodeHeight(tree.getRoot());
             final int maxGridIndex = getMaxGridIndex(gridPointParameter, endTime);
-
-            double[] tmpA = new double[tree.getNodeCount()];
-            double[] tmpB = new double[tree.getNodeCount()];
-            double[] tmpC = new double[tree.getNodeCount()];
-            double[] tmpD = new double[maxGridIndex];
-            double[] tmpE = new double[maxGridIndex];
-            double[] tmpF = new double[maxGridIndex];
-            double[] tmpLineageEffect = new double[tree.getNodeCount()];
-            double[] tmpTimes = new double[tree.getNodeCount()];
-            int[] tmpCounts = new int[tree.getNodeCount()];
 
             NodeRef[] nodes = new NodeRef[tree.getNodeCount()];
             System.arraycopy(tree.getNodes(), 0, nodes, 0, tree.getNodeCount());
@@ -301,7 +321,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
             }
             tmpLineageEffect[index] = currentLineageEffect;
             tmpCounts[index] = currentCount;
-            final int uniqueTimes = index + 1;
+            uniqueTimes = index + 1;
 
             for (int i = 0; i < uniqueTimes; i++) {
                 final double timeI = tmpTimes[i];
@@ -354,85 +374,73 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
                 tmpE[k] = sum;
                 tmpF[k] = sum * sum - quadraticSum;
             }
+            tmpSumsKnown = true;
+        }
+    }
 
-            double tripleIntegrationSum = 0;
-            double lineageEffectSqaredSum = 0;
-            for (int i = 0; i < uniqueTimes; i++) {
-                final double lineageCountEffect = tmpLineageEffect[i];
-                lineageEffectSqaredSum += lineageCountEffect * lineageCountEffect;
-                tripleIntegrationSum += lineageCountEffect * tmpA[i] * tmpB[i] * tmpC[i];
-            }
-            tripleIntegrationSum *= 2;
+    private void calculateTmpSumDerivatives() {
+        if (!tmpSumsKnown) {
+            calculateTmpSums();
+        }
 
-            for (int k = 0; k < maxGridIndex; k++) {
-                final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k));
-                final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k + 1));
-                tripleIntegrationSum += (nextPopSizeInverse - currentPopSizeInverse) * tmpF[k] * tmpD[k];
-            }
+        TreeModel tree = trees.get(0);
+        final double startTime = 0;
+        final double endTime = tree.getNodeHeight(tree.getRoot());
+        final int maxGridIndex = getMaxGridIndex(gridPointParameter, endTime);
 
-            tripleIntegrationSum /= -smoothRate.getParameterValue(0) * 2;
-            tripleIntegrationSum += -0.5 * (1 - lineageEffectSqaredSum)
-                    * (Math.exp(-logPopSizeParameter.getParameterValue(maxGridIndex)) - Math.exp(-logPopSizeParameter.getParameterValue(0)))
-                    * (endTime - startTime);
-
-            double tripleWithQuadraticIntegrationSum = 0;
-            final double commonFirstTermMultiplier = (Math.exp(-logPopSizeParameter.getParameterValue(maxGridIndex)) - Math.exp(-logPopSizeParameter.getParameterValue(0))) * (endTime - startTime);
-            for (int i = 0; i < uniqueTimes; i++) {
-                final double lineageCountEffect = tmpLineageEffect[i] * tmpLineageEffect[i];
-                final double timeI = tmpTimes[i];
-                double thisResult =  commonFirstTermMultiplier;
-                final double commonSecondTermMultiplier = smoothFunction.getInverseOnePlusExponential(timeI - startTime, smoothRate.getParameterValue(0))
-                        - smoothFunction.getInverseOnePlusExponential(timeI - endTime, smoothRate.getParameterValue(0));
-                for (int k = 0; k < maxGridIndex; k++) {
-                    final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k));
-                    final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k + 1));
-                    final double gridTime = gridPointParameter.getParameterValue(k);
-                    final double inverse = smoothFunction.getInverseOneMinusExponential(gridTime - timeI, smoothRate.getParameterValue(0));
-                    thisResult += (nextPopSizeInverse - currentPopSizeInverse) / smoothRate.getParameterValue(0)
-                            * (inverse * commonSecondTermMultiplier + (2.0 - inverse) * inverse * tmpC[i] +
-                            (1 - inverse) * (1 - inverse) * tmpD[k]);
+        for (int i = 0; i < uniqueTimes; i++) {
+            final double timeI = tmpTimes[i];
+            double sum = 0;
+            for (int j = 0; j < uniqueTimes; j++) {
+                if (j != i) {
+                    final double timeJ = tmpTimes[j];
+                    final double lineageCountEffect = tmpLineageEffect[j];
+                    final double thisInverse = smoothFunction.getInverseOneMinusExponential(timeJ - timeI, smoothRate.getParameterValue(0));
+                    sum += lineageCountEffect * thisInverse * (1 - thisInverse);
                 }
-                thisResult *= lineageCountEffect;
-                tripleWithQuadraticIntegrationSum += thisResult;
             }
-            tripleWithQuadraticIntegrationSum *= -0.5;
+            tmpADerivOverS[i] = - sum;
+        }
 
-            double firstDoubleIntegrationOffDiagonalSum = 0;
-            double firstDoubleIntegrationDiagonalSum = 0;
-            for (int i = 0; i < uniqueTimes; i++) {
-                final double lineageCountEffect = tmpLineageEffect[i];
-                final double timeI = tmpTimes[i];
-                firstDoubleIntegrationOffDiagonalSum += lineageCountEffect * tmpA[i] * tmpC[i];
-                firstDoubleIntegrationDiagonalSum += lineageCountEffect * lineageCountEffect
-                        * smoothFunction.getQuadraticIntegration(startTime, endTime, timeI, smoothRate.getParameterValue(0));
-            }
-            firstDoubleIntegrationOffDiagonalSum /= smoothRate.getParameterValue(0);
-            firstDoubleIntegrationOffDiagonalSum += 0.5 * (1 - lineageEffectSqaredSum) * (endTime - startTime);
-
-            final double firstDoubleIntegrationSum = -(firstDoubleIntegrationDiagonalSum * 0.5 + firstDoubleIntegrationOffDiagonalSum) * Math.exp(-logPopSizeParameter.getParameterValue(0));
-
-            double secondDoubleIntegrationSum = 0;
-            for (int i = 0; i < uniqueTimes; i++) {
-                secondDoubleIntegrationSum += 0.5 * tmpB[i] * tmpC[i] * tmpLineageEffect[i];
-            }
-
+        for (int i = 0; i < uniqueTimes; i++) {
+            final double timeI = tmpTimes[i];
+            double sum = 0;
             for (int k = 0; k < maxGridIndex; k++) {
                 final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k));
                 final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k + 1));
-                secondDoubleIntegrationSum += 0.5 * tmpE[k] * tmpD[k] * (nextPopSizeInverse - currentPopSizeInverse);
+                final double gridTime = gridPointParameter.getParameterValue(k);
+                final double thisInverse = smoothFunction.getInverseOneMinusExponential(gridTime - timeI, smoothRate.getParameterValue(0));
+                sum += (nextPopSizeInverse - currentPopSizeInverse) * thisInverse * (1 - thisInverse);
             }
+            tmpBDerivOverS[i] = -sum;
+        }
 
-            secondDoubleIntegrationSum /= smoothRate.getParameterValue(0);
-            secondDoubleIntegrationSum += 0.5 * (endTime - startTime) * (Math.exp(-logPopSizeParameter.getParameterValue(maxGridIndex)) - Math.exp(-logPopSizeParameter.getParameterValue(0)));
+        for (int i = 0; i < uniqueTimes; i++) {
+            final double timeI = tmpTimes[i];
+            tmpCDerivOverS[i] = smoothFunction.getSingleIntegrationDerivative(startTime, endTime, timeI, smoothRate.getParameterValue(0));
+        }
+    }
 
+    protected double calculateLogLikelihood() {
+        assert(trees.size() == 1);
+        if (!likelihoodKnown) {
+            TreeModel tree = trees.get(0);
+            final double startTime = 0;
+            final double endTime = tree.getNodeHeight(tree.getRoot());
+            final int maxGridIndex = getMaxGridIndex(gridPointParameter, endTime);
 
-            double singleIntegration = 0;
+            calculateTmpSums();
+
+            double lineageEffectSquaredSum = 0;
             for (int i = 0; i < uniqueTimes; i++) {
-                final double timeI = tmpTimes[i];
-                final double lineageCountEffectI = tmpLineageEffect[i];
-                singleIntegration += lineageCountEffectI * smoothFunction.getSingleIntegration(startTime, endTime, timeI, smoothRate.getParameterValue(0));
+                lineageEffectSquaredSum += tmpLineageEffect[i] * tmpLineageEffect[i];
             }
-            singleIntegration *= 0.5 * Math.exp(-logPopSizeParameter.getParameterValue(0));
+
+            double tripleIntegrationSum = getTripleIntegration(startTime, endTime, maxGridIndex, lineageEffectSquaredSum);
+
+            double doubleIntegrationSum = getDoubleIntegration(startTime, endTime, maxGridIndex, lineageEffectSquaredSum);
+
+            final double singleIntegration = getSingleIntegration(startTime, endTime);
 
             double logPopulationSizeInverse = 0;
             for (int i = 0; i < tree.getInternalNodeCount(); i++) {
@@ -440,15 +448,199 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
                 logPopulationSizeInverse += Math.log(getSmoothPopulationSizeInverse(tree.getNodeHeight(node), tree.getNodeHeight(tree.getRoot())));
             }
 
-            logLikelihood = logPopulationSizeInverse + singleIntegration + firstDoubleIntegrationSum + secondDoubleIntegrationSum + tripleIntegrationSum + tripleWithQuadraticIntegrationSum;
+            logLikelihood = logPopulationSizeInverse + singleIntegration + doubleIntegrationSum + tripleIntegrationSum;
 
             likelihoodKnown = true;
         }
         return logLikelihood;
     }
 
+    private double[] getGradientWrtNodeHeightNew() {
+        if (!likelihoodKnown) {
+            calculateLogLikelihood();
+        }
+        TreeModel tree = trees.get(0);
+        final double startTime = 0;
+        final double endTime = tree.getNodeHeight(tree.getRoot());
+        double[] gradient = new double[tree.getInternalNodeCount()];
+        getGradientWrtNodeHeightFromSingleIntegration(startTime, endTime, gradient);
 
-    private double getLineageCountEffect(Tree tree, int node) {
+        double lineageEffectSquaredSum = 0;
+        for (int i = 0; i < uniqueTimes; i++) {
+            lineageEffectSquaredSum += tmpLineageEffect[i] * tmpLineageEffect[i];
+        }
+        getGradientWrtNodeHeightFromDoubleIntegration(startTime, endTime, getMaxGridIndex(gridPointParameter, endTime), gradient);
+
+        getGradientWrtNodeHeightFromTripleIntegration(startTime, endTime, getMaxGridIndex(gridPointParameter, endTime), gradient);
+        return gradient;
+    }
+
+    double getTripleIntegration(double startTime, double endTime, int maxGridIndex, double lineageEffectSquaredSum) {
+        double tripleIntegrationSum = 0;
+        for (int i = 0; i < uniqueTimes; i++) {
+            final double lineageCountEffect = tmpLineageEffect[i];
+            tripleIntegrationSum += lineageCountEffect * tmpA[i] * tmpB[i] * tmpC[i];
+        }
+        tripleIntegrationSum *= 2;
+
+        for (int k = 0; k < maxGridIndex; k++) {
+            final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k));
+            final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k + 1));
+            tripleIntegrationSum += (nextPopSizeInverse - currentPopSizeInverse) * tmpF[k] * tmpD[k];
+        }
+
+        tripleIntegrationSum /= -smoothRate.getParameterValue(0) * 2;
+        tripleIntegrationSum += -0.5 * (1 - lineageEffectSquaredSum)
+                * (Math.exp(-logPopSizeParameter.getParameterValue(maxGridIndex)) - Math.exp(-logPopSizeParameter.getParameterValue(0)))
+                * (endTime - startTime);
+
+        double tripleWithQuadraticIntegrationSum = 0;
+        final double commonFirstTermMultiplier = (Math.exp(-logPopSizeParameter.getParameterValue(maxGridIndex)) - Math.exp(-logPopSizeParameter.getParameterValue(0))) * (endTime - startTime);
+        for (int i = 0; i < uniqueTimes; i++) {
+            final double lineageCountEffect = tmpLineageEffect[i] * tmpLineageEffect[i];
+            final double timeI = tmpTimes[i];
+            double thisResult =  commonFirstTermMultiplier;
+            final double commonSecondTermMultiplier = smoothFunction.getInverseOnePlusExponential(timeI - startTime, smoothRate.getParameterValue(0))
+                    - smoothFunction.getInverseOnePlusExponential(timeI - endTime, smoothRate.getParameterValue(0));
+            for (int k = 0; k < maxGridIndex; k++) {
+                final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k));
+                final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k + 1));
+                final double gridTime = gridPointParameter.getParameterValue(k);
+                final double inverse = smoothFunction.getInverseOneMinusExponential(gridTime - timeI, smoothRate.getParameterValue(0));
+                thisResult += (nextPopSizeInverse - currentPopSizeInverse) / smoothRate.getParameterValue(0)
+                        * (inverse * commonSecondTermMultiplier + (2.0 - inverse) * inverse * tmpC[i] +
+                        (1 - inverse) * (1 - inverse) * tmpD[k]);
+            }
+            thisResult *= lineageCountEffect;
+            tripleWithQuadraticIntegrationSum += thisResult;
+        }
+        tripleWithQuadraticIntegrationSum *= -0.5;
+        return tripleIntegrationSum + tripleWithQuadraticIntegrationSum;
+    }
+
+    private void getGradientWrtNodeHeightFromTripleIntegration(double startTime, double endTime, int maxGridIndex,
+                                                               double[] gradient) {
+        for (int i = 0; i < uniqueTimes; i++) {
+            final double lineageCountEffect = tmpLineageEffect[i];
+            final double timeI = tmpTimes[i];
+            gradient[i] += lineageCountEffect * (tmpADerivOverS[i] * tmpB[i] * tmpC[i] + tmpA[i] * tmpBDerivOverS[i] * tmpC[i] + tmpA[i] * tmpB[i] * tmpCDerivOverS[i]);
+            for (int k = 0; k < maxGridIndex; k++) {
+                final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k));
+                final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k + 1));
+                final double gridTime = gridPointParameter.getParameterValue(k);
+                final double tmpEInverse = smoothFunction.getInverseOneMinusExponential(timeI - gridTime, smoothRate.getParameterValue(0));
+
+                gradient[i] += (nextPopSizeInverse - currentPopSizeInverse) * tmpD[k] * (tmpE[k] - lineageCountEffect * tmpEInverse ) * tmpEInverse * (1 - tmpEInverse) * lineageCountEffect;
+            }
+
+
+            final double startTimeInverse = smoothFunction.getInverseOnePlusExponential(timeI - startTime, smoothRate.getParameterValue(0));
+            final double endTimeInverse = smoothFunction.getInverseOnePlusExponential(timeI - startTime, smoothRate.getParameterValue(0));
+            final double commonSecondTermMultiplier = startTimeInverse - endTimeInverse;
+            final double commonSecondTermMultiplierDerivativeOverS = - startTimeInverse * (1 - startTimeInverse) + endTimeInverse * (1 - endTimeInverse);
+
+            for (int k = 0; k < maxGridIndex; k++) {
+                final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k));
+                final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k + 1));
+                final double gridTime = gridPointParameter.getParameterValue(k);
+                final double inverse = smoothFunction.getInverseOneMinusExponential(gridTime - timeI, smoothRate.getParameterValue(0));
+                final double inverseDerivativeOverS = -inverse * (1 - inverse);
+                gradient[i] += (nextPopSizeInverse - currentPopSizeInverse)
+                        * (inverseDerivativeOverS * commonSecondTermMultiplier + inverse * commonSecondTermMultiplierDerivativeOverS +
+                        2 * (1 - inverse) * inverseDerivativeOverS * tmpC[i] + (2.0 - inverse) * inverse * tmpCDerivOverS[i] +
+                        2 * (1 - inverse) * (-inverseDerivativeOverS) * tmpD[k]);
+            }
+        }
+
+    }
+
+    double getDoubleIntegration(double startTime, double endTime, int maxGridIndex, double lineageEffectSquaredSum) {
+        double firstDoubleIntegrationOffDiagonalSum = 0;
+        double firstDoubleIntegrationDiagonalSum = 0;
+        for (int i = 0; i < uniqueTimes; i++) {
+            final double lineageCountEffect = tmpLineageEffect[i];
+            final double timeI = tmpTimes[i];
+            firstDoubleIntegrationOffDiagonalSum += lineageCountEffect * tmpA[i] * tmpC[i];
+            firstDoubleIntegrationDiagonalSum += lineageCountEffect * lineageCountEffect
+                    * smoothFunction.getQuadraticIntegration(startTime, endTime, timeI, smoothRate.getParameterValue(0));
+        }
+        firstDoubleIntegrationOffDiagonalSum /= smoothRate.getParameterValue(0);
+        firstDoubleIntegrationOffDiagonalSum += 0.5 * (1 - lineageEffectSquaredSum) * (endTime - startTime);
+
+        final double firstDoubleIntegrationSum = -(firstDoubleIntegrationDiagonalSum * 0.5 + firstDoubleIntegrationOffDiagonalSum) * Math.exp(-logPopSizeParameter.getParameterValue(0));
+
+        double secondDoubleIntegrationSum = 0;
+        for (int i = 0; i < uniqueTimes; i++) {
+            secondDoubleIntegrationSum += 0.5 * tmpB[i] * tmpC[i] * tmpLineageEffect[i];
+        }
+
+        for (int k = 0; k < maxGridIndex; k++) {
+            final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k));
+            final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k + 1));
+            secondDoubleIntegrationSum += 0.5 * tmpE[k] * tmpD[k] * (nextPopSizeInverse - currentPopSizeInverse);
+        }
+
+        secondDoubleIntegrationSum /= smoothRate.getParameterValue(0);
+        secondDoubleIntegrationSum += 0.5 * (endTime - startTime) * (Math.exp(-logPopSizeParameter.getParameterValue(maxGridIndex)) - Math.exp(-logPopSizeParameter.getParameterValue(0)));
+
+        return firstDoubleIntegrationSum + secondDoubleIntegrationSum;
+
+    }
+
+    private void getGradientWrtNodeHeightFromDoubleIntegration(double startTime, double endTime, int maxGridIndex,
+                                                               double[] gradient) {
+        final double firstPopSize = Math.exp(-logPopSizeParameter.getParameterValue(0));
+        for (int i = 0; i < uniqueTimes; i++) {
+            final double lineageCountEffect = tmpLineageEffect[i];
+            final double timeI = tmpTimes[i];
+            //firstDoubleIntegrationOffDiagonalSum += lineageCountEffect * tmpA[i] * tmpC[i];
+            gradient[i] += -lineageCountEffect * (tmpA[i] * tmpCDerivOverS[i] + tmpADerivOverS[i] * tmpC[i]) * firstPopSize;
+
+            //firstDoubleIntegrationDiagonalSum
+            gradient[i] += lineageCountEffect * lineageCountEffect
+                    * (smoothFunction.getSingleIntegrationDerivative(startTime, endTime, timeI, smoothRate.getParameterValue(0))
+                    + (smoothFunction.getDerivative(timeI, endTime, 0, 1, smoothRate.getParameterValue(0))
+                    - smoothFunction.getDerivative(timeI, startTime, 0, 1, smoothRate.getParameterValue(0)) / smoothRate.getParameterValue(0))
+                    ) * -0.5 * firstPopSize;
+
+            gradient[i] += 0.5 * tmpLineageEffect[i] * (tmpB[i] * tmpCDerivOverS[i] + tmpBDerivOverS[i] * tmpC[i]);
+
+            for (int k = 0; k < maxGridIndex; k++) {
+                final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k));
+                final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k + 1));
+                final double gridTime = gridPointParameter.getParameterValue(k);
+                final double tmpEInverse = smoothFunction.getInverseOneMinusExponential(timeI - gridTime, smoothRate.getParameterValue(0));
+                gradient[i] += 0.5 * tmpD[k] * (nextPopSizeInverse - currentPopSizeInverse) * tmpEInverse * (1 - tmpEInverse) * lineageCountEffect;
+            }
+        }
+    }
+
+    private double getSingleIntegration(double startTime, double endTime) {
+        double singleIntegration = 0;
+        for (int i = 0; i < uniqueTimes; i++) {
+            final double timeI = tmpTimes[i];
+            final double lineageCountEffectI = tmpLineageEffect[i];
+            singleIntegration += lineageCountEffectI * smoothFunction.getSingleIntegration(startTime, endTime, timeI, smoothRate.getParameterValue(0));
+        }
+        singleIntegration *= 0.5 * Math.exp(-logPopSizeParameter.getParameterValue(0));
+        return singleIntegration;
+    }
+
+    private void getGradientWrtNodeHeightFromSingleIntegration(double startTime, double endTime, double[] gradient) {
+        for (int i = 0; i < uniqueTimes; i++) {
+            final double timeI = tmpTimes[i];
+            final double lineageCountEffectI = tmpLineageEffect[i];
+            gradient[i] += lineageCountEffectI * smoothFunction.getSingleIntegrationDerivative(startTime, endTime, timeI, smoothRate.getParameterValue(0))
+            * 0.5 * Math.exp(-logPopSizeParameter.getParameterValue(0));
+        }
+    }
+
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        super.handleModelChangedEvent(model, object, index);
+        tmpSumsKnown = false;
+    }
+
+        private double getLineageCountEffect(Tree tree, int node) {
         if (tree.isExternal(tree.getNode(node))) {
             return 1;
         } else {

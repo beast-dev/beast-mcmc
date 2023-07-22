@@ -90,6 +90,7 @@ public class BayesianBridgeMarkovRandomFieldLikelihood extends AbstractModelLike
         double logPdf = 0.0;
         logPdf += firstElementDistribution.logPdf(unconstrained[0]);
         logPdf += bridge.logPdf(unconstrained[1]);
+        // Would be +logJacobian of the constrained->unconstrained transform, but this is the unconstrained->constrained transform
         logPdf -= transform.getLogJacobian(transform.inverse(variables.getParameterValues(),0,dim));
         return logPdf;
     }

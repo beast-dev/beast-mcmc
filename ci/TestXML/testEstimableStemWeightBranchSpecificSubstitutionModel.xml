@@ -150,7 +150,7 @@
 
     <parameter id="alpha" value="0.5" lower="0.0"/>
 
-    <branchSpecificSubstitutionModel id="cladeDependentSubstitutionModel1" dataType="nucleotide">
+    <estimableStemWeightBranchSpecificSubstitutionModel id="cladeDependentSubstitutionModel1" dataType="nucleotide">
         <treeModel idref="treeModel"/>
         <!-- The model for all taxa not in the specific clade -->
         <gtrModel idref="gtr1"/>
@@ -159,9 +159,20 @@
             <taxa idref="theClade"/>
             <gtrModel idref="gtr2"/>
         </clade>
-    </branchSpecificSubstitutionModel>
+    </estimableStemWeightBranchSpecificSubstitutionModel>
 
-    <branchSpecificSubstitutionModel id="cladeDependentSubstitutionModel3" dataType="nucleotide">
+    <estimableStemWeightBranchSpecificSubstitutionModel id="cladeDependentSubstitutionModel2" dataType="nucleotide">
+        <treeModel idref="treeModel"/>
+        <!-- The model for all taxa not in the specific clade -->
+        <gtrModel idref="gtr1"/>
+        <!-- Second substitution model and defining clade -->
+        <clade  stemWeight="0.5">
+            <taxa idref="theClade"/>
+            <gtrModel idref="gtr2"/>
+        </clade>
+    </estimableStemWeightBranchSpecificSubstitutionModel>
+
+    <estimableStemWeightBranchSpecificSubstitutionModel id="cladeDependentSubstitutionModel3" dataType="nucleotide">
         <treeModel idref="treeModel"/>
         <!-- The model for all taxa not in the specific clade -->
         <gtrModel idref="gtr1"/>
@@ -170,13 +181,35 @@
             <taxa idref="theClade"/>
             <gtrModel idref="gtr2"/>
         </clade>
-    </branchSpecificSubstitutionModel>
+    </estimableStemWeightBranchSpecificSubstitutionModel>
+
+    <estimableStemWeightBranchSpecificSubstitutionModel id="cladeDependentSubstitutionModel4" dataType="nucleotide">
+        <treeModel idref="treeModel"/>
+        <!-- The model for all taxa not in the specific clade -->
+        <gtrModel idref="gtr1"/>
+        <!-- Second substitution model and defining clade -->
+        <clade>
+            <stemWeight>
+                <parameter id="stemProportionParameter" value="0.707" lower="0.0" upper="1.0"/>
+            </stemWeight>
+            <taxa idref="theClade"/>
+            <gtrModel idref="gtr2"/>
+        </clade>
+    </estimableStemWeightBranchSpecificSubstitutionModel>
 
     <!-- site model                                                              -->
     <siteModel id="siteModel1">
         <!-- <substitutionModel> -->
         <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel1"/>
         <!-- </substitutionModel> -->
+        <gammaShape gammaCategories="4">
+            <parameter idref="alpha"/>
+        </gammaShape>
+    </siteModel>
+
+    <!-- site model                                                              -->
+    <siteModel id="siteModel2">
+        <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel2"/>
         <gammaShape gammaCategories="4">
             <parameter idref="alpha"/>
         </gammaShape>
@@ -190,6 +223,14 @@
         </gammaShape>
     </siteModel>
 
+    <!-- site model                                                              -->
+    <siteModel id="siteModel4">
+        <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel4"/>
+        <gammaShape gammaCategories="4">
+            <parameter idref="alpha"/>
+        </gammaShape>
+    </siteModel>
+
     <treeDataLikelihood id="treeLikelihood1" useAmbiguities="false">
         <patterns idref="patterns2"/>
         <treeModel idref="treeModel"/>
@@ -198,12 +239,28 @@
         <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel1"/>
     </treeDataLikelihood>
 
+    <treeDataLikelihood id="treeLikelihood2" useAmbiguities="false">
+        <patterns idref="patterns2"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="siteModel2"/>
+        <strictClockBranchRates idref="branchRates"/>
+        <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel2"/>
+    </treeDataLikelihood>
+
     <treeDataLikelihood id="treeLikelihood3" useAmbiguities="false">
         <patterns idref="patterns2"/>
         <treeModel idref="treeModel"/>
         <siteModel idref="siteModel3"/>
         <strictClockBranchRates idref="branchRates"/>
         <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel3"/>
+    </treeDataLikelihood>
+
+    <treeDataLikelihood id="treeLikelihood4" useAmbiguities="false">
+        <patterns idref="patterns2"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="siteModel4"/>
+        <strictClockBranchRates idref="branchRates"/>
+        <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel4"/>
     </treeDataLikelihood>
 
     <assertEqual tolerance="1e-13" verbose="true" charactersToStrip="\[\],">
@@ -233,5 +290,101 @@
             -67.91898348796958
         </expected>
     </assertEqual>
+
+    <assertEqual tolerance="1e-13" verbose="true" charactersToStrip="\[\],">
+        <message>
+            check fixed stem weight 0.5
+        </message>
+        <actual regex="dr.evomodel.treedatalikelihood.TreeDataLikelihood\((.*?)\)">
+            <cachedReport>
+                <treeDataLikelihood idref="treeLikelihood2"/>
+            </cachedReport>
+        </actual>
+        <expected>
+            -67.96920889498585
+        </expected>
+    </assertEqual>
+
+    <branchSpecificSubstitutionModel id="cladeDependentSubstitutionModel5" dataType="nucleotide">
+        <treeModel idref="treeModel"/>
+        <!-- The model for all taxa not in the specific clade -->
+        <gtrModel idref="gtr1"/>
+        <!-- Second substitution model and defining clade -->
+        <clade>
+            <stemWeight>
+                <parameter id="parameter1" value="0.15" lower="0.0" upper="1.0"/>
+            </stemWeight>
+            <taxa idref="theClade"/>
+            <gtrModel idref="gtr2"/>
+        </clade>
+        <clade>
+            <stemWeight>
+                <parameter id="parameter2" value="0.16" lower="0.0" upper="1.0"/>
+            </stemWeight>
+            <taxa idref="directOverlap"/>
+            <gtrModel idref="gtr2"/>
+        </clade>
+    </branchSpecificSubstitutionModel>
+
+    <branchSpecificSubstitutionModel id="cladeDependentSubstitutionModel6" dataType="nucleotide">
+        <treeModel idref="treeModel"/>
+        <!-- The model for all taxa not in the specific clade -->
+        <gtrModel idref="gtr1"/>
+        <!-- Second substitution model and defining clade -->
+        <clade>
+            <stemWeight>
+                <parameter id="parameter3" value="0.17" lower="0.0" upper="1.0"/>
+            </stemWeight>
+            <taxa idref="indirectOverlap1"/>
+            <gtrModel idref="gtr2"/>
+        </clade>
+        <clade>
+            <stemWeight>
+                <parameter id="parameter4" value="0.18" lower="0.0" upper="1.0"/>
+            </stemWeight>
+            <taxa idref="indirectOverlap2"/>
+            <gtrModel idref="gtr2"/>
+        </clade>
+    </branchSpecificSubstitutionModel>
+
+    <!-- site model                                                              -->
+    <siteModel id="siteModel5">
+        <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel5"/>
+        <gammaShape gammaCategories="4">
+            <parameter idref="alpha"/>
+        </gammaShape>
+    </siteModel>
+
+    <!-- site model                                                              -->
+    <siteModel id="siteModel6">
+        <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel6"/>
+        <gammaShape gammaCategories="4">
+            <parameter idref="alpha"/>
+        </gammaShape>
+    </siteModel>
+
+<!--    <treeDataLikelihood id="treeLikelihood5" useAmbiguities="false">-->
+<!--        <patterns idref="patterns2"/>-->
+<!--        <treeModel idref="treeModel"/>-->
+<!--        <siteModel idref="siteModel5"/>-->
+<!--        <strictClockBranchRates idref="branchRates"/>-->
+<!--        <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel5"/>-->
+<!--    </treeDataLikelihood>-->
+
+<!--    <treeDataLikelihood id="treeLikelihood6" useAmbiguities="false">-->
+<!--        <patterns idref="patterns2"/>-->
+<!--        <treeModel idref="treeModel"/>-->
+<!--        <siteModel idref="siteModel6"/>-->
+<!--        <strictClockBranchRates idref="branchRates"/>-->
+<!--        <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel6"/>-->
+<!--    </treeDataLikelihood>-->
+
+<!--    <report>-->
+<!--        <treeDataLikelihood idref="treeLikelihood5"/>-->
+<!--    </report>-->
+
+<!--    <report>-->
+<!--        <treeDataLikelihood idref="treeLikelihood6"/>-->
+<!--    </report>-->
 
 </beast>

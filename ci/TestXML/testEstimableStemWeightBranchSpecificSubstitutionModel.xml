@@ -148,14 +148,15 @@
         </rates>
     </gtrModel>
 
-    <parameter id="alpha" value="0.5" lower="0.0"/>
-
     <estimableStemWeightBranchSpecificSubstitutionModel id="cladeDependentSubstitutionModel1" dataType="nucleotide">
         <treeModel idref="treeModel"/>
         <!-- The model for all taxa not in the specific clade -->
         <gtrModel idref="gtr1"/>
         <!-- Second substitution model and defining clade -->
-        <clade stemWeight="0.0">
+        <clade>
+            <stemWeight>
+                <parameter value="0.0" lower="0.0" upper="1.0"/>
+            </stemWeight>
             <taxa idref="theClade"/>
             <gtrModel idref="gtr2"/>
         </clade>
@@ -166,7 +167,10 @@
         <!-- The model for all taxa not in the specific clade -->
         <gtrModel idref="gtr1"/>
         <!-- Second substitution model and defining clade -->
-        <clade  stemWeight="0.5">
+        <clade>
+            <stemWeight>
+                <parameter value="0.5" lower="0.0" upper="1.0"/>
+            </stemWeight>
             <taxa idref="theClade"/>
             <gtrModel idref="gtr2"/>
         </clade>
@@ -177,7 +181,10 @@
         <!-- The model for all taxa not in the specific clade -->
         <gtrModel idref="gtr1"/>
         <!-- Second substitution model and defining clade -->
-        <clade stemWeight="1.0">
+        <clade>
+            <stemWeight>
+                <parameter value="1.0" lower="0.0" upper="1.0"/>
+            </stemWeight>
             <taxa idref="theClade"/>
             <gtrModel idref="gtr2"/>
         </clade>
@@ -202,33 +209,21 @@
         <!-- <substitutionModel> -->
         <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel1"/>
         <!-- </substitutionModel> -->
-        <gammaShape gammaCategories="4">
-            <parameter idref="alpha"/>
-        </gammaShape>
     </siteModel>
 
     <!-- site model                                                              -->
     <siteModel id="siteModel2">
         <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel2"/>
-        <gammaShape gammaCategories="4">
-            <parameter idref="alpha"/>
-        </gammaShape>
     </siteModel>
 
     <!-- site model                                                              -->
     <siteModel id="siteModel3">
         <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel3"/>
-        <gammaShape gammaCategories="4">
-            <parameter idref="alpha"/>
-        </gammaShape>
     </siteModel>
 
     <!-- site model                                                              -->
     <siteModel id="siteModel4">
         <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel4"/>
-        <gammaShape gammaCategories="4">
-            <parameter idref="alpha"/>
-        </gammaShape>
     </siteModel>
 
     <treeDataLikelihood id="treeLikelihood1" useAmbiguities="false">
@@ -263,9 +258,9 @@
         <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel4"/>
     </treeDataLikelihood>
 
-    <assertEqual tolerance="1e-13" verbose="true" charactersToStrip="\[\],">
+    <assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
         <message>
-            check fixed stem weight 0.0
+            check stem weight 0.0
         </message>
         <actual regex="dr.evomodel.treedatalikelihood.TreeDataLikelihood\((.*?)\)">
             <cachedReport>
@@ -273,13 +268,13 @@
             </cachedReport>
         </actual>
         <expected>
-            -68.07217469138813
+            -65.9680135693
         </expected>
     </assertEqual>
 
-    <assertEqual tolerance="1e-13" verbose="true" charactersToStrip="\[\],">
+    <assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
         <message>
-            check fixed stem weight 1.0
+            check stem weight 1.0
         </message>
         <actual regex="dr.evomodel.treedatalikelihood.TreeDataLikelihood\((.*?)\)">
             <cachedReport>
@@ -287,13 +282,13 @@
             </cachedReport>
         </actual>
         <expected>
-            -67.91898348796958
+            -65.8150236001
         </expected>
     </assertEqual>
 
-    <assertEqual tolerance="1e-13" verbose="true" charactersToStrip="\[\],">
+    <assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
         <message>
-            check fixed stem weight 0.5
+            check stem weight 0.5
         </message>
         <actual regex="dr.evomodel.treedatalikelihood.TreeDataLikelihood\((.*?)\)">
             <cachedReport>
@@ -301,90 +296,145 @@
             </cachedReport>
         </actual>
         <expected>
-            -67.96920889498585
+            -65.8929018739
         </expected>
     </assertEqual>
 
-    <branchSpecificSubstitutionModel id="cladeDependentSubstitutionModel5" dataType="nucleotide">
-        <treeModel idref="treeModel"/>
-        <!-- The model for all taxa not in the specific clade -->
-        <gtrModel idref="gtr1"/>
-        <!-- Second substitution model and defining clade -->
-        <clade>
-            <stemWeight>
-                <parameter id="parameter1" value="0.15" lower="0.0" upper="1.0"/>
-            </stemWeight>
-            <taxa idref="theClade"/>
-            <gtrModel idref="gtr2"/>
-        </clade>
-        <clade>
-            <stemWeight>
-                <parameter id="parameter2" value="0.16" lower="0.0" upper="1.0"/>
-            </stemWeight>
-            <taxa idref="directOverlap"/>
-            <gtrModel idref="gtr2"/>
-        </clade>
-    </branchSpecificSubstitutionModel>
+    <assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
+        <message>
+            check stem weight 0.707
+        </message>
+        <actual regex="dr.evomodel.treedatalikelihood.TreeDataLikelihood\((.*?)\)">
+            <cachedReport>
+                <treeDataLikelihood idref="treeLikelihood4"/>
+            </cachedReport>
+        </actual>
+        <expected>
+            -65.8612061872
+        </expected>
+    </assertEqual>
 
-    <branchSpecificSubstitutionModel id="cladeDependentSubstitutionModel6" dataType="nucleotide">
-        <treeModel idref="treeModel"/>
-        <!-- The model for all taxa not in the specific clade -->
-        <gtrModel idref="gtr1"/>
-        <!-- Second substitution model and defining clade -->
-        <clade>
-            <stemWeight>
-                <parameter id="parameter3" value="0.17" lower="0.0" upper="1.0"/>
-            </stemWeight>
-            <taxa idref="indirectOverlap1"/>
-            <gtrModel idref="gtr2"/>
-        </clade>
-        <clade>
-            <stemWeight>
-                <parameter id="parameter4" value="0.18" lower="0.0" upper="1.0"/>
-            </stemWeight>
-            <taxa idref="indirectOverlap2"/>
-            <gtrModel idref="gtr2"/>
-        </clade>
-    </branchSpecificSubstitutionModel>
-
-    <!-- site model                                                              -->
-    <siteModel id="siteModel5">
-        <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel5"/>
-        <gammaShape gammaCategories="4">
-            <parameter idref="alpha"/>
-        </gammaShape>
-    </siteModel>
-
-    <!-- site model                                                              -->
-    <siteModel id="siteModel6">
-        <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel6"/>
-        <gammaShape gammaCategories="4">
-            <parameter idref="alpha"/>
-        </gammaShape>
-    </siteModel>
-
-<!--    <treeDataLikelihood id="treeLikelihood5" useAmbiguities="false">-->
-<!--        <patterns idref="patterns2"/>-->
+    <!--  This will throw an error about incompatible clades  -->
+<!--    <estimableStemWeightBranchSpecificSubstitutionModel id="cladeDependentSubstitutionModel5" dataType="nucleotide">-->
 <!--        <treeModel idref="treeModel"/>-->
-<!--        <siteModel idref="siteModel5"/>-->
-<!--        <strictClockBranchRates idref="branchRates"/>-->
-<!--        <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel5"/>-->
-<!--    </treeDataLikelihood>-->
-
-<!--    <treeDataLikelihood id="treeLikelihood6" useAmbiguities="false">-->
-<!--        <patterns idref="patterns2"/>-->
-<!--        <treeModel idref="treeModel"/>-->
-<!--        <siteModel idref="siteModel6"/>-->
-<!--        <strictClockBranchRates idref="branchRates"/>-->
-<!--        <branchSpecificSubstitutionModel idref="cladeDependentSubstitutionModel6"/>-->
-<!--    </treeDataLikelihood>-->
-
-<!--    <report>-->
-<!--        <treeDataLikelihood idref="treeLikelihood5"/>-->
-<!--    </report>-->
-
-<!--    <report>-->
-<!--        <treeDataLikelihood idref="treeLikelihood6"/>-->
-<!--    </report>-->
+<!--        &lt;!&ndash; The model for all taxa not in the specific clade &ndash;&gt;-->
+<!--        <gtrModel idref="gtr1"/>-->
+<!--        &lt;!&ndash; Second substitution model and defining clade &ndash;&gt;-->
+<!--        <clade>-->
+<!--            <stemWeight>-->
+<!--                <parameter id="parameter1" value="0.15" lower="0.0" upper="1.0"/>-->
+<!--            </stemWeight>-->
+<!--            <taxa idref="theClade"/>-->
+<!--            <gtrModel idref="gtr2"/>-->
+<!--        </clade>-->
+<!--        <clade>-->
+<!--            <stemWeight>-->
+<!--                <parameter id="parameter2" value="0.16" lower="0.0" upper="1.0"/>-->
+<!--            </stemWeight>-->
+<!--            <taxa idref="directOverlap"/>-->
+<!--            <gtrModel idref="gtr2"/>-->
+<!--        </clade>-->
+<!--    </estimableStemWeightBranchSpecificSubstitutionModel>-->
 
 </beast>
+
+<!-- R code for computing reference likelihoods -->
+<!--        library(phangorn)-->
+
+<!--        assembleQ.gtr <- function(er,bf) {-->
+<!--        # recover()-->
+
+<!--        # Ensure exchange rates and "base frequencies" are normalized-->
+<!--        bf <- bf/sum(bf)-->
+<!--        er <- er/sum(er)-->
+
+<!--        # Assemble Q matrix-->
+<!--        Q_ <- matrix(0,4,4)-->
+<!--        Q_[1,2] <- Q_[2,1] <- er[1]-->
+<!--        Q_[1,3] <- Q_[3,1] <- er[2]-->
+<!--        Q_[1,4] <- Q_[4,1] <- er[3]-->
+<!--        Q_[2,3] <- Q_[3,2] <- er[4]-->
+<!--        Q_[2,4] <- Q_[4,2] <- er[5]-->
+<!--        Q_[3,4] <- Q_[4,3] <- er[6]-->
+
+<!--        for (i in 1:4) {-->
+<!--        Q_[,i] <- Q_[,i] * bf[i]-->
+<!--        }-->
+<!--        diag(Q_) <- -rowSums(Q_)-->
+
+<!--        # Normalize-->
+<!--        Q_ <- Q_ / (-sum(bf * diag(Q_)))-->
+
+<!--        row.names(Q_) <- colnames(Q_) <- c("A","C","G","T")-->
+<!--        return(Q_)-->
+<!--        }-->
+
+<!--        computeLnL <- function(stemWeight) {-->
+<!--        # recover()-->
+
+<!--        # A fixed tree (A,(B,(C,D)))-->
+<!--        # the clade C+D and some proportion of that stem branch get GTR2-->
+<!--        # the rest of the tree gets GTR1-->
+
+<!--        phy <- read.tree(text="(A:1.0,(B:1.0,(C:1.0,D:1.0):1.0):1.0);")-->
+<!--        phy$edge.length <- 0.1 * phy$edge.length-->
+
+<!--        aln <- do.call(rbind,strsplit(c(-->
+<!--        "AAACCCGGTAACAA",-->
+<!--        "AAACCTGGGAATAA",-->
+<!--        "AAACTCGGGAATGA",-->
+<!--        "ATACCCGGTGGTAG"-->
+<!--        ),""))-->
+<!--        row.names(aln) <- c("A","B","C","D")-->
+
+<!--        nucs <- c("A","C","G","T")-->
+<!--        aln <- apply(aln,c(1,2),function(x){-->
+<!--        which(nucs == x)-->
+<!--        })-->
+
+<!--        Q1 <- assembleQ.gtr(c(1,2,1,1,2,1),(1:4)/10)-->
+<!--        Q2 <- assembleQ.gtr(c(1,25,1,1,25,1),(4:1)/10)-->
+
+<!--        root_bf <- (1:4)/10-->
+
+<!--        asrv <- rep(1,4)-->
+
+<!--        likelihood_per_category <- sapply(asrv,function(rate){-->
+<!--        non_mixed_brlen <- phy$edge.length[1] * rate-->
+
+<!--        GTR1 <- expm::expm(Q1 * non_mixed_brlen)-->
+<!--        GTR2 <- expm::expm(Q2 * non_mixed_brlen)-->
+<!--        GTR_mixed <- expm::expm(Q1 * non_mixed_brlen * (1 - stemWeight)) %*% expm::expm(Q2 * non_mixed_brlen * stemWeight)-->
+
+<!--        per_site_L <- sapply(1:dim(aln)[2],function(j) {-->
+<!--        # Tip labels are A=1, B=2, C=3, D=4-->
+<!--        # We number the root node 5, BCD's common ancestor 6, and CD's common ancestor 7-->
+<!--        plv <- matrix(NA,7,4)-->
+<!--        plv[1:4,] <- 0-->
+<!--        for (i in 1:4) {-->
+<!--        plv[i,aln[i,j]] <- 1.0-->
+<!--        }-->
+
+<!--        for (i in 1:4) {-->
+<!--        plv[7,i] <- sum(GTR2[i,] * plv[3,]) * sum(GTR2[i,] * plv[4,])-->
+<!--        }-->
+
+<!--        for (i in 1:4) {-->
+<!--        plv[6,i] <- sum(GTR_mixed[i,] * plv[7,]) * sum(GTR1[i,] * plv[2,])-->
+<!--        }-->
+
+<!--        for (i in 1:4) {-->
+<!--        plv[5,i] <- sum(GTR1[i,] * plv[6,]) * sum(GTR1[i,] * plv[1,])-->
+<!--        }-->
+
+<!--        return(sum(root_bf * plv[5,]))-->
+<!--        })-->
+<!--        })-->
+
+<!--        sum(log(rowSums(likelihood_per_category * 0.25)))-->
+<!--        }-->
+
+<!--        sprintf("%.10f",computeLnL(0.0))-->
+<!--        sprintf("%.10f",computeLnL(1.0))-->
+<!--        sprintf("%.10f",computeLnL(0.5))-->
+<!--        sprintf("%.10f",computeLnL(0.707))-->

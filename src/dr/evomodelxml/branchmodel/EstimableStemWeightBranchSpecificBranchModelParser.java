@@ -83,7 +83,7 @@ public class EstimableStemWeightBranchSpecificBranchModelParser extends Abstract
                             stemWeightParameter = (Parameter) xoc.getElementFirstChild(STEM_WEIGHT);
                             branchModel.addClade(taxonList, substitutionModel, stemWeightParameter);
                         } else {
-                            throw new RuntimeException("Uh oh.");
+                            throw new RuntimeException("stemWeight must be provided as a parameter.");
 //                            branchModel.addClade(taxonList, substitutionModel, stemWeight);
                         }
 
@@ -151,10 +151,7 @@ public class EstimableStemWeightBranchSpecificBranchModelParser extends Abstract
                     }, 0, Integer.MAX_VALUE),
             new ElementRule(CLADE,
                     new XMLSyntaxRule[]{
-                            new XORRule(
-                                    AttributeRule.newDoubleRule(STEM_WEIGHT, true, "What proportion of the stem branch to include [0 <= w <= 1] (default 0)."),
-                                    new ElementRule(STEM_WEIGHT, Parameter.class, "Parameter defining what proportion of the stem branch to include [0 <= w <= 1].", true)
-                            ),
+                            new ElementRule(STEM_WEIGHT, Parameter.class, "Parameter defining what proportion of the stem branch to include [0 <= w <= 1].", false),
                             AttributeRule.newBooleanRule(ALLOW_SINGLETON, true),
                             new ElementRule(Taxa.class, "A set of taxa which defines a clade to apply a different site model to"),
                             new ElementRule(SubstitutionModel.class, "The substitution model"),

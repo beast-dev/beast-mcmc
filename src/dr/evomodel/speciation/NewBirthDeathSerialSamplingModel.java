@@ -82,11 +82,12 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     double psi;
     double r;
     double rho;
+    double logRho;
     //double rho0; // TODO remove
 
     private boolean[] gradientFlags;
 
-    private double savedLogQ;
+    double savedLogQ;
 
     private double savedQ;
     private double[] partialQ;
@@ -101,8 +102,8 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     private double eAt_Old;
     private double eAt_End;
 
-    private final double[] dA;
-    private final double[] dB;
+    final double[] dA;
+    final double[] dB;
     private final double[] dG2;
 
     boolean computedBCurrent;
@@ -257,7 +258,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         // Do nothing
     }
 
-    private double p(int model, double t) {
+    final double p(int model, double t) {
         double eAt = Math.exp(A * (t - modelStartTimes[model]));
         return p(eAt);
     }
@@ -267,7 +268,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         return (lambda + mu + psi - A * ((eAt1B - (1.0 - B)) / (eAt1B + (1.0 - B)))) / (2.0 * lambda);
     }
 
-    private double logQ(int model, double time) {
+    double logQ(int model, double time) {
         double At = A * (time - modelStartTimes[model]);
         double eAt = Math.exp(At);
         double sqrtDenominator = g1(eAt);
@@ -339,6 +340,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         psi = serialSamplingRate.getParameterValue(model);
         r = treatmentProbability.getParameterValue(model);
         rho = samplingProbability.getParameterValue(model);
+//        logRho = Math.log(rho);
         this.savedLogQ = Double.NaN;
     }
 
@@ -390,7 +392,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             double end = modelStartTimes[model + 1];
             double start = modelStartTimes[model];
             eAt_End = Math.exp(A * (end - start));
-            dPCompute(model, end, start, eAt_End, dPModelEnd);
+            dPCompute(model, end, start, eAt_End, dPModelEnd, dG2);
         }
         
         computedBCurrent = true;
@@ -492,20 +494,20 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         ));
     }
 
-    private double g1(double eAt) {
+    final double g1(double eAt) {
         return  (1 + B) * eAt + (1 - B);
     }
 
-    private double g2(double G1) {
+    final double g2(double G1) {
         return A * (1 - 2 * (1 - B) / G1);
     }
 
-    public double q(int model, double t) {
+    public final double q(int model, double t) {
         double eAt = Math.exp(A * (t - modelStartTimes[model]));
         return q(eAt);
     }
 
-    public double q(double eAt) {
+    public final double q(double eAt) {
         double sqrtDenominator = g1(eAt);
         return 4 * eAt / (sqrtDenominator * sqrtDenominator);
     }
@@ -606,7 +608,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         }
     }
 
-    private void dPCompute(int model, double t, double intervalStart, double eAt, double[] dP) {
+    void dPCompute(int model, double t, double intervalStart, double eAt, double[] dP, double[] dG2) {
 
         double G1 = g1(eAt);
 
@@ -689,7 +691,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             }
             dP[model * 4 + 3] = -A / lambda * ((1 - B) * (eAt - 1) + G1) * dB[model * 4 + 3] / (G1 * G1);
         }
-
     }
 
     private void dQCompute(int model, double t, double[] dQ) {
@@ -698,7 +699,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         dQCompute(model, t, dQ, eAt);
     }
 
-    private void dQCompute(int model, double t, double[] dQ, double eAt) {
+    void dQCompute(int model, double t, double[] dQ, double eAt) {
 
         double dwell = t - modelStartTimes[model];
         double G1 = g1(eAt);
@@ -848,10 +849,38 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 //                gradient[k * 5 + p] += nLineages * (partialQ_all_old[k * 4 + p] / Q_Old - partialQ_all_young[k * 4 + p] / Q_young);
 //            }
 //        }
+
+//        for (int p = 0; p < 4; ++p) {
+//            if (gradientFlags[p]) {
+//                for (int k = 0; k <= currentModelSegment; k++) {
+//                    gradient[k * 5 + p] += nLineages * (partialQ_all_old[k * 4 + p] / Q_Old - partialQ_all_young[k * 4 + p] / Q_young);
+//                }
+//            }
+//        }
+
+        accumulateGradientForInterval(gradient, currentModelSegment, nLineages,
+                partialQ_all_old, Q_Old, partialQ_all_young, Q_young);
+    }
+
+    void accumulateGradientForInterval(double[] gradient, int currentModelSegment, int nLineages,
+                                       double[] partialQ_all_old, double Q_Old,
+                                       double[] partialQ_all_young, double Q_young) {
         for (int p = 0; p < 4; ++p) {
             if (gradientFlags[p]) {
                 for (int k = 0; k <= currentModelSegment; k++) {
-                    gradient[k * 5 + p] += nLineages * (partialQ_all_old[k * 4 + p] / Q_Old - partialQ_all_young[k * 4 + p] / Q_young);
+                    gradient[k * 5 + p] += nLineages * (partialQ_all_old[k * 4 + p] / Q_Old
+                            - partialQ_all_young[k * 4 + p] / Q_young);
+                }
+            }
+        }
+    }
+
+    void accumulateGradientForSampling(double[] gradient, int currentModelSegment, double term1,
+                                       double[] intermediate) {
+        for (int p = 0; p < 4; p++) {
+            if (gradientFlags[p]) {
+                for (int k = 0; k <= currentModelSegment; k++) {
+                    gradient[k * 5 + p] += term1 * intermediate[k * 4 + p];
                 }
             }
         }
@@ -887,7 +916,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
             // double eAt = Math.exp(A * (intervalEnd - modelStartTimes[currentModelSegment]));
 
-            dPCompute(currentModelSegment, intervalEnd, modelStartTimes[currentModelSegment], eAt_Old, this.dPIntervalEnd);
+            dPCompute(currentModelSegment, intervalEnd, modelStartTimes[currentModelSegment], eAt_Old, dPIntervalEnd, dG2);
 
             double term1 = (1 - r) / ((1 - r) * p_it + r);
 
@@ -898,13 +927,15 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 //                gradient[fractionIndex(k, numIntervals)] += term1 * dPIntervalEnd[k * 4 + 3];
 //            }
 
-            for (int p = 0; p < 4; p++) {
-                if (gradientFlags[p]) {
-                    for (int k = 0; k <= currentModelSegment; k++) {
-                        gradient[genericIndex(k, p, numIntervals)] += term1 * dPIntervalEnd[k * 4 + p];
-                    }
-                }
-            }
+//            for (int p = 0; p < 4; p++) {
+//                if (gradientFlags[p]) {
+//                    for (int k = 0; k <= currentModelSegment; k++) {
+//                        gradient[genericIndex(k, p, numIntervals)] += term1 * dPIntervalEnd[k * 4 + p];
+//                    }
+//                }
+//            }
+
+            accumulateGradientForSampling(gradient, currentModelSegment, term1, dPIntervalEnd);
         }
 
         if (sampleIsAtEventTime && currentModelSegment > 0) {
@@ -919,13 +950,16 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 //                gradient[samplingIndex(k, numIntervals)] += term1 * dPModelEnd_prev[k * 4 + 2];
 //                gradient[fractionIndex(k, numIntervals)] += term1 * dPModelEnd_prev[k * 4 + 3];
 //            }
-            for (int p = 0; p < 4; p++) {
-                if (gradientFlags[p]) {
-                    for (int k = 0; k < currentModelSegment; k++) {
-                        gradient[genericIndex(k, p, numIntervals)] += term1 * dPModelEnd_prev[k * 4 + p];
-                    }
-                }
-            }
+
+//            for (int p = 0; p < 4; p++) {
+//                if (gradientFlags[p]) {
+//                    for (int k = 0; k < currentModelSegment; k++) {
+//                        gradient[genericIndex(k, p, numIntervals)] += term1 * dPModelEnd_prev[k * 4 + p];
+//                    }
+//                }
+//            }
+
+            accumulateGradientForSampling(gradient, currentModelSegment, term1, dPModelEnd_prev);
         }
     }
 

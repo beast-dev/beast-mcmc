@@ -31,18 +31,18 @@ public class Timer {
 	private long nanoStart = 0, nanoStop = 0;
 
 	public void start() {
+		nanoStart = System.nanoTime(); // One wants the hihest precision first.  TODO Do we really need this?
 		start = System.currentTimeMillis();
-		nanoStart = System.nanoTime();
 	}
 
 	public void stop() {
-		stop = System.currentTimeMillis();
 		nanoStop = System.nanoTime();
+		stop = System.currentTimeMillis();
 	}
 
 	public void update() {
-		stop = System.currentTimeMillis();
 		nanoStop = System.nanoTime();
+		stop = System.currentTimeMillis();
 	}
 
 	/**

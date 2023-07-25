@@ -26,6 +26,7 @@
 package dr.evomodelxml.speciation;
 
 import dr.evolution.util.Units;
+import dr.evomodel.speciation.MasBirthDeathSerialSamplingModel;
 import dr.evomodel.speciation.NewBirthDeathSerialSamplingModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
@@ -98,12 +99,15 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
 
         Logger.getLogger("dr.evomodel").info(citeThisModel);
 
-        // return new NewBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units);
-        NewBirthDeathSerialSamplingModel model = new NewBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units);
+        NewBirthDeathSerialSamplingModel model = MAS_TEST ?
+                new MasBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units) :
+                new NewBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units);
         model.setupGradientFlags(gradientFlags);
         model.setupTimeline(grids != null ? grids.getParameterValues(): null);
         return model;
     }
+
+    private static final boolean MAS_TEST = false;
 
     //************************************************************************
     // AbstractXMLObjectParser implementation

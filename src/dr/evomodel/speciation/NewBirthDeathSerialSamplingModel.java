@@ -868,18 +868,28 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
         for (int p = 0; p < 4; ++p) {
             if (gradientFlags[p]) {
                 for (int k = 0; k <= currentModelSegment; k++) {
-                    gradient[k * 5 + p] += nLineages * (partialQ_all_old[k * 4 + p] / Q_Old
-                            - partialQ_all_young[k * 4 + p] / Q_young);
+                    gradient[k * 5 + p] += nLineages * (partialQ_all_old[k * 4 + p] / Q_Old - partialQ_all_young[k * 4 + p] / Q_young);
                 }
             }
         }
     }
 
-    void accumulateGradientForSampling(double[] gradient, int currentModelSegment, double term1,
+    void accumulateGradientForSerialSampling(double[] gradient, int currentModelSegment, double term1,
                                        double[] intermediate) {
         for (int p = 0; p < 4; p++) {
             if (gradientFlags[p]) {
                 for (int k = 0; k <= currentModelSegment; k++) {
+                    gradient[k * 5 + p] += term1 * intermediate[k * 4 + p];
+                }
+            }
+        }
+    }
+
+    void accumulateGradientForIntensiveSampling(double[] gradient, int currentModelSegment, double term1,
+                                             double[] intermediate) {
+        for (int p = 0; p < 4; p++) {
+            if (gradientFlags[p]) {
+                for (int k = 0; k < currentModelSegment; k++) {
                     gradient[k * 5 + p] += term1 * intermediate[k * 4 + p];
                 }
             }
@@ -935,7 +945,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 //                }
 //            }
 
-            accumulateGradientForSampling(gradient, currentModelSegment, term1, dPIntervalEnd);
+            accumulateGradientForSerialSampling(gradient, currentModelSegment, term1, dPIntervalEnd);
         }
 
         if (sampleIsAtEventTime && currentModelSegment > 0) {
@@ -944,12 +954,6 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
             double term1 = (1 - r) / ((1 - r) * previousP + r);
 
-//            for (int k = 0; k < currentModelSegment; k++) {
-//                gradient[birthIndex(k, numIntervals)] += term1 * dPModelEnd_prev[k * 4 + 0];
-//                gradient[deathIndex(k, numIntervals)] += term1 * dPModelEnd_prev[k * 4 + 1];
-//                gradient[samplingIndex(k, numIntervals)] += term1 * dPModelEnd_prev[k * 4 + 2];
-//                gradient[fractionIndex(k, numIntervals)] += term1 * dPModelEnd_prev[k * 4 + 3];
-//            }
 
 //            for (int p = 0; p < 4; p++) {
 //                if (gradientFlags[p]) {
@@ -959,7 +963,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 //                }
 //            }
 
-            accumulateGradientForSampling(gradient, currentModelSegment, term1, dPModelEnd_prev);
+            accumulateGradientForIntensiveSampling(gradient, currentModelSegment, term1, dPModelEnd_prev);
         }
     }
 

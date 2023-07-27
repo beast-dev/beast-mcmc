@@ -59,10 +59,21 @@ public class MasBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplin
         }
     }
 
-    final void accumulateGradientForSampling(double[] gradient, int currentModelSegment, double term1,
+    final void accumulateGradientForSerialSampling(double[] gradient, int currentModelSegment, double term1,
                                              double[] intermediate) {
 
         for (int k = 0; k <= currentModelSegment; k++) {
+            for (int p = 0; p < 4; ++p) {
+                gradient[k * 5 + p] += term1 * intermediate[k * 4 + p];
+            }
+        }
+
+    }
+
+    final void accumulateGradientForIntensiveSampling(double[] gradient, int currentModelSegment, double term1,
+                                                   double[] intermediate) {
+
+        for (int k = 0; k < currentModelSegment; k++) {
             for (int p = 0; p < 4; ++p) {
                 gradient[k * 5 + p] += term1 * intermediate[k * 4 + p];
             }

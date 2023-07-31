@@ -27,9 +27,9 @@ package dr.evomodel.speciation;
 
 import dr.inference.model.Parameter;
 
-public class MasBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplingModel {
+public class TwoParamBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplingModel {
 
-    public MasBirthDeathSerialSamplingModel(Parameter birthRate, Parameter deathRate, Parameter serialSamplingRate, Parameter treatmentProbability, Parameter samplingProbability, Parameter originTime, boolean condition, int numIntervals, double gridEnd, Type units) {
+    public TwoParamBirthDeathSerialSamplingModel(Parameter birthRate, Parameter deathRate, Parameter serialSamplingRate, Parameter treatmentProbability, Parameter samplingProbability, Parameter originTime, boolean condition, int numIntervals, double gridEnd, Type units) {
         super(birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingProbability, originTime, condition, numIntervals, gridEnd, units);
     }
 
@@ -54,8 +54,6 @@ public class MasBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplin
         for (int k = 0; k <= currentModelSegment; k++) {
             gradient[k * 5 + 0] += nLineages * (partialQ_all_old[k * 4 + 0] / Q_Old
                     - partialQ_all_young[k * 4 + 0] / Q_young);
-            gradient[k * 5 + 1] += nLineages * (partialQ_all_old[k * 4 + 1] / Q_Old
-                    - partialQ_all_young[k * 4 + 1] / Q_young);
             gradient[k * 5 + 2] += nLineages * (partialQ_all_old[k * 4 + 2] / Q_Old
                     - partialQ_all_young[k * 4 + 2] / Q_young);
         }
@@ -66,9 +64,9 @@ public class MasBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplin
 
         for (int k = 0; k <= currentModelSegment; k++) {
                 gradient[k * 5 + 0] += term1 * intermediate[k * 4 + 0];
-                gradient[k * 5 + 1] += term1 * intermediate[k * 4 + 1];
                 gradient[k * 5 + 2] += term1 * intermediate[k * 4 + 2];
         }
+
     }
 
     final void accumulateGradientForIntensiveSampling(double[] gradient, int currentModelSegment, double term1,
@@ -76,9 +74,9 @@ public class MasBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplin
 
         for (int k = 0; k < currentModelSegment; k++) {
                 gradient[k * 5 + 0] += term1 * intermediate[k * 4 + 0];
-                gradient[k * 5 + 1] += term1 * intermediate[k * 4 + 1];
                 gradient[k * 5 + 2] += term1 * intermediate[k * 4 + 2];
         }
+
     }
 
     final void dBCompute(int model, double[] dB) {
@@ -92,7 +90,6 @@ public class MasBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplin
         double term1 = 1 - 2 * (1 - rho) * previousP;
 
         dB[model * 4 + 0] = (A * term1 - dA[0] * (term1 * lambda + mu + psi)) / (A * A);
-        dB[model * 4 + 1] = (A - dA[1] * (term1 * lambda + mu + psi)) / (A * A);
         dB[model * 4 + 2] = (A - dA[2] * (term1 * lambda + mu + psi)) / (A * A);
     }
 
@@ -116,7 +113,6 @@ public class MasBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplin
         double G2 = g2(G1);
 
         dP[model * 4 + 0] = (-mu - psi - lambda * dG2[0] + G2) / (2 * lambda * lambda);
-        dP[model * 4 + 1] = (1 - dG2[1]) / (2 * lambda);
         dP[model * 4 + 2] = (1 - dG2[2]) / (2 * lambda);
     }
 
@@ -134,7 +130,6 @@ public class MasBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplin
 
         for (int k = 0; k < model; ++k) {
             dQ[k * 4 + 0] = term5 * dB[k * 4 + 0];
-            dQ[k * 4 + 1] = term5 * dB[k * 4 + 1];
             dQ[k * 4 + 2] = term5 * dB[k * 4 + 2];
         }
 
@@ -142,7 +137,6 @@ public class MasBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplin
         double term7 = dwell * term2;
 
         dQ[model * 4 + 0] = term6 * (dA[0] * term7 - dB[model * 4 + 0] * term3);
-        dQ[model * 4 + 1] = term6 * (dA[1] * term7 - dB[model * 4 + 1] * term3);
         dQ[model * 4 + 2] = term6 * (dA[2] * term7 - dB[model * 4 + 2] * term3);
     }
 

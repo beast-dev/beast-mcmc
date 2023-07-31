@@ -25,9 +25,11 @@
 
 package dr.evomodelxml.speciation;
 
+import com.sun.org.apache.bcel.internal.generic.SWITCH;
 import dr.evolution.util.Units;
 import dr.evomodel.speciation.MasBirthDeathSerialSamplingModel;
 import dr.evomodel.speciation.NewBirthDeathSerialSamplingModel;
+import dr.evomodel.speciation.TwoParamBirthDeathSerialSamplingModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -53,6 +55,12 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
     public static final String GRIDS = "grids";
 
     public static final String BDSS = "bdss";
+
+    enum ParametersToUse {
+        ALL,
+        LAM_MU_PSI,
+        LAM_PSI
+    }
 
     public String getParserName() {
         return BIRTH_DEATH_SERIAL_MODEL;
@@ -85,6 +93,18 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
         gradientFlags[3] = xo.getChild(RHO).getAttribute(GRADIENT_FLAG, true).booleanValue();
         gradientFlags[4] = xo.getChild(R).getAttribute(GRADIENT_FLAG, true).booleanValue();
 
+        ParametersToUse parametersToUse;
+
+        if (gradientFlags[0] && gradientFlags[1] && gradientFlags[2] && (!gradientFlags[3]) && (!gradientFlags[4])) {
+            // three true, two false
+            parametersToUse = ParametersToUse.LAM_MU_PSI;
+        } else if (gradientFlags[0] && (!gradientFlags[1]) && gradientFlags[2] && (!gradientFlags[3]) && (!gradientFlags[4])) {
+            // two true, three false
+            parametersToUse = ParametersToUse.LAM_PSI;
+        } else {
+            parametersToUse = ParametersToUse.ALL;
+        }
+
         final Parameter grids = xo.hasChildNamed(GRIDS) ? (Parameter) xo.getElementFirstChild(GRIDS): null;
 
 
@@ -99,15 +119,30 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
 
         Logger.getLogger("dr.evomodel").info(citeThisModel);
 
-        NewBirthDeathSerialSamplingModel model = MAS_TEST ?
-                new MasBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units) :
-                new NewBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units);
-        model.setupGradientFlags(gradientFlags);
+//        NewBirthDeathSerialSamplingModel model = MAS_TEST ?
+//                new MasBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units) :
+//                new NewBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units);
+
+        NewBirthDeathSerialSamplingModel model = null;
+
+        switch (parametersToUse) {
+            case ALL:
+                model = new NewBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units);
+                break;
+            case LAM_MU_PSI:
+                model = new MasBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units);
+                break;
+            case LAM_PSI:
+                model = new TwoParamBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units);
+                break;
+        }
+
+        // model.setupGradientFlags(gradientFlags);
         model.setupTimeline(grids != null ? grids.getParameterValues(): null);
         return model;
     }
 
-    private static final boolean MAS_TEST = false;
+    private static final boolean MAS_TEST = true;
 
     //************************************************************************
     // AbstractXMLObjectParser implementation

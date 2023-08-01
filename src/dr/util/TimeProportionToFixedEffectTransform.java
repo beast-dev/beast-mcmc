@@ -43,8 +43,7 @@ public class TimeProportionToFixedEffectTransform extends Transform.Multivariate
         double rateAncestral = Math.exp(values[1]);
         double rateDescendant = Math.exp(values[2]);
         double[] transformed = new double[1];
-        transformed[0] = Math.log(propTime + (1.0 - propTime) * rateDescendant/rateAncestral);
-        verifyOutput(values);
+        transformed[0] = Math.log(propTime * rateDescendant / rateAncestral + (1.0 - propTime));
         return transformed;
     }
 
@@ -53,7 +52,7 @@ public class TimeProportionToFixedEffectTransform extends Transform.Multivariate
         double rateAncestral = Math.exp(values[1]);
         double rateDescendant = Math.exp(values[2]);
         double[] transformed = new double[1];
-        transformed[0] = Math.log(propTime + (1.0 - propTime) * rateDescendant/rateAncestral);
+        transformed[0] = Math.log(propTime * rateDescendant / rateAncestral + (1.0 - propTime));
 
         double fe = transformed[0];
         double lb = rateAncestral;

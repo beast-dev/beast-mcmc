@@ -47,9 +47,9 @@ public class MasBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplin
         return lnL;
     }
 
-    final void accumulateGradientForInterval(final double[] gradient, final int currentModelSegment, final int nLineages,
-                                             final double[] partialQ_all_old, final double Q_Old,
-                                             final double[] partialQ_all_young, final double Q_young) {
+    void accumulateGradientForInterval(final double[] gradient, final int currentModelSegment, final int nLineages,
+                                       final double[] partialQ_all_old, final double Q_Old,
+                                       final double[] partialQ_all_young, final double Q_young) {
 
         for (int k = 0; k <= currentModelSegment; k++) {
             gradient[k * 5 + 0] += nLineages * (partialQ_all_old[k * 4 + 0] / Q_Old
@@ -61,7 +61,7 @@ public class MasBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplin
         }
     }
 
-    final void accumulateGradientForSerialSampling(double[] gradient, int currentModelSegment, double term1,
+    void accumulateGradientForSerialSampling(double[] gradient, int currentModelSegment, double term1,
                                              double[] intermediate) {
 
         for (int k = 0; k <= currentModelSegment; k++) {
@@ -71,7 +71,7 @@ public class MasBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplin
         }
     }
 
-    final void accumulateGradientForIntensiveSampling(double[] gradient, int currentModelSegment, double term1,
+     void accumulateGradientForIntensiveSampling(double[] gradient, int currentModelSegment, double term1,
                                                    double[] intermediate) {
 
         for (int k = 0; k < currentModelSegment; k++) {
@@ -81,7 +81,7 @@ public class MasBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplin
         }
     }
 
-    final void dBCompute(int model, double[] dB) {
+     void dBCompute(int model, double[] dB) {
 
         for (int k = 0; k < model; ++k) {
             for (int p = 0; p < 4; p++) {
@@ -96,7 +96,7 @@ public class MasBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplin
         dB[model * 4 + 2] = (A - dA[2] * (term1 * lambda + mu + psi)) / (A * A);
     }
 
-    final void dPCompute(int model, double t, double intervalStart, double eAt, double[] dP, double[] dG2) {
+    void dPCompute(int model, double t, double intervalStart, double eAt, double[] dP, double[] dG2) {
 
         double G1 = g1(eAt);
 
@@ -121,7 +121,7 @@ public class MasBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplin
     }
 
 
-    final void dQCompute(int model, double t, double[] dQ, double eAt) {
+    void dQCompute(int model, double t, double[] dQ, double eAt) {
 
         double dwell = t - modelStartTimes[model];
         double G1 = g1(eAt);

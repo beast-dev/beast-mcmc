@@ -27,25 +27,12 @@ package dr.evomodel.speciation;
 
 import dr.inference.model.Parameter;
 
-public class TwoParamBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplingModel {
+public class TwoParamBirthDeathSerialSamplingModel extends MasBirthDeathSerialSamplingModel {
 
     public TwoParamBirthDeathSerialSamplingModel(Parameter birthRate, Parameter deathRate, Parameter serialSamplingRate, Parameter treatmentProbability, Parameter samplingProbability, Parameter originTime, boolean condition, int numIntervals, double gridEnd, Type units) {
         super(birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingProbability, originTime, condition, numIntervals, gridEnd, units);
     }
 
-    @Override
-    public final double processModelSegmentBreakPoint(int model, double intervalStart, double intervalEnd, int nLineages) {
-//        double lnL = nLineages * (logQ(model, intervalEnd) - logQ(model, intervalStart));
-        double lnL = nLineages * Math.log(Q(model, intervalEnd) / Q(model, intervalStart));
-        if ( samplingProbability.getValue(model + 1) > 0.0 && samplingProbability.getValue(model + 1) < 1.0) {
-            // Add in probability of un-sampled lineages
-            // We don't need this at t=0 because all lineages in the tree are sampled
-            // TODO: check if we're right about how many lineages are actually alive at this time. Are we inadvertently over-counting or under-counting due to samples added at this _exact_ time?
-            lnL += nLineages * Math.log(1.0 - samplingProbability.getValue(model + 1));
-        }
-        this.savedLogQ = Double.NaN;
-        return lnL;
-    }
 
     final void accumulateGradientForInterval(final double[] gradient, final int currentModelSegment, final int nLineages,
                                              final double[] partialQ_all_old, final double Q_Old,
@@ -140,54 +127,6 @@ public class TwoParamBirthDeathSerialSamplingModel extends NewBirthDeathSerialSa
         dQ[model * 4 + 2] = term6 * (dA[2] * term7 - dB[model * 4 + 2] * term3);
     }
 
-
-    final double Q(int model, double time) {
-        double At = A * (time - modelStartTimes[model]);
-        double eAt = Math.exp(At);
-        double sqrtDenominator = g1(eAt);
-        return eAt / (sqrtDenominator * sqrtDenominator);
-    }
-
-    final double logQ(int model, double time) {
-        double At = A * (time - modelStartTimes[model]);
-        double eAt = Math.exp(At);
-        double sqrtDenominator = g1(eAt);
-        return At - 2 * Math.log(sqrtDenominator); // TODO log4 (additive constant) is not needed since we always see logQ(a) - logQ(b)
-    }
-
-    @Override
-    public double processInterval(int model, double tYoung, double tOld, int nLineages) {
-        double logQ_young;
-        double logQ_old = Q(model, tOld);
-        if (!Double.isNaN(this.savedLogQ)) {
-            logQ_young = this.savedLogQ;
-        } else {
-            logQ_young = Q(model, tYoung);
-        }
-        this.savedLogQ = logQ_old;
-        return nLineages * Math.log(logQ_old / logQ_young);
-    }
-
-    @Override
-    public double processSampling(int model, double tOld) {
-
-        double logSampProb;
-
-        boolean sampleIsAtEventTime = tOld == modelStartTimes[model];
-        boolean samplesTakenAtEventTime = rho > 0;
-
-        if (sampleIsAtEventTime && samplesTakenAtEventTime) {
-            logSampProb = Math.log(rho);
-            if (model > 0) {
-                logSampProb += Math.log(r + ((1.0 - r) * previousP));
-            }
-        } else {
-            double logPsi = Math.log(psi);
-            logSampProb = logPsi + Math.log(r + (1.0 - r) * p(model,tOld));
-        }
-
-        return logSampProb;
-    }
 }
 
 /*

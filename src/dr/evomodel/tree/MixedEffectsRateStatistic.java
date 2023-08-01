@@ -91,7 +91,7 @@ public class MixedEffectsRateStatistic extends TreeStatistic {
         for (int i = 0; i < offset; i++) {
             NodeRef child = tree.getExternalNode(i);
             rates[i] = branchRateModel.getBranchRate(tree, child);
-            locations[i] = branchRateTransform.getLocation(tree, tree.getNode(i));
+            locations[i] = branchRateTransform.getLocation(tree, child);
         }
         if (internal) {
             final int n = tree.getInternalNodeCount();
@@ -100,7 +100,7 @@ public class MixedEffectsRateStatistic extends TreeStatistic {
                 NodeRef child = tree.getInternalNode(i);
                 if (!tree.isRoot(child)) {
                     rates[k] = branchRateModel.getBranchRate(tree, child);
-                    locations[k] = branchRateTransform.getLocation(tree, tree.getNode(i));
+                    locations[k] = branchRateTransform.getLocation(tree, child);
                     k++;
                 }
             }

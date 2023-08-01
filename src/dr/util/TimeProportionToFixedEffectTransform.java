@@ -43,8 +43,28 @@ public class TimeProportionToFixedEffectTransform extends Transform.Multivariate
         double rateAncestral = Math.exp(values[1]);
         double rateDescendant = Math.exp(values[2]);
         double[] transformed = new double[1];
-        transformed[0] = Math.log((rateDescendant * propTime + rateAncestral * (1.0 - propTime)) / (rateDescendant * propTime));
+        transformed[0] = Math.log(propTime + (1.0 - propTime) * rateDescendant/rateAncestral);
+        verifyOutput(values);
         return transformed;
+    }
+
+    private void verifyOutput(double[] values) {
+        double propTime = values[0];
+        double rateAncestral = Math.exp(values[1]);
+        double rateDescendant = Math.exp(values[2]);
+        double[] transformed = new double[1];
+        transformed[0] = Math.log(propTime + (1.0 - propTime) * rateDescendant/rateAncestral);
+
+        double fe = transformed[0];
+        double lb = rateAncestral;
+        double ub = rateDescendant;
+        if (rateAncestral > rateDescendant) {
+            lb = rateDescendant;
+            ub = rateAncestral;
+        }
+
+        double newRate = rateAncestral * Math.exp(fe);
+        assert(newRate >= lb && newRate <= ub);
     }
 
     @Override

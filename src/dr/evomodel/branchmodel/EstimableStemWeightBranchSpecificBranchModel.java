@@ -26,16 +26,10 @@
 package dr.evomodel.branchmodel;
 
 import dr.evolution.tree.TreeUtils;
-import dr.evolution.util.Taxon;
-import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.branchratemodel.LocalClockModelParser;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
@@ -49,8 +43,9 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 public class EstimableStemWeightBranchSpecificBranchModel extends BranchSpecificBranchModel {
-    private List<Parameter> stemWeightParameters = new ArrayList<>();
-    protected Map<BitSet, Integer> stemWeightMap = new HashMap<BitSet, Integer>();
+
+    final private List<Parameter> stemWeightParameters = new ArrayList<>();
+    protected Map<BitSet, Integer> stemWeightMap = new HashMap<>();
     private boolean hasBackbone = false;
 
     public EstimableStemWeightBranchSpecificBranchModel(TreeModel treeModel, SubstitutionModel rootSubstitutionModel) {
@@ -128,7 +123,7 @@ public class EstimableStemWeightBranchSpecificBranchModel extends BranchSpecific
 
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if ( stemWeightParameters.contains(variable) && clades.size() > 0) {
+        if (variable instanceof Parameter && stemWeightParameters.contains((Parameter)variable) && clades.size() > 0) {
             setUpdateNodeMaps(true);
         }
         fireModelChanged();

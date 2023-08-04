@@ -311,6 +311,10 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
         return total;
     }
 
+    public Tree getTree() {
+        return treeModel;
+    }
+
     @Override
     public Citation.Category getCategory() {
         return Citation.Category.MOLECULAR_CLOCK;

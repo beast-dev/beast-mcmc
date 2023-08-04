@@ -90,6 +90,9 @@ public abstract class AbstractBranchRateModel extends AbstractModelLikelihood im
     public LogColumn[] getColumns() {
         if (this instanceof DifferentiableBranchRates) {
             Tree tree = ((DifferentiableBranchRates) this).getTree();
+            if (tree == null) {
+                return super.getColumns();
+            }
             LogColumn[] columns = new LogColumn[tree.getNodeCount() - 1];
             for (int i = 0; i < columns.length; i++) {
                 if (tree.getNode(i) != tree.getRoot())

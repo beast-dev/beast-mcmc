@@ -255,6 +255,7 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
         if (localClock != null) {
             double parentRate = rate;
             double stemProportion = 1.0;
+            double stemTime = 0.0;
 
             if (localClock != parentClock) {
                 // this is the branch where the rate switch occurs
@@ -267,15 +268,16 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
                 }
                 if (localClock.stemAsTime) {
                     // this could be greater than 1 in which case bad things might happen
-                    stemProportion = Math.min(localClock.getStemValue() / tree.getBranchLength(node), 1.0);
+                    stemTime = localClock.getStemValue();
+                    stemProportion = stemTime / tree.getBranchLength(node);
 
-//                    stemProportion = localClock.getStemValue() / tree.getBranchLength(node);
-//                    if (stemProportion > 1.0) {
-//                        // it should be ensured that this never happens.
-//                        throw new IllegalArgumentException("A stem proportion for a local clock is > 1.0");
-//                    }
+                    if (stemProportion > 1.0) {
+                        // it should be ensured that this never happens.
+                        throw new IllegalArgumentException("A stem proportion for a local clock is > 1.0");
+                    }
                 } else {
                     stemProportion = localClock.getStemValue();
+                    stemTime = tree.getBranchLength(node) * stemProportion;
                 }
             }
 

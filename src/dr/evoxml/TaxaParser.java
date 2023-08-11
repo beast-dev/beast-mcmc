@@ -30,6 +30,8 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.xml.*;
 
+import java.util.logging.Logger;
+
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
@@ -80,6 +82,10 @@ public class TaxaParser extends AbstractXMLObjectParser {
                 taxonList.removeTaxa(exclude);
             }
         }
+
+        final Logger logger = Logger.getLogger("dr.evoxml");
+        logger.info("\nTaxon list '" + xo.getId() + "' created with " + taxonList.getTaxonCount() + " taxa.");
+        logger.info("    most recent taxon date = " + Taxon.getMostRecentDate());
 
         return taxonList;
     }

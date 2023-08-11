@@ -264,9 +264,26 @@ public class TreeModelParser extends AbstractXMLObjectParser {
             }
         }
         
+        double minTaxonHeight = Double.MAX_VALUE;
+        double maxTaxonHeight = Double.MIN_VALUE;
+        for (int i = 0; i < treeModel.getTaxonCount(); i++) {
+            Taxon taxon = treeModel.getTaxon(i);
+            double h = Taxon.getHeightFromDate(taxon.getDate());
+            if (h < minTaxonHeight) {
+                minTaxonHeight = h;
+            }
+            if (h > maxTaxonHeight) {
+                maxTaxonHeight = h;
+            }
+        }
+        
 //        Logger.getLogger("dr.evomodel").info("  initial tree topology = " + TreeUtils.uniqueNewick(treeModel, treeModel.getRoot()));
-        Logger.getLogger("dr.evomodel").info("  taxon count = " + treeModel.getExternalNodeCount());
-        Logger.getLogger("dr.evomodel").info("  tree height = " + treeModel.getNodeHeight(treeModel.getRoot()));
+        Logger.getLogger("dr.evomodel").info("             taxon count = " + treeModel.getExternalNodeCount());
+        Logger.getLogger("dr.evomodel").info("             tree height = " + treeModel.getNodeHeight(treeModel.getRoot()));
+        Logger.getLogger("dr.evomodel").info("          min tip height = " + minTaxonHeight);
+        Logger.getLogger("dr.evomodel").info("          max tip height = " + maxTaxonHeight);
+        ;
+
         return treeModel;
     }
 

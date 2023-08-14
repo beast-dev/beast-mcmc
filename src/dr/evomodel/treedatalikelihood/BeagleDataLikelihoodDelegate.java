@@ -438,8 +438,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             instanceFlags = instanceDetails.getFlags();
 
-            if (IS_THREAD_COUNT_COMPATIBLE() && threadCount > 1) {
-                beagle.setCPUThreadCount(threadCount);
+            if (IS_THREAD_COUNT_COMPATIBLE()) {
+                if (threadCount > 0) {
+                    beagle.setCPUThreadCount(threadCount);
+                } else { // if no thread_count is specified then this will be -1 so put no upper bound on threads
+                    beagle.setCPUThreadCount(Integer.MAX_VALUE);
+                }
             }
 
             if (patternList instanceof UncertainSiteList) { // TODO Remove

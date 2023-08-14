@@ -263,33 +263,28 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("illegal child element in  " + getParserName() + ": " + xo.getChildName(i) + " " + xo.getChild(i));
             }
         }
-        
+
         double minTaxonHeight = Double.MAX_VALUE;
-        double maxTaxonHeight = Double.MIN_VALUE;
-        boolean hasDates = false;
+        double maxTaxonHeight = -Double.MAX_VALUE;
         for (int i = 0; i < treeModel.getTaxonCount(); i++) {
             Taxon taxon = treeModel.getTaxon(i);
+            double h = 0;
             if (taxon.getDate() != null) {
-                hasDates = true;
-                double h = Taxon.getHeightFromDate(taxon.getDate());
-                if (h < minTaxonHeight) {
-                    minTaxonHeight = h;
-                }
-                if (h > maxTaxonHeight) {
-                    maxTaxonHeight = h;
-                }
+                h = Taxon.getHeightFromDate(taxon.getDate());
+            }
+            if (h < minTaxonHeight) {
+                minTaxonHeight = h;
+            }
+            if (h > maxTaxonHeight) {
+                maxTaxonHeight = h;
             }
         }
-        
+
 //        Logger.getLogger("dr.evomodel").info("  initial tree topology = " + TreeUtils.uniqueNewick(treeModel, treeModel.getRoot()));
         Logger.getLogger("dr.evomodel").info("             taxon count = " + treeModel.getExternalNodeCount());
         Logger.getLogger("dr.evomodel").info("             tree height = " + treeModel.getNodeHeight(treeModel.getRoot()));
-        if (hasDates) {
-            Logger.getLogger("dr.evomodel").info("          min tip height = " + minTaxonHeight);
-            Logger.getLogger("dr.evomodel").info("          max tip height = " + maxTaxonHeight);
-        } else {
-            Logger.getLogger("dr.evomodel").info("          tip heights = 0");
-        }
+        Logger.getLogger("dr.evomodel").info("          min tip height = " + minTaxonHeight);
+        Logger.getLogger("dr.evomodel").info("          max tip height = " + maxTaxonHeight);
         return treeModel;
     }
 

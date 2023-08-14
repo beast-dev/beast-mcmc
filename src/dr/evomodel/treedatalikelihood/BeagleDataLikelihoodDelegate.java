@@ -438,11 +438,19 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             instanceFlags = instanceDetails.getFlags();
 
-            if (IS_THREAD_COUNT_COMPATIBLE()) {
-                if (threadCount > 0) {
-                    beagle.setCPUThreadCount(threadCount);
-                } else { // if no thread_count is specified then this will be -1 so put no upper bound on threads
-                    beagle.setCPUThreadCount(Integer.MAX_VALUE);
+            if ((instanceFlags & BeagleFlag.THREADING_CPP.getMask()) != 0) {
+                if (IS_THREAD_COUNT_COMPATIBLE() || threadCount != 0) {
+                    if (threadCount > 0) {
+                        beagle.setCPUThreadCount(threadCount);
+                        logger.info("    Using " + threadCount + " threads for CPU.");
+                    } else { // if no thread_count is specified then this will be -1 so put no upper bound on threads
+                        logger.info("    Using default thread count for CPU.");
+                        // this is just intended to remove the cap on number of threads so BEAGLE will
+                        // make its own decision (for better or worse).
+                        beagle.setCPUThreadCount(1000);
+                    }
+                } else {
+                    logger.info("    BEAGLE threading turned off (or unavailable) for CPU.");
                 }
             }
 

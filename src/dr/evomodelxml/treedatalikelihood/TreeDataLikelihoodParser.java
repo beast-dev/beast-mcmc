@@ -26,7 +26,6 @@
 package dr.evomodelxml.treedatalikelihood;
 
 import dr.evolution.alignment.PatternList;
-import dr.evolution.alignment.Patterns;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchmodel.BranchModel;
@@ -37,7 +36,12 @@ import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
-import dr.evomodel.treedatalikelihood.*;
+import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.PreOrderSettings;
+import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
@@ -110,7 +114,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         if (patternLists.size() > 1) {
             // will currently recommend true if using GPU, CUDA or OpenCL.
             useBeagle3MultiPartition = MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_RECOMMENDED();
-
+    
             if (System.getProperty("USE_BEAGLE3_EXTENSIONS") != null) {
                 useBeagle3MultiPartition = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3_EXTENSIONS"));
             }
@@ -139,13 +143,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             }
         }
 
-        int instanceCount = 0;
-        String ic = System.getProperty(BEAGLE_INSTANCE_COUNT);
-        if (ic != null && ic.length() > 0) {
-            instanceCount = Integer.parseInt(ic);
-        }
-
-        if ( useBeagle3MultiPartition && instanceCount == 0 && !useJava) {
+        if ( useBeagle3MultiPartition && !useJava) {
 
             if (beagleThreadCount == -1 && threadCount >= 0) {
                 System.setProperty(BEAGLE_THREAD_COUNT, Integer.toString(threadCount));
@@ -160,7 +158,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                         useAmbiguities,
                         scalingScheme,
                         delayRescalingUntilUnderflow
-                );
+                        );
 
                 return new TreeDataLikelihood(
                         dataLikelihoodDelegate,
@@ -170,7 +168,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 useBeagle3MultiPartition = false;
             }
 
-        }
+        } 
 
         // The multipartition data likelihood isn't available so make a set of single partition data likelihoods
         List<Likelihood> treeDataLikelihoods = new ArrayList<Likelihood>();
@@ -184,45 +182,24 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             logger.info("  Dividing each partition amongst " + instanceCount + " BEAGLE instances:");
         }
         for (int i = 0; i < patternLists.size(); i++) {
-            if (instanceCount > 1) {
-                for (int j = 0; j < instanceCount; j++) {
-                    PatternList patterns = new Patterns(patternLists.get(i), j, instanceCount);
-                    DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+
+            DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+                    treeModel,
+                    patternLists.get(i),
+                    branchModels.get(i),
+                    siteRateModels.get(i),
+                    useAmbiguities,
+                    preferGPU,
+                    scalingScheme,
+                    delayRescalingUntilUnderflow,
+                    settings);
+
+            treeDataLikelihoods.add(
+                    new TreeDataLikelihood(
+                            dataLikelihoodDelegate,
                             treeModel,
-                            patterns,
-                            branchModels.get(i),
-                            siteRateModels.get(i),
-                            useAmbiguities,
-                            preferGPU,
-                            scalingScheme,
-                            delayRescalingUntilUnderflow,
-                            settings);
+                            branchRateModel));
 
-                    treeDataLikelihoods.add(
-                            new TreeDataLikelihood(
-                                    dataLikelihoodDelegate,
-                                    treeModel,
-                                    branchRateModel));
-                }
-            } else {
-                DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
-                        treeModel,
-                        patternLists.get(i),
-                        branchModels.get(i),
-                        siteRateModels.get(i),
-                        useAmbiguities,
-                        preferGPU,
-                        scalingScheme,
-                        delayRescalingUntilUnderflow,
-                        settings);
-
-                treeDataLikelihoods.add(
-                        new TreeDataLikelihood(
-                                dataLikelihoodDelegate,
-                                treeModel,
-                                branchRateModel));
-
-            }
         }
 
         if (treeDataLikelihoods.size() == 1) {
@@ -230,7 +207,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         return new CompoundLikelihood(treeDataLikelihoods);
-
+    
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

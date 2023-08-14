@@ -49,6 +49,7 @@ import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut
@@ -89,6 +90,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                                                   PartialsRescalingScheme scalingScheme,
                                                   boolean delayRescalingUntilUnderflow,
                                                   PreOrderSettings settings) throws XMLParseException {
+
+        final Logger logger = Logger.getLogger("dr.evomodel");
+        logger.info("\nCreating tree data likelihoods for " + patternLists.size() + " partitions");
 
         if (tipStatesModel != null) {
             throw new XMLParseException("Tip State Error models are not supported yet with TreeDataLikelihood");

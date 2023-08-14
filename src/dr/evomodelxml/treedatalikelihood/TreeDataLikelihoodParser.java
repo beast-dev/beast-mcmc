@@ -178,9 +178,6 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             System.setProperty(BEAGLE_THREAD_COUNT, Integer.toString(threadCount / patternLists.size()));
         }
 
-        if (instanceCount > 1) {
-            logger.info("  Dividing each partition amongst " + instanceCount + " BEAGLE instances:");
-        }
         for (int i = 0; i < patternLists.size(); i++) {
 
             DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(

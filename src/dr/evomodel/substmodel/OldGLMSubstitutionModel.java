@@ -94,7 +94,7 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel
     public double getLogLikelihood() {
         double logL = super.getLogLikelihood();
         if (logL == 0 &&
-            BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(testProbabilities,this)) { // Also check that graph is connected
+                BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(testProbabilities,this)) { // Also check that graph is connected
             return 0;
         }
         return Double.NEGATIVE_INFINITY;
@@ -123,6 +123,7 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel
 
     @Override
     public WrappedMatrix getInfinitesimalDifferentialMatrix(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt) {
+        // TODO all instantiations of this function currently do the same thing; remove duplication
         return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
     }
 
@@ -179,7 +180,17 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel
                 }
             }
 
+//            final double chainRule = getChainRule();
+//            double[][] design = glm.getX(effect);
+//
+//            for (int i = 0; i < relativeRates.length; ++i) {
+//                differentialRates[i] = design[i][dim] / normalizingConstant * chainRule;
+//            }
         }
+
+//        double getChainRule() {
+//            return Math.exp(parameter.getParameterValue(dim));
+//        }
 
         private int index(int i, int j) {
             return i * stateCount + j;
@@ -196,10 +207,21 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel
         return new WrtOldGLMSubstitutionModelParameter(glm, effectIndex, dim, stateCount);
     }
 
+//    @Override
+//    public DifferentialMassProvider.DifferentialWrapper.WrtParameter factory(Parameter parameter, int dim) {
+//        for (int i = 0; i < glm.getNumberOfFixedEffects(); ++i) {
+//            Parameter effect = glm.getFixedEffect(i);
+//            if (parameter == effect) {
+//                return new WrtGlmCoefficient(effect, i, dim);
+//            }
+//        }
+//        throw new RuntimeException("Parameter not found");
+//    }
+
     @Override
     public void setupDifferentialRates(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
         final double[] Q = new double[stateCount * stateCount];
-        getInfinitesimalMatrix(Q);
+        getInfinitesimalMatrix(Q); // TODO These are large; should cache
         wrt.setupDifferentialRates(differentialRates, Q, normalizingConstant);
     }
 
@@ -211,15 +233,19 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel
     @Override
     public double getWeightedNormalizationGradient(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[][] differentialMassMatrix, double[] differentialFrequencies) {
         double derivative = 0;
-        double[] frequencies = getFrequencyModel().getFrequencies();
-        for (int i = 0; i < stateCount; i++) {
-            double currentRow = 0;
-            for (int j = 0; j < stateCount; j++) {
-                if (i != j) {
-                    currentRow +=differentialMassMatrix[i][j];
-                }
-            }
-            derivative += currentRow * frequencies[i];
+//        double[] frequencies = getFrequencyModel().getFrequencies();
+//        for (int i = 0; i < stateCount; i++) {
+//            double currentRow = 0;
+//            for (int j = 0; j < stateCount; j++) {
+//                if (i != j) {
+//                    currentRow +=differentialMassMatrix[i][j];
+//                }
+//            }
+//            derivative += currentRow * frequencies[i];
+//        }
+//        return derivative;
+        for (int i = 0; i < stateCount; ++i) {
+            derivative -= differentialMassMatrix[i][i] * getFrequencyModel().getFrequency(i);
         }
         return derivative;
     }

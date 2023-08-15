@@ -34,7 +34,8 @@ public enum OperatorSetType {
     FIXED_TREE_TOPOLOGY("fixed tree topology"),
     NEW_TREE_MIX("new tree operator mix"),
     ADAPTIVE_MULTIVARIATE("adaptive multivariate"),
-    CUSTOM("custom operator mix");
+    CUSTOM("custom operator mix"),
+    HMC("Hamiltonian Monte Carlo");
 
     OperatorSetType(String displayName) {
         this.displayName = displayName;

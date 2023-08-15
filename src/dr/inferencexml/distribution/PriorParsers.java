@@ -79,6 +79,7 @@ public class PriorParsers {
     public static final String HALF_T_PRIOR = "halfTPrior";
     public static final String DIRICHLET_PRIOR = "dirichletPrior";
     public static final String ALPHA = "alpha";
+    public static final String BETA = "beta";
     public static final String COUNTS = "counts";
     public static final String SUMS_TO = "sumsTo";
 
@@ -849,8 +850,15 @@ public class PriorParsers {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            final double shape = xo.getDoubleAttribute(SHAPE);
-            final double shapeB = xo.getDoubleAttribute(SHAPEB);
+            double shape;
+            double shapeB;
+            if (xo.hasAttribute(ALPHA) && xo.hasAttribute(BETA)) {
+                shape = xo.getDoubleAttribute(ALPHA);
+                shapeB = xo.getDoubleAttribute(BETA);
+            } else {
+                shape = xo.getDoubleAttribute(SHAPE);
+                shapeB = xo.getDoubleAttribute(SHAPEB);
+            }
             final double offset = xo.getAttribute(OFFSET, 0.0);
             final double scale = xo.getAttribute(SCALE, 1.0);
 
@@ -871,8 +879,16 @@ public class PriorParsers {
         }
 
         private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule(SHAPE),
-                AttributeRule.newDoubleRule(SHAPEB),
+                new XORRule(
+                        new AndRule(
+                                AttributeRule.newDoubleRule(SHAPE),
+                                AttributeRule.newDoubleRule(SHAPEB)
+                        ),
+                        new AndRule(
+                                AttributeRule.newDoubleRule(ALPHA),
+                                AttributeRule.newDoubleRule(BETA)
+                        )
+                ),
                 AttributeRule.newDoubleRule(OFFSET, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };

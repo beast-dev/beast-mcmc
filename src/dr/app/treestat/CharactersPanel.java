@@ -34,6 +34,7 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
 import dr.app.gui.table.TableSorter;
+import dr.evolution.util.Taxon;
 import jam.table.TableRenderer;
 import jam.framework.Exportable;
 
@@ -408,7 +409,10 @@ public class CharactersPanel extends JPanel implements Exportable {
             int saved1 = charactersTable.getSelectedRow();
             int saved2 = statesTable.getSelectedRow();
             int[] rows = excludedTaxaTable.getSelectedRows();
-            ArrayList<String> exclList = new ArrayList<String>(treeStatData.allTaxa);
+            ArrayList<String> exclList = new ArrayList<>();
+            for (Taxon taxon : treeStatData.allTaxa) {
+                exclList.add(taxon.getId());
+            }
             exclList.removeAll(selectedState.taxa);
             for (int row : rows) {
                 selectedState.taxa.add(exclList.get(row));
@@ -556,7 +560,10 @@ public class CharactersPanel extends JPanel implements Exportable {
             if (included) {
                 return selectedState.taxa.get(row);
             } else {
-                ArrayList<String> exclList = new ArrayList<String>(treeStatData.allTaxa);
+                ArrayList<String> exclList = new ArrayList<>();
+                for (Taxon taxon : treeStatData.allTaxa) {
+                    exclList.add(taxon.getId());
+                }
                 exclList.removeAll(selectedState.taxa);
                 return exclList.get(row);
             }

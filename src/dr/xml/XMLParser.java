@@ -341,6 +341,14 @@ public class XMLParser {
                 }
 
                 xo.setNativeObject(obj);
+            } else {
+                // The element doesn't have a specific parser so is likely to be an internal
+                // element to another parser. However, it has an ID then it is likely to be
+                // something that was intended to parse so give a warning.
+                if (e.hasAttribute(ID)) { // object has ID
+                    java.util.logging.Logger.getLogger("dr.xml").warning("Element called, " + xo.getName() +
+                            ", has an ID, " + e.getAttribute(ID) + ", but no parser.");
+                }
             }
 
             if (id != null) {

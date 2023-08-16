@@ -45,7 +45,7 @@ public class TransformedParameterRandomWalkOperatorParser extends RandomWalkOper
         try {
             randomWalk = super.parseXMLObject(xo);
         } catch (XMLParseException e) {
-            throw new XMLParseException("RandomWalkOperatorParser failled in TraansformedParameterRandomWalkOperator.");
+            throw new XMLParseException("RandomWalkOperatorParser failed in TransformedParameterRandomWalkOperator.");
         }
         return new TransformedParameterRandomWalkOperator((RandomWalkOperator) randomWalk);
 

@@ -32,6 +32,7 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.siteratemodel.DiscretizedSiteRateModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
@@ -39,6 +40,7 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodelxml.siteratemodel.OldGammaSiteModelParser;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.xml.*;
@@ -256,7 +258,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             hasSinglePartition = true;
             patternLists.add(patternList);
 
-            GammaSiteRateModel siteRateModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
+            SiteRateModel siteRateModel = (SiteRateModel) xo.getChild(SiteRateModel.class);
             siteRateModels.add(siteRateModel);
 
             FrequencyModel rootFreqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
@@ -264,8 +266,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             BranchModel branchModel = (BranchModel) xo.getChild(BranchModel.class);
             if (branchModel == null) {
                 SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
-                if (substitutionModel == null) {
-                    substitutionModel = siteRateModel.getSubstitutionModel();
+                if (substitutionModel == null && siteRateModel instanceof GammaSiteRateModel) {
+                    // for backwards compatibility the old GammaSiteRateModelParser can provide the substitution model...
+                    substitutionModel = ((GammaSiteRateModel)siteRateModel).getSubstitutionModel();
                 }
                 if (substitutionModel == null) {
                     throw new XMLParseException("No substitution model available for partition in DataTreeLikelihood: "+xo.getId());
@@ -295,8 +298,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 BranchModel branchModel = (BranchModel) cxo.getChild(BranchModel.class);
                 if (branchModel == null) {
                     SubstitutionModel substitutionModel = (SubstitutionModel) cxo.getChild(SubstitutionModel.class);
-                    if (substitutionModel == null && siteRateModel instanceof GammaSiteRateModel) {
-                        substitutionModel = ((GammaSiteRateModel)siteRateModel).getSubstitutionModel();
+                    if (substitutionModel == null && siteRateModel instanceof DiscretizedSiteRateModel) {
+                        // for backwards compatibility the old GammaSiteRateModelParser can provide the substitution model...
+                        substitutionModel = ((DiscretizedSiteRateModel)siteRateModel).getSubstitutionModel();
                     }
                     if (substitutionModel == null) {
                         throw new XMLParseException("No substitution model available for partition " + k + " in DataTreeLikelihood: "+xo.getId());
@@ -378,14 +382,17 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(INSTANCE_COUNT, true),
 
             // really it should be this set of elements or the PARTITION elements
-            new OrRule(new AndRule(new XMLSyntaxRule[]{
-                    new ElementRule(PatternList.class, true),
-                    new ElementRule(SiteRateModel.class, true),
-                    new ElementRule(FrequencyModel.class, true),
-                    new ElementRule(BranchModel.class, true)})
-                    ,
+            new OrRule(
+                    new AndRule(new XMLSyntaxRule[]{
+                            new ElementRule(PatternList.class, true),
+                            new ElementRule(SubstitutionModel.class, true),
+                            new ElementRule(SiteRateModel.class, true),
+                            new ElementRule(FrequencyModel.class, true),
+                            new ElementRule(BranchModel.class, true)}
+                    ),
                     new ElementRule(PARTITION, new XMLSyntaxRule[] {
                             new ElementRule(PatternList.class),
+                            new ElementRule(SubstitutionModel.class, true),
                             new ElementRule(SiteRateModel.class),
                             new ElementRule(FrequencyModel.class, true),
                             new ElementRule(BranchModel.class, true)

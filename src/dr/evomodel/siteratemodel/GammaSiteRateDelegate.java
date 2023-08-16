@@ -25,10 +25,10 @@
 
 package dr.evomodel.siteratemodel;
 
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.*;
 import dr.math.GeneralisedGaussLaguerreQuadrature;
 import dr.math.distributions.GammaDistribution;
-import dr.evomodel.substmodel.SubstitutionModel;
 import dr.math.functionEval.GammaFunction;
 import dr.util.Author;
 import dr.util.Citable;
@@ -44,77 +44,28 @@ import java.util.List;
  * @version $Id: GammaSiteModel.java,v 1.31 2005/09/26 14:27:38 rambaut Exp $
  */
 
-public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, Citable {
+public class GammaSiteRateDelegate extends AbstractModel implements SiteRateDelegate, Citable {
 
-    public static final DiscretizationType DEFAULT_DISCRETIZATION = DiscretizationType.EQUAL;
+    public static final DiscretizationType DEFAULT_DISCRETIZATION = DiscretizationType.QUADRATURE;
 
     public enum DiscretizationType {
         EQUAL,
         QUADRATURE
     };
 
-    public GammaSiteRateModel(String name) {
-        this(name,
-                null,
-                1.0,
-                null,
-                0, DiscretizationType.EQUAL,
-                null);
-    }
-
-    public GammaSiteRateModel(String name, double alpha, int categoryCount) {
-        this(name,
-                null,
-                1.0,
-                new Parameter.Default(alpha),
-                categoryCount,
-                DEFAULT_DISCRETIZATION,
-                null);
-    }
-
-    public GammaSiteRateModel(String name, double alpha, int categoryCount, double pInvar) {
-        this(name,
-                null,
-                1.0,
-                new Parameter.Default(alpha),
-                categoryCount,
-                DEFAULT_DISCRETIZATION,
-                new Parameter.Default(pInvar));
-    }
-
-    public GammaSiteRateModel(String name, Parameter nu) {
-        this(name,
-                nu,
-                1.0,
-                null,
-                -1,
-                null,
-                null);
-    }
 
     /**
      * Constructor for gamma+invar distributed sites. Either shapeParameter or
      * invarParameter (or both) can be null to turn off that feature.
      */
-    public GammaSiteRateModel(
+    public GammaSiteRateDelegate(
             String name,
-            Parameter nuParameter,
-            double muWeight,
             Parameter shapeParameter, int gammaCategoryCount,
             DiscretizationType discretizationType,
             Parameter invarParameter) {
 
         super(name);
-
-        this.nuParameter = nuParameter;
-        if (nuParameter != null) {
-            addVariable(nuParameter);
-            nuParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        }
-        this.muWeight = muWeight;
-
-        addStatistic(muStatistic);
-
+        
         this.shapeParameter = shapeParameter;
         if (shapeParameter != null) {
             this.categoryCount = gammaCategoryCount;
@@ -135,44 +86,6 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
         }
 
         this.discretizationType = discretizationType;
-
-        categoryRates = new double[this.categoryCount];
-        categoryProportions = new double[this.categoryCount];
-
-        ratesKnown = false;
-    }
-
-    /**
-     * set mu
-     */
-    public void setMu(double mu) {
-        nuParameter.setParameterValue(0, mu / muWeight);
-    }
-
-    /**
-     * @return mu
-     */
-    public final double getMu() {
-        return nuParameter.getParameterValue(0) * muWeight;
-    }
-
-    /**
-     * set alpha
-     */
-    public void setAlpha(double alpha) {
-        shapeParameter.setParameterValue(0, alpha);
-        ratesKnown = false;
-    }
-
-    /**
-     * @return alpha
-     */
-    public final double getAlpha() {
-        return shapeParameter.getParameterValue(0);
-    }
-
-    public void setRelativeRateParameter(Parameter nu) {
-        this.nuParameter = nu;
     }
 
     // *****************************************************************
@@ -183,59 +96,9 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
         return categoryCount;
     }
 
-    public double[] getCategoryRates() {
-        synchronized (this) {
-            if (!ratesKnown) {
-                calculateCategoryRates();
-            }
-        }
-
-        for (int i = (invarParameter != null ? 1 : 0); i < categoryRates.length; i++) {
-            // If a gamma rate is zero then the quantitization has failed numerically so return null.
-            // This allows the likelihood to return -Inf and reject this state.
-            if (categoryRates[i] == 0.0) {
-                return null;
-            }
-        }
-
-        return categoryRates;
-    }
-
-    public double[] getCategoryProportions() {
-        synchronized (this) {
-            if (!ratesKnown) {
-                calculateCategoryRates();
-            }
-        }
-
-        return categoryProportions;
-    }
-
-    public double getRateForCategory(int category) {
-        synchronized (this) {
-            if (!ratesKnown) {
-                calculateCategoryRates();
-            }
-        }
-
-        return categoryRates[category];
-    }
-
-    public double getProportionForCategory(int category) {
-        synchronized (this) {
-            if (!ratesKnown) {
-                calculateCategoryRates();
-            }
-        }
-
-        return categoryProportions[category];
-    }
-
-    /**
-     * discretization of gamma distribution with equal proportions in each
-     * category
-     */
-    private void calculateCategoryRates() {
+    public void getCategories(double[] categoryRates, double[] categoryProportions) {
+        assert categoryRates != null && categoryRates.length == categoryCount;
+        assert categoryProportions != null && categoryProportions.length == categoryCount;
 
         int offset = 0;
 
@@ -262,14 +125,6 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
             categoryRates[0] = 1.0;
             categoryProportions[0] = 1.0;
         }
-
-        if (nuParameter != null) {
-            double mu = getMu();
-            for (int i = 0; i < categoryCount; i++)
-                categoryRates[i] *= mu;
-        }
-
-        ratesKnown = true;
     }
 
     // *****************************************************************
@@ -277,20 +132,10 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
     // *****************************************************************
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        // Substitution model has changed so fire model changed event
         listenerHelper.fireModelChanged(this, object, index);
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == shapeParameter) {
-            ratesKnown = false;
-        } else if (variable == invarParameter) {
-            ratesKnown = false;
-        } else if (variable == nuParameter) {
-            ratesKnown = false; // MAS: I changed this because the rate parameter can affect the categories if the parameter is in siteModel and not clockModel
-        } else {
-            throw new RuntimeException("Unknown variable in GammaSiteRateModelParser.handleVariableChangedEvent");
-        }
         listenerHelper.fireModelChanged(this, variable, index);
     }
 
@@ -298,40 +143,11 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
     } // no additional state needs storing
 
     protected void restoreState() {
-        ratesKnown = false;
     }
 
     protected void acceptState() {
     } // no additional state needs accepting
 
-
-    private Statistic muStatistic = new Statistic.Abstract() {
-
-        public String getStatisticName() {
-            return "mu";
-        }
-
-        public int getDimension() {
-            return 1;
-        }
-
-        public String getDimensionName(int dim) {
-            return getId();
-        }
-
-        public double getStatisticValue(int dim) {
-            return getMu();
-        }
-
-    };
-
-
-    /**
-     * mutation rate parameter
-     */
-    private Parameter nuParameter;
-
-    private double muWeight;
 
     /**
      * shape parameter
@@ -345,26 +161,8 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
 
     private DiscretizationType discretizationType;
 
-    private boolean ratesKnown;
-
     private int categoryCount;
-
-    private double[] categoryRates;
-
-    private double[] categoryProportions;
-
-
-    // This is here solely to allow the GammaSiteModelParser to pass on the substitution model to the
-    // HomogenousBranchSubstitutionModel so that the XML will be compatible with older BEAST versions. To be removed
-    // at some point.
-    public SubstitutionModel getSubstitutionModel() {
-        return substitutionModel;
-    }
-
-    public void setSubstitutionModel(SubstitutionModel substitutionModel) {
-        this.substitutionModel = substitutionModel;
-    }
-
+    
 
     @Override
     public Citation.Category getCategory() {
@@ -434,9 +232,10 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
         double[] coefficients = quadrature.getCoefficients();
 
         for (int i = 0; i < catCount; i++) {
-            categoryRates[i + offset] = abscissae[i] / alpha;
+            categoryRates[i + offset] = abscissae[i] / (alpha);
             categoryProportions[i + offset] = coefficients[i]/GammaFunction.gamma(alpha);
         }
+
     }
 
     /**

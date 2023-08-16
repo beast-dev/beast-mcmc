@@ -25,7 +25,6 @@
 
 package dr.evomodelxml.speciation;
 
-import com.sun.org.apache.bcel.internal.generic.SWITCH;
 import dr.evolution.util.Units;
 import dr.evomodel.speciation.MasBirthDeathSerialSamplingModel;
 import dr.evomodel.speciation.NewBirthDeathSerialSamplingModel;

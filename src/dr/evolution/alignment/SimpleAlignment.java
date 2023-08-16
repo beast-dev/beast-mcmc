@@ -188,7 +188,7 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
             throw new IllegalArgumentException("Sequence's dataType does not match the alignment's");
         }
         
-        int invalidCharAt = sequence.getInvalidChar();
+        int invalidCharAt = sequence.getInvalidChar(dataType);
         if (invalidCharAt >= 0)
             throw new IllegalArgumentException("Sequence of " + sequence.getTaxon().getId()
                     + " contains invalid char \'" + sequence.getChar(invalidCharAt) + "\' at index " + invalidCharAt);
@@ -214,7 +214,7 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
             throw new IllegalArgumentException("Sequence's dataType does not match the alignment's");
         }
 
-        int invalidCharAt = sequence.getInvalidChar();
+        int invalidCharAt = sequence.getInvalidChar(dataType);
         if (invalidCharAt >= 0)
             throw new IllegalArgumentException("Sequence of " + sequence.getTaxon().getId()
                     + " contains invalid char \'" + sequence.getChar(invalidCharAt) + "\' at index " + invalidCharAt);

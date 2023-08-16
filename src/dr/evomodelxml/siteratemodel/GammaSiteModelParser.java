@@ -55,6 +55,10 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
     public static final String GAMMA_SHAPE = "gammaShape";
     public static final String GAMMA_CATEGORIES = "gammaCategories";
     public static final String PROPORTION_INVARIANT = "proportionInvariant";
+    public static final String CATEGORY_WIDTH = "categoryWidth";
+    public static final String TYPE = "type";
+    public static final String FASTEST = "fastest";
+    public static final String GEOMETRIC = "geometric";
 
     public String getParserName() {
         return SITE_MODEL;
@@ -102,13 +106,30 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
             msg += "\n  initial proportion of invariant sites = " + invarParam.getParameterValue(0);
         }
 
+        Parameter categoryWidthParameter = null;
+        GammaSiteRateModel.CategoryWidthType type = null;
+        if (xo.hasChildNamed(CATEGORY_WIDTH)) {
+            categoryWidthParameter = (Parameter) xo.getElementFirstChild(CATEGORY_WIDTH);
+            String typeString = xo.getChild(CATEGORY_WIDTH).getStringAttribute(TYPE);
+            try {
+                type = GammaSiteRateModel.CategoryWidthType.valueOf(typeString.toUpperCase());
+                if (type == GammaSiteRateModel.CategoryWidthType.FASTEST) {
+                    msg += "\n  initial proportion of fastest sites = " + categoryWidthParameter.getParameterValue(0);
+                } else {
+                    msg += "\n  initial factor for increasing category width = " + categoryWidthParameter.getParameterValue(0);
+            }
+            } catch (IllegalArgumentException eae) {
+                throw new XMLParseException("Unknown category width type: " + typeString);
+            }
+        }
+
         if (msg.length() > 0) {
             Logger.getLogger("dr.evomodel").info("\nCreating site rate model: " + msg);
         } else {
             Logger.getLogger("dr.evomodel").info("\nCreating site rate model.");
         }
 
-        GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, muParam, muWeight, shapeParam, catCount, invarParam);
+        GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, muParam, muWeight, shapeParam, catCount, invarParam, categoryWidthParameter, type);
 
         if (xo.hasChildNamed(SUBSTITUTION_MODEL)) {
 
@@ -166,6 +187,11 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
             }, true),
 
             new ElementRule(PROPORTION_INVARIANT, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }, true),
+
+            new ElementRule(CATEGORY_WIDTH, new XMLSyntaxRule[]{
+                    AttributeRule.newStringRule(TYPE, false),
                     new ElementRule(Parameter.class)
             }, true)
 

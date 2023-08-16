@@ -377,7 +377,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     benchmarkFlags =  BeagleBenchmarkFlag.SCALING_DYNAMIC.getMask();
                 }
 
-                logger.info("\nRunning benchmarks to automatically select fastest BEAGLE resource for analysis or partition... ");
+                logger.info("\t\tRunning benchmarks to automatically select fastest BEAGLE resource for analysis or partition... ");
 
                 List<BenchmarkedResourceDetails> benchmarkedResourceDetails =
                         BeagleFactory.getBenchmarkedResourceDetails(
@@ -448,8 +448,20 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             instanceFlags = instanceDetails.getFlags();
 
-            if (IS_THREAD_COUNT_COMPATIBLE() && threadCount > 1) {
-                beagle.setCPUThreadCount(threadCount);
+            if ((instanceFlags & BeagleFlag.THREADING_CPP.getMask()) != 0) {
+                if (IS_THREAD_COUNT_COMPATIBLE() || threadCount != 0) {
+                    if (threadCount > 0) {
+                        beagle.setCPUThreadCount(threadCount);
+                        logger.info("    Using " + threadCount + " threads for CPU.");
+                    } else { // if no thread_count is specified then this will be -1 so put no upper bound on threads
+                        logger.info("    Using default thread count for CPU.");
+                        // this is just intended to remove the cap on number of threads so BEAGLE will
+                        // make its own decision (for better or worse).
+                        beagle.setCPUThreadCount(1000);
+                    }
+                } else {
+                    logger.info("    BEAGLE threading turned off (or unavailable) for CPU.");
+                }
             }
 
             if (patternList instanceof UncertainSiteList) { // TODO Remove
@@ -461,12 +473,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 //            }
 
             //add in logger info for preOrder traversal
-            logger.info("  " + (settings.usePreOrder ? "Using" : "Ignoring") + " preOrder partials in tree likelihood.");
-            logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
-            logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
+            logger.info("    " + (settings.usePreOrder ? "Using" : "Ignoring") + " preOrder partials in tree likelihood.");
+            logger.info("    " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
+            logger.info("    With " + patternList.getPatternCount() + " unique site patterns.");
 
             if (patternList.areUncertain() && !useAmbiguities) {
-                logger.info("  WARNING: Uncertain site patterns will be ignored.");
+                logger.info("    WARNING: Uncertain site patterns will be ignored.");
             }
 
             for (int i = 0; i < tipCount; i++) {
@@ -488,13 +500,13 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             beagle.setPatternWeights(patternWeights);
 
-            String rescaleMessage = "  Using rescaling scheme : " + this.rescalingScheme.getText();
+            String rescaleMessage = "    Using rescaling scheme : " + this.rescalingScheme.getText();
             if (this.rescalingScheme == PartialsRescalingScheme.AUTO &&
                     resourceDetails != null &&
                     (resourceDetails.getFlags() & BeagleFlag.SCALING_AUTO.getMask()) == 0) {
                 // If auto scaling in BEAGLE is not supported then do it here
                 this.rescalingScheme = PartialsRescalingScheme.DYNAMIC;
-                rescaleMessage = "  Auto rescaling not supported in BEAGLE, using : " + this.rescalingScheme.getText();
+                rescaleMessage = "    Auto rescaling not supported in BEAGLE, using : " + this.rescalingScheme.getText();
             }
             boolean parenthesis = false;
             if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {

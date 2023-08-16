@@ -122,34 +122,43 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         boolean useJava = Boolean.parseBoolean(System.getProperty("java.only", "false"));
+        if (useJava) {
+            logger.warning("   Java-only computation is not available - ignoring this option.");
+        }
 
-        int threadCount = -1;
         int beagleThreadCount = -1;
         if (System.getProperty(BEAGLE_THREAD_COUNT) != null) {
+            // if beagle_thread_count is set then use that - this is a per-instance thread count
             beagleThreadCount = Integer.parseInt(System.getProperty(BEAGLE_THREAD_COUNT));
         }
 
-        if (beagleThreadCount == -1) {
-            // Todo: can't access XML object here, perhaps need to refactor
-            // the default is -1 threads (automatic thread pool size) but an XML attribute can override it
-            // int threadCount = xo.getAttribute(THREADS, -1);
-
-            if (System.getProperty(THREAD_COUNT) != null) {
-                threadCount = Integer.parseInt(System.getProperty(THREAD_COUNT));
-            }
-        }
-
-        int instanceCount = 0;
+        int beagleInstanceCount = 1;
         String ic = System.getProperty(BEAGLE_INSTANCE_COUNT);
         if (ic != null && ic.length() > 0) {
-            instanceCount = Integer.parseInt(ic);
+            beagleInstanceCount = Math.max(1, Integer.parseInt(ic));
         }
 
-        if ( useBeagle3MultiPartition && instanceCount == 0 && !useJava) {
+        if (beagleThreadCount == -1) {
+            // no beagle_thread_count is given so use the number of available processors
+            // (actually logical threads - so 2 x number of cores when hyperthreads are used).
 
-            if (beagleThreadCount == -1 && threadCount >= 0) {
-                System.setProperty(BEAGLE_THREAD_COUNT, Integer.toString(threadCount));
+            beagleThreadCount = Runtime.getRuntime().availableProcessors();
+
+            // 'threadCount' controls the top level number of Java threads holding the
+            // likelihood/prior evaluations. Shouldn't be considered here - by default
+            // this will use an autosizing thread pool so should probably be left alone.
+            // if (System.getProperty(THREAD_COUNT) != null) {
+            //  threadCount = Integer.parseInt(System.getProperty(THREAD_COUNT));
+            // }
+        }
+
+        if ( useBeagle3MultiPartition) {
+
+            if ( beagleInstanceCount > 1) {
+                logger.warning("   BEAGLE multi-partition extensions are not compatible with -beagle_instances option");
             }
+
+            System.setProperty(BEAGLE_THREAD_COUNT, Integer.toString(beagleThreadCount));
 
             try {
                 DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
@@ -176,38 +185,24 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         List<Likelihood> treeDataLikelihoods = new ArrayList<Likelihood>();
 
         // Todo: allow for different number of threads per beagle instance according to pattern counts
-        if (beagleThreadCount == -1 && threadCount >= 0) {
-            System.setProperty(BEAGLE_THREAD_COUNT, Integer.toString(threadCount / patternLists.size()));
+//        if (beagleThreadCount == -1 && threadCount >= 0) {
+//            System.setProperty(BEAGLE_THREAD_COUNT, Integer.toString(threadCount / patternLists.size()));
+//        }
+
+        if (beagleInstanceCount > 1) {
+            logger.info("  Dividing each partition amongst " + beagleInstanceCount + " BEAGLE instances:");
         }
 
-        if (instanceCount > 1) {
-            logger.info("  Dividing each partition amongst " + instanceCount + " BEAGLE instances:");
-        }
         for (int i = 0; i < patternLists.size(); i++) {
-            if (instanceCount > 1) {
-                for (int j = 0; j < instanceCount; j++) {
-                    PatternList patterns = new Patterns(patternLists.get(i), j, instanceCount);
-                    DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
-                            treeModel,
-                            patterns,
-                            branchModels.get(i),
-                            siteRateModels.get(i),
-                            useAmbiguities,
-                            preferGPU,
-                            scalingScheme,
-                            delayRescalingUntilUnderflow,
-                            settings);
+            PatternList partitionPatterns = patternLists.get(i);
+            // can't divide up a partition by more than the number of patterns...
+            int bic = Math.min(partitionPatterns.getPatternCount(), beagleInstanceCount);
 
-                    treeDataLikelihoods.add(
-                            new TreeDataLikelihood(
-                                    dataLikelihoodDelegate,
-                                    treeModel,
-                                    branchRateModel));
-                }
-            } else {
+            for (int j = 0; j < bic; j++) {
+                PatternList patterns = new Patterns(partitionPatterns, j, bic);
                 DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
                         treeModel,
-                        patternLists.get(i),
+                        patterns,
                         branchModels.get(i),
                         siteRateModels.get(i),
                         useAmbiguities,
@@ -221,7 +216,6 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                                 dataLikelihoodDelegate,
                                 treeModel,
                                 branchRateModel));
-
             }
         }
 

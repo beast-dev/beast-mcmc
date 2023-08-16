@@ -355,7 +355,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             // start auto resource selection
             String resourceAuto = System.getProperty(RESOURCE_AUTO_PROPERTY);
-            if (resourceAuto != null && Boolean.parseBoolean(resourceAuto)) {
+            if (Boolean.parseBoolean(resourceAuto)) {
 
                 long benchmarkFlags = 0;
 
@@ -443,7 +443,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     if (threadCount > 0) {
                         beagle.setCPUThreadCount(threadCount);
                         logger.info("    Using " + threadCount + " threads for CPU.");
-                    } else { // if no thread_count is specified then this will be -1 so put no upper bound on threads
+                    } else {
+                        // if no thread_count is specified then this will be -1 so put no upper bound on threads
+                        // currently the parser provides a default based on the number of cores as BEAGLE's
+                        // default is suboptimal
                         logger.info("    Using default thread count for CPU.");
                         // this is just intended to remove the cap on number of threads so BEAGLE will
                         // make its own decision (for better or worse).

@@ -57,11 +57,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     public static final String BEAGLE_INSTANCE_COUNT = "beagle.instance.count";
     public static final String BEAGLE_THREAD_COUNT = "beagle.thread.count";
     public static final String THREAD_COUNT = "thread.count";
-    public static final String THREADS = "threads";
 
     public static final String TREE_DATA_LIKELIHOOD = "treeDataLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
-    public static final String INSTANCE_COUNT = "instanceCount";
     public static final String PREFER_GPU = "preferGPU";
     public static final String SCALING_SCHEME = "scalingScheme";
     public static final String DELAY_SCALING = "delayScaling";
@@ -182,7 +180,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         // The multipartition data likelihood isn't available so make a set of single partition data likelihoods
-        List<Likelihood> treeDataLikelihoods = new ArrayList<Likelihood>();
+        List<Likelihood> treeDataLikelihoods = new ArrayList<>();
 
         // Todo: allow for different number of threads per beagle instance according to pattern counts
 //        if (beagleThreadCount == -1 && threadCount >= 0) {
@@ -249,9 +247,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 //            instanceCount = Integer.parseInt(ic);
 //        }
 
-        List<PatternList> patternLists = new ArrayList<PatternList>();
-        List<SiteRateModel> siteRateModels = new ArrayList<SiteRateModel>();
-        List<BranchModel> branchModels = new ArrayList<BranchModel>();
+        List<PatternList> patternLists = new ArrayList<>();
+        List<SiteRateModel> siteRateModels = new ArrayList<>();
+        List<BranchModel> branchModels = new ArrayList<>();
 
         boolean hasSinglePartition = false;
 

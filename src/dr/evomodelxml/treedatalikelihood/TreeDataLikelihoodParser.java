@@ -73,7 +73,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         return TREE_DATA_LIKELIHOOD;
     }
 
-    protected Likelihood createTreeDataLikelihood(List<PatternList> patternLists,
+    protected Likelihood createTreeDataLikelihood(String id,
+                                                  List<PatternList> patternLists,
                                                   List<BranchModel> branchModels,
                                                   List<SiteRateModel> siteRateModels,
                                                   Tree treeModel,
@@ -86,7 +87,6 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                                                   PreOrderSettings settings) throws XMLParseException {
 
         final Logger logger = Logger.getLogger("dr.evomodel");
-        logger.info("\nCreating tree data likelihoods for " + patternLists.size() + " partitions");
 
         if (tipStatesModel != null) {
             throw new XMLParseException("Tip State Error models are not supported yet with TreeDataLikelihood");
@@ -121,7 +121,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
         boolean useJava = Boolean.parseBoolean(System.getProperty("java.only", "false"));
         if (useJava) {
-            logger.warning("   Java-only computation is not available - ignoring this option.");
+            logger.warning("  Java-only computation is not available - ignoring this option.");
         }
 
         int beagleThreadCount = -1;
@@ -141,7 +141,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             // (actually logical threads - so 2 x number of cores when hyperthreads are used).
 
             beagleThreadCount = Runtime.getRuntime().availableProcessors();
-
+            System.setProperty(BEAGLE_THREAD_COUNT, Integer.toString(beagleThreadCount));
+            
             // 'threadCount' controls the top level number of Java threads holding the
             // likelihood/prior evaluations. Shouldn't be considered here - by default
             // this will use an autosizing thread pool so should probably be left alone.
@@ -150,13 +151,14 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             // }
         }
 
+        String plural = (patternLists.size() > 1 ? "s": "");
         if ( useBeagle3MultiPartition) {
 
-            if ( beagleInstanceCount > 1) {
-                logger.warning("   BEAGLE multi-partition extensions are not compatible with -beagle_instances option");
-            }
+            logger.info("\nCreating multi-partition tree data likelihood for " + patternLists.size() + " partition" + plural);
 
-            System.setProperty(BEAGLE_THREAD_COUNT, Integer.toString(beagleThreadCount));
+            if ( beagleInstanceCount > 1) {
+                logger.warning("  -beagle_instances option is not compatible with BEAGLE multi-partition extensions");
+            }
 
             try {
                 DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
@@ -187,8 +189,10 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 //            System.setProperty(BEAGLE_THREAD_COUNT, Integer.toString(threadCount / patternLists.size()));
 //        }
 
+        logger.info("\nCreating tree data likelihood" + plural + " for " + patternLists.size() + " partition" + plural);
+
         if (beagleInstanceCount > 1) {
-            logger.info("  Dividing each partition amongst " + beagleInstanceCount + " BEAGLE instances:");
+            logger.info("  dividing each partition between " + beagleInstanceCount + " BEAGLE instances:");
         }
 
         for (int i = 0; i < patternLists.size(); i++) {
@@ -209,11 +213,14 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                         delayRescalingUntilUnderflow,
                         settings);
 
-                treeDataLikelihoods.add(
-                        new TreeDataLikelihood(
-                                dataLikelihoodDelegate,
-                                treeModel,
-                                branchRateModel));
+                TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(
+                        dataLikelihoodDelegate,
+                        treeModel,
+                        branchRateModel);
+
+                treeDataLikelihood.setId(id + "_" + (j + 1));
+
+                treeDataLikelihoods.add(treeDataLikelihood);
             }
         }
 
@@ -235,17 +242,6 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             throw new RuntimeException("Need to specify derivative types.");
         }
         PreOrderSettings settings = new PreOrderSettings(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative);
-
-        // TreeDataLikelihood doesn't currently support Instances defined from the command line
-//        int instanceCount = xo.getAttribute(INSTANCE_COUNT, 1);
-//        if (instanceCount < 1) {
-//            instanceCount = 1;
-//        }
-//
-//        String ic = System.getProperty(BEAGLE_INSTANCE_COUNT);
-//        if (ic != null && ic.length() > 0) {
-//            instanceCount = Integer.parseInt(ic);
-//        }
 
         List<PatternList> patternLists = new ArrayList<>();
         List<SiteRateModel> siteRateModels = new ArrayList<>();
@@ -346,6 +342,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         return createTreeDataLikelihood(
+                xo.getId(),
                 patternLists,
                 branchModels,
                 siteRateModels,

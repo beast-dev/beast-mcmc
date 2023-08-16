@@ -60,6 +60,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String TREE_DATA_LIKELIHOOD = "treeDataLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
+    public static final String INSTANCE_COUNT = "instanceCount";
     public static final String PREFER_GPU = "preferGPU";
     public static final String SCALING_SCHEME = "scalingScheme";
     public static final String DELAY_SCALING = "delayScaling";
@@ -74,6 +75,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     protected Likelihood createTreeDataLikelihood(String id,
+                                                  int beagleInstanceCount,
                                                   List<PatternList> patternLists,
                                                   List<BranchModel> branchModels,
                                                   List<SiteRateModel> siteRateModels,
@@ -128,12 +130,6 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         if (System.getProperty(BEAGLE_THREAD_COUNT) != null) {
             // if beagle_thread_count is set then use that - this is a per-instance thread count
             beagleThreadCount = Integer.parseInt(System.getProperty(BEAGLE_THREAD_COUNT));
-        }
-
-        int beagleInstanceCount = 1;
-        String ic = System.getProperty(BEAGLE_INSTANCE_COUNT);
-        if (ic != null && ic.length() > 0) {
-            beagleInstanceCount = Math.max(1, Integer.parseInt(ic));
         }
 
         if (beagleThreadCount == -1) {
@@ -201,10 +197,10 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             int bic = Math.min(partitionPatterns.getPatternCount(), beagleInstanceCount);
 
             for (int j = 0; j < bic; j++) {
-                PatternList patterns = new Patterns(partitionPatterns, j, bic);
+                PatternList subPatterns = new Patterns(partitionPatterns, j, bic);
                 DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
                         treeModel,
-                        patterns,
+                        subPatterns,
                         branchModels.get(i),
                         siteRateModels.get(i),
                         useAmbiguities,
@@ -243,9 +239,15 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         }
         PreOrderSettings settings = new PreOrderSettings(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative);
 
-        List<PatternList> patternLists = new ArrayList<>();
-        List<SiteRateModel> siteRateModels = new ArrayList<>();
-        List<BranchModel> branchModels = new ArrayList<>();
+        int beagleInstanceCount = xo.getAttribute(INSTANCE_COUNT, 1);
+        String bic = System.getProperty(BEAGLE_INSTANCE_COUNT);
+        if (bic != null && bic.length() > 0) {
+            beagleInstanceCount = Math.max(1, Integer.parseInt(bic));
+        }
+
+        List<PatternList> patternLists = new ArrayList<PatternList>();
+        List<SiteRateModel> siteRateModels = new ArrayList<SiteRateModel>();
+        List<BranchModel> branchModels = new ArrayList<BranchModel>();
 
         boolean hasSinglePartition = false;
 
@@ -338,11 +340,12 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         final boolean delayScaling = xo.getAttribute(DELAY_SCALING, true);
 
         if (tipStatesModel != null) {
-            throw new XMLParseException("BEAGLE_INSTANCES option cannot be used with a TipStateModel (i.e., a sequence error model).");
+            throw new XMLParseException("TreeDataLikelihood is not currently compatible with TipStateModel (i.e., a sequence error model).");
         }
 
         return createTreeDataLikelihood(
                 xo.getId(),
+                beagleInstanceCount,
                 patternLists,
                 branchModels,
                 siteRateModels,

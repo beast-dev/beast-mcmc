@@ -25,8 +25,6 @@
 
 package dr.evomodelxml.treelikelihood;
 
-//import dr.app.beagle.evomodel.treelikelihood.RestrictedPartialsSequenceLikelihood;
-
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchmodel.BranchModel;
@@ -106,15 +104,6 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
-        int instanceCount = xo.getAttribute(INSTANCE_COUNT, 1);
-        if (instanceCount < 1) {
-            instanceCount = 1;
-        }
-
-        String ic = System.getProperty(BEAGLE_INSTANCE_COUNT);
-        if (ic != null && ic.length() > 0) {
-            instanceCount = Integer.parseInt(ic);
-        }
 
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
         MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
@@ -180,67 +169,27 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         if (beagleThreadCount == -1) {
-            // the default is -1 threads (automatic thread pool size) but an XML attribute can override it
-            int threadCount = xo.getAttribute(THREADS, -1);
+            // no beagle_thread_count is given so use the number of available processors
+            // (actually logical threads - so 2 x number of cores when hyperthreads are used).
 
-            if (System.getProperty(THREAD_COUNT) != null) {
-                threadCount = Integer.parseInt(System.getProperty(THREAD_COUNT));
-            }
-        
-            // Todo: allow for different number of threads per beagle instance according to pattern counts
-            if (threadCount >= 0) {
-                System.setProperty(BEAGLE_THREAD_COUNT, Integer.toString(threadCount / instanceCount));
-            }
+            beagleThreadCount = Runtime.getRuntime().availableProcessors();
         }
 
-        if (instanceCount == 1 || patternList.getPatternCount() < instanceCount) {
-            return createTreeLikelihood(
-                    patternList,
-                    treeModel,
-                    branchModel,
-                    siteRateModel,
-                    branchRateModel,
-                    tipStatesModel,
-                    useAmbiguities,
-                    scalingScheme,
-                    delayScaling,
-                    partialsRestrictions,
-                    xo
-            );
-        }
+        System.setProperty(BEAGLE_THREAD_COUNT, Integer.toString(beagleThreadCount));
 
-        // using multiple instances of BEAGLE...
-
-//        if (!(patternList instanceof SitePatterns)) {
-//            throw new XMLParseException("BEAGLE_INSTANCES option cannot be used with BEAUti-selected codon partitioning.");
-//        }
-
-        if (tipStatesModel != null) {
-            throw new XMLParseException("BEAGLE_INSTANCES option cannot be used with a TipStateModel (i.e., a sequence error model).");
-        }
-
-        List<Likelihood> likelihoods = new ArrayList<Likelihood>();
-        for (int i = 0; i < instanceCount; i++) {
-
-            Patterns subPatterns = new Patterns(patternList, i, instanceCount);
-
-            AbstractTreeLikelihood treeLikelihood = createTreeLikelihood(
-                    subPatterns,
-                    treeModel,
-                    branchModel,
-                    siteRateModel,
-                    branchRateModel,
-                    null,
-                    useAmbiguities,
-                    scalingScheme,
-                    delayScaling,
-                    partialsRestrictions,
-                    xo);
-            treeLikelihood.setId(xo.getId() + "_" + instanceCount);
-            likelihoods.add(treeLikelihood);
-        }
-
-        return new CompoundLikelihood(likelihoods);
+        return createTreeLikelihood(
+                patternList,
+                treeModel,
+                branchModel,
+                siteRateModel,
+                branchRateModel,
+                tipStatesModel,
+                useAmbiguities,
+                scalingScheme,
+                delayScaling,
+                partialsRestrictions,
+                xo
+        );
     }
 
     //************************************************************************

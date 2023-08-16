@@ -372,7 +372,7 @@ public class BeastMain {
                         new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
                         new Arguments.Option("beagle_SSE_off", "BEAGLE: turn off use of SSE extensions"),
                         new Arguments.Option("beagle_threading_off", "BEAGLE: turn off multi-threading for a CPU instance"),
-                        new Arguments.IntegerOption("beagle_threads", 1, Integer.MAX_VALUE, "BEAGLE: manually set number of threads per CPU instance (default auto)"),
+                        new Arguments.IntegerOption("beagle_threads", 0, Integer.MAX_VALUE, "BEAGLE: manually set number of threads per CPU instance (default auto)"),
                         new Arguments.Option("beagle_cuda", "BEAGLE: use CUDA parallization if available"),
                         new Arguments.Option("beagle_opencl", "BEAGLE: use OpenCL parallization if available"),
                         new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),

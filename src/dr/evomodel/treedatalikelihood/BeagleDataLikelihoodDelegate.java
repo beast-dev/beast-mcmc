@@ -305,7 +305,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 threadCount = Integer.parseInt(tc);
             }
 
-            if (threadCount == 0 || threadCount == 1) {
+            if (threadCount < 1) {
                 preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
                 preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
             } else {
@@ -439,10 +439,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             instanceFlags = instanceDetails.getFlags();
 
             if ((instanceFlags & BeagleFlag.THREADING_CPP.getMask()) != 0) {
-                if (IS_THREAD_COUNT_COMPATIBLE() || threadCount != 0) {
+                if (IS_THREAD_COUNT_COMPATIBLE() && threadCount != 0) {
                     if (threadCount > 0) {
                         beagle.setCPUThreadCount(threadCount);
-                        logger.info("    Using " + threadCount + " threads for CPU.");
+                        logger.info("    Using " + threadCount + " thread" + (threadCount > 1 ? "s" : "") + " for CPU.");
                     } else {
                         // if no thread_count is specified then this will be -1 so put no upper bound on threads
                         // currently the parser provides a default based on the number of cores as BEAGLE's

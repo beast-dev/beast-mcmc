@@ -66,7 +66,7 @@ public class TransmissionChainSummarizer extends BaseTreeTool {
     }
 
     private HashMap<String, Integer> createAndPrintIdMap(Tree tree){
-        int k = 1;
+        int k = 0;
         int taxonCount = tree.getTaxonCount();
         List<String> names = new ArrayList<String>();
         for (int i = 0; i < tree.getTaxonCount(); i++) {

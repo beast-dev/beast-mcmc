@@ -375,6 +375,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
             AttributeRule.newBooleanRule(PREFER_GPU, true),
             AttributeRule.newStringRule(SCALING_SCHEME,true),
+            AttributeRule.newIntegerRule(INSTANCE_COUNT, true),
 
             // really it should be this set of elements or the PARTITION elements
             new OrRule(new AndRule(new XMLSyntaxRule[]{

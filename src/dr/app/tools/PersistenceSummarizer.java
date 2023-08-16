@@ -98,7 +98,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
                     String ancestralState = nodeState;
                     double currentStateTime = 0;
                     boolean jumpOccured = false;
-                    Object[] jumps = readCJH(node, tree);
+                    Object[] jumps = readCJH(node, tree, nodeStateAnnotation);
 
                     //when no jumps are found, we need to go back it's ancestry to find a branch with a jump
                     if (jumps == null) {
@@ -110,7 +110,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
                             if (!tree.isRoot(node)){
                                 nodeHeight = tree.getNodeHeight(node);
                                 parentNodeHeight = tree.getNodeHeight(tree.getParent(node));
-                                jumps = readCJH(node, tree);
+                                jumps = readCJH(node, tree, nodeStateAnnotation);
                                 if (jumps == null) {
                                     currentStateTime += parentNodeHeight - nodeHeight;
 //                                    System.out.println("2\t"+currentStateTime);
@@ -168,7 +168,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
                                 if (!tree.isRoot(node)) {
                                     nodeHeight = tree.getNodeHeight(node);
                                     parentNodeHeight = tree.getNodeHeight(tree.getParent(node));
-                                    jumps = readCJH(node, tree);
+                                    jumps = readCJH(node, tree, nodeStateAnnotation);
                                     if (jumps == null) {
                                         currentStateTime += parentNodeHeight - nodeHeight;
 //                                        System.out.println("7\t"+currentStateTime);
@@ -233,7 +233,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
             if ((mrcaNodeHeight-evaluationTime)<independenceTime){
                 String currentNodeState = (String) tree.getNodeAttribute(currentNode, nodeStateAnnotation);
                 //we change the node state if it has changed in between evaluationTime and the node, so to what it should be at evaluationTime
-                Object[] jumps = readCJH(currentNode, tree);
+                Object[] jumps = readCJH(currentNode, tree, nodeStateAnnotation);
                 if(jumps!=null){
                     double oldestJumpTimeSmallerThanEvaluationTime = Double.MIN_VALUE;
                     for (int j = jumps.length - 1; j >= 0; j--) {
@@ -369,10 +369,24 @@ public class PersistenceSummarizer extends BaseTreeTool {
     }
 
 
-    private static Object[] readCJH(NodeRef node, Tree treeTime) {
+    private static Object[] readCJH(NodeRef node, Tree treeTime, String nodeStateAnnotation) {
         if (treeTime.getNodeAttribute(node, HISTORY) != null) {
             return (Object[]) treeTime.getNodeAttribute(node, HISTORY);
         } else {
+            // This is for trees where markov jumps are not logged.
+            // If markov jumps are logged, ancestralState == currentState so this shouldn't affect output
+            // Check if parentNode has same state as node.
+            NodeRef parentNode = treeTime.getParent(node);
+            String ancestralState = (String) treeTime.getNodeAttribute(parentNode, nodeStateAnnotation);
+            String currentState = (String) treeTime.getNodeAttribute(node, nodeStateAnnotation);
+            // If ancestralState != currentState, then assume jumps occurred in the middle of branch
+            if (!currentState.equals(ancestralState)) {
+                // Return a mock markov jump with transitionTime in the middle of branch
+                double parentNodeHeight = treeTime.getNodeHeight(parentNode);
+                double nodeHeight = treeTime.getNodeHeight(node);
+                double transitionTime = nodeHeight + ((parentNodeHeight - nodeHeight) / 2);
+                return new Object[]{new Object[]{transitionTime, ancestralState, currentState}};
+            }
             return null;
         }
     }

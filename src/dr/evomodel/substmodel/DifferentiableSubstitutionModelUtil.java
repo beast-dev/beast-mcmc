@@ -138,7 +138,7 @@ public class DifferentiableSubstitutionModelUtil {
         ((DifferentiableSubstitutionModel) substitutionModel).setupDifferentialFrequency(wrt, differentialFrequencies);
 
         double[][] differentialMassMatrix = new double[stateCount][stateCount];
-        substitutionModel.setupQMatrix(differentialRates, differentialFrequencies, differentialMassMatrix);
+        setupQDerivative(substitutionModel, differentialRates, differentialFrequencies, differentialMassMatrix);
         substitutionModel.makeValid(differentialMassMatrix, stateCount);
 
         final double weightedNormalizationGradient
@@ -158,6 +158,28 @@ public class DifferentiableSubstitutionModelUtil {
         }
 
         return differential;
+    }
+
+    private static void setupQDerivative(BaseSubstitutionModel substitutionModel, double[] differentialRates,
+                                         double[] differentialFrequencies, double[][] differentialMassMatrix) {
+        if (substitutionModel instanceof ComplexSubstitutionModel) {
+            int i, j, k = 0;
+            final int stateCount = differentialFrequencies.length;
+            for (i = 0; i < stateCount; i++) {
+                for (j = i + 1; j < stateCount; j++) {
+                    final double thisRate = differentialRates[k++];
+                    differentialMassMatrix[i][j] = thisRate * differentialFrequencies[j];
+                }
+            }
+            for (j = 0; j < stateCount; j++) {
+                for (i = j + 1; i < stateCount; i++) {
+                    final double thisRate = differentialRates[k++];
+                    differentialMassMatrix[i][j] = thisRate * differentialFrequencies[j];
+                }
+            }
+        } else {
+            substitutionModel.setupQMatrix(differentialRates, differentialFrequencies, differentialMassMatrix);
+        }
     }
 
     private static final boolean CHECK_COMMUTABILITY = false;

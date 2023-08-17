@@ -115,7 +115,7 @@ public abstract class AbstractBranchRateModel extends AbstractModelLikelihood im
         }
 
         public double getDoubleValue() {
-            return getBranchRate(tree, tree.getNode(dim)); }
+            return dim < tree.getRoot().getNumber() ? getBranchRate(tree, tree.getNode(dim)) : getBranchRate(tree, tree.getNode(dim + 1)); }
     }
 
 }

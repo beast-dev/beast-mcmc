@@ -1123,7 +1123,7 @@ public class XMLGenerator {
 
 			break;
 
-		case 1: // GammaSiteRateModel
+		case 1: // GammaSiteRateModelParser
 			
 			writer.writeOpenTag(
 					GammaSiteModelParser.GAMMA_SHAPE,

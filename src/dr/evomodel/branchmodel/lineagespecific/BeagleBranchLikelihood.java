@@ -31,7 +31,7 @@ import beagle.Beagle;
 import beagle.BeagleFactory;
 import dr.evomodel.branchmodel.BranchModel;
 //import dr.evomodel.branchmodel.HomogeneousBranchModel;
-//import dr.evomodel.siteratemodel.GammaSiteRateModel;
+//import dr.evomodel.siteratemodel.GammaSiteRateModelParser;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 //import dr.evomodel.substmodel.nucleotide.HKY;
@@ -484,7 +484,7 @@ public class BeagleBranchLikelihood implements Likelihood {
 //			BranchRateModel branchRateModel = new StrictClockBranchRates(rate);
 //
 //			// create site model
-//			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
+//			GammaSiteRateModelParser siteRateModel = new GammaSiteRateModelParser(
 //					"siteModel");
 //
 //			// create partition

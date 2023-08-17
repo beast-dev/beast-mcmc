@@ -25,6 +25,7 @@
 
 package dr.xml;
 
+import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -332,7 +333,9 @@ public class XMLParser {
                     addCitable((Citable)obj);
                 }
 
-                if (obj instanceof Likelihood) {
+                if (obj instanceof CompoundLikelihood) {
+                    Likelihood.FULL_LIKELIHOOD_SET.addAll(((CompoundLikelihood) obj).getLikelihoods());
+                } else if (obj instanceof Likelihood) {
                     Likelihood.FULL_LIKELIHOOD_SET.add((Likelihood) obj);
                 } else if (obj instanceof Model) {
                     Model.FULL_MODEL_SET.add((Model) obj);

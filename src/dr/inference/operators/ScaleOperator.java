@@ -116,8 +116,8 @@ public class ScaleOperator extends AbstractAdaptableOperator {
             }
         } else if (scaleAll) {
             // update all dimensions
-            // hasting ratio is dim-2 times of 1dim case. would be nice to have a reference here
-            // for the proof. It is supposed to be somewhere in an Alexei/Nicholes article.
+            // hasting ratio is dim-2 times of 1dim case. This can be derived easily from section 2.1 of
+            // https://people.maths.bris.ac.uk/~mapjg/papers/rjmcmc_20090613.pdf, ignoring the rjMCMC context
             if (degreesOfFreedom > 0)
                 // For parameters with non-uniform prior on only one dimension
                 logq = -degreesOfFreedom * Math.log(scale);

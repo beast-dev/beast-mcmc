@@ -116,6 +116,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
                                     currentStateTime += parentNodeHeight - nodeHeight;
 //                                    System.out.println("2\t"+currentStateTime);
                                     totalEventDescendents = TreeUtils.getExternalNodes(tree, node);
+                                    basalNode = node;
                                 } else {
                                     Object[] jump = getMostRecentJump(jumps);
                                     ancestralState = (String) jump[1];
@@ -177,6 +178,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
                                         currentStateTime += parentNodeHeight - nodeHeight;
 //                                        System.out.println("7\t"+currentStateTime);
                                         totalEventDescendents = TreeUtils.getExternalNodes(tree, node);
+                                        basalNode = node;
                                     } else {
                                          //iterate over jumps: get the most recent one
                                         Object[] jump = getMostRecentJump(jumps);
@@ -201,6 +203,9 @@ public class PersistenceSummarizer extends BaseTreeTool {
 
                     double independenceTime = getIndependenceTime(tree,nodes,originalNode,evaluationTime,currentState,nodeStateAnnotation);
                     nodes.add(originalNode);
+                    if(basalNode == null){
+                        System.out.println("Null!");
+                    }
                     int numberOfBranchesFromUniqueBeforeEvalTime = getNumberOfBranchesUntilEvalTime(tree, basalNode, currentState, nodeStateAnnotation, evaluationTime);
 
                     Row row = new Row(treeId, evaluationTime, ancestralTime, originalNode.getNumber(), node.getNumber(), currentState, ancestralState, currentStateTime, independenceTime,

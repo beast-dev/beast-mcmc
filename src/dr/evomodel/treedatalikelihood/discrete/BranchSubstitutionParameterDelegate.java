@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
+import dr.evomodel.substmodel.DifferentialMassProvider;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleBranchGradientDelegate;
 
@@ -49,13 +50,11 @@ public class BranchSubstitutionParameterDelegate extends AbstractBeagleBranchGra
                                         Tree tree,
                                         BeagleDataLikelihoodDelegate likelihoodDelegate,
                                         BranchRateModel branchRateModel,
-                                        BranchDifferentialMassProvider branchDifferentialMassProvider,
-                                        DifferentialCase differentialCase) {
+                                        BranchDifferentialMassProvider branchDifferentialMassProvider) {
         super(name, tree, likelihoodDelegate);
         this.name = name;
         this.branchRateModel = branchRateModel;
         this.branchDifferentialMassProvider = branchDifferentialMassProvider;
-        this.differentialCase = differentialCase;
     }
 
     @Override
@@ -68,7 +67,8 @@ public class BranchSubstitutionParameterDelegate extends AbstractBeagleBranchGra
 //                double[] differentialMassMatrix = branchDifferentialMassProvider.getDifferentialMassMatrixForBranch(node, time);
 //                double[] scaledDifferentialMassMatrix = DiscreteTraitBranchRateDelegate.scaleInfinitesimalMatrixByRates(differentialMassMatrix,
 //                        DiscreteTraitBranchRateDelegate.DifferentialChoice.GRADIENT, siteRateModel);
-                double[] scaledDifferentialMassMatrix = differentialCase.getScaledDifferentialMassMatrix(branchDifferentialMassProvider,
+                // TODO remove enum
+                double[] scaledDifferentialMassMatrix = DifferentialCase.EXACT.getScaledDifferentialMassMatrix(branchDifferentialMassProvider,
                         time, node, DiscreteTraitBranchRateDelegate.DifferentialChoice.GRADIENT, siteRateModel);
 
                 evolutionaryProcessDelegate.cacheFirstOrderDifferentialMatrix(beagle, i, scaledDifferentialMassMatrix);
@@ -78,8 +78,6 @@ public class BranchSubstitutionParameterDelegate extends AbstractBeagleBranchGra
             throw new RuntimeException("Not yet implemented!");
         }
     }
-
-    private final DifferentialCase differentialCase;
 
     public enum DifferentialCase {
         APPROXIMATE {

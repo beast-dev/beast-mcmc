@@ -54,6 +54,9 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
     private final TreeTrait treeTraitProvider;
     private final Tree tree;
 
+    private final DifferentialMassProvider.Mode mode = DifferentialMassProvider.Mode.EXACT;
+//    private final DifferentialMassProvider.Mode mode = DifferentialMassProvider.Mode.APPROXIMATE;
+
     public HomogeneousSubstitutionParameterGradient(String traitName,
                                                     TreeDataLikelihood treeDataLikelihood,
                                                     Parameter parameter,
@@ -75,7 +78,9 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
             }
 
             DifferentialMassProvider.DifferentialWrapper.WrtParameter wrtParameter = substitutionModel.factory(parameter, dim);
-            DifferentialMassProvider differentialMassProvider = new DifferentialMassProvider.DifferentialWrapper(substitutionModel, wrtParameter);
+            DifferentialMassProvider differentialMassProvider = new DifferentialMassProvider.DifferentialWrapper(
+                    substitutionModel, wrtParameter, mode);
+
             List<DifferentialMassProvider> differentialMassProviderList = new ArrayList<DifferentialMassProvider>();
             differentialMassProviderList.add(differentialMassProvider);
 
@@ -86,8 +91,8 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
                     treeDataLikelihood.getTree(),
                     likelihoodDelegate,
                     treeDataLikelihood.getBranchRateModel(),
-                    branchDifferentialMassProvider,
-                    BranchSubstitutionParameterDelegate.DifferentialCase.EXACT);
+                    branchDifferentialMassProvider);
+
             TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
         }
@@ -126,7 +131,7 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
 
     @Override
     public String getReport() {
-        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, tolerance);
+        return mode.getReport() + " " + GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, tolerance);
     }
 
     private final double tolerance = 1E-2;

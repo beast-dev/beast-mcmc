@@ -35,10 +35,23 @@ import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtPa
  */
 public class DifferentiableSubstitutionModelUtil {
 
-    static double[] getDifferentialMassMatrix(double time,
-                                              int stateCount,
-                                              WrappedMatrix differentialMassMatrix,
-                                              EigenDecomposition eigenDecomposition) {
+    static double[] getApproximateDifferentialMassMatrix(double time,
+                                                         int stateCount,
+                                                         WrappedMatrix differentialMassMatrix,
+                                                         EigenDecomposition eigenDecomposition) {
+
+        double[] outputArray = new double[stateCount * stateCount];
+
+        for (int i = 0, length = stateCount * stateCount; i < length; ++i) {
+            outputArray[i] = time * differentialMassMatrix.get(i);
+        }
+        return outputArray;
+    }
+
+    static double[] getExactDifferentialMassMatrix(double time,
+                                                   int stateCount,
+                                                   WrappedMatrix differentialMassMatrix,
+                                                   EigenDecomposition eigenDecomposition) {
 
         double[] eigenValues = eigenDecomposition.getEigenValues();
         WrappedMatrix eigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getEigenVectors(), 0, stateCount, stateCount);
@@ -67,7 +80,6 @@ public class DifferentiableSubstitutionModelUtil {
         }
 
         return outputArray;
-
     }
 
     private static void setZeros(WrappedMatrix matrix) {
@@ -200,5 +212,4 @@ public class DifferentiableSubstitutionModelUtil {
 
         return result;
     }
-
 }

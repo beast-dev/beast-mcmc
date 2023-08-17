@@ -96,6 +96,8 @@ public class BranchSubstitutionParameterGradient
 
             BranchSpecificSubstitutionParameterBranchModel branchModel = (BranchSpecificSubstitutionParameterBranchModel) likelihoodDelegate.getBranchModel();
 
+            DifferentialMassProvider.Mode mode = DifferentialMassProvider.Mode.EXACT;
+
             List<DifferentialMassProvider> differentialMassProviderList = new ArrayList<>();
             for (int i = 0; i < tree.getNodeCount(); ++i) {
                 NodeRef node = tree.getNode(i);
@@ -103,7 +105,8 @@ public class BranchSubstitutionParameterGradient
                     DifferentiableSubstitutionModel substitutionModel = (DifferentiableSubstitutionModel) branchModel.getSubstitutionModel(node);
                     Parameter parameter = branchParameter.getParameter(node.getNumber());
                     DifferentialMassProvider.DifferentialWrapper.WrtParameter wrtParameter = substitutionModel.factory(parameter, dim);
-                    differentialMassProviderList.add(new DifferentialMassProvider.DifferentialWrapper(substitutionModel, wrtParameter));
+                    differentialMassProviderList.add(new DifferentialMassProvider.DifferentialWrapper(
+                            substitutionModel, wrtParameter, mode));
                 }
             }
 
@@ -116,8 +119,8 @@ public class BranchSubstitutionParameterGradient
                     treeDataLikelihood.getTree(),
                     likelihoodDelegate,
                     treeDataLikelihood.getBranchRateModel(),
-                    branchDifferentialMassProvider,
-                    BranchSubstitutionParameterDelegate.DifferentialCase.EXACT);
+                    branchDifferentialMassProvider);
+            
             TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
         }

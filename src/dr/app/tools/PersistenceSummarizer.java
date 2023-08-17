@@ -99,6 +99,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
                     double currentStateTime = 0;
                     boolean jumpOccured = false;
                     Object[] jumps = readCJH(node, tree, nodeStateAnnotation);
+                    NodeRef basalNode = null; // This is the branch where the jump occurs i.e., node at the base of the unique introduction
 
                     //when no jumps are found, we need to go back it's ancestry to find a branch with a jump
                     if (jumps == null) {
@@ -122,12 +123,14 @@ public class PersistenceSummarizer extends BaseTreeTool {
 //                                    System.out.println("3\t"+currentStateTime);
                                     jumpOccured = true;
                                     totalEventDescendents = TreeUtils.getExternalNodes(tree, node);
+                                    basalNode = node;
                                 }
                                 node = tree.getParent(node);
                             } else {
                                 currentStateTime += parentNodeHeight - nodeHeight;
 //                                System.out.println("4\t"+currentStateTime);
                                 totalEventDescendents = TreeUtils.getExternalNodes(tree, node);
+                                basalNode = node;
                                 jumpOccured = true;
                             }
                         }
@@ -156,6 +159,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
 //                            System.out.println("5\t"+currentStateTime);
                             ancestralState = (String) recentJump[1];
                             totalEventDescendents = TreeUtils.getExternalNodes(tree, node);
+                            basalNode = node;
                         } else {
                             currentStateTime += parentNodeHeight - evaluationTime;
 //                            System.out.println("6\t"+currentStateTime);
@@ -181,6 +185,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
 //                                        System.out.println("8\t"+currentStateTime);
                                         jumpOccured = true;
                                         totalEventDescendents = TreeUtils.getExternalNodes(tree, node);
+                                        basalNode = node;
                                     }
                                     node = tree.getParent(node);
                                 } else {
@@ -188,6 +193,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
 //                                    System.out.println("9\t"+currentStateTime);
                                     totalEventDescendents = TreeUtils.getExternalNodes(tree, node);
                                     jumpOccured = true;
+                                    basalNode = node;
                                 }
                             }
                         }
@@ -195,11 +201,13 @@ public class PersistenceSummarizer extends BaseTreeTool {
 
                     double independenceTime = getIndependenceTime(tree,nodes,originalNode,evaluationTime,currentState,nodeStateAnnotation);
                     nodes.add(originalNode);
+                    int numberOfBranchesFromUniqueBeforeEvalTime = getNumberOfBranchesUntilEvalTime(tree, basalNode, currentState, nodeStateAnnotation, evaluationTime);
 
                     Row row = new Row(treeId, evaluationTime, ancestralTime, originalNode.getNumber(), node.getNumber(), currentState, ancestralState, currentStateTime, independenceTime,
                             nodeDescendants.size(),getSameStateDescendants(nodeDescendants,tree,currentState,nodeStateAnnotation, 0),
                             totalEventDescendents.size(),getSameStateDescendants(totalEventDescendents,tree,currentState,nodeStateAnnotation, 0),
-                            nodesAfterEvalTime(totalEventDescendents, tree, evaluationTime),getSameStateDescendants(totalEventDescendents,tree,currentState,nodeStateAnnotation, evaluationTime));
+                            nodesAfterEvalTime(totalEventDescendents, tree, evaluationTime),getSameStateDescendants(totalEventDescendents,tree,currentState,nodeStateAnnotation, evaluationTime),
+                            numberOfBranchesFromUniqueBeforeEvalTime);
                     ps.println(row);
                 }
             }
@@ -257,6 +265,24 @@ public class PersistenceSummarizer extends BaseTreeTool {
             }
         }
         return independenceTime;
+    }
+
+    private int getNumberOfBranchesUntilEvalTime(Tree tree, NodeRef node, String state, String nodeStateAnnotation, double evalTime){
+        int childCount = tree.getChildCount(node);
+        int numberOfBranches = 1; // 1 branch that belongs to the node itself
+        for (int i = 0; i < childCount; i++) {
+            NodeRef childNode = tree.getChild(node, i);
+            if (tree.getNodeHeight(childNode) < evalTime && tree.getNodeHeight(node) < evalTime){ // branch starts after evalTime then continue
+                continue;
+            }
+            String nodeState = (String) tree.getNodeAttribute(childNode, nodeStateAnnotation);
+            if(!nodeState.equalsIgnoreCase(state)) {
+                numberOfBranches += 1; // Jump occurs along this branch but we consider the branch until the jump to count as 1
+                continue;
+            }
+            numberOfBranches += getNumberOfBranchesUntilEvalTime(tree, childNode, state, nodeStateAnnotation, evalTime);
+        }
+        return numberOfBranches;
     }
 
 
@@ -322,6 +348,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
         int totalnumberOfDescendantsFromUniqueEventAndSameState;
         int numberOfDescendantsFromUniqueEventAfterEvalTime;
         int numberOfDescendantsFromUniqueEventAndSameStateAfterEvalTime;
+        int numberOfBranchesFromUniqueBeforeEvalTime;
 
         private static final String DELIMITER = ",";
 
@@ -330,7 +357,8 @@ public class PersistenceSummarizer extends BaseTreeTool {
                     String startLocation, String endLocation,
                     double time, double independenceTime, int numberOfDescendants, int numberOfDescendantsOfSameState,
                     int totalNumberOfDescendantsFromUniqueEvent, int totalnumberOfDescendantsFromUniqueEventAndSameState,
-                    int numberOfDescendantsFromUniqueEventAfterEvalTime, int numberOfDescendantsFromUniqueEventAndSameStateAfterEvalTime
+                    int numberOfDescendantsFromUniqueEventAfterEvalTime, int numberOfDescendantsFromUniqueEventAndSameStateAfterEvalTime,
+                    int numberOfBranchesFromUniqueBeforeEvalTime
         ) {
             this.treeId = treeId;
             this.evaluationTime = evaluationTime;
@@ -347,6 +375,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
             this.totalnumberOfDescendantsFromUniqueEventAndSameState = totalnumberOfDescendantsFromUniqueEventAndSameState;
             this.numberOfDescendantsFromUniqueEventAfterEvalTime = numberOfDescendantsFromUniqueEventAfterEvalTime;
             this.numberOfDescendantsFromUniqueEventAndSameStateAfterEvalTime = numberOfDescendantsFromUniqueEventAndSameStateAfterEvalTime;
+            this.numberOfBranchesFromUniqueBeforeEvalTime = numberOfBranchesFromUniqueBeforeEvalTime;
         }
 
         public String toString() {
@@ -356,6 +385,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
                     + time + DELIMITER + independenceTime + DELIMITER + numberOfDescendants + DELIMITER + numberOfDescendantsOfSameState
                     + DELIMITER + totalNumberOfDescendantsFromUniqueEvent + DELIMITER + totalnumberOfDescendantsFromUniqueEventAndSameState
                     + DELIMITER + numberOfDescendantsFromUniqueEventAfterEvalTime + DELIMITER + numberOfDescendantsFromUniqueEventAndSameStateAfterEvalTime
+                    + DELIMITER + numberOfBranchesFromUniqueBeforeEvalTime
                     ;
         }
     }
@@ -393,7 +423,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
 
     protected PrintStream openOutputFile(String outputFileName) {
         PrintStream ps = super.openOutputFile(outputFileName);
-        ps.println("treeId,evaluationTime,ancestralTime,evaluationNodeID,ancestralNodeID,stateAtEvaluationTime,ancestralState,persistenceTime,independenceTime,descendants,descendantsOfSameState,totalDescendantsFromUnique,totalDescendantsFromUniqueOfSameState,descendantsFromUniqueAfterEvalTime,descendantsFromUniqueOfSameStateAfterEvalTime");
+        ps.println("treeId,evaluationTime,ancestralTime,evaluationNodeID,ancestralNodeID,stateAtEvaluationTime,ancestralState,persistenceTime,independenceTime,descendants,descendantsOfSameState,totalDescendantsFromUnique,totalDescendantsFromUniqueOfSameState,descendantsFromUniqueAfterEvalTime,descendantsFromUniqueOfSameStateAfterEvalTime,numberOfBranchesFromUniqueBeforeEvalTime");
         return ps;
     }
 

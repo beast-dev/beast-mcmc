@@ -96,8 +96,8 @@ public class ArbitrarySubstitutionGeneratorGradient implements GradientWrtParame
                     treeDataLikelihood.getTree(),
                     likelihoodDelegate,
                     treeDataLikelihood.getBranchRateModel(),
-                    branchDifferentialMassProvider,
-                    BranchSubstitutionParameterDelegate.DifferentialCase.APPROXIMATE);
+                    branchDifferentialMassProvider);
+            
             TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
         }

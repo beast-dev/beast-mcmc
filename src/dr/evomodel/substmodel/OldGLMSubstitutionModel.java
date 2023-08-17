@@ -181,16 +181,16 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel
             }
 
 //            final double chainRule = getChainRule();
-//            double[][] design = glm.getX(effect);
+////            double[][] design = glm.getX(effect);
 //
-//            for (int i = 0; i < relativeRates.length; ++i) {
-//                differentialRates[i] = design[i][dim] / normalizingConstant * chainRule;
+//            for (int i = 0; i < differentialRates.length; ++i) {
+//                differentialRates[i] = covariate[i] / normalizingConstant * chainRule;
 //            }
         }
 
-//        double getChainRule() {
-//            return Math.exp(parameter.getParameterValue(dim));
-//        }
+        double getChainRule() {
+            return Math.exp(glm.getFixedEffect(fixedEffectIndex).getParameterValue(dim));
+        }
 
         private int index(int i, int j) {
             return i * stateCount + j;

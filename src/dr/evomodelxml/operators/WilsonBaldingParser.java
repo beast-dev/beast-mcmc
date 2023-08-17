@@ -25,12 +25,12 @@
 
 package dr.evomodelxml.operators;
 
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeModel;
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeOperator;
+import dr.evomodel.bigfasttree.thorney.UniformSubtreePruneRegraft;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainedTreeModel;
-import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainedTreeOperator;
-import dr.evomodel.treelikelihood.thorneytreelikelihood.UniformSubtreePruneRegraft;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
 

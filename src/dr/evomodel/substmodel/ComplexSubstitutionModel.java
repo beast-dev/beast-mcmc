@@ -1,7 +1,7 @@
 /*
  * ComplexSubstitutionModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,6 +25,9 @@
 
 package dr.evomodel.substmodel;
 
+import cern.colt.matrix.DoubleMatrix2D;
+import cern.colt.matrix.impl.DenseDoubleMatrix2D;
+import cern.colt.matrix.linalg.LUDecomposition;
 import dr.evolution.datatype.DataType;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
@@ -51,7 +54,7 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
 
     @Override
     protected void setupDimensionNames(int relativeTo) {
-        List<String> rateNames = new ArrayList<String>();
+        List<String> rateNames = new ArrayList<>();
 
         String ratePrefix = ratesParameter.getParameterName();
 
@@ -73,6 +76,31 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
 
     protected EigenSystem getDefaultEigenSystem(int stateCount) {
         return new ComplexColtEigenSystem(stateCount);
+    }
+
+    protected void computeStationaryDistribution(double[] statDistr) {
+        // Uses an LU decomposition to solve Q^t \pi = 0 and \sum \pi_i = 1
+
+        double[][] mat = getRelativeRateMatrixWithoutPi();
+
+        DoubleMatrix2D mat2 = new DenseDoubleMatrix2D(stateCount + 1, stateCount);
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                mat2.set(j, i, mat[i][j]); // Transposed
+            }
+        }
+        // Add row for sum-to-one constraint
+        for (int i = 0; i < stateCount; ++i) {
+            mat2.set(stateCount, i, 1.0);
+        }
+
+        LUDecomposition decomp = new LUDecomposition(mat2);
+        DoubleMatrix2D x = new DenseDoubleMatrix2D(stateCount + 1, 1);
+        x.set(stateCount, 0, 1.0);
+        DoubleMatrix2D y = decomp.solve(x);
+        for (int i = 0; i < stateCount; ++i) {
+            statDistr[i] = y.get(i, 0);
+        }
     }
 
     /**
@@ -163,6 +191,17 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
             rates[i] = ratesParameter.getParameterValue(i);
     }
 
+    private double[][] getRelativeRateMatrixWithoutPi() {
+        setupRelativeRates(relativeRates);
+        double[][] mat = new double[stateCount][stateCount];
+        double[] pi = new double[stateCount];
+        Arrays.fill(pi, 1.0);
+
+        setupQMatrix(relativeRates, pi, mat);
+        makeValid(mat, stateCount);
+        return mat;
+    }
+
     protected void setupQMatrix(double[] rates, double[] pi, double[][] matrix) {
         int i, j, k = 0;
         for (i = 0; i < stateCount; i++) {
@@ -243,7 +282,7 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
 
     @Override
     public Set<Likelihood> getLikelihoodSet() {
-        return new HashSet<Likelihood>(Arrays.asList(this));
+        return new HashSet<>(Collections.singletonList(this));
     }
 
     @Override
@@ -256,7 +295,7 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     }
 
     private boolean isUsed = false;
-    private double[] probability;
+    private final double[] probability;
 
     public Model getModel() {
         return this;

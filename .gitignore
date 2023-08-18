@@ -17,3 +17,6 @@ out/
 
 zig_zag
 src/revision.txt
+
+*.dmg
+release/Mac

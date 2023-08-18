@@ -113,6 +113,26 @@ public interface Transform {
 
     double[] gradientInverse(double[] values, int from, int to);
 
+    double logGradientInverse(double value);
+
+    double[] logGradientInverse(double[] values, int from, int to);
+
+    double derivativeOfTransformWrtValue(double value);
+
+    double[] derivativeOfTransformWrtValue(double[] values, int from, int to);
+
+    double secondDerivativeOfTransformWrtValue(double value);
+
+    double[] secondDerivativeOfTransformWrtValue(double[] values, int from, int to);
+
+    double secondDerivativeOfInverseTransformWrtValue(double value);
+
+    double[] secondDerivativeOfInverseTransformWrtValue(double[] values, int from, int to);
+
+    double logSecondDerivativeOfInverseTransformWrtValue(double value);
+
+    double[] logSecondDerivativeOfInverseTransformWrtValue(double[] values, int from, int to);
+
     /**
      * @return the transform's name
      */
@@ -274,6 +294,67 @@ public interface Transform {
             }
             return true;
         }
+
+        public double logGradientInverse(double value) {
+            throw new RuntimeException("Not yet implemented.");
+        };
+
+        public double[] logGradientInverse(double[] values, int from, int to) {
+            double[] result = values.clone();
+            for (int i = from; i < to; ++i) {
+                result[i] = logGradientInverse(values[i]);
+            }
+            return result;
+        }
+
+        public double derivativeOfTransformWrtValue(double value) {
+            throw new RuntimeException("Not yet implemented.");
+        };
+
+        public double[] derivativeOfTransformWrtValue(double[] values, int from, int to) {
+            double[] result = values.clone();
+            for (int i = from; i < to; ++i) {
+                result[i] = derivativeOfTransformWrtValue(values[i]);
+            }
+            return result;
+        }
+
+        public double secondDerivativeOfTransformWrtValue(double value) {
+            throw new RuntimeException("Not yet implemented.");
+        };
+
+        public double[] secondDerivativeOfTransformWrtValue(double[] values, int from, int to) {
+            double[] result = values.clone();
+            for (int i = from; i < to; ++i) {
+                result[i] = secondDerivativeOfTransformWrtValue(values[i]);
+            }
+            return result;
+        }
+
+        public double secondDerivativeOfInverseTransformWrtValue(double value) {
+            throw new RuntimeException("Not yet implemented.");
+        }
+
+        public double[] secondDerivativeOfInverseTransformWrtValue(double[] values, int from, int to) {
+            double[] result = values.clone();
+            for (int i = from; i < to; ++i) {
+                result[i] = secondDerivativeOfInverseTransformWrtValue(values[i]);
+            }
+            return result;
+        }
+
+        public double logSecondDerivativeOfInverseTransformWrtValue(double value) {
+            throw new RuntimeException("Not yet implemented.");
+        }
+
+        public double[] logSecondDerivativeOfInverseTransformWrtValue(double[] values, int from, int to) {
+            double[] result = values.clone();
+            for (int i = from; i < to; ++i) {
+                result[i] = logSecondDerivativeOfInverseTransformWrtValue(values[i]);
+            }
+            return result;
+        }
+
     }
 
     abstract class MultivariableTransform implements Transform {
@@ -330,6 +411,46 @@ public interface Transform {
 
         public boolean isInInteriorDomain(double value) {
             throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
+        public double logGradientInverse(double value) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
+        public double[] logGradientInverse(double[] values, int from, int to) {
+            throw new RuntimeException("Not yet implemented.");
+        }
+
+        public double derivativeOfTransformWrtValue(double value) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        };
+
+        public double[] derivativeOfTransformWrtValue(double[] values, int from, int to) {
+            throw new RuntimeException("Not yet implemented.");
+        }
+
+        public double secondDerivativeOfTransformWrtValue(double value) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        };
+
+        public double[] secondDerivativeOfTransformWrtValue(double[] values, int from, int to) {
+            throw new RuntimeException("Not yet implemented.");
+        }
+
+        public double secondDerivativeOfInverseTransformWrtValue(double value) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
+        public double[] secondDerivativeOfInverseTransformWrtValue(double[] values, int from, int to) {
+            throw new RuntimeException("Not yet implemented.");
+        }
+
+        public double logSecondDerivativeOfInverseTransformWrtValue(double value) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
+        public double[] logSecondDerivativeOfInverseTransformWrtValue(double[] values, int from, int to) {
+            throw new RuntimeException("Not yet implemented.");
         }
     }
 
@@ -489,6 +610,8 @@ public interface Transform {
 
         public double gradientInverse(double value) { return Math.exp(value); }
 
+        public double logGradientInverse(double value) { return value; }
+
         public double updateGradientLogDensity(double gradient, double value) {
             // gradient == gradient of inverse()
             // value == gradient of inverse() (value is untransformed)
@@ -521,6 +644,15 @@ public interface Transform {
         public String getTransformName() { return "log"; }
 
         public double getLogJacobian(double value) { return -Math.log(value); }
+
+        public double derivativeOfTransformWrtValue(double value) { return 1.0 / value; }
+
+        public double secondDerivativeOfTransformWrtValue(double value) { return -1.0 / (value * value); }
+
+        public double secondDerivativeOfInverseTransformWrtValue(double value) { return Math.exp(value); }
+
+        public double logSecondDerivativeOfInverseTransformWrtValue(double value) { return value; }
+
     }
 
     class LogConstrainedSumTransform extends MultivariableTransform {
@@ -1170,6 +1302,8 @@ public interface Transform {
 
         public double gradientInverse(double value) { return 1.0; }
 
+        public double logGradientInverse(double value) { return 0.0; }
+
         public String getTransformName() {
             return "none";
         }
@@ -1177,6 +1311,14 @@ public interface Transform {
         public double getLogJacobian(double value) {
             return 0.0;
         }
+
+        public double derivativeOfTransformWrtValue(double value) { return 1.0; }
+
+        public double secondDerivativeOfTransformWrtValue(double value) { return 0.0; }
+
+        public double secondDerivativeOfInverseTransformWrtValue(double value) { return 0.0; }
+
+        public double logSecondDerivativeOfInverseTransformWrtValue(double value) { return Double.NEGATIVE_INFINITY; }
     }
 
     class NoTransformMultivariable extends MultivariableTransform {

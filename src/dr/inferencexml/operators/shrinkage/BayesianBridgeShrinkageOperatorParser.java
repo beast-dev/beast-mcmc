@@ -26,12 +26,13 @@ public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectPars
 
         GammaDistribution globalScalePrior = null;
 
+        // This prior is actually on phi = globalScale^-exponent
         DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
         if (prior != null) {
             if (prior.getDistribution() instanceof GammaDistribution) {
                 globalScalePrior = (GammaDistribution) prior.getDistribution();
             } else {
-                throw new XMLParseException("Gibbs sampler only implemented for a gamma distributed global scale");
+                throw new XMLParseException("Gibbs sampler only implemented for a gamma prior on globalScale^(-exponent).");
             }
         }
 
@@ -50,10 +51,7 @@ public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectPars
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newDoubleRule(WEIGHT),
-            new XORRule(
-                    new ElementRule(BayesianBridgeStatisticsProvider.class),
-                    new ElementRule(AutoCorrelatedBranchRatesDistribution.class)
-            ),
+            new ElementRule(BayesianBridgeStatisticsProvider.class),
             new ElementRule(DistributionLikelihood.class, true),
             new ElementRule(MASK, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class),

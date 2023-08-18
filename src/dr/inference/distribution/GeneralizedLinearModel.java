@@ -357,6 +357,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         }
         return independentParam.get(k).getBounds().getUpperLimit(which);
     }
+    public abstract GeneralizedLinearModel factory(List<Parameter> oldIndependentParameter, List<Parameter> newIndependentParameter);
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 

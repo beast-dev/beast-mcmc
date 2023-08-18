@@ -30,6 +30,7 @@ import dr.evomodel.branchratemodel.BranchRateGradientWrtIncrements;
 import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
 import dr.evomodel.treedatalikelihood.continuous.BranchSpecificOptimaGradient;
 import dr.evomodel.treedatalikelihood.discrete.BranchRateGradientForDiscreteTrait;
+import dr.evomodel.treedatalikelihood.discrete.BranchSubstitutionParameterGradient;
 import dr.inference.hmc.CompoundGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.JointBranchRateGradient;
@@ -78,7 +79,8 @@ public class BranchRateGradientWrtIncrementsParser extends AbstractXMLObjectPars
 
         if (!(rateProvider instanceof JointBranchRateGradient) && !(rateProvider instanceof BranchSpecificOptimaGradient)) {
             if (!(rateProvider instanceof BranchRateGradient) &&
-                    !(rateProvider instanceof BranchRateGradientForDiscreteTrait)) {
+                    !(rateProvider instanceof BranchRateGradientForDiscreteTrait) &&
+                        !(rateProvider instanceof BranchSubstitutionParameterGradient)) {
                 throw new XMLParseException("Must provide a branch rate gradient");
             }
         }
@@ -109,9 +111,11 @@ public class BranchRateGradientWrtIncrementsParser extends AbstractXMLObjectPars
             ),
             new XORRule(
                     new XORRule(
-                            new ElementRule(BranchRateGradient.class),
-                            new ElementRule(BranchSpecificOptimaGradient.class)
-                    ),
+                            new ElementRule(BranchSubstitutionParameterGradient.class),
+                            new XORRule(
+                                    new ElementRule(BranchRateGradient.class),
+                                    new ElementRule(BranchSpecificOptimaGradient.class)
+                            )),
                     new XORRule(
                             new ElementRule(BranchRateGradientForDiscreteTrait.class),
                             new ElementRule(JointBranchRateGradient.class)

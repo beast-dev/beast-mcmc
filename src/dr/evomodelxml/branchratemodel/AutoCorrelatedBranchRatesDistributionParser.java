@@ -93,7 +93,7 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
     }
 
     public Class getReturnType() {
-        return ArbitraryBranchRates.class;
+        return AutoCorrelatedBranchRatesDistribution.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

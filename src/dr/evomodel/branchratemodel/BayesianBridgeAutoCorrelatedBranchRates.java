@@ -25,6 +25,9 @@
 
 package dr.evomodel.branchratemodel;
 
+import dr.evolution.tree.MutableTreeModel;
+import dr.evolution.tree.TreeTrait;
+import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.distribution.shrinkage.BayesianBridgeDistributionModel;
 import dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider;
 import dr.inference.model.*;
@@ -37,6 +40,7 @@ public class BayesianBridgeAutoCorrelatedBranchRates extends AutoCorrelatedBranc
         implements BayesianBridgeStatisticsProvider {
 
     private final BayesianBridgeDistributionModel distribution;
+    private final TreeParameterModel treeParameterModel;
 
     public BayesianBridgeAutoCorrelatedBranchRates(String name,
                                                    DifferentiableBranchRates branchRateModel,
@@ -45,6 +49,10 @@ public class BayesianBridgeAutoCorrelatedBranchRates extends AutoCorrelatedBranc
                                                    boolean takeLogBeforeIncrement, boolean operateOnIncrements) {
         super(name, branchRateModel, distribution, scaling, takeLogBeforeIncrement, operateOnIncrements);
         this.distribution = distribution;
+        this.treeParameterModel = new TreeParameterModel(
+                (MutableTreeModel)branchRateModel.getTree(), getLocalScale(),
+                false, TreeTrait.Intent.NODE);
+        addModel(treeParameterModel);
     }
 
     @Override

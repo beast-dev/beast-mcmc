@@ -54,6 +54,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         while (bounceState.isTimeRemaining()) {
 
             MinimumTravelInformation firstBounce = getNextBounce(position, velocity, action, gradient, momentum);
+            if (printEventLocations) System.err.println(position);
             bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);
         }
 
@@ -365,5 +366,6 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
     final TaskPool taskPool;
 
     protected final static boolean DEBUG = false;
+    private final static boolean printEventLocations = false;
 //    final static boolean DEBUG_SIGN = false;
 }

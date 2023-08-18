@@ -30,6 +30,9 @@ import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
+import dr.inference.loggers.NumberColumn;
 import dr.math.MathUtils;
 import dr.inference.model.Statistic;
 
@@ -43,7 +46,7 @@ import java.util.List;
  *
  * @todo - this should extend TreeModel rather than inheriting from DefaultTreeModel
  */
-public class EmpiricalTreeDistributionModel extends DefaultTreeModel {
+public class EmpiricalTreeDistributionModel extends DefaultTreeModel implements Loggable {
 
     /**
      * This constructor takes an array of trees and jumps randomly amongst them.
@@ -83,12 +86,22 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel {
         });
     }
 
+    public Tree[] getTrees() { return trees; }
+
+    public void setTree(int index) {
+        currentTreeIndex = index;
+        currentTree = trees[index];
+        fireModelChanged();
+    }
+
     protected void storeState() {
         storedCurrentTree = currentTree;
+        storedCurrentTreeIndex = currentTreeIndex;
     }
 
     protected void restoreState() {
         currentTree = storedCurrentTree;
+        currentTreeIndex = storedCurrentTreeIndex;
     }
 
     protected void acceptState() {
@@ -268,6 +281,23 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel {
         return currentTree.getAttributeNames();
     }
 
+    @Override
+    public LogColumn[] getColumns() {
+        if (columns == null) {
+            LogColumn column = new NumberColumn("empiricalTreeNumber") {
+                @Override
+                public double getDoubleValue() {
+                    return currentTreeIndex;
+                }
+            };
+
+            columns = new LogColumn[] { column };
+        }
+        return columns;
+    }
+
+    private LogColumn[] columns;
+
     public static final String EMPIRICAL_TREE_DISTRIBUTION_MODEL = "empiricalTreeDistributionModel";
 
     private final Tree[] trees;
@@ -276,4 +306,5 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel {
     private Tree storedCurrentTree;
 
     private int currentTreeIndex;
+    private int storedCurrentTreeIndex;
 }

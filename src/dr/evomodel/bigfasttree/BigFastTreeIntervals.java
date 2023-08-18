@@ -81,6 +81,13 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
         return events.getInterval(i + 1);
     }
 
+    public int getIntervalIndexForNode(int nodeNum) {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        return events.getNodePosition(nodeNum);
+    }
+
     @Override
     public double getIntervalTime(int i) {
         if (!intervalsKnown) {

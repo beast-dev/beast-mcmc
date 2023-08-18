@@ -196,7 +196,6 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
         if (taskPool != null) {
 
             firstBounce = getNextBounceParallel(position, velocity, action, gradient, momentum);
-            firstBounceBinary = null;
 
         } else {
 
@@ -205,7 +204,6 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                 firstBounce = new MinimumTravelInformation(firstBounceBinary.time, firstBounceBinary.index, firstBounceBinary.type);
             } else {
                 firstBounce = getNextBounceSerial(position, velocity, action, gradient, momentum);
-                firstBounceBinary = null;
             }
         }
 
@@ -214,6 +212,8 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
         }
 
         if (nativeCodeOptions.testNativeFindNextBounce) {
+            firstBounce = getNextBounceSerial(position, velocity, action, gradient, momentum);
+            firstBounceBinary = new MinimumTravelInformationBinary(firstBounce.time, firstBounce.index[0], firstBounce.type);
             testNative(firstBounceBinary, position, velocity, action, gradient, momentum);
         }
 

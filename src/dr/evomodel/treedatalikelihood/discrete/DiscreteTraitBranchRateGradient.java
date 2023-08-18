@@ -169,13 +169,15 @@ public class DiscreteTraitBranchRateGradient
             if (!tree.isRoot(node)) {
                 final int destinationIndex = getParameterIndexFromNode(node);
                 final double nodeResult = gradient[v] * getChainGradient(tree, node);
-                result[destinationIndex] = nodeResult;
+                result[destinationIndex] = nodeResult; //TODO: XJ thinks destinationIndex == v here.
+                result[v] = nodeResult;
                 v++;
             }
         }
 
         // TODO Ideally move all chain-ruling into branchRateModel (except branchLengths?)
-        result = branchRateModel.updateGradientLogDensity(result, null, 0, gradient.length);
+
+        result = updateBranchRateGradientLogDensity(result);
 
         if (COUNT_TOTAL_OPERATIONS) {
             ++getGradientLogDensityCount;
@@ -185,6 +187,11 @@ public class DiscreteTraitBranchRateGradient
 
         return result;
     }
+
+    double[] updateBranchRateGradientLogDensity(double[] result) {
+        return result;
+    }
+
 
     protected double getChainGradient(Tree tree, NodeRef node) {
         return tree.getBranchLength(node);

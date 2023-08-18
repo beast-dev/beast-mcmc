@@ -41,6 +41,7 @@ public class MCMCCriterion implements Acceptor {
     // is flat and will always accept (symmetric) proposals, i.e. hastings ratio of 0 in log space.
     // As this temperature parameter increases, the posterior gets more peaked.
     protected double temperature = 1.0;
+    private int rank = 0;
 
     public MCMCCriterion() {
 
@@ -80,4 +81,7 @@ public class MCMCCriterion implements Acceptor {
         this.temperature = temperature;
     }
 
+    public int getRank() { return rank; }
+
+    public void setRank(int rank) { this.rank = rank; }
 }

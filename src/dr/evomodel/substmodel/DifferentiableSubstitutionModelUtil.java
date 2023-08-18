@@ -35,10 +35,23 @@ import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtPa
  */
 public class DifferentiableSubstitutionModelUtil {
 
-    static double[] getDifferentialMassMatrix(double time,
-                                              int stateCount,
-                                              WrappedMatrix differentialMassMatrix,
-                                              EigenDecomposition eigenDecomposition) {
+    static double[] getApproximateDifferentialMassMatrix(double time,
+                                                         int stateCount,
+                                                         WrappedMatrix differentialMassMatrix,
+                                                         EigenDecomposition eigenDecomposition) {
+
+        double[] outputArray = new double[stateCount * stateCount];
+
+        for (int i = 0, length = stateCount * stateCount; i < length; ++i) {
+            outputArray[i] = time * differentialMassMatrix.get(i);
+        }
+        return outputArray;
+    }
+
+    static double[] getExactDifferentialMassMatrix(double time,
+                                                   int stateCount,
+                                                   WrappedMatrix differentialMassMatrix,
+                                                   EigenDecomposition eigenDecomposition) {
 
         double[] eigenValues = eigenDecomposition.getEigenValues();
         WrappedMatrix eigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getEigenVectors(), 0, stateCount, stateCount);
@@ -46,12 +59,14 @@ public class DifferentiableSubstitutionModelUtil {
 
         getTripleMatrixMultiplication(stateCount, inverseEigenVectors, differentialMassMatrix, eigenVectors);
 
+        setZeros(differentialMassMatrix);
+
         for (int i = 0; i < stateCount; i++) {
             for (int j = 0; j < stateCount; j++) {
                 if (i == j || eigenValues[i] == eigenValues[j]) {
                     differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * time);
                 } else {
-                    differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * (1.0 - Math.exp((eigenValues[j] - eigenValues[i]) * time)) / (eigenValues[i] - eigenValues[j]));
+                    differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) == 0 ? 0 : differentialMassMatrix.get(i, j) * (1.0 - Math.exp((eigenValues[j] - eigenValues[i]) * time)) / (eigenValues[i] - eigenValues[j]));
                 }
             }
         }
@@ -65,8 +80,19 @@ public class DifferentiableSubstitutionModelUtil {
         }
 
         return outputArray;
-
     }
+
+    private static void setZeros(WrappedMatrix matrix) {
+        for (int i = 0; i < matrix.getMinorDim(); i++) {
+            for (int j = 0; j < matrix.getMinorDim(); j++) {
+                if (Math.abs(matrix.get(i, j)) < threshold) {
+                    matrix.set(i, j, 0);
+                }
+            }
+        }
+    }
+
+    static final double threshold = 1E-10;  //TODO: very bad magic threshold number
 
     private static void getTripleMatrixMultiplication(int stateCount, ReadableMatrix leftMatrix,
                                                       WrappedMatrix middleMatrix, ReadableMatrix rightMatrix) {
@@ -112,7 +138,7 @@ public class DifferentiableSubstitutionModelUtil {
         ((DifferentiableSubstitutionModel) substitutionModel).setupDifferentialFrequency(wrt, differentialFrequencies);
 
         double[][] differentialMassMatrix = new double[stateCount][stateCount];
-        substitutionModel.setupQMatrix(differentialRates, differentialFrequencies, differentialMassMatrix);
+        setupQDerivative(substitutionModel, differentialRates, differentialFrequencies, differentialMassMatrix);
         substitutionModel.makeValid(differentialMassMatrix, stateCount);
 
         final double weightedNormalizationGradient
@@ -132,6 +158,28 @@ public class DifferentiableSubstitutionModelUtil {
         }
 
         return differential;
+    }
+
+    private static void setupQDerivative(BaseSubstitutionModel substitutionModel, double[] differentialRates,
+                                         double[] differentialFrequencies, double[][] differentialMassMatrix) {
+        if (substitutionModel instanceof ComplexSubstitutionModel) {
+            int i, j, k = 0;
+            final int stateCount = differentialFrequencies.length;
+            for (i = 0; i < stateCount; i++) {
+                for (j = i + 1; j < stateCount; j++) {
+                    final double thisRate = differentialRates[k++];
+                    differentialMassMatrix[i][j] = thisRate * differentialFrequencies[j];
+                }
+            }
+            for (j = 0; j < stateCount; j++) {
+                for (i = j + 1; i < stateCount; i++) {
+                    final double thisRate = differentialRates[k++];
+                    differentialMassMatrix[i][j] = thisRate * differentialFrequencies[j];
+                }
+            }
+        } else {
+            substitutionModel.setupQMatrix(differentialRates, differentialFrequencies, differentialMassMatrix);
+        }
     }
 
     private static final boolean CHECK_COMMUTABILITY = false;
@@ -186,5 +234,4 @@ public class DifferentiableSubstitutionModelUtil {
 
         return result;
     }
-
 }

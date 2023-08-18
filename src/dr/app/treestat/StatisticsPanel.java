@@ -326,7 +326,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 
         if (factory.allowsTaxonList()) {
 
-            for (Object taxonSet : treeStatData.taxonSets) {
+            for (Object taxonSet : treeStatData.taxonSets.values()) {
                 taxonSetCombo.addItem(taxonSet);
             }
 
@@ -413,9 +413,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
             taxa.setId(t.name);
             //Iterator iter = t.taxa.iterator();
             for (Object aTaxa : t.taxa) {
-                String id = (String) aTaxa;
-                Taxon taxon = new Taxon(id);
-                taxa.addTaxon(taxon);
+                taxa.addTaxon((Taxon) aTaxa);
             }
             statistic.setTaxonList(taxa);
         } else {

@@ -27,6 +27,7 @@ package dr.evomodelxml.treelikelihood;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.continuous.StandardizeTraits;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
@@ -107,7 +108,8 @@ public class TreeTraitParserUtilities {
         Parameter traits = (Parameter) cxo.getChild(Parameter.class);
         double[] window = cxo.getDoubleArrayAttribute(TreeTraitParserUtilities.WINDOW); // Must be included, no default value
         boolean duplicates = cxo.getAttribute(TreeTraitParserUtilities.DUPLICATES, true); // default = true
-        jitter(traits, length, missingIndicators, window, duplicates, true);
+        TaxonList taxonList = (TaxonList) cxo.getChild(TaxonList.class);
+        jitter(traits, length, missingIndicators, window, taxonList, duplicates, true);
     }
 
     public void randomize(XMLObject xo) throws XMLParseException {
@@ -185,7 +187,9 @@ public class TreeTraitParserUtilities {
         return false;
     }
 
-    public void jitter(Parameter trait, int dim, boolean[] missingIndicators, double[] window, boolean duplicates, boolean verbose) {
+    public void jitter(Parameter trait, int dim, boolean[] missingIndicators, double[] window,
+                       TaxonList taxonList,
+                       boolean duplicates, boolean verbose) {
         int numTraits = trait.getDimension() / dim;
         boolean[] update = new boolean[numTraits];
         if (!duplicates) {

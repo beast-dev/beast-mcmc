@@ -1,5 +1,8 @@
 package dr.evomodelxml.bigfasttree.thorney;
 
+import dr.evolution.datatype.ContinuousDataType;
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.IntegerDataType;
 import dr.evolution.tree.Tree;
 import dr.evomodel.bigfasttree.thorney.ConstrainedTreeBranchLengthProvider;
 import dr.evomodel.bigfasttree.thorney.ConstrainedTreeModel;
@@ -8,11 +11,11 @@ import dr.xml.*;
 
 public class ConstrainedBranchLengthProviderParser extends AbstractXMLObjectParser {
 
-    public static final String CONSTRAINED_BRANCHLENGTH_PROVIDER = "constrainedBranchLengthProvider";
+    public static final String MUTATION_BRANCH_MAP = "mutationBranchMap";
     public static final String DATA_TREE = "dataTree";
 
     public String getParserName() {
-        return CONSTRAINED_BRANCHLENGTH_PROVIDER;
+        return MUTATION_BRANCH_MAP;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -20,11 +23,11 @@ public class ConstrainedBranchLengthProviderParser extends AbstractXMLObjectPars
         boolean discrete = xo.getAttribute("discrete", true);
         double minBranchLength=xo.getAttribute("minBranchlength", 0.0);
 
-
         ConstrainedTreeModel constrainedTree = (ConstrainedTreeModel) xo.getChild(ConstrainedTreeModel.class);
         Tree dataTree = (Tree) xo.getElementFirstChild(DATA_TREE);
+        DataType dataType = discrete? IntegerDataType.INSTANCE: ContinuousDataType.INSTANCE;
 
-        return new ConstrainedTreeBranchLengthProvider(constrainedTree,dataTree,scale,minBranchLength,discrete);
+        return new ConstrainedTreeBranchLengthProvider(constrainedTree,dataTree,scale,minBranchLength,dataType);
     }
 
     //************************************************************************

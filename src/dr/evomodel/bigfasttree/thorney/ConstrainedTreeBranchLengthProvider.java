@@ -1,7 +1,8 @@
 package dr.evomodel.bigfasttree.thorney;
 
 import dr.evolution.datatype.ContinuousDataType;
-
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.IntegerDataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
@@ -15,8 +16,10 @@ public class ConstrainedTreeBranchLengthProvider  extends MutationBranchMap.Abst
     public static final String CONSTRAINED_TREE_BRANCHLENGTH_PROVIDER = "ConstrainedTreeBranchMutationProvider";
     
 
-    public ConstrainedTreeBranchLengthProvider(ConstrainedTreeModel constrainedTreeModel,Tree dataTree,Double scale,double minBranchLength,boolean discrete){
-        super(ContinuousDataType.INSTANCE);
+    public ConstrainedTreeBranchLengthProvider(ConstrainedTreeModel constrainedTreeModel,Tree dataTree,Double scale,double minBranchLength,DataType dataType){
+        super(dataType);
+        
+        boolean discrete = dataType instanceof ContinuousDataType? false:true;
 
         this.minBranchLength = minBranchLength;
 
@@ -54,7 +57,7 @@ public class ConstrainedTreeBranchLengthProvider  extends MutationBranchMap.Abst
         }
     }
     public ConstrainedTreeBranchLengthProvider(ConstrainedTreeModel constrainedTreeModel,Tree dataTree){
-        this(constrainedTreeModel,dataTree,1.0,0.0,true);
+        this(constrainedTreeModel,dataTree,1.0,0.0,IntegerDataType.INSTANCE);
     }
 
     public double getBranchLength( NodeRef node) {

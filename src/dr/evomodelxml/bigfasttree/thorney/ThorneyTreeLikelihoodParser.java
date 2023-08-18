@@ -1,8 +1,11 @@
 
 package dr.evomodelxml.bigfasttree.thorney;
 
+import dr.evolution.datatype.ContinuousDataType;
+import dr.evolution.datatype.IntegerDataType;
 import dr.evomodel.bigfasttree.thorney.BranchLengthLikelihoodDelegate;
 import dr.evomodel.bigfasttree.thorney.MutationBranchMap;
+import dr.evomodel.bigfasttree.thorney.PoissonBranchLengthLikelihoodDelegate;
 import dr.evomodel.bigfasttree.thorney.ThorneyDataLikelihoodDelegate;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
@@ -17,7 +20,7 @@ import dr.xml.*;
  */
 public class ThorneyTreeLikelihoodParser extends AbstractXMLObjectParser {
 
-    public static final String THORNEY_DATA_LIKELIHOOD_DELEGATE = "thorneyTreeLikehihood";
+    public static final String THORNEY_DATA_LIKELIHOOD_DELEGATE = "thorneyTreeLikelihood";
 
     public String getParserName() {
         return THORNEY_DATA_LIKELIHOOD_DELEGATE;
@@ -29,9 +32,7 @@ public class ThorneyTreeLikelihoodParser extends AbstractXMLObjectParser {
 
         MutationBranchMap branchLengthProvider = (MutationBranchMap) xo.getChild(MutationBranchMap.class);
         BranchLengthLikelihoodDelegate branchLengthLikelihoodDelegate = (BranchLengthLikelihoodDelegate) xo.getChild(BranchLengthLikelihoodDelegate.class);
-        
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
-
         ThorneyDataLikelihoodDelegate  dataLikelihoodDelegate = new ThorneyDataLikelihoodDelegate( treeModel, branchLengthProvider, branchLengthLikelihoodDelegate);
         
         return new TreeDataLikelihood(dataLikelihoodDelegate, treeModel, branchRateModel);

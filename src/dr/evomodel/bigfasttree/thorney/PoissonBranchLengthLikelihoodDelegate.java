@@ -21,13 +21,12 @@ public class PoissonBranchLengthLikelihoodDelegate extends AbstractModel impleme
 
 
     @Override
-    public double getGradientWrtTime(double mutations, double branchLength) { // TODO: better chain rule handling
+    public double getGradientWrtTime(double mutations, double time, double branchRate) { // TODO: better chain rule handling
         // if (!(this.branchRateModel instanceof StrictClockBranchRates)){
         //     throw new RuntimeException("gradients are only implemented for a strict clock model");
         // }
         // double rate = (double) branchRateModel.getVariable(0).getValue(0);
-        // return SaddlePointExpansion.logPoissonMeanDerivative(time * rate * scale, (int) Math.round(mutations)) * rate * scale;
-        throw new RuntimeException("gradients are not implemented for this model");
+        return SaddlePointExpansion.logPoissonMeanDerivative(time * branchRate * scale, (int) Math.round(mutations)) * branchRate * scale;
     }
 
 

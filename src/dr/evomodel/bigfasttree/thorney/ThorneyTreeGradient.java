@@ -26,7 +26,7 @@
 package dr.evomodel.bigfasttree.thorney;
 
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -48,7 +48,7 @@ public class ThorneyTreeGradient implements GradientWrtParameterProvider, Report
     private final TreeParameterModel indexHelper;
     private final double[] branchGradient;
     private final ThorneyDataLikelihoodDelegate dataLikelihoodDelegate;
-
+    private final BranchRateModel branchRateModel;
     public ThorneyTreeGradient(TreeDataLikelihood likelihood) {
         this.likelihood = likelihood;
         this.tree = (TreeModel)likelihood.getTree();
@@ -56,6 +56,7 @@ public class ThorneyTreeGradient implements GradientWrtParameterProvider, Report
         this.nodeHeightProxyParameter = new NodeHeightProxyParameter("ThorneyTreeGradient.NodeHeightProxyParameter", this.tree, true);
         this.branchGradient = new double[tree.getNodeCount() - 1];
         this.indexHelper = new TreeParameterModel(tree, new Parameter.Default(branchGradient), false);
+        this.branchRateModel = likelihood.getBranchRateModel();
 
 
     }
@@ -80,7 +81,8 @@ public class ThorneyTreeGradient implements GradientWrtParameterProvider, Report
             NodeRef node = tree.getNode(indexHelper.getNodeNumberFromParameterIndex(i));
             double time = tree.getBranchLength(node);
             double mutations = dataLikelihoodDelegate.getMutationMap().getMutations(node);
-            branchGradient[i] = dataLikelihoodDelegate.getBranchLengthLikelihoodDelegate().getGradientWrtTime(mutations, time);
+            double rate = branchRateModel.getBranchRate(tree,node);
+            branchGradient[i] = dataLikelihoodDelegate.getBranchLengthLikelihoodDelegate().getGradientWrtTime(mutations, time, rate);
         }
     }
 

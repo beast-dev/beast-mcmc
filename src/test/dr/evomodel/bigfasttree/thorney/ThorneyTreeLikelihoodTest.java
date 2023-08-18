@@ -61,12 +61,12 @@ public class ThorneyTreeLikelihoodTest extends TestCase {
 
    public void testAfterTopologyChange(){
        TreeModel subtree = constrainedTreeModel.getSubtree(constrainedTreeModel.getNode(0));
-        NodeRef insertedNode = subtree.getNode(4);
 
         NodeRef subtreeRoot = subtree.getRoot();// should be inserted node parent
-        assert subtree.getParent(insertedNode) == subtreeRoot;
         NodeRef tip2 = subtree.getExternalNode(1);
+        NodeRef insertedNode = subtree.getParent(tip2);
         NodeRef tip3 = subtree.getExternalNode(2);
+        assert subtree.getParent(insertedNode) == subtreeRoot;
 
         constrainedTreeModel.beginTreeEdit();
         subtree.removeChild(insertedNode,tip2);
@@ -128,11 +128,6 @@ public class ThorneyTreeLikelihoodTest extends TestCase {
     }
 
 
-
-
-
-   
-
    public void testRootPolytomy() throws IOException, Importer.ImportException, TreeUtils.MissingTaxonException {
        branchRateModel = new StrictClockBranchRates(new Parameter.Default(1.0));
 
@@ -157,8 +152,6 @@ public class ThorneyTreeLikelihoodTest extends TestCase {
            PoissonDistribution p = new PoissonDistribution(expectations[i]);
            expectedLL += p.logPdf(mutations[i]);
        }
-
-
 
        double LL = treeDataLikelihood.getLogLikelihood();
 

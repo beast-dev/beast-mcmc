@@ -29,6 +29,8 @@ import java.util.logging.Logger;
 
 import dr.evomodel.siteratemodel.DiscretizedSiteRateModel;
 import dr.evomodel.siteratemodel.GammaSiteRateDelegate;
+import dr.evomodel.siteratemodel.HomogeneousRateDelegate;
+import dr.evomodel.siteratemodel.SiteRateDelegate;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.inference.model.Parameter;
@@ -127,7 +129,12 @@ public class SiteModelParser extends AbstractXMLObjectParser {
             Logger.getLogger("dr.evomodel").info("\nCreating site rate model.");
         }
 
-        GammaSiteRateDelegate delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParam, catCount, type, invarParam);
+        SiteRateDelegate delegate;
+        if (shapeParam != null || invarParam != null) {
+            delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParam, catCount, type, invarParam);
+        } else {
+            delegate = new HomogeneousRateDelegate("HomogeneousRateDelegate");
+        }
 
         DiscretizedSiteRateModel siteRateModel = new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
 

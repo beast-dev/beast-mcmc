@@ -34,6 +34,7 @@ import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.siteratemodel.DiscretizedSiteRateModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.HomogeneousRateDelegate;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -259,6 +260,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             patternLists.add(patternList);
 
             SiteRateModel siteRateModel = (SiteRateModel) xo.getChild(SiteRateModel.class);
+            if (siteRateModel == null) {
+                siteRateModel = new DiscretizedSiteRateModel("SiteRateModel");
+            }
             siteRateModels.add(siteRateModel);
 
             FrequencyModel rootFreqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
@@ -291,6 +295,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 patternLists.add(patternList);
 
                 SiteRateModel siteRateModel = (SiteRateModel) cxo.getChild(SiteRateModel.class);
+                if (siteRateModel == null) {
+                    siteRateModel = new DiscretizedSiteRateModel("SiteRateModel");
+                }
                 siteRateModels.add(siteRateModel);
 
                 FrequencyModel rootFreqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);

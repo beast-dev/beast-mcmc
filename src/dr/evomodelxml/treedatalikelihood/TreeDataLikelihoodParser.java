@@ -291,11 +291,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 patternLists.add(patternList);
 
                 SiteRateModel siteRateModel = (SiteRateModel) cxo.getChild(SiteRateModel.class);
-//                if (siteRateModel == null) {
-//                    siteRateModel = new
-//                }
                 siteRateModels.add(siteRateModel);
-
 
                 FrequencyModel rootFreqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
 

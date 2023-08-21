@@ -40,8 +40,8 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
 
 
     /**
-     * Constructor for gamma+invar distributed sites. Either shapeParameter or
-     * invarParameter (or both) can be null to turn off that feature.
+     * Constructor for a discretized site rate model that uses a delegate to set
+     * the category rates.
      */
     public DiscretizedSiteRateModel(
             String name,

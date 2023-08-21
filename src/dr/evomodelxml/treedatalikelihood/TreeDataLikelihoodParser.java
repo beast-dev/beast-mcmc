@@ -291,7 +291,11 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 patternLists.add(patternList);
 
                 SiteRateModel siteRateModel = (SiteRateModel) cxo.getChild(SiteRateModel.class);
+//                if (siteRateModel == null) {
+//                    siteRateModel = new
+//                }
                 siteRateModels.add(siteRateModel);
+
 
                 FrequencyModel rootFreqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
 
@@ -301,6 +305,10 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     if (substitutionModel == null && siteRateModel instanceof DiscretizedSiteRateModel) {
                         // for backwards compatibility the old GammaSiteRateModelParser can provide the substitution model...
                         substitutionModel = ((DiscretizedSiteRateModel)siteRateModel).getSubstitutionModel();
+                    }
+                    if (substitutionModel == null && siteRateModel instanceof GammaSiteRateModel) {
+                        // for backwards compatibility the old GammaSiteRateModelParser can provide the substitution model...
+                        substitutionModel = ((GammaSiteRateModel)siteRateModel).getSubstitutionModel();
                     }
                     if (substitutionModel == null) {
                         throw new XMLParseException("No substitution model available for partition " + k + " in DataTreeLikelihood: "+xo.getId());

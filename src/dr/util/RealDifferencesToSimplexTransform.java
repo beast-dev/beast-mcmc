@@ -12,11 +12,13 @@ public class RealDifferencesToSimplexTransform extends Transform.MultivariateTra
     public RealDifferencesToSimplexTransform(int dim, Parameter weights) {
         super(dim);
         this.weights = weights;
+        this.outputDimension = dim + 1;
     }
 
     public RealDifferencesToSimplexTransform(int dim) {
         super(dim);
         weights = new Parameter.Default(dim, (double) 1 /dim);
+        this.outputDimension = dim + 1;
     }
 
     @Override
@@ -39,6 +41,7 @@ public class RealDifferencesToSimplexTransform extends Transform.MultivariateTra
         return "realDifferencesToSimplex";
     }
 
+
     @Override
     protected double[] transform(double[] values) {
 
@@ -49,18 +52,15 @@ public class RealDifferencesToSimplexTransform extends Transform.MultivariateTra
 
         double denominator = 0;
 
-        for(int i=0; i<=dim; i++){
+        for(int i=0; i<dim; i++){
             double innerSum = 0;
             for(int j=0; j<=i; j++) {
-                if(j<dim){
                     innerSum += values[j];
-                } else {
-                    innerSum += 1;
-
-                }
             }
             denominator += innerSum*weights.getParameterValue(i);
         }
+
+        denominator += weights.getParameterValue(dim);
 
         for(int i=0; i<dim; i++){
             if(i==0){
@@ -92,34 +92,40 @@ public class RealDifferencesToSimplexTransform extends Transform.MultivariateTra
         Matrix partialsMatrix = new Matrix(dim, dim);
 
         double sqrtDenominator = 0;
-        for(int i=0; i<=dim; i++){
-            double innerSum = 0;
-            for(int j=0; j<=i; j++) {
-                if(j<dim){
-                    innerSum += values[j];
-                } else {
-                    innerSum += 1;
-                }
-            }
-            sqrtDenominator += innerSum*weights.getParameterValue(i);
+
+        // reminder: dim is one less than the dimension of the simplex
+
+        double tempSum = 0;
+
+        for(int i=0; i<dim; i++){
+            tempSum += weights.getParameterValue(i)*values[i];
         }
+
+        sqrtDenominator = 1-tempSum;
+
 
         double denominator = sqrtDenominator * sqrtDenominator;
 
+        // this version is still in the ascending space
+
+        double[][] partialsMatrixTemp = new double[dim][dim];
+
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j < dim; j++) {
-                double weightSum = 0;
-                for (int d = j; d <= dim; d++) {
-                    weightSum += weights.getParameterValue(d);
-                }
-                double valueSum = 0;
-                for (int a = 0; a < i + 1; a++) {
-                    valueSum += values[a];
-                }
-                if (j <= i) {
-                    partialsMatrix.set(i, j, (sqrtDenominator - weightSum * valueSum) / denominator);
+                if (j == i) {
+                    partialsMatrixTemp[i][j] = weights.getParameterValue(dim)*(sqrtDenominator + values[i]*weights.getParameterValue(i)) / denominator;
                 } else {
-                    partialsMatrix.set(i, j, (-weightSum * valueSum) / denominator);
+                    partialsMatrixTemp[i][j] = (values[i]*weights.getParameterValue(j)*weights.getParameterValue(dim)) / denominator;
+                }
+            }
+        }
+
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+                if (i == 0) {
+                    partialsMatrix.set(i, j, partialsMatrixTemp[i][j]);
+                } else {
+                    partialsMatrix.set(i, j, partialsMatrixTemp[i][j] - partialsMatrixTemp[i - 1][j]);
                 }
             }
         }

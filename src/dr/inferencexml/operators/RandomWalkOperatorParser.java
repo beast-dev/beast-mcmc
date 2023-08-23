@@ -70,6 +70,7 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
 
 
             final Bounds<Double> bounds = parameter.getBounds();
+
             final int dim = parameter.getDimension();
 
             boolean lowerBoundsSet = true;

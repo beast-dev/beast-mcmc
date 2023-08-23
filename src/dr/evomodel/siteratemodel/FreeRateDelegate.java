@@ -68,7 +68,8 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
             int categoryCount,
             /*  Parameterization parameterization,*/
             Parameter rateParameter,
-            Parameter weightParameter) {
+            Parameter weightParameter,
+            Parameter invarParameter) {
 
         super(name);
 
@@ -100,6 +101,13 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
             throw new IllegalArgumentException("Weight parameter should have have an initial dimension of one or category count");
         }
 
+        if (invarParameter != null) {
+            this.invarParameter = invarParameter;
+            this.categoryCount += 1;
+            addVariable(invarParameter);
+            invarParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+        }
+
         addVariable(this.weightParameter);
 
         this.weightParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, categoryCount));
@@ -117,18 +125,34 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
         assert categoryRates != null && categoryRates.length == categoryCount;
         assert categoryProportions != null && categoryProportions.length == categoryCount;
 
+        int offset = 0;
+
+        if (invarParameter != null) {
+            categoryRates[0] = 0.0;
+            categoryProportions[0] = invarParameter.getParameterValue(0);
+            offset = 1;
+        }
 
 //        if (parameterization == Parameterization.ABSOLUTE) {
         double meanRate = 0.0;
         double sumWeights = 0.0;
-        for (int i = 0; i < categoryCount; i++) {
-            categoryRates[i] = rateParameter.getParameterValue(i);
-            categoryProportions[i] = weightParameter.getParameterValue(i);
-            meanRate += categoryRates[i]*categoryProportions[i];
-            sumWeights += categoryProportions[i];
+        for (int i = 0; i < categoryCount - offset; i++) {
+            categoryRates[i + offset] = rateParameter.getParameterValue(i);
+            categoryProportions[i + offset] = weightParameter.getParameterValue(i);
+            meanRate += categoryRates[i + offset]*categoryProportions[i+ offset];
+            sumWeights += categoryProportions[i + offset];
         }
         assert Math.abs(meanRate - 1.0) < 1E-10;
         assert Math.abs(sumWeights - 1.0) < 1E-10;
+
+        if (invarParameter != null) {
+            for (int i = 0; i < categoryCount - offset; i++) {
+                categoryRates[i + offset] = (categoryRates[i + offset])/(1 - invarParameter.getParameterValue(0));
+                categoryProportions[i + offset] = (categoryProportions[i + offset])*(1 - invarParameter.getParameterValue(0));
+            }
+        }
+
+
 //        } else {
 //            categoryRates[0] = 1.0;
 //            double sumRates = 0.0;
@@ -193,8 +217,9 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
      */
     private final Parameter weightParameter;
 
+    private Parameter invarParameter;
 
-    private final int categoryCount;
+    private int categoryCount;
 
 //    private final Parameterization parameterization;
 

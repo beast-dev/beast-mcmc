@@ -25,9 +25,7 @@
 
 package dr.inference.operators;
 
-import dr.inference.model.Bounds;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.inferencexml.operators.ScaleOperatorParser;
 import dr.math.MathUtils;
 
@@ -84,14 +82,21 @@ public class ScaleOperator extends AbstractAdaptableOperator {
     /**
      * change the parameter and return the hastings ratio.
      */
-    public final double doOperation() {
+    public double doOperation() {
 
         final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
 
         double logq;
 
         final Bounds<Double> bounds = variable.getBounds();
-        final int dim = variable.getSize();
+
+        int dim;
+
+        if(variable instanceof TransformedMultivariateParameter) {
+            dim = ((TransformedMultivariateParameter) variable).getUntransformedDimension();
+        } else {
+            dim = variable.getSize();
+        }
 
         if (scaleAllIndependently) {
             // update all dimensions independently.
@@ -102,7 +107,16 @@ public class ScaleOperator extends AbstractAdaptableOperator {
                 final double offset = bounds.getLowerLimit(i);
 
                 // scale offset by the lower bound
-                final double value = ((variable.getValue(i) - offset) * scaleOne) + offset;
+
+                double oldValue;
+
+                if(variable instanceof TransformedParameter) {
+                    oldValue = ((TransformedParameter)variable).getParameterUntransformedValue(i);
+                } else{
+                    oldValue = variable.getValue(i);
+                }
+
+                final double value = ((oldValue - offset) * scaleOne) + offset;
 
                 logq -= Math.log(scaleOne);
 
@@ -111,7 +125,13 @@ public class ScaleOperator extends AbstractAdaptableOperator {
                     throw new RuntimeException("proposed value greater than upper bound");
                 }
 
-                variable.setValue(i, value);
+                if(variable instanceof TransformedParameter) {
+                    ((TransformedParameter)getVariable()).setParameterUntransformedValue(i, value);
+                } else {
+                    variable.setValue(i, value);
+                }
+
+
 
             }
         } else if (scaleAll) {
@@ -129,7 +149,12 @@ public class ScaleOperator extends AbstractAdaptableOperator {
             for (int i = 0; i < dim; i++) {
                 // For scale all we scale by the same factor (i.e., not relative to their individual
                 // origins).
-                variable.setValue(i, variable.getValue(i) * scale);
+                if(variable instanceof TransformedParameter) {
+                    ((TransformedParameter)getVariable()).setParameterUntransformedValue(i,
+                            ((TransformedParameter)getVariable()).getParameterUntransformedValue(i)*scale);
+                } else {
+                    variable.setValue(i, variable.getValue(i) * scale);
+                }
             }
 
             for (int i = 0; i < dim; i++) {
@@ -143,6 +168,8 @@ public class ScaleOperator extends AbstractAdaptableOperator {
             // which bit to scale
             int index;
             if (indicator != null) {
+
+                // todo this may need fixing
                 final int idim = indicator.getDimension();
                 final boolean impliedOne = idim == (dim - 1);
                 // available bit locations
@@ -175,7 +202,15 @@ public class ScaleOperator extends AbstractAdaptableOperator {
                 index = MathUtils.nextInt(dim);
             }
 
-            final double oldValue = variable.getValue(index);
+            final double oldValue;
+
+            if(variable instanceof TransformedParameter) {
+                oldValue = ((TransformedParameter)variable).getParameterUntransformedValue(index);
+            } else{
+                oldValue = variable.getValue(index);
+            }
+
+
             final double offset = bounds.getLowerLimit(index);
 
             if (oldValue == 0) {
@@ -194,7 +229,13 @@ public class ScaleOperator extends AbstractAdaptableOperator {
                 throw new RuntimeException("proposed value greater than upper bound: " + newValue + " (" + variable.getId() + ")");
             }
 
-            variable.setValue(index, newValue);
+            if(variable instanceof TransformedParameter) {
+                ((TransformedParameter)getVariable()).setParameterUntransformedValue(index, newValue);
+            } else {
+                variable.setValue(index, newValue);
+            }
+
+
 
             // provides a hook for subclasses
             cleanupOperation(newValue, oldValue);

@@ -27,6 +27,7 @@ package dr.inference.operators;
 
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
+import dr.inference.model.TransformedMultivariateParameter;
 import dr.inference.model.TransformedParameter;
 import dr.inferencexml.operators.RandomWalkOperatorParser;
 import dr.math.MathUtils;
@@ -101,7 +102,11 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
 
         int dim;
         if (updateMap == null) {
-            dim = MathUtils.nextInt(parameter.getDimension());
+            if(parameter instanceof TransformedMultivariateParameter) {
+                dim = MathUtils.nextInt(((TransformedMultivariateParameter) parameter).getUntransformedDimension());
+            } else {
+                dim = MathUtils.nextInt(parameter.getDimension());
+            }
         } else {
             dim = updateMap.get(MathUtils.nextInt(updateMapSize));
         }

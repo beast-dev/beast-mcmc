@@ -25,59 +25,57 @@
 
 package dr.inference.operators;
 
+import dr.inference.model.Parameter;
 import dr.inference.model.TransformedParameter;
+import dr.inference.model.Variable;
 import dr.math.matrixAlgebra.Matrix;
+import figtree.treeviewer.ScaleAxis;
 
 /**
  * @author Paul Bastide
  */
 
-public class TransformedParameterRandomWalkOperator extends RandomWalkOperator {
+public class TransformedParameterScaleOperator extends ScaleOperator {
 
     private static boolean DEBUG = false;
 
-    public TransformedParameterRandomWalkOperator(TransformedParameter parameter, double windowSize,
-                                                  BoundaryCondition bc, double weight, AdaptationMode mode) {
-        super(parameter, windowSize, bc, weight, mode);
+    public TransformedParameterScaleOperator(ScaleOperator scaleOperator) {
+        super((TransformedParameter) scaleOperator.getVariable(),
+                scaleOperator.getScaleFactor(),
+                scaleOperator.getMode(),
+                scaleOperator.getWeight());
     }
 
-    public TransformedParameterRandomWalkOperator(TransformedParameter parameter, RandomWalkOperator randomWalkOperator) {
-        super(parameter,
-                randomWalkOperator.getWindowSize(),
-                randomWalkOperator.getBoundaryCondition(),
-                randomWalkOperator.getWeight(),
-                randomWalkOperator.getMode());
+    public TransformedParameterScaleOperator(Variable variable, double scale) {
+
+        super(variable, scale);
     }
 
-    public TransformedParameterRandomWalkOperator(RandomWalkOperator randomWalkOperator) {
-        super((TransformedParameter) randomWalkOperator.getParameter(),
-                randomWalkOperator.getWindowSize(),
-                randomWalkOperator.getBoundaryCondition(),
-                randomWalkOperator.getWeight(),
-                randomWalkOperator.getMode());
+    public TransformedParameterScaleOperator(Variable<Double> variable, double scale, AdaptationMode mode, double weight) {
+
+        super(variable, scale, mode, weight);
     }
 
+    public TransformedParameterScaleOperator(Variable<Double> variable, boolean scaleAll, int degreesOfFreedom, double scale,
+                         AdaptationMode mode, Parameter indicator, double indicatorOnProb, boolean scaleAllInd) {
+
+        super(variable, scaleAll, degreesOfFreedom,scale,mode, indicator, indicatorOnProb, scaleAllInd);
+
+    }
     @Override
     public double doOperation() {
         // Store old states
-        double[] oldValues = parameter.getParameterValues();
-        if (DEBUG) {
-            System.err.println("oldValues: " + new Matrix(oldValues, oldValues.length, 1));
-            System.err.println("oldValuesTrans: " + new Matrix(parameter.getParameterValues(), oldValues.length, 1));
-        }
+        Parameter par = (Parameter)getVariable();
+        double[] oldValues = par.getParameterValues();
+
         // Do operation
         double ratio = super.doOperation();
         // New states
-        double[] newValues = parameter.getParameterValues();
-        if (DEBUG) {
-            System.err.println("newValues: " + new Matrix(newValues, newValues.length, 1));
-            System.err.println("newValuesTrans: " + new Matrix(parameter.getParameterValues(), newValues.length, 1));
-        }
+        double[] newValues = par.getParameterValues();
+
         // Compute Jacobians
-        ratio += ((TransformedParameter) parameter).diffLogJacobian(oldValues, newValues);
-        if (DEBUG) {
-            System.err.println("ratio: " + ratio);
-        }
+        ratio += ((TransformedParameter) par).diffLogJacobian(oldValues, newValues);
+
         return ratio;
     }
 

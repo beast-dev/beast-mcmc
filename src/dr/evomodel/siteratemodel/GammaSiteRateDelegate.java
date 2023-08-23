@@ -281,7 +281,7 @@ public class GammaSiteRateDelegate extends AbstractModel implements SiteRateDele
         double[] categoryRates = new double[catCount];
         double[] categoryProportions = new double[catCount];
 
-        setEqualRates(categoryRates, categoryProportions, 1.0, catCount, 0);
+        setEqualRates(categoryRates, categoryProportions, 2, catCount, 0);
         System.out.println();
         System.out.println("Equal, alpha = 1.0");
         System.out.println("cat\trate\tproportion");
@@ -289,7 +289,7 @@ public class GammaSiteRateDelegate extends AbstractModel implements SiteRateDele
             System.out.println(i + "\t"+ categoryRates[i] +"\t" + categoryProportions[i]);
         }
 
-        setQuadratureRates(categoryRates, categoryProportions, 1.0, catCount, 0);
+        setQuadratureRates(categoryRates, categoryProportions, 2, catCount, 0);
         System.out.println();
         System.out.println("Quadrature, alpha = 1.0");
         System.out.println("cat\trate\tproportion");

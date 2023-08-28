@@ -94,7 +94,7 @@ public class DifferentiableSubstitutionModelUtil {
         final int stateCount = differentialMassMatrix.getMajorDim();
         assert (stateCount == differentialMassMatrix.getMinorDim()) ;
 
-        double[] corrected = new double[stateCount * stateCount];
+        double[] correction = new double[stateCount * stateCount];
 
         int index = findZeroEigenvalueIndex(ed.getEigenValues(), stateCount);
 
@@ -104,38 +104,30 @@ public class DifferentiableSubstitutionModelUtil {
         double[] qQPlus = getQQPlus(eigenVectors, inverseEigenVectors, index, stateCount);
         double[] oneMinusQPlusQ = getOneMinusQPlusQ(qQPlus, stateCount);
 
-        WrappedMatrix mw = new WrappedMatrix.Raw(qQPlus, 0, stateCount, stateCount);
-        System.err.println(mw);
+        double[] tmp = new double[stateCount * stateCount];
+        multiply(tmp, oneMinusQPlusQ, differentials, 1.0, stateCount);
+        multiply(correction, tmp, qQPlus, 1.0, stateCount);
 
-        for (int m = 0; m < stateCount; ++m) {
-            for (int n = 0; n < stateCount; n++) {
-                double entryMN = 0.0;
-                for (int i = 0; i < stateCount; ++i) {
-                    for (int j = 0; j < stateCount; ++j) {
-                        if (i == j) {
-                            entryMN += differentials[index12(i,j, stateCount)] *
-                                    (1.0 - qQPlus[index12(i,m, stateCount)]) * qQPlus[index12(n,j, stateCount)];
-                        } else {
-                            entryMN += differentials[index12(i,j, stateCount)] *
-                                    - qQPlus[index12(i,m, stateCount)] * qQPlus[index12(n,j, stateCount)];
-                        }
-//                            entryMN += differentials[i * stateCount + j] *
-//                                    qQPlus[i * stateCount + m] * qQPlus[n * stateCount + j];
-                    }
+        System.err.println("corr: " + new WrappedVector.Raw(correction));
+
+            for (int i = 0; i < differentials.length; ++i) {
+                differentials[i] -= correction[i];
+            }
+
+        return differentials;
+    }
+    
+    private static void multiply(double[] result, double[] left, double[] right, double scale, int stateCount) {
+
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                double entry = 0.0;
+                for (int k = 0; k < stateCount; ++k) {
+                    entry += left[i * stateCount + k] * right[k * stateCount + j];
                 }
-                corrected[index12(m,n, stateCount)] = differentials[index12(m,n, stateCount)] - time * entryMN;
+                result[i * stateCount + j] = scale * entry;
             }
         }
-
-        System.err.println("diff: " + new WrappedVector.Raw(differentials));
-        System.err.println("corr: " + new WrappedVector.Raw(corrected));
-
-//            for (int i = 0; i < differentials.length; ++i) {
-//                differentials[i] -= correction[i];
-//            }
-
-//        return differentials;
-            return corrected;
     }
 
     private static void setZeros(WrappedMatrix matrix) {

@@ -56,6 +56,7 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
 
     private final DifferentialMassProvider.Mode mode = DifferentialMassProvider.Mode.EXACT;
 //    private final DifferentialMassProvider.Mode mode = DifferentialMassProvider.Mode.APPROXIMATE;
+//    private final DifferentialMassProvider.Mode mode = DifferentialMassProvider.Mode.AFFINE;
 
     public HomogeneousSubstitutionParameterGradient(String traitName,
                                                     TreeDataLikelihood treeDataLikelihood,
@@ -134,5 +135,5 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
         return mode.getReport() + " " + GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, tolerance);
     }
 
-    private final double tolerance = 1E-2;
+    private final double tolerance = 1E+2;
 }

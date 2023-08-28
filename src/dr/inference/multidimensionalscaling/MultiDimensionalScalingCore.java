@@ -51,6 +51,8 @@ public interface MultiDimensionalScalingCore {
      */
     void initialize(int embeddingDimension, int locationCount, long flags);
 
+    void initialize(int embeddingDimension, MultiDimensionalScalingLayout layout, long flags);
+
     /**
      * sets the observation data
      */

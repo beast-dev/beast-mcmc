@@ -81,7 +81,14 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     public void initialize(int embeddingDimension, int locationCount, long flags) {
         information.flags = flags;
         instance = singleton.initialize(embeddingDimension, locationCount, information);
-        this.observationCount = (locationCount * (locationCount - 1)) / 2;
+        this.observationCount = (locationCount * (locationCount - 1)) / 2; // TODO Adjust for missing entries
+    }
+
+    @Override
+    public void initialize(int embeddingDimension, MultiDimensionalScalingLayout layout, long flags) {
+        information.flags = flags;
+        instance = singleton.initialize(embeddingDimension, layout, information);
+        this.observationCount = layout.observationCount; // TODO Adjust for missing entries
     }
 
     @Override

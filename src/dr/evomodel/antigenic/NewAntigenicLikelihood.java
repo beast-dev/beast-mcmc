@@ -1,7 +1,7 @@
 /*
  * AntigenicLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,15 +26,20 @@
 package dr.evomodel.antigenic;
 
 import dr.inference.model.*;
-import dr.math.MathUtils;
 import dr.math.LogTricks;
+import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
-import dr.util.*;
+import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.CommonCitations;
+import dr.util.DataTable;
 import dr.xml.*;
 
-
-import java.io.*;
-import java.util.*;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -49,12 +54,12 @@ import java.util.logging.Logger;
     Offset is set to 0 for the earliest virus and increasing with difference in date from earliest virus.
     This makes the raw virusLocations and serumLocations parameters not directly interpretable.
 */
-public class AntigenicLikelihood extends AbstractModelLikelihood implements Citable {
+public class NewAntigenicLikelihood extends AbstractModelLikelihood implements Citable {
     private static final boolean CHECK_INFINITE = false;
     private static final boolean USE_THRESHOLDS = true;
     private static final boolean USE_INTERVALS = true;
 
-    public final static String ANTIGENIC_LIKELIHOOD = "antigenicLikelihood";
+    public final static String ANTIGENIC_LIKELIHOOD = "newAntigenicLikelihood";
 
     // column indices in table
     private static final int VIRUS_ISOLATE = 0;
@@ -72,7 +77,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         MISSING
     }
 
-    public AntigenicLikelihood(
+    public NewAntigenicLikelihood(
             int mdsDimension,
             Parameter mdsPrecisionParameter,
             Parameter locationDriftParameter,
@@ -230,7 +235,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         this.virusAviditiesParameter = setupVirusAvidities(virusAviditiesParameter);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("\tAntigenicLikelihood:\n");
+        sb.append("\tNewAntigenicLikelihood:\n");
         sb.append("\t\t" + virusNames.size() + " viruses\n");
         sb.append("\t\t" + serumNames.size() + " sera\n");
         sb.append("\t\t" + measurements.size() + " assay measurements\n");
@@ -753,10 +758,10 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public final static String FILE_NAME = "fileName";
-        public final static String TIP_TRAIT = "tipTrait";
-        public final static String VIRUS_LOCATIONS = "virusLocations";
-        public final static String SERUM_LOCATIONS = "serumLocations";
+        public static final String FILE_NAME = "fileName";
+        public static final String TIP_TRAIT = "tipTrait";
+        public static final String VIRUS_LOCATIONS = "virusLocations";
+        public static final String SERUM_LOCATIONS = "serumLocations";
         public static final String MDS_DIMENSION = "mdsDimension";
         public static final String MERGE_SERUM_ISOLATES = "mergeSerumIsolates";
         public static final String DRIFT_INITIAL_LOCATIONS = "driftInitialLocations";
@@ -768,8 +773,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         public static final String VIRUS_AVIDITIES = "virusAvidities";
         public static final String SERUM_POTENCIES = "serumPotencies";
         public static final String SERUM_BREADTHS = "serumBreadths";
-        public final static String VIRUS_OFFSETS = "virusOffsets";
-        public final static String SERUM_OFFSETS = "serumOffsets";
+        public static final String VIRUS_OFFSETS = "virusOffsets";
+        public static final String SERUM_OFFSETS = "serumOffsets";
 
         public String getParserName() {
             return ANTIGENIC_LIKELIHOOD;
@@ -778,6 +783,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             String fileName = xo.getStringAttribute(FILE_NAME);
+
             DataTable<String[]> assayTable;
             try {
                 assayTable = DataTable.Text.parse(new FileReader(fileName), true, false);
@@ -856,7 +862,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 virusAviditiesParameter = (Parameter) xo.getElementFirstChild(VIRUS_AVIDITIES);
             }
 
-            AntigenicLikelihood AGL = new AntigenicLikelihood(
+            NewAntigenicLikelihood AGL = new NewAntigenicLikelihood(
                     mdsDimension,
                     mdsPrecision,
                     locationDrift,
@@ -914,7 +920,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         };
 
         public Class getReturnType() {
-            return AntigenicLikelihood.class;
+            return NewAntigenicLikelihood.class;
         }
     };
 
@@ -937,9 +943,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
         System.out.println("titre\tpoint\tinterval(tail)\tinterval(cdf)\tthreshold");
         for (double titre : titres) {
-            double point = AntigenicLikelihood.computeMeasurementLikelihood(titre, 0.0, 1.0);
-            double interval = AntigenicLikelihood.computeMeasurementIntervalLikelihood(titre + 1.0, titre, 0.0, 1.0);
-            double threshold = AntigenicLikelihood.computeMeasurementThresholdLikelihood(titre, 0.0, 1.0);
+            double point = NewAntigenicLikelihood.computeMeasurementLikelihood(titre, 0.0, 1.0);
+            double interval = NewAntigenicLikelihood.computeMeasurementIntervalLikelihood(titre + 1.0, titre, 0.0, 1.0);
+            double threshold = NewAntigenicLikelihood.computeMeasurementThresholdLikelihood(titre, 0.0, 1.0);
 
             System.out.println(titre + "\t" + point + "\t" + interval + "\t" + threshold);
         }

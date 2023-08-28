@@ -1,7 +1,7 @@
 /*
  * MultiDimensionalScalingCoreImpl2.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -41,16 +41,20 @@ import dr.math.distributions.NormalDistribution;
  * $LastChangedRevision$
  */
 
-public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingCore {
+public class NewMultiDimensionalScalingCoreImpl implements MultiDimensionalScalingCore {
 
     @Override
     public void initialize(int embeddingDimension, int locationCount, long flags) {
-        this.embeddingDimension = embeddingDimension;
-        this.locationCount = locationCount;
-        this.observationCount = (locationCount * (locationCount - 1)) / 2; // TODO Fix for missing values
+        throw new RuntimeException("Not yet implemented");
+    }
 
-        observations = new double[locationCount][locationCount];
-        increments = new double[locationCount][locationCount];
+    @Override
+    public void initialize(int embeddingDimension, MultiDimensionalScalingLayout layout, long flags) {
+        this.embeddingDimension = embeddingDimension;
+        this.layout = layout;
+
+        observations = new double[layout.rowLocationCount][layout.columnLocationCount];
+        increments = new double[layout.rowLocationCount][layout.columnLocationCount];
         storedIncrements = null;
         incrementsKnown = false;
         sumOfIncrementsKnown = false;
@@ -59,35 +63,44 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
         updatedLocation = -1;
 
-        locations = new double[locationCount][embeddingDimension];
-        storedLocations = new double[locationCount][embeddingDimension];
-    }
+        locations = new double[layout.uniqueLocationCount][embeddingDimension];
+        storedLocations = new double[layout.uniqueLocationCount][embeddingDimension];
 
-    @Override
-    public void initialize(int embeddingDimension, MultiDimensionalScalingLayout layout, long flags) {
-        throw new RuntimeException("Not yet implemented");
+        if (layout.isSymmetric()) {
+            nonMissingObservationCount = layout.observationCount - layout.rowLocationCount / 2; // TODO Handle missing observations
+        } else {
+            nonMissingObservationCount = layout.observationCount; // TODO Handle missing observations
+        }
     }
 
     @Override
     public void setPairwiseData(double[] observations) {
-        if (observations.length != (locationCount * locationCount)) {
+        if (observations.length != layout.observationCount) {
             throw new RuntimeException("Observation data is not the correct dimension");
         }
 
         int k = 0;
-        for (int i = 0; i < locationCount; i++) {
-            System.arraycopy(observations, k, this.observations[i], 0, locationCount);
-            k += locationCount;
+        for (int i = 0; i < layout.rowLocationCount; i++) {
+            System.arraycopy(observations, k, this.observations[i], 0, layout.columnLocationCount);
+            k += layout.columnLocationCount;
         }
+
+        if (layout.isSymmetric()) {
+            for (int i = 0; i < layout.rowLocationCount; ++i) {
+                this.observations[i][i] = Double.NaN;
+            }
+        }
+
+        makeDirty();
     }
 
     @Override
     public double[] getPairwiseData() {
-        double[] data = new double[locationCount * locationCount];
+        double[] data = new double[layout.observationCount];
         int k = 0;
-        for (int i = 0; i < locationCount; ++i) {
-            System.arraycopy(observations[i], 0, data, k, locationCount);
-            k += locationCount;
+        for (int i = 0; i < layout.rowLocationCount; ++i) {
+            System.arraycopy(observations[i], 0, data, k, layout.columnLocationCount);
+            k += layout.columnLocationCount;
         }
         return data;
     }
@@ -126,12 +139,12 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
             System.arraycopy(location, 0, locations[locationIndex], 0, embeddingDimension);
 
         } else {
-            if (location.length != embeddingDimension * locationCount) {
+            if (location.length != embeddingDimension * layout.uniqueLocationCount) {
                 throw new RuntimeException("Location is the not correct dimension");
             }
 
             int offset = 0;
-            for (int i = 0; i < locationCount; ++i) {
+            for (int i = 0; i < layout.uniqueLocationCount; ++i) {
                 System.arraycopy(location, offset, locations[i], 0, embeddingDimension);
                 offset += embeddingDimension;
             }
@@ -152,7 +165,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
             sumOfIncrementsKnown = true;
         }
 
-        double logLikelihood = 0.5 * (Math.log(precision) - Math.log(2 * Math.PI)) * observationCount;
+        double logLikelihood = 0.5 * (Math.log(precision) - Math.log(2 * Math.PI)) * nonMissingObservationCount;
 
         if (isLeftTruncated) {
             logLikelihood -= sumOfIncrements; // If truncated, then values on difference scale
@@ -170,7 +183,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
         storedIncrements = null;
 
         // Handle locations
-        for (int i = 0; i < locationCount; i++) {
+        for (int i = 0; i < layout.uniqueLocationCount; i++) {
             System.arraycopy(locations[i], 0 , storedLocations[i], 0, embeddingDimension);
         }
         updatedLocation = -1;
@@ -186,7 +199,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
         sumOfIncrementsKnown = true;
 
         if (storedIncrements != null) {
-            System.arraycopy(storedIncrements, 0 , increments[updatedLocation], 0, locationCount);
+            System.arraycopy(storedIncrements, 0 , increments[updatedLocation], 0, layout.columnLocationCount);
             incrementsKnown = true;
         } else {
             incrementsKnown = false;
@@ -204,7 +217,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     @Override
     public void acceptState() {
         if (storedIncrements != null) {
-            for (int j = 0; j < locationCount; ++j) {
+            for (int j = 0; j < layout.rowLocationCount; ++j) {
                 increments[j][updatedLocation] = increments[updatedLocation][j];
             }
         }
@@ -228,26 +241,27 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
         // OLD
         sumOfIncrements = 0.0;
-        for (int i = 0; i < locationCount; i++) {
+        for (int i = 0; i < layout.rowLocationCount; i++) {
+            for (int j = 0; j < layout.columnLocationCount; j++) {
 
-            for (int j = 0; j < locationCount; j++) {
-                double distance = calculateDistance(locations[i], locations[j]);
-                double residual = distance - observations[i][j];
-                double increment = residual * residual;
-                if (isLeftTruncated) {
-                    increment = scale * increment;
-                    if (i != j) {
+                if (!Double.isNaN(observations[i][j])) {
+
+                    double distance = calculateDistance(locations[i], locations[j]);
+                    double residual = distance - observations[i][j];
+                    double increment = residual * residual;
+                    if (isLeftTruncated) {
+                        increment = scale * increment;
                         increment += computeTruncation(distance, oneOverSd);
-//                        increment += computeTruncation(Math.sqrt(residual * residual), precision, oneOverSd); // OLD .. believed incorrect
                     }
+                    increments[i][j] = increment;
+                    sumOfIncrements += increment;
                 }
-                increments[i][j] = increment;
-//                increments[j][i] = increment; // Do not write transposed values
-                sumOfIncrements += increment;
             }
         }
 
-        sumOfIncrements /= 2;
+        if (layout.isSymmetric()) {
+            sumOfIncrements /= 2;
+        }
 
         incrementsKnown = true;
         sumOfIncrementsKnown = true;
@@ -262,25 +276,24 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
         final int i = updatedLocation;
 
-        storedIncrements = new double[locationCount];
-        System.arraycopy(increments[i], 0, storedIncrements, 0, locationCount);
+        storedIncrements = new double[layout.columnLocationCount];
+        System.arraycopy(increments[i], 0, storedIncrements, 0, layout.columnLocationCount);
 
-        for (int j = 0; j < locationCount; j++) {
-            double distance = calculateDistance(locations[i], locations[j]);
-            double residual = distance - observations[i][j];
-            double increment = residual * residual;
+        for (int j = 0; j < layout.columnLocationCount; j++) {
+            if (!Double.isNaN(observations[i][j])) {
 
-            if (isLeftTruncated) {
-                increment = scale * increment;
-                if (i != j) {
+                double distance = calculateDistance(locations[i], locations[j]);
+                double residual = distance - observations[i][j];
+                double increment = residual * residual;
+
+                if (isLeftTruncated) {
+                    increment = scale * increment;
                     increment += computeTruncation(distance, oneOverSd);
-//                    increment += computeTruncation(Math.sqrt(residual * residual), precision, oneOverSd); // OLD .. believed incorrect
                 }
-            }
 
-            delta += increment - increments[i][j];
-            increments[i][j] = increment;
-//            increments[j][i] = increment; // Do not write transposed values
+                delta += increment - increments[i][j];
+                increments[i][j] = increment;
+            }
         }
 
         sumOfIncrements += delta;
@@ -301,8 +314,9 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
     private int embeddingDimension;
     private boolean isLeftTruncated = false;
-    private int locationCount;
-    private int observationCount;
+    private MultiDimensionalScalingLayout layout;
+    private int nonMissingObservationCount;
+
     private double precision;
     private double storedPrecision;
 
@@ -321,5 +335,4 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
     private double sumOfIncrements;
     private double storedSumOfIncrements;
-
 }

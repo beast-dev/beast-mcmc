@@ -35,26 +35,95 @@ public interface DifferentialMassProvider {
 
     double[] getDifferentialMassMatrix(double time);
 
-    public class DifferentialWrapper implements DifferentialMassProvider {
+    enum Mode {
+        EXACT("exact") {
+            @Override
+            public double[] dispatch(double time,
+                                     DifferentiableSubstitutionModel model,
+                                     WrappedMatrix infinitesimalDifferentialMatrix) {
 
+                return DifferentiableSubstitutionModelUtil.getExactDifferentialMassMatrix(
+                        time, infinitesimalDifferentialMatrix, model.getEigenDecomposition());
+            }
 
+            @Override
+            public String getReport() {
+                return "Exact";
+            }
+        },
+        APPROXIMATE("approximate") {
+            @Override
+            public double[] dispatch(double time,
+                                     DifferentiableSubstitutionModel model,
+                                     WrappedMatrix infinitesimalDifferentialMatrix) {
+
+                return DifferentiableSubstitutionModelUtil.getApproximateDifferentialMassMatrix(
+                        time, infinitesimalDifferentialMatrix);
+            }
+
+            @Override
+            public String getReport() {
+                return "Approximate wrt parameter";
+            }
+        },
+        AFFINE("affine") {
+            @Override
+            public double[] dispatch(double time,
+                                     DifferentiableSubstitutionModel model,
+                                     WrappedMatrix infinitesimalDifferentialMatrix) {
+
+                double[] q = new double[16];
+                model.getInfinitesimalMatrix(q);
+
+                return DifferentiableSubstitutionModelUtil.getAffineDifferentialMassMatrix(
+                        time, infinitesimalDifferentialMatrix, model.getEigenDecomposition());
+            }
+
+            @Override
+            public String getReport() {
+                return "Affine-corrected wrt parameter";
+            }
+        };
+
+        private final String name;
+
+        Mode(String name) {
+            this.name = name;
+        }
+
+        public abstract double[] dispatch(double time,
+                                   DifferentiableSubstitutionModel model,
+                                   WrappedMatrix infinitesimalDifferentialMatrix);
+
+        public abstract String getReport();
+
+        public static Mode parse(String name) {
+            for (Mode mode : Mode.values()) {
+                if (mode.name.equalsIgnoreCase(name)) {
+                    return mode;
+                }
+            }
+            throw new IllegalArgumentException("Unknown mode");
+        }
+    }
+
+    class DifferentialWrapper implements DifferentialMassProvider {
+        
         private final DifferentiableSubstitutionModel baseModel;
         private final WrtParameter wrt;
+        private final Mode mode;
 
         public DifferentialWrapper(DifferentiableSubstitutionModel baseModel,
-                                   WrtParameter wrt) {
+                                   WrtParameter wrt,
+                                   Mode mode) {
             this.baseModel = baseModel;
             this.wrt = wrt;
+            this.mode = mode;
         }
 
         @Override
         public double[] getDifferentialMassMatrix(double time) {
-
-            WrappedMatrix infinitesimalDifferentialMatrix = baseModel.getInfinitesimalDifferentialMatrix(wrt);
-
-            return DifferentiableSubstitutionModelUtil.getDifferentialMassMatrix(time, baseModel.getDataType().getStateCount(),
-                    infinitesimalDifferentialMatrix, baseModel.getEigenDecomposition());
-
+            return mode.dispatch(time, baseModel, baseModel.getInfinitesimalDifferentialMatrix(wrt));
         }
 
         public interface WrtParameter {

@@ -29,10 +29,7 @@ import dr.evolution.util.Taxon;
 import dr.util.Attributable;
 import dr.util.Identifiable;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * Class for storing sequences.
@@ -88,6 +85,10 @@ public class Sequences implements SequenceList, Attributable, Identifiable {
         return sequence.getAttribute(name);
     }
 
+    public List<Sequence> getSequences() {
+        return Collections.unmodifiableList(sequences);
+    }
+    
     // **************************************************************
     // TaxonList IMPLEMENTATION
     // **************************************************************

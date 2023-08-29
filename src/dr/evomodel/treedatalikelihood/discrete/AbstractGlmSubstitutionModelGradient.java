@@ -29,6 +29,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.OldGLMSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
@@ -70,6 +71,8 @@ public abstract class AbstractGlmSubstitutionModelGradient implements GradientWr
 
     private final ParameterMap parameterMap;
     private final int whichSubstitutionModel;
+
+    private static final boolean USE_AFFINE_CORRECTION = true;
 
     public AbstractGlmSubstitutionModelGradient(String traitName,
                                                 TreeDataLikelihood treeDataLikelihood,
@@ -174,29 +177,32 @@ public abstract class AbstractGlmSubstitutionModelGradient implements GradientWr
             startTime = System.nanoTime();
         }
 
-        double[] differentials = (double[]) treeTraitProvider.getTrait(tree, null);
-        double[] generator = new double[differentials.length];
+        double[] crossProducts = (double[]) treeTraitProvider.getTrait(tree, null);
+        double[] generator = new double[crossProducts.length];
 
         if (whichSubstitutionModel > 0) {
             final int length = stateCount * stateCount;
             System.arraycopy(
-                    differentials, whichSubstitutionModel * length,
-                    differentials, 0, length);
-        }
-
-        if (DEBUG_CROSS_PRODUCTS) {
-            savedDifferentials = differentials.clone();
+                    crossProducts, whichSubstitutionModel * length,
+                    crossProducts, 0, length);
         }
 
         substitutionModel.getInfinitesimalMatrix(generator);
+        crossProducts = correctDifferentials(crossProducts);
+
+        if (DEBUG_CROSS_PRODUCTS) {
+            savedDifferentials = crossProducts.clone();
+        }
+
+//        substitutionModel.getInfinitesimalMatrix(generator);
         double[] pi = substitutionModel.getFrequencyModel().getFrequencies();
 
-        double normalizationConstant = preProcessNormalization(differentials, generator,
+        double normalizationConstant = preProcessNormalization(crossProducts, generator,
                 substitutionModel.getNormalization());
 
         final double[] gradient = new double[getParameter().getDimension()];
         for (int i = 0; i < getParameter().getDimension(); ++i) {
-            gradient[i] = processSingleGradientDimension(i, differentials, generator, pi,
+            gradient[i] = processSingleGradientDimension(i, crossProducts, generator, pi,
                     substitutionModel.getNormalization(),
                     normalizationConstant);
         }
@@ -208,6 +214,92 @@ public abstract class AbstractGlmSubstitutionModelGradient implements GradientWr
         }
 
         return gradient;
+    }
+
+    private int findZeroEigenvalueIndex(double[] eigenvalues) {
+        for (int i = 0; i < stateCount; ++i) {
+            if (eigenvalues[i] == 0) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private double[] getQQPlus(double[] eigenVectors, double[] inverseEigenVectors, int index) {
+        double[] result = new double[stateCount * stateCount];
+
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < stateCount; ++k) {
+                    if (k != index) {
+                        sum += eigenVectors[i * stateCount + k] * inverseEigenVectors[k * stateCount + j];
+                    }
+                }
+                result[i * stateCount + j] = sum;
+            }
+        }
+
+        return result;
+    }
+
+    double[] correctDifferentials(double[] differentials) {
+        if (USE_AFFINE_CORRECTION) {
+            double[] correction = new double[differentials.length];
+//            System.arraycopy(differentials, 0, correction, 0, differentials.length);
+
+            if (whichSubstitutionModel > 0) {
+                throw new RuntimeException("Not yet implemented");
+            }
+
+            EigenDecomposition ed = substitutionModel.getEigenDecomposition();
+            int index = findZeroEigenvalueIndex(ed.getEigenValues());
+
+            double[] eigenVectors = ed.getEigenVectors();
+            double[] inverseEigenVectors = ed.getInverseEigenVectors();
+
+            double[] qQPlus = getQQPlus(eigenVectors, inverseEigenVectors, index);
+
+            for (int m = 0; m < stateCount; ++m) {
+                for (int n = 0; n < stateCount; n++) {
+                    double entryMN = 0.0;
+                    for (int i = 0; i < stateCount; ++i) {
+                        for (int j = 0; j < stateCount; ++j) {
+                            if (i == j) {
+                                entryMN += differentials[index12(i,j)] *
+                                        (1.0 - qQPlus[index12(i,m)]) * qQPlus[index12(n,j)];
+                            } else {
+                                entryMN += differentials[index12(i,j)] *
+                                        - qQPlus[index12(i,m)] * qQPlus[index12(n,j)];
+                            }
+//                            entryMN += differentials[i * stateCount + j] *
+//                                    qQPlus[i * stateCount + m] * qQPlus[n * stateCount + j];
+                        }
+                    }
+                    correction[index12(m,n)] = entryMN;
+                }
+            }
+
+            System.err.println("diff: " + new WrappedVector.Raw(differentials));
+            System.err.println("corr: " + new WrappedVector.Raw(correction));
+
+            for (int i = 0; i < differentials.length; ++i) {
+                differentials[i] -= correction[i];
+            }
+
+            return differentials;
+//            return correction;
+        } else {
+            return differentials;
+        }
+    }
+
+    private int index12(int i, int j) {
+        return i * stateCount + j;
+    }
+
+    private int index21(int i, int j) {
+        return j * stateCount + i;
     }
 
     double preProcessNormalization(double[] differentials, double[] generator,

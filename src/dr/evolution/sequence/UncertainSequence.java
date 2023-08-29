@@ -1,5 +1,7 @@
 package dr.evolution.sequence;
 
+import dr.evolution.datatype.DataType;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -50,7 +52,7 @@ public class UncertainSequence extends Sequence {
     }
 
     @Override
-    public int getInvalidChar() {
+    public int getInvalidChar(DataType dataType) {
 
         checkParsed();
 

@@ -434,8 +434,12 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
             }
 
-            if (IS_THREAD_COUNT_COMPATIBLE() && threadCount > 1) {
-                beagle.setCPUThreadCount(threadCount);
+            if (IS_THREAD_COUNT_COMPATIBLE()) {
+                if (threadCount > 0) {
+                    beagle.setCPUThreadCount(threadCount);
+                } else { // if no thread_count is specified then this will be -1 so put no upper bound on threads
+                    beagle.setCPUThreadCount(Integer.MAX_VALUE);
+                }
             }
 
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");

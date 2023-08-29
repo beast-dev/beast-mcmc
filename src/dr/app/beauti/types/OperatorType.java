@@ -66,6 +66,7 @@ public enum OperatorType {
     WIDE_EXCHANGE("wideExchange"),
     GMRF_GIBBS_OPERATOR("gmrfGibbsOperator"),
     SKY_GRID_GIBBS_OPERATOR("gmrfGibbsOperator"),
+    SKY_GRID_HMC_OPERATOR("gmrfHMCOperator"),
 //    PRECISION_GMRF_OPERATOR("precisionGMRFOperator"),
     WILSON_BALDING("wilsonBalding");
 

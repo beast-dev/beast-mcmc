@@ -117,7 +117,7 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
 
         if (xo.hasAttribute(XMLParser.ID)) {
             final Logger logger = Logger.getLogger("dr.evoxml");
-            logger.info("Site patterns '" + xo.getId() + "' created from positions " +
+            logger.info("\nSite patterns '" + xo.getId() + "' created from positions " +
                     Integer.toString(f) + "-" + Integer.toString(t) +
                     " of alignment '" + alignment.getId() + "'");
 

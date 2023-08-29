@@ -28,17 +28,33 @@ package dr.evomodel.substmodel;
 import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
+import dr.math.matrixAlgebra.WrappedVector;
 
 /**
  * @author Marc A. Suchard
  * @author Xiang Ji
+ * @author Andrew Holbrook
  */
 public class DifferentiableSubstitutionModelUtil {
 
-    static double[] getDifferentialMassMatrix(double time,
-                                              int stateCount,
-                                              WrappedMatrix differentialMassMatrix,
-                                              EigenDecomposition eigenDecomposition) {
+    static double[] getApproximateDifferentialMassMatrix(double time,
+                                                         WrappedMatrix differentialMassMatrix) {
+
+        final int dim = differentialMassMatrix.getDim();
+
+        double[] outputArray = new double[dim];
+
+        for (int i = 0; i < dim; ++i) {
+            outputArray[i] = time * differentialMassMatrix.get(i);
+        }
+        return outputArray;
+    }
+
+    static double[] getExactDifferentialMassMatrix(double time,
+                                                   WrappedMatrix differentialMassMatrix,
+                                                   EigenDecomposition eigenDecomposition) {
+        
+        final int stateCount = differentialMassMatrix.getMajorDim();
 
         double[] eigenValues = eigenDecomposition.getEigenValues();
         WrappedMatrix eigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getEigenVectors(), 0, stateCount, stateCount);
@@ -67,7 +83,51 @@ public class DifferentiableSubstitutionModelUtil {
         }
 
         return outputArray;
+    }
 
+    static double[] getAffineDifferentialMassMatrix(double time,
+                                                    WrappedMatrix differentialMassMatrix,
+                                                    EigenDecomposition ed) {
+
+        double[] differentials = getApproximateDifferentialMassMatrix(time, differentialMassMatrix);
+
+        final int stateCount = differentialMassMatrix.getMajorDim();
+        assert (stateCount == differentialMassMatrix.getMinorDim()) ;
+
+        double[] correction = new double[stateCount * stateCount];
+
+        int index = findZeroEigenvalueIndex(ed.getEigenValues(), stateCount);
+
+        double[] eigenVectors = ed.getEigenVectors();
+        double[] inverseEigenVectors = ed.getInverseEigenVectors();
+
+        double[] qQPlus = getQQPlus(eigenVectors, inverseEigenVectors, index, stateCount);
+        double[] oneMinusQPlusQ = getOneMinusQPlusQ(qQPlus, stateCount);
+
+        double[] tmp = new double[stateCount * stateCount];
+        multiply(tmp, oneMinusQPlusQ, differentials, 1.0, stateCount);
+        multiply(correction, tmp, qQPlus, 1.0, stateCount);
+
+        System.err.println("corr: " + new WrappedVector.Raw(correction));
+
+            for (int i = 0; i < differentials.length; ++i) {
+                differentials[i] -= correction[i];
+            }
+
+        return differentials;
+    }
+    
+    private static void multiply(double[] result, double[] left, double[] right, double scale, int stateCount) {
+
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                double entry = 0.0;
+                for (int k = 0; k < stateCount; ++k) {
+                    entry += left[i * stateCount + k] * right[k * stateCount + j];
+                }
+                result[i * stateCount + j] = scale * entry;
+            }
+        }
     }
 
     private static void setZeros(WrappedMatrix matrix) {
@@ -126,7 +186,7 @@ public class DifferentiableSubstitutionModelUtil {
         ((DifferentiableSubstitutionModel) substitutionModel).setupDifferentialFrequency(wrt, differentialFrequencies);
 
         double[][] differentialMassMatrix = new double[stateCount][stateCount];
-        substitutionModel.setupQMatrix(differentialRates, differentialFrequencies, differentialMassMatrix);
+        setupQDerivative(substitutionModel, differentialRates, differentialFrequencies, differentialMassMatrix);
         substitutionModel.makeValid(differentialMassMatrix, stateCount);
 
         final double weightedNormalizationGradient
@@ -146,6 +206,28 @@ public class DifferentiableSubstitutionModelUtil {
         }
 
         return differential;
+    }
+
+    private static void setupQDerivative(BaseSubstitutionModel substitutionModel, double[] differentialRates,
+                                         double[] differentialFrequencies, double[][] differentialMassMatrix) {
+        if (substitutionModel instanceof ComplexSubstitutionModel) {
+            int i, j, k = 0;
+            final int stateCount = differentialFrequencies.length;
+            for (i = 0; i < stateCount; i++) {
+                for (j = i + 1; j < stateCount; j++) {
+                    final double thisRate = differentialRates[k++];
+                    differentialMassMatrix[i][j] = thisRate * differentialFrequencies[j];
+                }
+            }
+            for (j = 0; j < stateCount; j++) {
+                for (i = j + 1; i < stateCount; i++) {
+                    final double thisRate = differentialRates[k++];
+                    differentialMassMatrix[i][j] = thisRate * differentialFrequencies[j];
+                }
+            }
+        } else {
+            substitutionModel.setupQMatrix(differentialRates, differentialFrequencies, differentialMassMatrix);
+        }
     }
 
     private static final boolean CHECK_COMMUTABILITY = false;
@@ -201,4 +283,56 @@ public class DifferentiableSubstitutionModelUtil {
         return result;
     }
 
+
+    private static int findZeroEigenvalueIndex(double[] eigenvalues, int stateCount) {
+        for (int i = 0; i < stateCount; ++i) {
+            if (eigenvalues[i] == 0) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static double[] getOneMinusQPlusQ(double[] qQPlus, int stateCount) {
+        double[] result = new double[stateCount * stateCount];
+
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                if (i == j) {
+                    result[index12(i, j, stateCount)] = 1.0 - qQPlus[index12(i, j, stateCount)];
+                } else {
+                    result[index12(i, j, stateCount)] = - qQPlus[index12(i, j, stateCount)];
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static double[] getQQPlus(double[] eigenVectors, double[] inverseEigenVectors, int index, int stateCount) {
+
+        double[] result = new double[stateCount * stateCount];
+
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < stateCount; ++k) {
+                    if (k != index) {
+                        sum += eigenVectors[i * stateCount + k] * inverseEigenVectors[k * stateCount + j];
+                    }
+                }
+                result[i * stateCount + j] = sum;
+            }
+        }
+
+        return result;
+    }
+
+    private static int index12(int i, int j, int stateCount) {
+        return i * stateCount + j;
+    }
+
+    private static int index21(int i, int j, int stateCount) {
+        return j * stateCount + i;
+    }
 }

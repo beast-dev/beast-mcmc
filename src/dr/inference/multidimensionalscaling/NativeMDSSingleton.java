@@ -118,7 +118,7 @@ public class NativeMDSSingleton {
     public int initialize(int dimensionCount, MultiDimensionalScalingLayout layout,
                           MultiDimensionalScalingCore.CoreInformation information) {
         if (layout.isSymmetric()) {
-            initialize(dimensionCount, layout.rowLocationCount, information);
+            return initialize(dimensionCount, layout.rowLocationCount, information);
         } else {
             return initialize(dimensionCount, layout.rowLocationCount, layout.columnLocationCount,
                     information.flags, information.deviceNumber, information.numThreads);

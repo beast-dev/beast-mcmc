@@ -207,7 +207,7 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
 
     @Override
     public CompoundParameter getParameter() {
-        System.err.println("Warning: This is broken. (JointPartialsProvider.getParameter())");
+        // System.err.println("Warning: This is broken. (JointPartialsProvider.getParameter())");
         return providers[0].getParameter(); //TODO: This is going to be the real problem, I think
     }
 

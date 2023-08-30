@@ -100,6 +100,10 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel
         return Double.NEGATIVE_INFINITY;
     }
 
+    public GeneralizedLinearModel getGLM() {
+        return glm;
+    }
+
     @Override
     public String getDescription() {
         return "Generalized linear (model, GLM) substitution model"; // TODO Horrible; fix

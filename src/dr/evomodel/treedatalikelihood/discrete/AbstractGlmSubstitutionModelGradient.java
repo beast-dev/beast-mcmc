@@ -72,7 +72,7 @@ public abstract class AbstractGlmSubstitutionModelGradient implements GradientWr
     private final ParameterMap parameterMap;
     private final int whichSubstitutionModel;
 
-    private static final boolean USE_AFFINE_CORRECTION = true;
+    private static final boolean USE_AFFINE_CORRECTION = false;
 
     public AbstractGlmSubstitutionModelGradient(String traitName,
                                                 TreeDataLikelihood treeDataLikelihood,

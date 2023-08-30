@@ -48,7 +48,8 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import java.util.Arrays;
-import java.util.List;
+
+import static dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser.FORCE_FULL_PRECISION;
 
 /**
  * @author Marc A. Suchard
@@ -81,8 +82,20 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                                           final int dimTrait,
                                           MatrixParameterInterface samplingPrecision) {
 
+        this(name, parameter, missindIndicators, useMissingIndices, dimTrait, samplingPrecision, false);
+
+    }
+
+    public RepeatedMeasuresTraitDataModel(String name,
+                                          CompoundParameter parameter,
+                                          boolean[] missindIndicators,
+                                          boolean useMissingIndices,
+                                          final int dimTrait,
+                                          MatrixParameterInterface samplingPrecision,
+                                          boolean forceFullPrecision) {
+
         super(name, parameter, missindIndicators, useMissingIndices, dimTrait,
-                dimTrait == 1 ? PrecisionType.SCALAR : PrecisionType.FULL); //TODO: Not sure this is the best way to do this.
+                (dimTrait == 1 && !forceFullPrecision) ? PrecisionType.SCALAR : PrecisionType.FULL); //TODO: Not sure this is the best way to do this.
 
         this.traitName = name;
         this.samplingPrecisionParameter = samplingPrecision;
@@ -326,6 +339,14 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 
             boolean scaleByTipHeight = xo.getAttribute(SCALE_BY_TIP_HEIGHT, false);
 
+            // Jitter
+            if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
+                utilities.jitter(xo, samplingPrecision.getColumnDimension(), missingIndicators);
+            }
+
+            // Full Precision
+            boolean forceFullPrecision = xo.getAttribute(FORCE_FULL_PRECISION, false);
+
             if (!scaleByTipHeight) {
                 return new RepeatedMeasuresTraitDataModel(
                         traitName,
@@ -335,7 +356,8 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                         true,
                         samplingPrecision.getColumnDimension(),
 //                    diffusionModel.getPrecisionParameter().getRowDimension(),
-                        samplingPrecision
+                        samplingPrecision,
+                        forceFullPrecision
                 );
             } else {
                 return new TreeScaledRepeatedMeasuresTraitDataModel(
@@ -344,7 +366,8 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                         missingIndicators,
                         true,
                         samplingPrecision.getColumnDimension(),
-                        samplingPrecision
+                        samplingPrecision,
+                        forceFullPrecision
                 );
             }
         }
@@ -385,6 +408,8 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
             }, true),
             AttributeRule.newBooleanRule(SCALE_BY_TIP_HEIGHT, true),
 //            new ElementRule(MultivariateDiffusionModel.class),
+            TreeTraitParserUtilities.jitterRules(true),
+            AttributeRule.newBooleanRule(FORCE_FULL_PRECISION, true),
     };
 
 

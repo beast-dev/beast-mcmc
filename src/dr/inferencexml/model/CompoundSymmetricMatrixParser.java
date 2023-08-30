@@ -56,6 +56,11 @@ public class CompoundSymmetricMatrixParser extends AbstractXMLObjectParser {
 
         boolean isCholesky = xo.getAttribute(IS_CHOLESKY, false);
 
+        int dimOff = diagonalParameter.getDimension() * (diagonalParameter.getDimension() - 1) / 2;
+        if (dimOff != offDiagonalParameter.getDimension()) {
+            throw new XMLParseException("The vector '" + OFF_DIAGONAL + "' must be of dimension n*(n-1)/2 = " + dimOff + ", where n=" + diagonalParameter.getDimension() + " is the dimension of the vector '" + DIAGONAL + "'.");
+        }
+
         return new CompoundSymmetricMatrix(diagonalParameter, offDiagonalParameter, asCorrelation, isCholesky);
     }
 

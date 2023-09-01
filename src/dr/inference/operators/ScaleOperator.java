@@ -44,6 +44,7 @@ import java.util.logging.Logger;
  * @version $Id: ScaleOperator.java,v 1.20 2005/06/14 10:40:34 rambaut Exp $
  */
 public class ScaleOperator extends AbstractAdaptableOperator {
+    private final boolean REJECT_IF_OUT_OF_BOUNDS = true;
 
     private Parameter indicator;
     private double indicatorOnProb;
@@ -55,14 +56,15 @@ public class ScaleOperator extends AbstractAdaptableOperator {
 
     public ScaleOperator(Variable<Double> variable, double scale, AdaptationMode mode, double weight) {
 
-        this(variable, false, 0, scale, mode, null, 1.0, false);
-        setWeight(weight);
+        this(variable, false, 0, scale, mode, weight, null, 1.0, false);
     }
 
     public ScaleOperator(Variable<Double> variable, boolean scaleAll, int degreesOfFreedom, double scale,
-                         AdaptationMode mode, Parameter indicator, double indicatorOnProb, boolean scaleAllInd) {
+                         AdaptationMode mode, double weight, Parameter indicator, double indicatorOnProb, boolean scaleAllInd) {
 
         super(mode);
+
+        setWeight(weight);
 
         this.variable = variable;
         this.indicator = indicator;
@@ -132,9 +134,23 @@ public class ScaleOperator extends AbstractAdaptableOperator {
                 variable.setValue(i, variable.getValue(i) * scale);
             }
 
-            for (int i = 0; i < dim; i++) {
-                if (variable.getValue(i) > variable.getBounds().getUpperLimit(i)) {
-                    throw new RuntimeException("proposed value greater than upper bound");
+            if (REJECT_IF_OUT_OF_BOUNDS) {
+                // when scaling all parameter dimensions with different bounds (i.e., node heights
+                // where nodes below may bound a height) if the proposed scale will put any
+                // of the dimensions out of bounds then reject the move.
+                for (int i = 0; i < dim; i++) {
+                    if (variable.getValue(i) > variable.getBounds().getUpperLimit(i) ||
+                            variable.getValue(i) < variable.getBounds().getLowerLimit(i)) {
+                        return Double.NEGATIVE_INFINITY;
+                    }
+                }
+            } else {
+                for (int i = 0; i < dim; i++) {
+                    if (variable.getValue(i) > variable.getBounds().getUpperLimit(i)) {
+                        throw new RuntimeException("proposed value greater than upper bound");
+                    } else if (variable.getValue(i) < variable.getBounds().getLowerLimit(i)) {
+                        throw new RuntimeException("proposed value less than lower bound");
+                    }
                 }
             }
         } else {

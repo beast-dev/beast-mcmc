@@ -424,11 +424,18 @@ public abstract class AbstractGlmSubstitutionModelGradient implements GradientWr
 
     private static final Citation CITATION = new Citation(
             new Author[]{
-                    new Author( "A", "Magee"),
+                    new Author( "AF", "Magee"),
+                    new Author( "AJ", "Holbrook"),
+                    new Author( "JE", "Pekar"),
+                    new Author( "IW", "Caviedes-Solis"),
+                    new Author( "FA", "Matsen"),
+                    new Author( "G", "Baele"),
+                    new Author( "JO", "Wertheim"),
+                    new Author( "X", "Ji"),
                     new Author("P", "Lemey"),
                     new Author("MA", "Suchard"),
             },
-            "Phylo-geographic GLM random effects",
+            "Random-effects substitution models for phylogenetics via scalable gradient approximations",
             "",
             Citation.Status.IN_PREPARATION);
 

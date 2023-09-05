@@ -66,6 +66,8 @@ public abstract class OldBayesianBridgeLikelihood extends AbstractModelLikelihoo
 
     public Parameter getExponent() { return exponent; }
 
+    public Parameter getSlabWidth() { return null; }
+
     public abstract Parameter getLocalScale();
 
     public double getCoefficient(int i) { return coefficients.getParameterValue(i); }

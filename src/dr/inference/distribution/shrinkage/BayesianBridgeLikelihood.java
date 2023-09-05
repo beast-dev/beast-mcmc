@@ -62,6 +62,8 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood implements
 
     public Parameter getLocalScale() {return distribution.getLocalScale(); }
 
+    public Parameter getSlabWidth() {return distribution.getSlabWidth(); }
+
     public double getCoefficient(int i) { return coefficients.getParameterValue(i); }
 
     @Override

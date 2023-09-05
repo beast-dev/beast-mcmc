@@ -865,7 +865,8 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                     if (index == -1) {
                         // taxon not found in taxon list...
                         // ...perhaps it is a numerical taxon reference?
-                        throw new UnknownTaxonException(token3);
+                        throw new UnknownTaxonException("Taxon '" + token3 + "' in nexus '" + token + "' block but " +
+                                "not in the taxon list (taxon list may or may not originate from the nexus file)");
                     } else {
                         taxon = taxonList.getTaxon(index);
                     }

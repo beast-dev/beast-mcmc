@@ -32,12 +32,13 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
+
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @version $Id: StrictClockBranchRates.java,v 1.3 2006/01/09 17:44:30 rambaut Exp $
  */
-public class StrictClockBranchRates extends AbstractBranchRateModel {
+public class StrictClockBranchRates extends AbstractBranchRateModel implements DifferentiableBranchRates {
 
     private final Parameter rateParameter;
 
@@ -74,4 +75,41 @@ public class StrictClockBranchRates extends AbstractBranchRateModel {
         return rateParameter.getParameterValue(0);
     }
 
+    @Override
+    public double getBranchRateDifferential(Tree tree, NodeRef node) {
+        return 1.0;
+    }
+
+    @Override
+    public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Parameter getRateParameter() { return rateParameter; }
+
+    @Override
+    public int getParameterIndexFromNode(NodeRef node) { return node.getNumber(); }
+
+    @Override
+    public ArbitraryBranchRates.BranchRateTransform getTransform() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+
+        double total = 0.0;
+        for (double v : gradient) {
+            total += v;
+        }
+
+        return new double[] { total };
+    }
+
+    @Override
+    public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient,
+                                                    double[] value, int from, int to) {
+        throw new RuntimeException("Not yet implemented");
+    }
 }

@@ -173,18 +173,21 @@ public class PartitionTreeModel extends PartitionOptions {
             boolean branchesInUse = false;
             boolean newTreeOperatorsInUse = false;
             boolean adaptiveMultivariateInUse = false;
+            boolean HMCinUse = false;
 
             // if not a fixed tree then sample tree space
             if (options.operatorSetType == OperatorSetType.DEFAULT) {
+                newTreeOperatorsInUse = true;    // default is now the new tree operators
+            } else if (options.operatorSetType == OperatorSetType.CLASSIC) {
                 defaultInUse = true;
                 branchesInUse = true;
-            } else if (options.operatorSetType == OperatorSetType.NEW_TREE_MIX) {
-                newTreeOperatorsInUse = true;
             } else if (options.operatorSetType == OperatorSetType.FIXED_TREE_TOPOLOGY) {
                 branchesInUse = true;
             } else if (options.operatorSetType == OperatorSetType.ADAPTIVE_MULTIVARIATE) {
                 newTreeOperatorsInUse = true;
                 adaptiveMultivariateInUse = true;
+            } else if (options.operatorSetType == OperatorSetType.HMC) {
+                HMCinUse = true;
             } else {
                 throw new IllegalArgumentException("Unknown operator set type");
             }
@@ -199,6 +202,7 @@ public class PartitionTreeModel extends PartitionOptions {
 
             getOperator("subtreeLeap").setUsed(newTreeOperatorsInUse);
             getOperator("FHSPR").setUsed(newTreeOperatorsInUse);
+
         }
         return operators;
     }

@@ -170,8 +170,8 @@ public interface Model extends Identifiable, Serializable {
 
 
     // set to store all created models
-    final static Set<Model> FULL_MODEL_SET = new HashSet<Model>();
-	final static Set<Model> CONNECTED_MODEL_SET = new HashSet<Model>();
+    final static Set<Model> FULL_MODEL_SET = new LinkedHashSet<Model>();
+	final static Set<Model> CONNECTED_MODEL_SET = new LinkedHashSet<Model>();
 
 }
 

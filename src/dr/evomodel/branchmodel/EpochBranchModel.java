@@ -1,7 +1,7 @@
 /*
  * EpochBranchModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2021 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,10 +25,10 @@
 
 package dr.evomodel.branchmodel;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -50,8 +50,7 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
 
     public static final String EPOCH_BRANCH_MODEL = "EpochBranchModel";
 
-
-    public EpochBranchModel(TreeModel tree,
+    public EpochBranchModel(MutableTreeModel tree,
                             List<SubstitutionModel> substitutionModels,
                             Parameter epochTimes) {
 
@@ -185,11 +184,20 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
     public List<Citation> getCitations() {
         return Arrays.asList(
                 new Citation(new Author[]{new Author("F", "Bielejec"),
-                        new Author("P", "Lemey"), new Author("G", "Baele"), new Author("A", "Rambaut"),
-                        new Author("MA", "Suchard")}, Citation.Status.IN_PREPARATION));
+                        new Author("P", "Lemey"),
+                        new Author("G", "Baele"),
+                        new Author("A", "Rambaut"),
+                        new Author("MA", "Suchard")},
+                        "Inferring heterogeneous evolutionary processes through time: from sequence substitution to phylogeography",
+                        2014,
+                        "Syst. Biol.",
+                        63,
+                        493,
+                        504,
+                        Citation.Status.PUBLISHED));
     }// END: getCitations
 
-    private final TreeModel tree;
+    private final MutableTreeModel tree;
     private final List<SubstitutionModel> substitutionModels;
     private final Parameter epochTimes;
 

@@ -54,6 +54,7 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
     private static final String ANCESTOR = "ancestor";
     private static final String ANCESTRAL_PATH = "ancestralPath";
     private static final String RELATIVE_HEIGHT = "relativeToTipHeight";
+    private static final String ALWAYS_CONSTRAIN_TO_ROOT = "alwaysConstrainedToRoot";
 
     public String getParserName() {
         return ANCESTRAL_TRAIT_TREE_MODEL;
@@ -160,9 +161,25 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
             TaxonList descendants = MonophylyStatisticParser.parseTaxonListOrTaxa(
                     xo.getChild(MonophylyStatisticParser.MRCA));
 
+            boolean alwaysContrainedToRoot = xo.getAttribute(ALWAYS_CONSTRAIN_TO_ROOT, false);
+
+            if (alwaysContrainedToRoot) {
+
+                try {
+
+                if (tree.getRoot() != TreeUtils.getCommonAncestorNode(tree,
+                        TreeUtils.getLeavesForTaxa(tree, descendants))) {
+                    throw new XMLParseException("MRCA is not the root.");
+
+                }
+                } catch (TreeUtils.MissingTaxonException e) {
+                    throw new XMLParseException(e.getMessage());
+                }
+            }
+
             try {
                 ancestorInTree = new AncestralTaxonInTree(ancestor, tree, descendants, pseudoBranchLength,
-                        null, node, index, 0.0);
+                        null, node, index, 0.0, alwaysContrainedToRoot);
             } catch (TreeUtils.MissingTaxonException e) {
                 throw new XMLParseException("Unable to find taxa for " + ancestor.getId());
             }
@@ -198,7 +215,7 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
 
             try {
                 ancestorInTree = new AncestralTaxonInTree(ancestor, tree, descendent, pseudoBranchLength,
-                        time, node, index, offset); // TODO Refactor into separate class from MRCA version
+                        time, node, index, offset, false); // TODO Refactor into separate class from MRCA version
             } catch (TreeUtils.MissingTaxonException e) {
                 throw new XMLParseException("Unable to find taxa for " + ancestor.getId());
             }
@@ -234,7 +251,8 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
                                             new XORRule(
                                                     new ElementRule(Taxon.class, 1, Integer.MAX_VALUE),
                                                     new ElementRule(Taxa.class)
-                                            )
+                                            ),
+                                            AttributeRule.newBooleanRule(ALWAYS_CONSTRAIN_TO_ROOT, true),
                                     }),
                                     new ElementRule(ANCESTRAL_PATH, new XMLSyntaxRule[]{
                                             new ElementRule(Taxon.class),

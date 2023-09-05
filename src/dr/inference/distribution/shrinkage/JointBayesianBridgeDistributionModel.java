@@ -30,6 +30,11 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
     }
 
     @Override
+    public double getCoefficient(int i) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
     public Parameter getLocalScale() { return localScale; }
 
     @Override

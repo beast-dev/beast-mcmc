@@ -1,6 +1,5 @@
 package dr.app.tools;
 
-import dr.app.beauti.types.SequenceErrorType;
 import dr.app.util.Arguments;
 import dr.app.beast.BeastVersion;
 import dr.evolution.tree.NodeRef;

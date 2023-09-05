@@ -25,6 +25,7 @@
 
 package dr.xml;
 
+import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -332,7 +333,9 @@ public class XMLParser {
                     addCitable((Citable)obj);
                 }
 
-                if (obj instanceof Likelihood) {
+                if (obj instanceof CompoundLikelihood) {
+                    Likelihood.FULL_LIKELIHOOD_SET.addAll(((CompoundLikelihood) obj).getLikelihoods());
+                } else if (obj instanceof Likelihood) {
                     Likelihood.FULL_LIKELIHOOD_SET.add((Likelihood) obj);
                 } else if (obj instanceof Model) {
                     Model.FULL_MODEL_SET.add((Model) obj);
@@ -341,6 +344,14 @@ public class XMLParser {
                 }
 
                 xo.setNativeObject(obj);
+            } else {
+                // The element doesn't have a specific parser so is likely to be an internal
+                // element to another parser. However, it has an ID then it is likely to be
+                // something that was intended to parse so give a warning.
+                if (e.hasAttribute(ID)) { // object has ID
+                    java.util.logging.Logger.getLogger("dr.xml").warning("Element called, " + xo.getName() +
+                            ", has an ID, " + e.getAttribute(ID) + ", but no parser.");
+                }
             }
 
             if (id != null) {

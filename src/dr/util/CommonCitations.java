@@ -388,4 +388,19 @@ public class CommonCitations {
             15066, 15071,
             Citation.Status.PUBLISHED
     );
+
+    public static Citation GILL_2013_IMPROVING = new Citation(
+            new Author[]{
+                    new Author("MS", "Gill"),
+                    new Author("P", "Lemey"),
+                    new Author("NR", "Faria"),
+                    new Author("A", "Rambaut"),
+                    new Author("B", "Shapiro"),
+                    new Author("MA", "Suchard")
+            },
+            "Improving Bayesian population dynamics inference: a coalescent-based model for multiple loci",
+            2013,
+            "Mol Biol Evol",
+            30, 713, 724
+    );
 }

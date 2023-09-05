@@ -175,7 +175,8 @@ public class DiscreteTraitBranchRateGradient
         }
 
         // TODO Ideally move all chain-ruling into branchRateModel (except branchLengths?)
-        result = branchRateModel.updateGradientLogDensity(result, null, 0, gradient.length);
+
+        result = updateBranchRateGradientLogDensity(result);
 
         if (COUNT_TOTAL_OPERATIONS) {
             ++getGradientLogDensityCount;
@@ -185,6 +186,11 @@ public class DiscreteTraitBranchRateGradient
 
         return result;
     }
+
+    double[] updateBranchRateGradientLogDensity(double[] result) {
+        return result;
+    }
+
 
     protected double getChainGradient(Tree tree, NodeRef node) {
         return tree.getBranchLength(node);

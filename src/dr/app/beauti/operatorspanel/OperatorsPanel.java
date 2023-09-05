@@ -64,9 +64,10 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
     JComboBox operatorSetCombo = new JComboBox(new OperatorSetType[] {
             OperatorSetType.DEFAULT,
             OperatorSetType.FIXED_TREE_TOPOLOGY,
-            OperatorSetType.NEW_TREE_MIX,
+            OperatorSetType.CLASSIC,
             OperatorSetType.ADAPTIVE_MULTIVARIATE,
-            OperatorSetType.CUSTOM
+            OperatorSetType.CUSTOM,
+            OperatorSetType.HMC
     });
 
     public List<Operator> operators = new ArrayList<Operator>();

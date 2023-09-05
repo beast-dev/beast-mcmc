@@ -202,6 +202,8 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                         new TreeTrait.SumAcrossArrayD(
                                 new TreeTrait.SumOverTreeDA(da)));
 
+                treeTraits.addTrait(traitName+"_sum",new TreeTrait.SumAcrossArrayD(da));
+
             } else {
 
                 if (i == 0 || !isEpochModel) {

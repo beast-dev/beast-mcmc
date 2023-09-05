@@ -10,25 +10,36 @@ import java.util.List;
  */
 public class BeagleFunctionality {
 
+    private static boolean checkGTEVersion(int[] versionNumbers){
+        int[] beagleVersionNumbers = BeagleInfo.getVersionNumbers();
+        if (versionNumbers.length == 0 || beagleVersionNumbers.length == 0)
+            return false;
+        for (int i = 0; i < versionNumbers.length && i < beagleVersionNumbers.length; i++){
+            if (beagleVersionNumbers[i] > versionNumbers[i])
+                return true;
+            if (beagleVersionNumbers[i] < versionNumbers[i])
+                return false;
+        }
+        return true;
+    }
+
     public static boolean IS_THREAD_COUNT_COMPATIBLE() {
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1;
+        return checkGTEVersion(new int[]{3,1});
     }
 
     public static boolean IS_ODD_STATE_SSE_FIXED() {
         // SSE for odd state counts fixed in BEAGLE 3.1.3
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1 && versionNumbers[2] >= 3;
+        return checkGTEVersion(new int[]{3,1,3});
     }
 
     static boolean IS_PRE_ORDER_SUPPORTED() {
         int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 2;
+        return checkGTEVersion(new int[]{3,2});
     }
 
     static boolean IS_MULTI_PARTITION_COMPATIBLE() {
         int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3;
+        return checkGTEVersion(new int[]{3});
     }
 
     public static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {

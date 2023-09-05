@@ -36,10 +36,7 @@ import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.treedatalikelihood.action.ActionSubstitutionModelDelegate;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -123,7 +120,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         super("BeagleDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel");
 
-        logger.info("\nUsing BEAGLE DataLikelihood Delegate");
+        logger.info("\nCreating BEAGLE DataLikelihood Delegate");
         setId(patternList.getId());
 
         this.dataType = patternList.getDataType();
@@ -318,7 +315,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 threadCount = Integer.parseInt(tc);
             }
 
-            if (threadCount == 0 || threadCount == 1) {
+            if (threadCount < 1) {
                 preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
                 preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
             } else {
@@ -372,7 +369,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             // start auto resource selection
             String resourceAuto = System.getProperty(RESOURCE_AUTO_PROPERTY);
-            if (resourceAuto != null && Boolean.parseBoolean(resourceAuto)) {
+            if (Boolean.parseBoolean(resourceAuto)) {
 
                 long benchmarkFlags = 0;
 
@@ -384,7 +381,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     benchmarkFlags =  BeagleBenchmarkFlag.SCALING_DYNAMIC.getMask();
                 }
 
-                logger.info("\nRunning benchmarks to automatically select fastest BEAGLE resource for analysis or partition... ");
+                logger.info("\t\tRunning benchmarks to automatically select fastest BEAGLE resource for analysis or partition... ");
 
                 List<BenchmarkedResourceDetails> benchmarkedResourceDetails =
                         BeagleFactory.getBenchmarkedResourceDetails(
@@ -460,9 +457,24 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             if (!settings.useAction) {
                 instanceFlags = instanceDetails.getFlags();
+            }
 
-                if (IS_THREAD_COUNT_COMPATIBLE() && threadCount > 1) {
-                    beagle.setCPUThreadCount(threadCount);
+            if ((instanceFlags & BeagleFlag.THREADING_CPP.getMask()) != 0) {
+                if (IS_THREAD_COUNT_COMPATIBLE() && threadCount != 0) {
+                    if (threadCount > 0) {
+                        beagle.setCPUThreadCount(threadCount);
+                        logger.info("    Using " + threadCount + " thread" + (threadCount > 1 ? "s" : "") + " for CPU.");
+                    } else {
+                        // if no thread_count is specified then this will be -1 so put no upper bound on threads
+                        // currently the parser provides a default based on the number of cores as BEAGLE's
+                        // default is suboptimal
+                        logger.info("    Using default thread count for CPU.");
+                        // this is just intended to remove the cap on number of threads so BEAGLE will
+                        // make its own decision (for better or worse).
+                        beagle.setCPUThreadCount(1000);
+                    }
+                } else {
+                    logger.info("    BEAGLE threading turned off (or unavailable) for CPU.");
                 }
             }
 
@@ -481,7 +493,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
 
             if (patternList.areUncertain() && !useAmbiguities) {
-                logger.info("  WARNING: Uncertain site patterns will be ignored.");
+                logger.info("    WARNING: Uncertain site patterns will be ignored.");
             }
 
             for (int i = 0; i < tipCount; i++) {
@@ -503,13 +515,13 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             beagle.setPatternWeights(patternWeights);
 
-            String rescaleMessage = "  Using rescaling scheme : " + this.rescalingScheme.getText();
+            String rescaleMessage = "    Using rescaling scheme : " + this.rescalingScheme.getText();
             if (this.rescalingScheme == PartialsRescalingScheme.AUTO &&
                     resourceDetails != null &&
                     (resourceDetails.getFlags() & BeagleFlag.SCALING_AUTO.getMask()) == 0) {
                 // If auto scaling in BEAGLE is not supported then do it here
                 this.rescalingScheme = PartialsRescalingScheme.DYNAMIC;
-                rescaleMessage = "  Auto rescaling not supported in BEAGLE, using : " + this.rescalingScheme.getText();
+                rescaleMessage = "    Auto rescaling not supported in BEAGLE, using : " + this.rescalingScheme.getText();
             }
             boolean parenthesis = false;
             if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
@@ -1114,6 +1126,25 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     @Override
     public List<Citation> getCitations() {
         return Collections.singletonList(CommonCitations.AYRES_2019_BEAGLE);
+    }
+
+    private void releaseBeagle() throws Throwable {
+        if (beagle != null) {
+            beagle.finalize();
+        }
+    }
+
+    public static void releaseAllBeagleInstances() throws Throwable {
+        for (Likelihood likelihood : dr.inference.model.Likelihood.FULL_LIKELIHOOD_SET) {
+            if (likelihood instanceof TreeDataLikelihood) {
+                TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) likelihood;
+                DataLikelihoodDelegate likelihoodDelegate = treeDataLikelihood.getDataLikelihoodDelegate();
+                if (likelihoodDelegate instanceof BeagleDataLikelihoodDelegate) {
+                    BeagleDataLikelihoodDelegate delegate = (BeagleDataLikelihoodDelegate) likelihoodDelegate;
+                    delegate.releaseBeagle();
+                }
+            }
+        }
     }
 
     // **************************************************************

@@ -1,7 +1,7 @@
 /*
  * BeastMain.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -195,6 +195,17 @@ public class BeastMain {
 
                     parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML, version);
 
+                    // DM: Hot chains also need to add plugin parsers
+                    for (String pluginName : PluginLoader.getAvailablePlugins()) {
+                        Plugin plugin = PluginLoader.loadPlugin(pluginName);
+                        if (plugin != null) {
+                            Set<XMLObjectParser> parserSet = plugin.getParsers();
+                            for (XMLObjectParser pluginParser : parserSet) {
+                                parser.addXMLObjectParser(pluginParser);
+                            }
+                        }
+                    }
+
                     chains[i] = (MCMC) parser.parse(fileReader, MCMC.class);
                     if (chains[i] == null) {
                         throw new dr.xml.XMLParseException("BEAST XML file is missing an MCMC element");
@@ -279,6 +290,12 @@ public class BeastMain {
             System.err.flush();
             throw new RuntimeException("Terminate");
         }
+
+        try {
+            dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.releaseAllBeagleInstances();
+        } catch (Throwable e) {
+           throw new RuntimeException("Terminate");
+        }
     }
 
     public static void centreLine(String line, int pageWidth) {
@@ -335,7 +352,7 @@ public class BeastMain {
                         new Arguments.StringOption("prefix", "PREFIX", "Specify a prefix for all output log filenames"),
                         new Arguments.Option("overwrite", "Allow overwriting of log files"),
                         new Arguments.IntegerOption("errors", "Specify maximum number of numerical errors before stopping"),
-                        new Arguments.IntegerOption("threads", "The number of computational threads to use (default auto)"),
+                        new Arguments.IntegerOption("threads", "The maximum number of computational threads to use (default auto)"),
                         new Arguments.Option("fail_threads", "Exit with error on uncaught exception in thread."),
                         new Arguments.Option("java", "Use Java only, no native implementations"),
                         new Arguments.LongOption("tests", "The number of full evaluation tests to perform (default 1000)"),
@@ -354,8 +371,8 @@ public class BeastMain {
                         new Arguments.Option("beagle_GPU", "BEAGLE: use GPU instance if available"),
                         new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
                         new Arguments.Option("beagle_SSE_off", "BEAGLE: turn off use of SSE extensions"),
-                        new Arguments.Option("beagle_threading_off", "BEAGLE: turn off auto threading for a CPU instance"),
-                        new Arguments.IntegerOption("beagle_thread_count", 1, Integer.MAX_VALUE, "BEAGLE: manually set number of threads for a CPU instance"),
+                        new Arguments.Option("beagle_threading_off", "BEAGLE: turn off multi-threading for a CPU instance"),
+                        new Arguments.IntegerOption("beagle_threads", 0, Integer.MAX_VALUE, "BEAGLE: manually set number of threads per CPU instance (default auto)"),
                         new Arguments.Option("beagle_cuda", "BEAGLE: use CUDA parallization if available"),
                         new Arguments.Option("beagle_opencl", "BEAGLE: use OpenCL parallization if available"),
                         new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
@@ -379,6 +396,7 @@ public class BeastMain {
                         new Arguments.LongOption("save_at", "Specify a state at which to save a state file"),
                         new Arguments.LongOption("save_every", "Specify a frequency to save the state file"),
                         new Arguments.StringOption("save_state", "FILENAME", "Specify a filename to save state to"),
+                        new Arguments.Option("full_checkpoint_precision", "Use hex-encoded doubles in checkpoint files"),
                         new Arguments.Option("force_resume", "Force resuming from a saved state"),
 
                         new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
@@ -557,6 +575,9 @@ public class BeastMain {
         if (arguments.hasOption("beagle_thread_count")) {
             System.setProperty("beagle.thread.count", Integer.toString(arguments.getIntegerOption("beagle_thread_count")));
         }
+        if (arguments.hasOption("beagle_threads")) {
+            System.setProperty("beagle.thread.count", Integer.toString(arguments.getIntegerOption("beagle_threads")));
+        }
         if (arguments.hasOption("beagle_threading_off")) {
             System.setProperty("beagle.thread.count", Integer.toString(1));
         }
@@ -670,6 +691,10 @@ public class BeastMain {
             if (arguments.hasOption("save_stem")) {
                 String stemName = arguments.getStringOption("save_stem");
                 System.setProperty(BeastCheckpointer.SAVE_STEM, stemName);
+            }
+
+            if (arguments.hasOption("full_checkpoint_precision")) {
+                System.setProperty(BeastCheckpointer.FULL_CHECKPOINT_PRECISION, "true");
             }
 
             if (arguments.hasOption("force_resume")) {
@@ -910,7 +935,7 @@ public class BeastMain {
             BeastMPI.Finalize();
         }
 
-        if (!window) {
+        if (!usingMC3 && !window) { // DM: with MC3 the main thread gets here and terminates all threads prematurely 
             System.exit(0);
         }
     }

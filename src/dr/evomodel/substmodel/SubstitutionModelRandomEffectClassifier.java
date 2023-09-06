@@ -2,23 +2,14 @@ package dr.evomodel.substmodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.EpochBranchModel;
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.CountableMixtureBranchRates;
-import dr.evomodel.branchratemodel.PiecewiseLinearTimeDependentModel;
-import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeStatistic;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.markovjumps.MarkovJumpsCore;
 import dr.inference.markovjumps.MarkovJumpsType;
 import dr.inference.model.Parameter;
-import dr.oldevomodel.sitemodel.GammaSiteModel;
-import dr.oldevomodel.sitemodel.SiteModel;
 import dr.xml.Reportable;
 
 import java.util.List;

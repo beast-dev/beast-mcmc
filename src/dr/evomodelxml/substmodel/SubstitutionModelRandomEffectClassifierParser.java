@@ -28,18 +28,10 @@ package dr.evomodelxml.substmodel;
 import dr.evolution.alignment.PatternList;
 import dr.evomodel.branchmodel.EpochBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
-import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.OldGLMSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModelRandomEffectClassifier;
-import dr.evomodel.substmodel.nucleotide.GTR;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
-import dr.oldevomodel.sitemodel.GammaSiteModel;
-import dr.oldevomodel.sitemodel.SiteModel;
 import dr.xml.*;
 
 import static dr.evomodel.substmodel.nucleotide.GTR.*;
@@ -74,7 +66,7 @@ public class SubstitutionModelRandomEffectClassifierParser extends AbstractXMLOb
         if (xo.hasAttribute(THRESHOLD)) {
             threshold = xo.getDoubleAttribute(THRESHOLD);
         }
-        
+
         return new SubstitutionModelRandomEffectClassifier(xo.getId(), tree, glm, epochs, branchRates, siteModel, nPatterns, threshold);
     }
 

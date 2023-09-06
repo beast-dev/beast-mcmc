@@ -108,7 +108,7 @@ public class DifferentiableSubstitutionModelUtil {
         multiply(tmp, oneMinusQPlusQ, differentials, 1.0, stateCount);
         multiply(correction, tmp, qQPlus, 1.0, stateCount);
 
-        System.err.println("corr: " + new WrappedVector.Raw(correction));
+//        System.err.println("corr: " + new WrappedVector.Raw(correction));
 
             for (int i = 0; i < differentials.length; ++i) {
                 differentials[i] -= correction[i];

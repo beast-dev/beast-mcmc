@@ -66,11 +66,12 @@ public class NewMultiDimensionalScalingCoreImpl implements MultiDimensionalScali
         locations = new double[layout.uniqueLocationCount][embeddingDimension];
         storedLocations = new double[layout.uniqueLocationCount][embeddingDimension];
 
-        if (layout.isSymmetric()) {
-            nonMissingObservationCount = layout.observationCount - layout.rowLocationCount / 2; // TODO Handle missing observations
-        } else {
-            nonMissingObservationCount = layout.observationCount; // TODO Handle missing observations
-        }
+        nonMissingObservationCount = layout.observationCount;
+    }
+
+    @Override
+    public void setNonMissingObservationCount(int count) {
+        this.nonMissingObservationCount = count;
     }
 
     @Override
@@ -225,6 +226,11 @@ public class NewMultiDimensionalScalingCoreImpl implements MultiDimensionalScali
 
     @Override
     public void getGradient(double[] location) {
+        throw new RuntimeException("Not yet implemented.");
+    }
+
+    @Override
+    public void getObservationGradient(double[] location) {
         throw new RuntimeException("Not yet implemented.");
     }
 

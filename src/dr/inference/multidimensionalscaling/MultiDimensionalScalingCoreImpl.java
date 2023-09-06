@@ -69,6 +69,12 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     }
 
     @Override
+    public void setNonMissingObservationCount(int count) {
+        // this.nonMissingObservationCount = count;
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
     public void setPairwiseData(double[] observations) {
         if (observations.length != (locationCount * locationCount)) {
             throw new RuntimeException("Observation data is not the correct dimension");
@@ -212,6 +218,11 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
     @Override
     public void getGradient(double[] location) {
+        throw new RuntimeException("Not yet implemented.");
+    }
+
+    @Override
+    public void getObservationGradient(double[] location) {
         throw new RuntimeException("Not yet implemented.");
     }
 

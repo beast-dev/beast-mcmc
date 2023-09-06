@@ -26,6 +26,7 @@
 package dr.evomodel.antigenic;
 
 import dr.inference.model.*;
+import dr.inference.multidimensionalscaling.*;
 import dr.math.LogTricks;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
@@ -33,14 +34,13 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 import dr.util.DataTable;
-import dr.xml.*;
 
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
+
 
 /**
  * @author Andrew Rambaut
@@ -55,9 +55,10 @@ import java.util.logging.Logger;
     This makes the raw virusLocations and serumLocations parameters not directly interpretable.
 */
 public class NewAntigenicLikelihood extends AbstractModelLikelihood implements Citable {
+
     private static final boolean CHECK_INFINITE = false;
     private static final boolean USE_THRESHOLDS = true;
-    private static final boolean USE_INTERVALS = true;
+    private static final boolean USE_INTERVALS = false;
 
     public final static String ANTIGENIC_LIKELIHOOD = "newAntigenicLikelihood";
 
@@ -83,7 +84,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
             Parameter locationDriftParameter,
             Parameter virusDriftParameter,
             Parameter serumDriftParameter,
-            MatrixParameter virusLocationsParameter,
+            MatrixParameter virusSamplingParameter, // TODO Remove
             MatrixParameter serumLocationsParameter,
             CompoundParameter tipTraitsParameter,
             Parameter virusOffsetsParameter,
@@ -101,8 +102,405 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         this.intervalWidth = intervalWidth;
         boolean useIntervals = USE_INTERVALS && intervalWidth > 0.0;
 
-        int thresholdCount = 0;
+        MatchInfo info = matchVirusesAndSerum(measurements,
+                dataTable,
+                virusNames,
+                virusDates,
+                serumNames,
+                serumDates,
+                mergeSerumIsolates,
+                useIntervals);
 
+        double[] maxColumnTitres = getMaxTitres(measurements, serumNames);
+
+        this.tipTraitsParameter = tipTraitsParameter;
+        addVariable(tipTraitsParameter);
+        this.tipIndices = setupTipIndices(this.tipTraitsParameter, virusNames);
+
+        this.mdsDimension = mdsDimension;
+
+        this.mdsPrecisionParameter = mdsPrecisionParameter;
+        addVariable(mdsPrecisionParameter);
+
+        this.locationDriftParameter = locationDriftParameter;
+        if (this.locationDriftParameter != null) {
+            addVariable(locationDriftParameter);
+        }
+
+        this.virusDriftParameter = virusDriftParameter;
+        if (this.virusDriftParameter != null) {
+            addVariable(virusDriftParameter);
+        }
+
+        this.serumDriftParameter = serumDriftParameter;
+        if (this.serumDriftParameter != null) {
+            addVariable(serumDriftParameter);
+        }
+
+        this.virusSamplingParameter = virusSamplingParameter;
+        if (this.virusSamplingParameter != null) {
+            setupLocationsParameter(virusSamplingParameter, virusNames);
+        }
+
+        this.serumLocationsParameter = serumLocationsParameter;
+        if (this.serumLocationsParameter != null) {
+            setupLocationsParameter(serumLocationsParameter, serumNames);
+        }
+
+        this.virusOffsetsParameter = virusOffsetsParameter;
+        if (virusOffsetsParameter != null) {
+            setupOffsetsParameter(virusOffsetsParameter, virusNames, virusDates, info.earliestDate);
+        }
+
+        this.serumOffsetsParameter = serumOffsetsParameter;
+        if (serumOffsetsParameter != null) {
+            setupOffsetsParameter(serumOffsetsParameter, serumNames, serumDates, info.earliestDate);
+        }
+
+        this.serumPotenciesParameter = setupSerumPotencies(serumPotenciesParameter, maxColumnTitres);
+        this.serumBreadthsParameter = setupSerumBreadths(serumBreadthsParameter);
+        this.virusAviditiesParameter = setupVirusAvidities(virusAviditiesParameter);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("\tNewAntigenicLikelihood:\n");
+        sb.append("\t\t" + virusNames.size() + " viruses\n");
+        sb.append("\t\t" + serumNames.size() + " sera\n");
+        sb.append("\t\t" + measurements.size() + " assay measurements\n");
+        if (USE_THRESHOLDS) {
+            sb.append("\t\t" + info.thresholdCount + " thresholded measurements\n");
+        }
+        if (useIntervals) {
+            sb.append("\n\t\tAssuming a log 2 measurement interval width of " + intervalWidth + "\n");
+        }
+        Logger.getLogger("dr.evomodel").info(sb.toString());
+
+        numViruses = virusNames.size();
+        numSera = serumNames.size();
+        layout = (numViruses >= numSera) ?
+                new Layout.VirusXSerum(numViruses, numSera, mdsDimension) :
+                new Layout.SerumXVirus(numViruses, numSera, mdsDimension);
+
+        layout.sort(measurements, tipIndices);
+
+        virusLocationChanged = new boolean[this.virusSamplingParameter.getParameterCount()];
+        serumLocationChanged = new boolean[this.serumLocationsParameter.getParameterCount()];
+        virusEffectChanged = new boolean[virusNames.size()];
+        serumEffectChanged = new boolean[serumNames.size()];
+        logLikelihoods = new double[measurements.size()];
+        storedLogLikelihoods = new double[measurements.size()];
+
+        setupInitialLocations(driftInitialLocations);
+
+        mdsCore = instantiateCore(mdsDimension, layout.getMajorDim(), layout.getMinorDim(), false);
+        internalDimension = mdsCore.getInternalDimension();
+
+        observationCount = transferObservations();
+        mdsCore.setNonMissingObservationCount(observationCount);
+
+        transferLocations();
+        transferPrecision();
+
+        makeDirty();
+    }
+
+    public int getNumberOfViruses() { return numViruses; }
+
+    public int getNumberOfSera() { return numSera; }
+
+    public int getMdsDimension() { return mdsDimension; }
+
+    interface Layout {
+
+        int getMajorDim();
+
+        int getMinorDim();
+
+        int getObservationIndex(int virus, int serum);
+
+        int getVirusLocationOffset();
+
+        int getSerumLocationOffset();
+
+        void sort(List<Measurement> measurements, int[] virusIndices);
+
+        abstract class Base implements Layout {
+
+            final int numViruses;
+            final int numSera;
+            final int mdsDim;
+
+            Base(int numViruses, int numSera, int mdsDim) {
+                this.numViruses = numViruses;
+                this.numSera = numSera;
+                this.mdsDim = mdsDim;
+            }
+
+            public void sort(List<Measurement> measurements, int[] virusIndices) {
+                measurements.sort(getComparator(virusIndices));
+            }
+
+            abstract Comparator<Measurement> getComparator(int[] virusIndices);
+        }
+
+        class VirusXSerum extends Base {
+            VirusXSerum(int numViruses, int numSera, int mdsDim) {
+                super(numViruses, numSera, mdsDim);
+            }
+
+            @Override
+            public int getMajorDim() {
+                return numViruses;
+            }
+
+            @Override
+            public int getMinorDim() {
+                return numSera;
+            }
+
+            @Override
+            public int getObservationIndex(int virus, int serum) {
+                return virus * numSera + serum;
+            }
+
+            @Override
+            public int getVirusLocationOffset() {
+                return 0;
+            }
+
+            @Override
+            public int getSerumLocationOffset() {
+                return numViruses * mdsDim;
+            }
+
+            @Override
+            Comparator<Measurement> getComparator(int[] virusIndices) {
+                return new Comparator<Measurement>() {
+                    @Override
+                    public int compare(Measurement lhs, Measurement rhs) {
+                        int virusDiff = virusIndices[lhs.virus] - virusIndices[rhs.virus];
+                        if (virusDiff != 0) {
+                            return virusDiff;
+                        } else {
+                            return lhs.serum - lhs.serum;
+                        }
+                    }
+                };
+            }
+        }
+
+        class SerumXVirus extends Base {
+            SerumXVirus(int numViruses, int numSera, int mdsDim) {
+                super(numViruses, numSera, mdsDim);
+            }
+
+            @Override
+            public int getMajorDim() {
+                return numSera;
+            }
+
+            @Override
+            public int getMinorDim() {
+                return numViruses;
+            }
+
+            @Override
+            public int getObservationIndex(int virus, int serum) {
+                return serum * numViruses + virus;
+            }
+
+            @Override
+            public int getVirusLocationOffset() {
+                return numSera * mdsDim;
+            }
+
+            @Override
+            public int getSerumLocationOffset() {
+                return 0;
+            }
+
+            @Override
+            Comparator<Measurement> getComparator(int[] virusIndices) {
+                return new Comparator<Measurement>() {
+                    @Override
+                    public int compare(Measurement lhs, Measurement rhs) {
+                        int serumDiff = lhs.serum - rhs.serum;
+                        if (serumDiff != 0) {
+                            return serumDiff;
+                        } else {
+                            return virusIndices[lhs.virus] - virusIndices[rhs.virus];
+                        }
+                    }
+                };
+            }
+        }
+    }
+
+    private final int numViruses;
+    private final int numSera;
+
+    private final int observationCount;
+    private final Layout layout;
+
+    private boolean locationsKnown;
+    private boolean observationsKnown;
+    private boolean internalGradientKnown;
+    private boolean precisionKnown;
+
+    private boolean savedLikelihoodKnown;
+    private boolean savedLocationsKnown;
+    private boolean savedObservationsKnown;
+    private boolean savedPrecisionKnown;
+
+    private double computeLogLikelihoodMds() {
+
+        if (!precisionKnown) {
+            transferPrecision();
+            precisionKnown = true;
+        }
+
+        if (!locationsKnown) {
+            transferLocations();
+            locationsKnown = true;
+        }
+
+        if (!observationsKnown) {
+            transferObservations();
+            observationsKnown = true;
+        }
+
+        return mdsCore.calculateLogLikelihood();
+    }
+
+    private double getAdjustedValue(Measurement measurement) {
+        return  calculateBaseline(measurement.virus, measurement.serum) - measurement.log2Titre;
+    }
+
+    private void transferPrecision() {
+        double[] precision = new double[]{ mdsPrecisionParameter.getParameterValue(0) };
+        mdsCore.setParameters(precision);
+    }
+
+    private int transferObservations() {
+
+        double[] observations = new double[numViruses * numSera];
+        Arrays.fill(observations, Double.NaN);
+
+        int count = 0;
+        for (Measurement measurement : measurements) {
+            final int idx1 = tipIndices[measurement.virus];
+            final int idx2 = measurement.serum;
+
+            if (measurement.type != MeasurementType.POINT) {
+                throw new RuntimeException("Not yet implemented");
+            }
+
+            observations[layout.getObservationIndex(idx1, idx2)] = getAdjustedValue(measurement);
+            ++count;
+        }
+
+        mdsCore.setPairwiseData(observations);
+
+        return count;
+    }
+
+    private void transferLocations() {
+
+        double[] locations = new double[(numViruses + numSera) * mdsDimension];
+
+        int offset = layout.getVirusLocationOffset();
+        for (int i = 0; i < numViruses; ++i) {
+            Parameter parameter = tipTraitsParameter.getParameter(i);
+            for (int j = 0; j < mdsDimension; ++j) {
+                locations[offset + j] = parameter.getParameterValue(j);
+            }
+            offset += mdsDimension;
+        }
+
+        offset = layout.getSerumLocationOffset();
+        for (int i = 0; i < numSera; ++i) {
+            Parameter parameter = serumLocationsParameter.getParameter(i);
+            for (int j = 0; j < mdsDimension; ++j) {
+                locations[offset + j] = parameter.getParameterValue(j);
+            }
+            offset += mdsDimension;
+        }
+
+        mdsCore.updateLocation(-1, locations);
+    }
+
+    private final MultiDimensionalScalingCore mdsCore;
+    private final int internalDimension;
+    private long flags = 0L;
+
+    public MultiDimensionalScalingCore getCore() {
+        return mdsCore;
+    }
+
+    private MultiDimensionalScalingCore instantiateCore(int dim,
+                                                        int rowLocationCount, int columnLocationCount,
+                                                        boolean isLeftTruncated) {
+
+        long flags = 0;
+        String r = System.getProperty(MultiDimensionalScalingLikelihood.REQUIRED_FLAGS_PROPERTY);
+        if (r != null) {
+            flags = Long.parseLong(r.trim());
+        }
+
+        MultiDimensionalScalingCore core;
+        if (flags >= MultiDimensionalScalingCore.USE_NATIVE_MDS) {
+            System.err.println("Attempting to use a native MDS core with flag: " + flags + "; may the force be with you ....");
+            core = new MassivelyParallelMDSImpl();
+        } else {
+            System.err.println("Compute mode found: " + flags);
+            core = new MultiDimensionalScalingCoreImpl();
+        }
+
+        if (isLeftTruncated) {
+            flags |= MultiDimensionalScalingCore.LEFT_TRUNCATION;
+        }
+
+        System.err.println("Initializing with flags: " + flags);
+
+        core.initialize(dim, new MultiDimensionalScalingLayout(rowLocationCount, columnLocationCount), flags);
+
+        return core;
+    }
+
+    private static double[] getMaxTitres(List<Measurement> measurements,
+                                         List<String> serumNames) {
+        double[] maxColumnTitres = new double[serumNames.size()];
+        for (Measurement measurement : measurements) {
+            double titre = measurement.log2Titre;
+            if (Double.isNaN(titre)) {
+                titre = measurement.log2Titre;
+            }
+            if (titre > maxColumnTitres[measurement.serum]) {
+                maxColumnTitres[measurement.serum] = titre;
+            }
+        }
+        return maxColumnTitres;
+    }
+
+    private static class MatchInfo {
+        double earliestDate;
+        int thresholdCount;
+
+        MatchInfo(double earliestDate, int thresholdCount) {
+            this.earliestDate = earliestDate;
+            this.thresholdCount = thresholdCount;
+        }
+    }
+
+    private static MatchInfo matchVirusesAndSerum(List<Measurement> measurements,
+                                                  DataTable<String[]> dataTable,
+                                                  List<String> virusNames,
+                                                  List<Double> virusDates,
+                                                  List<String> serumNames,
+                                                  List<Double> serumDates,
+                                                  boolean mergeSerumIsolates,
+                                                  boolean useIntervals) {
+
+        int thresholdCount = 0;
 
         double earliestDate = Double.POSITIVE_INFINITY;
         for (int i = 0; i < dataTable.getRowCount(); i++) {
@@ -147,11 +545,11 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
                         thresholdCount++;
                     }
                     // check if threshold above
-                    if (values[TITRE].contains(">")) {                	
+                    if (values[TITRE].contains(">")) {
                         rawTitre = Double.parseDouble(values[TITRE].replace(">",""));
                         isThreshold = true;
                         isLowerThreshold = false;
-                        thresholdCount++;                    	
+                        thresholdCount++;
                         //throw new IllegalArgumentException("Error in measurement: unsupported greater than threshold at row " + (i+1));
                     }
                 }
@@ -171,93 +569,11 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
             if (USE_THRESHOLDS || !isThreshold) {
                 measurements.add(measurement);
             }
-
         }
 
-        double[] maxColumnTitres = new double[serumNames.size()];
-        for (Measurement measurement : measurements) {
-            double titre = measurement.log2Titre;
-            if (Double.isNaN(titre)) {
-                titre = measurement.log2Titre;
-            }
-            if (titre > maxColumnTitres[measurement.serum]) {
-                maxColumnTitres[measurement.serum] = titre;
-            }
-        }
-
-        this.mdsDimension = mdsDimension;
-
-        this.mdsPrecisionParameter = mdsPrecisionParameter;
-        addVariable(mdsPrecisionParameter);
-
-        this.locationDriftParameter = locationDriftParameter;
-        if (this.locationDriftParameter != null) {
-            addVariable(locationDriftParameter);
-        }
-
-        this.virusDriftParameter = virusDriftParameter;
-        if (this.virusDriftParameter != null) {
-            addVariable(virusDriftParameter);
-        }
-
-        this.serumDriftParameter = serumDriftParameter;
-        if (this.serumDriftParameter != null) {
-            addVariable(serumDriftParameter);
-        }
-
-        this.virusLocationsParameter = virusLocationsParameter;
-        if (this.virusLocationsParameter != null) {
-            setupLocationsParameter(virusLocationsParameter, virusNames);
-        }
-
-        this.serumLocationsParameter = serumLocationsParameter;
-        if (this.serumLocationsParameter != null) {
-            setupLocationsParameter(serumLocationsParameter, serumNames);
-        }
-
-        this.tipTraitsParameter = tipTraitsParameter;
-        if (tipTraitsParameter != null) {
-            setupTipTraitsParameter(this.tipTraitsParameter, virusNames);
-        }
-
-        this.virusOffsetsParameter = virusOffsetsParameter;
-        if (virusOffsetsParameter != null) {
-            setupOffsetsParameter(virusOffsetsParameter, virusNames, virusDates, earliestDate);
-        }
-
-        this.serumOffsetsParameter = serumOffsetsParameter;
-        if (serumOffsetsParameter != null) {
-            setupOffsetsParameter(serumOffsetsParameter, serumNames, serumDates, earliestDate);
-        }
-
-        this.serumPotenciesParameter = setupSerumPotencies(serumPotenciesParameter, maxColumnTitres);
-        this.serumBreadthsParameter = setupSerumBreadths(serumBreadthsParameter);
-        this.virusAviditiesParameter = setupVirusAvidities(virusAviditiesParameter);
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("\tNewAntigenicLikelihood:\n");
-        sb.append("\t\t" + virusNames.size() + " viruses\n");
-        sb.append("\t\t" + serumNames.size() + " sera\n");
-        sb.append("\t\t" + measurements.size() + " assay measurements\n");
-        if (USE_THRESHOLDS) {
-            sb.append("\t\t" + thresholdCount + " thresholded measurements\n");
-        }
-        if (useIntervals) {
-            sb.append("\n\t\tAssuming a log 2 measurement interval width of " + intervalWidth + "\n");
-        }
-        Logger.getLogger("dr.evomodel").info(sb.toString());
-
-        virusLocationChanged = new boolean[this.virusLocationsParameter.getParameterCount()];
-        serumLocationChanged = new boolean[this.serumLocationsParameter.getParameterCount()];
-        virusEffectChanged = new boolean[virusNames.size()];
-        serumEffectChanged = new boolean[serumNames.size()];
-        logLikelihoods = new double[measurements.size()];
-        storedLogLikelihoods = new double[measurements.size()];
-
-        setupInitialLocations(driftInitialLocations);
-
-        makeDirty();
+        return new MatchInfo(earliestDate, thresholdCount);
     }
+
 
     private Parameter setupVirusAvidities(Parameter virusAviditiesParameter) {
         // If no row parameter is given, then we will only use the serum effects
@@ -326,7 +642,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         strainNames.toArray(labelArray);
         offsetsParameter.setDimensionNames(labelArray);
         for (int i = 0; i < strainNames.size(); i++) {
-            Double offset = strainDates.get(i) - new Double(earliest);
+            Double offset = strainDates.get(i) - earliest;
             if (offset == null) {
                 throw new IllegalArgumentException("Date missing for strain: " + strainNames.get(i));
             }
@@ -336,12 +652,11 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     }
 
 
-    private void setupTipTraitsParameter(CompoundParameter tipTraitsParameter, List<String> strainNames) {
-        tipIndices = new int[strainNames.size()];
+    private int[] setupTipIndices(CompoundParameter tipTraitsParameter,
+                                 List<String> strainNames) {
 
-        for (int i = 0; i < strainNames.size(); i++) {
-            tipIndices[i] = -1;
-        }
+        int[] tipIndices = new int[strainNames.size()];
+        Arrays.fill(tipIndices, -1);
 
         for (int i = 0; i < tipTraitsParameter.getParameterCount(); i++) {
             Parameter tip = tipTraitsParameter.getParameter(i);
@@ -356,17 +671,13 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
 
                 // rather than setting these here, we set them when the locations are set so the changes propagate
                 // through to the diffusion model.
-//                Parameter location = locationsParameter.getParameter(index);
-//                for (int dim = 0; dim < mdsDimension; dim++) {
-//                    tip.setParameterValue(dim, location.getParameterValue(dim));
-//                }
             } else {
                 // The tree may contain viruses not present in the assay data
-                //       throw new IllegalArgumentException("Unmatched tip name in assay data: " + label);
+                throw new IllegalArgumentException("Unmatched tip name in assay data: " + label + "\nNot yet implemented.");
             }
         }
-        // we are only setting this parameter not listening to it:
-//        addVariable(this.tipTraitsParameter);
+
+        return tipIndices;
     }
 
     private final int findStrain(String label, List<String> strainNames) {
@@ -382,17 +693,19 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     }
 
     private void setupInitialLocations(double drift) {
-        for (int i = 0; i < virusLocationsParameter.getParameterCount(); i++) {
+        for (int i = 0; i < tipTraitsParameter.getParameterCount(); ++i) {
             double offset = 0.0;
             if (virusOffsetsParameter != null) {
                 offset = drift * virusOffsetsParameter.getParameterValue(i);
             }
             double r = MathUtils.nextGaussian() + offset;
-            virusLocationsParameter.getParameter(i).setParameterValue(0, r);
+            virusSamplingParameter.getParameter(i).setParameterValue(0, r); // TODO Remove
+            tipTraitsParameter.getParameter(tipIndices[i]).setParameterValue(0, r);
             if (mdsDimension > 1) {
                 for (int j = 1; j < mdsDimension; j++) {
                     r = MathUtils.nextGaussian();
-                    virusLocationsParameter.getParameter(i).setParameterValue(j, r);
+                    virusSamplingParameter.getParameter(i).setParameterValue(j, r); // TODO Remove
+                    tipTraitsParameter.getParameter(tipIndices[i]).setParameterValue(j, r);
                 }
             }
         }
@@ -418,78 +731,96 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-        if (variable == virusLocationsParameter) {
+        if (variable == virusSamplingParameter) { // TODO Remove
             if (index != -1) {
                 int loc = index / mdsDimension;
                 virusLocationChanged[loc] = true;
                 if (tipTraitsParameter != null && tipIndices[loc] != -1) {
-                    Parameter location = virusLocationsParameter.getParameter(loc);
+                    Parameter location = virusSamplingParameter.getParameter(loc);
                     Parameter tip = tipTraitsParameter.getParameter(tipIndices[loc]);
                     int dim = index % mdsDimension;
                     tip.setParameterValue(dim, location.getParameterValue(dim));
                 }
             } else {
-                if (false) { // Just for debugging purposes.
-//                    for (int idx = 0; idx < virusLocationsParameter.getDimension(); ++idx) {
-//                        int loc = idx / mdsDimension;
-//                        virusLocationChanged[loc] = true;
-//                        if (tipTraitsParameter != null && tipIndices[loc] != -1) {
-//                            Parameter location = virusLocationsParameter.getParameter(loc);
-//                            Parameter tip = tipTraitsParameter.getParameter(tipIndices[loc]);
-//                            int dim = idx % mdsDimension;
-//                            tip.setParameterValue(dim, location.getParameterValue(dim));
-//                        }
-//                    }
-                } else {
-                    Arrays.fill(virusLocationChanged, true);
-                    if (tipTraitsParameter != null) {
-                        for (int pindex = 0; pindex < virusLocationsParameter.getParameterCount(); ++pindex) {
-                            Parameter location = virusLocationsParameter.getParameter(pindex);
-                            Parameter tip = tipTraitsParameter.getParameter(tipIndices[pindex]);
-                            for (int i = 0; i < tip.getDimension(); ++i) {
-                                tip.setParameterValueQuietly(i, location.getParameterValue(i));//
-                            }
+                Arrays.fill(virusLocationChanged, true);
+                if (tipTraitsParameter != null) {
+                    for (int pindex = 0; pindex < virusSamplingParameter.getParameterCount(); ++pindex) {
+                        Parameter location = virusSamplingParameter.getParameter(pindex);
+                        Parameter tip = tipTraitsParameter.getParameter(tipIndices[pindex]);
+                        for (int i = 0; i < tip.getDimension(); ++i) {
+                            tip.setParameterValueQuietly(i, location.getParameterValue(i));//
                         }
-                        tipTraitsParameter.fireParameterChangedEvent();
                     }
+                    tipTraitsParameter.fireParameterChangedEvent();
                 }
+
             }
+
+            locationsKnown = false;
+        } else if (variable == tipTraitsParameter) {
+            locationsKnown = false;
         } else if (variable == serumLocationsParameter) {
             int loc = index / mdsDimension;
             serumLocationChanged[loc] = true;
+            locationsKnown = false;
         } else if (variable == mdsPrecisionParameter) {
             setLocationChangedFlags(true);
+            precisionKnown = false;
         } else if (variable == locationDriftParameter) {
             setLocationChangedFlags(true);
+            observationsKnown = false;
         } else if (variable == virusDriftParameter) {
-                setLocationChangedFlags(true);
+            setLocationChangedFlags(true);
+            observationsKnown = false;
         } else if (variable == serumDriftParameter) {
-                setLocationChangedFlags(true);
+            setLocationChangedFlags(true);
+            observationsKnown = false;
         } else if (variable == serumPotenciesParameter) {
             serumEffectChanged[index] = true;
+            observationsKnown = false;
         } else if (variable == serumBreadthsParameter) {
             serumEffectChanged[index] = true;
+            observationsKnown = false;
         } else if (variable == virusAviditiesParameter) {
             virusEffectChanged[index] = true;
+            observationsKnown = false;
         } else {
-            // could be a derived class's parameter
-//            throw new IllegalArgumentException("Unknown parameter");
+            throw new IllegalArgumentException("Unknown parameter");
         }
+
         likelihoodKnown = false;
     }
 
     @Override
     protected void storeState() {
-        System.arraycopy(logLikelihoods, 0, storedLogLikelihoods, 0, logLikelihoods.length);
+        if (!NEW) {
+            System.arraycopy(logLikelihoods, 0, storedLogLikelihoods, 0, logLikelihoods.length);
+        }
+
+        mdsCore.storeState();
+
+        savedLikelihoodKnown = likelihoodKnown;
+        savedLocationsKnown = locationsKnown;
+        savedObservationsKnown = observationsKnown;
+        savedPrecisionKnown = precisionKnown;
     }
 
     @Override
     protected void restoreState() {
-        double[] tmp = logLikelihoods;
-        logLikelihoods = storedLogLikelihoods;
-        storedLogLikelihoods = tmp;
+        if (!NEW) {
+            double[] tmp = logLikelihoods;
+            logLikelihoods = storedLogLikelihoods;
+            storedLogLikelihoods = tmp;
 
-        likelihoodKnown = false;
+            likelihoodKnown = false;
+        }
+
+        mdsCore.restoreState();
+
+        likelihoodKnown = savedLikelihoodKnown;
+        locationsKnown = savedLocationsKnown;
+        observationsKnown = savedObservationsKnown;
+        precisionKnown = savedPrecisionKnown;
     }
 
     @Override
@@ -500,9 +831,16 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         return this;
     }
 
+    private static final boolean NEW = true;
+
     public double getLogLikelihood() {
         if (!likelihoodKnown) {
-            logLikelihood = computeLogLikelihood();
+            if (NEW) {
+                logLikelihood = computeLogLikelihoodMds();
+            } else {
+                logLikelihood = computeLogLikelihood();
+            }
+            likelihoodKnown = true;
         }
 
         return logLikelihood;
@@ -517,11 +855,13 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         logLikelihood = 0.0;
         int i = 0;
 
+        double SSE = 0.0;
         for (Measurement measurement : measurements) {
 
             if (virusLocationChanged[measurement.virus] || serumLocationChanged[measurement.serum] || virusEffectChanged[measurement.virus] || serumEffectChanged[measurement.serum]) {
 
-                double expectation = calculateBaseline(measurement.virus, measurement.serum) - computeDistance(measurement.virus, measurement.serum);
+                double distance = computeDistance(measurement.virus, measurement.serum);
+                double expectation = calculateBaseline(measurement.virus, measurement.serum) - distance;
 
                 switch (measurement.type) {
                     case INTERVAL: {
@@ -531,6 +871,16 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
                     } break;
                     case POINT: {
                         logLikelihoods[i] = computeMeasurementLikelihood(measurement.log2Titre, expectation, sd);
+                        double x = (logLikelihoods[i] -  Math.log(1.0 / (Math.sqrt(2.0 * Math.PI) * 1.0))) * 2;
+                        double inc = Math.pow(measurement.log2Titre - expectation, 2);
+                        SSE += inc;
+//                        System.err.println(tipIndices[measurement.virus] + " " +
+//                                measurement.serum + " " +
+//                                measurement.log2Titre + " " +
+//                                distance + " " +
+//                                expectation + " " +
+//                                x + " " +
+//                                inc);
                     } break;
                     case THRESHOLD: {
                     	if(measurement.isLowerThreshold){
@@ -581,7 +931,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     // offset virus and serum location when computing
     protected double computeDistance(int virus, int serum) {
 
-        Parameter vLoc = virusLocationsParameter.getParameter(virus);
+        Parameter vLoc = tipTraitsParameter.getParameter(tipIndices[virus]);
         Parameter sLoc = serumLocationsParameter.getParameter(serum);
         double sum = 0.0;
 
@@ -689,11 +1039,29 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     }
 
     public void makeDirty() {
+
+        locationsKnown = false;
+        observationsKnown = false;
+        precisionKnown = false;
+        internalGradientKnown = false;
+
         likelihoodKnown = false;
         setLocationChangedFlags(true);
     }
 
-    private class Measurement {
+    public AntigenicGradientWrtParameter wrtFactory(Parameter parameter) {
+        if (parameter == tipTraitsParameter) {
+            return new AntigenicGradientWrtParameter.VirusLocations(numViruses, numSera, mdsDimension,
+                    tipTraitsParameter, layout);
+        } else if (parameter == serumLocationsParameter) {
+            return new AntigenicGradientWrtParameter.SerumLocations(numViruses, numSera, mdsDimension,
+                    serumLocationsParameter, layout);
+        } else {
+            throw new IllegalArgumentException("Not yet implemented");
+        }
+    }
+
+    private static class Measurement {
         private Measurement(final int virus, final int serum, final double virusDate, final double serumDate, final MeasurementType type, final double titre, final boolean isLowerThreshold) {
             this.virus = virus;
             this.serum = serum;
@@ -729,7 +1097,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     private final Parameter virusDriftParameter;
     private final Parameter serumDriftParameter;
 
-    private final MatrixParameter virusLocationsParameter;
+    private final MatrixParameter virusSamplingParameter;
     private final MatrixParameter serumLocationsParameter;
 
     private final Parameter virusOffsetsParameter;
@@ -751,178 +1119,6 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     private final boolean[] virusEffectChanged;
     private double[] logLikelihoods;
     private double[] storedLogLikelihoods;
-
-// **************************************************************
-// XMLObjectParser
-// **************************************************************
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public static final String FILE_NAME = "fileName";
-        public static final String TIP_TRAIT = "tipTrait";
-        public static final String VIRUS_LOCATIONS = "virusLocations";
-        public static final String SERUM_LOCATIONS = "serumLocations";
-        public static final String MDS_DIMENSION = "mdsDimension";
-        public static final String MERGE_SERUM_ISOLATES = "mergeSerumIsolates";
-        public static final String DRIFT_INITIAL_LOCATIONS = "driftInitialLocations";
-        public static final String INTERVAL_WIDTH = "intervalWidth";
-        public static final String MDS_PRECISION = "mdsPrecision";
-        public static final String LOCATION_DRIFT = "locationDrift";
-        public static final String VIRUS_DRIFT = "virusDrift";
-        public static final String SERUM_DRIFT = "serumDrift";
-        public static final String VIRUS_AVIDITIES = "virusAvidities";
-        public static final String SERUM_POTENCIES = "serumPotencies";
-        public static final String SERUM_BREADTHS = "serumBreadths";
-        public static final String VIRUS_OFFSETS = "virusOffsets";
-        public static final String SERUM_OFFSETS = "serumOffsets";
-
-        public String getParserName() {
-            return ANTIGENIC_LIKELIHOOD;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            String fileName = xo.getStringAttribute(FILE_NAME);
-
-            DataTable<String[]> assayTable;
-            try {
-                assayTable = DataTable.Text.parse(new FileReader(fileName), true, false);
-            } catch (IOException e) {
-                throw new XMLParseException("Unable to read assay data from file: " + e.getMessage());
-            }
-            System.out.println("Loaded HI table file: " + fileName);
-
-            boolean mergeSerumIsolates = xo.getAttribute(MERGE_SERUM_ISOLATES, false);
-
-            int mdsDimension = xo.getIntegerAttribute(MDS_DIMENSION);
-            double intervalWidth = 0.0;
-            if (xo.hasAttribute(INTERVAL_WIDTH)) {
-                intervalWidth = xo.getDoubleAttribute(INTERVAL_WIDTH);
-            }
-
-            double driftInitialLocations = 0.0;
-            if (xo.hasAttribute(DRIFT_INITIAL_LOCATIONS)) {
-                driftInitialLocations = xo.getDoubleAttribute(DRIFT_INITIAL_LOCATIONS);
-            }
-
-            CompoundParameter tipTraitParameter = null;
-            if (xo.hasChildNamed(TIP_TRAIT)) {
-                tipTraitParameter = (CompoundParameter) xo.getElementFirstChild(TIP_TRAIT);
-            }
-
-            MatrixParameter virusLocationsParameter = null;
-            if (xo.hasChildNamed(VIRUS_LOCATIONS)) {
-                virusLocationsParameter = (MatrixParameter) xo.getElementFirstChild(VIRUS_LOCATIONS);
-            }
-
-            MatrixParameter serumLocationsParameter = null;
-            if (xo.hasChildNamed(SERUM_LOCATIONS)) {
-                serumLocationsParameter = (MatrixParameter) xo.getElementFirstChild(SERUM_LOCATIONS);
-            }
-
-            Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
-
-            Parameter locationDrift = null;
-            if (xo.hasChildNamed(LOCATION_DRIFT)) {
-                locationDrift = (Parameter) xo.getElementFirstChild(LOCATION_DRIFT);
-            }
-
-            Parameter virusDrift = null;
-            if (xo.hasChildNamed(VIRUS_DRIFT)) {
-                virusDrift = (Parameter) xo.getElementFirstChild(VIRUS_DRIFT);
-            }
-
-            Parameter serumDrift = null;
-            if (xo.hasChildNamed(SERUM_DRIFT)) {
-                serumDrift = (Parameter) xo.getElementFirstChild(SERUM_DRIFT);
-            }
-
-            Parameter virusOffsetsParameter = null;
-            if (xo.hasChildNamed(VIRUS_OFFSETS)) {
-                virusOffsetsParameter = (Parameter) xo.getElementFirstChild(VIRUS_OFFSETS);
-            }
-
-            Parameter serumOffsetsParameter = null;
-            if (xo.hasChildNamed(SERUM_OFFSETS)) {
-                serumOffsetsParameter = (Parameter) xo.getElementFirstChild(SERUM_OFFSETS);
-            }
-
-            Parameter serumPotenciesParameter = null;
-            if (xo.hasChildNamed(SERUM_POTENCIES)) {
-                serumPotenciesParameter = (Parameter) xo.getElementFirstChild(SERUM_POTENCIES);
-            }
-
-            Parameter serumBreadthsParameter = null;
-            if (xo.hasChildNamed(SERUM_BREADTHS)) {
-                serumBreadthsParameter = (Parameter) xo.getElementFirstChild(SERUM_BREADTHS);
-            }
-
-            Parameter virusAviditiesParameter = null;
-            if (xo.hasChildNamed(VIRUS_AVIDITIES)) {
-                virusAviditiesParameter = (Parameter) xo.getElementFirstChild(VIRUS_AVIDITIES);
-            }
-
-            NewAntigenicLikelihood AGL = new NewAntigenicLikelihood(
-                    mdsDimension,
-                    mdsPrecision,
-                    locationDrift,
-                    virusDrift,
-                    serumDrift,
-                    virusLocationsParameter,
-                    serumLocationsParameter,
-                    tipTraitParameter,
-                    virusOffsetsParameter,
-                    serumOffsetsParameter,
-                    serumPotenciesParameter,
-                    serumBreadthsParameter,
-                    virusAviditiesParameter,
-                    assayTable,
-                    mergeSerumIsolates,
-                    intervalWidth,
-                    driftInitialLocations);
-
-            Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Utils.getCitationString(AGL));
-
-            return AGL;
-        }
-
-//************************************************************************
-// AbstractXMLObjectParser implementation
-//************************************************************************
-
-        public String getParserDescription() {
-            return "Provides the likelihood of immunological assay data such as Hemagglutinin inhibition (HI) given vectors of coordinates" +
-                    "for viruses and sera/antisera in some multidimensional 'antigenic' space.";
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
-                AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
-                AttributeRule.newBooleanRule(MERGE_SERUM_ISOLATES, true, "Should multiple serum isolates from the same strain have their locations merged (defaults to false)"),
-                AttributeRule.newDoubleRule(INTERVAL_WIDTH, true, "The width of the titre interval in log 2 space"),
-                AttributeRule.newDoubleRule(DRIFT_INITIAL_LOCATIONS, true, "The degree to drift initial virus and serum locations, defaults to 0.0"),
-                new ElementRule(TIP_TRAIT, CompoundParameter.class, "Optional parameter of tip locations from the tree", true),
-                new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class, "Parameter of locations of all virus"),
-                new ElementRule(SERUM_LOCATIONS, MatrixParameter.class, "Parameter of locations of all sera"),
-                new ElementRule(VIRUS_OFFSETS, Parameter.class, "Optional parameter for virus dates to be stored", true),
-                new ElementRule(SERUM_OFFSETS, Parameter.class, "Optional parameter for serum dates to be stored", true),
-                new ElementRule(SERUM_POTENCIES, Parameter.class, "Optional parameter for serum potencies", true),
-                new ElementRule(SERUM_BREADTHS, Parameter.class, "Optional parameter for serum breadths", true),
-                new ElementRule(VIRUS_AVIDITIES, Parameter.class, "Optional parameter for virus avidities", true),
-                new ElementRule(MDS_PRECISION, Parameter.class, "Parameter for precision of MDS embedding"),
-                new ElementRule(LOCATION_DRIFT, Parameter.class, "Optional parameter for drifting locations with time", true),
-                new ElementRule(VIRUS_DRIFT, Parameter.class, "Optional parameter for drifting only virus locations, overrides locationDrift", true),
-                new ElementRule(SERUM_DRIFT, Parameter.class, "Optional parameter for drifting only serum locations, overrides locationDrift", true)
-        };
-
-        public Class getReturnType() {
-            return NewAntigenicLikelihood.class;
-        }
-    };
 
     @Override
     public Citation.Category getCategory() {

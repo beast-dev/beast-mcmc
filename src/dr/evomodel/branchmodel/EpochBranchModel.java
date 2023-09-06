@@ -164,6 +164,14 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
     protected void acceptState() {
     }// END: acceptState
 
+    public double[] getEpochTimesDouble() {
+        return epochTimes.getParameterValues();
+    }
+
+    public MutableTreeModel getTree() {
+        return tree;
+    }
+
     @Override
     public Citation.Category getCategory() {
         return Citation.Category.SUBSTITUTION_MODELS;

@@ -2,20 +2,19 @@ package dr.evomodel.substmodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeUtils;
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.EpochBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeStatistic;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.markovjumps.MarkovJumpsCore;
 import dr.inference.markovjumps.MarkovJumpsType;
 import dr.inference.model.Parameter;
-import dr.oldevomodel.sitemodel.GammaSiteModel;
-import dr.oldevomodel.sitemodel.SiteModel;
 import dr.xml.Reportable;
 
+import java.util.List;
+
+@SuppressWarnings("deprecation")
 public class SubstitutionModelRandomEffectClassifier extends TreeStatistic implements Reportable {
     private final int dim;
     private final int nStates;
@@ -23,37 +22,62 @@ public class SubstitutionModelRandomEffectClassifier extends TreeStatistic imple
     private final double threshold;
 
     private Tree tree;
+    private OldGLMSubstitutionModel glmSubstitutionModel;
+    private EpochBranchModel epochBranchModel;
     private GammaSiteRateModel siteModel;
     private BranchRateModel branchRates;
 
-//    private ComplexSubstitutionModel proxy = null;
-//    private Parameter relativeRateDummyParameter = null;
-//    private MarkovJumpsSubstitutionModel markovJumps = null;
-    
+    private final boolean usingRateVariation;
+    private final boolean usingEpochs;
+    private boolean[] epochUsesTargetModel;
+
 //    private double[] countMatrix;
     private int[] fromState;
     private int[] toState;
 
     public SubstitutionModelRandomEffectClassifier(String name,
                                                    Tree tree,
-                                                   GammaSiteRateModel siteModel,
+                                                   OldGLMSubstitutionModel glmSubstitutionModel,
+                                                   EpochBranchModel epochBranchModel,
                                                    BranchRateModel branchRates,
+                                                   GammaSiteRateModel siteModel,
                                                    int nSites,
                                                    double threshold) {
         super(name);
         this.tree = tree;
+        this.glmSubstitutionModel = glmSubstitutionModel;
+        this.epochBranchModel = epochBranchModel;
         this.siteModel = siteModel;
         this.branchRates = branchRates;
 
-        if (!(siteModel.getSubstitutionModel() instanceof OldGLMSubstitutionModel)) {
+        usingRateVariation = siteModel != null ? true : false;
+        usingEpochs = epochBranchModel != null ? true : false;
+
+        if (!(glmSubstitutionModel instanceof OldGLMSubstitutionModel)) {
             throw new RuntimeException("SubstitutionModelRandomEffectClassifier only works for GLM substitution models.");
         }
 
+        if (usingEpochs) {
+            List<SubstitutionModel> substitutionModels = epochBranchModel.getSubstitutionModels();
+            this.epochUsesTargetModel = new boolean[substitutionModels.size()];
+            int matches = 0;
+            for (int i = 0; i < substitutionModels.size(); i++) {
+                if (substitutionModels.get(i) == glmSubstitutionModel) {
+                    this.epochUsesTargetModel[i] = true;
+                    matches++;
+                }
+            }
+            if ( matches == 0 ) {
+                throw new RuntimeException("Cannot find specified GLM substitution model (id: " + glmSubstitutionModel.getId() + ") in specified epoch model (id: " + epochBranchModel.getId() + ")");
+            }
+        } else {
+            this.epochUsesTargetModel = new boolean[0];
+        }
+
         this.nSites = nSites;
-        this.nStates = siteModel.getSubstitutionModel().getFrequencyModel().getDataType().getStateCount();
+        this.nStates = glmSubstitutionModel.getFrequencyModel().getDataType().getStateCount();
         this.dim = nStates * (nStates - 1);
-//        this.relativeRateDummyParameter = new Parameter.Default("",dim);
-//        this.countMatrix = new double[nStates * nStates];
+
         this.threshold = threshold;
 
         this.fromState = new int[dim];
@@ -86,28 +110,12 @@ public class SubstitutionModelRandomEffectClassifier extends TreeStatistic imple
         return dim;
     }
 
-//    private void setupSubstitutionModels(int index, boolean includeRandomEffect) {
-//        OldGLMSubstitutionModel glmSubs = (OldGLMSubstitutionModel)siteModel.getSubstitutionModel();
-//        double[] relativeRates = new double[dim];
-//        glmSubs.setupRelativeRates(relativeRates);
-//
-//        if (!includeRandomEffect) {
-//            double[] copiedParameterValues = glmSubs.getGLM().getRandomEffect(0).getParameterValues();
-////            double randomEffect = glmSubs.getGLM().getRandomEffect(0).getParameterValue(index);
-//            relativeRates[index] /= Math.exp(copiedParameterValues[index]);
-//        }
-//
-//        this.proxy = new ComplexSubstitutionModel("internalGlmProxyForSubstitutionModelRandomEffectClassifier",glmSubs.getDataType(),glmSubs.getFrequencyModel(),relativeRateDummyParameter);
-//        this.markovJumps = new MarkovJumpsSubstitutionModel(proxy, MarkovJumpsType.COUNTS);
-//    }
-
     private ComplexSubstitutionModel makeProxyModel(int index, boolean includeRandomEffect) {
-        OldGLMSubstitutionModel glmSubs = (OldGLMSubstitutionModel)siteModel.getSubstitutionModel();
         double[] relativeRates = new double[dim];
-        glmSubs.setupRelativeRates(relativeRates);
+        glmSubstitutionModel.setupRelativeRates(relativeRates);
 
         if (!includeRandomEffect) {
-            double[] copiedParameterValues = glmSubs.getGLM().getRandomEffect(0).getParameterValues();
+            double[] copiedParameterValues = glmSubstitutionModel.getGLM().getRandomEffect(0).getParameterValues();
 //            double randomEffect = glmSubs.getGLM().getRandomEffect(0).getParameterValue(index);
             relativeRates[index] /= Math.exp(copiedParameterValues[index]);
         }
@@ -118,40 +126,39 @@ public class SubstitutionModelRandomEffectClassifier extends TreeStatistic imple
         }
 
         return new ComplexSubstitutionModel("internalGlmProxyForSubstitutionModelRandomEffectClassifier",
-                glmSubs.getDataType(),glmSubs.getFrequencyModel(),relativeRateDummyParameter);
+                glmSubstitutionModel.getDataType(),glmSubstitutionModel.getFrequencyModel(),relativeRateDummyParameter);
 
     }
 
-//    private MarkovJumpsSubstitutionModel makeMarkovJumpsSubstitutionModel(int index, boolean includeRandomEffect) {
-//        return new MarkovJumpsSubstitutionModel(proxy, MarkovJumpsType.COUNTS);
-//    }
-
-//    private void setupCountMatrix(int index) {
-//        for (int i = 0; i < dim; i++) {
-//            countMatrix[i] = 0.0;
-//        }
-//        MarkovJumpsCore.fillRegistrationMatrix(countMatrix, fromState[index], toState[index], nStates, 1.0);
-//    }
-    private double[] makeCountMatrix(int index) {
-        double[] countMatrix = new double[nStates * nStates];
-        for (int i = 0; i < dim; i++) {
-            countMatrix[i] = 0.0;
+    private double getEpochContribution(NodeRef node) {
+        BranchModel.Mapping map = epochBranchModel.getBranchModelMapping(node);
+        int[] order = map.getOrder();
+        double[] weights = map.getWeights();
+        double duration = 0.0;
+        for (int k = 0; k < order.length; k++) {
+            if (epochUsesTargetModel[order[k]]) {
+                duration += weights[k];
+            }
         }
-        MarkovJumpsCore.fillRegistrationMatrix(countMatrix, fromState[index], toState[index], nStates, 1.0);
-        return countMatrix;
+        return duration;
     }
 
-    private double getTreeLengthInSubstitutions(double relativeRate) {
+    private double getTreeLengthInSubstitutions() {
         double length = 0.0;
         NodeRef root = tree.getRoot();
         for (int i = 0; i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
             if ( node != root ) {
-                double branchLength = tree.getNodeHeight(tree.getParent(node)) - tree.getNodeHeight(node);
-                length += branchLength * branchRates.getBranchRate(tree, node);
+                if (usingEpochs) {
+                    // This assumes branches do not have time-dependent rates that could interact with the epochs
+                    length += getEpochContribution(node);
+                } else {
+                    double branchLength = tree.getNodeHeight(tree.getParent(node)) - tree.getNodeHeight(node);
+                    length += branchLength * branchRates.getBranchRate(tree, node);
+                }
             }
         }
-        return length * relativeRate;
+        return length;
     }
 
     private double getDoubleResult(double countDiff) {
@@ -182,62 +189,78 @@ public class SubstitutionModelRandomEffectClassifier extends TreeStatistic imple
 //        return expectedCount * nSites;
 //    }
     
-    private double getCountForCategory(int category, int index, boolean includeRandomEffect) {
+    private double getCountForRateCategory(int index, double time, boolean includeRandomEffect, boolean countAll) {
         ComplexSubstitutionModel proxy = makeProxyModel(index, includeRandomEffect);
         MarkovJumpsSubstitutionModel markovJumps = new MarkovJumpsSubstitutionModel(proxy, MarkovJumpsType.COUNTS);
 
-        double thisRateCategory = siteModel.getRateForCategory(category);
-        double time = getTreeLengthInSubstitutions(thisRateCategory);
-
         double[] register = new double[nStates * nStates];
         double[] jointCounts = new double[nStates * nStates];
-//        double[] conditionalCounts = new double[nStates * nStates];
+        double[] conditionalCounts = new double[nStates * nStates];
+        double[] transitionProbabilities = new double[nStates * nStates];
 
-        int from = fromState[index];
-        int to = toState[index];
-        MarkovJumpsCore.fillRegistrationMatrix(register, from, to, nStates, 1.0);
+        if ( !countAll ) {
+            int from = fromState[index];
+            int to = toState[index];
+            MarkovJumpsCore.fillRegistrationMatrix(register, from, to, nStates, 1.0);
+        } else {
+            MarkovJumpsCore.fillRegistrationMatrix(register, nStates);
+        }
         markovJumps.setRegistration(register);
 
         markovJumps.computeJointStatMarkovJumps(time, jointCounts);
+        markovJumps.computeCondStatMarkovJumps(time, conditionalCounts);
+        proxy.getTransitionProbabilities(time, transitionProbabilities);
 
-//        markovJumps.computeCondStatMarkovJumps(time, conditionalCounts);
+        double count = 0.0;
+        double[] frequencies = glmSubstitutionModel.getFrequencyModel().getFrequencies();
+        for (int i = 0; i < nStates; i++) {
+            for (int j = 0; j < nStates; j++) {
+//                count += jointCounts[i*nStates + j] * transitionProbabilities[i*nStates + j] * frequencies[i];
+                count += jointCounts[i*nStates + j] * frequencies[i];
+            }
+        }
 
-        return jointCounts[from * nStates + to];
+        return count;
+//        return jointCounts[from * nStates + to];
     }
     
-    private double getCount(int index, boolean includeRandomEffect) {
+    private double getCount(int index, boolean includeRandomEffect, boolean countAll) {
+        double duration = getTreeLengthInSubstitutions();
         double expectedCount = 0.0;
-        for (int i = 0; i < siteModel.getCategoryCount(); i++) {
-            expectedCount += getCountForCategory(i, index, includeRandomEffect)  * siteModel.getProportionForCategory(i);
+        if (usingRateVariation) {
+            for (int i = 0; i < siteModel.getCategoryCount(); i++) {
+                double thisRateCategory = siteModel.getRateForCategory(i);
+                expectedCount += getCountForRateCategory(index, duration * thisRateCategory, includeRandomEffect, countAll)  * siteModel.getProportionForCategory(i);
+            }
+        } else {
+            expectedCount += getCountForRateCategory(index, duration, includeRandomEffect, countAll);
         }
 
         return expectedCount * nSites;
     }
 
     private double getCountDifferences(int index) {
-        return getCount(index,true) - getCount(index, false);
+        return getCount(index,true, false) - getCount(index, false, false);
     }
 
     @Override
     public double getStatisticValue(int dim) {
-//        double[] countsWith = new double[this.dim];
-//        double totCountsWith = 0.0;
-//        double[] countsWithout = new double[this.dim];
-//        double totCountsWithout = 0.0;
+//        double[] countAllSeparately = new double[this.dim];
+//        double totCountAllSeparately = 0.0;
+//        double totCountAll = getCount(-1, true, true);
 //        for (int i = 0; i < this.dim; i++) {
-//            countsWith[i] = getCount(i,true);
-//            countsWithout[i] = getCount(i,false);
-//            totCountsWith += countsWith[i];
-//            totCountsWithout += countsWithout[i];
+//            countAllSeparately[i] = getCount(i,true, false);
+//            totCountAllSeparately += countAllSeparately[i];
 //        }
 //
-//        System.err.println("Total counts without: " + totCountsWith + "\n");
-//        System.err.println("Total counts with: " + totCountsWithout + "\n");
+//        System.err.println("Total number of substitutions, counted separately: " + totCountAllSeparately + "\n");
+//        System.err.println("Total number of substitutions: " + totCountAll + "\n");
 //
 //        double meanTreeLength = 0.0;
 //        for (int i = 0; i < siteModel.getCategoryCount(); i++) {
 //            meanTreeLength += siteModel.getProportionForCategory(i) * getTreeLengthInSubstitutions(siteModel.getRateForCategory(i));
 //        }
+//        System.err.println("meanTreeLength * nSites = " + meanTreeLength * nSites + "\n");
 
         return getDoubleResult(getCountDifferences(dim));
     }

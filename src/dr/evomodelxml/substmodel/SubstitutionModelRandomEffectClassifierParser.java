@@ -26,6 +26,7 @@
 package dr.evomodelxml.substmodel;
 
 import dr.evolution.alignment.PatternList;
+import dr.evomodel.branchmodel.EpochBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
@@ -55,7 +56,12 @@ public class SubstitutionModelRandomEffectClassifierParser extends AbstractXMLOb
 
 //        TreeDataLikelihood likelihood = (TreeDataLikelihood)xo.getChild(TreeDataLikelihood.class);
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-//        OldGLMSubstitutionModel glm = (OldGLMSubstitutionModel) xo.getChild(OldGLMSubstitutionModel.class);
+        OldGLMSubstitutionModel glm = (OldGLMSubstitutionModel) xo.getChild(OldGLMSubstitutionModel.class);
+
+//        EpochBranchModel epochs = null;
+//        GammaSiteRateModel siteModel = null;
+
+        EpochBranchModel epochs = (EpochBranchModel) xo.getChild(EpochBranchModel.class);
         GammaSiteRateModel siteModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
         BranchRateModel branchRates = (BranchRateModel) xo.getChild(BranchRateModel.class);
         PatternList patternList = (PatternList)xo.getChild(PatternList.class);
@@ -68,10 +74,8 @@ public class SubstitutionModelRandomEffectClassifierParser extends AbstractXMLOb
         if (xo.hasAttribute(THRESHOLD)) {
             threshold = xo.getDoubleAttribute(THRESHOLD);
         }
-
-        // TODO: permit taking in an epochSubstitutionModel, get the times/epochs, and slice time
-
-        return new SubstitutionModelRandomEffectClassifier(xo.getId(), tree, siteModel, branchRates, nPatterns, threshold);
+        
+        return new SubstitutionModelRandomEffectClassifier(xo.getId(), tree, glm, epochs, branchRates, siteModel, nPatterns, threshold);
     }
 
     //************************************************************************
@@ -82,7 +86,8 @@ public class SubstitutionModelRandomEffectClassifierParser extends AbstractXMLOb
         return "A statistic that tracks whether a random-effect in a GLM substitution model is \"significant\" or not using a rule of thumb." +
                 "Considers the expected number of substitutions across the given tree (using the specified branch rates and among site rate variation model)." +
                 "For random-effect k, which affects i->j substitutions, compares expectation with random-effect at its given value to expectation with random-effect set to 0." +
-                "If this difference exceeds the specified threshold, the random-effect is taken to be significant.";
+                "If this difference exceeds the specified threshold, the random-effect is taken to be significant." +
+                "This statistic should not currently be used for epochs if the clock model contains any time-dependent variation (such as, but not limited to, epochs)!";
     }
 
     public Class getReturnType() {
@@ -95,7 +100,7 @@ public class SubstitutionModelRandomEffectClassifierParser extends AbstractXMLOb
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(TreeModel.class,false),
-            new ElementRule(GammaSiteRateModel.class,false),
+            new ElementRule(GammaSiteRateModel.class,true),
             new ElementRule(BranchRateModel.class,false),
             new ElementRule(PatternList.class,false),
             AttributeRule.newDoubleRule(THRESHOLD,true,"If threshold is positive, this is used as the cutoff number of substitutions and the statistic returns 0/1 for each random-effect. Otherwise, the difference in expected substitution counts is returned for each random-effect.")

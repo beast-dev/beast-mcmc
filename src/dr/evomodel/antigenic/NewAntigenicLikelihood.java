@@ -125,6 +125,10 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         this.locationDriftParameter = locationDriftParameter;
         if (this.locationDriftParameter != null) {
             addVariable(locationDriftParameter);
+
+            if (virusOffsetsParameter == null || serumOffsetsParameter == null) {
+                throw new IllegalArgumentException("Must also provide parameters to hold the offsets");
+            }
         }
 
         this.virusDriftParameter = virusDriftParameter;

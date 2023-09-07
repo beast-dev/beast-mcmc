@@ -25,15 +25,14 @@
 
 package dr.inference.distribution;
 
+import dr.evomodel.substmodel.LogAdditiveCtmcRateProvider;
 import dr.inference.model.Parameter;
-
-import java.util.List;
 
 /**
  * @author Marc A. Suchard
  */
 
-public class LogGaussianProcessModel extends LogLinearModel {
+public class LogGaussianProcessModel extends LogLinearModel implements LogAdditiveCtmcRateProvider {
 
     public LogGaussianProcessModel(Parameter dependentParam) {
 
@@ -42,7 +41,7 @@ public class LogGaussianProcessModel extends LogLinearModel {
 
     @Override
     public double[] getXBeta() {
-        double[] xBeta = super.getXBeta();
+        double[] xBeta = super.getSuperXBeta();
         for(int i = 0; i < xBeta.length; i++) {
             xBeta[i] = Math.exp(xBeta[i]);
         }

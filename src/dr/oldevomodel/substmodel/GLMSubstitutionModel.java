@@ -41,6 +41,8 @@ import java.util.List;
  */
 public class GLMSubstitutionModel extends ComplexSubstitutionModel {
 
+    // NB: We are currently using OldGlMSubstitutionModel and _not_ this class
+
     public GLMSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
                                 LogLinearModel glm) {
 

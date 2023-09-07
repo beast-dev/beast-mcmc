@@ -115,7 +115,7 @@ public class SubstitutionModelRandomEffectClassifier extends TreeStatistic imple
         glmSubstitutionModel.setupRelativeRates(relativeRates);
 
         if (!includeRandomEffect) {
-            double[] copiedParameterValues = glmSubstitutionModel.getGLM().getRandomEffect(0).getParameterValues();
+            double[] copiedParameterValues = glmSubstitutionModel.getGeneralizedLinearModel().getRandomEffect(0).getParameterValues();
 //            double randomEffect = glmSubs.getGLM().getRandomEffect(0).getParameterValue(index);
             relativeRates[index] /= Math.exp(copiedParameterValues[index]);
         }

@@ -104,6 +104,7 @@
 			</frequencyModel>
 		</rootFrequencies>
 		<gamGpModel>
+<!-- 		<glmModel family="logLinear" checkIdentifiability="true"> -->
 <!--
 			<randomEffects>
 				<parameter id="randomEffects" value="1 2 -1 -2 1 -1"/>
@@ -161,6 +162,7 @@
 				</designMatrix>
 			</independentVariables>
 		</gamGpModel>
+<!-- 		</glmModel> -->
 	</glmSubstitutionModel>
 
 	<siteModel id="loc.siteModel">

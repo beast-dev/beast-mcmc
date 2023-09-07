@@ -26,13 +26,11 @@
 package dr.evomodelxml.substmodel;
 
 import dr.evolution.datatype.DataType;
-import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
+import dr.evomodel.substmodel.LogAdditiveCtmcRateProvider;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.OldGLMSubstitutionModel;
-import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.distribution.GeneralizedLinearModel;
-import dr.inference.distribution.LogLinearModel;
 import dr.xml.*;
 
 /**
@@ -57,7 +55,7 @@ public class OldGLMSubstitutionModelParser extends AbstractXMLObjectParser {
 
         int rateCount = (dataType.getStateCount() - 1) * dataType.getStateCount();
 
-        LogLinearModel glm = (LogLinearModel) xo.getChild(GeneralizedLinearModel.class);
+        LogAdditiveCtmcRateProvider glm = (LogAdditiveCtmcRateProvider) xo.getChild(LogAdditiveCtmcRateProvider.class);
 
         int length = glm.getXBeta().length;
 

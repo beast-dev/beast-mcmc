@@ -83,31 +83,46 @@ public interface AntigenicGradientWrtParameter {
         }
     }
 
+    class Drift extends Locations {
 
-//        OTHER {
-//            @Override
-//            public boolean requiresLocationGradient() { return false; }
-//
-//            @Override
-//            public boolean requiresObservationGradient() { return true; }
-//
-//            @Override
-//            public int getSize(int viruses, int sera, int dim) {
-//                return viruses * sera;
-//            }
-//
-//            @Override
-//            void getGradient(double[] gradient, int offset,
-//                             double[] locationGradient,
-//                             double[] observationGradient) {
-//                System.arraycopy(observationGradient, 0, gradient, offset, observationGradient.length);
-//            }
-//
-//            @Override
-//            Parameter getParameter(NewAntigenicLikelihood likelihood) {
-//                return null;
-//            }
-//        };
+        private final Parameter virusTime;
+        private final Parameter serumTime;
+
+        Drift(int viruses, int sera, int mdsDim,
+              Parameter locationDrift, Parameter virusTime, Parameter serumTime,
+              NewAntigenicLikelihood.Layout layout) {
+            super(viruses, sera, mdsDim, locationDrift, layout);
+            this.virusTime = virusTime;
+            this.serumTime = serumTime;
+        }
+
+        @Override
+        int getLocationOffset() {
+            throw new RuntimeException("Should not be called");
+        }
+
+        @Override
+        public int getSize() { return 1; }
+
+        @Override
+        public void getGradient(double[] gradient, int offset,
+                                double[] locationGradient, double[] observationGradient) {
+
+            double derivative = 0;
+
+            int virusOffset = layout.getVirusLocationOffset();
+            for (int i = 0; i < viruses; ++i) {
+                derivative += locationGradient[virusOffset + i * mdsDim] * virusTime.getParameterValue(i);
+            }
+
+            int serumOffset = layout.getSerumLocationOffset();
+            for (int i = 0; i < sera; ++i) {
+                derivative += locationGradient[serumOffset + i * mdsDim] * serumTime.getParameterValue(i);
+            }
+
+            gradient[offset] = derivative;
+        }
+    }
 
     abstract class Base implements AntigenicGradientWrtParameter {
 

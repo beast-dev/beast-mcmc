@@ -116,6 +116,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         this.tipTraitsParameter = tipTraitsParameter;
         addVariable(tipTraitsParameter);
         this.tipIndices = setupTipIndices(this.tipTraitsParameter, virusNames);
+        this.virusIndices = setupVirusIndices(tipIndices);
 
         this.mdsDimension = mdsDimension;
 
@@ -417,6 +418,12 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
             for (int j = 0; j < mdsDimension; ++j) {
                 locations[offset + j] = parameter.getParameterValue(j);
             }
+
+            if (locationDriftParameter != null) {
+                locations[offset] += locationDriftParameter.getParameterValue(0) *
+                        virusOffsetsParameter.getParameterValue(i);
+            }
+
             offset += mdsDimension;
         }
 
@@ -425,6 +432,11 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
             Parameter parameter = serumLocationsParameter.getParameter(i);
             for (int j = 0; j < mdsDimension; ++j) {
                 locations[offset + j] = parameter.getParameterValue(j);
+            }
+
+            if (locationDriftParameter != null) {
+                locations[offset] += locationDriftParameter.getParameterValue(0) *
+                        serumOffsetsParameter.getParameterValue(i);
             }
             offset += mdsDimension;
         }
@@ -684,6 +696,14 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         return tipIndices;
     }
 
+    private int[] setupVirusIndices(int[] tipIndices) {
+        int[] virusIndices = new int[tipIndices.length];
+        for (int i = 0; i < tipIndices.length; ++i) {
+            virusIndices[tipIndices[i]] = i;
+        }
+        return virusIndices;
+    }
+
     private final int findStrain(String label, List<String> strainNames) {
         int index = 0;
         for (String strainName : strainNames) {
@@ -772,24 +792,30 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
             precisionKnown = false;
         } else if (variable == locationDriftParameter) {
             setLocationChangedFlags(true);
-            observationsKnown = false;
+            locationsKnown = false;
         } else if (variable == virusDriftParameter) {
             setLocationChangedFlags(true);
-            observationsKnown = false;
+            locationsKnown = false;
+            throw new IllegalArgumentException("Not yet implemented");
         } else if (variable == serumDriftParameter) {
             setLocationChangedFlags(true);
-            observationsKnown = false;
+            locationsKnown = false;
+            throw new IllegalArgumentException("Not yet implemented");
         } else if (variable == serumPotenciesParameter) {
             serumEffectChanged[index] = true;
             observationsKnown = false;
+            throw new IllegalArgumentException("Not yet implemented");
         } else if (variable == serumBreadthsParameter) {
             serumEffectChanged[index] = true;
             observationsKnown = false;
+            throw new IllegalArgumentException("Not yet implemented");
         } else if (variable == virusAviditiesParameter) {
             virusEffectChanged[index] = true;
             observationsKnown = false;
+            throw new IllegalArgumentException("Not yet implemented");
         } else {
-            throw new IllegalArgumentException("Unknown parameter");
+
+
         }
 
         likelihoodKnown = false;
@@ -1060,6 +1086,9 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         } else if (parameter == serumLocationsParameter) {
             return new AntigenicGradientWrtParameter.SerumLocations(numViruses, numSera, mdsDimension,
                     serumLocationsParameter, layout);
+        } else if (parameter == locationDriftParameter) {
+            return new AntigenicGradientWrtParameter.Drift(numViruses, numSera, mdsDimension,
+                    locationDriftParameter, virusOffsetsParameter, serumOffsetsParameter, layout);
         } else {
             throw new IllegalArgumentException("Not yet implemented");
         }
@@ -1108,7 +1137,8 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     private final Parameter serumOffsetsParameter;
 
     private final CompoundParameter tipTraitsParameter;
-    private int[] tipIndices;
+    private final int[] tipIndices;
+    private final int[] virusIndices;
 
     private final Parameter virusAviditiesParameter;
     private final Parameter serumPotenciesParameter;

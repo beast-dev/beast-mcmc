@@ -33,7 +33,6 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
  * @author Marc A. Suchard
  */
 
-@SuppressWarnings("deprecation")
 public class FixedEffectSubstitutionModelGradient extends AbstractGlmSubstitutionModelGradient {
 
     public FixedEffectSubstitutionModelGradient(String traitName,

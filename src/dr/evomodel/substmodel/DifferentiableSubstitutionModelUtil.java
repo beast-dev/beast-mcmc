@@ -309,7 +309,7 @@ public class DifferentiableSubstitutionModelUtil {
         return result;
     }
 
-    private static double[] getQQPlus(double[] eigenVectors, double[] inverseEigenVectors, int index, int stateCount) {
+    public static double[] getQQPlus(double[] eigenVectors, double[] inverseEigenVectors, int index, int stateCount) {
 
         double[] result = new double[stateCount * stateCount];
 

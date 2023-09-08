@@ -136,22 +136,25 @@
         <siteModel idref="loc.siteModel"/>
         <strictClockBranchRates idref="loc.branchRates"/>
     </treeDataLikelihood>
+
+<!-- START BY UNCOMMENTING THE REPORT BELOW -->
     
+<!-- 
     <report>
     	<gamGpModel idref="gamGpModel"/>
     	<treeDataLikelihood idref="treeLikelihood"/>
     </report>
+ -->
 
 <!-- 
-    <glmSubstitutionModelGradient id="gradient1" traitName="loc" effects="fixed">
+    <gamGpSubstitutionModelGradient id="gradient1" traitName="loc" effects="fixed">
     	<treeDataLikelihood idref="treeLikelihood"/>
     	<glmSubstitutionModel idref="loc.model"/>
-    </glmSubstitutionModelGradient>
+    </gamGpSubstitutionModelGradient>
 
     <report>
     	<glmSubstitutionModelGradient idref="gradient1"/>
     </report>
  -->
-
 
 </beast>

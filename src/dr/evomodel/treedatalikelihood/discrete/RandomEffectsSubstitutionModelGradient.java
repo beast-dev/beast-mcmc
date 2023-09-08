@@ -77,8 +77,8 @@ public class RandomEffectsSubstitutionModelGradient extends AbstractGlmSubstitut
     }
 
     @Override
-    double preProcessNormalization(double[] differentials, double[] generator,
-                                   boolean normalize) {
+    protected double preProcessNormalization(double[] differentials, double[] generator,
+                                             boolean normalize) {
         double total = 0.0;
         if (normalize) {
             for (int i = 0; i < stateCount; ++i) {

@@ -88,7 +88,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         assert (treeTraitProvider != null);
     }
 
-    abstract double preProcessNormalization(double[] differentials, double[] generator, boolean normalize);
+    protected abstract double preProcessNormalization(double[] differentials, double[] generator, boolean normalize);
 
     abstract double processSingleGradientDimension(int dim,
                                                    double[] differentials, double[] generator, double[] pi,

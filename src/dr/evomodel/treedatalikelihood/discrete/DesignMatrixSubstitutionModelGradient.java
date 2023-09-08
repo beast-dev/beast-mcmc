@@ -93,8 +93,8 @@ public class DesignMatrixSubstitutionModelGradient extends AbstractGlmSubstituti
     }
 
     @Override
-    double preProcessNormalization(double[] differentials, double[] generator,
-                                   boolean normalize) {
+    protected double preProcessNormalization(double[] differentials, double[] generator,
+                                             boolean normalize) {
         // TODO Code duplication with RandomEffectsGlmSubstitutionModel
         double total = 0.0;
         if (normalize) {

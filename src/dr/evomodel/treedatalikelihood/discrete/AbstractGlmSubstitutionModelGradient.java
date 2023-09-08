@@ -103,8 +103,8 @@ public abstract class AbstractGlmSubstitutionModelGradient extends AbstractLogAd
         return parameterMap.getParameter();
     }
 
-    double preProcessNormalization(double[] differentials, double[] generator,
-                                   boolean normalize) {
+    protected double preProcessNormalization(double[] differentials, double[] generator,
+                                             boolean normalize) {
         return 0.0;
     }
 

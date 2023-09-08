@@ -31,7 +31,7 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import static dr.inferencexml.distribution.GeneralizedLinearModelParser.*;
-import static dr.inferencexml.glm.GeneralizedLinearModelParser.DEPENDENT_VARIABLES;
+import static dr.inferencexml.glm.ExperimentalGeneralizedLinearModelParser.DEPENDENT_VARIABLES;
 
 /**
  * @author Filippo Monti
@@ -40,6 +40,7 @@ import static dr.inferencexml.glm.GeneralizedLinearModelParser.DEPENDENT_VARIABL
 public class GeneralizedAdditiveGaussianProcessModelParser extends AbstractXMLObjectParser {
 
     public static final String GAM_GP_LIKELIHOOD = "gamGpModel";
+    private static final String REALIZED_FIELD = "realizedField";
 
     public String getParserName() {
         return GAM_GP_LIKELIHOOD;
@@ -47,16 +48,18 @@ public class GeneralizedAdditiveGaussianProcessModelParser extends AbstractXMLOb
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        XMLObject cxo = xo.getChild(DEPENDENT_VARIABLES);
-        Parameter dependentParam = null;
-        if (cxo != null) {
-            dependentParam = (Parameter) cxo.getChild(Parameter.class);
-        }
+//        XMLObject cxo = xo.getChild(DEPENDENT_VARIABLES);
+//        Parameter dependentParam = null;
+//        if (cxo != null) {
+//            dependentParam = (Parameter) cxo.getChild(Parameter.class);
+//        }
+
+//        Parameter realizedField = (Parameter) xo.getElementFirstChild(REALIZED_FIELD);
 
 //        String family = xo.getStringAttribute(FAMILY);
-        LogGaussianProcessModel gp = new LogGaussianProcessModel(dependentParam);
+        LogGaussianProcessModel gp = new LogGaussianProcessModel(null);
 
-        addIndependentParameters(xo, gp, dependentParam);
+        addIndependentParameters(xo, gp, null);
 
         return gp;
     }
@@ -80,63 +83,46 @@ public class GeneralizedAdditiveGaussianProcessModelParser extends AbstractXMLOb
                                          Parameter dependentParam) throws XMLParseException {
         int totalCount = xo.getChildCount();
 
-        for (int i = 0; i < totalCount; i++) {
-            if (xo.getChildName(i).compareTo(INDEPENDENT_VARIABLES) == 0) {
-                XMLObject cxo = (XMLObject) xo.getChild(i);
-                Parameter independentParam = (Parameter) cxo.getChild(Parameter.class);
-                DesignMatrix designMatrix = (DesignMatrix) cxo.getChild(DesignMatrix.class);
-                checkDimensions(independentParam, dependentParam, designMatrix);
-                cxo = cxo.getChild(INDICATOR);
-                Parameter indicator = null;
-                if (cxo != null) {
-                    indicator = (Parameter) cxo.getChild(Parameter.class);
-                    if (indicator.getDimension() <= 1) {
-                        // if a dimension hasn't been set, then set it automatically
-                        indicator.setDimension(independentParam.getDimension());
-                    }
-                    if (indicator.getDimension() != independentParam.getDimension())
-                        throw new XMLParseException("dim(" + independentParam.getId() + ") != dim(" + indicator.getId() + ")");
-                }
+        for (XMLObject cxo : xo.getAllChildren(INDEPENDENT_VARIABLES)) {
+            Parameter field = (Parameter) cxo.getChild(Parameter.class);
+            DesignMatrix designMatrix = (DesignMatrix) cxo.getChild(DesignMatrix.class);
 
-//                if (checkFullRankOfMatrix) {
-//                    checkFullRank(designMatrix);
-//                }
-
-                glm.addIndependentParameter(independentParam, designMatrix, indicator);
+            if (field.getDimension() != designMatrix.getRowDimension()) {
+                throw new XMLParseException(field.getDimension() + " " + designMatrix.getRowDimension());
             }
+
+            glm.addIndependentParameter(field, designMatrix, null);
+
         }
+
+//        for (int i = 0; i < totalCount; i++) {
+//            if (xo.getChildName(i).compareTo(INDEPENDENT_VARIABLES) == 0) {
+//                XMLObject cxo = (XMLObject) xo.getChild(i);
+//                Parameter independentParam = (Parameter) cxo.getChild(Parameter.class);
+//                DesignMatrix designMatrix = (DesignMatrix) cxo.getChild(DesignMatrix.class);
+//                checkDimensions(independentParam, dependentParam, designMatrix);
+//                cxo = cxo.getChild(INDICATOR);
+//                Parameter indicator = null;
+//                if (cxo != null) {
+//                    indicator = (Parameter) cxo.getChild(Parameter.class);
+//                    if (indicator.getDimension() <= 1) {
+//                        // if a dimension hasn't been set, then set it automatically
+//                        indicator.setDimension(independentParam.getDimension());
+//                    }
+//                    if (indicator.getDimension() != independentParam.getDimension())
+//                        throw new XMLParseException("dim(" + independentParam.getId() + ") != dim(" + indicator.getId() + ")");
+//                }
+//
+////                if (checkFullRankOfMatrix) {
+////                    checkFullRank(designMatrix);
+////                }
+//
+//                glm.addIndependentParameter(independentParam, designMatrix, indicator);
+//            }
+//        }
     }
 
-//    private boolean checkFullRankOfMatrix = false;
 
-//    private void checkFullRank(DesignMatrix designMatrix) throws XMLParseException {
-//        int fullRank = designMatrix.getColumnDimension();
-////        System.err.println("designMatrix getColumnDimension = "+fullRank);
-//        SingularValueDecomposition svd = new SingularValueDecomposition(
-//                new DenseDoubleMatrix2D(designMatrix.getParameterAsMatrix()));
-//        int realRank = svd.rank();
-//        if (realRank != fullRank) {
-//            throw new XMLParseException(
-//                "rank(" + designMatrix.getId() + ") = " + realRank +
-//                        ".\nMatrix is not of full rank as colDim(" + designMatrix.getId() + ") = " + fullRank
-//            );
-//        }
-//    }
-
-//    private void checkRandomEffectsDimensions(Parameter randomEffect, Parameter dependentParam)
-//            throws XMLParseException {
-//        if (dependentParam != null) {
-//            if (randomEffect.getDimension() <= 1) {
-//                // if a dimension hasn't been set, then set it automatically
-//                randomEffect.setDimension(dependentParam.getDimension());
-//            }
-//            if (randomEffect.getDimension() != dependentParam.getDimension()) {
-//                throw new XMLParseException(
-//                        "dim(" + dependentParam.getId() + ") != dim(" + randomEffect.getId() + ")"
-//                );
-//            }
-//        }
-//    }
 
     // TODO remove code duplication
     private void checkDimensions(Parameter independentParam, Parameter dependentParam, DesignMatrix designMatrix)
@@ -179,6 +165,8 @@ public class GeneralizedAdditiveGaussianProcessModelParser extends AbstractXMLOb
 //            AttributeRule.newBooleanRule(CHECK_FULL_RANK, true),
             new ElementRule(DEPENDENT_VARIABLES,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+//            new ElementRule(REALIZED_FIELD,
+//                    new XMLSyntaxRule[] { new ElementRule(Parameter.class) } ),
             new ElementRule(INDEPENDENT_VARIABLES,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class, true),

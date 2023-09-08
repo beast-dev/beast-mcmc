@@ -26,25 +26,45 @@
 package dr.inference.distribution;
 
 import dr.evomodel.substmodel.LogAdditiveCtmcRateProvider;
+import dr.inference.model.DesignMatrix;
 import dr.inference.model.Parameter;
 
 /**
  * @author Marc A. Suchard
  */
 
+// TODO this class is not really a LogLinearModel nor GeneralizedLinearModel; need to disassociate.
+// TODO disassocation requires refactoring
 public class LogGaussianProcessModel extends LogLinearModel implements LogAdditiveCtmcRateProvider {
 
-    public LogGaussianProcessModel(Parameter dependentParam) {
+    public LogGaussianProcessModel(Parameter dependentParameter) {
+        super(dependentParameter);
+    }
 
-        super(dependentParam);
+    @Override
+    protected double calculateLogLikelihood() {
+        throw new RuntimeException("Not yet implemented.");
     }
 
     @Override
     public double[] getXBeta() {
-        double[] xBeta = super.getSuperXBeta();
-        for(int i = 0; i < xBeta.length; i++) {
-            xBeta[i] = Math.exp(xBeta[i]);
+
+        final int fieldDim = independentParam.get(0).getDimension();
+
+        double[] rates = new double[fieldDim];
+
+        for (int k = 0; k < numIndependentVariables; ++k) {
+            Parameter field = independentParam.get(k);
+            DesignMatrix X = designMatrix.get(k);
+
+            for (int i = 0; i < fieldDim; ++i) {
+                rates[i] += field.getParameterValue(i);
+            }
         }
-        return xBeta;
+
+        for(int i = 0; i < rates.length; i++) {
+            rates[i] = Math.exp(rates[i]);
+        }
+        return rates;
     }
 }

@@ -29,12 +29,10 @@ import dr.evolution.alignment.PatternList;
 import dr.evomodel.branchmodel.EpochBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
-import dr.evomodel.substmodel.OldGLMSubstitutionModel;
+import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModelRandomEffectClassifier;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
-
-import static dr.evomodel.substmodel.nucleotide.GTR.*;
 
 public class SubstitutionModelRandomEffectClassifierParser extends AbstractXMLObjectParser {
     public static final String NAME = "SubstitutionModelRandomEffectClassifier";
@@ -48,7 +46,7 @@ public class SubstitutionModelRandomEffectClassifierParser extends AbstractXMLOb
 
 //        TreeDataLikelihood likelihood = (TreeDataLikelihood)xo.getChild(TreeDataLikelihood.class);
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-        OldGLMSubstitutionModel glm = (OldGLMSubstitutionModel) xo.getChild(OldGLMSubstitutionModel.class);
+        GlmSubstitutionModel glm = (GlmSubstitutionModel) xo.getChild(GlmSubstitutionModel.class);
 
 //        EpochBranchModel epochs = null;
 //        GammaSiteRateModel siteModel = null;

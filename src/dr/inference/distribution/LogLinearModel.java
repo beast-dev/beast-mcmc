@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  */
-@Deprecated // GLM stuff is now in inference.glm - this is here for backwards compatibility temporarily
+
 public class LogLinearModel extends GeneralizedLinearModel implements LogAdditiveCtmcRateProvider {
 
     public LogLinearModel(Parameter dependentParam) {

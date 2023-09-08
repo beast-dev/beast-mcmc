@@ -29,7 +29,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.substmodel.DifferentialMassProvider;
-import dr.evomodel.substmodel.OldGLMSubstitutionModel;
+import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -52,14 +52,14 @@ public class ArbitrarySubstitutionGeneratorGradient implements GradientWrtParame
     private final TreeDataLikelihood treeDataLikelihood;
     private final TreeTrait treeTraitProvider;
     private final Tree tree;
-    private final OldGLMSubstitutionModel substitutionModel;
+    private final GlmSubstitutionModel substitutionModel;
     private final int stateCount;
 
     public ArbitrarySubstitutionGeneratorGradient(String traitName,
                                                   TreeDataLikelihood treeDataLikelihood,
 //                                                  Parameter parameter,
                                                   BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                  OldGLMSubstitutionModel substitutionModel) {
+                                                  GlmSubstitutionModel substitutionModel) {
 //        this.parameter = parameter;
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();

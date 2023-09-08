@@ -25,7 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.evomodel.substmodel.OldGLMSubstitutionModel;
+import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.distribution.GeneralizedLinearModel;
@@ -41,7 +41,7 @@ public class RandomEffectsSubstitutionModelGradient extends AbstractGlmSubstitut
     public RandomEffectsSubstitutionModelGradient(String traitName,
                                                   TreeDataLikelihood treeDataLikelihood,
                                                   BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                  OldGLMSubstitutionModel substitutionModel) {
+                                                  GlmSubstitutionModel substitutionModel) {
         super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel);
 
         // Count random effects dimension

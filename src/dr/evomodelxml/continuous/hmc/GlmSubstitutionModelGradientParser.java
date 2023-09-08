@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.continuous.hmc;
 
-import dr.evomodel.substmodel.OldGLMSubstitutionModel;
+import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -56,7 +56,7 @@ public class GlmSubstitutionModelGradientParser extends AbstractXMLObjectParser 
 
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-        OldGLMSubstitutionModel substitutionModel = (OldGLMSubstitutionModel) xo.getChild(OldGLMSubstitutionModel.class);
+        GlmSubstitutionModel substitutionModel = (GlmSubstitutionModel) xo.getChild(GlmSubstitutionModel.class);
 
         DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
         if (!(delegate instanceof BeagleDataLikelihoodDelegate)) {
@@ -94,7 +94,7 @@ public class GlmSubstitutionModelGradientParser extends AbstractXMLObjectParser 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TRAIT_NAME, true),
             new ElementRule(TreeDataLikelihood.class),
-            new ElementRule(OldGLMSubstitutionModel.class),
+            new ElementRule(GlmSubstitutionModel.class),
             AttributeRule.newStringRule(EFFECTS, true),
             new ElementRule(MaskedParameter.class, true),
             new ElementRule(DesignMatrix.class, true),

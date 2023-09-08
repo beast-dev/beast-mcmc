@@ -22,7 +22,7 @@ public class SubstitutionModelRandomEffectClassifier extends TreeStatistic imple
     private final double threshold;
 
     private Tree tree;
-    private OldGLMSubstitutionModel glmSubstitutionModel;
+    private GlmSubstitutionModel glmSubstitutionModel;
     private EpochBranchModel epochBranchModel;
     private GammaSiteRateModel siteModel;
     private BranchRateModel branchRates;
@@ -37,7 +37,7 @@ public class SubstitutionModelRandomEffectClassifier extends TreeStatistic imple
 
     public SubstitutionModelRandomEffectClassifier(String name,
                                                    Tree tree,
-                                                   OldGLMSubstitutionModel glmSubstitutionModel,
+                                                   GlmSubstitutionModel glmSubstitutionModel,
                                                    EpochBranchModel epochBranchModel,
                                                    BranchRateModel branchRates,
                                                    GammaSiteRateModel siteModel,
@@ -53,7 +53,7 @@ public class SubstitutionModelRandomEffectClassifier extends TreeStatistic imple
         usingRateVariation = siteModel != null ? true : false;
         usingEpochs = epochBranchModel != null ? true : false;
 
-        if (!(glmSubstitutionModel instanceof OldGLMSubstitutionModel)) {
+        if (!(glmSubstitutionModel instanceof GlmSubstitutionModel)) {
             throw new RuntimeException("SubstitutionModelRandomEffectClassifier only works for GLM substitution models.");
         }
 

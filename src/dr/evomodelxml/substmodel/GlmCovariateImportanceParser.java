@@ -26,7 +26,7 @@
 package dr.evomodelxml.substmodel;
 
 import dr.evomodel.substmodel.GlmCovariateImportance;
-import dr.evomodel.substmodel.OldGLMSubstitutionModel;
+import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.inference.loggers.Loggable;
@@ -51,7 +51,7 @@ public class GlmCovariateImportanceParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
-        OldGLMSubstitutionModel substitutionModel = (OldGLMSubstitutionModel) xo.getChild(OldGLMSubstitutionModel.class);
+        GlmSubstitutionModel substitutionModel = (GlmSubstitutionModel) xo.getChild(GlmSubstitutionModel.class);
 
         return new GlmCovariateImportance(likelihood, substitutionModel);
     }
@@ -71,7 +71,7 @@ public class GlmCovariateImportanceParser extends AbstractXMLObjectParser {
                             new ElementRule(BeagleTreeLikelihood.class),
                             new ElementRule(CompoundLikelihood.class),
                     }),
-            new ElementRule(OldGLMSubstitutionModel.class),
+            new ElementRule(GlmSubstitutionModel.class),
     };
 
     public String getParserDescription() {

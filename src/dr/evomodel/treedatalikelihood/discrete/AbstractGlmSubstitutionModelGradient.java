@@ -30,7 +30,7 @@ import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.EigenDecomposition;
-import dr.evomodel.substmodel.OldGLMSubstitutionModel;
+import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
@@ -65,7 +65,7 @@ public abstract class AbstractGlmSubstitutionModelGradient implements GradientWr
     protected final TreeTrait treeTraitProvider;
     protected final Tree tree;
 
-    protected final OldGLMSubstitutionModel substitutionModel;
+    protected final GlmSubstitutionModel substitutionModel;
     protected final GeneralizedLinearModel glm;
     protected final int stateCount;
 
@@ -77,7 +77,7 @@ public abstract class AbstractGlmSubstitutionModelGradient implements GradientWr
     public AbstractGlmSubstitutionModelGradient(String traitName,
                                                 TreeDataLikelihood treeDataLikelihood,
                                                 BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                OldGLMSubstitutionModel substitutionModel) {
+                                                GlmSubstitutionModel substitutionModel) {
 
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
@@ -107,7 +107,7 @@ public abstract class AbstractGlmSubstitutionModelGradient implements GradientWr
     String getType() { return "fixed"; }
 
     private int determineSubstitutionNumber(BranchModel branchModel,
-                                            OldGLMSubstitutionModel substitutionModel) {
+                                            GlmSubstitutionModel substitutionModel) {
 
         List<SubstitutionModel> substitutionModels = branchModel.getSubstitutionModels();
         for (int i = 0; i < substitutionModels.size(); ++i) {

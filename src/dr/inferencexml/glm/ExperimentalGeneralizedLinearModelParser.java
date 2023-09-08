@@ -31,15 +31,13 @@ import dr.inference.distribution.DensityModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.glm.*;
 import dr.inference.model.DesignMatrix;
-import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.util.Transform;
 import dr.xml.*;
 
 /**
  *
  */
-public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
+public class ExperimentalGeneralizedLinearModelParser extends AbstractXMLObjectParser {
 
     public static final String GLM_LIKELIHOOD = "glmModelNew";
 
@@ -64,12 +62,12 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
         XMLObject cxo = xo.getChild(MODEL);
         String linkFunctionName = cxo.getAttribute(LINK_FUNCTION, "identity");
         DensityModel model = (DensityModel) cxo.getChild(DensityModel.class);
-        GeneralizedLinearModel.LinkFunction linkFunction = GeneralizedLinearModel.LinkFunction.valueOf(linkFunctionName.toUpperCase());
+        ExperimentalGeneralizedLinearModel.LinkFunction linkFunction = ExperimentalGeneralizedLinearModel.LinkFunction.valueOf(linkFunctionName.toUpperCase());
 
         cxo = xo.getChild(DEPENDENT_VARIABLES);
         Parameter dependentParam = (Parameter) cxo.getChild(Parameter.class);
 
-        GeneralizedLinearModel glm = new GeneralizedLinearModel(dependentParam, model, linkFunction);
+        ExperimentalGeneralizedLinearModel glm = new ExperimentalGeneralizedLinearModel(dependentParam, model, linkFunction);
 
         // parse this as parameters in a DistributionModel?
 //        if (glm.requiresScale()) {
@@ -121,7 +119,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
         return glm;
     }
 
-    public void addRandomEffects(XMLObject xo, GeneralizedLinearModel glm,
+    public void addRandomEffects(XMLObject xo, ExperimentalGeneralizedLinearModel glm,
                                  Parameter dependentParam) throws XMLParseException {
         int totalCount = xo.getChildCount();
 
@@ -135,7 +133,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
         }
     }
 
-    public void addIndependentParameters(XMLObject xo, GeneralizedLinearModel glm,
+    public void addIndependentParameters(XMLObject xo, ExperimentalGeneralizedLinearModel glm,
                                          Parameter dependentParam) throws XMLParseException {
         int totalCount = xo.getChildCount();
 //        System.err.println("number of independent parameters = "+totalCount);
@@ -251,6 +249,6 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return GeneralizedLinearModel.class;
+        return ExperimentalGeneralizedLinearModel.class;
     }
 }

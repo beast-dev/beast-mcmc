@@ -1,5 +1,5 @@
 /*
- * OldGLMSubstitutionModelParser.java
+ * GLMSubstitutionModelParser.java
  *
  * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -26,21 +26,20 @@
 package dr.evomodelxml.substmodel;
 
 import dr.evolution.datatype.DataType;
-import dr.evomodel.substmodel.LogAdditiveCtmcRateProvider;
 import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.OldGLMSubstitutionModel;
+import dr.evomodel.substmodel.ExperimentalGlmSubstitutionModel;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evoxml.util.DataTypeUtils;
-import dr.inference.distribution.GeneralizedLinearModel;
+import dr.inference.glm.ExperimentalGeneralizedLinearModel;
 import dr.xml.*;
 
 /**
+ * @author Marc A. Suchard
  */
-@Deprecated // This uses the old (deprecated) GLM stuff and is here for XML compatibility for now
-// Only one of OldGLMSubstitutionModelParser and GLMSubstitutionModelParser should be in the parser list.
-public class OldGLMSubstitutionModelParser extends AbstractXMLObjectParser {
 
-    public static final String GLM_SUBSTITUTION_MODEL = "glmSubstitutionModel";
-    private static final String NORMALIZE = "normalize";
+public class ExperimentalGlmSubstitutionModelParser extends AbstractXMLObjectParser {
+
+    public static final String GLM_SUBSTITUTION_MODEL = "glmSubstitutionModelNew";
 
 
     public String getParserName() {
@@ -55,7 +54,9 @@ public class OldGLMSubstitutionModelParser extends AbstractXMLObjectParser {
 
         int rateCount = (dataType.getStateCount() - 1) * dataType.getStateCount();
 
-        LogAdditiveCtmcRateProvider glm = (LogAdditiveCtmcRateProvider) xo.getChild(LogAdditiveCtmcRateProvider.class);
+        // Should be constructed as a log-linear model
+        ExperimentalGeneralizedLinearModel glm = (ExperimentalGeneralizedLinearModel) xo.getChild(ExperimentalGeneralizedLinearModel.class);
+        // LogLinearModel glm = (LogLinearModel) xo.getChild(GeneralizedLinearModel.class);
 
         int length = glm.getXBeta().length;
 
@@ -63,19 +64,14 @@ public class OldGLMSubstitutionModelParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount) + " dimensions.  However GLM dimension is " + length);
         }
 
-        XMLObject cxo = xo.getChild(dr.oldevomodelxml.substmodel.ComplexSubstitutionModelParser.ROOT_FREQUENCIES);
+        XMLObject cxo = xo.getChild(ComplexSubstitutionModelParser.ROOT_FREQUENCIES);
         FrequencyModel rootFreq = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
         if (dataType != rootFreq.getDataType()) {
             throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its rootFrequencyModel.");
         }
 
-        boolean normalize = xo.getAttribute(NORMALIZE, true);
-
-        OldGLMSubstitutionModel model = new OldGLMSubstitutionModel(xo.getId(), dataType, rootFreq, glm);
-        model.setNormalization(normalize);
-
-        return model;
+        return new ExperimentalGlmSubstitutionModel(xo.getId(), dataType, rootFreq, glm);
     }
 
     //************************************************************************
@@ -87,7 +83,7 @@ public class OldGLMSubstitutionModelParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return OldGLMSubstitutionModel.class;
+        return SubstitutionModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -101,8 +97,7 @@ public class OldGLMSubstitutionModelParser extends AbstractXMLObjectParser {
                     new ElementRule(DataType.class)
             ),
             new ElementRule(ComplexSubstitutionModelParser.ROOT_FREQUENCIES, FrequencyModel.class),
-            new ElementRule(GeneralizedLinearModel.class),
-            AttributeRule.newBooleanRule(NORMALIZE, true),
+            new ElementRule(ExperimentalGeneralizedLinearModel.class),
     };
 
 }

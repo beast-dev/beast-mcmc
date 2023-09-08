@@ -28,14 +28,11 @@ package dr.inference.glm;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.SingularValueDecomposition;
 import dr.inference.distribution.DensityModel;
-import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
-import dr.inferencexml.glm.GeneralizedLinearModelParser;
-import dr.math.MultivariateFunction;
-import dr.math.distributions.Distribution;
+import dr.inferencexml.glm.ExperimentalGeneralizedLinearModelParser;
 import dr.util.Transform;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -48,7 +45,7 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  * @author Andrew Rambaut
  */
-public final class GeneralizedLinearModel extends AbstractModelLikelihood {
+public final class ExperimentalGeneralizedLinearModel extends AbstractModelLikelihood {
 
 
     public enum LinkFunction {
@@ -92,8 +89,8 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
     private double logLikelihood;
     private boolean likelihoodKnown = false;
 
-    public GeneralizedLinearModel(Parameter dependentParameter, DensityModel density, LinkFunction linkFunction) {
-        super(GeneralizedLinearModelParser.GLM_LIKELIHOOD);
+    public ExperimentalGeneralizedLinearModel(Parameter dependentParameter, DensityModel density, LinkFunction linkFunction) {
+        super(ExperimentalGeneralizedLinearModelParser.GLM_LIKELIHOOD);
         this.dependentParameter = dependentParameter;
         this.linkFunction = linkFunction.getTransform();
         this.density = density;

@@ -25,32 +25,9 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
-import dr.evomodel.branchmodel.BranchModel;
-import dr.evomodel.substmodel.OldGLMSubstitutionModel;
-import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
-import dr.inference.distribution.GeneralizedLinearModel;
-import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.loggers.LogColumn;
-import dr.inference.loggers.Loggable;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Parameter;
-import dr.math.matrixAlgebra.WrappedVector;
-import dr.util.Author;
-import dr.util.Citable;
-import dr.util.Citation;
-import dr.xml.Reportable;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -62,7 +39,7 @@ public class FixedEffectSubstitutionModelGradient extends AbstractGlmSubstitutio
     public FixedEffectSubstitutionModelGradient(String traitName,
                                                 TreeDataLikelihood treeDataLikelihood,
                                                 BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                OldGLMSubstitutionModel substitutionModel) {
+                                                GlmSubstitutionModel substitutionModel) {
         super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel);
     }
 }

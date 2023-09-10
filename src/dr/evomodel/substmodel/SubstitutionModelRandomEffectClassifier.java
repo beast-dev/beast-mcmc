@@ -27,6 +27,10 @@ public class SubstitutionModelRandomEffectClassifier extends TreeStatistic imple
     private GammaSiteRateModel siteModel;
     private BranchRateModel branchRates;
 
+    private Parameter proxyRates;
+    private ComplexSubstitutionModel proxy;
+    private MarkovJumpsSubstitutionModel markovJumps;
+
     private final boolean usingRateVariation;
     private final boolean usingEpochs;
     private boolean[] epochUsesTargetModel;
@@ -93,6 +97,11 @@ public class SubstitutionModelRandomEffectClassifier extends TreeStatistic imple
                 idx++;
             }
         }
+
+        this.proxyRates = new Parameter.Default(dim);
+        this.proxy = new ComplexSubstitutionModel("internalGlmProxyForSubstitutionModelRandomEffectClassifier",
+                glmSubstitutionModel.getDataType(),glmSubstitutionModel.getFrequencyModel(),proxyRates);
+        this.markovJumps = new MarkovJumpsSubstitutionModel(proxy, MarkovJumpsType.COUNTS);
     }
 
     @Override
@@ -110,7 +119,7 @@ public class SubstitutionModelRandomEffectClassifier extends TreeStatistic imple
         return dim;
     }
 
-    private ComplexSubstitutionModel makeProxyModel(int index, boolean includeRandomEffect) {
+    private void makeProxyModel(int index, boolean includeRandomEffect) {
         double[] relativeRates = new double[dim];
         glmSubstitutionModel.setupRelativeRates(relativeRates);
 
@@ -120,13 +129,12 @@ public class SubstitutionModelRandomEffectClassifier extends TreeStatistic imple
             relativeRates[index] /= Math.exp(copiedParameterValues[index]);
         }
 
-        Parameter relativeRateDummyParameter = new Parameter.Default(dim);
         for (int i = 0; i < dim; i++) {
-            relativeRateDummyParameter.setParameterValueQuietly(i,relativeRates[i]);
+            proxyRates.setParameterValue(i,relativeRates[i]);
         }
 
-        return new ComplexSubstitutionModel("internalGlmProxyForSubstitutionModelRandomEffectClassifier",
-                glmSubstitutionModel.getDataType(),glmSubstitutionModel.getFrequencyModel(),relativeRateDummyParameter);
+//        return new ComplexSubstitutionModel("internalGlmProxyForSubstitutionModelRandomEffectClassifier",
+//                glmSubstitutionModel.getDataType(),glmSubstitutionModel.getFrequencyModel(),relativeRateDummyParameter);
 
     }
 
@@ -190,8 +198,7 @@ public class SubstitutionModelRandomEffectClassifier extends TreeStatistic imple
 //    }
     
     private double getCountForRateCategory(int index, double time, boolean includeRandomEffect, boolean countAll) {
-        ComplexSubstitutionModel proxy = makeProxyModel(index, includeRandomEffect);
-        MarkovJumpsSubstitutionModel markovJumps = new MarkovJumpsSubstitutionModel(proxy, MarkovJumpsType.COUNTS);
+        makeProxyModel(index, includeRandomEffect);
 
         double[] register = new double[nStates * nStates];
         double[] jointCounts = new double[nStates * nStates];

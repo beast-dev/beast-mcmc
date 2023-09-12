@@ -37,10 +37,13 @@ import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
+import dr.inference.model.ModelListener;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Citable;
 import dr.xml.Reportable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -48,15 +51,18 @@ import java.util.List;
  */
 
 public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
-        GradientWrtParameterProvider, Reportable, Loggable, Citable {
+        GradientWrtParameterProvider, ModelListener, Reportable, Loggable, Citable {
 
     protected final TreeDataLikelihood treeDataLikelihood;
     protected final TreeTrait treeTraitProvider;
     protected final Tree tree;
+    protected final BranchModel branchModel;
 
     protected final ComplexSubstitutionModel substitutionModel;
     protected final int stateCount;
     protected final int whichSubstitutionModel;
+    protected final int substitutionModelCount;
+    protected int[] crossProductAccumulationMap;
 
     private static final boolean USE_AFFINE_CORRECTION = false;
 
@@ -67,10 +73,17 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
 
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
+        this.branchModel = likelihoodDelegate.getBranchModel();
         this.substitutionModel = substitutionModel;
         this.stateCount = substitutionModel.getDataType().getStateCount();
         this.whichSubstitutionModel = determineSubstitutionNumber(
                 likelihoodDelegate.getBranchModel(), substitutionModel);
+        this.substitutionModelCount = determineSubstitutionModelCount(likelihoodDelegate.getBranchModel());
+
+        this.crossProductAccumulationMap = new int[0];
+        if (substitutionModelCount > 1) {
+            updateCrossProductAccumulationMap();
+        }
 
         String name = SubstitutionModelCrossProductDelegate.getName(traitName);
 
@@ -105,11 +118,12 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         double[] crossProducts = (double[]) treeTraitProvider.getTrait(tree, null);
         double[] generator = new double[crossProducts.length];
 
-        if (whichSubstitutionModel > 0) {
-            final int length = stateCount * stateCount;
-            System.arraycopy(
-                    crossProducts, whichSubstitutionModel * length,
-                    crossProducts, 0, length);
+        if (substitutionModelCount > 0) {
+//            final int length = stateCount * stateCount;
+//            System.arraycopy(
+//                    crossProducts, whichSubstitutionModel * length,
+//                    crossProducts, 0, length);
+            crossProducts = accumulateAcrossSubstitutionModelInstances(crossProducts);
         }
 
         substitutionModel.getInfinitesimalMatrix(generator);
@@ -225,6 +239,41 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         throw new IllegalArgumentException("Unknown substitution model");
     }
 
+    private int determineSubstitutionModelCount(BranchModel branchModel) {
+        List<SubstitutionModel> substitutionModels = branchModel.getSubstitutionModels();
+        return substitutionModels.size();
+    }
+
+    // Should maybe be void and just update crossProducts?
+    private double[] accumulateAcrossSubstitutionModelInstances(double[] crossProducts) {
+        double[] accumulated = new double[crossProducts.length];
+        final int length = stateCount * stateCount;
+
+        for (int i : crossProductAccumulationMap) {
+            for (int j = 0; j < length; j++) {
+                accumulated[j] += crossProducts[i * length + j];
+            }
+        }
+
+        return accumulated;
+    }
+
+    private void updateCrossProductAccumulationMap() {
+        System.err.println("Updating crossProductAccumulationMap");
+        List<Integer> matchingModels = new ArrayList<>();
+        List<SubstitutionModel> substitutionModels = branchModel.getSubstitutionModels();
+        for (int i = 0; i < substitutionModels.size(); ++i) {
+            if (substitutionModel == substitutionModels.get(i)) {
+                matchingModels.add(i);
+            }
+        }
+
+        crossProductAccumulationMap = new int[matchingModels.size()];
+        for (int i = 0; i < matchingModels.size(); ++i) {
+            crossProductAccumulationMap[i] = matchingModels.get(i);
+        }
+    }
+
     @Override
     public Likelihood getLikelihood() {
         return treeDataLikelihood;
@@ -264,6 +313,21 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
 
     Double getReportTolerance() {
         return null;
+    }
+
+    // This has not been rigorously tested for epochs that change structure
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if (model == branchModel) {
+            updateCrossProductAccumulationMap();
+        }
+    }
+
+    public void modelChangedEvent(Model model, Object object, int index) {
+
+    }
+
+    public void modelRestored(Model model) {
+
     }
 
     protected static final boolean COUNT_TOTAL_OPERATIONS = false;

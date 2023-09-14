@@ -30,6 +30,7 @@ import dr.inference.multidimensionalscaling.*;
 import dr.math.LogTricks;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -58,7 +59,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
 
     private static final boolean CHECK_INFINITE = false;
     private static final boolean USE_THRESHOLDS = true;
-    private static final boolean USE_INTERVALS = false;
+    private static final boolean USE_INTERVALS = true;
 
     public final static String ANTIGENIC_LIKELIHOOD = "newAntigenicLikelihood";
 
@@ -114,6 +115,10 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         double[] maxColumnTitres = getMaxTitres(measurements, serumNames);
 
         this.tipTraitsParameter = tipTraitsParameter;
+        if (tipTraitsParameter.getBounds() == null) {
+            tipTraitsParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY,
+                    Double.NEGATIVE_INFINITY, tipTraitsParameter.getDimension()));
+        }
         addVariable(tipTraitsParameter);
         this.tipIndices = setupTipIndices(this.tipTraitsParameter, virusNames);
         this.virusIndices = setupVirusIndices(tipIndices);
@@ -154,12 +159,12 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
 
         this.virusOffsetsParameter = virusOffsetsParameter;
         if (virusOffsetsParameter != null) {
-            setupOffsetsParameter(virusOffsetsParameter, virusNames, virusDates, info.earliestDate);
+            setupOffsetsParameter(virusOffsetsParameter, virusNames, virusDates, info.earliestDate, true);
         }
 
         this.serumOffsetsParameter = serumOffsetsParameter;
         if (serumOffsetsParameter != null) {
-            setupOffsetsParameter(serumOffsetsParameter, serumNames, serumDates, info.earliestDate);
+            setupOffsetsParameter(serumOffsetsParameter, serumNames, serumDates, info.earliestDate, false);
         }
 
         this.serumPotenciesParameter = setupSerumPotencies(serumPotenciesParameter, maxColumnTitres);
@@ -356,8 +361,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     private boolean savedObservationsKnown;
     private boolean savedPrecisionKnown;
 
-    private double computeLogLikelihoodMds() {
-
+    public void updateParametersOnDevice() {
         if (!precisionKnown) {
             transferPrecision();
             precisionKnown = true;
@@ -372,7 +376,11 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
             transferObservations();
             observationsKnown = true;
         }
+    }
 
+    private double computeLogLikelihoodMds() {
+
+        updateParametersOnDevice();
         return mdsCore.calculateLogLikelihood();
     }
 
@@ -410,6 +418,9 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
 
     private void transferLocations() {
 
+//        System.err.println(new WrappedVector.Raw(virusSamplingParameter.getParameterValues()));
+//        System.err.println(new WrappedVector.Raw(tipTraitsParameter.getParameterValues()));
+
         double[] locations = new double[(numViruses + numSera) * mdsDimension];
 
         int offset = layout.getVirusLocationOffset();
@@ -426,6 +437,10 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
 
             offset += mdsDimension;
         }
+
+//        double[] debug = new double[numViruses * mdsDimension];
+//        System.arraycopy(locations, layout.getVirusLocationOffset(), debug, 0, numViruses * mdsDimension);
+//        System.err.println(new WrappedVector.Raw(debug));
 
         offset = layout.getSerumLocationOffset();
         for (int i = 0; i < numSera; ++i) {
@@ -652,7 +667,8 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         addVariable(locationsParameter);
     }
 
-    private void setupOffsetsParameter(Parameter offsetsParameter, List<String> strainNames, List<Double> strainDates, double earliest) {
+    private void setupOffsetsParameter(Parameter offsetsParameter, List<String> strainNames,
+                                       List<Double> strainDates, double earliest, boolean reIndex) {
         offsetsParameter.setDimension(strainNames.size());
         String[] labelArray = new String[strainNames.size()];
         strainNames.toArray(labelArray);
@@ -662,7 +678,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
             if (offset == null) {
                 throw new IllegalArgumentException("Date missing for strain: " + strainNames.get(i));
             }
-            offsetsParameter.setParameterValue(i, offset);
+            offsetsParameter.setParameterValue(reIndex ? tipIndices[i] : i, offset);
         }
         addVariable(offsetsParameter);
     }
@@ -720,11 +736,11 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         for (int i = 0; i < tipTraitsParameter.getParameterCount(); ++i) {
             double offset = 0.0;
             if (virusOffsetsParameter != null) {
-                offset = drift * virusOffsetsParameter.getParameterValue(i);
+                offset = drift * virusOffsetsParameter.getParameterValue(tipIndices[i]);
             }
-            double r = MathUtils.nextGaussian() + offset;
-            virusSamplingParameter.getParameter(i).setParameterValue(0, r); // TODO Remove
-            tipTraitsParameter.getParameter(tipIndices[i]).setParameterValue(0, r);
+            double r = MathUtils.nextGaussian();
+            virusSamplingParameter.getParameter(i).setParameterValue(0, r + offset); // TODO Remove
+            tipTraitsParameter.getParameter(tipIndices[i]).setParameterValue(0, r + offset);
             if (mdsDimension > 1) {
                 for (int j = 1; j < mdsDimension; j++) {
                     r = MathUtils.nextGaussian();
@@ -814,10 +830,10 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
             observationsKnown = false;
             throw new IllegalArgumentException("Not yet implemented");
         } else {
-
-
+            throw new IllegalArgumentException("Not yet implemented");
         }
 
+        fireModelChanged(variable, index);
         likelihoodKnown = false;
     }
 
@@ -901,16 +917,6 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
                     } break;
                     case POINT: {
                         logLikelihoods[i] = computeMeasurementLikelihood(measurement.log2Titre, expectation, sd);
-                        double x = (logLikelihoods[i] -  Math.log(1.0 / (Math.sqrt(2.0 * Math.PI) * 1.0))) * 2;
-                        double inc = Math.pow(measurement.log2Titre - expectation, 2);
-                        SSE += inc;
-//                        System.err.println(tipIndices[measurement.virus] + " " +
-//                                measurement.serum + " " +
-//                                measurement.log2Titre + " " +
-//                                distance + " " +
-//                                expectation + " " +
-//                                x + " " +
-//                                inc);
                     } break;
                     case THRESHOLD: {
                     	if(measurement.isLowerThreshold){

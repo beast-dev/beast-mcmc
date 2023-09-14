@@ -12,7 +12,8 @@ import java.util.List;
  * @author Philippe Lemey
  */
 
-public class AntigenicLikelihoodGradient extends AbstractModel implements GradientWrtParameterProvider, Reportable {
+public class AntigenicLikelihoodGradient // extends AbstractModel
+        implements ModelListener, GradientWrtParameterProvider, Reportable {
 
     private final NewAntigenicLikelihood likelihood;
     private final MultiDimensionalScalingCore mdsCore;
@@ -25,19 +26,13 @@ public class AntigenicLikelihoodGradient extends AbstractModel implements Gradie
     private final Parameter parameter;
 
     private boolean locationGradientKnown;
-    private boolean savedLocationGradientKnown;
+    private boolean observationGradientKnown;
 
     private double[] locationGradient;
-    private double[] savedLocationGradient;
-
-    private boolean observationGradientKnown;
-    private boolean savedObservationGradientKnown;
-
     private double[] observationGradient;
-    private double[] savedObservationGradient;
 
-    public AntigenicLikelihoodGradient(NewAntigenicLikelihood likelihood, List<AntigenicGradientWrtParameter> wrtList) {
-        super("AntigenicLikelihoodGradient");
+    public AntigenicLikelihoodGradient(NewAntigenicLikelihood likelihood,
+                                       List<AntigenicGradientWrtParameter> wrtList) {
         this.likelihood = likelihood;
         this.mdsCore = likelihood.getCore();
         this.wrtList = wrtList;
@@ -46,7 +41,8 @@ public class AntigenicLikelihoodGradient extends AbstractModel implements Gradie
         this.numSera = likelihood.getNumberOfSera();
         this.mdsDim = likelihood.getMdsDimension();
 
-        addModel(likelihood);
+        likelihood.addModelListener(this);
+        likelihood.addModelRestoreListener(this);
 
         if (wrtList.size() == 1) {
             this.parameter = wrtList.get(0).getParameter();
@@ -59,6 +55,23 @@ public class AntigenicLikelihoodGradient extends AbstractModel implements Gradie
         }
 
         locationGradientKnown = false;
+        observationGradientKnown = false;
+    }
+
+    @Override
+    public void modelChangedEvent(Model model, Object object, int index) {
+        if (model == likelihood) {
+            locationGradientKnown = false;
+            observationGradientKnown = false;
+        } else {
+            throw new IllegalArgumentException("Unknown model");
+        }
+    }
+
+    @Override
+    public void modelRestored(Model model) {
+        locationGradientKnown = false;
+        observationGradientKnown = false;
     }
 
     @Override
@@ -73,6 +86,8 @@ public class AntigenicLikelihoodGradient extends AbstractModel implements Gradie
 
     @Override
     public double[] getGradientLogDensity() {
+
+        likelihood.updateParametersOnDevice();
 
         if (!locationGradientKnown && requiresLocationGradient()) {
             getLocationGradients();
@@ -144,64 +159,6 @@ public class AntigenicLikelihoodGradient extends AbstractModel implements Gradie
         }
 
         mdsCore.getObservationGradient(observationGradient);
-    }
-
-    @Override
-    protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == likelihood) {
-            locationGradientKnown = false;
-            observationGradientKnown = false;
-        } else {
-            throw new IllegalArgumentException("Unknown model");
-        }
-    }
-
-    @Override
-    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        // Do nothing
-    }
-
-    @Override
-    protected void storeState() {
-        savedLocationGradientKnown = locationGradientKnown;
-        savedObservationGradientKnown = observationGradientKnown;
-
-        if (locationGradientKnown) {
-            if (savedLocationGradient == null) {
-                savedLocationGradient = new double[locationGradient.length];
-            }
-            System.arraycopy(locationGradient, 0, savedLocationGradient, 0, locationGradient.length);
-        }
-
-        if (observationGradientKnown) {
-            if (savedObservationGradient == null) {
-                savedObservationGradient = new double[observationGradient.length];
-            }
-            System.arraycopy(observationGradient, 0, savedObservationGradient, 0, observationGradient.length);
-        }
-    }
-
-    @Override
-    protected void restoreState() {
-        locationGradientKnown = savedLocationGradientKnown;
-        observationGradientKnown = savedObservationGradientKnown;
-
-        if (locationGradientKnown) {
-            double[] swap = locationGradient;
-            locationGradient = savedLocationGradient;
-            savedLocationGradient = swap;
-        }
-
-        if (observationGradientKnown) {
-            double[] swap = observationGradient;
-            observationGradient = savedObservationGradient;
-            savedObservationGradient = swap;
-        }
-    }
-
-    @Override
-    protected void acceptState() {
-        // Do nothing
     }
 
     @Override

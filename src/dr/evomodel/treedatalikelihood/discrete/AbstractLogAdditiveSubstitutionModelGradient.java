@@ -249,6 +249,8 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         double[] accumulated = new double[crossProducts.length];
         final int length = stateCount * stateCount;
 
+        // TODO first set of entries should be a copy (instead of accumulate)
+
         for (int i : crossProductAccumulationMap) {
             for (int j = 0; j < length; j++) {
                 accumulated[j] += crossProducts[i * length + j];

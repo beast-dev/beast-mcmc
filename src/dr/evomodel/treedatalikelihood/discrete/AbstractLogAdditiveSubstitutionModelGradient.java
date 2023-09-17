@@ -118,7 +118,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         double[] crossProducts = (double[]) treeTraitProvider.getTrait(tree, null);
         double[] generator = new double[crossProducts.length];
 
-        if (substitutionModelCount > 0) {
+        if (substitutionModelCount > 1) {
 //            final int length = stateCount * stateCount;
 //            System.arraycopy(
 //                    crossProducts, whichSubstitutionModel * length,

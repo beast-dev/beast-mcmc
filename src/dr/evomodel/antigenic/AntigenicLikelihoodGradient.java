@@ -12,7 +12,7 @@ import java.util.List;
  * @author Philippe Lemey
  */
 
-public class AntigenicLikelihoodGradient // extends AbstractModel
+public class AntigenicLikelihoodGradient
         implements ModelListener, GradientWrtParameterProvider, Reportable {
 
     private final NewAntigenicLikelihood likelihood;

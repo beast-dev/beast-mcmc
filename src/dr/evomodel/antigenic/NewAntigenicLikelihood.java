@@ -30,7 +30,6 @@ import dr.inference.multidimensionalscaling.*;
 import dr.math.LogTricks;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
-import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -192,12 +191,12 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
 
         layout.sort(measurements, tipIndices);
 
-        virusLocationChanged = new boolean[this.virusSamplingParameter.getParameterCount()];
-        serumLocationChanged = new boolean[this.serumLocationsParameter.getParameterCount()];
-        virusEffectChanged = new boolean[virusNames.size()];
-        serumEffectChanged = new boolean[serumNames.size()];
-        logLikelihoods = new double[measurements.size()];
-        storedLogLikelihoods = new double[measurements.size()];
+//        virusLocationChanged = new boolean[this.virusSamplingParameter.getParameterCount()];
+//        serumLocationChanged = new boolean[this.serumLocationsParameter.getParameterCount()];
+//        virusEffectChanged = new boolean[virusNames.size()];
+//        serumEffectChanged = new boolean[serumNames.size()];
+//        logLikelihoods = new double[measurements.size()];
+//        storedLogLikelihoods = new double[measurements.size()];
 
         setupInitialLocations(driftInitialLocations);
 
@@ -357,6 +356,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     private boolean precisionKnown;
 
     private boolean savedLikelihoodKnown;
+    private double savedLogLikelihood;
     private boolean savedLocationsKnown;
     private boolean savedObservationsKnown;
     private boolean savedPrecisionKnown;
@@ -364,23 +364,24 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     public void updateParametersOnDevice() {
         if (!precisionKnown) {
             transferPrecision();
-            precisionKnown = true;
+//            precisionKnown = true;
         }
 
         if (!locationsKnown) {
             transferLocations();
-            locationsKnown = true;
+//            locationsKnown = true;
         }
 
         if (!observationsKnown) {
             transferObservations();
-            observationsKnown = true;
+//            observationsKnown = true;
         }
     }
 
     private double computeLogLikelihoodMds() {
 
         updateParametersOnDevice();
+        mdsCore.makeDirty();
         return mdsCore.calculateLogLikelihood();
     }
 
@@ -774,7 +775,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         if (variable == virusSamplingParameter) { // TODO Remove
             if (index != -1) {
                 int loc = index / mdsDimension;
-                virusLocationChanged[loc] = true;
+//                virusLocationChanged[loc] = true;
                 if (tipTraitsParameter != null && tipIndices[loc] != -1) {
                     Parameter location = virusSamplingParameter.getParameter(loc);
                     Parameter tip = tipTraitsParameter.getParameter(tipIndices[loc]);
@@ -782,7 +783,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
                     tip.setParameterValue(dim, location.getParameterValue(dim));
                 }
             } else {
-                Arrays.fill(virusLocationChanged, true);
+//                Arrays.fill(virusLocationChanged, true);
                 if (tipTraitsParameter != null) {
                     for (int pindex = 0; pindex < virusSamplingParameter.getParameterCount(); ++pindex) {
                         Parameter location = virusSamplingParameter.getParameter(pindex);
@@ -801,32 +802,32 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
             locationsKnown = false;
         } else if (variable == serumLocationsParameter) {
             int loc = index / mdsDimension;
-            serumLocationChanged[loc] = true;
+//            serumLocationChanged[loc] = true;
             locationsKnown = false;
         } else if (variable == mdsPrecisionParameter) {
-            setLocationChangedFlags(true);
+//            setLocationChangedFlags(true);
             precisionKnown = false;
         } else if (variable == locationDriftParameter) {
-            setLocationChangedFlags(true);
+//            setLocationChangedFlags(true);
             locationsKnown = false;
         } else if (variable == virusDriftParameter) {
-            setLocationChangedFlags(true);
+//            setLocationChangedFlags(true);
             locationsKnown = false;
             throw new IllegalArgumentException("Not yet implemented");
         } else if (variable == serumDriftParameter) {
-            setLocationChangedFlags(true);
+//            setLocationChangedFlags(true);
             locationsKnown = false;
             throw new IllegalArgumentException("Not yet implemented");
         } else if (variable == serumPotenciesParameter) {
-            serumEffectChanged[index] = true;
+//            serumEffectChanged[index] = true;
             observationsKnown = false;
             throw new IllegalArgumentException("Not yet implemented");
         } else if (variable == serumBreadthsParameter) {
-            serumEffectChanged[index] = true;
+//            serumEffectChanged[index] = true;
             observationsKnown = false;
             throw new IllegalArgumentException("Not yet implemented");
         } else if (variable == virusAviditiesParameter) {
-            virusEffectChanged[index] = true;
+//            virusEffectChanged[index] = true;
             observationsKnown = false;
             throw new IllegalArgumentException("Not yet implemented");
         } else {
@@ -839,12 +840,10 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
 
     @Override
     protected void storeState() {
-        if (!NEW) {
-            System.arraycopy(logLikelihoods, 0, storedLogLikelihoods, 0, logLikelihoods.length);
-        }
 
         mdsCore.storeState();
 
+        savedLogLikelihood = logLikelihood;
         savedLikelihoodKnown = likelihoodKnown;
         savedLocationsKnown = locationsKnown;
         savedObservationsKnown = observationsKnown;
@@ -853,16 +852,10 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
 
     @Override
     protected void restoreState() {
-        if (!NEW) {
-            double[] tmp = logLikelihoods;
-            logLikelihoods = storedLogLikelihoods;
-            storedLogLikelihoods = tmp;
-
-            likelihoodKnown = false;
-        }
 
         mdsCore.restoreState();
 
+        logLikelihood = savedLogLikelihood;
         likelihoodKnown = savedLikelihoodKnown;
         locationsKnown = savedLocationsKnown;
         observationsKnown = savedObservationsKnown;
@@ -877,15 +870,9 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         return this;
     }
 
-    private static final boolean NEW = true;
-
     public double getLogLikelihood() {
         if (!likelihoodKnown) {
-            if (NEW) {
-                logLikelihood = computeLogLikelihoodMds();
-            } else {
-                logLikelihood = computeLogLikelihood();
-            }
+            logLikelihood = computeLogLikelihoodMds();
             likelihoodKnown = true;
         }
 
@@ -893,76 +880,76 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     }
 
     // This function can be overwritten to implement other sampling densities, i.e. discrete ranks
-    private double computeLogLikelihood() {
-
-        double precision = mdsPrecisionParameter.getParameterValue(0);
-        double sd = 1.0 / Math.sqrt(precision);
-
-        logLikelihood = 0.0;
-        int i = 0;
-
-        double SSE = 0.0;
-        for (Measurement measurement : measurements) {
-
-            if (virusLocationChanged[measurement.virus] || serumLocationChanged[measurement.serum] || virusEffectChanged[measurement.virus] || serumEffectChanged[measurement.serum]) {
-
-                double distance = computeDistance(measurement.virus, measurement.serum);
-                double expectation = calculateBaseline(measurement.virus, measurement.serum) - distance;
-
-                switch (measurement.type) {
-                    case INTERVAL: {
-                        double minTitre = measurement.log2Titre;
-                        double maxTitre = measurement.log2Titre + intervalWidth;
-                        logLikelihoods[i] = computeMeasurementIntervalLikelihood(minTitre, maxTitre, expectation, sd);
-                    } break;
-                    case POINT: {
-                        logLikelihoods[i] = computeMeasurementLikelihood(measurement.log2Titre, expectation, sd);
-                    } break;
-                    case THRESHOLD: {
-                    	if(measurement.isLowerThreshold){
-                    		logLikelihoods[i] = computeMeasurementThresholdLikelihood(measurement.log2Titre, expectation, sd);
-                    	}
-                    	else{
-                    		logLikelihoods[i] = computeMeasurementUpperThresholdLikelihood(measurement.log2Titre, expectation, sd);                  		
-                    	}
-                    } break;
-                    case MISSING:
-                        break;
-                }
-            }
-            logLikelihood += logLikelihoods[i];
-            i++;
-        }
-
-        likelihoodKnown = true;
-
-        setLocationChangedFlags(false);
-        setSerumEffectChangedFlags(false);
-        setVirusEffectChangedFlags(false);
-
-        return logLikelihood;
-    }
-
-    private void setLocationChangedFlags(boolean flag) {
-        for (int i = 0; i < virusLocationChanged.length; i++) {
-            virusLocationChanged[i] = flag;
-        }
-        for (int i = 0; i < serumLocationChanged.length; i++) {
-            serumLocationChanged[i] = flag;
-        }
-    }
-
-    private void setSerumEffectChangedFlags(boolean flag) {
-        for (int i = 0; i < serumEffectChanged.length; i++) {
-            serumEffectChanged[i] = flag;
-        }
-    }
-
-    private void setVirusEffectChangedFlags(boolean flag) {
-        for (int i = 0; i < virusEffectChanged.length; i++) {
-            virusEffectChanged[i] = flag;
-        }
-    }
+//    private double computeLogLikelihood() {
+//
+//        double precision = mdsPrecisionParameter.getParameterValue(0);
+//        double sd = 1.0 / Math.sqrt(precision);
+//
+//        logLikelihood = 0.0;
+//        int i = 0;
+//
+//        double SSE = 0.0;
+//        for (Measurement measurement : measurements) {
+//
+//            if (virusLocationChanged[measurement.virus] || serumLocationChanged[measurement.serum] || virusEffectChanged[measurement.virus] || serumEffectChanged[measurement.serum]) {
+//
+//                double distance = computeDistance(measurement.virus, measurement.serum);
+//                double expectation = calculateBaseline(measurement.virus, measurement.serum) - distance;
+//
+//                switch (measurement.type) {
+//                    case INTERVAL: {
+//                        double minTitre = measurement.log2Titre;
+//                        double maxTitre = measurement.log2Titre + intervalWidth;
+//                        logLikelihoods[i] = computeMeasurementIntervalLikelihood(minTitre, maxTitre, expectation, sd);
+//                    } break;
+//                    case POINT: {
+//                        logLikelihoods[i] = computeMeasurementLikelihood(measurement.log2Titre, expectation, sd);
+//                    } break;
+//                    case THRESHOLD: {
+//                    	if(measurement.isLowerThreshold){
+//                    		logLikelihoods[i] = computeMeasurementThresholdLikelihood(measurement.log2Titre, expectation, sd);
+//                    	}
+//                    	else{
+//                    		logLikelihoods[i] = computeMeasurementUpperThresholdLikelihood(measurement.log2Titre, expectation, sd);
+//                    	}
+//                    } break;
+//                    case MISSING:
+//                        break;
+//                }
+//            }
+//            logLikelihood += logLikelihoods[i];
+//            i++;
+//        }
+//
+//        likelihoodKnown = true;
+//
+//        setLocationChangedFlags(false);
+//        setSerumEffectChangedFlags(false);
+//        setVirusEffectChangedFlags(false);
+//
+//        return logLikelihood;
+//    }
+//
+//    private void setLocationChangedFlags(boolean flag) {
+//        for (int i = 0; i < virusLocationChanged.length; i++) {
+//            virusLocationChanged[i] = flag;
+//        }
+//        for (int i = 0; i < serumLocationChanged.length; i++) {
+//            serumLocationChanged[i] = flag;
+//        }
+//    }
+//
+//    private void setSerumEffectChangedFlags(boolean flag) {
+//        for (int i = 0; i < serumEffectChanged.length; i++) {
+//            serumEffectChanged[i] = flag;
+//        }
+//    }
+//
+//    private void setVirusEffectChangedFlags(boolean flag) {
+//        for (int i = 0; i < virusEffectChanged.length; i++) {
+//            virusEffectChanged[i] = flag;
+//        }
+//    }
 
     // offset virus and serum location when computing
     protected double computeDistance(int virus, int serum) {
@@ -1076,13 +1063,13 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
 
     public void makeDirty() {
 
+        mdsCore.makeDirty();
+
         locationsKnown = false;
         observationsKnown = false;
         precisionKnown = false;
         internalGradientKnown = false;
-
         likelihoodKnown = false;
-        setLocationChangedFlags(true);
     }
 
     public AntigenicGradientWrtParameter wrtFactory(Parameter parameter) {
@@ -1153,12 +1140,12 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     private double logLikelihood = 0.0;
     private boolean likelihoodKnown = false;
 
-    private final boolean[] virusLocationChanged;
-    private final boolean[] serumLocationChanged;
-    private final boolean[] serumEffectChanged;
-    private final boolean[] virusEffectChanged;
-    private double[] logLikelihoods;
-    private double[] storedLogLikelihoods;
+//    private final boolean[] virusLocationChanged;
+//    private final boolean[] serumLocationChanged;
+//    private final boolean[] serumEffectChanged;
+//    private final boolean[] virusEffectChanged;
+//    private double[] logLikelihoods;
+//    private double[] storedLogLikelihoods;
 
     @Override
     public Citation.Category getCategory() {

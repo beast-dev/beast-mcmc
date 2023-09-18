@@ -14,7 +14,6 @@ import dr.xml.Reportable;
 
 import java.util.List;
 
-@SuppressWarnings("deprecation")
 public class SubstitutionModelRandomEffectClassifier extends TreeStatistic implements Reportable {
     private final int dim;
     private final int nStates;

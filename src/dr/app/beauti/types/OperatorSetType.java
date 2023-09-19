@@ -30,10 +30,10 @@ package dr.app.beauti.types;
  */
 public enum OperatorSetType {
 
-    DEFAULT("classic operator mix"),
+    DEFAULT("new tree operator mix"),
     FIXED_TREE_TOPOLOGY("fixed tree topology"),
     FIXED_TREE("fixed tree"),
-    NEW_TREE_MIX("new tree operator mix"),
+    CLASSIC("classic tree operator mix"),
     ADAPTIVE_MULTIVARIATE("adaptive multivariate"),
     CUSTOM("custom operator mix"),
     HMC("Hamiltonian Monte Carlo");

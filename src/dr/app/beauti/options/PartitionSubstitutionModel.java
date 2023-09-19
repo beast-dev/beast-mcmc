@@ -74,6 +74,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private boolean gammaHetero = false;
     private int gammaCategories = 4;
     private boolean invarHetero = false;
+    private boolean equalWeights = false;
     private String codonHeteroPattern = null;
     private boolean unlinkedSubstitutionModel = true;
     private boolean unlinkedHeterogeneityModel = true;
@@ -142,6 +143,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         frequencyPolicy = source.frequencyPolicy;
         gammaHetero = source.gammaHetero;
         gammaCategories = source.gammaCategories;
+        equalWeights = source.equalWeights;
         invarHetero = source.invarHetero;
         codonHeteroPattern = source.codonHeteroPattern;
         unlinkedSubstitutionModel = source.unlinkedSubstitutionModel;
@@ -1158,6 +1160,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         this.invarHetero = invarHetero;
     }
 
+    public boolean isGammaHeteroEqualWeights() {
+        return equalWeights;
+    }
+
+    public void setGammaHeteroEqualWeights(boolean equalWeights) {
+        this.equalWeights = equalWeights;
+    }
+
     public String getCodonHeteroPattern() {
         return codonHeteroPattern;
     }
@@ -1282,6 +1292,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         frequencyPolicy = source.frequencyPolicy;
         gammaHetero = source.gammaHetero;
         gammaCategories = source.gammaCategories;
+        equalWeights = source.equalWeights;
         invarHetero = source.invarHetero;
         codonHeteroPattern = source.codonHeteroPattern;
         unlinkedSubstitutionModel = source.unlinkedSubstitutionModel;

@@ -76,10 +76,10 @@ public class PartitionModelPanel extends OptionsPanel {
             .values());
 
     private JComboBox heteroCombo = new JComboBox(new String[]{"None",
-            "Gamma", "Invariant Sites", "Gamma + Invariant Sites"});
+            /*"Gamma (Felsenstein weights)", */ "Gamma (equal weights)", "Invariant Sites", "Gamma (equal weights) + Invariant Sites"});
 
     private JComboBox gammaCatCombo = new JComboBox(new String[]{"4", "5",
-            "6", "7", "8", "9", "10"});
+            "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"});
     private JLabel gammaCatLabel;
 
     private JComboBox codingCombo = new JComboBox(new String[]{"Off",
@@ -229,16 +229,17 @@ public class PartitionModelPanel extends OptionsPanel {
 
         PanelUtils.setupComponent(heteroCombo);
         heteroCombo
-                .setToolTipText("<html>Select the type of site-specific rate<br>heterogeneity model.</html>");
+                .setToolTipText("<html>Select the type of site-specific rate<br>heterogeneity model." +
+//                        "<br>\"Felsenstein weights\" uses the quadrature method to calculate the category weights described in <br>" +
+//                        "Felsenstein (2001) <i>J Mol Evol</i> <b>53</b>: 447-455." +
+                        "</html>");
         heteroCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
 
-                boolean gammaHetero = heteroCombo.getSelectedIndex() == 1
-                        || heteroCombo.getSelectedIndex() == 3;
-
+                boolean gammaHetero = heteroCombo.getSelectedItem().toString().contains("Gamma");
                 model.setGammaHetero(gammaHetero);
-                model.setInvarHetero(heteroCombo.getSelectedIndex() == 2
-                        || heteroCombo.getSelectedIndex() == 3);
+                model.setInvarHetero(heteroCombo.getSelectedItem().toString().contains("Invariant"));
+                model.setGammaHeteroEqualWeights(heteroCombo.getSelectedItem().toString().contains("equal"));
 
                 if (gammaHetero) {
                     gammaCatLabel.setEnabled(true);

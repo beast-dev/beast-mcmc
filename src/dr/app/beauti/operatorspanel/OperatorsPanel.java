@@ -65,7 +65,7 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
             OperatorSetType.DEFAULT,
             OperatorSetType.FIXED_TREE_TOPOLOGY,
             OperatorSetType.FIXED_TREE,
-            OperatorSetType.NEW_TREE_MIX,
+            OperatorSetType.CLASSIC,
             OperatorSetType.ADAPTIVE_MULTIVARIATE,
             OperatorSetType.CUSTOM,
             OperatorSetType.HMC

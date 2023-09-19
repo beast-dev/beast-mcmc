@@ -37,7 +37,7 @@ import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.BufferIndexHelper;
 import dr.evomodelxml.treelikelihood.BeagleTreeLikelihoodParser;
-//import dr.evomodel.siteratemodel.GammaSiteRateModel;
+//import dr.evomodel.siteratemodel.GammaSiteRateModelParser;
 import dr.evomodel.siteratemodel.SiteRateModel;
 //import dr.evomodel.substmodel.FrequencyModel;
 //import dr.evomodel.substmodel.nucleotide.HKY;
@@ -434,8 +434,12 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
             }
 
-            if (IS_THREAD_COUNT_COMPATIBLE() && threadCount > 1) {
-                beagle.setCPUThreadCount(threadCount);
+            if (IS_THREAD_COUNT_COMPATIBLE()) {
+                if (threadCount > 0) {
+                    beagle.setCPUThreadCount(threadCount);
+                } else { // if no thread_count is specified then this will be -1 so put no upper bound on threads
+                    beagle.setCPUThreadCount(Integer.MAX_VALUE);
+                }
             }
 
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
@@ -1464,7 +1468,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 //            BranchRateModel branchRateModel = new StrictClockBranchRates(rate);
 //
 //            // create site model
-//            GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
+//            GammaSiteRateModelParser siteRateModel = new GammaSiteRateModelParser(
 //                    "siteModel");
 //
 //            BranchModel homogeneousBranchModel = new HomogeneousBranchModel(hky1);

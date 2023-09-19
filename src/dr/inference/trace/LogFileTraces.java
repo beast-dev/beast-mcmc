@@ -78,6 +78,10 @@ public class LogFileTraces extends AbstractTraceList {
         return lastState;
     }
 
+    public long getFirstState() {
+        return firstState;
+    }
+
     public boolean isIncomplete() {
         return false;
     }

@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import static dr.evomodelxml.continuous.ContinuousTraitDataModelParser.NUM_TRAITS;
+import static dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser.FORCE_FULL_PRECISION;
 
 /**
  * @author Marc A. Suchard
@@ -563,6 +564,13 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                         ", but sampling precision has dimension " + dimTrait);
             }
 
+            // Jitter
+            TreeTraitParserUtilities utilities = new TreeTraitParserUtilities(); // TODO: ideally this wouldn't be here
+            if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
+                utilities.jitter(xo, samplingPrecision.getColumnDimension(), subModel.getDataMissingIndicators());
+            }
+
+
             if (!scaleByTipHeight) {
                 return new RepeatedMeasuresTraitDataModel(
                         modelName,
@@ -629,6 +637,8 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
             }, true),
             AttributeRule.newBooleanRule(SCALE_BY_TIP_HEIGHT, true),
 //            new ElementRule(MultivariateDiffusionModel.class),
+            TreeTraitParserUtilities.jitterRules(true),
+            AttributeRule.newBooleanRule(FORCE_FULL_PRECISION, true),
     };
 
 

@@ -35,11 +35,10 @@ import dr.inference.model.Statistic;
 import java.util.Set;
 
 /**
- * A statistic that tracks the time of MRCA of a set of taxa
+ * A statistic that calculates the age (absolute time) from a height
  *
- * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
+ * @version $Id: $
  */
 public class AgeStatistic extends Statistic.Abstract {
 

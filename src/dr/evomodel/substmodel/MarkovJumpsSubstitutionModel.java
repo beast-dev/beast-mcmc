@@ -137,8 +137,6 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
         }
 
         if (PRECOMPUTE) {
-//            matrixMultiply(rateReg, evec, stateCount, tmp1);
-//            matrixMultiply(ievc, tmp1, stateCount, tmp2);
             MarkovJumpsCore.matrixMultiply(rateReg, eigenDecomposition.getEigenVectors(),
                     stateCount, tmp1);
             MarkovJumpsCore.matrixMultiply(eigenDecomposition.getInverseEigenVectors(), tmp1,
@@ -259,8 +257,8 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
     protected double[] registration;
 
     protected SubstitutionModel substModel;
-    private EigenDecomposition eigenDecomposition;
-    private MarkovJumpsCore markovJumpsCore;
+    private final EigenDecomposition eigenDecomposition;
+    private final MarkovJumpsCore markovJumpsCore;
 
     private boolean regRateChanged = true;
 

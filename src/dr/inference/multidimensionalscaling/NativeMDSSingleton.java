@@ -115,12 +115,25 @@ public class NativeMDSSingleton {
 
     private static NativeMDSSingleton INSTANCE = null;
 
+    public int initialize(int dimensionCount, MultiDimensionalScalingLayout layout,
+                          MultiDimensionalScalingCore.CoreInformation information) {
+        if (layout.isSymmetric()) {
+            return initialize(dimensionCount, layout.rowLocationCount, information);
+        } else {
+            return initialize(dimensionCount, layout.rowLocationCount, layout.columnLocationCount,
+                    information.flags, information.deviceNumber, information.numThreads);
+        }
+    }
+
     public int initialize(int dimensionCount, int locationCount, MultiDimensionalScalingCore.CoreInformation information) {
         return initialize(dimensionCount, locationCount,
                 information.flags, information.deviceNumber, information.numThreads);
     }
 
     private native int initialize(int dimensionCount, int locationCount, long flags, int deviceNumber, int threads);
+
+    private native int initialize(int dimensionCount, int rowLocationCount, int columnLocationCount, long flags,
+                                  int deviceNumber, int threads);
 
     public native void updateLocations(int instance, int updateCount, double[] locations);
 
@@ -141,6 +154,8 @@ public class NativeMDSSingleton {
     public native double[] getPairwiseData(int instance);
 
     public native void getLocationGradient(int instance, double[] gradient);
+
+    public native void getObservationGradient(int instance, double[] gradient);
 
     public native int getInternalDimension(int instance);
 

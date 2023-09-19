@@ -28,16 +28,20 @@ package dr.util;
 public class Timer {
 
 	private long start = 0, stop = 0;
+	private long nanoStart = 0, nanoStop = 0;
 
 	public void start() {
+		nanoStart = System.nanoTime(); // One wants the hihest precision first.  TODO Do we really need this?
 		start = System.currentTimeMillis();
 	}
 
 	public void stop() {
+		nanoStop = System.nanoTime();
 		stop = System.currentTimeMillis();
 	}
 
 	public void update() {
+		nanoStop = System.nanoTime();
 		stop = System.currentTimeMillis();
 	}
 
@@ -53,6 +57,16 @@ public class Timer {
 	public double toSeconds() {
 		update();
 		return toSeconds(stop - start);
+	}
+
+	public double toMilliSeconds() {
+		update();
+		return stop - start;
+	}
+
+	public double toNanoSeconds() {
+		update();
+		return nanoStop - nanoStart;
 	}
 
 	public static double toSeconds(long millis) {

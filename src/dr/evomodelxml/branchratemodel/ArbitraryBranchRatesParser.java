@@ -29,6 +29,8 @@ import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
+import dr.inference.distribution.shrinkage.BayesianBridgeLikelihood;
+import dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -52,6 +54,8 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
     private static final String INCLUDE_ROOT = "includeRoot";
     private static final String RANDOM_INDICATOR = "randomIndicator"; // keep some rates fixed but randomize others
+
+    private static final String SHRINKAGE = "shrinkage";
 
     static final String LOCATION = "location";
     static final String SCALE = "scale";
@@ -156,6 +160,11 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             scaleParameter = (Parameter) xo.getElementFirstChild(SCALE);
         }
 
+        if (xo.getAttribute(SHRINKAGE, false)) {
+            return new ArbitraryBranchRates.BranchRateTransform.LocationShrinkage(
+                    ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES, locationParameter);
+        }
+
         return make(reciprocal, exp, multiplier, locationParameter, scaleParameter);
     }
 
@@ -180,5 +189,6 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             new ElementRule(RANDOM_INDICATOR, new XMLSyntaxRule[] {
                             new ElementRule(Parameter.class),
             }, true),
+            AttributeRule.newBooleanRule(SHRINKAGE, true),
     };
 }

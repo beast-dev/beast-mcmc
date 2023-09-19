@@ -103,6 +103,10 @@ public class GapStrippedAlignment extends Alignment.Abstract
         throw new UnsupportedOperationException();
     }
 
+    public List<Sequence> getSequences() {
+        return alignment.getSequences();
+    }
+
     public final int getTaxonCount() {
         return alignment.getTaxonCount();
     }

@@ -39,6 +39,7 @@ import java.util.logging.Logger;
 public class MergePatternsParser extends AbstractXMLObjectParser {
 
     public static final String MERGE_PATTERNS = "mergePatterns";
+    private static final String UNIQUE = "unique";
 
     public String getParserName() { return MERGE_PATTERNS; }
 
@@ -47,10 +48,11 @@ public class MergePatternsParser extends AbstractXMLObjectParser {
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+        boolean unique = xo.getAttribute(UNIQUE, true);
 	    PatternList patternList = (PatternList)xo.getChild(0);
-	    Patterns patterns = new Patterns(patternList);
+	    Patterns patterns = new Patterns(patternList, unique);
 	    for (int i = 1; i < xo.getChildCount(); i++) {
-		    patterns.addPatterns((PatternList)xo.getChild(i));
+		    patterns.addPatterns((PatternList)xo.getChild(i), unique);
 	    }
 
         if (xo.hasAttribute(XMLParser.ID)) {
@@ -59,13 +61,18 @@ public class MergePatternsParser extends AbstractXMLObjectParser {
             logger.info("  pattern count = " + patterns.getPatternCount());
         }
 
+        if (!unique) {
+            patterns.trimWeights();
+        }
+
         return patterns;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private final XMLSyntaxRule[] rules = {
-        new ElementRule(PatternList.class, 1, Integer.MAX_VALUE)
+            new ElementRule(PatternList.class, 1, Integer.MAX_VALUE),
+            AttributeRule.newBooleanRule(UNIQUE, true),
     };
 
     public String getParserDescription() {

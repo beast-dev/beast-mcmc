@@ -99,6 +99,11 @@ public abstract class DataType implements Serializable {
             registerDataType(HiddenAminoAcids.DESCRIPTION + "2", HiddenAminoAcids.AMINO_ACIDS_HIDDEN_2);
             registerDataType(HiddenAminoAcids.DESCRIPTION + "3", HiddenAminoAcids.AMINO_ACIDS_HIDDEN_3);
             registerDataType(HiddenAminoAcids.DESCRIPTION + "4", HiddenAminoAcids.AMINO_ACIDS_HIDDEN_4);
+            registerDataType(StateDependentNucleotides.DESCRIPTION + "1", StateDependentNucleotides.NUCLEOTIDE_STATE_DEPENDENT_1);
+            registerDataType(StateDependentNucleotides.DESCRIPTION + "2", StateDependentNucleotides.NUCLEOTIDE_STATE_DEPENDENT_2);
+            registerDataType(StateDependentNucleotides.DESCRIPTION + "3", StateDependentNucleotides.NUCLEOTIDE_STATE_DEPENDENT_3);
+            registerDataType(StateDependentNucleotides.DESCRIPTION + "4", StateDependentNucleotides.NUCLEOTIDE_STATE_DEPENDENT_4);
+            registerDataType(StateDependentNucleotides.DESCRIPTION + "8", StateDependentNucleotides.NUCLEOTIDE_STATE_DEPENDENT_8);
             registerDataType(GeneralDataType.DESCRIPTION, GeneralDataType.INSTANCE);
             registerDataType(Microsatellite.DESCRIPTION, Microsatellite.INSTANCE);
             registerDataType(P2P.DESCRIPTION, P2P.INSTANCE);

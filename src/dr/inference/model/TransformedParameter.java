@@ -39,6 +39,7 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
     }
 
     public TransformedParameter(Parameter parameter, Transform transform, boolean inverse) {
+
         this.parameter = parameter;
         this.transform = transform;
         this.inverse = inverse;

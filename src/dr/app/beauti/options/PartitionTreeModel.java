@@ -177,10 +177,10 @@ public class PartitionTreeModel extends PartitionOptions {
 
             // if not a fixed tree then sample tree space
             if (options.operatorSetType == OperatorSetType.DEFAULT) {
+                newTreeOperatorsInUse = true;    // default is now the new tree operators
+            } else if (options.operatorSetType == OperatorSetType.CLASSIC) {
                 defaultInUse = true;
                 branchesInUse = true;
-            } else if (options.operatorSetType == OperatorSetType.NEW_TREE_MIX) {
-                newTreeOperatorsInUse = true;
             } else if (options.operatorSetType == OperatorSetType.FIXED_TREE_TOPOLOGY) {
                 branchesInUse = true;
             } else if (options.operatorSetType == OperatorSetType.ADAPTIVE_MULTIVARIATE) {

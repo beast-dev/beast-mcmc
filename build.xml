@@ -64,8 +64,35 @@
             description="Clean and Build all run-time stuff with unit test">
     </target>
 
+<!--    https://stackoverflow.com/questions/2974106/how-to-lookup-the-latest-git-commit-hash-from-an-ant-build-script-->
+    <available file=".git" type="dir" property="git.present"/>
+    <target name="git.commit" description="Store git revision in ${repository.commit}" if="git.present">
+        <exec executable="git" outputproperty="git.commit" failifexecutionfails="true" errorproperty="">
+            <arg value="describe"/>
+            <arg value="--always"/>
+            <arg value="--dirty"/>
+        </exec>
+        <condition property="repository.commit" value="${git.commit}" else="git-commit-unavailable">
+            <and>
+                <isset property="git.commit"/>
+                <length string="${git.commit}" trim="yes" length="0" when="greater"/>
+            </and>
+        </condition>
+    </target>
+
+    <target name="revision" depends="git.commit" description="build revision.txt from template">
+        <copy file="revision.txt.template" tofile="src/revision.txt" overwrite="yes">
+            <filterchain>
+                <replacetokens>
+                    <token key="repository.commit" value="${repository.commit}" />
+                </replacetokens>
+            </filterchain>
+        </copy>
+    </target>
+
+
     <!-- compile Java source code -->
-    <target name="compile-all" depends="init">
+    <target name="compile-all" depends="init,revision">
         <mkdir dir="${build}"/>
 
         <!-- Compile the java code from ${src} into ${build} /bin -->
@@ -74,7 +101,8 @@
                fork="true"
                includeantruntime="false"
                memoryinitialsize="256m"
-               memorymaximumsize="1024m">
+               memorymaximumsize="1024m"
+               encoding="UTF-8">
             <include name="dr/app/beast/**"/>
             <include name="dr/app/beauti/**"/>
             <include name="dr/app/bss/**"/>
@@ -159,6 +187,7 @@
             </fileset>
             <fileset dir="${src}">
                 <include name="dr/**/*.png"/>
+                <include name="revision.txt"/>
                 <include name="org/virion/jam/**/*.png"/>
                 <include name="dr/**/*.properties"/>
             </fileset>
@@ -255,11 +284,36 @@
             </fileset>
         </jar>
 
+        <!-- Put everything in ${build} into the tempest-lib.jar file -->
+        <jar jarfile="${dist}/tempest-lib.jar">
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+            </manifest>
+            <fileset dir="${build}">
+                <include name="dr/app/beauti/tipdatepanel/**/*.class"/>
+                <include name="dr/app/beauti/util/**/*.class"/>
+                <include name="dr/app/beauti/options/**/*.class"/>
+                <include name="dr/app/gui/**/*.class"/>
+                <include name="dr/app/tools/*.class"/>
+                <include name="dr/app/util/*.class"/>
+                <include name="dr/evolution/tree/**/*.class"/>
+                <include name="dr/evolution/io/*.class"/>
+                <include name="dr/evolution/util/*.class"/>
+                <include name="dr/math/**/*.class"/>
+                <include name="dr/stats/**/*.class"/>
+                <include name="dr/util/**/*.class"/>
+            </fileset>
+        </jar>
     </target>
 
     <!-- used to copy the compiled trace.jar into place in the Tracer lib folder -->
     <target name="copy_trace_jar" depends="dist" >
         <copy file="${dist}/trace.jar" todir="../Tracer/lib"/>
+    </target>
+
+    <!-- used to copy the compiled tempest-lib.jar into place in the Tempest lib folder -->
+    <target name="copy_tempest-lib_jar" depends="dist" >
+        <copy file="${dist}/tempest-lib.jar" todir="../Tempest/lib"/>
     </target>
 
     <!-- run beast.jar -->
@@ -662,7 +716,7 @@
 					useJavaXKey="true"
                     icon="${common_dir}/icons/beast.icns"
                     jvmversion="${jvm_version}"
-                    vmoptions="-Xmx2048M"
+                    vmoptions="-Xmx2048M -Djava.library.path=/usr/local/lib"
                     arguments="-window -working -options"
                     highresolutioncapable="true"
                     version="${version}"

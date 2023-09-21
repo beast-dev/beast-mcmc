@@ -173,10 +173,6 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
         }
     }
 
-    public double getPriorRateAsIncrement(Tree tree){
-        return 0;
-    }
-
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) { }
 
     protected void storeState() { }
@@ -392,6 +388,73 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
             @Override
             protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
                 throw new RuntimeException("Not yet implemented");
+            }
+
+            @Override
+            protected void storeState() { }
+
+            @Override
+            protected void restoreState() { }
+
+            @Override
+            protected void acceptState() { }
+        }
+
+        class LocationShrinkage extends AbstractModel implements BranchRateTransform {
+            private final BranchSpecificFixedEffects location;
+
+            public LocationShrinkage(String name, BranchSpecificFixedEffects location) {
+                super(name);
+                this.location = location;
+
+                if (location instanceof Model) {
+                    addModel((Model) location);
+                }
+            }
+
+            @Override
+            public double differential(double raw, Tree tree, NodeRef node) {
+                return transform(raw, tree, node);
+            }
+
+            @Override
+            public double secondDifferential(double raw, Tree tree, NodeRef node) {
+                return transform(raw, tree, node);
+            }
+
+            @Override
+            public double transform(double raw, Tree tree, NodeRef node) {
+                return location.getEffect(tree, node) * Math.exp(raw);
+            }
+
+            @Override
+            public double center() {
+                return 0;
+            }
+
+            @Override
+            public double lower() {
+                return Double.NEGATIVE_INFINITY;
+            }
+
+            @Override
+            public double upper() {
+                return Double.POSITIVE_INFINITY;
+            }
+
+            @Override
+            public double randomize(double raw) {
+                return raw;
+            }
+
+            @Override
+            protected void handleModelChangedEvent(Model model, Object object, int index) {
+                fireModelChanged();
+            }
+
+            @Override
+            protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+                fireModelChanged();
             }
 
             @Override

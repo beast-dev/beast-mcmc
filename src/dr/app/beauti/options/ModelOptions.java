@@ -137,6 +137,9 @@ public abstract class ModelOptions implements Serializable {
                 .initial(initial).uniformLower(uniformLower).uniformUpper(uniformUpper).build(parameters);
     }
 
+    //TODO think about having a createParameter method with a String priorID argument
+    //public Parameter createParameterGammaPrior(String name, String priorID, String description, ...) {
+
     public Parameter createParameterGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
                                                double shape, double scale, boolean priorFixed) {
         return createParameterGammaPrior(name, description, scaleType, initial, shape, scale, priorFixed, false);

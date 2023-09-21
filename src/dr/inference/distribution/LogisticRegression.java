@@ -27,6 +27,8 @@ package dr.inference.distribution;
 
 import dr.inference.model.Parameter;
 
+import java.util.List;
+
 /**
  * @author Marc A. Suchard
  */
@@ -50,6 +52,11 @@ public class LogisticRegression extends GeneralizedLinearModel {
 
 	public boolean requiresScale() {
 		return false;
+	}
+
+	@Override
+	public GeneralizedLinearModel factory(List<Parameter> oldIndependentParameter, List<Parameter> newIndependentParameter) {
+		throw new RuntimeException("Not yet implemented!");
 	}
 
 	protected double calculateLogLikelihood() {

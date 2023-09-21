@@ -40,7 +40,8 @@ import java.util.StringTokenizer;
 public class LogFileTraces extends AbstractTraceList {
 
     public LogFileTraces(String name, File file) {
-        this.name = name;
+        // trim off the extension if present.
+        this.name = name.toUpperCase().endsWith(".LOG") ? name.substring(0, name.length() - 4) : name;
         this.file = file;
         System.out.println("Loading log " + file.getAbsolutePath() + " ...");
     }
@@ -50,6 +51,13 @@ public class LogFileTraces extends AbstractTraceList {
      */
     public String getName() {
         return name;
+    }
+
+    /**
+     * @return the path of this traceset
+     */
+    public String getFileName() {
+        return file.getName();
     }
 
     /**
@@ -68,6 +76,10 @@ public class LogFileTraces extends AbstractTraceList {
      */
     public long getMaxState() {
         return lastState;
+    }
+
+    public long getFirstState() {
+        return firstState;
     }
 
     public boolean isIncomplete() {

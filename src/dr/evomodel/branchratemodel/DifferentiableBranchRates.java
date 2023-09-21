@@ -58,9 +58,11 @@ public interface DifferentiableBranchRates  extends BranchRates {
     double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value,
                                              int from, int to);
 
-    double mapReduceOverRates(NodeRateMap map, DoubleBinaryOperator reduce, double initial);
+    default double mapReduceOverRates(NodeRateMap map, DoubleBinaryOperator reduce, double initial) {
+        throw new RuntimeException("Not implemented"); // TODO Suggests this should be in subclass
+    }
 
-    void forEachOverRates(NodeRateMap map);
-
-    double getPriorRateAsIncrement(Tree tree);
+    default void forEachOverRates(NodeRateMap map) {
+        throw new RuntimeException("Not implemented"); // TODO Suggests this should be in subclass
+    }
 }

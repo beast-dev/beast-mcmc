@@ -90,6 +90,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
             MinimumTravelInformation travelInfo = getTimeToBoundary(position, velocity);
             double refreshTime = getRefreshTime();
 
+            if (printEventLocations) System.err.println(position);
             bounceState = doBounce(
                     bounceState.remainingTime, bounceTime, travelInfo, refreshTime,
                     position, velocity, gradient, action
@@ -258,4 +259,5 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
     }
 
     private final double refreshmentRate = 1.4;//todo: make an input option
+    private final static boolean printEventLocations = false;
 }

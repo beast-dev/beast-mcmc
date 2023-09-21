@@ -34,6 +34,7 @@ import dr.xml.Reportable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * @author Max Tolkoff
@@ -45,13 +46,18 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
     private final int dimension;
     private final Likelihood likelihood;
     private final Parameter parameter;
+    private final ParallelGradientExecutor parallelExecutor;
 
-    private final List<GradientWrtParameterProvider> derivativeList;
+    final List<GradientWrtParameterProvider> derivativeList;
 
-    private final List<DerivativeWrtParameterProvider> newDerivativeList;
+    final List<DerivativeWrtParameterProvider> newDerivativeList;
     private final DerivativeOrder highestOrder;
 
-    public JointGradient(List<GradientWrtParameterProvider> derivativeList){
+    public JointGradient(List<GradientWrtParameterProvider> derivativeList) {
+        this(derivativeList, 0);
+    }
+
+    public JointGradient(List<GradientWrtParameterProvider> derivativeList, int threadCount) {
 
         this.derivativeList = derivativeList;
 
@@ -90,6 +96,14 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
             }
         }
         this.highestOrder = DerivativeWrtParameterProvider.getHighestOrder(newDerivativeList);
+
+        // Parallel threading
+
+        if (threadCount > 1 || threadCount < 0) {
+            parallelExecutor = new ParallelGradientExecutor(threadCount, derivativeList);
+        } else {
+            parallelExecutor = null;
+        }
     }
 
     @Override
@@ -184,7 +198,30 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
         return hessian;
     }
 
-    private double[] getDerivativeLogDensity(DerivativeType derivativeType) {
+    double[] getDerivativeLogDensity(DerivativeType derivativeType) {
+        if (parallelExecutor != null) {
+            return getDerivativeLogDensityParallelImpl(derivativeType);
+        } else {
+            return getDerivativeLogDensitySerialImpl(derivativeType);
+        }
+    }
+
+    private double[] getDerivativeLogDensityParallelImpl(DerivativeType derivativeType) {
+
+        return parallelExecutor.getDerivativeLogDensityInParallel(derivativeType, (gradients, length) -> {
+            double[] reduction = new double[length];
+            for (Future<double[]> result : gradients) {
+                double[] tmp = result.get();
+                for (int j = 0; j < length; ++j) {
+                    reduction[j] += tmp[j];
+                }
+            }
+            return reduction;
+        }, dimension);
+    }
+
+    private double[] getDerivativeLogDensitySerialImpl(DerivativeType derivativeType) {
+
         int size = derivativeList.size();
 
         final double[] derivative = derivativeType.getDerivativeLogDensity(derivativeList.get(0));
@@ -217,7 +254,7 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
                 GradientWrtParameterProvider.TOLERANCE);
     }
 
-    private enum DerivativeType {
+    enum DerivativeType {
         GRADIENT("gradient") {
             @Override
             public double[] getDerivativeLogDensity(GradientWrtParameterProvider gradientWrtParameterProvider) {
@@ -232,7 +269,7 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
         };
 
         @SuppressWarnings("unused")
-        private String type;
+        final private String type;
 
         DerivativeType(String type) {
             this.type = type;

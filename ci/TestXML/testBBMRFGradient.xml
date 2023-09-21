@@ -1,0 +1,115 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <parameter id="parameter1" value="0.1 1.2 3.0 3.0 7.1231 8.312" lower="0.0"/>
+
+    <bayesianBridgeMarkovRandomField id="MRF1" type="log">
+        <parameter idref="parameter1"/>
+        <firstElementDistribution>
+            <normalDistributionModel>
+                <mean>
+                    <parameter value="0.0"/>
+                </mean>
+                <stdev>
+                    <parameter value="1.0"/>
+                </stdev>
+            </normalDistributionModel>
+        </firstElementDistribution>
+        <incrementDistribution>
+            <bayesianBridgeDistribution id="bridge1">
+                <globalScale>
+                    <parameter id="globalScale1" value="1.0" lower="0.0"/>
+                </globalScale>
+                <localScale>
+                    <parameter id="localScale1" value="1.0" dimension="5"/>
+                </localScale>
+                <exponent>
+                    <parameter value="1.0"/>
+                </exponent>
+                <!-- <slabWidth>
+                    <parameter value="2.0"/>
+                </slabWidth> -->
+            </bayesianBridgeDistribution>
+        </incrementDistribution>
+    </bayesianBridgeMarkovRandomField>
+
+    <report>
+        <bayesianBridgeMarkovRandomField idref="MRF1"/>
+    </report>
+
+    <parameter id="parameter2" value="29.315613485336748 291.45518749566236 140.76506772821173 262.1787102837457" lower="0.0"/>
+
+    <bayesianBridgeMarkovRandomField id="MRF2" type="log">
+        <parameter idref="parameter2"/>
+        <firstElementDistribution>
+            <normalDistributionModel>
+                <mean>
+                    <parameter value="0.0"/>
+                </mean>
+                <stdev>
+                    <parameter value="1.0"/>
+                </stdev>
+            </normalDistributionModel>
+        </firstElementDistribution>
+        <incrementDistribution>
+            <bayesianBridgeDistribution id="bridge2">
+                <globalScale>
+                    <parameter id="globalScale2" value="1.0" lower="0.0"/>
+                </globalScale>
+                <localScale>
+                    <parameter id="localScale2" value="1.0" dimension="3"/>
+                </localScale>
+                <exponent>
+                    <parameter value="1.0"/>
+                </exponent>
+                <!-- <slabWidth>
+                    <parameter value="2.0"/>
+                </slabWidth> -->
+            </bayesianBridgeDistribution>
+        </incrementDistribution>
+    </bayesianBridgeMarkovRandomField>
+
+    <report>
+        <bayesianBridgeMarkovRandomField idref="MRF2"/>
+    </report>
+
+
+<!--    <parameter id="parameter3" value="1392.829177164855 4.721368338344365E261 1.2092599589455922E308 6.614159777198269E307" lower="0.0"/>-->
+
+<!--    <bayesianBridgeMarkovRandomField id="MRF3" type="log">-->
+<!--        <parameter idref="parameter3"/>-->
+<!--        <firstElementDistribution>-->
+<!--            <normalDistributionModel>-->
+<!--                <mean>-->
+<!--                    <parameter value="0.0"/>-->
+<!--                </mean>-->
+<!--                <stdev>-->
+<!--                    <parameter value="1.0"/>-->
+<!--                </stdev>-->
+<!--            </normalDistributionModel>-->
+<!--        </firstElementDistribution>-->
+<!--        <incrementDistribution>-->
+<!--            <bayesianBridgeDistribution id="bridge3">-->
+<!--                <globalScale>-->
+<!--                    <parameter id="globalScale3" value="1.0" lower="0.0"/>-->
+<!--                </globalScale>-->
+<!--                <localScale>-->
+<!--                    <parameter id="localScale3" value="1.0" dimension="3"/>-->
+<!--                </localScale>-->
+<!--                <exponent>-->
+<!--                    <parameter value="1.0"/>-->
+<!--                </exponent>-->
+<!--                &lt;!&ndash; <slabWidth>-->
+<!--                    <parameter value="2.0"/>-->
+<!--                </slabWidth> &ndash;&gt;-->
+<!--            </bayesianBridgeDistribution>-->
+<!--        </incrementDistribution>-->
+<!--    </bayesianBridgeMarkovRandomField>-->
+
+<!--    <report>-->
+<!--        <bayesianBridgeMarkovRandomField idref="MRF3"/>-->
+<!--    </report>-->
+
+
+
+</beast>

@@ -26,6 +26,7 @@
 package dr.app.treestat;
 
 import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.Taxon;
 import jam.framework.Application;
 import jam.framework.DocumentFrame;
 import jam.util.IconUtils;
@@ -34,6 +35,7 @@ import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.io.*;
+import java.util.HashSet;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
@@ -190,7 +192,10 @@ public class TreeStatFrame extends DocumentFrame {
             tree = importer.importTree(null);
         }
 
-        treeStatData.allTaxa = TreeUtils.getLeafSet(tree);
+        treeStatData.allTaxa = new HashSet<Taxon>();
+        for (String taxonName : TreeUtils.getLeafSet(tree)) {
+            treeStatData.allTaxa.add(new Taxon(taxonName));
+        }
         statusLabel.setText(Integer.toString(treeStatData.allTaxa.size()) + " taxa loaded.");
         reader.close();
 

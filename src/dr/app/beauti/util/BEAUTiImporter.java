@@ -41,6 +41,7 @@ import dr.evolution.io.MicroSatImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.NexusImporter.MissingBlockException;
 import dr.evolution.io.NexusImporter.NexusBlock;
+import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -558,6 +559,18 @@ public class BEAUTiImporter {
                 new String[]{"NEX", "NEXUS", "FA", "FAS", "FASTA", "TRE", "TREE", "XML", "TXT"});
         if (options.fileNameStem == null || options.fileNameStem.equals(MCMCPanel.DEFAULT_FILE_NAME_STEM)) {
             options.fileNameStem = fileNameStem;
+        }
+
+        // check the alignment before adding it...
+        if (alignment.getSiteCount() == 0) {
+            // sequences are different lengths
+            throw new ImportException("This alignment is of zero length");
+        }
+        for (Sequence seq : alignment.getSequences()) {
+            if (seq.getLength() != alignment.getSiteCount()) {
+                // sequences are different lengths
+                throw new ImportException("The sequences in the alignment file are of different lengths - BEAST requires aligned sequences");
+            }
         }
 
         addTaxonList(taxonList);

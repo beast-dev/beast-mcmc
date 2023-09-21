@@ -43,6 +43,10 @@ import java.util.List;
  */
 
 public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, Citable {
+    public enum CategoryWidthType {
+        FASTEST,
+        GEOMETRIC
+    };
 
     public GammaSiteRateModel(String name) {
         this(   name,
@@ -50,7 +54,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
                 1.0,
                 null,
                 0,
-                null);
+                null, null, null);
     }
 
     public GammaSiteRateModel(String name, double alpha, int categoryCount) {
@@ -59,16 +63,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
                 1.0,
                 new Parameter.Default(alpha),
                 categoryCount,
-                null);
-    }
-
-    public GammaSiteRateModel(String name, double pInvar) {
-        this(   name,
-                null,
-                1.0,
-                null,
-                0,
-                new Parameter.Default(pInvar));
+                null, null, null);
     }
 
     public GammaSiteRateModel(String name, double alpha, int categoryCount, double pInvar) {
@@ -77,7 +72,19 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
                 1.0,
                 new Parameter.Default(alpha),
                 categoryCount,
-                new Parameter.Default(pInvar));
+                new Parameter.Default(pInvar),
+                null, null);
+    }
+
+    public GammaSiteRateModel(String name, double alpha, int categoryCount, double pInvar, double catWidth, CategoryWidthType categoryWidthType) {
+        this(   name,
+                null,
+                1.0,
+                new Parameter.Default(alpha),
+                categoryCount,
+                new Parameter.Default(pInvar),
+                new Parameter.Default(catWidth),
+                categoryWidthType);
     }
 
     public GammaSiteRateModel(
@@ -85,7 +92,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
             Parameter nuParameter,
             Parameter shapeParameter, int gammaCategoryCount,
             Parameter invarParameter) {
-        this(name, nuParameter, 1.0, shapeParameter, gammaCategoryCount, invarParameter);
+        this(name, nuParameter, 1.0, shapeParameter, gammaCategoryCount, invarParameter, null, null);
     }
 
         /**
@@ -97,7 +104,9 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
             Parameter nuParameter,
             double muWeight,
             Parameter shapeParameter, int gammaCategoryCount,
-            Parameter invarParameter) {
+            Parameter invarParameter,
+            Parameter categoryWidthParameter,
+            CategoryWidthType categoryWidthType) {
 
         super(name);
 
@@ -128,6 +137,13 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
 
             addVariable(invarParameter);
             invarParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+        }
+
+        this.categoryWidthParameter = categoryWidthParameter;
+        this.categoryWidthType = categoryWidthType;
+        if (categoryWidthParameter != null) {
+            addVariable(categoryWidthParameter);
+            categoryWidthParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         }
 
         categoryRates = new double[this.categoryCount];
@@ -165,35 +181,8 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
         return shapeParameter.getParameterValue(0);
     }
 
-
-    public Parameter getAlphaParameter() {
-        return shapeParameter;
-    }
-
-    public Parameter getPInvParameter() {
-        return invarParameter;
-    }
-
-    public Parameter setRelativeRateParameter() {
-        return nuParameter;
-    }
-
-    public void setAlphaParameter(Parameter parameter) {
-        if (shapeParameter != null) removeVariable(shapeParameter);
-        shapeParameter = parameter;
-        if (shapeParameter != null) addVariable(shapeParameter);
-    }
-
-    public void setPInvParameter(Parameter parameter) {
-        if (invarParameter != null) removeVariable(invarParameter);
-        invarParameter = parameter;
-        if (invarParameter != null) addVariable(invarParameter);
-    }
-
-    public void setRelativeRateParameter(Parameter parameter) {
-        if (nuParameter != null) removeVariable(nuParameter);
-        nuParameter = parameter;
-        if (nuParameter != null) addVariable(nuParameter);
+    public void setRelativeRateParameter(Parameter nu) {
+        this.nuParameter = nu;
     }
 
     // *****************************************************************
@@ -273,6 +262,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
 
             final double a = shapeParameter.getParameterValue(0);
             double mean = 0.0;
+            double sum = 0.0;
             final int gammaCatCount = categoryCount - cat;
 
             for (int i = 0; i < gammaCatCount; i++) {
@@ -285,14 +275,22 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
 
                 mean += categoryRates[i + cat];
 
-                categoryProportions[i + cat] = propVariable / gammaCatCount;
+                if (categoryWidthParameter != null && categoryWidthType == CategoryWidthType.GEOMETRIC && i > 0) {
+                    categoryProportions[i + cat] = categoryProportions[i + cat - 1] * (1.0 + categoryWidthParameter.getParameterValue(0));
+                } else if (categoryWidthParameter != null && categoryWidthType == CategoryWidthType.FASTEST &&
+                        i == (gammaCatCount - 1)) {
+                    categoryProportions[i + cat] = (1.0 + categoryWidthParameter.getParameterValue(0));
+                } else {
+                    categoryProportions[i + cat] = 1.0;
+                }
+                sum += categoryProportions[i + cat];
             }
 
             mean = (propVariable * mean) / gammaCatCount;
 
             for (int i = 0; i < gammaCatCount; i++) {
-
                 categoryRates[i + cat] /= mean;
+                categoryProportions[i + cat] /= sum;
             }
         } else {
             categoryRates[cat] = 1.0 / propVariable;
@@ -309,10 +307,6 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
         ratesKnown = true;
     }
 
-    public boolean hasInvariantSites() {
-        return invarParameter != null;
-    }
-
     // *****************************************************************
     // Interface ModelComponent
     // *****************************************************************
@@ -326,6 +320,8 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
         if (variable == shapeParameter) {
             ratesKnown = false;
         } else if (variable == invarParameter) {
+            ratesKnown = false;
+        } else if (variable == categoryWidthParameter) {
             ratesKnown = false;
         } else if (variable == nuParameter) {
             ratesKnown = false; // MAS: I changed this because the rate parameter can affect the categories if the parameter is in siteModel and not clockModel
@@ -384,6 +380,10 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
      */
     private Parameter invarParameter;
 
+    private Parameter categoryWidthParameter;
+
+    private CategoryWidthType categoryWidthType = null;
+
     private boolean ratesKnown;
 
     private int categoryCount;
@@ -417,7 +417,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
     }
 
     public List<Citation> getCitations() {
-        if (getAlphaParameter() != null) {
+        if (shapeParameter != null) {
             return Collections.singletonList(CITATION);
         } else {
             return Collections.emptyList();
@@ -437,4 +437,5 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
     );
 
     private SubstitutionModel substitutionModel;
+
 }

@@ -27,6 +27,8 @@ package dr.evolution.sequence;
 
 import dr.evolution.util.TaxonList;
 
+import java.util.List;
+
 /**
  * Interface for a list of sequences.
  *
@@ -61,5 +63,9 @@ public interface SequenceList extends TaxonList {
 	 */
 	public Object getSequenceAttribute(int index, String name);
 
+	/**
+	 * @return an immutable iterable List of sequences
+	 */
+	public List<Sequence> getSequences();
 }
 

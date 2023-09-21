@@ -49,9 +49,12 @@ public class Parameter implements Serializable {
 
     private boolean meanInRealSpace = false;
 
-    // Required para
+    // Required parameters
     private String baseName;
     private final String description;
+
+    //TODO think about have an optional (could be public) parameter priorID to idref to the prior later on
+    //private String priorID;
 
     private int dimensionWeight = 1;
 

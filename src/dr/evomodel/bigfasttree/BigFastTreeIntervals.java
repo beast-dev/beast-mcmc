@@ -18,6 +18,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Smart intervals that don't need a full recalculation. 
+ * author: JT
+ */
 public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIntervalList {
     public BigFastTreeIntervals(TreeModel tree) {
         this("bigFastIntervals",tree);
@@ -75,6 +79,13 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
             calculateIntervals();
         }
         return events.getInterval(i + 1);
+    }
+
+    public int getIntervalIndexForNode(int nodeNum) {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        return events.getNodePosition(nodeNum);
     }
 
     @Override

@@ -91,21 +91,6 @@ public class RandomLocalClockRateWrapper implements DifferentiableBranchRates {
     }
 
     @Override
-    public double mapReduceOverRates(NodeRateMap map, DoubleBinaryOperator reduce, double initial) {
-        return 0;
-    }
-
-    @Override
-    public void forEachOverRates(NodeRateMap map) {
-
-    }
-
-    @Override
-    public double getPriorRateAsIncrement(Tree tree) {
-        return 0;
-    }
-
-    @Override
     public double getBranchRate(Tree tree, NodeRef node) {
         return 0;
     }

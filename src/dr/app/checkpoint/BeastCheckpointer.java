@@ -26,7 +26,6 @@
 package dr.app.checkpoint;
 
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovchain.MarkovChain;
@@ -42,6 +41,8 @@ import dr.math.MathUtils;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -61,6 +62,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
     public final static String SAVE_STATE_AT = "save.state.at";
     public final static String SAVE_STATE_EVERY = "save.state.every";
     public final static String SAVE_STEM = "save.state.stem";
+    public final static String SAVE_STATE_TIME = "save.state.time";
 
     public final static String FORCE_RESUME = "force.resume";
     public final static String CHECKPOINT_SEED = "checkpoint.seed";
@@ -91,6 +93,12 @@ public class BeastCheckpointer implements StateLoaderSaver {
         if (System.getProperty(SAVE_STATE_EVERY) != null) {
             final long saveStateEvery = Long.parseLong(System.getProperty(SAVE_STATE_EVERY));
             listeners.add(new StateSaverChainListener(BeastCheckpointer.this, saveStateEvery,true));
+        }
+        if (System.getProperty(SAVE_STATE_TIME) != null) {
+            LocalTime saveTime = LocalTime.parse(System.getProperty(SAVE_STATE_TIME),
+                    DateTimeFormatter.ofPattern("HH:mm:ss"));
+            int saveSeconds = saveTime.toSecondOfDay();
+            listeners.add(new TimedStateSaverChainListener(BeastCheckpointer.this, saveSeconds));
         }
 
         useFullPrecision = (System.getProperty(FULL_CHECKPOINT_PRECISION) != null) &&
@@ -286,7 +294,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
             //check up front if there are any TreeParameterModel objects
             for (Model model : Model.CONNECTED_MODEL_SET) {
                 if (model instanceof TreeParameterModel) {
-                    //System.out.println("\nDetected TreeParameterModel: " + ((TreeParameterModel) model).toString());
+                    if (DEBUG) {
+                        System.out.println("\nSave TreeParameterModel: " + model.getClass().getSimpleName());
+                    }
                     traitModels.add((TreeParameterModel) model);
                 }
             }
@@ -503,7 +513,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
             // load the tree models last as we get the node heights from the tree (not the parameters which
             // which may not be associated with the right node
-            Set<String> expectedTreeModelNames = new HashSet<String>();
+            Set<String> expectedTreeModelNames = new LinkedHashSet<>();
 
             //store list of TreeModels for debugging purposes
             ArrayList<TreeModel> treeModelList = new ArrayList<TreeModel>();
@@ -523,11 +533,21 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         }
                         System.out.println();
                     }
+                } else {
+                    if (DEBUG) {
+                        System.out.println("Not a TreeModel: " + model.getModelName());
+                    }
                 }
 
                 //first add all TreeParameterModels to a list
                 if (model instanceof TreeParameterModel) {
+                    if (DEBUG) {
+                        System.out.println("\nLoad TreeParameterModel: " + model.getClass().getSimpleName());
+                    }
                     traitModels.add((TreeParameterModel)model);
+                    if (DEBUG) {
+                        System.out.println("TreeParameterModel: " + model.getModelName());
+                    }
                 }
 
             }
@@ -585,6 +605,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         int edgeCount = Integer.parseInt(fields[0]);
                         if (DEBUG) {
                             System.out.println("edge count = " + edgeCount);
+                            System.out.println("model: " + model.getId());
+                            System.out.println("linkedModels size = " + linkedModels.size());
+                            System.out.println(linkedModels.get(model.getId()));
                         }
 
                         //create data matrix of doubles to store information from list of TreeParameterModels
@@ -657,7 +680,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
             if (DEBUG) {
                 System.out.println("\nDouble checking:");
                 for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
-                    if (parameter.getParameterName().equals("branchRates.categories.rootNodeNumber")) {
+                    if (parameter.getParameterName() != null && parameter.getParameterName().equals("branchRates.categories.rootNodeNumber")) {
                         System.out.println(parameter.getParameterName() + ": " + parameter.getParameterValue(0));
                     }
                 }

@@ -65,6 +65,9 @@ public class BranchSpecificSubstitutionParameterBranchModel extends AbstractMode
         for (BranchRateModel branchRateModel : branchRateModelList) {
             addModel(branchRateModel);
         }
+        for (SubstitutionModel singleSubstitutionModel : substitutionModelList) {
+            addModel(singleSubstitutionModel);
+        }
     }
 
     private List<SubstitutionModel> constructSubstitutionModels(List<Parameter> substitutionParameterList,

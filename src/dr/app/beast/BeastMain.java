@@ -1,7 +1,7 @@
 /*
  * BeastMain.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -81,7 +81,7 @@ public class BeastMain {
 
     public BeastMain(File inputFile, BeastConsoleApp consoleApp, int maxErrorCount, final boolean verbose,
                      boolean parserWarning, boolean strictXML, List<String> additionalParsers,
-                     boolean useMC3, double[] chainTemperatures, int swapChainsEvery) {
+                     MCMCMCOptions mc3Options) {
 
         if (inputFile == null) {
             throw new RuntimeException("Error: no input file specified");
@@ -152,15 +152,18 @@ public class BeastMain {
             // appropriate savers and loaders according to the user's options.
             new BeastCheckpointer();
 
-            if (!useMC3) {
+            if (mc3Options == null) {
                 // just parse the file running all threads...
 
                 parser.parse(fileReader, true);
 
             } else {
+
+                double[] chainTemperatures = mc3Options.getChainTemperatures();
+
                 int chainCount = chainTemperatures.length;
                 MCMC[] chains = new MCMC[chainCount];
-                MCMCMCOptions options = new MCMCMCOptions(chainTemperatures, swapChainsEvery);
+//                MCMCMCOptions options = new MCMCMCOptions(chainTemperatures, swapChainsEvery);
 
                 Logger.getLogger("dr.apps.beast").info("Starting cold chain plus hot chains with temperatures: ");
                 for (int i = 1; i < chainTemperatures.length; i++) {
@@ -176,7 +179,7 @@ public class BeastMain {
                 }
                 fileReader.close();
 
-                chainTemperatures[0] = 1.0;
+                chainTemperatures[0] = 1.0; // TODO Should perform in Mc3Options constructor
 
                 for (int i = 1; i < chainCount; i++) {
                     // parse the file once for each hot chain
@@ -200,9 +203,10 @@ public class BeastMain {
                 // restart messages
                 logger.setLevel(Level.ALL);
 
-                MCMCMC mc3 = new MCMCMC(chains, options);
-                Thread thread = new Thread(mc3);
-                thread.start();
+                MCMCMC mc3 = new MCMCMC(chains, mc3Options);
+//                Thread thread = new Thread(mc3);
+//                thread.start();
+                mc3.run();
             }
 
         } catch (java.io.IOException ioe) {
@@ -273,6 +277,12 @@ public class BeastMain {
             ex.printStackTrace(System.err);
             System.err.flush();
             throw new RuntimeException("Terminate");
+        }
+
+        try {
+            dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.releaseAllBeagleInstances();
+        } catch (Throwable e) {
+           throw new RuntimeException("Terminate");
         }
     }
 
@@ -356,6 +366,8 @@ public class BeastMain {
                         new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
                         new Arguments.Option("beagle_double", "BEAGLE: use double precision if available"),
                         new Arguments.Option("beagle_async", "BEAGLE: use asynchronous kernels if available"),
+                        new Arguments.Option("beagle_low_memory", "BEAGLE: use lower memory pre-order traversal kernels"),
+                        new Arguments.StringOption("beagle_extra_buffer_count", "buffer_count", "BEAGLE: reserve extra transition matrix buffers for convolutions"),
                         new Arguments.StringOption("beagle_scaling", new String[]{"default", "dynamic", "delayed", "always", "none"},
                                 false, "BEAGLE: specify scaling scheme to use"),
                         new Arguments.Option("beagle_delay_scaling_off", "BEAGLE: don't wait until underflow for scaling option"),
@@ -368,10 +380,12 @@ public class BeastMain {
                         new Arguments.RealOption("mc3_delta", 0.0, Double.MAX_VALUE, "temperature increment parameter"),
                         new Arguments.RealArrayOption("mc3_temperatures", -1, "a comma-separated list of the hot chain temperatures"),
                         new Arguments.IntegerOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
+                        new Arguments.StringOption("mc3_scheme", "NAME", "Specify parallel tempering swap scheme"),
 
                         new Arguments.StringOption("load_state", "FILENAME", "Specify a filename to load a saved state from"),
                         new Arguments.StringOption("save_stem", "FILENAME", "Specify a stem for the filenames to save states to"),
                         new Arguments.LongOption("save_at", "Specify a state at which to save a state file"),
+                        new Arguments.StringOption("save_time", "HH:mm:ss", "Specify a length of time after which to save a state file"),
                         new Arguments.LongOption("save_every", "Specify a frequency to save the state file"),
                         new Arguments.StringOption("save_state", "FILENAME", "Specify a filename to save state to"),
                         new Arguments.Option("full_checkpoint_precision", "Use hex-encoded doubles in checkpoint files"),
@@ -452,6 +466,7 @@ public class BeastMain {
         boolean usingMC3 = false;
         double[] chainTemperatures = null;
         int swapChainsEvery = DEFAULT_SWAP_CHAIN_EVERY;
+        MCMCMCOptions.SwapScheme swapScheme = MCMCMCOptions.SwapScheme.ORIGINAL_FLAVOR;
 
         if (arguments.hasOption("particles")) {
             System.setProperty("smc.particle_folder", arguments.getStringOption("particles"));
@@ -520,6 +535,10 @@ public class BeastMain {
                 swapChainsEvery = arguments.getIntegerOption("mc3_swap");
             }
 
+            if (arguments.hasOption("mc3_scheme")) {
+                swapScheme = MCMCMCOptions.SwapScheme.parse(arguments.getStringOption("mc3_scheme"));
+            }
+
             usingMC3 = chainCount > 1;
         }
 
@@ -569,6 +588,10 @@ public class BeastMain {
             beagleFlags |= BeagleFlag.COMPUTATION_ASYNCH.getMask();
         }
 
+        if (arguments.hasOption("beagle_low_memory")) {
+            beagleFlags |= BeagleFlag.PREORDER_TRANSPOSE_LOW_MEMORY.getMask();
+        }
+
         if (arguments.hasOption("beagle_order")) {
             System.setProperty("beagle.resource.order", arguments.getStringOption("beagle_order"));
         }
@@ -596,6 +619,10 @@ public class BeastMain {
             } else if (arguments.getStringOption("beagle_multipartition").toLowerCase().equals("off")) {
                 System.setProperty("beagle.multipartition.extensions", Boolean.FALSE.toString());
             }
+        }
+
+        if (arguments.hasOption("beagle_extra_buffer_count")) {
+            System.setProperty("beagle.extra.buffer.count", arguments.getStringOption("beagle_extra_buffer_count"));
         }
 
         // ============= Other settings =============
@@ -657,6 +684,11 @@ public class BeastMain {
             if (arguments.hasOption("save_at")) {
                 long saveAt = arguments.getLongOption("save_at");
                 System.setProperty(BeastCheckpointer.SAVE_STATE_AT, Long.toString(saveAt));
+            }
+
+            if (arguments.hasOption("save_time")) {
+                String saveTime = arguments.getStringOption("save_time");
+                System.setProperty(BeastCheckpointer.SAVE_STATE_TIME, saveTime);
             }
 
             if (arguments.hasOption("save_every")) {
@@ -897,7 +929,8 @@ public class BeastMain {
 
         try {
             new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, warnings, strictXML, additionalParsers,
-                    usingMC3, chainTemperatures, swapChainsEvery);
+                    usingMC3 ? new MCMCMCOptions(chainTemperatures, swapChainsEvery, swapScheme) : null);
+//                    usingMC3, chainTemperatures, swapChainsEvery);
         } catch (RuntimeException rte) {
             // The stack trace here is not useful
 //            rte.printStackTrace(System.err);

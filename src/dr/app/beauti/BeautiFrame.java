@@ -511,25 +511,25 @@ public class BeautiFrame extends DocumentFrame {
 //                        JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
 //                                "Unable to open file", JOptionPane.ERROR_MESSAGE);
                 } catch (IOException ioe) {
-                    JOptionPane.showMessageDialog(this, "File I/O Error unable to read file: " + ioe.getMessage(),
+                    JOptionPane.showMessageDialog(this, "File I/O Error unable to read file:\n    " + ioe.getMessage(),
                             "Unable to read file", JOptionPane.ERROR_MESSAGE);
                     ioe.printStackTrace();
                     // there may be other files in the list so don't return
 //                    return;
 
                 } catch (MissingBlockException ex) {
-                    JOptionPane.showMessageDialog(this, "TAXON, DATA or CHARACTERS block is missing in Nexus file: " + ex,
+                    JOptionPane.showMessageDialog(this, "TAXON, DATA or CHARACTERS block is missing in Nexus file:\n    " + ex.getMessage(),
                             "Missing Block in Nexus File",
                             JOptionPane.ERROR_MESSAGE);
                     ex.printStackTrace();
 
                 } catch (ImportException ime) {
-                    JOptionPane.showMessageDialog(this, "Error parsing imported file: " + ime,
+                    JOptionPane.showMessageDialog(this, "Error parsing imported file:\n    " + ime.getMessage(),
                             "Error reading file",
                             JOptionPane.ERROR_MESSAGE);
                     ime.printStackTrace();
                 } catch (JDOMException jde) {
-                    JOptionPane.showMessageDialog(this, "Error parsing imported file: " + jde,
+                    JOptionPane.showMessageDialog(this, "Error parsing imported file:\n    " + jde.getMessage(),
                             "Error reading file",
                             JOptionPane.ERROR_MESSAGE);
                     jde.printStackTrace();

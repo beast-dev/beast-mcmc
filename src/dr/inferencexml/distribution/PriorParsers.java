@@ -28,7 +28,9 @@ package dr.inferencexml.distribution;
 import dr.inference.distribution.CauchyDistribution;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
+import dr.inference.distribution.PreconditioningDistributionLikelihood;
 import dr.inference.model.Likelihood;
+import dr.inference.model.PriorPreconditioningProvider;
 import dr.inference.model.Statistic;
 import dr.math.distributions.*;
 import dr.util.Attribute;
@@ -77,6 +79,7 @@ public class PriorParsers {
     public static final String HALF_T_PRIOR = "halfTPrior";
     public static final String DIRICHLET_PRIOR = "dirichletPrior";
     public static final String ALPHA = "alpha";
+    public static final String BETA = "beta";
     public static final String COUNTS = "counts";
     public static final String SUMS_TO = "sumsTo";
 
@@ -151,7 +154,7 @@ public class PriorParsers {
                 throw new XMLParseException("Uniform prior " + xo.getName() + " cannot take a bound at infinity, " +
                         "because it returns 1/(high-low) = 1/inf");
 
-            DistributionLikelihood likelihood = new DistributionLikelihood(new UniformDistribution(lower, upper));
+            DistributionLikelihood likelihood = new DistributionLikelihood(new UniformDistribution(lower, upper), true);
             if (DEBUG) {
                 System.out.println("Uniform prior: " + xo.getChildCount());
             }
@@ -510,7 +513,7 @@ public class PriorParsers {
             double mean = xo.getDoubleAttribute(MEAN);
             double stdev = xo.getDoubleAttribute(STDEV);
 
-            DistributionLikelihood likelihood = new DistributionLikelihood(new NormalDistribution(mean, stdev));
+            DistributionLikelihood likelihood = new PreconditioningDistributionLikelihood(new NormalDistribution(mean, stdev));
             for (int j = 0; j < xo.getChildCount(); j++) {
                 if (xo.getChild(j) instanceof Statistic) {
                     likelihood.addData((Statistic) xo.getChild(j));
@@ -847,8 +850,15 @@ public class PriorParsers {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            final double shape = xo.getDoubleAttribute(SHAPE);
-            final double shapeB = xo.getDoubleAttribute(SHAPEB);
+            double shape;
+            double shapeB;
+            if (xo.hasAttribute(ALPHA) && xo.hasAttribute(BETA)) {
+                shape = xo.getDoubleAttribute(ALPHA);
+                shapeB = xo.getDoubleAttribute(BETA);
+            } else {
+                shape = xo.getDoubleAttribute(SHAPE);
+                shapeB = xo.getDoubleAttribute(SHAPEB);
+            }
             final double offset = xo.getAttribute(OFFSET, 0.0);
             final double scale = xo.getAttribute(SCALE, 1.0);
 
@@ -869,8 +879,16 @@ public class PriorParsers {
         }
 
         private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule(SHAPE),
-                AttributeRule.newDoubleRule(SHAPEB),
+                new XORRule(
+                        new AndRule(
+                                AttributeRule.newDoubleRule(SHAPE),
+                                AttributeRule.newDoubleRule(SHAPEB)
+                        ),
+                        new AndRule(
+                                AttributeRule.newDoubleRule(ALPHA),
+                                AttributeRule.newDoubleRule(BETA)
+                        )
+                ),
                 AttributeRule.newDoubleRule(OFFSET, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };

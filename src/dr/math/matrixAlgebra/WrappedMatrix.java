@@ -301,11 +301,15 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
 
         final private int[] indicesMajor;
         final private int[] indicesMinor;
+        final int dimMajorFull;
+        final int dimMinorFull;
 
-        public Indexed(double[] buffer, int offset, int[] indicesMajor, int[] indicesMinor, int dimMajor, int dimMinor) {
-            super(buffer, offset, dimMajor, dimMinor);
+        public Indexed(double[] buffer, int offset, int[] indicesMajor, int[] indicesMinor, int dimMajorFull, int dimMinorFull) {
+            super(buffer, offset, indicesMajor.length, indicesMinor.length);
             this.indicesMajor = indicesMajor;
             this.indicesMinor = indicesMinor;
+            this.dimMajorFull = dimMajorFull;
+            this.dimMinorFull = dimMinorFull;
         }
 
         @Override
@@ -329,7 +333,7 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
         }
 
         private int getIndex(final int i, final int j) {
-            return offset + indicesMajor[i] * dimMajor + indicesMinor[j];
+            return offset + indicesMajor[i] * dimMajorFull + indicesMinor[j];
         }
     }
 
@@ -492,7 +496,10 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
                     sum += temp * temp;
                 }
                 if (sum > 1.0) {
-                    assert (Math.abs(sum - 1.0) < 1E-6);
+                    if (Math.abs(sum - 1.0) > 1E-6) {
+                        throw new RuntimeException("Values are not consistent with the cholesky decomposition of " +
+                                "a correlation matrix. Sum of squared values must be less than 1 (got " + sum + ")");
+                    }
                     sum = 1.0;
                 }
                 W.set(j, j, Math.sqrt(1 - sum));

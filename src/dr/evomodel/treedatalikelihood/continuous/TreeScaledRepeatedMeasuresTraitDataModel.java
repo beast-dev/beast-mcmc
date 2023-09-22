@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
 import org.ejml.data.DenseMatrix64F;
@@ -42,13 +43,21 @@ public class TreeScaledRepeatedMeasuresTraitDataModel extends RepeatedMeasuresTr
     private ContinuousRateTransformation rateTransformation;
 
     public TreeScaledRepeatedMeasuresTraitDataModel(String name,
+                                                    ContinuousTraitPartialsProvider childModel,
                                                     CompoundParameter parameter,
                                                     boolean[] missingIndicators,
                                                     boolean useMissingIndices,
                                                     final int dimTrait,
+                                                    final int numTraits,
                                                     MatrixParameterInterface samplingPrecision,
-                                                    boolean forceFullPrecision) {
-        super(name, parameter, missingIndicators, useMissingIndices, dimTrait, samplingPrecision, forceFullPrecision);
+                                                    PrecisionType precisionType) {
+        super(name, childModel, parameter, missingIndicators, useMissingIndices, dimTrait, numTraits,
+                samplingPrecision, precisionType);
+
+        if (!(childModel instanceof ContinuousTraitDataModel)) {
+            throw new RuntimeException("not yet implemented for alternative child models. " +
+                    "(can't just scale the partial in super.getTipPartial)");
+        }
     }
 
     @Override

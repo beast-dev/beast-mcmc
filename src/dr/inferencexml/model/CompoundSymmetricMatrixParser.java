@@ -39,6 +39,7 @@ public class CompoundSymmetricMatrixParser extends AbstractXMLObjectParser {
     public static final String OFF_DIAGONAL = "offDiagonal";
     public static final String AS_CORRELATION = "asCorrelation";
     public static final String IS_CHOLESKY = "isCholesky";
+    public static final String IS_STRICTLY_UPPER = "isStrictlyUpperTriangular";
 
     public String getParserName() {
         return MATRIX_PARAMETER;
@@ -56,12 +57,26 @@ public class CompoundSymmetricMatrixParser extends AbstractXMLObjectParser {
 
         boolean isCholesky = xo.getAttribute(IS_CHOLESKY, false);
 
+
+        boolean isStrictlyUpperTriangular = xo.getAttribute(IS_STRICTLY_UPPER, true);
+
+        CompoundSymmetricMatrix compoundSymmetricMatrix =
+                new CompoundSymmetricMatrix(diagonalParameter, offDiagonalParameter, asCorrelation, isCholesky);
+
+        if (!isStrictlyUpperTriangular) {
+            System.err.println("Warning: attribute " + IS_STRICTLY_UPPER + " in " + MATRIX_PARAMETER + " should only be set to 'false' " +
+                    "for debugging and testing purposes.");
+            compoundSymmetricMatrix.setStrictlyUpperTriangular(false);
+        }
+
         int dimOff = diagonalParameter.getDimension() * (diagonalParameter.getDimension() - 1) / 2;
+        if (!isStrictlyUpperTriangular) dimOff = dimOff + diagonalParameter.getDimension();
+
         if (dimOff != offDiagonalParameter.getDimension()) {
             throw new XMLParseException("The vector '" + OFF_DIAGONAL + "' must be of dimension n*(n-1)/2 = " + dimOff + ", where n=" + diagonalParameter.getDimension() + " is the dimension of the vector '" + DIAGONAL + "'.");
         }
 
-        return new CompoundSymmetricMatrix(diagonalParameter, offDiagonalParameter, asCorrelation, isCholesky);
+        return compoundSymmetricMatrix;
     }
 
     //************************************************************************
@@ -82,7 +97,8 @@ public class CompoundSymmetricMatrixParser extends AbstractXMLObjectParser {
             new ElementRule(OFF_DIAGONAL,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             AttributeRule.newBooleanRule(AS_CORRELATION, true),
-            AttributeRule.newBooleanRule(IS_CHOLESKY, true)
+            AttributeRule.newBooleanRule(IS_CHOLESKY, true),
+            AttributeRule.newBooleanRule(IS_STRICTLY_UPPER, true)
     };
 
     public Class getReturnType() {

@@ -41,7 +41,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
     public final static String FACTORS = "factors";
     public final static String DATA = "data";
     public final static String LOADINGS = "loadings";
-    public static final String ROW_PRECISION = "rowPrecision";
+    //    public static final String ROW_PRECISION = "rowPrecision";
     public static final String COLUMN_PRECISION = "columnPrecision";
     public static final String SCALE_DATA = "scaleData";
     public static final String CONTINUOUS = "continuous";
@@ -59,7 +59,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         MatrixParameterInterface factors;
-        if (xo.getChild(FACTORS).getChild(FastMatrixParameter.class) == null) {
+        if (xo.getChild(FACTORS).getChild(MatrixParameterInterface.class) == null) {
             CompoundParameter factorsTemp = (CompoundParameter) xo.getChild(FACTORS).getChild(CompoundParameter.class);
             factors = MatrixParameter.recast(factorsTemp.getParameterName(), factorsTemp);
         } else {
@@ -103,7 +103,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
             }
 
         }
-        DiagonalMatrix rowPrecision = (DiagonalMatrix) xo.getChild(ROW_PRECISION).getChild(MatrixParameter.class);
+//        DiagonalMatrix rowPrecision = (DiagonalMatrix) xo.getChild(ROW_PRECISION).getChild(MatrixParameter.class);
         DiagonalMatrix colPrecision = (DiagonalMatrix) xo.getChild(COLUMN_PRECISION).getChild(MatrixParameter.class);
         boolean newModel = xo.getAttribute(COMPUTE_RESIDUALS_FOR_DISCRETE, true);
         boolean computeResiduals = xo.getAttribute(RECOMPUTE_RESIDUALS, true);
@@ -126,7 +126,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 //        }
 
 
-        return new LatentFactorModel(dataParameter, factors, loadings, rowPrecision, colPrecision, missingIndicator, scaleData, continuous, newModel, computeResiduals, computeFactors, computeLoadings);
+        return new LatentFactorModel(dataParameter, factors, loadings, colPrecision, missingIndicator, scaleData, continuous, newModel, computeResiduals, computeFactors, computeLoadings);
     }
 
     private static final XMLSyntaxRule[] rules = {
@@ -147,9 +147,9 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
             new ElementRule(LOADINGS, new XMLSyntaxRule[]{
                     new ElementRule(MatrixParameterInterface.class)
             }),
-            new ElementRule(ROW_PRECISION, new XMLSyntaxRule[]{
-                    new ElementRule(DiagonalMatrix.class)
-            }),
+//            new ElementRule(ROW_PRECISION, new XMLSyntaxRule[]{
+//                    new ElementRule(DiagonalMatrix.class)
+//            }),
             new ElementRule(COLUMN_PRECISION, new XMLSyntaxRule[]{
                     new ElementRule(DiagonalMatrix.class)
             }),

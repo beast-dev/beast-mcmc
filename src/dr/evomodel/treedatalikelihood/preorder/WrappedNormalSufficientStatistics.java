@@ -32,7 +32,7 @@ public class WrappedNormalSufficientStatistics {
                                              DenseMatrix64F Pd,
                                              PrecisionType precisionType) {
 
-        int partialOffset = (dim + precisionType.getMatrixLength(dim)) * index;
+        int partialOffset = (precisionType.getPartialsDimension(dim)) * index;
         this.mean = new WrappedVector.Raw(buffer, partialOffset, dim);
         if (precisionType == PrecisionType.SCALAR) {
             this.precision = new WrappedMatrix.Raw(Pd.getData(), 0, dim, dim);

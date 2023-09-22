@@ -33,7 +33,7 @@ public class SubstitutionModelRandomEffectClassifier extends TreeStatistic imple
     private final boolean usingRateVariation;
     private final boolean usingEpochs;
     private boolean[] epochUsesTargetModel;
-
+    private boolean nullIsZero;
 //    private double[] countMatrix;
     private int[] fromState;
     private int[] toState;
@@ -45,13 +45,15 @@ public class SubstitutionModelRandomEffectClassifier extends TreeStatistic imple
                                                    BranchRateModel branchRates,
                                                    GammaSiteRateModel siteModel,
                                                    int nSites,
-                                                   double threshold) {
+                                                   double threshold,
+                                                   boolean nullIsZero) {
         super(name);
         this.tree = tree;
         this.glmSubstitutionModel = glmSubstitutionModel;
         this.epochBranchModel = epochBranchModel;
         this.siteModel = siteModel;
         this.branchRates = branchRates;
+        this.nullIsZero = nullIsZero;
 
         usingRateVariation = siteModel != null ? true : false;
         usingEpochs = epochBranchModel != null ? true : false;
@@ -125,7 +127,11 @@ public class SubstitutionModelRandomEffectClassifier extends TreeStatistic imple
         if (!includeRandomEffect) {
             double[] copiedParameterValues = glmSubstitutionModel.getGeneralizedLinearModel().getRandomEffect(0).getParameterValues();
 //            double randomEffect = glmSubs.getGLM().getRandomEffect(0).getParameterValue(index);
-            relativeRates[index] /= Math.exp(copiedParameterValues[index]);
+            if (nullIsZero) {
+                relativeRates[index] /= Math.exp(copiedParameterValues[index]);
+            } else {
+                relativeRates[index] = 0.0;
+            }
         }
 
         for (int i = 0; i < dim; i++) {

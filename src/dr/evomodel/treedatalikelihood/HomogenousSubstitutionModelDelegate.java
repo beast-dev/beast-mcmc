@@ -29,6 +29,7 @@ import beagle.Beagle;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.EigenDecomposition;
+import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 
 import java.io.Serializable;
@@ -41,6 +42,7 @@ import java.io.Serializable;
 public final class HomogenousSubstitutionModelDelegate implements EvolutionaryProcessDelegate, Serializable {
 
     private final SubstitutionModel substitutionModel;
+    private final FrequencyModel rootFrequencyModel;
 
     private final int eigenCount = 1;
     private final int nodeCount;
@@ -77,6 +79,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
         assert(branchModel.getSubstitutionModels().size() == 1) : "this delegate should only be used with simple branch models";
 
         this.substitutionModel = branchModel.getRootSubstitutionModel();
+        this.rootFrequencyModel = branchModel.getRootFrequencyModel();
 
         this.nodeCount = tree.getNodeCount();
 
@@ -98,6 +101,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     public HomogenousSubstitutionModelDelegate(SubstitutionModel substitutionModel, int matrixCount) {
 
         this.substitutionModel = substitutionModel;
+        this.rootFrequencyModel = substitutionModel.getFrequencyModel();
 
         // two eigen buffers for each decomposition for store and restore.
         eigenBufferHelper = new BufferIndexHelper(eigenCount, 0, 1);
@@ -209,7 +213,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
 
     @Override
     public double[] getRootStateFrequencies() {
-        return substitutionModel.getFrequencyModel().getFrequencies();
+        return rootFrequencyModel.getFrequencies();
     }
 
     @Override

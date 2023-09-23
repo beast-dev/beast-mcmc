@@ -37,6 +37,7 @@ import dr.xml.*;
 public class SubstitutionModelRandomEffectClassifierParser extends AbstractXMLObjectParser {
     public static final String NAME = "SubstitutionModelRandomEffectClassifier";
     public static final String THRESHOLD = "threshold";
+    public static final String NULL_VALUE = "nullValue";
 
     public String getParserName() {
         return NAME;
@@ -65,7 +66,17 @@ public class SubstitutionModelRandomEffectClassifierParser extends AbstractXMLOb
             threshold = xo.getDoubleAttribute(THRESHOLD);
         }
 
-        return new SubstitutionModelRandomEffectClassifier(xo.getId(), tree, glm, epochs, branchRates, siteModel, nPatterns, threshold);
+        boolean nullIzZero = true;
+        if (xo.hasAttribute(NULL_VALUE)) {
+            String h0 = xo.getStringAttribute(NULL_VALUE);
+            if (h0.equals("negativeInfinity")) {
+                nullIzZero = false;
+            } else if (!h0.equals("zero")) {
+                throw new RuntimeException("Invalid option for " + NULL_VALUE);
+            }
+        }
+
+        return new SubstitutionModelRandomEffectClassifier(xo.getId(), tree, glm, epochs, branchRates, siteModel, nPatterns, threshold, nullIzZero);
     }
 
     //************************************************************************
@@ -93,6 +104,7 @@ public class SubstitutionModelRandomEffectClassifierParser extends AbstractXMLOb
             new ElementRule(GammaSiteRateModel.class,true),
             new ElementRule(BranchRateModel.class,false),
             new ElementRule(PatternList.class,false),
-            AttributeRule.newDoubleRule(THRESHOLD,true,"If threshold is positive, this is used as the cutoff number of substitutions and the statistic returns 0/1 for each random-effect. Otherwise, the difference in expected substitution counts is returned for each random-effect.")
+            AttributeRule.newDoubleRule(THRESHOLD,true,"If threshold is positive, this is used as the cutoff number of substitutions and the statistic returns 0/1 for each random-effect. Otherwise, the difference in expected substitution counts is returned for each random-effect."),
+            AttributeRule.newStringRule(NULL_VALUE,true,"By setting this to \"negativeInfinity\", instead of the default \"zero\", allows testing if an element of the rate matrix is 0 (a random-effect value of NegativeInfinity makes the corresponding rate 0).")
     };
 }

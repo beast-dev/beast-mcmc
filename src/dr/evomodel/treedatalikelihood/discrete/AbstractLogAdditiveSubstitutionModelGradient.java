@@ -61,9 +61,9 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
 
     protected final ComplexSubstitutionModel substitutionModel;
     protected final int stateCount;
-    protected final int whichSubstitutionModel;
-    protected final int substitutionModelCount;
-    protected int[] crossProductAccumulationMap;
+//    protected final int whichSubstitutionModel;
+//    protected final int substitutionModelCount;
+    protected final List<Integer> crossProductAccumulationMap;
 
     private final ApproximationMode mode;
 
@@ -103,16 +103,20 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         this.branchModel = likelihoodDelegate.getBranchModel();
         this.substitutionModel = substitutionModel;
         this.stateCount = substitutionModel.getDataType().getStateCount();
-        this.whichSubstitutionModel = determineSubstitutionNumber(
-                likelihoodDelegate.getBranchModel(), substitutionModel);
-        this.substitutionModelCount = determineSubstitutionModelCount(likelihoodDelegate.getBranchModel());
+
+//        this.whichSubstitutionModel = determineSubstitutionNumber(
+//                likelihoodDelegate.getBranchModel(), substitutionModel);
+//        this.substitutionModelCount = determineSubstitutionModelCount(likelihoodDelegate.getBranchModel());
+
+        this.crossProductAccumulationMap = createCrossProductAccumulationMap(likelihoodDelegate.getBranchModel(),
+                substitutionModel);
 
         this.mode = mode;
 
-        this.crossProductAccumulationMap = new int[0];
-        if (substitutionModelCount > 1) {
-            updateCrossProductAccumulationMap();
-        }
+//        this.crossProductAccumulationMap = new int[0];
+//        if (substitutionModelCount > 1) {
+//            updateCrossProductAccumulationMap();
+//        }
 
         String name = SubstitutionModelCrossProductDelegate.getName(traitName);
 
@@ -150,9 +154,9 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         double[] crossProducts = (double[]) treeTraitProvider.getTrait(tree, null);
         double[] generator = new double[crossProducts.length];
 
-        if (whichSubstitutionModel > 1 || substitutionModelCount > 1) {
-            accumulateAcrossSubstitutionModelInstances(crossProducts);
-        }
+//        if (whichSubstitutionModel > 1 || substitutionModelCount > 1) {
+        accumulateAcrossSubstitutionModelInstances(crossProducts);
+//        }
 
         substitutionModel.getInfinitesimalMatrix(generator);
         crossProducts = correctDifferentials(crossProducts);
@@ -187,7 +191,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
             double[] correction = new double[differentials.length];
 //            System.arraycopy(differentials, 0, correction, 0, differentials.length);
 
-            if (whichSubstitutionModel > 0) {
+            if (crossProductAccumulationMap.size() > 1) {
                 throw new RuntimeException("Not yet implemented");
             }
 
@@ -261,60 +265,89 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         return j * stateCount + i;
     }
 
-    private int determineSubstitutionNumber(BranchModel branchModel,
-                                            ComplexSubstitutionModel substitutionModel) {
+//    private int determineSubstitutionNumber(BranchModel branchModel,
+//                                            ComplexSubstitutionModel substitutionModel) {
+//
+//        List<SubstitutionModel> substitutionModels = branchModel.getSubstitutionModels();
+//        for (int i = 0; i < substitutionModels.size(); ++i) {
+//            if (substitutionModel == substitutionModels.get(i)) {
+//                return i;
+//            }
+//        }
+//        throw new IllegalArgumentException("Unknown substitution model");
+//    }
 
-        List<SubstitutionModel> substitutionModels = branchModel.getSubstitutionModels();
-        for (int i = 0; i < substitutionModels.size(); ++i) {
-            if (substitutionModel == substitutionModels.get(i)) {
-                return i;
-            }
-        }
-        throw new IllegalArgumentException("Unknown substitution model");
-    }
-
-    private int determineSubstitutionModelCount(BranchModel branchModel) {
-        List<SubstitutionModel> substitutionModels = branchModel.getSubstitutionModels();
-        return substitutionModels.size();
-    }
+//    private int determineSubstitutionModelCount(BranchModel branchModel) {
+//        List<SubstitutionModel> substitutionModels = branchModel.getSubstitutionModels();
+//        return substitutionModels.size();
+//    }
 
     private void accumulateAcrossSubstitutionModelInstances(double[] crossProducts) {
         final int length = stateCount * stateCount;
 
-        // copy first set of entries instead of accumulating
-        System.arraycopy(
-                crossProducts, whichSubstitutionModel * length,
-                crossProducts, 0, length);
+//        // copy first set of entries instead of accumulating
+//        System.arraycopy(
+//                crossProducts, whichSubstitutionModel * length,
+//                crossProducts, 0, length);
+//
+//        if ( crossProductAccumulationMap.length > 0 ) {
+//            for (int i : crossProductAccumulationMap) {
+//                for (int j = 0; j < length; j++) {
+//                    crossProducts[j] += crossProducts[i * length + j];
+//                }
+//            }
+//        }
 
-        if ( crossProductAccumulationMap.length > 0 ) {
-            for (int i : crossProductAccumulationMap) {
-                for (int j = 0; j < length; j++) {
-                    crossProducts[j] += crossProducts[i * length + j];
-                }
-            }
+        int firstModel = crossProductAccumulationMap.get(0);
+        if (firstModel > 0) {
+            // Copy first set of entries
+            System.arraycopy(
+                    crossProducts, firstModel * length,
+                    crossProducts, 0, length);
         }
 
+        for (int i = 1; i < crossProductAccumulationMap.size(); ++i) {
+            int nextModel = crossProductAccumulationMap.get(i);
+            for (int j = 0; j < length; ++j) {
+                crossProducts[j] += crossProducts[nextModel * length + j];
+            }
+        }
     }
 
-    private void updateCrossProductAccumulationMap() {
-//        System.err.println("Updating crossProductAccumulationMap");
-        List<Integer> matchingModels = new ArrayList<>();
+    private List<Integer> createCrossProductAccumulationMap(BranchModel branchModel,
+                                                            ComplexSubstitutionModel substitutionModel) {
+
         List<SubstitutionModel> substitutionModels = branchModel.getSubstitutionModels();
-
-        // We copy whichSubstitutionModel instead of accumulating it
+        List<Integer> map = new ArrayList<>();
+        
         for (int i = 0; i < substitutionModels.size(); ++i) {
-            if (i != whichSubstitutionModel && substitutionModel == substitutionModels.get(i)) {
-                matchingModels.add(i);
+            if (substitutionModel == substitutionModels.get(i)) {
+                map.add(i);
             }
         }
 
-        crossProductAccumulationMap = new int[matchingModels.size()];
-        if (matchingModels.size() > 0) {
-            for (int i = 0; i < matchingModels.size(); ++i) {
-                crossProductAccumulationMap[i] = matchingModels.get(i);
-            }
-        }
+        return map;
     }
+
+//    private void updateCrossProductAccumulationMap() {
+////        System.err.println("Updating crossProductAccumulationMap");
+//        List<Integer> matchingModels = new ArrayList<>();
+//        List<SubstitutionModel> substitutionModels = branchModel.getSubstitutionModels();
+//
+//        // We copy whichSubstitutionModel instead of accumulating it
+//        for (int i = 0; i < substitutionModels.size(); ++i) {
+//            if (i != whichSubstitutionModel && substitutionModel == substitutionModels.get(i)) {
+//                matchingModels.add(i);
+//            }
+//        }
+//
+//        crossProductAccumulationMap = new int[matchingModels.size()];
+//        if (matchingModels.size() > 0) {
+//            for (int i = 0; i < matchingModels.size(); ++i) {
+//                crossProductAccumulationMap[i] = matchingModels.get(i);
+//            }
+//        }
+//    }
 
     @Override
     public Likelihood getLikelihood() {
@@ -358,9 +391,14 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
     }
 
     // This has not been rigorously tested for epochs that change structure
+    @SuppressWarnings("unused")
     protected void handleModelChangedEvent(Model model, Object object, int index) {
+//        if (model == branchModel) {
+//            updateCrossProductAccumulationMap();
+//        }
         if (model == branchModel) {
-            updateCrossProductAccumulationMap();
+//            crossProductAccumulationMap = createCrossProductAccumulationMap(branchModel, substitutionModel);
+            throw new RuntimeException("Not yet implemented");
         }
     }
 

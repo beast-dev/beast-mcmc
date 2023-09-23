@@ -45,6 +45,7 @@ import dr.xml.Reportable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * @author Marc A. Suchard
@@ -64,13 +65,39 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
     protected final int substitutionModelCount;
     protected int[] crossProductAccumulationMap;
 
-    private static final boolean USE_AFFINE_CORRECTION = false;
+    private final ApproximationMode mode;
+
+    enum ApproximationMode {
+        FIRST_ORDER {
+            @Override
+            public String getInfo() {
+                return "a first-order";
+            }
+        },
+        AFFINE_CORRECTED {
+            @Override
+            public String getInfo() {
+                return "an affine-corrected";
+            }
+        };
+
+        public abstract String getInfo();
+    }
+
+    private static final ApproximationMode DEFAULT_MODE = ApproximationMode.AFFINE_CORRECTED;
 
     public AbstractLogAdditiveSubstitutionModelGradient(String traitName,
                                                         TreeDataLikelihood treeDataLikelihood,
                                                         BeagleDataLikelihoodDelegate likelihoodDelegate,
                                                         ComplexSubstitutionModel substitutionModel) {
+        this(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel, DEFAULT_MODE); // TODO Remove this constructor
+    }
 
+    public AbstractLogAdditiveSubstitutionModelGradient(String traitName,
+                                                        TreeDataLikelihood treeDataLikelihood,
+                                                        BeagleDataLikelihoodDelegate likelihoodDelegate,
+                                                        ComplexSubstitutionModel substitutionModel,
+                                                        ApproximationMode mode) {
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.branchModel = likelihoodDelegate.getBranchModel();
@@ -79,6 +106,8 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         this.whichSubstitutionModel = determineSubstitutionNumber(
                 likelihoodDelegate.getBranchModel(), substitutionModel);
         this.substitutionModelCount = determineSubstitutionModelCount(likelihoodDelegate.getBranchModel());
+
+        this.mode = mode;
 
         this.crossProductAccumulationMap = new int[0];
         if (substitutionModelCount > 1) {
@@ -99,6 +128,9 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
 
         treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
         assert (treeTraitProvider != null);
+
+        Logger.getLogger("dr.evomodel.treedatalikelihood.discrete").info(
+                "Gradient wrt " + traitName + " using " + mode.getInfo() + " approximation");
     }
 
     protected abstract double preProcessNormalization(double[] differentials, double[] generator, boolean normalize);
@@ -155,7 +187,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
     }
 
     double[] correctDifferentials(double[] differentials) {
-        if (USE_AFFINE_CORRECTION) {
+        if (mode == ApproximationMode.AFFINE_CORRECTED) {
             double[] correction = new double[differentials.length];
 //            System.arraycopy(differentials, 0, correction, 0, differentials.length);
 
@@ -170,6 +202,10 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
             double[] inverseEigenVectors = ed.getInverseEigenVectors();
 
             double[] qQPlus = getQQPlus(eigenVectors, inverseEigenVectors, index);
+            double[] qPlusQ = getQPlusQ(eigenVectors, inverseEigenVectors, index);
+
+            double[] generator = new double[16];
+            substitutionModel.getInfinitesimalMatrix(generator);
 
             for (int m = 0; m < stateCount; ++m) {
                 for (int n = 0; n < stateCount; n++) {
@@ -198,11 +234,9 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
                 differentials[i] -= correction[i];
             }
 
-            return differentials;
-//            return correction;
-        } else {
-            return differentials;
         }
+
+        return differentials;
     }
 
     private int findZeroEigenvalueIndex(double[] eigenvalues) {
@@ -216,6 +250,10 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
 
     private double[] getQQPlus(double[] eigenVectors, double[] inverseEigenVectors, int index) {
         return DifferentiableSubstitutionModelUtil.getQQPlus(eigenVectors, inverseEigenVectors, index, stateCount);
+    }
+
+    private double[] getQPlusQ(double[] eigenVectors, double[] inverseEigenVectors, int index) {
+        return DifferentiableSubstitutionModelUtil.getQPlusQ(eigenVectors, inverseEigenVectors, index, stateCount);
     }
 
     private int index12(int i, int j) {

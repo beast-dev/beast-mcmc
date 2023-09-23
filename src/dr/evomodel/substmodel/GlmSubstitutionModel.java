@@ -238,19 +238,11 @@ public class GlmSubstitutionModel extends ComplexSubstitutionModel
     @Override
     public double getWeightedNormalizationGradient(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[][] differentialMassMatrix, double[] differentialFrequencies) {
         double derivative = 0;
-//        double[] frequencies = getFrequencyModel().getFrequencies();
-//        for (int i = 0; i < stateCount; i++) {
-//            double currentRow = 0;
-//            for (int j = 0; j < stateCount; j++) {
-//                if (i != j) {
-//                    currentRow +=differentialMassMatrix[i][j];
-//                }
-//            }
-//            derivative += currentRow * frequencies[i];
-//        }
-//        return derivative;
-        for (int i = 0; i < stateCount; ++i) {
-            derivative -= differentialMassMatrix[i][i] * getFrequencyModel().getFrequency(i);
+
+        if (getNormalization()) {
+            for (int i = 0; i < stateCount; ++i) {
+                derivative -= differentialMassMatrix[i][i] * getFrequencyModel().getFrequency(i);
+            }
         }
         return derivative;
     }

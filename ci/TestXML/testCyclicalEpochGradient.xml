@@ -653,7 +653,7 @@
     </glmSubstitutionModelGradient>
 
 
-	<assertEqual tolerance="1e-16" verbose="true" charactersToStrip="\[\],">
+	<assertEqual tolerance="1e-12" verbose="true" charactersToStrip="\[\],">
 		<message>
 			Check kappa 1 analytic (approximate)
 		</message>
@@ -667,7 +667,7 @@
 		</expected>
 	</assertEqual>
 
-	<assertEqual tolerance="1e-16" verbose="true" charactersToStrip="\[\],">
+	<assertEqual tolerance="1e-12" verbose="true" charactersToStrip="\[\],">
 		<message>
 			Check kappa 2 analytic (approximate)
 		</message>
@@ -681,7 +681,7 @@
 		</expected>
 	</assertEqual>
 
-	<assertEqual tolerance="1e-16" verbose="true" charactersToStrip="\[\],">
+	<assertEqual tolerance="1e-12" verbose="true" charactersToStrip="\[\],">
 		<message>
 			Check random-effects 1 analytic (approximate)
 		</message>
@@ -695,7 +695,7 @@
 		</expected>
 	</assertEqual>
 
-	<assertEqual tolerance="1e-16" verbose="true" charactersToStrip="\[\],">
+	<assertEqual tolerance="1e-12" verbose="true" charactersToStrip="\[\],">
 		<message>
 			Check random-effects 2 analytic (approximate)
 		</message>

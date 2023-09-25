@@ -84,7 +84,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         public abstract String getInfo();
     }
 
-    private static final ApproximationMode DEFAULT_MODE = ApproximationMode.AFFINE_CORRECTED;
+    private static final ApproximationMode DEFAULT_MODE = ApproximationMode.FIRST_ORDER;
 
     public AbstractLogAdditiveSubstitutionModelGradient(String traitName,
                                                         TreeDataLikelihood treeDataLikelihood,

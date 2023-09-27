@@ -204,7 +204,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
             double[] qQPlus = getQQPlus(eigenVectors, inverseEigenVectors, index);
             double[] qPlusQ = getQPlusQ(eigenVectors, inverseEigenVectors, index);
 
-            double[] generator = new double[16];
+            double[] generator = new double[stateCount * stateCount];
             substitutionModel.getInfinitesimalMatrix(generator);
 
             for (int m = 0; m < stateCount; ++m) {

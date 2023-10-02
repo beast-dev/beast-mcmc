@@ -63,7 +63,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         final Logger logger = Logger.getLogger("dr.evomodel");
 
-        logger.info("\nUsing TreeDataLikelihood");
+        logger.info("\nCreating TreeDataLikelihood");
 
         this.likelihoodDelegate = likelihoodDelegate;
         addModel(likelihoodDelegate);
@@ -79,7 +79,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         this.branchRateModel = branchRateModel;
         if (!(branchRateModel instanceof DefaultBranchRateModel)) {
-            logger.info("  Branch rate model used: " + branchRateModel.getModelName());
+            logger.info("  Branch rate model: " + branchRateModel.getModelName());
         }
         addModel(this.branchRateModel);
 

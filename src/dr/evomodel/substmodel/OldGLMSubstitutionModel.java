@@ -31,6 +31,8 @@ import dr.inference.distribution.LogLinearModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
@@ -41,7 +43,7 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 @Deprecated
-public class OldGLMSubstitutionModel extends ComplexSubstitutionModel {
+public class OldGLMSubstitutionModel extends ComplexSubstitutionModel implements  DifferentiableSubstitutionModel {
 
     public OldGLMSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
                                    LogLinearModel glm) {
@@ -103,6 +105,95 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel {
         return Collections.singletonList(CommonCitations.LEMEY_2014_UNIFYING);
     }
 
-    private LogLinearModel glm;
-    private double[] testProbabilities;
+    final private LogLinearModel glm;
+    final private double[] testProbabilities;
+
+    @Override
+    public WrappedMatrix getInfinitesimalDifferentialMatrix(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt) {
+        // TODO all instantiations of this function currently do the same thing; remove duplication
+        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
+    }
+
+    @Override
+    public DifferentialMassProvider.DifferentialWrapper.WrtParameter factory(Parameter parameter, int dim) {
+        for (int i = 0; i < glm.getNumberOfFixedEffects(); ++i) {
+            Parameter effect = glm.getFixedEffect(i);
+            if (parameter == effect) {
+                return new WrtGlmCoefficient(effect, i, dim);
+            }
+        }
+        throw new RuntimeException("Parameter not found");
+    }
+
+    @Override
+    public void setupDifferentialRates(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt,
+                                       double[] differentialRates,
+                                       double normalizingConstant) {
+        double[] relativeRates = new double[rateCount];
+        setupRelativeRates(relativeRates); // TODO These are large; should cache
+        wrt.setupDifferentialRates(differentialRates, relativeRates, normalizingConstant);
+    }
+
+    @Override
+    public void setupDifferentialFrequency(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt,
+                                           double[] differentialFrequency) {
+        double[] frequencies = freqModel.getFrequencies();
+        System.arraycopy(frequencies, 0, differentialFrequency, 0, frequencies.length);
+    }
+
+    @Override
+    public double getWeightedNormalizationGradient(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt,
+                                                   double[][] differentialMassMatrix,
+                                                   double[] differentialFrequencies) {
+        double weight = 0.0;
+        for (int i = 0; i < stateCount; ++i) {
+            weight -= differentialMassMatrix[i][i] * getFrequencyModel().getFrequency(i);
+        }
+        return weight;
+    }
+
+    class WrtGlmCoefficient implements DifferentialMassProvider.DifferentialWrapper.WrtParameter {
+
+        final private Parameter parameter;
+        final int effect;
+        final int dim;
+
+        public WrtGlmCoefficient(Parameter parameter, int effect, int dim) {
+            this.parameter = parameter;
+            this.effect = effect;
+            this.dim = dim;
+        }
+
+        @Override
+        public void setupDifferentialRates(double[] differentialRates,
+                                           double[] relativeRates,
+                                           double normalizingConstant) {
+
+            final double chainRule = getChainRule();
+            double[][] design = glm.getX(effect);
+
+            for (int i = 0; i < relativeRates.length; ++i) {
+                differentialRates[i] = design[i][dim] / normalizingConstant * chainRule;
+            }
+        }
+
+        double getChainRule() {
+            return Math.exp(parameter.getParameterValue(dim));
+        }
+
+        @Override
+        public double getRate(int switchCase) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double getNormalizationDifferential() {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public void setupDifferentialFrequencies(double[] differentialFrequencies, double[] frequencies) {
+            throw new RuntimeException("Not yet implemented");
+        }
+    }
 }

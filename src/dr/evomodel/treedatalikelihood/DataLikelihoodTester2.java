@@ -49,7 +49,7 @@ import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
-import dr.evomodelxml.siteratemodel.GammaSiteModelParser;
+import dr.evomodelxml.siteratemodel.SiteModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.inference.model.Parameter;
 
@@ -88,9 +88,9 @@ public class DataLikelihoodTester2 {
         //siteModel
         double alpha = 0.5;
         GammaSiteRateModel siteRateModel = new GammaSiteRateModel("gammaModel", alpha, 4);
-//        GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteRateModel");
+//        GammaSiteRateModelParser siteRateModel = new GammaSiteRateModelParser("siteRateModel");
         siteRateModel.setSubstitutionModel(hky);
-        Parameter mu = new Parameter.Default(GammaSiteModelParser.SUBSTITUTION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter mu = new Parameter.Default(SiteModelParser.SUBSTITUTION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
         siteRateModel.setRelativeRateParameter(mu);
 
         FrequencyModel f2 = new FrequencyModel(Nucleotides.INSTANCE, freqs);

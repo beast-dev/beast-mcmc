@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <beast>
-    <taxa>
+    <taxa id="taxa">
         <taxon id="taxon1">
             <attr name="sparse">0.0076177742633394985 NA NA -0.8666572905938715 NA -0.5001246338040305 NA</attr>
             <attr name="full">0.0076177742633394985 NA NA -0.8666572905938715 -0.454549337998158 -0.5001246338040305

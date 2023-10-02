@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <beast>
-    <taxa>
-        <taxa>
+    <taxa id="taxa">
+        <taxa id="taxa2">
             <taxon id="taxon_1">
                 <attr name="factors">0.0076177742633394985 0.04658821120386576 -0.454549337998158</attr>
                 <attr name="traits">0.6516453793311435 -0.30672526997380434 -1.0662258001632197 NA NA

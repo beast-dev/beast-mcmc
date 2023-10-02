@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <beast>
-    <taxa>
+    <taxa id="taxa">
         <taxon id="taxon1">
             <attr name="tRes">NA -0.5397266841036715</attr>
             <attr name="tFac">0.0076177742633394985 NA NA NA NA</attr>

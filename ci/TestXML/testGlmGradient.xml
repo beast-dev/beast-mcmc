@@ -190,15 +190,28 @@
     </glmSubstitutionModelGradient>
  -->
 
-    <report>
-    	<glmSubstitutionModelGradient idref="gradient1"/>
-    </report>
+<!--    <report>-->
+<!--    	<glmSubstitutionModelGradient idref="gradient1"/>-->
+<!--    </report>-->
 
 <!--
     <report>
     	<substitutionGeneratorGradient idref="gradient2"/>
     </report>
  -->
+	<assertEqual tolerance="1e-12" verbose="true" charactersToStrip="\[\],">
+		<message>
+			Check GLM gradient
+		</message>
+		<actual regex="analytic:\s(.*?)\n">
+			<report>
+				<glmSubstitutionModelGradient idref="gradient1"/>
+			</report>
+		</actual>
+		<expected>
+			1.5414842830364991E-16, -2.4678434049948024, -0.1228490337414247, 0.11116848084002778, -0.9071401815321029, -0.1224916091163623
+		</expected>
+	</assertEqual>
 
 
 </beast>

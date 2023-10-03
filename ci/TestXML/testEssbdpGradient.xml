@@ -47,7 +47,7 @@
     <!-- ########## -->
 
     <!-- multiple rates model with three intervals -->
-    <newBirthDeathSerialSampling id="new.bdss1" units="years" hasFinalSample="false" conditionOnSurvival="false">
+    <newBirthDeathSerialSampling id="new.bdss1" units="years" hasFinalSample="false" conditionOnSurvival="true">
         <birthRate>
             <parameter id="bdss1.birthRate" value ="8.47 2.88 1.82" lower="0.0"/>
         </birthRate>
@@ -127,7 +127,7 @@
     <!-- ########## -->
 
     <!-- multiple rates model with three intervals and one intensive sampling event at t1 = 2 -->
-    <newBirthDeathSerialSampling id="new.bdss2" units="years" hasFinalSample="false" conditionOnSurvival="false">
+    <newBirthDeathSerialSampling id="new.bdss2" units="years" hasFinalSample="false" conditionOnSurvival="true">
         <birthRate>
             <parameter id="bdss2.birthRate" value ="8.47 2.88 1.82" lower="0.0"/>
         </birthRate>
@@ -234,7 +234,7 @@
     </treeModel>
 
 
-    <newBirthDeathSerialSampling id="bdss3" units="years" conditionOnSurvival="false">
+    <newBirthDeathSerialSampling id="bdss3" units="years" conditionOnSurvival="true">
         <birthRate>
             <parameter id="bdss3.birthRate" value ="8.47 4.66 1.82" lower="0.0"/>
         </birthRate>
@@ -307,7 +307,7 @@
     <!-- ########## -->
 
     <!-- Origin is in different interval from rest of tree -->
-    <newBirthDeathSerialSampling id="new.bdss4" units="years" hasFinalSample="false" conditionOnSurvival="false">
+    <newBirthDeathSerialSampling id="new.bdss4" units="years" hasFinalSample="false" conditionOnSurvival="true">
         <birthRate>
             <parameter id="bdss4.birthRate" value ="8.47 2.88 1.82" lower="0.0"/>
         </birthRate>

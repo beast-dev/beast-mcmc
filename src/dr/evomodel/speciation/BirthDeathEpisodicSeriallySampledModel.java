@@ -452,9 +452,7 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
     }
 
     @Override
-    public double logConditioningProbability() {
-       return 0;
-    }
+    public double logConditioningProbability(int model) {return 0;}
 
     private double partialApartialLambda(int i) {
         return (lambda(i) - mu(i) + psi(i)) / Ai[i];
@@ -733,7 +731,7 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
     }
 
     @Override
-    public void logConditioningProbability(double[] gradient) {
+    public void logConditioningProbability(int currentModelSegment, double[] gradient) {
         return;
     }
     @Override

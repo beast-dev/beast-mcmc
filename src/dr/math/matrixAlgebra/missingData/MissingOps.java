@@ -26,7 +26,7 @@ import static dr.util.EuclideanToInfiniteNormUnitBallTransform.projection;
  */
 public class MissingOps {
 
-    final static double EPS = MachineAccuracy.SQRT_EPSILON;
+    final static double EPS = 1e-8;
 
     public static DenseMatrix64F wrap(final double[] source, final int offset,
                                       final int numRows, final int numCols) {

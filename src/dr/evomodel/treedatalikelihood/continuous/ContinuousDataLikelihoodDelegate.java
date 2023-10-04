@@ -419,9 +419,15 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                     double[] partial = dataModel.getTipPartial(tip, false);
                     WrappedMatrix tipVariance = new WrappedMatrix.Raw(partial, dimTrait + dimTrait * dimTrait,
                             dimTrait, dimTrait);
-                    for (int row = 0; row < dimTrait; ++row) {
-                        for (int col = 0; col < dimTrait; ++col) {
-                            jointVariance[tip * dimTrait + row][tip * dimTrait + col] += tipVariance.get(row, col);
+                    int offsetVar = 0;
+                    int dim = dimTrait;
+                    if (dataModel instanceof RepeatedMeasuresIntegratedProcessTraitDataModel) {
+                        offsetVar = dimTrait / 2;
+                        dim = dimTrait / 2;
+                    }
+                    for (int row = 0; row < dim; ++row) {
+                        for (int col = 0; col < dim; ++col) {
+                            jointVariance[tip * dim + row][tip * dim + col] += tipVariance.get(row + offsetVar, col + offsetVar);
                         }
                     }
                 }

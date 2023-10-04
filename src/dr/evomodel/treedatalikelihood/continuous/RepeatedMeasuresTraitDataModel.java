@@ -38,17 +38,13 @@ import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.matrixAlgebra.CholeskyDecomposition;
-import dr.math.matrixAlgebra.IllegalDimension;
-import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.*;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -64,7 +60,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     private boolean variableChanged = true;
     private boolean varianceKnown = false;
 
-    private Matrix samplingPrecision;
+    protected Matrix samplingPrecision;
     private Matrix samplingVariance;
     private Matrix storedSamplingPrecision;
     private Matrix storedSamplingVariance;
@@ -73,16 +69,15 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 
     private boolean[] missingTraitIndicators = null;
 
-
     public RepeatedMeasuresTraitDataModel(String name,
                                           CompoundParameter parameter,
                                           boolean[] missindIndicators,
                                           boolean useMissingIndices,
                                           final int dimTrait,
-                                          MatrixParameterInterface samplingPrecision) {
+                                          MatrixParameterInterface samplingPrecision,
+                                          PrecisionType precisionType) {
 
-        super(name, parameter, missindIndicators, useMissingIndices, dimTrait,
-                dimTrait == 1 ? PrecisionType.SCALAR : PrecisionType.FULL); //TODO: Not sure this is the best way to do this.
+        super(name, parameter, missindIndicators, useMissingIndices, dimTrait, precisionType);
 
         this.traitName = name;
         this.samplingPrecisionParameter = samplingPrecision;
@@ -99,6 +94,16 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 
     }
 
+    public RepeatedMeasuresTraitDataModel(String name,
+                                          CompoundParameter parameter,
+                                          boolean[] missindIndicators,
+                                          boolean useMissingIndices,
+                                          final int dimTrait,
+                                          MatrixParameterInterface samplingPrecision) {
+        this(name, parameter, missindIndicators, useMissingIndices, dimTrait, samplingPrecision,
+                dimTrait == 1 ? PrecisionType.SCALAR : PrecisionType.FULL); //TODO: Not sure this is the best way to do this.
+    }
+
     @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
 
@@ -112,9 +117,23 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         }
 
         double[] partial = super.getTipPartial(taxonIndex, fullyObserved);
+
         if (precisionType == precisionType.SCALAR) {
             return partial; //TODO: I don't think this is right, especially given constructor above.
         }
+
+        scalePartialwithSamplingPrecision(partial, dimTrait);
+
+        if (DEBUG) {
+            System.err.println("taxon " + taxonIndex);
+            System.err.println("\tprecision: " + new WrappedMatrix.Raw(partial, dimTrait, dimTrait, dimTrait));
+            System.err.println("\tmean: " + new WrappedVector.Raw(partial, 0, dimTrait));
+        }
+
+        return partial;
+    }
+
+    protected void scalePartialwithSamplingPrecision(double[] partial, int dimTrait) {
         DenseMatrix64F V = MissingOps.wrap(partial, dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
         //TODO: remove diagonalOnly part
@@ -136,14 +155,6 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 
         MissingOps.unwrap(P, partial, dimTrait);
         MissingOps.unwrap(V, partial, dimTrait + dimTrait * dimTrait);
-
-        if (DEBUG) {
-            System.err.println("taxon " + taxonIndex);
-            System.err.println("\tprecision: " + P);
-            System.err.println("\tmean: " + new WrappedVector.Raw(partial, 0, dimTrait));
-        }
-
-        return partial;
     }
 
     @Override
@@ -151,14 +162,18 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         if (getDataMissingIndicators() == null) {
             return null;
         } else if (missingTraitIndicators == null) {
-            this.missingTraitIndicators = new boolean[getParameter().getDimension()];
+            this.missingTraitIndicators = new boolean[getParameterPartialDimension()];
             Arrays.fill(missingTraitIndicators, true); // all traits are latent
         }
         return missingTraitIndicators;
     }
 
+    protected int getParameterPartialDimension() {
+        return getParameter().getDimension();
+    }
 
-    private void recomputeVariance() {
+
+    protected void recomputeVariance() {
         checkVariableChanged();
         if (!varianceKnown) {
             samplingVariance = samplingPrecision.inverse();
@@ -283,6 +298,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     public static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
     private static final String PRECISION = "samplingPrecision";
     private static final String SCALE_BY_TIP_HEIGHT = "scaleByTipHeight";
+    private static final String INTEGRATED_PROCESS = "integratedProcess";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
         @Override
@@ -325,18 +341,33 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 //            }
 
             boolean scaleByTipHeight = xo.getAttribute(SCALE_BY_TIP_HEIGHT, false);
+            boolean integratedProcess = xo.getAttribute(INTEGRATED_PROCESS, false);
+            if (scaleByTipHeight && integratedProcess) {
+                throw new XMLParseException("Integrated process with scaled sampling variance is not implemented.");
+            }
 
             if (!scaleByTipHeight) {
-                return new RepeatedMeasuresTraitDataModel(
-                        traitName,
-                        traitParameter,
-                        missingIndicators,
+                if (!integratedProcess) {
+                    return new RepeatedMeasuresTraitDataModel(
+                            traitName,
+                            traitParameter,
+                            missingIndicators,
 //                    missingIndicators,
-                        true,
-                        samplingPrecision.getColumnDimension(),
+                            true,
+                            samplingPrecision.getColumnDimension(),
 //                    diffusionModel.getPrecisionParameter().getRowDimension(),
-                        samplingPrecision
-                );
+                            samplingPrecision
+                    );
+                } else {
+                    return new RepeatedMeasuresIntegratedProcessTraitDataModel(
+                            traitName,
+                            traitParameter,
+                            missingIndicators,
+                            true,
+                            samplingPrecision.getColumnDimension() / 2,
+                            samplingPrecision
+                    );
+                }
             } else {
                 return new TreeScaledRepeatedMeasuresTraitDataModel(
                         traitName,

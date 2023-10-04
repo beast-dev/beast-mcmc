@@ -1,0 +1,148 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+    <taxa id="taxa">
+        <taxon id="t_905_6.2318">  <date value="7.2427" direction="forwards" units="years"/>  <attr name="location">  4.743020988 </attr> </taxon>
+        <taxon id="t_197_6.4297">  <date value="7.4406" direction="forwards" units="years"/>  <attr name="location">  4.234172593 </attr> </taxon>
+        <taxon id="t_522_3.2917">  <date value="4.3026" direction="forwards" units="years"/>  <attr name="location">  8.258769074 </attr> </taxon>
+        <taxon id="t_875_1.1078">  <date value="2.1187" direction="forwards" units="years"/>  <attr name="location">  5.903103533 </attr> </taxon>
+        <taxon id="t_299_3.3163">  <date value="4.3272" direction="forwards" units="years"/>  <attr name="location"> 11.375337641 </attr> </taxon>
+        <taxon id="t_701_4.8368">  <date value="5.8477" direction="forwards" units="years"/>  <attr name="location"> 14.018692543 </attr> </taxon>
+        <taxon id="t_531_8.1046">  <date value="9.1155" direction="forwards" units="years"/>  <attr name="location"> -0.002457594 </attr> </taxon>
+        <taxon id="t_966_0.6435">  <date value="1.6544" direction="forwards" units="years"/>  <attr name="location">  3.574595472 </attr> </taxon>
+        <taxon id="t_594_2.8976">  <date value="3.9085" direction="forwards" units="years"/>  <attr name="location"> 10.713271347 </attr> </taxon>
+        <taxon id="t_166_7.1920">  <date value="8.2029" direction="forwards" units="years"/>  <attr name="location"> 12.614285356 </attr> </taxon>
+        <taxon id="t_132_0.9484">  <date value="1.9593" direction="forwards" units="years"/>  <attr name="location">  5.842649828 </attr> </taxon>
+        <taxon id="t_236_8.5423">  <date value="9.5532" direction="forwards" units="years"/>  <attr name="location">  1.166627029 </attr> </taxon>
+        <taxon id="t_576_2.1073">  <date value="3.1182" direction="forwards" units="years"/>  <attr name="location">  6.569258843 </attr> </taxon>
+        <taxon id="t_86_8.5122">  <date value="9.5231" direction="forwards" units="years"/>  <attr name="location"> -1.133080490 </attr> </taxon>
+        <taxon id="t_203_7.6382">  <date value="8.6491" direction="forwards" units="years"/>  <attr name="location">  1.410183517 </attr> </taxon>
+        <taxon id="t_424_3.1211">  <date value="4.132" direction="forwards" units="years"/>  <attr name="location">  6.412889265 </attr> </taxon>
+        <taxon id="t_371_6.8555">  <date value="7.8664" direction="forwards" units="years"/>  <attr name="location">  5.213098492 </attr> </taxon>
+        <taxon id="t_613_0.7796">  <date value="1.7905" direction="forwards" units="years"/>  <attr name="location">  3.671048296 </attr> </taxon>
+        <taxon id="t_438_5.2021">  <date value="6.213" direction="forwards" units="years"/>  <attr name="location"> 13.786572972 </attr> </taxon>
+        <taxon id="t_798_5.5496">  <date value="6.5605" direction="forwards" units="years"/>  <attr name="location">  6.673005143 </attr> </taxon>
+        <taxon id="t_554_6.6570">  <date value="7.6679" direction="forwards" units="years"/>  <attr name="location">  3.651223894 </attr> </taxon>
+        <taxon id="t_630_1.5674">  <date value="2.5783" direction="forwards" units="years"/>  <attr name="location">  7.302796271 </attr> </taxon>
+        <taxon id="t_727_7.5443">  <date value="8.5552" direction="forwards" units="years"/>  <attr name="location">  1.685999809 </attr> </taxon>
+        <taxon id="t_45_9.4993">  <date value="10.5102" direction="forwards" units="years"/>  <attr name="location"> -2.125170277 </attr> </taxon>
+        <taxon id="t_503_1.0838">  <date value="2.0947" direction="forwards" units="years"/>  <attr name="location">  6.090180707 </attr> </taxon>
+        <taxon id="t_893_2.0700">  <date value="3.0809" direction="forwards" units="years"/>  <attr name="location">  8.748711311 </attr> </taxon>
+        <taxon id="t_144_1.8122">  <date value="2.8231" direction="forwards" units="years"/>  <attr name="location">  7.163648964 </attr> </taxon>
+        <taxon id="t_269_3.0511">  <date value="4.062" direction="forwards" units="years"/>  <attr name="location"> 10.986258679 </attr> </taxon>
+        <taxon id="t_780_5.2648">  <date value="6.2757" direction="forwards" units="years"/>  <attr name="location"> 13.852090227 </attr> </taxon>
+        <taxon id="t_196_3.7156">  <date value="4.7265" direction="forwards" units="years"/>  <attr name="location">  6.174018689 </attr> </taxon>
+        <taxon id="t_787_5.4709">  <date value="6.4818" direction="forwards" units="years"/>  <attr name="location"> 13.931451395 </attr> </taxon>
+        <taxon id="t_468_2.3174">  <date value="3.3283" direction="forwards" units="years"/>  <attr name="location">  7.325878447 </attr> </taxon>
+        <taxon id="t_734_9.7767">  <date value="10.7876" direction="forwards" units="years"/>  <attr name="location"> -2.756036767 </attr> </taxon>
+        <taxon id="t_329_2.6044">  <date value="3.6153" direction="forwards" units="years"/>  <attr name="location">  7.108565529 </attr> </taxon>
+        <taxon id="t_56_9.6102">  <date value="10.6211" direction="forwards" units="years"/>  <attr name="location"> -2.425634478 </attr> </taxon>
+        <taxon id="t_253_6.8750">  <date value="7.8859" direction="forwards" units="years"/>  <attr name="location"> 12.892724348 </attr> </taxon>
+        <taxon id="t_338_1.6358">  <date value="2.6467" direction="forwards" units="years"/>  <attr name="location">  6.732740295 </attr> </taxon>
+        <taxon id="t_36_9.6489">  <date value="10.6598" direction="forwards" units="years"/>  <attr name="location"> -1.771510751 </attr> </taxon>
+        <taxon id="t_366_0.7474">  <date value="1.7583" direction="forwards" units="years"/>  <attr name="location">  3.836718117 </attr> </taxon>
+        <taxon id="t_829_4.8407">  <date value="5.8516" direction="forwards" units="years"/>  <attr name="location">  5.369177214 </attr> </taxon>
+        <taxon id="t_772_4.5035">  <date value="5.5144" direction="forwards" units="years"/>  <attr name="location">  7.906657323 </attr> </taxon>
+        <taxon id="t_741_0.9269">  <date value="1.9378" direction="forwards" units="years"/>  <attr name="location">  5.852983882 </attr> </taxon>
+        <taxon id="t_825_1.6356">  <date value="2.6465" direction="forwards" units="years"/>  <attr name="location">  6.699068504 </attr> </taxon>
+        <taxon id="t_64_9.5231">  <date value="10.534" direction="forwards" units="years"/>  <attr name="location"> -2.221478744 </attr> </taxon>
+        <taxon id="t_57_0.3043">  <date value="1.3152" direction="forwards" units="years"/>  <attr name="location">  3.238329282 </attr> </taxon>
+        <taxon id="t_460_9.1725">  <date value="10.1834" direction="forwards" units="years"/>  <attr name="location"> -1.227861894 </attr> </taxon>
+        <taxon id="t_797_9.6778">  <date value="10.6887" direction="forwards" units="years"/>  <attr name="location"> -2.854486781 </attr> </taxon>
+        <taxon id="t_39_1.0716">  <date value="2.0825" direction="forwards" units="years"/>  <attr name="location">  6.096372467 </attr> </taxon>
+        <taxon id="t_675_2.1197">  <date value="3.1306" direction="forwards" units="years"/>  <attr name="location">  7.163886820 </attr> </taxon>
+        <taxon id="t_177_2.6410">  <date value="3.6519" direction="forwards" units="years"/>  <attr name="location">  6.338613138 </attr> </taxon>
+    </taxa>
+
+    <newick id="startingTree">
+        ((((t_132_0.9484:0.2904727449,(t_875_1.1078:0.3204643164,((t_338_1.6358:0.0201668845,t_825_1.6356:0.0199668845):0.139947278,(t_468_2.3174:0.2736302392,t_329_2.6044:0.5606302392):0.5680839233):0.6883501539):0.1294084285):0.2285463591,t_741_0.9269:0.497519104):0.2408496364,((t_144_1.8122:0.06295454271,((t_424_3.1211:0.5753613735,(t_196_3.7156:0.9303716116,t_829_4.8407:2.055471612):0.2394897619):0.7685960533,t_675_2.1197:0.3425574268):0.02789711591):1.040261041,((((((t_269_3.0511:0.3111342278,t_594_2.8976:0.1576342278):0.6089137933,(t_299_3.3163:0.6300674287,(((t_787_5.4709:0.06942144205,(t_166_7.1920:0.5891590501,t_253_6.8750:0.2721590501):1.201362392):0.6786812463,t_701_4.8368:0.1140026884):0.08715482791,(t_438_5.2021:0.4117126024,t_780_5.2648:0.4744126024):0.1547449138):1.949409912):0.5551805924):0.06108702738,t_893_2.0700:3.504846342e-05):0.5725282682,t_630_1.5674:0.0699633167):0.4503140188,t_39_1.0716:0.02447733547):0.1020897609,t_503_1.0838:0.1387670964):0.2360484874):0.5204531567):3.39951911,((t_366_0.7474:0.4860498629,(t_613_0.7796:0.2646210441,t_966_0.6435:0.1285210441):0.2536288188):2.334688388,((t_177_2.6410:1.279716711,(((((((t_36_9.6489:1.148124692,t_236_8.5423:0.04152469158):2.01962685,t_371_6.8555:0.3743515419):1.385238472,t_798_5.5496:0.4536900134):0.8724302506,((((t_727_7.5443:0.3433563641,t_203_7.6382:0.4372563641):0.1942002545,(((t_64_9.5231:0.1829180527,((t_56_9.6102:0.1565486252,t_734_9.7767:0.3230486252):0.07385105883,t_45_9.4993:0.119499684):0.03961836872):0.5564894559,t_797_9.6778:0.8941075087):0.3356587073,t_460_9.1725:0.724466216):1.441290403):1.495283157,t_905_6.2318:0.7203397755):0.03450555458,(t_197_6.4297:0.06029010984,((t_531_8.1046:1.515544408,t_86_8.5122:1.923144408):0.05277275755,t_554_6.6570:0.1207171653):0.1668729445):0.8924552203):1.253474934):0.1587299209,t_772_4.5035:0.4387501849):1.074929724,t_522_3.2917:0.3018799084):0.9665916021,t_576_2.1073:0.0840715105):0.661945201):1.207086494,t_57_0.3043:0.1501032053):2.227535046):1.1376496);
+    </newick>
+
+    <treeModel id="treeModel">
+        <newick idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits name="location.tipTraits" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="1" asMatrix="true">
+            <parameter id="location.leafTraits"/>
+        </nodeTraits>
+    </treeModel>
+
+    <multivariateDiffusionModel id="location.diffusionModel">
+        <precisionMatrix>
+            <cachedMatrixInverse id="location.precision.matrix">
+                <diagonalMatrix id="location.variance.matrix">
+                    <parameter id="location.variance.diagonal" value="1.0" lower="0.0"/>
+                </diagonalMatrix>
+            </cachedMatrixInverse>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+
+    <repeatedMeasuresModel id="location.repeatedMeasures" traitName="location" integratedProcess="true">
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="location.leafTraits"/>
+        </traitParameter>
+        <samplingPrecision>
+            <cachedMatrixInverse id="location.sampling.precision.matrix">
+                <diagonalMatrix id="location.sampling.variance.matrix">
+                    <parameter id="location.sampling.variance.diagonal" value="1.0 1.0" lower="0.0 0.0"/>
+                </diagonalMatrix>
+            </cachedMatrixInverse>
+        </samplingPrecision>
+        <multivariateDiffusionModel idref="location.diffusionModel"/>
+    </repeatedMeasuresModel>
+
+    <traitDataLikelihood id="ibmLikelihood" traitName="location" useTreeLength="true" scaleByTime="true" reportAsMultivariate="true" reciprocalRates="false" integrateInternalTraits="true" forceFullPrecision="true" integratedProcess="true">
+        <multivariateDiffusionModel idref="location.diffusionModel"/>
+        <repeatedMeasuresModel idref="location.repeatedMeasures"/>
+        <treeModel idref="treeModel"/>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter id="location.root" value="0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="Infinity"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+
+    <report>
+        With IOU likelihood =
+        <traitDataLikelihood idref="ibmLikelihood"/>
+    </report>
+
+    <mcmc id="ibmMcmc" chainLength="10">
+        <posterior id="ibmPosterior">
+            <traitDataLikelihood idref="ibmLikelihood"/>
+        </posterior>
+        <operators id="ibmOperators">
+            <dirtyLikelihood weight="1">
+                <traitDataLikelihood idref="ibmLikelihood"/>
+            </dirtyLikelihood>
+        </operators>
+        <log logEvery="10">
+            <posterior idref="ibmPosterior"/>
+            <traitDataLikelihood idref="ibmLikelihood"/>
+        </log>
+    </mcmc>
+
+    <assertEqual tolerance="1e-3" verbose="true">
+        <message>
+            Check log likelihood of observed data
+        </message>
+        <actual regex="logDatumLikelihood:\s+(.*)\n">
+            <traitDataLikelihood idref="ibmLikelihood"/>
+        </actual>
+        <expected regex="likelihood:\s+(.*)\n">
+            <posterior idref="ibmPosterior"/>
+        </expected>
+    </assertEqual>
+
+
+</beast>

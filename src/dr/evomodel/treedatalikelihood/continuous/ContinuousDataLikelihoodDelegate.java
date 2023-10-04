@@ -53,6 +53,7 @@ import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -540,7 +541,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             sb.append("variance:\n");
             sb.append(new Matrix(varianceDatum));
 
-            MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(driftDatum, new Matrix(varianceDatum).inverse().toComponents());
+            MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(driftDatum, new SymmetricMatrix(varianceDatum).inverse().toComponents());
             double logDensity = mvn.logPdf(datum);
             sb.append("\n\n");
             sb.append("logDatumLikelihood: ").append(logDensity).append("\n\n");

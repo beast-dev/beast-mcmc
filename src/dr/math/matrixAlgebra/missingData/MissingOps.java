@@ -1,6 +1,7 @@
 package dr.math.matrixAlgebra.missingData;
 
 import dr.inference.model.MatrixParameterInterface;
+import dr.math.MachineAccuracy;
 import dr.math.matrixAlgebra.*;
 import org.ejml.alg.dense.decomposition.lu.LUDecompositionAlt_D64;
 import org.ejml.alg.dense.linsol.lu.LinearSolverLu_D64;
@@ -25,6 +26,7 @@ import static dr.util.EuclideanToInfiniteNormUnitBallTransform.projection;
  */
 public class MissingOps {
 
+    final static double EPS = MachineAccuracy.SQRT_EPSILON;
 
     public static DenseMatrix64F wrap(final double[] source, final int offset,
                                       final int numRows, final int numCols) {
@@ -457,7 +459,7 @@ public class MissingOps {
         } else {
 
             LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.pseudoInverse(true);
-            ((SolvePseudoInverseSvd) solver).setThreshold(1e-8); // TODO No magic numbers, define as static final somewhere obvsious
+            ((SolvePseudoInverseSvd) solver).setThreshold(EPS);
             solver.setA(A);
             solver.solve(B, X);
 
@@ -993,6 +995,17 @@ public class MissingOps {
         CommonOps.transpose(P, Ptrans);
         CommonOps.addEquals(P, Ptrans);
         CommonOps.scale(0.5, P);
+    }
+
+    public static boolean isSymmetric(DenseMatrix64F P) {
+        int dimTrait = P.getNumCols();
+        if (dimTrait != P.getNumCols()) return false;
+        for (int i = 0; i < dimTrait; i++) {
+            for (int j = i + 1; j < dimTrait; j++) {
+                if (P.unsafe_get(i, j) != P.unsafe_get(j, i)) return false;
+            }
+        }
+        return true;
     }
 
     public static void symmetricMult(DenseMatrix64F Q, DenseMatrix64F P, DenseMatrix64F QtPQ) {

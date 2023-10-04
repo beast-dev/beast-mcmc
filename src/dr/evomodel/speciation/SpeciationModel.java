@@ -140,7 +140,7 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
         throw new RuntimeException("Not implemented");
     }
 
-    public double logConditioningProbability() {
+    public double logConditioningProbability(int model) {
         throw new RuntimeException("Not implemented");
     }
 }

@@ -40,7 +40,7 @@ package dr.inference.multidimensionalscaling;
  */
 public class NativeMDSSingleton {
 
-    private static final String LIBRARY_NAME = "mds_jni";
+    private static final String LIBRARY_NAME = "mds2_jni";
     private static final String LIBRARY_PATH_LABEL = "mds.library.path";
     private static final String LIBRARY_PLATFORM_NAME = getPlatformSpecificLibraryName();
     private static final String LIBRARY_PLATFORM_EXTENSION = getPlatformSpecificLibraryExtension();

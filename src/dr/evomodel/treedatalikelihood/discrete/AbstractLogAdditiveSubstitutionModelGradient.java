@@ -159,7 +159,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
 //        }
 
         substitutionModel.getInfinitesimalMatrix(generator);
-        crossProducts = correctDifferentials(crossProducts);
+//        crossProducts = correctDifferentials(crossProducts);
 
         if (DEBUG_CROSS_PRODUCTS) {
             savedDifferentials = crossProducts.clone();
@@ -186,57 +186,45 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         return gradient;
     }
 
-    double[] correctDifferentials(double[] differentials) {
-        if (mode == ApproximationMode.AFFINE_CORRECTED) {
-            double[] correction = new double[differentials.length];
-//            System.arraycopy(differentials, 0, correction, 0, differentials.length);
+    double correction(int i, int j, double[] crossProducts) {
 
-            if (crossProductAccumulationMap.size() > 1) {
-                throw new RuntimeException("Not yet implemented");
-            }
-
-            EigenDecomposition ed = substitutionModel.getEigenDecomposition();
-            int index = findZeroEigenvalueIndex(ed.getEigenValues());
-
-            double[] eigenVectors = ed.getEigenVectors();
-            double[] inverseEigenVectors = ed.getInverseEigenVectors();
-
-            double[] qQPlus = getQQPlus(eigenVectors, inverseEigenVectors, index);
-            double[] qPlusQ = getQPlusQ(eigenVectors, inverseEigenVectors, index);
-
-            double[] generator = new double[stateCount * stateCount];
-            substitutionModel.getInfinitesimalMatrix(generator);
-
-            for (int m = 0; m < stateCount; ++m) {
-                for (int n = 0; n < stateCount; n++) {
-                    double entryMN = 0.0;
-                    for (int i = 0; i < stateCount; ++i) {
-                        for (int j = 0; j < stateCount; ++j) {
-                            if (i == j) {
-                                entryMN += differentials[index12(i,j)] *
-                                        (1.0 - qQPlus[index12(i,m)]) * qQPlus[index12(n,j)];
-                            } else {
-                                entryMN += differentials[index12(i,j)] *
-                                        - qQPlus[index12(i,m)] * qQPlus[index12(n,j)];
-                            }
-//                            entryMN += differentials[i * stateCount + j] *
-//                                    qQPlus[i * stateCount + m] * qQPlus[n * stateCount + j];
-                        }
-                    }
-                    correction[index12(m,n)] = entryMN;
-                }
-            }
-
-            System.err.println("diff: " + new WrappedVector.Raw(differentials));
-            System.err.println("corr: " + new WrappedVector.Raw(correction));
-
-            for (int i = 0; i < differentials.length; ++i) {
-                differentials[i] -= correction[i];
-            }
-
+        if (mode == ApproximationMode.FIRST_ORDER) {
+            return 0.0;
         }
 
-        return differentials;
+        double[] affineMatrix = new double[stateCount * stateCount];
+
+        if (crossProductAccumulationMap.size() > 1) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        // TODO Start cache for each (i,j) .. only depends on substitutionModel
+        EigenDecomposition ed = substitutionModel.getEigenDecomposition();
+        int index = findZeroEigenvalueIndex(ed.getEigenValues());
+
+        double[] eigenVectors = ed.getEigenVectors();
+        double[] inverseEigenVectors = ed.getInverseEigenVectors();
+
+        double[] qQPlus = getQQPlus(eigenVectors, inverseEigenVectors, index);
+
+        for (int m = 0; m < stateCount; ++m) {
+            for (int n = 0; n < stateCount; n++) {
+                // TODO there are only stateCount unique values
+                affineMatrix[index12(m,n)] = (m == i) ?
+                        (qQPlus[index12(m,i)] - 1.0) * qQPlus[index12(j,n)] :
+                        qQPlus[index12(m,i)] * qQPlus[index12(j,n)];
+            }
+        }
+        // TODO End cache
+
+        double correction = 0.0;
+        for (int m = 0; m < stateCount; ++m) {
+            for (int n = 0; n < stateCount; ++n) {
+                correction += crossProducts[index12(m,n)] * affineMatrix[index12(m,n)];
+            }
+        }
+
+        return correction;
     }
 
     private int findZeroEigenvalueIndex(double[] eigenvalues) {

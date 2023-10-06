@@ -51,7 +51,7 @@ public interface DifferentialMassProvider {
                 return "Exact";
             }
         },
-        APPROXIMATE("approximate") {
+        FIRST_ORDER("approximate") {
             @Override
             public double[] dispatch(double time,
                                      DifferentiableSubstitutionModel model,

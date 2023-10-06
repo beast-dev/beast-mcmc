@@ -42,6 +42,8 @@ import dr.xml.Reportable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static dr.evomodel.substmodel.DifferentialMassProvider.Mode;
+
 /**
  * @author Marc A. Suchard
  * @author Xiang Ji
@@ -54,18 +56,22 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
     private final TreeTrait treeTraitProvider;
     private final Tree tree;
 
-    private final DifferentialMassProvider.Mode mode = DifferentialMassProvider.Mode.EXACT;
-//    private final DifferentialMassProvider.Mode mode = DifferentialMassProvider.Mode.APPROXIMATE;
-//    private final DifferentialMassProvider.Mode mode = DifferentialMassProvider.Mode.AFFINE;
+//    private final Mode mode = Mode.EXACT;
+//    private final Mode mode = Mode.FIRST_ORDER;
+//    private final Mode mode = Mode.AFFINE;
+
+    private final Mode mode;
 
     public HomogeneousSubstitutionParameterGradient(String traitName,
                                                     TreeDataLikelihood treeDataLikelihood,
                                                     Parameter parameter,
                                                     BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                    int dim) {
+                                                    int dim,
+                                                    Mode mode) {
         this.parameter = parameter;
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
+        this.mode = mode;
 
         final String name = BranchSubstitutionParameterDelegate.getName(traitName);
         TreeTrait test = treeDataLikelihood.getTreeTrait(name);
@@ -82,7 +88,7 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
             DifferentialMassProvider differentialMassProvider = new DifferentialMassProvider.DifferentialWrapper(
                     substitutionModel, wrtParameter, mode);
 
-            List<DifferentialMassProvider> differentialMassProviderList = new ArrayList<DifferentialMassProvider>();
+            List<DifferentialMassProvider> differentialMassProviderList = new ArrayList<>();
             differentialMassProviderList.add(differentialMassProvider);
 
             BranchDifferentialMassProvider branchDifferentialMassProvider =

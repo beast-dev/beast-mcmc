@@ -67,21 +67,41 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
 
     private final ApproximationMode mode;
 
-    enum ApproximationMode {
-        FIRST_ORDER {
+    public enum ApproximationMode {
+
+        FIRST_ORDER("firstOrder") {
             @Override
             public String getInfo() {
                 return "a first-order";
             }
         },
-        AFFINE_CORRECTED {
+        AFFINE_CORRECTED("affineCorrected") {
             @Override
             public String getInfo() {
                 return "an affine-corrected";
             }
         };
 
+        ApproximationMode(String label) {
+            this.label = label;
+        }
+
         public abstract String getInfo();
+
+        public String getLabel() {
+            return label;
+        }
+
+        private String label;
+
+        public static ApproximationMode factory(String label) {
+            for (ApproximationMode mode : ApproximationMode.values()) {
+                if (mode.getLabel().equalsIgnoreCase(label)) {
+                    return mode;
+                }
+            }
+            throw new IllegalArgumentException("Unknown approximation mode");
+        }
     }
 
     private static final ApproximationMode DEFAULT_MODE = ApproximationMode.FIRST_ORDER;
@@ -253,38 +273,8 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         return j * stateCount + i;
     }
 
-//    private int determineSubstitutionNumber(BranchModel branchModel,
-//                                            ComplexSubstitutionModel substitutionModel) {
-//
-//        List<SubstitutionModel> substitutionModels = branchModel.getSubstitutionModels();
-//        for (int i = 0; i < substitutionModels.size(); ++i) {
-//            if (substitutionModel == substitutionModels.get(i)) {
-//                return i;
-//            }
-//        }
-//        throw new IllegalArgumentException("Unknown substitution model");
-//    }
-
-//    private int determineSubstitutionModelCount(BranchModel branchModel) {
-//        List<SubstitutionModel> substitutionModels = branchModel.getSubstitutionModels();
-//        return substitutionModels.size();
-//    }
-
     private void accumulateAcrossSubstitutionModelInstances(double[] crossProducts) {
         final int length = stateCount * stateCount;
-
-//        // copy first set of entries instead of accumulating
-//        System.arraycopy(
-//                crossProducts, whichSubstitutionModel * length,
-//                crossProducts, 0, length);
-//
-//        if ( crossProductAccumulationMap.length > 0 ) {
-//            for (int i : crossProductAccumulationMap) {
-//                for (int j = 0; j < length; j++) {
-//                    crossProducts[j] += crossProducts[i * length + j];
-//                }
-//            }
-//        }
 
         int firstModel = crossProductAccumulationMap.get(0);
         if (firstModel > 0) {
@@ -316,26 +306,6 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
 
         return map;
     }
-
-//    private void updateCrossProductAccumulationMap() {
-////        System.err.println("Updating crossProductAccumulationMap");
-//        List<Integer> matchingModels = new ArrayList<>();
-//        List<SubstitutionModel> substitutionModels = branchModel.getSubstitutionModels();
-//
-//        // We copy whichSubstitutionModel instead of accumulating it
-//        for (int i = 0; i < substitutionModels.size(); ++i) {
-//            if (i != whichSubstitutionModel && substitutionModel == substitutionModels.get(i)) {
-//                matchingModels.add(i);
-//            }
-//        }
-//
-//        crossProductAccumulationMap = new int[matchingModels.size()];
-//        if (matchingModels.size() > 0) {
-//            for (int i = 0; i < matchingModels.size(); ++i) {
-//                crossProductAccumulationMap[i] = matchingModels.get(i);
-//            }
-//        }
-//    }
 
     @Override
     public Likelihood getLikelihood() {

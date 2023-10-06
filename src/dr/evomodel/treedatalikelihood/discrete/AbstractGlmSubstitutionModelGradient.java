@@ -52,9 +52,10 @@ public abstract class AbstractGlmSubstitutionModelGradient extends AbstractLogAd
     public AbstractGlmSubstitutionModelGradient(String traitName,
                                                 TreeDataLikelihood treeDataLikelihood,
                                                 BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                GlmSubstitutionModel substitutionModel) {
+                                                GlmSubstitutionModel substitutionModel,
+                                                ApproximationMode mode) {
 
-        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel);
+        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel, mode);
         this.glm = substitutionModel.getGeneralizedLinearModel();
         this.parameterMap = makeParameterMap(glm);
     }

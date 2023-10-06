@@ -38,6 +38,7 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+import static dr.evomodel.substmodel.DifferentialMassProvider.Mode;
 
 /**
  * @author Marc A. Suchard
@@ -51,6 +52,7 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
     private static final String DIMENSION = "dim";
     public static final String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
     public static final String USE_HESSIAN = "useHessian";
+    private static final String MODE = "mode";
 
     @Override
     public String getParserName() {
@@ -70,15 +72,27 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
 
         Boolean homogeneous = xo.getAttribute(HOMOGENEOUS_PROCESS, false);
 
+        Mode mode = parseMode(xo);
+
         int dim = xo.getAttribute(DIMENSION, 0);
         if (homogeneous) {
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-            return new HomogeneousSubstitutionParameterGradient(traitName, treeDataLikelihood, parameter, beagleData, dim);
+            return new HomogeneousSubstitutionParameterGradient(traitName, treeDataLikelihood, parameter, beagleData,
+                    dim, mode);
         } else {
             DifferentiableBranchRates branchRateModel = (DifferentiableBranchRates) xo.getChild(DifferentiableBranchRates.class);
             CompoundParameter branchParameter = branchModel.getBranchSpecificParameters(branchRateModel);
             return new BranchSubstitutionParameterGradient(traitName, treeDataLikelihood, beagleData,
                     branchParameter, branchRateModel, tolerance, useHessian, dim);
+        }
+    }
+
+    private Mode parseMode(XMLObject xo) throws XMLParseException {
+        String label = xo.getAttribute(MODE, Mode.EXACT.getLabel());
+        try {
+            return Mode.parse(label);
+        } catch (Exception e) {
+            throw new XMLParseException(e.getMessage());
         }
     }
 
@@ -89,6 +103,7 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TRAIT_NAME),
+            AttributeRule.newStringRule(MODE, true),
             new ElementRule(TreeDataLikelihood.class),
             new XORRule(
                     new AndRule(

@@ -72,9 +72,6 @@ public interface DifferentialMassProvider {
                                      DifferentiableSubstitutionModel model,
                                      WrappedMatrix infinitesimalDifferentialMatrix) {
 
-                double[] q = new double[16];
-                model.getInfinitesimalMatrix(q);
-
                 return DifferentiableSubstitutionModelUtil.getAffineDifferentialMassMatrix(
                         time, infinitesimalDifferentialMatrix, model.getEigenDecomposition());
             }

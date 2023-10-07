@@ -1,7 +1,7 @@
 /*
  * HomogeneousSubstitutionParameterGradient.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -55,11 +55,6 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
     private final TreeDataLikelihood treeDataLikelihood;
     private final TreeTrait treeTraitProvider;
     private final Tree tree;
-
-//    private final Mode mode = Mode.EXACT;
-//    private final Mode mode = Mode.FIRST_ORDER;
-//    private final Mode mode = Mode.AFFINE;
-
     private final Mode mode;
 
     public HomogeneousSubstitutionParameterGradient(String traitName,

@@ -323,27 +323,41 @@ public class DifferentiableSubstitutionModelUtil {
             }
         }
 
-        return result;
-    }
-
-    public static double[] getQPlusQ(double[] eigenVectors, double[] inverseEigenVectors, int index, int stateCount) {
-
-        double[] result = new double[stateCount * stateCount];
-
-        for (int i = 0; i < stateCount; ++i) {
-            for (int j = 0; j < stateCount; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < stateCount; ++k) {
-                    if (k != index) {
-                        sum += inverseEigenVectors[i * stateCount + k] * eigenVectors[k * stateCount + j];
-                    }
+        double[] reduced = new double[stateCount];
+        for (int j = 0; j < stateCount; ++j) {
+            double sum = 0.0;
+            for (int k = 0; k < stateCount; ++k) {
+                if (k != index) {
+                    sum += eigenVectors[k] * inverseEigenVectors[k * stateCount + j];
                 }
-                result[i * stateCount + j] = sum;
             }
+            reduced[j] = sum;
         }
+        reduced[0] -=1;
+
+        // TODO Determine the stateCount unique values and just return them
 
         return result;
     }
+
+//    public static double[] getQPlusQ(double[] eigenVectors, double[] inverseEigenVectors, int index, int stateCount) {
+//
+//        double[] result = new double[stateCount * stateCount];
+//
+//        for (int i = 0; i < stateCount; ++i) {
+//            for (int j = 0; j < stateCount; ++j) {
+//                double sum = 0.0;
+//                for (int k = 0; k < stateCount; ++k) {
+//                    if (k != index) {
+//                        sum += inverseEigenVectors[i * stateCount + k] * eigenVectors[k * stateCount + j];
+//                    }
+//                }
+//                result[i * stateCount + j] = sum;
+//            }
+//        }
+//
+//        return result;
+//    }
 
     private static int index12(int i, int j, int stateCount) {
         return i * stateCount + j;

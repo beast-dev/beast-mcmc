@@ -22,7 +22,7 @@
     </patterns>
 
     <newick id="startingTree">
-    	(A:1.0,B:1.0);
+    	(A:2.0,B:1.0);
 	</newick>
 
     <treeModel id="treeModel">

@@ -323,11 +323,47 @@ public class DifferentiableSubstitutionModelUtil {
             }
         }
 
+//        double[] reduced = new double[stateCount];
+//        for (int j = 0; j < stateCount; ++j) {
+//            double sum = 0.0;
+//            for (int k = 0; k < stateCount; ++k) {
+//                if (k != index) {
+//                    sum += eigenVectors[k] * inverseEigenVectors[k * stateCount + j];
+//                }
+//            }
+//            reduced[j] = sum;
+//        }
+//        reduced[0] -=1;
+
+        // TODO Determine the stateCount unique values and just return them
+
+        return result;
+    }
+
+    public static double[] getQQPlus(final double[] eigenVectors,
+                                     final double[] inverseEigenVectors,
+                                     final double[] eigenValues,
+                                     final int stateCount) {
+
+        double[] result = new double[stateCount * stateCount];
+
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < stateCount; ++k) {
+                    if (eigenValues[k] != 0.0) {
+                        sum += eigenVectors[i * stateCount + k] * inverseEigenVectors[k * stateCount + j];
+                    }
+                }
+                result[i * stateCount + j] = sum;
+            }
+        }
+
         double[] reduced = new double[stateCount];
         for (int j = 0; j < stateCount; ++j) {
             double sum = 0.0;
             for (int k = 0; k < stateCount; ++k) {
-                if (k != index) {
+                if (eigenValues[k] != 0.0) {
                     sum += eigenVectors[k] * inverseEigenVectors[k * stateCount + j];
                 }
             }

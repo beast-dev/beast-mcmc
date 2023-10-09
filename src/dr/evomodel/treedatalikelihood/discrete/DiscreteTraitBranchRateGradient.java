@@ -85,13 +85,11 @@ public class DiscreteTraitBranchRateGradient
         BranchRateModel brm = treeDataLikelihood.getBranchRateModel();
         this.branchRateModel = (brm instanceof DifferentiableBranchRates) ? (DifferentiableBranchRates) brm : null;
 
-        String name = DiscreteTraitBranchRateDelegate.getName(traitName);
+        String name = getTraitName(traitName);
         TreeTrait test = treeDataLikelihood.getTreeTrait(name);
 
         if (test == null) {
-            ProcessSimulationDelegate gradientDelegate = new DiscreteTraitBranchRateDelegate(traitName,
-                    treeDataLikelihood.getTree(),
-                    likelihoodDelegate);
+            ProcessSimulationDelegate gradientDelegate = makeGradientDelegate(traitName, tree, likelihoodDelegate);
             TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
         }
@@ -104,6 +102,16 @@ public class DiscreteTraitBranchRateGradient
             throw new RuntimeException("Not yet implemented for >1 traits");
         }
 //        dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
+    }
+
+    protected String getTraitName(String traitName) {
+        return DiscreteTraitBranchRateDelegate.getName(null);
+    }
+
+    protected ProcessSimulationDelegate makeGradientDelegate(String traitName, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate) {
+        return new DiscreteTraitBranchRateDelegate(traitName,
+                tree,
+                likelihoodDelegate);
     }
 
     @Override

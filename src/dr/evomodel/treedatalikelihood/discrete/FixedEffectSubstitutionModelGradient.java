@@ -38,7 +38,8 @@ public class FixedEffectSubstitutionModelGradient extends AbstractGlmSubstitutio
     public FixedEffectSubstitutionModelGradient(String traitName,
                                                 TreeDataLikelihood treeDataLikelihood,
                                                 BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                GlmSubstitutionModel substitutionModel) {
-        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel);
+                                                GlmSubstitutionModel substitutionModel,
+                                                ApproximationMode mode) {
+        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel, mode);
     }
 }

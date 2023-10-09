@@ -31,6 +31,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.Parameter;
@@ -67,6 +68,15 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
         this.nodeHeightProxyParameter = new NodeHeightProxyParameter("internalNodeHeights", treeModel, true);
     }
 
+    protected String getTraitName(String traitName) {
+        return DiscreteTraitNodeHeightDelegate.GRADIENT_TRAIT_NAME;
+    }
+
+    protected ProcessSimulationDelegate makeGradientDelegate(String traitName, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate) {
+        return new DiscreteTraitNodeHeightDelegate(traitName,
+                tree,
+                likelihoodDelegate);
+    }
     @Override
     public Parameter getParameter() {
         return nodeHeightProxyParameter;

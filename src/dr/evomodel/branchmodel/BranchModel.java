@@ -62,7 +62,7 @@ public interface BranchModel extends Model  {
      * Gets the substitution model that will be applied at the root.
      * @return the substitution model
      */
-    SubstitutionModel getRootSubstitutionModel();
+    SubstitutionModel getRootSubstitutionModel(); // TODO should deprecate infavor of getRootFrequenceModel
 
     /**
      * Gets the frequency model that will be applied at the root.

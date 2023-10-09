@@ -51,7 +51,7 @@ public interface DifferentialMassProvider {
                 return "Exact";
             }
         },
-        APPROXIMATE("approximate") {
+        FIRST_ORDER("firstOrder") {
             @Override
             public double[] dispatch(double time,
                                      DifferentiableSubstitutionModel model,
@@ -66,14 +66,11 @@ public interface DifferentialMassProvider {
                 return "Approximate wrt parameter";
             }
         },
-        AFFINE("affine") {
+        AFFINE("affineCorrected") {
             @Override
             public double[] dispatch(double time,
                                      DifferentiableSubstitutionModel model,
                                      WrappedMatrix infinitesimalDifferentialMatrix) {
-
-                double[] q = new double[16];
-                model.getInfinitesimalMatrix(q);
 
                 return DifferentiableSubstitutionModelUtil.getAffineDifferentialMassMatrix(
                         time, infinitesimalDifferentialMatrix, model.getEigenDecomposition());
@@ -85,10 +82,14 @@ public interface DifferentialMassProvider {
             }
         };
 
-        private final String name;
+        private final String label;
 
-        Mode(String name) {
-            this.name = name;
+        Mode(String label) {
+            this.label = label;
+        }
+
+        public String getLabel() {
+            return label;
         }
 
         public abstract double[] dispatch(double time,
@@ -97,9 +98,9 @@ public interface DifferentialMassProvider {
 
         public abstract String getReport();
 
-        public static Mode parse(String name) {
+        public static Mode parse(String label) {
             for (Mode mode : Mode.values()) {
-                if (mode.name.equalsIgnoreCase(name)) {
+                if (mode.label.equalsIgnoreCase(label)) {
                     return mode;
                 }
             }

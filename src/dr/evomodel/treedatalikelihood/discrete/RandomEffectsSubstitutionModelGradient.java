@@ -41,8 +41,9 @@ public class RandomEffectsSubstitutionModelGradient extends AbstractGlmSubstitut
     public RandomEffectsSubstitutionModelGradient(String traitName,
                                                   TreeDataLikelihood treeDataLikelihood,
                                                   BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                  GlmSubstitutionModel substitutionModel) {
-        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel);
+                                                  GlmSubstitutionModel substitutionModel,
+                                                  ApproximationMode mode) {
+        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel, mode);
 
         // Count random effects dimension
         int asymmetricCount = stateCount * (stateCount - 1);

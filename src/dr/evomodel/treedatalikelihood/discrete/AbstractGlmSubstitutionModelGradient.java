@@ -52,9 +52,10 @@ public abstract class AbstractGlmSubstitutionModelGradient extends AbstractLogAd
     public AbstractGlmSubstitutionModelGradient(String traitName,
                                                 TreeDataLikelihood treeDataLikelihood,
                                                 BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                GlmSubstitutionModel substitutionModel) {
+                                                GlmSubstitutionModel substitutionModel,
+                                                ApproximationMode mode) {
 
-        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel);
+        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel, mode);
         this.glm = substitutionModel.getGeneralizedLinearModel();
         this.parameterMap = makeParameterMap(glm);
     }
@@ -116,7 +117,7 @@ public abstract class AbstractGlmSubstitutionModelGradient extends AbstractLogAd
         return calculateCovariateDifferential(generator, differentials, covariate, pi, normalize);
     }
 
-    private double calculateCovariateDifferential(double[] generator, double[] differential,
+    private double calculateCovariateDifferential(double[] generator, double[] crossProduct,
                                                   double[] covariate, double[] pi,
                                                   boolean doNormalization) {
 
@@ -130,10 +131,15 @@ public abstract class AbstractGlmSubstitutionModelGradient extends AbstractLogAd
                 double xij = covariate[k++];
                 double element = xij * generator[index(i,j)];
 
-                total += differential[index(i,j)] * element;
-                total -= differential[index(i,i)] * element;
+                if (element != 0.0) {
+                    total += crossProduct[index(i, j)] * element;
+                    total -= crossProduct[index(i, i)] * element;
 
-                normalization += element * pi[i];
+                    total += correction(i, j, crossProduct) * element;
+                    total -= correction(i, i, crossProduct) * element;
+
+                    normalization += element * pi[i];
+                }
             }
         }
 
@@ -143,17 +149,22 @@ public abstract class AbstractGlmSubstitutionModelGradient extends AbstractLogAd
                 double xij = covariate[k++];
                 double element = xij * generator[index(i,j)];
 
-                total += differential[index(i,j)] * element;
-                total -= differential[index(i,i)] * element;
+                if (element != 0.0) {
+                    total += crossProduct[index(i, j)] * element;
+                    total -= crossProduct[index(i, i)] * element;
 
-                normalization += element * pi[i];
+                    total += correction(i, j, crossProduct) * element;
+                    total -= correction(i, j, crossProduct) * element;
+
+                    normalization += element * pi[i];
+                }
             }
         }
 
         if (doNormalization) {
             for (int i = 0; i < stateCount; ++i) {
                 for (int j = 0; j < stateCount; ++j) {
-                    total -= differential[index(i,j)] * generator[index(i,j)] * normalization;
+                    total -= crossProduct[index(i,j)] * generator[index(i,j)] * normalization;
                 }
             }
         }

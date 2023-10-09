@@ -39,12 +39,13 @@ import dr.inference.loggers.Loggable;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
-import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Citable;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -61,38 +62,101 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
 
     protected final ComplexSubstitutionModel substitutionModel;
     protected final int stateCount;
-//    protected final int whichSubstitutionModel;
-//    protected final int substitutionModelCount;
     protected final List<Integer> crossProductAccumulationMap;
 
     private final ApproximationMode mode;
 
-    enum ApproximationMode {
-        FIRST_ORDER {
+    public enum ApproximationMode {
+
+        FIRST_ORDER("firstOrder") {
             @Override
             public String getInfo() {
                 return "a first-order";
             }
+
+            @Override
+            CorrectionTermCache createCache(SubstitutionModel model,
+                                            List<Integer> accumulateMap) { return null; }
+
+            @Override
+            void emptyCache(CorrectionTermCache cache) { }
+
+            @Override
+            double computeCorrection(int i, int j, double[] crossProducts, int stateCount,
+                                     CorrectionTermCache correctionTermCache) {
+                return 0.0;
+            }
         },
-        AFFINE_CORRECTED {
+        AFFINE_CORRECTED("affineCorrected") {
             @Override
             public String getInfo() {
                 return "an affine-corrected";
             }
+
+            @Override
+            CorrectionTermCache createCache(SubstitutionModel model,
+                                            List<Integer> accumulateMap) {
+                if (accumulateMap.size() > 1) {
+                    throw new RuntimeException("Not yet implemented");
+                }
+                return new CorrectionTermCache(model);
+            }
+
+            @Override
+            void emptyCache(CorrectionTermCache cache) {
+                cache.clear();
+            }
+
+            @Override
+            double computeCorrection(int i, int j, double[] crossProducts, int stateCount,
+                                     CorrectionTermCache correctionTermCache) {
+
+                double[] affineMatrix = correctionTermCache.getAffineMatrix(i, j);
+
+                double correction = 0.0;
+                for (int m = 0; m < stateCount; ++m) {
+                    for (int n = 0; n < stateCount; ++n) {
+                        correction += crossProducts[m * stateCount + n] *
+                                affineMatrix[m * stateCount + n];
+                    }
+                }
+
+                return correction;
+            }
+
         };
 
-        public abstract String getInfo();
+        ApproximationMode(String label) {
+            this.label = label;
+        }
+
+        abstract String getInfo();
+
+        abstract CorrectionTermCache createCache(SubstitutionModel model, List<Integer> accumulateMap);
+
+        abstract void emptyCache(CorrectionTermCache cache);
+
+        abstract double computeCorrection(int i, int j, double[] crossProducts, int stateCount,
+                                          CorrectionTermCache correctionTermCache);
+
+        public String getLabel() {
+            return label;
+        }
+
+        private final String label;
+
+        public static ApproximationMode factory(String label) {
+            for (ApproximationMode mode : ApproximationMode.values()) {
+                if (mode.getLabel().equalsIgnoreCase(label)) {
+                    return mode;
+                }
+            }
+            throw new IllegalArgumentException("Unknown approximation mode");
+        }
     }
 
     private static final ApproximationMode DEFAULT_MODE = ApproximationMode.FIRST_ORDER;
-
-    public AbstractLogAdditiveSubstitutionModelGradient(String traitName,
-                                                        TreeDataLikelihood treeDataLikelihood,
-                                                        BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                        ComplexSubstitutionModel substitutionModel) {
-        this(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel, DEFAULT_MODE); // TODO Remove this constructor
-    }
-
+    
     public AbstractLogAdditiveSubstitutionModelGradient(String traitName,
                                                         TreeDataLikelihood treeDataLikelihood,
                                                         BeagleDataLikelihoodDelegate likelihoodDelegate,
@@ -103,20 +167,10 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         this.branchModel = likelihoodDelegate.getBranchModel();
         this.substitutionModel = substitutionModel;
         this.stateCount = substitutionModel.getDataType().getStateCount();
-
-//        this.whichSubstitutionModel = determineSubstitutionNumber(
-//                likelihoodDelegate.getBranchModel(), substitutionModel);
-//        this.substitutionModelCount = determineSubstitutionModelCount(likelihoodDelegate.getBranchModel());
-
         this.crossProductAccumulationMap = createCrossProductAccumulationMap(likelihoodDelegate.getBranchModel(),
                 substitutionModel);
-
         this.mode = mode;
-
-//        this.crossProductAccumulationMap = new int[0];
-//        if (substitutionModelCount > 1) {
-//            updateCrossProductAccumulationMap();
-//        }
+        this.correctionTermCache = mode.createCache(substitutionModel, crossProductAccumulationMap);
 
         String name = SubstitutionModelCrossProductDelegate.getName(traitName);
 
@@ -133,6 +187,9 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
         assert (treeTraitProvider != null);
 
+        this.branchModel.addModelListener(this);
+        this.substitutionModel.addModelListener(this);
+        
         Logger.getLogger("dr.evomodel.treedatalikelihood.discrete").info(
                 "Gradient wrt " + traitName + " using " + mode.getInfo() + " approximation");
     }
@@ -154,16 +211,9 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         double[] crossProducts = (double[]) treeTraitProvider.getTrait(tree, null);
         double[] generator = new double[crossProducts.length];
 
-//        if (whichSubstitutionModel > 1 || substitutionModelCount > 1) {
         accumulateAcrossSubstitutionModelInstances(crossProducts);
-//        }
 
         substitutionModel.getInfinitesimalMatrix(generator);
-        crossProducts = correctDifferentials(crossProducts);
-
-        if (DEBUG_CROSS_PRODUCTS) {
-            savedDifferentials = crossProducts.clone();
-        }
 
         double[] pi = substitutionModel.getFrequencyModel().getFrequencies();
 
@@ -186,117 +236,12 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         return gradient;
     }
 
-    double[] correctDifferentials(double[] differentials) {
-        if (mode == ApproximationMode.AFFINE_CORRECTED) {
-            double[] correction = new double[differentials.length];
-//            System.arraycopy(differentials, 0, correction, 0, differentials.length);
-
-            if (crossProductAccumulationMap.size() > 1) {
-                throw new RuntimeException("Not yet implemented");
-            }
-
-            EigenDecomposition ed = substitutionModel.getEigenDecomposition();
-            int index = findZeroEigenvalueIndex(ed.getEigenValues());
-
-            double[] eigenVectors = ed.getEigenVectors();
-            double[] inverseEigenVectors = ed.getInverseEigenVectors();
-
-            double[] qQPlus = getQQPlus(eigenVectors, inverseEigenVectors, index);
-            double[] qPlusQ = getQPlusQ(eigenVectors, inverseEigenVectors, index);
-
-            double[] generator = new double[stateCount * stateCount];
-            substitutionModel.getInfinitesimalMatrix(generator);
-
-            for (int m = 0; m < stateCount; ++m) {
-                for (int n = 0; n < stateCount; n++) {
-                    double entryMN = 0.0;
-                    for (int i = 0; i < stateCount; ++i) {
-                        for (int j = 0; j < stateCount; ++j) {
-                            if (i == j) {
-                                entryMN += differentials[index12(i,j)] *
-                                        (1.0 - qQPlus[index12(i,m)]) * qQPlus[index12(n,j)];
-                            } else {
-                                entryMN += differentials[index12(i,j)] *
-                                        - qQPlus[index12(i,m)] * qQPlus[index12(n,j)];
-                            }
-//                            entryMN += differentials[i * stateCount + j] *
-//                                    qQPlus[i * stateCount + m] * qQPlus[n * stateCount + j];
-                        }
-                    }
-                    correction[index12(m,n)] = entryMN;
-                }
-            }
-
-            System.err.println("diff: " + new WrappedVector.Raw(differentials));
-            System.err.println("corr: " + new WrappedVector.Raw(correction));
-
-            for (int i = 0; i < differentials.length; ++i) {
-                differentials[i] -= correction[i];
-            }
-
-        }
-
-        return differentials;
+    double correction(int i, int j, double[] crossProducts) {
+        return mode.computeCorrection(i, j, crossProducts, stateCount, correctionTermCache);
     }
-
-    private int findZeroEigenvalueIndex(double[] eigenvalues) {
-        for (int i = 0; i < stateCount; ++i) {
-            if (eigenvalues[i] == 0) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    private double[] getQQPlus(double[] eigenVectors, double[] inverseEigenVectors, int index) {
-        return DifferentiableSubstitutionModelUtil.getQQPlus(eigenVectors, inverseEigenVectors, index, stateCount);
-    }
-
-    private double[] getQPlusQ(double[] eigenVectors, double[] inverseEigenVectors, int index) {
-        return DifferentiableSubstitutionModelUtil.getQPlusQ(eigenVectors, inverseEigenVectors, index, stateCount);
-    }
-
-    private int index12(int i, int j) {
-        return i * stateCount + j;
-    }
-
-    @SuppressWarnings("unused")
-    private int index21(int i, int j) {
-        return j * stateCount + i;
-    }
-
-//    private int determineSubstitutionNumber(BranchModel branchModel,
-//                                            ComplexSubstitutionModel substitutionModel) {
-//
-//        List<SubstitutionModel> substitutionModels = branchModel.getSubstitutionModels();
-//        for (int i = 0; i < substitutionModels.size(); ++i) {
-//            if (substitutionModel == substitutionModels.get(i)) {
-//                return i;
-//            }
-//        }
-//        throw new IllegalArgumentException("Unknown substitution model");
-//    }
-
-//    private int determineSubstitutionModelCount(BranchModel branchModel) {
-//        List<SubstitutionModel> substitutionModels = branchModel.getSubstitutionModels();
-//        return substitutionModels.size();
-//    }
 
     private void accumulateAcrossSubstitutionModelInstances(double[] crossProducts) {
         final int length = stateCount * stateCount;
-
-//        // copy first set of entries instead of accumulating
-//        System.arraycopy(
-//                crossProducts, whichSubstitutionModel * length,
-//                crossProducts, 0, length);
-//
-//        if ( crossProductAccumulationMap.length > 0 ) {
-//            for (int i : crossProductAccumulationMap) {
-//                for (int j = 0; j < length; j++) {
-//                    crossProducts[j] += crossProducts[i * length + j];
-//                }
-//            }
-//        }
 
         int firstModel = crossProductAccumulationMap.get(0);
         if (firstModel > 0) {
@@ -329,26 +274,6 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         return map;
     }
 
-//    private void updateCrossProductAccumulationMap() {
-////        System.err.println("Updating crossProductAccumulationMap");
-//        List<Integer> matchingModels = new ArrayList<>();
-//        List<SubstitutionModel> substitutionModels = branchModel.getSubstitutionModels();
-//
-//        // We copy whichSubstitutionModel instead of accumulating it
-//        for (int i = 0; i < substitutionModels.size(); ++i) {
-//            if (i != whichSubstitutionModel && substitutionModel == substitutionModels.get(i)) {
-//                matchingModels.add(i);
-//            }
-//        }
-//
-//        crossProductAccumulationMap = new int[matchingModels.size()];
-//        if (matchingModels.size() > 0) {
-//            for (int i = 0; i < matchingModels.size(); ++i) {
-//                crossProductAccumulationMap[i] = matchingModels.get(i);
-//            }
-//        }
-//    }
-
     @Override
     public Likelihood getLikelihood() {
         return treeDataLikelihood;
@@ -366,10 +291,6 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
 
         String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, getReportTolerance());
         sb.append(message);
-
-        if (DEBUG_CROSS_PRODUCTS) {
-            sb.append("\n\tdifferentials: ").append(new WrappedVector.Raw(savedDifferentials, 0, savedDifferentials.length));
-        }
 
         if (COUNT_TOTAL_OPERATIONS) {
             sb.append("\n\tgetCrossProductGradientCount = ").append(gradientCount);
@@ -390,15 +311,14 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         return null;
     }
 
-    // This has not been rigorously tested for epochs that change structure
     @SuppressWarnings("unused")
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-//        if (model == branchModel) {
-//            updateCrossProductAccumulationMap();
-//        }
         if (model == branchModel) {
-//            crossProductAccumulationMap = createCrossProductAccumulationMap(branchModel, substitutionModel);
             throw new RuntimeException("Not yet implemented");
+        } else if (model == substitutionModel) {
+            mode.emptyCache(correctionTermCache);
+        } else {
+            throw new RuntimeException("Unknown model");
         }
     }
 
@@ -410,11 +330,66 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
 
     }
 
+    static class CorrectionTermCache {
+
+        private final SubstitutionModel model;
+        private final Map<Integer, double[]> map;
+        private final int stateCount;
+        private double[] qQPlus;
+
+        CorrectionTermCache(SubstitutionModel model) {
+            this.model = model;
+            this.map = new HashMap<>();
+            this.stateCount = model.getDataType().getStateCount();
+            this.qQPlus = null;
+        }
+
+        private int index12(int i, int j) {
+            return i * stateCount + j;
+        }
+
+        private double[] getQQPlus() {
+            if (qQPlus == null) {
+                EigenDecomposition ed = model.getEigenDecomposition();
+                qQPlus = DifferentiableSubstitutionModelUtil.getQQPlus(ed.getEigenVectors(),
+                        ed.getInverseEigenVectors(), ed.getEigenValues(), stateCount);
+            }
+            return qQPlus;
+        }
+
+        double[] getAffineMatrix(int i, int j) {
+
+            double[] affineMatrix = map.get(i * stateCount + j);
+
+            if (affineMatrix == null) {
+
+                affineMatrix = new double[stateCount * stateCount]; // TODO there are only stateCount unique values
+
+                double[] qQPlus = getQQPlus();
+
+                for (int m = 0; m < stateCount; ++m) {
+                    for (int n = 0; n < stateCount; n++) {
+                        affineMatrix[index12(m, n)] = (m == i) ?
+                                (qQPlus[index12(m, i)] - 1.0) * qQPlus[index12(j, n)] :
+                                qQPlus[index12(m, i)] * qQPlus[index12(j, n)];
+                    }
+                }
+
+                map.put(i * stateCount + j, affineMatrix);
+            }
+
+            return affineMatrix;
+        }
+
+        public void clear() {
+            map.clear();
+            qQPlus = null;
+        }
+    }
+
+    private final CorrectionTermCache correctionTermCache;
+
     protected static final boolean COUNT_TOTAL_OPERATIONS = false;
-    protected static final boolean DEBUG_CROSS_PRODUCTS = false;
-
-    protected double[] savedDifferentials;
-
     protected long gradientCount = 0;
     protected long totalGradientTime = 0;
 }

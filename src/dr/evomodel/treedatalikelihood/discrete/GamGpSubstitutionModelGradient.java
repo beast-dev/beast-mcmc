@@ -45,7 +45,8 @@ public class GamGpSubstitutionModelGradient extends AbstractLogAdditiveSubstitut
                                           TreeDataLikelihood treeDataLikelihood,
                                           BeagleDataLikelihoodDelegate likelihoodDelegate,
                                           GlmSubstitutionModel substitutionModel) {
-        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel);
+        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel,
+                ApproximationMode.FIRST_ORDER);
         throw new RuntimeException("Not yet implemented");
     }
 

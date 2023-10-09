@@ -47,8 +47,9 @@ public class DesignMatrixSubstitutionModelGradient extends AbstractGlmSubstituti
                                                  BeagleDataLikelihoodDelegate likelihoodDelegate,
                                                  GlmSubstitutionModel substitutionModel,
                                                  DesignMatrix matrix,
-                                                 MaskedParameter parameter) {
-        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel);
+                                                 MaskedParameter parameter,
+                                                 ApproximationMode mode) {
+        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel, mode);
 
         this.parameter = parameter;
 

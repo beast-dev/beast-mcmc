@@ -75,7 +75,7 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
     protected ProcessSimulationDelegate makeGradientDelegate(String traitName, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate) {
         return new DiscreteTraitNodeHeightDelegate(traitName,
                 tree,
-                likelihoodDelegate);
+                likelihoodDelegate, branchRateModel);
     }
     @Override
     public Parameter getParameter() {
@@ -83,32 +83,15 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
     }
 
     protected double getChainGradient(Tree tree, NodeRef node) {
-        return branchRateModel.getBranchRate(tree, node);
+        throw new RuntimeException("This should not be called anymore.");
     }
 
     @Override
     public double[] getGradientLogDensity() {
 
-        double[] result = new double[tree.getInternalNodeCount()];
-        Arrays.fill(result, 0.0);
+        double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
 
-        double[] gradient = super.getGradientLogDensity();
-
-        for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
-
-            final  NodeRef node = tree.getNode(i + tree.getExternalNodeCount());
-
-            for (int j = 0; j < tree.getChildCount(node); j++) {
-                NodeRef childNode = tree.getChild(node, j);
-                final int childNodeIndex = indexHelper.getParameterIndexFromNodeNumber(childNode.getNumber());
-                result[i] += gradient[childNodeIndex];
-            }
-            if (!tree.isRoot(node)) {
-                final int nodeIndex = indexHelper.getParameterIndexFromNodeNumber(node.getNumber());
-                result[i] -= gradient[nodeIndex];
-            }
-        }
-        return result;
+        return Arrays.copyOf(gradient, tree.getInternalNodeCount());
     }
 
     protected int getParameterIndexFromNode(NodeRef node) {

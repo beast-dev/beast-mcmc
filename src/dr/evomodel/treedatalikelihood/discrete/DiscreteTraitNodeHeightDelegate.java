@@ -27,6 +27,7 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import beagle.Beagle;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 
@@ -46,8 +47,12 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
 
 
     protected void getNodeDerivatives(Tree tree, double[] first, double[] second) {
-        super.getNodeDerivatives(tree, first, second);
+        double[] branchGradient = new double[first.length];
+        double[] branchDiagonalHessian = new double[first.length];
+        super.getNodeDerivatives(tree, branchGradient, branchDiagonalHessian);
         final int internalNodeCount = tree.getInternalNodeCount();
+        double[] sisterBranchesSecondDerivatives = new double[internalNodeCount];
+        double[] currentAndParentBranchesSecondDerivatives = new double[tree.getNodeCount() - 2];
 
         double[][] prePartials = new double[internalNodeCount][patternCount * stateCount * categoryCount];
         double[][] postPartials = new double[internalNodeCount][patternCount * stateCount * categoryCount];
@@ -58,6 +63,52 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
             beagle.getPartials(getPreOrderPartialIndex(i + tree.getExternalNodeCount()), Beagle.NONE, prePartials[i]);
             beagle.getTransitionMatrix(evolutionaryProcessDelegate.getMatrixIndex(i + tree.getExternalNodeCount()), transitionMatrices[i]);
         }
+
+        double[] Qi = new double[stateCount * stateCount * categoryCount];
+        double[] Qj = new double[stateCount * stateCount * categoryCount];
+        double[] Qk = new double[stateCount * stateCount * categoryCount];
+        double[] tmpLeftPartail = new double[patternCount * stateCount * categoryCount];
+        double[] tmpRightPartial = new double[patternCount * stateCount * categoryCount];
+        double[] tmpQLeftPartial = new double[patternCount * stateCount * categoryCount];
+        double[] tmpQRightPartial = new double[patternCount * stateCount * categoryCount];
+        double[] tmpIPartial = new double[patternCount * stateCount * categoryCount];
+
+        for (int i = 0; i < internalNodeCount; i++) {
+            NodeRef nodeI = tree.getNode(i + tree.getExternalNodeCount());
+            NodeRef nodeJ = tree.getChild(nodeI, 0);
+            NodeRef nodeK = tree.getChild(nodeI, 1);
+
+            beagle.getTransitionMatrix(evolutionaryProcessDelegate.getInfinitesimalMatrixBufferIndex(i + tree.getExternalNodeCount()), Qi);
+            beagle.getTransitionMatrix(evolutionaryProcessDelegate.getInfinitesimalMatrixBufferIndex(nodeJ.getNumber()), Qj);
+            beagle.getTransitionMatrix(evolutionaryProcessDelegate.getInfinitesimalMatrixBufferIndex(nodeK.getNumber()), Qk);
+
+            getMatrixVectorProduct(transitionMatrices[nodeJ.getNumber()], postPartials[nodeJ.getNumber()], tmpLeftPartail);
+            getMatrixVectorProduct(Qj, tmpLeftPartail, tmpQLeftPartial);
+
+            getMatrixVectorProduct(transitionMatrices[nodeK.getNumber()], postPartials[nodeK.getNumber()], tmpRightPartial);
+            getMatrixVectorProduct(Qk, tmpRightPartial, tmpQRightPartial);
+
+            getMatrixVectorProduct(Qi, prePartials[i + tree.getExternalNodeCount()], tmpIPartial);
+
+            sisterBranchesSecondDerivatives[i] = getTripleVectorReduction(tmpQLeftPartial, tmpQRightPartial, prePartials[i + tree.getExternalNodeCount()]);
+            currentAndParentBranchesSecondDerivatives[nodeJ.getNumber() - tree.getExternalNodeCount()] = getTripleVectorReduction(tmpQLeftPartial, tmpRightPartial, tmpIPartial);
+            currentAndParentBranchesSecondDerivatives[nodeK.getNumber() - tree.getExternalNodeCount()] = getTripleVectorReduction(tmpQRightPartial, tmpLeftPartail, tmpIPartial);
+        }
+
+    }
+
+    private void getMatrixVectorProduct(double[] matrix, double[] vector, double[] result) {
+
+    }
+
+    private double getTripleVectorReduction(double[] first, double[] second, double[] third) {
+        assert(first.length == second.length);
+        assert(second.length == third.length);
+        double tmp = 0;
+        for (int i = 0; i < first.length; i++) {
+            tmp += first[i] * second[i] * third[i];
+        }
+        return tmp;
 
     }
 

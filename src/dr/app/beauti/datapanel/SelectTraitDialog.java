@@ -30,7 +30,11 @@ import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.Collection;
 import java.util.List;
 
@@ -72,18 +76,37 @@ public class SelectTraitDialog {
                 new java.awt.event.ItemListener() {
                     public void itemStateChanged(java.awt.event.ItemEvent ev) {
                         nameField.setEnabled(copyCheck.isSelected());
+                        if (getSelectedTraitCount() > 1) independentBox.setSelected(!copyCheck.isSelected());
                     }
                 }
         );
+
+        traitList.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (getSelectedTraitCount() > 1) {
+                    if (independentBox.isSelected() && copyCheck.isSelected()) independentBox.setSelected(false);
+                    if (!(independentBox.isSelected() || copyCheck.isSelected())) copyCheck.setSelected(true);
+                }
+            }
+        });
+
+        independentBox.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (getSelectedTraitCount() > 1) copyCheck.setSelected(!(independentBox.isSelected()));
+            }
+        });
 
     }
 
     public int showDialog(Collection<TraitData> traits, String defaultName, Component parent, Boolean allowSelectTraits) {
         optionPanel.removeAll();
-        if (traits == null || !allowSelectTraits) {
+        nameField.setText(defaultName != null ? defaultName : "untitled_traits");
+
+        if (traits == null || !allowSelectTraits) { // traits shouldn't be null
             optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the selected trait(s)."));
             optionPanel.addComponentWithLabel("Name trait partition:", nameField);
-            nameField.setText(defaultName != null ? defaultName : "untitled_traits");
             nameField.setEnabled(true);
             nameField.selectAll();
         } else {
@@ -92,13 +115,13 @@ public class SelectTraitDialog {
             for (Object model : traits) {
                 traitModel.addElement(model);
             }
-            optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the following trait."));
+            optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the following trait(s)."));
             optionPanel.addComponentWithLabel("Trait(s):", scrollPane);
             optionPanel.addComponents(copyCheck, nameField);
             nameField.setEnabled(copyCheck.isSelected());
         }
 
-        if (traits != null && traits.size() > 1) {
+        if (traits != null && traits.size() > 1) { // traits shouldn't be null
             independentBox.setSelected(false);
             optionPanel.addComponent(independentBox);
         }
@@ -138,6 +161,14 @@ public class SelectTraitDialog {
                     isValid = false;
                     JOptionPane.showMessageDialog(parent, "Please select a trait(s).", "No Trait(s) Selected", JOptionPane.ERROR_MESSAGE);
                 }
+
+                if (getTraits().size() > 1 && !(getMakeCopy() || getForceIndependent())) { // pretty sure this can't happen, but warning just in case
+                    isValid = false;
+                    JOptionPane.showMessageDialog(parent,
+                            "You have selected multiple traits.\nPlease either name the new partition or " +
+                                    "check \"" + independentBox.getText() + "\"",
+                            "Multiple Traits Selected Without Name", JOptionPane.ERROR_MESSAGE);
+                }
             }
         } while (!isValid);
 
@@ -146,6 +177,10 @@ public class SelectTraitDialog {
 
     public List<TraitData> getTraits() {
         return (List<TraitData>) traitList.getSelectedValuesList();
+    }
+
+    private int getSelectedTraitCount() {
+        return traitList.getSelectedValuesList().size();
     }
 
     public boolean getMakeCopy() {

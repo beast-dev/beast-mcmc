@@ -31,7 +31,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.Parameter;
@@ -68,26 +67,50 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
         this.nodeHeightProxyParameter = new NodeHeightProxyParameter("internalNodeHeights", treeModel, true);
     }
 
-    protected String getTraitName(String traitName) {
-        return DiscreteTraitNodeHeightDelegate.GRADIENT_TRAIT_NAME;
-    }
-
-    protected ProcessSimulationDelegate makeGradientDelegate(String traitName, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate) {
-        return new DiscreteTraitNodeHeightDelegate(traitName,
-                tree,
-                likelihoodDelegate, branchRateModel);
-    }
+//    protected String getTraitName(String traitName) {
+//        return DiscreteTraitNodeHeightDelegate.GRADIENT_TRAIT_NAME;
+//    }
+//
+//    protected ProcessSimulationDelegate makeGradientDelegate(String traitName, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate) {
+//        return new DiscreteTraitNodeHeightDelegate(traitName,
+//                tree,
+//                likelihoodDelegate, branchRateModel);
+//    }
     @Override
     public Parameter getParameter() {
         return nodeHeightProxyParameter;
     }
 
     protected double getChainGradient(Tree tree, NodeRef node) {
-        throw new RuntimeException("This should not be called anymore.");
+//        throw new RuntimeException("This should not be called anymore.");
+        return branchRateModel.getBranchRate(tree, node);
     }
 
     @Override
     public double[] getGradientLogDensity() {
+
+        if (treeTraitProvider.getTraitName() == super.getTraitName(null)) {
+            double[] result = new double[tree.getInternalNodeCount()];
+            Arrays.fill(result, 0.0);
+
+            double[] gradient = super.getGradientLogDensity();
+
+            for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
+
+                final  NodeRef node = tree.getNode(i + tree.getExternalNodeCount());
+
+                for (int j = 0; j < tree.getChildCount(node); j++) {
+                    NodeRef childNode = tree.getChild(node, j);
+                    final int childNodeIndex = indexHelper.getParameterIndexFromNodeNumber(childNode.getNumber());
+                    result[i] += gradient[childNodeIndex];
+                }
+                if (!tree.isRoot(node)) {
+                    final int nodeIndex = indexHelper.getParameterIndexFromNodeNumber(node.getNumber());
+                    result[i] -= gradient[nodeIndex];
+                }
+            }
+            return result;
+        }
 
         double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
 

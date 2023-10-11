@@ -14,9 +14,7 @@ public class CreateBadTraitFormatDialog {
     private final JButton exampleButton = new JButton("Show example of mapping file format");
 
 
-
     OptionsPanel optionPanel;
-    private final JLabel label = new JLabel();
 
     public CreateBadTraitFormatDialog(final BeautiFrame frame) {
         this.frame = frame;

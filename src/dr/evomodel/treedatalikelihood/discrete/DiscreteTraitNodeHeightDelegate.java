@@ -56,6 +56,7 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
     protected void getNodeDerivatives(Tree tree, double[] first, double[] second) {
         double[] branchGradient = new double[first.length];
         double[] branchDiagonalHessian = second == null ? null : new double[first.length];
+//        double[] branchDiagonalHessian = new double[first.length];
         super.getNodeDerivatives(tree, branchGradient, branchDiagonalHessian);
 
         for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
@@ -77,14 +78,14 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
             double[] sisterBranchesSecondDerivatives = new double[internalNodeCount];
             double[] currentAndParentBranchesSecondDerivatives = new double[tree.getNodeCount() - 2];
 
-            double[][] prePartials = new double[internalNodeCount][patternCount * stateCount * categoryCount];
-            double[][] postPartials = new double[internalNodeCount][patternCount * stateCount * categoryCount];
-            double[][] transitionMatrices = new double[internalNodeCount][stateCount * stateCount * categoryCount];
+            double[][] prePartials = new double[tree.getNodeCount()][patternCount * stateCount * categoryCount];
+            double[][] postPartials = new double[tree.getNodeCount()][patternCount * stateCount * categoryCount];
+            double[][] transitionMatrices = new double[tree.getNodeCount()][stateCount * stateCount * categoryCount];
 
-            for (int i = 0; i < internalNodeCount; i++) {
-                beagle.getPartials(getPostOrderPartialIndex(i + tree.getExternalNodeCount()), Beagle.NONE, postPartials[i]);
-                beagle.getPartials(getPreOrderPartialIndex(i + tree.getExternalNodeCount()), Beagle.NONE, prePartials[i]);
-                beagle.getTransitionMatrix(evolutionaryProcessDelegate.getMatrixIndex(i + tree.getExternalNodeCount()), transitionMatrices[i]);
+            for (int i = 0; i < tree.getNodeCount(); i++) {
+                beagle.getPartials(getPostOrderPartialIndex(i), Beagle.NONE, postPartials[i]);
+                beagle.getTransitionMatrix(evolutionaryProcessDelegate.getMatrixIndex(i), transitionMatrices[i]);
+                beagle.getPartials(getPreOrderPartialIndex(i), Beagle.NONE, prePartials[i]);
             }
 
             double[] Qi = new double[stateCount * stateCount * categoryCount];
@@ -95,6 +96,7 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
             double[] tmpQLeftPartial = new double[patternCount * stateCount * categoryCount];
             double[] tmpQRightPartial = new double[patternCount * stateCount * categoryCount];
             double[] tmpIPartial = new double[patternCount * stateCount * categoryCount];
+
 
             for (int i = 0; i < internalNodeCount; i++) {
                 NodeRef nodeI = tree.getNode(i + tree.getExternalNodeCount());
@@ -111,11 +113,12 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
                 getMatrixVectorProduct(transitionMatrices[nodeK.getNumber()], postPartials[nodeK.getNumber()], tmpRightPartial);
                 getMatrixVectorProduct(Qk, tmpRightPartial, tmpQRightPartial);
 
-                getMatrixVectorProduct(Qi, prePartials[i + tree.getExternalNodeCount()], tmpIPartial);
-
+                if (!tree.isRoot(nodeI)) {
+                    getMatrixVectorProduct(Qi, prePartials[i + tree.getExternalNodeCount()], tmpIPartial);
+                    currentAndParentBranchesSecondDerivatives[nodeJ.getNumber()] = getTripleVectorReduction(tmpQLeftPartial, tmpRightPartial, tmpIPartial);
+                    currentAndParentBranchesSecondDerivatives[nodeK.getNumber()] = getTripleVectorReduction(tmpQRightPartial, tmpLeftPartail, tmpIPartial);
+                }
                 sisterBranchesSecondDerivatives[i] = getTripleVectorReduction(tmpQLeftPartial, tmpQRightPartial, prePartials[i + tree.getExternalNodeCount()]);
-                currentAndParentBranchesSecondDerivatives[nodeJ.getNumber() - tree.getExternalNodeCount()] = getTripleVectorReduction(tmpQLeftPartial, tmpRightPartial, tmpIPartial);
-                currentAndParentBranchesSecondDerivatives[nodeK.getNumber() - tree.getExternalNodeCount()] = getTripleVectorReduction(tmpQRightPartial, tmpLeftPartail, tmpIPartial);
             }
 
             for (int i = 0; i < internalNodeCount; i++) {
@@ -136,7 +139,18 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
     }
 
     private void getMatrixVectorProduct(double[] matrix, double[] vector, double[] result) {
-
+        assert(vector.length == result.length);
+        for (int category = 0; category < categoryCount; category++) {
+            for (int pattern = 0; pattern < patternCount; pattern++) {
+                for (int i = 0; i < stateCount; i++) {
+                    double sum = 0;
+                    for (int j = 0; j < stateCount; j++) {
+                        sum += matrix[category * stateCount * stateCount + i * stateCount + j] * vector[category * patternCount * stateCount + pattern * stateCount + j];
+                    }
+                    result[category * patternCount * stateCount + pattern * stateCount + i] = sum;
+                }
+            }
+        }
     }
 
     private double getTripleVectorReduction(double[] first, double[] second, double[] third) {

@@ -103,6 +103,8 @@ public class SelectTraitDialog {
     public int showDialog(Collection<TraitData> traits, String defaultName, Component parent, Boolean allowSelectTraits) {
         optionPanel.removeAll();
         nameField.setText(defaultName != null ? defaultName : "untitled_traits");
+        copyCheck.setSelected(true);
+        independentBox.setSelected(false);
 
         if (traits == null || !allowSelectTraits) { // traits shouldn't be null
             optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the selected trait(s)."));

@@ -25,28 +25,13 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evolution.tree.MutableTreeModel;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
-import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
-import dr.math.matrixAlgebra.CholeskyDecomposition;
-import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.WrappedVector;
-import dr.math.matrixAlgebra.missingData.MissingOps;
-import dr.xml.*;
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
 
-import java.util.Arrays;
+import static dr.math.matrixAlgebra.missingData.MissingOps.blockUnwrap;
+import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
 
 /**
  * @author Marc A. Suchard
@@ -92,7 +77,7 @@ public class RepeatedMeasuresIntegratedProcessTraitDataModel extends RepeatedMea
 
     @Override
     public boolean[] getDataMissingIndicators() {
-       return integratedProcessDataModel.getDataMissingIndicators();
+        return integratedProcessDataModel.getDataMissingIndicators();
     }
 
     @Override
@@ -103,6 +88,20 @@ public class RepeatedMeasuresIntegratedProcessTraitDataModel extends RepeatedMea
     @Override
     protected int getParameterPartialDimension() {
         return 2 * getParameter().getDimension();
+    }
+
+    @Override
+    protected void calculatePrecisionInfo() {
+        int dimProcess = 2 * dimTrait;
+        double[] precisionBuffer = new double[dimProcess * dimProcess];
+        // Precision [Id, 0; 0, precisionPosistion]
+        blockUnwrap(wrap(samplingPrecisionParameter.getParameterValues(), 0, dimTrait, dimTrait),
+                precisionBuffer, 0,
+                dimTrait, dimTrait, dimProcess);
+        for (int i = 0; i < dimTrait; i++) {
+            precisionBuffer[i * dimProcess + i] = 1.0;
+        }
+        samplingPrecision = new Matrix(precisionBuffer, dimProcess, dimProcess);
     }
 
 }

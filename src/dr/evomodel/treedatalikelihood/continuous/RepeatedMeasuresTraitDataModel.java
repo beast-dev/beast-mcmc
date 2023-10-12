@@ -54,7 +54,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         ModelExtensionProvider.NormalExtensionProvider {
 
     private final String traitName;
-    private final MatrixParameterInterface samplingPrecisionParameter;
+    protected final MatrixParameterInterface samplingPrecisionParameter;
     private boolean diagonalOnly = false;
     //    private DenseMatrix64F samplingVariance;
     private boolean variableChanged = true;
@@ -202,7 +202,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         }
     }
 
-    private void calculatePrecisionInfo() {
+    protected void calculatePrecisionInfo() {
         samplingPrecision = new Matrix(samplingPrecisionParameter.getParameterAsMatrix());
     }
 
@@ -364,7 +364,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                             traitParameter,
                             missingIndicators,
                             true,
-                            samplingPrecision.getColumnDimension() / 2,
+                            samplingPrecision.getColumnDimension(),
                             samplingPrecision
                     );
                 }

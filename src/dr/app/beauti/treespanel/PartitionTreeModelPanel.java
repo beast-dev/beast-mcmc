@@ -289,7 +289,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
                 if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
                     // is a NEXUS file
-                    beautiImporter.importNexusFile(file);
+                    beautiImporter.importNexusFile(file, true);
                 } else {
                     beautiImporter.importNewickFile(files[0]);
                 }

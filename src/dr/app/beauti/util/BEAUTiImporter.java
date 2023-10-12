@@ -199,8 +199,12 @@ public class BEAUTiImporter {
 
     }
 
-    // nexus
     public void importNexusFile(File file) throws IOException, ImportException {
+        importNexusFile(file, false);
+    }
+
+    // nexus
+    public void importNexusFile(File file, Boolean allowEmpty) throws IOException, ImportException {
         TaxonList taxa = null;
         SimpleAlignment alignment = null;
         List<Tree> trees = new ArrayList<Tree>();
@@ -311,7 +315,7 @@ public class BEAUTiImporter {
 //            throw new Exception(e.getMessage());
         }
 
-        setData(file.getName(), taxa, alignment, charSets, taxSets, model, null, trees);
+        setData(file.getName(), taxa, alignment, charSets, taxSets, model, null, trees, allowEmpty);
     }
 
     // FASTA

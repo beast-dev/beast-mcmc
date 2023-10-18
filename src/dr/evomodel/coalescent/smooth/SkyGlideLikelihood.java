@@ -39,7 +39,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * A likelihood function for a smooth skygrid coalescent process that nicely works with the newer tree intervals
+ * A likelihood function for a piece-wise linear log population size coalescent process that nicely works with the newer tree intervals
  *
  * @author Mathieu Fourment
  * @author Erick Matsen
@@ -54,10 +54,10 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
     private final Parameter logPopSizeParameter;
     private final Parameter gridPointParameter;
 
-    protected SkyGlideLikelihood(String name,
-                                 List<TreeModel> trees,
-                                 Parameter logPopSizeParameter,
-                                 Parameter gridPointParameter) {
+    public SkyGlideLikelihood(String name,
+                              List<TreeModel> trees,
+                              Parameter logPopSizeParameter,
+                              Parameter gridPointParameter) {
         super(name);
         this.trees = trees;
         this.logPopSizeParameter = logPopSizeParameter;

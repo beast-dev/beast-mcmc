@@ -158,6 +158,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         final int dimProcess;
         final int numTraits;
         final int dimNode;
+        final int dimProcessNode;;
 
         final MultivariateDiffusionModel diffusionModel;
         final ContinuousTraitPartialsProvider dataModel;
@@ -186,6 +187,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             dimProcess = likelihoodDelegate.getDimProcess();
             numTraits = likelihoodDelegate.getTraitCount();
             dimNode = dimTrait * numTraits;
+            dimProcessNode = likelihoodDelegate.getDimProcess() * numTraits;
             this.diffusionModel = diffusionModel;
             this.dataModel = dataModel;
             this.rateTransformation = rateTransformation;

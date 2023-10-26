@@ -31,6 +31,9 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                                                          ContinuousDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
         missingInformation = new PartiallyMissingInformation(tree, dataModel);
+        if (likelihoodDelegate.getDiffusionProcessDelegate().isIntegratedProcess()) {
+            addPositionVelocityTrait(treeTraitHelper);
+        }
     }
 
     @Override

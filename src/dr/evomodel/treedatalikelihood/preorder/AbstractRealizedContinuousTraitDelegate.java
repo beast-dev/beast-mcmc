@@ -103,12 +103,75 @@ public abstract class AbstractRealizedContinuousTraitDelegate extends ProcessSim
         treeTraitHelper.addTrait(tipPrecision);
     }
 
+    protected void addPositionVelocityTrait(final Helper treeTraitHelper) {
+        // Log separatelly gradient from position
+        TreeTrait.DA positionTrait = new TreeTrait.DA() {
+
+            public String getTraitName() {
+                return getPositionName(name);
+            }
+
+            public Intent getIntent() {
+                return Intent.NODE;
+            }
+
+            public double[] getTrait(Tree t, NodeRef node) {
+
+                if (t != tree) {  // TODO Write a wrapper class around t if TransformableTree
+                    if (t == baseTree) {
+                        node = getBaseNode(t, node);
+                    } else {
+                        throw new RuntimeException("Tree '" + t.getId() + "' and likelihood '" + tree.getId() + "' mismatch");
+                    }
+                }
+
+                return getTraitForNode(node, dimProcessNode, dimNode);
+            }
+        };
+
+        treeTraitHelper.addTrait(positionTrait);
+
+        TreeTrait.DA velocityTrait = new TreeTrait.DA() {
+
+            public String getTraitName() {
+                return getVelocityName(name);
+            }
+
+            public Intent getIntent() {
+                return Intent.NODE;
+            }
+
+            public double[] getTrait(Tree t, NodeRef node) {
+
+                if (t != tree) {  // TODO Write a wrapper class around t if TransformableTree
+                    if (t == baseTree) {
+                        node = getBaseNode(t, node);
+                    } else {
+                        throw new RuntimeException("Tree '" + t.getId() + "' and likelihood '" + tree.getId() + "' mismatch");
+                    }
+                }
+
+                return getTraitForNode(node, 0, dimProcessNode);
+            }
+        };
+
+        treeTraitHelper.addTrait(velocityTrait);
+    }
+
     public static String getTipTraitName(String name) {
         return REALIZED_TIP_TRAIT + "." + name;
     }
 
     private static String getTipPrecisionName(String name) {
         return "precision." + name;
+    }
+
+    private static String getPositionName(String name) {
+        return "position." + name;
+    }
+
+    private static String getVelocityName(String name) {
+        return "velocity." + name;
     }
 
     private double[] getTraitForAllTips() {
@@ -120,6 +183,22 @@ public abstract class AbstractRealizedContinuousTraitDelegate extends ProcessSim
         final int length = dimNode * tree.getExternalNodeCount();
         double[] trait = new double[length];
         System.arraycopy(sample, 0, trait, 0, length);
+
+        return trait;
+    }
+
+    private double[] getTraitForAllTips(int begin, int end) {
+
+        assert simulationProcess != null;
+
+        simulationProcess.cacheSimulatedTraits(null);
+
+        int dimLogTrait = end - begin;
+        final int length = dimLogTrait * tree.getExternalNodeCount();
+        double[] trait = new double[length];
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            System.arraycopy(sample, i * dimLogTrait, trait, 0, dimLogTrait);
+        }
 
         return trait;
     }
@@ -154,12 +233,30 @@ public abstract class AbstractRealizedContinuousTraitDelegate extends ProcessSim
         }
     }
 
+    private double[] getTraitForNode(final NodeRef node, int begin, int end) {
+
+        assert simulationProcess != null;
+
+        simulationProcess.cacheSimulatedTraits(null);
+
+        int dimLogTrait = end - begin;
+
+        if (node == null) {
+            return getTraitForAllTips(begin, end);
+        } else {
+            double[] trait = new double[dimLogTrait];
+            System.arraycopy(sample, node.getNumber() * dimNode + begin, trait, 0, dimLogTrait);
+
+            return trait;
+        }
+    }
+
     public int vectorizeNodeOperations(final List<NodeOperation> nodeOperations, final int[] operations) {
 
         int k = 0;
         for (ProcessOnTreeDelegate.NodeOperation op : nodeOperations) {
 
-            operations[k    ] = op.getNodeNumber(); // Parent sample
+            operations[k] = op.getNodeNumber(); // Parent sample
             operations[k + 1] = op.getLeftChild();  // Node sample
             operations[k + 2] = likelihoodDelegate.getActiveNodeIndex(op.getLeftChild());   // Node post-order partial
             operations[k + 3] = likelihoodDelegate.getActiveMatrixIndex(op.getLeftChild()); // Node branch info

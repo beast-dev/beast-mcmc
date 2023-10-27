@@ -70,7 +70,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
     @Override
     public String getReport() {
-        return null;
+        return "skyGlideLikelihood(" + getLogLikelihood() + ")";
     }
 
     @Override

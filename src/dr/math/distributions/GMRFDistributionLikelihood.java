@@ -30,6 +30,7 @@ import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.xml.Reportable;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.SymmTridiagMatrix;
 
@@ -37,7 +38,7 @@ import no.uib.cipr.matrix.SymmTridiagMatrix;
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class GMRFDistributionLikelihood extends AbstractModelLikelihood implements MultivariateDistribution {
+public class GMRFDistributionLikelihood extends AbstractModelLikelihood implements MultivariateDistribution, Reportable {
 
     private Parameter precisionParameter;
 
@@ -63,6 +64,7 @@ public class GMRFDistributionLikelihood extends AbstractModelLikelihood implemen
         this.gridParameter = gridParameter;
         this.fieldLength = popSizeParameter.getDimension();
         this.popSizeParameter = popSizeParameter;
+        setupGMRFWeights();
         addVariable(precisionParameter);
         addVariable(lambdaParameter);
         addVariable(gridParameter);
@@ -143,12 +145,12 @@ public class GMRFDistributionLikelihood extends AbstractModelLikelihood implemen
 
     @Override
     public double[][] getScaleMatrix() {
-        return new double[0][];
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
     public double[] getMean() {
-        return new double[0];
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
@@ -188,11 +190,16 @@ public class GMRFDistributionLikelihood extends AbstractModelLikelihood implemen
 
     @Override
     public double getLogLikelihood() {
-        return 0;
+        return logPdf(popSizeParameter.getParameterValues());
     }
 
     @Override
     public void makeDirty() {
 
+    }
+
+    @Override
+    public String getReport() {
+        return "gmrfDistributionLikelihood(" + getLogLikelihood() + ")";
     }
 }

@@ -38,32 +38,32 @@ import no.uib.cipr.matrix.SymmTridiagMatrix;
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class GMRFDistributionLikelihood extends AbstractModelLikelihood implements MultivariateDistribution, Reportable {
+public class GmrfDistributionLikelihood extends AbstractModelLikelihood implements MultivariateDistribution, Reportable {
 
     private Parameter precisionParameter;
 
     private Parameter lambdaParameter;
 
-    private Parameter gridParameter;
+    private Parameter gridParameter;  //TODO: Time-aware variant
 
     private int fieldLength;
-    private Parameter popSizeParameter;
+    private Parameter data;
     private SymmTridiagMatrix weightMatrix;
 
     private static final double LOG_TWO_TIMES_PI = OldGMRFSkyrideLikelihood.LOG_TWO_TIMES_PI;
 
 
-    public GMRFDistributionLikelihood(String name,
+    public GmrfDistributionLikelihood(String name,
                                       Parameter precisionParameter,
                                       Parameter lambdaParameter,
                                       Parameter gridParameter,
-                                      Parameter popSizeParameter) {
+                                      Parameter data) {
         super(name);
         this.precisionParameter = precisionParameter;
         this.lambdaParameter = lambdaParameter;
         this.gridParameter = gridParameter;
-        this.fieldLength = popSizeParameter.getDimension();
-        this.popSizeParameter = popSizeParameter;
+        this.fieldLength = data.getDimension();
+        this.data = data;
         setupGMRFWeights();
         addVariable(precisionParameter);
         addVariable(lambdaParameter);
@@ -190,7 +190,7 @@ public class GMRFDistributionLikelihood extends AbstractModelLikelihood implemen
 
     @Override
     public double getLogLikelihood() {
-        return logPdf(popSizeParameter.getParameterValues());
+        return logPdf(data.getParameterValues());
     }
 
     @Override

@@ -28,7 +28,7 @@ package dr.inferencexml.distribution;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.smooth.SmoothSkygridLikelihoodParser;
 import dr.inference.model.Parameter;
-import dr.math.distributions.GMRFDistributionLikelihood;
+import dr.math.distributions.GmrfDistributionLikelihood;
 import dr.xml.*;
 
 /**
@@ -37,7 +37,7 @@ import dr.xml.*;
  */
 public class GMRFDistributionLikelihoodParser  extends AbstractXMLObjectParser {
 
-    private static final String POPULATION_PARAMETER = GMRFSkyrideLikelihoodParser.POPULATION_PARAMETER;
+    private static final String DATA = "data";
     private static final String PRECISION_PARAMETER = GMRFSkyrideLikelihoodParser.PRECISION_PARAMETER;
 
     private static final String SINGLE_BETA = GMRFSkyrideLikelihoodParser.SINGLE_BETA;
@@ -51,8 +51,8 @@ public class GMRFDistributionLikelihoodParser  extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        XMLObject cxo = xo.getChild(POPULATION_PARAMETER);
-        Parameter popParameter = (Parameter) cxo.getChild(Parameter.class);
+        XMLObject cxo = xo.getChild(DATA);
+        Parameter data = (Parameter) cxo.getChild(Parameter.class);
 
         cxo = xo.getChild(PRECISION_PARAMETER);
         Parameter precParameter = (Parameter) cxo.getChild(Parameter.class);
@@ -66,7 +66,7 @@ public class GMRFDistributionLikelihoodParser  extends AbstractXMLObjectParser {
         }
 
         Parameter gridPoints = SmoothSkygridLikelihoodParser.getGridPoints(xo);
-        return new GMRFDistributionLikelihood(NAME, precParameter, lambda, gridPoints, popParameter);
+        return new GmrfDistributionLikelihood(NAME, precParameter, lambda, gridPoints, data);
     }
 
     @Override
@@ -74,7 +74,7 @@ public class GMRFDistributionLikelihoodParser  extends AbstractXMLObjectParser {
         return rules;
     }
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
+            new ElementRule(DATA, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
             new ElementRule(PRECISION_PARAMETER, new XMLSyntaxRule[]{
@@ -93,7 +93,7 @@ public class GMRFDistributionLikelihoodParser  extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return GMRFDistributionLikelihood.class;
+        return GmrfDistributionLikelihood.class;
     }
 
     @Override

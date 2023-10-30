@@ -1,0 +1,34 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+	<parameter id="data" value="1 2 3 4"/>
+
+
+	<multivariateDistributionLikelihood id="gmrf">
+		<distribution>
+			<gaussianMarkovRandomField dim="4">
+				<precision>
+					<parameter value="1.0"/>
+				</precision>
+				<start>
+					<parameter value="0.0"/>
+				</start>
+			</gaussianMarkovRandomField>
+		</distribution>
+		<data>
+			<parameter idref="data"/>
+		</data>
+	</multivariateDistributionLikelihood>
+
+	<report>
+		<multivariateDistributionLikelihood idref="gmrf"/>
+	</report>
+
+
+	<report>
+		<gradient>
+			<multivariateDistributionLikelihood idref="gmrf"/>
+		</gradient>
+	</report>
+
+</beast>

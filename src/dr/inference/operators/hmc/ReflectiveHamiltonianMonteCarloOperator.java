@@ -390,7 +390,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
                               double remainingTime) {
                 updatePosition(position, preconditioning, momentum, time);
                 momentum.set(indices[0], -momentum.get(indices[0]));
-                position[indices[0]] = eventLocation[0];
+                position[indices[0]] = eventLocation[0];  // TODO: XJ: they should be the same, change it to assert?
             }
         },
         Collision {
@@ -403,7 +403,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
 
                 for (int index : indices) {
                     momentum.set(index, updatedMomentum.get(index));
-                    position[index] = eventLocation[0];
+                    position[index] = eventLocation[0];   // TODO: XJ: they should be the same, change it to assert?
                 }
 
             }

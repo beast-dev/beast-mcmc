@@ -64,6 +64,9 @@ public class BeastVersion implements Version, Citable {
 
     private static final boolean IS_PRERELEASE = true;
 
+    // this is now being manually updated since the move to GitHub. 7 digits of GitHub hash.
+    private static final String REVISION = "8a10723";
+
     public String getVersion() {
         return VERSION;
     }
@@ -184,13 +187,15 @@ public class BeastVersion implements Version, Citable {
     public static String getRevision() {
         try {
             try (InputStream in = BeastVersion.class.getResourceAsStream("/revision.txt")) {
-                assert in != null;
-
-                List<String> lines =  new BufferedReader(
-                        new InputStreamReader(in, StandardCharsets.UTF_8))
-                        .lines()
-                        .collect(Collectors.toList());
-                return lines.get(1); //"commit-dirty" -dirty is only output if there are uncommited changes
+                if (in != null) {
+                    List<String> lines =  new BufferedReader(
+                            new InputStreamReader(in, StandardCharsets.UTF_8))
+                            .lines()
+                            .collect(Collectors.toList());
+                    return lines.get(1); //"commit-dirty" -dirty is only output if there are uncommited changes
+                } else {
+                    return REVISION;
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException("No revision file found. Try running `ant revision` to make it");

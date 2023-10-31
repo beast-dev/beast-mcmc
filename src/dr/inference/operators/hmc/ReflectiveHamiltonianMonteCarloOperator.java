@@ -210,13 +210,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
 
         private boolean isCollision(double position1, double intendedPosition1,
                                     double position2, double intendedPosition2) {
-            if (position1 > position2) {
-                return intendedPosition1 <= intendedPosition2;
-            } else if (position1 < position2) {
-                return intendedPosition1 >= intendedPosition2;
-            } else {
-                return false;
-            }
+            return (position1 - position2) * (intendedPosition1 - intendedPosition2) < 0 || intendedPosition1 == intendedPosition2;
         }
 
         private ReflectionEvent firstCollision(double[] position, ReadableVector momentum, double intervalLength) {

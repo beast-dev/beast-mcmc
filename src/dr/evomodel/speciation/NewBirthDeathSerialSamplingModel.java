@@ -288,19 +288,21 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     @Override
-    public double logConditioningProbability() {
+    public double logConditioningProbability(int model) {
         double logP = 0.0;
         if ( conditionOnSurvival ) {
             double origin = originTime.getParameterValue(0);
             double[] modelBreakPoints = getBreakPoints();
-            int idx = modelBreakPoints.length - 2;
-            double intervalStart = modelBreakPoints[idx];
-            // Origin is probably near the last index, so we do a linear search forwards in time from there
-            while ( origin < intervalStart) {
-                --idx;
-                intervalStart = modelBreakPoints[idx];
+
+            double segmentIntervalEnd = modelBreakPoints[model];
+
+            while (origin >= segmentIntervalEnd) { // TODO Maybe it's >= ?
+                ++model;
+                updateLikelihoodModelValues(model);
+                segmentIntervalEnd = modelBreakPoints[model];
             }
-            logP -= Math.log(1.0 - p(idx, origin));
+
+            logP -= Math.log(1.0 - p(model, origin));
         }
         return logP;
     }
@@ -1021,9 +1023,29 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     @Override
-    public void logConditioningProbability(double[] gradient) {
+    public void logConditioningProbability(int model, double[] gradient) {
+        double grad = 0.0;
+        double[] dPOrigin = new double[numIntervals * 4];
         if ( conditionOnSurvival ) {
-            throw new RuntimeException("Cannot yet condition ESSBDP for gradient.");
+            double origin = originTime.getParameterValue(0);
+            double[] modelBreakPoints = getBreakPoints();
+            double intervalStart = model > 0? modelBreakPoints[model-1]:0;
+            double segmentIntervalEnd = modelBreakPoints[model];
+
+            while (origin >= segmentIntervalEnd) { // TODO Maybe it's >= ?
+                intervalStart = segmentIntervalEnd;
+                ++model;
+                updateGradientModelValues(model);
+                segmentIntervalEnd = modelBreakPoints[model];
+            }
+            double eAt_Origin = Math.exp(A * (origin - intervalStart));
+            grad += 1 /(1.0 - p(eAt_Origin));
+            dPCompute(model, origin, intervalStart, eAt_Origin, dPOrigin, dG2);
+            for (int p = 0; p < 4; p++) {
+                for (int k = 0; k <= model; k++) {
+                    gradient[genericIndex(k, p, numIntervals)] += grad * dPOrigin[k * 4 + p];
+                }
+            }
         }
     }
 

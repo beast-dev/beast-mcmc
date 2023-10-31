@@ -70,7 +70,7 @@ public class GlmCovariateImportance implements Loggable, Reportable {
 
     @SuppressWarnings("deprecation")
     public GlmCovariateImportance(Likelihood likelihood,
-                                  OldGLMSubstitutionModel glmSubstitutionModel) {
+                                  GlmSubstitutionModel glmSubstitutionModel) {
         this.likelihood = likelihood;
         this.glm = glmSubstitutionModel.getGeneralizedLinearModel();
         covariates = new ArrayList<>();

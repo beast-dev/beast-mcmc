@@ -25,6 +25,7 @@
 
 package dr.math.distributions;
 
+import dr.inference.model.GradientProvider;
 import dr.math.UnivariateFunction;
 import dr.util.DataTable;
 
@@ -35,7 +36,7 @@ import dr.util.DataTable;
  * @author Alexei Drummond
  * @version $Id: UniformDistribution.java,v 1.3 2005/07/11 14:06:25 rambaut Exp $
  */
-public class UniformDistribution implements Distribution {
+public class UniformDistribution implements Distribution, GradientProvider {
     //
     // Public stuff
     //
@@ -177,4 +178,23 @@ public class UniformDistribution implements Distribution {
 
     private final double upper;
     private final double lower;
+
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = gradLogPdf(x[i]);
+        }
+        return result;
+    }
+
+    private double gradLogPdf(double x) {
+        return (x < lower || x > upper) ? Double.NaN : 0.0;
+    }
 }

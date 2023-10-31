@@ -25,7 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.evomodel.substmodel.OldGLMSubstitutionModel;
+import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.distribution.GeneralizedLinearModel;
@@ -45,10 +45,11 @@ public class DesignMatrixSubstitutionModelGradient extends AbstractGlmSubstituti
     public DesignMatrixSubstitutionModelGradient(String traitName,
                                                  TreeDataLikelihood treeDataLikelihood,
                                                  BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                 OldGLMSubstitutionModel substitutionModel,
+                                                 GlmSubstitutionModel substitutionModel,
                                                  DesignMatrix matrix,
-                                                 MaskedParameter parameter) {
-        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel);
+                                                 MaskedParameter parameter,
+                                                 ApproximationMode mode) {
+        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel, mode);
 
         this.parameter = parameter;
 
@@ -93,8 +94,8 @@ public class DesignMatrixSubstitutionModelGradient extends AbstractGlmSubstituti
     }
 
     @Override
-    double preProcessNormalization(double[] differentials, double[] generator,
-                                   boolean normalize) {
+    protected double preProcessNormalization(double[] differentials, double[] generator,
+                                             boolean normalize) {
         // TODO Code duplication with RandomEffectsGlmSubstitutionModel
         double total = 0.0;
         if (normalize) {

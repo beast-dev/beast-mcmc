@@ -26,20 +26,17 @@
 package dr.evomodelxml.substmodel;
 
 import dr.evolution.datatype.DataType;
-import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
+import dr.evomodel.substmodel.LogAdditiveCtmcRateProvider;
 import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.OldGLMSubstitutionModel;
-import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.distribution.GeneralizedLinearModel;
-import dr.inference.distribution.LogLinearModel;
 import dr.xml.*;
 
 /**
  */
-@Deprecated // This uses the old (deprecated) GLM stuff and is here for XML compatibility for now
-// Only one of OldGLMSubstitutionModelParser and GLMSubstitutionModelParser should be in the parser list.
-public class OldGLMSubstitutionModelParser extends AbstractXMLObjectParser {
+
+public class GlmSubstitutionModelParser extends AbstractXMLObjectParser {
 
     public static final String GLM_SUBSTITUTION_MODEL = "glmSubstitutionModel";
     private static final String NORMALIZE = "normalize";
@@ -57,7 +54,7 @@ public class OldGLMSubstitutionModelParser extends AbstractXMLObjectParser {
 
         int rateCount = (dataType.getStateCount() - 1) * dataType.getStateCount();
 
-        LogLinearModel glm = (LogLinearModel) xo.getChild(GeneralizedLinearModel.class);
+        LogAdditiveCtmcRateProvider glm = (LogAdditiveCtmcRateProvider) xo.getChild(LogAdditiveCtmcRateProvider.class);
 
         int length = glm.getXBeta().length;
 
@@ -74,7 +71,7 @@ public class OldGLMSubstitutionModelParser extends AbstractXMLObjectParser {
 
         boolean normalize = xo.getAttribute(NORMALIZE, true);
 
-        OldGLMSubstitutionModel model = new OldGLMSubstitutionModel(xo.getId(), dataType, rootFreq, glm);
+        GlmSubstitutionModel model = new GlmSubstitutionModel(xo.getId(), dataType, rootFreq, glm);
         model.setNormalization(normalize);
 
         return model;
@@ -89,7 +86,7 @@ public class OldGLMSubstitutionModelParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return OldGLMSubstitutionModel.class;
+        return GlmSubstitutionModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

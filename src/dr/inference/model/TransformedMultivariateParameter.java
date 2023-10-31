@@ -64,11 +64,11 @@ public class TransformedMultivariateParameter extends TransformedParameter {
         valuesKnown = false;
     }
 
-    public void variableChangedEvent(Variable variable, int index, ChangeType type) {
-        valuesKnown = false;
-        // Propogate change up model graph
-        fireParameterChangedEvent(index, type);
-    }
+//    public void variableChangedEvent(Variable variable, int index, ChangeType type) {
+//        valuesKnown = false;
+//        // Propogate change up model graph
+//        fireParameterChangedEvent(index, type);
+//    }
 
     public void setParameterValue(int dim, double value) {
         setParameterValueQuietly(dim, value);
@@ -78,6 +78,22 @@ public class TransformedMultivariateParameter extends TransformedParameter {
     public void setParameterValueQuietly(int dim, double value) {
         update();
         transformedValues[dim] = value;
+        updateParameterQuietlyFromTransformedValues();
+    }
+
+    @Override
+    public void setAllParameterValuesQuietly(double[] values) {
+        if (values.length != transformedValues.length) {
+            throw new IllegalArgumentException("supplied values must be of same dimension as transformed parameter");
+        }
+
+        for (int i = 0; i < transformedValues.length; i++) {
+            transformedValues[i] = values[i];
+        }
+        updateParameterQuietlyFromTransformedValues();
+    }
+
+    private void updateParameterQuietlyFromTransformedValues() {
         unTransformedValues = inverse(transformedValues);
         // Need to update all values
         for (int i = 0; i < parameter.getDimension(); i++) {
@@ -99,6 +115,23 @@ public class TransformedMultivariateParameter extends TransformedParameter {
             unTransformedValues = parameter.getParameterValues();
             transformedValues = transform(unTransformedValues);
             valuesKnown = true;
+        }
+    }
+
+    private boolean hasChanged() {
+        for (int i = 0; i < unTransformedValues.length; i++) {
+            if (parameter.getParameterValue(i) != unTransformedValues[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        valuesKnown = false;
+        if (!doNotPropagateChangeUp) {
+            fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED); //if one dimension of the untransformed parameter changes, it is very likely that many dimensions of the transformed parameter change
         }
     }
 }

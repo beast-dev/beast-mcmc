@@ -26,15 +26,17 @@
 
 package dr.inference.operators.hmc;
 
+import dr.app.bss.Utils;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.GraphicalParameterBound;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.inference.operators.AdaptationMode;
 import dr.inferencexml.operators.hmc.ReflectiveHamiltonianMonteCarloOperatorParser;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
 import dr.xml.Reportable;
+
+import java.util.ArrayList;
 
 
 /**
@@ -43,7 +45,9 @@ import dr.xml.Reportable;
  */
 public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCarloOperator implements Reportable {
 
-    private final GraphicalParameterBound treeParameterBound;
+    private final GeneralBoundsProvider parameterBound;
+    private boolean isAtBoundary = false;
+    private static final boolean DEBUG = false;
 
 
     public ReflectiveHamiltonianMonteCarloOperator(AdaptationMode mode,
@@ -54,17 +58,31 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
                                                    Parameter maskParameter,
                                                    Options runtimeOptions,
                                                    MassPreconditioner preconditioner,
-                                                   GraphicalParameterBound graphicalParameterBound) {
+                                                   GeneralBoundsProvider bounds) {
 
         super(mode, weight, gradientProvider, parameter, transform, maskParameter, runtimeOptions, preconditioner);
 
-        this.treeParameterBound = graphicalParameterBound;
+        this.parameterBound = bounds;
         this.leapFrogEngine = constructLeapFrogEngine(transform);
     }
 
     @Override
     protected LeapFrogEngine constructLeapFrogEngine(Transform transform) {
-        return new WithGraphBounds(parameter, getDefaultInstabilityHandler(), preconditioning, mask, treeParameterBound);
+        if (parameterBound == null) {
+            return null; //will get called again
+        }
+
+
+        if (transform != null) {
+            throw new RuntimeException("not yet implemented");
+        }
+
+        if (parameterBound instanceof GraphicalParameterBound) { //TODO: don't use 'instanceof' to deal with this.
+            return new WithGraphBounds(parameter, getDefaultInstabilityHandler(), preconditioning, mask,
+                    (GraphicalParameterBound) parameterBound);
+        }
+        return new WithMultivariateCurvedBounds(parameter, getDefaultInstabilityHandler(), preconditioning, mask,
+                (BoundedSpace) parameterBound);
     }
 
     @Override
@@ -78,7 +96,90 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
     }
 
 
-    class WithGraphBounds extends HamiltonianMonteCarloOperator.LeapFrogEngine.Default {
+    abstract class WithBounds extends HamiltonianMonteCarloOperator.LeapFrogEngine.Default {
+
+        WithBounds(Parameter parameter,
+                   InstabilityHandler instabilityHandler,
+                   MassPreconditioner preconditioning,
+                   double[] mask) {
+            super(parameter, instabilityHandler, preconditioning, mask);
+        }
+
+        protected abstract ReflectionEvent nextEvent(double[] position, WrappedVector momentum, double intervalLength,
+                                                     boolean isAtBoundary) throws NumericInstabilityException;
+
+
+        @Override
+        public void updatePosition(double[] position, WrappedVector momentum,
+                                   double functionalStepSize) throws NumericInstabilityException {
+
+            double collapsedTime = 0.0;
+            while (collapsedTime < functionalStepSize) {
+                ReflectionEvent event = nextEvent(position, momentum, functionalStepSize - collapsedTime, isAtBoundary);
+
+                isAtBoundary = event.doReflection(position, momentum);
+                collapsedTime += event.getEventTime();
+            }
+            setParameter(position);
+        }
+
+
+    }
+
+    class WithMultivariateCurvedBounds extends WithBounds {
+
+        private final BoundedSpace space;
+        public final int[] defaultIndices;
+
+        WithMultivariateCurvedBounds(Parameter parameter,
+                                     InstabilityHandler instabilityHandler,
+                                     MassPreconditioner preconditioning,
+                                     double[] mask,
+                                     BoundedSpace space) {
+            super(parameter, instabilityHandler, preconditioning, mask);
+            this.space = space;
+            ArrayList<Integer> inds = new ArrayList<>();
+            for (int i = 0; i < parameter.getDimension(); i++) {
+                if (mask == null || mask[i] == 1) {
+                    inds.add(i);
+                }
+            }
+            this.defaultIndices = new int[inds.size()];
+            for (int i = 0; i < inds.size(); i++) {
+                defaultIndices[i] = inds.get(i);
+            }
+        }
+
+
+        @Override
+        protected ReflectionEvent nextEvent(double[] position, WrappedVector momentum, double intervalLength,
+                                            boolean isAtBoundary) throws NumericInstabilityException {
+            double[] velocity = preconditioning.getVelocity(momentum);
+            double timeToReflection = space.forwardDistanceToBoundary(position, velocity, isAtBoundary);
+
+            if (DEBUG) {
+                System.out.println("Time to reflection: " + timeToReflection);
+                System.out.println("Interval length: " + intervalLength);
+            }
+
+
+            if (timeToReflection > intervalLength) {
+                return new ReflectionEvent(ReflectionType.None, intervalLength, Double.NaN, new int[0]);
+            } else {
+                double[] boundaryPosition = new double[position.length];
+                for (int i = 0; i < position.length; i++) {
+                    boundaryPosition[i] = position[i] + timeToReflection * velocity[i];
+                }
+                double[] normalVector = space.getNormalVectorAtBoundary(boundaryPosition);
+                return new ReflectionEvent(ReflectionType.MultivariateReflection, timeToReflection,
+                        intervalLength - timeToReflection,
+                        boundaryPosition, normalVector, defaultIndices);
+            }
+        }
+    }
+
+
+    class WithGraphBounds extends WithBounds {
 
         final private GraphicalParameterBound graphicalParameterBound;
 
@@ -94,20 +195,10 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
 
         }
 
+
         @Override
-        public void updatePosition(double[] position, WrappedVector momentum,
-                                   double functionalStepSize) {
-
-            double collapsedTime = 0.0;
-            while (collapsedTime < functionalStepSize) {
-                ReflectionEvent event = nextEvent(position, momentum, functionalStepSize - collapsedTime);
-                event.doReflection(position, momentum);
-                collapsedTime += event.getEventTime();
-            }
-            setParameter(position);
-        }
-
-        private ReflectionEvent nextEvent(double[] position, WrappedVector momentum, double intervalLength) {
+        protected ReflectionEvent nextEvent(double[] position, WrappedVector momentum, double intervalLength,
+                                            boolean isAtBoundary) {
             ReflectionEvent reflectionEventAtFixedBound = firstReflectionAtFixedBounds(position, momentum, intervalLength);
             ReflectionEvent collisionEvent = firstCollision(position, momentum, intervalLength);
             return (reflectionEventAtFixedBound.getEventTime() < collisionEvent.getEventTime()) ? reflectionEventAtFixedBound : collisionEvent;
@@ -164,7 +255,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
                     }
                 }
             }
-            return new ReflectionEvent(type, firstCollisionTime, collisionLocation, intervalLength, new int[]{index1, index2});
+            return new ReflectionEvent(type, firstCollisionTime, collisionLocation, new int[]{index1, index2});
         }
 
         private double[] getIntendedPosition(double[] position, ReadableVector momentum, double intervalLength) {
@@ -210,7 +301,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
                     }
                 }
             }
-            return new ReflectionEvent(type, firstReflection, reflectionLocation, intervalLength, new int[]{reflectionIndex});
+            return new ReflectionEvent(type, firstReflection, reflectionLocation, new int[]{reflectionIndex});
         }
 
 
@@ -219,21 +310,32 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
     class ReflectionEvent {
         private final ReflectionType type;
         private final double eventTime;
-        private final double eventLocation;
-        private final double intervalLength;
+        private final double[] eventLocation;
         private final int[] indices;
+        private final double[] normalVector;
+        private final double remainingTime;
+
+        ReflectionEvent(ReflectionType type,
+                        double eventTime,
+                        double remainingTime,
+                        double[] eventLocation,
+                        double[] normalVector,
+                        int[] indices) {
+            this.type = type;
+            this.eventTime = eventTime;
+            this.indices = indices;
+            this.eventLocation = eventLocation;
+            this.normalVector = normalVector;
+            this.remainingTime = remainingTime;
+        }
 
         ReflectionEvent(ReflectionType type,
                         double eventTime,
                         double eventLocation,
-                        double intervalLength,
                         int[] indices) {
-            this.type = type;
-            this.eventTime = eventTime;
-            this.intervalLength = intervalLength;
-            this.indices = indices;
-            this.eventLocation = eventLocation;
+            this(type, eventTime, Double.NaN, new double[]{eventLocation}, null, indices);
         }
+
 
         public double getEventTime() {
             return eventTime;
@@ -243,32 +345,77 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
             return type;
         }
 
-        public void doReflection(double[] position, WrappedVector momentum) {
-            type.doReflection(position, preconditioning, momentum, eventLocation, indices, eventTime);
+        public boolean doReflection(double[] position, WrappedVector momentum) {
+
+            if (DEBUG) {
+                System.out.println("time: " + eventTime);
+                System.out.print("start: ");
+                Utils.printArray(position);
+                System.out.println(momentum);
+            }
+
+            type.doReflection(position, preconditioning, momentum, eventLocation, indices, normalVector, eventTime, remainingTime);
+
+            if (DEBUG) {
+                System.out.print("end: ");
+                Utils.printArray(position);
+                System.out.println(momentum);
+            }
+
+            return type.isAtBoundary();
         }
 
     }
 
     enum ReflectionType {
+
+        MultivariateReflection {
+            @Override
+            void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum,
+                              double eventLocation[], int[] indices, double[] normalVector, double time,
+                              double remainingTime) {
+
+
+                updatePosition(position, preconditioning, momentum, time);
+                double vn = 0;
+                double nn = 0;
+
+                for (int i : indices) {
+                    vn += momentum.get(i) * normalVector[i];
+                    nn += normalVector[i] * normalVector[i];
+                }
+
+                double c = 2 * vn / nn;
+
+                for (int i : indices) {
+                    momentum.set(i, momentum.get(i) - c * normalVector[i]);
+                    position[i] = eventLocation[i];
+                }
+
+
+            }
+        },
         Reflection {
             @Override
             void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum,
-                              double eventLocation, int[] indices, double time) {
+                              double eventLocation[], int[] indices, double[] normalVector, double time,
+                              double remainingTime) {
                 updatePosition(position, preconditioning, momentum, time);
                 momentum.set(indices[0], -momentum.get(indices[0]));
-                position[indices[0]] = eventLocation;
+                position[indices[0]] = eventLocation[0];
             }
         },
         Collision {
             @Override
             void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum,
-                              double eventLocation, int[] indices, double time) {
+                              double eventLocation[], int[] indices, double[] normalVector, double time,
+                              double remainingTime) {
                 updatePosition(position, preconditioning, momentum, time);
                 ReadableVector updatedMomentum = preconditioning.doCollision(indices, momentum);
 
                 for (int index : indices) {
                     momentum.set(index, updatedMomentum.get(index));
-                    position[index] = eventLocation;
+                    position[index] = eventLocation[0];
                 }
 
             }
@@ -276,8 +423,16 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
         None {
             @Override
             void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum,
-                              double eventLocation, int[] indices, double time) {
+                              double eventLocation[], int[] indices, double[] normalVector, double time,
+                              double remainginTime) {
+
                 updatePosition(position, preconditioning, momentum, time);
+
+            }
+
+            @Override
+            public boolean isAtBoundary() {
+                return false;
             }
         };
 
@@ -289,7 +444,13 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
         }
 
         abstract void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum,
-                                   double eventLocation, int[] indices, double time);
+                                   double eventLocation[], int[] indices, double[] normalVector, double time, double remainingTime);
+
+
+        public boolean isAtBoundary() {
+            return true;
+        }
+
     }
 
 }

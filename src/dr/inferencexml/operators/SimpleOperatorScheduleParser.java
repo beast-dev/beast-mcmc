@@ -59,10 +59,11 @@ public class SimpleOperatorScheduleParser extends AbstractXMLObjectParser {
             schedule.setSequential(xo.getBooleanAttribute(SEQUENTIAL));
         }
 
+        Logger.getLogger("dr.inference").info("\nCreating operator scheduler");
 
         if (xo.hasAttribute(OPTIMIZATION_SCHEDULE)) {
             String type = xo.getStringAttribute(OPTIMIZATION_SCHEDULE);
-            Logger.getLogger("dr.inference").info("Optimization Schedule: " + type);
+            Logger.getLogger("dr.inference").info("  Optimization schedule: " + type);
 
             try {
                 if (type.equalsIgnoreCase("default")) {

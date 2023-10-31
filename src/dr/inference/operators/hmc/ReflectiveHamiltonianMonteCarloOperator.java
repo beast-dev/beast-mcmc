@@ -205,13 +205,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
         }
 
         private boolean isReflected(double position, double intendedNewPosition, double bound) {
-            if (position > bound) {
-                return intendedNewPosition <= bound;
-            } else if (position < bound) {
-                return intendedNewPosition >= bound;
-            } else {
-                return false;
-            }
+            return (bound - position) * (intendedNewPosition - bound) > 0;
         }
 
         private boolean isCollision(double position1, double intendedPosition1,

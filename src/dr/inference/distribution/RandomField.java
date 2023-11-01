@@ -37,6 +37,11 @@ import dr.math.distributions.RandomFieldDistribution;
 
 public class RandomField extends AbstractModelLikelihood {
 
+    public interface WeightProvider {
+        // TODO returns relative lengths (intercoalescent intervals) between field entries
+
+    }
+
     private final Parameter field;
     private final RandomFieldDistribution distribution;
 

@@ -1,5 +1,5 @@
 /*
- * MultivariateNormalDistributionModelParser.java
+ * RandomFieldParser.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -26,32 +26,24 @@
 package dr.inferencexml.distribution;
 
 import dr.inference.distribution.RandomField;
+import dr.inference.distribution.RandomFieldGradient;
 import dr.inference.model.Parameter;
-import dr.math.distributions.GaussianMarkovRandomField;
 import dr.xml.*;
 
-public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
+public class RandomFieldGradientParser extends AbstractXMLObjectParser {
 
-    private static final String PARSER_NAME = "gaussianMarkovRandomField";
-    private static final String DIMENSION = "dim";
-    private static final String PRECISION = "precision";
-    private static final String START = "start";
+    private static final String PARSER_NAME = "randomFieldGradient";
 
-    public String getParserName() { return PARSER_NAME; }
+    public String getParserName() {
+        return PARSER_NAME;
+    }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        int dim = xo.getIntegerAttribute(DIMENSION);
+        RandomField randomField = (RandomField) xo.getChild(RandomField.class);
+        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-        Parameter incrementPrecision = (Parameter) xo.getElementFirstChild(PRECISION);
-
-        if (incrementPrecision.getParameterValue(0) <= 0.0) {
-            throw new XMLParseException("Scale must be > 0.0");
-        }
-
-        Parameter start = (Parameter) xo.getElementFirstChild(START);
-
-        return new GaussianMarkovRandomField(dim, incrementPrecision, start);
+        return new RandomFieldGradient(randomField, parameter);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -59,11 +51,8 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newIntegerRule(DIMENSION),
-            new ElementRule(PRECISION,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(START,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+            new ElementRule(RandomField.class),
+            new ElementRule(Parameter.class),
     };
 
     public String getParserDescription() {
@@ -72,7 +61,6 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return RandomField.class;
+        return RandomFieldGradient.class;
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * MultivariateNormalDistributionModelParser.java
+ * RandomFieldParser.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -25,56 +25,48 @@
 
 package dr.inferencexml.distribution;
 
-import dr.inference.distribution.GaussianMarkovRandomFieldModel2;
-import dr.inference.model.Model;
+import dr.inference.distribution.MultivariateDistributionLikelihood;
+import dr.inference.distribution.OldGaussianMarkovRandomFieldModel;
+import dr.inference.distribution.RandomField;
 import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
-import dr.math.distributions.GaussianMarkovRandomField2;
+import dr.math.distributions.RandomFieldDistribution;
 import dr.xml.*;
 
-public class GaussianMarkovRandomFieldParser2 extends AbstractXMLObjectParser {
+public class RandomFieldParser extends AbstractXMLObjectParser {
 
-    public static final String NORMAL_DISTRIBUTION_MODEL = "gaussianMarkovRandomField2";
-    private static final String DIMENSION = "dim";
-    private static final String PRECISION = "precision";
-    private static final String START = "start";
+    private static final String NORMAL_DISTRIBUTION_MODEL = "randomField";
+    private static final String DATA = "data";
+    private static final String DISTRIBUTION = "distribution";
 
     public String getParserName() {
-
         return NORMAL_DISTRIBUTION_MODEL;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Parameter coefficients = (Parameter) xo.getChild(Parameter.class);
+        Parameter field = (Parameter) xo.getElementFirstChild(MultivariateDistributionLikelihood.DATA);
 
-        int dim = coefficients.getDimension();
+        RandomFieldDistribution distribution = (RandomFieldDistribution)
+                xo.getElementFirstChild(DISTRIBUTION);
 
-        XMLObject cxo = xo.getChild(PRECISION);
-        Parameter incrementPrecision = (Parameter) cxo.getChild(Parameter.class);
-
-        if (incrementPrecision.getParameterValue(0) <= 0.0) {
-            throw new XMLParseException("Scale must be > 0.0");
-        }
-
-        cxo = xo.getChild(START);
-        Parameter start = (Parameter) cxo.getChild(Parameter.class);
-
-
-
-        return new GaussianMarkovRandomFieldModel2(coefficients, new GaussianMarkovRandomField2(dim, incrementPrecision, start));
+        return new RandomField(xo.getId(), field, distribution);
     }
+
+    //************************************************************************
+    // AbstractXMLObjectParser implementation
+    //************************************************************************
 
     public XMLSyntaxRule[] getSyntaxRules() {
         return rules;
     }
 
     private final XMLSyntaxRule[] rules = {
-//            AttributeRule.newIntegerRule(DIMENSION),
-            new ElementRule(PRECISION,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(START,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+            new ElementRule(DATA, new XMLSyntaxRule[] {
+                    new ElementRule(Parameter.class),
+            }),
+            new ElementRule(DISTRIBUTION, new XMLSyntaxRule[] {
+                    new ElementRule(RandomFieldDistribution.class),
+            }),
     };
 
     public String getParserDescription() {
@@ -83,7 +75,7 @@ public class GaussianMarkovRandomFieldParser2 extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return GaussianMarkovRandomFieldModel2.class;
+        return OldGaussianMarkovRandomFieldModel.class;
     }
 
 }

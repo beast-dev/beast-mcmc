@@ -25,51 +25,48 @@
 
 package dr.math.distributions;
 
-import dr.inference.distribution.ParametricMultivariateDistributionModel;
-import dr.inference.model.*;
-import dr.inferencexml.distribution.MultivariateNormalDistributionModelParser;
+import dr.inference.model.GradientProvider;
+import dr.inference.model.HessianProvider;
+import dr.inference.model.Likelihood;
 import dr.math.matrixAlgebra.*;
 
 /**
  * @author Marc Suchard
  */
-public class GaussianMarkovRandomField2 extends AbstractModel implements
-        ParametricMultivariateDistributionModel, GradientProvider, HessianProvider {
+public class OldGaussianMarkovRandomField implements MultivariateDistribution, GaussianProcessRandomGenerator,
+        GradientProvider, HessianProvider {
 
     public static final String TYPE = "GaussianProcess";
 
+    private final int dim;
+    private final double incrementPrecision;
+    private final double start;
     private final double[] mean;
     private final double[][] precision;
-    private final int dim;
-    private final Parameter start;
-    private final Parameter incrementPrecision;
     private double[][] variance = null;
     private double[][] cholesky = null;
     private Double logDet = null;
 
 
 
-    public GaussianMarkovRandomField2(int dim, Parameter incrementPrecision, Parameter start) {
-        super(MultivariateNormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
+    public OldGaussianMarkovRandomField(int dim, double incrementPrecision, double start) {
 
         this.dim = dim;
         this.start = start;
         this.mean = new double[dim];
-        final double x0 = start.getParameterValue(0);
         for(int i=0; i<dim; ++i) {
-            this.mean[i] = x0;
+            this.mean[i] = start;
         }
         this.incrementPrecision = incrementPrecision;
-        final double k = incrementPrecision.getParameterValue(0);
         this.precision = new double[dim][dim];
-        this.precision[0][0] = k;
-        this.precision[0][1] = -1*k;
-        this.precision[dim-1][dim-1] = k;
-        this.precision[dim-1][dim-2] = -1*k;
+        this.precision[0][0] = incrementPrecision;
+        this.precision[0][1] = -1*incrementPrecision;
+        this.precision[dim-1][dim-1] = incrementPrecision;
+        this.precision[dim-1][dim-2] = -1*incrementPrecision;
         for (int i = 1; i < dim-1; ++i) {
-            this.precision[i][i] = 2*k;
-            this.precision[i][i-1] = -1*k;
-            this.precision[i][i+1] = -1*k;
+            this.precision[i][i] = 2*incrementPrecision;
+            this.precision[i][i-1] = -1*incrementPrecision;
+            this.precision[i][i+1] = -1*incrementPrecision;
         }
     }
 
@@ -78,14 +75,15 @@ public class GaussianMarkovRandomField2 extends AbstractModel implements
     }
 
     public double[][] getVariance() {
-        final double k = incrementPrecision.getParameterValue(0);
         if (variance == null) {
 
             for (int i=0; i<dim; ++i) {
                for (int j=0; j<dim; ++j) {
-                   if(j == i) variance[j][j] = j / k;
+                   if(j == i){
+                       variance[j][j] = j/incrementPrecision;
+                   }
                    else {
-                       variance[i][j] = Math.abs(j-i)/k;
+                       variance[i][j] = Math.abs(j-i)/incrementPrecision;
                    }
                }
             }
@@ -101,9 +99,8 @@ public class GaussianMarkovRandomField2 extends AbstractModel implements
     }
 
     public double getLogDet() {
-        final double k = incrementPrecision.getParameterValue(0);
         if (logDet == null) {
-            double det = Math.pow(k, dim);
+            double det = Math.pow(incrementPrecision, dim);
             for(int i=2; i<=dim; ++i) {
                 det = det * (2 - 2 * Math.cos((i-1)*(Math.PI/dim)));
             }
@@ -150,10 +147,8 @@ public class GaussianMarkovRandomField2 extends AbstractModel implements
         }
     }
 
-
-    @Override
-    public Variable<Double> getLocationVariable() {
-        return null;
+    public Object nextRandom() {
+        throw new RuntimeException("Not yet implemented");
     }
 
     public double logPdf(double[] x) {
@@ -227,7 +222,7 @@ public class GaussianMarkovRandomField2 extends AbstractModel implements
     // scale only modifies precision
     // in one dimension, this is equivalent to:
     // PDF[NormalDistribution[mean, Sqrt[scale]*Sqrt[1/precison]], x]
-    public double logPdf(double[] x, double[] mean, double[][] precision,
+    public static double logPdf(double[] x, double[] mean, double[][] precision,
                                 double logDet) {
 
         if (logDet == Double.NEGATIVE_INFINITY)
@@ -275,22 +270,23 @@ public class GaussianMarkovRandomField2 extends AbstractModel implements
         return logPdf(v);
     }
 
-
+    @Override
+    public Likelihood getLikelihood() {
+        return null;
+    }
 
     @Override
     public int getDimension() { return mean.length; }
-
-    public Parameter getincrementPrecision() { return incrementPrecision; }
-
-    public Parameter getstart() { return start; }
-
 
     @Override
     public double[] getGradientLogDensity(Object x) {
         return gradLogPdf((double[]) x);
     }
 
-
+    @Override
+    public double[][] getPrecisionMatrix() {
+        return precision;
+    }
 
     @Override
     public double[] getDiagonalHessianLogDensity(Object x) {
@@ -300,36 +296,5 @@ public class GaussianMarkovRandomField2 extends AbstractModel implements
     @Override
     public double[][] getHessianLogDensity(Object x) {
         return hessianLogPdf((double[]) x);
-    }
-
-
-    @Override
-    public double[] nextRandom() {
-        return new double[0];
-    }
-
-    @Override
-    protected void handleModelChangedEvent(Model model, Object object, int index) {
-
-    }
-
-    @Override
-    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-
-    }
-
-    @Override
-    protected void storeState() {
-
-    }
-
-    @Override
-    protected void restoreState() {
-
-    }
-
-    @Override
-    protected void acceptState() {
-
     }
 }

@@ -31,7 +31,6 @@ import dr.inference.distribution.RandomField;
 import dr.inference.model.*;
 import dr.inferencexml.distribution.MultivariateNormalDistributionModelParser;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
-import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.Arrays;
 
@@ -215,16 +214,6 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
                 1.0, getLogDeterminant());
     }
 
-//    private double[][] hessianLogPdf(double[] x) {
-//        // TODO Update to use Q
-//        return hessianLogPdf(x, getPrecision());
-//    }
-//
-//    private double[] diagonalHessianLogPdf(double[] x) {
-//        // TODO Update to use Q
-//        return diagonalHessianLogPdf(x, getPrecision());
-//    }
-
     public static double[] gradLogPdf(double[] x, double[] mean, double[][] precision) {
         final int dim = x.length;
 
@@ -273,6 +262,25 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return hessian;
     }
 
+    public static double[][] hessianLogPdf(double[] x, SymmetricTriDiagonalMatrix Q) { // TODO test
+        final int dim = x .length;
+        final double[][] hessian = new double[dim][dim];
+
+        hessian[0][0] = -Q.diagonal[0];
+        hessian[0][1] = -Q.offDiagonal[0];
+
+        for (int i = 1; i < dim - 1; ++i) {
+            hessian[i][i - 1] = -Q.offDiagonal[i - 1];
+            hessian[i][i]     = -Q.diagonal[i];
+            hessian[i][i + 1] = -Q.offDiagonal[i];
+        }
+
+        hessian[dim - 1][dim - 2] = -Q.offDiagonal[dim - 2];
+        hessian[dim - 1][dim - 1] = -Q.diagonal[dim - 1];
+
+        return hessian;
+    }
+
     public static double[] diagonalHessianLogPdf(double[] x, double[][] precision) {
         final int dim = x.length;
         final double[] hessian = new double[dim];
@@ -280,6 +288,15 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         for (int i = 0; i < dim; ++i) {
             hessian[i] = -precision[i][i];
         }
+
+        return hessian;
+    }
+
+    public static double[] diagonalHessianLogPdf(double[] x, SymmetricTriDiagonalMatrix Q) {
+        final int dim = x.length;
+        final double[] hessian = new double[dim];
+
+        System.arraycopy(Q.diagonal, 0, hessian, 0, dim);
 
         return hessian;
     }
@@ -414,7 +431,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return logNorm;
     }
 
-    private class SymmetricTriDiagonalMatrix {
+    private static class SymmetricTriDiagonalMatrix {
 
         double[] diagonal;
         double[] offDiagonal;
@@ -429,7 +446,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
             this.offDiagonal = offDiagonal;
         }
 
-        void copy(SymmetricTriDiagonalMatrix copy) {
+        void copyTo(SymmetricTriDiagonalMatrix copy) {
             System.arraycopy(diagonal, 0, copy.diagonal, 0, diagonal.length);
             System.arraycopy(offDiagonal, 0, copy.offDiagonal, 0, offDiagonal.length);
         }

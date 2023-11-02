@@ -109,7 +109,7 @@ public class RandomField extends AbstractModelLikelihood {
     public double getLogLikelihood() {
 
         if (!likelihoodKnown) {
-            logLikelihood = 0;
+            logLikelihood = distribution.logPdf(field.getParameterValues());
             likelihoodKnown = true;
         }
 

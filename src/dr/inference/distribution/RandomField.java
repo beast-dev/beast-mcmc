@@ -66,6 +66,10 @@ public class RandomField extends AbstractModelLikelihood {
         likelihoodKnown = false;
     }
 
+    public String toString() {
+        return getClass().getName() + " " + getModelName() + " (" + getLogLikelihood() + ")";
+    }
+
     public Parameter getField() { return field; }
 
     public RandomFieldDistribution getDistribution() { return distribution; }

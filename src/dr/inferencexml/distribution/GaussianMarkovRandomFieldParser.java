@@ -37,6 +37,7 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
     private static final String PRECISION = "precision";
     private static final String START = "start";
     private static final String WEIGHTS = "weights";
+    private static final String MATCH_PSEUDO_DETERMINANT = "matchPseudoDeterminant";
 
     public String getParserName() { return PARSER_NAME; }
 
@@ -61,7 +62,9 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
                     ") != distribution dim (" + dim + ") - 1");
         }
 
-        return new GaussianMarkovRandomField(dim, incrementPrecision, start, weights);
+        boolean matchPseudoDeterminant = xo.getAttribute(MATCH_PSEUDO_DETERMINANT, false);
+
+        return new GaussianMarkovRandomField(dim, incrementPrecision, start, weights, matchPseudoDeterminant);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
@@ -73,7 +76,8 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
             new ElementRule(START,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(WEIGHTS,
-                    new XMLSyntaxRule[]{new ElementRule(RandomField.WeightProvider.class)}, true)
+                    new XMLSyntaxRule[]{new ElementRule(RandomField.WeightProvider.class)}, true),
+            AttributeRule.newBooleanRule(MATCH_PSEUDO_DETERMINANT, true),
 
     };
 

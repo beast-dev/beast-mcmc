@@ -3,12 +3,11 @@
 
 	<parameter id="data" value="1 2 3 4"/>
 
-
-	<multivariateDistributionLikelihood id="gmrf">
+	<randomField id="gmrf">
 		<distribution>
-			<gaussianMarkovRandomField dim="4">
+			<gaussianMarkovRandomField dim="4" matchPseudoDeterminant="true">
 				<precision>
-					<parameter value="1.0"/>
+					<parameter value="1.5"/>
 				</precision>
 				<start>
 					<parameter value="0.0"/>
@@ -18,17 +17,21 @@
 		<data>
 			<parameter idref="data"/>
 		</data>
-	</multivariateDistributionLikelihood>
+	</randomField>
+
 
 	<report>
-		<multivariateDistributionLikelihood idref="gmrf"/>
+		<randomField idref="gmrf"/>
 	</report>
 
 
+
+<!-- 
 	<report>
 		<gradient>
 			<multivariateDistributionLikelihood idref="gmrf"/>
 		</gradient>
 	</report>
+ -->
 
 </beast>

@@ -40,6 +40,7 @@ public class RandomField extends AbstractModelLikelihood {
     public interface WeightProvider {
         // TODO returns relative lengths (intercoalescent intervals) between field entries
 
+        int getDimension();
     }
 
     private final Parameter field;

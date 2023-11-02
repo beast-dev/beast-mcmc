@@ -1,7 +1,7 @@
 /*
- * MultivariateNormalDistributionModelParser.java
+ * GaussianMarkovRandomFieldParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -36,6 +36,7 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
     private static final String DIMENSION = "dim";
     private static final String PRECISION = "precision";
     private static final String START = "start";
+    private static final String WEIGHTS = "weights";
 
     public String getParserName() { return PARSER_NAME; }
 
@@ -49,30 +50,37 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Scale must be > 0.0");
         }
 
-        Parameter start = (Parameter) xo.getElementFirstChild(START);
+        Parameter start = xo.hasChildNamed(START) ?
+                (Parameter) xo.getElementFirstChild(START) : null;
 
-        return new GaussianMarkovRandomField(dim, incrementPrecision, start);
+        RandomField.WeightProvider weights = xo.hasChildNamed(WEIGHTS) ?
+                (RandomField.WeightProvider) xo.getElementFirstChild(WEIGHTS) : null;
+
+        if (weights != null && weights.getDimension() != dim - 1) {
+            throw new XMLParseException("Weights dimension (" + weights.getDimension() +
+                    ") != distribution dim (" + dim + ") - 1");
+        }
+
+        return new GaussianMarkovRandomField(dim, incrementPrecision, start, weights);
     }
 
-    public XMLSyntaxRule[] getSyntaxRules() {
-        return rules;
-    }
+    public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(DIMENSION),
             new ElementRule(PRECISION,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(START,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(WEIGHTS,
+                    new XMLSyntaxRule[]{new ElementRule(RandomField.WeightProvider.class)}, true)
+
     };
 
-    public String getParserDescription() {
+    public String getParserDescription() { // TODO update
         return "Describes a normal distribution with a given mean and precision " +
                 "that can be used in a distributionLikelihood element";
     }
 
-    public Class getReturnType() {
-        return RandomField.class;
-    }
-
+    public Class getReturnType() { return RandomField.class; }
 }

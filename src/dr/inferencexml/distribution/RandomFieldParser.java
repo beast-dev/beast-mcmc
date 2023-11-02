@@ -49,6 +49,11 @@ public class RandomFieldParser extends AbstractXMLObjectParser {
         RandomFieldDistribution distribution = (RandomFieldDistribution)
                 xo.getElementFirstChild(DISTRIBUTION);
 
+        if (field.getDimension() != distribution.getDimension()) {
+            throw new XMLParseException("Field dimension (" + field.getDimension() +
+                    ") != distribution dimension (" + distribution.getDimension() + ")");
+        }
+
         return new RandomField(xo.getId(), field, distribution);
     }
 

@@ -31,11 +31,14 @@ import dr.inference.distribution.RandomField;
 import dr.inference.model.*;
 import dr.inferencexml.distribution.MultivariateNormalDistributionModelParser;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
+import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.Arrays;
 
 /**
  * @author Marc Suchard
+ * @author Pratyusa Data
+ * @author Xiang Ji
  */
 public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
@@ -48,14 +51,12 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     private final double[] mean;
     private final double[][] precision; // TODO Use a sparse matrix, like in GmrfSkyrideLikelihood
-    private double logDet;
 
     private SymmetricTriDiagonalMatrix Q;
     private SymmetricTriDiagonalMatrix savedQ;
 
     private boolean meanKnown;
     private boolean precisionKnown;
-    private boolean determinantKnown;
     private boolean qKnown;
 
     private final double logMatchTerm;
@@ -88,21 +89,10 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
         meanKnown = false;
         precisionKnown = false;
-        determinantKnown = false; // TODO No need to be computed separately
         qKnown = false;
     }
 
-//    private void check() {
-//        if (!meanKnown) {
-//            populateMean(mean);
-//            meanKnown = true;
-//        }
-//        if (!precisionKnown) {
-//            populatePrecision(precision);
-//            precisionKnown = true;
-//        }
-//    }
-
+    @Override
     public double[] getMean() {
         if (!meanKnown) {
             if (meanParameter == null) {
@@ -168,29 +158,6 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return TYPE;
     }
 
-//    public double[][] getVariance() {
-//        final double k = precisionParameter.getParameterValue(0);
-//        if (variance == null) {
-//
-//            for (int i=0; i<dim; ++i) {
-//               for (int j=0; j<dim; ++j) {
-//                   if(j == i) variance[j][j] = j / k;
-//                   else {
-//                       variance[i][j] = Math.abs(j-i)/k;
-//                   }
-//               }
-//            }
-//        }
-//        return variance;
-//    }
-//
-//    public double[][] getCholeskyDecomposition() {
-//        if (cholesky == null) {
-//            cholesky = getCholeskyDecomposition(getVariance());
-//        }
-//        return cholesky;
-//    }
-
     private static double matchPseudoDeterminantTerm(int dim) {
         double term = 0.0;
         for (int i = 1; i < dim; ++i) {
@@ -200,12 +167,9 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return term;
     }
 
-    public double getLogDet() {
+    private double getLogDeterminant() {
 
-        if (!determinantKnown) {
-            logDet = (dim - 1) * Math.log(precisionParameter.getParameterValue(0)) + logMatchTerm;
-            determinantKnown = true;
-        }
+        double logDet = (dim - 1) * Math.log(precisionParameter.getParameterValue(0)) + logMatchTerm;
 
         if (CHECK_DETERMINANT) {
 
@@ -242,28 +206,24 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
     @Override
     public double logPdf(double[] x) {
 //        double x1 = logPdf(x, getMean(), getPrecision(), getLogDet());
-//        double x2 = logPdf(x, getMean(), getQ(), precisionParameter.getParameterValue(0), 1.0, logMatchTerm);
+//        double x2 = logPdf(x, getMean(), getQ(), precisionParameter.getParameterValue(0),
+//                1.0, getLogDeterminant());
 //
 //        System.err.println(x1 + " ?= " + x2);
 //
         return logPdf(x, getMean(), getQ(), precisionParameter.getParameterValue(0),
-                1.0, logMatchTerm);
+                1.0, getLogDeterminant());
     }
 
-    public double[] gradLogPdf(double[] x) {
-        // TODO Update to use Q
-        return gradLogPdf(x, getMean(), getPrecision());
-    }
-
-    public double[][] hessianLogPdf(double[] x) {
-        // TODO Update to use Q
-        return hessianLogPdf(x, getPrecision());
-    }
-
-    public double[] diagonalHessianLogPdf(double[] x) {
-        // TODO Update to use Q
-        return diagonalHessianLogPdf(x, getPrecision());
-    }
+//    private double[][] hessianLogPdf(double[] x) {
+//        // TODO Update to use Q
+//        return hessianLogPdf(x, getPrecision());
+//    }
+//
+//    private double[] diagonalHessianLogPdf(double[] x) {
+//        // TODO Update to use Q
+//        return diagonalHessianLogPdf(x, getPrecision());
+//    }
 
     public static double[] gradLogPdf(double[] x, double[] mean, double[][] precision) {
         final int dim = x.length;
@@ -279,6 +239,26 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         for (int i = 1; i < dim-1; ++i) {
             gradient[i] = precision[i][i-1] * delta[i-1] + precision[i][i] * delta[i] + precision[i][i+1] * delta[i+1];
         }
+        return gradient;
+    }
+
+    public static double[] gradLogPdf(double[] x, double[] mean, SymmetricTriDiagonalMatrix Q) {
+
+        final int dim = x.length;
+
+        final double[] gradient = new double[dim];
+        final double[] delta = new double[dim];
+
+        for (int i = 0; i < dim; ++i) {
+            delta[i] = mean[i] - x[i];
+        }
+
+        gradient[0] = Q.diagonal[0] * delta[0] + Q.offDiagonal[1] * delta[1];
+        for (int i = 1; i < dim - 1; ++i) {
+            gradient[i] = Q.offDiagonal[i - 1] * delta[i - 1] + Q.diagonal[i] * delta[i] + Q.offDiagonal[i] * delta[i + 1];
+        }
+        gradient[dim - 1] = Q.offDiagonal[dim - 2] * delta[dim - 2] + Q.diagonal[dim - 1] * delta[dim - 1];
+
         return gradient;
     }
 
@@ -399,8 +379,8 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 //    }
 
     private static double logPdf(double[] x, double[] mean, SymmetricTriDiagonalMatrix Q,
-                                 double precision, double lambda, double logMatch) {
-        return getLogNormalization(x.length, precision, lambda, logMatch) - 0.5 * getSSE(x, mean, Q);
+                                 double precision, double lambda, double logDeterminant) {
+        return getLogNormalization(x.length, precision, lambda, logDeterminant) - 0.5 * getSSE(x, mean, Q);
     }
 
     private static double getSSE(double[] x, double[] mean, SymmetricTriDiagonalMatrix Q) {
@@ -421,13 +401,9 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return SSE;
     }
 
-    private static double getLogDeterminant(int dim, double precision, double lambda, double logMatch) {
-        return (dim - 1) * Math.log(precision) + logMatch;
-    }
+    private static double getLogNormalization(int dim, double precision, double lambda, double logDeterminant) {
 
-    private static double getLogNormalization(int dim, double precision, double lambda, double logMatch) {
-
-        double logNorm = 0.5 * getLogDeterminant(dim, precision, lambda, logMatch);
+        double logNorm = 0.5 * logDeterminant;
 
         if (lambda == 1.0) {
             logNorm -= (dim - 1) * HALF_LOG_TWO_PI;
@@ -438,8 +414,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return logNorm;
     }
 
-
-    class SymmetricTriDiagonalMatrix {
+    private class SymmetricTriDiagonalMatrix {
 
         double[] diagonal;
         double[] offDiagonal;
@@ -470,9 +445,6 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         }
     }
 
-    // scale only modifies precision
-    // in one dimension, this is equivalent to:
-    // PDF[NormalDistribution[mean, Sqrt[scale]*Sqrt[1/precison]], x]
     public static double logPdf(double[] x, double[] mean, double[][] precision,
                                 double logDet) {
 
@@ -483,7 +455,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
     }
 
     public static double getLogNormalization(int dim, double logDet) {
-        return -(dim - 1) * HALF_LOG_TWO_PI + 0.5 * logDet; // Pratyusa's normalization constant
+        return -(dim - 1) * HALF_LOG_TWO_PI + 0.5 * logDet;
     }
 
     public static double getSSE(double[] x, double[] mean, double[][] precision) {
@@ -512,17 +484,25 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     @Override
     public double[] getGradientLogDensity(Object x) {
-        return gradLogPdf((double[]) x);
+//        double[] g1 = gradLogPdf((double[]) x, getMean(), getPrecision());
+//        double[] g2 = gradLogPdf((double[]) x, getMean(), getQ());
+//
+//        System.err.println(new WrappedVector.Raw(g1));
+//        System.err.println(new WrappedVector.Raw(g2));
+
+        return gradLogPdf((double[]) x, getMean(), getQ());
     }
 
     @Override
     public double[] getDiagonalHessianLogDensity(Object x) {
-        return diagonalHessianLogPdf((double[]) x);
+        // TODO update for Q
+        return diagonalHessianLogPdf((double[]) x, getPrecision());
     }
 
     @Override
     public double[][] getHessianLogDensity(Object x) {
-        return hessianLogPdf((double[]) x);
+        // TODO update for Q
+        return hessianLogPdf((double[]) x, getPrecision());
     }
 
     @Override
@@ -541,7 +521,6 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
             meanKnown = false;
         } else if (variable == precisionParameter) {
             precisionKnown = false;
-            determinantKnown = false;
         } else {
             throw new IllegalArgumentException("Unknown variable");
         }
@@ -556,7 +535,6 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
     protected void restoreState() { // TODO with caching
         meanKnown = false;
         precisionKnown = false;
-        determinantKnown = false;
         qKnown = false;
     }
 

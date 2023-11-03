@@ -1,5 +1,5 @@
 /*
- * GaussianMarkovRandomFieldParser.java
+ * BaselineIncrementFieldParser.java
  *
  * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -27,53 +27,40 @@ package dr.inferencexml.distribution;
 
 import dr.inference.distribution.RandomField;
 import dr.inference.model.Parameter;
-import dr.math.distributions.GaussianMarkovRandomField;
+import dr.math.distributions.BaselineIncrementField;
 import dr.xml.*;
 
 import static dr.inferencexml.distribution.RandomFieldParser.WEIGHTS_RULE;
 import static dr.inferencexml.distribution.RandomFieldParser.parseWeightProvider;
 
-public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
+public class BaselineIncrementFieldParser extends AbstractXMLObjectParser {
 
-    private static final String PARSER_NAME = "gaussianMarkovRandomField";
-    private static final String DIMENSION = "dim";
-    private static final String PRECISION = "precision";
-    private static final String START = "start";
-    private static final String MATCH_PSEUDO_DETERMINANT = "matchPseudoDeterminant";
+    private static final String PARSER_NAME = "baselineIncrementField";
+    private static final String BASELINE = "baseline";
+    private static final String INCREMENTS = "increments";
 
     public String getParserName() { return PARSER_NAME; }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        int dim = xo.getIntegerAttribute(DIMENSION);
-
-        Parameter incrementPrecision = (Parameter) xo.getElementFirstChild(PRECISION);
-
-        if (incrementPrecision.getParameterValue(0) <= 0.0) {
-            throw new XMLParseException("Scale must be > 0.0");
-        }
-
-        Parameter start = xo.hasChildNamed(START) ?
-                (Parameter) xo.getElementFirstChild(START) : null;
-
-        RandomField.WeightProvider weights = parseWeightProvider(xo, dim);
-
-        boolean matchPseudoDeterminant = xo.getAttribute(MATCH_PSEUDO_DETERMINANT, false);
+        Parameter baseline = (Parameter) xo.getElementFirstChild(BASELINE);
+        Parameter increments = (Parameter) xo.getElementFirstChild(INCREMENTS);
+        RandomField.WeightProvider weights = parseWeightProvider(xo, increments.getDimension() + 1);
 
         String id = xo.hasId() ? xo.getId() : PARSER_NAME;
 
-        return new GaussianMarkovRandomField(id, dim, incrementPrecision, start, weights, matchPseudoDeterminant);
+        return new BaselineIncrementField(id, baseline, increments, weights);
     }
+
+
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newIntegerRule(DIMENSION),
-            new ElementRule(PRECISION,
+            new ElementRule(BASELINE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(START,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
-            AttributeRule.newBooleanRule(MATCH_PSEUDO_DETERMINANT, true),
+            new ElementRule(INCREMENTS,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             WEIGHTS_RULE,
     };
 
@@ -82,5 +69,5 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
                 "that can be used in a distributionLikelihood element";
     }
 
-    public Class getReturnType() { return RandomField.class; }
+    public Class getReturnType() { return BaselineIncrementField.class; }
 }

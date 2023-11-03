@@ -38,6 +38,8 @@ public class RandomFieldParser extends AbstractXMLObjectParser {
     private static final String DATA = "data";
     private static final String DISTRIBUTION = "distribution";
 
+    public static final String WEIGHTS = "weights";
+
     public String getParserName() {
         return NORMAL_DISTRIBUTION_MODEL;
     }
@@ -85,4 +87,17 @@ public class RandomFieldParser extends AbstractXMLObjectParser {
         return OldGaussianMarkovRandomFieldModel.class;
     }
 
+    public static RandomField.WeightProvider parseWeightProvider(XMLObject xo, int dim) throws XMLParseException {
+        RandomField.WeightProvider weights = xo.hasChildNamed(WEIGHTS) ?
+                (RandomField.WeightProvider) xo.getElementFirstChild(WEIGHTS) : null;
+
+        if (weights != null && weights.getDimension() != dim - 1) {
+            throw new XMLParseException("Weights dimension (" + weights.getDimension() +
+                    ") != distribution dim (" + dim + ") - 1");
+        }
+        return weights;
+    }
+
+    public static ElementRule WEIGHTS_RULE = new ElementRule(RandomFieldParser.WEIGHTS,
+            new XMLSyntaxRule[]{new ElementRule(RandomField.WeightProvider.class)}, true);
 }

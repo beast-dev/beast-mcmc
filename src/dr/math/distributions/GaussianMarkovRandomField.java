@@ -60,19 +60,20 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     private final double logMatchTerm;
 
-    public GaussianMarkovRandomField(int dim,
+    public GaussianMarkovRandomField(String name,
+                                     int dim,
                                      Parameter precision,
                                      Parameter start) {
-        this(dim, precision, start, null, true);
+        this(name, dim, precision, start, null, true);
     }
 
-    public GaussianMarkovRandomField(int dim,
+    public GaussianMarkovRandomField(String name,
+                                     int dim,
                                      Parameter precision,
                                      Parameter start,
                                      RandomField.WeightProvider weightProvider,
                                      boolean matchPseudoDeterminant) {
-
-        super(MultivariateNormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
+        super(name);
 
         this.dim = dim;
         this.meanParameter = start;

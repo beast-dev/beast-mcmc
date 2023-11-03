@@ -26,7 +26,6 @@
 package dr.app.checkpoint;
 
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovchain.MarkovChain;
@@ -51,6 +50,8 @@ import java.util.*;
  */
 public class BeastCheckpointer implements StateLoaderSaver {
 
+    private static BeastCheckpointer single_instance = null;
+
     private static final boolean DEBUG = false;
 
     // A debugging flag to do a check that the state gives the same likelihood after loading
@@ -67,30 +68,52 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
     public final static String FULL_CHECKPOINT_PRECISION = "full.checkpoint.precision";
 
-    private final String loadStateFileName;
-    private final String saveStateFileName;
-
-    private final String stemFileName;
+    private String loadStateFileName;
+    private String saveStateFileName;
+    private String stemFileName;
 
     private boolean forceResume = false;
 
-    private final boolean useFullPrecision;
+    private boolean useFullPrecision;
 
-    public BeastCheckpointer() {
-        loadStateFileName = System.getProperty(LOAD_STATE_FILE, null);
-        saveStateFileName = System.getProperty(SAVE_STATE_FILE, null);
+    private final List<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();
 
-        stemFileName = System.getProperty(SAVE_STEM, null);
-
-        final List<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();
-
-        if (System.getProperty(SAVE_STATE_AT) != null) {
-            final long saveStateAt = Long.parseLong(System.getProperty(SAVE_STATE_AT));
-            listeners.add(new StateSaverChainListener(BeastCheckpointer.this, saveStateAt,false));
+    public static synchronized BeastCheckpointer getInstance(String checkpointFileName, int checkpointEvery, int checkpointFinal, boolean overwrite) {
+        if (single_instance == null) {
+            single_instance = new BeastCheckpointer(checkpointFileName, checkpointEvery, checkpointFinal, overwrite);
         }
-        if (System.getProperty(SAVE_STATE_EVERY) != null) {
-            final long saveStateEvery = Long.parseLong(System.getProperty(SAVE_STATE_EVERY));
-            listeners.add(new StateSaverChainListener(BeastCheckpointer.this, saveStateEvery,true));
+
+        return single_instance;
+    }
+
+    private BeastCheckpointer(String checkpointFileName, int checkpointEvery, int checkpointFinal, boolean overwrite) {
+
+        if (checkpointFileName == null && checkpointEvery == -1 && checkpointFinal == -1) {
+
+            loadStateFileName = System.getProperty(LOAD_STATE_FILE, null);
+            saveStateFileName = System.getProperty(SAVE_STATE_FILE, null);
+
+            stemFileName = System.getProperty(SAVE_STEM, null);
+
+            if (System.getProperty(SAVE_STATE_AT) != null) {
+                final long saveStateAt = Long.parseLong(System.getProperty(SAVE_STATE_AT));
+                listeners.add(new StateSaverChainListener(BeastCheckpointer.this, saveStateAt,false));
+            }
+            if (System.getProperty(SAVE_STATE_EVERY) != null) {
+                final long saveStateEvery = Long.parseLong(System.getProperty(SAVE_STATE_EVERY));
+                listeners.add(new StateSaverChainListener(BeastCheckpointer.this, saveStateEvery,true));
+            }
+
+        } else {
+
+            loadStateFileName = null;
+            saveStateFileName = checkpointFileName;
+
+            stemFileName = null;
+
+            listeners.add(new StateSaverChainListener(BeastCheckpointer.this, checkpointFinal,false));
+            listeners.add(new StateSaverChainListener(BeastCheckpointer.this, checkpointEvery,true));
+
         }
 
         useFullPrecision = (System.getProperty(FULL_CHECKPOINT_PRECISION) != null) &&
@@ -132,6 +155,11 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 };
             }
         };
+
+    }
+
+    //only here for reasons of inheritance (of the CheckPointModifier class)
+    protected BeastCheckpointer() {
 
     }
 

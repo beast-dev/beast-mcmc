@@ -90,7 +90,7 @@ public class RepeatedMeasuresWishartStatistics implements ConjugateWishartStatis
     private static final boolean DEBUG = false;
 
 
-    private static final String RM_WISHART_STATISTICS = "repeatedMeasuresWishartStatistics";
+    public static final String RM_WISHART_STATISTICS = "repeatedMeasuresWishartStatistics";
     private static final String FORCE_RESAMPLE = "forceResample";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {

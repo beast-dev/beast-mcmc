@@ -48,7 +48,6 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -276,7 +275,6 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         // Do nothing
     }
 
-
     private static final boolean DEBUG = false;
 
     // TODO Move remainder into separate class file
@@ -331,7 +329,6 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                         traitName,
                         traitParameter,
                         missingIndicators,
-//                    missingIndicators,
                         true,
                         samplingPrecision.getColumnDimension(),
 //                    diffusionModel.getPrecisionParameter().getRowDimension(),

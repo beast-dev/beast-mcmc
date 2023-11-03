@@ -55,24 +55,19 @@ public class TransformedMultivariateParameter extends TransformedParameter {
 
     public void setParameterValue(int dim, double value) {
         update();
-        unTransformedValues[dim] = value;
-/*        transformedValues[dim] = value;
-        unTransformedValues = inverse(transformedValues);*/
+        transformedValues[dim] = value;
+        unTransformedValues = inverse(transformedValues);
         // Need to update all values
         parameter.setParameterValueNotifyChangedAll(0, unTransformedValues[0]); // Warn everyone is changed
         for (int i = 1; i < parameter.getDimension(); i++) {
             parameter.setParameterValueQuietly(i, unTransformedValues[i]); // Do the rest quietly
         }
-        transformedValues = transform(unTransformedValues);
     }
 
     public void setParameterValueQuietly(int dim, double value) {
         update();
-        unTransformedValues[dim] = value;
-        transformedValues = transform(unTransformedValues);
-
-/*        transformedValues[dim] = value;
-        unTransformedValues = inverse(transformedValues);*/
+        transformedValues[dim] = value;
+        unTransformedValues = inverse(transformedValues);
         // Need to update all values
         for (int i = 0; i < parameter.getDimension(); i++) {
             parameter.setParameterValueQuietly(i, unTransformedValues[i]);
@@ -96,23 +91,18 @@ public class TransformedMultivariateParameter extends TransformedParameter {
 //    }
 
     private void update() {
-
-//        if (hasChanged()) {
+        if (hasChanged()) {
             unTransformedValues = parameter.getParameterValues();
             transformedValues = transform(unTransformedValues);
-//        }
+        }
     }
 
     private boolean hasChanged() {
-
-
         for (int i = 0; i < unTransformedValues.length; i++) {
             if (parameter.getParameterValue(i) != unTransformedValues[i]) {
                 return true;
             }
         }
-
-
         return false;
     }
 }

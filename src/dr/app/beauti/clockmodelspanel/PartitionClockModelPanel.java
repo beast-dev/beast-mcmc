@@ -46,7 +46,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
     private static final long serialVersionUID = -1645661616353099424L;
 
     private JComboBox clockTypeCombo = new JComboBox(EnumSet.range(
-            ClockType.STRICT_CLOCK, ClockType.FIXED_LOCAL_CLOCK).toArray());
+            ClockType.STRICT_CLOCK, ClockType.MIXED_EFFECTS_CLOCK).toArray());
     private JComboBox clockDistributionCombo = new JComboBox (new ClockDistributionType[] {
             ClockDistributionType.LOGNORMAL,
             ClockDistributionType.GAMMA,

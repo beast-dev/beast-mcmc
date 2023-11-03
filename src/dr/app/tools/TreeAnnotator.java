@@ -1656,16 +1656,16 @@ public class TreeAnnotator {
         new TreeAnnotator(burninTrees, burninStates, heights, posteriorLimit, hpd2D, computeESS, target, targetTreeFileName, inputFileName, outputFileName);
 
         if (target == Target.MAX_CLADE_CREDIBILITY) {
-            System.out.println("Constructed Maximum Clade Credibility (MCC) tree - citation: " +
+            progressStream.println("Constructed Maximum Clade Credibility (MCC) tree - citation: " +
                     "Drummond and Rambaut: 'BEAST: Bayesian evolutionary analysis by sampling trees', BMC Ecology and Evolution 2007, 7: 214.");
         } else if (target == Target.HIPSTR) {
-            System.out.println("Constructed Highest Independent Posterior Sub-Tree (HIPSTR) tree - citation: In prep.");
+            progressStream.println("Constructed Highest Independent Posterior Sub-Tree (HIPSTR) tree - citation: In prep.");
         } else if (target == Target.USER_TARGET_TREE) {
-            System.out.println("Annotated user target tree.");
+            progressStream.println("Annotated user target tree.");
         }
 
         if (heights == HeightsSummary.CA_HEIGHTS) {
-            System.out.println("\nUsed Clade Height option - citation: " +
+            progressStream.println("\nUsed Clade Height option - citation: " +
                     "Heled and Bouckaert: 'Looking for trees in the forest: " +
                     "summary tree from posterior samples'. BMC Evolutionary Biology 2013 13:221.");
         }

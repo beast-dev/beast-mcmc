@@ -15,18 +15,18 @@ public class PoissonBranchLengthLikelihoodDelegate extends AbstractModel impleme
     }
 
     @Override
-    public double getLogLikelihood(double mutations, double branchLength) {
-        return SaddlePointExpansion.logPoissonProbability(branchLength*scale, (int) Math.round(mutations));
+    public double getLogLikelihood(MutationList mutations, double branchLength) {
+        return SaddlePointExpansion.logPoissonProbability(branchLength*scale, (int) Math.round(mutations.getMutationCount()));
     }
 
 
     @Override
-    public double getGradientWrtTime(double mutations, double time, double branchRate) { // TODO: better chain rule handling
+    public double getGradientWrtTime(MutationList mutations, double time, double branchRate) { // TODO: better chain rule handling
         // if (!(this.branchRateModel instanceof StrictClockBranchRates)){
         //     throw new RuntimeException("gradients are only implemented for a strict clock model");
         // }
         // double rate = (double) branchRateModel.getVariable(0).getValue(0);
-        return SaddlePointExpansion.logPoissonMeanDerivative(time * branchRate * scale, (int) Math.round(mutations)) * branchRate * scale;
+        return SaddlePointExpansion.logPoissonMeanDerivative(time * branchRate * scale, (int) Math.round(mutations.getMutationCount())) * branchRate * scale;
     }
 
 

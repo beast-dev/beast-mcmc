@@ -59,7 +59,7 @@ public class ZeroMutationMasker implements  MaskProvider {
     @Override
     public void updateMask() {
         for (int i = 0; i < mask.getDimension(); i++) {
-            final double currentMaskValue = branchLengthProvider.getMutations(tree.getInternalNode(i)) >0?1.0:0.0;
+            final double currentMaskValue = branchLengthProvider.getMutations(tree.getInternalNode(i)).getMutationCount() >0?1.0:0.0;
             mask.setParameterValueQuietly(i, currentMaskValue);
         }
         mask.fireParameterChangedEvent();

@@ -92,6 +92,9 @@ public class RandomFieldGradient implements GradientWrtParameterProvider, Report
     public double[] getGradientLogDensity() {
 
         // TODO Can cache here
-        return provider.getGradientLogDensity(parameter.getParameterValues());
+        return provider.getGradientLogDensity(
+                randomField.getField().getParameterValues()
+//                parameter.getParameterValues()
+        );
     }
 }

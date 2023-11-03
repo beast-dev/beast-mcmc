@@ -79,6 +79,13 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         this.precisionParameter = precision;
         this.weightProvider = weightProvider;
 
+        addVariable(meanParameter);
+        addVariable(precisionParameter);
+
+        if (weightProvider != null) {
+            addModel(weightProvider);
+        }
+
         this.mean = new double[dim];
         this.precision = new double[dim][dim];
 
@@ -149,8 +156,52 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
     }
 
     public GradientProvider getGradientWrt(Parameter parameter) {
-        // TODO Should return a GradientProvider for the specified the hyper-parameter
-        throw new RuntimeException("Not yet implemented");
+
+        if (parameter == precisionParameter) {
+            return new GradientProvider() {
+                @Override
+                public int getDimension() {
+                    return 1;
+                }
+
+                @Override
+                public double[] getGradientLogDensity(Object x) {
+                    double gradient =  gradLogPdfWrtPrecision((double[]) x, getMean(), getQ(),
+                            precisionParameter.getParameterValue(0));
+                    return new double[]{gradient};
+                }
+            };
+        } else if (parameter == meanParameter) {
+            return new GradientProvider() {
+                @Override
+                public int getDimension() {
+                    return meanParameter.getDimension();
+                }
+
+                @Override
+                public double[] getGradientLogDensity(Object x) {
+
+                    double[] gradient = gradLogPdf((double[]) x, getMean(), getQ());
+
+                    if (meanParameter.getDimension() == dim) {
+                        for (int i = 0; i < dim; ++i) {
+                            gradient[i] *= -1;
+                        }
+                        return gradient;
+                    } else if (meanParameter.getDimension() == 1) {
+                        double sum = 0.0;
+                        for (int i = 0; i < dim; ++i) {
+                            sum += gradient[i];
+                        }
+                        return new double[]{sum};
+                    }
+
+                    throw new IllegalArgumentException("Unknown mean parameter structure");
+                }
+            };
+        } else {
+            throw new RuntimeException("Unknown parameter");
+        }
     }
 
     public String getType() {
@@ -229,6 +280,12 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
             gradient[i] = precision[i][i-1] * delta[i-1] + precision[i][i] * delta[i] + precision[i][i+1] * delta[i+1];
         }
         return gradient;
+    }
+
+    public static double gradLogPdfWrtPrecision(double[] x, double[] mean, SymmetricTriDiagonalMatrix Q,
+                                                double precision) {
+        final int dim = x.length;
+        return 0.5 * (dim - 1 - getSSE(x, mean, Q)) / precision; // TODO Not correct with lambda != 1.0
     }
 
     public static double[] gradLogPdf(double[] x, double[] mean, SymmetricTriDiagonalMatrix Q) {
@@ -538,6 +595,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
             meanKnown = false;
         } else if (variable == precisionParameter) {
             precisionKnown = false;
+            qKnown = false;
         } else {
             throw new IllegalArgumentException("Unknown variable");
         }

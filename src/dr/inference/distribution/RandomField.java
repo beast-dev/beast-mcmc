@@ -37,7 +37,7 @@ import dr.math.distributions.RandomFieldDistribution;
 
 public class RandomField extends AbstractModelLikelihood {
 
-    public interface WeightProvider {
+    public interface WeightProvider extends Model {
         // TODO returns relative lengths (intercoalescent intervals) between field entries
 
         int getDimension();
@@ -77,7 +77,7 @@ public class RandomField extends AbstractModelLikelihood {
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == distribution) {
-            throw new RuntimeException("Not yet implemented");
+            likelihoodKnown = false;
         } else {
             throw new IllegalArgumentException("Unknown model");
         }

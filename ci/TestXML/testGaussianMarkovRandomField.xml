@@ -7,10 +7,10 @@
 		<distribution>
 			<gaussianMarkovRandomField dim="4" matchPseudoDeterminant="true">
 				<precision>
-					<parameter value="1.5"/>
+					<parameter id="precision" value="1.5"/>
 				</precision>
 				<start>
-					<parameter value="0.0"/>
+					<parameter id="mean" value="0.0"/>
 				</start>
 			</gaussianMarkovRandomField>
 		</distribution>
@@ -33,5 +33,22 @@
 		<randomFieldGradient idref="gradient"/>
 	</report>
 
+	<randomFieldGradient id="gradientPrecision">
+		<randomField idref="gmrf"/>
+		<parameter idref="precision"/>
+	</randomFieldGradient>
+
+	<report>
+		<randomFieldGradient idref="gradientPrecision"/>
+	</report>
+
+	<randomFieldGradient id="gradientMean">
+		<randomField idref="gmrf"/>
+		<parameter idref="mean"/>
+	</randomFieldGradient>
+
+	<report>
+		<randomFieldGradient idref="gradientMean"/>
+	</report>
 
 </beast>

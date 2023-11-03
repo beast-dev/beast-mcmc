@@ -78,6 +78,11 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
 
     @Override
     public double[] getGradientLogDensity() {
+
+        if (likelihood.getPopulationSizeModel() != null) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
         final double logLikelihood = likelihood.getLogLikelihood();
         double[] gradient = new double[tree.getInternalNodeCount()];
 
@@ -95,36 +100,21 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
 
         DemographicFunction demographicFunction = likelihood.getDemoModel().getDemographicFunction();
 
-        int numSameHeightNodes = 1;
-        double thisGradient = 0.0;
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
             NodeRef node = tree.getNode(tree.getExternalNodeCount() + nodeIndices[i]);
-            final int lineageCount = intervals.getLineageCount(intervalIndices[nodeIndices[i]]);
+            final double time = tree.getNodeHeight(node);
+            final double intensityGradient = demographicFunction.getIntensityGradient(time);
+            final double kChoose2 = Binomial.choose2(intervals.getLineageCount(intervalIndices[nodeIndices[i]]));
+            gradient[i] -= demographicFunction.getLogDemographicGradient(time);
 
-            final double intensityGradient = demographicFunction.getIntensityGradient(tree.getNodeHeight(node));
-
-            final double intervalLength = intervals.getInterval(intervalIndices[nodeIndices[i]]);
-
-            thisGradient -= demographicFunction.getLogDemographicGradient(tree.getNodeHeight(node));
-            if ( intervalLength != 0.0) {
-                thisGradient -= Binomial.choose2(lineageCount) * intensityGradient;
-            } else {
-                numSameHeightNodes++;
+            if (intervals.getInterval(intervalIndices[nodeIndices[i]]) != 0) {
+                gradient[i] -= kChoose2 * intensityGradient;
             }
 
             if (!tree.isRoot(node) && intervals.getInterval(intervalIndices[nodeIndices[i]] + 1) != 0.0) {
                 final int nextLineageCount = intervals.getLineageCount(intervalIndices[nodeIndices[i]] + 1);
-                thisGradient += Binomial.choose2(nextLineageCount) * intensityGradient;
-
-                for (int j = 0; j < numSameHeightNodes; j++) {
-                    gradient[nodeIndices[i - j]] = thisGradient / ((double) numSameHeightNodes);
-                }
-                thisGradient = 0.0;
-                numSameHeightNodes = 1;
+                gradient[i] += Binomial.choose2(nextLineageCount) * intensityGradient;
             }
-        }
-        for (int j = 0; j < numSameHeightNodes; j++) {
-            gradient[nodeIndices[tree.getInternalNodeCount() - j - 1]] = thisGradient / ((double) numSameHeightNodes);
         }
 
         return gradient;

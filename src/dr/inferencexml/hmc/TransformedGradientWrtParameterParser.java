@@ -1,7 +1,7 @@
 /*
- * GradientWrapperParser.java
+ * TransformedGradientWrtParameterParser.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -29,7 +29,6 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.TransformedGradientWrtParameter;
 import dr.inference.model.Parameter;
 import dr.inference.model.TransformedParameter;
-import dr.util.Transform;
 import dr.xml.*;
 
 /**

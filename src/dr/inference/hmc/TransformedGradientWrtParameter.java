@@ -83,7 +83,7 @@ public class TransformedGradientWrtParameter implements GradientWrtParameterProv
 
     @Override
     public String getReport() {
-        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0,
+        return GradientWrtParameterProvider.getReportAndCheckForError(this, Double.NEGATIVE_INFINITY,
                 Double.POSITIVE_INFINITY, null);
     }
 }

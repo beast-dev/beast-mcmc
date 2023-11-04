@@ -156,6 +156,14 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return precision;
     }
 
+    @Override
+    public double getIncrement(int i, Parameter field) {
+
+        double[] mean = getMean();
+        return (field.getParameterValue(i) - mean[i]) - (field.getParameterValue(i + 1) - mean[i + 1]);
+    }
+
+    @Override
     public GradientProvider getGradientWrt(Parameter parameter) {
 
         if (parameter == precisionParameter) {
@@ -251,7 +259,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     @Override
     public Variable<Double> getLocationVariable() {
-        return null;
+        return meanParameter;
     }
 
     @Override

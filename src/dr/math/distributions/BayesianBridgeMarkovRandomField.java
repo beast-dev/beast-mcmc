@@ -84,6 +84,7 @@ public class BayesianBridgeMarkovRandomField extends GaussianMarkovRandomField i
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == bayesianBridge) {
             qKnown = false;
+            // TODO do we need a fireModelChangedEvent()?
         } else {
             throw new IllegalArgumentException("Unknown model");
         }

@@ -30,7 +30,6 @@ import dr.inference.distribution.shrinkage.BayesianBridgeDistributionModel;
 import dr.inference.distribution.shrinkage.JointBayesianBridgeDistributionModel;
 import dr.inference.model.Parameter;
 import dr.math.distributions.BayesianBridgeMarkovRandomField;
-import dr.math.distributions.GaussianMarkovRandomField;
 import dr.xml.*;
 
 import static dr.inferencexml.distribution.RandomFieldParser.WEIGHTS_RULE;

@@ -26,6 +26,7 @@
 package dr.math.distributions;
 
 import dr.inference.distribution.RandomField;
+import dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider;
 import dr.inference.model.GradientProvider;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -36,29 +37,45 @@ import dr.inference.model.Variable;
  * @author Yucai Shao
  * @author Andy Magee
  */
-public class BaselineIncrementField extends RandomFieldDistribution {
+public class BaselineIncrementField extends RandomFieldDistribution
+        implements BayesianBridgeStatisticsProvider {
 
     public static final String TYPE = "BaselineIncrementField";
 
-    private final Parameter baseline;
-    private final Parameter increments;
-    private final RandomField.WeightProvider weights;
+    private final Distribution baseline;
+    private final Distribution increments;
+
+    private final GradientProvider baselineGradient;
+    private final GradientProvider incrementGradient;
+
+    private final BayesianBridgeStatisticsProvider bayesianBridge;
 
     public BaselineIncrementField(String name,
-                                  Parameter baseline,
-                                  Parameter increments,
+                                  Distribution baseline,
+                                  Distribution increments,
                                   RandomField.WeightProvider weights) {
         super(name);
 
         this.baseline = baseline;
         this.increments = increments;
-        this.weights = weights;
 
-        addVariable(baseline);
-        addVariable(increments);
+        if (baseline instanceof Model) {
+            addModel((Model) baseline);
+        }
+        if (increments instanceof Model) {
+            addModel((Model) increments);
+        }
+
+        baselineGradient = (baseline instanceof GradientProvider) ?
+                (GradientProvider) baseline : null;
+
+        incrementGradient = (increments instanceof GradientProvider) ?
+                (GradientProvider) increments : null;
+
+        bayesianBridge = (increments instanceof BayesianBridgeStatisticsProvider) ?
+                (BayesianBridgeStatisticsProvider) baseline : null;
 
         if (weights != null) {
-            addModel(weights);
             throw new IllegalArgumentException("Unsure how weights influence this field");
         }
     }
@@ -75,37 +92,91 @@ public class BaselineIncrementField extends RandomFieldDistribution {
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-
+//        if (model == baseline || model == increments) {
+            // Do nothing
+            // TODO do we need a fireModelChangedEvent()?
+//        }
     }
 
     @Override
-    protected void storeState() {
-
-    }
+    protected void storeState() { }
 
     @Override
-    protected void restoreState() {
-
-    }
+    protected void restoreState() { }
 
     @Override
-    protected void acceptState() {
-
-    }
+    protected void acceptState() { }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        throw new IllegalArgumentException("Unknown variable");
+    }
 
+    @Override
+    public double getCoefficient(int i) {
+        throw new RuntimeException("Should not be called");
+    }
+
+    @Override
+    public Parameter getGlobalScale() {
+        if (bayesianBridge != null) {
+            return bayesianBridge.getGlobalScale();
+        } else {
+            throw new IllegalArgumentException("Not a Bayesian bridge");
+        }
+    }
+
+    @Override
+    public Parameter getLocalScale() {
+        if (bayesianBridge != null) {
+            return bayesianBridge.getLocalScale();
+        } else {
+            throw new IllegalArgumentException("Not a Bayesian bridge");
+        }
+    }
+
+    @Override
+    public Parameter getExponent() {
+        if (bayesianBridge != null) {
+            return bayesianBridge.getExponent();
+        } else {
+            throw new IllegalArgumentException("Not a Bayesian bridge");
+        }
+    }
+
+    @Override
+    public Parameter getSlabWidth() {
+        if (bayesianBridge != null) {
+            return bayesianBridge.getSlabWidth();
+        } else {
+            throw new IllegalArgumentException("Not a Bayesian bridge");
+        }
     }
 
     @Override
     public int getDimension() {
-        throw new RuntimeException("Not yet implemented");
+        if (bayesianBridge != null) {
+            return bayesianBridge.getDimension();
+        } else {
+            throw new IllegalArgumentException("Not a Bayesian bridge");
+        }
     }
 
     @Override
     public double[] getGradientLogDensity(Object x) {
-        throw new RuntimeException("Not yet implemented");
+        double[] field = (double[]) x;
+
+        double[] sub = new double[field.length - 1];
+        System.arraycopy(field, 1, sub, 0, field.length - 1);
+
+        double[] baselineGrad = baselineGradient.getGradientLogDensity(new double[]{field[0]});
+        double[] incrementGrad = incrementGradient.getGradientLogDensity(sub);
+
+        double[] gradient = new double[field.length];
+        gradient[0] = baselineGrad[0];
+        System.arraycopy(incrementGrad, 0, gradient, 1, field.length - 1);
+
+        return gradient;
     }
 
     @Override
@@ -120,18 +191,20 @@ public class BaselineIncrementField extends RandomFieldDistribution {
 
     @Override
     public double logPdf(double[] x) {
-        throw new RuntimeException("Not yet implemented");
+
+        double logPdf = baseline.logPdf(x[0]);
+        for (int i = 1; i < x.length; ++i) {
+            logPdf += increments.logPdf(x[i]);
+        }
+
+        return logPdf;
     }
 
     @Override
-    public double[][] getScaleMatrix() {
-        throw new RuntimeException("Not yet implemented");
-    }
+    public double[][] getScaleMatrix() { throw new RuntimeException("Not yet implemented");}
 
     @Override
-    public double[] getMean() {
-        throw new RuntimeException("Not yet implemented");
-    }
+    public double[] getMean() { throw new RuntimeException("Not yet implemented"); }
 
     @Override
     public String getType() { return TYPE; }
@@ -139,5 +212,10 @@ public class BaselineIncrementField extends RandomFieldDistribution {
     @Override
     public GradientProvider getGradientWrt(Parameter parameter) {
         throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public double getIncrement(int i, Parameter field) {
+        return field.getParameterValue(i + 1);
     }
 }

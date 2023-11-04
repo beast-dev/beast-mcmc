@@ -41,4 +41,6 @@ public abstract class RandomFieldDistribution extends AbstractModel implements
     }
 
     public abstract GradientProvider getGradientWrt(Parameter parameter);
+
+    public abstract double getIncrement(int i, Parameter field);
 }

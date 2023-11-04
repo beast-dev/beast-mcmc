@@ -29,9 +29,6 @@ import dr.inference.distribution.BayesianBridgeMarkovRandomFieldLikelihood;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.distribution.shrinkage.*;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterParser;
-import dr.inferencexml.distribution.shrinkage.BayesianBridgeDistributionModelParser;
-import dr.util.FirstOrderFiniteDifferenceTransform;
 import dr.util.InverseFirstOrderFiniteDifferenceTransform;
 import dr.util.Transform;
 import dr.xml.*;
@@ -51,8 +48,6 @@ public class BayesianBridgeMarkovRandomFieldLikelihoodParser extends AbstractXML
 
         Parameter variables = (Parameter) xo.getChild(Parameter.class);
 
-//        BayesianBridgeDistributionModelParser bridgeParser = new BayesianBridgeDistributionModelParser();
-//        BayesianBridgeDistributionModel bridge = (BayesianBridgeDistributionModel) bridgeParser.parseXMLObject(xo.getChild(BAYESIAN_BRIDGE_DISTRIBUTION).getChild(0));
         BayesianBridgeDistributionModel bridge = (BayesianBridgeDistributionModel) xo.getChild(BAYESIAN_BRIDGE_DISTRIBUTION).getChild(0);
 
         ParametricDistributionModel firstElementDistribution = (ParametricDistributionModel) xo.getChild(FIRST_ELEMENT_DISTRIBUTION).getChild(0);
@@ -60,13 +55,13 @@ public class BayesianBridgeMarkovRandomFieldLikelihoodParser extends AbstractXML
         double upper = xo.getAttribute("upper", 1.0);
         double lower = xo.getAttribute("lower", 0.0);
 
-        String ttype = (String) xo.getAttribute(INCREMENT_TRANSFORM, "none");
+        String transformType = xo.getAttribute(INCREMENT_TRANSFORM, "none");
         Transform.UnivariableTransform incrementTransform;
-        if ( ttype.equalsIgnoreCase("none") ) {
+        if ( transformType.equalsIgnoreCase("none") ) {
             incrementTransform = new Transform.NoTransform();
-        } else if ( ttype.equalsIgnoreCase("log") ) {
+        } else if ( transformType.equalsIgnoreCase("log") ) {
             incrementTransform = new Transform.LogTransform();
-        } else if ( ttype.equalsIgnoreCase("logit") ) {
+        } else if ( transformType.equalsIgnoreCase("logit") ) {
             incrementTransform = new Transform.ScaledLogitTransform(lower, upper);
         } else {
             throw new RuntimeException("Invalid option for "+ INCREMENT_TRANSFORM);

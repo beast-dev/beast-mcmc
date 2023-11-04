@@ -28,6 +28,7 @@ package dr.inferencexml.distribution;
 import dr.inference.distribution.RandomField;
 import dr.inference.model.Parameter;
 import dr.math.distributions.BaselineIncrementField;
+import dr.math.distributions.Distribution;
 import dr.xml.*;
 
 import static dr.inferencexml.distribution.RandomFieldParser.WEIGHTS_RULE;
@@ -43,9 +44,10 @@ public class BaselineIncrementFieldParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Parameter baseline = (Parameter) xo.getElementFirstChild(BASELINE);
-        Parameter increments = (Parameter) xo.getElementFirstChild(INCREMENTS);
-        RandomField.WeightProvider weights = parseWeightProvider(xo, increments.getDimension() + 1);
+        Distribution baseline = (Distribution) xo.getElementFirstChild(BASELINE);
+        Distribution increments = (Distribution) xo.getElementFirstChild(INCREMENTS);
+
+        RandomField.WeightProvider weights = parseWeightProvider(xo, 0);
 
         String id = xo.hasId() ? xo.getId() : PARSER_NAME;
 

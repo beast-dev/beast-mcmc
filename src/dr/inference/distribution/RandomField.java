@@ -143,8 +143,7 @@ public class RandomField extends AbstractModelLikelihood {
 
         @Override
         public double getCoefficient(int i) {
-            double[] mean = getDistribution().getMean();
-            return (field.getParameterValue(i) - mean[i]) - (field.getParameterValue(i + 1) - mean[i + 1]);
+            return getDistribution().getIncrement(i, field);
         }
 
         @Override

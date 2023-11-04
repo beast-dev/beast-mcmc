@@ -28,6 +28,7 @@ package dr.inferencexml.distribution;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.distribution.OldGaussianMarkovRandomFieldModel;
 import dr.inference.distribution.RandomField;
+import dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider;
 import dr.inference.model.Parameter;
 import dr.math.distributions.RandomFieldDistribution;
 import dr.xml.*;
@@ -58,7 +59,11 @@ public class RandomFieldParser extends AbstractXMLObjectParser {
 
         String id = xo.hasId() ? xo.getId() : null;
 
-        return new RandomField(id, field, distribution);
+        if (distribution instanceof BayesianBridgeStatisticsProvider) {
+            return new RandomField.BayesianBridge(id, field, distribution);
+        } else {
+            return new RandomField(id, field, distribution);
+        }
     }
 
     //************************************************************************

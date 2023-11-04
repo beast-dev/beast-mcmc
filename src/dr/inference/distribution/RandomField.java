@@ -25,6 +25,7 @@
 
 package dr.inference.distribution;
 
+import dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider;
 import dr.inference.model.*;
 import dr.math.distributions.RandomFieldDistribution;
 
@@ -43,7 +44,7 @@ public class RandomField extends AbstractModelLikelihood {
         int getDimension();
     }
 
-    private final Parameter field;
+    protected final Parameter field;
     private final RandomFieldDistribution distribution;
 
     private boolean likelihoodKnown;
@@ -124,5 +125,51 @@ public class RandomField extends AbstractModelLikelihood {
     @Override
     public void makeDirty() {
         likelihoodKnown = false;
+    }
+
+    static public class BayesianBridge extends RandomField implements BayesianBridgeStatisticsProvider {
+
+        private final BayesianBridgeStatisticsProvider bayesianBridge;
+
+        public BayesianBridge(String name, Parameter field, RandomFieldDistribution distribution) {
+            super(name, field, distribution);
+
+            if (!(distribution instanceof BayesianBridgeStatisticsProvider)) {
+                throw new IllegalArgumentException("Must provider a BayesianBridgeStatisticsProvider");
+            }
+
+            this.bayesianBridge = (BayesianBridgeStatisticsProvider) distribution;
+        }
+
+        @Override
+        public double getCoefficient(int i) {
+            double[] mean = getDistribution().getMean();
+            return (field.getParameterValue(i) - mean[i]) - (field.getParameterValue(i + 1) - mean[i + 1]);
+        }
+
+        @Override
+        public Parameter getGlobalScale() {
+            return bayesianBridge.getGlobalScale();
+        }
+
+        @Override
+        public Parameter getLocalScale() {
+            return bayesianBridge.getLocalScale();
+        }
+
+        @Override
+        public Parameter getExponent() {
+            return bayesianBridge.getExponent();
+        }
+
+        @Override
+        public Parameter getSlabWidth() {
+            return bayesianBridge.getSlabWidth();
+        }
+
+        @Override
+        public int getDimension() {
+            return bayesianBridge.getDimension();
+        }
     }
 }

@@ -51,12 +51,12 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
     private final double[] mean;
     private final double[][] precision; // TODO Use a sparse matrix, like in GmrfSkyrideLikelihood
 
-    private SymmetricTriDiagonalMatrix Q;
+    SymmetricTriDiagonalMatrix Q;
     private SymmetricTriDiagonalMatrix savedQ;
 
     private boolean meanKnown;
     private boolean precisionKnown;
-    private boolean qKnown;
+    boolean qKnown;
 
     private final double logMatchTerm;
 
@@ -117,7 +117,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return mean;
     }
 
-    private SymmetricTriDiagonalMatrix getQ() {
+    SymmetricTriDiagonalMatrix getQ() {
         if (!qKnown) {
             double precision = precisionParameter.getParameterValue(0);
             Q.diagonal[0] = precision;
@@ -489,7 +489,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return logNorm;
     }
 
-    private static class SymmetricTriDiagonalMatrix {
+    static class SymmetricTriDiagonalMatrix {
 
         double[] diagonal;
         double[] offDiagonal;

@@ -43,7 +43,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     public static final String TYPE = "GaussianMarkovRandomField";
 
-    private final int dim;
+    protected final int dim;
     private final Parameter meanParameter;
     private final Parameter precisionParameter;
     private final RandomField.WeightProvider weightProvider;
@@ -117,7 +117,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return mean;
     }
 
-    SymmetricTriDiagonalMatrix getQ() {
+    protected SymmetricTriDiagonalMatrix getQ() {
         if (!qKnown) {
             double precision = precisionParameter.getParameterValue(0);
             Q.diagonal[0] = precision;

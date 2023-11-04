@@ -55,10 +55,27 @@ public class BayesianBridgeMarkovRandomField extends GaussianMarkovRandomField i
     }
 
     @Override
-    SymmetricTriDiagonalMatrix getQ() {
+    protected SymmetricTriDiagonalMatrix getQ() {
         if (!qKnown) {
-//            bayesianBridge.getStandardDeviation(i);
-            throw new RuntimeException("Not yet implemented");
+
+            final double[] diagonal = Q.diagonal;
+            final double[] offDiagonal = Q.offDiagonal;
+
+            double sd = bayesianBridge.getStandardDeviation(0);
+            offDiagonal[0] = -1.0 / (sd * sd);
+            diagonal[0] = -offDiagonal[0];
+
+            for (int i = 1; i < dim - 1; ++i) {
+                sd = bayesianBridge.getStandardDeviation(i);
+                offDiagonal[i] = -1.0 / (sd * sd);
+                diagonal[i] = -(offDiagonal[i - 1] + offDiagonal[i]);
+            }
+
+            diagonal[dim - 1] = -offDiagonal[dim - 2];
+
+            // TODO Update for lambda != 1 and for weights
+
+            qKnown = true;
         }
         return Q;
     }

@@ -27,6 +27,8 @@ package dr.inferencexml.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.TransformedGradientWrtParameter;
+import dr.inference.model.Parameter;
+import dr.inference.model.TransformedParameter;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -37,7 +39,8 @@ import dr.xml.*;
 
 public class TransformedGradientWrtParameterParser extends AbstractXMLObjectParser {
 
-    public static final String PARSER_NAME = "transformedGradient";
+    private static final String PARSER_NAME = "transformedGradient";
+    private static final String WRT = "wrt";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -45,16 +48,28 @@ public class TransformedGradientWrtParameterParser extends AbstractXMLObjectPars
         GradientWrtParameterProvider gradient = (GradientWrtParameterProvider)
                 xo.getChild(GradientWrtParameterProvider.class);
 
-        Transform transform = (Transform) xo.getChild(Transform.class);
+        TransformedParameter parameter = (TransformedParameter) xo.getChild(TransformedParameter.class);
 
-        return new TransformedGradientWrtParameter(gradient, transform);
+        if (xo.hasChildNamed(WRT)) {
+
+            Parameter wrt = (Parameter) xo.getElementFirstChild(WRT);
+
+            if (wrt != parameter.getUntransformedParameter()) {
+                throw new XMLParseException("Mismatch between transformed and untransformed parameters");
+            }
+        }
+
+        return new TransformedGradientWrtParameter(gradient, parameter);
     }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
                 new ElementRule(GradientWrtParameterProvider.class),
-                new ElementRule(Transform.class),
+                new ElementRule(TransformedParameter.class),
+                new ElementRule(WRT, new XMLSyntaxRule[]{
+                        new ElementRule(Parameter.class),
+                }, true),
         };
     }
 

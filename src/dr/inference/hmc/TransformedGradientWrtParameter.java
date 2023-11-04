@@ -27,6 +27,7 @@ package dr.inference.hmc;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.inference.model.TransformedParameter;
 import dr.util.Transform;
 import dr.xml.Reportable;
 
@@ -38,35 +39,51 @@ import dr.xml.Reportable;
 public class TransformedGradientWrtParameter implements GradientWrtParameterProvider, Reportable {
 
     private final GradientWrtParameterProvider gradient;
-    private final Transform transform;
+    private final TransformedParameter parameter;
 
     public TransformedGradientWrtParameter(GradientWrtParameterProvider gradient,
-                                           Transform transform) {
+                                           TransformedParameter parameter) {
         this.gradient = gradient;
-        this.transform = transform;
+        this.parameter = parameter;
     }
     @Override
     public Likelihood getLikelihood() {
-        return null;
+        return gradient.getLikelihood();
     }
 
     @Override
     public Parameter getParameter() {
-        return null;
+        return parameter.getUntransformedParameter();
     }
 
     @Override
     public int getDimension() {
-        return 0;
+        return parameter.getUntransformedParameter().getDimension();
     }
 
     @Override
     public double[] getGradientLogDensity() {
-        return new double[0];
+
+        double[] transformedGradient = gradient.getGradientLogDensity();
+        double[] untransformedValues = parameter.getParameterUntransformedValues();
+
+        Transform transform = parameter.getTransform();
+
+        double[] untransformedGradient;
+        if (transform instanceof Transform.MultivariableTransform) {
+            Transform.MultivariableTransform multivariableTransform = (Transform.MultivariableTransform) transform;
+            untransformedGradient = multivariableTransform.updateGradientLogDensity(transformedGradient, untransformedValues,
+                    0, untransformedValues.length);
+        } else {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        return untransformedGradient;
     }
 
     @Override
     public String getReport() {
-        return null;
+        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0,
+                Double.POSITIVE_INFINITY, null);
     }
 }

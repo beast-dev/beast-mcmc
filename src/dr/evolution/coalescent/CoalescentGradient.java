@@ -26,8 +26,8 @@
 package dr.evolution.coalescent;
 
 
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
@@ -97,29 +97,57 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
         getIntervalIndexForInternalNodes(intervalIndices, nodeIndices, sortedValues);
 
         IntervalList intervals = likelihood.getIntervalList();
+        BigFastTreeIntervals bigFastTreeIntervals = (BigFastTreeIntervals) intervals;
 
         DemographicFunction demographicFunction = likelihood.getDemoModel().getDemographicFunction();
 
-        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            NodeRef node = tree.getNode(tree.getExternalNodeCount() + nodeIndices[i]);
-            final double time = tree.getNodeHeight(node);
-            final double intensityGradient = demographicFunction.getIntensityGradient(time);
-            final double kChoose2 = Binomial.choose2(intervals.getLineageCount(intervalIndices[nodeIndices[i]]));
-            gradient[i] -= demographicFunction.getLogDemographicGradient(time);
+        int numSameHeightNodes = 1;
+        double thisGradient = 0;
+        for (int i = 0; i < bigFastTreeIntervals.getIntervalCount(); i++) {
+            if (bigFastTreeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
+                final double time = bigFastTreeIntervals.getIntervalTime(i + 1);
+                final int lineageCount = bigFastTreeIntervals.getLineageCount(i);
+                final double kChoose2 = Binomial.choose2(lineageCount);
+                final double intensityGradient = demographicFunction.getIntensityGradient(time);
+                thisGradient += demographicFunction.getLogDemographicGradient(time);
 
-            if (intervals.getInterval(intervalIndices[nodeIndices[i]]) != 0) {
-                gradient[i] -= kChoose2 * intensityGradient;
-            }
+                if (bigFastTreeIntervals.getInterval(i) != 0) {
+                    thisGradient -= kChoose2 * intensityGradient;
+                } else {
+                    numSameHeightNodes++;
+                }
 
-            if (!tree.isRoot(node) && intervals.getInterval(intervalIndices[nodeIndices[i]] + 1) != 0.0) {
-                final int nextLineageCount = intervals.getLineageCount(intervalIndices[nodeIndices[i]] + 1);
-                gradient[i] += Binomial.choose2(nextLineageCount) * intensityGradient;
+                if ( i < bigFastTreeIntervals.getIntervalCount() - 1
+                        && bigFastTreeIntervals.getInterval(i + 1) != 0) {
+
+                    final int nextLineageCount = bigFastTreeIntervals.getLineageCount(i + 1);
+                    thisGradient += Binomial.choose2(nextLineageCount) * intensityGradient;
+
+                    for (int j = 0; j < numSameHeightNodes; j++) {
+                        final int nodeIndex = bigFastTreeIntervals.getNodeNumbersForInterval(i - j)[1];
+                        gradient[nodeIndex - tree.getExternalNodeCount()] = thisGradient / (double) numSameHeightNodes;
+                    }
+
+                    thisGradient = 0;
+                    numSameHeightNodes = 1;
+                }
             }
+        }
+
+        int j = numSameHeightNodes;
+        int v = bigFastTreeIntervals.getIntervalCount() - 1;
+        while(j > 0) {
+            if (bigFastTreeIntervals.getIntervalType(v) == IntervalType.COALESCENT) {
+                gradient[bigFastTreeIntervals.getNodeNumbersForInterval(v)[1] - tree.getExternalNodeCount()] = thisGradient / (double) numSameHeightNodes;
+                j--;
+            }
+            v--;
         }
 
         return gradient;
     }
 
+    @Deprecated
     private void getIntervalIndexForInternalNodes(int[] intervalIndices, int[] nodeIndices, double[] sortedValues) {
         double[] nodeHeights = new double[tree.getInternalNodeCount()];
         ArrayList<ComparableDouble> sortedInternalNodes = new ArrayList<ComparableDouble>();

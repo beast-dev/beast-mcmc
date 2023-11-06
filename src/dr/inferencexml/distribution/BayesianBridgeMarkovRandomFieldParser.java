@@ -1,5 +1,5 @@
 /*
- * GaussianMarkovRandomFieldParser.java
+ * BayesianBridgeMarkovRandomFieldParser.java
  *
  * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -26,35 +26,33 @@
 package dr.inferencexml.distribution;
 
 import dr.inference.distribution.RandomField;
+import dr.inference.distribution.shrinkage.BayesianBridgeDistributionModel;
+import dr.inference.distribution.shrinkage.JointBayesianBridgeDistributionModel;
 import dr.inference.model.Parameter;
-import dr.math.distributions.GaussianMarkovRandomField;
+import dr.math.distributions.BayesianBridgeMarkovRandomField;
 import dr.xml.*;
 
 import static dr.inferencexml.distribution.RandomFieldParser.WEIGHTS_RULE;
 import static dr.inferencexml.distribution.RandomFieldParser.parseWeightProvider;
 
-public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
+public class BayesianBridgeMarkovRandomFieldParser extends AbstractXMLObjectParser {
 
-    private static final String PARSER_NAME = "gaussianMarkovRandomField";
-    private static final String DIMENSION = "dim";
-    private static final String PRECISION = "precision";
-    private static final String START = "start";
+    private static final String PARSER_NAME = "newBayesianBridgeMarkovRandomField";
+    private static final String MEAN = "mean";
     private static final String MATCH_PSEUDO_DETERMINANT = "matchPseudoDeterminant";
 
     public String getParserName() { return PARSER_NAME; }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        int dim = xo.getIntegerAttribute(DIMENSION);
 
-        Parameter incrementPrecision = (Parameter) xo.getElementFirstChild(PRECISION);
+        Parameter mean = xo.hasChildNamed(MEAN) ?
+                (Parameter) xo.getElementFirstChild(MEAN) : null;
 
-        if (incrementPrecision.getParameterValue(0) <= 0.0) {
-            throw new XMLParseException("Scale must be > 0.0");
-        }
+        JointBayesianBridgeDistributionModel bayesBridge = (JointBayesianBridgeDistributionModel)
+                xo.getChild(JointBayesianBridgeDistributionModel.class);
 
-        Parameter start = xo.hasChildNamed(START) ?
-                (Parameter) xo.getElementFirstChild(START) : null;
+        final int dim = bayesBridge.getLocalScale().getDimension();
 
         RandomField.WeightProvider weights = parseWeightProvider(xo, dim);
 
@@ -62,16 +60,14 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
 
         String id = xo.hasId() ? xo.getId() : PARSER_NAME;
 
-        return new GaussianMarkovRandomField(id, dim, incrementPrecision, start, weights, matchPseudoDeterminant);
+        return new BayesianBridgeMarkovRandomField(id, bayesBridge, mean, weights, matchPseudoDeterminant);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newIntegerRule(DIMENSION),
-            new ElementRule(PRECISION,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(START,
+            new ElementRule(BayesianBridgeDistributionModel.class),
+            new ElementRule(MEAN,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             AttributeRule.newBooleanRule(MATCH_PSEUDO_DETERMINANT, true),
             WEIGHTS_RULE,

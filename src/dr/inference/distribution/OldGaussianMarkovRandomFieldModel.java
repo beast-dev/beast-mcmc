@@ -27,7 +27,7 @@ package dr.inference.distribution;
 
 import dr.inference.model.*;
 import dr.inferencexml.distribution.MultivariateNormalDistributionModelParser;
-import dr.math.distributions.GaussianMarkovRandomField;
+import dr.math.distributions.OldGaussianMarkovRandomField;
 import dr.math.distributions.GaussianProcessRandomGenerator;
 
 
@@ -38,12 +38,12 @@ import dr.math.distributions.GaussianProcessRandomGenerator;
  * Pratyusa Datta
  */
 
-public class GaussianMarkovRandomFieldModel extends AbstractModel implements
+public class OldGaussianMarkovRandomFieldModel extends AbstractModel implements
         ParametricMultivariateDistributionModel, GaussianProcessRandomGenerator, GradientProvider, HessianProvider {
 
-    public GaussianMarkovRandomFieldModel(int dim,
-                                                 Parameter incrementPrecisionParameter,
-                                                 Parameter startParameter) {
+    public OldGaussianMarkovRandomFieldModel(int dim,
+                                             Parameter incrementPrecisionParameter,
+                                             Parameter startParameter) {
         super(MultivariateNormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
 
         this.dim = dim;
@@ -146,8 +146,8 @@ public class GaussianMarkovRandomFieldModel extends AbstractModel implements
     // Private instance variables and functions
     // **************************************************************
 
-    private GaussianMarkovRandomField createNewDistribution() {
-        return new GaussianMarkovRandomField(getDimension(),
+    private OldGaussianMarkovRandomField createNewDistribution() {
+        return new OldGaussianMarkovRandomField(getDimension(),
                 incrementPrecision.getParameterValue(0), start.getParameterValue(0));
     }
 
@@ -156,8 +156,8 @@ public class GaussianMarkovRandomFieldModel extends AbstractModel implements
     private final Parameter incrementPrecision;
     private final Parameter start;
 
-    private GaussianMarkovRandomField distribution;
-    private GaussianMarkovRandomField storedDistribution;
+    private OldGaussianMarkovRandomField distribution;
+    private OldGaussianMarkovRandomField storedDistribution;
 
     private boolean distributionKnown;
     private boolean storedDistributionKnown;

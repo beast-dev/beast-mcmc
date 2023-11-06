@@ -130,6 +130,21 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
         return true;
     }
 
+
+    /**
+     * Returns an array of the first and last node in an interval.
+     */
+    //TODO figure out why only an array of length 2 is being returned
+    public int[] getNodeNumbersForInterval(int i) {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        int[] nodes =new int[2];
+        nodes[0] = events.getNode(i);
+        nodes[1] = events.getNode(i + 1);
+        return nodes;
+    }
+
     @Override
     public void calculateIntervals() {
         //If dirty we rebuild the evens and sort them using parallel sort

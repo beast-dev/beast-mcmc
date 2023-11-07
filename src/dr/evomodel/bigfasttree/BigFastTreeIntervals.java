@@ -3,6 +3,7 @@ package dr.evomodel.bigfasttree;
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
@@ -16,7 +17,10 @@ import java.util.List;
 
 public class BigFastTreeIntervals extends AbstractModel implements Units, IntervalList {
     public BigFastTreeIntervals(TreeModel tree) {
-        super("bigFastIntervals");
+        this("bigFastIntervals",tree);
+    }
+    public BigFastTreeIntervals(String name, TreeModel tree) {
+        super(name);
         int maxEventCount = tree.getNodeCount();
 
         this.tree = tree;
@@ -37,6 +41,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
 
     public void makeDirty() {
         dirty = true;
+        intervalsKnown=false;
     }
 
     @Override
@@ -134,7 +139,6 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
     /**
      * Returns an array of the first and last node in an interval.
      */
-    //TODO figure out why only an array of length 2 is being returned
     public int[] getNodeNumbersForInterval(int i) {
         if (!intervalsKnown) {
             calculateIntervals();
@@ -145,7 +149,11 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
         return nodes;
     }
 
-    @Override
+    public Tree getTree() {
+        return this.tree;
+    }
+
+
     public void calculateIntervals() {
         //If dirty we rebuild the evens and sort them using parallel sort
         if (dirty) {
@@ -233,6 +241,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
                 } else if (treeChangedEvent.isTreeChanged()) {
                     if (!treeChangedEvent.isNodeOrderChanged()) {
                         onlyUpdateTimes = true;
+                        intervalsKnown=false;
                     } else {
                         // Full tree events result in a complete updating of the tree likelihood
                         // This event type is now used for EmpiricalTreeDistributions.
@@ -245,7 +254,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
                 //System.err.println("Another tree event has occured (possibly a trait change).");
             }
 
-            fireModelChanged();
+            fireModelChanged(object);
         }
     }
 
@@ -282,63 +291,18 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
 
     }
 
-    /**
-     * A private data class for sorting events on a full recalculation
-     * keeps the time, node number and type of event all in one place.
-     */
-    private class Event implements Comparable<Event> {
-
-        public int compareTo(Event e) {
-            double t = e.time;
-            if (t < time) {
-                return 1;
-            } else if (t > time) {
-                return -1;
-            } else {
-                // events are at exact same time so sort by type
-                return type.compareTo(e.type);
-            }
-        }
-
-        Event(double time, IntervalType type, int node, double interval, int lineageCount) {
-            this.time = time;
-            this.type = type;
-            this.node = node;
-            this.interval = interval;
-            this.lineageCount = lineageCount;
-//            this.info = info;
-        }
-
-        /* The type of event
-         */
-        final IntervalType type;
-
-        /**
-         * The time of the event
-         */
-        final double time;
-        final double interval;
-        final int lineageCount;
-
-        /**
-         * Some extra information for the event (e.g., destination of a migration)
-         */
-//        final int info;
-
-        final int node;
-    }
 
     /**
      * A private classs that wraps an array of events and provides some a higher level api for updated an event when
      * the associated node's height changes.
      */
-    private class Events {
+    protected class Events {
 
         public Events(int numberOfEvents) {
             nodes = new int[numberOfEvents];
             nodeOrder = new int[numberOfEvents];
             lineageCounts = new int[numberOfEvents];
-            intervals = new double[numberOfEvents];
+            intervals = new double[numberOfEvents]; //TODO number of events-1? right now indexing magic done in getters
             times = new double[numberOfEvents];
             intervalTypes = new IntervalType[numberOfEvents];
             this.numberOfEvents = numberOfEvents;
@@ -428,7 +392,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
                     int difference = intervalTypes[newPosition - 1] == IntervalType.COALESCENT ? -1 : 1;
                     if (newPosition > oldPostion) {
                         for (int i = oldPostion; i < newPosition; i++) {
-                             lineageCounts[i]++;
+                            lineageCounts[i]++;
                         }
                         lineageCounts[newPosition] = lineageCounts[newPosition - 1] + difference;
                         // need to increment the lineage counts by 1
@@ -579,4 +543,3 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
 
 
 }
-

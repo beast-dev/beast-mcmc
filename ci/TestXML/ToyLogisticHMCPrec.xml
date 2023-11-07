@@ -202,6 +202,11 @@
 		<populationTree>
 			<treeModel idref="treeModel"/>
 		</populationTree>
+		<intervals>
+			<bigFastTreeIntervals id="bigFastTreeIntervals">
+				<treeModel idref="treeModel"/>
+			</bigFastTreeIntervals>
+		</intervals>
 	</coalescentLikelihood>
 
 	<coalescentGradient id="coalescentGradient">

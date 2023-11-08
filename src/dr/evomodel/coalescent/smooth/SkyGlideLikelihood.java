@@ -26,6 +26,7 @@
 package dr.evomodel.coalescent.smooth;
 
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModelLikelihood;
@@ -114,22 +115,25 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
     public double getSingleTreeLogLikelihood(int index) {
         BigFastTreeIntervals interval = intervals.get(index);
-        int currentGridIndex = 0;
+        Tree thisTree = trees.get(index);
+        int currentGridIndex = -1;
         double lnL = 0;
-        for (int i = 0; i < interval.getIntervalCount() - 1; i++) {
-            final double intervalStart = interval.getIntervalTime(i);
-            final double intervalEnd = interval.getIntervalTime(i + 1);
+        for (int i = 0; i < interval.getIntervalCount(); i++) {
             final int lineageCount = interval.getLineageCount(i);
-            int[] gridIndices = getGridPoints(currentGridIndex, intervalStart, intervalEnd);
-            final int firstGridIndex = gridIndices[0];
-            final int lastGridIndex = gridIndices[1];
-            if (firstGridIndex == Integer.MAX_VALUE) { // no grid points within interval
-                lnL += 0.5 * lineageCount * (lineageCount - 1) * getLinearInverseIntegral(intervalStart, intervalEnd, currentGridIndex);
-            } else {
+            int[] nodeIndices = interval.getNodeNumbersForInterval(i);
+            final double intervalStart = thisTree.getNodeHeight(thisTree.getNode(nodeIndices[0]));
+            final double intervalEnd = thisTree.getNodeHeight(thisTree.getNode(nodeIndices[1]));
+
+            if (intervalStart != intervalEnd) { // no grid points within interval
+//                lnL -= 0.5 * lineageCount * (lineageCount - 1) * getLinearInverseIntegral(intervalStart, intervalEnd, currentGridIndex);
+//            } else {
+                int[] gridIndices = getGridPoints(currentGridIndex, intervalStart, intervalEnd);
+                final int firstGridIndex = gridIndices[0];
+                final int lastGridIndex = gridIndices[1];
                 double sum = 0;
-                sum += getLinearInverseIntegral(intervalStart, gridPointParameter.getParameterValue(firstGridIndex), currentGridIndex);
+                sum += getLinearInverseIntegral(intervalStart, gridPointParameter.getParameterValue(firstGridIndex), firstGridIndex);
                 currentGridIndex = firstGridIndex;
-                while(currentGridIndex < lastGridIndex) {
+                while(currentGridIndex + 1 < lastGridIndex) {
                     sum += getLinearInverseIntegral(gridPointParameter.getParameterValue(currentGridIndex), gridPointParameter.getParameterValue(currentGridIndex + 1), currentGridIndex);
                     currentGridIndex++;
                 }
@@ -166,7 +170,6 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
     private int getGridIndex(double time, int startGridIndex) {
         int index = startGridIndex;
-        double gridStart = gridPointParameter.getParameterValue(startGridIndex);
         while (index < gridPointParameter.getDimension() - 1 && gridPointParameter.getParameterValue(index + 1) < time) {
             index++;
         }
@@ -177,6 +180,10 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         final double slope = getGridSlope(gridIndex);
         final double intercept = getGridIntercept(gridIndex);
         assert(slope != 0 || intercept != 0);
+        if (start == end) {
+            return 0;
+        }
+
         if (slope == 0) {
 //            return (end - start) / intercept;
             return Math.exp(-intercept) * (end - start);
@@ -187,35 +194,39 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
     }
 
     private double getGridSlope(int gridIndex) {
-        if (gridIndex == gridPointParameter.getDimension() - 1) {
+        if (gridIndex == gridPointParameter.getDimension() - 2) {
             return 0;
         }
-        return (logPopSizeParameter.getParameterValue(gridIndex + 1) - logPopSizeParameter.getParameterValue(gridIndex))
-                / (gridPointParameter.getParameterValue(gridIndex + 1) - gridPointParameter.getParameterValue(gridIndex));
+        final double thisGridTime = gridPointParameter.getParameterValue(gridIndex + 1);
+        final double lastGridTime = gridIndex == -1 ? 0 : gridPointParameter.getParameterValue(gridIndex);
+        return (logPopSizeParameter.getParameterValue(gridIndex + 2) - logPopSizeParameter.getParameterValue(gridIndex + 1))
+                / (thisGridTime - lastGridTime);
     }
 
     private double getGridIntercept(int gridIndex) {
-        if (gridIndex == gridPointParameter.getDimension() - 1) {
-            return logPopSizeParameter.getParameterValue(gridIndex);
+        if (gridIndex == gridPointParameter.getDimension() - 2) {
+            return logPopSizeParameter.getParameterValue(gridIndex + 1);
         }
-        return (gridPointParameter.getParameterValue(gridIndex + 1) * logPopSizeParameter.getParameterValue(gridIndex)
-                - gridPointParameter.getParameterValue(gridIndex) * logPopSizeParameter.getParameterValue(gridIndex + 1)) /
-                (gridPointParameter.getParameterValue(gridIndex + 1) - gridPointParameter.getParameterValue(gridIndex));
+
+        final double thisGridTime = gridPointParameter.getParameterValue(gridIndex);
+        final double lastGridTime = gridIndex == 0 ? 0 : gridPointParameter.getParameterValue(gridIndex - 1);
+
+        return (thisGridTime * logPopSizeParameter.getParameterValue(gridIndex)
+                - lastGridTime * logPopSizeParameter.getParameterValue(gridIndex + 1)) /
+                (thisGridTime - lastGridTime);
     }
 
     private int[] getGridPoints(int startGridIndex, double startTime, double endTime) {
-        int firstGridIndex = Integer.MAX_VALUE;
-        int lastGridIndex = -1;
         int i = startGridIndex;
-        double time = gridPointParameter.getParameterValue(i);
-        while (time < endTime) {
-            if (time >= startTime) {
-                if (firstGridIndex > i) firstGridIndex = i;
-                if (lastGridIndex < i) lastGridIndex = i;
-            }
+        while (i + 1 < gridPointParameter.getDimension() && gridPointParameter.getParameterValue(i + 1) < startTime) {
             i++;
-            time = gridPointParameter.getParameterValue(i);
         }
+        int firstGridIndex = i;
+
+        while (i + 1 < gridPointParameter.getDimension() && gridPointParameter.getParameterValue(i + 1) < endTime) {
+            i++;
+        }
+        int lastGridIndex = i;
         return new int[]{firstGridIndex, lastGridIndex};
     }
 

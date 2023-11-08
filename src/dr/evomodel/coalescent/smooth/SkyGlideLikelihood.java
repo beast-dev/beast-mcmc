@@ -146,7 +146,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
                     }
                     sum += getLinearInverseIntegral(gridPointParameter.getParameterValue(currentGridIndex), intervalEnd, currentGridIndex + 1);
                 }
-                currentGridIndex = lastGridIndex - 1;
+                currentGridIndex = lastGridIndex;
                 lnL -= 0.5 * lineageCount * (lineageCount - 1) * sum;
             }
         }

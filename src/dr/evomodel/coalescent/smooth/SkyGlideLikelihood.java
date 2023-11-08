@@ -161,7 +161,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
         for (int i = 0; i < interval.getIntervalCount(); i++) {
             if (interval.getIntervalType(i) == IntervalType.COALESCENT) {
-                final double time = interval.getIntervalTime(i);
+                final double time = interval.getIntervalTime(i + 1);
                 currentGridIndex = getGridIndex(time, currentGridIndex);
                 lnL -= getLogPopulationSize(time, currentGridIndex);
             }
@@ -178,7 +178,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
     private int getGridIndex(double time, int startGridIndex) {
         int index = startGridIndex;
-        while (index < gridPointParameter.getDimension() - 1 && gridPointParameter.getParameterValue(index + 1) < time) {
+        while (index < gridPointParameter.getDimension() && gridPointParameter.getParameterValue(index) < time) {
             index++;
         }
         return index;
@@ -193,10 +193,8 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         }
 
         if (slope == 0) {
-//            return (end - start) / intercept;
             return Math.exp(-intercept) * (end - start);
         } else {
-//            return (Math.log(slope * end + intercept) - Math.log(slope * start + intercept)) / slope;
             return (Math.exp(-(slope * start + intercept)) - Math.exp(-(slope * end + intercept))) / slope;
         }
     }
@@ -212,12 +210,12 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
     }
 
     private double getGridIntercept(int gridIndex) {
-        if (gridIndex == gridPointParameter.getDimension()) {
+        if (gridIndex == gridPointParameter.getDimension() || gridIndex == 0) {
             return logPopSizeParameter.getParameterValue(gridIndex);
         }
 
         final double thisGridTime = gridPointParameter.getParameterValue(gridIndex);
-        final double lastGridTime = gridIndex == 0 ? 0 : gridPointParameter.getParameterValue(gridIndex - 1);
+        final double lastGridTime = gridPointParameter.getParameterValue(gridIndex - 1);
 
         return (thisGridTime * logPopSizeParameter.getParameterValue(gridIndex)
                 - lastGridTime * logPopSizeParameter.getParameterValue(gridIndex + 1)) /

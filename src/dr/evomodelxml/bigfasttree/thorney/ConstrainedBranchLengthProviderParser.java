@@ -11,7 +11,7 @@ import dr.xml.*;
 
 public class ConstrainedBranchLengthProviderParser extends AbstractXMLObjectParser {
 
-    public static final String MUTATION_BRANCH_MAP = "mutationBranchMap";
+    public static final String MUTATION_BRANCH_MAP = "simpleMutationBranchMap";
     public static final String DATA_TREE = "dataTree";
 
     public String getParserName() {

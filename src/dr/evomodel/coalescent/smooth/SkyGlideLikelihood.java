@@ -123,9 +123,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
             final double intervalStart = thisTree.getNodeHeight(thisTree.getNode(nodeIndices[0]));
             final double intervalEnd = thisTree.getNodeHeight(thisTree.getNode(nodeIndices[1]));
 
-            if (intervalStart != intervalEnd) { // no grid points within interval
-//                lnL -= 0.5 * lineageCount * (lineageCount - 1) * getLinearInverseIntegral(intervalStart, intervalEnd, currentGridIndex);
-//            } else {
+            if (intervalStart != intervalEnd) {
                 int[] gridIndices = getGridPoints(currentGridIndex, intervalStart, intervalEnd);
                 final int firstGridIndex = gridIndices[0];
                 final int lastGridIndex = gridIndices[1];

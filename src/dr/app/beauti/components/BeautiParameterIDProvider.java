@@ -1,7 +1,7 @@
 /*
- * OperatorType.java
+ * beautiParametersIDProvider.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,28 +23,33 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.types;
+package dr.app.beauti.components;
 
-/**
- * @author Andrew Rambaut
- */
-public enum OperatorSetType {
+public class BeautiParameterIDProvider {
 
-    DEFAULT("new tree operator mix"),
-    FIXED_TREE_TOPOLOGY("fixed tree topology"),
-    FIXED_TREE("fixed tree"),
-    CLASSIC("classic tree operator mix"),
-    ADAPTIVE_MULTIVARIATE("adaptive multivariate"),
-    CUSTOM("custom operator mix"),
-    HMC("Hamiltonian Monte Carlo");
-
-    OperatorSetType(String displayName) {
-        this.displayName = displayName;
+    public BeautiParameterIDProvider(String paramKey) {
+        parameterKey = paramKey;
     }
 
-    public String toString() {
-        return displayName;
+    /**
+     * Returns the default ID for a parameter xml component.
+     *
+     * @param modelName the model name
+     * @return the ID
+     */
+    public String getId(String modelName) {
+        return modelName + "." + parameterKey;
     }
 
-    private final String displayName;
+    /**
+     * Returns the default ID for an xml component.
+     *
+     * @param modelName the model name
+     * @return the ID
+     */
+    public String getPriorId(String modelName) {
+        return getId(modelName) + "Prior";
+    }
+
+    private static String parameterKey;
 }

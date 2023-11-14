@@ -63,7 +63,6 @@
 				<parameter value="-0.2 0.1 1.0"/>
 			</matrixParameter>
 		</samplingPrecision>
-		<multivariateDiffusionModel idref="diffusionModel"/>
 	</repeatedMeasuresModel>
 
 	<traitDataLikelihood id="traitLikelihood" traitName="X" forceFullPrecision="true" scaleByTime="true" useTreeLength="false">

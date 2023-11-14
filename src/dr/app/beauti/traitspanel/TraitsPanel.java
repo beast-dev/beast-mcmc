@@ -50,6 +50,7 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -482,42 +483,18 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         return true;
     }
 
+
     public void createTraitPartition() {
         int[] selRows = traitsTable.getSelectedRows();
-        java.util.List<TraitData> traits = new ArrayList<TraitData>();
-        int discreteCount = 0;
-        int continuousCount = 0;
+        List<TraitData> traits = new ArrayList<TraitData>();
         for (int row : selRows) {
             TraitData trait = options.traits.get(row);
             traits.add(trait);
-
-            if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
-                discreteCount ++;
-            }
-            if (trait.getTraitType() == TraitData.TraitType.CONTINUOUS) {
-                continuousCount ++;
-            }
         }
 
-        boolean success = false;
-        if (discreteCount > 0) {
-            if (continuousCount > 0)  {
-                JOptionPane.showMessageDialog(TraitsPanel.this, "Don't mix discrete and continuous traits when creating partition(s).", "Mixed Trait Types", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
 
-            // with discrete traits, create a separate partition for each
-            for (TraitData trait : traits) {
-                java.util.List<TraitData> singleTrait = new ArrayList<TraitData>();
-                singleTrait.add(trait);
-                if (dataPanel.createFromTraits(singleTrait)) {
-                    success = true;
-                }
-            }
-        } else {
-            // with
-            success = dataPanel.createFromTraits(traits);
-        }
+        boolean success = dataPanel.createFromTraits(traits, TraitsPanel.this);
+
         if (success) {
             frame.switchToPanel(BeautiFrame.DATA_PARTITIONS);
         }

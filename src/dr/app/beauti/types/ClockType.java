@@ -34,6 +34,7 @@ public enum ClockType {
     UNCORRELATED("Uncorrelated relaxed clock"),
     RANDOM_LOCAL_CLOCK("Random local clock"),
     FIXED_LOCAL_CLOCK("Fixed local clock"),
+    MIXED_EFFECTS_CLOCK("Mixed effects clock"),
     AUTOCORRELATED("Autocorrelated relaxed clock");
 
     ClockType(String displayName) {

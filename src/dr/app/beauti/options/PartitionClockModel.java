@@ -190,17 +190,17 @@ public class PartitionClockModel extends PartitionOptions {
                 "branchRates.categories", OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
 
 //        if (!options.useClassicOperatorsAndPriors()) {
-            createOperator("rwBranchRateQuantiles", "branchRates.quantiles", "Random walk of branch rate quantiles",
-                    "branchRates.quantiles", OperatorType.RANDOM_WALK_LOGIT, 1, branchWeights / 3);
+        createOperator("rwBranchRateQuantiles", "branchRates.quantiles", "Random walk of branch rate quantiles",
+                "branchRates.quantiles", OperatorType.RANDOM_WALK_LOGIT, 1, branchWeights / 3);
 //        } else {
-            createOperator("uniformBranchRateQuantiles", "branchRates.quantiles", "Performs an uniform draw of branch rate quantiles",
-                    "branchRates.quantiles", OperatorType.UNIFORM, 0, branchWeights / 3);
+        createOperator("uniformBranchRateQuantiles", "branchRates.quantiles", "Performs an uniform draw of branch rate quantiles",
+                "branchRates.quantiles", OperatorType.UNIFORM, 0, branchWeights / 3);
 //        }
 
         createOperator("uniformBranchRateDistributionIndex", "branchRates.distributionIndex", "Performs a uniform draw of the distribution index",
                 "branchRates.distributionIndex", OperatorType.INTEGER_UNIFORM, 0, branchWeights / 3);
 
-        createUpDownOperator("upDownRateHeights", "Substitution rate and heights",
+        createUpDownOperator("upDownRateHeights", "Evolutionary rate and heights",
                 "Scales substitution rates inversely to node heights of the tree",
                 getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
                 getParameter("clock.rate"), OperatorType.UP_DOWN, demoTuning, rateWeights);
@@ -218,10 +218,10 @@ public class PartitionClockModel extends PartitionOptions {
                 getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
                 getParameter(ClockType.UCGD_MEAN), OperatorType.UP_DOWN, demoTuning, rateWeights);
 
-        createUpDownOperator("microsatUpDownRateHeights", "Substitution rate and heights",
+        createUpDownOperator("microsatUpDownRateHeights", "Evolutionary rate and heights",
                 "Scales substitution rates inversely to node heights of the tree",
                 getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
-                getParameter("clock.rate"),OperatorType.MICROSAT_UP_DOWN, demoTuning, branchWeights);
+                getParameter("clock.rate"), OperatorType.MICROSAT_UP_DOWN, demoTuning, branchWeights);
     }
 
     // From PartitionClockModelTreeModelLink

@@ -64,7 +64,9 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         this.gridPointParameter = gridPointParameter;
         this.intervals = new ArrayList<>();
         for (int i = 0; i < trees.size(); i++) {
-            this.intervals.add(new BigFastTreeIntervals(trees.get(0)));
+            BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals(trees.get(i));
+            this.intervals.add(treeIntervals);
+            addModel(treeIntervals);
         }
     }
 
@@ -100,7 +102,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
     @Override
     public Model getModel() {
-        return null;
+        return this;
     }
 
     @Override

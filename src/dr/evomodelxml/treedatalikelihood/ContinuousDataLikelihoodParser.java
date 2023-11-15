@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.treedatalikelihood;
 
+import dr.app.beauti.components.BeautiModelIDProvider;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -51,7 +52,7 @@ import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuous
  * @author Marc Suchard
  * @version $Id$
  */
-public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
+public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser implements BeautiModelIDProvider {
 
     public static final String CONJUGATE_ROOT_PRIOR = AbstractMultivariateTraitLikelihood.CONJUGATE_ROOT_PRIOR;
     private static final String USE_TREE_LENGTH = AbstractMultivariateTraitLikelihood.USE_TREE_LENGTH;
@@ -79,8 +80,15 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         return CONTINUOUS_DATA_LIKELIHOOD;
     }
 
+    private enum DelegateProvider {
+        OU,
+        DRIFT,
+        HOMOGENOUS
+    }
+
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+        // Begin Parse Tree and rates
         Tree treeModel = (Tree) xo.getChild(Tree.class);
         MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
         BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
@@ -99,15 +107,61 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
                 treeModel, scaleByTime, useTreeLength);
+        // End Parse Tree and rates
+
+
+        // Begin Parse Evolution Model
+        List<BranchRateModel> driftModels = AbstractMultivariateTraitLikelihood.parseDriftModels(xo, diffusionModel);
+        List<BranchRateModel> optimalTraitsModels = AbstractMultivariateTraitLikelihood.parseOptimalValuesModels(xo, diffusionModel);
+
+
+        MultivariateElasticModel elasticModel = null;
+        if (xo.hasChildNamed(STRENGTH_OF_SELECTION_MATRIX)) {
+            XMLObject cxo = xo.getChild(STRENGTH_OF_SELECTION_MATRIX);
+            MatrixParameterInterface strengthOfSelectionMatrixParam;
+            strengthOfSelectionMatrixParam = (MatrixParameterInterface) cxo.getChild(MatrixParameterInterface.class);
+            if (strengthOfSelectionMatrixParam != null) {
+                elasticModel = new MultivariateElasticModel(strengthOfSelectionMatrixParam);
+            }
+        }
+
+
+        DiffusionProcessDelegate diffusionProcessDelegate;
+
+        boolean forceOU = xo.getAttribute(FORCE_OU, false);
+        boolean forceDrift = xo.getAttribute(FORCE_DRIFT, false);
+
+        final DelegateProvider delegateProvider;
+
+        if ((optimalTraitsModels != null && elasticModel != null) || forceOU) {
+            delegateProvider = DelegateProvider.OU;
+        } else {
+            if (driftModels != null || forceDrift) {
+                delegateProvider = DelegateProvider.DRIFT;
+            } else {
+                delegateProvider = DelegateProvider.HOMOGENOUS;
+            }
+        }
+
 
         final String traitName;
 
         ContinuousTraitPartialsProvider dataModel;
 
         if (xo.hasChildNamed(TreeTraitParserUtilities.TRAIT_PARAMETER)) {
-            dataModel = ContinuousTraitDataModelParser.parseContinuousTraitDataModel(xo);
+            PrecisionType precisionType = null;
+            if (delegateProvider != DelegateProvider.HOMOGENOUS) {
+                precisionType = PrecisionType.FULL;
+            }
+            dataModel = ContinuousTraitDataModelParser.parseContinuousTraitDataModel(xo, precisionType);
         } else {  // Has ContinuousTraitPartialsProvider
             dataModel = (ContinuousTraitPartialsProvider) xo.getChild(ContinuousTraitPartialsProvider.class);
+
+            if (delegateProvider != DelegateProvider.HOMOGENOUS && dataModel.getPrecisionType() != PrecisionType.FULL) {
+                throw new RuntimeException("The data likelihood delegate is not 'HomogeneousDiffusionModelDelegate', " +
+                        "but the data model with name '" + dataModel.getModelName() + "' has precision type '" +
+                        dataModel.getPrecisionType().getTag() + "'.");
+            }
 
 //            traitName = xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME);
 
@@ -122,6 +176,25 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             }
         }
 
+        boolean integratedProcess = dataModel instanceof IntegratedProcessTraitDataModel; //TODO: can add to interface if that would be better
+
+        if (delegateProvider == DelegateProvider.OU) {
+            if (!integratedProcess) {
+                diffusionProcessDelegate = new OUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel);
+            } else {
+                diffusionProcessDelegate = new IntegratedOUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel);
+            }
+        } else if (delegateProvider == DelegateProvider.DRIFT) {
+            diffusionProcessDelegate = new DriftDiffusionModelDelegate(treeModel, diffusionModel, driftModels);
+        } else if (delegateProvider == DelegateProvider.HOMOGENOUS) {
+            diffusionProcessDelegate = new HomogeneousDiffusionModelDelegate(treeModel, diffusionModel);
+        } else {
+            throw new RuntimeException("Unrecognized delegate provider.");
+        }
+
+        // End Parse Evolution Model
+
+
         traitName = xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME);
         dataModel.setTipTraitName(getTipTraitName(traitName)); // TODO: not an ideal solution as the trait name could be set differently later
 
@@ -135,37 +208,11 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         } else {
             allowSingular = dataModel.getDefaultAllowSingular();
         }
+        // End Parse Data Model
 
         dataModel.addTreeAndRateModel(treeModel, rateTransformation);
 
-        List<BranchRateModel> driftModels = AbstractMultivariateTraitLikelihood.parseDriftModels(xo, diffusionModel);
-        List<BranchRateModel> optimalTraitsModels = AbstractMultivariateTraitLikelihood.parseOptimalValuesModels(xo, diffusionModel);
 
-        MultivariateElasticModel elasticModel = null;
-        if (xo.hasChildNamed(STRENGTH_OF_SELECTION_MATRIX)) {
-            XMLObject cxo = xo.getChild(STRENGTH_OF_SELECTION_MATRIX);
-            MatrixParameterInterface strengthOfSelectionMatrixParam;
-            strengthOfSelectionMatrixParam = (MatrixParameterInterface) cxo.getChild(MatrixParameterInterface.class);
-            if (strengthOfSelectionMatrixParam != null) {
-                elasticModel = new MultivariateElasticModel(strengthOfSelectionMatrixParam);
-            }
-        }
-
-        DiffusionProcessDelegate diffusionProcessDelegate;
-        boolean integratedProcess = dataModel instanceof IntegratedProcessTraitDataModel; //TODO: can add to interface if that would be better
-        if ((optimalTraitsModels != null && elasticModel != null) || xo.getAttribute(FORCE_OU, false)) {
-            if (!integratedProcess) {
-                diffusionProcessDelegate = new OUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel);
-            } else {
-                diffusionProcessDelegate = new IntegratedOUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel);
-            }
-        } else {
-            if (driftModels != null || xo.getAttribute(FORCE_DRIFT, false)) {
-                diffusionProcessDelegate = new DriftDiffusionModelDelegate(treeModel, diffusionModel, driftModels);
-            } else {
-                diffusionProcessDelegate = new HomogeneousDiffusionModelDelegate(treeModel, diffusionModel);
-            }
-        }
         ContinuousDataLikelihoodDelegate delegate = new ContinuousDataLikelihoodDelegate(treeModel,
                 diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel, allowSingular);
 
@@ -175,7 +222,9 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
         TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(delegate, treeModel,
                 rateModel);
+        // End Assemble Model
 
+        // Begin Trait Reconstruction Parsing
         boolean reconstructTraits = xo.getAttribute(RECONSTRUCT_TRAITS, true);
         if (reconstructTraits) {
 
@@ -219,6 +268,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             }
 
         }
+        // End Trait Reconstruction Parsing
 
         delegate.setExtensionHelper();
 
@@ -267,5 +317,19 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
     public XMLSyntaxRule[] getSyntaxRules() {
         return rules;
+    }
+
+    //********************************************************************
+    // BeautiModelIDProvider interface
+    //********************************************************************
+
+    private static final String CONTINUOUS_DATA_LIKELIHOOD_DEFAULT_ID = "traitLikelihood";
+
+    public String getParserTag() {
+        return CONTINUOUS_DATA_LIKELIHOOD;
+    }
+
+    public String getId(String modelName) {
+        return modelName + "." + CONTINUOUS_DATA_LIKELIHOOD_DEFAULT_ID;
     }
 }

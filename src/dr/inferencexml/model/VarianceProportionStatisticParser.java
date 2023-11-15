@@ -31,6 +31,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser;
+import dr.evomodelxml.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModelParser;
 import dr.inference.model.VarianceProportionStatistic;
 import dr.inference.model.VarianceProportionStatisticEmpirical;
 import dr.inference.model.VarianceProportionStatisticPopulation;

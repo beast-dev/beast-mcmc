@@ -34,7 +34,7 @@ import dr.evolution.datatype.ContinuousDataType;
 import dr.evolution.util.Taxon;
 import dr.evomodel.continuous.TreeDataContinuousDiffusionStatistic;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihoodParser;
-import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModelParser;
+import dr.evomodelxml.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModelParser;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresWishartStatistics;
 import dr.evomodel.treedatalikelihood.continuous.WishartStatisticsWrapper;
 import dr.evomodelxml.tree.TreeLoggerParser;

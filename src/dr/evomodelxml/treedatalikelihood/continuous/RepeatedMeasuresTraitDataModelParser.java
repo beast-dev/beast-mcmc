@@ -23,10 +23,13 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.treedatalikelihood.continuous;
+package dr.evomodelxml.treedatalikelihood.continuous;
 
 import dr.app.beauti.components.BeautiModelIDProvider;
 import dr.app.beauti.components.BeautiParameterIDProvider;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
+import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
+import dr.evomodel.treedatalikelihood.continuous.TreeScaledRepeatedMeasuresTraitDataModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.continuous.ContinuousTraitDataModelParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;

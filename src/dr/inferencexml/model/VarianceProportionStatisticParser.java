@@ -29,10 +29,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
-import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
-import dr.evomodel.treedatalikelihood.continuous.TreeScaledRepeatedMeasuresTraitDataModel;
+import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser;
 import dr.inference.model.VarianceProportionStatistic;
 import dr.inference.model.VarianceProportionStatisticEmpirical;
@@ -65,7 +62,7 @@ public class VarianceProportionStatisticParser extends AbstractXMLObjectParser {
         if (!(dataModel instanceof RepeatedMeasuresTraitDataModel)) {
             throw new RuntimeException(
                     "In " + PARSER_NAME + ": " +
-                            "The provided likelihood does not have a " + RepeatedMeasuresTraitDataModel.REPEATED_MEASURES_MODEL + " element." +
+                            "The provided likelihood does not have a " + RepeatedMeasuresTraitDataModelParser.REPEATED_MEASURES_MODEL + " element." +
                             "VarianceProportionStatistic is only implemented for repeated measures.");
         }
 

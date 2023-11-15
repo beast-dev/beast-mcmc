@@ -80,6 +80,12 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         return CONTINUOUS_DATA_LIKELIHOOD;
     }
 
+    private enum DelegateProvider {
+        OU,
+        DRIFT,
+        HOMOGENOUS
+    }
+
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         // Begin Parse Tree and rates
@@ -104,29 +110,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         // End Parse Tree and rates
 
 
-        final String traitName;
-
-        ContinuousTraitPartialsProvider dataModel;
-
-        if (xo.hasChildNamed(TreeTraitParserUtilities.TRAIT_PARAMETER)) {
-            dataModel = ContinuousTraitDataModelParser.parseContinuousTraitDataModel(xo);
-        } else {  // Has ContinuousTraitPartialsProvider
-            dataModel = (ContinuousTraitPartialsProvider) xo.getChild(ContinuousTraitPartialsProvider.class);
-
-//            traitName = xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME);
-
-            if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
-                System.err.println("Jitter is specified in " + xo.getAttribute(XMLObject.ID) + " but will be ignored, as a data model is provided. If a jitter is needed, please add it to the data model " + dataModel.getClass().toString() + ".");
-            }
-            if (xo.getAttribute(FORCE_FULL_PRECISION, false)) {
-                System.err.println("Option " + FORCE_FULL_PRECISION + "is set to 'true' in " + xo.getAttribute(XMLObject.ID) + " but will be ignored, as a data model is provided. Please check the data model for this attribute.");
-            }
-            if (xo.getAttribute(FORCE_COMPLETELY_MISSING, false)) {
-                System.err.println("Option " + FORCE_COMPLETELY_MISSING + "is set to 'true' in " + xo.getAttribute(XMLObject.ID) + " but will be ignored, as a data model is provided. Please check the data model for this attribute.");
-            }
-        }
-        // End Parse Parameters
-
         // Begin Parse Evolution Model
         List<BranchRateModel> driftModels = AbstractMultivariateTraitLikelihood.parseDriftModels(xo, diffusionModel);
         List<BranchRateModel> optimalTraitsModels = AbstractMultivariateTraitLikelihood.parseOptimalValuesModels(xo, diffusionModel);
@@ -144,21 +127,71 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
 
 
         DiffusionProcessDelegate diffusionProcessDelegate;
+
+        boolean forceOU = xo.getAttribute(FORCE_OU, false);
+        boolean forceDrift = xo.getAttribute(FORCE_DRIFT, false);
+
+        final DelegateProvider delegateProvider;
+
+        if ((optimalTraitsModels != null && elasticModel != null) || forceOU) {
+            delegateProvider = DelegateProvider.OU;
+        } else {
+            if (driftModels != null || forceDrift) {
+                delegateProvider = DelegateProvider.DRIFT;
+            } else {
+                delegateProvider = DelegateProvider.HOMOGENOUS;
+            }
+        }
+
+
+        final String traitName;
+
+        ContinuousTraitPartialsProvider dataModel;
+
+        if (xo.hasChildNamed(TreeTraitParserUtilities.TRAIT_PARAMETER)) {
+            PrecisionType precisionType = null;
+            if (delegateProvider != DelegateProvider.HOMOGENOUS) {
+                precisionType = PrecisionType.FULL;
+            }
+            dataModel = ContinuousTraitDataModelParser.parseContinuousTraitDataModel(xo, precisionType);
+        } else {  // Has ContinuousTraitPartialsProvider
+            dataModel = (ContinuousTraitPartialsProvider) xo.getChild(ContinuousTraitPartialsProvider.class);
+
+            if (delegateProvider != DelegateProvider.HOMOGENOUS && dataModel.getPrecisionType() != PrecisionType.FULL) {
+                throw new RuntimeException("The data likelihood delegate is not 'HomogeneousDiffusionModelDelegate', " +
+                        "but the data model with name '" + dataModel.getModelName() + "' has precision type '" +
+                        dataModel.getPrecisionType().getTag() + "'.");
+            }
+
+//            traitName = xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME);
+
+            if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
+                System.err.println("Jitter is specified in " + xo.getAttribute(XMLObject.ID) + " but will be ignored, as a data model is provided. If a jitter is needed, please add it to the data model " + dataModel.getClass().toString() + ".");
+            }
+            if (xo.getAttribute(FORCE_FULL_PRECISION, false)) {
+                System.err.println("Option " + FORCE_FULL_PRECISION + "is set to 'true' in " + xo.getAttribute(XMLObject.ID) + " but will be ignored, as a data model is provided. Please check the data model for this attribute.");
+            }
+            if (xo.getAttribute(FORCE_COMPLETELY_MISSING, false)) {
+                System.err.println("Option " + FORCE_COMPLETELY_MISSING + "is set to 'true' in " + xo.getAttribute(XMLObject.ID) + " but will be ignored, as a data model is provided. Please check the data model for this attribute.");
+            }
+        }
+
         boolean integratedProcess = dataModel instanceof IntegratedProcessTraitDataModel; //TODO: can add to interface if that would be better
 
-        if ((optimalTraitsModels != null && elasticModel != null) || xo.getAttribute(FORCE_OU, false)) {
+        if (delegateProvider == DelegateProvider.OU) {
             if (!integratedProcess) {
                 diffusionProcessDelegate = new OUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel);
             } else {
                 diffusionProcessDelegate = new IntegratedOUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel);
             }
+        } else if (delegateProvider == DelegateProvider.DRIFT) {
+            diffusionProcessDelegate = new DriftDiffusionModelDelegate(treeModel, diffusionModel, driftModels);
+        } else if (delegateProvider == DelegateProvider.HOMOGENOUS) {
+            diffusionProcessDelegate = new HomogeneousDiffusionModelDelegate(treeModel, diffusionModel);
         } else {
-            if (driftModels != null || xo.getAttribute(FORCE_DRIFT, false)) {
-                diffusionProcessDelegate = new DriftDiffusionModelDelegate(treeModel, diffusionModel, driftModels);
-            } else {
-                diffusionProcessDelegate = new HomogeneousDiffusionModelDelegate(treeModel, diffusionModel);
-            }
+            throw new RuntimeException("Unrecognized delegate provider.");
         }
+
         // End Parse Evolution Model
 
 

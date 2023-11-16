@@ -240,7 +240,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
 
                     final WrappedVector cM2 = transform.getConditionalMean(
                             partialNodeBuffer, offsetPartial, // Tip value
-                            M1.getBuffer(), 0); // Parent value (actualized)
+                            P0x.data, 0); // Parent value (actualized)
 
 
                     final DenseMatrix64F cV2 = transform.getConditionalVariance();

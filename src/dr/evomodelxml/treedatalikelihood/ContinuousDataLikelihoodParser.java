@@ -185,6 +185,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
             } else {
                 diffusionProcessDelegate = new IntegratedOUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel);
             }
+        } else if (integratedProcess) {
+            diffusionProcessDelegate = new IntegratedBMDiffusionModelDelegate(treeModel, diffusionModel, driftModels);
         } else if (delegateProvider == DelegateProvider.DRIFT) {
             diffusionProcessDelegate = new DriftDiffusionModelDelegate(treeModel, diffusionModel, driftModels);
         } else if (delegateProvider == DelegateProvider.HOMOGENOUS) {

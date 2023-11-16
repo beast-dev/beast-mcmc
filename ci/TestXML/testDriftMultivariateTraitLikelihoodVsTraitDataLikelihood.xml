@@ -33,7 +33,7 @@
 		</nodeTraits>
 	</treeModel>
 
-    <multivariateDiffusionModel id="diffusionModel">
+	<multivariateDiffusionModel id="diffusionModel">
 		<precisionMatrix>
 			<matrixParameter id="precisionMatrix">
 				<parameter id="precision.col1" value="0.05 0.002"/>
@@ -52,8 +52,7 @@
 			<parameter idref="precisionMatrix"/>
 		</data>
 	</multivariateWishartPrior>
-	
-<<<<<<< HEAD
+
 	<discretizedBranchRates id="diffusionRates">
 		<treeModel idref="treeModel"/>
 		<distribution>
@@ -70,17 +69,15 @@
 			<parameter id="rrwCategories"/>
 		</rateCategories>
 	</discretizedBranchRates>
-	
-=======
->>>>>>> master
+
 	<compoundParameter id="driftRate">
 		<parameter id="driftRate.0" value="-50.0"/>
 		<parameter id="driftRate.1" value="100.0"/>
 	</compoundParameter>
 
-    <!-- ***************************************************************************** -->
-    <!-- Old Likelihood Specification -->
-    <!-- ***************************************************************************** -->
+	<!-- ***************************************************************************** -->
+	<!-- Old Likelihood Specification -->
+	<!-- ***************************************************************************** -->
 
 	<multivariateTraitLikelihood id="oldVanillaLikelihood" traitName="X" useTreeLength="true" scaleByTime="true" reportAsMultivariate="true" reciprocalRates="false" integrateInternalTraits="true">
 		<multivariateDiffusionModel idref="diffusionModel"/>
@@ -88,15 +85,15 @@
 		<traitParameter>
 			<parameter idref="leafTraits"/>
 		</traitParameter>
-        <conjugateRootPrior>
-            <meanParameter>
-                <parameter value="0.0 0.0"/>
-            </meanParameter>
-            <priorSampleSize>
-                <parameter value="0.000001"/>
-            </priorSampleSize>
-        </conjugateRootPrior>
-        <driftModels>
+		<conjugateRootPrior>
+			<meanParameter>
+				<parameter value="0.0 0.0"/>
+			</meanParameter>
+			<priorSampleSize>
+				<parameter value="0.000001"/>
+			</priorSampleSize>
+		</conjugateRootPrior>
+		<driftModels>
 			<strictClockBranchRates>
 				<rate>
 					<parameter idref="driftRate.0"/>
@@ -108,10 +105,7 @@
 				</rate>
 			</strictClockBranchRates>
 		</driftModels>
-<<<<<<< HEAD
 		<discretizedBranchRates idref="diffusionRates"/>
-=======
->>>>>>> master
 	</multivariateTraitLikelihood>
 	<continuousDiffusionStatistic id="oldDiffusionRate">
 		<multivariateTraitLikelihood idref="oldVanillaLikelihood"/>
@@ -124,36 +118,36 @@
 		Old likelihood =
 		<multivariateTraitLikelihood idref="oldVanillaLikelihood"/>
 	</report>
-	
+
 	<report>
 		Old ContinuousDiffusionStatistic =
 		<continuousDiffusionStatistic idref="oldDiffusionRate"/>
 	</report>
-	
+
 	<report>
 		Old ContinuousDiffusionStatistic greatCircleDistance=
 		<continuousDiffusionStatistic idref="oldDiffusionRateGCD"/>
 	</report>
 
-    <!-- ***************************************************************************** -->
-    <!-- New Likelihood Specification -->
-    <!-- ***************************************************************************** -->
-    
+	<!-- ***************************************************************************** -->
+	<!-- New Likelihood Specification -->
+	<!-- ***************************************************************************** -->
+
 	<traitDataLikelihood id="newVanillaLikelihood" traitName="X" useTreeLength="true" scaleByTime="true" reportAsMultivariate="true" reciprocalRates="false" integrateInternalTraits="true">
 		<multivariateDiffusionModel idref="diffusionModel"/>
 		<treeModel idref="treeModel"/>
 		<traitParameter>
 			<parameter idref="leafTraits"/>
 		</traitParameter>
-        <conjugateRootPrior>
-            <meanParameter>
-                <parameter value="0.0 0.0"/>
-            </meanParameter>
-            <priorSampleSize>
-                <parameter value="0.000001"/>
-            </priorSampleSize>
-        </conjugateRootPrior>
-        <driftModels>
+		<conjugateRootPrior>
+			<meanParameter>
+				<parameter value="0.0 0.0"/>
+			</meanParameter>
+			<priorSampleSize>
+				<parameter value="0.000001"/>
+			</priorSampleSize>
+		</conjugateRootPrior>
+		<driftModels>
 			<strictClockBranchRates>
 				<rate>
 					<parameter idref="driftRate.0"/>
@@ -165,10 +159,7 @@
 				</rate>
 			</strictClockBranchRates>
 		</driftModels>
-<<<<<<< HEAD
 		<discretizedBranchRates idref="diffusionRates"/>
-=======
->>>>>>> master
 	</traitDataLikelihood>
 	<traitDataContinuousDiffusionStatistic id="newDiffusionRate" traitName="X" displacementScheme="linear" scalingScheme="dependent" weightingScheme="weighted">
 		<traitDataLikelihood idref="newVanillaLikelihood"/>
@@ -176,30 +167,26 @@
 	<traitDataContinuousDiffusionStatistic id="newDiffusionRateGCD" traitName="X" displacementScheme="greatCircleDistance" scalingScheme="dependent" weightingScheme="weighted">
 		<traitDataLikelihood idref="newVanillaLikelihood"/>
 	</traitDataContinuousDiffusionStatistic>
-	
+
 	<operators id="newOperators" optimizationSchedule="log">
 		<randomWalkOperator windowSize="0.3" weight="5" boundaryCondition="absorbing">
 			<parameter idref="driftRate"/>
-		</randomWalkOperator>                                   
+		</randomWalkOperator>
 		<precisionGibbsOperator weight="2">
 			<wishartStatistics id="newWishartStatistics" traitName="X">
 				<traitDataLikelihood idref="newVanillaLikelihood"/>
-			</wishartStatistics>	
+			</wishartStatistics>
 			<multivariateWishartPrior idref="precisionPrior"/>
-<<<<<<< HEAD
-		</precisionGibbsOperator> 
+		</precisionGibbsOperator>
 		<scaleOperator scaleFactor="0.75" weight="5">
-				<parameter idref="stdev"/>
-			</scaleOperator>
+			<parameter idref="stdev"/>
+		</scaleOperator>
 		<swapOperator size="1" weight="5" autoOptimize="false">
 			<parameter idref="rrwCategories"/>
 		</swapOperator>
 		<uniformIntegerOperator weight="5">
 			<parameter idref="rrwCategories"/>
-		</uniformIntegerOperator>                                
-=======
-		</precisionGibbsOperator>                                  
->>>>>>> master
+		</uniformIntegerOperator>
 	</operators>
 
 	<report>
@@ -211,59 +198,59 @@
 		New ContinuousDiffusionStatistic =
 		<traitDataContinuousDiffusionStatistic idref="newDiffusionRate"/>
 	</report>
-	
+
 	<report>
 		New ContinuousDiffusionStatistic greatCircleDistance =
 		<traitDataContinuousDiffusionStatistic idref="newDiffusionRateGCD"/>
 	</report>
-	
+
 	<!-- ***************************************************************************** -->
-    <!-- Likelihoods and Wishart Statistics are Equal -->
-    <!-- ***************************************************************************** -->
+	<!-- Likelihoods and Wishart Statistics are Equal -->
+	<!-- ***************************************************************************** -->
 
 	<assertEqual tolerance="1e-1" verbose="true">
-        <message>
-           Likelihoods:
-        </message>
-        <actual regex="logDatumLikelihood:\s+(.*)\n">
-            <traitDataLikelihood idref="newVanillaLikelihood"/>
-        </actual>
-        <expected regex="logLikelihood:\s*(.*?)\s==">
-            <traitDataLikelihood idref="oldVanillaLikelihood"/>
-        </expected>
-    </assertEqual>
-    
-    <assertEqual tolerance="1e-1" verbose="true" charactersToStrip="\[\],">
-        <message>
-            Wishart Statistics
-        </message>
-        <actual regex="\[(.*)\]">
-        	<report>
-        		<property name="wishartStatistics">
-            		<object idref="newWishartStatistics"/>
-        		</property>
-   			</report>
-        </actual>
-        <expected regex="Outer-products \(DP\):\n\[(.*)\]">
-            <traitDataLikelihood idref="oldVanillaLikelihood"/>
-        </expected>
-    </assertEqual>
-    
-    <!-- ***************************************************************************** -->
-    <!-- Diffusion Rate Statistic is stochastics : need to take the mean -->
-    <!-- ***************************************************************************** -->
-    
-    <mcmc id="mcmcDummy" chainLength="10000">
+		<message>
+			Likelihoods:
+		</message>
+		<actual regex="logDatumLikelihood:\s+(.*)\n">
+			<traitDataLikelihood idref="newVanillaLikelihood"/>
+		</actual>
+		<expected regex="logLikelihood:\s*(.*?)\s==">
+			<traitDataLikelihood idref="oldVanillaLikelihood"/>
+		</expected>
+	</assertEqual>
+
+	<assertEqual tolerance="1e-1" verbose="true" charactersToStrip="\[\],">
+		<message>
+			Wishart Statistics
+		</message>
+		<actual regex="\[(.*)\]">
+			<report>
+				<property name="wishartStatistics">
+					<object idref="newWishartStatistics"/>
+				</property>
+			</report>
+		</actual>
+		<expected regex="Outer-products \(DP\):\n\[(.*)\]">
+			<traitDataLikelihood idref="oldVanillaLikelihood"/>
+		</expected>
+	</assertEqual>
+
+	<!-- ***************************************************************************** -->
+	<!-- Diffusion Rate Statistic is stochastics : need to take the mean -->
+	<!-- ***************************************************************************** -->
+
+	<mcmc id="mcmcDummy" chainLength="10000">
 		<posterior>
 			<traitDataLikelihood idref="newVanillaLikelihood"/>
 		</posterior>
 		<operators id="dummyOperators">
-       		<dirtyLikelihood weight="1">
-            	<traitDataLikelihood idref="newVanillaLikelihood"/>
-        	</dirtyLikelihood>
-        	<dirtyLikelihood weight="1">
-            	<traitDataLikelihood idref="oldVanillaLikelihood"/>
-        	</dirtyLikelihood>
+			<dirtyLikelihood weight="1">
+				<traitDataLikelihood idref="newVanillaLikelihood"/>
+			</dirtyLikelihood>
+			<dirtyLikelihood weight="1">
+				<traitDataLikelihood idref="oldVanillaLikelihood"/>
+			</dirtyLikelihood>
 		</operators>
 		<log id="screenLogDummy" logEvery="5000">
 			<column label="NewLikelihood" dp="4" width="12">
@@ -295,74 +282,71 @@
 			<parameter idref="oldDiffusionRateGCD"/>
 		</log>
 	</mcmc>
-   			
+
 	<traceAnalysis id="traceAnalysis" fileName="testContinuousDiffusionStatistic.log" stdError="false"/>
-	
-    <assertEqual tolerance="1e-1" verbose="true">
-        <message>
-           ContinuousDiffusionStatistics:
-        </message>
-        <actual>
-        	<report>
-				<property name="mean">
-        			<property name="correlationStatistics" index="0">
-            			<object idref="traceAnalysis"/>
-        			</property>
-        		</property>
-   			</report>
-        </actual>
-        <expected>
+
+	<assertEqual tolerance="1e-1" verbose="true">
+		<message>
+			ContinuousDiffusionStatistics:
+		</message>
+		<actual>
 			<report>
 				<property name="mean">
-        			<property name="correlationStatistics" index="1">
-            			<object idref="traceAnalysis"/>
-        			</property>
-        		</property>
-   			</report>
-        </expected>
-    </assertEqual>
-    
-    <assertEqual tolerance="1e-1" verbose="true" toleranceType="relative">
-        <message>
-           ContinuousDiffusionStatistics greatCircleDistance:
-        </message>
-        <actual>
-        	<report>
-				<property name="mean">
-        			<property name="correlationStatistics" index="2">
-            			<object idref="traceAnalysis"/>
-        			</property>
-        		</property>
-   			</report>
-        </actual>
-        <expected>
+					<property name="correlationStatistics" index="0">
+						<object idref="traceAnalysis"/>
+					</property>
+				</property>
+			</report>
+		</actual>
+		<expected>
 			<report>
 				<property name="mean">
-        			<property name="correlationStatistics" index="3">
-            			<object idref="traceAnalysis"/>
-        			</property>
-        		</property>
-   			</report>
-        </expected>
-    </assertEqual>
-    
-    <!-- ***************************************************************************** -->
-    <!-- Real MCMC -->
-    <!-- ***************************************************************************** -->
-    
-    <mcmc id="mcmcNew" chainLength="1000">
+					<property name="correlationStatistics" index="1">
+						<object idref="traceAnalysis"/>
+					</property>
+				</property>
+			</report>
+		</expected>
+	</assertEqual>
+
+	<assertEqual tolerance="1e-1" verbose="true" toleranceType="relative">
+		<message>
+			ContinuousDiffusionStatistics greatCircleDistance:
+		</message>
+		<actual>
+			<report>
+				<property name="mean">
+					<property name="correlationStatistics" index="2">
+						<object idref="traceAnalysis"/>
+					</property>
+				</property>
+			</report>
+		</actual>
+		<expected>
+			<report>
+				<property name="mean">
+					<property name="correlationStatistics" index="3">
+						<object idref="traceAnalysis"/>
+					</property>
+				</property>
+			</report>
+		</expected>
+	</assertEqual>
+
+	<!-- ***************************************************************************** -->
+	<!-- Real MCMC -->
+	<!-- ***************************************************************************** -->
+
+	<mcmc id="mcmcNew" chainLength="1000">
 		<posterior id="posterior">
 			<traitDataLikelihood idref="newVanillaLikelihood"/>
 			<multivariateWishartPrior idref="precisionPrior"/>
 			<normalPrior mean="0.0" stdev="10.0">
 				<parameter idref="driftRate"/>
 			</normalPrior>
-<<<<<<< HEAD
 			<exponentialPrior mean="0.3333333333333333" offset="0.0">
 				<parameter idref="stdev"/>
 			</exponentialPrior>
-=======
->>>>>>> master
 		</posterior>
 		<operators idref="newOperators"/>
 		<log id="screenLog" logEvery="500">
@@ -384,52 +368,49 @@
 			<column label="drift" dp="4" width="12">
 				<parameter idref="driftRate"/>
 			</column>
-<<<<<<< HEAD
 			<column label="Precision" dp="4" width="12">
 				<parameter idref="precisionMatrix"/>
 			</column>
-=======
->>>>>>> master
 		</log>
 	</mcmc>
-	
+
 	<!-- ***************************************************************************** -->
-    <!-- Likelihoods and Wishart Statistics are still equal -->
-    <!-- ***************************************************************************** -->
-	
+	<!-- Likelihoods and Wishart Statistics are still equal -->
+	<!-- ***************************************************************************** -->
+
 	<assertEqual tolerance="1e-1" verbose="true">
-        <message>
-           Likelihoods (post MCMC):
-        </message>
-        <actual regex="logDatumLikelihood:\s+(.*)\n">
-            <traitDataLikelihood idref="newVanillaLikelihood"/>
-        </actual>
-        <expected regex="logLikelihood:\s*(.*?)\s==">
-            <traitDataLikelihood idref="oldVanillaLikelihood"/>
-        </expected>
-    </assertEqual>
-    
-    <assertEqual tolerance="1e-1" verbose="true" charactersToStrip="\[\],">
-        <message>
-            Wishart Statistics (post MCMC):
-        </message>
-        <actual regex="\[(.*)\]">
-        	<report>
-        		<property name="wishartStatistics">
-            		<object idref="newWishartStatistics"/>
-        		</property>
-   			</report>
-        </actual>
-        <expected regex="Outer-products \(DP\):\n\[(.*)\]">
-            <traitDataLikelihood idref="oldVanillaLikelihood"/>
-        </expected>
-    </assertEqual>
-    
-    <!-- ***************************************************************************** -->
-    <!-- Diffusion Rate Statistics are still equal -->
-    <!-- ***************************************************************************** -->
-    
-    <mcmc id="mcmcDummy2" chainLength="10000">
+		<message>
+			Likelihoods (post MCMC):
+		</message>
+		<actual regex="logDatumLikelihood:\s+(.*)\n">
+			<traitDataLikelihood idref="newVanillaLikelihood"/>
+		</actual>
+		<expected regex="logLikelihood:\s*(.*?)\s==">
+			<traitDataLikelihood idref="oldVanillaLikelihood"/>
+		</expected>
+	</assertEqual>
+
+	<assertEqual tolerance="1e-1" verbose="true" charactersToStrip="\[\],">
+		<message>
+			Wishart Statistics (post MCMC):
+		</message>
+		<actual regex="\[(.*)\]">
+			<report>
+				<property name="wishartStatistics">
+					<object idref="newWishartStatistics"/>
+				</property>
+			</report>
+		</actual>
+		<expected regex="Outer-products \(DP\):\n\[(.*)\]">
+			<traitDataLikelihood idref="oldVanillaLikelihood"/>
+		</expected>
+	</assertEqual>
+
+	<!-- ***************************************************************************** -->
+	<!-- Diffusion Rate Statistics are still equal -->
+	<!-- ***************************************************************************** -->
+
+	<mcmc id="mcmcDummy2" chainLength="10000">
 		<posterior>
 			<traitDataLikelihood idref="newVanillaLikelihood"/>
 		</posterior>
@@ -464,55 +445,55 @@
 			<parameter idref="oldDiffusionRateGCD"/>
 		</log>
 	</mcmc>
-   			
+
 	<traceAnalysis id="traceAnalysis2" fileName="testContinuousDiffusionStatistic2.log" stdError="false"/>
-	
-    <assertEqual tolerance="1e-1" verbose="true">
-        <message>
-           ContinuousDiffusionStatistics (post-MCMC):
-        </message>
-        <actual>
-        	<report>
-				<property name="mean">
-        			<property name="correlationStatistics" index="0">
-            			<object idref="traceAnalysis2"/>
-        			</property>
-        		</property>
-   			</report>
-        </actual>
-        <expected>
+
+	<assertEqual tolerance="1e-1" verbose="true">
+		<message>
+			ContinuousDiffusionStatistics (post-MCMC):
+		</message>
+		<actual>
 			<report>
 				<property name="mean">
-        			<property name="correlationStatistics" index="1">
-            			<object idref="traceAnalysis2"/>
-        			</property>
-        		</property>
-   			</report>
-        </expected>
-    </assertEqual>
-    
-    <assertEqual tolerance="1e-1" verbose="true" toleranceType="relative">
-        <message>
-           ContinuousDiffusionStatistics greatCircleDistance (post MCMC):
-        </message>
-        <actual>
-        	<report>
-				<property name="mean">
-        			<property name="correlationStatistics" index="2">
-            			<object idref="traceAnalysis2"/>
-        			</property>
-        		</property>
-   			</report>
-        </actual>
-        <expected>
+					<property name="correlationStatistics" index="0">
+						<object idref="traceAnalysis2"/>
+					</property>
+				</property>
+			</report>
+		</actual>
+		<expected>
 			<report>
 				<property name="mean">
-        			<property name="correlationStatistics" index="3">
-            			<object idref="traceAnalysis2"/>
-        			</property>
-        		</property>
-   			</report>
-        </expected>
-    </assertEqual>
+					<property name="correlationStatistics" index="1">
+						<object idref="traceAnalysis2"/>
+					</property>
+				</property>
+			</report>
+		</expected>
+	</assertEqual>
+
+	<assertEqual tolerance="1e-1" verbose="true" toleranceType="relative">
+		<message>
+			ContinuousDiffusionStatistics greatCircleDistance (post MCMC):
+		</message>
+		<actual>
+			<report>
+				<property name="mean">
+					<property name="correlationStatistics" index="2">
+						<object idref="traceAnalysis2"/>
+					</property>
+				</property>
+			</report>
+		</actual>
+		<expected>
+			<report>
+				<property name="mean">
+					<property name="correlationStatistics" index="3">
+						<object idref="traceAnalysis2"/>
+					</property>
+				</property>
+			</report>
+		</expected>
+	</assertEqual>
 
 </beast>

@@ -25,13 +25,18 @@
 
 package dr.app.beauti.datapanel;
 
-import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.TraitData;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -42,20 +47,28 @@ public class SelectTraitDialog {
 
     private JFrame frame;
 
-    JComboBox traitCombo;
-    JCheckBox copyCheck;
+    //    JComboBox traitCombo;
+    JList traitList;
+    DefaultListModel traitModel;
+    private final JCheckBox copyCheck;
     JTextField nameField;
+    JScrollPane scrollPane;
+    private final JCheckBox independentBox;
 
     OptionsPanel optionPanel;
 
     public SelectTraitDialog(JFrame frame) {
         this.frame = frame;
 
-        traitCombo = new JComboBox();
+        traitModel = new DefaultListModel();
+        traitList = new JList(traitModel);
+        scrollPane = new JScrollPane(traitList);
 
         copyCheck = new JCheckBox("Name trait partition:");
         nameField = new JTextField();
         nameField.setColumns(20);
+
+        independentBox = new JCheckBox("New partition for each trait");
 
         optionPanel = new OptionsPanel(12, 12);
 
@@ -63,29 +76,56 @@ public class SelectTraitDialog {
                 new java.awt.event.ItemListener() {
                     public void itemStateChanged(java.awt.event.ItemEvent ev) {
                         nameField.setEnabled(copyCheck.isSelected());
+                        if (getSelectedTraitCount() > 1) independentBox.setSelected(!copyCheck.isSelected());
                     }
                 }
         );
 
+        traitList.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (getSelectedTraitCount() > 1) {
+                    if (independentBox.isSelected() && copyCheck.isSelected()) independentBox.setSelected(false);
+                    if (!(independentBox.isSelected() || copyCheck.isSelected())) copyCheck.setSelected(true);
+                }
+            }
+        });
+
+        independentBox.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (getSelectedTraitCount() > 1) copyCheck.setSelected(!(independentBox.isSelected()));
+            }
+        });
+
     }
 
-    public int showDialog(Collection<TraitData> traits, String defaultName) {
+    public int showDialog(Collection<TraitData> traits, String defaultName, Component parent, Boolean allowSelectTraits) {
         optionPanel.removeAll();
-        if (traits == null) {
+        nameField.setText(defaultName != null ? defaultName : "untitled_traits");
+        copyCheck.setSelected(true);
+        independentBox.setSelected(false);
+
+        if (traits == null || !allowSelectTraits) { // traits shouldn't be null
             optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the selected trait(s)."));
             optionPanel.addComponentWithLabel("Name trait partition:", nameField);
-            nameField.setText(defaultName != null ? defaultName : "untitled_traits");
             nameField.setEnabled(true);
             nameField.selectAll();
         } else {
-            traitCombo.removeAllItems();
+            traitModel.removeAllElements();
+
             for (Object model : traits) {
-                traitCombo.addItem(model);
+                traitModel.addElement(model);
             }
-            optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the following trait."));
-            optionPanel.addComponentWithLabel("Trait:", traitCombo);
+            optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the following trait(s)."));
+            optionPanel.addComponentWithLabel("Trait(s):", scrollPane);
             optionPanel.addComponents(copyCheck, nameField);
             nameField.setEnabled(copyCheck.isSelected());
+        }
+
+        if (traits != null && traits.size() > 1) { // traits shouldn't be null
+            independentBox.setSelected(false);
+            optionPanel.addComponent(independentBox);
         }
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
@@ -114,8 +154,22 @@ public class SelectTraitDialog {
             }
             if (result != JOptionPane.CANCEL_OPTION) {
                 String name = getName().trim();
-                if (name.isEmpty()) {
+                if (name.isEmpty() && (getMakeCopy() || traits == null)) {
                     isValid = false;
+                    JOptionPane.showMessageDialog(parent, "Cannot have an empty partition name.", "No Partition Name", JOptionPane.ERROR_MESSAGE);
+                }
+
+                if (getTraits().size() == 0 && allowSelectTraits) {
+                    isValid = false;
+                    JOptionPane.showMessageDialog(parent, "Please select a trait(s).", "No Trait(s) Selected", JOptionPane.ERROR_MESSAGE);
+                }
+
+                if (getTraits().size() > 1 && !(getMakeCopy() || getForceIndependent())) { // pretty sure this can't happen, but warning just in case
+                    isValid = false;
+                    JOptionPane.showMessageDialog(parent,
+                            "You have selected multiple traits.\nPlease either name the new partition or " +
+                                    "check \"" + independentBox.getText() + "\"",
+                            "Multiple Traits Selected Without Name", JOptionPane.ERROR_MESSAGE);
                 }
             }
         } while (!isValid);
@@ -123,12 +177,25 @@ public class SelectTraitDialog {
         return result;
     }
 
-    public TraitData getTrait() {
-        return (TraitData) traitCombo.getSelectedItem();
+    public List<TraitData> getTraits() {
+        return (List<TraitData>) traitList.getSelectedValuesList();
+    }
+
+    private int getSelectedTraitCount() {
+        return traitList.getSelectedValuesList().size();
     }
 
     public boolean getMakeCopy() {
         return copyCheck.isSelected();
+    }
+
+    public void reset() {
+        copyCheck.setSelected(false);
+        independentBox.setSelected(false);
+    }
+
+    public boolean getForceIndependent() {
+        return independentBox.isSelected();
     }
 
     public String getName() {

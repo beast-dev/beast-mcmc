@@ -98,13 +98,17 @@ public class CreateTraitDialog {
         exampleButton.setEnabled(false);
         exampleButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
-                JScrollPane scrollPane = TextUtil.createHTMLScrollPane(EXAMPLE_FORMAT, new Dimension(400,300));
-
-                JOptionPane.showMessageDialog(frame, scrollPane,
-                        "Example of mapping file format",
-                        JOptionPane.PLAIN_MESSAGE);
+                showExampleTraitFormat(frame);
             }
         });
+    }
+
+    public static void showExampleTraitFormat(BeautiFrame frame) {
+        JScrollPane scrollPane = TextUtil.createHTMLScrollPane(EXAMPLE_FORMAT, new Dimension(400,300));
+
+        JOptionPane.showMessageDialog(frame, scrollPane,
+                "Example of mapping file format",
+                JOptionPane.PLAIN_MESSAGE);
     }
 
     public void setTraitName(String traitName) {

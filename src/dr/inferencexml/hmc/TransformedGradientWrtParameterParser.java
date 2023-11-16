@@ -27,6 +27,7 @@ package dr.inferencexml.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.TransformedGradientWrtParameter;
+import dr.inference.model.GradientProvider;
 import dr.inference.model.Parameter;
 import dr.inference.model.TransformedParameter;
 import dr.xml.*;
@@ -64,7 +65,10 @@ public class TransformedGradientWrtParameterParser extends AbstractXMLObjectPars
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
-                new ElementRule(GradientWrtParameterProvider.class),
+                new XORRule(
+                        new ElementRule(GradientWrtParameterProvider.class),
+                        new ElementRule(GradientProvider.class)
+                ),
                 new ElementRule(TransformedParameter.class),
                 new ElementRule(WRT, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class),

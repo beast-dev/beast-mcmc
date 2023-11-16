@@ -53,6 +53,7 @@
 		</data>
 	</multivariateWishartPrior>
 	
+<<<<<<< HEAD
 	<discretizedBranchRates id="diffusionRates">
 		<treeModel idref="treeModel"/>
 		<distribution>
@@ -70,6 +71,8 @@
 		</rateCategories>
 	</discretizedBranchRates>
 	
+=======
+>>>>>>> master
 	<compoundParameter id="driftRate">
 		<parameter id="driftRate.0" value="-50.0"/>
 		<parameter id="driftRate.1" value="100.0"/>
@@ -105,7 +108,10 @@
 				</rate>
 			</strictClockBranchRates>
 		</driftModels>
+<<<<<<< HEAD
 		<discretizedBranchRates idref="diffusionRates"/>
+=======
+>>>>>>> master
 	</multivariateTraitLikelihood>
 	<continuousDiffusionStatistic id="oldDiffusionRate">
 		<multivariateTraitLikelihood idref="oldVanillaLikelihood"/>
@@ -159,7 +165,10 @@
 				</rate>
 			</strictClockBranchRates>
 		</driftModels>
+<<<<<<< HEAD
 		<discretizedBranchRates idref="diffusionRates"/>
+=======
+>>>>>>> master
 	</traitDataLikelihood>
 	<traitDataContinuousDiffusionStatistic id="newDiffusionRate" traitName="X" displacementScheme="linear" scalingScheme="dependent" weightingScheme="weighted">
 		<traitDataLikelihood idref="newVanillaLikelihood"/>
@@ -177,6 +186,7 @@
 				<traitDataLikelihood idref="newVanillaLikelihood"/>
 			</wishartStatistics>	
 			<multivariateWishartPrior idref="precisionPrior"/>
+<<<<<<< HEAD
 		</precisionGibbsOperator> 
 		<scaleOperator scaleFactor="0.75" weight="5">
 				<parameter idref="stdev"/>
@@ -187,6 +197,9 @@
 		<uniformIntegerOperator weight="5">
 			<parameter idref="rrwCategories"/>
 		</uniformIntegerOperator>                                
+=======
+		</precisionGibbsOperator>                                  
+>>>>>>> master
 	</operators>
 
 	<report>
@@ -344,9 +357,12 @@
 			<normalPrior mean="0.0" stdev="10.0">
 				<parameter idref="driftRate"/>
 			</normalPrior>
+<<<<<<< HEAD
 			<exponentialPrior mean="0.3333333333333333" offset="0.0">
 				<parameter idref="stdev"/>
 			</exponentialPrior>
+=======
+>>>>>>> master
 		</posterior>
 		<operators idref="newOperators"/>
 		<log id="screenLog" logEvery="500">
@@ -368,9 +384,12 @@
 			<column label="drift" dp="4" width="12">
 				<parameter idref="driftRate"/>
 			</column>
+<<<<<<< HEAD
 			<column label="Precision" dp="4" width="12">
 				<parameter idref="precisionMatrix"/>
 			</column>
+=======
+>>>>>>> master
 		</log>
 	</mcmc>
 	

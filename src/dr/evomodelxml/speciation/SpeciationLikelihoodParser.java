@@ -30,6 +30,7 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.speciation.CalibrationPoints;
+import dr.evomodel.speciation.EfficientSpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
 import dr.inference.distribution.DistributionLikelihood;
@@ -56,6 +57,8 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
     public static final String CALIBRATION = "calibration";
     public static final String CORRECTION = "correction";
     public static final String POINT = "point";
+
+    private static final String USE_NEW_LOOP = "useNewLoop";
 
     private final String EXACT = CalibrationPoints.CorrectionType.EXACT.toString();
     private final String APPROX = CalibrationPoints.CorrectionType.APPROXIMATED.toString();
@@ -188,7 +191,13 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
             }
         }
 
-        return new SpeciationLikelihood(tree, specModel, excludeTaxa, null);
+        boolean useNewLoop = xo.getAttribute(USE_NEW_LOOP, false);
+
+        if (useNewLoop) {
+            return new EfficientSpeciationLikelihood(tree, specModel, excludeTaxa, null);
+        } else {
+            return new SpeciationLikelihood(tree, specModel, excludeTaxa, null);
+        }
     }
 
     //************************************************************************
@@ -244,6 +253,7 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
             }, "One or more subsets of taxa which should be excluded from calculate the likelihood (which is calculated on the remaining subtree)", true),
 
             new ElementRule(CALIBRATION, calibration, true),
+            AttributeRule.newBooleanRule(USE_NEW_LOOP, true),
     };
 
 }

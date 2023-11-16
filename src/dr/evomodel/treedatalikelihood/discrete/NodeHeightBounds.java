@@ -67,10 +67,12 @@ public class NodeHeightBounds implements GraphicalParameterBound {
             nodeCount++;
         }
         int[] connectedIndices = new int[nodeCount];
+        int nodeIndex = 0;
         for (int i = 0; i < treeModel.getChildCount(nodeRef); i++) {
             NodeRef childNode = treeModel.getChild(nodeRef, i);
             if (!treeModel.isExternal(childNode)) {
-                connectedIndices[i] = childNode.getNumber() - externalNodeCount;
+                connectedIndices[nodeIndex] = childNode.getNumber() - externalNodeCount;
+                nodeIndex++;
             }
         }
         if (!treeModel.isRoot(nodeRef)) {

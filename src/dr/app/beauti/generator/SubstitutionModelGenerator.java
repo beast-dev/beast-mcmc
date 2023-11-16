@@ -171,6 +171,11 @@ public class SubstitutionModelGenerator extends Generator {
                 writeMicrosatSubstModel(model, writer);
                 break;
 
+            case DataType.DUMMY:
+                //Do nothing
+                break;
+
+
             default:
                 throw new IllegalArgumentException("Unknown data type");
         }
@@ -562,6 +567,11 @@ public class SubstitutionModelGenerator extends Generator {
             case DataType.MICRO_SAT:
                 writeMicrosatSubstModelParameterRef(model, writer);
                 break;
+
+            case DataType.DUMMY:
+                //Do nothing
+                break;
+
 
             default:
                 throw new IllegalArgumentException("Unknown data type");

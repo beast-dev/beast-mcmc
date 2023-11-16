@@ -44,13 +44,15 @@ public class RepeatedMeasuresIntegratedProcessTraitDataModel extends RepeatedMea
     private int dimProcess;
 
     public RepeatedMeasuresIntegratedProcessTraitDataModel(String name,
+                                                           ContinuousTraitPartialsProvider childModel,
                                                            CompoundParameter parameter,
                                                            boolean[] missindIndicators,
                                                            boolean useMissingIndices,
                                                            final int dimTrait,
+                                                           final int numTraits,
                                                            MatrixParameterInterface samplingPrecision) {
 
-        super(name, parameter, missindIndicators, useMissingIndices, dimTrait, samplingPrecision, PrecisionType.FULL);
+        super(name, childModel, parameter, missindIndicators, useMissingIndices, dimTrait, numTraits, samplingPrecision, PrecisionType.FULL);
 
         integratedProcessDataModel = new IntegratedProcessTraitDataModel(name, parameter, missindIndicators, useMissingIndices, dimTrait);
         dimProcess = 2 * dimTrait;
@@ -70,7 +72,7 @@ public class RepeatedMeasuresIntegratedProcessTraitDataModel extends RepeatedMea
 
         double[] partial = integratedProcessDataModel.getTipPartial(taxonIndex, fullyObserved);
 
-        scalePartialwithSamplingPrecision(partial, dimProcess);
+        scalePartialwithSamplingPrecision(partial, taxonIndex, dimProcess);
 
         return partial;
     }

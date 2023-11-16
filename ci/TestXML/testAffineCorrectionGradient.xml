@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    
+	<taxa id="taxa">
+        <taxon id="A"/>
+        <taxon id="B"/>
+    </taxa>    
+    
+    <alignment id="alignment1" dataType="nucleotide">
+        <sequence>
+            <taxon idref="A"/>
+            A
+        </sequence>
+        <sequence>
+            <taxon idref="B"/>
+            -
+        </sequence>       
+    </alignment>  
+    
+    <patterns id="loc.pattern" from="1">
+        <alignment idref="alignment1"/>
+    </patterns>
+
+    <newick id="startingTree">
+    	(A:2.0,B:1.0);
+	</newick>
+
+    <treeModel id="treeModel">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+	<strictClockBranchRates id="loc.branchRates">
+		<rate>
+			<parameter id="loc.clock.rate" value="1E-0" lower="0.0"/>
+		</rate>
+	</strictClockBranchRates>
+
+	<glmSubstitutionModel id="loc.model" normalize="false" dataType="nucleotide">
+	<!-- 
+	<rootFrequencies>
+			<frequencyModel id="loc.rootModel" dataType="nucleotide">
+				<frequencies>
+					<parameter id="loc.root" value="1 0 0 0"/>
+				</frequencies>
+			</frequencyModel>
+		</rootFrequencies>
+ -->
+		
+		<rootFrequencies>
+		<frequencyModel id="loc.frequencyModel" dataType="nucleotide">
+				<frequencies>
+					<parameter id="loc.frequencies" value="0.1 0.3 0.2 0.4"/>
+<!-- 					<parameter id="loc.frequencies" value="0.25 0.25 0.25 0.25"/> -->
+				</frequencies>
+			</frequencyModel>
+			</rootFrequencies>
+		
+		<glmModel family="logLinear" checkIdentifiability="false">
+
+			<independentVariables>
+				<parameter id="log.kappa" value="0.6931472"/>
+<!-- 				<parameter id="log.kappa" value="0.0"/> -->
+				<designMatrix id="kappa.designMatrix">
+					<parameter value="0 1 0 0 0 0
+					                  0 0 0 0 0 0"/>
+
+<!-- 
+					<parameter value="0 1 0 0 0 0
+					                  0 0 0 0 0 0"/> 
+ -->
+				</designMatrix>
+			</independentVariables>
+		</glmModel>
+	</glmSubstitutionModel>
+
+	<siteModel id="loc.siteModel">
+		<substitutionModel>
+			<glmSubstitutionModel idref="loc.model"/>
+		</substitutionModel>
+	</siteModel>
+
+    <treeDataLikelihood id="treeLikelihood" useAmbiguities="true" usePreOrder="true" scalingScheme="never" delayScaling="false">
+        <patterns idref="loc.pattern"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="loc.siteModel"/>
+        <strictClockBranchRates idref="loc.branchRates"/>
+			<frequencyModel id="loc.rootModel" dataType="nucleotide">
+				<frequencies>
+					<parameter id="loc.root" value="1 0 0 0"/>
+				</frequencies>
+			</frequencyModel>       
+    </treeDataLikelihood>
+
+    <glmSubstitutionModelGradient id="gradient.fo" traitName="loc" mode="firstOrder">
+    	<treeDataLikelihood idref="treeLikelihood"/>
+    	<glmSubstitutionModel idref="loc.model"/>
+    </glmSubstitutionModelGradient>
+    
+    <glmSubstitutionModelGradient id="gradient.ac" traitName="loc" mode="affineCorrected">
+    	<treeDataLikelihood idref="treeLikelihood"/>
+    	<glmSubstitutionModel idref="loc.model"/>
+    </glmSubstitutionModelGradient>
+
+    <cachedReport id="report.gradient.fo">
+    	<report>
+        	Approximation via cross-products (first-order)
+	    	<glmSubstitutionModelGradient idref="gradient.fo"/>	   	    	
+    	</report>
+    </cachedReport>
+        
+    <cachedReport id="report.gradient.ac">
+    	<report>
+	        Approximation via cross-products (affine-corrected)
+			<glmSubstitutionModelGradient idref="gradient.ac"/>    	    	
+		</report>
+    </cachedReport>        
+
+    <branchSubstitutionParameterGradient id="kappaGradient.exact" traitName="kappaParameterGradient.exact" 
+    		useHessian="false" homogeneous="true" mode="exact">    	
+	    <treeDataLikelihood idref="treeLikelihood"/>
+		<parameter idref="log.kappa"/>
+    </branchSubstitutionParameterGradient>
+        
+    <branchSubstitutionParameterGradient id="kappaGradient.fo" traitName="kappaParameterGradient.fo" 
+    		useHessian="false" homogeneous="true" mode="firstOrder">    	
+	    <treeDataLikelihood idref="treeLikelihood"/>
+		<parameter idref="log.kappa"/>
+    </branchSubstitutionParameterGradient>
+
+    <branchSubstitutionParameterGradient id="kappaGradient.ac" traitName="kappaParameterGradient.ac" 
+    		useHessian="false" homogeneous="true" mode="affineCorrected">    	
+	    <treeDataLikelihood idref="treeLikelihood"/>
+		<parameter idref="log.kappa"/>
+    </branchSubstitutionParameterGradient>
+
+	<cachedReport id="report.xiang.exact">
+		<report>
+		    Exact via Xiang-magic	    
+			<branchSubstitutionParameterGradient idref="kappaGradient.exact"/>
+		</report>
+	</cachedReport>
+	
+	<cachedReport id="report.xiang.fo">
+		<report>
+		    Exact via Xiang-magic	    
+			<branchSubstitutionParameterGradient idref="kappaGradient.fo"/>
+		</report>
+	</cachedReport>
+	
+	<cachedReport id="report.xiang.ac">
+		<report>
+		    Exact via Xiang-magic	    
+			<branchSubstitutionParameterGradient idref="kappaGradient.ac"/>
+		</report>
+	</cachedReport>		    
+	
+    <assertEqual tolerance="1E-6" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check exact solution
+        </message>
+       <actual regex="analytic: (.*?)\n">
+       		<cachedReport idref="report.xiang.exact"/>
+        </actual>
+        <expected regex="numeric : (.*?)\n">
+	        <cachedReport idref="report.xiang.exact"/>
+        </expected>
+    </assertEqual>	
+	
+    <assertEqual tolerance="1E-6" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check first-order solutions
+        </message>
+       <actual regex="analytic: (.*?)\n">
+       		<cachedReport idref="report.xiang.fo"/>
+        </actual>
+        <expected regex="analytic: (.*?)\n">
+	        <cachedReport idref="report.gradient.fo"/>
+        </expected>
+    </assertEqual>	
+    	
+    <assertEqual tolerance="1E-6" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check affine-corrected solutions
+        </message>
+       <actual regex="analytic: (.*?)\n">
+       		<cachedReport idref="report.xiang.ac"/>
+        </actual>
+        <expected regex="analytic: (.*?)\n">
+	        <cachedReport idref="report.gradient.ac"/>
+        </expected>
+    </assertEqual>	    	
+    	
+	
+</beast>

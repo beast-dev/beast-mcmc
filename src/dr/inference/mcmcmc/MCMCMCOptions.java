@@ -26,6 +26,8 @@
 package dr.inference.mcmcmc;
 
 
+import dr.inference.markovchain.MarkovChain;
+import dr.inference.operators.OperatorSchedule;
 
 /**
  * A class that brings together the auxillary information associated
@@ -35,14 +37,16 @@ package dr.inference.mcmcmc;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @author Marc A. Suchard
  */
 public class MCMCMCOptions {
 
-    public MCMCMCOptions(final double[] temperatures, final int swapChainsEvery) {
+    public MCMCMCOptions(final double[] temperatures, final int swapChainsEvery,
+                         final SwapScheme swapScheme) {
         this.temperatures = temperatures;
         this.swapChainsEvery = swapChainsEvery;
+        this.swapScheme = swapScheme;
     }
-
 
     public double[] getChainTemperatures() {
         return temperatures;
@@ -52,6 +56,67 @@ public class MCMCMCOptions {
         return swapChainsEvery;
     }
 
+    public SwapScheme getSwapScheme() {  return swapScheme; }
+
+    public enum SwapScheme {
+
+        ORIGINAL_FLAVOR("original") {
+            @Override
+            public ParallelTempering factory(MarkovChain[] chains, OperatorSchedule[] schedules,
+                                             MCMCMCOptions mcmcmcOptions) {
+                return new ParallelTempering.OriginalFlavor(chains, schedules, mcmcmcOptions);
+            }
+        },
+        STOCHASTIC_SINGLE("stochastic_single"){
+            @Override
+            public ParallelTempering factory(MarkovChain[] chains, OperatorSchedule[] schedules,
+                                             MCMCMCOptions mcmcmcOptions) {
+                return new ParallelTempering.StochasticSingleSwap(chains, schedules, mcmcmcOptions);
+            }
+        },
+        STOCHASTIC_MULTIPLE("stochastic_multiple") {
+            @Override
+            public ParallelTempering factory(MarkovChain[] chains, OperatorSchedule[] schedules,
+                                             MCMCMCOptions mcmcmcOptions) {
+                return new ParallelTempering.StochasticMultipleSwap(chains, schedules, mcmcmcOptions);
+            }
+        },
+        DETERMINISTIC_SINGLE("deterministic_single") {
+            @Override
+            public ParallelTempering factory(MarkovChain[] chains, OperatorSchedule[] schedules,
+                                             MCMCMCOptions mcmcmcOptions) {
+                return new ParallelTempering.DeterministicSingleSwap(chains, schedules, mcmcmcOptions);
+            }
+        },
+        DETERMINISTIC_MULTIPLE("deterministic_multiple") {
+            @Override
+            public ParallelTempering factory(MarkovChain[] chains, OperatorSchedule[] schedules,
+                                             MCMCMCOptions mcmcmcOptions) {
+                return new ParallelTempering.DeterministicMultipleSwap(chains, schedules, mcmcmcOptions);
+            }
+        };
+
+        SwapScheme(String name) {
+            this.name = name;
+        }
+
+        public static SwapScheme parse(String schemeName) {
+            for (SwapScheme scheme : SwapScheme.values()) {
+                if (scheme.name.equalsIgnoreCase(schemeName)) {
+                    return scheme;
+                }
+            }
+            throw new RuntimeException("Unknown swap scheme '" + schemeName + "'");
+        }
+
+        private final String name;
+
+        abstract public ParallelTempering factory(MarkovChain[] chains,
+                                         OperatorSchedule[] schedules,
+                                         MCMCMCOptions mcmcmcOptions);
+    }
+
     private final double[] temperatures;
     private final int swapChainsEvery;
+    private final SwapScheme swapScheme;
 }

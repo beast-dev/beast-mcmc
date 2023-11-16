@@ -1007,7 +1007,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
                         format.format(partials[offset + i]),
                         format.format(vector[i]));
             }
-            offset += dimTrait + PrecisionType.FULL.getMatrixLength(dimTrait);
+            offset += PrecisionType.FULL.getPartialsDimension(dimTrait);
         }
     }
 
@@ -1026,7 +1026,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
                         format.format(partials[offset + dimTrait + dimTrait * dimTrait + i]),
                         format.format(vector[i]));
             }
-            offset += dimTrait + PrecisionType.FULL.getMatrixLength(dimTrait);
+            offset += PrecisionType.FULL.getPartialsDimension(dimTrait);
         }
     }
 

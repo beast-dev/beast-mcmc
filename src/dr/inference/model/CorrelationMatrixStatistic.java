@@ -38,12 +38,12 @@ public class CorrelationMatrixStatistic extends Statistic.Abstract implements Va
 
 
     private static final String CORRELATION_MATRIX = "correlationMatrix";
-    private final MatrixParameter matrix;
+    private final MatrixParameterInterface matrix;
     private final double[][] correlation;
     private boolean corrKnown = false;
     private final boolean invert;
 
-    public CorrelationMatrixStatistic(MatrixParameter matrix, Boolean invert) {
+    public CorrelationMatrixStatistic(MatrixParameterInterface matrix, Boolean invert) {
         this.matrix = matrix;
         this.invert = invert;
         correlation = new double[matrix.getRowDimension()][matrix.getColumnDimension()];
@@ -100,7 +100,7 @@ public class CorrelationMatrixStatistic extends Statistic.Abstract implements Va
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            MatrixParameter matrix = (MatrixParameter) xo.getChild(MatrixParameter.class);
+            MatrixParameterInterface matrix = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
             if (matrix.getColumnDimension() != matrix.getRowDimension()) {
                 throw new XMLParseException("Only square matrices can be converted to correlation matrices");
             }
@@ -114,7 +114,7 @@ public class CorrelationMatrixStatistic extends Statistic.Abstract implements Va
         @Override
         public XMLSyntaxRule[] getSyntaxRules() {
             return new XMLSyntaxRule[]{
-                    new ElementRule(MatrixParameter.class),
+                    new ElementRule(MatrixParameterInterface.class),
                     AttributeRule.newBooleanRule(INVERT, true)
             };
         }

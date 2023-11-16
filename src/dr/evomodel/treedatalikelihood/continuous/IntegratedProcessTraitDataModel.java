@@ -103,6 +103,16 @@ public class IntegratedProcessTraitDataModel extends
     }
 
     @Override
+    public int getProcessDimension() {
+        return dimTrait;
+    }
+
+    @Override
+    public boolean isIntegratedProcess() {
+        return true;
+    }
+
+    @Override
     public boolean[] getDataMissingIndicators() {
             // Find missing values
             boolean[] missingIndicators = super.getDataMissingIndicators();

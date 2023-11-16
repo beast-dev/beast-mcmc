@@ -45,6 +45,14 @@ public interface ContinuousTraitPartialsProvider {
 
     int getTraitDimension();
 
+    default int getProcessDimension() {
+        return getTraitDimension();
+    }
+
+    default boolean isIntegratedProcess() {
+        return false;
+    }
+
     String getTipTraitName();
 
     void setTipTraitName(String name);

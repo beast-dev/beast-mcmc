@@ -94,7 +94,7 @@ public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParse
 
         int numTraits = xo.getAttribute(NUM_TRAITS, subModel.getTraitCount());
 
-        if (subModel.getTraitDimension() != dimTrait) {
+        if (subModel.getProcessDimension() != dimTrait) {
             throw new XMLParseException("sub-model has trait dimension " + subModel.getTraitDimension() +
                     ", but sampling precision has dimension " + dimTrait);
         }

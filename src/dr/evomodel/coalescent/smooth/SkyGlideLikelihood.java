@@ -114,6 +114,55 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         return lnL;
     }
 
+    public Parameter getLogPopSizeParameter() {
+        return logPopSizeParameter;
+    }
+
+    public double[] getGradientWrtLogPopulationSize() {
+        double[] gradient = new double[logPopSizeParameter.getDimension()];
+
+        for (int index = 0; index < trees.size(); index++) {
+            BigFastTreeIntervals interval = intervals.get(index);
+            Tree thisTree = trees.get(index);
+            int currentGridIndex = 0;
+            for (int i = 0; i < interval.getIntervalCount(); i++) {
+                final int lineageCount = interval.getLineageCount(i);
+                int[] nodeIndices = interval.getNodeNumbersForInterval(i);
+                final double intervalStart = thisTree.getNodeHeight(thisTree.getNode(nodeIndices[0]));
+                final double intervalEnd = thisTree.getNodeHeight(thisTree.getNode(nodeIndices[1]));
+
+                if (intervalStart != intervalEnd) {
+                    int[] gridIndices = getGridPoints(currentGridIndex, intervalStart, intervalEnd);
+                    final int firstGridIndex = gridIndices[0];
+                    final int lastGridIndex = gridIndices[1];
+
+
+                    if (firstGridIndex == lastGridIndex) {
+                        if (firstGridIndex < gridPointParameter.getDimension() - 1) {
+                            updateIntervalGradient(intervalStart, intervalEnd, firstGridIndex, lineageCount, gradient);
+                        } else {
+                            updateIntervalGradient(intervalStart, intervalEnd, gridPointParameter.getDimension() - 1, lineageCount, gradient);
+                        }
+                    } else {
+                        updateIntervalGradient(intervalStart, gridPointParameter.getParameterValue(firstGridIndex), firstGridIndex, lineageCount, gradient);
+                        currentGridIndex = firstGridIndex;
+                        while(currentGridIndex + 1 < lastGridIndex) {
+                            updateIntervalGradient(gridPointParameter.getParameterValue(currentGridIndex), gridPointParameter.getParameterValue(currentGridIndex + 1), currentGridIndex + 1, lineageCount, gradient);
+                            currentGridIndex++;
+                        }
+                        updateIntervalGradient(gridPointParameter.getParameterValue(currentGridIndex), intervalEnd, currentGridIndex + 1, lineageCount, gradient);
+                    }
+                    currentGridIndex = lastGridIndex;
+                }
+            }
+        }
+
+        // TODO: PopulationInverse bit
+
+        return gradient;
+    }
+
+
     public double getSingleTreeLogLikelihood(int index) {
         BigFastTreeIntervals interval = intervals.get(index);
         Tree thisTree = trees.get(index);
@@ -199,6 +248,26 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         }
     }
 
+
+    private void updateIntervalGradient(double intervalStart, double intervalEnd, int gridIndex, int lineageCount,
+                                        double[] gradient) {
+        final double slope = getGridSlope(gridIndex);
+        final double intercept = getGridIntercept(gridIndex);
+        assert(slope != 0 || intercept != 0);
+        if (intervalStart != intervalEnd) {
+            if (slope == 0) {
+                final double multiplier = (intervalEnd - intervalStart) * (-Math.exp(-intercept));
+                updateGridInterceptDerivativeWrtLogPopSize(gridIndex, gradient, multiplier);
+            } else {
+                final double interceptMultiplier = ( - Math.exp(-(slope * intervalStart + intercept)) + Math.exp(-(slope * intervalEnd + intercept))) / slope;
+                final double slopeMultiplier = (-intervalStart * Math.exp(-(slope * intervalStart + intercept)) + intervalEnd * Math.exp(-(slope * intervalEnd + intercept))) / slope;
+                updateGridInterceptDerivativeWrtLogPopSize(gridIndex, gradient, interceptMultiplier);
+                updateGridSlopeDerivativeWrtLogPopSize(gridIndex, gradient, slopeMultiplier);
+            }
+        }
+    }
+
+
     private double getGridSlope(int gridIndex) {
         if (gridIndex == gridPointParameter.getDimension()) {
             return 0;
@@ -207,6 +276,16 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         final double lastGridTime = gridIndex == 0 ? 0 : gridPointParameter.getParameterValue(gridIndex - 1);
         return (logPopSizeParameter.getParameterValue(gridIndex + 1) - logPopSizeParameter.getParameterValue(gridIndex))
                 / (thisGridTime - lastGridTime);
+    }
+
+    private void updateGridSlopeDerivativeWrtLogPopSize(int gridIndex, double[] gradient, double multiplier) {
+        if (gridIndex != gridPointParameter.getDimension()) {
+            final double thisGridTime = gridPointParameter.getParameterValue(gridIndex);
+            final double lastGridTime = gridIndex == 0 ? 0 : gridPointParameter.getParameterValue(gridIndex - 1);
+
+            gradient[gridIndex + 1] += multiplier / (thisGridTime - lastGridTime);
+            gradient[gridIndex] -= multiplier / (thisGridTime - lastGridTime);
+        }
     }
 
     private double getGridIntercept(int gridIndex) {
@@ -220,6 +299,18 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         return (thisGridTime * logPopSizeParameter.getParameterValue(gridIndex)
                 - lastGridTime * logPopSizeParameter.getParameterValue(gridIndex + 1)) /
                 (thisGridTime - lastGridTime);
+    }
+
+    private void updateGridInterceptDerivativeWrtLogPopSize(int gridIndex, double[] gradient, double multiplier) {
+        if (gridIndex == gridPointParameter.getDimension() || gridIndex == 0) {
+            gradient[gridIndex] += multiplier;
+        }
+
+        final double thisGridTime = gridPointParameter.getParameterValue(gridIndex);
+        final double lastGridTime = gridPointParameter.getParameterValue(gridIndex - 1);
+
+        gradient[gridIndex] += thisGridTime * multiplier;
+        gradient[gridIndex + 1] += lastGridTime / (thisGridTime - lastGridTime) * multiplier;
     }
 
     private int[] getGridPoints(int startGridIndex, double startTime, double endTime) { // return smallest grid index that is higher than each time

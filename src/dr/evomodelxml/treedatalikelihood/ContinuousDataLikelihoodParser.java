@@ -177,7 +177,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
             }
         }
 
-        boolean integratedProcess = dataModel instanceof IntegratedProcessTraitDataModel; //TODO: can add to interface if that would be better
+        boolean integratedProcess = dataModel.isIntegratedProcess();
 
         if (delegateProvider == DelegateProvider.OU) {
             if (!integratedProcess) {

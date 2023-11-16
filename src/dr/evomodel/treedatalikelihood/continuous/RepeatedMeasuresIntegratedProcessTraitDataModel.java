@@ -88,6 +88,11 @@ public class RepeatedMeasuresIntegratedProcessTraitDataModel extends RepeatedMea
     }
 
     @Override
+    public boolean isIntegratedProcess() {
+        return true;
+    }
+
+    @Override
     protected int getParameterPartialDimension() {
         return 2 * getParameter().getDimension();
     }

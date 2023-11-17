@@ -158,7 +158,7 @@ public class BeastMain {
             // Install the checkpointer. This creates a factory that returns
             // appropriate savers and loaders according to the user's options.
             //new BeastCheckpointer();
-            if (Boolean.parseBoolean(System.getProperty("checkpointOverrule"))) {
+            if (Boolean.parseBoolean(System.getProperty("checkpointOverrule", "true"))) {
                 BeastCheckpointer.getInstance(null, -1, -1, false);
                 Logger.getLogger("dr.apps.beast").info("Overriding checkpointing settings in the provided XML file");
             }

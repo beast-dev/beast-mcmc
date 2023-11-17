@@ -40,11 +40,17 @@ public class TransformedGradientWrtParameter implements GradientWrtParameterProv
 
     private final GradientWrtParameterProvider gradient;
     private final TransformedParameter parameter;
+    private final boolean includeJacobian;
+    private final boolean inverse;
 
     public TransformedGradientWrtParameter(GradientWrtParameterProvider gradient,
-                                           TransformedParameter parameter) {
+                                           TransformedParameter parameter,
+                                           boolean includeJacobian,
+                                           boolean inverse) {
         this.gradient = gradient;
         this.parameter = parameter;
+        this.includeJacobian = includeJacobian;
+        this.inverse = inverse;
     }
     @Override
     public Likelihood getLikelihood() {
@@ -68,14 +74,32 @@ public class TransformedGradientWrtParameter implements GradientWrtParameterProv
         double[] untransformedValues = parameter.getParameterUntransformedValues();
 
         Transform transform = parameter.getTransform();
+        if (inverse) {
+            transform = transform.inverseTransform();
+        }
 
         double[] untransformedGradient;
         if (transform instanceof Transform.MultivariableTransform) {
             Transform.MultivariableTransform multivariableTransform = (Transform.MultivariableTransform) transform;
             untransformedGradient = multivariableTransform.updateGradientLogDensity(transformedGradient, untransformedValues,
                     0, untransformedValues.length);
+
+            if (!includeJacobian) {
+                throw new RuntimeException("Not yet implemented");
+            }
         } else {
-            throw new RuntimeException("Not yet implemented");
+
+            double[] transformedValues = parameter.getParameterValues();
+            untransformedGradient = new double[transformedGradient.length];
+            for (int i = 0; i < untransformedGradient.length; ++i) {
+                untransformedGradient[i] = transform.updateGradientLogDensity(transformedGradient[i], transformedValues[i]);
+            }
+
+            if (!includeJacobian) {
+                for (int i = 0; i < untransformedGradient.length; ++i) {
+                    untransformedGradient[i] -= transform.gradientLogJacobianInverse(parameter.getParameterValue(i));
+                }
+            }
         }
 
         return untransformedGradient;

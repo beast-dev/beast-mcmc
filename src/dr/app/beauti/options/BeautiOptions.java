@@ -86,6 +86,7 @@ public class BeautiOptions extends ModelOptions {
 
     /**
      * This will register the list of components if not already there...
+     *
      * @param components
      */
     public void registerComponents(ComponentFactory[] components) {
@@ -100,7 +101,6 @@ public class BeautiOptions extends ModelOptions {
 
 
     /**
-     *
      * resets the options to the initial conditions
      */
     public void reset() {
@@ -140,6 +140,7 @@ public class BeautiOptions extends ModelOptions {
         chainLength = 10000000;
         logEvery = 1000;
         echoEvery = 1000;
+        checkpointEvery = 1000000;
         burnIn = 100000;
         fileName = null;
         autoOptimize = true;
@@ -149,6 +150,7 @@ public class BeautiOptions extends ModelOptions {
 
         fileNameStem = MCMCPanel.DEFAULT_FILE_NAME_STEM;
         logFileName = null;
+        checkpointFileName = null;
         allowOverwriteLog = false;
 //        mapTreeLog = false;
 //        mapTreeFileName = null;
@@ -262,7 +264,7 @@ public class BeautiOptions extends ModelOptions {
             for (PartitionSubstitutionModel substitutionModel : substitutionModels) {
                 relativeRateParameters.addAll(substitutionModel.getRelativeRateParameters());
             }
-            Parameter allMuNus = model.getParameter(useNuRelativeRates() ? "allNus" : "allMus" );
+            Parameter allMuNus = model.getParameter(useNuRelativeRates() ? "allNus" : "allMus");
             allMuNus.clearSubParameters();
             if (relativeRateParameters.size() > 1) {
 
@@ -382,8 +384,6 @@ public class BeautiOptions extends ModelOptions {
         }
         return null;
     }
-
-
 
 
     public boolean hasData() {
@@ -977,8 +977,9 @@ public class BeautiOptions extends ModelOptions {
     /**
      * given a list of BEAUti AbstractPartitionData, take the union of taxon list from them
      * but if partition instanceof PartitionPattern and taxon is masked in Patterns class, then not count.
-     * @param partitionDataList    can be BEAUti PartitionData or PartitionPattern or both
-     * @return  num of taxon
+     *
+     * @param partitionDataList can be BEAUti PartitionData or PartitionPattern or both
+     * @return num of taxon
      */
     public int getTaxonCount(List<AbstractPartitionData> partitionDataList) {
         if (partitionDataList == null || partitionDataList.size() == 0) return 0;
@@ -1098,6 +1099,23 @@ public class BeautiOptions extends ModelOptions {
         updateTraitParameters(partition);
 
         return selRow; // only for trait panel
+    }
+
+    public boolean onlyContinuousPartitions() {
+        if (dataPartitions.isEmpty()) {
+            return false;
+        }
+
+        boolean onlyContinuous = true;
+
+        for (AbstractPartitionData partition : dataPartitions) {
+            if (partition.getDataType().getType() != DataType.CONTINUOUS) {
+                onlyContinuous = false;
+                break;
+            }
+        }
+
+        return onlyContinuous;
     }
 
     private void updateTraitParameters(AbstractPartitionData partition) {
@@ -1318,6 +1336,7 @@ public class BeautiOptions extends ModelOptions {
     public int chainLength = 10000000;
     public int logEvery = 1000;
     public int echoEvery = 1000;
+    public int checkpointEvery = 1000000;
     public int burnIn = 100000;
     public String fileName = null;
     public boolean autoOptimize = true;
@@ -1327,6 +1346,7 @@ public class BeautiOptions extends ModelOptions {
 
     public String fileNameStem = MCMCPanel.DEFAULT_FILE_NAME_STEM;
     public String logFileName = null;
+    public String checkpointFileName = null;
 
     public boolean generateDemographicLogFile = false;
     public String demographicModelName = null;
@@ -1352,7 +1372,7 @@ public class BeautiOptions extends ModelOptions {
     public boolean useClassicOperatorsAndPriors() {
         return useClassicOperatorsAndPriors;
     }
-    
+
     public boolean useNuRelativeRates() {
         return !useClassicOperatorsAndPriors() || !NEW_RELATIVE_RATE_PARAMETERIZATION;
     }

@@ -10,7 +10,6 @@ import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
-import sun.security.rsa.MGF1;
 
 import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
@@ -202,7 +201,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                     final int[] missing = indices.getArray();
                     final WrappedVector cM2;
                     final DenseMatrix64F cV2;
-                    if (observedCount + zeroCount == dimTrait) {
+                    if (observedCount + zeroCount == dimTrait) { // all traits are directly observed or completely missing
 
 
                         final DenseMatrix64F V1 = getVarianceBranch(branchPrecision);
@@ -231,7 +230,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
 
                         safeInvert2(cP2, cV2, false);
 
-                    } else {
+                    } else { // mixture of completely observed traits, latent traits (finite, non-zero precision), and (perhaps) completely missing traits
 
                         if (hasDrift) {
                             throw new RuntimeException("Not currently implemented with drift.");
@@ -341,7 +340,6 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
             }
         }
     }
-
 
 
     private final static boolean NEW_CHOLESKY = false;

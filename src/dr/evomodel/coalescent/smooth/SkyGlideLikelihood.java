@@ -155,7 +155,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
                     currentGridIndex = lastGridIndex;
                 }
             }
-//            updateSingleTreePopulationInverseGradientWrtLogPopSize(index, gradient);
+            updateSingleTreePopulationInverseGradientWrtLogPopSize(index, gradient);
         }
 
         return gradient;
@@ -198,7 +198,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
                 lnL -= 0.5 * lineageCount * (lineageCount - 1) * sum;
             }
         }
-//        lnL += getSingleTreePopulationInverseLogLikelihood(index);
+        lnL += getSingleTreePopulationInverseLogLikelihood(index);
         return lnL;
     }
 
@@ -328,7 +328,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
             final double lastGridTime = gridPointParameter.getParameterValue(gridIndex - 1);
 
             final double firstDerivative = thisGridTime / (thisGridTime - lastGridTime) * multiplier;
-            final double secondDerivative = -thisGridTime / (thisGridTime - lastGridTime) * multiplier;
+            final double secondDerivative = -lastGridTime / (thisGridTime - lastGridTime) * multiplier;
 
 //            if (logPopSizeParameter.getParameterValue(gridIndex) == logPopSizeParameter.getParameterValue(gridIndex + 1)) {
 //                gradient[gridIndex] += (firstDerivative + secondDerivative) / 2;

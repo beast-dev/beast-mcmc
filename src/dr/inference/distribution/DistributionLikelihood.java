@@ -125,14 +125,6 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood imple
 
                 final double value = attributeValue[j] - offset;
 
-                if (offset > 0.0 && value < 0.0) {
-                    // fixes a problem with the offset on exponential distributions not
-                    // actually bounding the distribution. This only performs this check
-                    // if a non-zero offset is actually given otherwise it assumes the
-                    // parameter is either legitimately allowed to go negative or is bounded
-                    // at zero anyway.
-                    return Double.NEGATIVE_INFINITY;
-                }
                 logL += getLogPDF(value, count);
                 count += 1;
             }

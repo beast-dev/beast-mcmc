@@ -10,6 +10,7 @@ import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
+import sun.security.rsa.MGF1;
 
 import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
@@ -141,6 +142,9 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
 
         final DenseMatrix64F P0 = wrap(partialNodeBuffer, offsetPartial + dimTrait, dimTrait, dimTrait);
         final int missingCount = countFiniteDiagonals(P0);
+        final int zeroCount = countZeroDiagonals(P0);
+        final int observedCount = dimTrait - missingCount;
+
 
         if (missingCount == 0) { // Completely observed
 
@@ -148,8 +152,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
 
         } else {
 
-            final int zeroCount = countZeroDiagonals(P0);
-            if (zeroCount == dimTrait && !likelihoodDelegate.getDiffusionProcessDelegate().hasDrift()) { //  All missing completely at random
+            if (zeroCount == dimTrait) { //  All missing completely at random
                 //TODO: This is N(X_pa(j), l_j V_root). Why not N(X_pa(j), V_branch) ?
 
                 final double sqrtScale = Math.sqrt(1.0 / branchPrecision);
@@ -191,59 +194,94 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
 
                     simulateTraitForInternalNode(offsetSample, offsetParent, offsetPartial, branchPrecision);
 
-                } else { // Partially observed
-
+                } else {
                     System.arraycopy(partialNodeBuffer, offsetPartial, sample, offsetSample, dimTrait); // copy observed values
 
                     final PartiallyMissingInformation.HashedIntArray indices = missingInformation.getMissingIndices(nodeIndex, traitIndex);
                     final int[] observed = indices.getComplement();
                     final int[] missing = indices.getArray();
-
-                    for (int i : observed) {
-                        P0.set(i, i, 0.0);
-                    }
-
-
-                    //TODO: code below likely has some duplication with other classes
-                    final DenseMatrix64F P1 = getPrecisionBranch(branchPrecision);
-                    final DenseMatrix64F P = new DenseMatrix64F(dimTrait, dimTrait);
+                    final WrappedVector cM2;
+                    final DenseMatrix64F cV2;
+                    if (observedCount + zeroCount == dimTrait) {
 
 
-                    CommonOps.add(P0, P1, P);
+                        final DenseMatrix64F V1 = getVarianceBranch(branchPrecision);
+//                    final DenseMatrix64F V1 = new DenseMatrix64F(dimTrait, dimTrait);
+//                    CommonOps.scale(1.0 / branchPrecision, Vd, V1);
 
-                    final DenseMatrix64F V = new DenseMatrix64F(dimTrait, dimTrait);
-                    CommonOps.invert(P, V);
+                        ConditionalVarianceAndTransform2 transform =
+                                new ConditionalVarianceAndTransform2(
+                                        V1, missing, observed
+                                ); // TODO Cache (via delegated function)
 
-                    DenseMatrix64F traitSample = wrap(sample, offsetParent, dimTrait, 1);
-                    DenseMatrix64F tipMean = wrap(partialNodeBuffer, offsetPartial, dimTrait, 1);
+                        final DenseMatrix64F cP0 = new DenseMatrix64F(missing.length, missing.length);
+                        gatherRowsAndColumns(P0, cP0, missing, missing);
 
-                    DenseMatrix64F P0x = new DenseMatrix64F(dimTrait, 1);
-                    DenseMatrix64F P1x = new DenseMatrix64F(dimTrait, 1);
+                        final WrappedVector M1 = (WrappedVector) getMeanBranch(offsetParent);
 
-                    CommonOps.mult(P0, tipMean, P0x);
-                    CommonOps.mult(P1, traitSample, P1x);
-                    CommonOps.addEquals(P1x, P0x);
-                    CommonOps.mult(V, P1x, P0x);
+                        cM2 = transform.getConditionalMean(
+                                partialNodeBuffer, offsetPartial, // Tip value
+                                M1.getBuffer(), 0); // Parent value (actualized)
+
+                        final DenseMatrix64F cP1 = transform.getConditionalPrecision();
+
+                        final DenseMatrix64F cP2 = new DenseMatrix64F(missing.length, missing.length);
+                        cV2 = new DenseMatrix64F(missing.length, missing.length);
+                        CommonOps.add(cP0, cP1, cP2); //TODO: Shouldn't P0 = 0 always in this situation ?
+
+                        safeInvert2(cP2, cV2, false);
+
+                    } else {
+
+                        if (hasDrift) {
+                            throw new RuntimeException("Not currently implemented with drift.");
+                        }
+
+                        for (int i : observed) {
+                            P0.set(i, i, 0.0);
+                        }
+
+
+                        //TODO: code below likely has some duplication with other classes
+                        final DenseMatrix64F P1 = getPrecisionBranch(branchPrecision);
+                        final DenseMatrix64F P = new DenseMatrix64F(dimTrait, dimTrait);
+
+
+                        CommonOps.add(P0, P1, P);
+
+                        final DenseMatrix64F V = new DenseMatrix64F(dimTrait, dimTrait);
+                        CommonOps.invert(P, V);
+
+                        DenseMatrix64F traitSample = wrap(sample, offsetParent, dimTrait, 1);
+                        DenseMatrix64F tipMean = wrap(partialNodeBuffer, offsetPartial, dimTrait, 1);
+
+                        DenseMatrix64F P0x = new DenseMatrix64F(dimTrait, 1);
+                        DenseMatrix64F P1x = new DenseMatrix64F(dimTrait, 1);
+
+                        CommonOps.mult(P0, tipMean, P0x);
+                        CommonOps.mult(P1, traitSample, P1x);
+                        CommonOps.addEquals(P1x, P0x);
+                        CommonOps.mult(V, P1x, P0x);
 
 //                    final DenseMatrix64F V1 = new DenseMatrix64F(dimTrait, dimTrait);
 //                    CommonOps.scale(1.0 / branchPrecision, Vd, V1);
 
-                    ConditionalVarianceAndTransform2 transform =
-                            new ConditionalVarianceAndTransform2(
-                                    V, missing, observed
-                            ); // TODO Cache (via delegated function)
+                        ConditionalVarianceAndTransform2 transform =
+                                new ConditionalVarianceAndTransform2(
+                                        V, missing, observed
+                                ); // TODO Cache (via delegated function)
 
-                    final DenseMatrix64F cP0 = new DenseMatrix64F(missing.length, missing.length);
-                    gatherRowsAndColumns(P0, cP0, missing, missing);
-
-                    final WrappedVector M1 = (WrappedVector) getMeanBranch(offsetParent);
-
-                    final WrappedVector cM2 = transform.getConditionalMean(
-                            partialNodeBuffer, offsetPartial, // Tip value
-                            P0x.data, 0); // Parent value (actualized)
+                        final DenseMatrix64F cP0 = new DenseMatrix64F(missing.length, missing.length);
+                        gatherRowsAndColumns(P0, cP0, missing, missing);
 
 
-                    final DenseMatrix64F cV2 = transform.getConditionalVariance();
+                        cM2 = transform.getConditionalMean(
+                                partialNodeBuffer, offsetPartial, // Tip value
+                                P0x.data, 0); // Parent value (actualized)
+
+
+                        cV2 = transform.getConditionalVariance();
+                    }
 
 //                    final DenseMatrix64F cP2 = new DenseMatrix64F(missing.length, missing.length);
 //                    final DenseMatrix64F cV2 = new DenseMatrix64F(missing.length, missing.length);
@@ -290,7 +328,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                         System.err.println("M1: " + M1_debug);
                         System.err.println("P1: " + P1_debug);
                         System.err.println("");
-                        System.err.println("cP0: " + cP0);
+//                        System.err.println("cP0: " + cP0);
                         System.err.println("cM2: " + cM2);
 //                        System.err.println("cP1: " + cP1);
 //                        System.err.println("cP2: " + cP2);
@@ -303,6 +341,8 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
             }
         }
     }
+
+
 
     private final static boolean NEW_CHOLESKY = false;
 

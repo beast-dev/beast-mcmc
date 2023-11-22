@@ -26,8 +26,10 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evomodel.substmodel.GlmSubstitutionModel;
+import dr.evomodel.substmodel.LogAdditiveCtmcRateProvider;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.inference.distribution.LogGaussianProcessModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.Parameter;
 import dr.util.Citation;
@@ -40,6 +42,8 @@ import java.util.List;
  */
 
 public class GamGpSubstitutionModelGradient extends AbstractLogAdditiveSubstitutionModelGradient {
+    
+    private final LogGaussianProcessModel logGpModel;
 
     public GamGpSubstitutionModelGradient(String traitName,
                                           TreeDataLikelihood treeDataLikelihood,
@@ -47,12 +51,49 @@ public class GamGpSubstitutionModelGradient extends AbstractLogAdditiveSubstitut
                                           GlmSubstitutionModel substitutionModel) {
         super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel,
                 ApproximationMode.FIRST_ORDER);
+
+        LogAdditiveCtmcRateProvider rateProvider = substitutionModel.getRateProvider();
+
+        if (rateProvider instanceof LogGaussianProcessModel) {
+            logGpModel = (LogGaussianProcessModel) rateProvider;
+        }
+
+
+        getDimension();
+
+//        // Count random effects dimension
+//        int asymmetricCount = stateCount * (stateCount - 1);
+//        if (getDimension() == asymmetricCount) {
+//            // Asymmetric
+//            mapEffectToIndices = makeAsymmetricMap();
+//        } else if (getDimension() == asymmetricCount / 2) {
+//            // Symmetric
+//            throw new RuntimeException("Not yet implemented");
+//        } else {
+//            throw new IllegalArgumentException("Unable to determine random effects count");
+//        }
+
         throw new RuntimeException("Not yet implemented");
     }
 
+    // TODO Remove duplication
     @Override
-    protected double preProcessNormalization(double[] differentials, double[] generator, boolean normalize) {
-        return 0;
+    protected double preProcessNormalization(double[] differentials, double[] generator,
+                                             boolean normalize) {
+        double total = 0.0;
+        if (normalize) {
+            for (int i = 0; i < stateCount; ++i) {
+                for (int j = 0; j < stateCount; ++j) {
+                    total += differentials[index(i, j)] * generator[index(i, j)];
+                }
+            }
+        }
+        return total;
+    }
+
+    // TODO Remove duplication
+    int index(int i, int j) {
+        return i * stateCount + j;
     }
 
     @Override
@@ -68,7 +109,7 @@ public class GamGpSubstitutionModelGradient extends AbstractLogAdditiveSubstitut
 
     @Override
     public LogColumn[] getColumns() {
-        return new LogColumn[0];
+        return null;
     }
 
     @Override

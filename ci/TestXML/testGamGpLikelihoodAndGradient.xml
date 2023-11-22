@@ -59,7 +59,7 @@
 		<state code="C"/>
 <!--
 		<state code="D"/>
- -->
+-->
 	</generalDataType>
 
 	<attributePatterns id="loc.pattern" attribute="loc">
@@ -103,22 +103,57 @@
 				</frequencies>
 			</frequencyModel>
 		</rootFrequencies>
-		<gamGpModel id="gamGpModel">					
+		<gamGpModel id="gamGpModel"> <!-- returns density of realized field-->
+            <realizedField>
+                <parameter id="loc.coefficients0" value="0 0 0 0 0 0"/> <!-- 1 2 3 4 5put other numbers-->
+            </realizedField>
+            <gaussianNoise>
+                <parameter id="loc.noise" value="1"/>
+            </gaussianNoise>
+            <kernel>
+                <parameter id="loc.kernel" value="1 3 4" lower="0.0"/>
+            </kernel>
 			<independentVariables>
-				<parameter id="loc.coefficients0" value="0 0 0 0 0 0"/>
 				<designMatrix id="loc.designMatrix0">
-					<parameter value="1 1 1
-								      1 1 1"/>
+					<parameter value="1 0 0
+								      0 0 0"/>
+
 				</designMatrix>
 			</independentVariables>
 
 			<independentVariables>
-				<parameter id="loc.coefficients2" value="0 0 0 0 0 0"/>
-				<designMatrix id="loc.designMatrix2">
+				<designMatrix id="loc.designMatrix1">
 					<parameter value="0 1 0
 								      0 0 0"/>
 				</designMatrix>
-			</independentVariables>		
+			</independentVariables>
+            <independentVariables>
+                <designMatrix id="loc.designMatrix2">
+                    <parameter value="0 0 1
+								      0 0 0"/>
+                </designMatrix>
+            </independentVariables>
+            <independentVariables>
+                <designMatrix id="loc.designMatrix3">
+                    <parameter value="0 0 0
+								      1 0 0"/>
+                </designMatrix>
+            </independentVariables>
+            <independentVariables>
+                <designMatrix id="loc.designMatrix4">
+                    <parameter value="0 0 0
+								      0 1 0"/>
+                </designMatrix>
+            </independentVariables>
+
+            <independentVariables>
+                <designMatrix id="loc.designMatrix5">
+                    <parameter value="0 0 0
+								      0 0 1"/>
+                </designMatrix>
+            </independentVariables>
+
+<!-- nothing -->
 		</gamGpModel>
 	</glmSubstitutionModel>
 
@@ -137,16 +172,13 @@
         <strictClockBranchRates idref="loc.branchRates"/>
     </treeDataLikelihood>
 
-<!-- START BY UNCOMMENTING THE REPORT BELOW -->
-    
-<!-- 
+
     <report>
     	<gamGpModel idref="gamGpModel"/>
     	<treeDataLikelihood idref="treeLikelihood"/>
     </report>
- -->
 
-<!-- 
+    <!--
     <gamGpSubstitutionModelGradient id="gradient1" traitName="loc" effects="fixed">
     	<treeDataLikelihood idref="treeLikelihood"/>
     	<glmSubstitutionModel idref="loc.model"/>
@@ -155,6 +187,53 @@
     <report>
     	<glmSubstitutionModelGradient idref="gradient1"/>
     </report>
- -->
+    -->
+
+    <operators id="operators" optimizationSchedule="log">
+        <randomWalkOperator windowSize="0.1" weight="1">
+            <parameter idref="loc.coefficients0"/>
+        </randomWalkOperator>
+<!--        <scaleOperator scaleFactor="0.75" weight="1">-->
+<!--            <parameter idref="loc.kernel"/>-->
+<!--        </scaleOperator>-->
+    </operators>
+    <!-- scale operator random walk positive CHECK! -->
+
+    <mcmc id="mcmc" chainLength="100000" autoOptimize="true">
+        <joint id="joint"> <!-- joint, from now on a list of density -->
+            <prior id="prior">
+                <gamGpModel idref="gamGpModel"/>
+            </prior>
+            <likelihood id="likelihood">
+                <treeLikelihood idref="treeLikelihood"/>
+            </likelihood>
+        </joint>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="200"> <!-- keep track of the chain,printed to the screen-->
+            <column label="Joint" dp="4" width="12"> <!-- "label" is the col name; "dp" is the number of decimals and "width" is the btw cols space -->
+                <joint idref="joint"/>
+            </column>
+            <column label="Prior" dp="4" width="12">
+                <prior idref="prior"/>
+            </column>
+<!--            <column label="Likelihood" dp="4" width="12">-->
+<!--                <likelihood idref="likelihood"/>-->
+<!--            </column>-->
+            <column label="Root Height" sf="6" width="12">
+                <parameter idref="treeModel.rootHeight"/>
+            </column>
+            <column label="Field" sf="6" width="12">
+                <parameter idref="loc.coefficients0"/>
+            </column>
+        </log>
+        <log id="fileLog" logEvery="10" fileName="test.log">
+            <joint idref="joint"/>
+            <prior idref="prior"/>
+<!--            <likelihood idref="likelihood"/>-->
+            <parameter idref="loc.coefficients0"/>
+        </log>
+    </mcmc>
+
+    <traceAnalysis fileName="test.log"/>
 
 </beast>

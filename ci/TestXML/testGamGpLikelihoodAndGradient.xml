@@ -92,18 +92,8 @@
 			<parameter id="loc.clock.rate" value="1E-4" lower="0.0"/>
 		</rate>
 	</strictClockBranchRates>
-
-	<glmSubstitutionModel id="loc.model" normalize="true">
-		<generalDataType idref="loc.dataType"/>
-		<rootFrequencies>
-			<frequencyModel id="loc.frequencyModel" normalize="true">
-				<generalDataType idref="loc.dataType"/>
-				<frequencies>
-					<parameter id="loc.frequencies" dimension="3"/>
-				</frequencies>
-			</frequencyModel>
-		</rootFrequencies>
-		<gamGpModel id="gamGpModel"> <!-- returns density of realized field-->
+	
+	<gamGpModel id="gamGpModel"> <!-- returns density of realized field-->
             <realizedField>
                 <parameter id="loc.coefficients0" value="0 0 0 0 0 0"/> <!-- 1 2 3 4 5put other numbers-->
             </realizedField>
@@ -154,7 +144,22 @@
             </independentVariables>
 
 <!-- nothing -->
-		</gamGpModel>
+		</gamGpModel>	
+
+	<glmSubstitutionModel id="loc.model" normalize="true">
+		<generalDataType idref="loc.dataType"/>
+		<rootFrequencies>
+			<frequencyModel id="loc.frequencyModel" normalize="true">
+				<generalDataType idref="loc.dataType"/>
+				<frequencies>
+					<parameter id="loc.frequencies" dimension="3"/>
+				</frequencies>
+			</frequencyModel>
+		</rootFrequencies>
+<!-- 		<gamGpModel idref="gamGpModel"/> -->
+		<logRates>
+			<parameter idref="loc.coefficients0"/>
+		</logRates>
 	</glmSubstitutionModel>
 
 	<siteModel id="loc.siteModel">
@@ -178,16 +183,15 @@
     	<treeDataLikelihood idref="treeLikelihood"/>
     </report>
 
-    <!--
-    <gamGpSubstitutionModelGradient id="gradient1" traitName="loc" effects="fixed">
+    <approximateLogCtmcRateGradient id="gradient1" traitName="loc">
     	<treeDataLikelihood idref="treeLikelihood"/>
     	<glmSubstitutionModel idref="loc.model"/>
-    </gamGpSubstitutionModelGradient>
+    </approximateLogCtmcRateGradient>
 
     <report>
-    	<glmSubstitutionModelGradient idref="gradient1"/>
+    	<approximateLogCtmcRateGradient idref="gradient1"/>
     </report>
-    -->
+   
 
     <operators id="operators" optimizationSchedule="log">
         <randomWalkOperator windowSize="0.1" weight="1">
@@ -235,5 +239,6 @@
     </mcmc>
 
     <traceAnalysis fileName="test.log"/>
+
 
 </beast>

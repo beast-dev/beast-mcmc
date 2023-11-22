@@ -31,6 +31,7 @@ import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.distribution.GeneralizedLinearModel;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 /**
@@ -40,7 +41,7 @@ public class GlmSubstitutionModelParser extends AbstractXMLObjectParser {
 
     public static final String GLM_SUBSTITUTION_MODEL = "glmSubstitutionModel";
     private static final String NORMALIZE = "normalize";
-
+    private static final String LOG_RATES = "logRates";
 
     public String getParserName() {
         return GLM_SUBSTITUTION_MODEL;
@@ -55,6 +56,11 @@ public class GlmSubstitutionModelParser extends AbstractXMLObjectParser {
         int rateCount = (dataType.getStateCount() - 1) * dataType.getStateCount();
 
         LogAdditiveCtmcRateProvider glm = (LogAdditiveCtmcRateProvider) xo.getChild(LogAdditiveCtmcRateProvider.class);
+
+        if (glm == null) {
+            Parameter logRates = (Parameter) xo.getElementFirstChild(LOG_RATES);
+            glm = new LogAdditiveCtmcRateProvider.DataAugmented.Basic(logRates.getId(), logRates);
+        }
 
         int length = glm.getXBeta().length;
 
@@ -90,6 +96,7 @@ public class GlmSubstitutionModelParser extends AbstractXMLObjectParser {
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
+        System.err.println("all");
         return rules;
     }
 
@@ -100,8 +107,9 @@ public class GlmSubstitutionModelParser extends AbstractXMLObjectParser {
                     new ElementRule(DataType.class)
             ),
             new ElementRule(ComplexSubstitutionModelParser.ROOT_FREQUENCIES, FrequencyModel.class),
-            new ElementRule(GeneralizedLinearModel.class),
+            new XORRule(
+                    new ElementRule(GeneralizedLinearModel.class),
+                    new ElementRule(LOG_RATES, Parameter.class)),
             AttributeRule.newBooleanRule(NORMALIZE, true),
     };
-
 }

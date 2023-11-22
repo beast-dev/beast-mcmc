@@ -40,7 +40,8 @@ import java.util.List;
 // TODO this class is not really a LogLinearModel nor GeneralizedLinearModel; need to disassociate.
 // TODO disassocation requires refactoring
 // TODO substitute LogLinearModel with GeneralizedAdditiveModel
-public class LogGaussianProcessModel extends LogLinearModel implements LogAdditiveCtmcRateProvider {
+public class LogGaussianProcessModel extends LogLinearModel
+        implements LogAdditiveCtmcRateProvider.DataAugmented {
 
     //private final Parameter kernelParameter;
     private final List<DesignMatrix> designMatrices;
@@ -84,6 +85,9 @@ public class LogGaussianProcessModel extends LogLinearModel implements LogAdditi
     }
 
     public Parameter getFieldParameter() { return realizedField; }
+
+    @Override
+    public Parameter getLogRateParameter() { return realizedField; }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == kernel) {

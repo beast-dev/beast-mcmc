@@ -141,8 +141,6 @@ public class GeneralizedAdditiveGaussianProcessModelParser extends AbstractXMLOb
 //        }
     }
 
-
-
     // TODO remove code duplication
     private void checkDimensions(Parameter independentParam, Parameter dependentParam, DesignMatrix designMatrix)
             throws XMLParseException {

@@ -197,7 +197,7 @@
 <!--            <parameter idref="loc.kernel"/>-->
 <!--        </scaleOperator>-->
     </operators>
-    <!-- scale operator random walk positive CHECK!!  -->
+    <!-- scale operator random walk positive CHECK! -->
 
     <mcmc id="mcmc" chainLength="100000" autoOptimize="true">
         <joint id="joint"> <!-- joint, from now on a list of density -->

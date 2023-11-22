@@ -56,6 +56,8 @@ public class LogGaussianProcessModel extends LogLinearModel implements LogAdditi
     private double logDetinvV;
     private final GaussianProcessKernel kernel;
 
+    private final Parameter realizedField;
+
     // Constructor
     public LogGaussianProcessModel(Parameter dependentParameter,
                                    Parameter gaussianNoise,
@@ -67,6 +69,9 @@ public class LogGaussianProcessModel extends LogLinearModel implements LogAdditi
         //this.kernelParameter = kernelParameter;
         //addVariable(kernelParameter);
 
+        this.realizedField = dependentParameter;
+        addVariable(realizedField);
+
         this.designMatrices = designMatrices;
         for (DesignMatrix matrix : designMatrices) {
             addVariable(matrix);
@@ -77,6 +82,8 @@ public class LogGaussianProcessModel extends LogLinearModel implements LogAdditi
         this.kernel = new GaussianProcessKernel("name", kernelParameter);
         addModel(kernel);
     }
+
+    public Parameter getFieldParameter() { return realizedField; }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == kernel) {

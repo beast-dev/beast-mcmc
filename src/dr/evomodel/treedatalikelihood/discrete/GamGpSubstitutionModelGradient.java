@@ -33,7 +33,9 @@ import dr.inference.distribution.LogGaussianProcessModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.Parameter;
 import dr.util.Citation;
+import dr.util.CommonCitations;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -44,6 +46,7 @@ import java.util.List;
 public class GamGpSubstitutionModelGradient extends AbstractLogAdditiveSubstitutionModelGradient {
     
     private final LogGaussianProcessModel logGpModel;
+    private final int[][] mapEffectToIndices;
 
     public GamGpSubstitutionModelGradient(String traitName,
                                           TreeDataLikelihood treeDataLikelihood,
@@ -56,74 +59,88 @@ public class GamGpSubstitutionModelGradient extends AbstractLogAdditiveSubstitut
 
         if (rateProvider instanceof LogGaussianProcessModel) {
             logGpModel = (LogGaussianProcessModel) rateProvider;
+        } else {
+            throw new IllegalArgumentException("Not a Gaussian process");
         }
 
-
-        getDimension();
-
-//        // Count random effects dimension
-//        int asymmetricCount = stateCount * (stateCount - 1);
-//        if (getDimension() == asymmetricCount) {
-//            // Asymmetric
-//            mapEffectToIndices = makeAsymmetricMap();
-//        } else if (getDimension() == asymmetricCount / 2) {
-//            // Symmetric
-//            throw new RuntimeException("Not yet implemented");
-//        } else {
-//            throw new IllegalArgumentException("Unable to determine random effects count");
-//        }
-
-        throw new RuntimeException("Not yet implemented");
+        this.mapEffectToIndices = makeAsymmetricMap();
     }
 
-    // TODO Remove duplication
-    @Override
+     @Override
     protected double preProcessNormalization(double[] differentials, double[] generator,
                                              boolean normalize) {
         double total = 0.0;
         if (normalize) {
             for (int i = 0; i < stateCount; ++i) {
                 for (int j = 0; j < stateCount; ++j) {
-                    total += differentials[index(i, j)] * generator[index(i, j)];
+                    final int ij = i * stateCount + j;
+                    total += differentials[ij] * generator[ij];
                 }
             }
         }
         return total;
     }
+    
+    private int[][] makeAsymmetricMap() {
+        int[][] map = new int[stateCount * (stateCount - 1)][];
 
-    // TODO Remove duplication
-    int index(int i, int j) {
-        return i * stateCount + j;
+        int k = 0;
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = i + 1; j < stateCount; ++j) {
+                map[k++] = new int[]{i, j};
+            }
+        }
+
+        for (int j = 0; j < stateCount; ++j) {
+            for (int i = j + 1; i < stateCount; ++i) {
+                map[k++] = new int[]{i, j};
+            }
+        }
+
+        return map;
     }
 
     @Override
-    double processSingleGradientDimension(int dim, double[] differentials, double[] generator, double[] pi,
+    double processSingleGradientDimension(int k, double[] differentials, double[] generator, double[] pi,
                                           boolean normalize, double normalizationConstant) {
-        return 0;
+
+        final int i = mapEffectToIndices[k][0], j = mapEffectToIndices[k][1];
+        final int ii = i * stateCount + i;
+        final int ij = i * stateCount + j;
+
+        double element = generator[ij];
+        double total = (differentials[ij]  - differentials[ii]) * element;
+
+        if (normalize) {
+            total -= element * pi[i] * normalizationConstant;
+        }
+
+        return total;
     }
 
     @Override
     public Parameter getParameter() {
-        return null;
+        return logGpModel.getFieldParameter();
     }
 
     @Override
     public LogColumn[] getColumns() {
-        return null;
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
     public Citation.Category getCategory() {
-        return null;
+        return Citation.Category.SUBSTITUTION_MODELS;
     }
 
     @Override
     public String getDescription() {
-        return null;
+        return null; // TODO
     }
 
     @Override
     public List<Citation> getCitations() {
-        return null;
+        // TODO Update
+        return Collections.singletonList(CommonCitations.LEMEY_2014_UNIFYING);
     }
 }

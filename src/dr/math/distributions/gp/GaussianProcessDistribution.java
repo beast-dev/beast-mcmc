@@ -23,14 +23,18 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.math.distributions;
+package dr.math.distributions.gp;
 
-import dr.inference.distribution.LogGaussianProcessModel;
 import dr.inference.distribution.RandomField;
-import dr.inference.model.GradientProvider;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
+import dr.math.distributions.RandomFieldDistribution;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.factory.LinearSolverFactory;
+import org.ejml.interfaces.decomposition.CholeskyDecomposition;
+import org.ejml.interfaces.linsol.LinearSolver;
+import org.ejml.ops.CommonOps;
+
+import java.util.Arrays;
 
 /**
  * @author Marc Suchard
@@ -41,33 +45,90 @@ public class GaussianProcessDistribution extends RandomFieldDistribution {
     public static final String TYPE = "GaussianProcess";
 
     private final int dim;
-    private final Parameter mean;
-    private final LogGaussianProcessModel.GaussianProcessKernel kernel;
+    private final Parameter meanParameter;
+    private final Kernel kernel;
     private final RandomField.WeightProvider weightProvider;
+
+    private final double[] mean;
+    private final double[] tmp;
+    private final DenseMatrix64F precision;
+    private final DenseMatrix64F variance;
+    private final LinearSolver<DenseMatrix64F> solver;
+
+    private double logDeterminant;
+    
+    private boolean meanKnown;
+    private boolean precisionAndDeterminantKnown;
+    private boolean varianceKnown;
 
     public GaussianProcessDistribution(String name,
                                        int dim,
-                                       Parameter mean,
-                                       LogGaussianProcessModel.GaussianProcessKernel kernel,
+                                       Parameter meanParameter,
+                                       Kernel kernel,
                                        RandomField.WeightProvider weightProvider) {
         super(name);
 
         this.dim = dim;
-        this.mean = mean;
+        this.meanParameter = meanParameter;
         this.kernel = kernel;
         this.weightProvider = weightProvider;
 
-        addVariable(mean);
-        addModel(kernel);
+        this.mean = new double[dim];
+        this.tmp = new double[dim];
+        this.precision = new DenseMatrix64F(dim, dim);
+        this.variance = new DenseMatrix64F(dim, dim);
+
+        this.solver = LinearSolverFactory.symmPosDef(dim);
+
+        addVariable(meanParameter);
+
+        if (kernel instanceof AbstractModel) {
+            addModel((AbstractModel) kernel);
+        }
 
         if (weightProvider != null) {
             addModel(weightProvider);
         }
     }
 
+    private DenseMatrix64F getPrecision() {
+        if (!precisionAndDeterminantKnown) {
+            DenseMatrix64F variance = getVariance();
+            solver.solve(variance, precision);
+            CholeskyDecomposition<DenseMatrix64F> d = solver.getDecomposition();
+            logDeterminant = Math.log(d.computeDeterminant().getReal());
+            precisionAndDeterminantKnown = true;
+        }
+        return precision;
+    }
+
+    private DenseMatrix64F getVariance() {
+        if (!varianceKnown) {
+            for (int i = 0; i < dim; ++i) {
+                for (int j = 0; j < dim; ++j) {
+                    variance.set(i, j, kernel.getCorrelation(0, 0)); // TODO
+                }
+            }
+            varianceKnown = true;
+        }
+        return variance;
+    }
+
     @Override
     public double[] getMean() {
-        throw new RuntimeException("Not yet implemented");
+        if (!meanKnown) {
+            if (meanParameter == null) {
+                Arrays.fill(mean, 0.0);
+            } else if (meanParameter.getDimension() == 1) {
+                Arrays.fill(mean, meanParameter.getParameterValue(0));
+            } else {
+                for (int i = 0; i < mean.length; ++i) {
+                    mean[i] = meanParameter.getParameterValue(i);
+                }
+            }
+            meanKnown = true;
+        }
+        return mean;
     }
 
     @Override
@@ -97,6 +158,24 @@ public class GaussianProcessDistribution extends RandomFieldDistribution {
 
     @Override
     public double logPdf(double[] x) {
+
+        final double[] mean = getMean();
+        final double[] diff = tmp;
+        final double[] precision = getPrecision().getData();
+
+        for (int i = 0; i < dim; ++i) {
+            diff[i] = x[i] - mean[i];
+        }
+
+        double exponent = 0.0;
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                exponent += diff[i] * precision[i * dim + j] * diff[j];
+            }
+        }
+
+        
+
         throw new RuntimeException("Not yet implemented");
     }
 

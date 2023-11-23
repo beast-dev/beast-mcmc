@@ -25,10 +25,11 @@
 
 package dr.inferencexml.distribution;
 
-import dr.inference.distribution.LogGaussianProcessModel;
 import dr.inference.distribution.RandomField;
+import dr.inference.model.DesignMatrix;
 import dr.inference.model.Parameter;
-import dr.math.distributions.GaussianProcessDistribution;
+import dr.math.distributions.gp.GaussianProcessDistribution;
+import dr.math.distributions.gp.Kernel;
 import dr.xml.*;
 
 import static dr.inferencexml.distribution.RandomFieldParser.WEIGHTS_RULE;
@@ -39,6 +40,7 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
     private static final String PARSER_NAME = "gaussianProcessField";
     private static final String DIMENSION = "dim";
     private static final String MEAN = "mean";
+    private static final String BASES = "bases";
 
     public String getParserName() { return PARSER_NAME; }
 
@@ -54,7 +56,7 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
         String id = xo.hasId() ? xo.getId() : PARSER_NAME;
 
         return new GaussianProcessDistribution(id, dim, mean,
-                new LogGaussianProcessModel.GaussianProcessKernel(null, null),
+                new Kernel.DotProduct(null, null),
                 weights);
     }
 
@@ -64,6 +66,9 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(DIMENSION),
             new ElementRule(MEAN,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(BASES, new XMLSyntaxRule[] {
+                    new ElementRule(DesignMatrix.class) },
+                    0, Integer.MAX_VALUE),
             WEIGHTS_RULE,
     };
 

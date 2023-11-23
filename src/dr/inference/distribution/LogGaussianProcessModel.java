@@ -108,7 +108,7 @@ public class LogGaussianProcessModel extends LogLinearModel
         }
     }
 
-    public class GaussianProcessKernel extends AbstractModel {
+    public static class GaussianProcessKernel extends AbstractModel {
 
         private final Parameter parameter;
         public GaussianProcessKernel(String name,

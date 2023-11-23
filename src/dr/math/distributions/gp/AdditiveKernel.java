@@ -11,20 +11,22 @@ import java.util.List;
  * @author Marc A. Suchard
  * @author Filippo Monti
  */
-public interface Kernel {
+public interface AdditiveKernel {
 
     double getCorrelation(double x, double y);
 
-    class DotProduct extends Base implements Kernel {
+    double getScale();
+
+    class DotProduct extends Base {
 
         public DotProduct(String name, List<Parameter> parameters) {
             super(name, parameters);
         }
 
         public double getCorrelation(double x, double y) {
-            double sigma = parameters.get(0).getParameterValue(0);
-            return sigma * x * y;
+            return  x * y;
         }
+
     }
 
     class RadialBasisFunction extends Base {
@@ -38,11 +40,11 @@ public interface Kernel {
             double length = parameters.get(1).getParameterValue(0);
             double diff = x - y;
 
-            return sigma * Math.exp(-(diff * diff) / (2 * length * length));
+            return Math.exp(-(diff * diff) / (2 * length * length));
         }
     }
 
-    class Base extends AbstractModel {
+    abstract class Base extends AbstractModel implements AdditiveKernel {
 
         final List<Parameter> parameters;
 
@@ -55,6 +57,12 @@ public interface Kernel {
             for (Parameter p :parameters) {
                 addVariable(p);
             }
+        }
+
+        @Override
+        public double getScale() {
+            return 1.0;
+            // return parameters.get(0).getParameterValue(0); // TODO
         }
 
         @Override

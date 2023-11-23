@@ -32,21 +32,26 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.LinearSolverFactory;
 import org.ejml.interfaces.decomposition.CholeskyDecomposition;
 import org.ejml.interfaces.linsol.LinearSolver;
-import org.ejml.ops.CommonOps;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Marc Suchard
  * @author Filippo Monti
+ * //
+ * Duvenaud DK, Nickisch H, Rasmussen C. Additive Gaussian processes. In Shawe-Taylor J, Zemel R, Bartlett P, Pereira F, Weinberger KQ (eds.), Advances in Neural Information Processing Systems, volume 24. Curran Associates, Inc., 2011.
+ * URL <a href="https://proceedings.neurips.cc/paper/2011/file/4c5bde74a8f110656874902f07378009-Paper.pdf"/>
  */
-public class GaussianProcessDistribution extends RandomFieldDistribution {
+public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution {
 
     public static final String TYPE = "GaussianProcess";
 
+    private final int order;
+
     private final int dim;
     private final Parameter meanParameter;
-    private final Kernel kernel;
+    private final List<BasisDimension> bases;
     private final RandomField.WeightProvider weightProvider;
 
     private final double[] mean;
@@ -61,16 +66,22 @@ public class GaussianProcessDistribution extends RandomFieldDistribution {
     private boolean precisionAndDeterminantKnown;
     private boolean varianceKnown;
 
-    public GaussianProcessDistribution(String name,
-                                       int dim,
-                                       Parameter meanParameter,
-                                       Kernel kernel,
-                                       RandomField.WeightProvider weightProvider) {
+    public AdditiveGaussianProcessDistribution(String name,
+                                               int order,
+                                               int dim,
+                                               Parameter meanParameter,
+                                               List<BasisDimension> bases,
+                                               RandomField.WeightProvider weightProvider) {
         super(name);
 
+        if (order != 1) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        this.order = order;
         this.dim = dim;
         this.meanParameter = meanParameter;
-        this.kernel = kernel;
+        this.bases = bases;
         this.weightProvider = weightProvider;
 
         this.mean = new double[dim];
@@ -82,8 +93,12 @@ public class GaussianProcessDistribution extends RandomFieldDistribution {
 
         addVariable(meanParameter);
 
-        if (kernel instanceof AbstractModel) {
-            addModel((AbstractModel) kernel);
+        for (BasisDimension basis : bases) {
+            AdditiveKernel kernel = basis.getKernel();
+            if (kernel instanceof AbstractModel) {
+                addModel((AbstractModel) kernel);
+            }
+            addVariable(basis.getDesignMatrix());
         }
 
         if (weightProvider != null) {
@@ -91,7 +106,7 @@ public class GaussianProcessDistribution extends RandomFieldDistribution {
         }
     }
 
-    private DenseMatrix64F getPrecision() {
+    private double[] getPrecision() {
         if (!precisionAndDeterminantKnown) {
             DenseMatrix64F variance = getVariance();
             solver.solve(variance, precision);
@@ -99,16 +114,32 @@ public class GaussianProcessDistribution extends RandomFieldDistribution {
             logDeterminant = Math.log(d.computeDeterminant().getReal());
             precisionAndDeterminantKnown = true;
         }
-        return precision;
+        return precision.getData();
     }
 
     private DenseMatrix64F getVariance() {
         if (!varianceKnown) {
-            for (int i = 0; i < dim; ++i) {
-                for (int j = 0; j < dim; ++j) {
-                    variance.set(i, j, kernel.getCorrelation(0, 0)); // TODO
+            variance.zero();
+
+            // 1st order contribution
+            for (BasisDimension basis : bases) {
+                final AdditiveKernel kernel = basis.getKernel();
+                final DesignMatrix design = basis.getDesignMatrix();
+                final double scale = kernel.getScale(); // TODO is this term necessary?  or scale only needed at the order-level
+
+                for (int i = 0; i < dim; ++i) {
+                    for (int j = 0; j < dim; ++j) {
+                        double xi = design.getParameterValue(0, i); // TODO make generic dimension
+                        double xj = design.getParameterValue(0, j); // TODO make generic dimension
+                        variance.add(i, j, scale * kernel.getCorrelation(xi, xj));
+                    }
                 }
             }
+
+            for (int n = 1; n < order; ++n) {
+                // TODO higher-order terms via Newton-Girard formula
+            }
+
             varianceKnown = true;
         }
         return variance;
@@ -161,7 +192,7 @@ public class GaussianProcessDistribution extends RandomFieldDistribution {
 
         final double[] mean = getMean();
         final double[] diff = tmp;
-        final double[] precision = getPrecision().getData();
+        final double[] precision = getPrecision();
 
         for (int i = 0; i < dim; ++i) {
             diff[i] = x[i] - mean[i];
@@ -224,4 +255,20 @@ public class GaussianProcessDistribution extends RandomFieldDistribution {
 
     @Override
     protected void acceptState() { }
+
+    public static class BasisDimension {
+
+        private final AdditiveKernel kernel;
+        private final DesignMatrix design;
+
+        public BasisDimension(AdditiveKernel kernel, DesignMatrix design) {
+            this.kernel = kernel;
+            this.design = design;
+        }
+
+        AdditiveKernel getKernel() { return kernel; }
+
+        DesignMatrix getDesignMatrix() {  return design; }
+    }
+
 }

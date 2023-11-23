@@ -28,10 +28,14 @@ package dr.inferencexml.distribution;
 import dr.inference.distribution.RandomField;
 import dr.inference.model.DesignMatrix;
 import dr.inference.model.Parameter;
-import dr.math.distributions.gp.GaussianProcessDistribution;
-import dr.math.distributions.gp.Kernel;
+import dr.math.distributions.gp.AdditiveGaussianProcessDistribution;
+import dr.math.distributions.gp.AdditiveKernel;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static dr.math.distributions.gp.AdditiveGaussianProcessDistribution.BasisDimension;
 import static dr.inferencexml.distribution.RandomFieldParser.WEIGHTS_RULE;
 import static dr.inferencexml.distribution.RandomFieldParser.parseWeightProvider;
 
@@ -55,9 +59,23 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
 
         String id = xo.hasId() ? xo.getId() : PARSER_NAME;
 
-        return new GaussianProcessDistribution(id, dim, mean,
-                new Kernel.DotProduct(null, null),
-                weights);
+        int order = 1;
+
+        List<BasisDimension> bases = parseBases(xo);
+
+        return new AdditiveGaussianProcessDistribution(id, order, dim, mean, bases, weights);
+    }
+
+    private List<BasisDimension> parseBases(XMLObject xo) {
+        List<BasisDimension> bases = new ArrayList<>();
+        for (XMLObject cxo : xo.getAllChildren(BASES)) {
+            bases.add(new BasisDimension(
+                    new AdditiveKernel.DotProduct(null, null),
+                    (DesignMatrix) cxo.getChild(DesignMatrix.class)
+            ));
+        }
+
+        return bases;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
@@ -67,8 +85,9 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
             new ElementRule(MEAN,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(BASES, new XMLSyntaxRule[] {
-                    new ElementRule(DesignMatrix.class) },
-                    0, Integer.MAX_VALUE),
+                    new ElementRule(DesignMatrix.class),
+                    // TODO parse kernel
+                    }, 0, Integer.MAX_VALUE),
             WEIGHTS_RULE,
     };
 

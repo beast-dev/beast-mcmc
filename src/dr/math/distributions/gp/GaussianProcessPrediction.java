@@ -36,7 +36,7 @@ import dr.inference.model.*;
  */
 public class GaussianProcessPrediction implements Loggable, VariableListener, ModelListener {
 
-    private final GaussianProcessDistribution gp;
+    private final AdditiveGaussianProcessDistribution gp;
     private final Parameter realizedValues;
     private final Parameter predictivePoints;
     private final int dim;
@@ -45,7 +45,7 @@ public class GaussianProcessPrediction implements Loggable, VariableListener, Mo
     private boolean predictionKnown;
     private LogColumn[] columns;
 
-    public GaussianProcessPrediction(GaussianProcessDistribution gp,
+    public GaussianProcessPrediction(AdditiveGaussianProcessDistribution gp,
                                      Parameter realizedValues,
                                      Parameter predictivePoints) {
         this.gp = gp;

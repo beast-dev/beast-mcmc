@@ -63,7 +63,7 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
 
         List<BasisDimension> bases = parseBases(xo);
 
-        return new AdditiveGaussianProcessDistribution(id, order, dim, mean, bases, weights);
+        return new AdditiveGaussianProcessDistribution(id, order, dim, mean, null, bases, weights);
     }
 
     private List<BasisDimension> parseBases(XMLObject xo) {

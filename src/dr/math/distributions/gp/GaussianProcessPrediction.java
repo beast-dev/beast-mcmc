@@ -29,6 +29,16 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
+import dr.math.MathUtils;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.factory.LinearSolverFactory;
+import org.ejml.interfaces.linsol.LinearSolver;
+
+import static dr.math.distributions.gp.AdditiveGaussianProcessDistribution.BasisDimension;
+import static dr.math.distributions.gp.AdditiveGaussianProcessDistribution.computeAdditiveGramian;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Marc Suchard
@@ -38,28 +48,98 @@ public class GaussianProcessPrediction implements Loggable, VariableListener, Mo
 
     private final AdditiveGaussianProcessDistribution gp;
     private final Parameter realizedValues;
-    private final Parameter predictivePoints;
-    private final int dim;
+    private final List<DesignMatrix> predictiveDesigns;
+    private final int realizedDim;
+    private final int predictiveDim;
+    private final int order;
     private final double[] prediction;
+
+    private final LinearSolver<DenseMatrix64F> solver;
+
+    private final List<BasisDimension> realizedBases;
+    private final List<BasisDimension> predictiveBases;
+    private final List<BasisDimension> crossBases;
 
     private boolean predictionKnown;
     private LogColumn[] columns;
 
     public GaussianProcessPrediction(AdditiveGaussianProcessDistribution gp,
                                      Parameter realizedValues,
-                                     Parameter predictivePoints) {
+                                     List<DesignMatrix> predictiveDesigns) {
         this.gp = gp;
         this.realizedValues = realizedValues;
-        this.predictivePoints = predictivePoints;
-        this.dim = gp.getDimension();
-        this.prediction = new double[dim];
+        this.predictiveDesigns = predictiveDesigns;
+        this.realizedDim = gp.getDimension();
+        this.predictiveDim = predictiveDesigns.get(0).getColumnDimension();
+        this.order = gp.getOrder();
+        this.prediction = new double[realizedDim];
+
+        this.solver = LinearSolverFactory.symmPosDef(realizedDim);
+
+        this.realizedBases = gp.getBases();
+        this.predictiveBases = makePredictiveBases(realizedBases, predictiveDesigns);
+        this.crossBases = makeCrossBases(realizedBases, predictiveDesigns);
+
+        gp.addModelListener(this);
+        realizedValues.addVariableListener(this);
+
+        for (DesignMatrix design : predictiveDesigns) {
+            design.addVariableListener(this);
+        }
 
         predictionKnown = false;
     }
 
+    private static List<BasisDimension> makeCrossBases(List<BasisDimension> originalBases,
+                                                            List<DesignMatrix> predictiveDesigns) {
+        List<BasisDimension> result = new ArrayList<>();
+
+        for (int i = 0; i < originalBases.size(); ++i) {
+            BasisDimension originalBasis = originalBases.get(i);
+            BasisDimension newBasis = new BasisDimension(
+                    originalBasis.getKernel(), predictiveDesigns.get(i), originalBasis.getDesignMatrix1());
+
+            result.add(newBasis);
+        }
+
+        return result;
+    }
+
+    private static List<BasisDimension> makePredictiveBases(List<BasisDimension> originalBases,
+                                                            List<DesignMatrix> predictiveDesigns) {
+        List<BasisDimension> result = new ArrayList<>();
+
+        for (int i = 0; i < originalBases.size(); ++i) {
+            BasisDimension originalBasis = originalBases.get(i);
+            BasisDimension newBasis = new BasisDimension(
+                    originalBasis.getKernel(), predictiveDesigns.get(i), predictiveDesigns.get(i));
+
+            result.add(newBasis);
+        }
+
+        return result;
+    }
+
     private void computePredictions() {
-        // TODO
         // Compute: predicition ~ p(f(predictivePoints) | realizedValues)
+
+        DenseMatrix64F realizedGramian = new DenseMatrix64F(realizedDim, realizedDim);
+        computeAdditiveGramian(realizedGramian, realizedBases, order); // TODO can get directly from gp
+
+        DenseMatrix64F predictiveGramian = new DenseMatrix64F(predictiveDim, predictiveDim);
+        computeAdditiveGramian(predictiveGramian, predictiveBases, order);
+
+        DenseMatrix64F crossGramian = new DenseMatrix64F(realizedDim, predictiveDim);
+        computeAdditiveGramian(crossGramian, crossBases, order);
+
+        for (int i = 0; i < predictiveDim; ++i) {
+            prediction[i] = MathUtils.nextGaussian();
+        }
+
+        // mean: crossGramian %*% inverse(realizedGramian) %*% realizedField
+        // variance: predictiveGramian - crossGramian %*% inverse(realizedGramian) %*% t(crossGramian)
+
+        // TODO
     }
 
     private double getPrediction(int index) {
@@ -67,12 +147,16 @@ public class GaussianProcessPrediction implements Loggable, VariableListener, Mo
             computePredictions();
             predictionKnown = true;
         }
+
+        if (index == predictiveDim - 1) {
+            predictionKnown = false;
+        }
         return prediction[index];
     }
 
     private LogColumn[] createColumns() {
-        LogColumn[] columns = new LogColumn[dim];
-        for (int i = 0; i < dim; ++i) {
+        LogColumn[] columns = new LogColumn[predictiveDim];
+        for (int i = 0; i < predictiveDim; ++i) {
             final String name = "prediction" + (i + 1);
             final int index = i;
             columns[i] = new NumberColumn(name) {
@@ -108,7 +192,7 @@ public class GaussianProcessPrediction implements Loggable, VariableListener, Mo
 
     @Override
     public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-        if (variable == realizedValues || variable == predictivePoints) {
+        if (variable == realizedValues || predictiveDesigns.contains(variable)) {
             predictionKnown = false;
         } else {
             throw new IllegalArgumentException("Unknown variable");

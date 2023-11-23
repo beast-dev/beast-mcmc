@@ -51,11 +51,13 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 
     private final int dim;
     private final Parameter meanParameter;
+    private final Parameter nuggetParameter;
     private final List<BasisDimension> bases;
     private final RandomField.WeightProvider weightProvider;
 
     private final double[] mean;
     private final double[] tmp;
+    private final DenseMatrix64F gramian;
     private final DenseMatrix64F precision;
     private final DenseMatrix64F variance;
     private final LinearSolver<DenseMatrix64F> solver;
@@ -64,12 +66,13 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     
     private boolean meanKnown;
     private boolean precisionAndDeterminantKnown;
-    private boolean varianceKnown;
+    private boolean gramianAndVarianceKnown;
 
     public AdditiveGaussianProcessDistribution(String name,
                                                int order,
                                                int dim,
                                                Parameter meanParameter,
+                                               Parameter nuggetParameter,
                                                List<BasisDimension> bases,
                                                RandomField.WeightProvider weightProvider) {
         super(name);
@@ -81,24 +84,34 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         this.order = order;
         this.dim = dim;
         this.meanParameter = meanParameter;
+        this.nuggetParameter = nuggetParameter;
         this.bases = bases;
         this.weightProvider = weightProvider;
 
         this.mean = new double[dim];
         this.tmp = new double[dim];
+        this.gramian = new DenseMatrix64F(dim, dim);
         this.precision = new DenseMatrix64F(dim, dim);
         this.variance = new DenseMatrix64F(dim, dim);
 
         this.solver = LinearSolverFactory.symmPosDef(dim);
 
-        addVariable(meanParameter);
+        if (meanParameter != null) {
+            addVariable(meanParameter);
+        }
+
+        if (nuggetParameter != null) {
+            addVariable(nuggetParameter);
+        }
 
         for (BasisDimension basis : bases) {
             AdditiveKernel kernel = basis.getKernel();
             if (kernel instanceof AbstractModel) {
                 addModel((AbstractModel) kernel);
             }
-            addVariable(basis.getDesignMatrix());
+
+            addVariable(basis.getDesignMatrix1());
+            addVariable(basis.getDesignMatrix2());
         }
 
         if (weightProvider != null) {
@@ -106,43 +119,67 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         }
     }
 
+    public int getOrder() { return order; }
+
+    List<BasisDimension> getBases() { return bases; }
+
+    private void computeGramianAndVariance() {
+
+        computeAdditiveGramian(gramian, bases, order);
+
+        // Add variance nugget as needed
+        variance.set(gramian);
+
+        if (nuggetParameter != null) {
+            for (int i = 0; i < dim; ++i) {
+                variance.add(i, i, getNugget(i));
+            }
+        }
+    }
+
+    private void computePrecisionAndDeterminant() {
+        DenseMatrix64F variance = getVariance();
+        solver.solve(variance, precision);
+        CholeskyDecomposition<DenseMatrix64F> d = solver.getDecomposition();
+        logDeterminant = Math.log(d.computeDeterminant().getReal());
+    }
+
     private double[] getPrecision() {
         if (!precisionAndDeterminantKnown) {
-            DenseMatrix64F variance = getVariance();
-            solver.solve(variance, precision);
-            CholeskyDecomposition<DenseMatrix64F> d = solver.getDecomposition();
-            logDeterminant = Math.log(d.computeDeterminant().getReal());
+            computePrecisionAndDeterminant();
             precisionAndDeterminantKnown = true;
         }
         return precision.getData();
     }
 
+    private double getLogDeterminant() {
+        if (!precisionAndDeterminantKnown) {
+            computePrecisionAndDeterminant();
+            precisionAndDeterminantKnown = true;
+        }
+        return logDeterminant;
+    }
+
+    private DenseMatrix64F getGramian() {
+        if (!gramianAndVarianceKnown) {
+            computeGramianAndVariance();
+            gramianAndVarianceKnown = true;
+        }
+        return gramian;
+    }
+
     private DenseMatrix64F getVariance() {
-        if (!varianceKnown) {
-            variance.zero();
-
-            // 1st order contribution
-            for (BasisDimension basis : bases) {
-                final AdditiveKernel kernel = basis.getKernel();
-                final DesignMatrix design = basis.getDesignMatrix();
-                final double scale = kernel.getScale(); // TODO is this term necessary?  or scale only needed at the order-level
-
-                for (int i = 0; i < dim; ++i) {
-                    for (int j = 0; j < dim; ++j) {
-                        double xi = design.getParameterValue(0, i); // TODO make generic dimension
-                        double xj = design.getParameterValue(0, j); // TODO make generic dimension
-                        variance.add(i, j, scale * kernel.getCorrelation(xi, xj));
-                    }
-                }
-            }
-
-            for (int n = 1; n < order; ++n) {
-                // TODO higher-order terms via Newton-Girard formula
-            }
-
-            varianceKnown = true;
+        if (!gramianAndVarianceKnown) {
+             computeGramianAndVariance();
+             gramianAndVarianceKnown = true;
         }
         return variance;
+    }
+
+    private double getNugget(int i) {
+        return nuggetParameter.getDimension() == 1 ?
+                nuggetParameter.getParameterValue(0) :
+                nuggetParameter.getParameterValue(i);
     }
 
     @Override
@@ -163,16 +200,11 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     }
 
     @Override
-    public double getIncrement(int i, Parameter field) {
-        double[] mean = getMean();
-        return (field.getParameterValue(i) - mean[i]) - (field.getParameterValue(i + 1) - mean[i + 1]);
-    }
-
-    @Override
     public GradientProvider getGradientWrt(Parameter parameter) {
         throw new RuntimeException("Unknown parameter");
     }
 
+    @Override
     public String getType() {
         return TYPE;
     }
@@ -205,9 +237,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
             }
         }
 
-        
-
-        throw new RuntimeException("Not yet implemented");
+        return getLogDeterminant() - exponent / 2; // TODO + normalizing constant
     }
 
     @Override
@@ -259,16 +289,52 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     public static class BasisDimension {
 
         private final AdditiveKernel kernel;
-        private final DesignMatrix design;
+        private final DesignMatrix design1;
+        private final DesignMatrix design2;
+
+        public BasisDimension(AdditiveKernel kernel, DesignMatrix design1, DesignMatrix design2) {
+            this.kernel = kernel;
+            this.design1 = design1;
+            this.design2 = design2;
+        }
 
         public BasisDimension(AdditiveKernel kernel, DesignMatrix design) {
-            this.kernel = kernel;
-            this.design = design;
+            this(kernel, design, design);
         }
 
         AdditiveKernel getKernel() { return kernel; }
 
-        DesignMatrix getDesignMatrix() {  return design; }
+        DesignMatrix getDesignMatrix1() { return design1; }
+
+        DesignMatrix getDesignMatrix2() { return design2; }
     }
 
+    public static void computeAdditiveGramian(DenseMatrix64F gramian,
+                                              List<BasisDimension> bases,
+                                              int order) {
+        gramian.zero();
+
+        final int rowDim = gramian.getNumRows();
+        final int colDim = gramian.getNumCols();
+
+        // 1st order contribution
+        for (BasisDimension basis : bases) {
+            final AdditiveKernel kernel = basis.getKernel();
+            final DesignMatrix design1 = basis.getDesignMatrix1();
+            final DesignMatrix design2 = basis.getDesignMatrix2();
+            final double scale = kernel.getScale(); // TODO is this term necessary?  or scale only needed at the order-level
+
+            for (int i = 0; i < rowDim; ++i) {
+                for (int j = 0; j < colDim; ++j) {
+                    double xi = design1.getParameterValue(0, i); // TODO make generic dimension
+                    double xj = design2.getParameterValue(0, j); // TODO make generic dimension
+                    gramian.add(i, j, scale * kernel.getCorrelation(xi, xj));
+                }
+            }
+        }
+
+        for (int n = 1; n < order; ++n) {
+            // TODO higher-order terms via Newton-Girard formula
+        }
+    }
 }

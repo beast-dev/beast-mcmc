@@ -28,6 +28,8 @@ package dr.math.distributions.gp;
 import dr.inference.distribution.RandomField;
 import dr.inference.model.*;
 import dr.math.distributions.RandomFieldDistribution;
+import org.ejml.alg.dense.decomposition.chol.CholeskyDecompositionCommon_D64;
+import org.ejml.data.Complex64F;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.LinearSolverFactory;
 import org.ejml.interfaces.decomposition.CholeskyDecomposition;
@@ -35,6 +37,8 @@ import org.ejml.interfaces.linsol.LinearSolver;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static dr.math.matrixAlgebra.missingData.MissingOps.invertAndGetDeterminant;
 
 /**
  * @author Marc Suchard
@@ -68,6 +72,8 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     private boolean precisionAndDeterminantKnown;
     private boolean gramianAndVarianceKnown;
 
+    private static final boolean USE_CHOLESKY = true;
+
     public AdditiveGaussianProcessDistribution(String name,
                                                int order,
                                                int dim,
@@ -94,7 +100,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         this.precision = new DenseMatrix64F(dim, dim);
         this.variance = new DenseMatrix64F(dim, dim);
 
-        this.solver = LinearSolverFactory.symmPosDef(dim);
+        this.solver = USE_CHOLESKY ? LinearSolverFactory.symmPosDef(dim) : null;
 
         if (meanParameter != null) {
             addVariable(meanParameter);
@@ -139,9 +145,33 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 
     private void computePrecisionAndDeterminant() {
         DenseMatrix64F variance = getVariance();
-        solver.solve(variance, precision);
-        CholeskyDecomposition<DenseMatrix64F> d = solver.getDecomposition();
-        logDeterminant = Math.log(d.computeDeterminant().getReal());
+        if (USE_CHOLESKY) {
+            if (!solver.setA(variance)) {
+                throw new RuntimeException("Unable to decompose matrix");
+            }
+
+            solver.invert(precision);
+            logDeterminant = computeLogDeterminantFromTriangularMatrix(
+                    ((CholeskyDecompositionCommon_D64) solver.getDecomposition()).getT());
+        } else {
+            logDeterminant = invertAndGetDeterminant(variance, precision, true);
+        }
+    }
+
+    private double computeLogDeterminantFromTriangularMatrix(DenseMatrix64F T) {
+
+        final int n = T.numCols;
+        double[] t = T.getData();
+
+        double sum = 0.0;
+        int total = n * n;
+
+        for(int i = 0; i < total; i += n + 1) {
+            sum += Math.log(t[i]);
+        }
+
+        double logDet = 2 * sum;
+        return logDet;
     }
 
     private double[] getPrecision() {
@@ -236,8 +266,9 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
                 exponent += diff[i] * precision[i * dim + j] * diff[j];
             }
         }
-
-        return getLogDeterminant() - exponent / 2; // TODO + normalizing constant
+        
+        double logLikelihood = -0.5 * (dim * Math.log(2 * Math.PI) - getLogDeterminant()) - 0.5 * exponent;
+        return logLikelihood;
     }
 
     @Override
@@ -326,8 +357,8 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 
             for (int i = 0; i < rowDim; ++i) {
                 for (int j = 0; j < colDim; ++j) {
-                    double xi = design1.getParameterValue(0, i); // TODO make generic dimension
-                    double xj = design2.getParameterValue(0, j); // TODO make generic dimension
+                    double xi = design1.getParameterValue(i, 0); // TODO make generic dimension
+                    double xj = design2.getParameterValue(j, 0); // TODO make generic dimension
                     gramian.add(i, j, scale * kernel.getCorrelation(xi, xj));
                 }
             }

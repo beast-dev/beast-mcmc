@@ -192,8 +192,11 @@ public class GaussianProcessPrediction implements Loggable, VariableListener, Mo
 
     @Override
     public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-        if (variable == realizedValues || predictiveDesigns.contains(variable)) {
+        if (variable == realizedValues) {
             predictionKnown = false;
+        } else if (variable instanceof DesignMatrix &&
+                predictiveDesigns.contains((DesignMatrix) variable)) {
+            throw new IllegalArgumentException("Not yet implemented");
         } else {
             throw new IllegalArgumentException("Unknown variable");
         }

@@ -45,6 +45,7 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
     private static final String DIMENSION = "dim";
     private static final String MEAN = "mean";
     private static final String BASES = "bases";
+    private static final String NOISE = "gaussianNoise";
 
     public String getParserName() { return PARSER_NAME; }
 
@@ -57,13 +58,15 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
 
         RandomField.WeightProvider weights = parseWeightProvider(xo, dim);
 
+        Parameter noise = xo.hasChildNamed(NOISE) ? (Parameter) xo.getElementFirstChild(NOISE) : null;
+
         String id = xo.hasId() ? xo.getId() : PARSER_NAME;
 
         int order = 1;
 
         List<BasisDimension> bases = parseBases(xo);
 
-        return new AdditiveGaussianProcessDistribution(id, order, dim, mean, null, bases, weights);
+        return new AdditiveGaussianProcessDistribution(id, order, dim, mean, noise, bases, weights);
     }
 
     private List<BasisDimension> parseBases(XMLObject xo) {
@@ -88,6 +91,7 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
                     new ElementRule(DesignMatrix.class),
                     // TODO parse kernel
                     }, 0, Integer.MAX_VALUE),
+            new ElementRule(NOISE, Parameter.class, "", true),
             WEIGHTS_RULE,
     };
 

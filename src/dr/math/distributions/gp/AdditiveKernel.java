@@ -27,6 +27,8 @@ public interface AdditiveKernel {
             return  x * y;
         }
 
+        private static String TYPE = "DotProduct";
+
     }
 
     class RadialBasisFunction extends Base {
@@ -41,6 +43,19 @@ public interface AdditiveKernel {
             double diff = x - y;
 
             return Math.exp(-(diff * diff) / (2 * length * length));
+        }
+
+        private static String TYPE = "RadialBasisFunction";
+    }
+
+    static AdditiveKernel factory(String type, String name, List<Parameter> parameters)
+            throws IllegalArgumentException {
+        if (type.equalsIgnoreCase(DotProduct.TYPE)) {
+            return new DotProduct(name, parameters);
+        } else if (type.equalsIgnoreCase(RadialBasisFunction.TYPE)) {
+            return new RadialBasisFunction(name, parameters);
+        } else {
+            throw new IllegalArgumentException("Unknown kernel type");
         }
     }
 

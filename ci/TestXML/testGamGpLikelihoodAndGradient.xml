@@ -92,10 +92,10 @@
 			<parameter id="loc.clock.rate" value="1E-4" lower="0.0"/>
 		</rate>
 	</strictClockBranchRates>
-	
+		
 	<gamGpModel id="gamGpModel"> <!-- returns density of realized field-->
             <realizedField>
-                <parameter id="loc.coefficients0" value="0 0 0 0 0 0"/> <!-- 1 2 3 4 5put other numbers-->
+                <parameter id="loc.coefficients0" value="1 0 -1 0 0 0"/> <!-- 1 2 3 4 5put other numbers-->
             </realizedField>
             <gaussianNoise>
                 <parameter id="loc.noise" value="1"/>
@@ -145,6 +145,56 @@
 
 <!-- nothing -->
 		</gamGpModel>	
+		
+		
+	<randomField id="test.field">
+		<data>
+			<parameter idref="loc.coefficients0"/>
+		</data>
+		<distribution>
+			<gaussianProcessField id="test.gp" dim="6">	
+	            <gaussianNoise>
+    	            <parameter idref="loc.noise"/>
+	            </gaussianNoise>		
+				<bases>
+					<designMatrix idref="loc.designMatrix0"/>
+					<kernel type="dotProduct"/>
+				</bases>
+				<bases>
+					<designMatrix idref="loc.designMatrix1"/>
+					<kernel type="dotProduct"/>
+				</bases>
+				<bases>
+					<designMatrix idref="loc.designMatrix2"/>
+					<kernel type="dotProduct"/>
+				</bases>
+				<bases>
+					<designMatrix idref="loc.designMatrix3"/>
+					<kernel type="dotProduct"/>
+				</bases>												
+				<bases>
+					<designMatrix idref="loc.designMatrix4"/>
+					<kernel type="dotProduct"/>
+				</bases>
+				<bases>
+					<designMatrix idref="loc.designMatrix5"/>
+					<kernel type="dotProduct"/>
+				</bases>								
+			</gaussianProcessField>		
+		</distribution>
+	</randomField>
+
+	<randomFieldGradient id="test.gradient">
+		<randomField idref="test.field"/>
+		<parameter idref="loc.coefficients0"/>				
+	</randomFieldGradient>
+	
+	<report>
+		<gamGpModel idref="gamGpModel"/>
+		<randomField idref="test.field"/>
+		<randomFieldGradient idref="test.gradient"/>
+	</report>	
+	
 
 	<glmSubstitutionModel id="loc.model" normalize="true">
 		<generalDataType idref="loc.dataType"/>
@@ -239,6 +289,7 @@
     </mcmc>
 
     <traceAnalysis fileName="test.log"/>
+
 
 
 </beast>

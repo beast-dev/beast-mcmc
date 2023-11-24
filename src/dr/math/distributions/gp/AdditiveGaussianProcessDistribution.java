@@ -29,15 +29,14 @@ import dr.inference.distribution.RandomField;
 import dr.inference.model.*;
 import dr.math.distributions.RandomFieldDistribution;
 import org.ejml.alg.dense.decomposition.chol.CholeskyDecompositionCommon_D64;
-import org.ejml.data.Complex64F;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.LinearSolverFactory;
-import org.ejml.interfaces.decomposition.CholeskyDecomposition;
 import org.ejml.interfaces.linsol.LinearSolver;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static dr.math.distributions.MultivariateNormalDistribution.gradLogPdf;
 import static dr.math.matrixAlgebra.missingData.MissingOps.invertAndGetDeterminant;
 
 /**
@@ -64,7 +63,6 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     private final DenseMatrix64F gramian;
     private final DenseMatrix64F precision;
     private final DenseMatrix64F variance;
-    private final LinearSolver<DenseMatrix64F> solver;
 
     private double logDeterminant;
     
@@ -99,8 +97,6 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         this.gramian = new DenseMatrix64F(dim, dim);
         this.precision = new DenseMatrix64F(dim, dim);
         this.variance = new DenseMatrix64F(dim, dim);
-
-        this.solver = USE_CHOLESKY ? LinearSolverFactory.symmPosDef(dim) : null;
 
         if (meanParameter != null) {
             addVariable(meanParameter);
@@ -146,19 +142,20 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     private void computePrecisionAndDeterminant() {
         DenseMatrix64F variance = getVariance();
         if (USE_CHOLESKY) {
+            LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.symmPosDef(dim);
             if (!solver.setA(variance)) {
                 throw new RuntimeException("Unable to decompose matrix");
             }
 
             solver.invert(precision);
-            logDeterminant = computeLogDeterminantFromTriangularMatrix(
+            logDeterminant = 2 * computeLogDeterminantFromTriangularMatrix(
                     ((CholeskyDecompositionCommon_D64) solver.getDecomposition()).getT());
         } else {
             logDeterminant = invertAndGetDeterminant(variance, precision, true);
         }
     }
 
-    private double computeLogDeterminantFromTriangularMatrix(DenseMatrix64F T) {
+    private static double computeLogDeterminantFromTriangularMatrix(DenseMatrix64F T) {
 
         final int n = T.numCols;
         double[] t = T.getData();
@@ -170,8 +167,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
             sum += Math.log(t[i]);
         }
 
-        double logDet = 2 * sum;
-        return logDet;
+        return sum;
     }
 
     private double[] getPrecision() {
@@ -190,6 +186,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         return logDeterminant;
     }
 
+    @SuppressWarnings("unused")
     private DenseMatrix64F getGramian() {
         if (!gramianAndVarianceKnown) {
             computeGramianAndVariance();
@@ -267,8 +264,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
             }
         }
         
-        double logLikelihood = -0.5 * (dim * Math.log(2 * Math.PI) - getLogDeterminant()) - 0.5 * exponent;
-        return logLikelihood;
+        return -0.5 * (dim * Math.log(2 * Math.PI) - getLogDeterminant()) - 0.5 * exponent;
     }
 
     @Override
@@ -276,7 +272,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 
     @Override
     public double[] getGradientLogDensity(Object x) {
-        throw new RuntimeException("Not yet implemented");
+        return gradLogPdf((double[]) x, getMean(), getPrecision());
     }
 
     @Override

@@ -26,7 +26,7 @@
 package dr.inferencexml.distribution;
 
 import dr.inference.model.Parameter;
-import dr.math.distributions.gp.AdditiveKernel;
+import dr.math.distributions.gp.GaussianProcessKernel;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -46,9 +46,9 @@ public class GaussianProcessKernelParser extends AbstractXMLObjectParser {
         List<Parameter> parameters = new ArrayList<>();
         parameters.add((Parameter) xo.getChild(Parameter.class));
 
-        final AdditiveKernel kernel;
+        final GaussianProcessKernel kernel;
         try {
-            kernel = AdditiveKernel.factory(xo.getStringAttribute(TYPE), id, parameters);
+            kernel = GaussianProcessKernel.factory(xo.getStringAttribute(TYPE), id, parameters);
         } catch (IllegalArgumentException e) {
             throw new XMLParseException(e.getMessage());
         }
@@ -67,5 +67,5 @@ public class GaussianProcessKernelParser extends AbstractXMLObjectParser {
         return null;
     }
 
-    public Class getReturnType() { return AdditiveKernel.class; }
+    public Class getReturnType() { return GaussianProcessKernel.class; }
 }

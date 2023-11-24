@@ -29,7 +29,7 @@ import dr.inference.distribution.RandomField;
 import dr.inference.model.DesignMatrix;
 import dr.inference.model.Parameter;
 import dr.math.distributions.gp.AdditiveGaussianProcessDistribution;
-import dr.math.distributions.gp.AdditiveKernel;
+import dr.math.distributions.gp.GaussianProcessKernel;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -70,7 +70,7 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
         List<BasisDimension> bases = new ArrayList<>();
         for (XMLObject cxo : xo.getAllChildren(BASES)) {
             bases.add(new BasisDimension(
-                    new AdditiveKernel.DotProduct(null, null),
+                    (GaussianProcessKernel) cxo.getChild(GaussianProcessKernel.class),
                     (DesignMatrix) cxo.getChild(DesignMatrix.class)
             ));
         }

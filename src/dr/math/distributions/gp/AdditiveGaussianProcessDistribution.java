@@ -105,7 +105,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         }
 
         for (BasisDimension basis : bases) {
-            AdditiveKernel kernel = basis.getKernel();
+            GaussianProcessKernel kernel = basis.getKernel();
             if (kernel instanceof AbstractModel) {
                 addModel((AbstractModel) kernel);
             }
@@ -288,21 +288,21 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 
     public static class BasisDimension {
 
-        private final AdditiveKernel kernel;
+        private final GaussianProcessKernel kernel;
         private final DesignMatrix design1;
         private final DesignMatrix design2;
 
-        public BasisDimension(AdditiveKernel kernel, DesignMatrix design1, DesignMatrix design2) {
+        public BasisDimension(GaussianProcessKernel kernel, DesignMatrix design1, DesignMatrix design2) {
             this.kernel = kernel;
             this.design1 = design1;
             this.design2 = design2;
         }
 
-        public BasisDimension(AdditiveKernel kernel, DesignMatrix design) {
+        public BasisDimension(GaussianProcessKernel kernel, DesignMatrix design) {
             this(kernel, design, design);
         }
 
-        AdditiveKernel getKernel() { return kernel; }
+        GaussianProcessKernel getKernel() { return kernel; }
 
         DesignMatrix getDesignMatrix1() { return design1; }
 
@@ -319,7 +319,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 
         // 1st order contribution
         for (BasisDimension basis : bases) {
-            final AdditiveKernel kernel = basis.getKernel();
+            final GaussianProcessKernel kernel = basis.getKernel();
             final DesignMatrix design1 = basis.getDesignMatrix1();
             final DesignMatrix design2 = basis.getDesignMatrix2();
             final double scale = kernel.getScale(); // TODO is this term necessary?  or scale only needed at the order-level

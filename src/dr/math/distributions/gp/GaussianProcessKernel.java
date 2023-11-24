@@ -11,9 +11,12 @@ import java.util.List;
  * @author Marc A. Suchard
  * @author Filippo Monti
  */
-public interface AdditiveKernel {
+public interface GaussianProcessKernel {
 
     double getCorrelation(double x, double y);
+
+    @SuppressWarnings("unused")
+    double getCorrelation(double[] x, double[] y);
 
     double getScale();
 
@@ -27,7 +30,18 @@ public interface AdditiveKernel {
             return  x * y;
         }
 
-        private static String TYPE = "DotProduct";
+        public double getCorrelation(double[] x, double[] y) {
+            final int dim = x.length;
+
+            double product = 0.0;
+            for (int i = 0; i < dim; ++i) {
+                product += x[i] * y[i];
+            }
+
+            return product;
+        }
+
+        private static final String TYPE = "DotProduct";
 
     }
 
@@ -37,18 +51,32 @@ public interface AdditiveKernel {
             super(name, parameters);
         }
 
-        public double getCorrelation(double x, double y) {
-            double sigma = parameters.get(0).getParameterValue(0);
-            double length = parameters.get(1).getParameterValue(0);
-            double diff = x - y;
-
-            return Math.exp(-(diff * diff) / (2 * length * length));
+        private double functionalForm(double normSquared) {
+            double length = parameters.get(0).getParameterValue(0);
+            return Math.exp(-normSquared / (2 * length * length));
         }
 
-        private static String TYPE = "RadialBasisFunction";
+        public double getCorrelation(double x, double y) {
+            double diff = x - y;
+            return functionalForm(diff * diff);
+        }
+
+        public double getCorrelation(double[] x, double[] y) {
+            final int dim = x.length;
+
+            double normSquared = 0.0;
+            for (int i = 0; i < dim; ++i) {
+                double diff = x[i] - y[i];
+                normSquared += diff * diff;
+            }
+
+            return functionalForm(normSquared);
+        }
+
+        private static final String TYPE = "RadialBasisFunction";
     }
 
-    static AdditiveKernel factory(String type, String name, List<Parameter> parameters)
+    static GaussianProcessKernel factory(String type, String name, List<Parameter> parameters)
             throws IllegalArgumentException {
         if (type.equalsIgnoreCase(DotProduct.TYPE)) {
             return new DotProduct(name, parameters);
@@ -59,7 +87,7 @@ public interface AdditiveKernel {
         }
     }
 
-    abstract class Base extends AbstractModel implements AdditiveKernel {
+    abstract class Base extends AbstractModel implements GaussianProcessKernel {
 
         final List<Parameter> parameters;
 
@@ -88,7 +116,7 @@ public interface AdditiveKernel {
             if (parameters.contains((Parameter) variable)) {
                 fireModelChanged(variable, index);
             } else {
-                throw new RuntimeException("Unknown variable");
+                throw new IllegalArgumentException("Unknown variable");
             }
         }
 

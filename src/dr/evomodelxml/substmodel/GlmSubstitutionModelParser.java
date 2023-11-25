@@ -96,7 +96,6 @@ public class GlmSubstitutionModelParser extends AbstractXMLObjectParser {
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
-        System.err.println("all");
         return rules;
     }
 

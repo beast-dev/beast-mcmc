@@ -164,10 +164,12 @@ public class LogGaussianProcessModel extends LogLinearModel
             precisionKnown = true;
         }
 
-        RealMatrix muReal = predictiveKernel.multiply(vInvReal).multiply(ratesReal);
-        RealMatrix ratesCenteredReal = ratesReal.subtract(muReal);
-        double exponent = ratesCenteredReal.transpose().multiply(predictiveInvVariance).multiply(ratesCenteredReal).getEntry(0, 0);
-
+        // TODO this seems incorrect (the GP mean is 0, no? ... and there's no predictive variance)
+//        RealMatrix muReal = predictiveKernel.multiply(vInvReal).multiply(ratesReal);
+//        RealMatrix ratesCenteredReal = ratesReal.subtract(muReal);
+//        double exponent = ratesCenteredReal.transpose().multiply(predictiveInvVariance).multiply(ratesCenteredReal).getEntry(0, 0);
+        double exponent = ratesReal.transpose().multiply(vInvReal).multiply(ratesReal).getEntry(0,0);
+        
         // Compute the log likelihood
         double logLikelihood = -0.5 * (N * Math.log(2 * Math.PI) - logDetinvV) - 0.5 * exponent ;
         return logLikelihood;

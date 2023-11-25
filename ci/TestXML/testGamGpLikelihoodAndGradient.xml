@@ -153,6 +153,9 @@
 		</data>
 		<distribution>
 			<gaussianProcessField id="test.gp" dim="6">	
+				<orderVariance>
+					<parameter id="orderVariance" value="1.0"/>
+				</orderVariance>
 	            <gaussianNoise>
     	            <parameter idref="loc.noise"/>
 	            </gaussianNoise>		
@@ -289,7 +292,5 @@
     </mcmc>
 
     <traceAnalysis fileName="test.log"/>
-
-
 
 </beast>

@@ -52,6 +52,7 @@ public class GaussianProcessPrediction implements Loggable, VariableListener, Mo
     private final int realizedDim;
     private final int predictiveDim;
     private final int order;
+    private final Parameter orderVariance;
     private final double[] prediction;
 
     private final LinearSolver<DenseMatrix64F> solver;
@@ -72,6 +73,7 @@ public class GaussianProcessPrediction implements Loggable, VariableListener, Mo
         this.realizedDim = gp.getDimension();
         this.predictiveDim = predictiveDesigns.get(0).getColumnDimension();
         this.order = gp.getOrder();
+        this.orderVariance = gp.getOrderVariance();
         this.prediction = new double[realizedDim];
 
         this.solver = LinearSolverFactory.symmPosDef(realizedDim);
@@ -124,13 +126,13 @@ public class GaussianProcessPrediction implements Loggable, VariableListener, Mo
         // Compute: predicition ~ p(f(predictivePoints) | realizedValues)
 
         DenseMatrix64F realizedGramian = new DenseMatrix64F(realizedDim, realizedDim);
-        computeAdditiveGramian(realizedGramian, realizedBases, order); // TODO can get directly from gp
+        computeAdditiveGramian(realizedGramian, realizedBases, orderVariance); // TODO can get directly from gp
 
         DenseMatrix64F predictiveGramian = new DenseMatrix64F(predictiveDim, predictiveDim);
-        computeAdditiveGramian(predictiveGramian, predictiveBases, order);
+        computeAdditiveGramian(predictiveGramian, predictiveBases, orderVariance);
 
         DenseMatrix64F crossGramian = new DenseMatrix64F(realizedDim, predictiveDim);
-        computeAdditiveGramian(crossGramian, crossBases, order);
+        computeAdditiveGramian(crossGramian, crossBases, orderVariance);
 
         for (int i = 0; i < predictiveDim; ++i) {
             prediction[i] = MathUtils.nextGaussian();

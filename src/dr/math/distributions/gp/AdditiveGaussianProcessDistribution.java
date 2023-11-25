@@ -53,6 +53,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     private final int order;
 
     private final int dim;
+    private final Parameter orderVariance; // TODO should we reparameterize in terms of precision (for priors)?
     private final Parameter meanParameter;
     private final Parameter nuggetParameter;
     private final List<BasisDimension> bases;
@@ -73,20 +74,22 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     private static final boolean USE_CHOLESKY = true;
 
     public AdditiveGaussianProcessDistribution(String name,
-                                               int order,
                                                int dim,
+                                               Parameter orderVariance,
                                                Parameter meanParameter,
                                                Parameter nuggetParameter,
                                                List<BasisDimension> bases,
                                                RandomField.WeightProvider weightProvider) {
         super(name);
 
+        this.order = orderVariance.getDimension();
+
         if (order != 1) {
             throw new RuntimeException("Not yet implemented");
         }
-
-        this.order = order;
+        
         this.dim = dim;
+        this.orderVariance = orderVariance;
         this.meanParameter = meanParameter;
         this.nuggetParameter = nuggetParameter;
         this.bases = bases;
@@ -97,6 +100,8 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         this.gramian = new DenseMatrix64F(dim, dim);
         this.precision = new DenseMatrix64F(dim, dim);
         this.variance = new DenseMatrix64F(dim, dim);
+
+        addVariable(orderVariance);
 
         if (meanParameter != null) {
             addVariable(meanParameter);
@@ -123,11 +128,13 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 
     public int getOrder() { return order; }
 
+    public Parameter getOrderVariance() { return orderVariance; }
+
     List<BasisDimension> getBases() { return bases; }
 
     private void computeGramianAndVariance() {
 
-        computeAdditiveGramian(gramian, bases, order);
+        computeAdditiveGramian(gramian, bases, orderVariance);
 
         // Add variance nugget as needed
         variance.set(gramian);
@@ -338,7 +345,10 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 
     public static void computeAdditiveGramian(DenseMatrix64F gramian,
                                               List<BasisDimension> bases,
-                                              int order) {
+                                              Parameter orderVariance) {
+
+        final int order = orderVariance.getDimension();
+
         gramian.zero();
 
         final int rowDim = gramian.getNumRows();

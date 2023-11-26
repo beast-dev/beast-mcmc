@@ -359,13 +359,13 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
             final GaussianProcessKernel kernel = basis.getKernel();
             final DesignMatrix design1 = basis.getDesignMatrix1();
             final DesignMatrix design2 = basis.getDesignMatrix2();
-            final double scale = kernel.getScale(); // TODO is this term necessary?  or scale only needed at the order-level
+            final double scale = kernel.getScale();
 
             for (int i = 0; i < rowDim; ++i) {
                 for (int j = 0; j < colDim; ++j) {
                     double xi = design1.getParameterValue(i, 0); // TODO make generic dimension
                     double xj = design2.getParameterValue(j, 0); // TODO make generic dimension
-                    gramian.add(i, j, scale * kernel.getCorrelation(xi, xj));
+                    gramian.add(i, j, scale * kernel.getUnscaledCovariance(xi, xj));
                 }
             }
         }

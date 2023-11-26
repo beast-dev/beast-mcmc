@@ -36,6 +36,8 @@ public class GaussianProcessKernelParser extends AbstractXMLObjectParser {
 
     private static final String PARSER_NAME = "kernel";
     private static final String TYPE = "type";
+    private static final String SCALE = "scale";
+    private static final String LENGTH = "length";
 
     public String getParserName() { return PARSER_NAME; }
 
@@ -44,10 +46,17 @@ public class GaussianProcessKernelParser extends AbstractXMLObjectParser {
         String id = xo.hasId() ? xo.getId() : PARSER_NAME;
 
         List<Parameter> parameters = new ArrayList<>();
-        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-        if (parameter != null) {
-            parameters.add(parameter);
-        }
+
+        Parameter scale = xo.hasChildNamed(SCALE) ?
+                (Parameter) xo.getElementFirstChild(SCALE) :
+                new Parameter.Default(1.0);
+
+        Parameter length = xo.hasChildNamed(LENGTH) ?
+                (Parameter) xo.getElementFirstChild(LENGTH) :
+                new Parameter.Default(1.0);
+
+        parameters.add(scale);
+        parameters.add(length);
 
         final GaussianProcessKernel kernel;
         try {
@@ -63,7 +72,8 @@ public class GaussianProcessKernelParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TYPE),
-            new ElementRule(Parameter.class, true),
+            new ElementRule(SCALE, Parameter.class, "",  true),
+            new ElementRule(LENGTH, Parameter.class, "", true),
     };
 
     public String getParserDescription() { // TODO update

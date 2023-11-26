@@ -7,34 +7,30 @@ import dr.inference.model.Variable;
 
 import java.util.List;
 
-import static dr.math.ModifiedBesselFirstKind.bessi;
-import static dr.math.functionEval.GammaFunction.factorial;
-import static dr.math.functionEval.GammaFunction.gamma;
-
 /**
  * @author Marc A. Suchard
  * @author Filippo Monti
  */
 public interface GaussianProcessKernel {
 
-    double getCorrelation(double x, double y);
+    double getUnscaledCovariance(double x, double y);
 
     @SuppressWarnings("unused")
-    double getCorrelation(double[] x, double[] y);
+    double getUnscaledCovariance(double[] x, double[] y);
 
     double getScale();
 
-    class DotProduct extends Base {
+    class Linear extends Base {
 
-        public DotProduct(String name, List<Parameter> parameters) {
+        public Linear(String name, List<Parameter> parameters) {
             super(name, parameters);
         }
 
-        public double getCorrelation(double x, double y) {
+        public double getUnscaledCovariance(double x, double y) {
             return  x * y;
         }
 
-        public double getCorrelation(double[] x, double[] y) {
+        public double getUnscaledCovariance(double[] x, double[] y) {
             final int dim = x.length;
 
             double product = 0.0;
@@ -49,105 +45,131 @@ public interface GaussianProcessKernel {
 
     }
 
-    class RadialBasisFunction extends Base {
+    class SquaredExponential extends Base {
 
-        public RadialBasisFunction(String name, List<Parameter> parameters) {
+        public SquaredExponential(String name, List<Parameter> parameters) {
             super(name, parameters);
         }
 
         private double functionalForm(double normSquared) {
-            double length = parameters.get(0).getParameterValue(0);
+            double length = getLength();
             return Math.exp(-normSquared / (2 * length * length));
         }
 
-        public double getCorrelation(double x, double y) {
+        public double getUnscaledCovariance(double x, double y) {
             double diff = x - y;
             return functionalForm(diff * diff);
         }
 
-        public double getCorrelation(double[] x, double[] y) {
+        public double getUnscaledCovariance(double[] x, double[] y) {
             return functionalForm(normSquared(x, y));
         }
 
-        private static final String TYPE = "RadialBasisFunction";
+        private static final String TYPE = "SquaredExponential";
     }
 
-    class OrnsteinUhlenbeck extends L1Base {
+    class OrnsteinUhlenbeck extends NormedBase {
 
         public OrnsteinUhlenbeck(String name, List<Parameter> parameters) { super(name, parameters); }
 
         double functionalForm(double norm) {
-            double length = parameters.get(0).getParameterValue(0);
+            double length = getLength();
             return Math.exp(-norm / length);
         }
 
         private static final String TYPE = "OrnsteinUhlenbeck";
     }
 
-    class Matern extends L1Base {
+    class MaternFiveHalves extends NormedBase {
 
-        private final Parameter orderParameter;
-        private final int order;
-        private final double normalization;
-        private final double scale;
-
-        public Matern(String name, List<Parameter> parameters) {
-            super(name, parameters);
-            this.orderParameter = parameters.get(1);
-
-            this.order = (int) orderParameter.getParameterValue(0);
-            this.normalization = Math.pow(2, 1 - order) / factorial(order - 1);
-            this.scale = Math.sqrt(2 * order);
-        }
+        public MaternFiveHalves(String name, List<Parameter> parameters) { super(name, parameters); }
 
         double functionalForm(double norm) {
-            double length = parameters.get(0).getParameterValue(0);
-            double argument = scale * norm / length;
+            double length = getLength();
 
-            return normalization * Math.pow(argument, order) * bessi(argument, order);
+            double argument1 = Math.sqrt(5) * norm / length;
+            double argument2 = 5 * norm * norm / (3 * length * length);
+
+            return (1 + argument1 + argument2) * Math.exp(-argument1);
         }
 
-        @Override
-        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-            if (variable == orderParameter) {
-                throw new RuntimeException("Not yet implemented");
-            }
-            super.handleVariableChangedEvent(variable, index, type);
-        }
-
-        private static final String TYPE = "Matern";
+        private static final String TYPE = "Matern5/2";
     }
 
-    abstract class L1Base extends Base {
+    class MaternThreeHalves extends NormedBase {
 
-        public L1Base(String name, List<Parameter> parameters) { super(name, parameters); }
+        public MaternThreeHalves(String name, List<Parameter> parameters) { super(name, parameters); }
+
+        double functionalForm(double norm) {
+            double length = getLength();
+
+            double argument = Math.sqrt(3) * norm / length;
+
+            return (1 + argument) * Math.exp(-argument);
+        }
+
+        private static final String TYPE = "Matern3/2";
+    }
+
+    abstract class NormedBase extends Base {
+
+        public NormedBase(String name, List<Parameter> parameters) { super(name, parameters); }
 
         abstract double functionalForm(double norm);
 
-        public double getCorrelation(double x, double y) {
+        public double getUnscaledCovariance(double x, double y) {
             double norm = Math.abs(x - y);
             return functionalForm(norm);
         }
 
-        public double getCorrelation(double[] x, double[] y) {
+        public double getUnscaledCovariance(double[] x, double[] y) {
             double norm = Math.sqrt(normSquared(x, y));
             return functionalForm(norm);
         }
     }
 
+    enum AllKernels {
+        LINEAR(Linear.TYPE) {
+            GaussianProcessKernel factory(String name, List<Parameter> parameters) {
+                return new Linear(name, parameters);
+            }
+        },
+        OU(OrnsteinUhlenbeck.TYPE) {
+            GaussianProcessKernel factory(String name, List<Parameter> parameters) {
+                return new OrnsteinUhlenbeck(name, parameters);
+            }
+        },
+        SE(SquaredExponential.TYPE) {
+            GaussianProcessKernel factory(String name, List<Parameter> parameters) {
+                return new SquaredExponential(name, parameters);
+            }
+        },
+        MATERN32(MaternThreeHalves.TYPE) {
+            GaussianProcessKernel factory(String name, List<Parameter> parameters) {
+                return new MaternThreeHalves(name, parameters);
+            }
+        },
+        MATERN52(MaternFiveHalves.TYPE) {
+            GaussianProcessKernel factory(String name, List<Parameter> parameters) {
+                return new MaternFiveHalves(name, parameters);
+            }
+        };
+
+        AllKernels(String name) { this.name = name; }
+        abstract GaussianProcessKernel factory(String name, List<Parameter> parameters);
+        public String toString() { return name; }
+        private final String name;
+    }
+
     static GaussianProcessKernel factory(String type, String name, List<Parameter> parameters)
             throws IllegalArgumentException {
-        if (type.equalsIgnoreCase(DotProduct.TYPE)) {
-            return new DotProduct(name, parameters);
-        } else if (type.equalsIgnoreCase(RadialBasisFunction.TYPE)) {
-            return new RadialBasisFunction(name, parameters);
-        } else if (type.equalsIgnoreCase(Matern.TYPE)) {
-            return new Matern(name, parameters);
-        } else if (type.equalsIgnoreCase(OrnsteinUhlenbeck.TYPE)) {
-            return new OrnsteinUhlenbeck(name, parameters);
-        } else {
-            throw new IllegalArgumentException("Unknown kernel type");
+
+        for (AllKernels kernel : AllKernels.values()) {
+            if (type.equalsIgnoreCase(kernel.toString())) {
+                return kernel.factory(name, parameters);
+            }
         }
+        throw new IllegalArgumentException("Unknown kernel type");
     }
 
     abstract class Base extends AbstractModel implements GaussianProcessKernel {
@@ -179,8 +201,11 @@ public interface GaussianProcessKernel {
 
         @Override
         public double getScale() {
-            return 1.0;
-            // return parameters.get(0).getParameterValue(0); // TODO
+            return parameters.get(0).getParameterValue(0);
+        }
+
+        double getLength() {
+            return parameters.get(1).getParameterValue(0);
         }
 
         @Override

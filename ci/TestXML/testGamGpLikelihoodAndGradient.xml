@@ -198,7 +198,6 @@
 		<randomFieldGradient idref="test.gradient"/>
 	</report>	
 	
-
 	<glmSubstitutionModel id="loc.model" normalize="true">
 		<generalDataType idref="loc.dataType"/>
 		<rootFrequencies>
@@ -254,7 +253,6 @@
     	Joint gradient 
     	<jointGradient idref="joint.gradient"/>
     </report>
-   
 
     <operators id="operators" optimizationSchedule="log">
         <randomWalkOperator windowSize="0.1" weight="1">
@@ -269,7 +267,8 @@
     <mcmc id="mcmc" chainLength="100000" autoOptimize="true">
         <joint id="joint"> <!-- joint, from now on a list of density -->
             <prior id="prior">
-                <gamGpModel idref="gamGpModel"/>
+<!--                 <gamGpModel idref="gamGpModel"/> -->
+				<randomField idref="test.field"/>
             </prior>
             <likelihood id="likelihood">
                 <treeLikelihood idref="treeLikelihood"/>
@@ -301,7 +300,6 @@
         </log>
     </mcmc>
 
-    <traceAnalysis fileName="test.log"/>
-
+    <traceAnalysis fileName="test.log" stdError="true"/>
 
 </beast>

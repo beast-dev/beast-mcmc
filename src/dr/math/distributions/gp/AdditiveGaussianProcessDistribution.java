@@ -57,7 +57,6 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     private final Parameter meanParameter;
     private final Parameter nuggetParameter;
     private final List<BasisDimension> bases;
-    private final RandomField.WeightProvider weightProvider;
 
     private final double[] mean;
     private final double[] tmp;
@@ -78,8 +77,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
                                                Parameter orderVariance,
                                                Parameter meanParameter,
                                                Parameter nuggetParameter,
-                                               List<BasisDimension> bases,
-                                               RandomField.WeightProvider weightProvider) {
+                                               List<BasisDimension> bases) {
         super(name);
 
         this.order = orderVariance.getDimension();
@@ -93,7 +91,6 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         this.meanParameter = meanParameter;
         this.nuggetParameter = nuggetParameter;
         this.bases = bases;
-        this.weightProvider = weightProvider;
 
         this.mean = new double[dim];
         this.tmp = new double[dim];
@@ -119,10 +116,6 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 
             addVariable(basis.getDesignMatrix1());
             addVariable(basis.getDesignMatrix2());
-        }
-
-        if (weightProvider != null) {
-            addModel(weightProvider);
         }
     }
 
@@ -336,11 +329,46 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
             this(kernel, design, design);
         }
 
+        public BasisDimension(GaussianProcessKernel kernel, RandomField.WeightProvider weights) {
+            this(kernel, makeDesignMatrixFromWeights(weights));
+        }
+
         GaussianProcessKernel getKernel() { return kernel; }
 
         DesignMatrix getDesignMatrix1() { return design1; }
 
         DesignMatrix getDesignMatrix2() { return design2; }
+
+        private static DesignMatrix makeDesignMatrixFromWeights(RandomField.WeightProvider weights) {
+
+            return new DesignMatrix("weights", false) {
+
+                @Override
+                public double getParameterValue(int row, int col) {
+                    throw new RuntimeException("Not yet implemented");
+                }
+
+                @Override
+                public int getDimension() {
+                    return weights.getDimension();
+                }
+
+                @Override
+                public int getRowDimension() {
+                    return weights.getDimension();
+                }
+
+                @Override
+                public int getColumnDimension() {
+                    return 1;
+                }
+
+                @Override
+                public Parameter getParameter(int column) {
+                    throw new IllegalArgumentException("Not allowed");
+                }
+            };
+        }
     }
 
     public static void computeAdditiveGramian(DenseMatrix64F gramian,

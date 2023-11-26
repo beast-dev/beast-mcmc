@@ -59,24 +59,30 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
         Parameter mean = xo.hasChildNamed(MEAN) ?
                 (Parameter) xo.getElementFirstChild(MEAN) : null;
 
-        RandomField.WeightProvider weights = parseWeightProvider(xo, dim);
-
         Parameter noise = xo.hasChildNamed(NOISE) ? (Parameter) xo.getElementFirstChild(NOISE) : null;
 
         String id = xo.hasId() ? xo.getId() : PARSER_NAME;
 
         List<BasisDimension> bases = parseBases(xo);
 
-        return new AdditiveGaussianProcessDistribution(id, dim, orderVariance, mean, noise, bases, weights);
+        return new AdditiveGaussianProcessDistribution(id, dim, orderVariance, mean, noise, bases);
     }
 
     private List<BasisDimension> parseBases(XMLObject xo) {
         List<BasisDimension> bases = new ArrayList<>();
         for (XMLObject cxo : xo.getAllChildren(BASIS)) {
-            bases.add(new BasisDimension(
-                    (GaussianProcessKernel) cxo.getChild(GaussianProcessKernel.class),
-                    (DesignMatrix) cxo.getChild(DesignMatrix.class)
-            ));
+            GaussianProcessKernel kernel = (GaussianProcessKernel) cxo.getChild(GaussianProcessKernel.class);
+
+            DesignMatrix design = (DesignMatrix) cxo.getChild(DesignMatrix.class);
+
+            if (design != null) {
+                bases.add(new BasisDimension(kernel, design));
+            } else {
+                RandomField.WeightProvider weights = (RandomField.WeightProvider)
+                        cxo.getChild(RandomField.WeightProvider.class);
+
+                bases.add(new BasisDimension(kernel, weights));
+            }
         }
 
         return bases;
@@ -90,9 +96,11 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
             new ElementRule(MEAN,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(BASIS, new XMLSyntaxRule[] {
-                    new ElementRule(DesignMatrix.class),
-                    // TODO parse kernel
-                    }, 0, Integer.MAX_VALUE),
+                    new XORRule(
+                            new ElementRule(DesignMatrix.class),
+                            new ElementRule(RandomField.WeightProvider.class)),
+                    new ElementRule(GaussianProcessKernel.class),
+                    }, 1, Integer.MAX_VALUE),
             new ElementRule(NOISE, Parameter.class, "", true),
             WEIGHTS_RULE,
     };

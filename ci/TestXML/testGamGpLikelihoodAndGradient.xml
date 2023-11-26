@@ -159,30 +159,30 @@
 	            <gaussianNoise>
     	            <parameter idref="loc.noise"/>
 	            </gaussianNoise>		
-				<bases>
+				<basis>
 					<designMatrix idref="loc.designMatrix0"/>
 					<kernel type="dotProduct"/>
-				</bases>
-				<bases>
+				</basis>
+				<basis>
 					<designMatrix idref="loc.designMatrix1"/>
 					<kernel type="dotProduct"/>
-				</bases>
-				<bases>
+				</basis>
+				<basis>
 					<designMatrix idref="loc.designMatrix2"/>
 					<kernel type="dotProduct"/>
-				</bases>
-				<bases>
+				</basis>
+				<basis>
 					<designMatrix idref="loc.designMatrix3"/>
 					<kernel type="dotProduct"/>
-				</bases>												
-				<bases>
+				</basis>												
+				<basis>
 					<designMatrix idref="loc.designMatrix4"/>
 					<kernel type="dotProduct"/>
-				</bases>
-				<bases>
+				</basis>
+				<basis>
 					<designMatrix idref="loc.designMatrix5"/>
 					<kernel type="dotProduct"/>
-				</bases>								
+				</basis>								
 			</gaussianProcessField>		
 		</distribution>
 	</randomField>
@@ -244,6 +244,16 @@
     <report>
     	<approximateLogCtmcRateGradient idref="gradient1"/>
     </report>
+    
+    <jointGradient id="joint.gradient">
+    	 <approximateLogCtmcRateGradient idref="gradient1"/>
+    	 <randomFieldGradient idref="test.gradient"/>		
+    </jointGradient>
+    
+    <report>
+    	Joint gradient 
+    	<jointGradient idref="joint.gradient"/>
+    </report>
    
 
     <operators id="operators" optimizationSchedule="log">
@@ -292,5 +302,6 @@
     </mcmc>
 
     <traceAnalysis fileName="test.log"/>
+
 
 </beast>

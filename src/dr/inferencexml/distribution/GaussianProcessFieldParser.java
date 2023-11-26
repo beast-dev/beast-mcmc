@@ -45,7 +45,7 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
     private static final String DIMENSION = "dim";
     private static final String ORDER_VARIANCE = "orderVariance";
     private static final String MEAN = "mean";
-    private static final String BASES = "bases";
+    private static final String BASIS = "basis";
     private static final String NOISE = "gaussianNoise";
 
     public String getParserName() { return PARSER_NAME; }
@@ -72,7 +72,7 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
 
     private List<BasisDimension> parseBases(XMLObject xo) {
         List<BasisDimension> bases = new ArrayList<>();
-        for (XMLObject cxo : xo.getAllChildren(BASES)) {
+        for (XMLObject cxo : xo.getAllChildren(BASIS)) {
             bases.add(new BasisDimension(
                     (GaussianProcessKernel) cxo.getChild(GaussianProcessKernel.class),
                     (DesignMatrix) cxo.getChild(DesignMatrix.class)
@@ -89,7 +89,7 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
             new ElementRule(ORDER_VARIANCE, Parameter.class),
             new ElementRule(MEAN,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
-            new ElementRule(BASES, new XMLSyntaxRule[] {
+            new ElementRule(BASIS, new XMLSyntaxRule[] {
                     new ElementRule(DesignMatrix.class),
                     // TODO parse kernel
                     }, 0, Integer.MAX_VALUE),

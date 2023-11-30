@@ -227,11 +227,6 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     }
 
     @Override
-    public GradientProvider getGradientWrt(Parameter parameter) {
-        throw new RuntimeException("Unknown parameter");
-    }
-
-    @Override
     public String getType() {
         return TYPE;
     }
@@ -312,6 +307,41 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 
     @Override
     protected void acceptState() { }
+
+    @Override
+    public GradientProvider getGradientWrt(Parameter parameter) {
+        if (parameter == meanParameter) {
+            return new GradientProvider() {
+                @Override
+                public int getDimension() {
+                    return meanParameter.getDimension();
+                }
+
+                @Override
+                public double[] getGradientLogDensity(Object x) {
+
+                    double[] gradient = gradLogPdf((double[]) x, getMean(), getPrecision());
+
+                    if (meanParameter.getDimension() == dim) {
+                        for (int i = 0; i < dim; ++i) {
+                            gradient[i] *= -1;
+                        }
+                        return gradient;
+                    } else if (meanParameter.getDimension() == 1) {
+                        double sum = 0.0;
+                        for (int i = 0; i < dim; ++i) {
+                            sum += gradient[i];
+                        }
+                        return new double[]{sum}; // TODO should this be -sum?
+                    }
+
+                    throw new IllegalArgumentException("Unknown mean parameter structure");
+                }
+            };
+        } else {
+            throw new RuntimeException("Unknown parameter");
+        }
+    }
 
     public static class BasisDimension {
 

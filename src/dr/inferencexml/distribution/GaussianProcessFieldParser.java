@@ -37,7 +37,6 @@ import java.util.List;
 
 import static dr.math.distributions.gp.AdditiveGaussianProcessDistribution.BasisDimension;
 import static dr.inferencexml.distribution.RandomFieldParser.WEIGHTS_RULE;
-import static dr.inferencexml.distribution.RandomFieldParser.parseWeightProvider;
 
 public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
 

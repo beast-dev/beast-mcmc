@@ -496,8 +496,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         double[] offDiagonal;
 
         SymmetricTriDiagonalMatrix(int dim) {
-            this.diagonal = new double[dim];
-            this.offDiagonal = new double[dim - 1];
+            this(new double[dim], new double[dim - 1]);
         }
 
         SymmetricTriDiagonalMatrix(double[] diagonal, double[] offDiagonal) {

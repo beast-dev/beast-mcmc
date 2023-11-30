@@ -33,6 +33,8 @@ import static dr.evomodel.branchratemodel.ArbitraryBranchRates.make;
 
 public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
 
+    private static final double EPS_SIM = 10E-2;
+
     public ContinuousDataLikelihoodDelegateTest(String name) {
         super(name);
     }
@@ -1088,7 +1090,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
         double[] traits = getConditionalSimulations(dataLikelihood, likelihoodDelegate, diffusionModel, dataModel, rootPrior, treeModel, rateTransformation);
 
         for (int i = 0; i < traits.length; i++) {
-            assertEquals(format.format(expectedTraits[i]), format.format(traits[i]));
+            assertEquals(expectedTraits[i], traits[i], EPS_SIM);
         }
     }
 

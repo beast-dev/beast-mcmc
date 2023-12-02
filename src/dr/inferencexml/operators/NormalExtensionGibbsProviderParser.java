@@ -12,8 +12,8 @@ import dr.xml.*;
 
 public class NormalExtensionGibbsProviderParser extends AbstractXMLObjectParser {
 
-    private static final String TREE_TRAIT_NAME = "treeTraitName";
     private static final String NORMAL_EXTENSION = "normalExtension";
+    private static final String TREE_TRAIT = "treeTraitName";
 
 
     @Override
@@ -23,14 +23,20 @@ public class NormalExtensionGibbsProviderParser extends AbstractXMLObjectParser 
 
         TreeDataLikelihood likelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
 
-        return new GammaGibbsProvider.NormalExtensionGibbsProvider(dataModel, likelihood);
+        String traitName = null;
+        if (xo.hasAttribute(TREE_TRAIT)) {
+            traitName = xo.getStringAttribute(TREE_TRAIT);
+        }
+
+        return new GammaGibbsProvider.NormalExtensionGibbsProvider(dataModel, likelihood, traitName);
     }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
                 new ElementRule(ModelExtensionProvider.NormalExtensionProvider.class),
-                new ElementRule(TreeDataLikelihood.class)
+                new ElementRule(TreeDataLikelihood.class),
+                AttributeRule.newStringRule(TREE_TRAIT, true)
         };
     }
 

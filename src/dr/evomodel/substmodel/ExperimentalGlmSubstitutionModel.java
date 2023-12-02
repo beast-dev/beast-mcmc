@@ -26,7 +26,7 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
-import dr.inference.glm.GeneralizedLinearModel;
+import dr.inference.glm.ExperimentalGeneralizedLinearModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Likelihood;
@@ -39,10 +39,10 @@ import java.util.*;
 /**
  * @author Marc A. Suchard
  */
-public class GLMSubstitutionModel extends ComplexSubstitutionModel {
+public class ExperimentalGlmSubstitutionModel extends ComplexSubstitutionModel {
 
-    public GLMSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
-                                GeneralizedLinearModel glm) {
+    public ExperimentalGlmSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
+                                            ExperimentalGeneralizedLinearModel glm) {
 
         super(name, dataType, rootFreqModel, null);
         this.glm = glm;
@@ -94,7 +94,7 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
         return Double.NEGATIVE_INFINITY;
     }
 
-    public GeneralizedLinearModel getGeneralizedLinearModel() { return glm; }
+    public ExperimentalGeneralizedLinearModel getGeneralizedLinearModel() { return glm; }
 
     @Override
     public String getDescription() {
@@ -111,6 +111,6 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
         return Collections.singletonList(CommonCitations.LEMEY_2014_UNIFYING);
     }
 
-    private GeneralizedLinearModel glm;
+    private ExperimentalGeneralizedLinearModel glm;
     private double[] testProbabilities;    
 }

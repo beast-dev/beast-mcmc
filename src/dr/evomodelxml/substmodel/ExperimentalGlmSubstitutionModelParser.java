@@ -27,17 +27,17 @@ package dr.evomodelxml.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.GLMSubstitutionModel;
+import dr.evomodel.substmodel.ExperimentalGlmSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evoxml.util.DataTypeUtils;
-import dr.inference.glm.GeneralizedLinearModel;
+import dr.inference.glm.ExperimentalGeneralizedLinearModel;
 import dr.xml.*;
 
 /**
  * @author Marc A. Suchard
  */
 
-public class GLMSubstitutionModelParser extends AbstractXMLObjectParser {
+public class ExperimentalGlmSubstitutionModelParser extends AbstractXMLObjectParser {
 
     public static final String GLM_SUBSTITUTION_MODEL = "glmSubstitutionModelNew";
 
@@ -55,7 +55,7 @@ public class GLMSubstitutionModelParser extends AbstractXMLObjectParser {
         int rateCount = (dataType.getStateCount() - 1) * dataType.getStateCount();
 
         // Should be constructed as a log-linear model
-        GeneralizedLinearModel glm = (GeneralizedLinearModel) xo.getChild(GeneralizedLinearModel.class);
+        ExperimentalGeneralizedLinearModel glm = (ExperimentalGeneralizedLinearModel) xo.getChild(ExperimentalGeneralizedLinearModel.class);
         // LogLinearModel glm = (LogLinearModel) xo.getChild(GeneralizedLinearModel.class);
 
         int length = glm.getXBeta().length;
@@ -71,7 +71,7 @@ public class GLMSubstitutionModelParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its rootFrequencyModel.");
         }
 
-        return new GLMSubstitutionModel(xo.getId(), dataType, rootFreq, glm);
+        return new ExperimentalGlmSubstitutionModel(xo.getId(), dataType, rootFreq, glm);
     }
 
     //************************************************************************
@@ -97,7 +97,7 @@ public class GLMSubstitutionModelParser extends AbstractXMLObjectParser {
                     new ElementRule(DataType.class)
             ),
             new ElementRule(ComplexSubstitutionModelParser.ROOT_FREQUENCIES, FrequencyModel.class),
-            new ElementRule(GeneralizedLinearModel.class),
+            new ElementRule(ExperimentalGeneralizedLinearModel.class),
     };
 
 }

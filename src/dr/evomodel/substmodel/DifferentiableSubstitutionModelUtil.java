@@ -28,30 +28,33 @@ package dr.evomodel.substmodel;
 import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
+import dr.math.matrixAlgebra.WrappedVector;
 
 /**
  * @author Marc A. Suchard
  * @author Xiang Ji
+ * @author Andrew Holbrook
  */
 public class DifferentiableSubstitutionModelUtil {
 
     static double[] getApproximateDifferentialMassMatrix(double time,
-                                                         int stateCount,
-                                                         WrappedMatrix differentialMassMatrix,
-                                                         EigenDecomposition eigenDecomposition) {
+                                                         WrappedMatrix differentialMassMatrix) {
 
-        double[] outputArray = new double[stateCount * stateCount];
+        final int dim = differentialMassMatrix.getDim();
 
-        for (int i = 0, length = stateCount * stateCount; i < length; ++i) {
+        double[] outputArray = new double[dim];
+
+        for (int i = 0; i < dim; ++i) {
             outputArray[i] = time * differentialMassMatrix.get(i);
         }
         return outputArray;
     }
 
     static double[] getExactDifferentialMassMatrix(double time,
-                                                   int stateCount,
                                                    WrappedMatrix differentialMassMatrix,
                                                    EigenDecomposition eigenDecomposition) {
+        
+        final int stateCount = differentialMassMatrix.getMajorDim();
 
         double[] eigenValues = eigenDecomposition.getEigenValues();
         WrappedMatrix eigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getEigenVectors(), 0, stateCount, stateCount);
@@ -80,6 +83,49 @@ public class DifferentiableSubstitutionModelUtil {
         }
 
         return outputArray;
+    }
+
+    static double[] getAffineDifferentialMassMatrix(double time,
+                                                    WrappedMatrix differentialMassMatrix,
+                                                    EigenDecomposition ed) {
+
+        double[] differentials = getApproximateDifferentialMassMatrix(time, differentialMassMatrix);
+
+        final int stateCount = differentialMassMatrix.getMajorDim();
+        assert (stateCount == differentialMassMatrix.getMinorDim()) ;
+
+        double[] correction = new double[stateCount * stateCount];
+
+        int index = findZeroEigenvalueIndex(ed.getEigenValues(), stateCount);
+
+        double[] eigenVectors = ed.getEigenVectors();
+        double[] inverseEigenVectors = ed.getInverseEigenVectors();
+
+        double[] qQPlus = getQQPlus(eigenVectors, inverseEigenVectors, index, stateCount);
+        double[] oneMinusQPlusQ = getOneMinusQPlusQ(qQPlus, stateCount);
+
+        double[] tmp = new double[stateCount * stateCount];
+        multiply(tmp, oneMinusQPlusQ, differentials, 1.0, stateCount);
+        multiply(correction, tmp, qQPlus, 1.0, stateCount);
+
+        for (int i = 0; i < differentials.length; ++i) {
+            differentials[i] -= correction[i];
+        }
+
+        return differentials;
+    }
+    
+    private static void multiply(double[] result, double[] left, double[] right, double scale, int stateCount) {
+
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                double entry = 0.0;
+                for (int k = 0; k < stateCount; ++k) {
+                    entry += left[i * stateCount + k] * right[k * stateCount + j];
+                }
+                result[i * stateCount + j] = scale * entry;
+            }
+        }
     }
 
     private static void setZeros(WrappedMatrix matrix) {
@@ -233,5 +279,127 @@ public class DifferentiableSubstitutionModelUtil {
         }
 
         return result;
+    }
+
+
+    private static int findZeroEigenvalueIndex(double[] eigenvalues, int stateCount) {
+        for (int i = 0; i < stateCount; ++i) {
+            if (eigenvalues[i] == 0) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static double[] getOneMinusQPlusQ(double[] qQPlus, int stateCount) {
+        double[] result = new double[stateCount * stateCount];
+
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                if (i == j) {
+                    result[index12(i, j, stateCount)] = 1.0 - qQPlus[index12(i, j, stateCount)];
+                } else {
+                    result[index12(i, j, stateCount)] = - qQPlus[index12(i, j, stateCount)];
+                }
+            }
+        }
+
+        return result;
+    }
+
+    public static double[] getQQPlus(double[] eigenVectors, double[] inverseEigenVectors, int index, int stateCount) {
+
+        double[] result = new double[stateCount * stateCount];
+
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < stateCount; ++k) {
+                    if (k != index) {
+                        sum += eigenVectors[i * stateCount + k] * inverseEigenVectors[k * stateCount + j];
+                    }
+                }
+                result[i * stateCount + j] = sum;
+            }
+        }
+
+//        double[] reduced = new double[stateCount];
+//        for (int j = 0; j < stateCount; ++j) {
+//            double sum = 0.0;
+//            for (int k = 0; k < stateCount; ++k) {
+//                if (k != index) {
+//                    sum += eigenVectors[k] * inverseEigenVectors[k * stateCount + j];
+//                }
+//            }
+//            reduced[j] = sum;
+//        }
+//        reduced[0] -=1;
+
+        // TODO Determine the stateCount unique values and just return them
+
+        return result;
+    }
+
+    public static double[] getQQPlus(final double[] eigenVectors,
+                                     final double[] inverseEigenVectors,
+                                     final double[] eigenValues,
+                                     final int stateCount) {
+
+        double[] result = new double[stateCount * stateCount];
+
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < stateCount; ++k) {
+                    if (eigenValues[k] != 0.0) {
+                        sum += eigenVectors[i * stateCount + k] * inverseEigenVectors[k * stateCount + j];
+                    }
+                }
+                result[i * stateCount + j] = sum;
+            }
+        }
+
+        double[] reduced = new double[stateCount];
+        for (int j = 0; j < stateCount; ++j) {
+            double sum = 0.0;
+            for (int k = 0; k < stateCount; ++k) {
+                if (eigenValues[k] != 0.0) {
+                    sum += eigenVectors[k] * inverseEigenVectors[k * stateCount + j];
+                }
+            }
+            reduced[j] = sum;
+        }
+        reduced[0] -=1;
+
+        // TODO Determine the stateCount unique values and just return them
+
+        return result;
+    }
+
+//    public static double[] getQPlusQ(double[] eigenVectors, double[] inverseEigenVectors, int index, int stateCount) {
+//
+//        double[] result = new double[stateCount * stateCount];
+//
+//        for (int i = 0; i < stateCount; ++i) {
+//            for (int j = 0; j < stateCount; ++j) {
+//                double sum = 0.0;
+//                for (int k = 0; k < stateCount; ++k) {
+//                    if (k != index) {
+//                        sum += inverseEigenVectors[i * stateCount + k] * eigenVectors[k * stateCount + j];
+//                    }
+//                }
+//                result[i * stateCount + j] = sum;
+//            }
+//        }
+//
+//        return result;
+//    }
+
+    private static int index12(int i, int j, int stateCount) {
+        return i * stateCount + j;
+    }
+
+    private static int index21(int i, int j, int stateCount) {
+        return j * stateCount + i;
     }
 }

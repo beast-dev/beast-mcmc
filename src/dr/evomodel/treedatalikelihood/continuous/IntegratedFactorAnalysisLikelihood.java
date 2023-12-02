@@ -228,6 +228,16 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     @Override
+    public boolean usesMissingIndices() {
+        return true;
+    }
+
+    @Override
+    public ContinuousTraitPartialsProvider[] getChildModels() {
+        return new ContinuousTraitPartialsProvider[0]; // LFM is not currently extendible
+    }
+
+    @Override
     public boolean getDefaultAllowSingular() {
         return true;
     }
@@ -248,7 +258,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             logLikelihood = calculateLogLikelihood();
             likelihoodKnown = true;
         }
-        return logLikelihood;
+        return 0;
     }
 
     @Override
@@ -694,6 +704,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         unwrap(precision, partials, partialsOffset + numFactors); //TODO: use PrecisionType.fillPrecisionInPartials()
         precisionType.fillEffDimInPartials(partials, partialsOffset, effDim, numFactors);
         precisionType.fillDeterminantInPartials(partials, partialsOffset, factorLogDeterminant, numFactors);
+        precisionType.fillRemainderInPartials(partials, partialsOffset, constant, numFactors);
 
         if (STORE_VARIANCE) {
             safeInvert2(precision, variance, true);

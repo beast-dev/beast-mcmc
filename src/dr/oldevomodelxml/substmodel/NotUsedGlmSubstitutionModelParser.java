@@ -27,7 +27,7 @@ package dr.oldevomodelxml.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.oldevomodel.substmodel.FrequencyModel;
-import dr.oldevomodel.substmodel.GLMSubstitutionModel;
+import dr.oldevomodel.substmodel.NotUsedGlmSubstitutionModel;
 import dr.oldevomodel.substmodel.SubstitutionModel;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.distribution.GeneralizedLinearModel;
@@ -36,7 +36,7 @@ import dr.xml.*;
 
 /**
  */
-public class GLMSubstitutionModelParser extends AbstractXMLObjectParser {
+public class NotUsedGlmSubstitutionModelParser extends AbstractXMLObjectParser {
 
     public static final String GLM_SUBSTITUTION_MODEL = "glmSubstitutionModel";
 
@@ -68,7 +68,7 @@ public class GLMSubstitutionModelParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its rootFrequencyModel.");
         }
 
-        return new GLMSubstitutionModel(xo.getId(), dataType, rootFreq, glm);
+        return new NotUsedGlmSubstitutionModel(xo.getId(), dataType, rootFreq, glm);
     }
 
     //************************************************************************

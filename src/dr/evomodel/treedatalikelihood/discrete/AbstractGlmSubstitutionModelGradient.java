@@ -25,28 +25,16 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
-import dr.evomodel.branchmodel.BranchModel;
-import dr.evomodel.substmodel.OldGLMSubstitutionModel;
-import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.distribution.GeneralizedLinearModel;
-import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.CompoundParameter;
-import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Author;
-import dr.util.Citable;
 import dr.util.Citation;
-import dr.xml.Reportable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,64 +44,24 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
-@SuppressWarnings("deprecation")
-public abstract class AbstractGlmSubstitutionModelGradient implements GradientWrtParameterProvider, Reportable,
-        Loggable, Citable {
+public abstract class AbstractGlmSubstitutionModelGradient extends AbstractLogAdditiveSubstitutionModelGradient {
 
-    protected final TreeDataLikelihood treeDataLikelihood;
-    protected final TreeTrait treeTraitProvider;
-    protected final Tree tree;
-
-    protected final OldGLMSubstitutionModel substitutionModel;
     protected final GeneralizedLinearModel glm;
-    protected final int stateCount;
-
     private final ParameterMap parameterMap;
-    private final int whichSubstitutionModel;
 
     public AbstractGlmSubstitutionModelGradient(String traitName,
                                                 TreeDataLikelihood treeDataLikelihood,
                                                 BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                OldGLMSubstitutionModel substitutionModel) {
+                                                GlmSubstitutionModel substitutionModel,
+                                                ApproximationMode mode) {
 
-        this.treeDataLikelihood = treeDataLikelihood;
-        this.tree = treeDataLikelihood.getTree();
-        this.substitutionModel = substitutionModel;
+        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel, mode);
         this.glm = substitutionModel.getGeneralizedLinearModel();
         this.parameterMap = makeParameterMap(glm);
-        this.stateCount = substitutionModel.getDataType().getStateCount();
-        this.whichSubstitutionModel = determineSubstitutionNumber(
-                likelihoodDelegate.getBranchModel(), substitutionModel);
-
-        String name = SubstitutionModelCrossProductDelegate.getName(traitName);
-
-        if (treeDataLikelihood.getTreeTrait(name) == null) {
-            ProcessSimulationDelegate gradientDelegate = new SubstitutionModelCrossProductDelegate(traitName,
-                    treeDataLikelihood.getTree(),
-                    likelihoodDelegate,
-                    treeDataLikelihood.getBranchRateModel(),
-                    substitutionModel.getDataType().getStateCount());
-            TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
-            treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
-        }
-
-        treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
-        assert (treeTraitProvider != null);
     }
 
+    @SuppressWarnings("unused")
     String getType() { return "fixed"; }
-
-    private int determineSubstitutionNumber(BranchModel branchModel,
-                                            OldGLMSubstitutionModel substitutionModel) {
-
-        List<SubstitutionModel> substitutionModels = branchModel.getSubstitutionModels();
-        for (int i = 0; i < substitutionModels.size(); ++i) {
-            if (substitutionModel == substitutionModels.get(i)) {
-                return i;
-            }
-        }
-        throw new IllegalArgumentException("Unknown substitution model");
-    }
 
     ParameterMap makeParameterMap(GeneralizedLinearModel glm) {
 
@@ -152,66 +100,12 @@ public abstract class AbstractGlmSubstitutionModelGradient implements GradientWr
     }
 
     @Override
-    public Likelihood getLikelihood() {
-        return treeDataLikelihood;
-    }
-
-    @Override
     public Parameter getParameter() {
         return parameterMap.getParameter();
     }
 
-    @Override
-    public int getDimension() {
-        return getParameter().getDimension();
-    }
-
-    @Override
-    public double[] getGradientLogDensity() {
-
-        long startTime;
-        if (COUNT_TOTAL_OPERATIONS) {
-            startTime = System.nanoTime();
-        }
-
-        double[] differentials = (double[]) treeTraitProvider.getTrait(tree, null);
-        double[] generator = new double[differentials.length];
-
-        if (whichSubstitutionModel > 0) {
-            final int length = stateCount * stateCount;
-            System.arraycopy(
-                    differentials, whichSubstitutionModel * length,
-                    differentials, 0, length);
-        }
-
-        if (DEBUG_CROSS_PRODUCTS) {
-            savedDifferentials = differentials.clone();
-        }
-
-        substitutionModel.getInfinitesimalMatrix(generator);
-        double[] pi = substitutionModel.getFrequencyModel().getFrequencies();
-
-        double normalizationConstant = preProcessNormalization(differentials, generator,
-                substitutionModel.getNormalization());
-
-        final double[] gradient = new double[getParameter().getDimension()];
-        for (int i = 0; i < getParameter().getDimension(); ++i) {
-            gradient[i] = processSingleGradientDimension(i, differentials, generator, pi,
-                    substitutionModel.getNormalization(),
-                    normalizationConstant);
-        }
-
-        if (COUNT_TOTAL_OPERATIONS) {
-            ++gradientCount;
-            long endTime = System.nanoTime();
-            totalGradientTime += (endTime - startTime) / 1000000;
-        }
-
-        return gradient;
-    }
-
-    double preProcessNormalization(double[] differentials, double[] generator,
-                                   boolean normalize) {
+    protected double preProcessNormalization(double[] differentials, double[] generator,
+                                             boolean normalize) {
         return 0.0;
     }
 
@@ -223,7 +117,7 @@ public abstract class AbstractGlmSubstitutionModelGradient implements GradientWr
         return calculateCovariateDifferential(generator, differentials, covariate, pi, normalize);
     }
 
-    private double calculateCovariateDifferential(double[] generator, double[] differential,
+    private double calculateCovariateDifferential(double[] generator, double[] crossProduct,
                                                   double[] covariate, double[] pi,
                                                   boolean doNormalization) {
 
@@ -237,10 +131,15 @@ public abstract class AbstractGlmSubstitutionModelGradient implements GradientWr
                 double xij = covariate[k++];
                 double element = xij * generator[index(i,j)];
 
-                total += differential[index(i,j)] * element;
-                total -= differential[index(i,i)] * element;
+                if (element != 0.0) {
+                    total += crossProduct[index(i, j)] * element;
+                    total -= crossProduct[index(i, i)] * element;
 
-                normalization += element * pi[i];
+                    total += correction(i, j, crossProduct) * element;
+                    total -= correction(i, i, crossProduct) * element;
+
+                    normalization += element * pi[i];
+                }
             }
         }
 
@@ -250,17 +149,22 @@ public abstract class AbstractGlmSubstitutionModelGradient implements GradientWr
                 double xij = covariate[k++];
                 double element = xij * generator[index(i,j)];
 
-                total += differential[index(i,j)] * element;
-                total -= differential[index(i,i)] * element;
+                if (element != 0.0) {
+                    total += crossProduct[index(i, j)] * element;
+                    total -= crossProduct[index(i, i)] * element;
 
-                normalization += element * pi[i];
+                    total += correction(i, j, crossProduct) * element;
+                    total -= correction(i, j, crossProduct) * element;
+
+                    normalization += element * pi[i];
+                }
             }
         }
 
         if (doNormalization) {
             for (int i = 0; i < stateCount; ++i) {
                 for (int j = 0; j < stateCount; ++j) {
-                    total -= differential[index(i,j)] * generator[index(i,j)] * normalization;
+                    total -= crossProduct[index(i,j)] * generator[index(i,j)] * normalization;
                 }
             }
         }
@@ -271,44 +175,6 @@ public abstract class AbstractGlmSubstitutionModelGradient implements GradientWr
     int index(int i, int j) {
         return i * stateCount + j;
     }
-
-    Double getReportTolerance() {
-        return null;
-    }
-
-    @Override
-    public String getReport() {
-
-        StringBuilder sb = new StringBuilder();
-
-        String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, getReportTolerance());
-        sb.append(message);
-
-        if (DEBUG_CROSS_PRODUCTS) {
-            sb.append("\n\tdifferentials: ").append(new WrappedVector.Raw(savedDifferentials, 0, savedDifferentials.length));
-        }
-
-        if (COUNT_TOTAL_OPERATIONS) {
-            sb.append("\n\tgetCrossProductGradientCount = ").append(gradientCount);
-            sb.append("\n\taverageGradientTime = ");
-            if (gradientCount > 0) {
-                sb.append(totalGradientTime / gradientCount);
-            } else {
-                sb.append("NA");
-            }
-            sb.append("\n");
-        }
-
-        return  sb.toString();
-    }
-
-    private static final boolean COUNT_TOTAL_OPERATIONS = false;
-    private static final boolean DEBUG_CROSS_PRODUCTS = false;
-
-    private double[] savedDifferentials;
-
-    private long gradientCount = 0;
-    private long totalGradientTime = 0;
 
     @Override
     public LogColumn[] getColumns() {
@@ -332,11 +198,18 @@ public abstract class AbstractGlmSubstitutionModelGradient implements GradientWr
 
     private static final Citation CITATION = new Citation(
             new Author[]{
-                    new Author( "A", "Magee"),
+                    new Author( "AF", "Magee"),
+                    new Author( "AJ", "Holbrook"),
+                    new Author( "JE", "Pekar"),
+                    new Author( "IW", "Caviedes-Solis"),
+                    new Author( "FA", "Matsen"),
+                    new Author( "G", "Baele"),
+                    new Author( "JO", "Wertheim"),
+                    new Author( "X", "Ji"),
                     new Author("P", "Lemey"),
                     new Author("MA", "Suchard"),
             },
-            "Phylo-geographic GLM random effects",
+            "Random-effects substitution models for phylogenetics via scalable gradient approximations",
             "",
             Citation.Status.IN_PREPARATION);
 

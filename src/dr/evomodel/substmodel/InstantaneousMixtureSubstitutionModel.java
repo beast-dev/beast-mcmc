@@ -1,18 +1,8 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
-import dr.evomodel.substmodel.codon.GY94CodonModel;
-import dr.inference.glm.GeneralizedLinearModel;
-import dr.inference.loggers.LogColumn;
-import dr.inference.model.BayesianStochasticSearchVariableSelection;
-import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.math.matrixAlgebra.Vector;
-import dr.util.Citation;
-import dr.util.CommonCitations;
 
-import javax.xml.crypto.Data;
-import java.util.Collections;
 import java.util.List;
 
 public class InstantaneousMixtureSubstitutionModel extends ComplexSubstitutionModel implements ParameterReplaceableSubstitutionModel {

@@ -42,12 +42,12 @@ import java.util.*;
 /**
  * @author Marc A. Suchard
  */
-@Deprecated
-public class OldGLMSubstitutionModel extends ComplexSubstitutionModel
-        implements ParameterReplaceableSubstitutionModel, DifferentiableSubstitutionModel{
 
-    public OldGLMSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
-                                   LogLinearModel glm) {
+public class GlmSubstitutionModel extends ComplexSubstitutionModel
+        implements ParameterReplaceableSubstitutionModel, DifferentiableSubstitutionModel {
+
+    public GlmSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
+                                LogAdditiveCtmcRateProvider glm) {
 
         super(name, dataType, rootFreqModel, null);
         this.glm = glm;
@@ -56,7 +56,12 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel
 
     }
 
-    public GeneralizedLinearModel getGeneralizedLinearModel() { return glm; }
+    public GeneralizedLinearModel getGeneralizedLinearModel() {
+        if (glm instanceof GeneralizedLinearModel) {
+            return (GeneralizedLinearModel) glm;
+        }
+        throw new RuntimeException("Not yet implemented");
+    }
 
     protected void setupRelativeRates(double[] rates) {
         System.arraycopy(glm.getXBeta(),0,rates,0,rates.length);
@@ -71,9 +76,9 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel
         if (model == glm) {
             updateMatrix = true;
             fireModelChanged();
+        } else {
+            super.handleModelChangedEvent(model, object, index);
         }
-        else
-            super.handleModelChangedEvent(model,object,index);
     }
 
     public LogColumn[] getColumns() {
@@ -111,14 +116,14 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel
         return Collections.singletonList(CommonCitations.LEMEY_2014_UNIFYING);
     }
 
-    private final LogLinearModel glm;
+    private final LogAdditiveCtmcRateProvider glm;
     private final double[] testProbabilities;
 
     @Override
     public ParameterReplaceableSubstitutionModel factory(List<Parameter> oldParameters, List<Parameter> newParameters) {
 
-        LogLinearModel newGLM = glm.factory(oldParameters, newParameters);
-        return new OldGLMSubstitutionModel(getModelName(), dataType, freqModel, newGLM);
+        LogLinearModel newGLM = ((LogLinearModel)glm).factory(oldParameters, newParameters);
+        return new GlmSubstitutionModel(getModelName(), dataType, freqModel, newGLM);
     }
 
     @Override
@@ -200,11 +205,11 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel
     @Override
     public DifferentialMassProvider.DifferentialWrapper.WrtParameter factory(Parameter parameter, int dim) {
 
-        final int effectIndex = glm.getEffectNumber(parameter);
+        final int effectIndex = ((LogLinearModel)glm).getEffectNumber(parameter);
         if (effectIndex == -1) {
             throw new RuntimeException("Only implemented for single dimensions, break up beta to one for each block for now please.");
         }
-        return new WrtOldGLMSubstitutionModelParameter(glm, effectIndex, dim, stateCount);
+        return new WrtOldGLMSubstitutionModelParameter((LogLinearModel) glm, effectIndex, dim, stateCount);
     }
 
 //    @Override
@@ -233,19 +238,11 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel
     @Override
     public double getWeightedNormalizationGradient(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[][] differentialMassMatrix, double[] differentialFrequencies) {
         double derivative = 0;
-//        double[] frequencies = getFrequencyModel().getFrequencies();
-//        for (int i = 0; i < stateCount; i++) {
-//            double currentRow = 0;
-//            for (int j = 0; j < stateCount; j++) {
-//                if (i != j) {
-//                    currentRow +=differentialMassMatrix[i][j];
-//                }
-//            }
-//            derivative += currentRow * frequencies[i];
-//        }
-//        return derivative;
-        for (int i = 0; i < stateCount; ++i) {
-            derivative -= differentialMassMatrix[i][i] * getFrequencyModel().getFrequency(i);
+
+        if (getNormalization()) {
+            for (int i = 0; i < stateCount; ++i) {
+                derivative -= differentialMassMatrix[i][i] * getFrequencyModel().getFrequency(i);
+            }
         }
         return derivative;
     }

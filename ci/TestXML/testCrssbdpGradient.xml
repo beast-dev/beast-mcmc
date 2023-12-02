@@ -46,7 +46,7 @@
 	<!-- ########## -->
 
 	<!--full model-->
-	<newBirthDeathSerialSampling id="bdss1" units="years" conditionOnSurvival="false">
+	<newBirthDeathSerialSampling id="bdss1" units="years" conditionOnSurvival="true">
 		<birthRate>
 			<parameter id="bdss1.birthRate" value="8.472" lower="0.0"/>
 		</birthRate>
@@ -130,7 +130,7 @@
 	<!-- ########## -->
 
 	<!-- rho = 1 case -->
-	<newBirthDeathSerialSampling id="bdss2" units="years" conditionOnSurvival="false">
+	<newBirthDeathSerialSampling id="bdss2" units="years" conditionOnSurvival="true">
 		<birthRate>
 			<parameter id="bdss2.birthRate" value="8.472" lower="0.0"/>
 		</birthRate>
@@ -211,7 +211,7 @@
 	<!-- ########## -->
 
 	<!-- rho = 0 case -->
-	<newBirthDeathSerialSampling id="bdss3" units="years" conditionOnSurvival="false">
+	<newBirthDeathSerialSampling id="bdss3" units="years" conditionOnSurvival="true">
 		<birthRate>
 			<parameter id="bdss3.birthRate" value="8.472" lower="0.0"/>
 		</birthRate>
@@ -283,7 +283,7 @@
 	<!-- ########## -->
 
 	<!-- r = 1 case -->
-	<newBirthDeathSerialSampling id="bdss4" units="years" conditionOnSurvival="false">
+	<newBirthDeathSerialSampling id="bdss4" units="years" conditionOnSurvival="true">
 		<birthRate>
 			<parameter id="bdss4.birthRate" value="8.472" lower="0.0"/>
 		</birthRate>
@@ -364,7 +364,7 @@
 	<!-- ########## -->
 
 	<!-- r = 0 case -->
-	<newBirthDeathSerialSampling id="bdss5" units="years" conditionOnSurvival="false">
+	<newBirthDeathSerialSampling id="bdss5" units="years" conditionOnSurvival="true">
 		<birthRate>
 			<parameter id="bdss5.birthRate" value="8.472" lower="0.0"/>
 		</birthRate>
@@ -435,7 +435,7 @@
 	<!-- ########## -->
 
 	<!-- mu = 0, r > 0 case -->
-	<newBirthDeathSerialSampling id="bdss6" units="years" conditionOnSurvival="false">
+	<newBirthDeathSerialSampling id="bdss6" units="years" conditionOnSurvival="true">
 		<birthRate>
 			<parameter id="bdss6.birthRate" value="8.472" lower="0.0"/>
 		</birthRate>
@@ -525,7 +525,7 @@
 	</treeModel>
 
 	<!-- psi = 0, 0 < rho < 1 case -->
-	<newBirthDeathSerialSampling id="bdss7" units="years" conditionOnSurvival="false">
+	<newBirthDeathSerialSampling id="bdss7" units="years" conditionOnSurvival="true">
 		<birthRate>
 			<parameter id="bdss7.birthRate" value="8.472" lower="0.0"/>
 		</birthRate>
@@ -590,7 +590,7 @@
 	<!-- ########## -->
 
 	<!-- psi = 0, rho = 1 case -->
-	<newBirthDeathSerialSampling id="bdss8" units="years" conditionOnSurvival="false">
+	<newBirthDeathSerialSampling id="bdss8" units="years" conditionOnSurvival="true">
 		<birthRate>
 			<parameter id="bdss8.birthRate" value="8.472" lower="0.0"/>
 		</birthRate>

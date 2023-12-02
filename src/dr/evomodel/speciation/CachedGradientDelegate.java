@@ -120,7 +120,7 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
         // origin branch is a fake branch that doesn't exist in the tree, now compute its contribution
         provider.processGradientOrigin(gradient, currentModelSegment, treeIntervals.getTotalDuration());
 
-        provider.logConditioningProbability(gradient);
+        provider.logConditioningProbability(currentModelSegment,gradient);
 
         if (MEASURE_RUN_TIME) {
             timer.stop();

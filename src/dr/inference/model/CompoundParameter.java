@@ -274,20 +274,86 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
         int dim = 0;
-        for (Parameter parameter1 : uniqueParameters) {
-            if (variable == parameter1) {
-                if (!doNotPropagateChangeUp) {
+        if (!doNotPropagateChangeUp) {
+            for (Parameter parameter1 : uniqueParameters) {
+                if (variable == parameter1) {
                     int subparameterIndex = (index == -1) ? -1 : dim + index;
                     fireParameterChangedEvent(subparameterIndex, type);
+                    break;
                 }
-                break;
+                dim += parameter1.getDimension();
             }
-            dim += parameter1.getDimension();
         }
     }
 
     public double getParameterValue(int index, int parameter) {
         return getParameter(parameter).getParameterValue(index);
+    }
+
+    public static CompoundParameter mergeParameters(String newName,
+                                                    CompoundParameter[] parameters,
+                                                    Boolean enforceSameNames) {
+        int nParameters = parameters[0].getParameterCount();
+        for (int i = 1; i < parameters.length; i++) {
+            assert (nParameters == parameters[i].getParameterCount());
+        }
+
+        CompoundParameter mergedParameter = new CompoundParameter(newName);
+        for (int i = 0; i < nParameters; i++) {
+            String parameterName = parameters[0].getParameter(i).getParameterName();
+            CompoundParameter rowParameter = new CompoundParameter(parameterName);
+            for (int j = 0; j < parameters.length; j++) {
+                Parameter subParameter = parameters[j].getParameter(i);
+                if (enforceSameNames && subParameter.getParameterName() != parameterName) {
+                    throw new RuntimeException("parameter " + j + " with sub-parameter " + i + " has name " +
+                            subParameter.getParameterName() + ". This does not match parameter 0 with sub-parameter " +
+                            +i + " that has name " + parameterName + ".");
+                }
+                rowParameter.addParameter(subParameter);
+            }
+            mergedParameter.addParameter(rowParameter);
+        }
+
+        return mergedParameter;
+    }
+
+    public static CompoundParameter mergeParameters(CompoundParameter[] parameters) {
+        String newName = parameters[0].getParameterName();
+        for (int i = 1; i < parameters.length; i++) {
+            newName += "_and_" + parameters[i].getParameterName();
+        }
+        return mergeParameters(newName, parameters, true);
+    }
+
+    public static void checkParametersMerged(CompoundParameter mergedParameter, CompoundParameter[] parameters) {
+        int nParams = mergedParameter.getParameterCount();
+        for (int i = 0; i < nParams; i++) {
+            CompoundParameter subMerged = (CompoundParameter) mergedParameter.getParameter(i);
+
+            for (int j = 0; j < parameters.length; j++) {
+                assert (subMerged.getParameter(j) == parameters[j].getParameter(i));
+            }
+
+            //Below is redundant but a good sanity check
+            int currentParameter = 0;
+            int currentIndex = 0;
+            int currentDimension = parameters[currentParameter].getParameter(i).getDimension();
+
+            for (int j = 0; j < subMerged.getDimension(); j++) {
+                if (currentIndex == currentDimension) {
+                    currentParameter++;
+                    currentIndex = 0;
+                    currentDimension = parameters[currentParameter].getParameter(i).getDimension();
+                }
+
+                double v1 = subMerged.getParameterValue(j);
+                double v2 = parameters[currentParameter].getParameter(i).getParameterValue(currentIndex);
+
+                assert (v1 == v2);
+
+                currentIndex++;
+            }
+        }
     }
 
     // ****************************************************************
@@ -309,7 +375,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         }
     }
 
-    protected ArrayList<Parameter> getParameters(){
+    protected ArrayList<Parameter> getParameters() {
         return parameters;
     }
 

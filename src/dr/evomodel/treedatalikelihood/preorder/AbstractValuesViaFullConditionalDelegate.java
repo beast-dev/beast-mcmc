@@ -90,7 +90,7 @@ public abstract class AbstractValuesViaFullConditionalDelegate extends TipFullCo
 
                     computeValueWithMissing(cM, // input mean
                             transform.getConditionalCholesky(), // input variance,
-                            new WrappedVector.Indexed(sample, sampleOffset, missing, missing.length), // output sample
+                            new WrappedVector.Indexed(sample, sampleOffset, missing), // output sample
                             transform.getTemporaryStorage());
 
                     System.err.println("cM: " + cM);

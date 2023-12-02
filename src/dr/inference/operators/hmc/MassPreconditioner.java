@@ -42,6 +42,14 @@ public interface MassPreconditioner {
 
     int getDimension();
 
+    default double[] getVelocity(ReadableVector momentum) {
+        double[] velocity = new double[momentum.getDim()];
+        for (int i = 0; i < velocity.length; i++) {
+            velocity[i] = getVelocity(i, momentum);
+        }
+        return velocity;
+    }
+
     enum Type {
 
         NONE("none") {

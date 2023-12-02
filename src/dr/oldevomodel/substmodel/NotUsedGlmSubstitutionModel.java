@@ -39,10 +39,12 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  */
-public class GLMSubstitutionModel extends ComplexSubstitutionModel {
+public class NotUsedGlmSubstitutionModel extends ComplexSubstitutionModel {
 
-    public GLMSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
-                                LogLinearModel glm) {
+    // NB: We are currently using OldGlMSubstitutionModel and _not_ this class
+
+    public NotUsedGlmSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
+                                       LogLinearModel glm) {
 
         super(name, dataType, rootFreqModel, null);
         this.glm = glm;

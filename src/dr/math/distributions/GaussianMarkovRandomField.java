@@ -29,7 +29,6 @@ import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import dr.inference.distribution.RandomField;
 import dr.inference.model.*;
-import dr.inferencexml.distribution.MultivariateNormalDistributionModelParser;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
 
 import java.util.Arrays;

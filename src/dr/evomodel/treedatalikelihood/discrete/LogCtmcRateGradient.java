@@ -1,7 +1,7 @@
 /*
- * DiscreteTraitBranchRateGradient.java
+ * LogCtmcRateGradient.java
  *
- * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -29,7 +29,6 @@ import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evomodel.substmodel.LogAdditiveCtmcRateProvider;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.inference.distribution.LogGaussianProcessModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.Parameter;
 import dr.util.Citation;
@@ -43,26 +42,25 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
-public class GamGpSubstitutionModelGradient extends AbstractLogAdditiveSubstitutionModelGradient {
-    
-    private final LogGaussianProcessModel logGpModel;
+public class LogCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGradient {
+
+    private final LogAdditiveCtmcRateProvider.DataAugmented rateProvider;
     private final int[][] mapEffectToIndices;
 
-    public GamGpSubstitutionModelGradient(String traitName,
-                                          TreeDataLikelihood treeDataLikelihood,
-                                          BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                          GlmSubstitutionModel substitutionModel) {
+    public LogCtmcRateGradient(String traitName,
+                               TreeDataLikelihood treeDataLikelihood,
+                               BeagleDataLikelihoodDelegate likelihoodDelegate,
+                               GlmSubstitutionModel substitutionModel) {
         super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel,
                 ApproximationMode.FIRST_ORDER);
 
-        LogAdditiveCtmcRateProvider rateProvider = substitutionModel.getRateProvider();
-
-        if (rateProvider instanceof LogGaussianProcessModel) {
-            logGpModel = (LogGaussianProcessModel) rateProvider;
-        } else {
-            throw new IllegalArgumentException("Not a Gaussian process");
+        if (substitutionModel.getRateProvider() instanceof LogAdditiveCtmcRateProvider.DataAugmented)
+            this.rateProvider = (LogAdditiveCtmcRateProvider.DataAugmented)
+                    substitutionModel.getRateProvider();
+        else {
+            throw new IllegalArgumentException("Invalid substitution model");
         }
-
+        
         this.mapEffectToIndices = makeAsymmetricMap();
     }
 
@@ -120,7 +118,7 @@ public class GamGpSubstitutionModelGradient extends AbstractLogAdditiveSubstitut
 
     @Override
     public Parameter getParameter() {
-        return logGpModel.getFieldParameter();
+        return rateProvider.getLogRateParameter();
     }
 
     @Override

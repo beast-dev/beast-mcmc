@@ -29,7 +29,6 @@ import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import dr.inference.distribution.RandomField;
 import dr.inference.model.*;
-import dr.inferencexml.distribution.MultivariateNormalDistributionModelParser;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
 
 import java.util.Arrays;
@@ -154,13 +153,6 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
             precisionKnown = true;
         }
         return precision;
-    }
-
-    @Override
-    public double getIncrement(int i, Parameter field) {
-
-        double[] mean = getMean();
-        return (field.getParameterValue(i) - mean[i]) - (field.getParameterValue(i + 1) - mean[i + 1]);
     }
 
     @Override
@@ -503,8 +495,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         double[] offDiagonal;
 
         SymmetricTriDiagonalMatrix(int dim) {
-            this.diagonal = new double[dim];
-            this.offDiagonal = new double[dim - 1];
+            this(new double[dim], new double[dim - 1]);
         }
 
         SymmetricTriDiagonalMatrix(double[] diagonal, double[] offDiagonal) {

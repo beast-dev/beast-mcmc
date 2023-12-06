@@ -29,10 +29,9 @@ import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.discrete.*;
+import dr.evomodel.treedatalikelihood.discrete.AbstractGlmSubstitutionModelGradient;
+import dr.evomodel.treedatalikelihood.discrete.LogCtmcRateGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.model.DesignMatrix;
-import dr.inference.model.MaskedParameter;
 import dr.xml.*;
 
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
@@ -42,11 +41,10 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRA
  * @author Marc A. Suchard
  */
 
-public class GamGpSubstitutionModelGradientParser extends AbstractXMLObjectParser {
+public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParser {
 
-    private static final String PARSER_NAME = "gamGpSubstitutionModelGradient";
+    private static final String PARSER_NAME = "approximateLogCtmcRateGradient";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
-    private static final String EFFECTS = "effects";
 
     public String getParserName(){ return PARSER_NAME; }
 
@@ -56,14 +54,12 @@ public class GamGpSubstitutionModelGradientParser extends AbstractXMLObjectParse
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
         GlmSubstitutionModel substitutionModel = (GlmSubstitutionModel) xo.getChild(GlmSubstitutionModel.class);
 
-        // TODO ensure there's a GAM-GP underneath substitutionModel
-
         DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
         if (!(delegate instanceof BeagleDataLikelihoodDelegate)) {
             throw new XMLParseException("Unknown likelihood delegate type");
         }
 
-        return new GamGpSubstitutionModelGradient(traitName, treeDataLikelihood,
+        return new LogCtmcRateGradient(traitName, treeDataLikelihood,
                 (BeagleDataLikelihoodDelegate) delegate, substitutionModel);
     }
 
@@ -76,9 +72,6 @@ public class GamGpSubstitutionModelGradientParser extends AbstractXMLObjectParse
             AttributeRule.newStringRule(TRAIT_NAME, true),
             new ElementRule(TreeDataLikelihood.class),
             new ElementRule(GlmSubstitutionModel.class),
-            AttributeRule.newStringRule(EFFECTS, true),
-            new ElementRule(MaskedParameter.class, true),
-            new ElementRule(DesignMatrix.class, true),
     };
 
     @Override

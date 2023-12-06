@@ -33,6 +33,7 @@ import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.MachineAccuracy;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
@@ -54,6 +55,9 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
     private final Parameter logPopSizeParameter;
     private final Parameter gridPointParameter;
 
+    private boolean likelihoodKnown = false;
+    private double logLikelihood;
+
     public SkyGlideLikelihood(String name,
                               List<TreeModel> trees,
                               Parameter logPopSizeParameter,
@@ -68,6 +72,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
             this.intervals.add(treeIntervals);
             addModel(treeIntervals);
         }
+        addVariable(logPopSizeParameter);
     }
 
     @Override
@@ -77,12 +82,12 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-
+        likelihoodKnown = false;
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-
+        likelihoodKnown = false;
     }
 
     @Override
@@ -92,7 +97,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
     @Override
     protected void restoreState() {
-
+        likelihoodKnown = false;
     }
 
     @Override
@@ -107,11 +112,15 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
     @Override
     public double getLogLikelihood() {
-        double lnL = 0;
-        for (int i = 0; i < trees.size(); i++) {
-            lnL += getSingleTreeLogLikelihood(i);
+        if (!likelihoodKnown) {
+            double lnL = 0;
+            for (int i = 0; i < trees.size(); i++) {
+                lnL += getSingleTreeLogLikelihood(i);
+            }
+            logLikelihood = lnL;
+            likelihoodKnown = true;
         }
-        return lnL;
+        return logLikelihood;
     }
 
     public Parameter getLogPopSizeParameter() {
@@ -261,10 +270,9 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         if (slope == 0) {
             return Math.exp(-intercept) * (end - start);
         } else {
-            return (Math.exp(-(slope * start + intercept)) - Math.exp(-(slope * end + intercept))) / slope;
+            return Math.exp(-intercept) * (Math.exp(-slope * start) - Math.exp(-slope * end)) / slope;
         }
     }
-
 
     private void updateIntervalGradient(double intervalStart, double intervalEnd, int gridIndex, int lineageCount,
                                         double[] gradient) {
@@ -272,17 +280,16 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         final double intercept = getGridIntercept(gridIndex);
         final double lineageMultiplier = -0.5 * lineageCount * (lineageCount - 1);
         assert(slope != 0 || intercept != 0);
+        final double realSmall = MachineAccuracy.SQRT_EPSILON*(Math.abs(slope) + 1.0); // TODO: arbitrary magic bound
         if (intervalStart != intervalEnd) {
-            if (slope == 0) {
-                final double multiplier = (intervalEnd - intervalStart) * (-Math.exp(-intercept));
-                updateGridInterceptDerivativeWrtLogPopSize(gridIndex, gradient, lineageMultiplier * multiplier);
-            } else {
-                final double interceptMultiplier = ( - Math.exp(-(slope * intervalStart + intercept)) + Math.exp(-(slope * intervalEnd + intercept))) / slope;
-                final double slopeMultiplier = (-intervalStart * Math.exp(-(slope * intervalStart + intercept)) + intervalEnd * Math.exp(-(slope * intervalEnd + intercept))) / slope
-                        - (Math.exp(-(slope * intervalStart + intercept)) - Math.exp(-(slope * intervalEnd + intercept))) / slope / slope;
+            final double slopeMultiplier = slope < realSmall ? Math.exp(-intercept) * (intervalStart * intervalStart - intervalEnd * intervalEnd) / 2
+                    : Math.exp(-intercept) * ( (-intervalStart * Math.exp(-slope * intervalStart) + intervalEnd * Math.exp(-slope * intervalEnd))
+                    - (Math.exp(-slope * intervalStart) - Math.exp(-slope * intervalEnd)) / slope) / slope;
+            final double interceptMultiplier = slope < realSmall ? (intervalEnd - intervalStart) * (-Math.exp(-intercept))
+                    : Math.exp(-intercept) * (-Math.exp(-slope * intervalStart ) + Math.exp(-slope * intervalEnd )) / slope;
+
                 updateGridInterceptDerivativeWrtLogPopSize(gridIndex, gradient, lineageMultiplier * interceptMultiplier);
                 updateGridSlopeDerivativeWrtLogPopSize(gridIndex, gradient, lineageMultiplier * slopeMultiplier);
-            }
         }
     }
 
@@ -330,13 +337,6 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
             final double firstDerivative = thisGridTime / (thisGridTime - lastGridTime) * multiplier;
             final double secondDerivative = -lastGridTime / (thisGridTime - lastGridTime) * multiplier;
 
-//            if (logPopSizeParameter.getParameterValue(gridIndex) == logPopSizeParameter.getParameterValue(gridIndex + 1)) {
-//                gradient[gridIndex] += (firstDerivative + secondDerivative) / 2;
-//                gradient[gridIndex + 1] += (firstDerivative + secondDerivative) / 2;
-//            } else {
-//                gradient[gridIndex] += firstDerivative;
-//                gradient[gridIndex + 1] += secondDerivative;
-//            }
             gradient[gridIndex] += firstDerivative;
             gradient[gridIndex + 1] += secondDerivative;
         }
@@ -358,6 +358,6 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
     @Override
     public void makeDirty() {
-
+        likelihoodKnown = false;
     }
 }

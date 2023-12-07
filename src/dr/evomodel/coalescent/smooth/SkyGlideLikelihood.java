@@ -282,10 +282,10 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         assert(slope != 0 || intercept != 0);
         final double realSmall = MachineAccuracy.SQRT_EPSILON*(Math.abs(slope) + 1.0); // TODO: arbitrary magic bound
         if (intervalStart != intervalEnd) {
-            final double slopeMultiplier = slope < realSmall ? Math.exp(-intercept) * (intervalStart * intervalStart - intervalEnd * intervalEnd) / 2
+            final double slopeMultiplier = Math.abs(slope) < realSmall ? Math.exp(-intercept) * (intervalStart * intervalStart - intervalEnd * intervalEnd) / 2
                     : Math.exp(-intercept) * ( (-intervalStart * Math.exp(-slope * intervalStart) + intervalEnd * Math.exp(-slope * intervalEnd))
                     - (Math.exp(-slope * intervalStart) - Math.exp(-slope * intervalEnd)) / slope) / slope;
-            final double interceptMultiplier = slope < realSmall ? (intervalEnd - intervalStart) * (-Math.exp(-intercept))
+            final double interceptMultiplier = Math.abs(slope) < realSmall ? (intervalEnd - intervalStart) * (-Math.exp(-intercept))
                     : Math.exp(-intercept) * (-Math.exp(-slope * intervalStart ) + Math.exp(-slope * intervalEnd )) / slope;
 
                 updateGridInterceptDerivativeWrtLogPopSize(gridIndex, gradient, lineageMultiplier * interceptMultiplier);

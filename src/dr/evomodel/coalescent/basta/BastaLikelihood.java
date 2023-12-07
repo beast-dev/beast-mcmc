@@ -1,7 +1,7 @@
 /*
  * BastaLikelihood.java
  *
- * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,12 +25,15 @@
 
 package dr.evomodel.coalescent.basta;
 
+import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.StrictClockBranchRates;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
@@ -42,54 +45,117 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import static dr.evomodel.coalescent.basta.ProcessOnCoalescentIntervalDelegate.*;
+
 /**
  * @author Guy Baele
+ * @author Yucai Shao
  * @author Marc A. Suchard
- * @version $Id$
  */
 
-public final class BastaLikelihood extends AbstractModelLikelihood implements
+public class BastaLikelihood extends AbstractModelLikelihood implements
         TreeTraitProvider, Citable, Profileable, Reportable {
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
-
     private static final boolean TEST = false;
 
+    private final BastaLikelihoodDelegate likelihoodDelegate;
+
+    private final Tree tree;
+    private final PatternList patternList;
+    private final SubstitutionModel substitutionModel;
+    private final Parameter popSizeParameter;
+    private final BranchRateModel branchRateModel;
+    private final int stateCount;
+
+    private final Helper treeTraits = new Helper();
+
+    private final CoalescentIntervalTraversal treeTraversalDelegate;
+    private final BigFastTreeIntervals treeIntervals;
+
+    private double logLikelihood;
+    private double storedLogLikelihood;
+    protected boolean likelihoodKnown;
+
+    private final boolean isTreeRandom;
+
     public BastaLikelihood(String name,
-                           BastaLikelihoodDelegate likelihoodDelegate,
                            Tree treeModel,
+                           PatternList patternList,
+                           SubstitutionModel substitutionModel,
+                           Parameter popSizeParameter,
                            BranchRateModel branchRateModel,
-                           int numberSubIntervals) {
+                           BastaLikelihoodDelegate likelihoodDelegate,
+                           int numberSubIntervals,
+                           boolean useAmbiguities) {
 
         super(name);
 
         assert likelihoodDelegate != null;
         assert treeModel != null;
         assert branchRateModel != null;
+        assert patternList.getPatternCount() == 1;
+        assert useAmbiguities;
+
+        if (!(branchRateModel instanceof StrictClockBranchRates)) {
+            throw new RuntimeException("Not yet implemented");
+        }
 
         final Logger logger = Logger.getLogger("dr.evomodel");
 
         logger.info("\nUsing BastaLikelihood");
 
+        this.patternList = patternList;
+
         this.likelihoodDelegate = likelihoodDelegate;
         addModel(likelihoodDelegate);
 
-        this.treeModel = treeModel;
+        this.tree = treeModel;
         isTreeRandom = (treeModel instanceof AbstractModel) && ((AbstractModel) treeModel).isVariable();
         if (isTreeRandom) {
-            addModel((AbstractModel)treeModel);
+            addModel((AbstractModel)treeModel); // TODO maybe unnecessary as BFTI already signals
         }
 
         this.branchRateModel = branchRateModel;
         addModel(branchRateModel);
+
+        this.substitutionModel = substitutionModel;
+        addModel(substitutionModel);
+
+        this.popSizeParameter = popSizeParameter;
+        addVariable(popSizeParameter);
+
+        this.stateCount = substitutionModel.getDataType().getStateCount();
 
         treeIntervals = new BigFastTreeIntervals((TreeModel)treeModel);
         treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, treeIntervals, branchRateModel, numberSubIntervals);
 
         addModel(treeIntervals);
 
+        setTipData();
+
         likelihoodKnown = false;
-        hasInitialized = true;
+    }
+
+    private void setTipData() {
+
+        int[] data = patternList.getPattern(0);
+
+        for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
+            NodeRef node = tree.getExternalNode(i);
+
+            int index = patternList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+            int datum = data[index];
+
+            if (datum >= stateCount) {
+                throw new RuntimeException("Not yet implemented");
+            }
+
+            double[] partials = new double[stateCount];
+            partials[datum] = 1.0;
+
+            likelihoodDelegate.setPartials(node.getNumber(), partials);
+        }
     }
 
     @Override
@@ -99,15 +165,22 @@ public final class BastaLikelihood extends AbstractModelLikelihood implements
 
     @Override @SuppressWarnings("Duplicates")
     public final double getLogLikelihood() {
-        if (COUNT_TOTAL_OPERATIONS)
-            totalGetLogLikelihoodCount++;
+        if (COUNT_TOTAL_OPERATIONS) totalGetLogLikelihoodCount++;
 
         if (!likelihoodKnown) {
+            long startTime;
             if (COUNT_TOTAL_OPERATIONS) {
                 totalCalculateLikelihoodCount++;
+                startTime = System.nanoTime();
             }
 
             logLikelihood = calculateLogLikelihood();
+
+            if (COUNT_TOTAL_OPERATIONS) {
+                long endTime = System.nanoTime();
+                totalLikelihoodTime += (endTime - startTime) / 1000000;
+            }
+
             likelihoodKnown = true;
         }
 
@@ -116,8 +189,7 @@ public final class BastaLikelihood extends AbstractModelLikelihood implements
 
     @Override
     public final void makeDirty() {
-        if (COUNT_TOTAL_OPERATIONS)
-            totalMakeDirtyCount++;
+        if (COUNT_TOTAL_OPERATIONS) totalMakeDirtyCount++;
 
         likelihoodKnown = false;
         likelihoodDelegate.makeDirty();
@@ -127,10 +199,11 @@ public final class BastaLikelihood extends AbstractModelLikelihood implements
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // TODO
     }
+
     @Override @SuppressWarnings("Duplicates")
     protected final void handleModelChangedEvent(Model model, Object object, int index) {
 
-        if (model == treeModel) {
+        if (model == tree) {
             if (object instanceof TreeChangedEvent) {
 
                 final TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
@@ -154,22 +227,21 @@ public final class BastaLikelihood extends AbstractModelLikelihood implements
             if (index == -1) {
                 updateAllNodes();
             } else {
-                updateNode(treeModel.getNode(index));
+                updateNode(tree.getNode(index));
             }
 
         } else if (model == branchRateModel) {
             if (index == -1) {
                 updateAllNodes();
             } else {
-                updateNode(treeModel.getNode(index));
+                updateNode(tree.getNode(index));
             }
         } else {
 
             assert false : "Unknown componentChangedEvent";
         }
 
-        if (COUNT_TOTAL_OPERATIONS)
-            totalModelChangedCount++;
+        if (COUNT_TOTAL_OPERATIONS) totalModelChangedCount++;
 
         likelihoodKnown = false;
         fireModelChanged();
@@ -199,31 +271,35 @@ public final class BastaLikelihood extends AbstractModelLikelihood implements
         if (TEST) treeIntervals.acceptModelState();
     } // nothing to do
 
-    /**
-     * Calculate the log likelihood of the data for the current tree.
-     *
-     * @return the log likelihood.
-     */
     private double calculateLogLikelihood() {
 
-        double logL;
+        // update eigen-decomposition
+        likelihoodDelegate.setEigenDecomposition(0, substitutionModel.getEigenDecomposition()); // TODO do conditionally and double-buffer
 
-//        likelihoodDelegate.makeDirty();
+        // update population sizes
+        likelihoodDelegate.setPopulationSizes(0, popSizeParameter.getParameterValues()); // TODO do conditionally and double-buffer
 
+        // update operations on tree
         treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
 
-        final List<ProcessOnCoalescentIntervalDelegate.BranchIntervalOperation> branchOperations =
+        final List<BranchIntervalOperation> branchOperations =
                 treeTraversalDelegate.getBranchIntervalOperations();
-        final List<ProcessOnCoalescentIntervalDelegate.OtherOperation> nodeOperations =
+        final List<TransitionMatrixOperation> matrixOperations =
+                treeTraversalDelegate.getMatrixOperations();
+        final List<Integer> intervalStarts = treeTraversalDelegate.getIntervalStarts();
+
+        final List<OtherOperation> nodeOperations =
                 treeTraversalDelegate.getOtherOperations();
 
         if (COUNT_TOTAL_OPERATIONS) {
-            totalMatrixUpdateCount += branchOperations.size();
-            totalOperationCount += nodeOperations.size();
+            totalPropagationCount += branchOperations.size();
+            totalMatrixUpdateCount += matrixOperations.size();
+            totalIntervalReductionCount += treeTraversalDelegate.getCoalescentIntervalCount();
         }
 
-        final NodeRef root = treeModel.getRoot();
-        logL = likelihoodDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
+        final NodeRef root = tree.getRoot();
+        double logL = likelihoodDelegate.calculateLikelihood(branchOperations, matrixOperations,
+                intervalStarts, root.getNumber());
 
         // after traverse all nodes and patterns have been updated --
         //so change flags to reflect this.
@@ -240,73 +316,57 @@ public final class BastaLikelihood extends AbstractModelLikelihood implements
      * Set update flag for a node only
      */
     protected void updateNode(NodeRef node) {
-        if (COUNT_TOTAL_OPERATIONS)
-            totalRateUpdateSingleCount++;
+        if (COUNT_TOTAL_OPERATIONS) totalRateUpdateSingleCount++;
 
         treeTraversalDelegate.updateNode(node);
         likelihoodKnown = false;
     }
 
-    /**
-     * Set update flag for a node and its direct children
-     */
-//    protected void updateNodeAndChildren(NodeRef node) {
-//        if (COUNT_TOTAL_OPERATIONS)
-//            totalRateUpdateSingleCount += 1 + treeModel.getChildCount(node);
-//
-//        treeTraversalDelegate.updateNodeAndChildren(node);
-//        likelihoodKnown = false;
-//    }
-
-    /**
-     * Set update flag for all nodes
-     */
     protected void updateAllNodes() {
-        if (COUNT_TOTAL_OPERATIONS)
-            totalRateUpdateAllCount++;
+        if (COUNT_TOTAL_OPERATIONS) totalRateUpdateAllCount++;
 
         treeTraversalDelegate.updateAllNodes();
         likelihoodKnown = false;
     }
 
-    // **************************************************************
-    // Reportable IMPLEMENTATION
-    // **************************************************************
-
     @Override
     public String getReport() {
-        return null;
+        StringBuilder sb = new StringBuilder();
+
+        double logL = getLogLikelihood();
+
+        String delegateString = likelihoodDelegate.getReport();
+        if (delegateString != null) {
+            sb.append(delegateString);
+        }
+
+        sb.append(getClass().getName()).append("(").append(logL).append(")");
+
+        if (COUNT_TOTAL_OPERATIONS)
+            sb.append(
+                    "\n  propagation operations = ").append(totalPropagationCount).append(
+                    "\n  matrix updates = ").append(totalMatrixUpdateCount).append(
+                    "\n  interval operations = ").append(totalIntervalReductionCount).append(
+                    "\n  model changes = ").append(totalModelChangedCount).append(
+                    "\n  make dirties = ").append(totalMakeDirtyCount).append(
+                    "\n  calculate likelihoods = ").append(totalCalculateLikelihoodCount).append(
+                    "\n  get likelihoods = ").append(totalGetLogLikelihoodCount).append(
+                    "\n  all rate updates = ").append(totalRateUpdateAllCount).append(
+                    "\n  partial rate updates = ").append(totalRateUpdateSingleCount).append(
+                    "\n  average likelihood time = ").append(totalLikelihoodTime / totalCalculateLikelihoodCount);
+
+        return sb.toString();
     }
 
-    // **************************************************************
-    // TreeTrait IMPLEMENTATION
-    // **************************************************************
-
-    /**
-     * Returns an array of all the available traits
-     *
-     * @return the array
-     */
     @Override
     public TreeTrait[] getTreeTraits() {
         return treeTraits.getTreeTraits();
     }
 
-    /**
-     * Returns a trait that is stored using a specific key. This will often be the same
-     * as the 'name' of the trait but may not be depending on the application.
-     *
-     * @param key a unique key
-     * @return the trait
-     */
     @Override
     public TreeTrait getTreeTrait(String key) {
         return treeTraits.getTreeTrait(key);
     }
-
-    // **************************************************************
-    // Decorate with TreeTraitProviders
-    // **************************************************************
 
     public void addTrait(TreeTrait trait) {
         treeTraits.addTrait(trait);
@@ -317,7 +377,7 @@ public final class BastaLikelihood extends AbstractModelLikelihood implements
     }
 
     @Override
-    public Citation.Category getCategory() { return Citation.Category.FRAMEWORK; }
+    public Citation.Category getCategory() { return Citation.Category.TREE_PRIORS; }
 
     @Override
     public String getDescription() {
@@ -337,59 +397,20 @@ public final class BastaLikelihood extends AbstractModelLikelihood implements
         }
     }
 
-    // **************************************************************
-    // INSTANCE PROFILEABLE
-    // **************************************************************
-
     @Override
     public long getTotalCalculationCount() {
         return likelihoodDelegate.getTotalCalculationCount();
     }
 
-    // **************************************************************
-    // INSTANCE VARIABLES
-    // **************************************************************
-
-    /**
-     * The data likelihood delegate
-     */
-    private final
-    BastaLikelihoodDelegate likelihoodDelegate;
-
-    /**
-     * the tree model
-     */
-    private final Tree treeModel;
-
-    /**
-     * the branch rate model
-     */
-    private final BranchRateModel branchRateModel;
-
-    /**
-     * TreeTrait helper
-     */
-    private final Helper treeTraits = new Helper();
-
-    private final CoalescentIntervalTraversal treeTraversalDelegate;
-    private final BigFastTreeIntervals treeIntervals;
-
-    private double logLikelihood;
-    private double storedLogLikelihood;
-    protected boolean likelihoodKnown;
-
-    private boolean hasInitialized;
-
-    private final boolean isTreeRandom;
-
-    private int totalOperationCount = 0;
+    private int totalPropagationCount = 0;
     private int totalMatrixUpdateCount = 0;
+    private int totalIntervalReductionCount = 0;
     private int totalGetLogLikelihoodCount = 0;
     private int totalModelChangedCount = 0;
     private int totalMakeDirtyCount = 0;
     private int totalCalculateLikelihoodCount = 0;
     private int totalRateUpdateAllCount = 0;
     private int totalRateUpdateSingleCount = 0;
-    private int totalPostOrderStatistics = 0;
-    private int totalCalculatePostOrderStatistics = 0;
+
+    private long totalLikelihoodTime = 0;
 }

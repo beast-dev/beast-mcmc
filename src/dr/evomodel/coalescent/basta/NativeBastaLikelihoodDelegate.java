@@ -1,27 +1,57 @@
 package dr.evomodel.coalescent.basta;
 
-import dr.evomodel.treedatalikelihood.continuous.cdi.CDIJNIWrapper;
-import dr.evomodel.treedatalikelihood.continuous.cdi.ResourceDetails;
+import dr.evolution.alignment.PatternList;
+import dr.evolution.tree.Tree;
+import dr.evomodel.substmodel.SubstitutionModel;
+import dr.inference.model.Parameter;
+
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
  */
-public class NativeBastaLikelihoodDelegate extends BastaLikelihoodDelegate.AbstractBastaLikelihood {
+public class NativeBastaLikelihoodDelegate extends BastaLikelihoodDelegate.AbstractBastaLikelihoodDelegate {
 
     private final NativeBastaJniWrapper jni;
 
-    public NativeBastaLikelihoodDelegate(String name) {
-        super(name);
+    public NativeBastaLikelihoodDelegate(String name,
+                                         Tree tree,
+                                         int stateCount) {
+        super(name, tree, stateCount);
         jni = NativeBastaJniWrapper.getBastaJniWrapper();
     }
 
     @Override
-    protected void functionOne() {
-        jni.functionOne();
+    protected double computeBranchIntervalOperations(List<BranchIntervalOperation> branchIntervalOperations) {
+        if (branchIntervalOperations != null) {
+            for (BranchIntervalOperation operation : branchIntervalOperations) {
+                System.err.println(operation.toString());
+            }
+        }
+
+        return 0.0;
     }
 
     @Override
-    protected void functionTwo() {
-        jni.functionTwo();
+    protected double computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations) {
+        if (matrixOperations != null) {
+            for (TransitionMatrixOperation operation : matrixOperations) {
+                System.err.println(operation.toString());
+            }
+        }
+
+        return 0.0;
+    }
+
+    @Override
+    protected double computeCoalescentIntervalReduction(List<Integer> intervalStarts,
+                                                        List<BranchIntervalOperation> branchIntervalOperations) {
+        if (intervalStarts != null) {
+            for (int start : intervalStarts) {
+                System.err.println(start);
+            }
+        }
+
+        return 0.0;
     }
 }

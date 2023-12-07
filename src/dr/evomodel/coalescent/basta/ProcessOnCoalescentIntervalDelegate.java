@@ -42,25 +42,32 @@ public interface ProcessOnCoalescentIntervalDelegate {
         BranchIntervalOperation(int outputBuffer,
                                 int inputBuffer1,
                                 int inputBuffer2,
+                                int inputMatrix1,
+                                int inputMatrix2,
                                 double intervalLength,
                                 int executionOrder,
                                 int subIntervalNumber) {
             this.outputBuffer = outputBuffer;
             this.inputBuffer1 = inputBuffer1;
             this.inputBuffer2 = inputBuffer2;
+            this.inputMatrix1 = inputMatrix1;
+            this.inputMatrix2 = inputMatrix2;
             this.intervalLength = intervalLength;
             this.executionOrder = executionOrder;
             this.subIntervalNumber = subIntervalNumber;
         }
 
         public String toString() {
-            return subIntervalNumber + ":" + outputBuffer + " <- " + inputBuffer1 + " + " + inputBuffer2
-                    + " (" + intervalLength + ") @ " + executionOrder;
+            return subIntervalNumber + ":" + outputBuffer + " <- " +
+                    inputBuffer1 + " (" + inputMatrix1 + ") + " +
+                    inputBuffer2 + " (" + inputMatrix2 +  ") (" + intervalLength + ") @ " + executionOrder;
         }
 
         public final int outputBuffer;
         public final int inputBuffer1;
         public final int inputBuffer2;
+        public final int inputMatrix1;
+        public final int inputMatrix2;
         public final double intervalLength;
         public final int executionOrder;
         public final int subIntervalNumber;
@@ -92,5 +99,19 @@ public interface ProcessOnCoalescentIntervalDelegate {
         private final int nodeNumber;
         private final int leftChild;
         private final int rightChild;
+    }
+
+    final class TransitionMatrixOperation {
+        TransitionMatrixOperation(int outputBuffer, int decompositionBuffer, double time) {
+            this.outputBuffer = outputBuffer;
+            this.decompositionBuffer = decompositionBuffer;
+            this.time = time;
+        }
+
+        public String toString() { return outputBuffer + " <- " + decompositionBuffer + " (" + time + ")"; }
+
+        public final int outputBuffer;
+        public final int decompositionBuffer;
+        public final double time;
     }
 }

@@ -25,10 +25,6 @@
 
 package dr.evomodel.coalescent.basta;
 
-import dr.evomodel.treedatalikelihood.TreeTraversal;
-
-import java.util.List;
-
 /**
  * ProcessOnCoalescentIntervalDelegate - interface for a plugin delegate for the likelihood based on coalescent intervals
  *
@@ -44,23 +40,28 @@ public interface ProcessOnCoalescentIntervalDelegate {
                                 int inputBuffer2,
                                 int inputMatrix1,
                                 int inputMatrix2,
+                                int accBuffer1,
+                                int accBuffer2,
                                 double intervalLength,
                                 int executionOrder,
-                                int subIntervalNumber) {
+                                int intervalNumber) {
             this.outputBuffer = outputBuffer;
             this.inputBuffer1 = inputBuffer1;
             this.inputBuffer2 = inputBuffer2;
             this.inputMatrix1 = inputMatrix1;
             this.inputMatrix2 = inputMatrix2;
+            this.accBuffer1 = accBuffer1;
+            this.accBuffer2 = accBuffer2;
             this.intervalLength = intervalLength;
             this.executionOrder = executionOrder;
-            this.subIntervalNumber = subIntervalNumber;
+            this.intervalNumber = intervalNumber;
         }
 
         public String toString() {
-            return subIntervalNumber + ":" + outputBuffer + " <- " +
+            return intervalNumber + ":" + outputBuffer + " <- " +
                     inputBuffer1 + " (" + inputMatrix1 + ") + " +
-                    inputBuffer2 + " (" + inputMatrix2 +  ") (" + intervalLength + ") @ " + executionOrder;
+                    inputBuffer2 + " (" + inputMatrix2 +  ") (" + intervalLength + ") ["+
+                    accBuffer1 + " + " + accBuffer2 + "] @ " + executionOrder;
         }
 
         public final int outputBuffer;
@@ -68,9 +69,11 @@ public interface ProcessOnCoalescentIntervalDelegate {
         public final int inputBuffer2;
         public final int inputMatrix1;
         public final int inputMatrix2;
+        public final int accBuffer1;
+        public final int accBuffer2;
         public final double intervalLength;
         public final int executionOrder;
-        public final int subIntervalNumber;
+        public final int intervalNumber;
     }
 
     final class OtherOperation {

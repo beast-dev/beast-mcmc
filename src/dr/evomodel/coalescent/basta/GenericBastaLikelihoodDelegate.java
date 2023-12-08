@@ -18,6 +18,11 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     private final double[] sizes;
     private final double[] coalescent;
 
+    private final double[] e;
+    private final double[] f;
+    private final double[] g;
+    private final double[] h;
+
     private final double[] temp;
 
     private final EigenDecomposition[] decompositions; // TODO flatten?
@@ -33,19 +38,26 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         this.sizes = new double[2 * stateCount];
         this.decompositions = new EigenDecomposition[1];
 
+        this.e = new double[maxNumCoalescentIntervals * stateCount];
+        this.f = new double[maxNumCoalescentIntervals * stateCount];
+        this.g = new double[maxNumCoalescentIntervals * stateCount];
+        this.h = new double[maxNumCoalescentIntervals * stateCount];
+
         this.temp = new double[stateCount * stateCount];
     }
 
     @Override
     protected double computeBranchIntervalOperations(List<BranchIntervalOperation> branchIntervalOperations) {
 
-        for (BranchIntervalOperation operation : branchIntervalOperations) { // TODO execute parallel by subIntervalNumber or executionOrder
+        for (BranchIntervalOperation operation : branchIntervalOperations) { // TODO execute parallel by intervalNumber or executionOrder
             peelPartials(
                     partials, operation.outputBuffer,
                     operation.inputBuffer1, operation.inputBuffer2,
                     matrices,
                     operation.inputMatrix1, operation.inputMatrix2,
-                    coalescent, operation.subIntervalNumber,
+                    operation.accBuffer1, operation.accBuffer2,
+                    coalescent, operation.intervalNumber,
+                    sizes, 0,
                     stateCount);
 
             if (PRINT_COMMANDS) {
@@ -80,11 +92,32 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     @Override
     protected double computeCoalescentIntervalReduction(List<Integer> intervalStarts,
                                                         List<BranchIntervalOperation> branchIntervalOperations) {
-        for (int start : intervalStarts) { // TODO execute in parallel
-            System.err.println(start);
+
+        for (int interval = 0; interval < intervalStarts.size() - 1; ++interval) { // TODO execute in parallel (no race conditions)
+            int start = intervalStarts.get(interval);
+            int end = intervalStarts.get(interval + 1);
+
+            for (int i = start; i < end; ++i) { // TODO execute in parallel (has race conditions)
+                BranchIntervalOperation operation = branchIntervalOperations.get(i);
+                reduceWithinInterval(e, f, g, h, partials,
+                        operation.inputBuffer1, operation.inputBuffer2,
+                        operation.accBuffer1, operation.accBuffer2,
+                        operation.intervalNumber,
+                        stateCount);
+
+            }
         }
 
-        return 0.0;
+        double logL = 0.0;
+        for (int i = 0; i < intervalStarts.size() - 1; ++i) { // TODO execute in parallel
+            BranchIntervalOperation operation = branchIntervalOperations.get(intervalStarts.get(i));
+
+            logL += reduceAcrossIntervals(e, f, g, h,
+                    operation.intervalNumber, operation.intervalLength,
+                    sizes, coalescent, stateCount);
+        }
+
+        return logL;
     }
 
     @Override
@@ -112,8 +145,9 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                                      int leftPartialOffset, int rightPartialOffset,
                                      double[] matrices,
                                      int leftMatrixOffset, int rightMatrixOffset,
-                                     double[] probability,
-                                     int probabilityOffset,
+                                     int leftAccOffset, int rightAccOffset,
+                                     double[] probability, int probabilityOffset,
+                                     double[] sizes, int sizesOffset,
                                      int stateCount) {
 
         resultOffset *= stateCount;
@@ -125,27 +159,46 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         for (int i = 0; i < stateCount; ++i) {
             double sum = 0.0;
             for (int j = 0; j < stateCount; ++j) {
-                sum += matrices[leftMatrixOffset + i * stateCount + j] *
-                        partials[leftPartialOffset + j];
+                sum += matrices[leftMatrixOffset + i * stateCount + j] * partials[leftPartialOffset + j];
             }
             partials[resultOffset + i] = sum;
         }
+
         if (rightPartialOffset >= 0) {
             // Handle right
             rightPartialOffset *= stateCount;
             rightMatrixOffset *= stateCount * stateCount;
 
+            leftAccOffset *= stateCount;
+            rightAccOffset *= stateCount;
+
+            sizesOffset *= sizesOffset * stateCount;
+
+            double prob = 0.0;
             for (int i = 0; i < stateCount; ++i) {
-                double sum = 0.0;
+                double right = 0.0;
                 for (int j = 0; j < stateCount; ++j) {
-                    sum += matrices[rightMatrixOffset + i * stateCount + j] *
-                            partials[rightPartialOffset + j];
+                    right += matrices[rightMatrixOffset + i * stateCount + j] * partials[rightPartialOffset + j];
                 }
-                partials[resultOffset + i] *= sum;
+                // entry = left * right * size
+                double left = partials[resultOffset + i];
+                double entry = left * right / sizes[sizesOffset + i];
+
+                partials[resultOffset + i] = entry;
+                partials[leftAccOffset + i] = left;
+                partials[rightAccOffset + i] = right;
+
+                prob += entry;
             }
 
-            probability[probabilityOffset] = 1.0; // TODO
+            for (int i = 0; i < stateCount; ++i) {
+                partials[resultOffset + i] /= prob;
+            }
+
+            probability[probabilityOffset] = prob;
         }
+
+        // TODO rescale?
     }
 
     private static void computeTransitionProbabilities(double distance,
@@ -201,6 +254,66 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                 }
                 matrix[u] = Math.abs(temp);
                 u++;
+            }
+        }
+    }
+
+    private static double reduceAcrossIntervals(double[] e, double[] f, double[] g, double[] h,
+                                                int interval, double length,
+                                                double[] sizes, double[] coalescent,
+                                                int stateCount) {
+
+        int offset = interval * stateCount;
+
+        double sum = 0.0;
+        for (int k = 0; k < stateCount; ++k) {
+            sum += (e[offset + k] * e[offset + k] - f[offset + k] +
+                    g[offset + k] * g[offset + k] - h[offset + k]) / sizes[k];
+        }
+
+        double logL = -length * sum / 4;
+
+        double prob = coalescent[interval];
+        if (prob != 0.0) {
+            logL += Math.log(prob);
+        }
+
+        return logL;
+    }
+
+    private static void reduceWithinInterval(double[] e, double[] f, double[] g, double[] h,
+                                             double[] partials,
+                                             int startBuffer1, int startBuffer2,
+                                             int endBuffer1, int endBuffer2,
+                                             int interval, int stateCount) {
+
+        interval *= stateCount;
+
+        startBuffer1 *= stateCount;
+        endBuffer1 *= stateCount;
+
+        for (int i = 0; i < stateCount; ++i) {
+            double startP = partials[startBuffer1 + i];
+            e[interval + i] += startP;
+            f[interval + i] += startP * startP;
+
+            double endP = partials[endBuffer1 + i];
+            g[interval + i] += endP;
+            h[interval + i] += endP * endP;
+        }
+
+        if (startBuffer2 >= 0) {
+            startBuffer2 *= stateCount;
+            endBuffer2 *= stateCount;
+
+            for (int i = 0; i < stateCount; ++i) {
+                double startP = partials[startBuffer2 + i];
+                e[interval + i] += startP;
+                f[interval + i] += startP * startP;
+
+                double endP = partials[endBuffer2 + i];
+                g[interval + i] += endP;
+                h[interval + i] += endP * endP;
             }
         }
     }

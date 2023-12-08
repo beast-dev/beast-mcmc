@@ -146,8 +146,15 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
 
         public int getActiveBuffer(NodeRef node) {
             if (DEBUG) test(node);
-            return getCurrentOffset(node) * stride + node.getNumber();
-//            return 1000 + getCurrentOffset(node) * 1000 + node.getNumber();
+            int currentOffset = getCurrentOffset(node);
+            if (currentOffset > 0) {
+                ++currentOffset;
+            }
+            return currentOffset * stride + node.getNumber();
+        }
+
+        public int getAccumulationBuffer(NodeRef node) {
+            return  stride + node.getNumber();
         }
 
         public int getExecutionOrder(NodeRef node) {
@@ -284,7 +291,7 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
             }
         }
 
-        intervalStarts.remove(intervalStarts.size() - 1);
+//        intervalStarts.remove(intervalStarts.size() - 1);
     }
 
     @SuppressWarnings("unused")
@@ -326,8 +333,9 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
                 new BranchIntervalOperation(
                         outputBuffer,
                         inputBuffer1, -1,
-                        inputMatrix1, -1, length,
-                        executionOrder, subInterval));
+                        inputMatrix1, -1,
+                        outputBuffer, -1,
+                        length, executionOrder, subInterval));
 
         activeNodesForInterval.setExecutionOrder(node, executionOrder);
     }
@@ -338,6 +346,9 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         
         final int inputBuffer1 = activeNodesForInterval.getActiveBuffer(leftChild);
         final int inputBuffer2 = activeNodesForInterval.getActiveBuffer(rightChild);
+
+        final int extraBuffer1 = activeNodesForInterval.getAccumulationBuffer(leftChild);
+        final int extraBuffer2 = activeNodesForInterval.getAccumulationBuffer(rightChild);
 
         final int outputBuffer = activeNodesForInterval.getActiveBuffer(nodeAtTopOfInterval);
         final int executionOrder = Math.max(
@@ -352,6 +363,7 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
                         outputBuffer,
                         inputBuffer1, inputBuffer2,
                         inputMatrix1, inputMatrix2,
+                        extraBuffer1, extraBuffer2,
                         length, executionOrder, subInterval));
 
         activeNodesForInterval.setExecutionOrder(nodeAtTopOfInterval, executionOrder);

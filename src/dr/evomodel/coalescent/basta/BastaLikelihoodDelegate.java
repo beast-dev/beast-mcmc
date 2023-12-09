@@ -79,7 +79,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
 
     abstract class AbstractBastaLikelihoodDelegate extends AbstractModel implements BastaLikelihoodDelegate, Citable {
 
-        protected static final boolean PRINT_COMMANDS = true;
+        protected static final boolean PRINT_COMMANDS = false;
 
         protected final int maxNumCoalescentIntervals;
 
@@ -146,7 +146,8 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
             FULL
         }
 
-        abstract protected void computeBranchIntervalOperations(List<BranchIntervalOperation> branchIntervalOperations);
+        abstract protected void computeBranchIntervalOperations(List<Integer> intervalStarts,
+                                                                List<BranchIntervalOperation> branchIntervalOperations);
 
         abstract protected void computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations);
 
@@ -164,7 +165,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
             }
 
             computeTransitionProbabilityOperations(matrixOperation);
-            computeBranchIntervalOperations(branchOperations);
+            computeBranchIntervalOperations(intervalStarts, branchOperations);
             return computeCoalescentIntervalReduction(intervalStarts, branchOperations);
         }
 

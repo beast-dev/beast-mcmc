@@ -22,7 +22,8 @@ public class NativeBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     }
 
     @Override
-    protected void computeBranchIntervalOperations(List<BranchIntervalOperation> branchIntervalOperations) {
+    protected void computeBranchIntervalOperations(List<Integer> intervalStarts,
+                                                   List<BranchIntervalOperation> branchIntervalOperations) {
         if (branchIntervalOperations != null) {
             for (BranchIntervalOperation operation : branchIntervalOperations) {
                 System.err.println(operation.toString());

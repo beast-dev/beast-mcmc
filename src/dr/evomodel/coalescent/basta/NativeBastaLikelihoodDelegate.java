@@ -22,30 +22,21 @@ public class NativeBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     }
 
     @Override
-    protected  void clearAll() {
-
-    }
-
-    @Override
-    protected double computeBranchIntervalOperations(List<BranchIntervalOperation> branchIntervalOperations) {
+    protected void computeBranchIntervalOperations(List<BranchIntervalOperation> branchIntervalOperations) {
         if (branchIntervalOperations != null) {
             for (BranchIntervalOperation operation : branchIntervalOperations) {
                 System.err.println(operation.toString());
             }
         }
-
-        return 0.0;
     }
 
     @Override
-    protected double computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations) {
+    protected void computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations) {
         if (matrixOperations != null) {
             for (TransitionMatrixOperation operation : matrixOperations) {
                 System.err.println(operation.toString());
             }
         }
-
-        return 0.0;
     }
 
     @Override

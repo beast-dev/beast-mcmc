@@ -281,7 +281,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         final List<TransitionMatrixOperation> matrixOperations =
                 treeTraversalDelegate.getMatrixOperations();
         final List<Integer> intervalStarts = treeTraversalDelegate.getIntervalStarts();
-        
+
         if (COUNT_TOTAL_OPERATIONS) {
             totalPropagationCount += branchOperations.size();
             totalMatrixUpdateCount += matrixOperations.size();

@@ -12,8 +12,6 @@ import java.util.List;
  */
 public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.AbstractBastaLikelihoodDelegate {
 
-    private static final boolean PRINT_COMMANDS = true;
-
     private final double[] partials;
     private final double[] matrices;
     private final double[] sizes;
@@ -48,20 +46,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     }
 
     @Override
-    protected void clearAll() {
-//        Arrays.fill(partials, tree.getExternalNodeCount() * stateCount, partials.length, 0.0);
-//        Arrays.fill(matrices, 0.0);
-//        Arrays.fill(sizes, 0.0);
-
-//        Arrays.fill(coalescent, 0.0);
-//        Arrays.fill(e, 0.0);
-//        Arrays.fill(f, 0.0);
-//        Arrays.fill(g, 0.0);
-//        Arrays.fill(h, 0.0);
-    }
-
-    @Override
-    protected double computeBranchIntervalOperations(List<BranchIntervalOperation> branchIntervalOperations) {
+    protected void computeBranchIntervalOperations(List<BranchIntervalOperation> branchIntervalOperations) {
 
         Arrays.fill(coalescent, 0.0);
 
@@ -81,12 +66,10 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                         new WrappedVector.Raw(partials, operation.outputBuffer * stateCount, stateCount));
             }
         }
-
-        return 0.0;
     }
 
     @Override
-    protected double computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations) {
+    protected void computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations) {
 
         for (TransitionMatrixOperation operation : matrixOperations) { // TODO execute in parallel
             computeTransitionProbabilities(
@@ -101,8 +84,6 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                                 operation.outputBuffer * stateCount * stateCount, stateCount * stateCount));
             }
         }
-
-        return 0.0;
     }
 
     @Override
@@ -142,7 +123,6 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             System.err.println("logL = " + logL + "\n");
         }
 
-//        return 0.0;
         return logL;
     }
 

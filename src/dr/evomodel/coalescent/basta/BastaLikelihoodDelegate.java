@@ -101,15 +101,14 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         }
 
         private int getMaxNumberOfCoalescentIntervals(Tree tree) {
-//            BigFastTreeIntervals intervals = new BigFastTreeIntervals((TreeModel) tree); // TODO fix BFTI to take a Tree
-//            int zeroLengthSampling = 0;
-//            for (int i = 0; i < intervals.getIntervalCount(); ++i) {
-//                if (intervals.getIntervalType(i) == IntervalType.SAMPLE && intervals.getIntervalTime(i) == 0.0) {
-//                    ++zeroLengthSampling;
-//                }
-//            }
-//            return tree.getNodeCount() - zeroLengthSampling;
-            return tree.getNodeCount();
+            BigFastTreeIntervals intervals = new BigFastTreeIntervals((TreeModel) tree); // TODO fix BFTI to take a Tree
+            int zeroLengthSampling = 0;
+            for (int i = 0; i < intervals.getIntervalCount(); ++i) {
+                if (intervals.getIntervalType(i) == IntervalType.SAMPLE && intervals.getIntervalTime(i) == 0.0) {
+                    ++zeroLengthSampling;
+                }
+            }
+            return tree.getNodeCount() - zeroLengthSampling;
         }
 
         @Override
@@ -147,11 +146,9 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
             FULL
         }
 
-        abstract protected void clearAll();
+        abstract protected void computeBranchIntervalOperations(List<BranchIntervalOperation> branchIntervalOperations);
 
-        abstract protected double computeBranchIntervalOperations(List<BranchIntervalOperation> branchIntervalOperations);
-
-        abstract protected double computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations);
+        abstract protected void computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations);
 
         abstract protected double computeCoalescentIntervalReduction(List<Integer> intervalStarts,
                                                                      List<BranchIntervalOperation> branchIntervalOperations);
@@ -166,11 +163,9 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
                 System.err.println("Tree = " + tree);
             }
 
-            double logLikelihood = computeTransitionProbabilityOperations(matrixOperation);
-            logLikelihood += computeBranchIntervalOperations(branchOperations);
-            logLikelihood += computeCoalescentIntervalReduction(intervalStarts, branchOperations);
-
-            return logLikelihood;
+            computeTransitionProbabilityOperations(matrixOperation);
+            computeBranchIntervalOperations(branchOperations);
+            return computeCoalescentIntervalReduction(intervalStarts, branchOperations);
         }
 
         @Override

@@ -4,6 +4,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.math.matrixAlgebra.WrappedVector;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -47,7 +48,22 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     }
 
     @Override
+    protected void clearAll() {
+//        Arrays.fill(partials, tree.getExternalNodeCount() * stateCount, partials.length, 0.0);
+//        Arrays.fill(matrices, 0.0);
+//        Arrays.fill(sizes, 0.0);
+
+//        Arrays.fill(coalescent, 0.0);
+//        Arrays.fill(e, 0.0);
+//        Arrays.fill(f, 0.0);
+//        Arrays.fill(g, 0.0);
+//        Arrays.fill(h, 0.0);
+    }
+
+    @Override
     protected double computeBranchIntervalOperations(List<BranchIntervalOperation> branchIntervalOperations) {
+
+        Arrays.fill(coalescent, 0.0);
 
         for (BranchIntervalOperation operation : branchIntervalOperations) { // TODO execute parallel by intervalNumber or executionOrder
             peelPartials(
@@ -93,6 +109,11 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     protected double computeCoalescentIntervalReduction(List<Integer> intervalStarts,
                                                         List<BranchIntervalOperation> branchIntervalOperations) {
 
+        Arrays.fill(e, 0.0);
+        Arrays.fill(f, 0.0);
+        Arrays.fill(g, 0.0);
+        Arrays.fill(h, 0.0);
+
         for (int interval = 0; interval < intervalStarts.size() - 1; ++interval) { // TODO execute in parallel (no race conditions)
             int start = intervalStarts.get(interval);
             int end = intervalStarts.get(interval + 1);
@@ -117,6 +138,11 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                     sizes, coalescent, stateCount);
         }
 
+        if (PRINT_COMMANDS) {
+            System.err.println("logL = " + logL + "\n");
+        }
+
+//        return 0.0;
         return logL;
     }
 

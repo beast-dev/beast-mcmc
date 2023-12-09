@@ -22,6 +22,11 @@ public class NativeBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     }
 
     @Override
+    protected  void clearAll() {
+
+    }
+
+    @Override
     protected double computeBranchIntervalOperations(List<BranchIntervalOperation> branchIntervalOperations) {
         if (branchIntervalOperations != null) {
             for (BranchIntervalOperation operation : branchIntervalOperations) {

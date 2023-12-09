@@ -30,6 +30,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
+import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
@@ -77,8 +78,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     private double storedLogLikelihood;
     protected boolean likelihoodKnown;
 
-    private final boolean isTreeRandom;
-
     public BastaLikelihood(String name,
                            Tree treeModel,
                            PatternList patternList,
@@ -111,10 +110,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         addModel(likelihoodDelegate);
 
         this.tree = treeModel;
-        isTreeRandom = (treeModel instanceof AbstractModel) && ((AbstractModel) treeModel).isVariable();
-        if (isTreeRandom) {
-            addModel((AbstractModel)treeModel); // TODO maybe unnecessary as BFTI already signals
-        }
 
         this.branchRateModel = branchRateModel;
         addModel(branchRateModel);
@@ -127,10 +122,14 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         this.stateCount = substitutionModel.getDataType().getStateCount();
 
-        treeIntervals = new BigFastTreeIntervals((TreeModel)treeModel);
-        treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, treeIntervals, branchRateModel, numberSubIntervals);
+        if (tree instanceof TreeModel) {
+            treeIntervals = new BestSignalsFromBigFastTreeIntervals((TreeModel) treeModel);
+            addModel(treeIntervals);
+        } else {
+            throw new RuntimeException("Not yet implemented");
+        }
 
-        addModel(treeIntervals);
+        treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, treeIntervals, branchRateModel, numberSubIntervals);
 
         setTipData();
 
@@ -197,49 +196,53 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        // TODO
+        if (variable == popSizeParameter) {
+            likelihoodKnown = false;
+        } else {
+            throw new RuntimeException("Not yet implemented");
+        }
     }
 
     @Override @SuppressWarnings("Duplicates")
     protected final void handleModelChangedEvent(Model model, Object object, int index) {
 
-        if (model == tree) {
-            if (object instanceof TreeChangedEvent) {
-
-                final TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
-
-                if (!isTreeRandom) throw new IllegalStateException("Attempting to change a fixed tree");
-
-                if (treeChangedEvent.isNodeChanged()) {
-                    // If a node event occurs the node and its two child nodes
-                    // are flagged for updating this will result in everything
-                    // above being updated as well. Node events occur when a node
-                    // is added to a branch, removed from a branch or its height or
-                    // rate changes.
-                    updateNode(((TreeChangedEvent) object).getNode());
-                } else if (treeChangedEvent.isTreeChanged()) {
-                    // Full tree events result in a complete updating of the tree likelihood
-                    // This event type is now used for EmpiricalTreeDistributions.
-                    updateAllNodes();
-                }
-            }
-        } else if (model == likelihoodDelegate) {
-            if (index == -1) {
-                updateAllNodes();
-            } else {
-                updateNode(tree.getNode(index));
-            }
-
-        } else if (model == branchRateModel) {
-            if (index == -1) {
-                updateAllNodes();
-            } else {
-                updateNode(tree.getNode(index));
-            }
-        } else {
-
-            assert false : "Unknown componentChangedEvent";
-        }
+//        if (model == tree) {
+//            if (object instanceof TreeChangedEvent) {
+//
+//                final TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
+//
+//                if (!isTreeRandom) throw new IllegalStateException("Attempting to change a fixed tree");
+//
+//                if (treeChangedEvent.isNodeChanged()) {
+//                    // If a node event occurs the node and its two child nodes
+//                    // are flagged for updating this will result in everything
+//                    // above being updated as well. Node events occur when a node
+//                    // is added to a branch, removed from a branch or its height or
+//                    // rate changes.
+//                    updateNode(((TreeChangedEvent) object).getNode());
+//                } else if (treeChangedEvent.isTreeChanged()) {
+//                    // Full tree events result in a complete updating of the tree likelihood
+//                    // This event type is now used for EmpiricalTreeDistributions.
+//                    updateAllNodes();
+//                }
+//            }
+//        } else if (model == likelihoodDelegate) {
+//            if (index == -1) {
+//                updateAllNodes();
+//            } else {
+//                updateNode(tree.getNode(index));
+//            }
+//
+//        } else if (model == branchRateModel) {
+//            if (index == -1) {
+//                updateAllNodes();
+//            } else {
+//                updateNode(tree.getNode(index));
+//            }
+//        } else {
+//
+//            assert false : "Unknown componentChangedEvent";
+//        }
 
         if (COUNT_TOTAL_OPERATIONS) totalModelChangedCount++;
 
@@ -249,27 +252,18 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
     @Override
     protected final void storeState() {
-
         assert (likelihoodKnown) : "the likelihood should always be known at this point in the cycle";
         storedLogLikelihood = logLikelihood;
-
-        if (TEST) treeIntervals.storeModelState();
     }
 
     @Override
     protected final void restoreState() {
-
-        // restore the likelihood and flag it as known
         logLikelihood = storedLogLikelihood;
         likelihoodKnown = true;
-
-        if (TEST) treeIntervals.restoreModelState();
     }
 
     @Override
-    protected void acceptState() {
-        if (TEST) treeIntervals.acceptModelState();
-    } // nothing to do
+    protected void acceptState() { } // nothing to do
 
     private double calculateLogLikelihood() {
 
@@ -287,10 +281,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         final List<TransitionMatrixOperation> matrixOperations =
                 treeTraversalDelegate.getMatrixOperations();
         final List<Integer> intervalStarts = treeTraversalDelegate.getIntervalStarts();
-
-        final List<OtherOperation> nodeOperations =
-                treeTraversalDelegate.getOtherOperations();
-
+        
         if (COUNT_TOTAL_OPERATIONS) {
             totalPropagationCount += branchOperations.size();
             totalMatrixUpdateCount += matrixOperations.size();

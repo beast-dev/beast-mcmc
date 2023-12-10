@@ -85,8 +85,13 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
     @Override
     protected void computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations) {
+        computeInnerTransitionProbabilityOperations(matrixOperations, 0, matrixOperations.size(), temp);
+    }
 
-        for (TransitionMatrixOperation operation : matrixOperations) { // TODO execute in parallel
+    protected void computeInnerTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations,
+                                                               int start, int end, double[] temp) {
+        for (int i = start; i < end; ++i) {
+            TransitionMatrixOperation operation = matrixOperations.get(i);
             computeTransitionProbabilities(
                     operation.time,
                     matrices, operation.outputBuffer * stateCount * stateCount,
@@ -229,7 +234,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                                                        int stateCount,
                                                        double[] iexp) {
 
-        assert matrix.length >= matrixOffset + stateCount * stateCount;
+        assert matrix.length >= matrixOffset * stateCount * stateCount;
         assert iexp.length == stateCount * stateCount;
 
         boolean real = eigen.getEigenValues().length == stateCount;

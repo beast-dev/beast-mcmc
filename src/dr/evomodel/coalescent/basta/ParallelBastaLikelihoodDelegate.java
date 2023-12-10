@@ -1,7 +1,6 @@
 package dr.evomodel.coalescent.basta;
 
 import dr.evolution.tree.Tree;
-import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,11 +11,12 @@ import java.util.concurrent.*;
  */
 public class ParallelBastaLikelihoodDelegate extends GenericBastaLikelihoodDelegate {
 
-    private static final int MIN_TASKS = 1;
+    private static final int MIN_BRANCH_TASKS = 1;
+    private static final int MIN_MATRIX_TASKS = 1;
 
     private final int threadCount;
     private final ExecutorService pool;
-    private final List<Callable<Object>> allTasks;
+    private final double[][] temp;
 
     public ParallelBastaLikelihoodDelegate(String name,
                                            Tree tree,
@@ -33,41 +33,64 @@ public class ParallelBastaLikelihoodDelegate extends GenericBastaLikelihoodDeleg
         }
 
         this.threadCount = Math.abs(threadCount);
-
-        this.allTasks = new ArrayList<>(threadCount);
-        for (int i = 0; i < threadCount; ++i) {
-            allTasks.add(null);
-        }
+        this.temp = new double[this.threadCount][stateCount * stateCount];
     }
 
+    @Override
     protected void computeInnerBranchIntervalOperations(List<BranchIntervalOperation> branchIntervalOperations,
                                                       int start, int end) {
 
         int totalTasks = end - start;
 
-        if (totalTasks <= MIN_TASKS) {
+        if (totalTasks <= MIN_BRANCH_TASKS) {
             super.computeInnerBranchIntervalOperations(branchIntervalOperations, start, end);
         } else {
-            int numTasksPerThread = totalTasks / threadCount;
-            if (totalTasks % threadCount != 0) {
-                ++numTasksPerThread;
-            }
+            forkJoin((s, e, t) -> super.computeInnerBranchIntervalOperations(branchIntervalOperations, s, e),
+                    start, end);
+        }
+    }
 
-            List<Callable<Object>> tasks = new ArrayList<>(threadCount);
-            for (int i = 0, startTask = start; startTask < end; ++i, startTask += numTasksPerThread) {
-                final int thisStart = startTask;
-                final int thisEnd = Math.min(end, startTask + numTasksPerThread);
+    @Override
+    protected void computeInnerTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations,
+                                                               int start, int end, double[] temp) {
+        int totalTasks = end - start;
 
-                tasks.add(() -> {
-                    super.computeInnerBranchIntervalOperations(branchIntervalOperations, thisStart, thisEnd);
-                    return null;
-                });
-            }
-            try {
-                pool.invokeAll(tasks);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+        if (totalTasks <= MIN_MATRIX_TASKS) {
+            super.computeInnerTransitionProbabilityOperations(matrixOperations, start, end, temp);
+        } else {
+            forkJoin((s, e, t) -> super.computeInnerTransitionProbabilityOperations(matrixOperations, s, e, this.temp[t]),
+                    start, end);
+        }
+    }
+
+    private interface RangeCallable {
+        void execute(int start, int end, int task);
+    }
+
+    private void forkJoin(RangeCallable f, int start, int end) {
+        final int totalTasks = end - start;
+
+        int numTasksPerThread = totalTasks / threadCount;
+        if (totalTasks % threadCount != 0) {
+            ++numTasksPerThread;
+        }
+
+        List<Callable<Object>> tasks = new ArrayList<>(threadCount);
+        for (int i = 0, startTask = start; startTask < end; ++i, startTask += numTasksPerThread) {
+            final int thisStart = startTask;
+            final int thisEnd = Math.min(end, startTask + numTasksPerThread);
+            final int thisTask = i;
+
+            tasks.add(() -> {
+                f.execute(thisStart, thisEnd, thisTask);
+                return null;
+            });
+
+        }
+        try {
+            pool.invokeAll(tasks);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 }

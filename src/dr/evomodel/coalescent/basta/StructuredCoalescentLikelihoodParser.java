@@ -53,6 +53,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
     public static final String SUBINTERVALS = "subIntervals";
+    private static final String THREADS = "threads";
 
     public static final String MAP_RECONSTRUCTION = "useMAP";
 
@@ -104,6 +105,8 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             }
         }
 
+        int threads = xo.getAttribute(THREADS, 1);
+
         if (treeModel != null) {
             try {
                 if (USE_OLD_CODE) {
@@ -113,8 +116,11 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                     if (USE_DELEGATE) {
                         return new BastaLikelihood("name",
                                 treeModel, patternList, generalSubstitutionModel, popSizes, branchRateModel,
-                                new GenericBastaLikelihoodDelegate("name", treeModel,
-                                        generalSubstitutionModel.getDataType().getStateCount()),
+                                (threads != 1) ?
+                                        new ParallelBastaLikelihoodDelegate("name", treeModel,
+                                                generalSubstitutionModel.getDataType().getStateCount(), threads) :
+                                        new GenericBastaLikelihoodDelegate("name", treeModel,
+                                                generalSubstitutionModel.getDataType().getStateCount()),
                               subIntervals, true);
                     } else {
                         return new FasterStructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList,
@@ -149,6 +155,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(SUBINTERVALS, true),
+            AttributeRule.newIntegerRule(THREADS, true),
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
             new ElementRule(BranchRateModel.class, true),

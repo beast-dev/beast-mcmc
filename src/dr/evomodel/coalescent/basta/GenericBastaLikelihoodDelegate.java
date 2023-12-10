@@ -56,23 +56,29 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             int start = intervalStarts.get(interval);
             int end = intervalStarts.get(interval + 1);
 
-            for (int i = start; i < end; ++i) { // TODO execute in parallel
-                BranchIntervalOperation operation = branchIntervalOperations.get(i);
+            computeInnerBranchIntervalOperations(branchIntervalOperations, start, end);
+        }
+    }
 
-                peelPartials(
-                        partials, operation.outputBuffer,
-                        operation.inputBuffer1, operation.inputBuffer2,
-                        matrices,
-                        operation.inputMatrix1, operation.inputMatrix2,
-                        operation.accBuffer1, operation.accBuffer2,
-                        coalescent, operation.intervalNumber,
-                        sizes, 0,
-                        stateCount);
+    protected void computeInnerBranchIntervalOperations(List<BranchIntervalOperation> branchIntervalOperations,
+                                                      int start, int end) {
 
-                if (PRINT_COMMANDS) {
-                    System.err.println(operation + " " +
-                            new WrappedVector.Raw(partials, operation.outputBuffer * stateCount, stateCount));
-                }
+        for (int i = start; i < end; ++i) {
+            BranchIntervalOperation operation = branchIntervalOperations.get(i);
+
+            peelPartials(
+                    partials, operation.outputBuffer,
+                    operation.inputBuffer1, operation.inputBuffer2,
+                    matrices,
+                    operation.inputMatrix1, operation.inputMatrix2,
+                    operation.accBuffer1, operation.accBuffer2,
+                    coalescent, operation.intervalNumber,
+                    sizes, 0,
+                    stateCount);
+
+            if (PRINT_COMMANDS) {
+                System.err.println(operation + " " +
+                        new WrappedVector.Raw(partials, operation.outputBuffer * stateCount, stateCount));
             }
         }
     }

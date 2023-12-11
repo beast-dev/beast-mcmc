@@ -161,7 +161,6 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     @Override
     public void setPopulationSizes(int index, double[] sizes) {
         assert sizes.length == stateCount;
-        assert index == 0; // TODO generalize
 
         System.arraycopy(sizes, 0, this.sizes, index * stateCount, stateCount);
     }

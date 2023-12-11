@@ -31,11 +31,9 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.util.Citable;
@@ -58,7 +56,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         TreeTraitProvider, Citable, Profileable, Reportable {
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
-    private static final boolean TEST = false;
 
     private final BastaLikelihoodDelegate likelihoodDelegate;
 
@@ -72,7 +69,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     private final Helper treeTraits = new Helper();
 
     private final CoalescentIntervalTraversal treeTraversalDelegate;
-    private final BigFastTreeIntervals treeIntervals;
+    private final BestSignalsFromBigFastTreeIntervals treeIntervals;
 
     private double logLikelihood;
     private double storedLogLikelihood;
@@ -205,6 +202,16 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
     @Override @SuppressWarnings("Duplicates")
     protected final void handleModelChangedEvent(Model model, Object object, int index) {
+
+        if (model == treeIntervals) {
+//            System.err.println("info");
+        } else if (model == branchRateModel) {
+
+        } else if (model == substitutionModel) {
+
+        } else {
+            throw new RuntimeException("Not yet implemented");
+        }
 
 //        if (model == tree) {
 //            if (object instanceof TreeChangedEvent) {

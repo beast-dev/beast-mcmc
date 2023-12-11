@@ -1,8 +1,5 @@
 package dr.evomodel.coalescent.basta;
 
-import beagle.Beagle;
-import beagle.basta.BeagleBasta;
-import beagle.basta.BastaFactory;
 import dr.evolution.tree.Tree;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.math.matrixAlgebra.WrappedVector;
@@ -33,34 +30,6 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                                           Tree tree,
                                           int stateCount) {
         super(name, tree, stateCount);
-
-        BeagleBasta basta = BastaFactory.loadBastaInstance(1, 1, 1, 16, 1, 1, 1, 1,
-                1, null, 0L, 0L);
-
-//        Beagle basta = BeagleFactory.loadBeagleInstance(10, 10, 0, 16, 1, 1, 1, 1,
-//                1, null, 0L, 0L);
-
-
-//        beagle = BeagleFactory.loadBeagleInstance(
-//                tipCount,
-//                numPartials,
-//                compactPartialsCount,
-//                stateCount,
-//                patternCount,
-//                evolutionaryProcessDelegate.getEigenBufferCount(),
-//                numMatrices,
-//                categoryCount,
-//                numScaleBuffers, // Always allocate; they may become necessary
-//                resourceList,
-//                preferenceFlags,
-//                requirementFlags
-//        );
-
-        int cumulativeBufferIndex = Beagle.NONE;
-        /* No need to rescale partials */
-
-        double[] tmp = new double[16];
-        basta.setPartials(0, tmp);
 
         this.partials = new double[maxNumCoalescentIntervals * tree.getNodeCount() * stateCount]; // TODO much too large
         this.matrices = new double[maxNumCoalescentIntervals * stateCount * stateCount]; // TODO much too small (except for strict-clock

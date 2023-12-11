@@ -275,10 +275,10 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     private double calculateLogLikelihood() {
 
         // update eigen-decomposition
-        likelihoodDelegate.setEigenDecomposition(0, substitutionModel.getEigenDecomposition()); // TODO do conditionally and double-buffer
+        likelihoodDelegate.updateEigenDecomposition(0, substitutionModel.getEigenDecomposition(), false); // TODO do conditionally and double-buffer
 
         // update population sizes
-        likelihoodDelegate.setPopulationSizes(0, popSizeParameter.getParameterValues()); // TODO do conditionally and double-buffer
+        likelihoodDelegate.updatePopulationSizes(0, popSizeParameter.getParameterValues(), false); // TODO do conditionally and double-buffer
 
         // update operations on tree
         treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();

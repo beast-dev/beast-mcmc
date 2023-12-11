@@ -59,6 +59,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
 
     public static final Boolean USE_OLD_CODE = false;
     private static final boolean USE_DELEGATE = true;
+    private static final boolean USE_BEAGLE = false;
 
     public String getParserName() {
         return STRUCTURED_COALESCENT;
@@ -114,14 +115,19 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                             generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees);
                 } else {
                     if (USE_DELEGATE) {
-                        return new BastaLikelihood("name",
-                                treeModel, patternList, generalSubstitutionModel, popSizes, branchRateModel,
-                                (threads != 1) ?
-                                        new ParallelBastaLikelihoodDelegate("name", treeModel,
-                                                generalSubstitutionModel.getDataType().getStateCount(), threads) :
-                                        new GenericBastaLikelihoodDelegate("name", treeModel,
-                                                generalSubstitutionModel.getDataType().getStateCount()),
-                              subIntervals, true);
+                        final BastaLikelihoodDelegate delegate;
+                        if (USE_BEAGLE) {
+                            delegate = new BeagleBastaLikelihoodDelegate("name", treeModel,
+                                    generalSubstitutionModel.getDataType().getStateCount());
+                        } else {
+                            delegate = (threads != 1) ?
+                                    new ParallelBastaLikelihoodDelegate("name", treeModel,
+                                            generalSubstitutionModel.getDataType().getStateCount(), threads) :
+                                    new GenericBastaLikelihoodDelegate("name", treeModel,
+                                            generalSubstitutionModel.getDataType().getStateCount());
+                        }
+                        return new BastaLikelihood("name", treeModel, patternList, generalSubstitutionModel,
+                                popSizes, branchRateModel, delegate, subIntervals, true);
                     } else {
                         return new FasterStructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList,
                                 dataType, tag, generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees,

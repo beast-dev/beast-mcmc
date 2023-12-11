@@ -69,11 +69,11 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         throw new RuntimeException("Not yet implemented");
     }
 
-    default void setEigenDecomposition(int index, EigenDecomposition decomposition) {
+    default void updateEigenDecomposition(int index, EigenDecomposition decomposition, boolean flip) {
         throw new RuntimeException("Not yet implemented");
     }
 
-    default void setPopulationSizes(int index, double[] sizes) {
+    default void updatePopulationSizes(int index, double[] sizes, boolean flip) {
         throw new RuntimeException("Not yet implemented");
     }
 

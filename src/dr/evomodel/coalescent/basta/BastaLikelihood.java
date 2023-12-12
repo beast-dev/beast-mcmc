@@ -212,7 +212,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         }
     }
 
-    @Override @SuppressWarnings("Duplicates")
+    @Override
     protected final void handleModelChangedEvent(Model model, Object object, int index) {
 
         if (model == treeIntervals) {
@@ -226,44 +226,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         } else {
             throw new RuntimeException("Not yet implemented");
         }
-
-//        if (model == tree) {
-//            if (object instanceof TreeChangedEvent) {
-//
-//                final TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
-//
-//                if (!isTreeRandom) throw new IllegalStateException("Attempting to change a fixed tree");
-//
-//                if (treeChangedEvent.isNodeChanged()) {
-//                    // If a node event occurs the node and its two child nodes
-//                    // are flagged for updating this will result in everything
-//                    // above being updated as well. Node events occur when a node
-//                    // is added to a branch, removed from a branch or its height or
-//                    // rate changes.
-//                    updateNode(((TreeChangedEvent) object).getNode());
-//                } else if (treeChangedEvent.isTreeChanged()) {
-//                    // Full tree events result in a complete updating of the tree likelihood
-//                    // This event type is now used for EmpiricalTreeDistributions.
-//                    updateAllNodes();
-//                }
-//            }
-//        } else if (model == likelihoodDelegate) {
-//            if (index == -1) {
-//                updateAllNodes();
-//            } else {
-//                updateNode(tree.getNode(index));
-//            }
-//
-//        } else if (model == branchRateModel) {
-//            if (index == -1) {
-//                updateAllNodes();
-//            } else {
-//                updateNode(tree.getNode(index));
-//            }
-//        } else {
-//
-//            assert false : "Unknown componentChangedEvent";
-//        }
 
         if (COUNT_TOTAL_OPERATIONS) totalModelChangedCount++;
 
@@ -284,7 +246,11 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     @Override
     protected final void restoreState() {
         logLikelihood = storedLogLikelihood;
+
         likelihoodKnown = true;
+        populationSizesKnown = true;
+        treeIntervalsKnown = true;
+        transitionMatricesKnown = true;
     }
 
     @Override

@@ -66,7 +66,6 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         branchIntervalOperations.clear();
         matrixOperations.clear();
         intervalStarts.clear();
-        otherOperations.clear();
 
         if (traversalType == TraversalType.REVERSE_LEVEL_ORDER) {
             traverseReverseCoalescentLevelOrder();
@@ -85,10 +84,6 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
 
     public int getCoalescentIntervalCount() {
         return currentLikelihoodInterval + 1;
-    }
-
-    public List<OtherOperation> getOtherOperations() {
-        return otherOperations;
     }
 
     public List<Integer> getIntervalStarts() {
@@ -256,7 +251,7 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         int startingInterval = 0;
         for (int node = 0; node < updateNode.length; ++node) {
             if (updateNode[node]) {
-                
+
             }
         }
         return startingInterval;
@@ -439,7 +434,6 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
 
     private final List<BranchIntervalOperation> branchIntervalOperations = new ArrayList<>();
     private final List<TransitionMatrixOperation> matrixOperations = new ArrayList<>();
-    private final List<OtherOperation> otherOperations = new ArrayList<>();
     private final List<Integer> intervalStarts = new ArrayList<>();
 }
 

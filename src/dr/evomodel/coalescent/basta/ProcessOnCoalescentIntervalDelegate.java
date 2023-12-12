@@ -76,34 +76,6 @@ public interface ProcessOnCoalescentIntervalDelegate {
         public final int intervalNumber;
     }
 
-    final class OtherOperation {
-        OtherOperation(int nodeNumber, int leftChild, int rightChild) {
-            this.nodeNumber = nodeNumber;
-            this.leftChild = leftChild;
-            this.rightChild = rightChild;
-        }
-
-        public int getNodeNumber() {
-            return nodeNumber;
-        }
-
-        public int getLeftChild() {
-            return leftChild;
-        }
-
-        public int getRightChild() {
-            return rightChild;
-        }
-
-        public String toString() {
-            return nodeNumber + "(" + leftChild + "," + rightChild + ")";
-        }
-
-        private final int nodeNumber;
-        private final int leftChild;
-        private final int rightChild;
-    }
-
     final class TransitionMatrixOperation {
         TransitionMatrixOperation(int outputBuffer, int decompositionBuffer, double time) {
             this.outputBuffer = outputBuffer;

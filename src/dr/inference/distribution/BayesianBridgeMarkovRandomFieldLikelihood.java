@@ -64,25 +64,9 @@ public class BayesianBridgeMarkovRandomFieldLikelihood extends AbstractModelLike
         values[0] = new double[1];
         values[0][0] = concatenated[0];
         values[1] = new double[dim - 1];
-        for (int i = 0; i < dim - 1; i++) {
-            values[1][i] = concatenated[i+1];
-        }
+        System.arraycopy(concatenated, 1, values[1], 0, dim -1);
         return values;
     }
-
-//    private double[] getFirstElementVariableValues() {
-//        double[] vals = new double[1];
-//        vals[0] = variables.getParameterValue(0);
-//        return vals;
-//    }
-//
-//    private double[] getBridgeVariableValues() {
-//        double[] vals = new double[dim - 1];
-//        for (int i = 0; i < dim - 1; i++) {
-//            vals[i] = variables.getParameterValue(i + 1);
-//        }
-//        return vals;
-//    }
 
     @Override
     public double getLogLikelihood() {
@@ -103,9 +87,7 @@ public class BayesianBridgeMarkovRandomFieldLikelihood extends AbstractModelLike
         grad[0] = ((GradientProvider)firstElementDistribution).getGradientLogDensity(transformedVariables[0])[0];
 
         double[] bridgeGrad = bridge.getGradientLogDensity(transformedVariables[1]);
-        for (int i = 0; i < dim - 1; i++) {
-            grad[i + 1] = bridgeGrad[i];
-        }
+        System.arraycopy(bridgeGrad, 0, grad, 1, dim -1);
 
         return transform.updateGradientLogDensity(grad, transform.inverse(variables.getParameterValues(), 0, dim), 0, dim);
 

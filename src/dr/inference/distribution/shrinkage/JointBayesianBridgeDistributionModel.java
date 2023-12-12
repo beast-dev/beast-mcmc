@@ -2,8 +2,6 @@ package dr.inference.distribution.shrinkage;
 
 import dr.inference.model.Parameter;
 import dr.inference.model.PriorPreconditioningProvider;
-import dr.math.MathUtils;
-import dr.math.distributions.GammaDistribution;
 import dr.math.distributions.NormalDistribution;
 
 /**
@@ -98,10 +96,6 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
         }
         return draws;
     }
-
-//    public void setGlobalScale(double draw) {
-//        globalScale.setParameterValue(0, draw);
-//    }
 
     private final Parameter localScale;
     private final Parameter slabWidth;

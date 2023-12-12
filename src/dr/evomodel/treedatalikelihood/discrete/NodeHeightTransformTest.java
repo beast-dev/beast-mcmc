@@ -156,7 +156,7 @@ public class NodeHeightTransformTest implements Reportable{
             nodeHeightTransform.getNodeHeights().fireParameterChangedEvent();
 
             nodeHeightGradient.getLikelihood().makeDirty();
-            final double result = nodeHeightGradient.getLikelihood().getLogLikelihood() - realLineTransform.getLogJacobian(inverseValues, 0, argument.length);
+            final double result = nodeHeightGradient.getLikelihood().getLogLikelihood() - realLineTransform.logJacobian(inverseValues, 0, argument.length);
             return result;
         }
 

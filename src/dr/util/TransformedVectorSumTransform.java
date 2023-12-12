@@ -10,12 +10,11 @@ import dr.xml.XMLSyntaxRule;
 public class TransformedVectorSumTransform extends Transform.MultivariateTransform {
 
     private static final String NAME = "transformedVectorSumTransform";
+    private static final String PARSER_NAME2 = "vectorScanTransformedParameter";
     private final Transform incrementTransform;
-    private final int dim;
 
     public TransformedVectorSumTransform(int dim, Transform incrementTransform) {
         super(dim);
-        this.dim = dim;
         this.incrementTransform = incrementTransform;
     }
 
@@ -37,6 +36,24 @@ public class TransformedVectorSumTransform extends Transform.MultivariateTransfo
     @Override
     public String getTransformName() {
         return NAME;
+    }
+
+    @Override
+    protected double[] updateGradientLogDensity(double[] transformedGradient, double[] untransformedValues) {
+
+        final int dim = untransformedValues.length;
+
+        double[] transformedValues = transform(untransformedValues); // TODO This seem unnecessary; maybe change interface to pass these values?
+        double[] untransformedGradient = new double[dim];
+
+        untransformedGradient[dim - 1] = transformedGradient[dim - 1] *
+                incrementTransform.gradient(transformedValues[dim - 1]);
+        for (int i = dim - 2; i >= 0; --i) {
+            untransformedGradient[i] = transformedGradient[i] *
+                    incrementTransform.gradient(transformedValues[i]) + untransformedGradient[i + 1];
+        }
+
+        return untransformedGradient;
     }
 
     @Override
@@ -85,7 +102,6 @@ public class TransformedVectorSumTransform extends Transform.MultivariateTransfo
 
         @Override
         public TransformedMultivariateParameter parseXMLObject(XMLObject xo) throws XMLParseException {
-            final String name = xo.hasId() ? xo.getId() : null;
 
             Parameter param = (Parameter) xo.getChild(Parameter.class);
 
@@ -98,13 +114,13 @@ public class TransformedVectorSumTransform extends Transform.MultivariateTransfo
                 lower = xo.getDoubleAttribute("lower");
             }
 
-            Transform incrementTransform = null;
-            String ttype = (String) xo.getAttribute(INCREMENT_TRANSFORM);
-            if (ttype.equalsIgnoreCase("log")) {
+            Transform incrementTransform;
+            String transformType = (String) xo.getAttribute(INCREMENT_TRANSFORM);
+            if (transformType.equalsIgnoreCase("log")) {
                 incrementTransform = Transform.LOG;
-            } else if (ttype.equalsIgnoreCase("logit")) {
+            } else if (transformType.equalsIgnoreCase("logit")) {
                 incrementTransform = new Transform.ScaledLogitTransform(upper, lower);
-            } else if (ttype.equalsIgnoreCase("none")) {
+            } else if (transformType.equalsIgnoreCase("none")) {
                 incrementTransform = new Transform.NoTransform();
             } else {
                 throw new RuntimeException("Invalid transform type");
@@ -134,5 +150,8 @@ public class TransformedVectorSumTransform extends Transform.MultivariateTransfo
         public String getParserName() {
             return NAME;
         }
+
+        @Override
+        public String[] getParserNames() { return new String[]{NAME, PARSER_NAME2}; }
     };
 }

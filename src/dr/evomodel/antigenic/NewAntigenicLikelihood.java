@@ -364,17 +364,17 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     public void updateParametersOnDevice() {
         if (!precisionKnown) {
             transferPrecision();
-//            precisionKnown = true;
+            precisionKnown = true;
         }
 
         if (!locationsKnown) {
             transferLocations();
-//            locationsKnown = true;
+            locationsKnown = true;
         }
 
         if (!observationsKnown) {
             transferObservations();
-//            observationsKnown = true;
+            observationsKnown = true;
         }
     }
 

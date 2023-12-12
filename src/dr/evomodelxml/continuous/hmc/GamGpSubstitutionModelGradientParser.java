@@ -91,3 +91,4 @@ public class GamGpSubstitutionModelGradientParser extends AbstractXMLObjectParse
         return AbstractGlmSubstitutionModelGradient.class;
     }
 }
+

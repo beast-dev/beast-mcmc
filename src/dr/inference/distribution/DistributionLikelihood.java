@@ -29,6 +29,7 @@ import dr.inference.model.Parameter;
 import dr.math.distributions.Distribution;
 import dr.math.matrixAlgebra.Vector;
 import dr.util.Attribute;
+import dr.xml.Reportable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -40,7 +41,7 @@ import org.w3c.dom.Element;
  * @version $Id: DistributionLikelihood.java,v 1.11 2005/05/25 09:35:28 rambaut Exp $
  */
 
-public class DistributionLikelihood extends AbstractDistributionLikelihood {
+public class DistributionLikelihood extends AbstractDistributionLikelihood implements Reportable {
 
     public final static boolean DEBUG = false;
 
@@ -181,5 +182,10 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
     protected Distribution distribution;
     private final double offset;
     private final double scale;
+
+    @Override
+    public String getReport() {
+        return "Distribution " + getId() + " " + getLogLikelihood();
+    }
 }
 

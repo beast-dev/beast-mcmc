@@ -75,6 +75,10 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     private double storedLogLikelihood;
     protected boolean likelihoodKnown;
 
+    private boolean populationSizesKnown;
+    private boolean treeIntervalsKnown;
+    private boolean transitionMatricesKnown;
+
     public BastaLikelihood(String name,
                            Tree treeModel,
                            PatternList patternList,
@@ -131,6 +135,9 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         setTipData();
 
         likelihoodKnown = false;
+        populationSizesKnown = false;
+        treeIntervalsKnown = false;
+        transitionMatricesKnown = false;
     }
 
     private void setTipData() {
@@ -188,12 +195,17 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         if (COUNT_TOTAL_OPERATIONS) totalMakeDirtyCount++;
 
         likelihoodKnown = false;
+        treeIntervalsKnown = false;
+        populationSizesKnown = false;
+        transitionMatricesKnown = false;
+
         likelihoodDelegate.makeDirty();
         updateAllNodes();
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == popSizeParameter) {
+            populationSizesKnown = false;
             likelihoodKnown = false;
         } else {
             throw new RuntimeException("Not yet implemented");
@@ -204,11 +216,13 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     protected final void handleModelChangedEvent(Model model, Object object, int index) {
 
         if (model == treeIntervals) {
-//            System.err.println("info");
+            treeIntervalsKnown = false;
+            transitionMatricesKnown = false;
         } else if (model == branchRateModel) {
-
+            treeIntervalsKnown = false; // TODO should not be necessary
+            transitionMatricesKnown = false;
         } else if (model == substitutionModel) {
-
+            transitionMatricesKnown = false;
         } else {
             throw new RuntimeException("Not yet implemented");
         }
@@ -260,6 +274,10 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     @Override
     protected final void storeState() {
         assert (likelihoodKnown) : "the likelihood should always be known at this point in the cycle";
+        assert (populationSizesKnown);
+        assert (treeIntervalsKnown);
+        assert (transitionMatricesKnown);
+
         storedLogLikelihood = logLikelihood;
     }
 
@@ -274,18 +292,25 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
     private double calculateLogLikelihood() {
 
-        // update eigen-decomposition
-        likelihoodDelegate.updateEigenDecomposition(0, substitutionModel.getEigenDecomposition(), false); // TODO do conditionally and double-buffer
+        if (!transitionMatricesKnown) {
+            // update eigen-decomposition
+            likelihoodDelegate.updateEigenDecomposition(0, substitutionModel.getEigenDecomposition(), false); // TODO do conditionally and double-buffer
+        }
 
-        // update population sizes
-        likelihoodDelegate.updatePopulationSizes(0, popSizeParameter.getParameterValues(), false); // TODO do conditionally and double-buffer
+        if (!populationSizesKnown) {
+            // update population sizes
+            likelihoodDelegate.updatePopulationSizes(0, popSizeParameter.getParameterValues(), false); // TODO do conditionally and double-buffer
+        }
 
-        // update operations on tree
-        treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
+        if (!treeIntervalsKnown) {
+            // update operations on tree
+            treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
+        }
 
         final List<BranchIntervalOperation> branchOperations =
                 treeTraversalDelegate.getBranchIntervalOperations();
         final List<TransitionMatrixOperation> matrixOperations =
+                transitionMatricesKnown ? NO_OPT :
                 treeTraversalDelegate.getMatrixOperations();
         final List<Integer> intervalStarts = treeTraversalDelegate.getIntervalStarts();
 
@@ -302,6 +327,10 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         // after traverse all nodes and patterns have been updated --
         //so change flags to reflect this.
         setAllNodesUpdated();
+
+        treeIntervalsKnown = true;
+        populationSizesKnown = true;
+        transitionMatricesKnown = true;
 
         return logL;
     }
@@ -399,6 +428,8 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     public long getTotalCalculationCount() {
         return likelihoodDelegate.getTotalCalculationCount();
     }
+
+    private final List<TransitionMatrixOperation> NO_OPT = new ArrayList<>();
 
     private int totalPropagationCount = 0;
     private int totalMatrixUpdateCount = 0;

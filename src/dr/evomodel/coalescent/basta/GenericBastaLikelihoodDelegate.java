@@ -233,7 +233,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                                                        int stateCount,
                                                        double[] iexp) {
 
-        assert matrix.length >= matrixOffset * stateCount * stateCount;
+        assert matrix.length >= matrixOffset + stateCount * stateCount;
         assert iexp.length == stateCount * stateCount;
 
         boolean real = eigen.getEigenValues().length == stateCount;

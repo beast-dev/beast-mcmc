@@ -11,8 +11,8 @@ import java.util.concurrent.*;
  */
 public class ParallelBastaLikelihoodDelegate extends GenericBastaLikelihoodDelegate {
 
-    private static final int MIN_BRANCH_TASKS = 1;
-    private static final int MIN_MATRIX_TASKS = 1;
+    private static final int MIN_BRANCH_TASKS = 50;
+    private static final int MIN_MATRIX_TASKS = 1000000;
 
     private final int threadCount;
     private final ExecutorService pool;
@@ -41,6 +41,7 @@ public class ParallelBastaLikelihoodDelegate extends GenericBastaLikelihoodDeleg
                                                       int start, int end) {
 
         int totalTasks = end - start;
+//        System.err.println(totalTasks);
 
         if (totalTasks <= MIN_BRANCH_TASKS) {
             super.computeInnerBranchIntervalOperations(branchIntervalOperations, start, end);

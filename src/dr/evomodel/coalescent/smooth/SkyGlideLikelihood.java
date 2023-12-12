@@ -147,11 +147,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
 
                     if (firstGridIndex == lastGridIndex) {
-                        if (firstGridIndex < gridPointParameter.getDimension() - 1) {
-                            updateIntervalGradient(intervalStart, intervalEnd, firstGridIndex, lineageCount, gradient);
-                        } else {
-                            updateIntervalGradient(intervalStart, intervalEnd, gridPointParameter.getDimension() - 1, lineageCount, gradient);
-                        }
+                        updateIntervalGradient(intervalStart, intervalEnd, firstGridIndex, lineageCount, gradient);
                     } else {
                         updateIntervalGradient(intervalStart, gridPointParameter.getParameterValue(firstGridIndex), firstGridIndex, lineageCount, gradient);
                         currentGridIndex = firstGridIndex;
@@ -189,11 +185,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
                 double sum = 0;
 
                 if (firstGridIndex == lastGridIndex) {
-                    if (firstGridIndex < gridPointParameter.getDimension() - 1) {
-                        sum += getLinearInverseIntegral(intervalStart, intervalEnd, firstGridIndex);
-                    } else {
-                        sum += getLinearInverseIntegral(intervalStart, intervalEnd, gridPointParameter.getDimension() - 1);
-                    }
+                    sum += getLinearInverseIntegral(intervalStart, intervalEnd, firstGridIndex);
                 } else {
                     sum += getLinearInverseIntegral(intervalStart, gridPointParameter.getParameterValue(firstGridIndex), firstGridIndex);
                     currentGridIndex = firstGridIndex;
@@ -267,11 +259,17 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
             return 0;
         }
 
-        if (slope == 0) {
+        final double realSmall = getMagicUnderFlowBound(slope);
+
+        if (Math.abs(slope) < realSmall) {
             return Math.exp(-intercept) * (end - start);
         } else {
             return Math.exp(-intercept) * (Math.exp(-slope * start) - Math.exp(-slope * end)) / slope;
         }
+    }
+
+    private double getMagicUnderFlowBound(double slope) { // TODO: arbitrary magic bound
+        return MachineAccuracy.SQRT_EPSILON*(Math.abs(slope) + 1.0);
     }
 
     private void updateIntervalGradient(double intervalStart, double intervalEnd, int gridIndex, int lineageCount,
@@ -280,7 +278,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         final double intercept = getGridIntercept(gridIndex);
         final double lineageMultiplier = -0.5 * lineageCount * (lineageCount - 1);
         assert(slope != 0 || intercept != 0);
-        final double realSmall = MachineAccuracy.SQRT_EPSILON*(Math.abs(slope) + 1.0); // TODO: arbitrary magic bound
+        final double realSmall = getMagicUnderFlowBound(slope);
         if (intervalStart != intervalEnd) {
             final double slopeMultiplier = Math.abs(slope) < realSmall ? Math.exp(-intercept) * (intervalStart * intervalStart - intervalEnd * intervalEnd) / 2
                     : Math.exp(-intercept) * ( (-intervalStart * Math.exp(-slope * intervalStart) + intervalEnd * Math.exp(-slope * intervalEnd))

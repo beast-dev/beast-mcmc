@@ -199,7 +199,6 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
                     currentGridIndex = lastGridIndex;
                 }
             }
-            updateSingleTreePopulationInverseGradientWrtLogPopSize(index, diagonalHessian);
         }
 
         return diagonalHessian;

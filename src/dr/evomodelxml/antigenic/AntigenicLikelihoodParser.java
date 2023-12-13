@@ -1,6 +1,7 @@
 package dr.evomodelxml.antigenic;
 
 import dr.evomodel.antigenic.NewAntigenicLikelihood;
+import dr.inference.model.AbstractTransformedCompoundMatrix;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
@@ -34,6 +35,8 @@ public class AntigenicLikelihoodParser extends AbstractXMLObjectParser {
     public static final String SERUM_BREADTHS = "serumBreadths";
     public static final String VIRUS_OFFSETS = "virusOffsets";
     public static final String SERUM_OFFSETS = "serumOffsets";
+
+    private static final String START_DIMENSION = "tipStartDim";
 
     public String getParserName() {
         return ANTIGENIC_LIKELIHOOD;
@@ -122,6 +125,8 @@ public class AntigenicLikelihoodParser extends AbstractXMLObjectParser {
             virusAviditiesParameter = (Parameter) xo.getElementFirstChild(VIRUS_AVIDITIES);
         }
 
+        int startDim = xo.getAttribute(START_DIMENSION, 1) - 1;
+
         NewAntigenicLikelihood AGL = new NewAntigenicLikelihood(
                 mdsDimension,
                 mdsPrecision,
@@ -139,7 +144,8 @@ public class AntigenicLikelihoodParser extends AbstractXMLObjectParser {
                 assayTable,
                 mergeSerumIsolates,
                 intervalWidth,
-                driftInitialLocations);
+                driftInitialLocations,
+                startDim);
 
         Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Citable.Utils.getCitationString(AGL));
 
@@ -176,7 +182,8 @@ public class AntigenicLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(MDS_PRECISION, Parameter.class, "Parameter for precision of MDS embedding"),
             new ElementRule(LOCATION_DRIFT, Parameter.class, "Optional parameter for drifting locations with time", true),
             new ElementRule(VIRUS_DRIFT, Parameter.class, "Optional parameter for drifting only virus locations, overrides locationDrift", true),
-            new ElementRule(SERUM_DRIFT, Parameter.class, "Optional parameter for drifting only serum locations, overrides locationDrift", true)
+            new ElementRule(SERUM_DRIFT, Parameter.class, "Optional parameter for drifting only serum locations, overrides locationDrift", true),
+            AttributeRule.newIntegerRule(START_DIMENSION, true),
     };
 
     public Class getReturnType() {

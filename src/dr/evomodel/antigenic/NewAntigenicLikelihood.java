@@ -95,7 +95,8 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
             DataTable<String[]> dataTable,
             boolean mergeSerumIsolates,
             double intervalWidth,
-            double driftInitialLocations) {
+            double driftInitialLocations,
+            int tipStartOffset) {
 
         super(ANTIGENIC_LIKELIHOOD);
 
@@ -123,6 +124,8 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         this.virusIndices = setupVirusIndices(tipIndices);
 
         this.mdsDimension = mdsDimension;
+        this.tipDimension = tipTraitsParameter.getParameter(0).getDimension();
+        this.tipStartOffset = tipStartOffset;
 
         this.mdsPrecisionParameter = mdsPrecisionParameter;
         addVariable(mdsPrecisionParameter);
@@ -428,7 +431,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         for (int i = 0; i < numViruses; ++i) {
             Parameter parameter = tipTraitsParameter.getParameter(i);
             for (int j = 0; j < mdsDimension; ++j) {
-                locations[offset + j] = parameter.getParameterValue(j);
+                locations[offset + j] = parameter.getParameterValue(tipStartOffset + j);
             }
 
             if (locationDriftParameter != null) {
@@ -741,12 +744,12 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
             }
             double r = MathUtils.nextGaussian();
             virusSamplingParameter.getParameter(i).setParameterValue(0, r + offset); // TODO Remove
-            tipTraitsParameter.getParameter(tipIndices[i]).setParameterValue(0, r + offset);
+            tipTraitsParameter.getParameter(tipIndices[i]).setParameterValue(tipStartOffset + 0, r + offset);
             if (mdsDimension > 1) {
                 for (int j = 1; j < mdsDimension; j++) {
                     r = MathUtils.nextGaussian();
                     virusSamplingParameter.getParameter(i).setParameterValue(j, r); // TODO Remove
-                    tipTraitsParameter.getParameter(tipIndices[i]).setParameterValue(j, r);
+                    tipTraitsParameter.getParameter(tipIndices[i]).setParameterValue(tipStartOffset + j, r);
                 }
             }
         }
@@ -774,7 +777,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         if (variable == virusSamplingParameter) { // TODO Remove
             if (index != -1) {
-                int loc = index / mdsDimension;
+                int loc = index / tipDimension;
 //                virusLocationChanged[loc] = true;
                 if (tipTraitsParameter != null && tipIndices[loc] != -1) {
                     Parameter location = virusSamplingParameter.getParameter(loc);
@@ -972,7 +975,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
             sxOffset = serumDriftParameter.getParameterValue(0) * serumOffsetsParameter.getParameterValue(serum);
         }
 
-        double vxLoc = vLoc.getParameterValue(0) + vxOffset;
+        double vxLoc = vLoc.getParameterValue(tipStartOffset + 0) + vxOffset;
         double sxLoc = sLoc.getParameterValue(0) + sxOffset;
 
         double difference = vxLoc - sxLoc;
@@ -980,7 +983,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
 
         // other dimensions are not
         for (int i = 1; i < mdsDimension; i++) {
-            difference = vLoc.getParameterValue(i) - sLoc.getParameterValue(i);
+            difference = vLoc.getParameterValue(tipStartOffset + i) - sLoc.getParameterValue(i);
             sum += difference * difference;
         }
 
@@ -1075,7 +1078,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     public AntigenicGradientWrtParameter wrtFactory(Parameter parameter) {
         if (parameter == tipTraitsParameter) {
             return new AntigenicGradientWrtParameter.VirusLocations(numViruses, numSera, mdsDimension,
-                    tipTraitsParameter, layout);
+                    tipTraitsParameter, layout, tipStartOffset, tipDimension);
         } else if (parameter == serumLocationsParameter) {
             return new AntigenicGradientWrtParameter.SerumLocations(numViruses, numSera, mdsDimension,
                     serumLocationsParameter, layout);
@@ -1117,6 +1120,8 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     private final List<Double> serumDates = new ArrayList<Double>();
 
     private final int mdsDimension;
+    private final int tipDimension;
+    private final int tipStartOffset;
     private final double intervalWidth;
     private final Parameter mdsPrecisionParameter;
     private final Parameter locationDriftParameter;

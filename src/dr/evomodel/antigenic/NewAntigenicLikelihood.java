@@ -724,7 +724,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     private final int findStrain(String label, List<String> strainNames) {
         int index = 0;
         for (String strainName : strainNames) {
-            if (label.startsWith(strainName)) {
+            if (label.equalsIgnoreCase(strainName)) {
                 return index;
             }
 

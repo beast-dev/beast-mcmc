@@ -27,6 +27,7 @@
 package dr.evomodel.coalescent.smooth;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
@@ -39,7 +40,7 @@ import dr.xml.Reportable;
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class SkyGlideGradient implements GradientWrtParameterProvider, Reportable {
+public class SkyGlideGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable {
 
     private final SkyGlideLikelihood likelihood;
 
@@ -88,7 +89,19 @@ public class SkyGlideGradient implements GradientWrtParameterProvider, Reportabl
 
     @Override
     public String getReport() {
-        return GradientWrtParameterProvider.getReportAndCheckForError(this, wrtParameter.getParameterLowerBound(), wrtParameter.getParameterUpperBound(), tolerance);
+        String output = GradientWrtParameterProvider.getReportAndCheckForError(this, wrtParameter.getParameterLowerBound(), wrtParameter.getParameterUpperBound(), tolerance)
+                + "\n" + HessianWrtParameterProvider.getReportAndCheckForError(this, tolerance);
+        return output;
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity() {
+        return wrtParameter.getDiagonalHessianLogDensity(likelihood);
+    }
+
+    @Override
+    public double[][] getHessianLogDensity() {
+        throw new RuntimeException("Not yet implemented.");
     }
 
     public enum WrtParameter {
@@ -96,6 +109,11 @@ public class SkyGlideGradient implements GradientWrtParameterProvider, Reportabl
             @Override
             double[] getGradientLogDensity(SkyGlideLikelihood likelihood) {
                 return likelihood.getGradientWrtLogPopulationSize();
+            }
+
+            @Override
+            double[] getDiagonalHessianLogDensity(SkyGlideLikelihood likelihood) {
+                return likelihood.getDiagonalHessianLogDensityWrtLogPopSize();
             }
 
             @Override
@@ -109,6 +127,7 @@ public class SkyGlideGradient implements GradientWrtParameterProvider, Reportabl
             }
         };
         abstract double[] getGradientLogDensity(SkyGlideLikelihood likelihood);
+        abstract double[] getDiagonalHessianLogDensity(SkyGlideLikelihood likelihood);
         abstract double getParameterLowerBound();
         abstract double getParameterUpperBound();
     }

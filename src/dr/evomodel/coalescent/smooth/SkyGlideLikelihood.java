@@ -147,15 +147,15 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
 
                     if (firstGridIndex == lastGridIndex) {
-                        updateIntervalGradient(intervalStart, intervalEnd, firstGridIndex, lineageCount, gradient);
+                        updateIntervalGradientWrtLogPopSize(intervalStart, intervalEnd, firstGridIndex, lineageCount, gradient);
                     } else {
-                        updateIntervalGradient(intervalStart, gridPointParameter.getParameterValue(firstGridIndex), firstGridIndex, lineageCount, gradient);
+                        updateIntervalGradientWrtLogPopSize(intervalStart, gridPointParameter.getParameterValue(firstGridIndex), firstGridIndex, lineageCount, gradient);
                         currentGridIndex = firstGridIndex;
                         while(currentGridIndex + 1 < lastGridIndex) {
-                            updateIntervalGradient(gridPointParameter.getParameterValue(currentGridIndex), gridPointParameter.getParameterValue(currentGridIndex + 1), currentGridIndex + 1, lineageCount, gradient);
+                            updateIntervalGradientWrtLogPopSize(gridPointParameter.getParameterValue(currentGridIndex), gridPointParameter.getParameterValue(currentGridIndex + 1), currentGridIndex + 1, lineageCount, gradient);
                             currentGridIndex++;
                         }
-                        updateIntervalGradient(gridPointParameter.getParameterValue(currentGridIndex), intervalEnd, currentGridIndex + 1, lineageCount, gradient);
+                        updateIntervalGradientWrtLogPopSize(gridPointParameter.getParameterValue(currentGridIndex), intervalEnd, currentGridIndex + 1, lineageCount, gradient);
                     }
                     currentGridIndex = lastGridIndex;
                 }
@@ -165,6 +165,85 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
         return gradient;
     }
+
+    public double[] getDiagonalHessianLogDensityWrtLogPopSize() {
+        double[] diagonalHessian = new double[logPopSizeParameter.getDimension()];
+
+        for (int index = 0; index < trees.size(); index++) {
+            BigFastTreeIntervals interval = intervals.get(index);
+            Tree thisTree = trees.get(index);
+            int currentGridIndex = 0;
+            for (int i = 0; i < interval.getIntervalCount(); i++) {
+                final int lineageCount = interval.getLineageCount(i);
+                int[] nodeIndices = interval.getNodeNumbersForInterval(i);
+                final double intervalStart = thisTree.getNodeHeight(thisTree.getNode(nodeIndices[0]));
+                final double intervalEnd = thisTree.getNodeHeight(thisTree.getNode(nodeIndices[1]));
+
+                if (intervalStart != intervalEnd) {
+                    int[] gridIndices = getGridPoints(currentGridIndex, intervalStart, intervalEnd);
+                    final int firstGridIndex = gridIndices[0];
+                    final int lastGridIndex = gridIndices[1];
+
+
+                    if (firstGridIndex == lastGridIndex) {
+                        updateIntervalDiagonalHessianWrtLogPopSize(intervalStart, intervalEnd, firstGridIndex, lineageCount, diagonalHessian);
+                    } else {
+                        updateIntervalDiagonalHessianWrtLogPopSize(intervalStart, gridPointParameter.getParameterValue(firstGridIndex), firstGridIndex, lineageCount, diagonalHessian);
+                        currentGridIndex = firstGridIndex;
+                        while(currentGridIndex + 1 < lastGridIndex) {
+                            updateIntervalDiagonalHessianWrtLogPopSize(gridPointParameter.getParameterValue(currentGridIndex), gridPointParameter.getParameterValue(currentGridIndex + 1), currentGridIndex + 1, lineageCount, diagonalHessian);
+                            currentGridIndex++;
+                        }
+                        updateIntervalDiagonalHessianWrtLogPopSize(gridPointParameter.getParameterValue(currentGridIndex), intervalEnd, currentGridIndex + 1, lineageCount, diagonalHessian);
+                    }
+                    currentGridIndex = lastGridIndex;
+                }
+            }
+            updateSingleTreePopulationInverseGradientWrtLogPopSize(index, diagonalHessian);
+        }
+
+        return diagonalHessian;
+    }
+
+    private void updateIntervalDiagonalHessianWrtLogPopSize(double intervalStart, double intervalEnd, int gridIndex,
+                                                            int lineageCount, double[] diagonalHessian) {
+        final double slope = getGridSlope(gridIndex);
+        final double intercept = getGridIntercept(gridIndex);
+        final double lineageMultiplier = -0.5 * lineageCount * (lineageCount - 1);
+        assert(slope != 0 || intercept != 0);
+        final double realSmall = getMagicUnderFlowBound(slope);
+        if (intervalStart != intervalEnd) {
+            final double expIntervalStart = Math.exp(-slope * intervalStart);
+            final double expIntervalEnd = Math.exp(-slope * intervalEnd);
+            final double expIntercept = Math.exp(-intercept);
+
+            final double thisGridTime = gridPointParameter.getParameterValue(gridIndex);
+            final double lastGridTime = gridIndex == 0 ? 0 : gridPointParameter.getParameterValue(gridIndex - 1);
+
+            final double secondDerivativeWrtIntercept = getLinearInverseIntegral(intervalStart, intervalEnd, gridIndex);
+            final double secondDerivativeWrtSlope = Math.abs(slope) < realSmall ? expIntercept
+                    * (intervalEnd * intervalEnd * intervalEnd - intervalStart * intervalStart * intervalStart) / 3 :
+                    expIntercept * (-2 / slope / slope * (intervalEnd * expIntervalEnd - intervalStart * expIntervalStart)
+                    +(intervalStart * intervalStart * expIntervalStart - intervalEnd * intervalEnd * expIntervalEnd) / slope
+                    +2 / slope / slope / slope * (expIntervalStart - expIntervalEnd));
+            final double derivativeWrtSlope = Math.abs(slope) < realSmall ? expIntercept * (intervalStart * intervalStart - intervalEnd * intervalEnd) / 2 :
+                    expIntercept * ((intervalEnd * expIntervalEnd - intervalStart * expIntervalStart) / slope - (expIntervalStart - expIntervalEnd) / slope / slope);
+            final double secondDerivativeWrtInterceptSlope = -derivativeWrtSlope;
+
+            final double partialInterceptPartialFirstLogPopSize = thisGridTime / (thisGridTime - lastGridTime);
+            final double partialInterceptPartialSecondLogPopSize = - lastGridTime / (thisGridTime - lastGridTime);
+            final double partialSlopePartialFirstLogPopSize = - 1 / (thisGridTime - lastGridTime);
+            final double partialSLopePartialSecondLogPopSize = 1 / (thisGridTime - lastGridTime);
+
+            diagonalHessian[gridIndex] += lineageMultiplier * (secondDerivativeWrtIntercept * partialInterceptPartialFirstLogPopSize * partialInterceptPartialFirstLogPopSize
+                    + 2 * secondDerivativeWrtInterceptSlope * partialSlopePartialFirstLogPopSize * partialInterceptPartialFirstLogPopSize
+                    + secondDerivativeWrtSlope * partialSlopePartialFirstLogPopSize * partialSlopePartialFirstLogPopSize);
+            diagonalHessian[gridIndex + 1] += lineageMultiplier * (secondDerivativeWrtIntercept * partialInterceptPartialSecondLogPopSize * partialInterceptPartialSecondLogPopSize
+                    + 2 * secondDerivativeWrtInterceptSlope * partialSLopePartialSecondLogPopSize * partialInterceptPartialSecondLogPopSize
+                    + secondDerivativeWrtSlope * partialSLopePartialSecondLogPopSize * partialSLopePartialSecondLogPopSize);
+        }
+    }
+
 
 
     public double getSingleTreeLogLikelihood(int index) {
@@ -272,8 +351,8 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         return MachineAccuracy.SQRT_EPSILON*(Math.abs(slope) + 1.0);
     }
 
-    private void updateIntervalGradient(double intervalStart, double intervalEnd, int gridIndex, int lineageCount,
-                                        double[] gradient) {
+    private void updateIntervalGradientWrtLogPopSize(double intervalStart, double intervalEnd, int gridIndex, int lineageCount,
+                                                     double[] gradient) {
         final double slope = getGridSlope(gridIndex);
         final double intercept = getGridIntercept(gridIndex);
         final double lineageMultiplier = -0.5 * lineageCount * (lineageCount - 1);

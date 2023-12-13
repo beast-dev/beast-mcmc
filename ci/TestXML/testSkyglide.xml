@@ -3033,8 +3033,8 @@
 		<populationSizes>
 
 			<!-- skygrid.logPopSize is in log units unlike other popSize                 -->
-<!-- 			changing 2.100001 to 2.1 will cause instability for numerical derivative -->
-			<parameter id="skygrid.logPopSize" dimension="6" value="1.1 4.1 2.100001 2.1 1.2 0.8"/>
+<!-- 			changing 2.1001 to 2.1 will cause instability for numerical derivative -->
+			<parameter id="skygrid.logPopSize" dimension="6" value="1.1 4.1 2.1001 2.1 1.2 0.8"/>
 <!-- 			<parameter id="skygrid.logPopSize" dimension="6" value="1.3 1.3 1.3 1.3 1.3 1.3"/> -->
 <!-- 			<parameter id="skygrid.logPopSize" dimension="3" value="1.1 1.1 1.1"/> -->
 <!-- 			<parameter id="skygrid.logPopSize" dimension="5" value="1.1 2.1 1.2 3.1 4.1"/> -->

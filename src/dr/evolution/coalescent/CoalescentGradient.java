@@ -55,7 +55,7 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
 
     public enum Wrt {
         NODE_HEIGHTS,
-        PARAMETER;
+        PARAMETER
     }
 
     public CoalescentGradient(CoalescentLikelihood likelihood,

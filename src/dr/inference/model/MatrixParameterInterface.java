@@ -51,6 +51,10 @@ public interface MatrixParameterInterface extends Parameter {
 
     double[] getParameterValues();
 
+    default int getParameterCount() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
     int getUniqueParameterCount();
 
     Parameter getUniqueParameter(int index);

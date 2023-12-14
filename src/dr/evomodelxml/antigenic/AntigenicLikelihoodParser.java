@@ -1,10 +1,7 @@
 package dr.evomodelxml.antigenic;
 
 import dr.evomodel.antigenic.NewAntigenicLikelihood;
-import dr.inference.model.AbstractTransformedCompoundMatrix;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.DataTable;
 import dr.xml.*;
@@ -78,9 +75,9 @@ public class AntigenicLikelihoodParser extends AbstractXMLObjectParser {
             // TOD Remove
         }
 
-        MatrixParameter serumLocationsParameter = null;
+        MatrixParameterInterface serumLocationsParameter = null;
         if (xo.hasChildNamed(SERUM_LOCATIONS)) {
-            serumLocationsParameter = (MatrixParameter) xo.getElementFirstChild(SERUM_LOCATIONS);
+            serumLocationsParameter = (MatrixParameterInterface) xo.getElementFirstChild(SERUM_LOCATIONS);
         }
 
         Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
@@ -173,7 +170,7 @@ public class AntigenicLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(DRIFT_INITIAL_LOCATIONS, true, "The degree to drift initial virus and serum locations, defaults to 0.0"),
             new ElementRule(TIP_TRAIT, CompoundParameter.class, "Optional parameter of tip locations from the tree", true),
 //                new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class, "Parameter of locations of all virus"),
-            new ElementRule(SERUM_LOCATIONS, MatrixParameter.class, "Parameter of locations of all sera"),
+            new ElementRule(SERUM_LOCATIONS, MatrixParameterInterface.class, "Parameter of locations of all sera"),
             new ElementRule(VIRUS_OFFSETS, Parameter.class, "Optional parameter for virus dates to be stored", true),
             new ElementRule(SERUM_OFFSETS, Parameter.class, "Optional parameter for serum dates to be stored", true),
             new ElementRule(SERUM_POTENCIES, Parameter.class, "Optional parameter for serum potencies", true),

@@ -80,7 +80,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
             Parameter virusDriftParameter,
             Parameter serumDriftParameter,
             MatrixParameter virusSamplingParameter, // TODO Remove
-            MatrixParameter serumLocationsParameter,
+            MatrixParameterInterface serumLocationsParameter,
             CompoundParameter tipTraitsParameter,
             Parameter virusOffsetsParameter,
             Parameter serumOffsetsParameter,
@@ -651,9 +651,20 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         return serumBreadthsParameter;
     }
 
-    protected void setupLocationsParameter(MatrixParameter locationsParameter, List<String> strains) {
-        locationsParameter.setColumnDimension(mdsDimension);
-        locationsParameter.setRowDimension(strains.size());
+    protected void setupLocationsParameter(MatrixParameterInterface locationsParameter, List<String> strains) {
+        if (locationsParameter instanceof MatrixParameter) {
+            ((MatrixParameter) locationsParameter).setColumnDimension(mdsDimension);
+            ((MatrixParameter) locationsParameter).setRowDimension(strains.size());
+        } else if (locationsParameter instanceof FastMatrixParameter) {
+            FastMatrixParameter fmp = (FastMatrixParameter) locationsParameter;
+            if (fmp.getRowDimension() != mdsDimension) {
+                throw new IllegalArgumentException("Column dim must be " + mdsDimension);
+            }
+            if (fmp.getColumnDimension() != strains.size()) {
+                throw new IllegalArgumentException("Row dim must be " + strains.size());
+            }
+        }
+
         for (int i = 0; i < strains.size(); i++) {
             locationsParameter.getParameter(i).setId(strains.get(i));
         }
@@ -1116,7 +1127,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     private final Parameter serumDriftParameter;
 
     private final MatrixParameter virusSamplingParameter;
-    private final MatrixParameter serumLocationsParameter;
+    private final MatrixParameterInterface serumLocationsParameter;
 
     private final Parameter virusOffsetsParameter;
     private final Parameter serumOffsetsParameter;

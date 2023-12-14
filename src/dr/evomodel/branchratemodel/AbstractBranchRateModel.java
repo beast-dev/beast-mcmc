@@ -86,36 +86,36 @@ public abstract class AbstractBranchRateModel extends AbstractModelLikelihood im
     public void makeDirty() {
         // Do nothing
     }
-
-    public LogColumn[] getColumns() {
-        if (this instanceof DifferentiableBranchRates) {
-            Tree tree = ((DifferentiableBranchRates) this).getTree();
-            if (tree == null) {
-                return super.getColumns();
-            }
-            LogColumn[] columns = new LogColumn[tree.getNodeCount() - 1];
-            for (int i = 0; i < columns.length; i++) {
-                if (tree.getNode(i) != tree.getRoot())
-                    columns[i] = new BranchRateColumn(getModelName() + i, i, tree);
-            }
-            return columns;
-        } else {
-            return super.getColumns();
-        }
-    }
-
-    private class BranchRateColumn extends NumberColumn {
-        private final int dim;
-        private final Tree tree;
-
-        public BranchRateColumn(String label, int dim, Tree tree) {
-            super(label);
-            this.dim = dim;
-            this.tree = tree;
-        }
-
-        public double getDoubleValue() {
-            return dim < tree.getRoot().getNumber() ? getBranchRate(tree, tree.getNode(dim)) : getBranchRate(tree, tree.getNode(dim + 1)); }
-    }
+//
+//    public LogColumn[] getColumns() {
+//        if (this instanceof DifferentiableBranchRates) {
+//            Tree tree = ((DifferentiableBranchRates) this).getTree();
+//            if (tree == null) {
+//                return super.getColumns();
+//            }
+//            LogColumn[] columns = new LogColumn[tree.getNodeCount() - 1];
+//            for (int i = 0; i < columns.length; i++) {
+//                if (tree.getNode(i) != tree.getRoot())
+//                    columns[i] = new BranchRateColumn(getModelName() + i, i, tree);
+//            }
+//            return columns;
+//        } else {
+//            return super.getColumns();
+//        }
+//    }
+//
+//    private class BranchRateColumn extends NumberColumn {
+//        private final int dim;
+//        private final Tree tree;
+//
+//        public BranchRateColumn(String label, int dim, Tree tree) {
+//            super(label);
+//            this.dim = dim;
+//            this.tree = tree;
+//        }
+//
+//        public double getDoubleValue() {
+//            return dim < tree.getRoot().getNumber() ? getBranchRate(tree, tree.getNode(dim)) : getBranchRate(tree, tree.getNode(dim + 1)); }
+//    }
 
 }

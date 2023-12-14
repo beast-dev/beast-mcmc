@@ -50,7 +50,7 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
 
     private final CoreInformation information;
 
-    MassivelyParallelMDSImpl() {
+    public MassivelyParallelMDSImpl() {
         singleton = NativeMDSSingleton.loadLibrary();
 
         information = new CoreInformation();
@@ -81,7 +81,19 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     public void initialize(int embeddingDimension, int locationCount, long flags) {
         information.flags = flags;
         instance = singleton.initialize(embeddingDimension, locationCount, information);
-        this.observationCount = (locationCount * (locationCount - 1)) / 2;
+        this.observationCount = (locationCount * (locationCount - 1)) / 2; // TODO Adjust for missing entries
+    }
+
+    @Override
+    public void initialize(int embeddingDimension, MultiDimensionalScalingLayout layout, long flags) {
+        information.flags = flags;
+        instance = singleton.initialize(embeddingDimension, layout, information);
+        this.observationCount = layout.observationCount;
+    }
+
+    @Override
+    public void setNonMissingObservationCount(int count) {
+        this.observationCount = count;
     }
 
     @Override
@@ -109,6 +121,7 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     public double calculateLogLikelihood() {
         double sumOfIncrements = singleton.getSumOfIncrements(instance);
 
+        // TODO when left-truncated, I am not sure the below is correct
         return 0.5 * (Math.log(precision) - Math.log(2 * Math.PI)) * observationCount - sumOfIncrements;
     }
 
@@ -146,6 +159,11 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
                 }
             }
         }
+    }
+
+    @Override
+    public void getObservationGradient(double[] observation) {
+        singleton.getObservationGradient(instance, observation);
     }
 
     @Override

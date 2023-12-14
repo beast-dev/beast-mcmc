@@ -25,6 +25,7 @@
 
 package dr.app.beauti.options;
 
+import dr.app.beauti.components.continuous.ContinuousModelExtensionType;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.continuous.ContinuousSubstModelType;
@@ -59,8 +60,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private BinaryModelType binarySubstitutionModel = BinaryModelType.BIN_SIMPLE;
     private DiscreteSubstModelType discreteSubstType = DiscreteSubstModelType.SYM_SUBST;
     private ContinuousSubstModelType continuousSubstModelType = ContinuousSubstModelType.HOMOGENOUS;
+    private ContinuousModelExtensionType continuousExtensionType = ContinuousModelExtensionType.NONE;
 
-    private final int continuousTraitCount;
+    private int continuousTraitCount;
+    private final int extendedTraitCount;
 
     private final TraitData traitData;
 
@@ -71,6 +74,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private boolean gammaHetero = false;
     private int gammaCategories = 4;
     private boolean invarHetero = false;
+    private boolean equalWeights = false;
     private String codonHeteroPattern = null;
     private boolean unlinkedSubstitutionModel = true;
     private boolean unlinkedHeterogeneityModel = true;
@@ -83,6 +87,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private MicroSatModelType.Phase phase = MicroSatModelType.Phase.ONE_PHASE;
     private Microsatellite microsatellite = null;
     private boolean isLatitudeLongitude = false;
+    private boolean isIndependent = false;
     private double jitterWindow = 0.0;
 
     public TraitData getTraitData() {
@@ -97,6 +102,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         } else {
             continuousTraitCount = 0;
         }
+
+        extendedTraitCount = continuousTraitCount;
 
         if (partition.getTraits() != null && partition.getDataType().getType() == DataType.GENERAL) {
             traitData = partition.getTraits().get(0);
@@ -122,8 +129,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         binarySubstitutionModel = source.binarySubstitutionModel;
         discreteSubstType = source.discreteSubstType;
         continuousSubstModelType = source.continuousSubstModelType;
+        continuousExtensionType = source.continuousExtensionType;
 
         continuousTraitCount = source.continuousTraitCount;
+        extendedTraitCount = source.extendedTraitCount;
+
 
         traitData = source.traitData;
 
@@ -133,6 +143,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         frequencyPolicy = source.frequencyPolicy;
         gammaHetero = source.gammaHetero;
         gammaCategories = source.gammaCategories;
+        equalWeights = source.equalWeights;
         invarHetero = source.invarHetero;
         codonHeteroPattern = source.codonHeteroPattern;
         unlinkedSubstitutionModel = source.unlinkedSubstitutionModel;
@@ -153,6 +164,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public PartitionSubstitutionModel(BeautiOptions options, String name) {
         super(options, name);
         continuousTraitCount = 0;
+        extendedTraitCount = continuousTraitCount;
+
         traitData = null;
 
         initModelParametersAndOpererators();
@@ -328,28 +341,28 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         createOperator("CP3.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
         // if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
-            createOperator("deltaGTR", "gtr.rates",
+        createOperator("deltaGTR", "gtr.rates",
+                "Change GTR transition rates relative to each other maintaining mean",
+                GTR_RATES,
+                OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        for (int j = 1; j <= 3; j++) {
+            createOperator("CP" + j + ".deltaGTR", "CP" + j + ".gtr.rates",
                     "Change GTR transition rates relative to each other maintaining mean",
-                    GTR_RATES,
+                    "CP" + j + "." + GTR_RATES,
                     OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-            for (int j = 1; j <= 3; j++) {
-                createOperator("CP" + j + ".deltaGTR", "CP" + j + ".gtr.rates",
-                        "Change GTR transition rates relative to each other maintaining mean",
-                        "CP" + j + "." + GTR_RATES,
-                        OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-            }
-            createOperator("CP1+2.deltaGTR", "CP1+2.gtr.rates",
-                    "Change GTR transition rates relative to each other maintaining mean",
-                    "CP1+2." + GTR_RATES,
-                    OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        }
+        createOperator("CP1+2.deltaGTR", "CP1+2.gtr.rates",
+                "Change GTR transition rates relative to each other maintaining mean",
+                "CP1+2." + GTR_RATES,
+                OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
         // } else {
-            for (String rateName : GTR_RATE_NAMES) {
-                createScaleOperator(rateName, demoTuning, substWeights);
-                for (int j = 1; j <= 3; j++) {
-                    createScaleOperator("CP" + j + "." + rateName, demoTuning, substWeights);
-                }
-                createScaleOperator("CP1+2." + rateName, demoTuning, substWeights);
+        for (String rateName : GTR_RATE_NAMES) {
+            createScaleOperator(rateName, demoTuning, substWeights);
+            for (int j = 1; j <= 3; j++) {
+                createScaleOperator("CP" + j + "." + rateName, demoTuning, substWeights);
             }
+            createScaleOperator("CP1+2." + rateName, demoTuning, substWeights);
+        }
         // }
 
         createScaleOperator("alpha", demoTuning, substWeights);
@@ -359,18 +372,18 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         createScaleOperator("CP1+2.alpha", demoTuning, substWeights);
 
         // if (!options.classicOperatorsAndPriors && LOGIT_PINV_KERNEL) { // a switch at the top of BeautiOptions
-            createOperator("rwPInv", "rwPInv", "Random walk on pInv in logit space", "pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
-            for (int i = 1; i <= 3; i++) {
-                createOperator("CP" + i + ".rwPInv", "CP" + i + ".rwPInv", "Random walk on pInv in logit space", "CP" + i + ".pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
-            }
-            createOperator("CP1+2.rwPInv", "CP1+2.rwPInv", "Random walk on pInv in logit space", "CP1+2.pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
+        createOperator("rwPInv", "rwPInv", "Random walk on pInv in logit space", "pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
+        for (int i = 1; i <= 3; i++) {
+            createOperator("CP" + i + ".rwPInv", "CP" + i + ".rwPInv", "Random walk on pInv in logit space", "CP" + i + ".pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
+        }
+        createOperator("CP1+2.rwPInv", "CP1+2.rwPInv", "Random walk on pInv in logit space", "CP1+2.pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
         // } else {
-            // old (and not very appropriate scale operator)
+        // old (and not very appropriate scale operator)
         createOperator("CP1+2.uniformPInv", "CP1+2.uniformPInv", "Random walk on pInv in logit space", "pInv", OperatorType.UNIFORM, demoTuning, substWeights);
-            for (int i = 1; i <= 3; i++) {
-                createOperator("CP" + i + ".uniformPInv", "CP" + i + ".uniformPInv", "Random walk on pInv in logit space",  "CP" + i + ".pInv", OperatorType.UNIFORM, demoTuning, substWeights);
-            }
-        createOperator("CP1+2.uniformPInv", "CP1+2.uniformPInv", "Random walk on pInv in logit space",  "CP1+2.pInv", OperatorType.UNIFORM, demoTuning, substWeights);
+        for (int i = 1; i <= 3; i++) {
+            createOperator("CP" + i + ".uniformPInv", "CP" + i + ".uniformPInv", "Random walk on pInv in logit space", "CP" + i + ".pInv", OperatorType.UNIFORM, demoTuning, substWeights);
+        }
+        createOperator("CP1+2.uniformPInv", "CP1+2.uniformPInv", "Random walk on pInv in logit space", "CP1+2.pInv", OperatorType.UNIFORM, demoTuning, substWeights);
         // }
 
         createScaleOperator("bcov.alpha", demoTuning, substWeights);
@@ -384,7 +397,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 0.0, 0.0, 10.0, 0.0, true);
         createParameterNormalPrior("biasLinear", "Linear bias", PriorScaleType.NONE,
                 0.0, 0.0, 10.0, 0.0, true);
-        createZeroOneParameterUniformPrior("geomDist", "The success probability of geometric distribution",  0.1, true);
+        createZeroOneParameterUniformPrior("geomDist", "The success probability of geometric distribution", 0.1, true);
         createZeroOneParameterUniformPrior("onePhaseProb", "A probability of geomDist being the last step of series", 1.0, true);
 
         createScaleOperator("propLinear", demoTuning, substWeights);
@@ -565,6 +578,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     params.add(getParameter("onePhaseProb"));
                 }
                 break;
+
+            case DataType.DUMMY:
+                //Do nothing
+                break;
+
 
             default:
                 throw new IllegalArgumentException("Unknown data type");
@@ -833,6 +851,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 }
                 break;
 
+            case DataType.DUMMY:
+                //Do nothing
+                break;
+
+
             default:
                 throw new IllegalArgumentException("Unknown data type");
         }
@@ -908,7 +931,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     /**
      * @return true either if the options have more than one partition or any partition is
-     *         broken into codon positions.
+     * broken into codon positions.
      */
     public boolean hasCodonPartitions() {
         return getCodonPartitionCount() > 1;
@@ -1009,8 +1032,20 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         return continuousSubstModelType;
     }
 
+    public ContinuousModelExtensionType getContinuousExtensionType() {
+        return continuousExtensionType;
+    }
+
     public void setContinuousSubstModelType(final ContinuousSubstModelType continuousSubstModelType) {
         this.continuousSubstModelType = continuousSubstModelType;
+    }
+
+    public void setContinuousExtensionType(final ContinuousModelExtensionType extensionType) {
+        this.continuousExtensionType = extensionType;
+    }
+
+    public void setContinuousLatentDimension(final int k) {
+        this.continuousTraitCount = k;
     }
 
     public void setIsLatitudeLongitude(boolean latitudeLongitude) {
@@ -1019,6 +1054,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public boolean isLatitudeLongitude() {
         return isLatitudeLongitude;
+    }
+
+    public void setIsIndependent(boolean isIndependent) {
+        this.isIndependent = isIndependent;
+    }
+
+    public boolean isIndependent() {
+        return isIndependent;
     }
 
     public void setJitterWindow(double jitterWindow) {
@@ -1031,6 +1074,18 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public int getContinuousTraitCount() {
         return continuousTraitCount;
+    }
+
+    public int getContinuousTraitDimension() {
+        if (isIndependent) {
+            return 1;
+        }
+
+        return getContinuousTraitCount();
+    }
+
+    public int getExtendedTraitCount() {
+        return extendedTraitCount;
     }
 
     public MicroSatModelType.RateProportionality getRatePorportion() {
@@ -1105,6 +1160,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         this.invarHetero = invarHetero;
     }
 
+    public boolean isGammaHeteroEqualWeights() {
+        return equalWeights;
+    }
+
+    public void setGammaHeteroEqualWeights(boolean equalWeights) {
+        this.equalWeights = equalWeights;
+    }
+
     public String getCodonHeteroPattern() {
         return codonHeteroPattern;
     }
@@ -1159,7 +1222,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public String getPrefix() {
         String prefix = "";
         if (options.getPartitionSubstitutionModels(Nucleotides.INSTANCE).size() +
-                options.getPartitionSubstitutionModels(AminoAcids.INSTANCE).size()  > 1) {
+                options.getPartitionSubstitutionModels(AminoAcids.INSTANCE).size() > 1) {
             // There is more than one active partition model, or doing species analysis
             prefix += getName() + ".";
         }
@@ -1229,6 +1292,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         frequencyPolicy = source.frequencyPolicy;
         gammaHetero = source.gammaHetero;
         gammaCategories = source.gammaCategories;
+        equalWeights = source.equalWeights;
         invarHetero = source.invarHetero;
         codonHeteroPattern = source.codonHeteroPattern;
         unlinkedSubstitutionModel = source.unlinkedSubstitutionModel;

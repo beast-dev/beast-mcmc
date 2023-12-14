@@ -114,12 +114,12 @@ public class CompleteHistorySimulator extends SimpleAlignment
      * @param branchRateModel
      * @param nReplications:  nr of samples to generate
      */
-//    public CompleteHistorySimulator(Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel,
+//    public CompleteHistorySimulator(Tree tree, GammaSiteRateModelParser siteModel, BranchRateModel branchRateModel,
 //                                    int nReplications) {
 //        this(tree, siteModel, branchRateModel, nReplications, false);
 //    }
 //
-//    public CompleteHistorySimulator(Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel,
+//    public CompleteHistorySimulator(Tree tree, GammaSiteRateModelParser siteModel, BranchRateModel branchRateModel,
 //                                    int nReplications, boolean sumAcrossSites) {
 //        this(tree, siteModel, branchRateModel, nReplications, sumAcrossSites, null, null);
 //

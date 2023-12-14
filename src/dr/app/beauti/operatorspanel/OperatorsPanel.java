@@ -61,10 +61,11 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
     JCheckBox autoOptimizeCheck = null;
 
-    JComboBox operatorSetCombo = new JComboBox(new OperatorSetType[] {
+    JComboBox operatorSetCombo = new JComboBox(new OperatorSetType[]{
             OperatorSetType.DEFAULT,
             OperatorSetType.FIXED_TREE_TOPOLOGY,
-            OperatorSetType.NEW_TREE_MIX,
+            OperatorSetType.FIXED_TREE,
+            OperatorSetType.CLASSIC,
             OperatorSetType.ADAPTIVE_MULTIVARIATE,
             OperatorSetType.CUSTOM,
             OperatorSetType.HMC
@@ -155,7 +156,7 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
         operatorSetCombo.addItemListener(
                 new java.awt.event.ItemListener() {
                     public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                        options.operatorSetType = (OperatorSetType)operatorSetCombo.getSelectedItem();
+                        options.operatorSetType = (OperatorSetType) operatorSetCombo.getSelectedItem();
                         operators = options.selectOperators();
                         operatorTableModel.fireTableDataChanged();
                         operatorsChanged();
@@ -325,9 +326,9 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
                 renderer.setForeground(Color.black);
             }
             if (op.isParameterFixed()) {
-               setToolTipText(
-                       "This parameter is set to a fixed value. To turn \r" +
-                       "this move on, select a prior in the Priors tab");
+                setToolTipText(
+                        "This parameter is set to a fixed value. To turn \r" +
+                                "this move on, select a prior in the Priors tab");
             }
 
             return this;

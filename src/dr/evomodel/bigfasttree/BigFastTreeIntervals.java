@@ -193,10 +193,6 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     }
 
     @Override
-    /**
-     * Returns an array of the first and last node in an interval.
-     */
-    //TODO figure out why only an array of length 2 is being returned
     public int[] getNodeNumbersForInterval(int i) {
         if (!intervalsKnown) {
             calculateIntervals();
@@ -521,7 +517,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
                     int difference = intervalTypes[newPosition - 1] == IntervalType.COALESCENT ? -1 : 1;
                     if (newPosition > oldPostion) {
                         for (int i = oldPostion; i < newPosition; i++) {
-                             lineageCounts[i]++;
+                            lineageCounts[i]++;
                         }
                         lineageCounts[newPosition] = lineageCounts[newPosition - 1] + difference;
                         // need to increment the lineage counts by 1
@@ -673,4 +669,3 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
 
 
 }
-

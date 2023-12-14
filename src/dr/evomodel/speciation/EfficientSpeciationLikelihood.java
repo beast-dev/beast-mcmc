@@ -142,7 +142,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         // origin branch is a fake branch that doesn't exist in the tree, now compute its contribution
         logL += speciationModel.processOrigin(currentModelSegment, treeIntervals.getTotalDuration());
 
-        logL += speciationModel.logConditioningProbability();
+        logL += speciationModel.logConditioningProbability(currentModelSegment);
 
         if (MEASURE_RUN_TIME) {
             timer.stop();

@@ -75,7 +75,7 @@ public class MixedEffectsRateStatisticParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return RateStatistic.class;
+        return MixedEffectsRateStatistic.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

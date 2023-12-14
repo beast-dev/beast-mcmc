@@ -107,6 +107,7 @@
         <state code="0"/>
         <state code="1"/>
         <state code="2"/>
+        <state code="9"/>
     </generalDataType>
 
     <alignment id="alignment">

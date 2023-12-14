@@ -30,7 +30,7 @@ import dr.evolution.coalescent.TreeIntervalList;
 import dr.evomodel.coalescent.*;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.glm.GeneralizedLinearModel;
+import dr.inference.glm.ExperimentalGeneralizedLinearModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.DesignMatrix;
 import dr.inference.model.Parameter;
@@ -351,7 +351,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
 
         if(useGlmModel) {
 
-            GeneralizedLinearModel glm = (GeneralizedLinearModel) xo.getChild(GeneralizedLinearModel.class);
+            ExperimentalGeneralizedLinearModel glm = (ExperimentalGeneralizedLinearModel) xo.getChild(ExperimentalGeneralizedLinearModel.class);
             covariates = new ArrayList<MatrixParameter>();
             betaList = new ArrayList<Parameter>();
             List<DesignMatrix> designMat = glm.getDesignMatrix();

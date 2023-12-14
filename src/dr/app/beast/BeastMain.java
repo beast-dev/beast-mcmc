@@ -150,7 +150,11 @@ public class BeastMain {
 
             // Install the checkpointer. This creates a factory that returns
             // appropriate savers and loaders according to the user's options.
-            new BeastCheckpointer();
+            //new BeastCheckpointer();
+            if (Boolean.parseBoolean(System.getProperty("checkpointOverrule", "true"))) {
+                BeastCheckpointer.getInstance(null, -1, -1, false);
+                Logger.getLogger("dr.apps.beast").info("Overriding checkpointing settings in the provided XML file");
+            }
 
             if (mc3Options == null) {
                 // just parse the file running all threads...
@@ -340,7 +344,7 @@ public class BeastMain {
                         new Arguments.StringOption("prefix", "PREFIX", "Specify a prefix for all output log filenames"),
                         new Arguments.Option("overwrite", "Allow overwriting of log files"),
                         new Arguments.IntegerOption("errors", "Specify maximum number of numerical errors before stopping"),
-                        new Arguments.IntegerOption("threads", "The number of computational threads to use (default auto)"),
+                        new Arguments.IntegerOption("threads", "The maximum number of computational threads to use (default auto)"),
                         new Arguments.Option("fail_threads", "Exit with error on uncaught exception in thread."),
                         new Arguments.Option("java", "Use Java only, no native implementations"),
                         new Arguments.LongOption("tests", "The number of full evaluation tests to perform (default 1000)"),
@@ -359,8 +363,8 @@ public class BeastMain {
                         new Arguments.Option("beagle_GPU", "BEAGLE: use GPU instance if available"),
                         new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
                         new Arguments.Option("beagle_SSE_off", "BEAGLE: turn off use of SSE extensions"),
-                        new Arguments.Option("beagle_threading_off", "BEAGLE: turn off auto threading for a CPU instance"),
-                        new Arguments.IntegerOption("beagle_thread_count", 1, Integer.MAX_VALUE, "BEAGLE: manually set number of threads for a CPU instance"),
+                        new Arguments.Option("beagle_threading_off", "BEAGLE: turn off multi-threading for a CPU instance"),
+                        new Arguments.IntegerOption("beagle_threads", 0, Integer.MAX_VALUE, "BEAGLE: manually set number of threads per CPU instance (default auto)"),
                         new Arguments.Option("beagle_cuda", "BEAGLE: use CUDA parallization if available"),
                         new Arguments.Option("beagle_opencl", "BEAGLE: use OpenCL parallization if available"),
                         new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
@@ -572,6 +576,9 @@ public class BeastMain {
         }
         if (arguments.hasOption("beagle_thread_count")) {
             System.setProperty("beagle.thread.count", Integer.toString(arguments.getIntegerOption("beagle_thread_count")));
+        }
+        if (arguments.hasOption("beagle_threads")) {
+            System.setProperty("beagle.thread.count", Integer.toString(arguments.getIntegerOption("beagle_threads")));
         }
         if (arguments.hasOption("beagle_threading_off")) {
             System.setProperty("beagle.thread.count", Integer.toString(1));
@@ -857,7 +864,6 @@ public class BeastMain {
                     "with models in BEAST, please upgrade to BEAGLE v3.x at http://github.com/beagle-dev/beagle-lib/\n");
         }
 
-
         if (beagleShowInfo) {
             BeagleInfo.printResourceList();
             return;
@@ -875,7 +881,6 @@ public class BeastMain {
             }
 
             String inputFileName = null;
-
 
             if (args2.length > 0) {
                 inputFileName = args2[0];

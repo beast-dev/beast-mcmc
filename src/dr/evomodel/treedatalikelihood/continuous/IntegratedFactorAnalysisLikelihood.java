@@ -29,7 +29,6 @@ import dr.evolution.tree.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
 import dr.math.KroneckerOperation;
 import dr.math.distributions.MultivariateNormalDistribution;
@@ -45,8 +44,6 @@ import org.ejml.data.DenseMatrix64F;
 
 import java.util.*;
 
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.STANDARDIZE;
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TARGET_SD;
 import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
 /**
@@ -228,6 +225,16 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     @Override
+    public boolean usesMissingIndices() {
+        return true;
+    }
+
+    @Override
+    public ContinuousTraitPartialsProvider[] getChildModels() {
+        return new ContinuousTraitPartialsProvider[0]; // LFM is not currently extendible
+    }
+
+    @Override
     public boolean getDefaultAllowSingular() {
         return true;
     }
@@ -248,7 +255,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             logLikelihood = calculateLogLikelihood();
             likelihoodKnown = true;
         }
-        return logLikelihood;
+        return 0;
     }
 
     @Override
@@ -694,6 +701,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         unwrap(precision, partials, partialsOffset + numFactors); //TODO: use PrecisionType.fillPrecisionInPartials()
         precisionType.fillEffDimInPartials(partials, partialsOffset, effDim, numFactors);
         precisionType.fillDeterminantInPartials(partials, partialsOffset, factorLogDeterminant, numFactors);
+        precisionType.fillRemainderInPartials(partials, partialsOffset, constant, numFactors);
 
         if (STORE_VARIANCE) {
             safeInvert2(precision, variance, true);
@@ -838,92 +846,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         abstract boolean useCache();
 
     }
-
-
-    // TODO Move remainder into separate class file
-    public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
-        @Override
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
-            TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
-
-            TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                    utilities.parseTraitsFromTaxonAttributes(xo,
-                            treeModel, true);
-            CompoundParameter traitParameter = returnValue.traitParameter;
-            boolean[] missingIndicators = returnValue.getMissingIndicators();
-
-            MatrixParameterInterface loadings = (MatrixParameterInterface) xo.getElementFirstChild(LOADINGS);
-            Parameter traitPrecision = (Parameter) xo.getElementFirstChild(PRECISION);
-
-            double nugget = xo.getAttribute(NUGGET, 0.0);
-
-            TaskPool taskPool = (TaskPool) xo.getChild(TaskPool.class);
-
-            CacheProvider cacheProvider;
-            boolean useCache = xo.getAttribute(CACHE_PRECISION, false);
-            if (useCache) {
-                cacheProvider = CacheProvider.USE_CACHE;
-            } else {
-                cacheProvider = CacheProvider.NO_CACHE;
-            }
-
-
-            return new IntegratedFactorAnalysisLikelihood(xo.getId(), traitParameter, missingIndicators,
-                    loadings, traitPrecision, nugget, taskPool, cacheProvider);
-        }
-
-        @Override
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        @Override
-        public String getParserDescription() {
-            return null;
-        }
-
-        @Override
-        public Class getReturnType() {
-            return IntegratedFactorAnalysisLikelihood.class;
-        }
-
-        @Override
-        public String getParserName() {
-            return INTEGRATED_FACTOR_Model;
-        }
-    };
-
-    public static final String INTEGRATED_FACTOR_Model = "integratedFactorModel";
-    private static final String LOADINGS = "loadings";
-    private static final String PRECISION = "precision";
-    private static final String NUGGET = "nugget";
-    private static final String CACHE_PRECISION = "cachePrecision";
-
-    private final static XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new ElementRule(LOADINGS, new XMLSyntaxRule[]{
-                    new ElementRule(MatrixParameterInterface.class),
-            }),
-            new ElementRule(PRECISION, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class),
-            }),
-            // Tree trait parser
-            new ElementRule(MutableTreeModel.class),
-            AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME),
-            new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
-            }),
-            new ElementRule(TreeTraitParserUtilities.MISSING, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
-            }, true),
-            AttributeRule.newDoubleRule(NUGGET, true),
-            AttributeRule.newBooleanRule(STANDARDIZE, true),
-            new ElementRule(TaskPool.class, true),
-            AttributeRule.newDoubleRule(TARGET_SD, true),
-            AttributeRule.newBooleanRule(CACHE_PRECISION, true)
-
-    };
 
     public void setLikelihoodDelegate(ContinuousDataLikelihoodDelegate delegate) {
         this.delegate = delegate;

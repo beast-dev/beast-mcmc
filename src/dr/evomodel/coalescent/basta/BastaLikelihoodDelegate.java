@@ -25,6 +25,11 @@
 
 package dr.evomodel.coalescent.basta;
 
+import dr.evolution.coalescent.IntervalType;
+import dr.evolution.tree.Tree;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.substmodel.EigenDecomposition;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -37,8 +42,8 @@ import java.util.List;
  * BastaLikelihoodDelegate - interface for a plugin delegate for the BASTA model likelihood.
  *
  * @author Marc A. Suchard
+ * @author Yucai Shao
  * @author Guy Baele
- * @version $Id$
  */
 public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDelegate, Model, Profileable, Reportable {
 
@@ -48,22 +53,63 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
 
     void restoreState();
 
-    double calculateLikelihood(List<BranchIntervalOperation> branchOperations, List<OtherOperation> nodeOperations,
+    double calculateLikelihood(List<BranchIntervalOperation> branchOperations,
+                               List<TransitionMatrixOperation> matrixOperations,
+                               List<Integer> intervalStarts,
                                int rootNodeNumber);
 
-    int getDemeCount();
-    
-    int vectorizeBranchIntervalOperations(List<BranchIntervalOperation> nodeOperations, int[] operations);
+    default void setPartials(int index, double[] partials) {
+        throw new RuntimeException("Not yet implemented");
+    }
 
-    abstract class AbstractBastaLikelihood extends AbstractModel implements BastaLikelihoodDelegate, Citable {
+    default void getPartials(int index, double[] partials) {
+        assert index >= 0;
+        assert partials != null;
 
-        public AbstractBastaLikelihood(String name) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    default void updateEigenDecomposition(int index, EigenDecomposition decomposition, boolean flip) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    default void updatePopulationSizes(int index, double[] sizes, boolean flip) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    abstract class AbstractBastaLikelihoodDelegate extends AbstractModel implements BastaLikelihoodDelegate, Citable {
+
+        protected static final boolean PRINT_COMMANDS = false;
+
+        protected final int maxNumCoalescentIntervals;
+
+        protected final ParallelizationScheme parallelizationScheme;
+
+        protected final int stateCount;
+
+        protected final Tree tree;
+
+        public AbstractBastaLikelihoodDelegate(String name,
+                                               Tree tree,
+                                               int stateCount) {
             super(name);
+
+            this.tree = tree;
+            this.stateCount = stateCount;
+            this.maxNumCoalescentIntervals = getMaxNumberOfCoalescentIntervals(tree);
+            this.parallelizationScheme = ParallelizationScheme.NONE;
         }
 
-        protected abstract void functionOne();
-
-        protected abstract void functionTwo();
+        private int getMaxNumberOfCoalescentIntervals(Tree tree) {
+            BigFastTreeIntervals intervals = new BigFastTreeIntervals((TreeModel) tree); // TODO fix BFTI to take a Tree
+            int zeroLengthSampling = 0;
+            for (int i = 0; i < intervals.getIntervalCount(); ++i) {
+                if (intervals.getIntervalType(i) == IntervalType.SAMPLE && intervals.getIntervalTime(i) == 0.0) {
+                    ++zeroLengthSampling;
+                }
+            }
+            return tree.getNodeCount() - zeroLengthSampling;
+        }
 
         @Override
         public void makeDirty() {
@@ -72,12 +118,12 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
 
         @Override
         protected void handleModelChangedEvent(Model model, Object object, int index) {
-
+            throw new RuntimeException("Should not be called");
         }
 
         @Override
         protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-
+            throw new RuntimeException("Should not be called");
         }
 
         @Override
@@ -95,19 +141,32 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
 
         }
 
-        @Override
-        public double calculateLikelihood(List<BranchIntervalOperation> branchOperations, List<OtherOperation> nodeOperations, int rootNodeNumber) {
-            return 0;
+        enum ParallelizationScheme {
+            NONE,
+            FULL
         }
 
-        @Override
-        public int getDemeCount() {
-            return 0;
-        }
+        abstract protected void computeBranchIntervalOperations(List<Integer> intervalStarts,
+                                                                List<BranchIntervalOperation> branchIntervalOperations);
+
+        abstract protected void computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations);
+
+        abstract protected double computeCoalescentIntervalReduction(List<Integer> intervalStarts,
+                                                                     List<BranchIntervalOperation> branchIntervalOperations);
 
         @Override
-        public int vectorizeBranchIntervalOperations(List<BranchIntervalOperation> nodeOperations, int[] operations) {
-            return 0;
+        public double calculateLikelihood(List<BranchIntervalOperation> branchOperations,
+                                          List<TransitionMatrixOperation> matrixOperation,
+                                          List<Integer> intervalStarts,
+                                          int rootNodeNumber) {
+
+            if (PRINT_COMMANDS) {
+                System.err.println("Tree = " + tree);
+            }
+
+            computeTransitionProbabilityOperations(matrixOperation);
+            computeBranchIntervalOperations(intervalStarts, branchOperations);
+            return computeCoalescentIntervalReduction(intervalStarts, branchOperations);
         }
 
         @Override

@@ -25,6 +25,7 @@
 
 package dr.inference.distribution;
 
+import dr.evomodel.substmodel.LogAdditiveCtmcRateProvider;
 import dr.inference.model.Parameter;
 
 import java.util.List;
@@ -32,13 +33,17 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  */
-@Deprecated // GLM stuff is now in inference.glm - this is here for backwards compatibility temporarily
-public class LogLinearModel extends GeneralizedLinearModel {
+
+public class LogLinearModel extends GeneralizedLinearModel implements LogAdditiveCtmcRateProvider.Integrated {
 
     public LogLinearModel(Parameter dependentParam) {
         super(dependentParam);
     }
 
+    public double[] getSuperXBeta() {
+        return super.getXBeta();
+    }
+    
     @Override
     public double[] getXBeta() {
         double[] xBeta = super.getXBeta();

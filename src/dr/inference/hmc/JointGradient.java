@@ -25,10 +25,7 @@
 
 package dr.inference.hmc;
 
-import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.DerivativeOrder;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
@@ -77,9 +74,16 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
                 if (!Arrays.equals(grad.getParameter().getParameterValues(), parameter.getParameterValues())){
                     throw new RuntimeException("Unequal parameter values");
                 }
-                for (Likelihood likelihood : grad.getLikelihood().getLikelihoodSet()) {
-                    if (!(likelihoodList.contains(likelihood))) {
-                        likelihoodList.add(likelihood);
+                Likelihood outer = grad.getLikelihood();
+                if (outer instanceof ReciprocalLikelihood) {
+                    if (!(likelihoodList.contains(outer))) {
+                        likelihoodList.add(outer);
+                    }
+                } else {
+                    for (Likelihood likelihood : grad.getLikelihood().getLikelihoodSet()) {
+                        if (!(likelihoodList.contains(likelihood))) {
+                            likelihoodList.add(likelihood);
+                        }
                     }
                 }
             }

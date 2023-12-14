@@ -26,7 +26,6 @@
 package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.RandomWalkOperator;
@@ -110,7 +109,7 @@ public class RandomWalkNodeHeightOperator extends AbstractAdaptableTreeOperator 
             newValue =  (x2 * (upper - lower)) + lower;
 
             // HR is the ratio of Jacobians for the before and after values in interval [0,1]
-            logHR = Transform.LOGIT.getLogJacobian(x1) - Transform.LOGIT.getLogJacobian(x2);
+            logHR = Transform.LOGIT.logJacobian(x1) - Transform.LOGIT.logJacobian(x2);
 
         } else if (boundaryCondition == RandomWalkOperator.BoundaryCondition.log) {
             // offset oldValue to [0,+Inf]
@@ -122,7 +121,7 @@ public class RandomWalkNodeHeightOperator extends AbstractAdaptableTreeOperator 
             newValue = x2 + lower;
 
             // HR is the ratio of Jacobians for the before and after values
-            logHR = Transform.LOG.getLogJacobian(x1) - Transform.LOG.getLogJacobian(x2);
+            logHR = Transform.LOG.logJacobian(x1) - Transform.LOG.logJacobian(x2);
 
         } else {
             newValue = oldValue + draw;

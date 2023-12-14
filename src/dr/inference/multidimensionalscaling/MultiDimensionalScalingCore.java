@@ -51,6 +51,10 @@ public interface MultiDimensionalScalingCore {
      */
     void initialize(int embeddingDimension, int locationCount, long flags);
 
+    void initialize(int embeddingDimension, MultiDimensionalScalingLayout layout, long flags);
+
+    void setNonMissingObservationCount(int count);
+
     /**
      * sets the observation data
      */
@@ -95,6 +99,12 @@ public interface MultiDimensionalScalingCore {
      * Get gradient of MDS likelihood w.r.t. locations
      */
     void getGradient(double[] location);
+
+    default void getLocationGradient(double[] location) {
+        getGradient(location);
+    }
+
+    void getObservationGradient(double[] observation);
 
     /**
      * Get pair-wise data

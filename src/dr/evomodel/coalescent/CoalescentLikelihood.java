@@ -256,6 +256,10 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 		return coalescentEventStatisticValues[i];
 	}
 
+	public PopulationSizeModel getPopulationSizeModel() {
+		return populationSizeModel;
+	}
+
 	// **************************************************************
 	// Units IMPLEMENTATION
 	// **************************************************************

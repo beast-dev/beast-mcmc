@@ -43,6 +43,16 @@ public class MaskingParser extends AbstractXMLObjectParser {
     private static final String NAME = "name";
     private static final String COMPLEMENT = "complement";
 
+    public class MaskingParameter extends Parameter.Default {
+
+        private final Parameter parameter;
+
+        public MaskingParameter(int dimension, Parameter parameter) {
+            super(dimension, 0.0);
+            this.parameter = parameter;
+        }
+    }
+
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
@@ -58,10 +68,12 @@ public class MaskingParser extends AbstractXMLObjectParser {
             dimMap.put(n, i);
         }
 
+        Parameter result = new MaskingParameter(parameter.getDimension(), parameter);
+
         for (String name : names) {
             if (dimMap.containsKey(name)) {
                 int index = dimMap.get(name);
-                parameter.setParameterValue(index, 1);
+                result.setParameterValue(index, 1);
             } else {
                 throw new XMLParseException("Dimension '" + name + "' not found");
 
@@ -70,11 +82,11 @@ public class MaskingParser extends AbstractXMLObjectParser {
 
         if (xo.getAttribute(COMPLEMENT, false)) {
             for (int i = 0; i < parameter.getDimension(); ++i) {
-                parameter.setParameterValue(i,1 - parameter.getParameterValue(i));
+                result.setParameterValue(i,1 - result.getParameterValue(i));
             }
         }
 
-        return parameter;
+        return result;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -94,7 +106,7 @@ public class MaskingParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return Parameter.class;
+        return MaskingParameter.class;
     }
 
     public String getParserName() {

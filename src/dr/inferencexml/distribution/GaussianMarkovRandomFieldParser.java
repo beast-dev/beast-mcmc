@@ -57,11 +57,8 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
         Parameter start = xo.hasChildNamed(START) ?
                 (Parameter) xo.getElementFirstChild(START) : null;
 
-        Parameter lambda = (Parameter) xo.getElementFirstChild(LAMBDA);
-
-        if (Math.abs(lambda.getParameterValue(0)) > 1.0) {
-            throw new XMLParseException("Lambda must be between -1.0 and 1.0");
-        }
+        Parameter lambda = xo.hasChildNamed(LAMBDA) ?
+                (Parameter) xo.getElementFirstChild(LAMBDA) : null;
 
         RandomField.WeightProvider weights = parseWeightProvider(xo, dim);
 

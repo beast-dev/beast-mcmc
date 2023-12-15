@@ -184,14 +184,14 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
             // A. Get current precision of k and j
             final DenseMatrix64F Pk = wrap(preOrderPartials, kbo + dimTrait, dimTrait, dimTrait);
-//                final DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
+//                final DenseMatrix64F Pj = wrapPartialPrecision(jbo);
 
 //                final DenseMatrix64F Vk = wrap(prePartials, kbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-            final DenseMatrix64F Vj = wrap(partials, jbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+            final DenseMatrix64F Vj = wrapPartialVariance(jbo);
 
             if (allZeroDiagonals(Vj)) {
 
-                final DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
+                final DenseMatrix64F Pj = wrapPartialPrecision(jbo);
 
                 assert (!allZeroDiagonals(Pj));
 
@@ -329,11 +329,11 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             final double lpi = partials[ibo + dimTrait + 2 * dimTrait * dimTrait];
             final double lpj = partials[jbo + dimTrait + 2 * dimTrait * dimTrait];
 
-            final DenseMatrix64F Pi = wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
-            final DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
+            final DenseMatrix64F Pi = wrapPartialPrecision(ibo);
+            final DenseMatrix64F Pj = wrapPartialPrecision(jbo);
 
-            final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-            final DenseMatrix64F Vj = wrap(partials, jbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+            final DenseMatrix64F Vi = wrapPartialVariance(ibo);
+            final DenseMatrix64F Vj = wrapPartialVariance(jbo);
 
             if (TIMING) {
                 endTime("peel1");
@@ -728,11 +728,11 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         // TODO For each trait in parallel
         for (int trait = 0; trait < numTraits; ++trait) {
 
-            final DenseMatrix64F PRoot = wrap(partials, rootOffset + dimTrait, dimTrait, dimTrait);
-            final DenseMatrix64F PPrior = wrap(partials, priorOffset + dimTrait, dimTrait, dimTrait);
+            final DenseMatrix64F PRoot = wrapPartialPrecision(rootOffset);
+            final DenseMatrix64F PPrior = wrapPartialPrecision(priorOffset);
 
-            final DenseMatrix64F VRoot = wrap(partials, rootOffset + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-            final DenseMatrix64F VPrior = wrap(partials, priorOffset + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+            final DenseMatrix64F VRoot = wrapPartialVariance(rootOffset);
+            final DenseMatrix64F VPrior = wrapPartialVariance(priorOffset);
 
             // TODO Block below is for the conjugate prior ONLY
             {
@@ -862,4 +862,11 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 //    }
 
     double[] inverseDiffusions;
+
+    protected DenseMatrix64F wrapPartialPrecision(int ibo) {
+        return wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
+    }
+    protected DenseMatrix64F wrapPartialVariance(int ibo) {
+        return wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+    }
 }

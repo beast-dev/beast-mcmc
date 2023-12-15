@@ -207,10 +207,10 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
             // A. Get current precision of k and j
             final DenseMatrix64F Pk = wrap(preOrderPartials, kbo + dimTrait, dimTrait, dimTrait);
-//            final DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
+//            final DenseMatrix64F Pj = wrapPartialPrecision(jbo);
 
 //            final DenseMatrix64F Vk = wrap(preOrderPartials, kbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-//            final DenseMatrix64F Vj = wrap(partials, jbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+//            final DenseMatrix64F Vj = wrapPartialVariance(jbo);
 
             // B. Inflate variance along sibling branch using matrix inversion
 //            final DenseMatrix64F Vjp = matrix0;
@@ -264,7 +264,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 System.err.println("pM: " + new WrappedVector.Raw(preOrderPartials, kbo, dimTrait));
                 System.err.println("pP: " + Pk);
                 System.err.println("sM: " + new WrappedVector.Raw(partials, jbo, dimTrait));
-                DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
+                DenseMatrix64F Pj = wrapPartialPrecision(jbo);
                 DenseMatrix64F Vj = new DenseMatrix64F(dimTrait, dimTrait);
                 CommonOps.invert(Pj, Vj);
                 System.err.println("sP: " + Vj);
@@ -400,8 +400,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             }
 
             if (DEBUG) {
-                final DenseMatrix64F Pi = wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
-                final DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
+                final DenseMatrix64F Pi = wrapPartialPrecision(ibo);
+                final DenseMatrix64F Pj = wrapPartialPrecision(jbo);
                 reportMeansAndPrecisions(trait, ibo, jbo, kbo, Pi, Pj, Pk);
             }
 
@@ -490,7 +490,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         }
 
         // A. Get current precision of i and j
-        final DenseMatrix64F Pi = wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
+        final DenseMatrix64F Pi = wrapPartialPrecision(ibo);
 
         if (TIMING) {
             endTime("peel1");
@@ -505,7 +505,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         if (useVariancei) {
 
             final DenseMatrix64F Vip = matrix0;
-            final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+            final DenseMatrix64F Vi = wrapPartialVariance(ibo);
             CommonOps.add(Vi, Vdi, Vip);
             if (allZeroOrInfinite(Vip)) {
                 throw new RuntimeException("Zero-length branch on data is not allowed.");
@@ -610,8 +610,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         // TODO For each trait in parallel
         for (int trait = 0; trait < numTraits; ++trait) {
 
-            final DenseMatrix64F PPrior = wrap(partials, priorOffset + dimTrait, dimTrait, dimTrait);
-            final DenseMatrix64F VPrior = wrap(partials, priorOffset + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+            final DenseMatrix64F PPrior = wrapPartialPrecision(priorOffset);
+            final DenseMatrix64F VPrior = wrapPartialVariance(priorOffset);
 
 
             // TODO Block below is for the conjugate prior ONLY
@@ -646,7 +646,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                     System.err.print(" " + partials[rootOffset + g]);
                 }
                 System.err.println("");
-                System.err.println("PRoot: " + wrap(partials, rootOffset + dimTrait, dimTrait, dimTrait));
+                System.err.println("PRoot: " + wrapPartialPrecision(rootOffset));
                 System.err.println("PPrior: " + PPrior);
                 System.err.println("PTotal: " + PTotal);
                 System.err.println("\n SS:" + SS);
@@ -675,7 +675,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 //        if (anyDiagonalInfinities(P)) {
 //            // Inflate variance
 //            final DenseMatrix64F Vp = matrix0;
-//            final DenseMatrix64F Vi = wrap(partials, bo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+//            final DenseMatrix64F Vi = wrapPartialVariance(bo);
 //
 //            CommonOps.add(Vi, v, Vd, Vp);
 //            c = safeInvert(Vp, Pp, true);

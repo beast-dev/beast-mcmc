@@ -151,7 +151,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
 
         } else {
 
-            if (zeroCount == dimTrait) { //  All missing completely at random
+            if (zeroCount == dimTrait && !likelihoodDelegate.getDiffusionProcessDelegate().hasDrift()) { //  All missing completely at random
                 //TODO: This is N(X_pa(j), l_j V_root). Why not N(X_pa(j), V_branch) ?
 
                 final double sqrtScale = Math.sqrt(1.0 / branchPrecision);

@@ -3063,33 +3063,7 @@
 	<report>
 		<gmrfSkyGridLikelihood idref="skygrid"/>
 	</report>
-	
-	<smoothSkygridLikelihood id="smoothSkygrid" old="false">
-		<populationSizes>
 
-			<!-- skygrid.logPopSize is in log units unlike other popSize                 -->
-			<parameter idref="skygrid.logPopSize"/>
-		</populationSizes>
-		<precisionParameter>
-			<parameter idref="skygrid.precision"/>
-		</precisionParameter>
-		<numGridPoints>
-			<parameter idref="skygrid.numGridPoints"/>
-		</numGridPoints>
-		<cutOff>
-			<parameter idref="skygrid.cutOff"/>
-		</cutOff>
-		<populationTree>
-			<treeModel idref="treeModel"/>
-		</populationTree>
-		<smoothRate>
-			<parameter id="smooth.Rate" value="100.0" lower="0.0"/>
-		</smoothRate>
-	</smoothSkygridLikelihood>
-	
-	<report>
-		<smoothSkygridLikelihood idref="smoothSkygrid"/>
-	</report>
 
 	<skyGlideLikelihood id="skyGlideLikelihood">
 		<populationSizes>
@@ -3125,81 +3099,6 @@
 		<skyGlideGradient idref="skyGlideGradient.logPopSize"/>
 	</report>
 
-
-	<gmrfDistributionLikelihood id="gmrfDistribution">
-		<data>
-			<!-- skygrid.logPopSize is in log units unlike other popSize                 -->
-			<parameter idref="skygrid.logPopSize"/>
-		</data>
-		<precisionParameter>
-			<parameter idref="skygrid.precision"/>
-		</precisionParameter>
-<!-- 
-		<gridPoints>
-			<parameter idref="gridPoints"/>
-		</gridPoints>
- -->
-
-		<numGridPoints>
-			<parameter idref="skygrid.numGridPoints"/>
-		</numGridPoints>
-		<cutOff>
-			<parameter idref="skygrid.cutOff"/>
-		</cutOff>
-
-	</gmrfDistributionLikelihood>
-
-	<report>
-		<gmrfDistributionLikelihood idref="gmrfDistribution"/>
-	</report>
-	
-	<randomField id="gmrf">
-		<distribution>
-			<gaussianMarkovRandomField dim="6" matchPseudoDeterminant="false"> <!-- false returns Mandev's calculation -->
- 				<precision>
-					<parameter idref="skygrid.precision"/>
-				</precision>
-				<start>
-					<parameter id="mean" value="0.0"/>
-				</start>
-			</gaussianMarkovRandomField>
-		</distribution>
-		<data>
-			<parameter idref="skygrid.logPopSize"/>
-		</data>
-	</randomField>
-
-
-	<report>
-		<randomField idref="gmrf"/>
-	</report>
-
-	<randomFieldGradient id="gradient">
-		<randomField idref="gmrf"/>
-		<parameter idref="skygrid.logPopSize"/>
-	</randomFieldGradient>
-
-	<report>
-		<randomFieldGradient idref="gradient"/>
-	</report>
-
-	<randomFieldGradient id="gradientPrecision">
-		<randomField idref="gmrf"/>
-		<parameter idref="skygrid.precision"/>
-	</randomFieldGradient>
-
-	<report>
-		<randomFieldGradient idref="gradientPrecision"/>
-	</report>
-
-	<randomFieldGradient id="gradientMean">
-		<randomField idref="gmrf"/>
-		<parameter idref="mean"/>
-	</randomFieldGradient>
-
-	<report>
-		<randomFieldGradient idref="gradientMean"/>
-	</report>
 
 <!--
 	<smoothSkygridGradient id="smoothSkygridGradient" wrtParameter="nodeHeight" gradientCheckTolerance="0.005">

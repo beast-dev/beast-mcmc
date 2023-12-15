@@ -39,6 +39,7 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
     private static final String DIMENSION = "dim";
     private static final String PRECISION = "precision";
     private static final String START = "start";
+    private static final String LAMBDA = "lambda";
     private static final String MATCH_PSEUDO_DETERMINANT = "matchPseudoDeterminant";
 
     public String getParserName() { return PARSER_NAME; }
@@ -56,13 +57,19 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
         Parameter start = xo.hasChildNamed(START) ?
                 (Parameter) xo.getElementFirstChild(START) : null;
 
+        Parameter lambda = (Parameter) xo.getElementFirstChild(LAMBDA);
+
+        if (Math.abs(lambda.getParameterValue(0)) > 1.0) {
+            throw new XMLParseException("Lambda must be between -1.0 and 1.0");
+        }
+
         RandomField.WeightProvider weights = parseWeightProvider(xo, dim);
 
         boolean matchPseudoDeterminant = xo.getAttribute(MATCH_PSEUDO_DETERMINANT, false);
 
         String id = xo.hasId() ? xo.getId() : PARSER_NAME;
 
-        return new GaussianMarkovRandomField(id, dim, incrementPrecision, start, weights, matchPseudoDeterminant);
+        return new GaussianMarkovRandomField(id, dim, incrementPrecision, start, lambda, weights, matchPseudoDeterminant);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
@@ -72,6 +79,8 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
             new ElementRule(PRECISION,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(START,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(LAMBDA,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             AttributeRule.newBooleanRule(MATCH_PSEUDO_DETERMINANT, true),
             WEIGHTS_RULE,

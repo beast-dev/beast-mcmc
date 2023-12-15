@@ -5,14 +5,17 @@
 
 	<randomField id="gmrf">
 		<distribution>
-			<gaussianMarkovRandomField dim="4" matchPseudoDeterminant="true">
+			<GaussianMarkovRandomField dim="4" matchPseudoDeterminant="true">
 				<precision>
 					<parameter id="precision" value="1.5"/>
 				</precision>
 				<start>
 					<parameter id="mean" value="0.0"/>
 				</start>
-			</gaussianMarkovRandomField>
+				<lambda>
+					<parameter id="lambda" value="0.9"/>
+				</lambda>
+			</GaussianMarkovRandomField>
 		</distribution>
 		<data>
 			<parameter idref="data"/>

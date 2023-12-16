@@ -25,42 +25,40 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
+import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.GlmSubstitutionModel;
-import dr.evomodel.substmodel.LogAdditiveCtmcRateProvider;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.Parameter;
 import dr.util.Citation;
-import dr.util.CommonCitations;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Marc A. Suchard
  */
 
-public class CtmcFrequencyDistributionGradient extends AbstractLogAdditiveSubstitutionModelGradient {
+public class CtmcFrequencyModelGradient extends AbstractLogAdditiveSubstitutionModelGradient {
 
-    private final LogAdditiveCtmcRateProvider.DataAugmented rateProvider;
-    private final int[][] mapEffectToIndices;
+    private final FrequencyModel frequencyModel;
 
-    public CtmcFrequencyDistributionGradient(String traitName,
-                                             TreeDataLikelihood treeDataLikelihood,
-                                             BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                             GlmSubstitutionModel substitutionModel) {
+    public CtmcFrequencyModelGradient(String traitName,
+                                      TreeDataLikelihood treeDataLikelihood,
+                                      BeagleDataLikelihoodDelegate likelihoodDelegate,
+                                      GlmSubstitutionModel substitutionModel) {
         super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel,
                 ApproximationMode.FIRST_ORDER);
 
-        if (substitutionModel.getRateProvider() instanceof LogAdditiveCtmcRateProvider.DataAugmented)
-            this.rateProvider = (LogAdditiveCtmcRateProvider.DataAugmented)
-                    substitutionModel.getRateProvider();
-        else {
-            throw new IllegalArgumentException("Invalid substitution model");
+        List<SubstitutionModel> substitutionModels = likelihoodDelegate.getBranchModel().getSubstitutionModels();
+        this.frequencyModel = likelihoodDelegate.getBranchModel().getRootFrequencyModel();
+
+        for (SubstitutionModel model : substitutionModels) {
+            if (frequencyModel != model.getFrequencyModel()) {
+                throw new RuntimeException("Not yet implemented");
+            }
         }
-        
-        this.mapEffectToIndices = makeAsymmetricMap();
     }
 
      @Override
@@ -77,39 +75,24 @@ public class CtmcFrequencyDistributionGradient extends AbstractLogAdditiveSubsti
         }
         return total;
     }
-    
-    private int[][] makeAsymmetricMap() {
-        int[][] map = new int[stateCount * (stateCount - 1)][];
-
-        int k = 0;
-        for (int i = 0; i < stateCount; ++i) {
-            for (int j = i + 1; j < stateCount; ++j) {
-                map[k++] = new int[]{i, j};
-            }
-        }
-
-        for (int j = 0; j < stateCount; ++j) {
-            for (int i = j + 1; i < stateCount; ++i) {
-                map[k++] = new int[]{i, j};
-            }
-        }
-
-        return map;
-    }
 
     @Override
-    double processSingleGradientDimension(int k, double[] differentials, double[] generator, double[] pi,
+    double processSingleGradientDimension(int j, double[] differentials, double[] generator, double[] pi,
                                           boolean normalize, double normalizationConstant) {
+        // derivative wrt pi[j]
+        double total = 0.0;
 
-        final int i = mapEffectToIndices[k][0], j = mapEffectToIndices[k][1];
-        final int ii = i * stateCount + i;
-        final int ij = i * stateCount + j;
-
-        double element = generator[ij];
-        double total = (differentials[ij]  - differentials[ii]) * element;
+        for (int i = 0; i < stateCount; ++i) {
+            final int ii = i * stateCount + i;
+            final int ij = i * stateCount + j;
+            total += (differentials[ij] - differentials[ii]) * generator[ij];
+        }
 
         if (normalize) {
-            total -= element * pi[i] * normalizationConstant;
+            for (int i = 0; i < stateCount; ++i) {
+                final int ij = i * stateCount + j;
+                total -= generator[ij] * pi[j] * normalizationConstant;
+            }
         }
 
         return total;
@@ -117,7 +100,7 @@ public class CtmcFrequencyDistributionGradient extends AbstractLogAdditiveSubsti
 
     @Override
     public Parameter getParameter() {
-        return rateProvider.getLogRateParameter();
+        return frequencyModel.getFrequencyParameter();
     }
 
     @Override
@@ -138,6 +121,6 @@ public class CtmcFrequencyDistributionGradient extends AbstractLogAdditiveSubsti
     @Override
     public List<Citation> getCitations() {
         // TODO Update
-        return Collections.singletonList(CommonCitations.LEMEY_2014_UNIFYING);
+        return null;
     }
 }

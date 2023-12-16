@@ -3159,9 +3159,9 @@
  				<precision>
 					<parameter idref="skygrid.precision"/>
 				</precision>
-				<start>
+				<mean>
 					<parameter id="mean" value="0.0"/>
-				</start>
+				</mean>
 			</gaussianMarkovRandomField>
 		</distribution>
 		<data>

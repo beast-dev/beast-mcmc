@@ -9,9 +9,9 @@
 				<precision>
 					<parameter id="precision" value="1.5"/>
 				</precision>
-				<start>
+				<mean>
 					<parameter id="mean" value="0.0"/>
-				</start>
+				</mean>
 			</GaussianMarkovRandomField>
 		</distribution>
 		<data>
@@ -57,9 +57,9 @@
 				<precision>
 					<parameter id="precisionProper" value="1.5"/>
 				</precision>
-				<start>
+				<mean>
 					<parameter id="meanProper" value="0.0"/>
-				</start>
+				</mean>
 				<lambda>
 					<parameter id="lambda" value="0.9"/>
 				</lambda>

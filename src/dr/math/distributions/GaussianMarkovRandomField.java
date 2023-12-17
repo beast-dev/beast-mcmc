@@ -243,7 +243,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
         if (!isImproper()) {
             double lambda = lambdaParameter.getParameterValue(0);
-            logDet += (1 - dim) * Math.log(1 - lambda * lambda);
+            logDet += Math.log(1 - lambda * lambda);
         }
 
         if (CHECK_DETERMINANT) {
@@ -260,7 +260,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
             }
 
             if (Math.abs(sum - logDet) > 1E-6) {
-                throw new RuntimeException("Incorrect pseudo-determinant");
+                throw new RuntimeException("Incorrect (pseudo-) determinant");
             }
         }
 

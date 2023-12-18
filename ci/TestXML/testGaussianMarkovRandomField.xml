@@ -9,12 +9,9 @@
 				<precision>
 					<parameter id="precision" value="1.5"/>
 				</precision>
-				<start>
+				<mean>
 					<parameter id="mean" value="0.0"/>
-				</start>
-				<lambda>
-					<parameter id="lambda" value="0.9"/>
-				</lambda>
+				</mean>
 			</GaussianMarkovRandomField>
 		</distribution>
 		<data>
@@ -53,5 +50,57 @@
 	<report>
 		<randomFieldGradient idref="gradientMean"/>
 	</report>
+
+	<randomField id="gmrfProper">
+		<distribution>
+			<GaussianMarkovRandomField dim="4" matchPseudoDeterminant="true">
+				<precision>
+					<parameter id="precisionProper" value="1.5"/>
+				</precision>
+				<mean>
+					<parameter id="meanProper" value="0.0"/>
+				</mean>
+				<lambda>
+					<parameter id="lambda" value="0.9"/>
+				</lambda>
+			</GaussianMarkovRandomField>
+		</distribution>
+		<data>
+			<parameter idref="data"/>
+		</data>
+	</randomField>
+
+
+	<report>
+		<randomField idref="gmrfProper"/>
+	</report>
+
+	<randomFieldGradient id="gradientProper">
+		<randomField idref="gmrfProper"/>
+		<parameter idref="data"/>
+	</randomFieldGradient>
+
+	<report>
+		<randomFieldGradient idref="gradientProper"/>
+	</report>
+
+	<randomFieldGradient id="gradientPrecisionProper">
+		<randomField idref="gmrfProper"/>
+		<parameter idref="precisionProper"/>
+	</randomFieldGradient>
+
+	<report>
+		<randomFieldGradient idref="gradientPrecisionProper"/>
+	</report>
+
+	<randomFieldGradient id="gradientMeanProper">
+		<randomField idref="gmrfProper"/>
+		<parameter idref="meanProper"/>
+	</randomFieldGradient>
+
+	<report>
+		<randomFieldGradient idref="gradientMeanProper"/>
+	</report>
+
 
 </beast>

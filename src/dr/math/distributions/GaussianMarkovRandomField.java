@@ -49,57 +49,50 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
     private final RandomField.WeightProvider weightProvider;
 
     private final double[] mean;
-    private final double[][] precision; // TODO Use a sparse matrix, like in GmrfSkyrideLikelihood
 
-    SymmetricTriDiagonalMatrix Q;
-    private SymmetricTriDiagonalMatrix savedQ;
+    final SymmetricTriDiagonalMatrix Q;
+    private final SymmetricTriDiagonalMatrix savedQ;
 
     private boolean meanKnown;
-    private boolean precisionKnown;
     boolean qKnown;
+    private boolean savedQKnown;
 
     private final double logMatchTerm;
 
     public GaussianMarkovRandomField(String name,
                                      int dim,
                                      Parameter precision,
-                                     Parameter start,
-                                     Parameter lambda) {
-        this(name, dim, precision, start, lambda, null, true);
-    }
-
-    public GaussianMarkovRandomField(String name,
-                                     int dim,
-                                     Parameter precision,
-                                     Parameter start,
+                                     Parameter mean,
                                      Parameter lambda,
                                      RandomField.WeightProvider weightProvider,
                                      boolean matchPseudoDeterminant) {
         super(name);
 
         this.dim = dim;
-        this.meanParameter = start;
+        this.meanParameter = mean;
         this.precisionParameter = precision;
         this.lambdaParameter = lambda;
         this.weightProvider = weightProvider;
 
         addVariable(meanParameter);
         addVariable(precisionParameter);
-        addVariable(lambdaParameter);
+
+        if (lambda != null) {
+            addVariable(lambdaParameter);
+        }
 
         if (weightProvider != null) {
             addModel(weightProvider);
         }
 
         this.mean = new double[dim];
-        this.precision = new double[dim][dim];
 
         this.Q = new SymmetricTriDiagonalMatrix(dim);
+        this.savedQ = new SymmetricTriDiagonalMatrix(dim);
 
         this.logMatchTerm = matchPseudoDeterminant ? matchPseudoDeterminantTerm(dim) : 0.0;
 
         meanKnown = false;
-        precisionKnown = false;
         qKnown = false;
     }
 
@@ -124,42 +117,56 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
     protected SymmetricTriDiagonalMatrix getQ() {
         if (!qKnown) {
             double precision = precisionParameter.getParameterValue(0);
-            double lambda = lambdaParameter.getParameterValue(0);
-            Q.diagonal[0] = precision;
-            for (int i = 1; i < dim - 1; ++i) {
-                Q.diagonal[i] = (1 + lambda * lambda) * precision;
-            }
-            Q.diagonal[dim - 1] = precision;
+            if (isImproper()) {
+                Q.diagonal[0] = precision;
+                for (int i = 1; i < dim - 1; ++i) {
+                    Q.diagonal[i] = 2 * precision;
+                }
+                Q.diagonal[dim - 1] = precision;
 
-            for (int i = 0; i < dim - 1; ++i) {
-                Q.offDiagonal[i] = -precision * lambda;
+                for (int i = 0; i < dim - 1; ++i) {
+                    Q.offDiagonal[i] = -precision;
+                }
+            } else {
+                double lambda = lambdaParameter.getParameterValue(0);
+                Q.diagonal[0] = precision;
+                for (int i = 1; i < dim - 1; ++i) {
+                    Q.diagonal[i] = (1 + lambda * lambda) * precision;
+                }
+                Q.diagonal[dim - 1] = precision;
+
+                for (int i = 0; i < dim - 1; ++i) {
+                    Q.offDiagonal[i] = -precision * lambda;
+                }
             }
-            // TODO Update for lambda != 1 and for weights
+
+            assert weightProvider == null : "Not yet implemented";
+            // TODO Update for weights
 
             qKnown = true;
         }
         return Q;
     }
 
-    private double[][] getPrecision() {
+    private static double[][] makePrecisionMatrix(SymmetricTriDiagonalMatrix Q) {
 
-        if (!precisionKnown) {
-            final double k = precisionParameter.getParameterValue(0);
-            final double p = lambdaParameter.getParameterValue(0);
+        final int dim = Q.diagonal.length;
+        double[][] precision = new double[dim][dim];
 
-            precision[0][0] = k;
-            precision[0][1] = -1 * k * p;
-            precision[dim - 1][dim - 1] = k;
-            precision[dim - 1][dim - 2] = -1 * k * p;
-            for (int i = 1; i < dim - 1; ++i) {
-                precision[i][i] = (1 + p * p) * k;
-                precision[i][i - 1] = -1 * k * p;
-                precision[i][i + 1] = -1 * k * p;
-            }
-
-            precisionKnown = true;
+        for (int i = 0; i < dim; ++i) {
+            precision[i][i] = Q.diagonal[i];
         }
+
+        for (int i = 0; i < dim - 1; ++i) {
+            precision[i][i + 1] = Q.offDiagonal[i];
+            precision[i + 1][i] = Q.offDiagonal[i];
+        }
+
         return precision;
+    }
+
+    private boolean isImproper() {
+        return lambdaParameter == null || lambdaParameter.getParameterValue(0) == 1.0;
     }
 
     @Override
@@ -175,7 +182,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
                 @Override
                 public double[] getGradientLogDensity(Object x) {
                     double gradient =  gradLogPdfWrtPrecision((double[]) x, getMean(), getQ(),
-                            precisionParameter.getParameterValue(0), lambdaParameter.getParameterValue(0));
+                            precisionParameter.getParameterValue(0), isImproper());
                     return new double[]{gradient};
                 }
             };
@@ -199,7 +206,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
                     } else if (meanParameter.getDimension() == 1) {
                         double sum = 0.0;
                         for (int i = 0; i < dim; ++i) {
-                            sum += -gradient[i];
+                            sum -= gradient[i];
                         }
                         return new double[]{sum};
                     }
@@ -207,6 +214,8 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
                     throw new IllegalArgumentException("Unknown mean parameter structure");
                 }
             };
+        } else if (parameter == lambdaParameter) {
+            throw new RuntimeException("Not yet implemented"); // TODO
         } else {
             throw new RuntimeException("Unknown parameter");
         }
@@ -218,31 +227,29 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     private double matchPseudoDeterminantTerm(int dim) {
         double term = 0.0;
-        double lambda = lambdaParameter.getParameterValue(0);
-        if(Math.abs(lambda) == 1) {
+        if (isImproper()) {
             for (int i = 1; i < dim; ++i) {
                 double x = (2 - 2 * Math.cos(i * Math.PI / dim));
                 term += Math.log(x);
             }
-            return term;
         }
-        else{
-            return (dim - 1) * Math.log(1 - lambda * lambda);
-        }
+        return term;
     }
 
     private double getLogDeterminant() {
-        double lambda = lambdaParameter.getParameterValue(0);
-        double logDet;
-        if(Math.abs(lambda) == 1) {
-            logDet = (dim - 1) * Math.log(precisionParameter.getParameterValue(0)) + logMatchTerm;
+
+        int effectiveDim = isImproper() ? dim - 1 : dim;
+        double logDet = effectiveDim * Math.log(precisionParameter.getParameterValue(0)) + logMatchTerm;
+
+        if (!isImproper()) {
+            double lambda = lambdaParameter.getParameterValue(0);
+            logDet += Math.log(1 - lambda * lambda);
         }
-        else{
-            logDet = dim * Math.log(precisionParameter.getParameterValue(0)) + logMatchTerm;
-        }
+
         if (CHECK_DETERMINANT) {
 
-            RobustEigenDecomposition ed = new RobustEigenDecomposition(new DenseDoubleMatrix2D(getPrecision()));
+            double[][] precision = makePrecisionMatrix(Q);
+            RobustEigenDecomposition ed = new RobustEigenDecomposition(new DenseDoubleMatrix2D(precision));
             DoubleMatrix1D values = ed.getRealEigenvalues();
             double sum = 0.0;
             for (int i = 0; i < values.size(); ++i) {
@@ -253,7 +260,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
             }
 
             if (Math.abs(sum - logDet) > 1E-6) {
-                throw new RuntimeException("Incorrect pseudo-determinant");
+                throw new RuntimeException("Incorrect (pseudo-) determinant");
             }
         }
 
@@ -264,7 +271,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     @Override
     public double[][] getScaleMatrix() {
-        return getPrecision();
+        return makePrecisionMatrix(getQ());
     }
 
     @Override
@@ -274,45 +281,13 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     @Override
     public double logPdf(double[] x) {
-//        double x1 = logPdf(x, getMean(), getPrecision(), getLogDet());
-//        double x2 = logPdf(x, getMean(), getQ(), precisionParameter.getParameterValue(0),
-//                1.0, getLogDeterminant());
-//
-//        System.err.println(x1 + " ?= " + x2);
-//
-        return logPdf(x, getMean(), getQ(), precisionParameter.getParameterValue(0),
-                1.0, getLogDeterminant());
-    }
-
-    public static double[] gradLogPdf(double[] x, double[] mean, double[][] precision) {
-        final int dim = x.length;
-
-        final double[] gradient = new double[dim];
-        final double[] delta = new double[dim];
-
-        for (int i = 0; i < dim; ++i) {
-            delta[i] = mean[i] - x[i];
-        }
-        gradient[0] = precision[0][0] * delta[0] + precision[0][1] * delta[1];
-        gradient[dim-1] = precision[dim-1][dim-2] * delta[dim-2] + precision[dim-1][dim-1] * delta[dim-1];
-        for (int i = 1; i < dim-1; ++i) {
-            gradient[i] = precision[i][i-1] * delta[i-1] + precision[i][i] * delta[i] + precision[i][i+1] * delta[i+1];
-        }
-        return gradient;
+        return logPdf(x, getMean(), getQ(), isImproper(), getLogDeterminant());
     }
 
     public static double gradLogPdfWrtPrecision(double[] x, double[] mean, SymmetricTriDiagonalMatrix Q,
-                                                double precision, double lambda) {
-        final int dim = x.length;
-
-        if(Math.abs(lambda) == 1){
-        return 0.5 * (dim - 1 - getSSE(x, mean, Q)) / precision;
-            } // TODO Not correct with lambda != 1.0
-
-        else{
-            return 0.5 * (dim - getSSE(x, mean, Q)) / precision;
-        }
-
+                                                double precision, boolean isImproper) {
+        final int effectiveDim = isImproper ? x.length - 1 : x.length;
+        return 0.5 * (effectiveDim - getSSE(x, mean, Q)) / precision;
     }
 
     public static double[] gradLogPdf(double[] x, double[] mean, SymmetricTriDiagonalMatrix Q) {
@@ -335,17 +310,6 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return gradient;
     }
 
-    public static double[][] hessianLogPdf(double[] x, double[][] precision) {
-        final int dim = x .length;
-        final double[][] hessian = new double[dim][dim];
-        for (int i = 0; i < dim; i++) {
-            for (int j = 0; j < dim; j++) {
-                hessian[i][j] = -precision[i][j];
-            }
-        }
-        return hessian;
-    }
-
     public static double[][] hessianLogPdf(double[] x, SymmetricTriDiagonalMatrix Q) { // TODO test
         final int dim = x .length;
         final double[][] hessian = new double[dim][dim];
@@ -365,22 +329,12 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return hessian;
     }
 
-    public static double[] diagonalHessianLogPdf(double[] x, double[][] precision) {
-        final int dim = x.length;
-        final double[] hessian = new double[dim];
-
-        for (int i = 0; i < dim; ++i) {
-            hessian[i] = -precision[i][i];
-        }
-
-        return hessian;
-    }
-
     public static double[] diagonalHessianLogPdf(double[] x, SymmetricTriDiagonalMatrix Q) {
         final int dim = x.length;
         final double[] hessian = new double[dim];
 
         System.arraycopy(Q.diagonal, 0, hessian, 0, dim);
+        // TODO do we not need to negate each element of hessian?
 
         return hessian;
     }
@@ -480,8 +434,8 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 //    }
 
     private static double logPdf(double[] x, double[] mean, SymmetricTriDiagonalMatrix Q,
-                                 double precision, double lambda, double logDeterminant) {
-        return getLogNormalization(x.length, precision, lambda, logDeterminant) - 0.5 * getSSE(x, mean, Q);
+                                 boolean isImproper, double logDeterminant) {
+        return getLogNormalization(x.length, isImproper, logDeterminant) - 0.5 * getSSE(x, mean, Q);
     }
 
     private static double getSSE(double[] x, double[] mean, SymmetricTriDiagonalMatrix Q) {
@@ -500,19 +454,6 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         SSE += Q.diagonal[dim - 1] * delta[dim - 1] * delta[dim - 1];
 
         return SSE;
-    }
-
-    private static double getLogNormalization(int dim, double precision, double lambda, double logDeterminant) {
-
-        double logNorm = 0.5 * logDeterminant;
-
-        if (Math.abs(lambda) == 1.0) {
-            logNorm -= (dim - 1) * HALF_LOG_TWO_PI;
-        } else {
-            logNorm -= dim * HALF_LOG_TWO_PI;
-        }
-
-        return logNorm;
     }
 
     static class SymmetricTriDiagonalMatrix {
@@ -545,36 +486,9 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         }
     }
 
-    public static double logPdf(double[] x, double[] mean, double[][] precision,
-                                double logDet) {
-
-        if (logDet == Double.NEGATIVE_INFINITY)
-            return logDet;
-
-        return getLogNormalization(x.length, logDet) - 0.5 * getSSE(x, mean, precision);
-    }
-
-    public static double getLogNormalization(int dim, double logDet) {
-        return -(dim - 1) * HALF_LOG_TWO_PI + 0.5 * logDet;
-    }
-
-    public static double getSSE(double[] x, double[] mean, double[][] precision) {
-
-        final int dim = x.length;
-
-        final double[] delta = new double[dim];
-
-        for (int i = 0; i < dim; i++) {
-            delta[i] = x[i] - mean[i];
-        }
-
-        double SSE = precision[dim-1][dim-1] * delta[dim-1] * delta[dim-1];
-
-        for (int i = 0; i < dim-1; i++) {
-            SSE += precision[i][i] * delta[i] * delta[i] + 2 * precision[i][i + 1] * delta[i] * delta[i + 1];
-        }
-
-        return SSE;
+    private static double getLogNormalization(int dim, boolean isImproper, double logDeterminant) {
+        final int effectiveDim = isImproper ? dim - 1 : dim;
+        return -effectiveDim * HALF_LOG_TWO_PI + 0.5 * logDeterminant;
     }
 
     private static final double HALF_LOG_TWO_PI = Math.log(2.0 * Math.PI) / 2;
@@ -584,25 +498,17 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     @Override
     public double[] getGradientLogDensity(Object x) {
-//        double[] g1 = gradLogPdf((double[]) x, getMean(), getPrecision());
-//        double[] g2 = gradLogPdf((double[]) x, getMean(), getQ());
-//
-//        System.err.println(new WrappedVector.Raw(g1));
-//        System.err.println(new WrappedVector.Raw(g2));
-
         return gradLogPdf((double[]) x, getMean(), getQ());
     }
 
     @Override
     public double[] getDiagonalHessianLogDensity(Object x) {
-        // TODO update for Q
-        return diagonalHessianLogPdf((double[]) x, getPrecision());
+        return diagonalHessianLogPdf((double[]) x, getQ());
     }
 
     @Override
     public double[][] getHessianLogDensity(Object x) {
-        // TODO update for Q
-        return hessianLogPdf((double[]) x, getPrecision());
+        return hessianLogPdf((double[]) x,getQ());
     }
 
     @Override
@@ -619,8 +525,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == meanParameter) {
             meanKnown = false;
-        } else if (variable == precisionParameter) {
-            precisionKnown = false;
+        } else if (variable == precisionParameter || variable == lambdaParameter) {
             qKnown = false;
         } else {
             throw new IllegalArgumentException("Unknown variable");
@@ -629,14 +534,20 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     @Override
     protected void storeState() {
-        // TODO
+        if (qKnown) {
+            Q.copyTo(savedQ);
+        }
+        savedQKnown = qKnown;
     }
 
     @Override
-    protected void restoreState() { // TODO with caching
+    protected void restoreState() { // TODO cache mean
         meanKnown = false;
-        precisionKnown = false;
-        qKnown = false;
+
+        qKnown = savedQKnown;
+        if (qKnown) {
+            savedQ.swap(Q);
+        }
     }
 
     @Override

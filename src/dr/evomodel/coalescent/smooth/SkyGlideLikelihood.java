@@ -228,7 +228,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
             final double expIntervalEnd = Math.exp(-slope * intervalEnd);
             final double expIntercept = Math.exp(-intercept);
 
-            final double thisGridTime = gridPointParameter.getParameterValue(gridIndex);
+            final double thisGridTime = gridIndex < gridPointParameter.getDimension() ? gridPointParameter.getParameterValue(gridIndex) : 0;
             final double lastGridTime = gridIndex == 0 ? 0 : gridPointParameter.getParameterValue(gridIndex - 1);
 
             final double secondDerivativeWrtIntercept = getLinearInverseIntegral(intervalStart, intervalEnd, gridIndex);
@@ -241,17 +241,19 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
                     expIntercept * ((intervalEnd * expIntervalEnd - intervalStart * expIntervalStart) / slope - (expIntervalStart - expIntervalEnd) / slope / slope);
             final double secondDerivativeWrtInterceptSlope = -derivativeWrtSlope;
 
-            final double partialInterceptPartialFirstLogPopSize = thisGridTime / (thisGridTime - lastGridTime);
-            final double partialInterceptPartialSecondLogPopSize = - lastGridTime / (thisGridTime - lastGridTime);
-            final double partialSlopePartialFirstLogPopSize = - 1 / (thisGridTime - lastGridTime);
-            final double partialSLopePartialSecondLogPopSize = 1 / (thisGridTime - lastGridTime);
+            final double partialInterceptPartialFirstLogPopSize = thisGridTime > 0 ? thisGridTime / (thisGridTime - lastGridTime) : 1;
+            final double partialInterceptPartialSecondLogPopSize = thisGridTime > 0 ? - lastGridTime / (thisGridTime - lastGridTime) : 0;
+            final double partialSlopePartialFirstLogPopSize = thisGridTime > 0 ? - 1 / (thisGridTime - lastGridTime) : 0;
+            final double partialSLopePartialSecondLogPopSize = thisGridTime > 0 ? 1 / (thisGridTime - lastGridTime) : 0;
 
             diagonalHessian[gridIndex] += lineageMultiplier * (secondDerivativeWrtIntercept * partialInterceptPartialFirstLogPopSize * partialInterceptPartialFirstLogPopSize
                     + 2 * secondDerivativeWrtInterceptSlope * partialSlopePartialFirstLogPopSize * partialInterceptPartialFirstLogPopSize
                     + secondDerivativeWrtSlope * partialSlopePartialFirstLogPopSize * partialSlopePartialFirstLogPopSize);
-            diagonalHessian[gridIndex + 1] += lineageMultiplier * (secondDerivativeWrtIntercept * partialInterceptPartialSecondLogPopSize * partialInterceptPartialSecondLogPopSize
-                    + 2 * secondDerivativeWrtInterceptSlope * partialSLopePartialSecondLogPopSize * partialInterceptPartialSecondLogPopSize
-                    + secondDerivativeWrtSlope * partialSLopePartialSecondLogPopSize * partialSLopePartialSecondLogPopSize);
+            if (gridIndex < gridPointParameter.getDimension()) {
+                diagonalHessian[gridIndex + 1] += lineageMultiplier * (secondDerivativeWrtIntercept * partialInterceptPartialSecondLogPopSize * partialInterceptPartialSecondLogPopSize
+                        + 2 * secondDerivativeWrtInterceptSlope * partialSLopePartialSecondLogPopSize * partialInterceptPartialSecondLogPopSize
+                        + secondDerivativeWrtSlope * partialSLopePartialSecondLogPopSize * partialSLopePartialSecondLogPopSize);
+            }
         }
     }
 

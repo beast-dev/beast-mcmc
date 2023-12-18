@@ -343,7 +343,6 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
                     int count = 0;
                     int j = 0;
                     while(numSameHeightNodes - count > 0 && tmp != 0) {
-                        boolean test = thisTree.isExternal(thisTree.getNode(interval.getNodeNumbersForInterval(i - j)[0]));
                         final int nodeIndex = interval.getNodeNumbersForInterval(i - j)[0];
                         if (!thisTree.isExternal(thisTree.getNode(nodeIndex))) {
                             count++;

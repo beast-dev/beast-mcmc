@@ -75,6 +75,10 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         addVariable(logPopSizeParameter);
     }
 
+    public List<TreeModel> getTrees() {
+        return trees;
+    }
+
     @Override
     public String getReport() {
         return "skyGlideLikelihood(" + getLogLikelihood() + ")";
@@ -243,6 +247,92 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         }
     }
 
+    public double[] getGradientWrtNodeHeight(int treeIndex) {
+
+        BigFastTreeIntervals interval = intervals.get(treeIndex);
+        Tree thisTree = trees.get(treeIndex);
+        double[] gradient = new double[thisTree.getInternalNodeCount()];
+
+        int currentGridIndex = 0;
+        double tmp = 0;
+        double numSameHeightNodes = 1;
+        for (int i = 0; i < interval.getIntervalCount(); i++) {
+            final int lineageCount = interval.getLineageCount(i);
+            int[] nodeIndices = interval.getNodeNumbersForInterval(i);
+            final double intervalStart = thisTree.getNodeHeight(thisTree.getNode(nodeIndices[0]));
+            final double intervalEnd = thisTree.getNodeHeight(thisTree.getNode(nodeIndices[1]));
+
+            if (!(thisTree.isExternal(thisTree.getNode(nodeIndices[0])) && thisTree.isExternal(thisTree.getNode(nodeIndices[1])))) {
+                int[] gridIndices = getGridPoints(currentGridIndex, intervalStart, intervalEnd);
+                final int firstGridIndex = gridIndices[0];
+                final int lastGridIndex = gridIndices[1];
+
+                if (intervalStart == intervalEnd) {
+                    if (interval.getIntervalType(i) == IntervalType.COALESCENT)
+                        numSameHeightNodes++;
+                } else {
+                    final double firstGridSlope = getGridSlope(firstGridIndex);
+                    final double firstGridIntercept = getGridIntercept(firstGridIndex);
+
+                    final double lastGridSlope = getGridSlope(lastGridIndex);
+                    final double lastGridIntercept = getGridIntercept(lastGridIndex);
+
+                    final double lineageMultiplier = 0.5 * lineageCount * (lineageCount - 1);
+                    if (!thisTree.isExternal(thisTree.getNode(nodeIndices[0]))) {
+                        tmp += lineageMultiplier * Math.exp(-firstGridIntercept - firstGridSlope * intervalStart);
+                    }
+
+                    int count = 0;
+                    int j = 0;
+                    while(numSameHeightNodes - count > 0 && tmp != 0) {
+                        boolean test = thisTree.isExternal(thisTree.getNode(interval.getNodeNumbersForInterval(i - j)[0]));
+                        final int nodeIndex = interval.getNodeNumbersForInterval(i - j)[0];
+                        if (!thisTree.isExternal(thisTree.getNode(nodeIndex))) {
+                            count++;
+                            gradient[nodeIndex - thisTree.getExternalNodeCount()] += tmp / numSameHeightNodes;
+                        }
+                        j++;
+                    }
+
+                    if (interval.getIntervalType(i) == IntervalType.COALESCENT) {
+                        tmp = -lineageMultiplier * Math.exp(-lastGridIntercept - lastGridSlope * intervalEnd);
+                    }
+                }
+                currentGridIndex = lastGridIndex;
+            }
+        }
+        int count = 0;
+        int j = 0;
+        while(numSameHeightNodes - count > 0 && tmp != 0) {
+            final int nodeIndex = interval.getNodeNumbersForInterval(interval.getIntervalCount() - 1 - j)[1];
+            if (!thisTree.isExternal(thisTree.getNode(nodeIndex))) {
+                count++;
+                gradient[nodeIndex - thisTree.getExternalNodeCount()] += tmp / numSameHeightNodes;
+            }
+            j++;
+        }
+
+        updateSingleTreePopulationInverseGradientWrtNodeHeight(treeIndex, gradient);
+
+        return gradient;
+    }
+    private void updateSingleTreePopulationInverseGradientWrtNodeHeight(int index, double[] gradient) {
+
+        BigFastTreeIntervals interval = intervals.get(index);
+        TreeModel tree = trees.get(index);
+        int currentGridIndex = 0;
+
+        for (int i = 0; i < interval.getIntervalCount(); i++) {
+
+            if (interval.getIntervalType(i) == IntervalType.COALESCENT) {
+                final double time = interval.getIntervalTime(i + 1);
+                final int nodeIndex = interval.getNodeNumbersForInterval(i)[1];
+                currentGridIndex = getGridIndex(time, currentGridIndex);
+                final double slope = getGridSlope(currentGridIndex);
+                gradient[nodeIndex - tree.getExternalNodeCount()] -= slope;
+            }
+        }
+    }
 
 
     public double getSingleTreeLogLikelihood(int index) {

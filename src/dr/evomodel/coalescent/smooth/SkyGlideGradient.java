@@ -106,8 +106,7 @@ public class SkyGlideGradient implements GradientWrtParameterProvider, HessianWr
     @Override
     public String getReport() {
         String output = GradientWrtParameterProvider.getReportAndCheckForError(this, wrtParameter.getParameterLowerBound(), wrtParameter.getParameterUpperBound(), tolerance)
-                ;
-//        + "\n" + HessianWrtParameterProvider.getReportAndCheckForError(this, tolerance);
+                + "\n" + HessianWrtParameterProvider.getReportAndCheckForError(this, tolerance);
         return output;
     }
 
@@ -151,7 +150,7 @@ public class SkyGlideGradient implements GradientWrtParameterProvider, HessianWr
 
             @Override
             double[] getDiagonalHessianLogDensity(SkyGlideLikelihood likelihood, int treeIndex) {
-                throw new RuntimeException("Not yet implemented.");
+                return likelihood.getDiagonalHessianWrtNodeHeight(treeIndex);
             }
 
             @Override

@@ -79,6 +79,14 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         return trees;
     }
 
+    public BigFastTreeIntervals getIntervals(int treeIndex) {
+        return intervals.get(treeIndex);
+    }
+
+    public TreeModel getTree(int treeIndex) {
+        return trees.get(treeIndex);
+    }
+
     @Override
     public String getReport() {
         return "skyGlideLikelihood(" + getLogLikelihood() + ")";
@@ -247,7 +255,55 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         }
     }
 
+    public enum NodeHeightDerivativeType {
+        GRADIENT {
+            @Override
+            double getNodeHeightDerivative(double intercept, double slope, double time, double lineageMultiplier) {
+                return lineageMultiplier * Math.exp(-intercept - slope * time);
+            }
+
+            @Override
+            void updateSingleTreePopulationInverseGradientWrtNodeHeight(SkyGlideLikelihood likelihood, int treeIndex, double[] derivatives) {
+
+                int currentGridIndex = 0;
+                BigFastTreeIntervals interval = likelihood.getIntervals(treeIndex);
+                TreeModel tree = likelihood.getTree(treeIndex);
+
+                for (int i = 0; i < interval.getIntervalCount(); i++) {
+                    if (interval.getIntervalType(i) == IntervalType.COALESCENT) {
+                        final double time = interval.getIntervalTime(i + 1);
+                        final int nodeIndex = interval.getNodeNumbersForInterval(i)[1];
+                        currentGridIndex = likelihood.getGridIndex(time, currentGridIndex);
+                        final double slope = likelihood.getGridSlope(currentGridIndex);
+                        derivatives[nodeIndex - tree.getExternalNodeCount()] -= slope;
+                    }
+                }
+            }
+        },
+        DIAGONAL_HESSIAN {
+            @Override
+            double getNodeHeightDerivative(double intercept, double slope, double time, double lineageMultiplier) {
+                return - lineageMultiplier * Math.exp(-intercept - slope * time) * slope;
+            }
+
+            @Override
+            void updateSingleTreePopulationInverseGradientWrtNodeHeight(SkyGlideLikelihood likelihood, int treeIndex, double[] derivatives) {
+
+            }
+        };
+        abstract double getNodeHeightDerivative(double intercept, double slope, double time, double lineageMultiplier);
+        abstract void updateSingleTreePopulationInverseGradientWrtNodeHeight(SkyGlideLikelihood likelihood, int treeIndex, double[] derivatives);
+    }
+
     public double[] getGradientWrtNodeHeight(int treeIndex) {
+        return getDerivativeWrtNodeHeight(treeIndex, NodeHeightDerivativeType.GRADIENT);
+    }
+
+    public double[] getDiagonalHessianWrtNodeHeight(int treeIndex) {
+        return getDerivativeWrtNodeHeight(treeIndex, NodeHeightDerivativeType.DIAGONAL_HESSIAN);
+    }
+
+    public double[] getDerivativeWrtNodeHeight(int treeIndex, NodeHeightDerivativeType derivativeType) {
 
         BigFastTreeIntervals interval = intervals.get(treeIndex);
         Tree thisTree = trees.get(treeIndex);
@@ -279,7 +335,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
                     final double lineageMultiplier = 0.5 * lineageCount * (lineageCount - 1);
                     if (!thisTree.isExternal(thisTree.getNode(nodeIndices[0]))) {
-                        tmp += lineageMultiplier * Math.exp(-firstGridIntercept - firstGridSlope * intervalStart);
+                        tmp += derivativeType.getNodeHeightDerivative(firstGridIntercept, firstGridSlope, intervalStart, lineageMultiplier);
                     }
 
                     int count = 0;
@@ -295,7 +351,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
                     }
 
                     if (interval.getIntervalType(i) == IntervalType.COALESCENT) {
-                        tmp = -lineageMultiplier * Math.exp(-lastGridIntercept - lastGridSlope * intervalEnd);
+                        tmp = -derivativeType.getNodeHeightDerivative(lastGridIntercept, lastGridSlope, intervalEnd, lineageMultiplier);
                     }
                 }
                 currentGridIndex = lastGridIndex;
@@ -312,26 +368,9 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
             j++;
         }
 
-        updateSingleTreePopulationInverseGradientWrtNodeHeight(treeIndex, gradient);
+        derivativeType.updateSingleTreePopulationInverseGradientWrtNodeHeight(this, treeIndex, gradient);
 
         return gradient;
-    }
-    private void updateSingleTreePopulationInverseGradientWrtNodeHeight(int index, double[] gradient) {
-
-        BigFastTreeIntervals interval = intervals.get(index);
-        TreeModel tree = trees.get(index);
-        int currentGridIndex = 0;
-
-        for (int i = 0; i < interval.getIntervalCount(); i++) {
-
-            if (interval.getIntervalType(i) == IntervalType.COALESCENT) {
-                final double time = interval.getIntervalTime(i + 1);
-                final int nodeIndex = interval.getNodeNumbersForInterval(i)[1];
-                currentGridIndex = getGridIndex(time, currentGridIndex);
-                final double slope = getGridSlope(currentGridIndex);
-                gradient[nodeIndex - tree.getExternalNodeCount()] -= slope;
-            }
-        }
     }
 
 

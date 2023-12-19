@@ -350,6 +350,8 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
                         }
                         j++;
                     }
+                    numSameHeightNodes = 1;
+                    tmp = 0;
 
                     if (interval.getIntervalType(i) == IntervalType.COALESCENT) {
                         tmp = -derivativeType.getNodeHeightDerivative(lastGridIntercept, lastGridSlope, intervalEnd, lineageMultiplier);

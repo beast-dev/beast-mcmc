@@ -448,6 +448,11 @@ public class BeastGenerator extends Generator {
                                 // microsat does not have alignment
                                 patternListGenerator.writePatternList((PartitionPattern) partition, microsatList, writer);
                                 break;
+
+                            case DataType.DUMMY:
+                                //Do nothing
+                                break;
+
                             default:
                                 throw new IllegalArgumentException("Unsupported data type");
                         }
@@ -875,6 +880,9 @@ public class BeastGenerator extends Generator {
 
         // write tree log to file
         logGenerator.writeTreeLogToFile(writer);
+
+        //write current state of chain to checkpoint file
+        logGenerator.writeCheckpointToFile(writer);
 
         writer.writeCloseTag("mcmc");
     }

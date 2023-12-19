@@ -34,7 +34,7 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
-public class LogLinearModel extends GeneralizedLinearModel implements LogAdditiveCtmcRateProvider {
+public class LogLinearModel extends GeneralizedLinearModel implements LogAdditiveCtmcRateProvider.Integrated {
 
     public LogLinearModel(Parameter dependentParam) {
         super(dependentParam);

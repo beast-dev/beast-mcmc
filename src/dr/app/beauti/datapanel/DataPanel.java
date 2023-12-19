@@ -37,6 +37,7 @@ import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.DummyDataType;
 import dr.evolution.datatype.Microsatellite;
 import dr.evolution.util.Taxa;
 import jam.framework.Exportable;
@@ -331,7 +332,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         boolean taxaAvailable = options.taxonList != null && options.taxonList.getTaxonCount() > 0;
         boolean traitAvailable = options.traits != null && options.traits.size() > 0;
 
-        createTraitPartitionAction.setEnabled(traitAvailable);
+//        createTraitPartitionAction.setEnabled(traitAvailable);
+        createTraitPartitionAction.setEnabled(true);
 
         dataTableModel.fireTableDataChanged();
     }
@@ -350,6 +352,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
             partitionsToRemove.add(options.dataPartitions.get(row));
         }
 
+        removePartitions(partitionsToRemove);
+
+    }
+
+    private void removePartitions(Set<AbstractPartitionData> partitionsToRemove) {
         boolean hasIdenticalTaxa = options.hasIdenticalTaxa(); // need to check this before removing partitions
 
         // TODO: would probably be a good idea to check if the user wants to remove the last partition
@@ -374,49 +381,119 @@ public class DataPanel extends BeautiPanel implements Exportable {
         dataTable.selectAll();
     }
 
-    public boolean createFromTraits(List<TraitData> traits) {
-        int selRow = -1;
+    public boolean createFromTraits(List<TraitData> traits, Component parent) {
+
+        if (options.traits.size() == 0) {
+            Boolean result = frame.doImportTraits();
+
+            if (result == false) {
+                return false;
+            }
+        }
+
 
         if (selectTraitDialog == null) {
             selectTraitDialog = new SelectTraitDialog(frame);
         }
 
-        if (traits==null || traits.size() == 0) {
-            int result = selectTraitDialog.showDialog(options.traits, null);
+        boolean alreadySelected = false;
+        if (traits == null || traits.size() == 0) {
+            int result = selectTraitDialog.showDialog(options.traits, null, this, true);
+            alreadySelected = true;
             if (result != JOptionPane.CANCEL_OPTION) {
-                TraitData trait = selectTraitDialog.getTrait();
-                String name = trait.getName();
-                if (selectTraitDialog.getMakeCopy()) {
-                    name = selectTraitDialog.getName();
-                }
+                traits = selectTraitDialog.getTraits();
 
-                selRow = options.createPartitionForTraits(name, trait);
             } else {
                 return false;
             }
-        } else {
-            if (traits.size() > 1) {
-                // a set of traits have been passed to the function
-                int result = selectTraitDialog.showDialog(null, null);
-                if (result != JOptionPane.CANCEL_OPTION) {
-                    String name = selectTraitDialog.getName();
-                    selRow = options.createPartitionForTraits(name, traits);
-                }  else {
+        }
+
+        String name;
+
+        if (traits.size() > 1 && !selectTraitDialog.getForceIndependent()) {
+            // a set of traits have been passed to the function
+            int result;
+            if (alreadySelected && selectTraitDialog.getMakeCopy()) { //selectTraitDialog should not allow an empty name
+                name = selectTraitDialog.getName();
+            } else {
+                result = selectTraitDialog.showDialog(traits, null, this, false);
+                name = selectTraitDialog.getName();
+
+                if (result == JOptionPane.CANCEL_OPTION) {
                     return false;
                 }
-            } else {
-                selRow = options.createPartitionForTraits(traits.get(0).getName(), traits);
+            }
+
+        } else {
+            name = traits.get(0).getName();
+            if (selectTraitDialog.getMakeCopy()) {
+                name = selectTraitDialog.getName();
             }
         }
+
+
+        boolean validSelection = checkSelectedTraits(traits);
+
+        if (!validSelection) {
+            JOptionPane.showMessageDialog(parent, "Don't mix discrete and continuous traits when creating partition(s).", "Mixed Trait Types", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        int minRow = -1;
+        int maxRow;
+
+        if (traits.get(0).getTraitType() == TraitData.TraitType.DISCRETE || selectTraitDialog.getForceIndependent()) {
+
+            for (int i = 0; i < traits.size(); i++) {
+
+                TraitData trait = traits.get(i);
+
+                int selRow = options.createPartitionForTraits(trait.getName(), trait);
+
+                if (i == 0) {
+                    minRow = selRow;
+                }
+            }
+
+            maxRow = minRow + traits.size() - 1;
+        } else {
+            minRow = options.createPartitionForTraits(name, traits);
+            maxRow = minRow;
+
+        }
+
 
         modelsChanged();
         dataTableModel.fireTableDataChanged();
 
-        if (selRow != -1) {
-            dataTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+        if (minRow != -1) {
+            dataTable.getSelectionModel().setSelectionInterval(minRow, maxRow);
         }
+
+        selectTraitDialog.reset();
         fireDataChanged();
         repaint();
+
+        return true;
+    }
+
+    private boolean checkSelectedTraits(List<TraitData> traits) {
+        int discreteCount = 0;
+        int continuousCount = 0;
+
+        for (TraitData trait : traits) {
+
+            if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
+                discreteCount++;
+            }
+            if (trait.getTraitType() == TraitData.TraitType.CONTINUOUS) {
+                continuousCount++;
+            }
+        }
+
+        if (discreteCount > 0 && continuousCount > 0) {
+            return false;
+        }
 
         return true;
     }
@@ -450,7 +527,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             } else {
                 if (partition.getDataType() != dateType) {
                     JOptionPane.showMessageDialog(this, "Can only link the models for data partitions \n" +
-                            "of the same data type (e.g., nucleotides)",
+                                    "of the same data type (e.g., nucleotides)",
                             "Unable to link models",
                             JOptionPane.ERROR_MESSAGE);
                     return;
@@ -881,8 +958,33 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            createFromTraits(null);
+            createFromTraits(null, DataPanel.this);
+
+            for (AbstractPartitionData partition : options.dataPartitions) {
+
+                if (partition.getDataType() instanceof DummyDataType) {
+
+                    Set<AbstractPartitionData> partitionsToRemove = new HashSet<AbstractPartitionData>();
+                    partitionsToRemove.add(partition);
+                    removePartitions(partitionsToRemove);
+
+                    break; //there should only be one dummy partion
+
+                }
+
+            }
+
+
+            selectDataPanel();
+            //TODO: fix error when deleting partition
+
         }
+
+
+    }
+
+    private void selectDataPanel() {
+        frame.tabbedPane.setSelectedComponent(this);
     }
 
 //    public class ShowAction extends AbstractAction {

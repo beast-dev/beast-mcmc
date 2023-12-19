@@ -205,24 +205,12 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
         }
 
         private boolean isReflected(double position, double intendedNewPosition, double bound) {
-            if (position > bound) {
-                return intendedNewPosition <= bound;
-            } else if (position < bound) {
-                return intendedNewPosition >= bound;
-            } else {
-                return false;
-            }
+            return (bound - position) * (intendedNewPosition - bound) > 0;
         }
 
         private boolean isCollision(double position1, double intendedPosition1,
                                     double position2, double intendedPosition2) {
-            if (position1 > position2) {
-                return intendedPosition1 <= intendedPosition2;
-            } else if (position1 < position2) {
-                return intendedPosition1 >= intendedPosition2;
-            } else {
-                return false;
-            }
+            return (position1 - position2) * (intendedPosition1 - intendedPosition2) < 0 || intendedPosition1 == intendedPosition2;
         }
 
         private ReflectionEvent firstCollision(double[] position, ReadableVector momentum, double intervalLength) {
@@ -402,7 +390,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
                               double remainingTime) {
                 updatePosition(position, preconditioning, momentum, time);
                 momentum.set(indices[0], -momentum.get(indices[0]));
-                position[indices[0]] = eventLocation[0];
+                position[indices[0]] = eventLocation[0];  // TODO: XJ: they should be the same, change it to assert?
             }
         },
         Collision {
@@ -415,7 +403,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
 
                 for (int index : indices) {
                     momentum.set(index, updatedMomentum.get(index));
-                    position[index] = eventLocation[0];
+                    position[index] = eventLocation[0];   // TODO: XJ: they should be the same, change it to assert?
                 }
 
             }

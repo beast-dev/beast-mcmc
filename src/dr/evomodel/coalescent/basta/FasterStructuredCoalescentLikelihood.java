@@ -48,10 +48,7 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Guy Baele
@@ -137,7 +134,7 @@ public class FasterStructuredCoalescentLikelihood extends AbstractModelLikelihoo
         //this.activeLineages = new ArrayList<double[]>();
         //TODO make this dependent on the interval to store all probability densities (?)
         this.activeLineages = new double[nodeCount*demes];
-        this.activeNodeNumbers = new ArrayList<>(nodeCount);
+        this.activeNodeNumbers = new HashSet<>(nodeCount);
 
         this.likelihoodKnown = false;
 
@@ -930,7 +927,7 @@ public class FasterStructuredCoalescentLikelihood extends AbstractModelLikelihoo
     //TODO one array as currently used isn't going to cut it to store all the probability densities
     private double[] activeLineages;
     //also keep track of the active node numbers per interval
-    private ArrayList<Integer> activeNodeNumbers;
+    private HashSet<Integer> activeNodeNumbers;
 
     //the migration model
     private GeneralSubstitutionModel generalSubstitutionModel;

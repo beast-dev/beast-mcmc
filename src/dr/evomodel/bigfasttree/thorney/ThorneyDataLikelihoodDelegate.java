@@ -15,6 +15,11 @@ import dr.inference.model.Model;
 import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
 
+
+//mutationbranch map is akin to patterns list
+// branch length likelihood delegate is like a substitution model.
+// 
+
 public class ThorneyDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate {
     final static String NAME="ThorneyDataLikelihoodDelegate";
 
@@ -113,7 +118,7 @@ public class ThorneyDataLikelihoodDelegate extends AbstractModel implements Data
             if(nodeIndex==root){
                 logL=0;
             }else{
-                double mutations = mutationMap.getMutations(node); //TODO make branchMutations
+                MutationList mutations = mutationMap.getMutations(node); //TODO make branchMutations
                 double branchLength = branchLengths[nodeIndex];
 //                    if (nodeIndex == rootChild1) {
 //                        // sum the branches on both sides of the root

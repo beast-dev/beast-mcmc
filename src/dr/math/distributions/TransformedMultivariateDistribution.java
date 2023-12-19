@@ -46,7 +46,7 @@ public class TransformedMultivariateDistribution implements MultivariateDistribu
 
     @Override
     public double logPdf(double[] x) {
-        return distribution.logPdf(transform.transform(x, 0, x.length)) + transform.getLogJacobian(x, 0, x.length);
+        return distribution.logPdf(transform.transform(x, 0, x.length)) + transform.logJacobian(x, 0, x.length);
     }
 
     @Override

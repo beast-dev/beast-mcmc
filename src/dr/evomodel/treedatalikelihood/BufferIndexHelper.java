@@ -58,8 +58,10 @@ public class BufferIndexHelper implements Serializable {
         storedIndexOffsets = new int[doubleBufferCount];
         indexOffsetsFlipped = new boolean[doubleBufferCount];
 
-        this.constantOffset = bufferSetNumber * getBufferCount();
+        this.constantOffset = computeOffset(bufferSetNumber);
     }
+
+    protected int computeOffset(int bufferSetNumber) { return  bufferSetNumber * getBufferCount(); }
 
     public int getBufferCount() {
         return 2 * doubleBufferCount + minIndexValue;

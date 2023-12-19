@@ -210,7 +210,7 @@ public class MaximizerWrtParameter implements Reportable {
                 setParameter(new WrappedVector.Raw(argument), parameter);
 
                 if (settings.includeJacobian) {
-                    return -evaluateLogLikelihood() - transform.getLogJacobian(argument, 0, argument.length);
+                    return -evaluateLogLikelihood() - transform.logJacobian(argument, 0, argument.length);
                 }
                 return -evaluateLogLikelihood();
             }

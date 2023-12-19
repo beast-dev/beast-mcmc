@@ -53,6 +53,8 @@ public abstract class DataType implements Serializable {
     public static final int CONTINUOUS = 8;
     public static final int INTEGER = 9;
 
+    public static final int DUMMY = 9;
+
     public static final char UNKNOWN_CHARACTER = '?';
     public static final char GAP_CHARACTER = '-';
 
@@ -441,6 +443,8 @@ public abstract class DataType implements Serializable {
                 return "Continuous Traits";
             case DataType.MICRO_SAT:
                 return "Microsatellite";
+            case DataType.DUMMY:
+                return "Dummy";
             default:
                 throw new IllegalArgumentException("Unsupported data type");
 

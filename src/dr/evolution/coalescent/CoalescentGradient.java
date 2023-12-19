@@ -37,11 +37,8 @@ import dr.inference.loggers.Loggable;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.Binomial;
-import dr.util.ComparableDouble;
-import dr.util.HeapSort;
 import dr.xml.Reportable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -55,10 +52,12 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
     private final Tree tree;
 
     public CoalescentGradient(CoalescentLikelihood likelihood,
-                              TreeModel tree) {
+                              TreeModel tree,
+                              double tolerance) {
         this.likelihood = likelihood;
         this.tree = tree;
         this.parameter = new NodeHeightProxyParameter("NodeHeights", tree, true);
+        this.tolerance = tolerance;
     }
 
     @Override
@@ -90,11 +89,6 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
             Arrays.fill(gradient, Double.NaN);
             return gradient;
         }
-
-        int[] intervalIndices = new int[tree.getInternalNodeCount()];
-        int[] nodeIndices = new int[tree.getInternalNodeCount()];
-        double[] sortedValues = new double[tree.getInternalNodeCount()];
-        getIntervalIndexForInternalNodes(intervalIndices, nodeIndices, sortedValues);
 
         IntervalList intervals = likelihood.getIntervalList();
         BigFastTreeIntervals bigFastTreeIntervals = (BigFastTreeIntervals) intervals;
@@ -147,37 +141,11 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
         return gradient;
     }
 
-    @Deprecated
-    private void getIntervalIndexForInternalNodes(int[] intervalIndices, int[] nodeIndices, double[] sortedValues) {
-        double[] nodeHeights = new double[tree.getInternalNodeCount()];
-        ArrayList<ComparableDouble> sortedInternalNodes = new ArrayList<ComparableDouble>();
-        for (int i = 0; i < nodeIndices.length; i++) {
-            final double nodeHeight = tree.getNodeHeight(tree.getNode(tree.getExternalNodeCount() + i));
-            sortedInternalNodes.add(new ComparableDouble(nodeHeight));
-            nodeHeights[i] = nodeHeight;
-        }
-        HeapSort.sort(sortedInternalNodes, nodeIndices);
-        for (int i = 0; i < nodeIndices.length; i++) {
-            sortedValues[i] = nodeHeights[nodeIndices[i]];
-        }
-
-        IntervalList intervals = likelihood.getIntervalList();
-        int intervalIndex = 0;
-        double finishTime = intervals.getInterval(intervalIndex);
-        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            while(intervalIndex < intervals.getIntervalCount() - 1 && sortedValues[i] - finishTime > realSmallNumber) {
-                intervalIndex++;
-                finishTime += intervals.getInterval(intervalIndex);
-            }
-            intervalIndices[nodeIndices[i]] = intervalIndex;
-        }
-    }
-
-    private final double realSmallNumber = 1E-10;
+    private final double tolerance;
 
     @Override
     public String getReport() {
-        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, 1E-2);
+        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, tolerance);
     }
 
     @Override

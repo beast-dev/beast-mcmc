@@ -80,7 +80,7 @@ public class ThorneyTreeGradient implements GradientWrtParameterProvider, Report
         for (int i = 0; i < tree.getNodeCount() - 1; i++) {
             NodeRef node = tree.getNode(indexHelper.getNodeNumberFromParameterIndex(i));
             double time = tree.getBranchLength(node);
-            double mutations = dataLikelihoodDelegate.getMutationMap().getMutations(node);
+            MutationList mutations = dataLikelihoodDelegate.getMutationMap().getMutations(node);
             double rate = branchRateModel.getBranchRate(tree,node);
             branchGradient[i] = dataLikelihoodDelegate.getBranchLengthLikelihoodDelegate().getGradientWrtTime(mutations, time, rate);
         }

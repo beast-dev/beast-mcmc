@@ -1,7 +1,7 @@
 /*
  * CoalescentIntervalTraversal.java
  *
- * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2024 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -35,6 +35,8 @@ import dr.evomodel.treedatalikelihood.TreeTraversal;
 
 import java.util.*;
 
+import static dr.evomodel.coalescent.basta.ProcessOnCoalescentIntervalDelegate.*;
+
 /**
  * @author Marc A Suchard
  * @author Guy Baele
@@ -42,8 +44,10 @@ import java.util.*;
 public class CoalescentIntervalTraversal extends TreeTraversal {
 
     private final BigFastTreeIntervals treeIntervals;
-    private final List<Set<NodeRef>> activeNodesForAllIntervals;
     private final int numberSubIntervals;
+
+    private int currentMatrixNumber;
+    private int currentLikelihoodInterval;
 
     protected CoalescentIntervalTraversal(final Tree tree,
                                           final BigFastTreeIntervals treeIntervals,
@@ -55,12 +59,13 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
 
         this.treeIntervals = treeIntervals;
         this.numberSubIntervals = numberSubIntervals;
-        this.activeNodesForAllIntervals = new ArrayList<>();
     }
 
     @Override
     public final void dispatchTreeTraversalCollectBranchAndNodeOperations() {
         branchIntervalOperations.clear();
+        matrixOperations.clear();
+        intervalStarts.clear();
         otherOperations.clear();
 
         if (traversalType == TraversalType.REVERSE_LEVEL_ORDER) {
@@ -70,15 +75,43 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         }
     }
 
-    public List<ProcessOnCoalescentIntervalDelegate.BranchIntervalOperation> getBranchIntervalOperations() {
+    public List<BranchIntervalOperation> getBranchIntervalOperations() {
         return branchIntervalOperations;
     }
 
-    public List<ProcessOnCoalescentIntervalDelegate.OtherOperation> getOtherOperations() {
+    public List<TransitionMatrixOperation> getMatrixOperations() {
+        return matrixOperations;
+    }
+
+    public int getCoalescentIntervalCount() {
+        return currentLikelihoodInterval + 1;
+    }
+
+    public List<OtherOperation> getOtherOperations() {
         return otherOperations;
     }
 
-    class ActiveNodesForInterval implements Set<NodeRef> {
+    public List<Integer> getIntervalStarts() {
+        return intervalStarts;
+    }
+
+    protected final double computeRateScaledIntervalLength(final Tree tree, final NodeRef node, double length) {
+        final double branchRate;
+
+        synchronized (branchRateModel) {
+            branchRate = branchRateModel.getBranchRate(tree, node);
+        }
+
+        final double branchIntervalLength = branchRate * length;
+
+        assert branchIntervalLength >= 0.0 : "Negative interval length: " + branchIntervalLength + " for node " +
+                node.getNumber() + (tree.isExternal(node) ?
+                " (" + tree.getNodeTaxon(node).getId() + ")" : "");
+
+        return branchIntervalLength;
+    }
+
+    static class ActiveNodesForInterval implements Set<NodeRef> {
 
         private static final boolean DEBUG = true;
 
@@ -113,8 +146,15 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
 
         public int getActiveBuffer(NodeRef node) {
             if (DEBUG) test(node);
-//            return node.getNumber() * stride + getCurrentOffset(node);
-            return 1000 + getCurrentOffset(node) * 1000 + node.getNumber();
+            int currentOffset = getCurrentOffset(node);
+            if (currentOffset > 0) {
+                ++currentOffset;
+            }
+            return currentOffset * stride + node.getNumber();
+        }
+
+        public int getAccumulationBuffer(NodeRef node) {
+            return  stride + node.getNumber();
         }
 
         public int getExecutionOrder(NodeRef node) {
@@ -224,12 +264,14 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
 
     private void traverseReverseCoalescentLevelOrder() {
 
-        int startingInterval = 0;
-
+        currentLikelihoodInterval = 0;
+        currentMatrixNumber = -1;
 
         // Rebuild active nodes from scratch; TODO cache
         ActiveNodesForInterval activeNodesForInterval = new ActiveNodesForInterval(treeModel.getNodeCount());
         activeNodesForInterval.add(treeIntervals.getSamplingNode(-1)); // Most recent sampled taxon
+
+        intervalStarts.add(0);
 
         for (int interval = 0; interval < treeIntervals.getIntervalCount(); ++interval) {
 
@@ -247,16 +289,32 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
                     throw new RuntimeException("Not a coalescence at top");
                 }
             }
+        }
+    }
 
-            activeNodesForAllIntervals.add(activeNodesForInterval.copy());
+    @SuppressWarnings("unused")
+    private int getDecompositionNumber(NodeRef node) {
+        return 0;
+    }
+
+    private int computeTransmissionProbabilities(int subInterval, NodeRef node, double length) {
+
+        final int matrixNumber = subInterval; // TODO generalize
+
+        if (matrixNumber != currentMatrixNumber) { // TODO should cache by (decomposition, length)-pair
+
+            final double rateScaledLength = computeRateScaledIntervalLength(treeModel, node, length);
+
+            matrixOperations.add(
+                    new TransitionMatrixOperation(
+                            matrixNumber,
+                            getDecompositionNumber(node),
+                            rateScaledLength));
+
+            currentMatrixNumber = matrixNumber;
         }
 
-        if (false) {
-            for (ProcessOnCoalescentIntervalDelegate.BranchIntervalOperation op : branchIntervalOperations) {
-                System.err.println(op);
-            }
-            System.exit(-1);
-        }
+        return matrixNumber;
     }
     
     private void propagateTransmissionProbabilities(int subInterval, NodeRef node, double length,
@@ -267,9 +325,15 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         final int outputBuffer = activeNodesForInterval.getActiveBuffer(node);
         final int executionOrder = activeNodesForInterval.getExecutionOrder(node) + 1;
 
+        final int inputMatrix1 = computeTransmissionProbabilities(subInterval, node, length);
+
         branchIntervalOperations.add(
-                new ProcessOnCoalescentIntervalDelegate.BranchIntervalOperation(
-                        outputBuffer, inputBuffer1, -1, length, executionOrder, subInterval));
+                new BranchIntervalOperation(
+                        outputBuffer,
+                        inputBuffer1, -1,
+                        inputMatrix1, -1,
+                        outputBuffer, -1,
+                        length, executionOrder, subInterval));
 
         activeNodesForInterval.setExecutionOrder(node, executionOrder);
     }
@@ -281,14 +345,24 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         final int inputBuffer1 = activeNodesForInterval.getActiveBuffer(leftChild);
         final int inputBuffer2 = activeNodesForInterval.getActiveBuffer(rightChild);
 
+        final int extraBuffer1 = activeNodesForInterval.getAccumulationBuffer(leftChild);
+        final int extraBuffer2 = activeNodesForInterval.getAccumulationBuffer(rightChild);
+
         final int outputBuffer = activeNodesForInterval.getActiveBuffer(nodeAtTopOfInterval);
         final int executionOrder = Math.max(
                 activeNodesForInterval.getExecutionOrder(leftChild),
                 activeNodesForInterval.getExecutionOrder(rightChild)) + 1;
 
+        final int inputMatrix1 = computeTransmissionProbabilities(subInterval,leftChild, length);
+        final int inputMatrix2 = computeTransmissionProbabilities(subInterval,leftChild, length);
+
         branchIntervalOperations.add(
-                new ProcessOnCoalescentIntervalDelegate.BranchIntervalOperation(
-                        outputBuffer, inputBuffer1, inputBuffer2, length, executionOrder, subInterval));
+                new BranchIntervalOperation(
+                        outputBuffer,
+                        inputBuffer1, inputBuffer2,
+                        inputMatrix1, inputMatrix2,
+                        extraBuffer1, extraBuffer2,
+                        length, executionOrder, subInterval));
 
         activeNodesForInterval.setExecutionOrder(nodeAtTopOfInterval, executionOrder);
     }
@@ -305,12 +379,14 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         }
 
         // Handle initial sub-intervals
-        int subInterval = interval * numberSubIntervals;
+        int subInterval = currentLikelihoodInterval * numberSubIntervals;
         for (int i = 0; i < numberSubIntervals - 1; ++i) {
             for (NodeRef activeNode : activeNodesForInterval) {
                 propagateTransmissionProbabilities(subInterval, activeNode, subIntervalLength, activeNodesForInterval);
             }
             ++subInterval;
+            ++currentLikelihoodInterval;
+            intervalStarts.add(branchIntervalOperations.size());
         }
 
         // Handle last sub-interval
@@ -332,9 +408,13 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
                 propagateTransmissionProbabilities(subInterval, activeNode, subIntervalLength, activeNodesForInterval);
             }
         }
+
+        ++currentLikelihoodInterval;
+        intervalStarts.add(branchIntervalOperations.size());
     }
 
     private void processSamplingEvent(int interval, ActiveNodesForInterval activeNodesForInterval) {
+
         final NodeRef nodeAtTopOfInterval = treeIntervals.getSamplingNode(interval);
         final double intervalLength = treeIntervals.getInterval(interval);
 
@@ -343,20 +423,23 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
             final double subIntervalLength = intervalLength / numberSubIntervals;
 
             // Handle all sub-intervals
-            int subInterval = interval * numberSubIntervals;
+            int subInterval = currentLikelihoodInterval * numberSubIntervals;
             for (int i = 0; i < numberSubIntervals ; ++i) {
                 for (NodeRef activeNode : activeNodesForInterval) {
                     propagateTransmissionProbabilities(subInterval, activeNode, subIntervalLength, activeNodesForInterval);
                 }
                 ++subInterval;
+                ++currentLikelihoodInterval;
+                intervalStarts.add(branchIntervalOperations.size());
             }
         }
 
-//        System.err.println("Adding " + nodeAtTopOfInterval.getNumber());
         activeNodesForInterval.add(nodeAtTopOfInterval);
     }
 
-    private final List<ProcessOnCoalescentIntervalDelegate.BranchIntervalOperation> branchIntervalOperations = new ArrayList<>();
-    private final List<ProcessOnCoalescentIntervalDelegate.OtherOperation> otherOperations = new ArrayList<>();
+    private final List<BranchIntervalOperation> branchIntervalOperations = new ArrayList<>();
+    private final List<TransitionMatrixOperation> matrixOperations = new ArrayList<>();
+    private final List<OtherOperation> otherOperations = new ArrayList<>();
+    private final List<Integer> intervalStarts = new ArrayList<>();
 }
 

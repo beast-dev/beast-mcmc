@@ -3125,6 +3125,18 @@
 		<skyGlideGradient idref="skyGlideGradient.logPopSize"/>
 	</report>
 
+    <nodeHeightProxyParameter id="nodeHeightWithRootProxyParameter" rootNode="true">
+        <tree idref="treeModel"/>
+    </nodeHeightProxyParameter>
+    <!-- 	diagonal hessian wrt node height is very unstable -->
+    <skyGlideGradient id="skyGlideGradient.nodeHeight" gradientCheckTolerance="0.1">
+        <skyGlideLikelihood idref="skyGlideLikelihood"/>
+        <nodeHeightProxyParameter idref="nodeHeightWithRootProxyParameter"/>
+    </skyGlideGradient>
+
+    <report>
+        <skyGlideGradient idref="skyGlideGradient.nodeHeight"/>
+    </report>
 
 	<gmrfDistributionLikelihood id="gmrfDistribution">
 		<data>

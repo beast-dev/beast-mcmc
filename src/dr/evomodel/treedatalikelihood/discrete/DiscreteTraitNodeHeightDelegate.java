@@ -54,6 +54,9 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
         this.branchRates = branchRates;
     }
 
+    protected int getGradientLength() {
+        return branchRates.getTree().getInternalNodeCount();
+    }
 
     protected void getNodeDerivatives(Tree tree, double[] first, double[] second) {
         double[] branchGradient = new double[tree.getNodeCount() - 1];
@@ -69,11 +72,11 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
 
             for (int j = 0; j < tree.getChildCount(node); j++) {
                 NodeRef childNode = tree.getChild(node, j);
-                final int childNodeIndex = childNode.getNumber();
+                final int childNodeIndex = getParameterIndex(childNode, tree);
                 first[i] += branchGradient[childNodeIndex] * branchRates.getBranchRate(tree, childNode);
             }
             if (!tree.isRoot(node)) {
-                first[i] -= branchGradient[i + tree.getExternalNodeCount()] * branchRates.getBranchRate(tree, node);
+                first[i] -= branchGradient[getParameterIndex(node, tree)] * branchRates.getBranchRate(tree, node);
             }
         }
 

@@ -50,6 +50,7 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
                                              Tree tree,
                                              BeagleDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree);
+        this.tree = tree;
         this.likelihoodDelegate = likelihoodDelegate;
         this.beagle = likelihoodDelegate.getBeagleInstance();
 
@@ -259,6 +260,7 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
     protected double[] gradient;
 
     protected boolean substitutionProcessKnown;
+    protected Tree tree;
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     final boolean DEBUG = false;

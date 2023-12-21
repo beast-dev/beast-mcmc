@@ -65,7 +65,10 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
     @Override
     public void initialize(int embeddingDimension, MultiDimensionalScalingLayout layout, long flags) {
-        throw new RuntimeException("Not yet implemented");
+        throw new RuntimeException("Not yet implemented.\nIf you are trying to use the MassiveMDS parallelization " +
+                "library, then you need to specify the system property 'mds.required.flags' to be some number greater " +
+                "than 0.\nFor example: 'java -Dmds.required.flags=1 <everything else you would normally put to run " +
+                "BEAST>'");
     }
 
     @Override

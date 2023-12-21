@@ -55,7 +55,7 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
     }
 
     protected int getGradientLength() {
-        return branchRates.getTree().getInternalNodeCount();
+        return tree.getInternalNodeCount();
     }
 
     protected void getNodeDerivatives(Tree tree, double[] first, double[] second) {

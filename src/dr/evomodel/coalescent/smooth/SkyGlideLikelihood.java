@@ -75,6 +75,18 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         addVariable(logPopSizeParameter);
     }
 
+    public List<TreeModel> getTrees() {
+        return trees;
+    }
+
+    public BigFastTreeIntervals getIntervals(int treeIndex) {
+        return intervals.get(treeIndex);
+    }
+
+    public TreeModel getTree(int treeIndex) {
+        return trees.get(treeIndex);
+    }
+
     @Override
     public String getReport() {
         return "skyGlideLikelihood(" + getLogLikelihood() + ")";
@@ -216,7 +228,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
             final double expIntervalEnd = Math.exp(-slope * intervalEnd);
             final double expIntercept = Math.exp(-intercept);
 
-            final double thisGridTime = gridPointParameter.getParameterValue(gridIndex);
+            final double thisGridTime = gridIndex < gridPointParameter.getDimension() ? gridPointParameter.getParameterValue(gridIndex) : 0;
             final double lastGridTime = gridIndex == 0 ? 0 : gridPointParameter.getParameterValue(gridIndex - 1);
 
             final double secondDerivativeWrtIntercept = getLinearInverseIntegral(intervalStart, intervalEnd, gridIndex);
@@ -229,20 +241,140 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
                     expIntercept * ((intervalEnd * expIntervalEnd - intervalStart * expIntervalStart) / slope - (expIntervalStart - expIntervalEnd) / slope / slope);
             final double secondDerivativeWrtInterceptSlope = -derivativeWrtSlope;
 
-            final double partialInterceptPartialFirstLogPopSize = thisGridTime / (thisGridTime - lastGridTime);
-            final double partialInterceptPartialSecondLogPopSize = - lastGridTime / (thisGridTime - lastGridTime);
-            final double partialSlopePartialFirstLogPopSize = - 1 / (thisGridTime - lastGridTime);
-            final double partialSLopePartialSecondLogPopSize = 1 / (thisGridTime - lastGridTime);
+            final double partialInterceptPartialFirstLogPopSize = thisGridTime > 0 ? thisGridTime / (thisGridTime - lastGridTime) : 1;
+            final double partialInterceptPartialSecondLogPopSize = thisGridTime > 0 ? - lastGridTime / (thisGridTime - lastGridTime) : 0;
+            final double partialSlopePartialFirstLogPopSize = thisGridTime > 0 ? - 1 / (thisGridTime - lastGridTime) : 0;
+            final double partialSLopePartialSecondLogPopSize = thisGridTime > 0 ? 1 / (thisGridTime - lastGridTime) : 0;
 
             diagonalHessian[gridIndex] += lineageMultiplier * (secondDerivativeWrtIntercept * partialInterceptPartialFirstLogPopSize * partialInterceptPartialFirstLogPopSize
                     + 2 * secondDerivativeWrtInterceptSlope * partialSlopePartialFirstLogPopSize * partialInterceptPartialFirstLogPopSize
                     + secondDerivativeWrtSlope * partialSlopePartialFirstLogPopSize * partialSlopePartialFirstLogPopSize);
-            diagonalHessian[gridIndex + 1] += lineageMultiplier * (secondDerivativeWrtIntercept * partialInterceptPartialSecondLogPopSize * partialInterceptPartialSecondLogPopSize
-                    + 2 * secondDerivativeWrtInterceptSlope * partialSLopePartialSecondLogPopSize * partialInterceptPartialSecondLogPopSize
-                    + secondDerivativeWrtSlope * partialSLopePartialSecondLogPopSize * partialSLopePartialSecondLogPopSize);
+            if (gridIndex < gridPointParameter.getDimension()) {
+                diagonalHessian[gridIndex + 1] += lineageMultiplier * (secondDerivativeWrtIntercept * partialInterceptPartialSecondLogPopSize * partialInterceptPartialSecondLogPopSize
+                        + 2 * secondDerivativeWrtInterceptSlope * partialSLopePartialSecondLogPopSize * partialInterceptPartialSecondLogPopSize
+                        + secondDerivativeWrtSlope * partialSLopePartialSecondLogPopSize * partialSLopePartialSecondLogPopSize);
+            }
         }
     }
 
+    public enum NodeHeightDerivativeType {
+        GRADIENT {
+            @Override
+            double getNodeHeightDerivative(double intercept, double slope, double time, double lineageMultiplier) {
+                return lineageMultiplier * Math.exp(-intercept - slope * time);
+            }
+
+            @Override
+            void updateSingleTreePopulationInverseGradientWrtNodeHeight(SkyGlideLikelihood likelihood, int treeIndex, double[] derivatives) {
+
+                int currentGridIndex = 0;
+                BigFastTreeIntervals interval = likelihood.getIntervals(treeIndex);
+                TreeModel tree = likelihood.getTree(treeIndex);
+
+                for (int i = 0; i < interval.getIntervalCount(); i++) {
+                    if (interval.getIntervalType(i) == IntervalType.COALESCENT) {
+                        final double time = interval.getIntervalTime(i + 1);
+                        final int nodeIndex = interval.getNodeNumbersForInterval(i)[1];
+                        currentGridIndex = likelihood.getGridIndex(time, currentGridIndex);
+                        final double slope = likelihood.getGridSlope(currentGridIndex);
+                        derivatives[nodeIndex - tree.getExternalNodeCount()] -= slope;
+                    }
+                }
+            }
+        },
+        DIAGONAL_HESSIAN {
+            @Override
+            double getNodeHeightDerivative(double intercept, double slope, double time, double lineageMultiplier) {
+                return - lineageMultiplier * Math.exp(-intercept - slope * time) * slope;
+            }
+
+            @Override
+            void updateSingleTreePopulationInverseGradientWrtNodeHeight(SkyGlideLikelihood likelihood, int treeIndex, double[] derivatives) {
+
+            }
+        };
+        abstract double getNodeHeightDerivative(double intercept, double slope, double time, double lineageMultiplier);
+        abstract void updateSingleTreePopulationInverseGradientWrtNodeHeight(SkyGlideLikelihood likelihood, int treeIndex, double[] derivatives);
+    }
+
+    public double[] getGradientWrtNodeHeight(int treeIndex) {
+        return getDerivativeWrtNodeHeight(treeIndex, NodeHeightDerivativeType.GRADIENT);
+    }
+
+    public double[] getDiagonalHessianWrtNodeHeight(int treeIndex) {
+        return getDerivativeWrtNodeHeight(treeIndex, NodeHeightDerivativeType.DIAGONAL_HESSIAN);
+    }
+
+    public double[] getDerivativeWrtNodeHeight(int treeIndex, NodeHeightDerivativeType derivativeType) {
+
+        BigFastTreeIntervals interval = intervals.get(treeIndex);
+        Tree thisTree = trees.get(treeIndex);
+        double[] gradient = new double[thisTree.getInternalNodeCount()];
+
+        int currentGridIndex = 0;
+        double tmp = 0;
+        double numSameHeightNodes = 1;
+        for (int i = 0; i < interval.getIntervalCount(); i++) {
+            final int lineageCount = interval.getLineageCount(i);
+            int[] nodeIndices = interval.getNodeNumbersForInterval(i);
+            final double intervalStart = thisTree.getNodeHeight(thisTree.getNode(nodeIndices[0]));
+            final double intervalEnd = thisTree.getNodeHeight(thisTree.getNode(nodeIndices[1]));
+
+            if (!(thisTree.isExternal(thisTree.getNode(nodeIndices[0])) && thisTree.isExternal(thisTree.getNode(nodeIndices[1])))) {
+                int[] gridIndices = getGridPoints(currentGridIndex, intervalStart, intervalEnd);
+                final int firstGridIndex = gridIndices[0];
+                final int lastGridIndex = gridIndices[1];
+
+                if (intervalStart == intervalEnd) {
+                    if (interval.getIntervalType(i) == IntervalType.COALESCENT)
+                        numSameHeightNodes++;
+                } else {
+                    final double firstGridSlope = getGridSlope(firstGridIndex);
+                    final double firstGridIntercept = getGridIntercept(firstGridIndex);
+
+                    final double lastGridSlope = getGridSlope(lastGridIndex);
+                    final double lastGridIntercept = getGridIntercept(lastGridIndex);
+
+                    final double lineageMultiplier = 0.5 * lineageCount * (lineageCount - 1);
+                    if (!thisTree.isExternal(thisTree.getNode(nodeIndices[0]))) {
+                        tmp += derivativeType.getNodeHeightDerivative(firstGridIntercept, firstGridSlope, intervalStart, lineageMultiplier);
+                    }
+
+                    int count = 0;
+                    int j = 0;
+                    while(numSameHeightNodes - count > 0 && tmp != 0) {
+                        final int nodeIndex = interval.getNodeNumbersForInterval(i - j)[0];
+                        if (!thisTree.isExternal(thisTree.getNode(nodeIndex))) {
+                            count++;
+                            gradient[nodeIndex - thisTree.getExternalNodeCount()] += tmp / numSameHeightNodes;
+                        }
+                        j++;
+                    }
+                    numSameHeightNodes = 1;
+                    tmp = 0;
+
+                    if (interval.getIntervalType(i) == IntervalType.COALESCENT) {
+                        tmp = -derivativeType.getNodeHeightDerivative(lastGridIntercept, lastGridSlope, intervalEnd, lineageMultiplier);
+                    }
+                }
+                currentGridIndex = lastGridIndex;
+            }
+        }
+        int count = 0;
+        int j = 0;
+        while(numSameHeightNodes - count > 0 && tmp != 0) {
+            final int nodeIndex = interval.getNodeNumbersForInterval(interval.getIntervalCount() - 1 - j)[1];
+            if (!thisTree.isExternal(thisTree.getNode(nodeIndex))) {
+                count++;
+                gradient[nodeIndex - thisTree.getExternalNodeCount()] += tmp / numSameHeightNodes;
+            }
+            j++;
+        }
+
+        derivativeType.updateSingleTreePopulationInverseGradientWrtNodeHeight(this, treeIndex, gradient);
+
+        return gradient;
+    }
 
 
     public double getSingleTreeLogLikelihood(int index) {

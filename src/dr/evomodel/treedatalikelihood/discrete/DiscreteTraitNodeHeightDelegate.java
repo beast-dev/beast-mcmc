@@ -134,7 +134,6 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
                 NodeRef nodeI = tree.getNode(i + tree.getExternalNodeCount());
                 NodeRef nodeJ = tree.getChild(nodeI, 0);
                 NodeRef nodeK = tree.getChild(nodeI, 1);
-//                denominator[i] = getDoubleVectorReduction(postPartials[nodeI.getNumber()], prePartials[nodeI.getNumber()], true);
 
                 beagle.getTransitionMatrix(evolutionaryProcessDelegate.getInfinitesimalMatrixBufferIndex(nodeI.getNumber()), Qi);
                 beagle.getTransitionMatrix(evolutionaryProcessDelegate.getInfinitesimalMatrixBufferIndex(nodeJ.getNumber()), Qj);
@@ -147,12 +146,10 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
                 getMatrixVectorProduct(Qk, tmpRightPartial, tmpQRightPartial); // Qk Pk p_k
 
                 sisterBranchesSecondDerivatives[i] = getVectorMinusVector(
-                        getVectorVectorDivision(getVectorStateReduction(getTripleVectorMultiplication(tmpQLeftPartial, tmpQRightPartial, prePartials[nodeI.getNumber()])), denominator[nodeI.getNumber()]),
+                        getVectorVectorDivision(getVectorStateReduction(getTripleVectorMultiplication(tmpQLeftPartial, tmpQRightPartial, prePartials[nodeI.getNumber()])),
+                                getVectorStateReduction(getTripleVectorMultiplication(tmpLeftPartail, tmpRightPartial, prePartials[nodeI.getNumber()]))),
                         getVectorVectorProduct(branchPatternGradient[getParameterIndex(nodeJ, tree)], branchPatternGradient[getParameterIndex(nodeK, tree)]));
 
-//                second[i] = branchDiagonalHessian[getParameterIndex(nodeJ, tree)] * branchRates.getBranchRate(tree, nodeJ) * branchRates.getBranchRate(tree, nodeJ)
-//                        + branchDiagonalHessian[getParameterIndex(nodeK, tree)] * branchRates.getBranchRate(tree, nodeK) * branchRates.getBranchRate(tree, nodeK)
-//                        + 2 * sisterBranchesSecondDerivatives[i] * branchRates.getBranchRate(tree, nodeJ) * branchRates.getBranchRate(tree, nodeK);
 
                 second[i] = getVectorPatternReduction(getVectorPlusScaledVector(
                 getVectorPlusScaledVector(branchPatternDiagonalHessian[getParameterIndex(nodeJ, tree)], branchPatternDiagonalHessian[getParameterIndex(nodeK, tree)],

@@ -164,7 +164,7 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
         //update all preOrder partials first
         simulationProcess.cacheSimulatedTraits(node);
 
-        double[] second = new double[tree.getNodeCount() - 1];
+        double[] second = new double[getGradientLength()];
         getNodeDerivatives(tree, null, second);
 
         return second;

@@ -223,8 +223,8 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
     }
 
     private double[] getVectorStateReduction(double[] vector) {
-        double[] out = new double[patternCount];
-        for (int pattern = 0; pattern < patternCount; pattern++) {
+        double[] out = new double[vector.length/stateCount];
+        for (int pattern = 0; pattern < out.length; pattern++) {
             double sum = 0;
             for (int state = 0; state < stateCount; state++) {
                 sum += vector[pattern * stateCount + state];
@@ -317,8 +317,8 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
 
     private double[] getVectorVectorDivision(double[] numerator, double[] denominator) {
         double[] out = new double[numerator.length];
-        for (int pattern = 0; pattern < patternCount; pattern++) {
-            out[pattern] = numerator[pattern] / denominator[pattern];
+        for (int i = 0; i < numerator.length; i++) {
+            out[i] = numerator[i] / denominator[i];
         }
         return out;
     }

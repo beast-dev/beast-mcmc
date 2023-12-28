@@ -161,23 +161,23 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
 
 
                 if (!tree.isRoot(nodeI)) {
-//                    getMatrixVectorProduct(Qi, prePartials[nodeI.getNumber()], tmpIPartial);  //Qi q_i
-//                    currentAndParentBranchesSecondDerivatives[getParameterIndex(nodeJ, tree)] = getNormalizedPatternReduction(getTripleVectorReduction(tmpQLeftPartial, tmpRightPartial, tmpIPartial, true), denominator[i])
-//                            - branchGradient[getParameterIndex(nodeJ, tree)] * branchGradient[getParameterIndex(nodeI, tree)];
-//                    currentAndParentBranchesSecondDerivatives[getParameterIndex(nodeK, tree)] = getNormalizedPatternReduction(getTripleVectorReduction(tmpQRightPartial, tmpLeftPartail, tmpIPartial, true), denominator[i])
-//                            - branchGradient[getParameterIndex(nodeK, tree)] * branchGradient[getParameterIndex(nodeI, tree)];
-//
-//
-////                    getMatrixVectorProduct(Qj, postPartials[nodeJ.getNumber()], tmpLeftPartail);
-////                    getMatrixVectorProduct(transitionMatrices[nodeJ.getNumber()], tmpLeftPartail, tmpQLeftPartial);
-////
-////                    getMatrixVectorProduct(transitionMatrices[nodeJ.getNumber()], postPartials[nodeJ.getNumber()], tmpRightPartial);
-////                    getMatrixVectorProduct(Qj, tmpRightPartial, tmpQRightPartial);
-//
-//
-//                    second[i] += branchDiagonalHessian[getParameterIndex(nodeI, tree)] * branchRates.getBranchRate(tree, nodeI) * branchRates.getBranchRate(tree, nodeI)
-//                            - 2 * currentAndParentBranchesSecondDerivatives[getParameterIndex(nodeJ, tree)] * branchRates.getBranchRate(tree, nodeI) * branchRates.getBranchRate(tree, nodeJ)
-//                            - 2 * currentAndParentBranchesSecondDerivatives[getParameterIndex(nodeK, tree)] * branchRates.getBranchRate(tree, nodeI) * branchRates.getBranchRate(tree, nodeK);
+                    getMatrixTransformVectorProduct(Qi, prePartials[nodeI.getNumber()], tmpIPartial);  //Qi q_i
+                    currentAndParentBranchesSecondDerivatives[getParameterIndex(nodeJ, tree)] = getVectorMinusVector(
+                            getVectorVectorDivision(getVectorStateReduction(getTripleVectorMultiplication(tmpQLeftPartial, tmpRightPartial, tmpIPartial)),
+                                    getVectorStateReduction(getTripleVectorMultiplication(tmpLeftPartail, tmpRightPartial, prePartials[nodeI.getNumber()]))),
+                            getVectorVectorProduct(branchPatternGradient[getParameterIndex(nodeJ, tree)], branchPatternGradient[getParameterIndex(nodeI, tree)]));
+                    currentAndParentBranchesSecondDerivatives[getParameterIndex(nodeK, tree)] = getVectorMinusVector(
+                            getVectorVectorDivision(getVectorStateReduction(getTripleVectorMultiplication(tmpQRightPartial, tmpLeftPartail, tmpIPartial)),
+                                    getVectorStateReduction(getTripleVectorMultiplication(tmpLeftPartail, tmpRightPartial, prePartials[nodeI.getNumber()]))),
+                            getVectorVectorProduct(branchPatternGradient[getParameterIndex(nodeK, tree)], branchPatternGradient[getParameterIndex(nodeI, tree)]));
+
+
+                    second[i] +=  getVectorPatternReduction(getVectorPlusScaledVector(
+                            getVectorPlusScaledVector(branchPatternDiagonalHessian[getParameterIndex(nodeI, tree)], currentAndParentBranchesSecondDerivatives[getParameterIndex(nodeJ, tree)],
+                                    branchRates.getBranchRate(tree, nodeI) * branchRates.getBranchRate(tree, nodeI),
+                                    -2 * branchRates.getBranchRate(tree, nodeI) * branchRates.getBranchRate(tree, nodeJ)),
+                            currentAndParentBranchesSecondDerivatives[getParameterIndex(nodeK, tree)], 1, -2 * branchRates.getBranchRate(tree, nodeI) * branchRates.getBranchRate(tree, nodeK)));
+
                 }
 
             }
@@ -187,8 +187,6 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
 //                testBranchGradient[i] = getNormalizedPatternReduction(getDoubleVectorReduction(prePartials[i], tmpIPartial, true), denominator[i]);
 //            }
 
-
-            int test = 0;
         }
 
 
@@ -254,6 +252,21 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
                     double sum = 0;
                     for (int j = 0; j < stateCount; j++) {
                         sum += matrix[category * stateCount * stateCount + i * stateCount + j] * vector[category * patternCount * stateCount + pattern * stateCount + j];
+                    }
+                    result[category * patternCount * stateCount + pattern * stateCount + i] = sum;
+                }
+            }
+        }
+    }
+
+    private void getMatrixTransformVectorProduct(double[] matrix, double[] vector, double[] result) {
+        assert(vector.length == result.length);
+        for (int category = 0; category < categoryCount; category++) {
+            for (int pattern = 0; pattern < patternCount; pattern++) {
+                for (int i = 0; i < stateCount; i++) {
+                    double sum = 0;
+                    for (int j = 0; j < stateCount; j++) {
+                        sum += matrix[category * stateCount * stateCount + j * stateCount + i] * vector[category * patternCount * stateCount + pattern * stateCount + j];
                     }
                     result[category * patternCount * stateCount + pattern * stateCount + i] = sum;
                 }

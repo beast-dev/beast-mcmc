@@ -294,9 +294,9 @@ public class RzhetskyNeiBranchLengthProvider extends AbstractModel implements Mu
     }
 
     @Override
-    public double getMutations(NodeRef node) {
-        // TODO Auto-generated method stub
-        return getBranchLength(node);
+    public MutationList getMutations(NodeRef node){
+        MutationList mutations = new MutationList.SimpleMutationList(getBranchLength(node));
+        return mutations;
     }
 }
 

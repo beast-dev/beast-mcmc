@@ -75,8 +75,9 @@ public class ConstrainedTreeBranchLengthProvider  extends MutationBranchMap.Abst
         }
     }
 
-    public double getMutations(NodeRef node){
-        return getBranchLength(node);
+    public MutationList getMutations(NodeRef node){
+        MutationList mutations = new MutationList.SimpleMutationList(getBranchLength(node));
+        return mutations;
     }
 
 

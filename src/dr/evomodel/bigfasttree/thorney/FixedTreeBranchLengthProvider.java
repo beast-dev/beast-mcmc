@@ -75,9 +75,13 @@ public class FixedTreeBranchLengthProvider extends MutationBranchMap.AbstractMut
             throw new RuntimeException("Unrecognized Tree");
         }
     }
-    public double getMutations(NodeRef node){
-        return getBranchLength(tree, node);
-
+        public double getBranchLength (NodeRef node) {
+            return getBranchLength(this.tree, node);
+       
+    }
+    public MutationList getMutations(NodeRef node){
+        MutationList mutations = new MutationList.SimpleMutationList(getBranchLength(node));
+        return mutations;
     }
 
     private HashMap<BitSet, NodeRef> getBitSetNodeMap(Tree referenceTree, Tree tree) {

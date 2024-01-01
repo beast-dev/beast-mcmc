@@ -31,6 +31,7 @@ import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.Reportable;
@@ -166,8 +167,23 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
 
             computeTransitionProbabilityOperations(matrixOperation);
             computeBranchIntervalOperations(intervalStarts, branchOperations);
-            return computeCoalescentIntervalReduction(intervalStarts, branchOperations);
+
+            double logL = computeCoalescentIntervalReduction(intervalStarts, branchOperations);
+
+            if (PRINT_COMMANDS) {
+                System.err.println("logL = " + logL + " " + getStamp() + "\n");
+                if (printCount > 1000) {
+                    System.exit(-1);
+                }
+                ++printCount;
+            }
+
+            return logL;
         }
+
+        abstract String getStamp();
+
+        int printCount = 0;
 
         @Override
         public long getTotalCalculationCount() {

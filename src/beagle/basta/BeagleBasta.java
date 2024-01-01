@@ -4,12 +4,23 @@ import beagle.Beagle;
 
 public interface BeagleBasta extends Beagle {
 
+    int BASTA_OPERATION_SIZE = 8;
+
     void updateBastaPartials(final int[] operations,
                              int operationCount,
-                             int populationSizeIndex);
+                             final int[] intervals,
+                             int intervalCount,
+                             int populationSizeIndex,
+                             int coalescentProbabilityIndex);
 
     void accumulateBastaPartials(final int[] operations,
                                  int operationCount,
-                                 final int[] segments,
-                                 int segmentCount);
+                                 final int[] intervalStarts,
+                                 int intervalCount,
+                                 final double[] intervalLengths,
+                                 int populationSizesIndex,
+                                 int coalescentIndex,
+                                 double[] result);
+
+    void getBastaBuffer(int index, double[] buffer);
 }

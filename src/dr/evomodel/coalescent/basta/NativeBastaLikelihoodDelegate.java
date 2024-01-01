@@ -22,6 +22,10 @@ public class NativeBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     }
 
     @Override
+    String getStamp() { return "native"; }
+
+
+    @Override
     protected void computeBranchIntervalOperations(List<Integer> intervalStarts,
                                                    List<BranchIntervalOperation> branchIntervalOperations) {
         if (branchIntervalOperations != null) {

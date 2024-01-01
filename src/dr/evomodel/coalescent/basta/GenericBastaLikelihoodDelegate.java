@@ -32,7 +32,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         super(name, tree, stateCount);
 
         this.partials = new double[maxNumCoalescentIntervals * tree.getNodeCount() * stateCount]; // TODO much too large
-        this.matrices = new double[maxNumCoalescentIntervals * stateCount * stateCount]; // TODO much too small (except for strict-clock
+        this.matrices = new double[maxNumCoalescentIntervals * stateCount * stateCount]; // TODO much too small (except for strict-clock)
         this.coalescent = new double[maxNumCoalescentIntervals];
         this.sizes = new double[2 * stateCount];
         this.decompositions = new EigenDecomposition[1];
@@ -57,6 +57,10 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             int end = intervalStarts.get(interval + 1);
 
             computeInnerBranchIntervalOperations(branchIntervalOperations, start, end);
+        }
+
+        if (PRINT_COMMANDS) {
+            System.err.println("coalescent: " + new WrappedVector.Raw(coalescent));
         }
     }
 
@@ -107,6 +111,9 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     }
 
     @Override
+    String getStamp() { return "generic"; }
+
+    @Override
     protected double computeCoalescentIntervalReduction(List<Integer> intervalStarts,
                                                         List<BranchIntervalOperation> branchIntervalOperations) {
 
@@ -137,10 +144,6 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             logL += reduceAcrossIntervals(e, f, g, h,
                     operation.intervalNumber, operation.intervalLength,
                     sizes, coalescent, stateCount);
-        }
-
-        if (PRINT_COMMANDS) {
-            System.err.println("logL = " + logL + "\n");
         }
 
         return logL;

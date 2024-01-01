@@ -6,7 +6,12 @@ import beagle.basta.BeagleBasta;
 import beagle.basta.BastaFactory;
 import dr.evolution.tree.Tree;
 import dr.evomodel.substmodel.EigenDecomposition;
+import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.BufferIndexHelper;
+import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.Likelihood;
 import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.List;
@@ -216,6 +221,37 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
             lengths[i] = branchIntervalOperations.get(start).intervalLength;
         }
         intervals[i] = intervalStarts.get(i);
+    }
+
+    private boolean releaseSingleton = true;
+
+    private void releaseBeagle() throws Throwable {
+        if (beagle != null && releaseSingleton) {
+            beagle.finalize();
+            releaseSingleton = false;
+        }
+    }
+
+    public static void releaseBeagleBastaLikelihoodDelegate(BastaLikelihood treeDataLikelihood) throws Throwable {
+        BastaLikelihoodDelegate likelihoodDelegate = treeDataLikelihood.getLikelihoodDelegate();
+        if (likelihoodDelegate instanceof BeagleBastaLikelihoodDelegate) {
+            BeagleBastaLikelihoodDelegate delegate = (BeagleBastaLikelihoodDelegate) likelihoodDelegate;
+            delegate.releaseBeagle();
+        }
+    }
+
+    public static void releaseAllBeagleBastaInstances() throws Throwable {
+        for (Likelihood likelihood : dr.inference.model.Likelihood.FULL_LIKELIHOOD_SET) {
+            if (likelihood instanceof BastaLikelihood) {
+                releaseBeagleBastaLikelihoodDelegate((BastaLikelihood) likelihood);
+            } else if (likelihood instanceof CompoundLikelihood) {
+                for (Likelihood likelihood2: ((CompoundLikelihood) likelihood).getLikelihoods()) {
+                    if (likelihood2 instanceof BastaLikelihood) {
+                        releaseBeagleBastaLikelihoodDelegate((BastaLikelihood) likelihood2);
+                    }
+                }
+            }
+        }
     }
 
     static class OffsetBufferIndexHelper extends BufferIndexHelper {

@@ -381,6 +381,8 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         }
     }
 
+    public BastaLikelihoodDelegate getLikelihoodDelegate() {  return likelihoodDelegate; }
+
     @Override
     public List<Citation> getCitations() {
         if (likelihoodDelegate instanceof Citable) {

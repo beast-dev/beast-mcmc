@@ -221,13 +221,16 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
     }
 
     private double[] getVectorStateReduction(double[] vector) {
-        double[] out = new double[vector.length/stateCount];
-        for (int pattern = 0; pattern < out.length; pattern++) {
-            double sum = 0;
-            for (int state = 0; state < stateCount; state++) {
-                sum += vector[pattern * stateCount + state];
+        double[] out = new double[patternCount];
+        for (int category = 0; category < categoryCount; category++) {
+            final double categoryWeight = siteRateModel.getProportionForCategory(category);
+            for (int pattern = 0; pattern < out.length; pattern++) {
+                double sum = 0;
+                for (int state = 0; state < stateCount; state++) {
+                    sum += vector[category * patternCount * stateCount + pattern * stateCount + state];
+                }
+                out[pattern] += sum * categoryWeight;
             }
-            out[pattern] = sum;
         }
         return out;
     }
@@ -276,12 +279,9 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
 
     private double getVectorPatternReduction(double[] vector) {
         double sum = 0;
-        for (int category = 0; category < categoryCount; category++) {
-            final double categoryWeight = siteRateModel.getProportionForCategory(category);
 
-            for (int pattern = 0; pattern < patternCount; pattern++) {
-                sum += categoryWeight * vector[category * patternCount + pattern] * patternList.getPatternWeight(pattern);
-            }
+        for (int pattern = 0; pattern < patternCount; pattern++) {
+            sum += vector[pattern] * patternList.getPatternWeight(pattern);
         }
         return sum;
     }

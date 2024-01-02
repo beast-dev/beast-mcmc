@@ -118,6 +118,9 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
             double[] tmpPatternNumerator = new double[patternCount];
             double[] tmpPatternDenominator = new double[patternCount];
 
+            double[] tmpPatternCacheOne = new double[patternCount];
+            double[] tmpPatternCacheTwo = new double[patternCount];
+
             for (int i = 0; i < tree.getNodeCount() - 1; i++) {
                 beagle.getTransitionMatrix(evolutionaryProcessDelegate.getInfinitesimalMatrixBufferIndex(i), Qi);
                 getMatrixVectorProduct(Qi, postPartials[i], tmpIPartial);
@@ -146,9 +149,10 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
 
                 getTripleVectorReduction(tmpQLeftPartial, tmpQRightPartial, prePartials[nodeI.getNumber()], tmpPatternNumerator);
                 getTripleVectorReduction(tmpLeftPartail, tmpRightPartial, prePartials[nodeI.getNumber()], tmpPatternDenominator);
-                sisterBranchesSecondDerivatives[i] = getVectorMinusVector(
-                        getVectorVectorDivision(tmpPatternNumerator, tmpPatternDenominator),
-                        getVectorVectorProduct(branchPatternGradient[getParameterIndex(nodeJ, tree)], branchPatternGradient[getParameterIndex(nodeK, tree)]));
+                getVectorVectorDivision(tmpPatternNumerator, tmpPatternDenominator, tmpPatternCacheOne);
+                getVectorVectorProduct(branchPatternGradient[getParameterIndex(nodeJ, tree)], branchPatternGradient[getParameterIndex(nodeK, tree)], tmpPatternCacheTwo);
+
+                sisterBranchesSecondDerivatives[i] = getVectorMinusVector(tmpPatternCacheOne, tmpPatternCacheTwo);
 
 
                 second[i] = getVectorPatternReduction(getVectorPlusScaledVector(
@@ -235,6 +239,12 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
         return product;
     }
 
+    private void getVectorVectorProduct(double[] first, double[] second, double[] out) {
+        for (int i = 0; i < first.length; i++) {
+            out[i] = first[i] * second[i];
+        }
+    }
+
 
     private void getMatrixVectorProduct(double[] matrix, double[] vector, double[] result) {
         assert(vector.length == result.length);
@@ -313,6 +323,12 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
             out[i] = numerator[i] / denominator[i];
         }
         return out;
+    }
+
+    private void getVectorVectorDivision(double[] numerator, double[] denominator, double[] out) {
+        for (int i = 0; i < numerator.length; i++) {
+            out[i] = numerator[i] / denominator[i];
+        }
     }
 
     private double[] getDoubleVectorReduction(double[] first, double[] second, boolean multipliedCategoryWeight) {

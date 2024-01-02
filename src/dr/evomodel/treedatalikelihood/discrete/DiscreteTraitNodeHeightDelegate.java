@@ -287,6 +287,7 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
         assert(first.length == second.length);
         assert(second.length == third.length);
 
+        Arrays.fill(out, 0);
 
         for (int category = 0; category < categoryCount; category++) {
             final double categoryWeight = siteRateModel.getProportionForCategory(category);

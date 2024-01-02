@@ -139,7 +139,7 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
 
         String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY,
                 tolerance, smallValueThreshold)
-                + HessianWrtParameterProvider.getReportAndCheckForError(this, null);
+                + HessianWrtParameterProvider.getReportAndCheckForError(this, tolerance);
 
         return message;
     }

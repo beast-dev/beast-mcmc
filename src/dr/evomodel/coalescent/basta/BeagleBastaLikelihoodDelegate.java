@@ -14,6 +14,7 @@ import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.math.matrixAlgebra.WrappedVector;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static beagle.basta.BeagleBasta.BASTA_OPERATION_SIZE;
@@ -187,22 +188,62 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         }
     }
 
+    int tipCount = -1;
+    int[] map;
+    int used;
+
+    private static final boolean CACHE_FRIENDLY = true;
+
+    int map(int buffer) {
+        if (buffer < tipCount) {
+            return buffer;
+        } else {
+            if (map[buffer] == -1) {
+                map[buffer] = used;
+                ++used;
+            }
+            return map[buffer];
+        }
+    }
+
     private void vectorizeBranchIntervalOperations(List<Integer> intervalStarts,
                                                    List<BranchIntervalOperation> branchIntervalOperations,
                                                    int[] operations,
                                                    int[] intervals,
                                                    double[] lengths) {
+
+        if (CACHE_FRIENDLY) {
+            this.tipCount = tree.getExternalNodeCount();
+            if (this.map == null) {
+                this.map = new int[maxNumCoalescentIntervals * tree.getNodeCount()];
+            }
+            Arrays.fill(this.map, -1);
+            this.used = this.tipCount;
+        }
+
         // TODO double-buffer
         int k = 0;
         for (BranchIntervalOperation op : branchIntervalOperations) {
-            operations[k] = op.outputBuffer;
-            operations[k + 1] = op.inputBuffer1;
-            operations[k + 2] = op.inputMatrix1;
-            operations[k + 3] = op.inputBuffer2;
-            operations[k + 4] = op.inputMatrix2;
-            operations[k + 5] = op.accBuffer1;
-            operations[k + 6] = op.accBuffer2;
-            operations[k + 7] = op.intervalNumber;
+
+            if (CACHE_FRIENDLY) {
+                operations[k] = map(op.outputBuffer);
+                operations[k + 1] = map(op.inputBuffer1);
+                operations[k + 2] = op.inputMatrix1;
+                operations[k + 3] = map(op.inputBuffer2);
+                operations[k + 4] = op.inputMatrix2;
+                operations[k + 5] = map(op.accBuffer1);
+                operations[k + 6] = map(op.accBuffer2);
+                operations[k + 7] = op.intervalNumber;
+            } else {
+                operations[k] = op.outputBuffer;
+                operations[k + 1] = op.inputBuffer1;
+                operations[k + 2] = op.inputMatrix1;
+                operations[k + 3] = op.inputBuffer2;
+                operations[k + 4] = op.inputMatrix2;
+                operations[k + 5] = op.accBuffer1;
+                operations[k + 6] = op.accBuffer2;
+                operations[k + 7] = op.intervalNumber;
+            }
 
             k += BASTA_OPERATION_SIZE;
         }

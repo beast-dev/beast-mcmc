@@ -374,7 +374,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                                               final double branchPrecision) {
 
         if (!Double.isInfinite(branchPrecision)) {
-            // Here we simulate X_j | X_pa(j), Y
+            // Here we simulate X_j | X_pa(j), Y = X_j | X_pa(j), Y[j]
 
             final WrappedVector M0 = new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait);
             final DenseMatrix64F P0 = wrap(partialNodeBuffer, offsetPartial + dimTrait, dimTrait, dimTrait);

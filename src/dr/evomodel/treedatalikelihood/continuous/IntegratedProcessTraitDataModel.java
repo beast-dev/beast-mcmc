@@ -128,6 +128,10 @@ public class IntegratedProcessTraitDataModel extends
                 missingIndicatorsIntegrated[indMissing] = missingIndicators[i];
             }
             return missingIndicatorsIntegrated;
-        }
+    }
+
+    public boolean[] getOriginalDataMissingIndicators() {
+        return super.getDataMissingIndicators();
+    }
 
 }

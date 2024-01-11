@@ -112,7 +112,7 @@ public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParse
                         modelName,
                         subModel,
                         subModel.getParameter(),
-                        subModel.getDataMissingIndicators(),
+                        ((IntegratedProcessTraitDataModel) subModel).getOriginalDataMissingIndicators(), // PB: The Integrated object has the original data missing data in memory to work well with getTipPartial
                         true,
                         dimTrait,
                         numTraits,

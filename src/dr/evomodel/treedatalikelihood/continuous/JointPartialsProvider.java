@@ -197,6 +197,15 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
 
     @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
+        if (precisionType != PrecisionType.FULL) {
+            throw new RuntimeException("Currently only implemented for full precision");
+        }
+        if (fullyObserved) {
+            throw new RuntimeException("Wishart statistics currently not implemented for joint partials provider");
+            // TODO: need to implement scalar precision type then go from there
+        }
+
+
         double[] partial = new double[precisionType.getPartialsDimension(traitDim)];
 
         int meanOffset = precisionType.getMeanOffset(traitDim);

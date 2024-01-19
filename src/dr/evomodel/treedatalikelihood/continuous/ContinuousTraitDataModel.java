@@ -303,6 +303,11 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         // do nothing
     }
 
+    @Override
+    public boolean needToUpdateTipDataGradient(int offset, int dimGradient) {
+        return false;
+    }
+
     /*
      * For partially observed tips: (y_1, y_2)^t \sim N(\mu, \Sigma) where
      *

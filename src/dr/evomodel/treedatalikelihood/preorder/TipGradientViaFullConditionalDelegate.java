@@ -120,7 +120,7 @@ public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDis
         final double[] fullConditionalPartial = super.getTraitForNode(node);
         NormalSufficientStatistics statPre = new NormalSufficientStatistics(fullConditionalPartial, 0, dimTrait, Pd, likelihoodDelegate.getPrecisionType());
         DenseMatrix64F precisionPre = statPre.getRawPrecisionCopy();
-        DenseMatrix64F variancePre = statPre.getRawVarianceCopy();
+//        DenseMatrix64F variancePre = statPre.getRawVarianceCopy();
         DenseMatrix64F meanPre = statPre.getRawMeanCopy();
 
         // Post mean
@@ -131,14 +131,20 @@ public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDis
 
         if (doSubset) {
             precisionPre = MissingOps.gatherRowsAndColumns(precisionPre, subInds, subInds);
-            variancePre = MissingOps.gatherRowsAndColumns(precisionPre, subInds, subInds);
             meanPre = MissingOps.gatherRowsAndColumns(meanPre, subInds, new int[]{0});
             meanPost = MissingOps.gatherRowsAndColumns(meanPost, subInds, new int[]{0});
         }
 
-        //TODO: only compute the variance if needed
-        dataModel.updateTipDataGradient(precisionPre, variancePre, node, offset, dimGradient); // does nothing for standard model
+        DenseMatrix64F variancePre = null;
+        if (dataModel.needToUpdateTipDataGradient(offset, dimGradient)) {
+            variancePre = statPre.getRawVarianceCopy();
+            if (doSubset) {
+                variancePre = MissingOps.gatherRowsAndColumns(precisionPre, subInds, subInds);
+            }
 
+            dataModel.updateTipDataGradient(precisionPre, variancePre, node, offset, dimGradient); // does nothing for standard model
+
+        }
 
         // - Q_i * (X_i - m_i)
         DenseMatrix64F gradient = new DenseMatrix64F(dimGradient, numTraits);

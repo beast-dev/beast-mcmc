@@ -43,6 +43,11 @@ public interface ModelExtensionProvider extends ContinuousTraitPartialsProvider 
             safeInvert2(samplingVariance, precision, false);
         }
 
+        @Override
+        default boolean needToUpdateTipDataGradient(int offset, int dimGradient) {
+            return true;
+        }
+
     }
 }
 

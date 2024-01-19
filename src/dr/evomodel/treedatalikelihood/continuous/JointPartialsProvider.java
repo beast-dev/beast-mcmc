@@ -410,22 +410,34 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
 
     @Override
     public void updateTipDataGradient(DenseMatrix64F precision, DenseMatrix64F variance,
-                                       NodeRef node, int offset, int dimGradient) {
+                                      NodeRef node, int offset, int dimGradient) {
 
+
+        ContinuousTraitPartialsProvider provider = getProviderOffset(offset, dimGradient);
+        provider.updateTipDataGradient(precision, variance, node, 0, dimGradient);
+    }
+
+    private ContinuousTraitPartialsProvider getProviderOffset(int offset, int dimTrait) {
         int thisOffset = 0;
         int i = 0;
         while (thisOffset < offset) {
             thisOffset += providers[i].getTraitDimension();
-            i ++;
+            i++;
         }
 
         ContinuousTraitPartialsProvider provider = providers[i];
 
-        if (thisOffset != offset || provider.getTraitDimension() != dimGradient) {
+        if (thisOffset != offset || provider.getTraitDimension() != dimTrait) {
             throw new RuntimeException("Offset and dimension must perfectly align with a child model (for now)");
         }
 
-        provider.updateTipDataGradient(precision, variance, node, 0, dimGradient);
+        return provider;
+    }
+
+    @Override
+    public boolean needToUpdateTipDataGradient(int offset, int dimGradient) {
+        ContinuousTraitPartialsProvider provider = getProviderOffset(offset, dimGradient);
+        return provider.needToUpdateTipDataGradient(offset, dimGradient);
     }
 
 

@@ -122,6 +122,10 @@ public interface ContinuousTraitPartialsProvider {
         throw new RuntimeException("not yet implemented");
     }
 
+    default boolean needToUpdateTipDataGradient(int offset, int dimGradient) {
+        throw new RuntimeException("not yet implemented");
+    }
+
     static boolean[] indicesToIndicator(List<Integer> indices, int n) {
 
         if (indices == null) {

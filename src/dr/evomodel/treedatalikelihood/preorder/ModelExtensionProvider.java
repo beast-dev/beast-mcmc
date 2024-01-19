@@ -34,11 +34,18 @@ public interface ModelExtensionProvider extends ContinuousTraitPartialsProvider 
         default void updateTipDataGradient(DenseMatrix64F precision, DenseMatrix64F variance,
                                            NodeRef node, int offset, int dimGradient) {
 
-            if (offset != 0 || dimGradient != getTraitDimension()) {
+            extendTipDataGradient(this, precision, variance, node, offset, dimGradient);
+        }
+
+        static void extendTipDataGradient(NormalExtensionProvider provider,
+                                          DenseMatrix64F precision, DenseMatrix64F variance,
+                                          NodeRef node, int offset, int dimGradient) {
+
+            if (offset != 0 || dimGradient != provider.getTraitDimension()) {
                 throw new RuntimeException("not implemented for subset of model.");
             }
 
-            DenseMatrix64F samplingVariance = getExtensionVariance(node);
+            DenseMatrix64F samplingVariance = provider.getExtensionVariance(node);
             CommonOps.addEquals(samplingVariance, variance);
             safeInvert2(samplingVariance, precision, false);
         }

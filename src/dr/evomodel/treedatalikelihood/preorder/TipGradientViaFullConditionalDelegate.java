@@ -108,19 +108,10 @@ public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDis
             throw new RuntimeException("Not yet implemented");
         }
 
-        // Exclude data models that have not been tested.
-        if ((dataModel instanceof IntegratedProcessTraitDataModel)
-                || (dataModel instanceof ElementaryVectorDataModel)
-                || (dataModel instanceof EmptyTraitDataModel)) {
-            throw new RuntimeException("Tip gradients are not implemented for '"
-                    + dataModel.getClass().toString() + "' data model.");
-        }
-
         // Pre stats
         final double[] fullConditionalPartial = super.getTraitForNode(node);
         NormalSufficientStatistics statPre = new NormalSufficientStatistics(fullConditionalPartial, 0, dimTrait, Pd, likelihoodDelegate.getPrecisionType());
         DenseMatrix64F precisionPre = statPre.getRawPrecisionCopy();
-//        DenseMatrix64F variancePre = statPre.getRawVarianceCopy();
         DenseMatrix64F meanPre = statPre.getRawMeanCopy();
 
         // Post mean
@@ -135,15 +126,13 @@ public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDis
             meanPost = MissingOps.gatherRowsAndColumns(meanPost, subInds, new int[]{0});
         }
 
-        DenseMatrix64F variancePre = null;
         if (dataModel.needToUpdateTipDataGradient(offset, dimGradient)) {
-            variancePre = statPre.getRawVarianceCopy();
+            DenseMatrix64F variancePre = statPre.getRawVarianceCopy();
             if (doSubset) {
                 variancePre = MissingOps.gatherRowsAndColumns(precisionPre, subInds, subInds);
             }
 
-            dataModel.updateTipDataGradient(precisionPre, variancePre, node, offset, dimGradient); // does nothing for standard model
-
+            dataModel.updateTipDataGradient(precisionPre, variancePre, node, offset, dimGradient);
         }
 
         // - Q_i * (X_i - m_i)

@@ -17,14 +17,36 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert2;
  */
 public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDistributionDelegate {
 
+    private final int offset;
+    private final int dimGradient;
+
+    private final int[] subInds;
+
+    private final boolean doSubset;
+
     public TipGradientViaFullConditionalDelegate(String name, MutableTreeModel tree,
                                                  MultivariateDiffusionModel diffusionModel,
                                                  ContinuousTraitPartialsProvider dataModel,
                                                  ConjugateRootTraitPrior rootPrior,
                                                  ContinuousRateTransformation rateTransformation,
-                                                 ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+                                                 ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                 int offset,
+                                                 int dimGradient) {
 
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
+        this.offset = offset;
+        this.dimGradient = dimGradient;
+
+        subInds = new int[dimGradient];
+        for (int i = 0; i < dimGradient; i++) {
+            subInds[i] = i + offset;
+        }
+
+        if (offset != 0 || dimGradient != dimTrait) {
+            doSubset = true;
+        } else {
+            doSubset = false;
+        }
     }
 
     public static String getName(String name) {
@@ -87,8 +109,7 @@ public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDis
         }
 
         // Exclude data models that have not been tested.
-        if ((dataModel instanceof JointPartialsProvider)
-                || (dataModel instanceof IntegratedProcessTraitDataModel)
+        if ((dataModel instanceof IntegratedProcessTraitDataModel)
                 || (dataModel instanceof ElementaryVectorDataModel)
                 || (dataModel instanceof EmptyTraitDataModel)) {
             throw new RuntimeException("Tip gradients are not implemented for '"
@@ -99,19 +120,8 @@ public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDis
         final double[] fullConditionalPartial = super.getTraitForNode(node);
         NormalSufficientStatistics statPre = new NormalSufficientStatistics(fullConditionalPartial, 0, dimTrait, Pd, likelihoodDelegate.getPrecisionType());
         DenseMatrix64F precisionPre = statPre.getRawPrecisionCopy();
-
-        if (dataModel instanceof ModelExtensionProvider.NormalExtensionProvider) {
-            // Exclude data models that have not been tested.
-            if (!(dataModel instanceof RepeatedMeasuresTraitDataModel)) {
-                throw new RuntimeException("Tip gradients are not implemented for '"
-                        + dataModel.getClass().toString() + "' data model.");
-            }
-            // TODO Move to different class ?
-            // TODO Only works for one data point (no repetition) ?
-            DenseMatrix64F samplingVariance = ((ModelExtensionProvider.NormalExtensionProvider) dataModel).getExtensionVariance(node);
-            CommonOps.addEquals(samplingVariance, statPre.getRawVariance());
-            safeInvert2(samplingVariance, precisionPre, false);
-        }
+        DenseMatrix64F variancePre = statPre.getRawVarianceCopy();
+        DenseMatrix64F meanPre = statPre.getRawMeanCopy();
 
         // Post mean
         final double[] postOrderPartial = new double[dimPartial * numTraits];
@@ -119,9 +129,20 @@ public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDis
         cdi.getPostOrderPartial(nodeIndex, postOrderPartial);
         DenseMatrix64F meanPost = MissingOps.wrap(postOrderPartial, 0, dimTrait, 1);
 
+        if (doSubset) {
+            precisionPre = MissingOps.gatherRowsAndColumns(precisionPre, subInds, subInds);
+            variancePre = MissingOps.gatherRowsAndColumns(precisionPre, subInds, subInds);
+            meanPre = MissingOps.gatherRowsAndColumns(meanPre, subInds, new int[]{0});
+            meanPost = MissingOps.gatherRowsAndColumns(meanPost, subInds, new int[]{0});
+        }
+
+        //TODO: only compute the variance if needed
+        dataModel.updateTipDataGradient(precisionPre, variancePre, node, offset, dimGradient); // does nothing for standard model
+
+
         // - Q_i * (X_i - m_i)
-        DenseMatrix64F gradient = new DenseMatrix64F(dimTrait, numTraits);
-        CommonOps.addEquals(meanPost, -1.0, statPre.getRawMean());
+        DenseMatrix64F gradient = new DenseMatrix64F(dimGradient, numTraits);
+        CommonOps.addEquals(meanPost, -1.0, meanPre);
         CommonOps.changeSign(meanPost);
         CommonOps.mult(precisionPre, meanPost, gradient);
 

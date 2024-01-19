@@ -1,5 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
@@ -405,6 +406,26 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
             }
         }
         throw new RuntimeException("Partials provider does not have trait '" + trait + "', nor did any of its sub-models");
+    }
+
+    @Override
+    public void updateTipDataGradient(DenseMatrix64F precision, DenseMatrix64F variance,
+                                       NodeRef node, int offset, int dimGradient) {
+
+        int thisOffset = 0;
+        int i = 0;
+        while (thisOffset < offset) {
+            thisOffset += providers[i].getTraitDimension();
+            i ++;
+        }
+
+        ContinuousTraitPartialsProvider provider = providers[i];
+
+        if (thisOffset != offset || provider.getTraitDimension() != dimGradient) {
+            throw new RuntimeException("Offset and dimension must perfectly align with a child model (for now)");
+        }
+
+        provider.updateTipDataGradient(precision, variance, node, 0, dimGradient);
     }
 
 

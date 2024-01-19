@@ -68,12 +68,6 @@ public class TreeTipGradient implements GradientWrtParameterProvider, Reportable
         String name =
                 TipGradientViaFullConditionalDelegate.getName(traitName);
 
-        TreeTrait test = treeDataLikelihood.getTreeTrait(name);
-
-        if (test == null) {
-            likelihoodDelegate.addFullConditionalGradientTrait(traitName);
-        }
-
         // TODO Move into different constructor / parser
         String fcdName = TipFullConditionalDistributionDelegate.getName(traitName);
         if (treeDataLikelihood.getTreeTrait(fcdName) == null) {
@@ -85,9 +79,7 @@ public class TreeTipGradient implements GradientWrtParameterProvider, Reportable
             likelihoodDelegate.addNewFullConditionalDensityTrait(traitName);
         }
 
-        treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
 
-        assert (treeTraitProvider != null);
 
         nTaxa = treeDataLikelihood.getTree().getExternalNodeCount();
 //        nTraits = treeDataLikelihood.getDataLikelihoodDelegate().getTraitCount();
@@ -138,6 +130,17 @@ public class TreeTipGradient implements GradientWrtParameterProvider, Reportable
                 (maskParameter.getDimension() != traitParameter.getDimension())) {
             throw new RuntimeException("Trait and mask parameters must be the same size");
         }
+
+        TreeTrait test = treeDataLikelihood.getTreeTrait(name);
+
+        if (test == null) {
+            likelihoodDelegate.addFullConditionalGradientTrait(traitName, gradientOffset, dimTrait);
+        }
+
+        treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
+
+        assert (treeTraitProvider != null);
+
     }
 
     @Override

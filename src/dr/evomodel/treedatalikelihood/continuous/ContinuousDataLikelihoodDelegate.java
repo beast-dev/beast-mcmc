@@ -1010,13 +1010,15 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return getDiffusionModel().getPrecisionParameter();
     }
 
-    public void addFullConditionalGradientTrait(String traitName) {
+    public void addFullConditionalGradientTrait(String traitName, int offset, int dimTrait) {
 
         ProcessSimulationDelegate gradientDelegate = new TipGradientViaFullConditionalDelegate(traitName,
                 (MutableTreeModel) getCallbackLikelihood().getTree(),
                 getDiffusionModel(),
                 getDataModel(), getRootPrior(),
-                getRateTransformation(), this);
+                getRateTransformation(), this,
+                offset,
+                dimTrait);
 
         TreeTraitProvider traitProvider = new ProcessSimulation(getCallbackLikelihood(), gradientDelegate);
 

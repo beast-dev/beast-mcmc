@@ -52,6 +52,32 @@ public class ParallelBastaLikelihoodDelegate extends GenericBastaLikelihoodDeleg
     }
 
     @Override
+    protected void computeInnerTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations, int start, int end) {
+        int totalTasks = end - start;
+
+        if (totalTasks <= MIN_MATRIX_TASKS) {
+            super.computeInnerTransitionProbabilityOperationsGrad(matrixOperations, start, end);
+        } else {
+            forkJoin((s, e, t) -> super.computeInnerTransitionProbabilityOperationsGrad(matrixOperations, s, e),
+                    start, end);
+        }
+    }
+
+    @Override
+    protected void computeInnerBranchIntervalOperationsGrad(List<BranchIntervalOperation> branchIntervalOperations, int start, int end){
+
+        int totalTasks = end - start;
+//        System.err.println(totalTasks);
+
+        if (totalTasks <= MIN_BRANCH_TASKS) {
+            super.computeInnerBranchIntervalOperationsGrad(branchIntervalOperations, start, end);
+        } else {
+            forkJoin((s, e, t) -> super.computeInnerBranchIntervalOperationsGrad(branchIntervalOperations, s, e),
+                    start, end);
+        }
+    }
+
+    @Override
     protected void computeInnerTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations,
                                                                int start, int end, double[] temp) {
         int totalTasks = end - start;

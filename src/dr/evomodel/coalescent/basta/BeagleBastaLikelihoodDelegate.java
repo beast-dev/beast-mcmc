@@ -134,6 +134,26 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     }
 
     @Override
+    protected void computeBranchIntervalOperationsGrad(List<Integer> intervalStarts, List<BranchIntervalOperation> branchIntervalOperations) {
+
+    }
+
+    @Override
+    protected void computeTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations) {
+
+    }
+
+    @Override
+    protected double[][] computeCoalescentIntervalReductionGrad(List<Integer> intervalStarts, List<BranchIntervalOperation> branchIntervalOperations) {
+        return new double[0][];
+    }
+
+    @Override
+    protected double[] computeCoalescentIntervalReductionGradPopSize(List<Integer> intervalStarts, List<BranchIntervalOperation> branchIntervalOperations) {
+        return new double[0];
+    }
+
+    @Override
     public void setPartials(int index, double[] partials) {
         beagle.setPartials(index, partials);
     }

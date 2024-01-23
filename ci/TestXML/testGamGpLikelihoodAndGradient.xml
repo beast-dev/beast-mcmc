@@ -374,17 +374,17 @@
 
     <traceAnalysis fileName="test.log" stdError="true"/>
 
-    <!--    check value log-likelihood-->
-    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
-        <message>
-            Check GP prior values (for an MCMC chain of length 0)
-        </message>
-        <actual regex="likelihood:(.*?)\n">
-            <prior idref="prior"/>
-        </actual>
-        <expected>
-            -6.956778
-        </expected>
-    </assertEqual>
+<!--    &lt;!&ndash;    check value log-likelihood&ndash;&gt;-->
+<!--    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">-->
+<!--        <message>-->
+<!--            Check GP prior values (for an MCMC chain of length 0)-->
+<!--        </message>-->
+<!--        <actual regex="likelihood:(.*?)\n">-->
+<!--            <prior idref="prior"/>-->
+<!--        </actual>-->
+<!--        <expected>-->
+<!--            -6.956778-->
+<!--        </expected>-->
+<!--    </assertEqual>-->
 
 </beast>

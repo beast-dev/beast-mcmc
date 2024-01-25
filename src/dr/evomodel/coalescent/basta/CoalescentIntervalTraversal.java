@@ -63,9 +63,14 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
 
     @Override
     public final void dispatchTreeTraversalCollectBranchAndNodeOperations() {
-        branchIntervalOperations.clear();
         matrixOperations.clear();
-        intervalStarts.clear();
+
+        if (SWAP_API) {
+            branchIntervalOperationList.clear();
+        } else {
+            branchIntervalOperations.clear();
+            intervalStarts.clear();
+        }
 
         if (traversalType == TraversalType.REVERSE_LEVEL_ORDER) {
             traverseReverseCoalescentLevelOrder();
@@ -75,7 +80,11 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
     }
 
     public List<BranchIntervalOperation> getBranchIntervalOperations() {
-        return branchIntervalOperations;
+        if (SWAP_API) {
+            return branchIntervalOperationList.getOperations();
+        } else {
+            return branchIntervalOperations;
+        }
     }
 
     public List<TransitionMatrixOperation> getMatrixOperations() {
@@ -87,7 +96,11 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
     }
 
     public List<Integer> getIntervalStarts() {
-        return intervalStarts;
+        if (SWAP_API) {
+            return branchIntervalOperationList.getStarts();
+        } else {
+            return intervalStarts;
+        }
     }
 
     protected final double computeRateScaledIntervalLength(final Tree tree, final NodeRef node, double length) {
@@ -322,13 +335,18 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
 
         final int inputMatrix1 = computeTransmissionProbabilities(subInterval, node, length);
 
-        branchIntervalOperations.add(
-                new BranchIntervalOperation(
-                        outputBuffer,
-                        inputBuffer1, -1,
-                        inputMatrix1, -1,
-                        outputBuffer, -1,
-                        length, executionOrder, subInterval));
+        BranchIntervalOperation operation = new BranchIntervalOperation(
+                outputBuffer,
+                inputBuffer1, -1,
+                inputMatrix1, -1,
+                outputBuffer, -1,
+                length, executionOrder, subInterval);
+
+        if (SWAP_API) {
+            branchIntervalOperationList.addOperation(operation);
+        } else {
+            branchIntervalOperations.add(operation);
+        }
 
         activeNodesForInterval.setExecutionOrder(node, executionOrder);
     }
@@ -351,16 +369,23 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         final int inputMatrix1 = computeTransmissionProbabilities(subInterval,leftChild, length);
         final int inputMatrix2 = computeTransmissionProbabilities(subInterval,leftChild, length);
 
-        branchIntervalOperations.add(
-                new BranchIntervalOperation(
-                        outputBuffer,
-                        inputBuffer1, inputBuffer2,
-                        inputMatrix1, inputMatrix2,
-                        extraBuffer1, extraBuffer2,
-                        length, executionOrder, subInterval));
+        BranchIntervalOperation operation = new BranchIntervalOperation(
+                outputBuffer,
+                inputBuffer1, inputBuffer2,
+                inputMatrix1, inputMatrix2,
+                extraBuffer1, extraBuffer2,
+                length, executionOrder, subInterval);
+
+        if (SWAP_API) {
+            branchIntervalOperationList.addOperation(operation);
+        } else {
+            branchIntervalOperations.add(operation);
+        }
 
         activeNodesForInterval.setExecutionOrder(nodeAtTopOfInterval, executionOrder);
     }
+
+    private static final boolean SWAP_API = false;
 
     private void processCoalescentEvent(int interval, ActiveNodesForInterval activeNodesForInterval) {
 
@@ -381,7 +406,13 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
             }
             ++subInterval;
             ++currentLikelihoodInterval;
-            intervalStarts.add(branchIntervalOperations.size());
+
+            if (SWAP_API) {
+                branchIntervalOperationList.addStart();
+            } else {
+                intervalStarts.add(branchIntervalOperations.size());
+            }
+
         }
 
         // Handle last sub-interval
@@ -399,13 +430,18 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         }
 
         for (NodeRef activeNode : activeNodesForInterval) {
-            if (activeNode != nodeAtTopOfInterval) {
+            if (activeNode != nodeAtTopOfInterval) { // TODO can get rid of check if re-arrange operations above
                 propagateTransmissionProbabilities(subInterval, activeNode, subIntervalLength, activeNodesForInterval);
             }
         }
 
         ++currentLikelihoodInterval;
-        intervalStarts.add(branchIntervalOperations.size());
+
+        if (SWAP_API) {
+            branchIntervalOperationList.addStart();
+        } else {
+            intervalStarts.add(branchIntervalOperations.size());
+        }
     }
 
     private void processSamplingEvent(int interval, ActiveNodesForInterval activeNodesForInterval) {
@@ -425,7 +461,12 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
                 }
                 ++subInterval;
                 ++currentLikelihoodInterval;
-                intervalStarts.add(branchIntervalOperations.size());
+
+                if (SWAP_API) {
+                    branchIntervalOperationList.addStart();
+                } else {
+                    intervalStarts.add(branchIntervalOperations.size());
+                }
             }
         }
 
@@ -435,5 +476,7 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
     private final List<BranchIntervalOperation> branchIntervalOperations = new ArrayList<>();
     private final List<TransitionMatrixOperation> matrixOperations = new ArrayList<>();
     private final List<Integer> intervalStarts = new ArrayList<>();
+
+    private final BranchIntervalOperationList branchIntervalOperationList = null;
 }
 

@@ -206,6 +206,13 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         }
     }
 
+    private void vectorizeBranchIntervalOperations(BranchIntervalOperationList branchIntervalOperations,
+                                                   int[] operations,
+                                                   int[] intervals,
+                                                   double[] lengths) {
+
+    }
+
     private void vectorizeBranchIntervalOperations(List<Integer> intervalStarts,
                                                    List<BranchIntervalOperation> branchIntervalOperations,
                                                    int[] operations,

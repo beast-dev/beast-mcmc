@@ -25,6 +25,20 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     private final double[] temp;
 
     private final EigenDecomposition[] decompositions; // TODO flatten?
+    private final double[][][] partialsGrad;
+    private final double[][][] matricesGrad;
+    private final double[][][] coalescentGrad;
+    private final double[][][] eGrad;
+    private final double[][][] fGrad;
+    private final double[][][] gGrad;
+    private final double[][][] hGrad;
+    private final double[][] partialsGradPopSize;
+    private final double[][] coalescentGradPopSize;
+    private final double[][] eGradPopSize;
+    private final double[][] fGradPopSize;
+    private final double[][] gGradPopSize;
+    private final double[][] hGradPopSize;
+
 
     public GenericBastaLikelihoodDelegate(String name,
                                           Tree tree,
@@ -41,6 +55,23 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         this.f = new double[maxNumCoalescentIntervals * stateCount];
         this.g = new double[maxNumCoalescentIntervals * stateCount];
         this.h = new double[maxNumCoalescentIntervals * stateCount];
+
+        this.partialsGrad = new double[stateCount][stateCount][maxNumCoalescentIntervals * tree.getNodeCount() * stateCount];
+        this.matricesGrad = new double[stateCount][stateCount][maxNumCoalescentIntervals * stateCount * stateCount];
+        this.coalescentGrad = new double[stateCount][stateCount][maxNumCoalescentIntervals];
+
+        this.eGrad = new double[stateCount][stateCount][maxNumCoalescentIntervals * stateCount];
+        this.fGrad = new double[stateCount][stateCount][maxNumCoalescentIntervals * stateCount];
+        this.gGrad = new double[stateCount][stateCount][maxNumCoalescentIntervals * stateCount];
+        this.hGrad = new double[stateCount][stateCount][maxNumCoalescentIntervals * stateCount];
+
+        this.partialsGradPopSize = new double[stateCount][maxNumCoalescentIntervals * tree.getNodeCount() * stateCount];
+        this.coalescentGradPopSize = new double[stateCount][maxNumCoalescentIntervals];
+
+        this.eGradPopSize = new double[stateCount][maxNumCoalescentIntervals * stateCount];
+        this.fGradPopSize = new double[stateCount][maxNumCoalescentIntervals * stateCount];
+        this.gGradPopSize = new double[stateCount][maxNumCoalescentIntervals * stateCount];
+        this.hGradPopSize = new double[stateCount][maxNumCoalescentIntervals * stateCount];
 
         this.temp = new double[stateCount * stateCount];
     }
@@ -147,6 +178,381 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         }
 
         return logL;
+    }
+
+    @Override
+    protected void computeBranchIntervalOperationsGrad(List<Integer> intervalStarts, List<BranchIntervalOperation> branchIntervalOperations) {
+        for (int interval = 0; interval < intervalStarts.size() - 1; ++interval) { // execute in series by intervalNumber
+            // TODO try grouping by executionOrder (unclear if more efficient, same total #)
+            int start = intervalStarts.get(interval);
+            int end = intervalStarts.get(interval + 1);
+            computeInnerBranchIntervalOperationsGrad(branchIntervalOperations, start, end);
+        }
+    }
+
+    protected void computeInnerBranchIntervalOperationsGrad(List<BranchIntervalOperation> branchIntervalOperations, int start, int end) {
+        for (int i = start; i < end; ++i) {
+            BranchIntervalOperation operation = branchIntervalOperations.get(i);
+
+            peelPartialsGrad(
+                    partials, operation.outputBuffer,
+                    operation.inputBuffer1, operation.inputBuffer2,
+                    matrices,
+                    operation.inputMatrix1, operation.inputMatrix2,
+                    operation.accBuffer1, operation.accBuffer2,
+                    coalescent, operation.intervalNumber,
+                    sizes, 0,
+                    stateCount);
+
+        }
+    }
+
+    private void peelPartialsGrad(double[] partials,
+                                     int resultOffset,
+                                     int leftPartialOffset, int rightPartialOffset,
+                                     double[] matrices,
+                                     int leftMatrixOffset, int rightMatrixOffset,
+                                     int leftAccOffset, int rightAccOffset,
+                                     double[] probability, int probabilityOffset,
+                                     double[] sizes, int sizesOffset,
+                                     int stateCount) {
+        resultOffset *= stateCount;
+
+        // Handle left
+        leftPartialOffset *= stateCount;
+        leftMatrixOffset *= stateCount * stateCount;
+
+
+        for (int a = 0; a < stateCount; ++a) {
+            for (int b = 0; b < stateCount; ++b) {
+                for (int i = 0; i < stateCount; ++i) {
+                    double sum = 0.0;
+                    for (int j = 0; j < stateCount; ++j) {
+                        sum += matricesGrad[a][b][leftMatrixOffset + i * stateCount + j] * partials[leftPartialOffset + j];
+                        sum += matrices[leftMatrixOffset + i * stateCount + j] * partialsGrad[a][b][leftPartialOffset + j];
+                    }
+                    partialsGrad[a][b][resultOffset + i] = sum;
+                }
+            }
+        }
+
+        for (int a = 0; a < stateCount; ++a) {
+            for (int i = 0; i < stateCount; ++i) {
+                double sum = 0.0;
+                for (int j = 0; j < stateCount; ++j) {
+                    sum += matrices[leftMatrixOffset + i * stateCount + j] * partialsGradPopSize[a][leftPartialOffset + j];
+                }
+                partialsGradPopSize[a][resultOffset + i] = sum;
+            }
+        }
+
+        if (rightPartialOffset >= 0) {
+            // Handle right
+            rightPartialOffset *= stateCount;
+            rightMatrixOffset *= stateCount * stateCount;
+
+            leftAccOffset *= stateCount;
+            rightAccOffset *= stateCount;
+            // TODO: check bug?
+            sizesOffset *= sizesOffset * stateCount;
+
+            for (int a = 0; a < stateCount; ++a) {
+                for (int b = 0; b < stateCount; ++b) {
+                    double J = probability[probabilityOffset];
+
+                    // first half
+                    double partial_J_ab = 0.0;
+                    for (int i = 0; i < stateCount; ++i) {
+                        double rightGrad = 0.0;
+                        for (int j = 0; j < stateCount; ++j) {
+                            rightGrad += matricesGrad[a][b][rightMatrixOffset + i * stateCount + j] * partials[rightPartialOffset + j];
+                            rightGrad += matrices[rightMatrixOffset + i * stateCount + j] * partialsGrad[a][b][rightPartialOffset + j];
+                        }
+                        double leftGrad = partialsGrad[a][b][resultOffset + i];
+                        double left = partials[leftAccOffset + i];
+                        double right = partials[rightAccOffset + i];
+
+                        double entry = (leftGrad * right + rightGrad * left) / sizes[sizesOffset + i];
+                        partial_J_ab += entry;
+
+                        partialsGrad[a][b][resultOffset + i] = entry / J;
+                        partialsGrad[a][b][leftAccOffset + i] = leftGrad;
+                        partialsGrad[a][b][rightAccOffset + i] = rightGrad;
+                    }
+                    // second half
+                    for (int i = 0; i < stateCount; ++i) {
+                        double entry = partials[resultOffset + i];
+                        partialsGrad[a][b][resultOffset + i] -= partial_J_ab * entry / J;
+                    }
+                    coalescentGrad[a][b][probabilityOffset] = partial_J_ab;
+                }
+            }
+
+            for (int a = 0; a < stateCount; ++a) {
+                    double J = probability[probabilityOffset];
+                    // first half
+                    double partial_J_ab_PopSize = 0.0;
+                    for (int i = 0; i < stateCount; ++i) {
+                        double rightGradPopSize = 0.0;
+                        for (int j = 0; j < stateCount; ++j) {
+                            rightGradPopSize += matrices[rightMatrixOffset + i * stateCount + j] *  partialsGradPopSize[a][rightPartialOffset + j];
+                        }
+                        double leftGradPopSize = partialsGradPopSize[a][resultOffset + i];
+                        double left = partials[leftAccOffset + i];
+                        double right = partials[rightAccOffset + i];
+
+                        double entry = (leftGradPopSize * right + rightGradPopSize * left) / sizes[sizesOffset + i];
+                        if (i == a){
+                            entry += left * right;
+                        }
+                        partial_J_ab_PopSize += entry;
+
+                        partialsGradPopSize[a][resultOffset + i] = entry / J;
+                        partialsGradPopSize[a][leftAccOffset + i] = leftGradPopSize;
+                        partialsGradPopSize[a][rightAccOffset + i] = rightGradPopSize;
+                    }
+                    // second half
+                    for (int i = 0; i < stateCount; ++i) {
+                        double entry = partials[resultOffset + i];
+                        partialsGradPopSize[a][resultOffset + i] -= partial_J_ab_PopSize * entry / J;
+                    }
+                    coalescentGradPopSize[a][probabilityOffset] = partial_J_ab_PopSize;
+                }
+            }
+        }
+
+
+    @Override
+    protected void computeTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations) {
+        computeInnerTransitionProbabilityOperationsGrad(matrixOperations, 0, matrixOperations.size());
+    }
+
+    protected void computeInnerTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations,
+                                                               int start, int end) {
+        for (int i = start; i < end; ++i) {
+            TransitionMatrixOperation operation = matrixOperations.get(i);
+            computeTransitionProbabilitiesGrad(operation.time, operation.outputBuffer * stateCount * stateCount);
+        }
+    }
+
+    private void computeTransitionProbabilitiesGrad(double distance, int matrixOffset) {
+        for (int a = 0; a < stateCount; a++) {
+            for (int b = 0; b < stateCount; b++) {
+                for (int c = 0; c < stateCount; c++) {
+                    for (int d = 0; d < stateCount; d++) {
+                        if (d == b) {
+                            matricesGrad[a][b][matrixOffset + c*stateCount + b] =  distance * matrices[matrixOffset + c*stateCount + a];
+                        } else {
+                            matricesGrad[a][b][matrixOffset + c*stateCount + d] = 0;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    protected double[][] computeCoalescentIntervalReductionGrad(List<Integer> intervalStarts, List<BranchIntervalOperation> branchIntervalOperations) {
+
+        for (int interval = 0; interval < intervalStarts.size() - 1; ++interval) { // TODO execute in parallel (no race conditions)
+            int start = intervalStarts.get(interval);
+            int end = intervalStarts.get(interval + 1);
+
+            for (int i = start; i < end; ++i) { // TODO execute in parallel (has race conditions)
+                BranchIntervalOperation operation = branchIntervalOperations.get(i);
+                reduceWithinIntervalGrad(partials, partialsGrad,
+                        operation.inputBuffer1, operation.inputBuffer2,
+                        operation.accBuffer1, operation.accBuffer2,
+                        operation.intervalNumber,
+                        stateCount);
+
+            }
+        }
+
+        double[][] grad = new double[stateCount][stateCount];
+        for (int i = 0; i < intervalStarts.size() - 1; ++i) { // TODO execute in parallel
+            BranchIntervalOperation operation = branchIntervalOperations.get(intervalStarts.get(i));
+
+            double[][] temp_grad =  reduceAcrossIntervalsGrad(e, f, g, h,
+                    operation.intervalNumber, operation.intervalLength,
+                    sizes, coalescent, stateCount);
+
+            for (int a = 0; a < stateCount; a++) {
+                for (int b = 0; b < stateCount; b++) {
+                    grad[a][b] += temp_grad[a][b];
+                }
+            }
+        }
+        return grad;
+    }
+
+    @Override
+    protected double[] computeCoalescentIntervalReductionGradPopSize(List<Integer> intervalStarts, List<BranchIntervalOperation> branchIntervalOperations) {
+
+        Arrays.stream(eGradPopSize).forEach(a -> Arrays.fill(a, 0));
+        Arrays.stream(fGradPopSize).forEach(a -> Arrays.fill(a, 0));
+        Arrays.stream(gGradPopSize).forEach(a -> Arrays.fill(a, 0));
+        Arrays.stream(hGradPopSize).forEach(a -> Arrays.fill(a, 0));
+
+        for (int interval = 0; interval < intervalStarts.size() - 1; ++interval) { // TODO execute in parallel (no race conditions)
+            int start = intervalStarts.get(interval);
+            int end = intervalStarts.get(interval + 1);
+
+            for (int i = start; i < end; ++i) { // TODO execute in parallel (has race conditions)
+                BranchIntervalOperation operation = branchIntervalOperations.get(i);
+                reduceWithinIntervalGrad(partials, partialsGrad,
+                        operation.inputBuffer1, operation.inputBuffer2,
+                        operation.accBuffer1, operation.accBuffer2,
+                        operation.intervalNumber,
+                        stateCount);
+            }
+        }
+
+        double[] grad = new double[stateCount];
+        for (int i = 0; i < intervalStarts.size() - 1; ++i) { // TODO execute in parallel
+            BranchIntervalOperation operation = branchIntervalOperations.get(intervalStarts.get(i));
+
+            double[] temp_grad =  reduceAcrossIntervalsGradPopSize(e, f, g, h,
+                    operation.intervalNumber, operation.intervalLength,
+                    sizes, coalescent, stateCount);
+
+            for (int a = 0; a < stateCount; a++) {
+                    grad[a] += temp_grad[a];
+                }
+            }
+        return grad;
+    }
+
+    private double[][] reduceAcrossIntervalsGrad(double[] e, double[] f, double[] g, double[] h,
+                                         int interval, double length,
+                                         double[] sizes, double[] coalescent,
+                                         int stateCount) {
+
+        int offset = interval * stateCount;
+        double[][] grad = new double[stateCount][stateCount];
+
+        for (int a = 0; a < stateCount; a++) {
+            for (int b = 0; b < stateCount; b++) {
+                double sum = 0.0;
+                for (int k = 0; k < stateCount; ++k) {
+                    sum += (2 * e[offset + k] * eGrad[a][b][offset + k] - fGrad[a][b][offset + k] +
+                            2 * g[offset + k] * gGrad[a][b][offset + k] - hGrad[a][b][offset + k]) / sizes[k];
+                }
+
+                grad[a][b] = -length * sum / 4;
+
+                double J = coalescent[interval];
+                if (J != 0.0) {
+                    grad[a][b] += coalescentGrad[a][b][interval] / J;
+                }
+            }
+        }
+        return grad;
+    }
+
+    private double[] reduceAcrossIntervalsGradPopSize(double[] e, double[] f, double[] g, double[] h,
+                                                 int interval, double length,
+                                                 double[] sizes, double[] coalescent,
+                                                 int stateCount) {
+
+        int offset = interval * stateCount;
+        double[] grad = new double[stateCount];
+
+        for (int a = 0; a < stateCount; a++) {
+                double sum = 0.0;
+                for (int k = 0; k < stateCount; ++k) {
+                    sum += (2 * e[offset + k] * eGradPopSize[a][offset + k] - fGradPopSize[a][offset + k] +
+                            2 * g[offset + k] * gGradPopSize[a][offset + k] - hGradPopSize[a][offset + k]) / sizes[k];
+                    if (k == a) {
+                        sum += (e[offset + k] * e[offset + k]) - f[offset + k] +
+                                (g[offset + k] * g[offset + k]) - h[offset + k];
+                    }
+                }
+
+
+                grad[a] = -length * sum / 4;
+
+                double J = coalescent[interval];
+                if (J != 0.0) {
+                    grad[a] += coalescentGradPopSize[a][interval] / J;
+                }
+            }
+        return grad;
+    }
+
+    private void reduceWithinIntervalGrad(double[] partials, double[][][] partialsGrad,
+                                          int startBuffer1, int startBuffer2,
+                                          int endBuffer1, int endBuffer2,
+                                          int interval, int stateCount)  {
+        interval *= stateCount;
+
+        startBuffer1 *= stateCount;
+        endBuffer1 *= stateCount;
+
+        for (int a = 0; a < stateCount; ++a) {
+            for (int b = 0; b < stateCount; ++b) {
+                for (int i = 0; i < stateCount; ++i) {
+                    double startPGrad = partialsGrad[a][b][startBuffer1 + i];
+                    double startP = partials[startBuffer1 + i];
+                    eGrad[a][b][interval + i] += startPGrad;
+                    fGrad[a][b][interval + i] += 2 * startP * startPGrad;
+
+                    double endPGrad = partialsGrad[a][b][endBuffer1 + i];
+                    double endP = partials[endBuffer1 + i];
+                    gGrad[a][b][interval + i] += endPGrad;
+                    hGrad[a][b][interval + i] += 2 * endP * endPGrad;
+                }
+            }
+        }
+
+        for (int a = 0; a < stateCount; ++a) {
+                for (int i = 0; i < stateCount; ++i) {
+                    double startPGradPopSize = partialsGradPopSize[a][startBuffer1 + i];
+                    double startP = partials[startBuffer1 + i];
+                    eGradPopSize[a][interval + i] += startPGradPopSize;
+                    fGradPopSize[a][interval + i] += 2 * startP * startPGradPopSize;
+
+                    double endPGradPopSize = partialsGradPopSize[a][endBuffer1 + i];
+                    double endP = partials[endBuffer1 + i];
+                    gGradPopSize[a][interval + i] += endPGradPopSize;
+                    hGradPopSize[a][interval + i] += 2 * endP * endPGradPopSize;
+                }
+            }
+
+        if (startBuffer2 >= 0) {
+            startBuffer2 *= stateCount;
+            endBuffer2 *= stateCount;
+            for (int a = 0; a < stateCount; ++a) {
+                for (int b = 0; b < stateCount; ++b) {
+                    for (int i = 0; i < stateCount; ++i) {
+                        double startPGrad = partialsGrad[a][b][startBuffer2 + i];
+                        double startP = partials[startBuffer2 + i];
+                        eGrad[a][b][interval + i] += startPGrad;
+                        fGrad[a][b][interval + i] += 2 * startP * startPGrad;
+
+                        double endPGrad = partialsGrad[a][b][endBuffer2 + i];
+                        double endP = partials[endBuffer2 + i];
+                        gGrad[a][b][interval + i] += endPGrad;
+                        hGrad[a][b][interval + i] += 2 * endP * endPGrad;
+                    }
+                }
+            }
+
+            for (int a = 0; a < stateCount; ++a) {
+                    for (int i = 0; i < stateCount; ++i) {
+                        double startPGradPopSize = partialsGradPopSize[a][startBuffer2 + i];
+                        double startP = partials[startBuffer2 + i];
+                        eGradPopSize[a][interval + i] += startPGradPopSize;
+                        fGradPopSize[a][interval + i] += 2 * startP * startPGradPopSize;
+
+                        double endPGradPopSize = partialsGradPopSize[a][endBuffer2 + i];
+                        double endP = partials[endBuffer2 + i];
+                        gGradPopSize[a][interval + i] += endPGradPopSize;
+                        hGradPopSize[a][interval + i] += 2 * endP * endPGradPopSize;
+                    }
+
+            }
+        }
     }
 
     @Override

@@ -117,24 +117,17 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
     protected SymmetricTriDiagonalMatrix getQ() {
         if (!qKnown) {
             double precision = precisionParameter.getParameterValue(0);
+            Q.diagonal[0] = precision;
+            for (int i = 1; i < dim - 1; ++i) {
+                Q.diagonal[i] = 2 * precision;
+            }
+            Q.diagonal[dim - 1] = precision;
             if (isImproper()) {
-                Q.diagonal[0] = precision;
-                for (int i = 1; i < dim - 1; ++i) {
-                    Q.diagonal[i] = 2 * precision;
-                }
-                Q.diagonal[dim - 1] = precision;
-
                 for (int i = 0; i < dim - 1; ++i) {
                     Q.offDiagonal[i] = -precision;
                 }
             } else {
                 double lambda = lambdaParameter.getParameterValue(0);
-                Q.diagonal[0] = precision;
-                for (int i = 1; i < dim - 1; ++i) {
-                    Q.diagonal[i] = (1 + lambda * lambda) * precision;
-                }
-                Q.diagonal[dim - 1] = precision;
-
                 for (int i = 0; i < dim - 1; ++i) {
                     Q.offDiagonal[i] = -precision * lambda;
                 }
@@ -242,27 +235,35 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         double logDet = effectiveDim * Math.log(precisionParameter.getParameterValue(0)) + logMatchTerm;
 
         if (!isImproper()) {
-            double lambda = lambdaParameter.getParameterValue(0);
-            logDet += Math.log(1 - lambda * lambda);
-        }
-
-        if (CHECK_DETERMINANT) {
-
             double[][] precision = makePrecisionMatrix(Q);
             RobustEigenDecomposition ed = new RobustEigenDecomposition(new DenseDoubleMatrix2D(precision));
             DoubleMatrix1D values = ed.getRealEigenvalues();
-            double sum = 0.0;
             for (int i = 0; i < values.size(); ++i) {
                 double v = values.get(i);
                 if (Math.abs(v) > 1E-6) {
-                    sum += Math.log(v);
+                    logDet += Math.log(v);
                 }
             }
-
-            if (Math.abs(sum - logDet) > 1E-6) {
-                throw new RuntimeException("Incorrect (pseudo-) determinant");
-            }
+            logDet = logDet - effectiveDim * Math.log(precisionParameter.getParameterValue(0));
         }
+
+//        if (CHECK_DETERMINANT) {
+//
+//            double[][] precision = makePrecisionMatrix(Q);
+//            RobustEigenDecomposition ed = new RobustEigenDecomposition(new DenseDoubleMatrix2D(precision));
+//            DoubleMatrix1D values = ed.getRealEigenvalues();
+//            double sum = 0.0;
+//            for (int i = 0; i < values.size(); ++i) {
+//                double v = values.get(i);
+//                if (Math.abs(v) > 1E-6) {
+//                    sum += Math.log(v);
+//                }
+//            }
+//
+//            if (Math.abs(sum - logDet) > 1E-6) {
+//                throw new RuntimeException("Incorrect (pseudo-) determinant");
+//            }
+//        }
 
         return logDet;
     }

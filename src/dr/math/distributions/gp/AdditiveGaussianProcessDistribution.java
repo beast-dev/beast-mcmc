@@ -171,11 +171,20 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     }
 
     private double[] getPrecision() {
+        return getPrecisionAsMatrix().getData();
+//        if (!precisionAndDeterminantKnown) {
+//            computePrecisionAndDeterminant();
+//            precisionAndDeterminantKnown = true;
+//       }
+   //     return precision.getData();
+    }
+
+    protected DenseMatrix64F getPrecisionAsMatrix() {
         if (!precisionAndDeterminantKnown) {
             computePrecisionAndDeterminant();
             precisionAndDeterminantKnown = true;
         }
-        return precision.getData();
+        return precision;
     }
 
     private double getLogDeterminant() {
@@ -258,8 +267,8 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
                 exponent += diff[i] * precision[i * dim + j] * diff[j];
             }
         }
-        
-        return -0.5 * (dim * Math.log(2 * Math.PI) - getLogDeterminant()) - 0.5 * exponent;
+
+        return -0.5 * (dim * Math.log(2 * Math.PI) + getLogDeterminant()) - 0.5 * exponent;
     }
 
     @Override

@@ -8,6 +8,8 @@ public class BastaFactory extends BeagleFactory {
 
     public static BeagleBasta loadBastaInstance(
             int tipCount,
+            int coalescentBufferCount,
+            int maxCoalescentIntervalCount,
             int partialsBufferCount,
             int compactBufferCount,
             int stateCount,
@@ -20,15 +22,17 @@ public class BastaFactory extends BeagleFactory {
             long preferenceFlags,
             long requirementFlags) {
 
-        getBeagleJNIWrapper();
-        if (BeagleJNIWrapper.INSTANCE != null) {
+        BeagleJNIWrapper beagleWrapper = getBeagleJNIWrapper();
+        if (beagleWrapper != null) {
 
-            getBastaJNIWrapper();
-            if (BastaJNIWrapper.INSTANCE != null) {
+            BastaJNIWrapper bastaWrapper = getBastaJNIWrapper();
+            if (bastaWrapper != null) {
 
                 try {
                     BeagleBasta beagle = new BastaJNIImpl(
                             tipCount,
+                            coalescentBufferCount,
+                            maxCoalescentIntervalCount,
                             partialsBufferCount,
                             compactBufferCount,
                             stateCount,

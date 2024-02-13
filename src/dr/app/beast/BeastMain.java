@@ -285,6 +285,7 @@ public class BeastMain {
 
         try {
             dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.releaseAllBeagleInstances();
+            dr.evomodel.coalescent.basta.BeagleBastaLikelihoodDelegate.releaseAllBeagleBastaInstances();
         } catch (Throwable e) {
            throw new RuntimeException("Terminate");
         }

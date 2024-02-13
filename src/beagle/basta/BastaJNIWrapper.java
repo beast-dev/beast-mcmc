@@ -6,16 +6,31 @@ public class BastaJNIWrapper {
 
     private BastaJNIWrapper() { }
 
+    public native int allocateCoalescentBuffers(int instance,
+                                                int bufferCount,
+                                                int maxCoalescentIntervalCount); // TODO buffers have different sizes
+
+    public native int getBastaBuffer(int instance,
+                                     int index,
+                                     double[] buffer);
+
     public native int updateBastaPartials(int instance,
                                           final int[] operations,
                                           int operationCount,
-                                          int populationSizeIndex);
+                                          final int[] intervals,
+                                          int intervalCount,
+                                          int populationSizeIndex,
+                                          int coalescentProbabilityIndex);
 
     public native int accumulateBastaPartials(int instance,
                                               final int[] operations,
                                               int operationCount,
-                                              final int[] segments,
-                                              int segmentCount);
+                                              final int[] intervals,
+                                              int intervalCount,
+                                              final double[] intervalLengths,
+                                              int populationSizesIndex,
+                                              int coalescentProbabilityIndex,
+                                              double[] result);
 
     private static String getPlatformSpecificLibraryName() {
         String osName = System.getProperty("os.name").toLowerCase();

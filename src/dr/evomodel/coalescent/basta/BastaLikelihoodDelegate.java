@@ -31,6 +31,7 @@ import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.Reportable;
@@ -76,6 +77,13 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
     default void updatePopulationSizes(int index, double[] sizes, boolean flip) {
         throw new RuntimeException("Not yet implemented");
     }
+
+    double[][] calculateGradient(List<BranchIntervalOperation> branchOperations,
+                                 List<TransitionMatrixOperation> matrixOperation,
+                                 List<Integer> intervalStarts,
+                                 int rootNodeNumber);
+
+    double[] calculateGradientPopSize(List<BranchIntervalOperation> branchOperations, List<TransitionMatrixOperation> matrixOperations, List<Integer> intervalStarts, int number);
 
     abstract class AbstractBastaLikelihoodDelegate extends AbstractModel implements BastaLikelihoodDelegate, Citable {
 
@@ -166,8 +174,87 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
 
             computeTransitionProbabilityOperations(matrixOperation);
             computeBranchIntervalOperations(intervalStarts, branchOperations);
-            return computeCoalescentIntervalReduction(intervalStarts, branchOperations);
+
+            double logL = computeCoalescentIntervalReduction(intervalStarts, branchOperations);
+
+            if (PRINT_COMMANDS) {
+                System.err.println("logL = " + logL + " " + getStamp() + "\n");
+                if (printCount > 1000) {
+                    System.exit(-1);
+                }
+                ++printCount;
+            }
+
+            return logL;
         }
+
+        abstract protected void computeBranchIntervalOperationsGrad(List<Integer> intervalStarts,
+                                                                List<BranchIntervalOperation> branchIntervalOperations);
+
+        abstract protected void computeTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations);
+
+        abstract protected double[][] computeCoalescentIntervalReductionGrad(List<Integer> intervalStarts,
+                                                                     List<BranchIntervalOperation> branchIntervalOperations);
+
+        abstract protected double[] computeCoalescentIntervalReductionGradPopSize(List<Integer> intervalStarts,
+                                                                             List<BranchIntervalOperation> branchIntervalOperations);
+
+        @Override
+        public double[][] calculateGradient(List<BranchIntervalOperation> branchOperations,
+                                            List<TransitionMatrixOperation> matrixOperation,
+                                            List<Integer> intervalStarts,
+                                            int rootNodeNumber) {
+
+            if (PRINT_COMMANDS) {
+                System.err.println("Tree = " + tree);
+            }
+
+            computeTransitionProbabilityOperationsGrad(matrixOperation);
+
+            computeBranchIntervalOperationsGrad(intervalStarts, branchOperations);
+
+            double[][] grad = computeCoalescentIntervalReductionGrad(intervalStarts, branchOperations);
+
+//            if (PRINT_COMMANDS) {
+//                System.err.println("logL = " + logL + " " + getStamp() + "\n");
+//                if (printCount > 1000) {
+//                    System.exit(-1);
+//                }
+//                ++printCount;
+//            }
+
+            return grad;
+        }
+
+        @Override
+        public double[]calculateGradientPopSize(List<BranchIntervalOperation> branchOperations,
+                                            List<TransitionMatrixOperation> matrixOperation,
+                                            List<Integer> intervalStarts,
+                                            int rootNodeNumber) {
+
+            if (PRINT_COMMANDS) {
+                System.err.println("Tree = " + tree);
+            }
+
+            computeBranchIntervalOperationsGrad(intervalStarts, branchOperations);
+
+            double[] grad = computeCoalescentIntervalReductionGradPopSize(intervalStarts, branchOperations);
+
+//            if (PRINT_COMMANDS) {
+//                System.err.println("logL = " + logL + " " + getStamp() + "\n");
+//                if (printCount > 1000) {
+//                    System.exit(-1);
+//                }
+//                ++printCount;
+//            }
+
+            return grad;
+        }
+
+
+        abstract String getStamp();
+
+        int printCount = 0;
 
         @Override
         public long getTotalCalculationCount() {

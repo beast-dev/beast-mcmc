@@ -59,7 +59,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
 
     public static final Boolean USE_OLD_CODE = false;
     private static final boolean USE_DELEGATE = true;
-    private static final boolean USE_BEAGLE = false;
+    private static final boolean USE_BEAGLE = true;
 
     public String getParserName() {
         return STRUCTURED_COALESCENT;

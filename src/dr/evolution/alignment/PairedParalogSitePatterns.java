@@ -69,7 +69,7 @@ public class PairedParalogSitePatterns extends UncertainSiteList {
         this.singleCopySpecies = Arrays.asList(singleCopySpecies);
         this.allIds = getAllIds(sitePatterns.getSiteList().asList());
         this.pairedPatterns = new int[sitePatterns.getPatternCount()][];
-//        setPairedPatterns();
+        setPairedPatterns();
         setUncertainSitePatterns();
     }
 

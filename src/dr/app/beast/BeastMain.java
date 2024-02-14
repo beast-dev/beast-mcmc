@@ -377,6 +377,7 @@ public class BeastMain {
                                 false, "BEAGLE: use multipartition extensions if available (default auto)"),
                         new Arguments.Option("beagle_CPU", "BEAGLE: use CPU instance"),
                         new Arguments.Option("beagle_GPU", "BEAGLE: use GPU instance if available"),
+                        new Arguments.Option("beagle_tensor_core", "BEAGLE: use tensor cores on GPU if available"),
                         new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
                         new Arguments.Option("beagle_SSE_off", "BEAGLE: turn off use of SSE extensions"),
                         new Arguments.Option("beagle_threading_off", "BEAGLE: turn off multi-threading for a CPU instance"),
@@ -577,6 +578,9 @@ public class BeastMain {
         }
         if (arguments.hasOption("beagle_GPU")) {
             beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
+        }
+        if(arguments.hasOption("beagle_tensor_core")) {
+            beagleFlags |= BeagleFlag.VECTOR_TENSOR.getMask();
         }
         if (arguments.hasOption("beagle_cuda")) {
             beagleFlags |= BeagleFlag.FRAMEWORK_CUDA.getMask();

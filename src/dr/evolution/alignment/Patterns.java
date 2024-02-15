@@ -136,6 +136,11 @@ public class Patterns implements PatternList {
         subSetPatterns(subSet, subSetCount);
     }
 
+    public Patterns(PatternList patternList, int subSet, int subSetCount, Boolean unique) {
+        addPatterns(patternList, unique);
+        subSetPatterns(subSet, subSetCount);
+    }
+
     private void subSetPatterns(int subSet, int subSetCount) {
         if (subSetCount > 0) {
             // if we are using subSetCount then cut it down to only the subset we want...

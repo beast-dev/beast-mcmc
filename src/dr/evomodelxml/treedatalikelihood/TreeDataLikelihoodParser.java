@@ -198,7 +198,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             int bic = Math.min(partitionPatterns.getPatternCount(), beagleInstanceCount);
 
             for (int j = 0; j < bic; j++) {
-                PatternList subPatterns = new Patterns(partitionPatterns, j, bic);
+                PatternList subPatterns = new Patterns(partitionPatterns, j, bic, partitionPatterns.areUnique());
                 DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
                         treeModel,
                         subPatterns,

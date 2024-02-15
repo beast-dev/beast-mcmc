@@ -27,18 +27,13 @@ package dr.evomodel.antigenic;
 
 import dr.inference.model.*;
 import dr.inference.multidimensionalscaling.*;
-import dr.math.LogTricks;
 import dr.math.MathUtils;
-import dr.math.distributions.NormalDistribution;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 import dr.util.DataTable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 
@@ -51,19 +46,19 @@ import java.util.logging.Logger;
 /*
     Both virus locations and serum locations are shifted by the parameter locationDrift.
     A location is increased by locationDrift x offset.
-    Offset is set to 0 for the earliest virus and increasing with difference in date from earliest virus.
+    Offset is set to 0 for the earliest virus and increasing with difference in date from the earliest virus.
     This makes the raw virusLocations and serumLocations parameters not directly interpretable.
 */
 public class NewAntigenicLikelihood extends AbstractModelLikelihood implements Citable {
 
-    private static final boolean CHECK_INFINITE = false;
+//    private static final boolean CHECK_INFINITE = false;
     private static final boolean USE_THRESHOLDS = true;
     private static final boolean USE_INTERVALS = true;
 
     public final static String ANTIGENIC_LIKELIHOOD = "newAntigenicLikelihood";
 
     // column indices in table
-    private static final int VIRUS_ISOLATE = 0;
+//    private static final int VIRUS_ISOLATE = 0;
     private static final int VIRUS_STRAIN = 1;
     private static final int VIRUS_DATE = 2;
     private static final int SERUM_ISOLATE = 3;
@@ -85,7 +80,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
             Parameter virusDriftParameter,
             Parameter serumDriftParameter,
             MatrixParameter virusSamplingParameter, // TODO Remove
-            MatrixParameter serumLocationsParameter,
+            MatrixParameterInterface serumLocationsParameter,
             CompoundParameter tipTraitsParameter,
             Parameter virusOffsetsParameter,
             Parameter serumOffsetsParameter,
@@ -95,7 +90,8 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
             DataTable<String[]> dataTable,
             boolean mergeSerumIsolates,
             double intervalWidth,
-            double driftInitialLocations) {
+            double driftInitialLocations,
+            int tipStartOffset) {
 
         super(ANTIGENIC_LIKELIHOOD);
 
@@ -120,9 +116,11 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         }
         addVariable(tipTraitsParameter);
         this.tipIndices = setupTipIndices(this.tipTraitsParameter, virusNames);
-        this.virusIndices = setupVirusIndices(tipIndices);
+//        this.virusIndices = setupVirusIndices(tipIndices);
 
         this.mdsDimension = mdsDimension;
+        this.tipDimension = tipTraitsParameter.getParameter(0).getDimension();
+        this.tipStartOffset = tipStartOffset;
 
         this.mdsPrecisionParameter = mdsPrecisionParameter;
         addVariable(mdsPrecisionParameter);
@@ -172,14 +170,14 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
 
         StringBuilder sb = new StringBuilder();
         sb.append("\tNewAntigenicLikelihood:\n");
-        sb.append("\t\t" + virusNames.size() + " viruses\n");
-        sb.append("\t\t" + serumNames.size() + " sera\n");
-        sb.append("\t\t" + measurements.size() + " assay measurements\n");
+        sb.append("\t\t").append(virusNames.size()).append(" viruses\n");
+        sb.append("\t\t").append(serumNames.size()).append(" sera\n");
+        sb.append("\t\t").append(measurements.size()).append(" assay measurements\n");
         if (USE_THRESHOLDS) {
-            sb.append("\t\t" + info.thresholdCount + " thresholded measurements\n");
+            sb.append("\t\t").append(info.thresholdCount).append(" thresholded measurements\n");
         }
         if (useIntervals) {
-            sb.append("\n\t\tAssuming a log 2 measurement interval width of " + intervalWidth + "\n");
+            sb.append("\n\t\tAssuming a log 2 measurement interval width of ").append(intervalWidth).append("\n");
         }
         Logger.getLogger("dr.evomodel").info(sb.toString());
 
@@ -283,15 +281,12 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
 
             @Override
             Comparator<Measurement> getComparator(int[] virusIndices) {
-                return new Comparator<Measurement>() {
-                    @Override
-                    public int compare(Measurement lhs, Measurement rhs) {
-                        int virusDiff = virusIndices[lhs.virus] - virusIndices[rhs.virus];
-                        if (virusDiff != 0) {
-                            return virusDiff;
-                        } else {
-                            return lhs.serum - lhs.serum;
-                        }
+                return (lhs, rhs) -> {
+                    int virusDiff = virusIndices[lhs.virus] - virusIndices[rhs.virus];
+                    if (virusDiff != 0) {
+                        return virusDiff;
+                    } else {
+                        return lhs.serum - rhs.serum;
                     }
                 };
             }
@@ -329,15 +324,12 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
 
             @Override
             Comparator<Measurement> getComparator(int[] virusIndices) {
-                return new Comparator<Measurement>() {
-                    @Override
-                    public int compare(Measurement lhs, Measurement rhs) {
-                        int serumDiff = lhs.serum - rhs.serum;
-                        if (serumDiff != 0) {
-                            return serumDiff;
-                        } else {
-                            return virusIndices[lhs.virus] - virusIndices[rhs.virus];
-                        }
+                return (lhs, rhs) -> {
+                    int serumDiff = lhs.serum - rhs.serum;
+                    if (serumDiff != 0) {
+                        return serumDiff;
+                    } else {
+                        return virusIndices[lhs.virus] - virusIndices[rhs.virus];
                     }
                 };
             }
@@ -428,7 +420,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         for (int i = 0; i < numViruses; ++i) {
             Parameter parameter = tipTraitsParameter.getParameter(i);
             for (int j = 0; j < mdsDimension; ++j) {
-                locations[offset + j] = parameter.getParameterValue(j);
+                locations[offset + j] = parameter.getParameterValue(tipStartOffset + j);
             }
 
             if (locationDriftParameter != null) {
@@ -462,7 +454,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
 
     private final MultiDimensionalScalingCore mdsCore;
     private final int internalDimension;
-    private long flags = 0L;
+//    private final long flags = 0L;
 
     public MultiDimensionalScalingCore getCore() {
         return mdsCore;
@@ -548,7 +540,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
                 virus = virusNames.size() - 1;
             }
 
-            String serumName = "";
+            String serumName;
             if (mergeSerumIsolates) {
                 serumName = values[SERUM_STRAIN];
             } else {
@@ -659,9 +651,20 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         return serumBreadthsParameter;
     }
 
-    protected void setupLocationsParameter(MatrixParameter locationsParameter, List<String> strains) {
-        locationsParameter.setColumnDimension(mdsDimension);
-        locationsParameter.setRowDimension(strains.size());
+    protected void setupLocationsParameter(MatrixParameterInterface locationsParameter, List<String> strains) {
+        if (locationsParameter instanceof MatrixParameter) {
+            ((MatrixParameter) locationsParameter).setColumnDimension(mdsDimension);
+            ((MatrixParameter) locationsParameter).setRowDimension(strains.size());
+        } else if (locationsParameter instanceof FastMatrixParameter) {
+            FastMatrixParameter fmp = (FastMatrixParameter) locationsParameter;
+            if (fmp.getRowDimension() != mdsDimension) {
+                throw new IllegalArgumentException("Column dim must be " + mdsDimension);
+            }
+            if (fmp.getColumnDimension() != strains.size()) {
+                throw new IllegalArgumentException("Row dim must be " + strains.size());
+            }
+        }
+
         for (int i = 0; i < strains.size(); i++) {
             locationsParameter.getParameter(i).setId(strains.get(i));
         }
@@ -713,18 +716,18 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         return tipIndices;
     }
 
-    private int[] setupVirusIndices(int[] tipIndices) {
-        int[] virusIndices = new int[tipIndices.length];
-        for (int i = 0; i < tipIndices.length; ++i) {
-            virusIndices[tipIndices[i]] = i;
-        }
-        return virusIndices;
-    }
+//    private int[] setupVirusIndices(int[] tipIndices) {
+//        int[] virusIndices = new int[tipIndices.length];
+//        for (int i = 0; i < tipIndices.length; ++i) {
+//            virusIndices[tipIndices[i]] = i;
+//        }
+//        return virusIndices;
+//    }
 
-    private final int findStrain(String label, List<String> strainNames) {
+    private int findStrain(String label, List<String> strainNames) {
         int index = 0;
         for (String strainName : strainNames) {
-            if (label.startsWith(strainName)) {
+            if (label.equalsIgnoreCase(strainName)) {
                 return index;
             }
 
@@ -741,12 +744,12 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
             }
             double r = MathUtils.nextGaussian();
             virusSamplingParameter.getParameter(i).setParameterValue(0, r + offset); // TODO Remove
-            tipTraitsParameter.getParameter(tipIndices[i]).setParameterValue(0, r + offset);
+            tipTraitsParameter.getParameter(tipIndices[i]).setParameterValue(tipStartOffset, r + offset);
             if (mdsDimension > 1) {
                 for (int j = 1; j < mdsDimension; j++) {
                     r = MathUtils.nextGaussian();
                     virusSamplingParameter.getParameter(i).setParameterValue(j, r); // TODO Remove
-                    tipTraitsParameter.getParameter(tipIndices[i]).setParameterValue(j, r);
+                    tipTraitsParameter.getParameter(tipIndices[i]).setParameterValue(tipStartOffset + j, r);
                 }
             }
         }
@@ -774,7 +777,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         if (variable == virusSamplingParameter) { // TODO Remove
             if (index != -1) {
-                int loc = index / mdsDimension;
+                int loc = index / tipDimension;
 //                virusLocationChanged[loc] = true;
                 if (tipTraitsParameter != null && tipIndices[loc] != -1) {
                     Parameter location = virusSamplingParameter.getParameter(loc);
@@ -785,9 +788,9 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
             } else {
 //                Arrays.fill(virusLocationChanged, true);
                 if (tipTraitsParameter != null) {
-                    for (int pindex = 0; pindex < virusSamplingParameter.getParameterCount(); ++pindex) {
-                        Parameter location = virusSamplingParameter.getParameter(pindex);
-                        Parameter tip = tipTraitsParameter.getParameter(tipIndices[pindex]);
+                    for (int pIndex = 0; pIndex < virusSamplingParameter.getParameterCount(); ++pIndex) {
+                        Parameter location = virusSamplingParameter.getParameter(pIndex);
+                        Parameter tip = tipTraitsParameter.getParameter(tipIndices[pIndex]);
                         for (int i = 0; i < tip.getDimension(); ++i) {
                             tip.setParameterValueQuietly(i, location.getParameterValue(i));//
                         }
@@ -952,47 +955,47 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
 //    }
 
     // offset virus and serum location when computing
-    protected double computeDistance(int virus, int serum) {
-
-        Parameter vLoc = tipTraitsParameter.getParameter(tipIndices[virus]);
-        Parameter sLoc = serumLocationsParameter.getParameter(serum);
-        double sum = 0.0;
-
-        // first dimension is shifted
-        double vxOffset = 0.0;
-        double sxOffset = 0.0;
-        if (locationDriftParameter != null && virusOffsetsParameter != null && serumOffsetsParameter != null) {
-            vxOffset = locationDriftParameter.getParameterValue(0) * virusOffsetsParameter.getParameterValue(virus);
-            sxOffset = locationDriftParameter.getParameterValue(0) * serumOffsetsParameter.getParameterValue(serum);
-        }
-        if (virusDriftParameter != null && virusOffsetsParameter != null) {
-            vxOffset = virusDriftParameter.getParameterValue(0) * virusOffsetsParameter.getParameterValue(virus);
-        }
-        if (serumDriftParameter != null && serumOffsetsParameter != null) {
-            sxOffset = serumDriftParameter.getParameterValue(0) * serumOffsetsParameter.getParameterValue(serum);
-        }
-
-        double vxLoc = vLoc.getParameterValue(0) + vxOffset;
-        double sxLoc = sLoc.getParameterValue(0) + sxOffset;
-
-        double difference = vxLoc - sxLoc;
-        sum += difference * difference;
-
-        // other dimensions are not
-        for (int i = 1; i < mdsDimension; i++) {
-            difference = vLoc.getParameterValue(i) - sLoc.getParameterValue(i);
-            sum += difference * difference;
-        }
-
-        double dist = Math.sqrt(sum);
-
-        if (serumBreadthsParameter != null) {
-            double serumBreadth = serumBreadthsParameter.getParameterValue(serum);
-            dist /= serumBreadth;
-        }
-
-        return dist;
-    }
+//    protected double computeDistance(int virus, int serum) {
+//
+//        Parameter vLoc = tipTraitsParameter.getParameter(tipIndices[virus]);
+//        Parameter sLoc = serumLocationsParameter.getParameter(serum);
+//        double sum = 0.0;
+//
+//        // first dimension is shifted
+//        double vxOffset = 0.0;
+//        double sxOffset = 0.0;
+//        if (locationDriftParameter != null && virusOffsetsParameter != null && serumOffsetsParameter != null) {
+//            vxOffset = locationDriftParameter.getParameterValue(0) * virusOffsetsParameter.getParameterValue(virus);
+//            sxOffset = locationDriftParameter.getParameterValue(0) * serumOffsetsParameter.getParameterValue(serum);
+//        }
+//        if (virusDriftParameter != null && virusOffsetsParameter != null) {
+//            vxOffset = virusDriftParameter.getParameterValue(0) * virusOffsetsParameter.getParameterValue(virus);
+//        }
+//        if (serumDriftParameter != null && serumOffsetsParameter != null) {
+//            sxOffset = serumDriftParameter.getParameterValue(0) * serumOffsetsParameter.getParameterValue(serum);
+//        }
+//
+//        double vxLoc = vLoc.getParameterValue(tipStartOffset + 0) + vxOffset;
+//        double sxLoc = sLoc.getParameterValue(0) + sxOffset;
+//
+//        double difference = vxLoc - sxLoc;
+//        sum += difference * difference;
+//
+//        // other dimensions are not
+//        for (int i = 1; i < mdsDimension; i++) {
+//            difference = vLoc.getParameterValue(tipStartOffset + i) - sLoc.getParameterValue(i);
+//            sum += difference * difference;
+//        }
+//
+//        double dist = Math.sqrt(sum);
+//
+//        if (serumBreadthsParameter != null) {
+//            double serumBreadth = serumBreadthsParameter.getParameterValue(serum);
+//            dist /= serumBreadth;
+//        }
+//
+//        return dist;
+//    }
 
 
     // Calculates the expected log2 titre when mapDistance = 0
@@ -1004,62 +1007,61 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         return baseline;
     }
 
-    private static double computeMeasurementLikelihood(double titre, double expectation, double sd) {
+//    private static double computeMeasurementLikelihood(double titre, double expectation, double sd) {
+//
+//        double lnL = NormalDistribution.logPdf(titre, expectation, sd);
+//
+//        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+//            throw new RuntimeException("infinite point measurement");
+//        }
+//        return lnL;
+//    }
 
-        double lnL = NormalDistribution.logPdf(titre, expectation, sd);
+//    private static double computeMeasurementThresholdLikelihood(double titre, double expectation, double sd) {
+//
+//        // real titre is somewhere between -infinity and measured 'titre'
+//        // want the lower tail of the normal CDF
+//
+//        double lnL = NormalDistribution.cdf(titre, expectation, sd, true);          // returns logged CDF
+//
+//        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+//            throw new RuntimeException("infinite threshold measurement");
+//        }
+//        return lnL;
+//    }
 
-        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-            throw new RuntimeException("infinite point measurement");
-        }
-        return lnL;
-    }
-
-    private static double computeMeasurementThresholdLikelihood(double titre, double expectation, double sd) {
-
-        // real titre is somewhere between -infinity and measured 'titre'
-        // want the lower tail of the normal CDF
-
-        double lnL = NormalDistribution.cdf(titre, expectation, sd, true);          // returns logged CDF
-
-        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-            throw new RuntimeException("infinite threshold measurement");
-        }
-        return lnL;
-    }
-
-
-    private static double computeMeasurementUpperThresholdLikelihood(double titre, double expectation, double sd) {
-
-        // real titre is somewhere between -infinity and measured 'titre'
-        // want the lower tail of the normal CDF
-    	double L = NormalDistribution.cdf(titre, expectation, sd, false);          // returns  CDF
-    	double lnL = Math.log(1-L);  //get the upper tail probability, then log it
-
-        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-            throw new RuntimeException("infinite threshold measurement");
-        }
-        return lnL;
-    }    
+//    private static double computeMeasurementUpperThresholdLikelihood(double titre, double expectation, double sd) {
+//
+//        // real titre is somewhere between -infinity and measured 'titre'
+//        // want the lower tail of the normal CDF
+//    	double L = NormalDistribution.cdf(titre, expectation, sd, false);          // returns  CDF
+//    	double lnL = Math.log(1-L);  //get the upper tail probability, then log it
+//
+//        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+//            throw new RuntimeException("infinite threshold measurement");
+//        }
+//        return lnL;
+//    }
     
     
-    private static double computeMeasurementIntervalLikelihood(double minTitre, double maxTitre, double expectation, double sd) {
-
-        // real titre is somewhere between measured minTitre and maxTitre
-
-        double cdf1 = NormalDistribution.cdf(maxTitre, expectation, sd, true);     // returns logged CDF
-        double cdf2 = NormalDistribution.cdf(minTitre, expectation, sd, true);     // returns logged CDF
-        double lnL = LogTricks.logDiff(cdf1, cdf2);
-
-        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-            // this occurs when the interval is in the far tail of the distribution, cdf1 == cdf2
-            // instead return logPDF of the point
-            lnL = NormalDistribution.logPdf(minTitre, expectation, sd);
-            if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-                throw new RuntimeException("infinite interval measurement");
-            }
-        }
-        return lnL;
-    }
+//    private static double computeMeasurementIntervalLikelihood(double minTitre, double maxTitre, double expectation, double sd) {
+//
+//        // real titre is somewhere between measured minTitre and maxTitre
+//
+//        double cdf1 = NormalDistribution.cdf(maxTitre, expectation, sd, true);     // returns logged CDF
+//        double cdf2 = NormalDistribution.cdf(minTitre, expectation, sd, true);     // returns logged CDF
+//        double lnL = LogTricks.logDiff(cdf1, cdf2);
+//
+//        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+//            // this occurs when the interval is in the far tail of the distribution, cdf1 == cdf2
+//            // instead return logPDF of the point
+//            lnL = NormalDistribution.logPdf(minTitre, expectation, sd);
+//            if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+//                throw new RuntimeException("infinite interval measurement");
+//            }
+//        }
+//        return lnL;
+//    }
 
     public void makeDirty() {
 
@@ -1075,7 +1077,7 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     public AntigenicGradientWrtParameter wrtFactory(Parameter parameter) {
         if (parameter == tipTraitsParameter) {
             return new AntigenicGradientWrtParameter.VirusLocations(numViruses, numSera, mdsDimension,
-                    tipTraitsParameter, layout);
+                    tipTraitsParameter, layout, tipStartOffset, tipDimension);
         } else if (parameter == serumLocationsParameter) {
             return new AntigenicGradientWrtParameter.SerumLocations(numViruses, numSera, mdsDimension,
                     serumLocationsParameter, layout);
@@ -1107,16 +1109,17 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
         final double titre;
         final double log2Titre;
         final boolean isLowerThreshold;
+    }
 
-    };
-
-    private final List<Measurement> measurements = new ArrayList<Measurement>();
-    private final List<String> virusNames = new ArrayList<String>();
-    private final List<String> serumNames = new ArrayList<String>();
-    private final List<Double> virusDates = new ArrayList<Double>();
-    private final List<Double> serumDates = new ArrayList<Double>();
+    private final List<Measurement> measurements = new ArrayList<>();
+    private final List<String> virusNames = new ArrayList<>();
+    private final List<String> serumNames = new ArrayList<>();
+    private final List<Double> virusDates = new ArrayList<>();
+    private final List<Double> serumDates = new ArrayList<>();
 
     private final int mdsDimension;
+    private final int tipDimension;
+    private final int tipStartOffset;
     private final double intervalWidth;
     private final Parameter mdsPrecisionParameter;
     private final Parameter locationDriftParameter;
@@ -1124,14 +1127,14 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     private final Parameter serumDriftParameter;
 
     private final MatrixParameter virusSamplingParameter;
-    private final MatrixParameter serumLocationsParameter;
+    private final MatrixParameterInterface serumLocationsParameter;
 
     private final Parameter virusOffsetsParameter;
     private final Parameter serumOffsetsParameter;
 
     private final CompoundParameter tipTraitsParameter;
     private final int[] tipIndices;
-    private final int[] virusIndices;
+//    private final int[] virusIndices;
 
     private final Parameter virusAviditiesParameter;
     private final Parameter serumPotenciesParameter;
@@ -1158,19 +1161,6 @@ public class NewAntigenicLikelihood extends AbstractModelLikelihood implements C
     }
 
     public List<Citation> getCitations() {
-        return Arrays.asList(CommonCitations.BEDFORD_2015_INTEGRATING);
-    }
-
-    public static void main(String[] args) {
-        double[] titres = {0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0};
-
-        System.out.println("titre\tpoint\tinterval(tail)\tinterval(cdf)\tthreshold");
-        for (double titre : titres) {
-            double point = NewAntigenicLikelihood.computeMeasurementLikelihood(titre, 0.0, 1.0);
-            double interval = NewAntigenicLikelihood.computeMeasurementIntervalLikelihood(titre + 1.0, titre, 0.0, 1.0);
-            double threshold = NewAntigenicLikelihood.computeMeasurementThresholdLikelihood(titre, 0.0, 1.0);
-
-            System.out.println(titre + "\t" + point + "\t" + interval + "\t" + threshold);
-        }
+        return Collections.singletonList(CommonCitations.BEDFORD_2015_INTEGRATING);
     }
 }

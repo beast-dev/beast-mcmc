@@ -1,8 +1,6 @@
 package test.dr.util;
 
-import dr.inference.model.Parameter;
 import dr.math.MachineAccuracy;
-import dr.math.MathUtils;
 import dr.util.FirstOrderFiniteDifferenceTransform;
 import dr.util.Transform;
 import junit.framework.Test;
@@ -78,7 +76,7 @@ public class FirstOrderFiniteDifferenceTransformTest extends TestCase {
     }
 
     public static double getLogJacobianInverse(double[] values, Transform.MultivariateTransform transform, int dim) {
-        return -transform.getLogJacobian(transform.inverse(values, 0, dim), 0, dim);
+        return -transform.logJacobian(transform.inverse(values, 0, dim), 0, dim);
     }
 
     public static double[] getNumericalGradientLogJacobianInverse(double[] values, Transform.MultivariateTransform transform) {

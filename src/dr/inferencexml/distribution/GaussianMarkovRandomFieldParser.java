@@ -38,7 +38,8 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
     private static final String PARSER_NAME = "gaussianMarkovRandomField";
     private static final String DIMENSION = "dim";
     private static final String PRECISION = "precision";
-    private static final String START = "start";
+    private static final String MEAN = "mean";
+    private static final String LAMBDA = "lambda";
     private static final String MATCH_PSEUDO_DETERMINANT = "matchPseudoDeterminant";
 
     public String getParserName() { return PARSER_NAME; }
@@ -53,8 +54,11 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Scale must be > 0.0");
         }
 
-        Parameter start = xo.hasChildNamed(START) ?
-                (Parameter) xo.getElementFirstChild(START) : null;
+        Parameter start = xo.hasChildNamed(MEAN) ?
+                (Parameter) xo.getElementFirstChild(MEAN) : null;
+
+        Parameter lambda = xo.hasChildNamed(LAMBDA) ?
+                (Parameter) xo.getElementFirstChild(LAMBDA) : null;
 
         RandomField.WeightProvider weights = parseWeightProvider(xo, dim);
 
@@ -62,7 +66,7 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
 
         String id = xo.hasId() ? xo.getId() : PARSER_NAME;
 
-        return new GaussianMarkovRandomField(id, dim, incrementPrecision, start, weights, matchPseudoDeterminant);
+        return new GaussianMarkovRandomField(id, dim, incrementPrecision, start, lambda, weights, matchPseudoDeterminant);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
@@ -71,7 +75,9 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(DIMENSION),
             new ElementRule(PRECISION,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(START,
+            new ElementRule(MEAN,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(LAMBDA,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             AttributeRule.newBooleanRule(MATCH_PSEUDO_DETERMINANT, true),
             WEIGHTS_RULE,

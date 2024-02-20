@@ -19,3 +19,5 @@ zig_zag
 
 *.dmg
 release/Mac
+
+src/revision.txt

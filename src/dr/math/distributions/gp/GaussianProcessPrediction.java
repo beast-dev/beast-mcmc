@@ -54,7 +54,6 @@ public class GaussianProcessPrediction implements Reportable, Loggable, Variable
     private final List<DesignMatrix> predictiveDesigns;
     private final int realizedDim;
     private final int predictiveDim;
-    private final int order;
     private final Parameter orderVariance;
     private final double[] prediction;
     private final double[] mean;
@@ -65,7 +64,6 @@ public class GaussianProcessPrediction implements Reportable, Loggable, Variable
 
     private final LinearSolver<DenseMatrix64F> solver;
 
-    private final List<BasisDimension> realizedBases;
     private final List<BasisDimension> predictiveBases;
     private final List<BasisDimension> crossBases;
 
@@ -86,7 +84,6 @@ public class GaussianProcessPrediction implements Reportable, Loggable, Variable
         this.predictiveDesigns = predictiveDesigns;
         this.realizedDim = gp.getDimension();
         this.predictiveDim = predictiveDesigns.get(0).getRowDimension(); // CHANGED TO ROW ??? (BEFORE IT WAS ColumnDimension)
-        this.order = gp.getOrder();
         this.orderVariance = gp.getOrderVariance();
         this.crossGramian = new DenseMatrix64F(predictiveDim, realizedDim);
         this.realizedPrecision = new DenseMatrix64F(realizedDim, realizedDim);
@@ -98,7 +95,7 @@ public class GaussianProcessPrediction implements Reportable, Loggable, Variable
 
         this.solver = LinearSolverFactory.symmPosDef(realizedDim);
 
-        this.realizedBases = gp.getBases();
+        List<BasisDimension> realizedBases = gp.getBases();
         this.predictiveBases = makePredictiveBases(realizedBases, predictiveDesigns);
         this.crossBases = makeCrossBases(realizedBases, predictiveDesigns);
 
@@ -172,9 +169,6 @@ public class GaussianProcessPrediction implements Reportable, Loggable, Variable
             }
             prediction[i] += mean[i];
         }
-//        for(int i = 0; i < predictiveDim; i++) {
-//            prediction[i] += 1;
-//        }
     }
 
     private double getPrediction(int index) {
@@ -189,15 +183,6 @@ public class GaussianProcessPrediction implements Reportable, Loggable, Variable
         return prediction[index];
     }
 
-//
-//    private DenseMatrix64F getCrossRealized() {
-//        if(!crossRealizedKnown) {
-//            computeCrossRealized();
-//            crossRealizedKnown = true;
-//        }
-//        return crossRealized;
-//    }
-//
     private void computeCrossGramian() {
         if (!crossGramianKnown) {
             computeAdditiveGramian(crossGramian, crossBases, orderVariance);
@@ -206,7 +191,7 @@ public class GaussianProcessPrediction implements Reportable, Loggable, Variable
     }
 
     private void computeCrossRealized() {
-        if(!crossRealizedKnown) {
+        if (!crossRealizedKnown) {
             computeCrossGramian();
 
             realizedPrecision = gp.getPrecisionAsMatrix();
@@ -285,18 +270,9 @@ public class GaussianProcessPrediction implements Reportable, Loggable, Variable
         return columns;
     }
 
-//    @Override
-//    public String getReport() {
-//        StringBuffer sb = new StringBuffer();
-//        for (LogColumn column : getColumns()) {
-//            sb.append(" ").append(column.getFormatted());
-//        }
-//        return sb.toString();
-//    }
-
     @Override
     public String getReport() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("mean:");
         for (double value : getMean()) {
             sb.append(" ").append(value);

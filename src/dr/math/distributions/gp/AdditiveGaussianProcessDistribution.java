@@ -171,11 +171,15 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     }
 
     private double[] getPrecision() {
+        return getPrecisionAsMatrix().getData();
+    }
+
+    protected DenseMatrix64F getPrecisionAsMatrix() {
         if (!precisionAndDeterminantKnown) {
             computePrecisionAndDeterminant();
             precisionAndDeterminantKnown = true;
         }
-        return precision.getData();
+        return precision;
     }
 
     private double getLogDeterminant() {
@@ -258,8 +262,8 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
                 exponent += diff[i] * precision[i * dim + j] * diff[j];
             }
         }
-        
-        return -0.5 * (dim * Math.log(2 * Math.PI) - getLogDeterminant()) - 0.5 * exponent;
+
+        return -0.5 * (dim * Math.log(2 * Math.PI) + getLogDeterminant()) - 0.5 * exponent;
     }
 
     @Override
@@ -404,9 +408,6 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     public static void computeAdditiveGramian(DenseMatrix64F gramian,
                                               List<BasisDimension> bases,
                                               Parameter orderVariance) {
-
-        final int order = orderVariance.getDimension();
-
         gramian.zero();
 
         final int rowDim = gramian.getNumRows();
@@ -428,8 +429,9 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
             }
         }
 
-        for (int n = 1; n < order; ++n) {
-            // TODO higher-order terms via Newton-Girard formula
-        }
+        // TODO higher-order terms via Newton-Girard formula
+        @SuppressWarnings("unused")
+        final int order = orderVariance.getDimension();
+//        for (int n = 1; n < order; ++n) { }
     }
 }

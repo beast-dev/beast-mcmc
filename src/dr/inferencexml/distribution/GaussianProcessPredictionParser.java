@@ -38,6 +38,7 @@ import java.util.List;
 public class GaussianProcessPredictionParser extends AbstractXMLObjectParser {
 
     private static final String PARSER_NAME = "gaussianProcessPrediction";
+    private static final String BASES = "bases";
 
     public String getParserName() { return PARSER_NAME; }
 
@@ -47,8 +48,8 @@ public class GaussianProcessPredictionParser extends AbstractXMLObjectParser {
                 xo.getChild(AdditiveGaussianProcessDistribution.class);
 
         Parameter realizedValues = (Parameter) xo.getChild(Parameter.class);
-
-        List<DesignMatrix> predictiveDesigns = new ArrayList<>(xo.getAllChildren(DesignMatrix.class));
+        List<DesignMatrix> predictiveDesigns = new ArrayList<>(xo.getChild(BASES).getAllChildren(DesignMatrix.class));
+        //List<DesignMatrix> predictiveDesigns = new ArrayList<>(xo.getAllChildren(DesignMatrix.class));
 
         return new GaussianProcessPrediction(gp, realizedValues, predictiveDesigns);
     }
@@ -58,7 +59,9 @@ public class GaussianProcessPredictionParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             new ElementRule(AdditiveGaussianProcessDistribution.class),
             new ElementRule(Parameter.class),
-            new ElementRule(DesignMatrix.class, 1, Integer.MAX_VALUE),
+            new ElementRule(BASES, new XMLSyntaxRule[] {
+                    new ElementRule(DesignMatrix.class, 1, Integer.MAX_VALUE)
+            }),
     };
 
     public String getParserDescription() { // TODO update

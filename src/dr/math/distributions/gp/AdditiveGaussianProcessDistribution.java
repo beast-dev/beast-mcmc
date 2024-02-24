@@ -25,6 +25,7 @@
 
 package dr.math.distributions.gp;
 
+import dr.inference.distribution.LogGaussianProcessModel;
 import dr.inference.distribution.RandomField;
 import dr.inference.model.*;
 import dr.math.distributions.RandomFieldDistribution;
@@ -65,7 +66,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     private final DenseMatrix64F variance;
 
     private double logDeterminant;
-    
+
     private boolean meanKnown;
     private boolean precisionAndDeterminantKnown;
     private boolean gramianAndVarianceKnown;
@@ -247,6 +248,8 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 
     @Override
     public double logPdf(double[] x) {
+        precisionAndDeterminantKnown = false;
+        gramianAndVarianceKnown = false;
 
         final double[] mean = getMean();
         final double[] diff = tmp;
@@ -291,7 +294,29 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        throw new IllegalArgumentException("Unknown model");
+        if (containsKernel(model)) {
+          precisionAndDeterminantKnown = false;
+          gramianAndVarianceKnown = false;
+          fireModelChanged();
+        } else {
+          throw new IllegalArgumentException("Unknown model");
+        }
+    }
+//
+//        if (model == bases){
+//            precisionAndDeterminantKnown = false;
+//        } else {
+//            throw new IllegalArgumentException("Unknown model");
+//        }
+
+
+    private boolean containsKernel(Model model) {
+        for (BasisDimension basis : bases) {
+            if (model == basis.getKernel()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

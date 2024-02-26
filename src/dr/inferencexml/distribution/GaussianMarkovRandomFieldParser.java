@@ -60,7 +60,9 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
         Parameter lambda = xo.hasChildNamed(LAMBDA) ?
                 (Parameter) xo.getElementFirstChild(LAMBDA) : null;
 
-        RandomField.WeightProvider weights = parseWeightProvider(xo, dim);
+//        RandomField.WeightProvider weights = parseWeightProvider(xo, dim);
+
+        RandomField.WeightProvider weights = (RandomField.WeightProvider) xo.getChild(RandomField.WeightProvider.class);
 
         boolean matchPseudoDeterminant = xo.getAttribute(MATCH_PSEUDO_DETERMINANT, false);
 
@@ -73,6 +75,7 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(DIMENSION),
+            new ElementRule(RandomField.WeightProvider.class, true),
             new ElementRule(PRECISION,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(MEAN,

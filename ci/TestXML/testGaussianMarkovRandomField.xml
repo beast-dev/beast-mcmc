@@ -38,14 +38,14 @@
 		<distribution>
 			<GaussianMarkovRandomField dim="4" matchPseudoDeterminant="false">
 				<precision>
-					<parameter id="precision" value="0.8"/>
+					<parameter id="precision" value="0.1"/>
 				</precision>
 				<mean>
-					<parameter id="mean" value="50"/>
+					<parameter id="mean" value="0"/>
 				</mean>
-				<lambda>
-					<parameter id="lambda" value="0.99"/>
-				</lambda>
+				<weightProvider>
+					<treeModel idref="treeModel"/>
+				</weightProvider>
 			</GaussianMarkovRandomField>
 		</distribution>
 		<data>

@@ -676,11 +676,11 @@ public class MissingOps {
 
     private static double[] buffer = new double[16];
 
-    public static void safeWeightedAverage(final WrappedVector mi,
+    public static void safeWeightedAverage(final ReadableVector mi,
                                            final DenseMatrix64F Pi,
-                                           final WrappedVector mj,
+                                           final ReadableVector mj,
                                            final DenseMatrix64F Pj,
-                                           final WrappedVector mk,
+                                           final WritableVector mk,
                                            final DenseMatrix64F Vk,
                                            final int dimTrait) {
 //        countZeroDiagonals(Vk);

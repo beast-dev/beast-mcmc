@@ -25,6 +25,9 @@
 
 package dr.inference.distribution;
 
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evolution.tree.Tree;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider;
 import dr.inference.model.*;
 import dr.math.distributions.RandomFieldDistribution;

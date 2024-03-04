@@ -228,7 +228,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                 for (int i = 0; i < stateCount; ++i) {
                     double sum = 0.0;
                     for (int j = 0; j < stateCount; ++j) {
-                        sum += matricesGrad[a][b][leftMatrixOffset + i * stateCount + j] * partials[leftPartialOffset + j];
+                        sum += matricesGrad[a][b][leftMatrixOffset + i * stateCount + j] * partials[leftPartialOffset + j]; // TODO MAS: is this not just t * p^*?
                         sum += matrices[leftMatrixOffset + i * stateCount + j] * partialsGrad[a][b][leftPartialOffset + j];
                     }
                     partialsGrad[a][b][resultOffset + i] = sum;
@@ -265,7 +265,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                     for (int i = 0; i < stateCount; ++i) {
                         double rightGrad = 0.0;
                         for (int j = 0; j < stateCount; ++j) {
-                            rightGrad += matricesGrad[a][b][rightMatrixOffset + i * stateCount + j] * partials[rightPartialOffset + j];
+                            rightGrad += matricesGrad[a][b][rightMatrixOffset + i * stateCount + j] * partials[rightPartialOffset + j]; // TODO MAS: t * p^*?
                             rightGrad += matrices[rightMatrixOffset + i * stateCount + j] * partialsGrad[a][b][rightPartialOffset + j];
                         }
                         double leftGrad = partialsGrad[a][b][resultOffset + i];
@@ -339,11 +339,12 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         for (int a = 0; a < stateCount; a++) {
             for (int b = 0; b < stateCount; b++) {
                 for (int c = 0; c < stateCount; c++) {
-                    for (int d = 0; d < stateCount; d++) {
+                    for (int d = 0; d < stateCount; d++) { // TODO MAS: last loop unnecessary (also S^4 storage is unnecessary)
                         if (d == b) {
+                            // TODO MAS: should these be cached at all? why not generate on the fly (t * matrices[])
                             matricesGrad[a][b][matrixOffset + c*stateCount + b] =  distance * matrices[matrixOffset + c*stateCount + a];
                         } else {
-                            matricesGrad[a][b][matrixOffset + c*stateCount + d] = 0;
+                            matricesGrad[a][b][matrixOffset + c*stateCount + d] = 0; // TODO MAS: avoid caching (many) zeros
                         }
                     }
                 }

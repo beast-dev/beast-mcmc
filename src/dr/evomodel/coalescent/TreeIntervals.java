@@ -216,6 +216,7 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
             }
 
             if (!include || tree.isExternal(child)) {
+                // the mrca of the clade below that is being excluded becomes a sampling event
                 intervals.addSampleEvent(tree.getNodeHeight(child));
             } else {
                 collectTimes(tree, child, excludeNodesBelow, intervals);

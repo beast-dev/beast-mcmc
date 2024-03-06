@@ -32,15 +32,15 @@ import dr.app.util.Utils;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.alignment.SimpleAlignment;
-import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Microsatellite;
-import dr.evolution.datatype.Nucleotides;
+import dr.evolution.datatype.*;
 import dr.evolution.io.FastaImporter;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.MicroSatImporter;
+import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.NexusImporter.MissingBlockException;
 import dr.evolution.io.NexusImporter.NexusBlock;
+import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -64,7 +64,7 @@ import java.util.List;
 public class BEAUTiImporter {
 
     private final String DEFAULT_NAME = "default";
-    
+
     private final BeautiOptions options;
     private final BeautiFrame frame;
 
@@ -77,13 +77,7 @@ public class BEAUTiImporter {
 
     public void importFromFile(File file) throws IOException, ImportException, JDOMException {
         try {
-            Reader reader = new FileReader(file);
-
-            BufferedReader bufferedReader = new BufferedReader(reader);
-            String line = bufferedReader.readLine();
-            while (line != null && line.length() == 0) {
-                line = bufferedReader.readLine();
-            }
+            String line = findFirstLine(file);
 
             if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
                 // is a NEXUS file
@@ -104,10 +98,22 @@ public class BEAUTiImporter {
                 throw new ImportException("Unrecognized format for imported file.");
             }
 
-            bufferedReader.close();
         } catch (IOException e) {
             throw new IOException(e.getMessage());
         }
+    }
+
+    public String findFirstLine(File file) throws IOException {
+        Reader reader = new FileReader(file);
+
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        String line = bufferedReader.readLine();
+        while (line != null && line.length() == 0) {
+            line = bufferedReader.readLine();
+        }
+
+        bufferedReader.close();
+        return line;
     }
 
     // micro-sat
@@ -193,8 +199,12 @@ public class BEAUTiImporter {
 
     }
 
+    public void importNexusFile(File file) throws IOException, ImportException {
+        importNexusFile(file, false);
+    }
+
     // nexus
-    private void importNexusFile(File file) throws IOException, ImportException {
+    public void importNexusFile(File file, Boolean allowEmpty) throws IOException, ImportException {
         TaxonList taxa = null;
         SimpleAlignment alignment = null;
         List<Tree> trees = new ArrayList<Tree>();
@@ -305,7 +315,7 @@ public class BEAUTiImporter {
 //            throw new Exception(e.getMessage());
         }
 
-        setData(file.getName(), taxa, alignment, charSets, taxSets, model, null, trees);
+        setData(file.getName(), taxa, alignment, charSets, taxSets, model, null, trees, allowEmpty);
     }
 
     // FASTA
@@ -341,6 +351,7 @@ public class BEAUTiImporter {
         String[] traitNames = dataTable.getColumnLabels();
         String[] taxonNames = dataTable.getRowLabels();
 
+
         for (int i = 0; i < dataTable.getColumnCount(); i++) {
             boolean warningGiven = false;
 
@@ -364,7 +375,7 @@ public class BEAUTiImporter {
 
                         if (c1 != c &&
                                 !(c == Double.class && c1 == Integer.class) &&
-                                !warningGiven ) {
+                                !warningGiven) {
                             JOptionPane.showMessageDialog(frame, "Not all values of same type for trait" + traitName,
                                     "Incompatible values", JOptionPane.WARNING_MESSAGE);
                             warningGiven = true;
@@ -403,7 +414,32 @@ public class BEAUTiImporter {
                 j++;
             }
         }
-        setData(file.getName(), taxa, null, null, null, null, importedTraits, null);
+        setData(file.getName(), taxa, null, null, null, null, importedTraits, null, true);
+    }
+
+    public void importTaxaFromTraits(final File file) throws Exception {
+
+        DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(file));
+
+        String[] taxonNames = dataTable.getRowLabels();
+
+        Taxa taxa = new Taxa();
+        for (int i = 0; i < taxonNames.length; i++) {
+            taxa.addTaxon(new Taxon(taxonNames[i]));
+        }
+
+        addTaxonList(taxa);
+
+        SimpleAlignment dummyAlignment = new SimpleAlignment();
+        dummyAlignment.setDataType(new DummyDataType());
+
+        setData(file.getName(), taxa, dummyAlignment, null, null, null, null, null, true);
+    }
+
+    public void importNewickFile(final File file) throws Exception {
+        NewickImporter importer = new NewickImporter(new FileReader(file));
+        Tree[] trees = importer.importTrees(options.taxonList);
+        addTrees(Arrays.asList(trees));
     }
 
     public boolean importPredictors(final File file, final TraitData trait) throws Exception {
@@ -417,7 +453,7 @@ public class BEAUTiImporter {
         String extension = "";
         if (fileName.lastIndexOf(".") != -1) {
             extension = fileName.substring(fileName.lastIndexOf(".") + 1);
-            fileName =  fileName.substring(0, fileName.lastIndexOf("."));
+            fileName = fileName.substring(0, fileName.lastIndexOf("."));
         }
         boolean isCSV = extension.toUpperCase().equals("CSV");
 
@@ -450,7 +486,7 @@ public class BEAUTiImporter {
                     matches -= 1;
                 }
             }
-            if (((double)matches) / states.size() > 0.5) { // arbitrary cut off but if 50% matching then presumably they all should
+            if (((double) matches) / states.size() > 0.5) { // arbitrary cut off but if 50% matching then presumably they all should
                 for (String name : stateNamesCol) {
                     if (!states.contains(name)) {
                         JOptionPane.showMessageDialog(frame, "Predictor row label contains unrecognized state '" + name + "'",
@@ -473,7 +509,7 @@ public class BEAUTiImporter {
                     try {
                         data[i][j] = Double.parseDouble(row[j]);
                     } catch (NumberFormatException nfe) {
-                        JOptionPane.showMessageDialog(frame, "Predictor '" + name + "' has a bad value at row " + (i+1),
+                        JOptionPane.showMessageDialog(frame, "Predictor '" + name + "' has a bad value at row " + (i + 1),
                                 "Missing value", JOptionPane.ERROR_MESSAGE);
                     }
                 }
@@ -493,9 +529,9 @@ public class BEAUTiImporter {
                 String[] values = dataTable.getColumn(i);
                 for (int j = 0; j < values.length; j++) {
                     try {
-                        data[j][0] =  Double.parseDouble(values[j]);
+                        data[j][0] = Double.parseDouble(values[j]);
                     } catch (NumberFormatException nfe) {
-                        JOptionPane.showMessageDialog(frame, "Predictor '" + name + "' has a bad value at position " + (j+1),
+                        JOptionPane.showMessageDialog(frame, "Predictor '" + name + "' has a bad value at position " + (j + 1),
                                 "Missing value", JOptionPane.ERROR_MESSAGE);
                     }
                 }
@@ -548,16 +584,40 @@ public class BEAUTiImporter {
         return true;
     }
 
-    // for Alignment
     private void setData(String fileName, TaxonList taxonList, Alignment alignment,
                          List<CharSet> charSets,
                          List<NexusApplicationImporter.TaxSet> taxSets,
                          PartitionSubstitutionModel model,
                          List<TraitData> traits, List<Tree> trees) throws ImportException, IllegalArgumentException {
+        setData(fileName, taxonList, alignment, charSets, taxSets, model, traits, trees, false);
+    }
+
+    // for Alignment
+    private void setData(String fileName, TaxonList taxonList, Alignment alignment,
+                         List<CharSet> charSets,
+                         List<NexusApplicationImporter.TaxSet> taxSets,
+                         PartitionSubstitutionModel model,
+                         List<TraitData> traits, List<Tree> trees,
+                         Boolean allowEmpty) throws ImportException, IllegalArgumentException {
         String fileNameStem = Utils.trimExtensions(fileName,
                 new String[]{"NEX", "NEXUS", "FA", "FAS", "FASTA", "TRE", "TREE", "XML", "TXT"});
         if (options.fileNameStem == null || options.fileNameStem.equals(MCMCPanel.DEFAULT_FILE_NAME_STEM)) {
             options.fileNameStem = fileNameStem;
+        }
+
+        // check the alignment before adding it...
+        if (!allowEmpty && alignment.getSiteCount() == 0) {
+            // sequences are different lengths
+            throw new ImportException("This alignment is of zero length");
+        }
+
+        if (alignment != null) {
+            for (Sequence seq : alignment.getSequences()) {
+                if (seq.getLength() != alignment.getSiteCount()) {
+                    // sequences are different lengths
+                    throw new ImportException("The sequences in the alignment file are of different lengths - BEAST requires aligned sequences");
+                }
+            }
         }
 
         addTaxonList(taxonList);

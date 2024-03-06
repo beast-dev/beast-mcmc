@@ -27,7 +27,7 @@ public abstract class AbstractFullConditionalDistributionDelegate
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
         this.likelihoodDelegate = likelihoodDelegate;
         this.cdi = likelihoodDelegate.getIntegrator();
-        this.dimPartial = dimTrait + likelihoodDelegate.getPrecisionType().getMatrixLength(dimTrait);
+        this.dimPartial = likelihoodDelegate.getPrecisionType().getPartialsDimension(dimTrait);
         this.partialNodeBuffer = new double[numTraits * dimPartial];
         this.partialRootBuffer = new double[numTraits * dimPartial];
     }

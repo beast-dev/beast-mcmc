@@ -14,8 +14,6 @@ public interface ModelExtensionProvider extends ContinuousTraitPartialsProvider 
                                                      TreeTrait treeTrait,
                                                      Tree tree);
 
-    double[] transformTreeTraits(double[] treeTraits);
-
 
     interface NormalExtensionProvider extends ModelExtensionProvider {
 

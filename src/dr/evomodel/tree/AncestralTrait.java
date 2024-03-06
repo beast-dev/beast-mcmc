@@ -41,16 +41,19 @@ import java.util.Set;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
+ *
+ * boolean stem option added by Andy Magee, 2022/07/20
  */
 public class AncestralTrait implements Loggable {
 
-    public AncestralTrait(String name, TreeTrait ancestralTrait, Tree tree, TaxonList taxa) throws TreeUtils.MissingTaxonException {
+    public AncestralTrait(String name, TreeTrait ancestralTrait, Tree tree, TaxonList taxa, boolean stem) throws TreeUtils.MissingTaxonException {
         this.name = name;
         this.tree = tree;
         this.ancestralTrait = ancestralTrait;
         if (taxa != null) {
             this.leafSet = TreeUtils.getLeavesForTaxa(tree, taxa);
         }
+        this.stem = stem;
     }
 
     public Tree getTree() {
@@ -68,6 +71,11 @@ public class AncestralTrait implements Loggable {
             if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
         } else {
             node = tree.getRoot();
+        }
+
+        if (stem) {
+            node = tree.getParent(node);
+            if (node == null) throw new RuntimeException("No node found that is parent of MRCA of " + leafSet);
         }
 
         return ancestralTrait.getTraitString(tree, node);
@@ -95,5 +103,5 @@ public class AncestralTrait implements Loggable {
     private final TreeTrait ancestralTrait;
     private final String name;
     private Set<String> leafSet = null;
-
+    private final boolean stem;
 }

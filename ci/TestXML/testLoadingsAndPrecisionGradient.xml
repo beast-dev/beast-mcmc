@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    <taxa>
+        <taxon id="taxon_1">
+            <attr name="traits">-0.8161262390971513 0.4270454816694809 -0.6230781939110783 -0.16450480870919917
+                -0.4456292313690999
+            </attr>
+        </taxon>
+        <taxon id="taxon_2">
+            <attr name="traits">-1.0144436604293505 -0.8920557774375898 1.478607059857378 -0.16240458275087258
+                -0.6908795858187
+            </attr>
+        </taxon>
+        <taxon id="taxon_3">
+            <attr name="traits">1.056873733132347 NA NA NA 1.066150616149452
+            </attr>
+        </taxon>
+        <taxon id="taxon_4">
+            <attr name="traits">-0.2221684856569227 -0.11560476062111587 0.41571346596533654 0.8655080462439241
+                0.10898633050895852
+            </attr>
+        </taxon>
+        <taxon id="taxon_5">
+            <attr name="traits">-0.17438164408909365 -0.7122666957434696 -0.44738267923159963 -0.17865180808229236
+                0.23315524522158199
+            </attr>
+        </taxon>
+        <taxon id="taxon_6">
+            <attr name="traits">NA -0.8666572905938715 -0.454549337998158 -0.5001246338040305
+                -0.5397266841036715
+            </attr>
+        </taxon>
+        <taxon id="taxon_7">
+            <attr name="traits">1.0015698840090395 2.3897801345872987 -1.5146279580725215 0.8960512885879615
+                -2.2012739127775762
+            </attr>
+        </taxon>
+        <taxon id="taxon_8">
+            <attr name="traits">-0.42898479922720356 NA 0.6436374468251037 -0.09729958495856225
+                -1.396413239367357
+            </attr>
+        </taxon>
+        <taxon id="taxon_9">
+            <attr name="traits">0.09104086929644847 0.38443026317349643 -1.426378176957026 -0.7790116303715932
+                0.2981854605237854
+            </attr>
+        </taxon>
+        <taxon id="taxon_10">
+            <attr name="traits">NA NA NA NA 1.6135287964494376
+            </attr>
+        </taxon>
+    </taxa>
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+        (taxon_6:0.6599920953,((((taxon_8:0.08050441416,taxon_4:0.1993587138):0.06120663346,taxon_7:0.4556825075):0.1431224649,taxon_10:0.5471037512):0.8189234324,((taxon_1:0.739103453,(taxon_2:0.3068418624,taxon_5:0.7002265998):0.6723836821):0.4476448677,(taxon_9:0.16993984,taxon_3:0.2669664454):0.9823498076):0.9481884362):0.3653106997);;
+    </newick>
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="true" traitDimension="5"
+                    name="traits">
+            <parameter id="leafTraits"/>
+        </nodeTraits>
+    </treeModel>
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+            <DiagonalMatrix>
+                <parameter id="diffusion.precision" value="1.0 1.0 1.0" lower="0"/>
+            </DiagonalMatrix>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+    <matrixParameter id="L">
+        <parameter id="L1"
+                   value="0.0076177742633394985 0.3515255484089337 0.30611493207760276 -2.132446790112065 -0.05945162267545193"/>
+        <parameter id="L2"
+                   value="0.05702524809146323 -0.784929798992992 -1.0304943902767967 -0.3930227002265834 0.2079912019698792"/>
+        <parameter id="L3"
+                   value="-0.5484010117038763 0.24501763591278475 -0.21629784327601548 1.712948337244973 1.4061412930408388"/>
+    </matrixParameter>
+    <distributionLikelihood id="L.prior">
+        <data>
+            <matrixParameter idref="L"/>
+        </data>
+        <distribution>
+            <normalDistributionModel>
+                <mean>
+                    <parameter value="0.0"/>
+                </mean>
+                <stdev>
+                    <parameter value="1.0" lower="0"/>
+                </stdev>
+            </normalDistributionModel>
+        </distribution>
+    </distributionLikelihood>
+    <integratedFactorModel id="factorModel" traitName="traits" standardize="true">
+        <loadings>
+            <matrixParameter idref="L"/>
+        </loadings>
+        <precision>
+            <parameter id="factorPrecision"
+                       value="97.48357423403706 26.759815906207667 1.202369045099128 53.24006355944153 7.777187664705567"
+                       lower="0"/>
+        </precision>
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="leafTraits"/>
+        </traitParameter>
+    </integratedFactorModel>
+    <gammaPrior id="factorPrecision.prior" scale="1.0" shape="1.0">
+        <parameter idref="factorPrecision"/>
+    </gammaPrior>
+    <traitDataLikelihood allowIdentical="true" standardize="true" cacheBranches="true" id="traitLikelihood"
+                         traitName="traits" useTreeLength="false" scaleByTime="false" reportAsMultivariate="true"
+                         allowSingular="true">
+        <multivariateDiffusionModel idref="diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <integratedFactorModel idref="factorModel"/>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001" dimension="1"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+    <compoundParameter id="loadingsAndPrecision">
+        <parameter idref="L"/>
+        <parameter idref="factorPrecision"/>
+    </compoundParameter>
+    <operators id="operators">
+        <hamiltonianMonteCarloOperator weight="1.0" nSteps="10" stepSize="0.05" drawVariance="1.0" autoOptimize="true"
+                                       gradientCheckCount="100" gradientCheckTolerance="5e-3">
+            <jointGradient>
+<!--                <gradient>-->
+<!--                    <distributionLikelihood idref="L.prior"/>-->
+<!--                    <matrixParameter idref="L"/>-->
+<!--                </gradient>-->
+                <integratedFactorAnalysisLoadingsAndPrecisionGradient>
+                    <compoundParameter idref="loadingsAndPrecision"/>
+                    <integratedFactorModel idref="factorModel"/>
+                    <traitDataLikelihood idref="traitLikelihood"/>
+                </integratedFactorAnalysisLoadingsAndPrecisionGradient>
+            </jointGradient>
+            <compoundParameter idref="loadingsAndPrecision"/>
+        </hamiltonianMonteCarloOperator>
+    </operators>
+    <mcmc id="mcmc" chainLength="100" autoOptimize="true">
+        <posterior id="posterior">
+            <prior id="prior">
+<!--                <distributionLikelihood idref="L.prior"/>-->
+<!--                <gammaPrior idref="factorPrecision.prior"/>-->
+            </prior>
+            <likelihood id="likelihood">
+                <traitDataLikelihood idref="traitLikelihood"/>
+                <integratedFactorModel idref="factorModel"/>
+            </likelihood>
+        </posterior>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="1000">
+            <column label="posterior" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+            <column label="prior" dp="4" width="12">
+                <prior idref="prior"/>
+            </column>
+            <column label="likelihood" dp="4" width="12">
+                <likelihood idref="likelihood"/>
+            </column>
+        </log>
+        <log id="fileLog" logEvery="10" fileName="defaultFile.log" overwrite="true">
+            <posterior idref="posterior"/>
+            <prior idref="prior"/>
+            <likelihood idref="likelihood"/>
+            <matrixParameter idref="L"/>
+            <parameter idref="factorPrecision"/>
+        </log>
+    </mcmc>
+</beast>

@@ -34,6 +34,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.xml.*;
 
+import static dr.evomodel.continuous.ContinuousDiffusionStatistic.getGreatCircleDistance;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TRAIT_NAME;
 
 /**
@@ -45,7 +46,7 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TRAIT_NAME;
 
 public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
 
-    private static final String CONTINUOUS_DIFFUSION_STATISTIC = "traitDataContinuousDiffusionStatistic";
+    public static final String CONTINUOUS_DIFFUSION_STATISTIC = "traitDataContinuousDiffusionStatistic";
 
     private TreeDataContinuousDiffusionStatistic(String statisticName,
                                                  TreeTrait.DA trait,
@@ -109,7 +110,7 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
         weightingScheme.add(lhs, displacement, time);
     }
 
-    private static double distance(double[] x, double[] y){
+    private static double distance(double[] x, double[] y) {
         assert (x.length == y.length);
 
         double total = 0.0;
@@ -133,36 +134,59 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
     private enum DisplacementScheme {
         LINEAR {
             @Override
-            double displace(double[] x, double[] y){
+            double displace(double[] x, double[] y) {
                 return Math.sqrt(distance(x, y));
             }
 
             @Override
-            String getName() { return "linear"; }
+            String getName() {
+                return "linear";
+            }
         },
         QUADRATIC {
             @Override
-            double displace(double[] x, double[] y){
+            double displace(double[] x, double[] y) {
                 return distance(x, y);
             }
 
             @Override
-            String getName() { return "quadratic"; }
+            String getName() {
+                return "quadratic";
+            }
+        },
+        GREAT_CIRCLE_DISTANCE {
+            @Override
+            double displace(double[] x, double[] y) {
+                if (x.length == 2 && y.length == 2) {
+                    return getGreatCircleDistance(x, y);
+                } else {
+                    return LINEAR.displace(x, y);
+                }
+            }
+
+            @Override
+            String getName() {
+                return "greatCircleDistance";
+            }
         };
 
         abstract String getName();
+
         abstract double displace(double[] x, double[] y);
     }
 
     private enum ScalingScheme {
         RATE_DEPENDENT { //dependent on the rates (not dividing by phi_i)
+
             @Override
             double scale(BranchRates branchRates, Tree tree, NodeRef node) {
                 return 1.0;
             }
 
             @Override
-            String getName() { return "dependent"; }
+            String getName() {
+                return "dependent";
+            }
         },
         RATE_INDEPENDENT {
             @Override
@@ -171,7 +195,9 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
             }
 
             @Override
-            String getName() { return "independent"; }
+            String getName() {
+                return "independent";
+            }
         };
 
         abstract double scale(BranchRates branchRates, Tree tree, NodeRef node);
@@ -186,12 +212,14 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
         WEIGHTED {
             @Override
             void add(Statistic lhs, double displacement, double time) {
-                 lhs.numerator += displacement;
-                 lhs.denominator += time;
+                lhs.numerator += displacement;
+                lhs.denominator += time;
             }
 
             @Override
-            String getName() { return "weighted"; }
+            String getName() {
+                return "weighted";
+            }
         },
         UNWEIGHTED {
             @Override
@@ -201,7 +229,9 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
             }
 
             @Override
-            String getName() { return "unweighted"; }
+            String getName() {
+                return "unweighted";
+            }
         };
 
         abstract void add(Statistic lhs, double displacement, double time);
@@ -219,7 +249,7 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
             this.denominator = 0.0;
         }
     }
-    
+
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         @Override

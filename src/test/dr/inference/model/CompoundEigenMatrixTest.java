@@ -154,7 +154,7 @@ public class CompoundEigenMatrixTest {
     Instance[] all = {test0, test1, test2, test3, test4};
 
     @Test
-    public void CompundEigenMatrix() throws Exception {
+    public void CompoundEigenMatrix() throws Exception {
         for (Instance test : all) {
 
             Parameter alphaEig = test.getEigenValuesStrengthOfSelection();

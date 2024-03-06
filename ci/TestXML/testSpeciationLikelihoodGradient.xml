@@ -198,7 +198,7 @@
 		</speciesTree>
 	</speciationLikelihood>
 
-	<speciationLikelihoodGradient id="speciationGradient">
+	<speciationLikelihoodGradient id="speciationGradient" wrtParameter="nodeHeight">
 		<speciationLikelihood idref="speciation"/>
 		<treeModel idref="treeModel"/>
 	</speciationLikelihoodGradient>
@@ -495,7 +495,7 @@
 		</logTree>
  -->
 
-        <log logEvery="10" fileName="check.log">
+        <log logEvery="1" fileName="check.log">
 			<speciationLikelihoodGradient idref="speciationGradient"/>
         </log>
 

@@ -139,9 +139,8 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
         
         ScaleOperator operator = new ScaleOperator(parameter, scaleAll,
                 degreesOfFreedom, scaleFactor,
-                mode, indicator, indicatorOnProb,
+                mode, weight, indicator, indicatorOnProb,
                 scaleAllInd);
-        operator.setWeight(weight);
         return operator;
     }
 

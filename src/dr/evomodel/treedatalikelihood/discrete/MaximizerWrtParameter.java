@@ -100,6 +100,30 @@ public class MaximizerWrtParameter implements Reportable {
         return likelihood;
     }
 
+    public double[] getMinimumPoint(boolean inParameterSpace) {
+        if (inParameterSpace && (transform != null)) {
+            return transform.inverse(minimumPoint, 0, minimumPoint.length);
+        } else {
+            return minimumPoint;
+        }
+    }
+
+    public GradientWrtParameterProvider getGradient() {
+        return gradient;
+    }
+
+    public boolean wasExecuted() {
+        return function != null;
+    }
+
+    public Transform getTransform() {
+        return transform;
+    }
+
+    public Function getFunction() {
+        return function;
+    }
+
     public void maximize() {
 
         LBFGS_Param paramsBFGS = Lbfgs.defaultParams();

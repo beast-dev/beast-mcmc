@@ -446,6 +446,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
 
         final double rate = getLatentTransitionRate() *
                 latentTransitionFrequencyParameter.getParameterValue(0) * branchLength;
+
         final double zeroJumps = Math.exp(-rate);
         double joint = zeroJumps;
         if(proportion>0){
@@ -482,7 +483,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
             density= joint/ marg;
         }
 
-        density *= branchLength;  // random variable is latentProportion = reward / branchLength, so include Jacobian
+        // density *= branchLength;  // random variable is latentProportion = reward / branchLength, so include Jacobian //AHHHHHH!!!! need to be very sure it is ok to comment this out.
 
         if (DEBUG) {
             if (Double.isInfinite(Math.log(density))) {
@@ -671,11 +672,12 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
 
     };
 
-    /** This is private getter can scale the incoming transition rate by the hieght of the root. The idea here is that
+    /** This is private getter can scale the incoming transition rate by the height of the root. The idea here is that
     there are cases were we don't have much prior information on the instantaneous rate, and so we can set a prior based
     on how many latent periods we might expect over the course of the tree. This hopefully also helps with the case were
     latency is added to the root's children which pushes back the root only to lead to more latency there.
     **/
+    //TODO might need jacobian
     private double getLatentTransitionRate(){
         if(scaleByRootHeight){
             return latentTransitionRateParameter.getParameterValue(0)/(rootHeightParameter.getParameterValue(0));

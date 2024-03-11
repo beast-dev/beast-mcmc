@@ -25,6 +25,7 @@
 
 package dr.math.distributions.gp;
 
+import dr.inference.distribution.LogGaussianProcessModel;
 import dr.inference.distribution.RandomField;
 import dr.inference.model.*;
 import dr.math.distributions.RandomFieldDistribution;
@@ -65,7 +66,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     private final DenseMatrix64F variance;
 
     private double logDeterminant;
-    
+
     private boolean meanKnown;
     private boolean precisionAndDeterminantKnown;
     private boolean gramianAndVarianceKnown;
@@ -172,11 +173,6 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 
     private double[] getPrecision() {
         return getPrecisionAsMatrix().getData();
-//        if (!precisionAndDeterminantKnown) {
-//            computePrecisionAndDeterminant();
-//            precisionAndDeterminantKnown = true;
-//       }
-   //     return precision.getData();
     }
 
     protected DenseMatrix64F getPrecisionAsMatrix() {
@@ -252,6 +248,8 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 
     @Override
     public double logPdf(double[] x) {
+        precisionAndDeterminantKnown = false;
+        gramianAndVarianceKnown = false;
 
         final double[] mean = getMean();
         final double[] diff = tmp;
@@ -296,7 +294,29 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        throw new IllegalArgumentException("Unknown model");
+        if (containsKernel(model)) {
+          precisionAndDeterminantKnown = false;
+          gramianAndVarianceKnown = false;
+          fireModelChanged();
+        } else {
+          throw new IllegalArgumentException("Unknown model");
+        }
+    }
+//
+//        if (model == bases){
+//            precisionAndDeterminantKnown = false;
+//        } else {
+//            throw new IllegalArgumentException("Unknown model");
+//        }
+
+
+    private boolean containsKernel(Model model) {
+        for (BasisDimension basis : bases) {
+            if (model == basis.getKernel()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -413,9 +433,6 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     public static void computeAdditiveGramian(DenseMatrix64F gramian,
                                               List<BasisDimension> bases,
                                               Parameter orderVariance) {
-
-        final int order = orderVariance.getDimension();
-
         gramian.zero();
 
         final int rowDim = gramian.getNumRows();
@@ -437,8 +454,9 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
             }
         }
 
-        for (int n = 1; n < order; ++n) {
-            // TODO higher-order terms via Newton-Girard formula
-        }
+        // TODO higher-order terms via Newton-Girard formula
+        @SuppressWarnings("unused")
+        final int order = orderVariance.getDimension();
+//        for (int n = 1; n < order; ++n) { }
     }
 }

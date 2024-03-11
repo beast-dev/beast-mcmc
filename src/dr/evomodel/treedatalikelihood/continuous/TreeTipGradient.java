@@ -80,7 +80,6 @@ public class TreeTipGradient implements GradientWrtParameterProvider, Reportable
         }
 
 
-
         nTaxa = treeDataLikelihood.getTree().getExternalNodeCount();
 //        nTraits = treeDataLikelihood.getDataLikelihoodDelegate().getTraitCount();
 //        dimTrait = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
@@ -166,7 +165,7 @@ public class TreeTipGradient implements GradientWrtParameterProvider, Reportable
         int offsetOutput = 0;
         for (int taxon = 0; taxon < nTaxa; ++taxon) {
             double[] taxonGradient = (double[]) treeTraitProvider.getTrait(tree, tree.getExternalNode(taxon));
-            System.arraycopy(taxonGradient, gradientOffset, gradient, offsetOutput, dimTrait);
+            System.arraycopy(taxonGradient, 0, gradient, offsetOutput, dimTrait);
             offsetOutput += dimTrait;
         }
 

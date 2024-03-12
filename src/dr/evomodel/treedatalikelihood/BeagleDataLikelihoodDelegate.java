@@ -455,9 +455,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
             }
 
-            if (!settings.useAction) {
-                instanceFlags = instanceDetails.getFlags();
-            }
+
+            instanceFlags = instanceDetails.getFlags();
 
             if ((instanceFlags & BeagleFlag.THREADING_CPP.getMask()) != 0) {
                 if (IS_THREAD_COUNT_COMPATIBLE() && threadCount != 0) {

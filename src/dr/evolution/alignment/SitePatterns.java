@@ -47,8 +47,8 @@ import java.util.*;
  */
 public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
-    private static final boolean IGNORE_UNKNOWN_DEFAULT = false;
-    private static final boolean IGNORE_GAPS_DEFAULT = false;
+    private static final boolean IGNORE_AMBIGUITY_DEFAULT = true;
+
     /**
      * the source alignment
      */
@@ -97,8 +97,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
     final protected boolean unique; // Compress into weighted list of unique patterns
 
-    final private boolean ignoreUnknown; // Whether to ignore unknowns when considering if sites are unique
-    final private boolean ignoreGaps; // Whether to ignore gaps when considering if sites are unique
+    final private boolean ignoreAmbiguity; // Whether to ignore unknowns when considering if sites are unique
 
     private boolean uncertainSites = false;
 
@@ -172,8 +171,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         this.strip = strip;
         this.unique = unique;
 
-        this.ignoreUnknown = IGNORE_UNKNOWN_DEFAULT;
-        this.ignoreGaps = IGNORE_GAPS_DEFAULT;
+        this.ignoreAmbiguity = IGNORE_AMBIGUITY_DEFAULT;
 
         setPatterns(alignment, from, to, every, constantSiteCounts);
     }
@@ -206,8 +204,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         this.strip = strip;
         this.unique = unique;
 
-        this.ignoreUnknown = IGNORE_UNKNOWN_DEFAULT;
-        this.ignoreGaps = IGNORE_GAPS_DEFAULT;
+        this.ignoreAmbiguity = IGNORE_AMBIGUITY_DEFAULT;
 
         setPatterns(siteList, from, to, every, null);
     }
@@ -233,8 +230,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         this.strip = strip;
         this.unique = unique;
         
-        this.ignoreUnknown = IGNORE_UNKNOWN_DEFAULT;
-        this.ignoreGaps = IGNORE_GAPS_DEFAULT;
+        this.ignoreAmbiguity = IGNORE_AMBIGUITY_DEFAULT;
 
         setPatterns(siteList, mask);
     }
@@ -492,25 +488,18 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
      * @return true if the pattern is invariant
      */
     private boolean isInvariant(int[] pattern) {
-        int len = pattern.length;
-
-        Set<Integer> stateSet = new HashSet<>();
-        for (int num : pattern) {
-            stateSet.add(num);
-        }
-        // the number of unique state codes
-        int count = stateSet.size();
-        // if we are ignoring unknown states then decrement the count if there are any
-        if (ignoreUnknown && stateSet.contains(getDataType().getUnknownState())) {
-            count -= 1;
-        }
-        // if we are ignoring gaps then decrement the count if there are any
-        if (ignoreGaps && stateSet.contains(getDataType().getGapState())) {
-            count -= 1;
+        int firstState = pattern[0];
+        for (int i = 1; i < pattern.length; i++) {
+            if (ignoreAmbiguity) {
+                if (getDataType().areUnambiguouslyDifferent(firstState, pattern[i])) {
+                    return false;
+                }
+            } else if (firstState != pattern[i]) {
+                return false;
+            }
         }
 
-        // is there one unbique state (or fewer if gaps and/or missing, and we are ignoring them)
-        return count <= 1;
+        return true;
     }
 
     /**
@@ -522,10 +511,11 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
         int len = pattern1.length;
         for (int i = 0; i < len; i++) {
-            if (pattern1[i] != pattern2[i] &&
-                    !(ignoreUnknown && (getDataType().isUnknownState(pattern1[i]) || getDataType().isUnknownState(pattern2[i]))) &&
-                    !(ignoreGaps && (getDataType().isGapState(pattern1[i]) || getDataType().isGapState(pattern2[i])))
-            ) {
+            if (ignoreAmbiguity) {
+                   if (getDataType().areUnambiguouslyDifferent(pattern1[i], pattern2[i])) {
+                       return false;
+                   }
+            } else if (pattern1[i] != pattern2[i]) {
                 return false;
             }
         }

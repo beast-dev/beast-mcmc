@@ -47,6 +47,8 @@ import java.util.*;
  */
 public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
+    private static final boolean IGNORE_UNKNOWN_DEFAULT = false;
+    private static final boolean IGNORE_GAPS_DEFAULT = false;
     /**
      * the source alignment
      */
@@ -91,9 +93,12 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
     protected int from, to, every;
 
-    protected boolean strip = true;  // Strip out completely ambiguous sites
+    final protected boolean strip;  // Strip out completely ambiguous sites
 
-    protected boolean unique = true; // Compress into weighted list of unique patterns
+    final protected boolean unique; // Compress into weighted list of unique patterns
+
+    final private boolean ignoreUnknown; // Whether to ignore unknowns when considering if sites are unique
+    final private boolean ignoreGaps; // Whether to ignore gaps when considering if sites are unique
 
     private boolean uncertainSites = false;
 
@@ -141,6 +146,17 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         this(alignment, taxa, from, to, every, strip, unique, null);
     }
 
+    /**
+     *
+     * @param alignment The alignment
+     * @param taxa The list of taxa - can be a subset of those in the alignment
+     * @param from the first site to be included in the pattern list (zero indexed)
+     * @param to the last site to be included in the pattern list (inclusive)
+     * @param every skip every over every X sites
+     * @param strip whether to strip completely ambiguous/gapped sites
+     * @param unique whether to only include unique site patterns (with weights)
+     * @param constantSiteCounts a vector of counts of constant sites for each state (for where the alignment only includes variable sites)
+     */
     public SitePatterns(Alignment alignment, TaxonList taxa, int from, int to, int every, boolean strip, boolean unique, int[] constantSiteCounts) {
         if (taxa != null) {
             SimpleAlignment a = new SimpleAlignment();
@@ -155,6 +171,9 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         }
         this.strip = strip;
         this.unique = unique;
+
+        this.ignoreUnknown = IGNORE_UNKNOWN_DEFAULT;
+        this.ignoreGaps = IGNORE_GAPS_DEFAULT;
 
         setPatterns(alignment, from, to, every, constantSiteCounts);
     }
@@ -186,6 +205,10 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     public SitePatterns(SiteList siteList, int from, int to, int every, boolean strip, boolean unique) {
         this.strip = strip;
         this.unique = unique;
+
+        this.ignoreUnknown = IGNORE_UNKNOWN_DEFAULT;
+        this.ignoreGaps = IGNORE_GAPS_DEFAULT;
+
         setPatterns(siteList, from, to, every, null);
     }
 
@@ -209,6 +232,10 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     public SitePatterns(SiteList siteList, boolean[] mask, boolean strip, boolean unique) {
         this.strip = strip;
         this.unique = unique;
+        
+        this.ignoreUnknown = IGNORE_UNKNOWN_DEFAULT;
+        this.ignoreGaps = IGNORE_GAPS_DEFAULT;
+
         setPatterns(siteList, mask);
     }
 
@@ -467,14 +494,23 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     private boolean isInvariant(int[] pattern) {
         int len = pattern.length;
 
-        int state = pattern[0];
-        for (int i = 1; i < len; i++) {
-            if (pattern[i] != state) {
-                return false;
-            }
+        Set<Integer> stateSet = new HashSet<>();
+        for (int num : pattern) {
+            stateSet.add(num);
+        }
+        // the number of unique state codes
+        int count = stateSet.size();
+        // if we are ignoring unknown states then decrement the count if there are any
+        if (ignoreUnknown && stateSet.contains(getDataType().getUnknownState())) {
+            count -= 1;
+        }
+        // if we are ignoring gaps then decrement the count if there are any
+        if (ignoreGaps && stateSet.contains(getDataType().getGapState())) {
+            count -= 1;
         }
 
-        return true;
+        // is there one unbique state (or fewer if gaps and/or missing, and we are ignoring them)
+        return count <= 1;
     }
 
     /**
@@ -486,7 +522,10 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
         int len = pattern1.length;
         for (int i = 0; i < len; i++) {
-            if (pattern1[i] != pattern2[i]) {
+            if (pattern1[i] != pattern2[i] &&
+                    !(ignoreUnknown && (getDataType().isUnknownState(pattern1[i]) || getDataType().isUnknownState(pattern2[i]))) &&
+                    !(ignoreGaps && (getDataType().isGapState(pattern1[i]) || getDataType().isGapState(pattern2[i])))
+            ) {
                 return false;
             }
         }

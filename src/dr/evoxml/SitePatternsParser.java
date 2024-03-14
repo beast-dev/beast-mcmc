@@ -48,7 +48,11 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
     public static final String EVERY = "every";
     public static final String TAXON_LIST = "taxonList";
     public static final String STRIP = "strip";
+    // Specifies whether to collapse no
     public static final String UNIQUE = "unique";
+
+    // Specifies whether sites that differ only in the pattern of ambiguities are treated as unique
+    public static final String UNIQUE_AMBIGUITIES = "uniqueAmbiguities";
     public static final String CONSTANT_PATTERNS = "constantPatterns";
 
 

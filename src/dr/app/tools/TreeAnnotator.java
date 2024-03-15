@@ -444,7 +444,7 @@ public class TreeAnnotator {
 
             for (Pair<BitSet, BitSet> subClade : clade.subClades) {
 
-                CladeSystem.Clade left = cladeSystem.getCladeMap().get(subClade.fst);
+                CladeSystem.Clade left = cladeSystem.getCladeMap().get(subClade.first);
                 if (left == null) {
                     throw new IllegalArgumentException("no clade found");
                 }
@@ -454,7 +454,7 @@ public class TreeAnnotator {
                     leftLogCredibility = findHIPSTRTree(cladeSystem, left);
                     credibilityCache.put(left, leftLogCredibility);
                 }
-                CladeSystem.Clade right = cladeSystem.getCladeMap().get(subClade.snd);
+                CladeSystem.Clade right = cladeSystem.getCladeMap().get(subClade.second);
                 if (right == null) {
                     throw new IllegalArgumentException("no clade found");
                 }

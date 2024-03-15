@@ -213,10 +213,10 @@ public class BeastParser extends XMLParser {
         categoryMap.put("Framework", new LinkedHashSet<Pair<String, String>>());
 
         for (Pair<String, String> keyPair : getCitationStore().keySet()) {
-            Set<Pair<String, String>> pairSet = categoryMap.get(keyPair.fst);
+            Set<Pair<String, String>> pairSet = categoryMap.get(keyPair.first);
             if (pairSet == null) {
                 pairSet = new LinkedHashSet<Pair<String, String>>();
-                categoryMap.put(keyPair.fst, pairSet);
+                categoryMap.put(keyPair.first, pairSet);
             }
             pairSet.add(keyPair);
         }
@@ -226,7 +226,7 @@ public class BeastParser extends XMLParser {
             Set<Pair<String, String>> pairSet = categoryMap.get(category);
 
             for (Pair<String, String>keyPair : pairSet) {
-                Logger.getLogger("dr.apps.beast").info(keyPair.snd + ":");
+                Logger.getLogger("dr.apps.beast").info(keyPair.second + ":");
 
                 for (Citation citation : getCitationStore().get(keyPair)) {
                     Logger.getLogger("dr.apps.beast").info("\t" + citation.toString());

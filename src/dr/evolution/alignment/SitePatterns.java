@@ -277,16 +277,6 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
                                 !isAmbiguous(pattern) &&
                                 !isUnknown(pattern))) {
 
-                    System.err.print("Adding: ");
-                    for (int j = 0; j < getPatternLength(); j++) {
-                        if (getDataType().getCode(pattern[j]).equals("K")) {
-                            System.err.print(getDataType().getCode(pattern[j]));
-                        } else {
-                            System.err.print(getDataType().getCode(pattern[j]));
-                        }
-                    }
-                    System.err.println();
-
                     sitePatternIndices[site] = addPattern(pattern, weight, compression);
 
                     count += 1;

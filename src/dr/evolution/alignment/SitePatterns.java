@@ -47,6 +47,8 @@ import static dr.evolution.alignment.SitePatterns.CompressionType.*;
  * @version $Id: SitePatterns.java,v 1.47 2005/06/22 16:44:17 rambaut Exp $
  */
 public class SitePatterns implements SiteList, dr.util.XHTMLable {
+    private final boolean DEBUG = false;
+
     public enum CompressionType {
         // no compression - all patterns in order
         UNCOMPRESSED,
@@ -244,6 +246,10 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
             uncertainPatterns = new double[siteCount][][];
         }
 
+        if (DEBUG) {
+            System.err.println("Creating SitePatterns using compression type: " + compression.toString());
+        }
+
         if (compression != UNCOMPRESSED) {
             // if the patterns are to be compressed then create the constant sites initially
             for (int i = 0; i < siteList.getStateCount(); i++) {
@@ -256,6 +262,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         }
 
         int site = 0;
+        int count = 0;
 
         for (int i = from; i <= to; i += every) {
             int[] pattern = siteList.getSitePattern(i);
@@ -270,8 +277,19 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
                                 !isAmbiguous(pattern) &&
                                 !isUnknown(pattern))) {
 
+                    System.err.print("Adding: ");
+                    for (int j = 0; j < getPatternLength(); j++) {
+                        if (getDataType().getCode(pattern[j]).equals("K")) {
+                            System.err.print(getDataType().getCode(pattern[j]));
+                        } else {
+                            System.err.print(getDataType().getCode(pattern[j]));
+                        }
+                    }
+                    System.err.println();
+
                     sitePatternIndices[site] = addPattern(pattern, weight, compression);
 
+                    count += 1;
                 } else {
                     sitePatternIndices[site] = -1;
                 }
@@ -279,9 +297,47 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
             site++;
         }
 
+        if (DEBUG) {
+            System.err.println("Added " + count + " site patterns");
+
+            if (compression != UNCOMPRESSED) {
+                System.err.println("Compressed to " + patternCount + " unique patterns");
+//                System.err.println("Constant patterns:");
+//                for (int i = 0; i < getStateCount(); i++) {
+//                    System.err.println("State " + getDataType().getCode(i) + ": " + weights[i]);
+//                }
+
+                System.err.println("All patterns:");
+                for (int i = 0; i < getPatternCount(); i++) {
+                    System.err.print("Pattern: ");
+                    for (int j = 0; j < getPatternLength(); j++) {
+                        System.err.print(getDataType().getCode(patterns[i][j]));
+                    }
+                    System.err.println(" - " + weights[i]);
+                }
+            }
+        }
+
+
         if (compression != UNCOMPRESSED && compression != UNIQUE_ONLY) {
 //            sortPatternsByWeight();
             compressAmbiguousPatterns(compression == AMBIGUOUS_CONSTANT);
+
+            if (DEBUG) {
+                System.err.println("Further compressed to " + patternCount + " ambiguously unique patterns");
+//                System.err.println("Constant patterns:");
+//                for (int i = 0; i < getStateCount(); i++) {
+//                    System.err.println("State " + getDataType().getCode(i) + ": " + weights[i]);
+//                }
+                System.err.println("All patterns:");
+                for (int i = 0; i < getPatternCount(); i++) {
+                    System.err.print("Pattern: ");
+                    for (int j = 0; j < getPatternLength(); j++) {
+                        System.err.print(getDataType().getCode(patterns[i][j]));
+                    }
+                    System.err.println(" - " + weights[i]);
+                }
+            }
         }
 
         countInvariantSites();
@@ -380,17 +436,17 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     private void compressAmbiguousPatterns(boolean constantOnly) {
         // the first stateCount patterns are the constant ones
         for (int i = getStateCount(); i < patternCount; i++) {
-                int count = constantOnly ? getStateCount() : i;
-                for (int j = 0; j < count; j++) {
-                    if (patterns[j] != null) {
-                        if (comparePatterns(patterns[i], patterns[j], true)) {
-                        if (getCanonicalStateCount(patterns[i]) > getCanonicalStateCount(patterns[j])) {
+            int count = constantOnly ? getStateCount() : i;
+            for (int j = 0; j < count; j++) {
+                if (patterns[j] != null) {
+                    if (comparePatterns(patterns[i], patterns[j], true)) {
+                        if (!constantOnly && getCanonicalStateCount(patterns[i]) > getCanonicalStateCount(patterns[j])) {
                             // if this is a less ambiguous pattern then this becomes the 'type' pattern
                             patterns[j] = patterns[i];
                         }
-                        patterns[i] = null;
                         weights[j] += weights[i];
                         weights[i] = 0.0;
+                        patterns[i] = null;
                         break;
                     }
                 }

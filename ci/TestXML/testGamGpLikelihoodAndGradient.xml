@@ -223,7 +223,6 @@
 	</report>
 
 
-
 	<glmSubstitutionModel id="loc.model" normalize="true">
 		<generalDataType idref="loc.dataType"/>
 		<rootFrequencies>
@@ -327,46 +326,6 @@
             -0.5 0 1 0 0 0
         </expected>
     </assertEqual>
-
-
-    <mcmc id="mcmc" chainLength="1000" autoOptimize="true">
-        <joint id="joint"> <!-- joint, from now on a list of density -->
-            <prior id="prior">
-<!--                 <gamGpModel idref="gamGpModel"/> -->
-				<randomField idref="test.field"/>
-            </prior>
-            <likelihood id="likelihood">
-                <treeLikelihood idref="treeLikelihood"/>
-            </likelihood>
-        </joint>
-        <operators idref="operators"/>
-        <log id="screenLog" logEvery="200"> <!-- keep track of the chain,printed to the screen-->
-            <column label="Joint" dp="4" width="12"> <!-- "label" is the col name; "dp" is the number of decimals and "width" is the btw cols space -->
-                <joint idref="joint"/>
-            </column>
-            <column label="Prior" dp="4" width="12">
-                <prior idref="prior"/>
-            </column>
-            <column label="Likelihood" dp="4" width="12">
-                <likelihood idref="likelihood"/>
-            </column>
-            <column label="Root Height" sf="6" width="12"> <!-- "sf" is the total number of units -->
-                <parameter idref="treeModel.rootHeight"/>
-            </column>
-            <column label="Field" sf="6" width="12">
-                <parameter idref="loc.coefficients0"/>
-            </column>
-            <column sf="6" width="12">
-                <parameter idref="test.prediction"/>
-            </column>
-        </log>
-        <log id="fileLog" logEvery="10" fileName="test.log">
-            <joint idref="joint"/>
-            <prior idref="prior"/>
-            <likelihood idref="likelihood"/>
-            <parameter idref="loc.coefficients0"/>
-        </log>
-    </mcmc>
 
     <report id = "report.prediction">
         <gaussianProcessPrediction idref="test.prediction"/>

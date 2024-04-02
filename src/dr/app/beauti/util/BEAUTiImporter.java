@@ -561,15 +561,17 @@ public class BEAUTiImporter {
             options.fileNameStem = fileNameStem;
         }
 
-        // check the alignment before adding it...
-        if (alignment.getSiteCount() == 0) {
-            // sequences are different lengths
-            throw new ImportException("This alignment is of zero length");
-        }
-        for (Sequence seq : alignment.getSequences()) {
-            if (seq.getLength() != alignment.getSiteCount()) {
+        if (alignment != null) {
+            // check the alignment before adding it...
+            if (alignment.getSiteCount() == 0) {
                 // sequences are different lengths
-                throw new ImportException("The sequences in the alignment file are of different lengths - BEAST requires aligned sequences");
+                throw new ImportException("This alignment is of zero length");
+            }
+            for (Sequence seq : alignment.getSequences()) {
+                if (seq.getLength() != alignment.getSiteCount()) {
+                    // sequences are different lengths
+                    throw new ImportException("The sequences in the alignment file are of different lengths - BEAST requires aligned sequences");
+                }
             }
         }
 

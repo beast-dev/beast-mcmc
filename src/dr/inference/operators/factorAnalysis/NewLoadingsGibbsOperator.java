@@ -65,14 +65,14 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     private final FactorAnalysisOperatorAdaptor adaptor;
 
     private final ConstrainedSampler constrainedSampler;
-    private final ColumnDimProvider columnDimProvider;
+    private final LoadingsSamplerConstraints columnDimProvider;
 
 
     public NewLoadingsGibbsOperator(FactorAnalysisStatisticsProvider statisticsProvider, NormalStatisticsProvider prior,
                                     double weight, boolean randomScan, DistributionLikelihood workingPrior,
                                     boolean multiThreaded, int numThreads,
                                     ConstrainedSampler constrainedSampler,
-                                    ColumnDimProvider columnDimProvider) {
+                                    LoadingsSamplerConstraints columnDimProvider) {
 
         setWeight(weight);
 
@@ -209,8 +209,10 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     }
 
     private void drawI(int i) {
-        int arrayInd = columnDimProvider.getArrayIndex(i, adaptor.getNumberOfFactors());
-        drawI(i, precisionArray.get(arrayInd), meanMidArray.get(arrayInd), meanArray.get(arrayInd));
+        if (columnDimProvider.getColumnDim(i, adaptor.getNumberOfFactors()) > 0) {
+            int arrayInd = columnDimProvider.getArrayIndex(i, adaptor.getNumberOfFactors());
+            drawI(i, precisionArray.get(arrayInd), meanMidArray.get(arrayInd), meanArray.get(arrayInd));
+        }
     }
 
 //    @Override
@@ -370,144 +372,13 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         abstract void applyConstraint(FactorAnalysisOperatorAdaptor adaptor);
     }
 
-    public enum ColumnDimProvider {//TODO: don't hard code constraints, make more generalizable
-
-
-        NONE("none") {
-            @Override
-            int getColumnDim(int colIndex, int nRows) {
-                return nRows;
-            }
-
-            @Override
-            int getArrayIndex(int colIndex, int nRows) {
-                return 0;
-            }
-
-            @Override
-            void allocateStorage(ArrayList<double[][]> precisionArray, ArrayList<double[]> midMeanArray,
-                                 ArrayList<double[]> meanArray, int nRows) {
-
-                precisionArray.add(new double[nRows][nRows]);
-                midMeanArray.add(new double[nRows]);
-                meanArray.add(new double[nRows]);
-
-            }
-        },
-
-        UPPER_TRIANGULAR("upperTriangular") {
-            @Override
-            int getColumnDim(int colIndex, int nRows) {
-                return Math.min(colIndex + 1, nRows);
-            }
-
-            @Override
-            int getArrayIndex(int colIndex, int nRows) {
-                return Math.min(colIndex, nRows - 1);
-            }
-
-            @Override
-            void allocateStorage(ArrayList<double[][]> precisionArray, ArrayList<double[]> midMeanArray,
-                                 ArrayList<double[]> meanArray, int nRows) {
-
-                for (int i = 1; i <= nRows; i++) {
-                    precisionArray.add(new double[i][i]);
-                    midMeanArray.add(new double[i]);
-                    meanArray.add(new double[i]);
-                }
-
-            }
-        },
-
-        FIRST_ROW("firstRow") {
-            @Override
-            int getColumnDim(int colIndex, int nRows) {
-                return 1;
-            }
-
-            @Override
-            int getArrayIndex(int colIndex, int nRows) {
-                return 0;
-            }
-
-            @Override
-            void allocateStorage(ArrayList<double[][]> precisionArray, ArrayList<double[]> midMeanArray,
-                                 ArrayList<double[]> meanArray, int nRows) {
-
-                precisionArray.add(new double[1][1]);
-                midMeanArray.add(new double[1]);
-                meanArray.add(new double[1]);
-
-            }
-        },
-
-        HYBRID("hybrid") {
-            @Override
-            int getColumnDim(int colIndex, int nRows) {
-
-                if (colIndex == 0) {
-                    return 1;
-                }
-                return nRows;
-            }
-
-            @Override
-            int getArrayIndex(int colIndex, int nRows) {
-                if (colIndex == 0) {
-                    return 0;
-                }
-                return 1;
-            }
-
-            @Override
-            void allocateStorage(ArrayList<double[][]> precisionArray, ArrayList<double[]> midMeanArray, ArrayList<double[]> meanArray, int nRows) {
-
-                // first column
-                precisionArray.add(new double[1][1]);
-                midMeanArray.add(new double[1]);
-                meanArray.add(new double[1]);
-
-
-                // remaining columns
-                precisionArray.add(new double[nRows][nRows]);
-                midMeanArray.add(new double[nRows]);
-                meanArray.add(new double[nRows]);
-
-            }
-        };
-
-        abstract int getColumnDim(int colIndex, int nRows);
-
-        abstract int getArrayIndex(int colIndex, int nRows);
-
-        abstract void allocateStorage(ArrayList<double[][]> precisionArray, ArrayList<double[]> midMeanArray,
-                                      ArrayList<double[]> meanArray, int nRows);
-
-
-        private String name;
-
-        ColumnDimProvider(String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public static ColumnDimProvider parse(String name) {
-            name = name.toLowerCase();
-            for (ColumnDimProvider dimProvider : ColumnDimProvider.values()) {
-                if (name.compareTo(dimProvider.getName().toLowerCase()) == 0) {
-                    return dimProvider;
-                }
-            }
-            throw new IllegalArgumentException("Unknown dimension provider type");
-        }
-
-    }
-
     @Override
     public String getReport() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(adaptor.getReport());
+        sb.append("\n\n");
+
+
         int repeats = 20000;
 
         int nFac = adaptor.getNumberOfFactors();
@@ -553,7 +424,6 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             }
         }
 
-        StringBuilder sb = new StringBuilder();
         sb.append(getOperatorName() + "Report:\n");
         sb.append("Loadings mean:\n");
         sb.append(new Vector(loadMean));

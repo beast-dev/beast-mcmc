@@ -59,6 +59,23 @@ public class BeagleFunctionality {
         return order;
     }
 
+    public static List<Long> parseSystemPropertyLongArray(String propertyName) {
+        List<Long> order = new ArrayList<>();
+        String r = System.getProperty(propertyName);
+        if (r != null) {
+            String[] parts = r.split(",");
+            for (String part : parts) {
+                try {
+                    long n = Long.parseLong(part.trim());
+                    order.add(n);
+                } catch (NumberFormatException nfe) {
+                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
+                }
+            }
+        }
+        return order;
+    }
+
     public static List<String> parseSystemPropertyStringArray(String propertyName) {
 
         List<String> order = new ArrayList<>();

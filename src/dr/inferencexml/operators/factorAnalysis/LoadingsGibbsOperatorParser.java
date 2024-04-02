@@ -25,19 +25,13 @@
 
 package dr.inferencexml.operators.factorAnalysis;
 
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MomentDistributionModel;
-import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.distribution.NormalStatisticsProvider;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.Parameter;
 import dr.inference.operators.factorAnalysis.*;
 import dr.math.distributions.Distribution;
-import dr.math.distributions.NormalDistribution;
-import dr.util.Attribute;
 import dr.xml.*;
 
 /**
@@ -117,13 +111,26 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
                         xo.getAttribute(CONSTRAINT, NewLoadingsGibbsOperator.ConstrainedSampler.NONE.getName())
                 );
 
-                NewLoadingsGibbsOperator.ColumnDimProvider dimProvider =
-                        NewLoadingsGibbsOperator.ColumnDimProvider.parse(xo.getAttribute(SPARSITY_CONSTRAINT,
-                                NewLoadingsGibbsOperator.ColumnDimProvider.UPPER_TRIANGULAR.getName())
-                        );
+                LoadingsSamplerConstraints sparsityConstraints =
+                        (GeneralizedSampleConstraints)
+                                xo.getChild(GeneralizedSampleConstraints.class);
+
+                if (sparsityConstraints != null && xo.hasAttribute(SPARSITY_CONSTRAINT)) {
+                    throw new XMLParseException("Cannot provide both a '" + SPARSITY_CONSTRAINT + "' attribute and '" +
+                            GeneralizedSampleConstraints.PARSER.getParserName() +
+                            "' element.");
+                }
+
+                if (sparsityConstraints == null) {
+                    sparsityConstraints =
+                            LoadingsSamplerConstraints.ColumnDimProvider.parse(xo.getAttribute(SPARSITY_CONSTRAINT,
+                                    LoadingsSamplerConstraints.ColumnDimProvider.UPPER_TRIANGULAR.getName())
+                            );
+                }
+
 
                 return new NewLoadingsGibbsOperator(statisticsProvider, prior, weight, randomScan, WorkingPrior,
-                        multiThreaded, numThreads, sampler, dimProvider);
+                        multiThreaded, numThreads, sampler, sparsityConstraints);
             } else {
 //                return new LoadingsGibbsOperator(LFM, prior, weight, randomScan, WorkingPrior, multiThreaded, numThreads);
                 return null;
@@ -158,6 +165,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
             new ElementRule(WORKING_PRIOR, new XMLSyntaxRule[]{
                     new ElementRule(DistributionLikelihood.class)
             }, true),
+            new ElementRule(GeneralizedSampleConstraints.class, true)
     };
 
     @Override

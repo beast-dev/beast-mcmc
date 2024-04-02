@@ -38,6 +38,8 @@ public class TransformedMultivariateParameter extends TransformedParameter {
     private double[] unTransformedValues;
 //    private double[] storedTransformedValues; //TODO store/restore mechanism for TransformedParameter ?
 
+    private boolean valuesKnown = false;
+
     public TransformedMultivariateParameter(Parameter parameter, Transform.MultivariableTransform transform) {
         this(parameter, transform, false);
     }
@@ -53,26 +55,46 @@ public class TransformedMultivariateParameter extends TransformedParameter {
         return transformedValues[dim];
     }
 
+    protected void storeValues() {
+        super.storeValues();
+    }
+
+    protected void restoreValues() {
+        super.restoreValues();
+        valuesKnown = false;
+    }
+
+//    public void variableChangedEvent(Variable variable, int index, ChangeType type) {
+//        valuesKnown = false;
+//        // Propogate change up model graph
+//        fireParameterChangedEvent(index, type);
+//    }
+
     public void setParameterValue(int dim, double value) {
-        update();
-        unTransformedValues[dim] = value;
-/*        transformedValues[dim] = value;
-        unTransformedValues = inverse(transformedValues);*/
-        // Need to update all values
-        parameter.setParameterValueNotifyChangedAll(0, unTransformedValues[0]); // Warn everyone is changed
-        for (int i = 1; i < parameter.getDimension(); i++) {
-            parameter.setParameterValueQuietly(i, unTransformedValues[i]); // Do the rest quietly
-        }
-        transformedValues = transform(unTransformedValues);
+        setParameterValueQuietly(dim, value);
+        parameter.fireParameterChangedEvent();
     }
 
     public void setParameterValueQuietly(int dim, double value) {
         update();
-        unTransformedValues[dim] = value;
-        transformedValues = transform(unTransformedValues);
+        transformedValues[dim] = value;
+        updateParameterQuietlyFromTransformedValues();
+    }
 
-/*        transformedValues[dim] = value;
-        unTransformedValues = inverse(transformedValues);*/
+    @Override
+    public void setAllParameterValuesQuietly(double[] values) {
+        if (values.length != transformedValues.length) {
+            throw new IllegalArgumentException("supplied values must be of same dimension as transformed parameter");
+        }
+
+        for (int i = 0; i < transformedValues.length; i++) {
+            transformedValues[i] = values[i];
+        }
+        updateParameterQuietlyFromTransformedValues();
+    }
+
+    private void updateParameterQuietlyFromTransformedValues() {
+        unTransformedValues = inverse(transformedValues);
         // Need to update all values
         for (int i = 0; i < parameter.getDimension(); i++) {
             parameter.setParameterValueQuietly(i, unTransformedValues[i]);
@@ -84,35 +106,32 @@ public class TransformedMultivariateParameter extends TransformedParameter {
     }
 
     public void addBounds(Bounds<Double> bounds) {
-//        parameter.addBounds(new DefaultBounds(null, null));
-//        throw new RuntimeException("Should not call addBounds() on transformed parameter");
         // TODO: Check bounds of the parameter ?  XJ: bounds can be quite arbitrary in this case.  I decided to allow manual setup through parser.
         transformedBounds = bounds;
     }
 
-//    public Bounds<Double> getBounds() {
-////        throw new RuntimeException("Should not call addBounds() on transformed parameter");
-//        return new DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, parameter.getDimension());
-//    }
-
     private void update() {
-
-//        if (hasChanged()) {
+        if (!valuesKnown) {
             unTransformedValues = parameter.getParameterValues();
             transformedValues = transform(unTransformedValues);
-//        }
+            valuesKnown = true;
+        }
     }
 
     private boolean hasChanged() {
-
-
         for (int i = 0; i < unTransformedValues.length; i++) {
             if (parameter.getParameterValue(i) != unTransformedValues[i]) {
                 return true;
             }
         }
-
-
         return false;
+    }
+
+    @Override
+    public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        valuesKnown = false;
+        if (!doNotPropagateChangeUp) {
+            fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED); //if one dimension of the untransformed parameter changes, it is very likely that many dimensions of the transformed parameter change
+        }
     }
 }

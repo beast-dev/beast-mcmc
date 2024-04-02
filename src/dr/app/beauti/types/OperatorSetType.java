@@ -32,6 +32,7 @@ public enum OperatorSetType {
 
     DEFAULT("new tree operator mix"),
     FIXED_TREE_TOPOLOGY("fixed tree topology"),
+    FIXED_TREE("fixed tree"),
     CLASSIC("classic tree operator mix"),
     ADAPTIVE_MULTIVARIATE("adaptive multivariate"),
     CUSTOM("custom operator mix"),

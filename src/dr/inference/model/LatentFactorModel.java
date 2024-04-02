@@ -48,7 +48,6 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private final MatrixParameterInterface factors;
     private final MatrixParameterInterface loadings;
     private MatrixParameterInterface sData;
-    private final DiagonalMatrix rowPrecision;
     private final DiagonalMatrix colPrecision;
     private final Parameter continuous;
 
@@ -105,7 +104,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private final int nmeasurements;
 
     public LatentFactorModel(MatrixParameterInterface data, MatrixParameterInterface factors, MatrixParameterInterface loadings,
-                             DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision,
+                             DiagonalMatrix colPrecision,
                              Parameter missingIndicator,
                              boolean scaleData, Parameter continuous, boolean newModel, boolean recomputeResiduals,
                              boolean recomputeFactors, boolean recomputeLoadings
@@ -182,13 +181,11 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             }
         }
 
-        this.rowPrecision = rowPrecision;
         this.colPrecision = colPrecision;
 
         addVariable(data);
         addVariable(factors);
         addVariable(loadings);
-        addVariable(rowPrecision);
         addVariable(colPrecision);
 
         dimFactors = factors.getRowDimension();

@@ -70,6 +70,7 @@ import dr.util.CommonCitations;
 import java.util.*;
 import java.util.logging.Logger;
 
+import static dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.instanceCount;
 import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
 
 /**
@@ -102,7 +103,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
 
-    private static int instanceCount = BeagleDataLikelihoodDelegate.instanceCount;
+//    private static int instanceCount = BeagleDataLikelihoodDelegate.instanceCount;
     private static List<Integer> resourceOrder = null;
     private static List<Integer> preferredOrder = null;
     private static List<Integer> requiredOrder = null;

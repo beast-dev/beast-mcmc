@@ -51,12 +51,12 @@ public class LKJCorrelationDistribution extends AbstractLKJDistribution {
 
         assert (x.length == upperTriangularSize(dim));
 
-        if (shape == 1.0) { // Uniform
-            return logNormalizationConstant;
-        } else {
-            SymmetricMatrix R = compoundCorrelationSymmetricMatrix(x, dim);
-            return logPdf(R);
-        }
+//        if (shape == 1.0) { // Uniform //even when it's uniform, you still want to return -inf if it's not pos. def.
+//            return logNormalizationConstant;
+//        } else {
+        SymmetricMatrix R = compoundCorrelationSymmetricMatrix(x, dim);
+        return logPdf(R);
+//        }
     }
 
     private double logPdf(Matrix R) {

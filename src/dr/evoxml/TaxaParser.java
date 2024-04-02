@@ -84,7 +84,8 @@ public class TaxaParser extends AbstractXMLObjectParser {
         }
 
         final Logger logger = Logger.getLogger("dr.evoxml");
-        logger.info("\nTaxon list '" + xo.getId() + "' created with " + taxonList.getTaxonCount() + " taxa.");
+        String idString = xo.hasId() ? "'" + xo.getId() + "' " : "";
+        logger.info("\nTaxon list " + idString + "created with " + taxonList.getTaxonCount() + " taxa.");
         logger.info("    most recent taxon date = " + Taxon.getMostRecentDate());
 
         return taxonList;

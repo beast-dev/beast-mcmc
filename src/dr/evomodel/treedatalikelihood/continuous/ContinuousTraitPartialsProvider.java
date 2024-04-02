@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
 import dr.inference.model.CompoundParameter;
 
 import java.util.ArrayList;
@@ -69,6 +70,18 @@ public interface ContinuousTraitPartialsProvider {
 
     String getModelName();
 
+    boolean usesMissingIndices();
+
+    ContinuousTraitPartialsProvider[] getChildModels();
+
+    default double[] drawTraitsBelowConditionalOnDataAndTraitsAbove(double[] aboveTraits) {
+        throw new RuntimeException("Conditional sampling not yet implemented for " + this.getClass());
+    }
+
+    default double[] transformTreeTraits(double[] traits) {
+        return traits;
+    }
+
     default boolean getDefaultAllowSingular() {
         return false;
     }
@@ -77,10 +90,28 @@ public interface ContinuousTraitPartialsProvider {
         return true;
     }
 
-    default int[] getPartitionDimensions() { return null;}
+    default int[] getPartitionDimensions() {
+        return new int[]{getTraitDimension()};
+    }
 
     default void addTreeAndRateModel(Tree treeModel, ContinuousRateTransformation rateTransformation) {
         // Do nothing
+    }
+
+    default WrappedNormalSufficientStatistics partitionNormalStatistics(WrappedNormalSufficientStatistics statistic,
+                                                                        ContinuousTraitPartialsProvider provider) {
+        if (this == provider) {
+            return statistic;
+        }
+        throw new RuntimeException("This class does not currently support 'partitionNormalStatistics' with " +
+                "a provider other than itself.");
+    }
+
+    default ContinuousTraitPartialsProvider getProviderForTrait(String trait) {
+        if (trait.equals(getTipTraitName())) {
+            return this;
+        }
+        throw new RuntimeException("Partials provider does not have trait '" + trait + "'");
     }
 
     static boolean[] indicesToIndicator(List<Integer> indices, int n) {

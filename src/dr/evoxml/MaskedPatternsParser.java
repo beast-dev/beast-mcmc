@@ -43,6 +43,7 @@ public class MaskedPatternsParser extends AbstractXMLObjectParser {
     public static final String MASKED_PATTERNS = "maskedPatterns";
     public static final String MASK = "mask";
     public static final String NEGATIVE = "negative";
+    public static final String INVERSE = "inverse";
 
     public String getParserName() { return MASKED_PATTERNS; }
 
@@ -53,7 +54,7 @@ public class MaskedPatternsParser extends AbstractXMLObjectParser {
 
         SiteList siteList = (SiteList)xo.getChild(SiteList.class);
 
-        boolean negativeMask = xo.getBooleanAttribute(NEGATIVE);
+        boolean inverseMask = xo.getBooleanAttribute(INVERSE, false) || xo.getBooleanAttribute(NEGATIVE, false);
         String maskString = (String)xo.getElementFirstChild(MASK);
 
         boolean[] mask = new boolean[siteList.getSiteCount()];
@@ -63,7 +64,7 @@ public class MaskedPatternsParser extends AbstractXMLObjectParser {
                 if (k >= mask.length) {
                     break;
                 }
-                mask[k] = (c == '0' ? negativeMask : !negativeMask);
+                mask[k] = (c == '0' ? inverseMask : !inverseMask);
                 k++;
             }
         }
@@ -94,6 +95,7 @@ public class MaskedPatternsParser extends AbstractXMLObjectParser {
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newBooleanRule(INVERSE, true),
             AttributeRule.newBooleanRule(NEGATIVE, true),
             new ElementRule(SiteList.class),
             new ElementRule(MASK, String.class, "A parameter of 1s and 0s that represent included and excluded sites")

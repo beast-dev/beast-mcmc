@@ -26,13 +26,6 @@
 package dr.inferencexml.glm;
 
 //import dr.inference.glm.MultivariateOUModel;
-import dr.evomodel.substmodel.SubstitutionModel;
-import dr.inference.glm.GeneralizedLinearModel;
-import dr.inference.model.DesignMatrix;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Parameter;
-import dr.inferencexml.glm.GeneralizedLinearModelParser;
-import dr.xml.*;
 
 /**
  *

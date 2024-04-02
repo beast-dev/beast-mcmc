@@ -35,7 +35,6 @@ import dr.evomodel.treedatalikelihood.discrete.BranchRateGradientForDiscreteTrai
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.JointBranchRateGradient;
-import dr.inference.hmc.JointGradient;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;

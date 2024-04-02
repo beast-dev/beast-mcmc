@@ -45,7 +45,7 @@ import java.util.logging.Logger;
 public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood implements Reportable,
         GradientWrtParameterProvider {
 
-    private final static String REQUIRED_FLAGS_PROPERTY = "mds.required.flags";
+    public final static String REQUIRED_FLAGS_PROPERTY = "mds.required.flags";
 
     @Override
     public String getReport() {

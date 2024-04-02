@@ -42,10 +42,14 @@ public class MCMCMCRunner extends Thread {
         this.disableCoerce = disableCoerce;
     }
 
+    public void runSubChain() {
+        markovChain.runChain(length, disableCoerce);
+    }
+
 	public void run() {
         long i = 0;
         while (i < totalLength) {
-            markovChain.runChain(length, disableCoerce/*, 0*/);
+            runSubChain();
 
             i += length;
 

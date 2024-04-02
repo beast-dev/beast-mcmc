@@ -97,6 +97,8 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
         mc.setCurrentLength(burnin);
         scheme.init();
         ((CombinedOperatorSchedule) schedule).reset();
+        long startTime = System.currentTimeMillis();
+        long startState = currentState;
         for (pathParameter = scheme.nextPathParameter(); pathParameter >= 0; pathParameter = scheme.nextPathParameter()) {
             pathLikelihood.setPathParameter(pathParameter);
             reportIteration(pathParameter, chainLength, burnin, scheme.pathSteps, scheme.step);
@@ -113,6 +115,20 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
             mc.runChain(burnin, false/*, 0*/);
             mc.setCurrentLength(cl);
             mc.runChain(chainLength, false);
+
+            for (MCLogger logger : loggers) {
+                logger.log(currentState);
+
+                // Print timePerMillion and units from MCLogger
+                if (logger instanceof MCLogger) {
+                    long time = System.currentTimeMillis();
+                    double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (currentState - startState));
+                    MCLogger mcLogger = (MCLogger) logger;
+                    String timePerMillion = mcLogger.getTimePerMillion(currentState, hoursPerMillionStates);
+                    String units = mcLogger.getUnits(hoursPerMillionStates, timePerMillion);
+                    System.out.println("Time per million: " + timePerMillion + units);
+                }
+            }
 
             if (SHOW_OPERATOR_ANALYSIS) {
             	OperatorAnalysisPrinter.showOperatorAnalysis(System.out, schedule, false);
@@ -748,6 +764,6 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
     public static final String BETA = "beta";
     public static final String PRERUN = "prerun";
     public static final String PRINT_OPERATOR_ANALYSIS = "printOperatorAnalysis";
-    
+
     private static boolean SHOW_OPERATOR_ANALYSIS = false;
 }

@@ -25,10 +25,7 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.BetaDistribution;
 import org.w3c.dom.Document;
@@ -38,9 +35,10 @@ import org.w3c.dom.Element;
  * A class that acts as a model for beta distributed data.
  *
  * @author Marc A. Suchard
+ * @author Andy Magee
  */
 
-public class BetaDistributionModel extends AbstractModel implements ParametricDistributionModel {
+public class BetaDistributionModel extends AbstractModel implements ParametricDistributionModel, GradientProvider {
 
     public static final String BETA_DISTRIBUTION_MODEL = "betaDistributionModel";
 
@@ -179,6 +177,34 @@ public class BetaDistributionModel extends AbstractModel implements ParametricDi
 
     private double getXScaled(double x) {
         return (x - offset) / length;
+    }
+
+
+    // **************************************************************
+    // GradientProvider implementation
+    // **************************************************************
+
+    public static double gradLogPdf(double x, double a, double b) {
+        return (a - 1.0) / x - (b - 1.0) / (1.0 - x);
+    }
+
+    public static double scaledGradLogPdf(double x, double a, double b, double o, double l) {
+        return (-(a + b - 2.0) * (o - x) - a * l  + l) / ((o - x) * (l + o - x));
+    }
+
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = scaledGradLogPdf(x[i], alpha.getValue(0), beta.getValue(0), offset, length);
+        }
+        return result;
     }
 
     // **************************************************************

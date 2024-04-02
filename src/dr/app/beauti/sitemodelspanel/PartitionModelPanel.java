@@ -26,6 +26,7 @@
 package dr.app.beauti.sitemodelspanel;
 
 import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.components.continuous.ContinuousModelExtensionType;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
@@ -45,6 +46,7 @@ import dr.evolution.datatype.Microsatellite;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.event.*;
 import java.util.EnumSet;
@@ -66,23 +68,23 @@ public class PartitionModelPanel extends OptionsPanel {
             NucModelType.JC, NucModelType.TN93).toArray());
     private JComboBox aaSubstCombo = new JComboBox(AminoAcidModelType.values());
     private JComboBox binarySubstCombo = new JComboBox(
-            new BinaryModelType[] { BinaryModelType.BIN_SIMPLE, BinaryModelType.BIN_COVARION });
+            new BinaryModelType[]{BinaryModelType.BIN_SIMPLE, BinaryModelType.BIN_COVARION});
     private JCheckBox useAmbiguitiesTreeLikelihoodCheck = new JCheckBox(
             "Use ambiguities in the tree likelihood associated with this model");
 
     private JComboBox frequencyCombo = new JComboBox(FrequencyPolicyType
             .values());
 
-    private JComboBox heteroCombo = new JComboBox(new String[] { "None",
-            "Gamma (Felsenstein weights)", "Gamma (equal weights)", "Invariant Sites", "Gamma (equal weights) + Invariant Sites" });
+    private JComboBox heteroCombo = new JComboBox(new String[]{"None",
+            /*"Gamma (Felsenstein weights)", */ "Gamma (equal weights)", "Invariant Sites", "Gamma (equal weights) + Invariant Sites"});
 
-    private JComboBox gammaCatCombo = new JComboBox(new String[] { "4", "5",
-            "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16" });
+    private JComboBox gammaCatCombo = new JComboBox(new String[]{"4", "5",
+            "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"});
     private JLabel gammaCatLabel;
 
-    private JComboBox codingCombo = new JComboBox(new String[] { "Off",
+    private JComboBox codingCombo = new JComboBox(new String[]{"Off",
             "2 partitions: positions (1 + 2), 3",
-            "3 partitions: positions 1, 2, 3" });
+            "3 partitions: positions 1, 2, 3"});
 
     private JCheckBox substUnlinkCheck = new JCheckBox(
             "Unlink substitution rate parameters across codon positions");
@@ -106,11 +108,16 @@ public class PartitionModelPanel extends OptionsPanel {
     private JButton setupGLMButton;
     private GLMSettingsDialog glmSettingsDialog = null;
 
+    // =========== continuous traits =============
+
     private JComboBox continuousTraitSiteModelCombo = new JComboBox(
             ContinuousSubstModelType.values());
 
     private JCheckBox latLongCheck = new JCheckBox(
             "Bivariate trait represents latitude and longitude");
+
+    private JCheckBox treatIndependentCheck = new JCheckBox(
+            "Each site is independent");
 
     private JCheckBox useLambdaCheck = new JCheckBox(
             "Estimate phylogenetic signal using tree transform");
@@ -119,6 +126,12 @@ public class PartitionModelPanel extends OptionsPanel {
             "Add random jitter to tips");
     private JLabel jitterWindowLabel = new JLabel("Jitter window size:");
     private RealNumberField jitterWindowText = new RealNumberField(0, Double.POSITIVE_INFINITY);
+
+    private JComboBox modelExtensionCombo = new JComboBox(ContinuousModelExtensionType.values());
+    private OptionsPanel latentFactorOptions = new OptionsPanel(12, 12);
+    private JSpinner factorDimSpinner = new JSpinner(
+            new SpinnerNumberModel(1, 1, 20, 1)
+    );
 
     private JTextArea citationText;
 
@@ -216,21 +229,17 @@ public class PartitionModelPanel extends OptionsPanel {
 
         PanelUtils.setupComponent(heteroCombo);
         heteroCombo
-                .setToolTipText("<html>Select the type of site-specific rate<br>heterogeneity model.<br>"
-                + "\"Felsenstein weights\" uses the quadrature method to calculate the category weights described in <br>" +
-                "Felsenstein (2001) <i>J Mol Evol</i> <b>53</b>: 447-455.</html>");
+                .setToolTipText("<html>Select the type of site-specific rate<br>heterogeneity model." +
+//                        "<br>\"Felsenstein weights\" uses the quadrature method to calculate the category weights described in <br>" +
+//                        "Felsenstein (2001) <i>J Mol Evol</i> <b>53</b>: 447-455." +
+                        "</html>");
         heteroCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
 
-                boolean gammaHetero = heteroCombo.getSelectedIndex() == 1 ||
-                        heteroCombo.getSelectedIndex() == 2
-                        || heteroCombo.getSelectedIndex() == 4;
-
+                boolean gammaHetero = heteroCombo.getSelectedItem().toString().contains("Gamma");
                 model.setGammaHetero(gammaHetero);
-                model.setInvarHetero(heteroCombo.getSelectedIndex() == 3
-                        || heteroCombo.getSelectedIndex() == 4);
-                model.setGammaHeteroEqualWeights(heteroCombo.getSelectedIndex() == 2
-                        || heteroCombo.getSelectedIndex() == 4);
+                model.setInvarHetero(heteroCombo.getSelectedItem().toString().contains("Invariant"));
+                model.setGammaHeteroEqualWeights(heteroCombo.getSelectedItem().toString().contains("equal"));
 
                 if (gammaHetero) {
                     gammaCatLabel.setEnabled(true);
@@ -353,6 +362,18 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
 
+        PanelUtils.setupComponent(treatIndependentCheck);
+        treatIndependentCheck
+                .setToolTipText("<html>Specify whether the traits should be treated as independent.");
+
+        treatIndependentCheck.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setIsIndependent(treatIndependentCheck.isSelected());
+            }
+        });
+        treatIndependentCheck.setEnabled(true);
+
+
         PanelUtils.setupComponent(latLongCheck);
         latLongCheck
                 .setToolTipText("<html>Specify whether this is a geographical trait representing <br>"
@@ -392,6 +413,49 @@ public class PartitionModelPanel extends OptionsPanel {
                 model.setJitterWindow(addJitterCheck.isSelected() ? jitterWindowText.getValue() : 0.0);
             }
         });
+
+
+        modelExtensionCombo.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.DESELECTED) {
+                    // do nothing
+                    return;
+                }
+                if (modelExtensionCombo.getSelectedItem() == ContinuousModelExtensionType.LATENT_FACTORS) {
+                    latentFactorOptions = new OptionsPanel();
+                    factorDimSpinner.setValue(1);
+                    latentFactorOptions.addComponentWithLabel("Latent dimension:",
+                            factorDimSpinner);
+
+                    JOptionPane optionPane = new JOptionPane(latentFactorOptions,
+                            JOptionPane.QUESTION_MESSAGE,
+                            JOptionPane.OK_CANCEL_OPTION,
+                            null,
+                            null,
+                            null);
+                    optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
+
+                    final JDialog dialog = optionPane.createDialog(frame, "Select Latent Factor Dimension");
+                    dialog.pack();
+                    dialog.setVisible(true);
+
+                    Integer value = (Integer) optionPane.getValue();
+                    if (value == JOptionPane.CANCEL_OPTION) {
+                        modelExtensionCombo.setSelectedIndex(0);
+                        factorDimSpinner.setValue(1);
+                        model.setContinuousLatentDimension(model.getExtendedTraitCount());
+                    } else {
+                        Integer k = (Integer) factorDimSpinner.getValue();
+                        model.setContinuousLatentDimension(k);
+                    }
+                } else { // just in case they originally set a factor model then changed their mind
+                    model.setContinuousLatentDimension(model.getExtendedTraitCount());
+                }
+                model.setContinuousExtensionType((ContinuousModelExtensionType) modelExtensionCombo.getSelectedItem());
+            }
+        });
+
 
         PanelUtils.setupComponent(useLambdaCheck);
         useLambdaCheck.addItemListener(new ItemListener() {
@@ -559,11 +623,17 @@ public class PartitionModelPanel extends OptionsPanel {
                 continuousTraitSiteModelCombo.setSelectedItem(model
                         .getContinuousSubstModelType());
 
+                modelExtensionCombo.setSelectedItem(model.getContinuousExtensionType());
+
                 ContinuousComponentOptions component = (ContinuousComponentOptions) model.getOptions()
                         .getComponentOptions(ContinuousComponentOptions.class);
 
                 latLongCheck.setSelected(model.isLatitudeLongitude());
                 latLongCheck.setEnabled(model.getContinuousTraitCount() == 2);
+
+                treatIndependentCheck.setSelected(model.isIndependent());
+                treatIndependentCheck.setEnabled(model.getContinuousTraitCount() > 1);
+
                 useLambdaCheck.setSelected(component.useLambda(model));
                 break;
             case DataType.MICRO_SAT:
@@ -580,6 +650,11 @@ public class PartitionModelPanel extends OptionsPanel {
                         .getPartitionSubstitutionModels(Microsatellite.INSTANCE)
                         .size() > 1);
                 break;
+
+            case DataType.DUMMY:
+                //Do nothing
+                break;
+
 
             default:
                 throw new IllegalArgumentException("Unknown data type");
@@ -735,6 +810,7 @@ public class PartitionModelPanel extends OptionsPanel {
                 addComponentWithLabel("Continuous Trait Model:",
                         continuousTraitSiteModelCombo);
                 addComponent(latLongCheck);
+                addComponent(treatIndependentCheck);
                 addSeparator();
                 addComponent(addJitterCheck);
                 OptionsPanel panel = new OptionsPanel();
@@ -745,6 +821,10 @@ public class PartitionModelPanel extends OptionsPanel {
 
                 addSeparator();
                 addComponent(useLambdaCheck);
+
+                addSeparator();
+                addComponentWithLabel("Model Extension:", modelExtensionCombo);
+
                 break;
 
             case DataType.MICRO_SAT:
@@ -758,6 +838,10 @@ public class PartitionModelPanel extends OptionsPanel {
                 addComponentWithLabel("Rate Proportionality:", rateProportionCombo);
                 addComponentWithLabel("Mutational Bias:", mutationBiasCombo);
                 addComponentWithLabel("Phase:", phaseCombo);
+                break;
+
+            case DataType.DUMMY:
+                //Do nothing
                 break;
 
             default:

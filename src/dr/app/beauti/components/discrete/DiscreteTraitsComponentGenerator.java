@@ -26,6 +26,7 @@
 package dr.app.beauti.components.discrete;
 
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodelxml.substmodel.GlmSubstitutionModelParser;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.generator.BaseComponentGenerator;
@@ -41,11 +42,9 @@ import dr.inferencexml.distribution.BinomialLikelihoodParser;
 import dr.inferencexml.distribution.GeneralizedLinearModelParser;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.oldevomodel.substmodel.AbstractSubstitutionModel;
-import dr.evomodel.tree.TreeModel;
 import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
 import dr.oldevomodelxml.substmodel.ComplexSubstitutionModelParser;
 import dr.oldevomodelxml.substmodel.FrequencyModelParser;
-import dr.oldevomodelxml.substmodel.GLMSubstitutionModelParser;
 import dr.oldevomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.oldevomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
@@ -310,7 +309,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         } else if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
             writer.writeComment("GLM substitution model");
 
-            writer.writeOpenTag(GLMSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, new Attribute[] {
+            writer.writeOpenTag(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, new Attribute[] {
                     new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL)
             });
 
@@ -363,7 +362,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             writer.writeCloseTag(GeneralizedLinearModelParser.GLM_LIKELIHOOD);
 
-            writer.writeCloseTag(GLMSubstitutionModelParser.GLM_SUBSTITUTION_MODEL);
+            writer.writeCloseTag(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL);
 
             writer.writeComment("GLM: statistic that returns the product of the coefficients and the respective indicators for the predictors");
 
@@ -398,7 +397,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
                 // not strictly necessary but makes the XML consistent
-                writer.writeIDref(GLMSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, model.getName() + "." + AbstractSubstitutionModel.MODEL);
+                writer.writeIDref(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, model.getName() + "." + AbstractSubstitutionModel.MODEL);
             } else {
                 writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, model.getName() + "." + AbstractSubstitutionModel.MODEL);
             }
@@ -440,7 +439,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
         if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
             // not strictly necessary but makes the XML consistent
-            writer.writeIDref(GLMSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
+            writer.writeIDref(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
         } else {
             writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
         }
@@ -539,7 +538,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
         if (partition.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
             // not strictly necessary but makes the XML consistent
-            writer.writeIDref(GLMSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
+            writer.writeIDref(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
         } else {
             writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
         }

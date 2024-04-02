@@ -79,6 +79,17 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     }
 
     @Override
+    public void setPostOrderPartial(int bufferIndex, double[] partial) {
+        super.setPostOrderPartial(bufferIndex, partial);
+
+        int remOffset = PrecisionType.FULL.getRemainderOffset(dimTrait);
+        for (int trait = 0; trait < numTraits; trait++) {
+            remainders[bufferIndex * numTraits + trait] = partial[dimPartialForTrait * trait + remOffset];
+        }
+
+    }
+
+    @Override
     public void setDiffusionPrecision(int precisionIndex, final double[] matrix, double logDeterminant) {
         super.setDiffusionPrecision(precisionIndex, matrix, logDeterminant);
 
@@ -152,8 +163,8 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         int jbo = dimPartial * jBuffer;
 
         // Determine matrix offsets
-        final int imo = dimMatrix * iMatrix;
-        final int jmo = dimMatrix * jMatrix;
+        final int imo = iMatrix;
+        final int jmo = jMatrix;
 
         // Read variance increments along descendant branches of k
         final double vi = branchLengths[imo];
@@ -284,8 +295,8 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         int jbo = dimPartial * jBuffer;
 
         // Determine matrix offsets
-        final int imo = dimMatrix * iMatrix;
-        final int jmo = dimMatrix * jMatrix;
+        final int imo = iMatrix;
+        final int jmo = jMatrix;
 
         // Read variance increments along descendant branches of k
         final double vi = branchLengths[imo];
@@ -374,7 +385,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 //                final DenseMatrix64F Vk = new DenseMatrix64F(dimTrait, dimTrait);
             final DenseMatrix64F Vk = matrix5;
             //TODO: should saveInvert put an infinity on the diagonal of Vk?
-            InversionResult ck = safeInvert2(Pk, Vk, true);
+            InversionResult ck = safeInvertPrecision(Pk, Vk, true);
 
             // B. Partial mean
 //                for (int g = 0; g < dimTrait; ++g) {
@@ -695,10 +706,10 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, int precisionIndex,
                                            final double[] logLikelihoods,
                                            boolean incrementOuterProducts, boolean isIntegratedProcess) {
-        assert(logLikelihoods.length == numTraits);
+        assert (logLikelihoods.length == numTraits);
 
         assert (!incrementOuterProducts);
-        assert(!isIntegratedProcess);
+        assert (!isIntegratedProcess);
 
         if (DEBUG) {
             System.err.println("Root calculation for " + rootBufferIndex);

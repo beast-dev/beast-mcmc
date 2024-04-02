@@ -31,6 +31,7 @@ import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * @author Alexander Fisher
@@ -38,12 +39,18 @@ import java.util.List;
 
 public class JointBranchRateGradient extends JointGradient {
 
+    private static final boolean COMPUTE_IN_PARALLEL = true;
+
     private final static String JOINT_BRANCH_RATE_GRADIENT = "JointBranchRateGradient";
 
     public JointBranchRateGradient(List<GradientWrtParameterProvider> derivativeList) {
-        super(derivativeList);
+        super(derivativeList, COMPUTE_IN_PARALLEL ? derivativeList.size() : 0);
     }
 
+    @Override
+    double[] getDerivativeLogDensity(DerivativeType derivativeType) {
+        return super.getDerivativeLogDensity(derivativeType);
+    }
 
     // **************************************************************
     // XMLObjectParser
@@ -55,7 +62,7 @@ public class JointBranchRateGradient extends JointGradient {
             return JOINT_BRANCH_RATE_GRADIENT;
         }
 
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) {
 
             List<GradientWrtParameterProvider> derivativeList = new ArrayList<>();
 
@@ -74,7 +81,7 @@ public class JointBranchRateGradient extends JointGradient {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new OrRule(
                         new ElementRule(BranchRateGradient.class, 1, Integer.MAX_VALUE),
                         new ElementRule(BranchRateGradientForDiscreteTrait.class, 1, Integer.MAX_VALUE)

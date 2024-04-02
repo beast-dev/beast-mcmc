@@ -42,7 +42,7 @@ import java.util.logging.Logger;
 /**
  * @author Marc Suchard
  */
-@Deprecated // GLM stuff is now in inference.glm - this is here for backwards compatibility temporarily
+
 public abstract class GeneralizedLinearModel extends AbstractModelLikelihood implements MultivariateFunction {
 
     protected Parameter dependentParam;
@@ -357,6 +357,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         }
         return independentParam.get(k).getBounds().getUpperLimit(which);
     }
+    public abstract GeneralizedLinearModel factory(List<Parameter> oldIndependentParameter, List<Parameter> newIndependentParameter);
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 

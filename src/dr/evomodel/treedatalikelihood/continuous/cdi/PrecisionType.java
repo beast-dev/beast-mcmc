@@ -159,7 +159,7 @@ public enum PrecisionType {
 
     FULL("full precision matrix per branch", "full", 2) {
         // partial structure:
-        //      [mean (p), precision (p^2), variance (p^2), fullPrecision (1), effective dimension (1), determinant (1)]
+        //      [mean (p), precision (p^2), variance (p^2), fullPrecision (1), effective dimension (1), determinant (1), remainder (1)]
 
         @Override
         public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
@@ -188,16 +188,17 @@ public enum PrecisionType {
         }
 
         @Override
+        public void fillRemainderInPartials(double[] partials, int offset, double remainder, int dimTrait) {
+            int remOffset = getRemainderOffset(dimTrait);
+            partials[offset + remOffset] = remainder;
+        }
+
+        @Override
         public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait) {
             for (int i = 0; i < dimTrait; ++i) {
                 data[dOffset + i] = Double.isInfinite(partial[pOffset + dimTrait + i * dimTrait + i]) ?
                         partial[pOffset + i] : Double.NaN;
             }
-        }
-
-        @Override
-        public int getMatrixLength(int dimTrait) {
-            return 2 * super.getMatrixLength(dimTrait) + 3;
         }
 
         @Override
@@ -226,6 +227,11 @@ public enum PrecisionType {
         }
 
         @Override
+        public int getRemainderOffset(int dimTrait) {
+            return dimTrait + dimTrait * dimTrait * 2 + 3;
+        }
+
+        @Override
         public int getVarianceOffset(int dimTrait) {
             return dimTrait + dimTrait * dimTrait;
         }
@@ -250,6 +256,16 @@ public enum PrecisionType {
         public boolean hasDeterminant() {
             return true;
         }
+
+        @Override
+        public boolean hasRemainder() {
+            return true;
+        }
+
+        @Override
+        public int getPartialsDimension(int dimTrait) {
+            return dimTrait + 2 * getMatrixLength(dimTrait) + 4;
+        }
     };
 
     private final int power;
@@ -270,7 +286,7 @@ public enum PrecisionType {
         return power;
     }
 
-    public int getMatrixLength(int dimTrait) {
+    protected int getMatrixLength(int dimTrait) {
         int length = 1;
         final int pow = getPower();
         for (int i = 0; i < pow; ++i) {
@@ -331,6 +347,14 @@ public enum PrecisionType {
         return -1;
     }
 
+    public int getRemainderOffset(int dimTrait) {
+        return -1;
+    }
+
+    public void fillRemainderInPartials(double[] partials, int offset, double remainder, int dimTrait) {
+        throw new RuntimeException("precision type " + tag + " does not store remainders");
+    }
+
     abstract public double[] getScaledPrecision(double[] partial, int offset, double[] diffusionPrecision, int dimTrait);
 
     public int getPartialsDimension(int dimTrait) {
@@ -342,6 +366,10 @@ public enum PrecisionType {
     }
 
     public boolean hasDeterminant() {
+        return false;
+    }
+
+    public boolean hasRemainder() {
         return false;
     }
 

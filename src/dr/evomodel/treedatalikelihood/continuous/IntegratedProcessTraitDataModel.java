@@ -69,7 +69,7 @@ public class IntegratedProcessTraitDataModel extends
         double[] partial = super.getTipPartial(taxonIndex, fullyObserved);
 
         int dimTraitDouble = 2 * dimTrait;
-        int dimPartialDouble = dimTraitDouble + precisionType.getMatrixLength(dimTraitDouble);
+        int dimPartialDouble = precisionType.getPartialsDimension(dimTraitDouble);
         double[] partialDouble = new double[dimPartialDouble];
 
         // Traits [0, traitsPosition]

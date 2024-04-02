@@ -25,18 +25,25 @@
 
 package dr.inference.distribution;
 
+import dr.evomodel.substmodel.LogAdditiveCtmcRateProvider;
 import dr.inference.model.Parameter;
+
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
  */
-@Deprecated // GLM stuff is now in inference.glm - this is here for backwards compatibility temporarily
-public class LogLinearModel extends GeneralizedLinearModel {
+
+public class LogLinearModel extends GeneralizedLinearModel implements LogAdditiveCtmcRateProvider {
 
     public LogLinearModel(Parameter dependentParam) {
         super(dependentParam);
     }
 
+    public double[] getSuperXBeta() {
+        return super.getXBeta();
+    }
+    
     @Override
     public double[] getXBeta() {
         double[] xBeta = super.getXBeta();
@@ -60,5 +67,23 @@ public class LogLinearModel extends GeneralizedLinearModel {
 
     public boolean requiresScale() {
         return false;
+    }
+
+    @Override
+    public LogLinearModel factory(List<Parameter> oldIndependentParameter, List<Parameter> newIndependentParameter)  {
+        LogLinearModel newGLM = new LogLinearModel(dependentParam);
+        for (int i = 0; i < numRandomEffects; i++) {
+            newGLM.addRandomEffectsParameter(randomEffects.get(i));
+        }
+        for (int i = 0; i < numIndependentVariables; i++) {
+            Parameter currentIndependentParameter = independentParam.get(i);
+            final int index = oldIndependentParameter.indexOf(currentIndependentParameter);
+            if (index != -1) {
+                newGLM.addIndependentParameter(newIndependentParameter.get(index), designMatrix.get(i), indParamDelta.get(i));
+            } else {
+                newGLM.addIndependentParameter(currentIndependentParameter, designMatrix.get(i), indParamDelta.get(i));
+            }
+        }
+        return newGLM;
     }
 }

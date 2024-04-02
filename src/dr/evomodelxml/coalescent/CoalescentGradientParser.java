@@ -29,6 +29,7 @@ package dr.evomodelxml.coalescent;
 import dr.evolution.coalescent.CoalescentGradient;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
+import dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser;
 import dr.xml.*;
 
 /**
@@ -39,11 +40,14 @@ public class CoalescentGradientParser extends AbstractXMLObjectParser {
 
     private static final String NAME = "coalescentGradient";
 
+    private static final String TOLERANCE = HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_TOLERANCE;
+
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        double tolerance = xo.getAttribute(TOLERANCE, 1E-1);
         CoalescentLikelihood likelihood = (CoalescentLikelihood) xo.getChild(CoalescentLikelihood.class);
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-        return new CoalescentGradient(likelihood, tree);
+        return new CoalescentGradient(likelihood, tree, tolerance);
     }
 
     @Override
@@ -54,6 +58,7 @@ public class CoalescentGradientParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             new ElementRule(CoalescentLikelihood.class),
             new ElementRule(TreeModel.class),
+            AttributeRule.newDoubleRule(TOLERANCE, true),
     };
 
 

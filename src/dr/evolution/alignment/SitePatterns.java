@@ -60,7 +60,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         AMBIGUOUS_CONSTANT
     }
 
-    public static final CompressionType DEFAULT_COMPRESSION_TYPE = AMBIGUOUS_CONSTANT;
+    public static final CompressionType DEFAULT_COMPRESSION_TYPE = UNIQUE_ONLY;
 
     private final boolean isCompressed;
 

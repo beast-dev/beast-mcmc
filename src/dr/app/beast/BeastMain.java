@@ -370,6 +370,9 @@ public class BeastMain {
                         new Arguments.Option("adaptation_off", "Don't adapt operator sizes"),
                         new Arguments.RealOption("adaptation_target", 0.0, 1.0, "Target acceptance rate for adaptive operators (default 0.234)"),
 
+                        new Arguments.StringOption("pattern_compression", new String[]{"off", "unique", "ambiguous_constant", "ambiguous_all"},
+                                false, "Site pattern compression mode (default unique)"),
+
                         new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
                         new Arguments.StringOption("beagle_order", "order", "BEAGLE: set order of resource use"),
@@ -516,6 +519,12 @@ public class BeastMain {
 
             if (arguments.hasOption("prefix")) {
                 fileNamePrefix = arguments.getStringOption("prefix");
+            }
+
+            // ============= Evaluation approximations =============
+
+            if (arguments.hasOption("pattern_compression")) {
+                System.setProperty("patterns.compression", arguments.getStringOption("pattern_compression").toLowerCase());
             }
 
             // ============= MC^3 settings =============

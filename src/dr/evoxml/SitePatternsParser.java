@@ -79,6 +79,21 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
             }
         }
 
+        // allow a system property to override - possibly set by command line option '-pattern_compression'
+        if (System.getProperty("patterns.compression") != null) {
+            String property = System.getProperty("patterns.compression");
+            if (property.equalsIgnoreCase("off")) {
+                compression = SitePatterns.CompressionType.UNCOMPRESSED;
+            } else if (property.equalsIgnoreCase("unique")) {
+                compression = SitePatterns.CompressionType.UNIQUE_ONLY;
+            } else if (property.equalsIgnoreCase("ambiguous_constant")) {
+                compression = SitePatterns.CompressionType.AMBIGUOUS_CONSTANT;
+            } else if (property.equalsIgnoreCase("ambiguous_all")) {
+                compression = SitePatterns.CompressionType.AMBIGUOUS_CONSTANT;
+            } else {
+                throw new IllegalArgumentException("Unknown `patterns.compression` system property value: " + System.getProperty("patterns.compression"));
+            }
+        }
         int from = 0;
         int to = -1;
         int every = xo.getAttribute(EVERY, 1);
@@ -141,7 +156,11 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
             if (every > 1) {
                 logger.info("  only using every " + every + " site");
             }
-            logger.info("  " + (compression != SitePatterns.CompressionType.UNCOMPRESSED ? "unique ": "") + "pattern count = " + patterns.getPatternCount());
+            String s = (compression == SitePatterns.CompressionType.UNCOMPRESSED ? "uncompressed":
+                    (compression == SitePatterns.CompressionType.UNIQUE_ONLY ? "unique":
+                            (compression == SitePatterns.CompressionType.AMBIGUOUS_CONSTANT ? "unique and ambiguous-constant":
+                                    "ambiguous unique")));
+            logger.info("  " + s + " pattern count = " + patterns.getPatternCount());
         }
 
         return patterns;

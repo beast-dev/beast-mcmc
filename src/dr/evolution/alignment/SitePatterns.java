@@ -313,6 +313,9 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 //            sortPatternsByWeight();
             compressAmbiguousPatterns(compression == AMBIGUOUS_CONSTANT);
 
+            // these are no longer valid...
+            sitePatternIndices = null;
+
             if (DEBUG) {
                 System.err.println("Further compressed to " + patternCount + " ambiguously unique patterns");
 //                System.err.println("Constant patterns:");

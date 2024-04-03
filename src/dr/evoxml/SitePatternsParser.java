@@ -156,11 +156,21 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
             if (every > 1) {
                 logger.info("  only using every " + every + " site");
             }
-            String s = (compression == SitePatterns.CompressionType.UNCOMPRESSED ? "uncompressed":
-                    (compression == SitePatterns.CompressionType.UNIQUE_ONLY ? "unique":
-                            (compression == SitePatterns.CompressionType.AMBIGUOUS_CONSTANT ? "unique and ambiguous-constant":
-                                    "ambiguous unique")));
-            logger.info("  " + s + " pattern count = " + patterns.getPatternCount());
+            switch (compression) {
+                case UNCOMPRESSED:
+                    logger.info("  uncompressed");
+                    break;
+                case UNIQUE_ONLY:
+                    logger.info("  compressed to unique site patterns");
+                    break;
+                case AMBIGUOUS_UNIQUE:
+                    logger.info("  compressed to unique site patterns allowing ambiguity");
+                    break;
+                case AMBIGUOUS_CONSTANT:
+                    logger.info("  compressed to unique site patterns allowing ambiguity for constant sites");
+                    break;
+            }
+            logger.info("  pattern count = " + patterns.getPatternCount());
         }
 
         return patterns;

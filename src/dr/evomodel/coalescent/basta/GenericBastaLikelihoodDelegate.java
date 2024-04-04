@@ -45,7 +45,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                                           int stateCount) {
         super(name, tree, stateCount);
 
-        this.partials = new double[maxNumCoalescentIntervals * tree.getNodeCount() * stateCount]; // TODO much too large
+        this.partials = new double[maxNumCoalescentIntervals * (tree.getNodeCount() + 1) * stateCount]; // TODO much too large
         this.matrices = new double[maxNumCoalescentIntervals * stateCount * stateCount]; // TODO much too small (except for strict-clock)
         this.coalescent = new double[maxNumCoalescentIntervals];
         this.sizes = new double[2 * stateCount];
@@ -56,7 +56,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         this.g = new double[maxNumCoalescentIntervals * stateCount];
         this.h = new double[maxNumCoalescentIntervals * stateCount];
 
-        this.partialsGrad = new double[stateCount][stateCount][maxNumCoalescentIntervals * tree.getNodeCount() * stateCount];
+        this.partialsGrad = new double[stateCount][stateCount][maxNumCoalescentIntervals * (tree.getNodeCount() + 1) * stateCount];
         this.matricesGrad = new double[stateCount][stateCount][maxNumCoalescentIntervals * stateCount * stateCount];
         this.coalescentGrad = new double[stateCount][stateCount][maxNumCoalescentIntervals];
 
@@ -65,7 +65,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         this.gGrad = new double[stateCount][stateCount][maxNumCoalescentIntervals * stateCount];
         this.hGrad = new double[stateCount][stateCount][maxNumCoalescentIntervals * stateCount];
 
-        this.partialsGradPopSize = new double[stateCount][maxNumCoalescentIntervals * tree.getNodeCount() * stateCount];
+        this.partialsGradPopSize = new double[stateCount][maxNumCoalescentIntervals * (tree.getNodeCount() + 1) * stateCount];
         this.coalescentGradPopSize = new double[stateCount][maxNumCoalescentIntervals];
 
         this.eGradPopSize = new double[stateCount][maxNumCoalescentIntervals * stateCount];

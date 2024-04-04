@@ -36,7 +36,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
                                          int stateCount) {
         super(name, tree, stateCount);
 
-        int partialsCount = maxNumCoalescentIntervals * tree.getNodeCount(); // TODO much too large
+        int partialsCount = maxNumCoalescentIntervals * (tree.getNodeCount() + 1); // TODO much too large
         int matricesCount = maxNumCoalescentIntervals; // TODO much too small (except for strict-clock)
 
         int coalescentBufferCount = 5; // E, F, G, H, probabilities
@@ -242,7 +242,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         if (CACHE_FRIENDLY) {
             this.tipCount = tree.getExternalNodeCount();
             if (this.map == null) {
-                this.map = new int[maxNumCoalescentIntervals * tree.getNodeCount()];
+                this.map = new int[maxNumCoalescentIntervals * (tree.getNodeCount() + 1)];
             }
             Arrays.fill(this.map, -1);
             this.used = this.tipCount;

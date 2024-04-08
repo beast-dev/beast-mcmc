@@ -92,59 +92,6 @@
 			<parameter id="loc.clock.rate" value="1E-4" lower="0.0"/>
 		</rate>
 	</strictClockBranchRates>
-		
-<!--	<gamGpModel id="gamGpModel"> &lt;!&ndash; returns density of realized field&ndash;&gt;-->
-<!--            <realizedField>-->
-<!--                <parameter id="loc.coefficients0" value="1 0 -1 0 0 0"/> &lt;!&ndash; 1 2 3 4 5 put other numbers&ndash;&gt;-->
-<!--            </realizedField>-->
-<!--            <gaussianNoise>-->
-<!--                <parameter id="loc.noise" value="1"/>-->
-<!--            </gaussianNoise>-->
-<!--            <kernel>-->
-<!--                <parameter id="loc.kernel" value="1 3 4" lower="0.0"/>-->
-<!--            </kernel>-->
-
-<!--			<independentVariables>-->
-<!--				<designMatrix id="loc.designMatrix0">-->
-<!--					<parameter value="1 0 0-->
-<!--								      0 0 0"/>-->
-<!--				</designMatrix>-->
-<!--			</independentVariables>-->
-
-<!--			<independentVariables>-->
-<!--				<designMatrix id="loc.designMatrix1">-->
-<!--					<parameter value="0 66 0-->
-<!--								      0 0 0"/>-->
-<!--				</designMatrix>-->
-<!--			</independentVariables>-->
-<!--            <independentVariables>-->
-<!--                <designMatrix id="loc.designMatrix2">-->
-<!--                    <parameter value="0 0 1-->
-<!--								      0 0 0"/>-->
-<!--                </designMatrix>-->
-<!--            </independentVariables>-->
-<!--            <independentVariables>-->
-<!--                <designMatrix id="loc.designMatrix3">-->
-<!--                    <parameter value="0 0 0-->
-<!--								      1 0 0"/>-->
-<!--                </designMatrix>-->
-<!--            </independentVariables>-->
-<!--            <independentVariables>-->
-<!--                <designMatrix id="loc.designMatrix4">-->
-<!--                    <parameter value="0 0 0-->
-<!--								      0 1 0"/>-->
-<!--                </designMatrix>-->
-<!--            </independentVariables>-->
-
-<!--            <independentVariables>-->
-<!--                <designMatrix id="loc.designMatrix5">-->
-<!--                    <parameter value="0 0 0-->
-<!--								      0 0 1"/>-->
-<!--                </designMatrix>-->
-<!--            </independentVariables>-->
-<!--&lt;!&ndash; nothing &ndash;&gt;-->
-<!--    </gamGpModel>-->
-
 
     <randomField id="test.field">
         <data>
@@ -216,7 +163,6 @@
     </gaussianProcessPrediction>
 
 	<report>
-<!--		<gamGpModel idref="gamGpModel"/>-->
 		<randomField idref="test.field"/>
 		<randomFieldGradient idref="test.gradient"/>
         <gaussianProcessPrediction idref="test.prediction"/>
@@ -233,7 +179,6 @@
 				</frequencies>
 			</frequencyModel>
 		</rootFrequencies>
-<!-- 		<gamGpModel idref="gamGpModel"/> -->
 		<logRates>
 			<parameter idref="loc.coefficients0"/>
 		</logRates>
@@ -330,8 +275,6 @@
     <report id = "report.prediction">
         <gaussianProcessPrediction idref="test.prediction"/>
     </report>
-
-    <traceAnalysis fileName="test.log" stdError="true"/>
 
 <!--    &lt;!&ndash;    check value log-likelihood&ndash;&gt;-->
 <!--    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">-->

@@ -16,8 +16,9 @@ public class NativeBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
 
     public NativeBastaLikelihoodDelegate(String name,
                                          Tree tree,
-                                         int stateCount) {
-        super(name, tree, stateCount);
+                                         int stateCount,
+                                         boolean transpose) {
+        super(name, tree, stateCount, transpose);
         jni = NativeBastaJniWrapper.getBastaJniWrapper();
     }
 

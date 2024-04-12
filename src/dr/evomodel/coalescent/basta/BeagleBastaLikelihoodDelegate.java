@@ -33,8 +33,9 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
 
     public BeagleBastaLikelihoodDelegate(String name,
                                          Tree tree,
-                                         int stateCount) {
-        super(name, tree, stateCount);
+                                         int stateCount,
+                                         boolean transpose) {
+        super(name, tree, stateCount, transpose);
 
         int partialsCount = maxNumCoalescentIntervals * (tree.getNodeCount() + 1); // TODO much too large
         int matricesCount = maxNumCoalescentIntervals; // TODO much too small (except for strict-clock)
@@ -218,11 +219,20 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
             eigenBufferHelper.flipOffset(0);
         }
 
-        beagle.setEigenDecomposition(
-                eigenBufferHelper.getOffsetIndex(0),
-                decomposition.getEigenVectors(),
-                decomposition.getInverseEigenVectors(),
-                decomposition.getEigenValues());
+        if (TRANSPOSE) {
+            beagle.setEigenDecomposition(
+                    eigenBufferHelper.getOffsetIndex(0),
+                    decomposition.transpose().getEigenVectors(),
+                    decomposition.transpose().getInverseEigenVectors(),
+                    decomposition.transpose().getEigenValues());
+        } else {
+            beagle.setEigenDecomposition(
+                    eigenBufferHelper.getOffsetIndex(0),
+                    decomposition.getEigenVectors(),
+                    decomposition.getInverseEigenVectors(),
+                    decomposition.getEigenValues());
+        }
+
     }
 
     @Override

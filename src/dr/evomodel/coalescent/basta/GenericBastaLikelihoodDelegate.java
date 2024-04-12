@@ -39,12 +39,12 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     private final double[][] gGradPopSize;
     private final double[][] hGradPopSize;
 
-    public static final boolean TRANSPOSE = true;
 
     public GenericBastaLikelihoodDelegate(String name,
                                           Tree tree,
-                                          int stateCount) {
-        super(name, tree, stateCount);
+                                          int stateCount,
+                                          boolean transpose) {
+        super(name, tree, stateCount, transpose);
 
         this.partials = new double[maxNumCoalescentIntervals * (tree.getNodeCount() + 1) * stateCount]; // TODO much too large
         this.matrices = new double[maxNumCoalescentIntervals * stateCount * stateCount]; // TODO much too small (except for strict-clock)
@@ -595,7 +595,11 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
     @Override
     public void updateEigenDecomposition(int index, EigenDecomposition decomposition, boolean flip) {
-        decompositions[index] = decomposition;
+        if (TRANSPOSE) {
+            decompositions[index] = decomposition.transpose();
+        } else {
+            decompositions[index] = decomposition;
+        }
     }
 
     @Override
@@ -710,18 +714,6 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         }
 
         int u = matrixOffset;
-        if (TRANSPOSE) {
-            for (int i = 0; i < stateCount; i++) {
-                for (int j = 0; j < stateCount; j++) {
-                    double temp = 0.0;
-                    for (int k = 0; k < stateCount; k++) {
-                        temp += Evec[j * stateCount + k] * iexp[k * stateCount + i];
-                    }
-                    matrix[u] = Math.abs(temp);
-                    u++;
-                }
-            }
-        } else {
             for (int i = 0; i < stateCount; i++) {
                 for (int j = 0; j < stateCount; j++) {
                     double temp = 0.0;
@@ -732,8 +724,6 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                     u++;
                 }
             }
-        }
-
     }
 
     private static double reduceAcrossIntervals(double[] e, double[] f, double[] g, double[] h,
@@ -796,3 +786,4 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         }
     }
 }
+

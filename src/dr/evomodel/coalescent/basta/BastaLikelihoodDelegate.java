@@ -97,14 +97,17 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
 
         protected final Tree tree;
 
+        protected final boolean TRANSPOSE;
+
         public AbstractBastaLikelihoodDelegate(String name,
                                                Tree tree,
-                                               int stateCount) {
+                                               int stateCount, boolean transpose) {
             super(name);
 
             this.tree = tree;
             this.stateCount = stateCount;
             this.maxNumCoalescentIntervals = getMaxNumberOfCoalescentIntervals(tree);
+            this.TRANSPOSE = transpose;
             this.parallelizationScheme = ParallelizationScheme.NONE;
         }
 

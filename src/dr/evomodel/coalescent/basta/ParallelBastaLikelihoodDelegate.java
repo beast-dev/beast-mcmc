@@ -21,8 +21,9 @@ public class ParallelBastaLikelihoodDelegate extends GenericBastaLikelihoodDeleg
     public ParallelBastaLikelihoodDelegate(String name,
                                            Tree tree,
                                            int stateCount,
-                                           int threadCount) {
-        super(name, tree, stateCount);
+                                           int threadCount,
+                                           boolean transpose) {
+        super(name, tree, stateCount, transpose);
 
         if (threadCount > 1) {
             pool = Executors.newFixedThreadPool(threadCount);

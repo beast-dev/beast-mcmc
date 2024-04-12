@@ -59,7 +59,8 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
 
     public static final Boolean USE_OLD_CODE = false;
     private static final boolean USE_DELEGATE = true;
-    private static final boolean USE_BEAGLE = true;
+    private static final boolean USE_BEAGLE = false;
+    private static final boolean TRANSPOSE = true;
 
     public String getParserName() {
         return STRUCTURED_COALESCENT;
@@ -118,13 +119,13 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                         final BastaLikelihoodDelegate delegate;
                         if (USE_BEAGLE) {
                             delegate = new BeagleBastaLikelihoodDelegate("name", treeModel,
-                                    generalSubstitutionModel.getDataType().getStateCount());
+                                    generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE);
                         } else {
                             delegate = (threads != 1) ?
                                     new ParallelBastaLikelihoodDelegate("name", treeModel,
-                                            generalSubstitutionModel.getDataType().getStateCount(), threads) :
+                                            generalSubstitutionModel.getDataType().getStateCount(), threads, TRANSPOSE) :
                                     new GenericBastaLikelihoodDelegate("name", treeModel,
-                                            generalSubstitutionModel.getDataType().getStateCount());
+                                            generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE);
                         }
                         return new BastaLikelihood("name", treeModel, patternList, generalSubstitutionModel,
                                 popSizes, branchRateModel, delegate, subIntervals, true);

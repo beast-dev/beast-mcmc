@@ -188,7 +188,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
             return logL;
         }
 
-        abstract protected void computeBranchIntervalOperationsGrad(List<Integer> intervalStarts,
+        abstract protected void computeBranchIntervalOperationsGrad(List<Integer> intervalStarts, List<TransitionMatrixOperation> matrixOperations,
                                                                 List<BranchIntervalOperation> branchIntervalOperations);
 
         abstract protected void computeTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations);
@@ -211,7 +211,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
 
             computeTransitionProbabilityOperationsGrad(matrixOperation);
 
-            computeBranchIntervalOperationsGrad(intervalStarts, branchOperations);
+            computeBranchIntervalOperationsGrad(intervalStarts, matrixOperation, branchOperations);
 
             double[][] grad = computeCoalescentIntervalReductionGrad(intervalStarts, branchOperations);
 
@@ -236,7 +236,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
                 System.err.println("Tree = " + tree);
             }
 
-            computeBranchIntervalOperationsGrad(intervalStarts, branchOperations);
+            computeBranchIntervalOperationsGrad(intervalStarts, matrixOperation, branchOperations);
 
             double[] grad = computeCoalescentIntervalReductionGradPopSize(intervalStarts, branchOperations);
 

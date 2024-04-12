@@ -23,4 +23,10 @@ public interface BeagleBasta extends Beagle {
                                  double[] result);
 
     void getBastaBuffer(int index, double[] buffer);
+
+    void updateBastaPartialsGrad(int[] operations, int operationCount, int[] intervals, int intervalCount, int populationSizeIndex, int coalescentProbabilityIndex);
+
+    void updateTransitionMatricesGrad(int[] transitionMatrixIndices, double[] branchLengths, int count);
+
+    void accumulateBastaPartialsGrad(int[] operations, int operationCount,  final int[] intervalStarts, int intervalCount, final double[] intervalLengths, int populationSizeIndex, int coalescentProbabilityIndex, double[] result);
 }

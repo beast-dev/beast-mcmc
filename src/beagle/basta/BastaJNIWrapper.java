@@ -56,4 +56,10 @@ public class BastaJNIWrapper {
     }
 
     public static BastaJNIWrapper INSTANCE;
+
+    public native int updateBastaPartialsGrad(int instance, int[] operations, int operationCount, int[] intervals, int intervalCount, int populationSizeIndex, int coalescentProbabilityIndex);
+
+    public native int updateTransitionMatricesGrad(int instance, int[] transitionMatrixIndices, double[] branchLengths, int count);
+
+    public native int accumulateBastaPartialsGrad(int instance, int[] operations, int operationCount, int[] intervalStarts, int intervalCount, double[] intervalLengths, int populationSizeIndex, int coalescentProbabilityIndex, double[] result);
 }

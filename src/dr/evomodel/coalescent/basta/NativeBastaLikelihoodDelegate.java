@@ -57,7 +57,7 @@ public class NativeBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     }
 
     @Override
-    protected void computeBranchIntervalOperationsGrad(List<Integer> intervalStarts, List<BranchIntervalOperation> branchIntervalOperations) {
+    protected void computeBranchIntervalOperationsGrad(List<Integer> intervalStarts, List<TransitionMatrixOperation> matrixOperations, List<BranchIntervalOperation> branchIntervalOperations) {
 
     }
 

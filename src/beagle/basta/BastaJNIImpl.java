@@ -38,6 +38,32 @@ public class BastaJNIImpl extends BeagleJNIImpl implements BeagleBasta {
     }
 
     @Override
+    public void updateBastaPartialsGrad(int[] operations, int operationCount, int[] intervals, int intervalCount, int populationSizeIndex, int coalescentProbabilityIndex) {
+        int errCode = BastaJNIWrapper.INSTANCE.updateBastaPartialsGrad(instance, operations, operationCount,
+                intervals, intervalCount, populationSizeIndex, coalescentProbabilityIndex);
+        if (errCode != 0) {
+            throw new BeagleException("updateBastaPartialsGrad", errCode);
+        }
+    }
+
+    @Override
+    public void updateTransitionMatricesGrad(int[] transitionMatrixIndices, double[] branchLengths, int count) {
+        int errCode = BastaJNIWrapper.INSTANCE.updateTransitionMatricesGrad(instance, transitionMatrixIndices, branchLengths, count);
+        if (errCode != 0) {
+            throw new BeagleException("updateTransitionMatricesGrad", errCode);
+        }
+    }
+
+    @Override
+    public void accumulateBastaPartialsGrad(int[] operations, int operationCount, int[] intervalStarts, int intervalCount, double[] intervalLengths, int populationSizeIndex, int coalescentProbabilityIndex, double[] result) {
+        int errCode = BastaJNIWrapper.INSTANCE.accumulateBastaPartialsGrad(instance,operations, operationCount,
+                intervalStarts, intervalCount, intervalLengths, populationSizeIndex, coalescentProbabilityIndex, result);
+        if (errCode != 0) {
+            throw new BeagleException("accumulateBastaPartialsGrad", errCode);
+        }
+    }
+
+    @Override
     public void updateBastaPartials(int[] operations, int operationCount,
                                     int[] intervals, int intervalCount,
                                     int populationSizeIndex,

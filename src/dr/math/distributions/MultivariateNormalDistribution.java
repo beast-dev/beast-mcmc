@@ -156,13 +156,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
     public static double calculatePrecisionMatrixDeterminate(double[][] precision, boolean inLogScale) {
         try {
             if (inLogScale) {
-                double logDet = 0;
-                double[][] L = getCholeskyDecomposition(precision);
-                for (int i = 0; i < L[0].length; ++i) {
-                    logDet += Math.log(L[i][i]);
-                }
-                logDet *= 2.0;
-                return logDet;
+                return new Matrix(precision).logDeterminant();
             } else {
                 return new Matrix(precision).determinant();
             }

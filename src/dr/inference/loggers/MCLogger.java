@@ -256,18 +256,8 @@ public class MCLogger implements Logger {
 
                     double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (state - startState));
 
-                    String timePerMillion = formatter.format(hoursPerMillionStates);
-                    String units = " hours/million states";
-                    if (hoursPerMillionStates < 0.1) {
-                        double minutesPerMillionStates = hoursPerMillionStates * 60;
-                        timePerMillion = formatter.format(minutesPerMillionStates);
-                        units = " minutes/million states";
-                        if (minutesPerMillionStates < 0.1) {
-                            double secondsPerMillionStates = minutesPerMillionStates * 60;
-                            timePerMillion = formatter.format(secondsPerMillionStates);
-                            units = " seconds/million states";
-                        }
-                    }
+                    String timePerMillion = getTimePerMillion(state, hoursPerMillionStates);
+                    String units = getUnits(hoursPerMillionStates, timePerMillion);
                     values[columnCount + 1] = timePerMillion + units;
 
                 } else {
@@ -314,5 +304,29 @@ public class MCLogger implements Logger {
     private long startState;
 
     private final NumberFormat formatter = NumberFormat.getNumberInstance();
+    public String getTimePerMillion(long state, double hoursPerMillionStates) {
 
+        String timePerMillion = formatter.format(hoursPerMillionStates);
+        if (hoursPerMillionStates < 0.1) {
+            double minutesPerMillionStates = hoursPerMillionStates * 60;
+            timePerMillion = formatter.format(minutesPerMillionStates);
+            if (minutesPerMillionStates < 0.1) {
+                double secondsPerMillionStates = minutesPerMillionStates * 60;
+                timePerMillion = formatter.format(secondsPerMillionStates);
+            }
+        }
+        return timePerMillion;
+    }
+
+    public String getUnits(double hoursPerMillionStates, String timePerMillion) {
+        String units = " hours/million states";
+        if (hoursPerMillionStates < 0.1) {
+            double minutesPerMillionStates = hoursPerMillionStates * 60;
+            units = " minutes/million states";
+            if (minutesPerMillionStates < 0.1) {
+                units = " seconds/million states";
+            }
+        }
+        return units;
+    }
 }

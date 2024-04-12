@@ -26,6 +26,7 @@
 package dr.evomodel.coalescent.basta;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -653,11 +654,15 @@ public class OldStructuredCoalescentLikelihood extends AbstractCoalescentLikelih
     // ModelListener IMPLEMENTATION
     // **************************************************************
 
+    public OldStructuredCoalescentLikelihood(String name, IntervalList intervalList) {
+        super(name, intervalList);
+    }
+
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (DEBUG) {
             System.out.println("handleModelChangedEvent: " + model.getModelName() + ", " + object + " (class " + object.getClass() + ")");
         }
-        if (model == treeModel) {
+        if (model == treeModel || model == intervalList) {
             //for all the nodes that are older than the event, set updateProbDist (still to implement) to true
             //then trigger a recalculation that makes use of an adjusted traverseTree method (that checks whether
             //or not the ProbDist needs to be updated

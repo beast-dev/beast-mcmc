@@ -50,6 +50,8 @@ public abstract class DataType implements Serializable {
     public static final int P2PTYPE = 7;
     public static final int CONTINUOUS = 8;
 
+    public static final int DUMMY = 9;
+
     public static final char UNKNOWN_CHARACTER = '?';
     public static final char GAP_CHARACTER = '-';
 
@@ -99,6 +101,11 @@ public abstract class DataType implements Serializable {
             registerDataType(HiddenAminoAcids.DESCRIPTION + "2", HiddenAminoAcids.AMINO_ACIDS_HIDDEN_2);
             registerDataType(HiddenAminoAcids.DESCRIPTION + "3", HiddenAminoAcids.AMINO_ACIDS_HIDDEN_3);
             registerDataType(HiddenAminoAcids.DESCRIPTION + "4", HiddenAminoAcids.AMINO_ACIDS_HIDDEN_4);
+            registerDataType(StateDependentNucleotides.DESCRIPTION + "1", StateDependentNucleotides.NUCLEOTIDE_STATE_DEPENDENT_1);
+            registerDataType(StateDependentNucleotides.DESCRIPTION + "2", StateDependentNucleotides.NUCLEOTIDE_STATE_DEPENDENT_2);
+            registerDataType(StateDependentNucleotides.DESCRIPTION + "3", StateDependentNucleotides.NUCLEOTIDE_STATE_DEPENDENT_3);
+            registerDataType(StateDependentNucleotides.DESCRIPTION + "4", StateDependentNucleotides.NUCLEOTIDE_STATE_DEPENDENT_4);
+            registerDataType(StateDependentNucleotides.DESCRIPTION + "8", StateDependentNucleotides.NUCLEOTIDE_STATE_DEPENDENT_8);
             registerDataType(GeneralDataType.DESCRIPTION, GeneralDataType.INSTANCE);
             registerDataType(Microsatellite.DESCRIPTION, Microsatellite.INSTANCE);
             registerDataType(P2P.DESCRIPTION, P2P.INSTANCE);
@@ -354,6 +361,22 @@ public abstract class DataType implements Serializable {
         return (1.0 - (sumMatch / (sum1 * sum2)));
     }
 
+    /**
+     * returns whether two states are definitely different given the ambiguity in either
+     */
+    public boolean areUnambiguouslyDifferent(int state1, int state2) {
+        boolean[] stateSet1 = getStateSet(state1);
+        boolean[] stateSet2 = getStateSet(state2);
+        for (int i = 0; i < stateSet1.length; i++) {
+            if (stateSet1[i] && stateSet2[i]) {
+                // at least one state is present in both sets
+                return false;
+            }
+        }
+        return true;
+    }
+
+
     public String toString() {
         return getDescription();
     }
@@ -432,6 +455,8 @@ public abstract class DataType implements Serializable {
                 return "Continuous Traits";
             case DataType.MICRO_SAT:
                 return "Microsatellite";
+            case DataType.DUMMY:
+                return "Dummy";
             default:
                 throw new IllegalArgumentException("Unsupported data type");
 

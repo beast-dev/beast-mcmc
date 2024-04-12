@@ -76,6 +76,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     public static final String SPHERICAL_BETA_PRIOR = "sphericalBetaPrior";
     public static final String SPHERICAL_BETA_SHAPE = "shapeParameter";
     public static final String MV_LOG_NORMAL_PRIOR = "MVlogNormalPrior";
+    public static final String DETERMINANT_PRIOR = "determinantPrior";
 
     public static final String DATA = "data";
 
@@ -755,6 +756,45 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
         public Class getReturnType() {
             return MultivariateDistributionLikelihood.class;
+        }
+    };
+
+    public static XMLObjectParser DETERMINANT_PRIOR_PARSER = new AbstractXMLObjectParser() {
+        @Override
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+            double shape = xo.getDoubleAttribute(LKJ_SHAPE);
+            MatrixParameterInterface parameter = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
+            int dim = parameter.getRowDimension();
+            if (parameter.getColumnDimension() != dim) {
+                throw new XMLParseException("matrix must be square");
+            }
+            MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(new ConstrainedDeterminantDistributionModel(shape, dim));
+            likelihood.addData(parameter);
+            return likelihood;
+        }
+
+        @Override
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return new XMLSyntaxRule[]{
+                    AttributeRule.newDoubleRule(LKJ_SHAPE, true),
+                    new ElementRule(MatrixParameterInterface.class)
+
+            };
+        }
+
+        @Override
+        public String getParserDescription() {
+            return "Calculates p(X) = c * det(X)^a (currently omits normalization constant c)";
+        }
+
+        @Override
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
+
+        @Override
+        public String getParserName() {
+            return DETERMINANT_PRIOR;
         }
     };
 

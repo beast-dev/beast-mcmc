@@ -45,7 +45,7 @@ import java.util.*;
  * @author Andrew Rambaut
  * @version $Id: LocalClockModel.java,v 1.1 2005/04/05 09:27:48 rambaut Exp $
  */
-public class LocalClockModel extends AbstractBranchRateModel implements Citable {
+public class LocalClockModel extends AbstractBranchRateModel implements Citable, DifferentiableBranchRates {
 
     private TreeModel treeModel;
     protected Map<Integer, LocalClock> localTipClocks = new HashMap<Integer, LocalClock>();
@@ -255,6 +255,7 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
         if (localClock != null) {
             double parentRate = rate;
             double stemProportion = 1.0;
+            double stemTime = 0.0;
 
             if (localClock != parentClock) {
                 // this is the branch where the rate switch occurs
@@ -267,15 +268,16 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
                 }
                 if (localClock.stemAsTime) {
                     // this could be greater than 1 in which case bad things might happen
-                    stemProportion = Math.min(localClock.getStemValue() / tree.getBranchLength(node), 1.0);
+                    stemTime = localClock.getStemValue();
+                    stemProportion = stemTime / tree.getBranchLength(node);
 
-//                    stemProportion = localClock.getStemValue() / tree.getBranchLength(node);
-//                    if (stemProportion > 1.0) {
-//                        // it should be ensured that this never happens.
-//                        throw new IllegalArgumentException("A stem proportion for a local clock is > 1.0");
-//                    }
+                    if (stemProportion > 1.0) {
+                        // it should be ensured that this never happens.
+                        throw new IllegalArgumentException("A stem proportion for a local clock is > 1.0");
+                    }
                 } else {
                     stemProportion = localClock.getStemValue();
+                    stemTime = tree.getBranchLength(node) * stemProportion;
                 }
             }
 
@@ -388,6 +390,41 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
         if (!nodeClockMap.containsKey(node)) {
             nodeClockMap.put(node, localClock);
         }
+    }
+
+    @Override
+    public double getBranchRateDifferential(Tree tree, NodeRef node) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public Parameter getRateParameter() {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public int getParameterIndexFromNode(NodeRef node) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public ArbitraryBranchRates.BranchRateTransform getTransform() {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value, int from, int to) {
+        throw new RuntimeException("Not yet implemented!");
     }
 
     enum ClockType {

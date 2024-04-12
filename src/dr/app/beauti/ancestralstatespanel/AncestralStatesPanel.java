@@ -234,6 +234,10 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
             case DataType.MICRO_SAT:
                 title = "Microsatellite";
                 break;
+            case DataType.DUMMY:
+                title = "NA";
+                break;
+
             default:
                 throw new IllegalArgumentException("Unsupported data type");
 

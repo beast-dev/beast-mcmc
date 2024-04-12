@@ -341,6 +341,11 @@ public class MultivariateOUModel extends GeneralizedLinearModel implements Stati
         return true;
     }
 
+    @Override
+    public GeneralizedLinearModel factory(List<Parameter> oldIndependentParameter, List<Parameter> newIndependentParameter) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         conditionalPrecisionKnown = false;
         likelihoodKnown = false;

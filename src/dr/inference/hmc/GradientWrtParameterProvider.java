@@ -49,6 +49,41 @@ public interface GradientWrtParameterProvider {
 
     double[] getGradientLogDensity();
 
+    class Negative implements GradientWrtParameterProvider {
+
+        private final GradientWrtParameterProvider provider;
+
+        public Negative(GradientWrtParameterProvider provider) {
+            this.provider = provider;
+        }
+
+        @Override
+        public Likelihood getLikelihood() {
+            return provider.getLikelihood();
+        }
+
+        @Override
+        public Parameter getParameter() {
+            return provider.getParameter();
+        }
+
+        @Override
+        public int getDimension() {
+            return provider.getDimension();
+        }
+
+        @Override
+        public double[] getGradientLogDensity() {
+
+            double[] gradient = provider.getGradientLogDensity();
+            for (int i = 0; i < gradient.length; ++i) {
+                gradient[i] =-gradient[i];
+            }
+
+            return gradient;
+        }
+    }
+
     class ParameterWrapper implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable {
 
         final GradientProvider provider;
@@ -131,7 +166,7 @@ public interface GradientWrtParameterProvider {
         }
 
 
-        private MultivariateFunction numeric = new MultivariateFunction() {
+        private final MultivariateFunction numeric = new MultivariateFunction() {
 
             @Override
             public double evaluate(double[] argument) {

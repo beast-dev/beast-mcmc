@@ -16,3 +16,6 @@ out/
 !ci/**/*.xml
 
 zig_zag
+
+*.dmg
+release/Mac

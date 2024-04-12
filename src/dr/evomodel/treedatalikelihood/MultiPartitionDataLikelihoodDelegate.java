@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+import static dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.instanceCount;
 import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
 
 /**
@@ -117,7 +118,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
 
-    private static int instanceCount = 0;
     private static List<Integer> resourceOrder = null;
     private static List<Integer> preferredOrder = null;
     private static List<Integer> requiredOrder = null;

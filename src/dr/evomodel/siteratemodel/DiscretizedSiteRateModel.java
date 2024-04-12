@@ -38,10 +38,26 @@ import java.util.Comparator;
 
 public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateModel {
 
+    /**
+     * Constructor for a rate homogenous (single category) SiteRateModel.
+     */
+    public DiscretizedSiteRateModel(String name) {
+        this(name, null, 0.0, new HomogeneousRateDelegate(null));
+    }
 
     /**
-     * Constructor for gamma+invar distributed sites. Either shapeParameter or
-     * invarParameter (or both) can be null to turn off that feature.
+     * Constructor for a rate homogenous (single category) SiteRateModel.
+     */
+    public DiscretizedSiteRateModel(
+            String name,
+            Parameter nuParameter,
+            double muWeight) {
+        this(name, nuParameter, muWeight, new HomogeneousRateDelegate(null));
+    }
+
+    /**
+     * Constructor for a discretized site rate model that uses a delegate to set
+     * the category rates.
      */
     public DiscretizedSiteRateModel(
             String name,

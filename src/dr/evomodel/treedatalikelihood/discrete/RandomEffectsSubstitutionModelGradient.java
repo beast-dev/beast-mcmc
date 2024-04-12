@@ -25,29 +25,25 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.evomodel.substmodel.OldGLMSubstitutionModel;
+import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.distribution.GeneralizedLinearModel;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.DesignMatrix;
 import dr.inference.model.Parameter;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Marc A. Suchard
  */
-public class RandomEffectsSubstitutionModelGradient extends GlmSubstitutionModelGradient {
+public class RandomEffectsSubstitutionModelGradient extends AbstractGlmSubstitutionModelGradient {
 
     private final int[][] mapEffectToIndices;
 
     public RandomEffectsSubstitutionModelGradient(String traitName,
                                                   TreeDataLikelihood treeDataLikelihood,
                                                   BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                  OldGLMSubstitutionModel substitutionModel) {
-        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel);
+                                                  GlmSubstitutionModel substitutionModel,
+                                                  ApproximationMode mode) {
+        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel, mode);
 
         // Count random effects dimension
         int asymmetricCount = stateCount * (stateCount - 1);
@@ -82,8 +78,8 @@ public class RandomEffectsSubstitutionModelGradient extends GlmSubstitutionModel
     }
 
     @Override
-    double preProcessNormalization(double[] differentials, double[] generator,
-                                   boolean normalize) {
+    protected double preProcessNormalization(double[] differentials, double[] generator,
+                                             boolean normalize) {
         double total = 0.0;
         if (normalize) {
             for (int i = 0; i < stateCount; ++i) {

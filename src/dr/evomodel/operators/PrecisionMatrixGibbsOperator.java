@@ -49,6 +49,7 @@ import dr.math.matrixAlgebra.Vector;
 import dr.util.Attribute;
 import dr.xml.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -507,6 +508,8 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
                 );
             } else if (ws != null) {
 
+                ws = checkForMultipleWishartStatisticProviders(ws, xo);
+
                 if (precMatrix instanceof DiagonalConstrainedMatrixView) {
                     precMatrix = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
 
@@ -531,6 +534,32 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
             } else {
                 return new PrecisionMatrixGibbsOperator(likelihood, (WishartStatistics) prior.getDistribution(), weight);
             }
+        }
+
+        private ConjugateWishartStatisticsProvider checkForMultipleWishartStatisticProviders(
+                ConjugateWishartStatisticsProvider ws,
+                XMLObject xo) throws XMLParseException {
+
+            List<ConjugateWishartStatisticsProvider> providers = new ArrayList<>();
+            for (int i = 0; i < xo.getChildCount(); ++i) {
+                Object cxo = xo.getChild(i);
+                if (cxo instanceof ConjugateWishartStatisticsProvider) {
+                    providers.add((ConjugateWishartStatisticsProvider) cxo);
+                }
+            }
+
+            if (providers.size() > 1) {
+                MatrixParameterInterface precision = providers.get(0).getPrecisionParameter();
+                for (int i = 1; i < providers.size(); ++i) {
+                    if (providers.get(i).getPrecisionParameter() != precision) {
+                        throw new XMLParseException("All Wishart statistics providers must act on the same precision parameter");
+                    }
+                }
+
+                ws = new ConjugateWishartStatisticsProvider.CompoundWishartStatistics(providers);
+            }
+
+            return ws;
         }
 
         //************************************************************************

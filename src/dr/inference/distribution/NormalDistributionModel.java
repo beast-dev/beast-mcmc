@@ -42,7 +42,7 @@ import org.w3c.dom.Element;
  */
 
 public class NormalDistributionModel extends AbstractModel implements ParametricDistributionModel,
-        GaussianProcessRandomGenerator, GradientProvider, HessianProvider, NormalStatisticsProvider {
+        GaussianProcessRandomGenerator, GradientProvider, HessianProvider, NormalStatisticsProvider, PriorPreconditioningProvider {
     /**
      * Constructor.
      */
@@ -202,6 +202,11 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     @Override
     public Likelihood getLikelihood() {
         return null;
+    }
+
+    @Override
+    public double getStandardDeviation(int index) {
+        return getStdev();
     }
 
     @Override

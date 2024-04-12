@@ -94,6 +94,16 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
     }
 
     @Override
+    public boolean usesMissingIndices() {
+        return false;
+    }
+
+    @Override
+    public ContinuousTraitPartialsProvider[] getChildModels() {
+        return new ContinuousTraitPartialsProvider[0];
+    }
+
+    @Override
     public List<Integer> getMissingIndices() {
         return null;
     }

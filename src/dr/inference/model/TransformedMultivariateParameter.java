@@ -101,7 +101,7 @@ public class TransformedMultivariateParameter extends TransformedParameter {
         }
     }
 
-    public final int getDimension() {
+    public int getDimension() {
         return getTransformedDimension();
     }
 

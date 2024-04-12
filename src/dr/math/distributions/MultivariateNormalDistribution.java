@@ -91,7 +91,8 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
 
     public double getLogDet() {
         if (logDet == null) {
-            logDet = Math.log(calculatePrecisionMatrixDeterminate(precision));
+            boolean inlogScale = true;
+            logDet = calculatePrecisionMatrixDeterminate(precision, inlogScale);
         }
         if (Double.isInfinite(logDet)) {
             if (isDiagonal(precision)) {
@@ -147,10 +148,24 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         nextMultivariateNormalCholesky(mean, getCholeskyDecomposition(), Math.sqrt(scale), result);
     }
 
-
     public static double calculatePrecisionMatrixDeterminate(double[][] precision) {
+        boolean inLogScale = false;
+        return calculatePrecisionMatrixDeterminate(precision, inLogScale);
+    }
+
+    public static double calculatePrecisionMatrixDeterminate(double[][] precision, boolean inLogScale) {
         try {
-            return new Matrix(precision).determinant();
+            if (inLogScale) {
+                double logDet = 0;
+                double[][] L = getCholeskyDecomposition(precision);
+                for (int i = 0; i < L[0].length; ++i) {
+                    logDet += Math.log(L[i][i]);
+                }
+                logDet *= 2.0;
+                return logDet;
+            } else {
+                return new Matrix(precision).determinant();
+            }
         } catch (IllegalDimension e) {
             throw new RuntimeException(e.getMessage());
         }

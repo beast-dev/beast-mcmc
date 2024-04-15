@@ -219,20 +219,15 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
             eigenBufferHelper.flipOffset(0);
         }
 
-        if (TRANSPOSE) {
-            beagle.setEigenDecomposition(
-                    eigenBufferHelper.getOffsetIndex(0),
-                    decomposition.transpose().getEigenVectors(),
-                    decomposition.transpose().getInverseEigenVectors(),
-                    decomposition.transpose().getEigenValues());
-        } else {
-            beagle.setEigenDecomposition(
-                    eigenBufferHelper.getOffsetIndex(0),
-                    decomposition.getEigenVectors(),
-                    decomposition.getInverseEigenVectors(),
-                    decomposition.getEigenValues());
+        if (transpose) {
+            decomposition = decomposition.transpose();
         }
 
+        beagle.setEigenDecomposition(
+                eigenBufferHelper.getOffsetIndex(0),
+                decomposition.getEigenVectors(),
+                decomposition.getInverseEigenVectors(),
+                decomposition.getEigenValues());
     }
 
     @Override

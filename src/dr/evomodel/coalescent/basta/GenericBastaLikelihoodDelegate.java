@@ -229,10 +229,10 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             for (int b = 0; b < stateCount; ++b) {
                 for (int i = 0; i < stateCount; ++i) {
                     double sum = 0.0;
-                    if (TRANSPOSE && i == b) {
+                    if (transpose && i == b) {
                         sum += partials[leftAccOffset + a] * distance;
                     }
-                    if (!TRANSPOSE) {
+                    if (!transpose) {
                         for (int j = 0; j < stateCount; ++j) {
                             sum += matricesGrad[a][b][leftMatrixOffset + i * stateCount + j] * partials[leftPartialOffset + j];
                         }
@@ -241,6 +241,8 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                         sum += matrices[leftMatrixOffset + i * stateCount + j] * partialsGrad[a][b][leftPartialOffset + j];
                     }
                     partialsGrad[a][b][resultOffset + i] = sum;
+
+                    throw new RuntimeException("Function should not depend on `transpose`");
                 }
             }
         }
@@ -272,11 +274,11 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                     double partial_J_ab = 0.0;
                     for (int i = 0; i < stateCount; ++i) {
                         double rightGrad = 0.0;
-                        if (TRANSPOSE && i == b) {
+                        if (transpose && i == b) {
                             rightGrad += partials[rightAccOffset + a] * distance;
                         }
 
-                        if (!TRANSPOSE) {
+                        if (!transpose) {
                             for (int j = 0; j < stateCount; ++j) {
                                 rightGrad += matricesGrad[a][b][rightMatrixOffset + i * stateCount + j] * partials[rightPartialOffset + j];
                             }
@@ -294,6 +296,8 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                         partialsGrad[a][b][resultOffset + i] = entry / J;
                         partialsGrad[a][b][leftAccOffset + i] = leftGrad;
                         partialsGrad[a][b][rightAccOffset + i] = rightGrad;
+
+                        throw new RuntimeException("Function should not depend on `transpose`");
                     }
                     // second half
                     for (int i = 0; i < stateCount; ++i) {
@@ -354,32 +358,18 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     private void computeTransitionProbabilitiesGrad(double distance, int matrixOffset) {
         for (int a = 0; a < stateCount; a++) {
             for (int b = 0; b < stateCount; b++) {
-                if (TRANSPOSE) {
-                    for (int c = 0; c < stateCount; c++) {
-                        for (int d = 0; d < stateCount; d++) { // TODO MAS: last loop unnecessary (also S^4 storage is unnecessary)
-                            if (c == b) {
-                                matricesGrad[a][b][matrixOffset + c*stateCount + d] =  distance * matrices[matrixOffset + a*stateCount + d];
-                            } else {
-                                matricesGrad[a][b][matrixOffset + c*stateCount + d] = 0; // TODO MAS: avoid caching (many) zeros
-                            }
+                for (int c = 0; c < stateCount; c++) {
+                    for (int d = 0; d < stateCount; d++) { // TODO MAS: last loop unnecessary (also S^4 storage is unnecessary)
+                        if (d == b) {
+                            // TODO MAS: should these be cached at all? why not generate on the fly (t * matrices[])
+                            matricesGrad[a][b][matrixOffset + c*stateCount + b] =  distance * matrices[matrixOffset + c*stateCount + a];
+                        } else {
+                            matricesGrad[a][b][matrixOffset + c*stateCount + d] = 0; // TODO MAS: avoid caching (many) zeros
                         }
                     }
-                } else {
-                    for (int c = 0; c < stateCount; c++) {
-                        for (int d = 0; d < stateCount; d++) { // TODO MAS: last loop unnecessary (also S^4 storage is unnecessary)
-                            if (d == b) {
-                                // TODO MAS: should these be cached at all? why not generate on the fly (t * matrices[])
-                                matricesGrad[a][b][matrixOffset + c*stateCount + b] =  distance * matrices[matrixOffset + c*stateCount + a];
-                            } else {
-                                matricesGrad[a][b][matrixOffset + c*stateCount + d] = 0; // TODO MAS: avoid caching (many) zeros
-                            }
-                        }
-                    }
-
                 }
             }
         }
-
     }
 
     @Override
@@ -595,11 +585,12 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
     @Override
     public void updateEigenDecomposition(int index, EigenDecomposition decomposition, boolean flip) {
-        if (TRANSPOSE) {
-            decompositions[index] = decomposition.transpose();
-        } else {
-            decompositions[index] = decomposition;
+
+        if (transpose) {
+            decomposition = decomposition.transpose();
         }
+
+        decompositions[index] = decomposition;
     }
 
     @Override

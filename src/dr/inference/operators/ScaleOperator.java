@@ -25,7 +25,9 @@
 
 package dr.inference.operators;
 
-import dr.inference.model.*;
+import dr.inference.model.Bounds;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.inferencexml.operators.ScaleOperatorParser;
 import dr.math.MathUtils;
 
@@ -42,6 +44,7 @@ import java.util.logging.Logger;
  * @version $Id: ScaleOperator.java,v 1.20 2005/06/14 10:40:34 rambaut Exp $
  */
 public class ScaleOperator extends AbstractAdaptableOperator {
+    private final boolean REJECT_IF_OUT_OF_BOUNDS = true;
 
     private Parameter indicator;
     private double indicatorOnProb;
@@ -53,14 +56,15 @@ public class ScaleOperator extends AbstractAdaptableOperator {
 
     public ScaleOperator(Variable<Double> variable, double scale, AdaptationMode mode, double weight) {
 
-        this(variable, false, 0, scale, mode, null, 1.0, false);
-        setWeight(weight);
+        this(variable, false, 0, scale, mode, weight, null, 1.0, false);
     }
 
     public ScaleOperator(Variable<Double> variable, boolean scaleAll, int degreesOfFreedom, double scale,
-                         AdaptationMode mode, Parameter indicator, double indicatorOnProb, boolean scaleAllInd) {
+                         AdaptationMode mode, double weight, Parameter indicator, double indicatorOnProb, boolean scaleAllInd) {
 
         super(mode);
+
+        setWeight(weight);
 
         this.variable = variable;
         this.indicator = indicator;
@@ -82,21 +86,14 @@ public class ScaleOperator extends AbstractAdaptableOperator {
     /**
      * change the parameter and return the hastings ratio.
      */
-    public double doOperation() {
+    public final double doOperation() {
 
         final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
 
         double logq;
 
         final Bounds<Double> bounds = variable.getBounds();
-
-        int dim;
-
-        if(variable instanceof TransformedMultivariateParameter) {
-            dim = ((TransformedMultivariateParameter) variable).getUntransformedDimension();
-        } else {
-            dim = variable.getSize();
-        }
+        final int dim = variable.getSize();
 
         if (scaleAllIndependently) {
             // update all dimensions independently.
@@ -107,16 +104,7 @@ public class ScaleOperator extends AbstractAdaptableOperator {
                 final double offset = bounds.getLowerLimit(i);
 
                 // scale offset by the lower bound
-
-                double oldValue;
-
-                if(variable instanceof TransformedParameter) {
-                    oldValue = ((TransformedParameter)variable).getParameterUntransformedValue(i);
-                } else{
-                    oldValue = variable.getValue(i);
-                }
-
-                final double value = ((oldValue - offset) * scaleOne) + offset;
+                final double value = ((variable.getValue(i) - offset) * scaleOne) + offset;
 
                 logq -= Math.log(scaleOne);
 
@@ -125,13 +113,7 @@ public class ScaleOperator extends AbstractAdaptableOperator {
                     throw new RuntimeException("proposed value greater than upper bound");
                 }
 
-                if(variable instanceof TransformedParameter) {
-                    ((TransformedParameter)getVariable()).setParameterUntransformedValue(i, value);
-                } else {
-                    variable.setValue(i, value);
-                }
-
-
+                variable.setValue(i, value);
 
             }
         } else if (scaleAll) {
@@ -149,17 +131,26 @@ public class ScaleOperator extends AbstractAdaptableOperator {
             for (int i = 0; i < dim; i++) {
                 // For scale all we scale by the same factor (i.e., not relative to their individual
                 // origins).
-                if(variable instanceof TransformedParameter) {
-                    ((TransformedParameter)getVariable()).setParameterUntransformedValue(i,
-                            ((TransformedParameter)getVariable()).getParameterUntransformedValue(i)*scale);
-                } else {
-                    variable.setValue(i, variable.getValue(i) * scale);
-                }
+                variable.setValue(i, variable.getValue(i) * scale);
             }
 
-            for (int i = 0; i < dim; i++) {
-                if (variable.getValue(i) > variable.getBounds().getUpperLimit(i)) {
-                    throw new RuntimeException("proposed value greater than upper bound");
+            if (REJECT_IF_OUT_OF_BOUNDS) {
+                // when scaling all parameter dimensions with different bounds (i.e., node heights
+                // where nodes below may bound a height) if the proposed scale will put any
+                // of the dimensions out of bounds then reject the move.
+                for (int i = 0; i < dim; i++) {
+                    if (variable.getValue(i) > variable.getBounds().getUpperLimit(i) ||
+                            variable.getValue(i) < variable.getBounds().getLowerLimit(i)) {
+                        return Double.NEGATIVE_INFINITY;
+                    }
+                }
+            } else {
+                for (int i = 0; i < dim; i++) {
+                    if (variable.getValue(i) > variable.getBounds().getUpperLimit(i)) {
+                        throw new RuntimeException("proposed value greater than upper bound");
+                    } else if (variable.getValue(i) < variable.getBounds().getLowerLimit(i)) {
+                        throw new RuntimeException("proposed value less than lower bound");
+                    }
                 }
             }
         } else {
@@ -168,8 +159,6 @@ public class ScaleOperator extends AbstractAdaptableOperator {
             // which bit to scale
             int index;
             if (indicator != null) {
-
-                // todo this may need fixing
                 final int idim = indicator.getDimension();
                 final boolean impliedOne = idim == (dim - 1);
                 // available bit locations
@@ -202,16 +191,12 @@ public class ScaleOperator extends AbstractAdaptableOperator {
                 index = MathUtils.nextInt(dim);
             }
 
-            final double oldValue;
+            final double oldValue = variable.getValue(index);
+            double offset = bounds.getLowerLimit(index);
 
-            if(variable instanceof TransformedParameter) {
-                oldValue = ((TransformedParameter)variable).getParameterUntransformedValue(index);
-            } else{
-                oldValue = variable.getValue(index);
+            if (offset == Double.NEGATIVE_INFINITY) {
+                offset = -bounds.getUpperLimit(index);
             }
-
-
-            final double offset = bounds.getLowerLimit(index);
 
             if (oldValue == 0) {
                 Logger.getLogger("dr.inference").severe("The " + ScaleOperatorParser.SCALE_OPERATOR +
@@ -229,13 +214,7 @@ public class ScaleOperator extends AbstractAdaptableOperator {
                 throw new RuntimeException("proposed value greater than upper bound: " + newValue + " (" + variable.getId() + ")");
             }
 
-            if(variable instanceof TransformedParameter) {
-                ((TransformedParameter)getVariable()).setParameterUntransformedValue(index, newValue);
-            } else {
-                variable.setValue(index, newValue);
-            }
-
-
+            variable.setValue(index, newValue);
 
             // provides a hook for subclasses
             cleanupOperation(newValue, oldValue);

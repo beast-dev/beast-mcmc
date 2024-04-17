@@ -78,7 +78,7 @@ public class FreeRateSimplexTransform extends Transform.MultivariateTransform {
     protected double getLogJacobian(double[] values) {
         Matrix partialsMatrix = new Matrix(dim, dim);
 
-        double sqrtDenominator = 0;
+        double sqrtDenominator;
 
         // reminder: dim is one less than the dimension of the simplex
 
@@ -90,10 +90,9 @@ public class FreeRateSimplexTransform extends Transform.MultivariateTransform {
 
         sqrtDenominator = 1-tempSum;
 
+        assert sqrtDenominator > 0;
+
         double denominator = sqrtDenominator * sqrtDenominator;
-
-        // this version is still in the ascending space
-
 
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j < dim; j++) {
@@ -148,7 +147,7 @@ public class FreeRateSimplexTransform extends Transform.MultivariateTransform {
                 int dimension = xo.getIntegerAttribute(DIMENSION);
                 return new FreeRateSimplexTransform(dimension);
             } else {
-                throw new XMLParseException("RealDifferencesToSimplex must have either a dimension attribute or" +
+                throw new XMLParseException("FreeRateSimplexTransform must have either a dimension attribute or" +
                         "a set of weights");
             }
         }

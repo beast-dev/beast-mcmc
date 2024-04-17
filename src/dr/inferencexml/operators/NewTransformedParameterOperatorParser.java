@@ -9,18 +9,13 @@ import dr.xml.*;
 import static dr.inference.operators.NewTransformedParameterOperator.NEW_TRANSFORMED_OPERATOR;
 
 public class NewTransformedParameterOperatorParser extends AbstractXMLObjectParser {
-    public static final String INVERSE = "inverse";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         SimpleMCMCOperator operator = (SimpleMCMCOperator) xo.getChild(SimpleMCMCOperator.class);
         BoundedSpace bounds = (BoundedSpace) xo.getChild(BoundedSpace.class);
         Transform transform = (Transform) xo.getChild(Transform.class);
-        boolean inverse = false;
-        if(xo.hasAttribute(INVERSE)) {
-            inverse = xo.getBooleanAttribute(INVERSE);
-        }
-        return new NewTransformedParameterOperator(operator, transform, inverse, bounds);
+        return new NewTransformedParameterOperator(operator, transform, bounds);
     }
 
     @Override
@@ -28,8 +23,7 @@ public class NewTransformedParameterOperatorParser extends AbstractXMLObjectPars
         return new XMLSyntaxRule[]{
                 new ElementRule(SimpleMCMCOperator.class),
                 new ElementRule(Transform.class),
-                new ElementRule(BoundedSpace.class, true),
-                AttributeRule.newBooleanRule(INVERSE, true)
+                new ElementRule(BoundedSpace.class, true)
         };
     }
 

@@ -9,19 +9,16 @@ public class NewTransformedParameterOperator extends AbstractAdaptableOperator {
     private final SimpleMCMCOperator subOperator;
     private final Parameter parameter;
     private final Transform transform;
-    private final boolean inverse;
     private final boolean checkValid;
     private final BoundedSpace generalBounds;
     public static final String NEW_TRANSFORMED_OPERATOR = "newTransformedParameterOperator";
 
     public NewTransformedParameterOperator(SimpleMCMCOperator operator,
                                            Transform transform,
-                                           boolean inverse,
                                            BoundedSpace generalBounds) {
 
         this.subOperator = operator;
         this.transform = transform;
-        this.inverse = inverse;
         setWeight(operator.getWeight());
         this.isAdaptable = operator instanceof AbstractAdaptableOperator;
         this.parameter = operator.getParameter();
@@ -29,11 +26,7 @@ public class NewTransformedParameterOperator extends AbstractAdaptableOperator {
         this.checkValid = generalBounds != null;
     }
 
-    public NewTransformedParameterOperator(SimpleMCMCOperator operator,
-                                           Transform transform,
-                                           BoundedSpace generalBounds) {
-        this(operator, transform, false, generalBounds);
-    }
+
 
 
     @Override
@@ -89,13 +82,10 @@ public class NewTransformedParameterOperator extends AbstractAdaptableOperator {
 
         // Compute Jacobians
 
-        if (inverse) {
-            ratio += -transform.getLogJacobian(transform.transform(oldValues, 0, oldValues.length), 0, oldValues.length)
-                    + transform.getLogJacobian(transform.transform(newValues, 0, newValues.length), 0, oldValues.length);
-        } else {
-            ratio += transform.getLogJacobian(oldValues, 0, oldValues.length)
-                    - transform.getLogJacobian(newValues, 0, newValues.length);
-        }
+
+        ratio += transform.getLogJacobian(transform.transform(oldValues, 0, oldValues.length), 0, oldValues.length)
+                - transform.getLogJacobian(transform.transform(newValues, 0, newValues.length), 0, oldValues.length);
+
 
         return ratio;
     }

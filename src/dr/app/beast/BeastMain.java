@@ -874,7 +874,7 @@ public class BeastMain {
         int[] versionNumbers = BeagleInfo.getVersionNumbers();
         if (versionNumbers.length != 0 && versionNumbers[0] < 4) {
             System.err.println("BEAST v" + BeastVersion.INSTANCE.getVersion() + " requires BEAGLE v4.0 or later.\n" +
-                    "Please install or upgrade to the latest BEAGLE from http://github.com/beagle-dev/beagle-lib/");
+                    "Please install or upgrade to the latest BEAGLE from https://beagle-dev.github.io/");
             throw new RuntimeException("Terminate");
         }
 

@@ -58,7 +58,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             }
         }
         if (priorType == PriorType.UNIFORM_PRIOR && !isInputValid()) {
-            error = "Invalid uniform bound !";
+            error = "Invalid uniform bound";
             return true;
         }
         if (isTruncatable && isTruncatedCheck.isSelected()) {
@@ -69,10 +69,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
                 error = upperField.getErrorMessage();
                 return true;
             } else if (lowerField.getValue() >= upperField.getValue()) {
-                error = "Invalid truncation bound !";
+                error = "Invalid truncation bound";
                 return true;
             } else if (getValue(OFFSET) > -1 && lowerField.getValue() < getValue(OFFSET)) {
-                error = "Offset cannot be smaller than truncation lower !";
+                error = "Offset cannot be smaller than truncation lower";
                 return true;
             } else {
                 error = "";

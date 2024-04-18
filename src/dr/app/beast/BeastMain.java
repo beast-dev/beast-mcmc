@@ -84,6 +84,7 @@ public class BeastMain {
                      boolean parserWarning, boolean strictXML, List<String> additionalParsers,
                      MCMCMCOptions mc3Options) {
 
+
         if (inputFile == null) {
             throw new RuntimeException("Error: no input file specified");
         }
@@ -375,6 +376,7 @@ public class BeastMain {
 
                         new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
+                        new Arguments.Option("beagle_auto", "BEAGLE: automatically select fastest resource for analysis"),
                         new Arguments.StringOption("beagle_order", "order", "BEAGLE: set order of resource use"),
                         new Arguments.IntegerOption("beagle_instances", "BEAGLE: divide site patterns amongst instances"),
                         new Arguments.StringOption("beagle_multipartition", new String[]{"auto", "on", "off"},
@@ -420,13 +422,6 @@ public class BeastMain {
                         new Arguments.Option("version", "Print the version and credits and stop"),
                         new Arguments.Option("help", "Print this information and stop"),
                 });
-
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        if (versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1) {
-            arguments.addOption("beagle_auto",
-                    "BEAGLE: automatically select fastest resource for analysis",
-                    "beagle_info");
-        };
 
         int argumentCount = 0;
 
@@ -876,12 +871,11 @@ public class BeastMain {
 
         BeagleInfo.printVersionInformation();
 
-        if (BeagleInfo.getVersion().startsWith("1.")) {
-            System.err.println("WARNING: You are currenly using BEAGLE v1.x. For best performance and compatibility\n" +
-                    "with models in BEAST, please upgrade to BEAGLE v3.x at http://github.com/beagle-dev/beagle-lib/\n");
-        } else if (BeagleInfo.getVersion().startsWith("2.")) {
-            System.err.println("WARNING: You are currenly using BEAGLE v2.x. For best performance and compatibility\n" +
-                    "with models in BEAST, please upgrade to BEAGLE v3.x at http://github.com/beagle-dev/beagle-lib/\n");
+        int[] versionNumbers = BeagleInfo.getVersionNumbers();
+        if (versionNumbers.length != 0 && versionNumbers[0] < 4) {
+            System.err.println("BEAST v" + BeastVersion.INSTANCE.getVersion() + " requires BEAGLE v4.0 or later.\n" +
+                    "Please install or upgrade to the latest BEAGLE from http://github.com/beagle-dev/beagle-lib/");
+            throw new RuntimeException("Terminate");
         }
 
         if (beagleShowInfo) {

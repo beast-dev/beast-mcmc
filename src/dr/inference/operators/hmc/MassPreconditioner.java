@@ -650,6 +650,9 @@ public interface MassPreconditioner {
             this.variance = new AdaptableVector.AdaptableVariance(dim);
             this.options = options;
             this.minimumUpdates = options.preconditioningDelay();
+            if (minimumUpdates < 2) {
+                throw new RuntimeException("Need at least two samples to calculate empirical variance.  Set HMC's option preconditioningDelay > 2 please!");
+            }
             this.gradient = gradient;
             if (guessInitialMass) {
                 setInitialMass();

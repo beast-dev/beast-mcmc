@@ -80,7 +80,7 @@ public class ExpGammaDistributionModel extends AbstractModel
 
     public double quantile(double y) {
         try {
-            return Math.log(new GammaDistributionImpl(getShape(), getScale())).inverseCumulativeProbability(y));
+            return Math.log((new GammaDistributionImpl(getShape(), getScale())).inverseCumulativeProbability(y));
         } catch (MathException e) {
             return Double.NaN;
         }

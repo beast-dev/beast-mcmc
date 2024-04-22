@@ -46,7 +46,7 @@ public class Weights extends AbstractModel implements RandomField.WeightProvider
                 index1 = temp;
             }
 
-            return (intervals.getInterval(index1) + intervals.getInterval(index2))/2;
+            return 2/(intervals.getInterval(index1) + intervals.getInterval(index2));
         }
 
     }

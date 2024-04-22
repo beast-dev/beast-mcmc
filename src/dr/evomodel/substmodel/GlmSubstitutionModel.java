@@ -56,6 +56,7 @@ public class GlmSubstitutionModel extends ComplexSubstitutionModel
 
     }
 
+    @Override
     public LogAdditiveCtmcRateProvider getRateProvider() {
         return glm;
     }

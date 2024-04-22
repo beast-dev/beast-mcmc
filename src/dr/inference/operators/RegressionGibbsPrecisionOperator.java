@@ -85,8 +85,8 @@ public class RegressionGibbsPrecisionOperator extends SimpleMCMCOperator impleme
                 }
             }
 
-            final double shape = priorParametrization.getShape() + n / 2.0;
-            final double rate = priorParametrization.getRate() + 0.5 * SSE;
+            final double shape = priorParametrization.getShape(k) + n / 2.0;
+            final double rate = priorParametrization.getRate(k) + 0.5 * SSE;
 
             final double draw = MathUtils.nextGamma(shape, rate); // Gamma( \alpha + n/2 , \beta + (1/2)*SSE )
             precision.setParameterValue(k, draw);

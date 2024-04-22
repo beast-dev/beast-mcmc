@@ -1209,6 +1209,10 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             return parameter == node.heightParameter;
         }
 
+        public boolean isOnlyHeightChanged() {
+            return false;
+        }
+
         public boolean isRateChanged() {
             return parameter == node.rateParameter;
         }

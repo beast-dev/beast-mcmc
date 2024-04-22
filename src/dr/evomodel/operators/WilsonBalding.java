@@ -27,6 +27,7 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainableTreeOperator;
 import dr.evomodelxml.operators.WilsonBaldingParser;
 import dr.math.MathUtils;
 
@@ -36,22 +37,20 @@ import dr.math.MathUtils;
  * @author Alexei Drummond
  * @version $Id: WilsonBalding.java,v 1.38 2005/06/14 10:40:34 rambaut Exp $
  */
-public class WilsonBalding extends AbstractTreeOperator {
+public class WilsonBalding extends AbstractTreeOperator implements ConstrainableTreeOperator {
 
     private TreeModel tree = null;
-    private final int tipCount;
 
 
     public WilsonBalding(TreeModel tree, double weight) {
         this.tree = tree;
-        tipCount = tree.getExternalNodeCount();
         setWeight(weight);
     }
 
-    public double doOperation() {
+    public double doOperation(TreeModel tree) {
 
-        double logq = proposeTree();
-
+        double logq = proposeTree(tree);
+        int tipCount = tree.getExternalNodeCount();
         if (tree.getExternalNodeCount() != tipCount) {
             int newCount = tree.getExternalNodeCount();
             throw new RuntimeException("Lost some tips in modified SPR! (" +
@@ -62,10 +61,14 @@ public class WilsonBalding extends AbstractTreeOperator {
         return logq;
     }
 
+    public double doOperation(){
+        return doOperation(tree);
+    }
+
     /**
      * WARNING: Assumes strictly bifurcating tree.
      */
-    public double proposeTree() {
+    public double proposeTree(TreeModel tree){
 
         NodeRef i;
         double oldMinAge, newMinAge, newRange, oldRange, newAge, q;

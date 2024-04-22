@@ -38,7 +38,7 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegat
 import dr.evomodel.treedatalikelihood.discrete.*;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.hmc.SumDerivative;
+import dr.inference.hmc.JointGradient;
 import dr.inference.model.BranchParameter;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
@@ -89,7 +89,7 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
 
             checkBranchRateModels(providers);
 
-            return new SumDerivative(providers);
+            return new JointGradient(providers);
         }
     }
 
@@ -128,17 +128,19 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
 
                 BranchParameter branchParameter = (BranchParameter) xo.getChild(BranchParameter.class);
 
+                Double tolerance = xo.getAttribute(BranchSubstitutionParameterGradientParser.GRADIENT_CHECK_TOLERANCE, null);
+
                 if (xo.hasChildNamed(LOCATION)) {
 
                     BranchSpecificFixedEffects location = parseLocation(xo);
 
                     return new BranchSubstitutionParameterLocationGradient(traitName, treeDataLikelihood, beagleData, branchParameter,
-                            useHessian, location);
+                            tolerance, useHessian, location);
 
                 } else if (xo.hasChildNamed(SCALE)) {
 
                     Parameter scale = (Parameter) xo.getElementFirstChild(SCALE);
-                    return new BranchSubstitutionParameterScaleGradient(traitName, treeDataLikelihood, beagleData, branchParameter, scale, useHessian);
+                    return new BranchSubstitutionParameterScaleGradient(traitName, treeDataLikelihood, beagleData, branchParameter, scale, tolerance, useHessian);
 
                 } else {
                     throw new XMLParseException("Not yet implemented.");

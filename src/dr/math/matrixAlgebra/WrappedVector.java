@@ -27,6 +27,7 @@ package dr.math.matrixAlgebra;
 
 
 import dr.inference.model.Variable;
+import dr.xml.AbstractXMLObjectParser;
 
 /**
  * @author Marc A. Suchard
@@ -73,7 +74,7 @@ public interface WrappedVector extends ReadableVector, WritableVector {
         }
     }
 
-    final class Raw extends Abstract {
+    class Raw extends Abstract {
 
         public Raw(double[] buffer, int offset, int dim) {
             super(buffer, offset, dim);
@@ -91,6 +92,17 @@ public interface WrappedVector extends ReadableVector, WritableVector {
         @Override
         final public void set(final int i, final double x) {
             buffer[offset + i] = x;
+        }
+    }
+
+    final class View extends Raw {
+
+        public View(WrappedVector vector, int offset, int length) {
+            super(vector.getBuffer(), vector.getOffset() + offset, length);
+
+            if (!(vector instanceof WrappedVector.Raw)) {
+                throw new RuntimeException("This can only extend WrappedVector.Raw");
+            }
         }
     }
 
@@ -118,8 +130,8 @@ public interface WrappedVector extends ReadableVector, WritableVector {
 
         final private int[] indices;
 
-        public Indexed(double[] buffer, int offset, int[] indices, int dim) {
-            super(buffer, offset, dim);
+        public Indexed(double[] buffer, int offset, int[] indices) {
+            super(buffer, offset, indices.length);
             this.indices = indices;
         }
 

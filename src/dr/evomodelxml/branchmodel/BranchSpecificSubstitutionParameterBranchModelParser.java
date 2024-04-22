@@ -46,15 +46,18 @@ public class BranchSpecificSubstitutionParameterBranchModelParser extends Abstra
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
         List<Parameter> parameters = new ArrayList<>();
-        for (XMLObject xoc : xo.getAllChildren(OLD_PARAMETER)) {
-            Parameter parameter = (Parameter) xoc.getChild(Parameter.class);
+        XMLObject xoc = xo.getChild(OLD_PARAMETER);
+        for (int i = 0; i < xoc.getChildCount(); ++i) {
+            Parameter parameter = (Parameter) xoc.getChild(i);
             parameters.add(parameter);
         }
 
         List<BranchRateModel> branchRateModels = new ArrayList<>();
-        for (XMLObject xoc : xo.getAllChildren(NEW_PARAMETER)) {
-            BranchRateModel branchRateModel = (BranchRateModel) xoc.getChild(BranchRateModel.class);
+        xoc = xo.getChild(NEW_PARAMETER);
+        for (int i = 0; i < xoc.getChildCount(); ++i) {
+            BranchRateModel branchRateModel = (BranchRateModel) xoc.getChild(i);
             branchRateModels.add(branchRateModel);
         }
 

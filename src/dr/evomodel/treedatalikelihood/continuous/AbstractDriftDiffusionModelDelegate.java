@@ -34,6 +34,7 @@ import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrat
 import dr.inference.model.Model;
 import dr.math.KroneckerOperation;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
 import java.util.List;
 
@@ -172,5 +173,19 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
     public double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance,
                                        final double[][] treeSharedLengths, final double[][] traitVariance) {
         return KroneckerOperation.product(treeVariance, traitVariance);
+    }
+
+    @Override
+    public void getMeanTipVariances(final double priorSampleSize,
+                                    final double[] treeLengths,
+                                    final DenseMatrix64F traitVariance,
+                                    final DenseMatrix64F varSum) {
+        double sumLengths = 0;
+        for (double treeLength : treeLengths) {
+            sumLengths += treeLength;
+        }
+        sumLengths /= treeLengths.length;
+        CommonOps.scale(sumLengths, traitVariance, varSum);
+        CommonOps.addEquals(varSum, 1 / priorSampleSize, traitVariance);
     }
 }

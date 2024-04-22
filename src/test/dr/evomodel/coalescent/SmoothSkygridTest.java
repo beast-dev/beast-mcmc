@@ -25,11 +25,8 @@
 
 package test.dr.evomodel.coalescent;
 
-import dr.evomodel.coalescent.smooth.SmoothSkygridLikelihood;
+import dr.evomodel.coalescent.smooth.OldSmoothSkygridLikelihood;
 import junit.framework.TestCase;
-import org.apache.commons.math.ConvergenceException;
-import org.apache.commons.math.FunctionEvaluationException;
-import org.apache.commons.math.analysis.UnivariateRealFunction;
 import org.apache.commons.math.analysis.integration.RombergIntegrator;
 import org.apache.commons.math.analysis.integration.UnivariateRealIntegrator;
 
@@ -64,7 +61,7 @@ public class SmoothSkygridTest extends TestCase {
 
         // Test gradients
         startTime = System.nanoTime();
-        xx = SmoothSkygridLikelihood.getGradientWrtLogPopSizesInIntervalViaCentralDifference(
+        xx = OldSmoothSkygridLikelihood.getGradientWrtLogPopSizesInIntervalViaCentralDifference(
                 1.1, 1.9,
                 1, 2,
                 Math.log(5), Math.log(10), 2.0);
@@ -72,7 +69,7 @@ public class SmoothSkygridTest extends TestCase {
         System.err.println("Total cDiff execution time: " + (endTime-startTime) + "ns");
         
         startTime = System.nanoTime();
-        yy = SmoothSkygridLikelihood.getGradientWrtLogPopSizesInInterval(
+        yy = OldSmoothSkygridLikelihood.getGradientWrtLogPopSizesInInterval(
                 1.1, 1.9,
                 1, 2,
                 Math.log(5), Math.log(10), 2.0);
@@ -136,14 +133,14 @@ public class SmoothSkygridTest extends TestCase {
 //
         // Approximated step function
         startTime = System.nanoTime();
-        x = SmoothSkygridLikelihood.getPopSizeInInterval(1.6,
+        x = OldSmoothSkygridLikelihood.getPopSizeInInterval(1.6,
                 1, 2,
                 Math.log(5), Math.log(10), 100.0);
         System.err.println(x);
         y = 10;
         assertEquals(x, y, tolerance);
 
-        x = SmoothSkygridLikelihood.getIntensityInInterval(1, 2,
+        x = OldSmoothSkygridLikelihood.getIntensityInInterval(1, 2,
                 1, 2,
                 Math.log(5), Math.log(10), 100.0);
         System.err.println(x);

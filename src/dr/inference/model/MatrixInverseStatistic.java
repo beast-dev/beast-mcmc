@@ -35,7 +35,7 @@ public class MatrixInverseStatistic extends Statistic.Abstract implements Variab
 
     private static final String INVERSE_STATISTIC = "matrixInverse";
 
-    public MatrixInverseStatistic(MatrixParameter matrix) {
+    public MatrixInverseStatistic(MatrixParameterInterface matrix) {
         this.matrix = matrix;
         matrix.addParameterListener(this);
     }
@@ -57,7 +57,7 @@ public class MatrixInverseStatistic extends Statistic.Abstract implements Variab
         return inverse[x][y];
     }
 
-    public String getDimensionName(int dim) {        
+    public String getDimensionName(int dim) {
         return getStatisticName() + "." + matrix.getDimensionName(dim);
     }
 
@@ -73,7 +73,7 @@ public class MatrixInverseStatistic extends Statistic.Abstract implements Variab
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            MatrixParameter matrix = (MatrixParameter) xo.getChild(MatrixParameter.class);
+            MatrixParameterInterface matrix = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
 
             if (matrix.getColumnDimension() != matrix.getRowDimension())
                 throw new XMLParseException("Only square matrices can be inverted");
@@ -99,11 +99,11 @@ public class MatrixInverseStatistic extends Statistic.Abstract implements Variab
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(MatrixParameter.class)
+                new ElementRule(MatrixParameterInterface.class)
         };
     };
 
     private boolean inverseKnown = false;
     private double[][] inverse;
-    private MatrixParameter matrix;
+    private MatrixParameterInterface matrix;
 }

@@ -146,6 +146,8 @@ public class TreeTipGradient implements GradientWrtParameterProvider, Reportable
 
     @Override
     public String getReport() {
-        return (new dr.math.matrixAlgebra.Vector(getGradientLogDensity())).toString();
+        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0, Double.POSITIVE_INFINITY, tolerance);
     }
+
+    private double tolerance = 1E-3;
 }

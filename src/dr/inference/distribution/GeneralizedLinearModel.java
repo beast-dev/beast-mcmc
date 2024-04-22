@@ -42,7 +42,7 @@ import java.util.logging.Logger;
 /**
  * @author Marc Suchard
  */
-@Deprecated // GLM stuff is now in inference.glm - this is here for backwards compatibility temporarily
+
 public abstract class GeneralizedLinearModel extends AbstractModelLikelihood implements MultivariateFunction {
 
     protected Parameter dependentParam;
@@ -86,6 +86,9 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         addVariable(effect);
         randomEffects.add(effect);
         numRandomEffects++;
+        if (N == 0) {
+            N = effect.getDimension();
+        }
     }
 
     public void addIndependentParameter(Parameter effect, DesignMatrix matrix, Parameter delta) {
@@ -197,6 +200,10 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         return independentParam.get(j);
     }
 
+    public Parameter getFixedEffectIndicator(int j) {
+        return indParamDelta.get(j);
+    }
+
     public Parameter getRandomEffect(int j) {
         return randomEffects.get(j);
     }
@@ -250,6 +257,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         return designMatrix.get(j).getParameterAsMatrix();
     }
 
+    public DesignMatrix getDesignMatrix(int j) { return designMatrix.get(j); }
 
     public double[] getScale() {
 
@@ -349,13 +357,14 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         }
         return independentParam.get(k).getBounds().getUpperLimit(which);
     }
+    public abstract GeneralizedLinearModel factory(List<Parameter> oldIndependentParameter, List<Parameter> newIndependentParameter);
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-//        fireModelChanged();
+        fireModelChanged();
     }
 
     protected void storeState() {

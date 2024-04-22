@@ -42,6 +42,11 @@ public class AutoCorrelatedRatesWithBayesianBridge implements BayesianBridgeStat
     }
 
     @Override
+    public Parameter getSlabWidth() {
+        return prior.getSlabWidth();
+    }
+
+    @Override
     public int getDimension() {
         return rates.getDimension();
     }

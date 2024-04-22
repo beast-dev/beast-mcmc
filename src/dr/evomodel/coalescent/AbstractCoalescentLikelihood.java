@@ -130,8 +130,8 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     protected abstract double calculateLogLikelihood();
 
 
-    protected final IntervalList getIntervalList() {
-        return intervalList;
+    public IntervalList getIntervalList() {
+            return intervalList;
     }
 
     public String toString() {
@@ -163,7 +163,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     // Private and protected stuff
     // ****************************************************************
 
-    private IntervalList intervalList = null;
+    protected IntervalList intervalList = null;
 
     protected double logLikelihood;
     protected double storedLogLikelihood;

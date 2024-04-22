@@ -43,6 +43,7 @@ public class MaskedPatternsParser extends AbstractXMLObjectParser {
     public static final String MASKED_PATTERNS = "maskedPatterns";
     public static final String MASK = "mask";
     public static final String NEGATIVE = "negative";
+    public static final String INVERSE = "inverse";
 
     public String getParserName() { return MASKED_PATTERNS; }
 
@@ -53,7 +54,7 @@ public class MaskedPatternsParser extends AbstractXMLObjectParser {
 
         SiteList siteList = (SiteList)xo.getChild(SiteList.class);
 
-        boolean negativeMask = xo.getBooleanAttribute(NEGATIVE);
+        boolean inverseMask = xo.getBooleanAttribute(INVERSE, false) || xo.getBooleanAttribute(NEGATIVE, false);
         String maskString = (String)xo.getElementFirstChild(MASK);
 
         boolean[] mask = new boolean[siteList.getSiteCount()];
@@ -63,7 +64,7 @@ public class MaskedPatternsParser extends AbstractXMLObjectParser {
                 if (k >= mask.length) {
                     break;
                 }
-                mask[k] = (c == '0' ? negativeMask : !negativeMask);
+                mask[k] = (c == '0' ? inverseMask : !inverseMask);
                 k++;
             }
         }
@@ -72,24 +73,29 @@ public class MaskedPatternsParser extends AbstractXMLObjectParser {
             throw new XMLParseException("The mask needs to be the same length as the alignment (spaces are ignored)");
         }
 
-        SitePatterns patterns = new SitePatterns(siteList, mask, false, false);
+        throw new UnsupportedOperationException("This has not been implemented");
 
-        if (patterns == null) {
-            throw new XMLParseException("The mask needs include at least one pattern");
-        }
-
-        if (xo.hasAttribute(XMLParser.ID)) {
-            final Logger logger = Logger.getLogger("dr.evoxml");
-            logger.info("Site patterns '" + xo.getId() + "' created by masking alignment with id '" + siteList.getId() + "'");
-            logger.info("  pattern count = " + patterns.getPatternCount());
-        }
-
-        return patterns;
+        // @todo - work out how to do this. Create a MaskedSitePatterns which can then be put into a SitePatterns
+        // for compression etc. Or MaskedAlignment may make more sense here.
+//        SitePatterns patterns = new MaskedSitePatterns(siteList, mask);
+//
+//        if (patterns == null) {
+//            throw new XMLParseException("The mask needs include at least one pattern");
+//        }
+//
+//        if (xo.hasAttribute(XMLParser.ID)) {
+//            final Logger logger = Logger.getLogger("dr.evoxml");
+//            logger.info("Site patterns '" + xo.getId() + "' created by masking alignment with id '" + siteList.getId() + "'");
+//            logger.info("  pattern count = " + patterns.getPatternCount());
+//        }
+//
+//        return patterns;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newBooleanRule(INVERSE, true),
             AttributeRule.newBooleanRule(NEGATIVE, true),
             new ElementRule(SiteList.class),
             new ElementRule(MASK, String.class, "A parameter of 1s and 0s that represent included and excluded sites")

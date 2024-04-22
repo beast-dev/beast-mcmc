@@ -72,7 +72,7 @@ public class TreeAnnotator {
 
     enum Target {
         MAX_CLADE_CREDIBILITY("Maximum clade credibility tree"),
-        MAX_MARGINAL_CLADE_CREDIBILITY("Maximum marginal clade credibilities"),
+        HIPSTR("Highest independent posterior subtree reconstruction (HIPSTR)"),
         USER_TARGET_TREE("User target tree");
 
         String desc;
@@ -267,9 +267,9 @@ public class TreeAnnotator {
                 targetTree = new FlexibleTree(getMCCTree(burnin, cladeSystem, inputFileName));
                 break;
             }
-            case MAX_MARGINAL_CLADE_CREDIBILITY: {
-                progressStream.println("Finding maximum marginal credibility tree...");
-                targetTree = new FlexibleTree(getMMCCTree(cladeSystem));
+            case HIPSTR: {
+                progressStream.println("Finding highest independent posterior subtree reconstruction (HIPSTR) tree...");
+                targetTree = new FlexibleTree(getHIPSTRTree(cladeSystem));
                 break;
             }
             default: throw new IllegalArgumentException("Unknown targetOption");
@@ -416,15 +416,15 @@ public class TreeAnnotator {
         return bestTree;
     }
 
-    private Tree getMMCCTree(CladeSystem cladeSystem) {
+    private Tree getHIPSTRTree(CladeSystem cladeSystem) {
 
         CladeSystem.Clade rootClade = cladeSystem.getRootClade();
 
         credibilityCache.clear();
 
-        double score = findMMCCTree(cladeSystem, rootClade);
+        double score = findHIPSTRTree(cladeSystem, rootClade);
 
-        SimpleTree tree = new SimpleTree(buildMCCTree(cladeSystem, rootClade));
+        SimpleTree tree = new SimpleTree(buildHIPSTRTree(cladeSystem, rootClade));
 
         progressStream.println();
         progressStream.println("Highest Log Marginal Clade Credibility: " + score);
@@ -435,7 +435,7 @@ public class TreeAnnotator {
 
     private Map<CladeSystem.Clade, Double> credibilityCache = new HashMap<>();
 
-    private double findMMCCTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
+    private double findHIPSTRTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
 
         double logCredibility = Math.log(clade.credibility);
 
@@ -444,23 +444,23 @@ public class TreeAnnotator {
 
             for (Pair<BitSet, BitSet> subClade : clade.subClades) {
 
-                CladeSystem.Clade left = cladeSystem.getCladeMap().get(subClade.fst);
+                CladeSystem.Clade left = cladeSystem.getCladeMap().get(subClade.first);
                 if (left == null) {
                     throw new IllegalArgumentException("no clade found");
                 }
 
                 double leftLogCredibility = credibilityCache.getOrDefault(left, Double.NaN);
                 if (Double.isNaN(leftLogCredibility)) {
-                    leftLogCredibility = findMMCCTree(cladeSystem, left);
+                    leftLogCredibility = findHIPSTRTree(cladeSystem, left);
                     credibilityCache.put(left, leftLogCredibility);
                 }
-                CladeSystem.Clade right = cladeSystem.getCladeMap().get(subClade.snd);
+                CladeSystem.Clade right = cladeSystem.getCladeMap().get(subClade.second);
                 if (right == null) {
                     throw new IllegalArgumentException("no clade found");
                 }
                 double rightLogCredibility = credibilityCache.getOrDefault(right, Double.NaN);
                 if (Double.isNaN(rightLogCredibility)) {
-                    rightLogCredibility = findMMCCTree(cladeSystem, right);
+                    rightLogCredibility = findHIPSTRTree(cladeSystem, right);
                     credibilityCache.put(right, rightLogCredibility);
                 }
 
@@ -479,13 +479,13 @@ public class TreeAnnotator {
         return logCredibility;
     }
 
-    private SimpleNode buildMCCTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
+    private SimpleNode buildHIPSTRTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
         SimpleNode newNode = new SimpleNode();
         if (clade.size == 1) {
             newNode.setTaxon(clade.taxon);
         } else {
-            newNode.addChild(buildMCCTree(cladeSystem, clade.bestLeft));
-            newNode.addChild(buildMCCTree(cladeSystem, clade.bestRight));
+            newNode.addChild(buildHIPSTRTree(cladeSystem, clade.bestLeft));
+            newNode.addChild(buildHIPSTRTree(cladeSystem, clade.bestRight));
         }
         return newNode;
     }
@@ -905,6 +905,7 @@ public class TreeAnnotator {
                                     annotateMedianAttribute(tree, node, attributeName + "_median", values);
                                     annotateHPDAttribute(tree, node, attributeName + "_95%_HPD", 0.95, values);
                                     annotateRangeAttribute(tree, node, attributeName + "_range", values);
+                                    annotateSignAttribute(tree, node, attributeName + "_signDistribution", values);
                                     if (computeESS == true) {
                                         annotateESSAttribute(tree, node, attributeName + "_ESS", values);
                                     }
@@ -924,6 +925,7 @@ public class TreeAnnotator {
                                         if (minValueArray[k] < maxValueArray[k]) {
                                             annotateMedianAttribute(tree, node, name + (k + 1) + "_median", valuesArray[k]);
                                             annotateRangeAttribute(tree, node, name + (k + 1) + "_range", valuesArray[k]);
+                                            annotatePositiveProbability(tree, node, name + (k + 1) + "_positiveProb", valuesArray[k]);
                                             if (!want2d)
                                                 annotateHPDAttribute(tree, node, name + (k + 1) + "_95%_HPD", 0.95, valuesArray[k]);
                                         }
@@ -1016,6 +1018,18 @@ public class TreeAnnotator {
 
             tree.setNodeAttribute(node, label + ".set", name);
             tree.setNodeAttribute(node, label + ".set.prob", freq);
+        }
+
+        private void annotateSignAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
+            double negativePortion = DiscreteStatistics.negativeProbability(values);
+            double positivePortion = 1 - negativePortion;
+            tree.setNodeAttribute(node, label, new Object[]{negativePortion, positivePortion});
+        }
+
+        private void annotatePositiveProbability(MutableTree tree, NodeRef node, String label, double[] values) {
+            double negativePortion = DiscreteStatistics.negativeProbability(values);
+            double positivePortion = 1 - negativePortion;
+            tree.setNodeAttribute(node, label, positivePortion);
         }
 
         private void annotateRangeAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
@@ -1537,7 +1551,7 @@ public class TreeAnnotator {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption("type", new String[] { "mcc", "mmcc" }, false, "an option of 'mcc' or 'mmcc'"),
+                        new Arguments.StringOption("type", new String[]{"mcc", "hipstr"}, false, "an option of 'mcc' or 'hipstr'"),
                         new Arguments.StringOption("heights", new String[]{"keep", "median", "mean", "ca"}, false,
                                 "an option of 'keep', 'median', 'mean' or 'ca' (default)"),
                         new Arguments.LongOption("burnin", "the number of states to be considered as 'burn-in'"),
@@ -1577,8 +1591,6 @@ public class TreeAnnotator {
                 heights = HeightsSummary.MEDIAN_HEIGHTS;
             } else if (value.equalsIgnoreCase("ca")) {
                 heights = HeightsSummary.CA_HEIGHTS;
-                System.out.println("Please cite: Heled and Bouckaert: Looking for trees in the forest:\n" +
-                        "summary tree from posterior samples. BMC Evolutionary Biology 2013 13:221.");
             }
         }
 
@@ -1592,11 +1604,10 @@ public class TreeAnnotator {
         }
 
         if (arguments.hasOption("ess")) {
-            if(burninStates != -1) {
+            if (burninStates != -1) {
                 System.out.println(" Calculating ESS for branch parameters.");
                 computeESS = true;
-            }
-            else {
+            } else {
                 throw new RuntimeException("Specify burnin as states to use 'ess' option.");
             }
         }
@@ -1616,8 +1627,8 @@ public class TreeAnnotator {
         }
 
         Target target = Target.MAX_CLADE_CREDIBILITY;
-        if (arguments.hasOption("type") && arguments.getStringOption("type").equalsIgnoreCase("MMCC")) {
-            target = Target.MAX_MARGINAL_CLADE_CREDIBILITY;
+        if (arguments.hasOption("type") && arguments.getStringOption("type").equalsIgnoreCase("HIPSTR")) {
+            target = Target.HIPSTR;
         }
 
         if (arguments.hasOption("target")) {
@@ -1643,6 +1654,21 @@ public class TreeAnnotator {
         }
 
         new TreeAnnotator(burninTrees, burninStates, heights, posteriorLimit, hpd2D, computeESS, target, targetTreeFileName, inputFileName, outputFileName);
+
+        if (target == Target.MAX_CLADE_CREDIBILITY) {
+            progressStream.println("Constructed Maximum Clade Credibility (MCC) tree - citation: " +
+                    "Drummond and Rambaut: 'BEAST: Bayesian evolutionary analysis by sampling trees', BMC Ecology and Evolution 2007, 7: 214.");
+        } else if (target == Target.HIPSTR) {
+            progressStream.println("Constructed Highest Independent Posterior Sub-Tree (HIPSTR) tree - citation: In prep.");
+        } else if (target == Target.USER_TARGET_TREE) {
+            progressStream.println("Annotated user target tree.");
+        }
+
+        if (heights == HeightsSummary.CA_HEIGHTS) {
+            progressStream.println("\nUsed Clade Height option - citation: " +
+                    "Heled and Bouckaert: 'Looking for trees in the forest: " +
+                    "summary tree from posterior samples'. BMC Evolutionary Biology 2013 13:221.");
+        }
 
         System.exit(0);
     }

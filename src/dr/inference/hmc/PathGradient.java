@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * @author Marc A. Suchard
  */
-public class PathGradient implements GradientWrtParameterProvider, PathDependent {
+public class PathGradient implements HessianWrtParameterProvider, PathDependent {
 
     private final int dimension;
     private final Likelihood likelihood;
@@ -94,5 +94,31 @@ public class PathGradient implements GradientWrtParameterProvider, PathDependent
 
     private static double blend(double source, double destination, double beta) {
         return beta * source + (1.0 - beta) * destination;
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity() {
+
+        if (!(source instanceof HessianWrtParameterProvider) ||
+                !(destination instanceof HessianWrtParameterProvider)) {
+            throw new RuntimeException("Must use Hessian providers");
+        }
+
+        final double[] likelihood = ((HessianWrtParameterProvider) source).getDiagonalHessianLogDensity();
+
+        if (beta != 1.0) {
+            final double[] second = ((HessianWrtParameterProvider) destination).getDiagonalHessianLogDensity();
+
+            for (int i = 0; i < likelihood.length; ++i) {
+                likelihood[i] = blend(likelihood[i], second[i], beta);
+            }
+        }
+
+        return likelihood;
+    }
+
+    @Override
+    public double[][] getHessianLogDensity() {
+        throw new RuntimeException("Not yet implemented");
     }
 }

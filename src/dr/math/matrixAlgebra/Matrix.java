@@ -506,11 +506,18 @@ public class Matrix {
      * @return java.lang.String
      */
     public String toString() {
+        return toString(0);
+    }
+
+    public String toString(int indent) {
         StringBuffer sb = new StringBuffer();
         char[] separator = {'[', ' '};
         int n = rows();
         int m = columns();
         for (int i = 0; i < n; i++) {
+            for (int ind = 0; ind < indent; ind++) {
+                sb.append("\t");
+            }
             separator[0] = '{';
             for (int j = 0; j < m; j++) {
                 sb.append(separator);

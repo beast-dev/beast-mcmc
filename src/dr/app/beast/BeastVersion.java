@@ -60,7 +60,7 @@ public class BeastVersion implements Version, Citable {
      */
     private static final String VERSION = "1.10.5";
 
-    private static final String DATE_STRING = "2002-2019";
+    private static final String DATE_STRING = "2002-2024";
 
     private static final boolean IS_PRERELEASE = true;
 
@@ -101,10 +101,10 @@ public class BeastVersion implements Version, Citable {
                 "\thttp://github.com/beast-dev/beast-mcmc",
                 "",
                 "BEAST developers:",
-                "\tAlex Alekseyenko, Guy Baele, Trevor Bedford, Filip Bielejec, Erik Bloomquist, Matthew Hall,",
-                "\tJoseph Heled, Sebastian Hoehna, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li,",
-                "\tGerton Lunter, Sidney Markowitz, Vladimir Minin, Michael Defoin Platel,",
-                "\tOliver Pybus, Chieh-Hsi Wu, Walter Xie",
+                "\tAlex Alekseyenko, Daniel Ayres, Guy Baele, Trevor Bedford, Filip Bielejec, Erik Bloomquist, ",
+                "\tMandev Gill, Matthew Hall, Gabe Hassler, Joseph Heled, Sebastian Hoehna, Denise Kuehnert, ",
+                "\tPhilippe Lemey, Wai Lok Sibon Li, Gerton Lunter, Andy Magee, Sidney Markowitz, JT McCrone, ",
+                "\tVladimir Minin, Michael Defoin Platel, Oliver Pybus, Chieh-Hsi Wu, Walter Xie",
                 "",
                 "Thanks to:",
                 "\tRoald Forsberg, Beth Shapiro and Korbinian Strimmer"};

@@ -159,7 +159,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
     private double getMaxEigenvalueAsTravelTime() {
 
         double treeCovEigenvalue = eigenvalue.find(likelihoodDelegate.getTreeVariance());
-        double traitCovEigenvalue = eigenvalue.find(likelihoodDelegate.getTreeTraitVariance());
+        double traitCovEigenvalue = eigenvalue.find(likelihoodDelegate.getTraitVariance());
 
         return optimalTravelTimeScalar * Math.sqrt(treeCovEigenvalue * traitCovEigenvalue);
     }

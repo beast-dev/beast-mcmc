@@ -1,7 +1,7 @@
 /*
  * TreeParameterModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,10 +26,13 @@
 package dr.evomodel.tree;
 
 import dr.evolution.tree.*;
+import dr.evomodel.branchratemodel.NodeRateMap;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+
+import java.util.function.DoubleBinaryOperator;
 
 /**
  * This class maintains a parameter of length equal to the number of nodes in the tree.
@@ -42,6 +45,11 @@ import dr.inference.model.Variable;
  */
 public class TreeParameterModel extends AbstractModel implements TreeTrait<Double>, TreeDoubleTraitProvider {
 
+    public enum Type {
+        WITHOUT_ROOT,
+        WITH_ROOT
+    }
+
     protected final MutableTreeModel tree;
 
     // The tree parameter;
@@ -50,7 +58,7 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
     // the index of the root node.
     private final Parameter rootNodeNumber;
 
-    private boolean includeRoot = false;
+    private boolean includeRoot;
 
     private Intent intent;
 
@@ -65,6 +73,10 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
      */
     public TreeParameterModel(MutableTreeModel tree, Parameter parameter, boolean includeRoot) {
         this(tree, parameter, includeRoot, Intent.NODE);
+    }
+
+    public TreeParameterModel(MutableTreeModel tree, Parameter parameter, Type includeRoot) {
+        this(tree, parameter, includeRoot == Type.WITH_ROOT, Intent.NODE);
     }
 
     /**
@@ -111,9 +123,15 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
-            handleRootMove();
+            if (!inHandleRootMove) {
+                inHandleRootMove = true;
+                handleRootMove();
+                inHandleRootMove = false;
+            }
         }
     }
+
+    private boolean inHandleRootMove = false;
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
@@ -160,7 +178,7 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
 
         assert (!tree.isRoot(node) && !includeRoot) : "root node doesn't have a parameter value!";
 
-        assert tree.getRoot().getNumber() == rootNodeNumber.getValue(0).intValue() :
+        assert !includeRoot || tree.getRoot().getNumber() == rootNodeNumber.getValue(0).intValue() :
                 "INTERNAL ERROR! node with number " + rootNodeNumber + " should be the root node.";
 
         int nodeNumber = node.getNumber();
@@ -212,6 +230,52 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
                 rootNodeNumber.setParameterValue(0, newRootNodeNumber);
             }
         }
+    }
+
+    public void forEach(NodeRateMap map) {
+
+        final int len = parameter.getDimension();
+        final int rootNumber = tree.getRoot().getNumber();
+
+        // Assumes that tree.getNode(i).getNumber == i
+
+        for (int i = 0; i < len; ++i) {
+            NodeRef node = tree.getNode(i);
+            assert node.getNumber() == i;
+            map.apply(i, node, parameter.getParameterValue(i));
+        }
+
+        if (len > rootNumber) {
+            for (int i = rootNumber; i < len; ++i) {
+                NodeRef node = tree.getNode(i + 1);
+                assert node.getNumber() == i + 1;
+                map.apply(i, node, parameter.getParameterValue(i));
+            }
+        }
+    }
+
+    public double mapReduce(NodeRateMap map, DoubleBinaryOperator reduce, double initial) {
+
+        final int len = parameter.getDimension();
+        final int rootNumber = tree.getRoot().getNumber();
+
+        // Assumes that tree.getNode(i).getNumber == i
+
+        for (int i = 0; i < len; ++i) {
+            NodeRef node = tree.getNode(i);
+            assert node.getNumber() == i;
+            initial = reduce.applyAsDouble(initial, map.apply(i, node, parameter.getParameterValue(i)));
+        }
+
+        if (includeRoot && len > rootNumber) {
+            for (int i = rootNumber; i < len; ++i) {
+                NodeRef node = tree.getNode(i + 1);
+                assert node.getNumber() == i + 1;
+                initial = reduce.applyAsDouble(initial, map.apply(i, node, parameter.getParameterValue(i)));
+            }
+        }
+
+        return initial;
     }
 
     /**

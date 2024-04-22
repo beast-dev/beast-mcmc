@@ -1,6 +1,7 @@
 package dr.evomodelxml.continuous.hmc;
 
 import dr.inference.distribution.AutoRegressiveNormalDistributionModel;
+import dr.inference.distribution.CompoundSymmetryNormalDistributionModel;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
@@ -22,13 +23,23 @@ public class PrecisionDataProductProviderParser extends AbstractXMLObjectParser 
         double roughTimeGuess = xo.getAttribute(TIME_GUESS, 1.0);
 
         MatrixParameterInterface matrix = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
+
         AutoRegressiveNormalDistributionModel ar = (AutoRegressiveNormalDistributionModel) xo.getChild(
                 AutoRegressiveNormalDistributionModel.class);
+
+        CompoundSymmetryNormalDistributionModel cs = (CompoundSymmetryNormalDistributionModel) xo.getChild(
+                CompoundSymmetryNormalDistributionModel.class);
 
         if (matrix != null) {
             return new PrecisionMatrixVectorProductProvider.Generic(matrix, roughTimeGuess);
         } else {
-            return new PrecisionMatrixVectorProductProvider.AutoRegressive(ar, roughTimeGuess);
+            if (ar != null) {
+                return new PrecisionMatrixVectorProductProvider.AutoRegressive(ar, roughTimeGuess);
+            } else if (cs != null) {
+                return new PrecisionMatrixVectorProductProvider.CompoundSymmetry(cs, roughTimeGuess);
+            } else {
+                throw new RuntimeException("unrecognized type, must be ar or cs!");
+            }
         }
     }
 
@@ -40,10 +51,6 @@ public class PrecisionDataProductProviderParser extends AbstractXMLObjectParser 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(THREAD_COUNT, true),
             AttributeRule.newDoubleRule(TIME_GUESS, true),
-            new XORRule(
-                    new ElementRule(MatrixParameterInterface.class),
-                    new ElementRule(AutoRegressiveNormalDistributionModel.class)
-            ),
             new ElementRule(MASKING,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)

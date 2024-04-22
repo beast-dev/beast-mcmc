@@ -42,7 +42,7 @@ import org.w3c.dom.Element;
  */
 
 public class NormalDistributionModel extends AbstractModel implements ParametricDistributionModel,
-        GaussianProcessRandomGenerator, GradientProvider, HessianProvider {
+        GaussianProcessRandomGenerator, GradientProvider, HessianProvider, NormalStatisticsProvider, PriorPreconditioningProvider {
     /**
      * Constructor.
      */
@@ -86,6 +86,16 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
 
     public Variable<Double> getMean() {
         return mean;
+    }
+
+    @Override
+    public double getNormalMean(int dim) {
+        return mean.getValue(0);
+    }
+
+    @Override
+    public double getNormalSD(int dim) {
+        return getStdev();
     }
 
     public Variable<Double> getPrecision() {
@@ -195,7 +205,14 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     }
 
     @Override
-    public int getDimension() { return 1; }
+    public double getStandardDeviation(int index) {
+        return getStdev();
+    }
+
+    @Override
+    public int getDimension() {
+        return 1;
+    }
 
     @Override
     public double[] getGradientLogDensity(Object obj) {

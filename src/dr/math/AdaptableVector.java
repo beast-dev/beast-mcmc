@@ -115,7 +115,7 @@ public interface AdaptableVector {
             super.update(x);
             for (int i = 0; i < dim; i++) {
                 meanSquaredValues[i] = ((updates - 1.0) * meanSquaredValues[i] + x.get(i) * x.get(i)) / updates;
-                variance[i] = meanSquaredValues[i] - getNewMeans(i) * getNewMeans(i);
+                variance[i] = Math.abs(meanSquaredValues[i] - getNewMeans(i) * getNewMeans(i));
             }
         }
 

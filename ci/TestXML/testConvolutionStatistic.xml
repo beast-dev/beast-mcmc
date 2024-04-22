@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    <taxa id="taxa">
+        <taxon id="A"/>
+        <taxon id="B"/>
+        <taxon id="C"/>
+        <taxon id="D"/>
+        <taxon id="E"/>
+    </taxa>
+    <alignment id="alignment" dataType="nucleotide">
+        <sequence>
+            <taxon idref="A"/>
+            gatgggctgcgcatgaatggataatgtaaccctgtcttattgtagacgagtttctcgttggacgcttcgttttgtcttacgttgcgtttggttaactgcggtttaaccgtgccgggttgctgggctaatcaggacgctcgttgccctattccctgctttgaggtgagtttcggggtcgccacttccattttcttatgtcccgtgagagttggttgcgtgtgcgatcttttttttgctcggtgttggttgatttgtctgggcttggtctactcgtcctggtgttattgtttccctttcgttggttcatttttagttataaagtttgatcccatttgggtctgtttttatcaggttgggaggggtaggggttttctcatttcggttgctattcggtcgacgttgggctattttgtctttcgttgacgtgtgggggtatgttggatctgtcgtgtgaattgcctgcttgtttcttaagggatgtgctcgctttagcggtctttttgctcgtattcttgttgtgcactggtagtctcggttggtcagtgcgcttatgtttagtcctttttctgcgtattgttggtaggtgaagctcgacggttggtctggctgggggtcattgtggtctgtgcgttttgttgccttgctggtaatacgggttgccatctcggctgcttttttttgccatcttcggtcctcgaagcgtccctttgcctccctttgtgtttctggggaaatgtggcaggacgccgtttttttgtaaacttggaggggtttctaacaggttgttgttctgtgtctctactggtgttgtaggcgattgtgtttatttttgttggtgatcctggtttctgctggtgagaagtttcttgtcctcggtgagacgcatttcctggttattcgttgtgattgtttaaccagttcaatgctttggaaacttttcgctgctttgtcgtctggcgcggtctattctggggttttctgcgcgtcttcttccttgtgt
+        </sequence>
+        <sequence>
+            <taxon idref="B"/>
+            aatcggctgcgcatgaatggataatgtaaccctgtcttagagtagacgagtttctcgttggacgcttcgttttgtcttgctttgcgcttggttaactgtggtttaaccgtgccgggttgctcggctaatcaggacgctcgttgccctattctttgctttgaggtgagtttcgaggtcgccacttccattttcctttgtcccgcgagagttggttgcgtgcgcgatcttttttttgctcggtgttggttgatttgtctgggcttggtctactcgtcttggtgttattgtttccgtttcgttggttcatttttagttataaagtttgatcccatttgggtctgtttttttcaggttgggaggggtagggattttctcatttcggttgctattcggtcgacgttgggctattttgtctttcgttaacgtgtgggggtatgttggatctgtcgtgtggattgcctggttgtttcttaagggatctgctcgctttagtggtctttttgctcgtattcttgttgtgcactggtagtctcggtcggtcattgcgcttatgtttattcctttttctgcgtattgttggtaggtgaagttcgacggttggtctggctgggggtcattgtggtctgtgcgttttgttgccttgctggtaatacgggttgccatctcggctgcttttttttgccatcttcggtcctcgaagcgtccctttgcctccctttgtgtttctggggaaatgtggcaggacgtcgtttttttgtaaacttggaggggtttctaacgggttattgttctgtgtctctactggtgttgtaggcgattgtgtttattttctttggtgatcctggtctctgctggtgagaagtttcttgtcttcggtgagacgcatttcctggttattcgttgtgattatttaaccagttcaatgctttggaaacttttcgctacttcgttgtctggcgcggtctattctggggttttctgcgcgtcttcctccttgtgt
+        </sequence>
+        <sequence>
+            <taxon idref="C"/>
+            gggtcgaatggtattagtagctactgtcgcactgtcgtttgtgataacactaactccgtgggctctttgtttgtcgatgtattgtgtgtgttaaaccgcatatccgtggtgcaggacctaggtaataataagggcgctcttggctacagaggctaatcaaagctaacggtcagacttgtcattacgtgctattattgtcccgggagggctctttctgttctgtaccatattttatctcgtcaatgatggccctacttgtggtttgtcgattttccatcgcttccttgtaatctacgcacgaacccatggtatgatgtgccgttaggcaacatgtcggcgattctcgtttagggatctactacttgatgataccggacggagtcatcggtttcaatgcatatttgctttttgagatgtcgctgaggttgagtcatacgtatgacttcgcgtaggttttgccaacgaggaccatatggactctgcaatggacagtcgtctatcggcaataacgcttgtctggcaccggtaccctcttatggccagatctgttcttcacgcttcgtagactctctgtgtttgaaggctctctcgacactagtcgccgggagggagttcattgtacacggatgccttaacggagttacgatttacccgggtcgccatctcggatgcattatcgtgccacctttgtccaccataccgatctgcagcctccgtctgtgtatctggcatatcatcgctcagtctaattttgaatcgagaaaccacattgagaagacaagctcggctagaatcgaccgaccagtgtagtcgggcagagtgtctaggcatatgggcgataccagtctctggtggtgaaaacactcttagtcgcttcgattcgtaggccccttttatgtgtagtgtcgctgttaccggtttaaagaattatccaactcctgctcctcttttggcacgcagtatctattttgcatctatctgcgcgcgcccccgctcatct
+        </sequence>
+        <sequence>
+            <taxon idref="D"/>
+            ggttgacctgatattactagatatggtcaggctccagtttctgaaagcgattaccggatggaccatttcgttaaagatgtcctgaatttagaatactacaatggggcagtggagcgaaacataaataattaatgcaacattgaccacatggtctgctaaaatgtcggtgttgggctggccactacgcggtttaagtaaccccggcaaggcgctctcttgcgagaacagcttttttctcggctaggattggtatgtcggagtctcggattcgagagtgggagtttttgcaacatttgtacgagcgcgtcccaaacaaggccgtgagacccaagcggtttccttctatgcgagggacatagggtcagcgcataccgcacttaggtttcgtgcataatgaagctcggctctttgagatagtaccgaggtcctttctttggttgagtctgctgtgagggttgcccacttcgccctaaaggactatgctccagacattcgtcttccgacacttactatatcttcggcacttttgtctagaacgtcaagcgctttaccacgcattttgtattttgccacgtttatgagtgttgctcgtatcgtttcgttccgatggaggtcatttgagacggctcttatacaggagtaacgttttatacggatcgccattccgcttcccttcgtttgccaccatagttcatcgtagagacttctggcctcggtgggtgcatctagtaattccgggcggaccccgattttgtcacaatctaccaagtttgtagaatagcggcttatacagtcttccgaccggtcctgtaggagactgtcgatcgtgctgcgggcgctccgaattggtagtggagagaagactttttgcctcagtgaaccgaagacccctgttagtcatactgtcgccttagcgtttgcatagattacgcaacttcctgcatctctcgtctcgaatagtatctttattgcagtgatttgctcttacgcgttctcgtga
+        </sequence>
+        <sequence>
+            <taxon idref="E"/>
+            ggttgacatcacattaatagatacagtcacgccatagtttgtgatagcgattactggttggtcgctcatgttctagatctcctgagttcagaattctacaatttagtagcggagcaaacccacaggtgttaaggcgagcctgacgacatagtcagctaaaacgtccatgttggtgtggccactatgcagcgtatgtgtcccgggaaaggcgcactcttgagataccatatttcttcccgacgaggatagaggtgtcggagtctggtctgcgtgacacggcgatttagtaacatttgtacgagagtatcgccagtcatgacgatagacccaggtgagttccttctatacgacgcccatagggtaagctaactccgcacctagttgtcggtcacaatgaagctgggccctctgggatcgtaccgagctccattcccttgatggaattgcggtgcacgttgccgacgtcgtcctaaagaactctgctcccgacagtcgtctaccgagacggactctatttttctcactttagtctagcatgtcaagcgttttaccatccattatgtcttatgggtggttttggagcgttactcatatcctttcgacctgatggtggtcattttagacggttcgtttacgggagtaacgcttaagacgggtggccctcttgctcgcttttgtatgccaccagcgttcatcgccgtgtctctttgcctcgcttttagcattgagccattcctggcagagcctgaatttgctataatatacgaggtttgtagaaaggcggcttatactgtcttacgagcggtgatgtgcgggactgcagaacgcggtaggggcccgccaatttgctagtggtgaagagtcgttttgcatcaatgaaataaagcctcctgataggcatcctgacgttctatcgatctcatacattgcgcgatttcttgagtctatcgcgcctattactatctatatgacagtgatttgctcgaacgcgtcctggtgt
+        </sequence>
+    </alignment>
+
+  	<patterns id="patterns" from="1" strip="false" unique="false">
+  		<alignment idref="alignment"/>
+  	</patterns>
+
+
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+      ((A:1.0,B:1.0):1.0,((D:0.25,E:0.25):0.25,C:0.5):1.5)
+    </newick>
+
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+  	<strictClockBranchRates id="branchRates">
+  		<rate>
+  			<parameter id="clock.rate" value="0.525" lower="0.0"/>
+  		</rate>
+  	</strictClockBranchRates>
+
+    <strictClockBranchRates id="clock1">
+  		<rate>
+  			<parameter id="clock.rate1" value="0.25" lower="0.0"/>
+  		</rate>
+  	</strictClockBranchRates>
+
+    <strictClockBranchRates id="clock2">
+  		<rate>
+  			<parameter id="clock.rate2" value="0.8" lower="0.0"/>
+  		</rate>
+  	</strictClockBranchRates>
+
+    <rateStatistic id="rate1" name="rate1" mode="mean" internal="true" external="true">
+      <treeModel idref="treeModel"/>
+      <strictClockBranchRates idref="clock1"/>
+    </rateStatistic>
+
+    <rateStatistic id="rate2" name="rate2" mode="mean" internal="true" external="true">
+      <treeModel idref="treeModel"/>
+      <strictClockBranchRates idref="clock2"/>
+    </rateStatistic>
+
+    <HKYModel id="JC">
+        <frequencies>
+            <frequencyModel dataType="nucleotide">
+                <frequencies>
+                    <parameter id="JC.frequencies" value="0.25 0.25 0.25 0.25"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <kappa>
+            <parameter id="kappaJC" value="1.0" lower="0.0"/>
+        </kappa>
+    </HKYModel>
+
+    <HKYModel id="F81">
+        <frequencies>
+            <frequencyModel dataType="nucleotide">
+                <frequencies>
+                    <parameter id="F81.frequencies" value="0.1742 0.2162 0.2634 0.3462 "/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <kappa>
+            <parameter id="kappaF81" value="1.0" lower="0.0"/>
+        </kappa>
+    </HKYModel>
+
+    <HKYModel id="HKY">
+        <frequencies>
+            <frequencyModel dataType="nucleotide">
+                <frequencies>
+                    <parameter id="HKY.frequencies" value="0.1 0.2 0.3 0.4"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <kappa>
+            <parameter id="kappa" value="5.0" lower="0.0"/>
+        </kappa>
+    </HKYModel>
+
+    <siteModel id="siteModel">
+  		<substitutionModel>
+  			<HKYModel idref="HKY"/>
+  		</substitutionModel>
+  	</siteModel>
+
+    <ancestralTreeLikelihood id="asrLikelihood" useAmbiguities="false" stateTagName="states">
+        <alignment idref="alignment"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </ancestralTreeLikelihood>
+
+    <!-- Use incorrect branch rates -->
+    <asrSubstitutionModelConvolutionStatistic id="time0">
+        <ancestralTreeLikelihood idref="asrLikelihood"/>
+        <substitutionModelAncestor>
+            <HKYModel idref="HKY"/>
+        </substitutionModelAncestor>
+        <substitutionModelDescendant>
+            <HKYModel idref="JC"/>
+        </substitutionModelDescendant>
+        <strictClockBranchRates idref="branchRates"/>
+        <mrca>
+            <taxa>
+                <taxon idref="C"/>
+                <taxon idref="D"/>
+                <taxon idref="E"/>
+            </taxa>
+        </mrca>
+    </asrSubstitutionModelConvolutionStatistic>
+
+    <!-- Use true simulating branch rates -->
+    <asrSubstitutionModelConvolutionStatistic id="time1">
+  			<ancestralTreeLikelihood idref="asrLikelihood"/>
+  			<substitutionModelAncestor>
+  				<HKYModel idref="HKY"/>
+  			</substitutionModelAncestor>
+  			<substitutionModelDescendant>
+  				<HKYModel idref="JC"/>
+  			</substitutionModelDescendant>
+  			<strictClockBranchRates idref="branchRates"/>
+  			<rateAncestor>
+  				<rateStatistic idref="rate1"/>
+  			</rateAncestor>
+  			<rateDescendant>
+  				<rateStatistic idref="rate2"/>
+  			</rateDescendant>
+  			<mrca>
+                  <taxa>
+                      <taxon idref="C"/>
+                      <taxon idref="D"/>
+                      <taxon idref="E"/>
+                  </taxa>
+  			</mrca>
+  	</asrSubstitutionModelConvolutionStatistic>
+
+    <asrSubstitutionModelConvolutionStatistic id="time2">
+        <ancestralTreeLikelihood idref="asrLikelihood"/>
+        <substitutionModelAncestor>
+            <HKYModel idref="HKY"/>
+        </substitutionModelAncestor>
+        <substitutionModelDescendant>
+            <HKYModel idref="JC"/>
+        </substitutionModelDescendant>
+        <strictClockBranchRates idref="branchRates"/>
+        <rateAncestor>
+            <rateStatistic idref="rate1"/>
+        </rateAncestor>
+        <rateDescendant>
+            <rateStatistic idref="rate2"/>
+        </rateDescendant>
+        <mrca>
+            <taxa>
+                <taxon idref="C"/>
+                <taxon idref="D"/>
+                <taxon idref="E"/>
+            </taxa>
+        </mrca>
+        <prior>
+            <gammaDistributionModel id="gammaPriorMean1">
+                <shape>
+                    1.0
+                </shape>
+                <scale>
+                    1.0
+                </scale>
+            </gammaDistributionModel>
+        </prior>
+    </asrSubstitutionModelConvolutionStatistic>
+
+    <asrSubstitutionModelConvolutionStatistic id="time3">
+        <ancestralTreeLikelihood idref="asrLikelihood"/>
+        <substitutionModelAncestor>
+            <HKYModel idref="HKY"/>
+        </substitutionModelAncestor>
+        <substitutionModelDescendant>
+            <HKYModel idref="JC"/>
+        </substitutionModelDescendant>
+        <strictClockBranchRates idref="branchRates"/>
+        <rateAncestor>
+            <rateStatistic idref="rate1"/>
+        </rateAncestor>
+        <rateDescendant>
+            <rateStatistic idref="rate2"/>
+        </rateDescendant>
+        <mrca>
+            <taxa>
+                <taxon idref="C"/>
+                <taxon idref="D"/>
+                <taxon idref="E"/>
+            </taxa>
+        </mrca>
+        <prior>
+            <gammaDistributionModel id="gammaPriorMean0.1">
+                <shape>
+                    1.0
+                </shape>
+                <scale>
+                    0.1
+                </scale>
+            </gammaDistributionModel>
+        </prior>
+    </asrSubstitutionModelConvolutionStatistic>
+
+    <asrSubstitutionModelConvolutionStatistic id="time4" bootstrap="true">
+        <ancestralTreeLikelihood idref="asrLikelihood"/>
+        <substitutionModelAncestor>
+            <HKYModel idref="HKY"/>
+        </substitutionModelAncestor>
+        <substitutionModelDescendant>
+            <HKYModel idref="JC"/>
+        </substitutionModelDescendant>
+        <strictClockBranchRates idref="branchRates"/>
+        <rateAncestor>
+            <rateStatistic idref="rate1"/>
+        </rateAncestor>
+        <rateDescendant>
+            <rateStatistic idref="rate2"/>
+        </rateDescendant>
+        <mrca>
+            <taxa>
+                <taxon idref="C"/>
+                <taxon idref="D"/>
+                <taxon idref="E"/>
+            </taxa>
+        </mrca>
+    </asrSubstitutionModelConvolutionStatistic>
+
+    <asrSubstitutionModelConvolutionStatistic id="time5" bootstrap="true">
+        <ancestralTreeLikelihood idref="asrLikelihood"/>
+        <substitutionModelAncestor>
+            <HKYModel idref="HKY"/>
+        </substitutionModelAncestor>
+        <substitutionModelDescendant>
+            <HKYModel idref="JC"/>
+        </substitutionModelDescendant>
+        <strictClockBranchRates idref="branchRates"/>
+        <rateAncestor>
+            <rateStatistic idref="rate1"/>
+        </rateAncestor>
+        <rateDescendant>
+            <rateStatistic idref="rate2"/>
+        </rateDescendant>
+        <mrca>
+            <taxa>
+                <taxon idref="C"/>
+                <taxon idref="D"/>
+                <taxon idref="E"/>
+            </taxa>
+        </mrca>
+        <prior>
+            <gammaDistributionModel idref="gammaPriorMean0.1"/>
+        </prior>
+    </asrSubstitutionModelConvolutionStatistic>
+
+    <!-- True shift time: 0.5 -->
+    <report>
+        <asrSubstitutionModelConvolutionStatistic idref="time0"/>
+    </report>
+
+    <report>
+      <asrSubstitutionModelConvolutionStatistic idref="time1"/>
+    </report>
+
+    <report>
+        <asrSubstitutionModelConvolutionStatistic idref="time2"/>
+    </report>
+
+    <report>
+        <asrSubstitutionModelConvolutionStatistic idref="time3"/>
+    </report>
+
+    <report>
+        <asrSubstitutionModelConvolutionStatistic idref="time4"/>
+    </report>
+
+    <report>
+        <asrSubstitutionModelConvolutionStatistic idref="time5"/>
+    </report>
+
+</beast>
+
+<!--        set.seed(42)-->
+<!--        library(phangorn)-->
+
+<!--        phy1 <- read.tree(text="((A:1.0,B:1.0):1.0,C:1.0);")-->
+<!--        phy2 <- read.tree(text="((D:0.25,E:0.25):0.25,C:0.5);")-->
+<!--        phytot <- read.tree(text="((A:1.0,B:1.0):1.0,((D:0.25,E:0.25):0.25,C:0.5):1.5);")-->
+
+<!--        # rescale-->
+<!--        clock1 <- 1/sum(phy1$edge.length)-->
+<!--        phy1$edge.length <- clock1 * phy1$edge.length-->
+
+<!--        clock2 <- 1/sum(phy2$edge.length)-->
+<!--        phy2$edge.length <- clock2 * phy2$edge.length-->
+
+<!--        # true shift time is 1/3 of the branch before CDE clade-->
+
+<!--        # simulate sequence data-->
+<!--        aln1 <- simSeq(phy1,l=1000,Q=c(1,5,1,1,5,1),bf=c(1:4))-->
+
+<!--        # Jukes-Cantor along 0.5 time length of branch to CDE at rate clock2-->
+<!--        seq.start <- as.character(aln1)["C",]-->
+
+<!--        JC <- matrix(1,4,4)-->
+<!--        diag(JC) <- -3-->
+<!--        JC <- -1/sum(0.25 * diag(JC)) * JC-->
+
+<!--        TPM <- expm::expm(JC * 0.5 * clock2)-->
+<!--        colnames(TPM) <- row.names(TPM) <- c("a","c","g","t")-->
+
+<!--        seq.end <- sapply(1:1000,function(i){-->
+<!--        sample(c("a","c","g","t"),1,prob=TPM[which(row.names(TPM) == seq.start[i]),])-->
+<!--        })-->
+
+<!--        aln2 <- simSeq(phy2,l=1000,rootseq=seq.end)-->
+
+<!--        aln <- as.phyDat(-->
+<!--        rbind(as.character(aln1[c("A","B")]),-->
+<!--        as.character(aln2))-->
+<!--        )-->
+

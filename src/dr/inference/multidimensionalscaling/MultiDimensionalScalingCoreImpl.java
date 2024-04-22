@@ -47,7 +47,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     public void initialize(int embeddingDimension, int locationCount, long flags) {
         this.embeddingDimension = embeddingDimension;
         this.locationCount = locationCount;
-        this.observationCount = (locationCount * (locationCount - 1)) / 2;
+        this.observationCount = (locationCount * (locationCount - 1)) / 2; // TODO Fix for missing values
 
         observations = new double[locationCount][locationCount];
         increments = new double[locationCount][locationCount];
@@ -61,6 +61,17 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
         locations = new double[locationCount][embeddingDimension];
         storedLocations = new double[locationCount][embeddingDimension];
+    }
+
+    @Override
+    public void initialize(int embeddingDimension, MultiDimensionalScalingLayout layout, long flags) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public void setNonMissingObservationCount(int count) {
+        // this.nonMissingObservationCount = count;
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
@@ -182,9 +193,6 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
         if (storedIncrements != null) {
             System.arraycopy(storedIncrements, 0 , increments[updatedLocation], 0, locationCount);
-//            for (int j = 0; j < locationCount; j++) { // Do not write transposed values
-//                increments[j][updatedLocation] = storedIncrements[j];
-//            }
             incrementsKnown = true;
         } else {
             incrementsKnown = false;
@@ -210,6 +218,11 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
     @Override
     public void getGradient(double[] location) {
+        throw new RuntimeException("Not yet implemented.");
+    }
+
+    @Override
+    public void getObservationGradient(double[] location) {
         throw new RuntimeException("Not yet implemented.");
     }
 

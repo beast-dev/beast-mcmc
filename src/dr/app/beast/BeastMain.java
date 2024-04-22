@@ -1,7 +1,7 @@
 /*
  * BeastMain.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -70,6 +70,7 @@ public class BeastMain {
             Iterator iter = parser.getThreads();
             while (iter.hasNext()) {
                 Thread thread = (Thread) iter.next();
+                //noinspection removal
                 thread.stop(); // http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
             }
         }
@@ -81,7 +82,8 @@ public class BeastMain {
 
     public BeastMain(File inputFile, BeastConsoleApp consoleApp, int maxErrorCount, final boolean verbose,
                      boolean parserWarning, boolean strictXML, List<String> additionalParsers,
-                     boolean useMC3, double[] chainTemperatures, int swapChainsEvery) {
+                     MCMCMCOptions mc3Options) {
+
 
         if (inputFile == null) {
             throw new RuntimeException("Error: no input file specified");
@@ -157,17 +159,24 @@ public class BeastMain {
 
             // Install the checkpointer. This creates a factory that returns
             // appropriate savers and loaders according to the user's options.
-            new BeastCheckpointer();
+            //new BeastCheckpointer();
+            if (Boolean.parseBoolean(System.getProperty("checkpointOverrule", "true"))) {
+                BeastCheckpointer.getInstance(null, -1, -1, false);
+                Logger.getLogger("dr.apps.beast").info("Overriding checkpointing settings in the provided XML file");
+            }
 
-            if (!useMC3) {
+            if (mc3Options == null) {
                 // just parse the file running all threads...
 
                 parser.parse(fileReader, true);
 
             } else {
+
+                double[] chainTemperatures = mc3Options.getChainTemperatures();
+
                 int chainCount = chainTemperatures.length;
                 MCMC[] chains = new MCMC[chainCount];
-                MCMCMCOptions options = new MCMCMCOptions(chainTemperatures, swapChainsEvery);
+//                MCMCMCOptions options = new MCMCMCOptions(chainTemperatures, swapChainsEvery);
 
                 Logger.getLogger("dr.apps.beast").info("Starting cold chain plus hot chains with temperatures: ");
                 for (int i = 1; i < chainTemperatures.length; i++) {
@@ -183,7 +192,7 @@ public class BeastMain {
                 }
                 fileReader.close();
 
-                chainTemperatures[0] = 1.0;
+                chainTemperatures[0] = 1.0; // TODO Should perform in Mc3Options constructor
 
                 for (int i = 1; i < chainCount; i++) {
                     // parse the file once for each hot chain
@@ -216,9 +225,10 @@ public class BeastMain {
                 // restart messages
                 logger.setLevel(Level.ALL);
 
-                MCMCMC mc3 = new MCMCMC(chains, options);
-                Thread thread = new Thread(mc3);
-                thread.start();
+                MCMCMC mc3 = new MCMCMC(chains, mc3Options);
+//                Thread thread = new Thread(mc3);
+//                thread.start();
+                mc3.run();
             }
 
         } catch (java.io.IOException ioe) {
@@ -290,6 +300,12 @@ public class BeastMain {
             System.err.flush();
             throw new RuntimeException("Terminate");
         }
+
+        try {
+            dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.releaseAllBeagleInstances();
+        } catch (Throwable e) {
+           throw new RuntimeException("Terminate");
+        }
     }
 
     public static void centreLine(String line, int pageWidth) {
@@ -346,7 +362,7 @@ public class BeastMain {
                         new Arguments.StringOption("prefix", "PREFIX", "Specify a prefix for all output log filenames"),
                         new Arguments.Option("overwrite", "Allow overwriting of log files"),
                         new Arguments.IntegerOption("errors", "Specify maximum number of numerical errors before stopping"),
-                        new Arguments.IntegerOption("threads", "The number of computational threads to use (default auto)"),
+                        new Arguments.IntegerOption("threads", "The maximum number of computational threads to use (default auto)"),
                         new Arguments.Option("fail_threads", "Exit with error on uncaught exception in thread."),
                         new Arguments.Option("java", "Use Java only, no native implementations"),
                         new Arguments.LongOption("tests", "The number of full evaluation tests to perform (default 1000)"),
@@ -355,8 +371,12 @@ public class BeastMain {
                         new Arguments.Option("adaptation_off", "Don't adapt operator sizes"),
                         new Arguments.RealOption("adaptation_target", 0.0, 1.0, "Target acceptance rate for adaptive operators (default 0.234)"),
 
+                        new Arguments.StringOption("pattern_compression", new String[]{"off", "unique", "ambiguous_constant", "ambiguous_all"},
+                                false, "Site pattern compression mode (default unique)"),
+
                         new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
+                        new Arguments.Option("beagle_auto", "BEAGLE: automatically select fastest resource for analysis"),
                         new Arguments.StringOption("beagle_order", "order", "BEAGLE: set order of resource use"),
                         new Arguments.IntegerOption("beagle_instances", "BEAGLE: divide site patterns amongst instances"),
                         new Arguments.StringOption("beagle_multipartition", new String[]{"auto", "on", "off"},
@@ -365,13 +385,15 @@ public class BeastMain {
                         new Arguments.Option("beagle_GPU", "BEAGLE: use GPU instance if available"),
                         new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
                         new Arguments.Option("beagle_SSE_off", "BEAGLE: turn off use of SSE extensions"),
-                        new Arguments.Option("beagle_threading_off", "BEAGLE: turn off auto threading for a CPU instance"),
-                        new Arguments.IntegerOption("beagle_thread_count", 1, Integer.MAX_VALUE, "BEAGLE: manually set number of threads for a CPU instance"),
+                        new Arguments.Option("beagle_threading_off", "BEAGLE: turn off multi-threading for a CPU instance"),
+                        new Arguments.IntegerOption("beagle_threads", 0, Integer.MAX_VALUE, "BEAGLE: manually set number of threads per CPU instance (default auto)"),
                         new Arguments.Option("beagle_cuda", "BEAGLE: use CUDA parallization if available"),
                         new Arguments.Option("beagle_opencl", "BEAGLE: use OpenCL parallization if available"),
                         new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
                         new Arguments.Option("beagle_double", "BEAGLE: use double precision if available"),
                         new Arguments.Option("beagle_async", "BEAGLE: use asynchronous kernels if available"),
+                        new Arguments.Option("beagle_low_memory", "BEAGLE: use lower memory pre-order traversal kernels"),
+                        new Arguments.StringOption("beagle_extra_buffer_count", "buffer_count", "BEAGLE: reserve extra transition matrix buffers for convolutions"),
                         new Arguments.StringOption("beagle_scaling", new String[]{"default", "dynamic", "delayed", "always", "none"},
                                 false, "BEAGLE: specify scaling scheme to use"),
                         new Arguments.Option("beagle_delay_scaling_off", "BEAGLE: don't wait until underflow for scaling option"),
@@ -384,10 +406,12 @@ public class BeastMain {
                         new Arguments.RealOption("mc3_delta", 0.0, Double.MAX_VALUE, "temperature increment parameter"),
                         new Arguments.RealArrayOption("mc3_temperatures", -1, "a comma-separated list of the hot chain temperatures"),
                         new Arguments.IntegerOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
+                        new Arguments.StringOption("mc3_scheme", "NAME", "Specify parallel tempering swap scheme"),
 
                         new Arguments.StringOption("load_state", "FILENAME", "Specify a filename to load a saved state from"),
                         new Arguments.StringOption("save_stem", "FILENAME", "Specify a stem for the filenames to save states to"),
                         new Arguments.LongOption("save_at", "Specify a state at which to save a state file"),
+                        new Arguments.StringOption("save_time", "HH:mm:ss", "Specify a length of time after which to save a state file"),
                         new Arguments.LongOption("save_every", "Specify a frequency to save the state file"),
                         new Arguments.StringOption("save_state", "FILENAME", "Specify a filename to save state to"),
                         new Arguments.Option("full_checkpoint_precision", "Use hex-encoded doubles in checkpoint files"),
@@ -398,13 +422,6 @@ public class BeastMain {
                         new Arguments.Option("version", "Print the version and credits and stop"),
                         new Arguments.Option("help", "Print this information and stop"),
                 });
-
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        if (versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1) {
-            arguments.addOption("beagle_auto",
-                    "BEAGLE: automatically select fastest resource for analysis",
-                    "beagle_info");
-        };
 
         int argumentCount = 0;
 
@@ -467,6 +484,7 @@ public class BeastMain {
         boolean usingMC3 = false;
         double[] chainTemperatures = null;
         int swapChainsEvery = DEFAULT_SWAP_CHAIN_EVERY;
+        MCMCMCOptions.SwapScheme swapScheme = MCMCMCOptions.SwapScheme.ORIGINAL_FLAVOR;
 
         if (arguments.hasOption("particles")) {
             System.setProperty("smc.particle_folder", arguments.getStringOption("particles"));
@@ -496,6 +514,12 @@ public class BeastMain {
 
             if (arguments.hasOption("prefix")) {
                 fileNamePrefix = arguments.getStringOption("prefix");
+            }
+
+            // ============= Evaluation approximations =============
+
+            if (arguments.hasOption("pattern_compression")) {
+                System.setProperty("patterns.compression", arguments.getStringOption("pattern_compression").toLowerCase());
             }
 
             // ============= MC^3 settings =============
@@ -535,6 +559,10 @@ public class BeastMain {
                 swapChainsEvery = arguments.getIntegerOption("mc3_swap");
             }
 
+            if (arguments.hasOption("mc3_scheme")) {
+                swapScheme = MCMCMCOptions.SwapScheme.parse(arguments.getStringOption("mc3_scheme"));
+            }
+
             usingMC3 = chainCount > 1;
         }
 
@@ -569,6 +597,9 @@ public class BeastMain {
         if (arguments.hasOption("beagle_thread_count")) {
             System.setProperty("beagle.thread.count", Integer.toString(arguments.getIntegerOption("beagle_thread_count")));
         }
+        if (arguments.hasOption("beagle_threads")) {
+            System.setProperty("beagle.thread.count", Integer.toString(arguments.getIntegerOption("beagle_threads")));
+        }
         if (arguments.hasOption("beagle_threading_off")) {
             System.setProperty("beagle.thread.count", Integer.toString(1));
         }
@@ -582,6 +613,10 @@ public class BeastMain {
         }
         if (arguments.hasOption("beagle_async")) {
             beagleFlags |= BeagleFlag.COMPUTATION_ASYNCH.getMask();
+        }
+
+        if (arguments.hasOption("beagle_low_memory")) {
+            beagleFlags |= BeagleFlag.PREORDER_TRANSPOSE_LOW_MEMORY.getMask();
         }
 
         if (arguments.hasOption("beagle_order")) {
@@ -611,6 +646,10 @@ public class BeastMain {
             } else if (arguments.getStringOption("beagle_multipartition").toLowerCase().equals("off")) {
                 System.setProperty("beagle.multipartition.extensions", Boolean.FALSE.toString());
             }
+        }
+
+        if (arguments.hasOption("beagle_extra_buffer_count")) {
+            System.setProperty("beagle.extra.buffer.count", arguments.getStringOption("beagle_extra_buffer_count"));
         }
 
         // ============= Other settings =============
@@ -667,6 +706,11 @@ public class BeastMain {
             if (arguments.hasOption("save_at")) {
                 long saveAt = arguments.getLongOption("save_at");
                 System.setProperty(BeastCheckpointer.SAVE_STATE_AT, Long.toString(saveAt));
+            }
+
+            if (arguments.hasOption("save_time")) {
+                String saveTime = arguments.getStringOption("save_time");
+                System.setProperty(BeastCheckpointer.SAVE_STATE_TIME, saveTime);
             }
 
             if (arguments.hasOption("save_every")) {
@@ -827,14 +871,12 @@ public class BeastMain {
 
         BeagleInfo.printVersionInformation();
 
-        if (BeagleInfo.getVersion().startsWith("1.")) {
-            System.err.println("WARNING: You are currenly using BEAGLE v1.x. For best performance and compatibility\n" +
-                    "with models in BEAST, please upgrade to BEAGLE v3.x at http://github.com/beagle-dev/beagle-lib/\n");
-        } else if (BeagleInfo.getVersion().startsWith("2.")) {
-            System.err.println("WARNING: You are currenly using BEAGLE v2.x. For best performance and compatibility\n" +
-                    "with models in BEAST, please upgrade to BEAGLE v3.x at http://github.com/beagle-dev/beagle-lib/\n");
+        int[] versionNumbers = BeagleInfo.getVersionNumbers();
+        if (versionNumbers.length != 0 && versionNumbers[0] < 4) {
+            System.err.println("BEAST v" + BeastVersion.INSTANCE.getVersion() + " requires BEAGLE v4.0 or later.\n" +
+                    "Please install or upgrade to the latest BEAGLE from https://beagle-dev.github.io/");
+            throw new RuntimeException("Terminate");
         }
-
 
         if (beagleShowInfo) {
             BeagleInfo.printResourceList();
@@ -853,7 +895,6 @@ public class BeastMain {
             }
 
             String inputFileName = null;
-
 
             if (args2.length > 0) {
                 inputFileName = args2[0];
@@ -907,7 +948,8 @@ public class BeastMain {
 
         try {
             new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, warnings, strictXML, additionalParsers,
-                    usingMC3, chainTemperatures, swapChainsEvery);
+                    usingMC3 ? new MCMCMCOptions(chainTemperatures, swapChainsEvery, swapScheme) : null);
+//                    usingMC3, chainTemperatures, swapChainsEvery);
         } catch (RuntimeException rte) {
             // The stack trace here is not useful
 //            rte.printStackTrace(System.err);

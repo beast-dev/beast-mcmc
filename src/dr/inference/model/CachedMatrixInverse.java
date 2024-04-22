@@ -126,6 +126,11 @@ public class CachedMatrixInverse extends CompoundParameter implements MatrixPara
     }
 
     @Override
+    public boolean isImmutable() {
+        return true;
+    }
+
+    @Override
     public int getColumnDimension() { return dim; }
 
     @Override

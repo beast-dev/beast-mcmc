@@ -60,7 +60,7 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
                                  Parameter rateIndicatorParameter,
                                  Parameter ratesParameter,
                                  boolean ratesAreMultipliers,
-                                 double threshold){
+                                 double threshold) {
         this(treeModel, meanRateParameter, rateIndicatorParameter, ratesParameter, ratesAreMultipliers, threshold, false);
     }
 
@@ -83,11 +83,11 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
         if (Double.isNaN(threshold)) { // NaN == binary values
             rateIndicatorParameter.addBounds(new Parameter.DefaultBounds(1, 0, rateIndicatorParameter.getDimension()));
             this.threshold = 0.5;
-            if(simulation){
+            if (simulation) {
                 for (int i = 0; i < rateIndicatorParameter.getDimension(); ++i) {
                     rateIndicatorParameter.setParameterValue(i, 1.0);
                 }
-            }else {
+            } else {
                 for (int i = 0; i < rateIndicatorParameter.getDimension(); ++i) {
                     rateIndicatorParameter.setParameterValue(i, 0.0);
                 }
@@ -98,11 +98,11 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
         }
         ratesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0, ratesParameter.getDimension()));
 
-        if(simulation){
+        if (simulation) {
             for (int i = 0; i < rateIndicatorParameter.getDimension(); i++) {
                 ratesParameter.setParameterValue(i, treeModel.getNodeRate(treeModel.getNode(i)));
             }
-        }else {
+        } else {
             for (int i = 0; i < rateIndicatorParameter.getDimension(); i++) {
                 ratesParameter.setParameterValue(i, 1.0);
             }
@@ -137,7 +137,7 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
      * @param tree the tree
      * @param node the node
      * @return true of the variable at this node is included in function, thus representing a change in the
-     *         function looking down the tree.
+     * function looking down the tree.
      */
     public final boolean isVariableSelected(Tree tree, NodeRef node) {
         return indicators.getNodeValue(tree, node) > threshold;
@@ -170,6 +170,10 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
             recalculationNeeded = false;
         }
         return unscaledBranchRates[node.getNumber()] * scaleFactor;
+    }
+
+    public double getUnscaledBranchRate(Tree tree, NodeRef node) {
+        return getBranchRate(tree, node) / scaleFactor;
     }
 
     private void calculateUnscaledBranchRates(TreeModel tree) {

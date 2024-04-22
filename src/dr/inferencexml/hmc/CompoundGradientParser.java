@@ -28,7 +28,6 @@ package dr.inferencexml.hmc;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.hmc.CompoundDerivative;
-import dr.inference.hmc.CompoundGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 import dr.xml.*;
@@ -51,21 +50,19 @@ public class CompoundGradientParser extends AbstractXMLObjectParser {
 
     @Override
     public String[] getParserNames() {
-        return new String[] { SUM_DERIVATIVE, SUM_DERIVATIVE2 };
+        return new String[]{SUM_DERIVATIVE, SUM_DERIVATIVE2};
     }
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        List<GradientWrtParameterProvider> gradList = new ArrayList<GradientWrtParameterProvider>();
-        List<Likelihood> likelihoodList = new ArrayList<Likelihood>(); // TODO Remove?
+        List<GradientWrtParameterProvider> gradList = new ArrayList<>();
 
         for (int i = 0; i < xo.getChildCount(); ++i) {
 
             Object obj = xo.getChild(i);
 
             GradientWrtParameterProvider grad;
-            Likelihood likelihood;
 
             if (obj instanceof DistributionLikelihood) {
                 DistributionLikelihood dl = (DistributionLikelihood) obj;
@@ -83,19 +80,16 @@ public class CompoundGradientParser extends AbstractXMLObjectParser {
 
                 final GradientProvider provider = (GradientProvider) mdl.getDistribution();
                 final Parameter parameter = mdl.getDataParameter();
-                likelihood = mdl;
 
                 grad = new GradientWrtParameterProvider.ParameterWrapper(provider, parameter, mdl);
 
             } else if (obj instanceof GradientWrtParameterProvider) {
                 grad = (GradientWrtParameterProvider) obj;
-                likelihood = grad.getLikelihood();
             } else {
                 throw new XMLParseException("Not a Gaussian process");
             }
 
             gradList.add(grad);
-            likelihoodList.add(likelihood);
         }
 
         return new CompoundDerivative(gradList);

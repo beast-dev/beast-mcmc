@@ -2,6 +2,7 @@ package dr.evomodel.operators;
 
 import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.operators.hmc.MinimumTravelInformation;
+import dr.inference.operators.hmc.MinimumTravelInformationBinary;
 
 public class NativeZigZag {
 
@@ -53,15 +54,20 @@ public class NativeZigZag {
     int createInstance(int dimension,
                        NativeZigZagOptions options,
                        double[] mask,
-                       double[] observed) {
+                       double[] observed,
+                       double[] parameterSign,
+                       double[] lb,
+                       double[] ub) {
 
 
         if ((mask != null && dimension != mask.length) ||
                 (observed != null && dimension != observed.length)) {
             throw new RuntimeException("Invalid dimensions");
         }
-
-        int result = create(dimension, options, mask, observed);
+        if (mask == null){
+            mask = allOneMask(dimension);
+        }
+        int result = create(dimension, options, mask, parameterSign, lb, ub);
         if (result < 0) {
             throw new RuntimeException("Unable to create instance");
         }
@@ -69,10 +75,20 @@ public class NativeZigZag {
         return instanceNumber++;
     }
 
+    private double[] allOneMask(int dimension) {
+        double[] mask = new double[dimension];
+        for (int i = 0; i < dimension; i++) {
+            mask[i] = 1;
+        }
+        return mask;
+    }
+
     private native int create(int dimension,
                               NativeZigZagOptions options,
                               double[] mask,
-                              double[] observed);
+                              double[] parameterSign,
+                              double[] lowerBounds,
+                              double[] upperBounds);
 
     native int operate(int instanceNumber,
                        PrecisionColumnProvider columnProvider,
@@ -83,12 +99,12 @@ public class NativeZigZag {
                        double[] momentum,
                        double time);
 
-    native MinimumTravelInformation getNextEvent(int instanceNumber,
-                                                 double[] position,
-                                                 double[] velocity,
-                                                 double[] action,
-                                                 double[] gradient,
-                                                 double[] momentum);
+    native MinimumTravelInformationBinary getNextEvent(int instanceNumber,
+                                                       double[] position,
+                                                       double[] velocity,
+                                                       double[] action,
+                                                       double[] gradient,
+                                                       double[] momentum);
 
     native int enterCriticalRegion(int instanceNumber,
                                    double[] position,
@@ -123,11 +139,11 @@ public class NativeZigZag {
                                double[] column,
                                double eventTime, int eventIndex, int eventType);
 
-    native MinimumTravelInformation getNextEventIrreversible(int instanceNumber,
-                                                             double[] position,
-                                                             double[] velocity,
-                                                             double[] action,
-                                                             double[] gradient);
+//    native MinimumTravelInformation getNextEventIrreversible(int instanceNumber,
+//                                                             double[] position,
+//                                                             double[] velocity,
+//                                                             double[] action,
+//                                                             double[] gradient);
     static {
         System.loadLibrary("zig_zag");
         INSTANCE = new NativeZigZag();

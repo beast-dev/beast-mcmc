@@ -25,6 +25,8 @@
 
 package dr.math.matrixAlgebra.missingData;
 
+import static dr.math.matrixAlgebra.missingData.InversionResult.Code.*;
+
 /**
  * @author Marc A. Suchard
  */
@@ -77,6 +79,18 @@ public class InversionResult {
         }
         return new InversionResult(Code.PARTIALLY_OBSERVED, -1, logDet, true);
         // Effective dimension is unknown in this last case (<= min(dim1, dim2)), but should never be used.
+    }
+
+    public static Code getCode(int fullDim, int effectiveDim) {
+        final InversionResult.Code code;
+        if (effectiveDim == 0) {
+            code = NOT_OBSERVED;
+        } else if (effectiveDim == fullDim) {
+            code = FULLY_OBSERVED;
+        } else {
+            code = PARTIALLY_OBSERVED;
+        }
+        return code;
     }
 
     public String toString() {

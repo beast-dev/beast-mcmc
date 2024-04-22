@@ -276,6 +276,8 @@ public class NewTreeModel extends AbstractModel implements MutableTree, Citable 
             return parameter == node.heightParameter;
         }
 
+        public boolean isOnlyHeightChanged() { return false; }
+
         public boolean areAllInternalHeightsChanged() {
             if (parameter != null) {
                 return parameter == node.heightParameter && index == CHANGE_IN_ALL_INTERNAL_NODES;

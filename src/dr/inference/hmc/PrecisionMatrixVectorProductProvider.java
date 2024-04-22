@@ -26,6 +26,7 @@
 package dr.inference.hmc;
 
 import dr.inference.distribution.AutoRegressiveNormalDistributionModel;
+import dr.inference.distribution.CompoundSymmetryNormalDistributionModel;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 
@@ -89,6 +90,26 @@ public interface PrecisionMatrixVectorProductProvider {
         @Override
         public double[] getMassVector() {
             return ar.getDiagonal();
+        }
+    }
+
+    class CompoundSymmetry extends Base {
+
+        private final CompoundSymmetryNormalDistributionModel cs;
+
+        public CompoundSymmetry(CompoundSymmetryNormalDistributionModel cs, double roughTimeGuess) {
+            super(roughTimeGuess);
+            this.cs = cs;
+        }
+
+        @Override
+        public double[] getProduct(Parameter vector) {
+            return cs.getPrecisionVectorProduct(vector.getParameterValues());
+        }
+
+        @Override
+        public double[] getMassVector() {
+            return cs.getDiagonal();
         }
     }
 

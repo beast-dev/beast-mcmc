@@ -39,7 +39,7 @@ import dr.xml.*;
 public class TaskPoolParser extends AbstractXMLObjectParser {
 
     private static final String TAXON_PARSER_NAME = "taxonTaskPool";
-    private static final String TASk_PARSER_NAME = "taskPool";
+    public static final String TASK_PARSER_NAME = "taskPool";
     public static final String THREAD_COUNT = "threadCount";
 
     @Override
@@ -77,7 +77,7 @@ public class TaskPoolParser extends AbstractXMLObjectParser {
 
     @Override
     public String[] getParserNames() {
-        return new String[] { TAXON_PARSER_NAME, TASk_PARSER_NAME };
+        return new String[] { TAXON_PARSER_NAME, TASK_PARSER_NAME };
     }
 
     private final XMLSyntaxRule[] rules = new XMLSyntaxRule[] {

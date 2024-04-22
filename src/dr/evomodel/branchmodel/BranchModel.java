@@ -43,7 +43,7 @@ import java.util.List;
 public interface BranchModel extends Model  {
     /**
      * Returns a mapping of substitution models to the given branch. The Mapping
-     * contains a list of substitution models in order from tipward to rootward
+     * contains a list of substitution models in order from rootward to tipward
      * and a set of relative weights for each (may be times or proportions).
      *
      * @param branch the branch
@@ -62,7 +62,7 @@ public interface BranchModel extends Model  {
      * Gets the substitution model that will be applied at the root.
      * @return the substitution model
      */
-    SubstitutionModel getRootSubstitutionModel();
+    SubstitutionModel getRootSubstitutionModel(); // TODO should deprecate infavor of getRootFrequenceModel
 
     /**
      * Gets the frequency model that will be applied at the root.

@@ -34,6 +34,7 @@ public class ModifiedBesselFirstKind {
     //Adapted from Numerical Recipes for C
 
     public static final int ACC = 40;
+    public static final int REAL_SUM = 100;
     public static final double BIGNO = 1.0e10;
     public static final double BIGNI = 1.0e-10;
 
@@ -56,7 +57,7 @@ public class ModifiedBesselFirstKind {
             tox = 2.0 / Math.abs(x);
             bip = ans = 0.0;
             bi = 1.0;
-            for (j = 2 * (n + (int)Math.sqrt(ACC * n)); j > 0; j--) {
+            for (j = 2 * (n + (int) Math.sqrt(ACC * n)); j > 0; j--) {
                 bim = bip + j * tox * bi;
                 bip = bi;
                 bi = bim;
@@ -71,4 +72,39 @@ public class ModifiedBesselFirstKind {
             return (x < 0.0 && ((n & 1) != 0)) ? -ans : ans;
         }
     }
+
+
+    // taken from http://janroman.dhis.org/finance/Math/Bessel.pdf
+    public static double bessi(double x, double order) {
+        double iv = Math.pow(x / 2, order) / Math.exp(GammaFunction.lnGamma(1 + order));
+        iv *= recurseSum(x, order);
+        return iv;
+    }
+
+    private static double recurseSum(double x, double order) {
+        double y = x * x / 4;
+        double b = 1;
+        double sum = b;
+        for (int i = 1; i < REAL_SUM; i++) {
+            double k = i;
+            double z = y / (k * (k + order));
+            b *= z;
+            sum += b;
+        }
+        return sum;
+    }
+
+    public static double bessIRatio(double x, double y, double order) {
+        double ratio = Math.pow(x / y, order);
+        double sumX = recurseSum(x, order);
+        double sumY = recurseSum(y, order);
+        return ratio * sumX / sumY;
+    }
+
+    public static double scaledBessIRatio(double x, double y, double order) {
+        double sumX = recurseSum(x, order);
+        double sumY = recurseSum(y, order);
+        return sumX / sumY;
+    }
+
 }

@@ -63,7 +63,9 @@ public class AncestralTaxonInTree extends AbstractModel {
                                 Parameter priorSampleSize,
                                 Parameter height,
                                 NodeRef node, int index,
-                                double offset) throws TreeUtils.MissingTaxonException {
+                                double offset,
+                                boolean alwaysContrainedToRoot,
+                                boolean addTipHeightBound) throws TreeUtils.MissingTaxonException {
 
         super(ancestor.getId());
 
@@ -86,6 +88,9 @@ public class AncestralTaxonInTree extends AbstractModel {
         if (height != null) {
             addVariable(height);
         }
+
+        isAtRoot = alwaysContrainedToRoot;
+        this.addTipHeightBound = addTipHeightBound;
     }
 
     // Public API
@@ -103,6 +108,10 @@ public class AncestralTaxonInTree extends AbstractModel {
     }
 
     final public boolean isOnAncestralPath() { return height != null; } // TODO Refactor into subclass
+
+    final public boolean isAtRoot() { return isAtRoot; }
+
+    final public boolean addTipHeightBound() { return addTipHeightBound; }
 
     final public NodeRef getTipNode() { return tipNode; } // TODO Refactor into subclass
 
@@ -170,6 +179,8 @@ public class AncestralTaxonInTree extends AbstractModel {
     final private Parameter pseudoBranchLength;
     final private Parameter height;
     final private double offset;
+    final private boolean isAtRoot;
+    final private boolean addTipHeightBound;
 
     private int index;
     private NodeRef node;

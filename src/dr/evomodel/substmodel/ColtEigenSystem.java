@@ -65,7 +65,6 @@ public class ColtEigenSystem implements EigenSystem {
             try {
                 svd = new RobustSingularValueDecomposition(eigenV, maxIterations);
             } catch (ArithmeticException ae) {
-                System.err.println(ae.getMessage());
                 return getEmptyDecomposition(stateCount);
             }
             if (svd.cond() > maxConditionNumber) {

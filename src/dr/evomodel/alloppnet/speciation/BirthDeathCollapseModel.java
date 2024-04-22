@@ -51,6 +51,7 @@ package dr.evomodel.alloppnet.speciation;
  *         Date: 01/09/2013
  */
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
 import dr.evolution.tree.Tree;

@@ -26,7 +26,10 @@
 package dr.evomodelxml.operators;
 
 import dr.evomodel.operators.NNI;
+import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainedTreeModel;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainedTreeOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
 
@@ -44,8 +47,12 @@ public class NNIParser extends AbstractXMLObjectParser {
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-
-        return new NNI(treeModel, weight);
+        NNI op = new NNI(treeModel,weight);
+        if(treeModel instanceof ConstrainedTreeModel){
+            return new ConstrainedTreeOperator((ConstrainedTreeModel) treeModel, weight, op);
+        }else{
+            return op;
+        }
     }
 
     // ************************************************************************

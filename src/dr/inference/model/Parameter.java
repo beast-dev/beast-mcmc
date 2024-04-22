@@ -177,6 +177,15 @@ public interface Parameter extends Statistic, Variable<Double> {
 
     void setParameterUntransformedValue(int dim, double a);
 
+    default void setAllParameterValuesQuietly(double[] values) {
+        if (values.length != getDimension()) {
+            throw new IllegalArgumentException("supplied values must be of same dimension as parameter");
+        }
+        for (int i = 0; i < this.getDimension(); i++) {
+            setParameterValueQuietly(i, values[i]);
+        }
+    }
+
     boolean isImmutable();
 
     Set<Parameter> FULL_PARAMETER_SET = new LinkedHashSet<Parameter>();

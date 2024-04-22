@@ -7,12 +7,12 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegat
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inferencexml.model.TraitValidationProviderParser;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
@@ -32,35 +32,29 @@ public class TraitValidationProvider implements CrossValidationProvider, Reporta
 
 
     public TraitValidationProvider(Parameter trueTraits,
-                                   ContinuousTraitPartialsProvider dataModel,
+                                   ModelExtensionProvider dataModel,
                                    Tree treeModel,
                                    String id,
                                    Parameter missingParameter,
                                    TreeDataLikelihood treeLikelihood,
                                    String inferredValuesName,
-                                   List<Integer> trueMissingIndices) {
+                                   boolean[] trueMissingIndicators) {
 
 
         this.trueTraits = trueTraits;
-        this.dimTrait = dataModel.getTraitDimension();
+        this.dimTrait = dataModel.getDataDimension();
 
-        this.missingInds = setupMissingInds(dataModel, missingParameter, trueMissingIndices);
+        this.missingInds = setupMissingInds(dataModel, missingParameter, trueMissingIndicators);
         int nMissing = missingInds.length;
 
 
         TreeTrait treeTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + inferredValuesName);
 
-        if (dataModel instanceof ModelExtensionProvider) {
-            this.extensionDelegate = ((ModelExtensionProvider) dataModel).getExtensionDelegate(
-                    (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate(),
-                    treeTrait,
-                    treeModel);
-        } else { //Simply returns the tree traits
-            this.extensionDelegate = new ContinuousExtensionDelegate(
-                    (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate(),
-                    treeTrait,
-                    treeModel);
-        }
+        this.extensionDelegate = dataModel.getExtensionDelegate(
+                (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate(),
+                treeTrait,
+                treeModel);
+
 
         this.dimNames = new String[nMissing];
         setupDimNames(treeModel, id);
@@ -69,12 +63,19 @@ public class TraitValidationProvider implements CrossValidationProvider, Reporta
     }
 
     private int[] setupMissingInds(ContinuousTraitPartialsProvider dataModel, Parameter missingParameter,
-                                   List<Integer> trueMissing) {
+                                   boolean[] trueMissingIndicators) {
         int[] missingInds;
         int nMissing = 0;
         if (missingParameter == null) {
-            List<Integer> missingList = dataModel.getMissingIndices();
-            missingList.removeAll(trueMissing);
+            boolean[] missingIndicators = dataModel.getDataMissingIndicators();
+
+            List<Integer> missingList = new ArrayList<>();
+            for (int i = 0; i < missingIndicators.length; i++) {
+                if (missingIndicators[i] && !trueMissingIndicators[i]) {
+                    missingList.add(i);
+                }
+            }
+
             nMissing = missingList.size();
 
             missingInds = new int[nMissing];
@@ -87,8 +88,7 @@ public class TraitValidationProvider implements CrossValidationProvider, Reporta
 
 
             for (int i = 0; i < missingParameter.getSize(); i++) {
-                if (missingParameter.getParameterValue(i) == 1.0 && !trueMissing.contains(i)) {
-                    //TODO: search more efficiently through the `trueMissing` array
+                if (missingParameter.getParameterValue(i) == 1.0 && !trueMissingIndicators[i]) {
                     nMissing += 1;
                 }
             }
@@ -97,8 +97,7 @@ public class TraitValidationProvider implements CrossValidationProvider, Reporta
             int counter = 0;
 
             for (int i = 0; i < missingParameter.getSize(); i++) {
-                if (missingParameter.getParameterValue(i) == 1.0 && !trueMissing.contains(i)) {
-                    //TODO: (see above)
+                if (missingParameter.getParameterValue(i) == 1.0 && !trueMissingIndicators[i]) {
                     missingInds[counter] = i;
                     counter += 1;
                 }
@@ -122,7 +121,7 @@ public class TraitValidationProvider implements CrossValidationProvider, Reporta
             int taxonInd = i / dimTrait;
             int traitInd = i - taxonInd * dimTrait;
             String taxonName = treeModel.getTaxonId(taxonInd);
-            dimNames[dim] = id + "." + taxonName + (traitInd + 1);
+            dimNames[dim] = id + "." + taxonName + "." + (traitInd + 1);
             dim += 1;
         }
     }

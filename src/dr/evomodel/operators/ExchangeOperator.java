@@ -27,6 +27,7 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainableTreeOperator;
 import dr.math.MathUtils;
 
 /**
@@ -36,7 +37,7 @@ import dr.math.MathUtils;
  * <p/>
  * KNOWN BUGS: WIDE operator cannot be used on trees with 4 or fewer tips!
  */
-public class ExchangeOperator extends AbstractTreeOperator {
+public class ExchangeOperator extends AbstractTreeOperator implements ConstrainableTreeOperator {
 
     public static final int NARROW = 0;
     public static final int WIDE = 1;
@@ -54,7 +55,8 @@ public class ExchangeOperator extends AbstractTreeOperator {
         setWeight(weight);
     }
 
-    public double doOperation() {
+
+    public double doOperation(TreeModel tree) {
 
         final int tipCount = tree.getExternalNodeCount();
 
@@ -62,10 +64,10 @@ public class ExchangeOperator extends AbstractTreeOperator {
 
         switch( mode ) {
             case NARROW:
-                hastingsRatio = (narrow() ? 0.0 : Double.NEGATIVE_INFINITY);
+                hastingsRatio = (narrow(tree) ? 0.0 : Double.NEGATIVE_INFINITY);
                 break;
             case WIDE:
-                hastingsRatio = (wide() ? 0.0 : Double.NEGATIVE_INFINITY);
+                hastingsRatio = (wide(tree) ? 0.0 : Double.NEGATIVE_INFINITY);
                 break;
             default:
                 throw new IllegalArgumentException("Unknow Exchange Mode");
@@ -76,11 +78,14 @@ public class ExchangeOperator extends AbstractTreeOperator {
 
         return hastingsRatio;
     }
+    public double doOperation(){
+        return doOperation(tree);
+    }
 
     /**
      * WARNING: Assumes strictly bifurcating tree.
      */
-    public boolean narrow() {
+    public boolean narrow(TreeModel tree) {
         final int nNodes = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
 
@@ -115,7 +120,7 @@ public class ExchangeOperator extends AbstractTreeOperator {
     /**
      * WARNING: Assumes strictly bifurcating tree.
      */
-    public boolean wide() {
+    public boolean wide(TreeModel tree) {
 
         final int nodeCount = tree.getNodeCount();
         final NodeRef root = tree.getRoot();

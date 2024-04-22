@@ -26,7 +26,6 @@
 package dr.app.checkpoint;
 
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovchain.MarkovChain;
@@ -42,6 +41,8 @@ import dr.math.MathUtils;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -50,6 +51,8 @@ import java.util.*;
  * @author Guy Baele
  */
 public class BeastCheckpointer implements StateLoaderSaver {
+
+    private static BeastCheckpointer single_instance = null;
 
     private static final boolean DEBUG = false;
 
@@ -61,36 +64,65 @@ public class BeastCheckpointer implements StateLoaderSaver {
     public final static String SAVE_STATE_AT = "save.state.at";
     public final static String SAVE_STATE_EVERY = "save.state.every";
     public final static String SAVE_STEM = "save.state.stem";
+    public final static String SAVE_STATE_TIME = "save.state.time";
 
     public final static String FORCE_RESUME = "force.resume";
     public final static String CHECKPOINT_SEED = "checkpoint.seed";
 
     public final static String FULL_CHECKPOINT_PRECISION = "full.checkpoint.precision";
 
-    private final String loadStateFileName;
-    private final String saveStateFileName;
-
-    private final String stemFileName;
+    private String loadStateFileName;
+    private String saveStateFileName;
+    private String stemFileName;
 
     private boolean forceResume = false;
 
-    private final boolean useFullPrecision;
+    private boolean useFullPrecision;
 
-    public BeastCheckpointer() {
-        loadStateFileName = System.getProperty(LOAD_STATE_FILE, null);
-        saveStateFileName = System.getProperty(SAVE_STATE_FILE, null);
+    private final List<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();
 
-        stemFileName = System.getProperty(SAVE_STEM, null);
-
-        final List<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();
-
-        if (System.getProperty(SAVE_STATE_AT) != null) {
-            final long saveStateAt = Long.parseLong(System.getProperty(SAVE_STATE_AT));
-            listeners.add(new StateSaverChainListener(BeastCheckpointer.this, saveStateAt,false));
+    public static synchronized BeastCheckpointer getInstance(String checkpointFileName, int checkpointEvery, int checkpointFinal, boolean overwrite) {
+        if (single_instance == null) {
+            single_instance = new BeastCheckpointer(checkpointFileName, checkpointEvery, checkpointFinal, overwrite);
         }
-        if (System.getProperty(SAVE_STATE_EVERY) != null) {
-            final long saveStateEvery = Long.parseLong(System.getProperty(SAVE_STATE_EVERY));
-            listeners.add(new StateSaverChainListener(BeastCheckpointer.this, saveStateEvery,true));
+
+        return single_instance;
+    }
+
+    private BeastCheckpointer(String checkpointFileName, int checkpointEvery, int checkpointFinal, boolean overwrite) {
+
+        if (checkpointFileName == null && checkpointEvery == -1 && checkpointFinal == -1) {
+
+            loadStateFileName = System.getProperty(LOAD_STATE_FILE, null);
+            saveStateFileName = System.getProperty(SAVE_STATE_FILE, null);
+
+            stemFileName = System.getProperty(SAVE_STEM, null);
+
+            if (System.getProperty(SAVE_STATE_AT) != null) {
+                final long saveStateAt = Long.parseLong(System.getProperty(SAVE_STATE_AT));
+                listeners.add(new StateSaverChainListener(BeastCheckpointer.this, saveStateAt,false));
+            }
+            if (System.getProperty(SAVE_STATE_EVERY) != null) {
+                final long saveStateEvery = Long.parseLong(System.getProperty(SAVE_STATE_EVERY));
+                listeners.add(new StateSaverChainListener(BeastCheckpointer.this, saveStateEvery,true));
+            }
+
+        } else {
+
+            loadStateFileName = null;
+            saveStateFileName = checkpointFileName;
+
+            stemFileName = null;
+
+            listeners.add(new StateSaverChainListener(BeastCheckpointer.this, checkpointFinal,false));
+            listeners.add(new StateSaverChainListener(BeastCheckpointer.this, checkpointEvery,true));
+
+        }
+        if (System.getProperty(SAVE_STATE_TIME) != null) {
+            LocalTime saveTime = LocalTime.parse(System.getProperty(SAVE_STATE_TIME),
+                    DateTimeFormatter.ofPattern("HH:mm:ss"));
+            int saveSeconds = saveTime.toSecondOfDay();
+            listeners.add(new TimedStateSaverChainListener(BeastCheckpointer.this, saveSeconds));
         }
 
         useFullPrecision = (System.getProperty(FULL_CHECKPOINT_PRECISION) != null) &&
@@ -132,6 +164,11 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 };
             }
         };
+
+    }
+
+    //only here for reasons of inheritance (of the CheckPointModifier class)
+    protected BeastCheckpointer() {
 
     }
 
@@ -212,8 +249,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
                                 "Try resuming the analysis by using the same starting seed as for the original BEAST run.");
                     } else {
                         System.out.println("Saved lnL does not match recomputed value for loaded state: stored lnL: " + savedLnL +
-                        ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +
-                        "\nThreshold of " + threshold + " for restarting analysis not exceeded; continuing ...");
+                                ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +
+                                "\nThreshold of " + threshold + " for restarting analysis not exceeded; continuing ...");
                     }
                 }
 
@@ -286,7 +323,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
             //check up front if there are any TreeParameterModel objects
             for (Model model : Model.CONNECTED_MODEL_SET) {
                 if (model instanceof TreeParameterModel) {
-                    //System.out.println("\nDetected TreeParameterModel: " + ((TreeParameterModel) model).toString());
+                    if (DEBUG) {
+                        System.out.println("\nSave TreeParameterModel: " + model.getClass().getSimpleName());
+                    }
                     traitModels.add((TreeParameterModel) model);
                 }
             }
@@ -503,7 +542,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
             // load the tree models last as we get the node heights from the tree (not the parameters which
             // which may not be associated with the right node
-            Set<String> expectedTreeModelNames = new HashSet<String>();
+            Set<String> expectedTreeModelNames = new LinkedHashSet<>();
 
             //store list of TreeModels for debugging purposes
             ArrayList<TreeModel> treeModelList = new ArrayList<TreeModel>();
@@ -523,11 +562,21 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         }
                         System.out.println();
                     }
+                } else {
+                    if (DEBUG) {
+                        System.out.println("Not a TreeModel: " + model.getModelName());
+                    }
                 }
 
                 //first add all TreeParameterModels to a list
                 if (model instanceof TreeParameterModel) {
+                    if (DEBUG) {
+                        System.out.println("\nLoad TreeParameterModel: " + model.getClass().getSimpleName());
+                    }
                     traitModels.add((TreeParameterModel)model);
+                    if (DEBUG) {
+                        System.out.println("TreeParameterModel: " + model.getModelName());
+                    }
                 }
 
             }
@@ -585,6 +634,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         int edgeCount = Integer.parseInt(fields[0]);
                         if (DEBUG) {
                             System.out.println("edge count = " + edgeCount);
+                            System.out.println("model: " + model.getId());
+                            System.out.println("linkedModels size = " + linkedModels.size());
+                            System.out.println(linkedModels.get(model.getId()));
                         }
 
                         //create data matrix of doubles to store information from list of TreeParameterModels
@@ -624,7 +676,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
                             System.out.println("adopting tree structure");
                         }
 
-                        //adopt the loaded tree structure;
+                        //adopt the loaded tree structure
                         ((TreeModel) model).beginTreeEdit();
                         ((TreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
                         if (traitModels.size() > 0) {
@@ -657,7 +709,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
             if (DEBUG) {
                 System.out.println("\nDouble checking:");
                 for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
-                    if (parameter.getParameterName().equals("branchRates.categories.rootNodeNumber")) {
+                    if (parameter.getParameterName() != null && parameter.getParameterName().equals("branchRates.categories.rootNodeNumber")) {
                         System.out.println(parameter.getParameterName() + ": " + parameter.getParameterValue(0));
                     }
                 }

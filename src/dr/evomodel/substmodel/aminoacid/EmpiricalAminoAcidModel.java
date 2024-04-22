@@ -64,5 +64,7 @@ public class EmpiricalAminoAcidModel extends BaseSubstitutionModel {
 
     }
 
+    public EmpiricalRateMatrix getEmpiricalRateMatrix() { return rateMatrix; }
+
     private EmpiricalRateMatrix rateMatrix;
 }

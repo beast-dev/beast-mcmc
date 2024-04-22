@@ -47,15 +47,16 @@ public class BranchSubstitutionParameterScaleGradient extends HyperParameterBran
                                                     BeagleDataLikelihoodDelegate likelihoodDelegate,
                                                     BranchParameter branchParameter,
                                                     Parameter hyperParameter,
+                                                    Double tolerance,
                                                     boolean useHessian) {
 
-        super(traitName, treeDataLikelihood, likelihoodDelegate, branchParameter, hyperParameter, useHessian);
+        super(traitName, treeDataLikelihood, likelihoodDelegate, branchParameter, hyperParameter, tolerance, useHessian);
         this.locationScaleTransform = (ArbitraryBranchRates.BranchRateTransform.LocationScaleLogNormal) branchParameter.getTransform();
     }
 
     @Override
     double[] getDifferential(Tree tree, NodeRef node) {
-        double rate = branchParameter.getParameterValue(node.getNumber());
+        double rate = branchRateModel.getBranchRate(tree, node);
         double tmp = (Math.log(rate / locationScaleTransform.getLocation(tree, node)) - locationScaleTransform.getTransformMu())
                 /(locationScaleTransform.getTransformSigma() * locationScaleTransform.getTransformSigma()) - 1.0;
 

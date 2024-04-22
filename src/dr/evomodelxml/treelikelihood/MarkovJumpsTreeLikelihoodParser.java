@@ -64,6 +64,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
     public static final String COMPACT_HISTORY = "compactHistory";
     public static final String NUMBER_OF_SIMULANTS = "numberOfSimulants";
     public static final String REPORT_UNCONDITIONED_COLUMNS = "reportUnconditionedValues";
+    private static final String ALLOW_COMPRESSED_SITES = "allowCompressedSites";
 
 
     public String getParserName() {
@@ -91,12 +92,11 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
         boolean useMarginalLogLikelihood = xo.getAttribute(MARGINAL_LIKELIHOOD, true);
         boolean conditionalProbabilitiesInLogSpace = xo.getAttribute(CONDITIONAL_PROBABILITIES_IN_LOG_SPACE, false);
 
-
         boolean useUniformization = xo.getAttribute(USE_UNIFORMIZATION, false);
         boolean reportUnconditionedColumns = xo.getAttribute(REPORT_UNCONDITIONED_COLUMNS, false);
         int nSimulants = xo.getAttribute(NUMBER_OF_SIMULANTS, 1);
 
-        if (patternList.areUnique()) {
+        if (patternList.areUnique() && !xo.getAttribute(ALLOW_COMPRESSED_SITES, false)) {
             throw new XMLParseException("Markov Jumps reconstruction cannot be used with compressed (unique) patterns.");
         }
 
@@ -228,6 +228,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                     AttributeRule.newBooleanRule(SAVE_HISTORY, true),
                     AttributeRule.newBooleanRule(LOG_HISTORY, true),
                     AttributeRule.newBooleanRule(COMPACT_HISTORY, true),
+                    AttributeRule.newBooleanRule(ALLOW_COMPRESSED_SITES, true),
                     new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {
                             new ElementRule(TaxonList.class),
                             new ElementRule(Parameter.class),

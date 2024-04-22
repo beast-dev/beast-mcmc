@@ -25,9 +25,12 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
 import dr.inference.model.CompoundParameter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -42,17 +45,74 @@ public interface ContinuousTraitPartialsProvider {
 
     int getTraitDimension();
 
+    String getTipTraitName();
+
+    void setTipTraitName(String name);
+
+    default int getDataDimension() {
+        return getTraitDimension();
+    }
+
     PrecisionType getPrecisionType();
 
     double[] getTipPartial(int taxonIndex, boolean fullyObserved);
 
-    List<Integer> getMissingIndices();
+    @Deprecated
+    List<Integer> getMissingIndices(); // use getTraitMissingIndicators() instead
 
-    boolean[] getMissingIndicator();
+    boolean[] getDataMissingIndicators(); // returns null for no missing data
+
+    default boolean[] getTraitMissingIndicators() { // returns null for no missing traits
+        return getDataMissingIndicators();
+    }
 
     CompoundParameter getParameter();
 
     String getModelName();
+
+    boolean usesMissingIndices();
+
+    ContinuousTraitPartialsProvider[] getChildModels();
+
+    default double[] drawTraitsBelowConditionalOnDataAndTraitsAbove(double[] aboveTraits) {
+        throw new RuntimeException("Conditional sampling not yet implemented for " + this.getClass());
+    }
+
+    default double[] transformTreeTraits(double[] traits) {
+        return traits;
+    }
+
+    default boolean getDefaultAllowSingular() {
+        return false;
+    }
+
+    default boolean suppliesWishartStatistics() {
+        return true;
+    }
+
+    default int[] getPartitionDimensions() {
+        return new int[]{getTraitDimension()};
+    }
+
+    default void addTreeAndRateModel(Tree treeModel, ContinuousRateTransformation rateTransformation) {
+        // Do nothing
+    }
+
+    default WrappedNormalSufficientStatistics partitionNormalStatistics(WrappedNormalSufficientStatistics statistic,
+                                                                        ContinuousTraitPartialsProvider provider) {
+        if (this == provider) {
+            return statistic;
+        }
+        throw new RuntimeException("This class does not currently support 'partitionNormalStatistics' with " +
+                "a provider other than itself.");
+    }
+
+    default ContinuousTraitPartialsProvider getProviderForTrait(String trait) {
+        if (trait.equals(getTipTraitName())) {
+            return this;
+        }
+        throw new RuntimeException("Partials provider does not have trait '" + trait + "'");
+    }
 
     static boolean[] indicesToIndicator(List<Integer> indices, int n) {
 
@@ -69,4 +129,17 @@ public interface ContinuousTraitPartialsProvider {
         return indicator;
 
     }
+
+    static List<Integer> indicatorToIndices(boolean[] indicators) { //TODO: test
+        List<Integer> indices = new ArrayList<>();
+
+        for (int i = 0; i < indicators.length; i++) {
+            if (indicators[i]) {
+                indices.add(i);
+            }
+        }
+
+        return indices;
+    }
+
 }

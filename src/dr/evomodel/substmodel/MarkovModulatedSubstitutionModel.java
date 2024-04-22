@@ -76,7 +76,7 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
                                             Parameter switchingRates,
                                             DataType dataType,
                                             EigenSystem eigenSystem) {
-        this(name, baseModels, switchingRates, dataType, eigenSystem, null, false, null);
+        this(name, baseModels, switchingRates, dataType, eigenSystem, null, false, null, null);
     }
 
     public MarkovModulatedSubstitutionModel(String name,
@@ -86,7 +86,8 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
                                             EigenSystem eigenSystem,
                                             Parameter rateScalar,
                                             boolean geometricRates,
-                                            SiteRateModel gammaRateModel) {
+                                            SiteRateModel gammaRateModel,
+                                            Parameter relativeWeights) {
 //        super(name, dataType, null, eigenSystem);
         super(name, dataType, null, null);
 
@@ -121,7 +122,7 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
         }
 
         // This constructor also checks that all models have the same base stateCount
-        freqModel = new MarkovModulatedFrequencyModel("mm", freqModels, switchingRates);
+        freqModel = new MarkovModulatedFrequencyModel("mm", freqModels, switchingRates, relativeWeights);
         addModel(freqModel);
 
         if (stateCount != stateSizes) {

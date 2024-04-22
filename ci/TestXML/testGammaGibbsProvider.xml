@@ -80,16 +80,35 @@
         </traitParameter>
     </integratedFactorModel>
 
-    <traitDataLikelihood id="traitLikelihood" traitName="factors" forceFullPrecision="true" scaleByTime="true" useTreeLength="false">
+    <traitDataLikelihood id="traitLikelihood" traitName="factors" forceFullPrecision="true" scaleByTime="true"
+                         useTreeLength="false">
         <multivariateDiffusionModel idref="diffusionModel"/>
         <treeModel idref="treeModel"/>
         <traitParameter>
             <parameter idref="leafTraitsTree"/>
         </traitParameter>
-<!--        <integratedFactorModel idref="factorModel"/>-->
+        <!--        <integratedFactorModel idref="factorModel"/>-->
         <conjugateRootPrior>
             <meanParameter>
                 <parameter id="mean" value="0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+
+    <traitDataLikelihood id="traitLikelihoodDummy" traitName="factors" forceFullPrecision="true" scaleByTime="true"
+                         useTreeLength="false">
+        <multivariateDiffusionModel idref="diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <!--        <traitParameter>-->
+        <!--            <parameter idref="leafTraitsTree"/>-->
+        <!--        </traitParameter>-->
+        <integratedFactorModel idref="factorModel"/>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0"/>
             </meanParameter>
             <priorSampleSize>
                 <parameter value="0.001"/>
@@ -126,9 +145,9 @@
     </normalGammaPrecisionGibbsOperator>
 
 
-    <report>
+    <cachedReport id="precisionReport">
         <normalGammaPrecisionGibbsOperator idref="precisionOp"/>
-    </report>
+    </cachedReport>
 
 
     <assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
@@ -136,7 +155,7 @@
             Check observation counts
         </message>
         <actual regex="(?s)Observation counts:\s*(.*?)\n">
-            <normalGammaPrecisionGibbsOperator idref="precisionOp"/>
+            <cachedReport idref="precisionReport"/>
         </actual>
         <expected>
             3 4 3
@@ -148,7 +167,7 @@
             Check squared errors
         </message>
         <actual regex="(?s)Sum of squared errors:\s*(.*)">
-            <normalGammaPrecisionGibbsOperator idref="precisionOp"/>
+            <cachedReport idref="precisionReport"/>
         </actual>
         <expected>
             93.0053, 15.0377, 14.1228

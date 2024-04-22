@@ -140,6 +140,32 @@ public class LogisticGrowth extends ExponentialGrowth {
         return (r*t*z + (1 + c)*nZero*Math.log(nZero + c*nZero + z + c*ert*z))/(r*z*(nZero + c*nZero + z));
     }
 
+    @Override
+    public double getIntensityGradient(double finishTime) {
+        final double nZero = getN0();
+        final double r = getGrowthRate();
+        final double c = getShape();
+
+        double ert = Math.exp(r * finishTime);
+        if( lowLimit == 0 ) {
+            return (c * ert + 1.0) / ((1+c) * nZero);
+        }
+        final double z = lowLimit;
+        return (1.0 + (1 + c)*nZero/(nZero + c*nZero + z + c*ert*z) * (c * ert))/(nZero + c*nZero + z);
+    }
+
+    @Override
+    public double getLogDemographicGradient(double finishTime) {
+        final double d = getDemographic(finishTime);
+        final double nZero = getN0();
+        final double r = getGrowthRate();
+        final double c = getShape();
+        final double expOfMRT = Math.exp(-r * finishTime);
+
+        final double result = d == 0.0 ? 0.0 : -nZero * (1.0 + c) * c * r * expOfMRT / (d * (c + expOfMRT) * (c + expOfMRT));
+
+        return result;
+    }
     /**
      * Returns value of demographic intensity function at time t
      * (= integral 1/N(x) dx from 0 to t).

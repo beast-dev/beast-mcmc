@@ -26,7 +26,10 @@
 package dr.evomodelxml.operators;
 
 import dr.evomodel.operators.ExchangeOperator;
+import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainedTreeModel;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainedTreeOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
 
@@ -46,7 +49,13 @@ public class ExchangeOperatorParser {
 
             final TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
             final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-            return new ExchangeOperator(ExchangeOperator.NARROW, treeModel, weight);
+
+            ExchangeOperator op = new ExchangeOperator(ExchangeOperator.NARROW,treeModel,weight);
+            if(treeModel instanceof ConstrainedTreeModel){
+                return new ConstrainedTreeOperator((ConstrainedTreeModel) treeModel, weight, op);
+            }else{
+                return op;
+            }
         }
 
         // ************************************************************************
@@ -85,7 +94,12 @@ public class ExchangeOperatorParser {
             }
             final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-            return new ExchangeOperator(ExchangeOperator.WIDE, treeModel, weight);
+            ExchangeOperator op = new ExchangeOperator(ExchangeOperator.WIDE,treeModel,weight);
+            if(treeModel instanceof ConstrainedTreeModel){
+                return new ConstrainedTreeOperator((ConstrainedTreeModel) treeModel, weight, op);
+            }else{
+                return op;
+            }
         }
 
         // ************************************************************************

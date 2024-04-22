@@ -47,7 +47,7 @@ import java.util.List;
 public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikelihood
         implements GradientWrtParameterProvider, Citable, Reportable {
 
-    private final ArbitraryBranchRates branchRateModel;
+    private final DifferentiableBranchRates branchRateModel;
     private final ParametricMultivariateDistributionModel distribution;
     private final BranchVarianceScaling scaling;
     private final BranchRateUnits units;
@@ -71,11 +71,13 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private double[] increments;
     private double[] savedIncrements;
 
+    boolean wrtIncrements;
+
     public AutoCorrelatedBranchRatesDistribution(String name,
-                                                 ArbitraryBranchRates branchRateModel,
+                                                 DifferentiableBranchRates  branchRateModel,
                                                  ParametricMultivariateDistributionModel distribution,
                                                  BranchVarianceScaling scaling,
-                                                 boolean takeLogBeforeIncrement) {
+                                                 boolean takeLogBeforeIncrement, boolean operateOnIncrements) {
         super(name);
         this.branchRateModel = branchRateModel;
         this.distribution = distribution;
@@ -85,7 +87,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         this.tree = branchRateModel.getTree();
         this.rateParameter = branchRateModel.getRateParameter();
 
-        addModel(branchRateModel);
+        addModel((BranchRateModel) branchRateModel);
         addModel(distribution);
 
         if (tree instanceof TreeModel) {
@@ -95,6 +97,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         this.dim = branchRateModel.getRateParameter().getDimension();
         this.increments = new double[dim];
         this.savedIncrements = new double[dim];
+        this.wrtIncrements = operateOnIncrements;
 
         if (dim != distribution.getMean().length) {
             throw new RuntimeException("Dimension mismatch in AutoCorrelatedRatesDistribution. " +
@@ -150,13 +153,13 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
     BranchVarianceScaling getScaling() { return scaling; }
 
-    ArbitraryBranchRates getBranchRateModel() { return branchRateModel; }
+    public DifferentiableBranchRates getBranchRateModel() { return branchRateModel; }
 
     private void rescaleGradientWrtIncrements(double[] gradientWrtIncrements) {
         for (int i = 0; i < dim; i++) {
             NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
-                int index = branchRateModel.getParameterIndexFromNode(node);
+                    int index = branchRateModel.getParameterIndexFromNode(node);
                 gradientWrtIncrements[index] = scaling.rescaleIncrement(
                         gradientWrtIncrements[index], tree.getBranchLength(node));
             }
@@ -261,15 +264,18 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
     private void checkIncrements() {
         if (!incrementsKnown) {
-            logJacobian =  recursePreOrder(tree.getRoot(), 0.0);
+            logJacobian =  recursePreOrder(tree.getRoot(), 0); //branchRateModel.getPriorRateAsIncrement(tree));
             incrementsKnown = true;
         }
     }
 
     private double calculateLogLikelihood() {
         checkIncrements();
-        return logJacobian +
-                distribution.logPdf(increments);
+        double logLikelihood = distribution.logPdf(increments);
+        if (!wrtIncrements) {
+            logLikelihood += logJacobian;
+        }
+        return logLikelihood;
     }
 
     private double recursePreOrder(NodeRef node, double parentRateAsIncrement) {
@@ -281,7 +287,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
             final double rateAsIncrement = units.transform(rate);
             final double branchLength = tree.getBranchLength(node);
 
-            logJacobian += units.getTransformLogJacobian(rate) + scaling.getTransformLogJacobian(branchLength);
+            logJacobian += units.getTransformLogJacobian(rate) + scaling.getTransformLogJacobian(branchLength);// - branchRateModel.getPriorRateAsIncrement(tree);
 
             final double rateIncrement = scaling.rescaleIncrement(
                     rateAsIncrement - parentRateAsIncrement, branchLength);
@@ -360,7 +366,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
             double inverseTransformGradient(double gradient, double value) { return gradient; }
 
             @Override
-            boolean needsIncrementCorrection() { return false; }
+            boolean needsIncrementCorrection(boolean wrtIncrements) { return false; }
         },
 
         STRICTLY_POSITIVE("strictlyPositive") {
@@ -394,7 +400,9 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
             }
 
             @Override
-            boolean needsIncrementCorrection() { return true; }
+            boolean needsIncrementCorrection(boolean wrtIncrements) {
+                return (!wrtIncrements);
+            }
         };
 
         BranchRateUnits(String name) { this.name = name; }
@@ -413,7 +421,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
         abstract double inverseTransformGradient(double gradient, double value);
 
-        abstract boolean needsIncrementCorrection();
+        abstract boolean needsIncrementCorrection(boolean wrtIncrements);
     }
 
     public enum BranchVarianceScaling {

@@ -450,6 +450,8 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
 
             final NumberFormatter nf = new NumberFormatter(6);
 
+            double logLikelihood = this.getLogLikelihood();
+
             int index = 0;
             for( Likelihood lik : likelihoods ) {
 
@@ -492,7 +494,7 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
             for (int i = 0; i < indent; i++) {
                 message += " ";
             }
-            message += this.getId() + " log-likelihood = " + this.getLogLikelihood();
+            message += this.getId() + " log-likelihood = " + logLikelihood;
 
             if (indent == 0) message += "\n\n";
 

@@ -176,7 +176,7 @@
             <matrixParameter idref="scale"/>
         </hamiltonianMonteCarloOperator>
     </operators>
-    <mcmc id="mcmc" chainLength="200" autoOptimize="true">
+    <mcmc id="mcmc" chainLength="100" autoOptimize="true">
         <posterior id="posterior">
             <prior id="prior">
                 <!--                <distributionLikelihood idref="L.prior"/>-->

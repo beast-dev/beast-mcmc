@@ -945,7 +945,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
                         format.format(partials[offset + i]),
                         format.format(vector[i]));
             }
-            offset += dimTrait + PrecisionType.FULL.getMatrixLength(dimTrait);
+            offset += PrecisionType.FULL.getPartialsDimension(dimTrait);
         }
     }
 
@@ -964,7 +964,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
                         format.format(partials[offset + dimTrait + dimTrait * dimTrait + i]),
                         format.format(vector[i]));
             }
-            offset += dimTrait + PrecisionType.FULL.getMatrixLength(dimTrait);
+            offset += PrecisionType.FULL.getPartialsDimension(dimTrait);
         }
     }
 
@@ -1006,7 +1006,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
 
     private void testConditionalMoments(TreeDataLikelihood dataLikelihood, ContinuousDataLikelihoodDelegate likelihoodDelegate) {
         new TreeTipGradient("" +
-                "trait", dataLikelihood, likelihoodDelegate, null);
+                "trait", null, dataLikelihood, likelihoodDelegate, null);
         TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
                 new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
                 TreeTraitLogger.NodeRestriction.EXTERNAL, false);

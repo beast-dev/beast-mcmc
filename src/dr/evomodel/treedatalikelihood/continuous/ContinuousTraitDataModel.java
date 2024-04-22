@@ -25,12 +25,14 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.inference.model.*;
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.List;
 
@@ -48,6 +50,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     final PrecisionType precisionType;
 
     private final boolean[] missingIndicators;
+    private boolean useMissingIndices;
 
     private String tipTraitName = null;
 
@@ -56,15 +59,28 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
                                     boolean[] missingIndicators,
                                     boolean useMissingIndices,
                                     final int dimTrait, PrecisionType precisionType) {
+
+        this(name, parameter, missingIndicators, useMissingIndices, dimTrait,
+                parameter.getParameter(0).getDimension() / dimTrait,
+                precisionType);
+    }
+
+    public ContinuousTraitDataModel(String name,
+                                    CompoundParameter parameter,
+                                    boolean[] missingIndicators,
+                                    boolean useMissingIndices,
+                                    final int dimTrait, final int numTraits,
+                                    PrecisionType precisionType) {
         super(name);
         this.parameter = parameter;
         addVariable(parameter);
 
         this.originalMissingIndicators = missingIndicators;
+        this.useMissingIndices = true;
         this.missingIndicators = (useMissingIndices ? missingIndicators : new boolean[missingIndicators.length]);
 
         this.dimTrait = dimTrait;
-        this.numTraits = getParameter().getParameter(0).getDimension() / dimTrait;
+        this.numTraits = numTraits;
         this.precisionType = precisionType;
 
 
@@ -106,6 +122,16 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     @Override
     public CompoundParameter getParameter() {
         return parameter;
+    }
+
+    @Override
+    public boolean usesMissingIndices() {
+        return useMissingIndices;
+    }
+
+    @Override
+    public ContinuousTraitPartialsProvider[] getChildModels() {
+        return new ContinuousTraitPartialsProvider[0];
     }
 
     @Override
@@ -193,7 +219,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         if (fullyObserved) {
 
             final PrecisionType precisionType = PrecisionType.SCALAR;
-            final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);
+            final int offsetInc = precisionType.getPartialsDimension(dimTrait);
             final double precision = PrecisionType.getObservedPrecisionValue(false);
 
             double[] tipPartial = getTipPartial(taxonIndex, precisionType);
@@ -248,7 +274,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     }
 
     double[] getTipObservation(int taxonIndex, final PrecisionType precisionType) {
-        final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);
+        final int offsetInc = precisionType.getPartialsDimension(dimTrait);
 
         final double[] partial = getTipPartial(taxonIndex, precisionType);
         final double[] data = new double[numTraits * dimTrait];
@@ -268,7 +294,18 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     @Override
     public double[] transformTreeTraits(double[] treeTraits) {
-        return treeTraits;
+        return treeTraits.clone();
+    }
+
+    @Override
+    public void updateTipDataGradient(DenseMatrix64F precision, DenseMatrix64F variance, NodeRef node,
+                                      int offset, int dimGradient) {
+        // do nothing
+    }
+
+    @Override
+    public boolean needToUpdateTipDataGradient(int offset, int dimGradient) {
+        return false;
     }
 
     /*

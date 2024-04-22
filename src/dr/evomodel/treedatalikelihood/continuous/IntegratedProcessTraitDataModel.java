@@ -25,8 +25,10 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.CompoundParameter;
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.List;
 
@@ -69,7 +71,7 @@ public class IntegratedProcessTraitDataModel extends
         double[] partial = super.getTipPartial(taxonIndex, fullyObserved);
 
         int dimTraitDouble = 2 * dimTrait;
-        int dimPartialDouble = dimTraitDouble + precisionType.getMatrixLength(dimTraitDouble);
+        int dimPartialDouble = precisionType.getPartialsDimension(dimTraitDouble);
         double[] partialDouble = new double[dimPartialDouble];
 
         // Traits [0, traitsPosition]
@@ -102,6 +104,17 @@ public class IntegratedProcessTraitDataModel extends
     @Override
     public int getTraitDimension() {
         return 2 * dimTrait;
+    }
+
+    @Override
+    public void updateTipDataGradient(DenseMatrix64F precision, DenseMatrix64F variance, NodeRef node,
+                                      int offset, int dimGradient) {
+        throw new RuntimeException("not yet implemented");
+    }
+
+    @Override
+    public boolean needToUpdateTipDataGradient(int offset, int dimGradient) {
+        throw new RuntimeException("not yet implemented");
     }
 
 }

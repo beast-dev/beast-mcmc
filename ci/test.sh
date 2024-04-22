@@ -1,5 +1,7 @@
 #!/bin/bash
 
+trap 'echo "Ctr + C!"; exit 2' SIGINT
+
 passed=true
 failedFiles=()
 

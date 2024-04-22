@@ -26,7 +26,7 @@
 package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.hmc.ReversibleHMCProvider;
+import dr.inference.model.GeneralBoundsProvider;
 import dr.inference.model.GraphicalParameterBound;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
@@ -47,11 +47,11 @@ import dr.xml.XMLSyntaxRule;
 public class ReflectiveHamiltonianMonteCarloOperatorParser extends HamiltonianMonteCarloOperatorParser {
 
     public final static String OPERATOR_NAME = "reflectiveHamiltonianMonteCarloOperator";
-    private GraphicalParameterBound graphicalParameterBound;
+    private GeneralBoundsProvider bounds;
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        this.graphicalParameterBound = (GraphicalParameterBound) xo.getChild(GraphicalParameterBound.class);
+        this.bounds = (GeneralBoundsProvider) xo.getChild(GeneralBoundsProvider.class);
         return super.parseXMLObject(xo);
     }
 
@@ -63,13 +63,13 @@ public class ReflectiveHamiltonianMonteCarloOperatorParser extends HamiltonianMo
 
         return new ReflectiveHamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                 parameter, transform, mask,
-                runtimeOptions, preconditioner, graphicalParameterBound);
+                runtimeOptions, preconditioner, bounds);
     }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         XMLSyntaxRule[] extendedRules = new XMLSyntaxRule[rules.length + 1];
-        extendedRules[0] = new ElementRule(GraphicalParameterBound.class);
+        extendedRules[0] = new ElementRule(GeneralBoundsProvider.class);
         for (int i = 0; i < rules.length; i++) {
             extendedRules[i + 1] = rules[i];
         }

@@ -68,6 +68,8 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
 
         Parameter ratesParameter;
 
+        boolean computeStationaryDistribution = xo.getAttribute(COMPUTE_STATIONARY, false);
+
         XMLObject cxo;
         FrequencyModel freqModel = null;
         if (xo.hasChildNamed(FREQUENCIES)) {
@@ -76,11 +78,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
         } else if (xo.hasChildNamed(ROOT_FREQUENCIES)) {
             cxo = xo.getChild(ROOT_FREQUENCIES);
             freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
-        } else if (!xo.getAttribute(COMPUTE_STATIONARY, false)) {
-            throw new XMLParseException("No frequency model found in " + getParserName());
         }
-//        FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
-//        DataType dataType = freqModel.getDataType();
 
         DataType dataType = DataTypeUtils.getDataType(xo);
 
@@ -111,13 +109,28 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
 
         if (!xo.hasChildNamed(INDICATOR)) {
             if (!checkConditioning) {
-                model = new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter) {
-                    protected EigenSystem getDefaultEigenSystem(int stateCount) {
-                        return new ComplexColtEigenSystem(stateCount, false, ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
-                    }
-                };
+
+                if (computeStationaryDistribution) {
+                    model = new ComplexSubstitutionModelAtStationarity(COMPLEX_SUBSTITUTION_MODEL, dataType, ratesParameter) {
+                        protected EigenSystem getDefaultEigenSystem(int stateCount) {
+                            return new ComplexColtEigenSystem(stateCount, false,
+                                    ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
+                        }
+                    };
+                } else {
+                    model = new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter) {
+                        protected EigenSystem getDefaultEigenSystem(int stateCount) {
+                            return new ComplexColtEigenSystem(stateCount, false,
+                                    ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
+                        }
+                    };
+                }
             } else {
-                model = new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter);
+                if (computeStationaryDistribution) {
+                    model = new ComplexSubstitutionModelAtStationarity(COMPLEX_SUBSTITUTION_MODEL, dataType, ratesParameter);
+                } else {
+                    model = new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter);
+                }
             }
         } else {
             

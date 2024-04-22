@@ -33,7 +33,7 @@ package dr.inference.model;
  */
 public class NegativeStatistic extends Statistic.Abstract {
 
-    private Statistic statistic = null;
+    private final Statistic statistic;
 
 	public NegativeStatistic(String name, Statistic statistic) {
 		super(name);

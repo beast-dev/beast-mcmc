@@ -44,7 +44,7 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
             for (int i = 0; i < dim; ++i) {
                 gradient[i] = MarginalizedAlphaStableDistribution.gradLogPdf(x[i], scale, alpha);
             }
-        } else if (alpha == 1.0) {
+        } else {
             for (int i = 0; i < dim; ++i) {
                 gradient[i] = LaplaceDistribution.gradLogPdf(x[i], 0, scale);
             }
@@ -63,7 +63,7 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
             for (double x : v) {
                 sum += MarginalizedAlphaStableDistribution.logPdf(x, scale, alpha);
             }
-        } else if (alpha == 1.0) {
+        } else {
             for (int i = 0; i < dim; ++i) {
                 sum += LaplaceDistribution.logPdf(v[i], 0, scale);
             }

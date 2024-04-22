@@ -100,6 +100,30 @@ public class MaximizerWrtParameter implements Reportable {
         return likelihood;
     }
 
+    public double[] getMinimumPoint(boolean inParameterSpace) {
+        if (inParameterSpace && (transform != null)) {
+            return transform.inverse(minimumPoint, 0, minimumPoint.length);
+        } else {
+            return minimumPoint;
+        }
+    }
+
+    public GradientWrtParameterProvider getGradient() {
+        return gradient;
+    }
+
+    public boolean wasExecuted() {
+        return function != null;
+    }
+
+    public Transform getTransform() {
+        return transform;
+    }
+
+    public Function getFunction() {
+        return function;
+    }
+
     public void maximize() {
 
         LBFGS_Param paramsBFGS = Lbfgs.defaultParams();
@@ -186,7 +210,7 @@ public class MaximizerWrtParameter implements Reportable {
                 setParameter(new WrappedVector.Raw(argument), parameter);
 
                 if (settings.includeJacobian) {
-                    return -evaluateLogLikelihood() - transform.getLogJacobian(argument, 0, argument.length);
+                    return -evaluateLogLikelihood() - transform.logJacobian(argument, 0, argument.length);
                 }
                 return -evaluateLogLikelihood();
             }

@@ -51,6 +51,10 @@ public interface MatrixParameterInterface extends Parameter {
 
     double[] getParameterValues();
 
+    default int getParameterCount() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
     int getUniqueParameterCount();
 
     Parameter getUniqueParameter(int index);
@@ -64,4 +68,27 @@ public interface MatrixParameterInterface extends Parameter {
     String toSymmetricString();
 
     boolean isConstrainedSymmetric();
+
+    default int index(int row, int col) {
+        // column-major
+        if (col > getColumnDimension()) {
+            throw new RuntimeException("Column " + col + " out of bounds: Compared to " + getColumnDimension() + "maximum size.");
+        }
+        if (row > getRowDimension()) {
+            throw new RuntimeException("Row " + row + " out of bounds: Compared to " + getRowDimension() + "maximum size.");
+        }
+        return col * getRowDimension() + row;
+    }
+
+    static double[][] getParameterAsMatrix(MatrixParameterInterface parameter) {
+        int rowDim = parameter.getRowDimension();
+        int colDim = parameter.getColumnDimension();
+        double[][] rtn = new double[rowDim][colDim];
+        for (int j = 0; j < colDim; ++j) {
+            for (int i = 0; i < rowDim; ++i) {
+                rtn[i][j] = parameter.getParameterValue(i, j);
+            }
+        }
+        return rtn;
+    }
 }

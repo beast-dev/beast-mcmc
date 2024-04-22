@@ -174,8 +174,9 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
         double[] lastGradient = leapFrogEngine.getLastGradient();
         double[] lastPosition = leapFrogEngine.getLastPosition();
+        double[] currentPosition = leapFrogEngine.getInitialPosition();
         if (preconditionScheduler.shouldStoreSecant(lastGradient, lastPosition)) {
-            preconditioning.storeSecant(new WrappedVector.Raw(lastGradient), new WrappedVector.Raw(lastPosition));
+            preconditioning.storeSecant(new WrappedVector.Raw(lastGradient), new WrappedVector.Raw(currentPosition));
         }
         preconditioning.updateMass();
     }
@@ -249,7 +250,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
                     double[] untransformedValue = transform.inverse(argument, 0, argument.length);
                     ReadableVector.Utils.setParameter(untransformedValue, parameter);
-                    return joint.getLogLikelihood() - transform.getLogJacobian(untransformedValue, 0, untransformedValue.length);
+                    return joint.getLogLikelihood() - transform.logJacobian(untransformedValue, 0, untransformedValue.length);
                 }
             }
 
@@ -775,7 +776,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
             @Override
             public double getParameterLogJacobian() {
-                return transform.getLogJacobian(unTransformedPosition, 0, unTransformedPosition.length);
+                return transform.logJacobian(unTransformedPosition, 0, unTransformedPosition.length);
             }
 
             @Override

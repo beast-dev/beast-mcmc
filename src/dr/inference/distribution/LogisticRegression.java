@@ -27,6 +27,8 @@ package dr.inference.distribution;
 
 import dr.inference.model.Parameter;
 
+import java.util.List;
+
 /**
  * @author Marc A. Suchard
  */
@@ -52,6 +54,11 @@ public class LogisticRegression extends GeneralizedLinearModel {
 		return false;
 	}
 
+	@Override
+	public GeneralizedLinearModel factory(List<Parameter> oldIndependentParameter, List<Parameter> newIndependentParameter) {
+		throw new RuntimeException("Not yet implemented!");
+	}
+
 	protected double calculateLogLikelihood() {
 		// logLikelihood calculation for logistic regression
 		double logLikelihood = 0;
@@ -66,7 +73,6 @@ public class LogisticRegression extends GeneralizedLinearModel {
 		}
 		return logLikelihood;
 	}
-
 
 	public boolean confirmIndependentParameters() {
 		// todo -- check that independent parameters \in {0,1} only

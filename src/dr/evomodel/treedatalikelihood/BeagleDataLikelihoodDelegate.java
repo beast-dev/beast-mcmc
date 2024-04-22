@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
+import static dr.evomodel.treedatalikelihood.SubstitutionModelDelegate.BUFFER_POOL_SIZE_DEFAULT;
 
 /**
  * BeagleDataLikelihoodDelegate
@@ -84,8 +85,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     public static int instanceCount = 0;
     private static List<Integer> resourceOrder = null;
-    private static List<Integer> preferredOrder = null;
-    private static List<Integer> requiredOrder = null;
+    private static List<Long> preferredOrder = null;
+    private static List<Long> requiredOrder = null;
     private static List<String> scalingOrder = null;
     private static List<Integer> extraBufferOrder = null;
 
@@ -97,6 +98,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private long totalMatrixUpdateCount = 0;
     private long totalPartialsUpdateCount = 0;
     private long totalEvaluationCount = 0;
+    private boolean releaseSingleton = true;
 
     /**
      *
@@ -176,6 +178,15 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
             scaleBufferHelper = new BufferIndexHelper(getSingleScaleBufferCount(), 0);
 
+            if (extraBufferOrder == null) {
+                extraBufferOrder = parseSystemPropertyIntegerArray(EXTRA_BUFFER_COUNT_PROPERTY);
+            }
+
+            int extraBufferCount = BUFFER_POOL_SIZE_DEFAULT;
+            if (extraBufferOrder.size() > 0) {
+                extraBufferCount = extraBufferOrder.get(instanceCount % extraBufferOrder.size());
+            }
+
             if (settings.branchInfinitesimalDerivative) {
                 evolutionaryProcessDelegate = settings.useAction ?
 //                        new OldActionSubstitutionModelDelegate(tree, branchModel, nodeCount) :
@@ -216,16 +227,13 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 resourceOrder = parseSystemPropertyIntegerArray(RESOURCE_ORDER_PROPERTY);
             }
             if (preferredOrder == null) {
-                preferredOrder = parseSystemPropertyIntegerArray(PREFERRED_FLAGS_PROPERTY);
+                preferredOrder = parseSystemPropertyLongArray(PREFERRED_FLAGS_PROPERTY);
             }
             if (requiredOrder == null) {
-                requiredOrder = parseSystemPropertyIntegerArray(REQUIRED_FLAGS_PROPERTY);
+                requiredOrder = parseSystemPropertyLongArray(REQUIRED_FLAGS_PROPERTY);
             }
             if (scalingOrder == null) {
                 scalingOrder = parseSystemPropertyStringArray(SCALING_PROPERTY);
-            }
-            if (extraBufferOrder == null) {
-                extraBufferOrder = parseSystemPropertyIntegerArray(EXTRA_BUFFER_COUNT_PROPERTY);
             }
 
             // first set the rescaling scheme to use from the parser
@@ -1128,19 +1136,29 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     }
 
     private void releaseBeagle() throws Throwable {
-        if (beagle != null) {
+        if (beagle != null && releaseSingleton) {
             beagle.finalize();
+            releaseSingleton = false;
+        }
+    }
+
+    public static void releaseBeagleDataLikelihoodDelegate(TreeDataLikelihood treeDataLikelihood) throws Throwable {
+        DataLikelihoodDelegate likelihoodDelegate = treeDataLikelihood.getDataLikelihoodDelegate();
+        if (likelihoodDelegate instanceof BeagleDataLikelihoodDelegate) {
+            BeagleDataLikelihoodDelegate delegate = (BeagleDataLikelihoodDelegate) likelihoodDelegate;
+            delegate.releaseBeagle();
         }
     }
 
     public static void releaseAllBeagleInstances() throws Throwable {
         for (Likelihood likelihood : dr.inference.model.Likelihood.FULL_LIKELIHOOD_SET) {
             if (likelihood instanceof TreeDataLikelihood) {
-                TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) likelihood;
-                DataLikelihoodDelegate likelihoodDelegate = treeDataLikelihood.getDataLikelihoodDelegate();
-                if (likelihoodDelegate instanceof BeagleDataLikelihoodDelegate) {
-                    BeagleDataLikelihoodDelegate delegate = (BeagleDataLikelihoodDelegate) likelihoodDelegate;
-                    delegate.releaseBeagle();
+                releaseBeagleDataLikelihoodDelegate((TreeDataLikelihood) likelihood);
+            } else if (likelihood instanceof CompoundLikelihood) {
+                for (Likelihood likelihood2: ((CompoundLikelihood) likelihood).getLikelihoods()) {
+                    if (likelihood2 instanceof TreeDataLikelihood) {
+                        releaseBeagleDataLikelihoodDelegate((TreeDataLikelihood) likelihood2);
+                    }
                 }
             }
         }

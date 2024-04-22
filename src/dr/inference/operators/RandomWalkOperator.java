@@ -57,20 +57,34 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
 
     public RandomWalkOperator(Parameter parameter, Parameter updateIndex, double windowSize, BoundaryCondition boundaryCondition,
                               double weight, AdaptationMode mode) {
+
+        this(parameter, windowSize, boundaryCondition, weight, mode, makeUpdateMap(updateIndex));
+    }
+
+    public RandomWalkOperator(Parameter parameter, double windowSize, BoundaryCondition boundaryCondition,
+                              double weight, AdaptationMode mode, List<Integer> updateMap) {
         super(mode);
+
+        setWeight(weight);
         this.parameter = parameter;
         this.windowSize = windowSize;
         this.boundaryCondition = boundaryCondition;
+        this.updateMap = updateMap;
+        if (updateMap != null) {
+            updateMapSize = updateMap.size();
+        }
+    }
 
-        setWeight(weight);
+    private static ArrayList<Integer> makeUpdateMap(Parameter updateIndex) {
+        ArrayList<Integer> updateMap = null;
         if (updateIndex != null) {
             updateMap = new ArrayList<Integer>();
             for (int i = 0; i < updateIndex.getDimension(); i++) {
                 if (updateIndex.getParameterValue(i) == 1.0)
                     updateMap.add(i);
             }
-            updateMapSize=updateMap.size();
         }
+        return updateMap;
     }
 
     /**
@@ -86,6 +100,10 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
 
     public final BoundaryCondition getBoundaryCondition() {
         return boundaryCondition;
+    }
+
+    public final List<Integer> getUpdateMap() {
+        return updateMap;
     }
 
     /**
@@ -124,7 +142,7 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
             parameter.setParameterValue(dim, (x2 * (upper - lower)) + lower);
             
             // HR is the ratio of Jacobians for the before and after values in interval [0,1]
-            return Transform.LOGIT.getLogJacobian(x1) - Transform.LOGIT.getLogJacobian(x2);
+            return Transform.LOGIT.logJacobian(x1) - Transform.LOGIT.logJacobian(x2);
 
         } else if (boundaryCondition == BoundaryCondition.log) {
             // offset oldValue to [0,+Inf]
@@ -136,7 +154,7 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
             parameter.setParameterValue(dim, x2 + lower);
 
             // HR is the ratio of Jacobians for the before and after values
-            return Transform.LOG.getLogJacobian(x1) - Transform.LOG.getLogJacobian(x2);
+            return Transform.LOG.logJacobian(x1) - Transform.LOG.logJacobian(x2);
 
         } else {
             double newValue = oldValue + draw;
@@ -265,7 +283,7 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
 
     protected Parameter parameter = null;
     private double windowSize = 0.01;
-    private List<Integer> updateMap = null;
+    private List<Integer> updateMap;
     private int updateMapSize;
     private final BoundaryCondition boundaryCondition;
 }

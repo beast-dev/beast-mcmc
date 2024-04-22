@@ -108,6 +108,7 @@ public class TreeTraitParserUtilities {
         Parameter traits = (Parameter) cxo.getChild(Parameter.class);
         double[] window = cxo.getDoubleArrayAttribute(TreeTraitParserUtilities.WINDOW); // Must be included, no default value
         boolean duplicates = cxo.getAttribute(TreeTraitParserUtilities.DUPLICATES, true); // default = true
+
         TaxonList taxonList = (TaxonList) cxo.getChild(TaxonList.class);
         jitter(traits, length, missingIndicators, window, taxonList, duplicates, true);
     }
@@ -186,6 +187,7 @@ public class TreeTraitParserUtilities {
         }
         return false;
     }
+
 
     public void jitter(Parameter trait, int dim, boolean[] missingIndicators, double[] window,
                        TaxonList taxonList,
@@ -578,13 +580,15 @@ public class TreeTraitParserUtilities {
     }
 
     public static TreeTrait getTreeTraitFromDataLikelihood(TreeDataLikelihood dataLikelihood) {
+        return dataLikelihood.getTreeTrait(getTipTraitNameFromDataLikelihood(dataLikelihood));
+    }
+
+    public static String getTipTraitNameFromDataLikelihood(TreeDataLikelihood dataLikelihood) {
         ContinuousDataLikelihoodDelegate delegate =
                 (ContinuousDataLikelihoodDelegate) dataLikelihood.getDataLikelihoodDelegate();
 
         ContinuousTraitPartialsProvider dataModel = delegate.getDataModel();
         String traitName = dataModel.getTipTraitName();
-//        String realizedTraitName = getTipTraitName(traitName);
-
-        return dataLikelihood.getTreeTrait(traitName);
+        return traitName;
     }
 }

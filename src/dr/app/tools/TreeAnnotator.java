@@ -1551,7 +1551,7 @@ public class TreeAnnotator {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption("type", new String[] { "mcc", "hipstr" }, false, "an option of 'mcc' or 'hipstr'"),
+                        new Arguments.StringOption("type", new String[]{"mcc", "hipstr"}, false, "an option of 'mcc' or 'hipstr'"),
                         new Arguments.StringOption("heights", new String[]{"keep", "median", "mean", "ca"}, false,
                                 "an option of 'keep', 'median', 'mean' or 'ca' (default)"),
                         new Arguments.LongOption("burnin", "the number of states to be considered as 'burn-in'"),
@@ -1591,8 +1591,6 @@ public class TreeAnnotator {
                 heights = HeightsSummary.MEDIAN_HEIGHTS;
             } else if (value.equalsIgnoreCase("ca")) {
                 heights = HeightsSummary.CA_HEIGHTS;
-                System.out.println("Please cite: Heled and Bouckaert: Looking for trees in the forest:\n" +
-                        "summary tree from posterior samples. BMC Evolutionary Biology 2013 13:221.");
             }
         }
 
@@ -1606,11 +1604,10 @@ public class TreeAnnotator {
         }
 
         if (arguments.hasOption("ess")) {
-            if(burninStates != -1) {
+            if (burninStates != -1) {
                 System.out.println(" Calculating ESS for branch parameters.");
                 computeESS = true;
-            }
-            else {
+            } else {
                 throw new RuntimeException("Specify burnin as states to use 'ess' option.");
             }
         }
@@ -1657,6 +1654,21 @@ public class TreeAnnotator {
         }
 
         new TreeAnnotator(burninTrees, burninStates, heights, posteriorLimit, hpd2D, computeESS, target, targetTreeFileName, inputFileName, outputFileName);
+
+        if (target == Target.MAX_CLADE_CREDIBILITY) {
+            progressStream.println("Constructed Maximum Clade Credibility (MCC) tree - citation: " +
+                    "Drummond and Rambaut: 'BEAST: Bayesian evolutionary analysis by sampling trees', BMC Ecology and Evolution 2007, 7: 214.");
+        } else if (target == Target.HIPSTR) {
+            progressStream.println("Constructed Highest Independent Posterior Sub-Tree (HIPSTR) tree - citation: In prep.");
+        } else if (target == Target.USER_TARGET_TREE) {
+            progressStream.println("Annotated user target tree.");
+        }
+
+        if (heights == HeightsSummary.CA_HEIGHTS) {
+            progressStream.println("\nUsed Clade Height option - citation: " +
+                    "Heled and Bouckaert: 'Looking for trees in the forest: " +
+                    "summary tree from posterior samples'. BMC Evolutionary Biology 2013 13:221.");
+        }
 
         System.exit(0);
     }

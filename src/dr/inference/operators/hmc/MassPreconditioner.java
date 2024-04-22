@@ -10,10 +10,7 @@ import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.*;
 import dr.math.*;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.matrixAlgebra.ReadableVector;
-import dr.math.matrixAlgebra.RobustEigenDecomposition;
-import dr.math.matrixAlgebra.WrappedMatrix;
-import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.*;
 import dr.util.Transform;
 
 import java.util.ArrayList;
@@ -42,6 +39,14 @@ public interface MassPreconditioner {
 
     int getDimension();
 
+    default double[] getVelocity(ReadableVector momentum) {
+        double[] velocity = new double[momentum.getDim()];
+        for (int i = 0; i < velocity.length; i++) {
+            velocity[i] = getVelocity(i, momentum);
+        }
+        return velocity;
+    }
+
     enum Type {
 
         NONE("none") {
@@ -69,7 +74,7 @@ public interface MassPreconditioner {
                 int dimension = transform instanceof Transform.MultivariableTransform ?
                         ((Transform.MultivariableTransform) transform).getDimension() : gradient.getDimension();
 
-                return new AdaptiveDiagonalPreconditioning(dimension, gradient, transform, options.preconditioningDelay());
+                return new AdaptiveDiagonalPreconditioning(dimension, gradient, transform, options);
             }
         },
         PRIOR_DIAGONAL("priorDiagonal") {
@@ -553,18 +558,36 @@ public interface MassPreconditioner {
 
             adaptiveDiagonal.update(new WrappedVector.Raw(newDiagonalHessian));
 
-            double[] boundedDiagonal = boundMassInverse(((WrappedVector) adaptiveDiagonal.getMean()).getBuffer());
+            double[] boundedDiagonal = boundMassInverse(((WrappedVector) adaptiveDiagonal.getMean()).getBuffer(),
+                    lowerBound, upperBound, dim, VarianceConverter.HESSIAN);
             setInverseMassFromArray(boundedDiagonal);
         }
 
-        private double[] boundMassInverse(double[] diagonalHessian) {
+        enum VarianceConverter {
+            HESSIAN {
+                @Override
+                double convertVariance(double input) {
+                    return -1.0 / input;
+                }
+            },
+            VARIANCE {
+                @Override
+                double convertVariance(double input) {
+                    return input;
+                }
+            };
+            abstract double convertVariance(double input);
+        }
+
+        public static double[] boundMassInverse(double[] diagonalHessian, Parameter lowerBound, Parameter upperBound,
+                                                int dim, VarianceConverter varianceConverter) {
 
             double[] boundedMassInverse = diagonalHessian.clone();
 
             normalizeL1(boundedMassInverse, dim);
 
             for (int i = 0; i < dim; i++) {
-                boundedMassInverse[i] = 1.0 / boundedMassInverse[i];
+                boundedMassInverse[i] = varianceConverter.convertVariance(boundedMassInverse[i]);
                 if (boundedMassInverse[i] < lowerBound.getParameterValue(0)) {
                     boundedMassInverse[i] = lowerBound.getParameterValue(0);
                 } else if (boundedMassInverse[i] > upperBound.getParameterValue(0)) {
@@ -577,7 +600,7 @@ public interface MassPreconditioner {
             return boundedMassInverse;
         }
 
-        private void normalizeL1(double[] vector, double norm) {
+        private static void normalizeL1(double[] vector, double norm) {
             double sum = 0.0;
             for (int i = 0; i < vector.length; i++) {
                 sum += Math.abs(vector[i]);
@@ -611,20 +634,25 @@ public interface MassPreconditioner {
         private AdaptableVector.AdaptableVariance variance;
         private final int minimumUpdates;
         private final GradientWrtParameterProvider gradient;
+        private final MassPreconditioningOptions options;
 
         AdaptiveDiagonalPreconditioning(int dim,
                                         GradientWrtParameterProvider gradient,
-                                        Transform transform, int preconditioningDelay) {
-            this(dim, gradient, transform, preconditioningDelay, false);
+                                        Transform transform, MassPreconditioningOptions options) {
+            this(dim, gradient, transform, options, false);
         }
 
         AdaptiveDiagonalPreconditioning(int dim,
                                         GradientWrtParameterProvider gradient,
-                                        Transform transform, int preconditioningDelay,
+                                        Transform transform, MassPreconditioningOptions options,
                                         boolean guessInitialMass) {
             super(dim, transform);
             this.variance = new AdaptableVector.AdaptableVariance(dim);
-            this.minimumUpdates = preconditioningDelay;
+            this.options = options;
+            this.minimumUpdates = options.preconditioningDelay();
+            if (minimumUpdates < 2) {
+                throw new RuntimeException("Need at least two samples to calculate empirical variance.  Set HMC's option preconditioningDelay > 2 please!");
+            }
             this.gradient = gradient;
             if (guessInitialMass) {
                 setInitialMass();
@@ -692,9 +720,10 @@ public interface MassPreconditioner {
 
             if (variance.getUpdateCount() > minimumUpdates) {
                 double[] newVariance = variance.getVariance();
-//                adaptiveDiagonal.update(new WrappedVector.Raw(newVariance));
-//                return normalizeVector(adaptiveDiagonal.getMean(), dim);
-                setInverseMassFromArray(normalizeVector(new WrappedVector.Raw(newVariance), dim));
+                adaptiveDiagonal.update(new WrappedVector.Raw(newVariance));
+                setInverseMassFromArray(DiagonalHessianPreconditioning.boundMassInverse(((WrappedVector) adaptiveDiagonal.getMean()).getBuffer(),
+                        options.preconditioningEigenLowerBound(), options.preconditioningEigenUpperBound(), dim,
+                        DiagonalHessianPreconditioning.VarianceConverter.VARIANCE));
             }
 
         }

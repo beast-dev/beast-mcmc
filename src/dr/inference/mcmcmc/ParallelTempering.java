@@ -39,6 +39,10 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  * @author Guy Baele
+ *
+ * literature to look at:
+ *   Saifuddin Syed and Alex Bouchard-Cote (see extensions to `New` below)
+ *   Adapative parallel tempering for BEAST 2 (https://github.com/nicfel/CoupledMCMC)
  */
 
 public interface ParallelTempering {

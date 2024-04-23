@@ -48,7 +48,7 @@ public class BayesianBridgeMarkovRandomField extends GaussianMarkovRandomField i
                                            Parameter mean,
                                            RandomField.WeightProvider weightProvider,
                                            boolean matchPseudoDeterminant) {
-        super(name, bayesianBridge.getDimension(), null, mean, weightProvider, matchPseudoDeterminant);
+        super(name, bayesianBridge.getDimension(), null, mean, null, weightProvider, matchPseudoDeterminant);
 
         this.bayesianBridge = bayesianBridge;
         addModel(bayesianBridge);

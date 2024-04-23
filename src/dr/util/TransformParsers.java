@@ -26,6 +26,7 @@
 package dr.util;
 
 import dr.inference.model.Parameter;
+import dr.inferencexml.model.MaskingParser;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -77,15 +78,36 @@ public class TransformParsers {
     @SuppressWarnings("unused")
     public static XMLObjectParser COMPOUND_MULTIVARIATE_PARSER = new AbstractXMLObjectParser() {
 
+        private static final String MASK = "mask";
+
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            List<Transform.MultivariableTransform> transforms = new ArrayList<Transform.MultivariableTransform>();
-            for (int i = 0; i < xo.getChildCount(); i++) {
-                transforms.add(parseMultivariableTransform(xo.getChild(i)));
-            }
+            if (xo.hasChildNamed(MASK)) {
+                Transform.ParsedTransform  parsedTransform = (Transform.ParsedTransform)
+                        xo.getChild(Transform.ParsedTransform.class);
+                Transform transform = parsedTransform.transform;
 
-            return new Transform.MultivariateArray(transforms);
+                MaskingParser.MaskingParameter mask = (MaskingParser.MaskingParameter) xo.getElementFirstChild(MASK);
+
+                List<Transform> transforms = new ArrayList<>();
+                for (int i = 0; i < mask.getDimension(); ++i) {
+                    if (mask.getParameterValue(i) == 1.0) {
+                        transforms.add(transform);
+                    } else {
+                        transforms.add(Transform.NONE);
+                    }
+                }
+
+                return new Transform.Array(transforms, null);
+            } else {
+                List<Transform.MultivariableTransform> transforms = new ArrayList<Transform.MultivariableTransform>();
+                for (int i = 0; i < xo.getChildCount(); i++) {
+                    transforms.add(parseMultivariableTransform(xo.getChild(i)));
+                }
+
+                return new Transform.MultivariateArray(transforms);
+            }
         }
 
         @Override
@@ -93,6 +115,7 @@ public class TransformParsers {
             return new XMLSyntaxRule[] {
                     new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE),
                     new ElementRule(Transform.MultivariableTransform.class, 0, Integer.MAX_VALUE),
+                    new ElementRule(MASK, Parameter.class, "", true),
             };
         }
 

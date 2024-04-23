@@ -26,7 +26,10 @@
 package dr.evomodelxml.continuous.hmc;
 
 
+import dr.evolution.coalescent.IntervalList;
+import dr.evolution.coalescent.TreeIntervalList;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
@@ -72,10 +75,10 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
         }
 
         Parameter coalescentIntervals = null;
-        OldGMRFSkyrideLikelihood skyrideLikelihood = null;
+        GMRFSkyrideLikelihood skyrideLikelihood = null;
         if (xo.hasChildNamed(COALESCENT_INTERVAL)) {
             cxo = xo.getChild(COALESCENT_INTERVAL);
-            skyrideLikelihood = (OldGMRFSkyrideLikelihood) cxo.getChild(OldGMRFSkyrideLikelihood.class);
+            skyrideLikelihood = (GMRFSkyrideLikelihood) cxo.getChild(GMRFSkyrideLikelihood.class);
         }
 
         boolean withRoot = xo.getBooleanAttribute(WITH_ROOT);
@@ -97,6 +100,7 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
                 nodeHeightTransform = transform;
             }
         } else {
+            checkIntervals(skyrideLikelihood);
             Parameter nodeHeightParameter = (Parameter) cxo.getChild(Parameter.class);
             nodeHeightTransform = new NodeHeightTransform(nodeHeightParameter, tree, skyrideLikelihood);
             coalescentIntervals = ((NodeHeightTransform) nodeHeightTransform).getParameter();
@@ -106,6 +110,23 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
         }
 
         return nodeHeightTransform;
+    }
+
+    /**
+     * Check the intervals in the likelihood are tree intervals and have an interval-node mapping
+     *
+     * @param likelihood the skygrid likelihood
+     */
+    private void checkIntervals(GMRFSkyrideLikelihood likelihood) {
+
+
+        IntervalList intervalList = likelihood.getIntervalList();
+        if (!(intervalList instanceof TreeIntervalList)) {
+            throw new IllegalArgumentException("Skyride likelihood does not have intervals which map to " +
+                    "the underlying tree. This is needed for gradient calculations");
+        }
+
+
     }
 
     @Override

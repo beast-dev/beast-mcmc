@@ -180,6 +180,8 @@ public class PartitionClockModel extends PartitionOptions {
 
         createOperator("HMCLN", "HMC relaxed clock",
                 "Hamiltonian Monte Carlo relaxed clock operator", null, OperatorType.RELAXED_CLOCK_HMC_OPERATOR ,1 , 1.0);
+        createScaleOperator(ClockType.HMCLN_LOCATION, demoTuning, rateWeights);
+        createScaleOperator(ClockType.HMCLN_SCALE, demoTuning, rateWeights);
 
 
         // Random local clock
@@ -234,6 +236,11 @@ public class PartitionClockModel extends PartitionOptions {
                 "Scales UCGD mean inversely to node heights of the tree",
                 getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
                 getParameter(ClockType.UCGD_MEAN), OperatorType.UP_DOWN, demoTuning, rateWeights);
+
+        createUpDownOperator("upDownHMCRateHeights", "Evolutionary rate and heights",
+                "Scales clock rate inversely to node heights of the tree",
+                getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
+                getParameter(ClockType.HMCLN_LOCATION), OperatorType.UP_DOWN, demoTuning, rateWeights);
 
         createUpDownOperator("microsatUpDownRateHeights", "Evolutionary rate and heights",
                 "Scales substitution rates inversely to node heights of the tree",
@@ -457,9 +464,11 @@ public class PartitionClockModel extends PartitionOptions {
 //                            break;
                     case EXPONENTIAL:
                         return getOperator("upDownUCEDMeanHeights");
+                    default:
+                        throw new UnsupportedOperationException("Unknown clock distribution type");
                 }
-                break;
-
+            case HMC:
+                return getOperator("upDownHMCRateHeights");
             case AUTOCORRELATED:
                 throw new UnsupportedOperationException("Autocorrelated clock not implemented yet");
 //                    rateParam = getParameter("treeModel.rootRate");//TODO fix tree?
@@ -468,7 +477,6 @@ public class PartitionClockModel extends PartitionOptions {
             default:
                 throw new IllegalArgumentException("Unknown clock model");
         }
-        return null;
     }
 
     @Override
@@ -564,6 +572,9 @@ public class PartitionClockModel extends PartitionOptions {
                     case HMC:
                         switch (clockDistributionType) {
                             case LOGNORMAL:
+                                ops.add(rateOperator = getOperator(ClockType.HMCLN_LOCATION));
+                                ops.add(getOperator(ClockType.HMCLN_SCALE));
+                                addUpDownOperator(ops, rateOperator);
                                 ops.add(getOperator("HMCLN"));
                                 break;
                             default:

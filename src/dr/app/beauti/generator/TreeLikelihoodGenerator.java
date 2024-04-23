@@ -25,6 +25,7 @@
 
 package dr.app.beauti.generator;
 
+import dr.app.beauti.types.ClockType;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
@@ -100,7 +101,8 @@ public class TreeLikelihoodGenerator extends Generator {
 
         Attribute[] attributes = new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, idString),
-                new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood())
+                new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood()),
+                new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_PREORDER, clockModel.getClockType() == ClockType.HMC)
         };
 
         writer.writeComment("Likelihood for tree given sequence data");

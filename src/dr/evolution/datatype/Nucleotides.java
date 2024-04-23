@@ -62,7 +62,7 @@ public class Nucleotides extends DataType {
 	 * A table to translate state numbers (0-17) into character codes
 	 */
 	public static final char[] NUCLEOTIDE_CHARS = 
-		{ 'A','C','G','T','U','K','M','R','S','W','Y','B','D','H','V','N', UNKNOWN_CHARACTER,GAP_CHARACTER};
+		{ 'A','C','G','T','U','R','Y','M','W','S','K','B','D','H','V','N', UNKNOWN_CHARACTER,GAP_CHARACTER};
 
 	/** 
 	 * This table maps nucleotide characters into state codes (0-17)

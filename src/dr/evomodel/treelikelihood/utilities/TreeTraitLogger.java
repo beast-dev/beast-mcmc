@@ -28,14 +28,18 @@ package dr.evomodel.treelikelihood.utilities;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.xml.Reportable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A utility class to format traits on a tree in a LogColumn-based file.  This class takes an array of TraitProvider
@@ -57,6 +61,17 @@ public class TreeTraitLogger implements Loggable, Reportable {
         this.tree = tree;
         this.nodeRestriction = nodeRestriction;
         this.taxonNameExplicit = taxonNameExplicit;
+        this.leafSet = null;
+        addTraits(traits);
+    }
+
+    public TreeTraitLogger(Tree tree,
+                           TreeTrait[] traits,
+                           TaxonList taxonList) throws TreeUtils.MissingTaxonException {
+        this.tree = tree;
+        this.nodeRestriction = NodeRestriction.ALL;
+        this.taxonNameExplicit = false;
+        this.leafSet = TreeUtils.getLeavesForTaxa(tree, taxonList);
         addTraits(traits);
     }
 
@@ -74,7 +89,22 @@ public class TreeTraitLogger implements Loggable, Reportable {
 
         for (final TreeTrait trait : treeTraits) {
 
-            if (trait.getIntent() == TreeTrait.Intent.WHOLE_TREE) {
+            if (leafSet != null) {
+                LogColumn column = new LogColumn.Abstract(trait.getTraitName()) {
+                    @Override
+                    protected String getFormattedValue() {
+                        NodeRef node = TreeUtils.getCommonAncestorNode(tree, leafSet);
+                        if (node != null) {
+                            return trait.getTraitString(tree, node);
+                        } else {
+                            return "-";
+                        }
+                    }
+                };
+
+                columns.add(column);
+
+            } else if (trait.getIntent() == TreeTrait.Intent.WHOLE_TREE) {
                 LogColumn column = new LogColumn.Abstract(trait.getTraitName()) {
                     @Override
                     protected String getFormattedValue() {
@@ -141,6 +171,7 @@ public class TreeTraitLogger implements Loggable, Reportable {
     private List<TreeTrait> treeTraits;
     private final NodeRestriction nodeRestriction;
     private final boolean taxonNameExplicit;
+    private final Set<String> leafSet;
 
     @Override
     public String getReport() {

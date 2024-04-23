@@ -16,8 +16,7 @@ out/
 !ci/**/*.xml
 
 zig_zag
-
+src/revision.txt
 *.dmg
 release/Mac
-
 src/revision.txt

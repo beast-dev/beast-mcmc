@@ -76,9 +76,9 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
         boolean randomizeRates = xo.getAttribute(RANDOMIZE_RATES, false);
 
-        if (centerAtOne && randomizeRates) {
-            throw new XMLParseException("Cannot centerAtOne and randomize the starting rates");
-        }
+//        if (centerAtOne && randomizeRates) {
+//            throw new XMLParseException("Cannot centerAtOne and randomize the starting rates");
+//        }
 
         final int numBranches = tree.getNodeCount() - 1;
         if (rateCategoryParameter.getDimension() > 1 && (rateCategoryParameter.getDimension() != numBranches)) {
@@ -117,6 +117,19 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
                     double increment = MathUtils.nextGaussian() * scale;
                     double x = transform.randomize(increment);
                     rateCategoryParameter.setValue(i, x);
+                }
+            }
+
+            if (centerAtOne) {
+                double mean = 0.0;
+                for (int i = 0; i < rateCategoryParameter.getDimension(); ++i) {
+                    mean += rateCategoryParameter.getParameterValue(i);
+                }
+                mean /= rateCategoryParameter.getDimension();
+                
+                for (int i = 0; i < rateCategoryParameter.getDimension(); ++i) {
+                    rateCategoryParameter.setParameterValue(i,
+                            rateCategoryParameter.getParameterValue(i) - mean + 1.0);
                 }
             }
         }

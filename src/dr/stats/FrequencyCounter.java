@@ -100,12 +100,12 @@ public final class FrequencyCounter<T extends Comparable> {
         }
         Collections.sort(values, new Comparator<Pair<T, Integer>>() {
             public int compare(Pair<T, Integer> value1, Pair<T, Integer> value2) {
-                return getFrequency(value2.fst) - getFrequency(value1.fst);
+                return getFrequency(value2.first) - getFrequency(value1.first);
             }
         });
         List<Integer> order = new ArrayList<Integer>();
         for (Pair<T, Integer> value : values) {
-            order.add(value.snd);
+            order.add(value.second);
         }
         return order;
     }

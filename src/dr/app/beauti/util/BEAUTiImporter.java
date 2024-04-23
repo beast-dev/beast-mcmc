@@ -108,7 +108,7 @@ public class BEAUTiImporter {
 
         BufferedReader bufferedReader = new BufferedReader(reader);
         String line = bufferedReader.readLine();
-        while (line != null && line.length() == 0) {
+        while (line != null && line.isEmpty()) {
             line = bufferedReader.readLine();
         }
 
@@ -430,10 +430,7 @@ public class BEAUTiImporter {
 
         addTaxonList(taxa);
 
-        SimpleAlignment dummyAlignment = new SimpleAlignment();
-        dummyAlignment.setDataType(new DummyDataType());
-
-        setData(file.getName(), taxa, dummyAlignment, null, null, null, null, null, true);
+        setData(file.getName(), taxa, null, null, null, null, null, null, true);
     }
 
     public void importNewickFile(final File file) throws Exception {
@@ -598,20 +595,20 @@ public class BEAUTiImporter {
                          List<NexusApplicationImporter.TaxSet> taxSets,
                          PartitionSubstitutionModel model,
                          List<TraitData> traits, List<Tree> trees,
-                         Boolean allowEmpty) throws ImportException, IllegalArgumentException {
+                         boolean allowEmpty) throws ImportException, IllegalArgumentException {
         String fileNameStem = Utils.trimExtensions(fileName,
                 new String[]{"NEX", "NEXUS", "FA", "FAS", "FASTA", "TRE", "TREE", "XML", "TXT"});
         if (options.fileNameStem == null || options.fileNameStem.equals(MCMCPanel.DEFAULT_FILE_NAME_STEM)) {
             options.fileNameStem = fileNameStem;
         }
 
-        // check the alignment before adding it...
-        if (!allowEmpty && alignment.getSiteCount() == 0) {
-            // sequences are different lengths
-            throw new ImportException("This alignment is of zero length");
-        }
-
         if (alignment != null) {
+            // check the alignment before adding it...
+            if (!allowEmpty && alignment.getSiteCount() == 0) {
+                // sequences are different lengths
+                throw new ImportException("This alignment is of zero length");
+            }
+
             for (Sequence seq : alignment.getSequences()) {
                 if (seq.getLength() != alignment.getSiteCount()) {
                     // sequences are different lengths
@@ -776,7 +773,7 @@ public class BEAUTiImporter {
                 setClockAndTree(partition);//TODO Cannot load Clock Model and Tree Model from BEAST file yet
 
             } else {// only this works
-                if (options.getPartitionSubstitutionModels(partition.getDataType()).size() < 1) {// use same substitution model in beginning
+                if (options.getPartitionSubstitutionModels(partition.getDataType()).isEmpty()) {// use same substitution model in beginning
                     // PartitionSubstitutionModel based on PartitionData
                     PartitionSubstitutionModel psm = new PartitionSubstitutionModel(options, DEFAULT_NAME, partition);
                     partition.setPartitionSubstitutionModel(psm);
@@ -799,7 +796,7 @@ public class BEAUTiImporter {
         PartitionTreeModel treeModel;
 
         // use same tree model and same tree prior in beginning
-        if (options.getPartitionTreeModels().size() < 1) {
+        if (options.getPartitionTreeModels().isEmpty()) {
             // PartitionTreeModel based on PartitionData
             treeModel = new PartitionTreeModel(options, DEFAULT_NAME);
             partition.setPartitionTreeModel(treeModel);
@@ -820,7 +817,7 @@ public class BEAUTiImporter {
         }
 
         // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
-        if (options.getPartitionClockModels(partition.getDataType()).size() < 1) {
+        if (options.getPartitionClockModels(partition.getDataType()).isEmpty()) {
             // PartitionClockModel based on PartitionData
             PartitionClockModel pcm = new PartitionClockModel(options, DEFAULT_NAME, partition, treeModel);
             partition.setPartitionClockModel(pcm);
@@ -857,10 +854,10 @@ public class BEAUTiImporter {
     }
 
     private void addTrees(List<Tree> trees) {
-        if (trees != null && trees.size() > 0) {
+        if (trees != null && !trees.isEmpty()) {
             for (Tree tree : trees) {
                 String id = tree.getId();
-                if (id == null || id.trim().length() == 0) {
+                if (id == null || id.trim().isEmpty()) {
                     tree.setId("tree_" + (options.userTrees.size() + 1));
                 } else {
                     String newId = id;

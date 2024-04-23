@@ -250,7 +250,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
             System.err.println("Creating SitePatterns using compression type: " + compression.toString());
         }
 
-        if (compression != UNCOMPRESSED) {
+        if (compression == AMBIGUOUS_CONSTANT || compression == AMBIGUOUS_UNIQUE) {
             // if the patterns are to be compressed then create the constant sites initially
             for (int i = 0; i < siteList.getStateCount(); i++) {
                 int[] pattern = new int[siteList.getPatternLength()];

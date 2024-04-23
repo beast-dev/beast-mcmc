@@ -89,9 +89,13 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == ratesParameter && indicatorsParameter.getParameterValue(index) == 0)
-            return; // Does not affect likelihood
-        super.handleVariableChangedEvent(variable,index,type);
+        if (index > -1){
+            if (variable == ratesParameter && indicatorsParameter.getParameterValue(index) == 0)
+                return; // Does not affect likelihood
+            super.handleVariableChangedEvent(variable,index,type);
+        } else {
+            super.handleVariableChangedEvent(variable,index,type);
+        }
     }
 
     public Model getModel() {
@@ -126,4 +130,9 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
     private double[] probability = null;
 
     private final Parameter indicatorsParameter;
+
+    public Parameter getRatesParameter() {
+        return ratesParameter;
+    }
+
 }

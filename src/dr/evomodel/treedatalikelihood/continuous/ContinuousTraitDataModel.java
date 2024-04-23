@@ -25,12 +25,14 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.inference.model.*;
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.List;
 
@@ -293,6 +295,17 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     @Override
     public double[] transformTreeTraits(double[] treeTraits) {
         return treeTraits.clone();
+    }
+
+    @Override
+    public void updateTipDataGradient(DenseMatrix64F precision, DenseMatrix64F variance, NodeRef node,
+                                      int offset, int dimGradient) {
+        // do nothing
+    }
+
+    @Override
+    public boolean needToUpdateTipDataGradient(int offset, int dimGradient) {
+        return false;
     }
 
     /*

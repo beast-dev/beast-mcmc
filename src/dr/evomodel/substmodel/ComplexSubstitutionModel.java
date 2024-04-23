@@ -345,5 +345,9 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
         return Collections.singletonList(CommonCitations.EDWARDS_2011_ANCIENT);
     }
 
+    public Model getRateProvider() {
+        throw new RuntimeException("Method implement only in specific subclasses");
+    }
+
     private boolean doNormalization = true;
 }

@@ -203,6 +203,26 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         return gradient;
     }
 
+    public static double[] gradLogPdf(double[] x, double[] mean, double[] precision) {
+        final int dim = x.length;
+        final double[] gradient = new double[dim];
+        final double[] delta = new double[dim];
+
+        for (int i = 0; i < dim; ++i) {
+            delta[i] = mean[i] - x[i];
+        }
+
+        for (int i = 0; i < dim; ++i) {
+            double sum = 0;
+            for (int j = 0; j <dim; ++j) {
+                sum += precision[i * dim + j] * delta[j];
+            }
+            gradient[i] = sum;
+        }
+
+        return gradient;
+    }
+
     public double[][] hessianLogPdf(double[] x) {
         if (hasSinglePrecision) {
             return hessianLogPdf(x, mean, singlePrecision);

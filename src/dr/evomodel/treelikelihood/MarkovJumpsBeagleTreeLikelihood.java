@@ -184,7 +184,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                     final int registerNumber = numRegisters;
 
                     public String getTraitName() {
-                        return tag;
+                        return traitName;
                     }
 
                     public Intent getIntent() {

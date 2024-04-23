@@ -158,7 +158,7 @@ public class TransformedRandomWalkOperator extends AbstractAdaptableOperator {
         //this should be correct
         //logJacobian += transformations[index].getLogJacobian(parameter.getParameterValue(index)) - transformations[index].getLogJacobian(x[index]);
 
-        logJacobian += transformations[index].getLogJacobian(x[index]) - transformations[index].getLogJacobian(parameter.getParameterValue(index));  
+        logJacobian += transformations[index].logJacobian(x[index]) - transformations[index].logJacobian(parameter.getParameterValue(index));
 
         //return 0.0;
         return logJacobian;

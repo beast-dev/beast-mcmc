@@ -761,7 +761,7 @@ public class BeastMain {
 
         BeastConsoleApp consoleApp = null;
 
-        String nameString = "BEAST " + version.getVersionString();
+        String nameString = "BEAST X" + version.getVersionString();
 
         if (window) {
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");

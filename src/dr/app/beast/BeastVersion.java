@@ -58,7 +58,7 @@ public class BeastVersion implements Version, Citable {
     /**
      * Version string: assumed to be in format x.x.x
      */
-    private static final String VERSION = "1.10.5";
+    private static final String VERSION = "10.5.0";
 
     private static final String DATE_STRING = "2002-2024";
 
@@ -102,9 +102,10 @@ public class BeastVersion implements Version, Citable {
                 "",
                 "BEAST developers:",
                 "\tAlex Alekseyenko, Daniel Ayres, Guy Baele, Trevor Bedford, Filip Bielejec, Erik Bloomquist, ",
-                "\tMandev Gill, Matthew Hall, Gabe Hassler, Joseph Heled, Sebastian Hoehna, Denise Kuehnert, ",
-                "\tPhilippe Lemey, Wai Lok Sibon Li, Gerton Lunter, Andy Magee, Sidney Markowitz, JT McCrone, ",
-                "\tVladimir Minin, Michael Defoin Platel, Oliver Pybus, Chieh-Hsi Wu, Walter Xie",
+                "\tMichael Karcher, Gabriela Cybis, Mandev Gill, Matthew Hall, Gabe Hassler, Joseph Heled, ",
+                "\tSebastian Hoehna, Xiang Ji, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li, Gerton Lunter, ",
+                "\tAndy Magee, Sidney Markowitz, JT McCrone, Volodymyr Minin, Julia Palacios, Michael Defoin Platel, ",
+                "\tOliver Pybus, Yucai Shao, Max Tolkoff, Chieh-Hsi Wu, Walter Xie and Zhenyu Zhang",
                 "",
                 "Thanks to:",
                 "\tRoald Forsberg, Beth Shapiro and Korbinian Strimmer"};

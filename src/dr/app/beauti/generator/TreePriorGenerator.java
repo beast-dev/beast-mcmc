@@ -688,7 +688,8 @@ public class TreePriorGenerator extends Generator {
 
         String priorPrefix = prior.getPrefix();
 
-        if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
+        if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID ||
+                prior.getNodeHeightPrior() == TreePriorType.SKYGRID_HMC) {
 
             writer.writeComment("Generate a gmrfSkyGridLikelihood for the Bayesian SkyGrid process");
             writer.writeOpenTag(
@@ -749,7 +750,7 @@ public class TreePriorGenerator extends Generator {
             writer.writeCloseTag(PriorParsers.GAMMA_PRIOR);
 
             //add gradient information to XML file in case of an HMC transition kernel mix
-            if (options.operatorSetType == OperatorSetType.HMC) {
+            if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID_HMC) {
 
                 writer.writeOpenTag(GMRFSkyrideGradientParser.NAME,
                         new Attribute[]{

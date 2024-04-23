@@ -185,13 +185,16 @@ public class BeastVersion implements Version, Citable {
         try {
             try (InputStream in = BeastVersion.class.getResourceAsStream("/revision.txt")) {
 
-                assert in != null;
+                if (in != null) {
 
-                List<String> lines =  new BufferedReader(
-                        new InputStreamReader(in, StandardCharsets.UTF_8))
-                        .lines()
-                        .collect(Collectors.toList());
-                return lines.get(1); //"commit-dirty" -dirty is only output if there are uncommited changes
+                    List<String> lines = new BufferedReader(
+                            new InputStreamReader(in, StandardCharsets.UTF_8))
+                            .lines()
+                            .collect(Collectors.toList());
+                    return lines.get(1); //"commit-dirty" -dirty is only output if there are uncommited changes
+                } else {
+                    return "unknown";
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException("No revision file found. Try running `ant revision` to make it");

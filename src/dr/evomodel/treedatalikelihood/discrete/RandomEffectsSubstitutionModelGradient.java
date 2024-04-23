@@ -58,14 +58,6 @@ public class RandomEffectsSubstitutionModelGradient extends AbstractGlmSubstitut
         }
     }
 
-//    Parameter makeCompoundParameter(GeneralizedLinearModel glm) {
-//        CompoundParameter parameter = new CompoundParameter("random.effects");
-//        for (int i = 0; i < glm.getNumberOfRandomEffects(); ++i) {
-//            parameter.addParameter(glm.getRandomEffect(i));
-//        }
-//        return parameter;
-//    }
-
     ParameterMap makeParameterMap(GeneralizedLinearModel glm) {
 
         return new ParameterMap() {

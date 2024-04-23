@@ -169,7 +169,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     // Private and protected stuff
     // ****************************************************************
 
-    private IntervalList intervalList = null;
+    protected IntervalList intervalList = null;
 
     protected double logLikelihood;
     protected double storedLogLikelihood;

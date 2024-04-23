@@ -26,6 +26,7 @@
 package dr.evomodelxml.continuous.hmc;
 
 import dr.evomodel.substmodel.GlmSubstitutionModel;
+import dr.evomodel.substmodel.LogRateSubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -52,15 +53,24 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
 
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-        GlmSubstitutionModel substitutionModel = (GlmSubstitutionModel) xo.getChild(GlmSubstitutionModel.class);
 
         DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
         if (!(delegate instanceof BeagleDataLikelihoodDelegate)) {
             throw new XMLParseException("Unknown likelihood delegate type");
         }
 
-        return new LogCtmcRateGradient(traitName, treeDataLikelihood,
-                (BeagleDataLikelihoodDelegate) delegate, substitutionModel);
+        for (Object child : xo.getChildren()) {
+            if (child instanceof GlmSubstitutionModel) {
+                final GlmSubstitutionModel substitutionModel = (GlmSubstitutionModel) child;
+                return new LogCtmcRateGradient(traitName, treeDataLikelihood,
+                        (BeagleDataLikelihoodDelegate) delegate, substitutionModel);
+            } else if (child instanceof LogRateSubstitutionModel) {
+                final LogRateSubstitutionModel substitutionModel = (LogRateSubstitutionModel) child;
+                return new LogCtmcRateGradient(traitName, treeDataLikelihood,
+                        (BeagleDataLikelihoodDelegate) delegate, substitutionModel);
+            }
+        }
+        throw new XMLParseException("No valid substitution model found"); // TODO ugly (!?)
     }
 
     @Override
@@ -71,7 +81,9 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TRAIT_NAME, true),
             new ElementRule(TreeDataLikelihood.class),
-            new ElementRule(GlmSubstitutionModel.class),
+            new XORRule(
+                    new ElementRule(GlmSubstitutionModel.class),
+                    new ElementRule(LogRateSubstitutionModel.class)),
     };
 
     @Override

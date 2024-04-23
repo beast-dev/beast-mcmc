@@ -26,10 +26,15 @@
 
 package dr.evomodel.coalescent.smooth;
 
+import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
+
+import java.util.List;
 
 /**
  * A likelihood function for a piece-wise linear log population size coalescent process that nicely works with the newer tree intervals
@@ -39,7 +44,7 @@ import dr.xml.Reportable;
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class SkyGlideGradient implements GradientWrtParameterProvider, Reportable {
+public class SkyGlideGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable {
 
     private final SkyGlideLikelihood likelihood;
 
@@ -48,6 +53,8 @@ public class SkyGlideGradient implements GradientWrtParameterProvider, Reportabl
     private final WrtParameter wrtParameter;
 
     private final double tolerance;
+
+    private int treeIndex = -1;
 
     public SkyGlideGradient(SkyGlideLikelihood likelihood,
                             Parameter parameter,
@@ -61,6 +68,16 @@ public class SkyGlideGradient implements GradientWrtParameterProvider, Reportabl
     private WrtParameter factory(Parameter parameter) {
         if (parameter == likelihood.getLogPopSizeParameter()) {
             return WrtParameter.LOG_POP_SIZE;
+        } else if (parameter instanceof NodeHeightProxyParameter){
+            List<TreeModel> trees = likelihood.getTrees();
+            final TreeModel tree = ((NodeHeightProxyParameter) parameter).getTree();
+            for (int i = 0; i < trees.size(); i++) {
+                if (trees.get(i) == tree) {
+                    treeIndex = i;
+                    return WrtParameter.NODE_HEIGHT;
+                }
+            }
+            throw new RuntimeException("Parameter not recognized.");
         } else {
             throw new RuntimeException("Parameter not recognized.");
         }
@@ -83,19 +100,36 @@ public class SkyGlideGradient implements GradientWrtParameterProvider, Reportabl
 
     @Override
     public double[] getGradientLogDensity() {
-        return wrtParameter.getGradientLogDensity(likelihood);
+        return wrtParameter.getGradientLogDensity(likelihood, treeIndex);
     }
 
     @Override
     public String getReport() {
-        return GradientWrtParameterProvider.getReportAndCheckForError(this, wrtParameter.getParameterLowerBound(), wrtParameter.getParameterUpperBound(), tolerance);
+        String output = GradientWrtParameterProvider.getReportAndCheckForError(this, wrtParameter.getParameterLowerBound(), wrtParameter.getParameterUpperBound(), tolerance)
+                + "\n" + HessianWrtParameterProvider.getReportAndCheckForError(this, wrtParameter == WrtParameter.NODE_HEIGHT ? null : tolerance);
+        return output;
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity() {
+        return wrtParameter.getDiagonalHessianLogDensity(likelihood, treeIndex);
+    }
+
+    @Override
+    public double[][] getHessianLogDensity() {
+        throw new RuntimeException("Not yet implemented.");
     }
 
     public enum WrtParameter {
         LOG_POP_SIZE {
             @Override
-            double[] getGradientLogDensity(SkyGlideLikelihood likelihood) {
+            double[] getGradientLogDensity(SkyGlideLikelihood likelihood, int treeIndex) {
                 return likelihood.getGradientWrtLogPopulationSize();
+            }
+
+            @Override
+            double[] getDiagonalHessianLogDensity(SkyGlideLikelihood likelihood, int treeIndex) {
+                return likelihood.getDiagonalHessianLogDensityWrtLogPopSize();
             }
 
             @Override
@@ -107,8 +141,30 @@ public class SkyGlideGradient implements GradientWrtParameterProvider, Reportabl
             double getParameterUpperBound() {
                 return Double.POSITIVE_INFINITY;
             }
+        },
+        NODE_HEIGHT {
+            @Override
+            double[] getGradientLogDensity(SkyGlideLikelihood likelihood, int treeIndex) {
+                return likelihood.getGradientWrtNodeHeight(treeIndex);
+            }
+
+            @Override
+            double[] getDiagonalHessianLogDensity(SkyGlideLikelihood likelihood, int treeIndex) {
+                return likelihood.getDiagonalHessianWrtNodeHeight(treeIndex);
+            }
+
+            @Override
+            double getParameterLowerBound() {
+                return 0;
+            }
+
+            @Override
+            double getParameterUpperBound() {
+                return Double.POSITIVE_INFINITY;
+            }
         };
-        abstract double[] getGradientLogDensity(SkyGlideLikelihood likelihood);
+        abstract double[] getGradientLogDensity(SkyGlideLikelihood likelihood, int treeIndex);
+        abstract double[] getDiagonalHessianLogDensity(SkyGlideLikelihood likelihood, int treeIndex);
         abstract double getParameterLowerBound();
         abstract double getParameterUpperBound();
     }

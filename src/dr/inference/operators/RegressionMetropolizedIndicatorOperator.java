@@ -85,7 +85,7 @@ public class RegressionMetropolizedIndicatorOperator extends SimpleMCMCOperator 
         effectOperator.computeForwardDensity(mean, variance,precision);
         logHastingsRatio += MultivariateNormalDistribution.logPdf(effect.getParameterValues(),
                                 mean, precision,
-                                Math.log(MultivariateNormalDistribution.calculatePrecisionMatrixDeterminate(precision)),
+                                MultivariateNormalDistribution.calculatePrecisionMatrixLogDeterminate(precision),
                                 1.0);
 
         // Do update
@@ -104,7 +104,7 @@ public class RegressionMetropolizedIndicatorOperator extends SimpleMCMCOperator 
         precision = effectOperator.getLastPrecision();
         logHastingsRatio -= MultivariateNormalDistribution.logPdf(effect.getParameterValues(),
                                 mean, precision,
-                                Math.log(MultivariateNormalDistribution.calculatePrecisionMatrixDeterminate(precision)),
+                                MultivariateNormalDistribution.calculatePrecisionMatrixLogDeterminate(precision),
                                 1.0);
 
         return logHastingsRatio;

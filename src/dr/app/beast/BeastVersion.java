@@ -60,12 +60,9 @@ public class BeastVersion implements Version, Citable {
      */
     private static final String VERSION = "1.10.5";
 
-    private static final String DATE_STRING = "2002-2023";
+    private static final String DATE_STRING = "2002-2024";
 
     private static final boolean IS_PRERELEASE = true;
-
-    // this is now being manually updated since the move to GitHub. 7 digits of GitHub hash.
-    private static final String REVISION = "8a10723";
 
     public String getVersion() {
         return VERSION;
@@ -104,10 +101,10 @@ public class BeastVersion implements Version, Citable {
                 "\thttp://github.com/beast-dev/beast-mcmc",
                 "",
                 "BEAST developers:",
-                "\tAlex Alekseyenko, Guy Baele, Trevor Bedford, Filip Bielejec, Erik Bloomquist, Matthew Hall,",
-                "\tJoseph Heled, Sebastian Hoehna, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li,",
-                "\tGerton Lunter, Sidney Markowitz, Vladimir Minin, Michael Defoin Platel,",
-                "\tOliver Pybus, Chieh-Hsi Wu, Walter Xie",
+                "\tAlex Alekseyenko, Daniel Ayres, Guy Baele, Trevor Bedford, Filip Bielejec, Erik Bloomquist, ",
+                "\tMandev Gill, Matthew Hall, Gabe Hassler, Joseph Heled, Sebastian Hoehna, Denise Kuehnert, ",
+                "\tPhilippe Lemey, Wai Lok Sibon Li, Gerton Lunter, Andy Magee, Sidney Markowitz, JT McCrone, ",
+                "\tVladimir Minin, Michael Defoin Platel, Oliver Pybus, Chieh-Hsi Wu, Walter Xie",
                 "",
                 "Thanks to:",
                 "\tRoald Forsberg, Beth Shapiro and Korbinian Strimmer"};
@@ -187,15 +184,14 @@ public class BeastVersion implements Version, Citable {
     public static String getRevision() {
         try {
             try (InputStream in = BeastVersion.class.getResourceAsStream("/revision.txt")) {
-                if (in != null) {
-                    List<String> lines =  new BufferedReader(
-                            new InputStreamReader(in, StandardCharsets.UTF_8))
-                            .lines()
-                            .collect(Collectors.toList());
-                    return lines.get(1); //"commit-dirty" -dirty is only output if there are uncommited changes
-                } else {
-                    return REVISION;
-                }
+
+                assert in != null;
+
+                List<String> lines =  new BufferedReader(
+                        new InputStreamReader(in, StandardCharsets.UTF_8))
+                        .lines()
+                        .collect(Collectors.toList());
+                return lines.get(1); //"commit-dirty" -dirty is only output if there are uncommited changes
             }
         } catch (IOException e) {
             throw new RuntimeException("No revision file found. Try running `ant revision` to make it");

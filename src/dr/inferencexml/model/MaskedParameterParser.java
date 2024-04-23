@@ -82,8 +82,7 @@ public class MaskedParameterParser extends AbstractXMLObjectParser {
                 }
             }
             Logger.getLogger("dr.inferencexml.model").info("Found in total " + total + " missing values\n");
-        }
-        else {
+        } else {
             int from = xo.getAttribute(FROM, 1) - 1;
             int to = xo.getAttribute(TO, parameter.getDimension()) - 1;
             int every = xo.getAttribute(EVERY, 1);

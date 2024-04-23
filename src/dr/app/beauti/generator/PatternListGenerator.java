@@ -140,7 +140,8 @@ public class PatternListGenerator extends Generator {
         from += offset;
 
         // this object is created solely to calculate the number of patterns in the alignment
-        SitePatterns patterns = new SitePatterns(alignment, null, from - 1, to - 1, every, strip, unique);
+        SitePatterns patterns = new SitePatterns(alignment, null, from - 1, to - 1, every, strip,
+                unique ? SitePatterns.CompressionType.UNIQUE_ONLY : SitePatterns.CompressionType.UNCOMPRESSED);
 
         writer.writeComment("The " + (unique ? "unique " : "") + "patterns from " + from + " to " + (to > 0 ? to : "end") + ((every > 1) ? " every " + every : ""),
                 "npatterns=" + patterns.getPatternCount());

@@ -25,8 +25,10 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
+import dr.evomodel.substmodel.ComplexSubstitutionModel;
 import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evomodel.substmodel.LogAdditiveCtmcRateProvider;
+import dr.evomodel.substmodel.LogRateSubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.loggers.LogColumn;
@@ -53,15 +55,26 @@ public class LogCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGra
                                GlmSubstitutionModel substitutionModel) {
         super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel,
                 ApproximationMode.FIRST_ORDER);
+        this.rateProvider = extractRateProvider(substitutionModel);
+        this.mapEffectToIndices = makeAsymmetricMap();
+    }
 
-        if (substitutionModel.getRateProvider() instanceof LogAdditiveCtmcRateProvider.DataAugmented)
-            this.rateProvider = (LogAdditiveCtmcRateProvider.DataAugmented)
-                    substitutionModel.getRateProvider();
-        else {
+    public LogCtmcRateGradient(String traitName,
+                               TreeDataLikelihood treeDataLikelihood,
+                               BeagleDataLikelihoodDelegate likelihoodDelegate,
+                               LogRateSubstitutionModel substitutionModel) {
+        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel,
+                ApproximationMode.FIRST_ORDER);
+        this.rateProvider = extractRateProvider(substitutionModel);
+        this.mapEffectToIndices = makeAsymmetricMap();
+    }
+
+    private LogAdditiveCtmcRateProvider.DataAugmented extractRateProvider(ComplexSubstitutionModel substitutionModel) {
+        if (substitutionModel.getRateProvider() instanceof LogAdditiveCtmcRateProvider.DataAugmented) {
+            return (LogAdditiveCtmcRateProvider.DataAugmented) substitutionModel.getRateProvider();
+        } else {
             throw new IllegalArgumentException("Invalid substitution model");
         }
-        
-        this.mapEffectToIndices = makeAsymmetricMap();
     }
 
      @Override

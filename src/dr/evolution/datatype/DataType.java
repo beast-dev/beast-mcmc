@@ -365,6 +365,22 @@ public abstract class DataType implements Serializable {
         return (1.0 - (sumMatch / (sum1 * sum2)));
     }
 
+    /**
+     * returns whether two states are definitely different given the ambiguity in either
+     */
+    public boolean areUnambiguouslyDifferent(int state1, int state2) {
+        boolean[] stateSet1 = getStateSet(state1);
+        boolean[] stateSet2 = getStateSet(state2);
+        for (int i = 0; i < stateSet1.length; i++) {
+            if (stateSet1[i] && stateSet2[i]) {
+                // at least one state is present in both sets
+                return false;
+            }
+        }
+        return true;
+    }
+
+
     public String toString() {
         return getDescription();
     }

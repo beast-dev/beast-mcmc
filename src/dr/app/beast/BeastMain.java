@@ -70,6 +70,7 @@ public class BeastMain {
             Iterator iter = parser.getThreads();
             while (iter.hasNext()) {
                 Thread thread = (Thread) iter.next();
+                //noinspection removal
                 thread.stop(); // http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
             }
         }
@@ -82,6 +83,7 @@ public class BeastMain {
     public BeastMain(File inputFile, BeastConsoleApp consoleApp, int maxErrorCount, final boolean verbose,
                      boolean parserWarning, boolean strictXML, List<String> additionalParsers,
                      MCMCMCOptions mc3Options) {
+
 
         if (inputFile == null) {
             throw new RuntimeException("Error: no input file specified");
@@ -354,8 +356,12 @@ public class BeastMain {
                         new Arguments.Option("adaptation_off", "Don't adapt operator sizes"),
                         new Arguments.RealOption("adaptation_target", 0.0, 1.0, "Target acceptance rate for adaptive operators (default 0.234)"),
 
+                        new Arguments.StringOption("pattern_compression", new String[]{"off", "unique", "ambiguous_constant", "ambiguous_all"},
+                                false, "Site pattern compression mode (default unique)"),
+
                         new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
+                        new Arguments.Option("beagle_auto", "BEAGLE: automatically select fastest resource for analysis"),
                         new Arguments.StringOption("beagle_order", "order", "BEAGLE: set order of resource use"),
                         new Arguments.IntegerOption("beagle_instances", "BEAGLE: divide site patterns amongst instances"),
                         new Arguments.StringOption("beagle_multipartition", new String[]{"auto", "on", "off"},
@@ -402,13 +408,6 @@ public class BeastMain {
                         new Arguments.Option("version", "Print the version and credits and stop"),
                         new Arguments.Option("help", "Print this information and stop"),
                 });
-
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        if (versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1) {
-            arguments.addOption("beagle_auto",
-                    "BEAGLE: automatically select fastest resource for analysis",
-                    "beagle_info");
-        };
 
         int argumentCount = 0;
 
@@ -501,6 +500,12 @@ public class BeastMain {
 
             if (arguments.hasOption("prefix")) {
                 fileNamePrefix = arguments.getStringOption("prefix");
+            }
+
+            // ============= Evaluation approximations =============
+
+            if (arguments.hasOption("pattern_compression")) {
+                System.setProperty("patterns.compression", arguments.getStringOption("pattern_compression").toLowerCase());
             }
 
             // ============= MC^3 settings =============
@@ -857,12 +862,11 @@ public class BeastMain {
 
         BeagleInfo.printVersionInformation();
 
-        if (BeagleInfo.getVersion().startsWith("1.")) {
-            System.err.println("WARNING: You are currenly using BEAGLE v1.x. For best performance and compatibility\n" +
-                    "with models in BEAST, please upgrade to BEAGLE v3.x at http://github.com/beagle-dev/beagle-lib/\n");
-        } else if (BeagleInfo.getVersion().startsWith("2.")) {
-            System.err.println("WARNING: You are currenly using BEAGLE v2.x. For best performance and compatibility\n" +
-                    "with models in BEAST, please upgrade to BEAGLE v3.x at http://github.com/beagle-dev/beagle-lib/\n");
+        int[] versionNumbers = BeagleInfo.getVersionNumbers();
+        if (versionNumbers.length != 0 && versionNumbers[0] < 4) {
+            System.err.println("BEAST v" + BeastVersion.INSTANCE.getVersion() + " requires BEAGLE v4.0 or later.\n" +
+                    "Please install or upgrade to the latest BEAGLE from https://beagle-dev.github.io/");
+            throw new RuntimeException("Terminate");
         }
 
         if (beagleShowInfo) {

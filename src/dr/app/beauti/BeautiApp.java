@@ -33,11 +33,7 @@ import jam.framework.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.Method;
-import java.security.AccessControlException;
-import java.util.HashSet;
 import java.util.Locale;
-import java.util.Set;
 
 
 /**

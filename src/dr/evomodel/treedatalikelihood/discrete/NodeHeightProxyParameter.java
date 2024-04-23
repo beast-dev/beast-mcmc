@@ -51,6 +51,10 @@ public class NodeHeightProxyParameter extends Parameter.Proxy {
                 includeRoot);
     }
 
+    public TreeModel getTree() {
+        return tree;
+    }
+
     private int getNodeNumber(int index) {
         return indexHelper.getNodeNumberFromParameterIndex(index + tree.getExternalNodeCount());
     }

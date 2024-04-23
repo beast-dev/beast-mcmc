@@ -53,6 +53,10 @@ public class LogLinearModel extends GeneralizedLinearModel implements LogAdditiv
         return xBeta;
     }
 
+    public Parameter getLogRateParameter() {
+        throw new RuntimeException("Not yet implemented.");
+    }
+
     protected double calculateLogLikelihood(double[] beta) {
         throw new RuntimeException("Not yet implemented.");
     }

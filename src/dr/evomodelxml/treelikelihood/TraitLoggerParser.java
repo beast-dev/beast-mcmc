@@ -28,6 +28,8 @@ package dr.evomodelxml.treelikelihood;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
+import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.treelikelihood.utilities.TreeTraitLogger;
 import dr.xml.*;
 
@@ -50,7 +52,18 @@ public class TraitLoggerParser extends AbstractXMLObjectParser {
                 xo.getAttribute(NODES, "all"));
         boolean taxonNameExplicit = xo.getAttribute(TAXON_NAME_EXPLICIT, false);
 
-        return new TreeTraitLogger(treeModel, new TreeTrait[] { trait }, nodes, taxonNameExplicit);
+        TaxonList taxonList = (TaxonList) xo.getChild(TaxonList.class);
+        if (taxonList != null) {
+            TreeTraitLogger logger = null;
+            try {
+                logger = new TreeTraitLogger(treeModel, new TreeTrait[] { trait }, taxonList);
+            } catch (TreeUtils.MissingTaxonException e) {
+                throw new XMLParseException(e.getMessage());
+            }
+            return logger;
+        } else {
+            return new TreeTraitLogger(treeModel, new TreeTrait[]{trait}, nodes, taxonNameExplicit);
+        }
     }
 
     static TreeTrait parseTreeTrait(XMLObject xo, boolean wholeTreeOnly) throws XMLParseException {
@@ -93,6 +106,7 @@ public class TraitLoggerParser extends AbstractXMLObjectParser {
           AttributeRule.newStringRule(NODES, true),
           new ElementRule(Tree.class),
           new ElementRule(TreeTraitProvider.class),
+          new ElementRule(TaxonList.class, true),
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

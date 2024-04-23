@@ -25,11 +25,14 @@
 
 package dr.inference.trace;
 
+import dr.math.MachineAccuracy;
 import dr.stats.DiscreteStatistics;
 import dr.stats.FrequencyCounter;
 import dr.util.HeapSort;
 
 import java.util.*;
+
+import static jebl.math.MachineAccuracy.EPSILON;
 
 /**
  * A class that stores the distribution statistics for a trace
@@ -189,9 +192,7 @@ public class TraceDistribution {
                 if (value > maximum) maximum = value;
             }
 
-            if (maximum == minimum) {
-                isConstant = true;
-            }
+            isConstant = MachineAccuracy.isSame(maximum, minimum);
         }
 
         if (isConstant) {

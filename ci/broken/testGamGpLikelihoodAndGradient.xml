@@ -92,112 +92,83 @@
 			<parameter id="loc.clock.rate" value="1E-4" lower="0.0"/>
 		</rate>
 	</strictClockBranchRates>
-		
-	<gamGpModel id="gamGpModel"> <!-- returns density of realized field-->
-            <realizedField>
-                <parameter id="loc.coefficients0" value="1 0 -1 0 0 0"/> <!-- 1 2 3 4 5put other numbers-->
-            </realizedField>
-            <gaussianNoise>
-                <parameter id="loc.noise" value="1"/>
-            </gaussianNoise>
-            <kernel>
-                <parameter id="loc.kernel" value="1 3 4" lower="0.0"/>
-            </kernel>
-			<independentVariables>
-				<designMatrix id="loc.designMatrix0">
-					<parameter value="1 0 0
-								      0 0 0"/>
 
-				</designMatrix>
-			</independentVariables>
-
-			<independentVariables>
-				<designMatrix id="loc.designMatrix1">
-					<parameter value="0 1 0
-								      0 0 0"/>
-				</designMatrix>
-			</independentVariables>
-            <independentVariables>
-                <designMatrix id="loc.designMatrix2">
-                    <parameter value="0 0 1
-								      0 0 0"/>
-                </designMatrix>
-            </independentVariables>
-            <independentVariables>
-                <designMatrix id="loc.designMatrix3">
-                    <parameter value="0 0 0
-								      1 0 0"/>
-                </designMatrix>
-            </independentVariables>
-            <independentVariables>
-                <designMatrix id="loc.designMatrix4">
-                    <parameter value="0 0 0
-								      0 1 0"/>
-                </designMatrix>
-            </independentVariables>
-
-            <independentVariables>
-                <designMatrix id="loc.designMatrix5">
-                    <parameter value="0 0 0
-								      0 0 1"/>
-                </designMatrix>
-            </independentVariables>
-
-<!-- nothing -->
-		</gamGpModel>	
-		
-		
-	<randomField id="test.field">
-		<data>
-			<parameter idref="loc.coefficients0"/>
-		</data>
-		<distribution>
-			<gaussianProcessField id="test.gp" dim="6">	
-				<orderVariance>
-					<parameter id="orderVariance" value="1.0"/>
-				</orderVariance>
-	            <gaussianNoise>
-    	            <parameter idref="loc.noise"/>
-	            </gaussianNoise>		
-				<basis>
-					<designMatrix idref="loc.designMatrix0"/>
-					<kernel type="dotProduct"/>
-				</basis>
-				<basis>
-					<designMatrix idref="loc.designMatrix1"/>
-					<kernel type="dotProduct"/>
-				</basis>
-				<basis>
-					<designMatrix idref="loc.designMatrix2"/>
-					<kernel type="dotProduct"/>
-				</basis>
-				<basis>
-					<designMatrix idref="loc.designMatrix3"/>
-					<kernel type="dotProduct"/>
-				</basis>												
-				<basis>
-					<designMatrix idref="loc.designMatrix4"/>
-					<kernel type="dotProduct"/>
-				</basis>
-				<basis>
-					<designMatrix idref="loc.designMatrix5"/>
-					<kernel type="dotProduct"/>
-				</basis>								
-			</gaussianProcessField>		
-		</distribution>
-	</randomField>
-
+    <randomField id="test.field">
+        <data>
+            <parameter id="loc.coefficients0" value="1 0 -1 0 0 0"/>
+        </data>
+        <distribution>
+            <gaussianProcessField id="test.gp" dim="6">
+                <orderVariance>
+                    <parameter id="orderVariance" value="1.0"/>
+                </orderVariance>
+                <gaussianNoise>
+                    <parameter id="loc.noise" value="1"/>
+                </gaussianNoise>
+                <basis>
+                    <designMatrix id="loc.designMatrix0">
+                        <parameter value="1 0 0 0 0 0"/>
+                    </designMatrix>
+                    <kernel type="dotProduct"/>
+                </basis>
+                <basis>
+                    <designMatrix id="loc.designMatrix1">
+                        <parameter value="0 1 0 0 0 0"/>
+                    </designMatrix>
+                    <kernel type="dotProduct"/>
+                </basis>
+<!--                <basis>-->
+<!--                    <designMatrix id="loc.designMatrix2">-->
+<!--                        <parameter value="0 0 1 0 0 0"/>-->
+<!--                    </designMatrix>-->
+<!--                    <kernel type="dotProduct"/>-->
+<!--                </basis>-->
+                <!--                <basis>-->
+                <!--                    <designMatrix id="loc.designMatrix3">-->
+                <!--                        <parameter value="0 0 0 1 0 0"/>-->
+                <!--                    </designMatrix>-->
+                <!--                    <kernel type="dotProduct"/>-->
+                <!--                </basis>-->
+                <!--                <basis>-->
+                <!--                    <designMatrix id="loc.designMatrix4">-->
+                <!--                        <parameter value="0 0 0 0 1 0"/>-->
+                <!--                    </designMatrix>-->
+                <!--                    <kernel type="dotProduct"/>-->
+                <!--                </basis>-->
+                <!--                <basis>-->
+                <!--                    <designMatrix id="loc.designMatrix5">-->
+                <!--                        <parameter value="0 0 0 0 0 1"/>-->
+                <!--                    </designMatrix>-->
+                <!--                    <kernel type="dotProduct"/>-->
+                <!--                </basis>	                -->
+            </gaussianProcessField>
+        </distribution>
+    </randomField>
 	<randomFieldGradient id="test.gradient">
 		<randomField idref="test.field"/>
-		<parameter idref="loc.coefficients0"/>				
+		<parameter idref="loc.coefficients0"/>
 	</randomFieldGradient>
-	
+
+    <gaussianProcessPrediction id="test.prediction">
+        <parameter idref="loc.coefficients0"/>
+        <additiveGaussianProcessDistribution idref="test.gp"/>
+        <bases>
+            <designMatrix id="loc.designMatrixPred0">
+                <parameter value="1 2"/> <!-- The dimension of this vector determines the dimension of the output-->
+            </designMatrix>
+            <designMatrix id="loc.designMatrixPred1">
+                <parameter value="2 1"/>
+            </designMatrix>
+        </bases>
+    </gaussianProcessPrediction>
+
 	<report>
-		<gamGpModel idref="gamGpModel"/>
 		<randomField idref="test.field"/>
 		<randomFieldGradient idref="test.gradient"/>
-	</report>	
-	
+        <gaussianProcessPrediction idref="test.prediction"/>
+	</report>
+
+
 	<glmSubstitutionModel id="loc.model" normalize="true">
 		<generalDataType idref="loc.dataType"/>
 		<rootFrequencies>
@@ -208,7 +179,6 @@
 				</frequencies>
 			</frequencyModel>
 		</rootFrequencies>
-<!-- 		<gamGpModel idref="gamGpModel"/> -->
 		<logRates>
 			<parameter idref="loc.coefficients0"/>
 		</logRates>
@@ -229,30 +199,29 @@
         <strictClockBranchRates idref="loc.branchRates"/>
     </treeDataLikelihood>
 
-
-    <report>
-    	<gamGpModel idref="gamGpModel"/>
-    	<treeDataLikelihood idref="treeLikelihood"/>
-    </report>
+<!--    <report>-->
+<!--    	<gamGpModel idref="gamGpModel"/>-->
+<!--    	<treeDataLikelihood idref="treeLikelihood"/>-->
+<!--    </report>-->
 
     <approximateLogCtmcRateGradient id="gradient1" traitName="loc">
     	<treeDataLikelihood idref="treeLikelihood"/>
     	<glmSubstitutionModel idref="loc.model"/>
     </approximateLogCtmcRateGradient>
 
-    <report>
-    	<approximateLogCtmcRateGradient idref="gradient1"/>
-    </report>
-    
+<!--    <report>-->
+<!--    	<approximateLogCtmcRateGradient idref="gradient1"/>-->
+<!--    </report>-->
+
     <jointGradient id="joint.gradient">
     	 <approximateLogCtmcRateGradient idref="gradient1"/>
     	 <randomFieldGradient idref="test.gradient"/>		
     </jointGradient>
     
-    <report>
-    	Joint gradient 
-    	<jointGradient idref="joint.gradient"/>
-    </report>
+<!--    <report>-->
+<!--    	Joint gradient -->
+<!--    	<jointGradient idref="joint.gradient"/>-->
+<!--    </report>-->
 
     <operators id="operators" optimizationSchedule="log">
         <randomWalkOperator windowSize="0.1" weight="1">
@@ -264,42 +233,60 @@
     </operators>
     <!-- scale operator random walk positive CHECK! -->
 
-    <mcmc id="mcmc" chainLength="100000" autoOptimize="true">
-        <joint id="joint"> <!-- joint, from now on a list of density -->
-            <prior id="prior">
-<!--                 <gamGpModel idref="gamGpModel"/> -->
-				<randomField idref="test.field"/>
-            </prior>
-            <likelihood id="likelihood">
-                <treeLikelihood idref="treeLikelihood"/>
-            </likelihood>
-        </joint>
-        <operators idref="operators"/>
-        <log id="screenLog" logEvery="200"> <!-- keep track of the chain,printed to the screen-->
-            <column label="Joint" dp="4" width="12"> <!-- "label" is the col name; "dp" is the number of decimals and "width" is the btw cols space -->
-                <joint idref="joint"/>
-            </column>
-            <column label="Prior" dp="4" width="12">
-                <prior idref="prior"/>
-            </column>
-<!--            <column label="Likelihood" dp="4" width="12">-->
-<!--                <likelihood idref="likelihood"/>-->
-<!--            </column>-->
-            <column label="Root Height" sf="6" width="12">
-                <parameter idref="treeModel.rootHeight"/>
-            </column>
-            <column label="Field" sf="6" width="12">
-                <parameter idref="loc.coefficients0"/>
-            </column>
-        </log>
-        <log id="fileLog" logEvery="10" fileName="test.log">
-            <joint idref="joint"/>
-            <prior idref="prior"/>
-<!--            <likelihood idref="likelihood"/>-->
-            <parameter idref="loc.coefficients0"/>
-        </log>
-    </mcmc>
+    <!--    check values predictive mean -->
+    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check GP prediction: mean
+        </message>
+        <actual regex="mean: (.*?)\n">
+            <gaussianProcessPrediction idref="test.prediction"/>
+        </actual>
+        <expected>
+            0.5 1
+        </expected>
+    </assertEqual>
 
-    <traceAnalysis fileName="test.log" stdError="true"/>
+    <!--    check values predictive variance -->
+    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check GP prediction: variance
+        </message>
+        <actual regex="variance: (.*?)\n">
+            <gaussianProcessPrediction idref="test.prediction"/>
+        </actual>
+        <expected>
+            2.5 2 2 2.5
+        </expected>
+    </assertEqual>
+
+    <!-- check values Gradients-->
+    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check values for gradient
+        </message>
+        <actual regex="analytic:(.*?)\n">
+            <randomFieldGradient idref="test.gradient"/>
+        </actual>
+        <expected>
+            -0.5 0 1 0 0 0
+        </expected>
+    </assertEqual>
+
+    <report id = "report.prediction">
+        <gaussianProcessPrediction idref="test.prediction"/>
+    </report>
+
+<!--    &lt;!&ndash;    check value log-likelihood&ndash;&gt;-->
+<!--    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">-->
+<!--        <message>-->
+<!--            Check GP prior values (for an MCMC chain of length 0)-->
+<!--        </message>-->
+<!--        <actual regex="likelihood:(.*?)\n">-->
+<!--            <prior idref="prior"/>-->
+<!--        </actual>-->
+<!--        <expected>-->
+<!--            -6.956778-->
+<!--        </expected>-->
+<!--    </assertEqual>-->
 
 </beast>

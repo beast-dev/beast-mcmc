@@ -779,7 +779,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, "skygrid");
                 writer.writeCloseTag(GMRFSkyrideGradientParser.NAME);
 
-                writer.writeOpenTag(JointGradientParser.SUM_DERIVATIVE2,
+                writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT,
                         new Attribute[]{
                                 new Attribute.Default<String>(XMLParser.ID, "joint.skygrid.precision")
                         }
@@ -789,16 +789,16 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(PriorParsers.GAMMA_PRIOR, "skygrid.precision.prior");
                 writer.writeIDref(ParameterParser.PARAMETER, "skygrid.precision");
                 writer.writeCloseTag(GradientWrapperParser.NAME);
-                writer.writeCloseTag(JointGradientParser.SUM_DERIVATIVE2);
+                writer.writeCloseTag(JointGradientParser.JOINT_GRADIENT);
 
-                writer.writeOpenTag(CompoundGradientParser.SUM_DERIVATIVE2,
+                writer.writeOpenTag(CompoundGradientParser.COMPOUND_GRADIENT,
                         new Attribute[]{
                                 new Attribute.Default<String>(XMLParser.ID,  "full.skygrid.gradient")
                         }
                 );
-                writer.writeIDref(JointGradientParser.SUM_DERIVATIVE2, "joint.skygrid.precision");
+                writer.writeIDref(JointGradientParser.JOINT_GRADIENT, "joint.skygrid.precision");
                 writer.writeIDref(GMRFSkyrideGradientParser.NAME, "gmrfGradientPop");
-                writer.writeCloseTag(CompoundGradientParser.SUM_DERIVATIVE2);
+                writer.writeCloseTag(CompoundGradientParser.COMPOUND_GRADIENT);
 
             }
 

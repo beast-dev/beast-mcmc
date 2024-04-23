@@ -118,6 +118,16 @@ public class PartitionClockModel extends PartitionOptions {
                 .initial(1.0 / 3.0).mean(1.0 / 3.0).offset(0.0).partitionOptions(this)
                 .isAdaptiveMultivariateCompatible(true).build(parameters);
 
+        new Parameter.Builder(ClockType.HMCLN_LOCATION, "HMC relaxed clock rate").
+                prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
+                .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(false).build(parameters);
+
+        new Parameter.Builder(ClockType.HMCLN_SCALE, "HMC relaxed clock scale").
+                prior(PriorType.EXPONENTIAL_PRIOR).isNonNegative(true)
+                .initial(1.0).mean(1.0).offset(0.0).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(false).build(parameters);
+
         // Random local clock
         createParameterGammaPrior(ClockType.LOCAL_CLOCK + ".relativeRates", "random local clock relative rates",
                 PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.5, 2.0, false, false);
@@ -148,6 +158,8 @@ public class PartitionClockModel extends PartitionOptions {
         // Uncorrelated clock
         createParameter("branchRates.categories", "relaxed clock branch rate categories");
 
+        createParameter("branchRates.rates", "relaxed clock branch rates", 1.0);
+
         //createZeroOneParameter("branchRates.quantiles", "relaxed clock branch rate quantiles", 0.5);
         createZeroOneParameterUniformPrior("branchRates.quantiles", "relaxed clock branch rate quantiles", 0.5);
 
@@ -165,6 +177,10 @@ public class PartitionClockModel extends PartitionOptions {
         createScaleOperator(ClockType.UCLD_STDEV, demoTuning, rateWeights);
         createScaleOperator(ClockType.UCGD_MEAN, demoTuning, rateWeights);
         createScaleOperator(ClockType.UCGD_SHAPE, demoTuning, rateWeights);
+
+        createOperator("HMCLN", "HMC relaxed clock",
+                "Hamiltonian Monte Carlo relaxed clock operator", null, OperatorType.RELAXED_CLOCK_HMC_OPERATOR ,1 , 1.0);
+
 
         // Random local clock
         createOperator(ClockType.LOCAL_CLOCK + ".relativeRates", OperatorType.RANDOM_WALK, demoTuning, treeWeights);
@@ -201,9 +217,10 @@ public class PartitionClockModel extends PartitionOptions {
                 "branchRates.distributionIndex", OperatorType.INTEGER_UNIFORM, 0, branchWeights / 3);
 
         createUpDownOperator("upDownRateHeights", "Evolutionary rate and heights",
-                "Scales substitution rates inversely to node heights of the tree",
+                "Scales clock rate inversely to node heights of the tree",
                 getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
-                getParameter("clock.rate"), OperatorType.UP_DOWN, demoTuning, rateWeights);
+                getClockRateParameter(), OperatorType.UP_DOWN, demoTuning, rateWeights);
+
         createUpDownOperator("upDownUCEDMeanHeights", "UCED mean and heights",
                 "Scales UCED mean inversely to node heights of the tree",
                 getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
@@ -321,6 +338,19 @@ public class PartitionClockModel extends PartitionOptions {
                     }
                     break;
 
+                case HMC:
+                    // add the scale parameter (if needed) for the distribution. The location parameter will be added
+                    // in getClockRateParameter.
+                    switch (clockDistributionType) {
+                        case LOGNORMAL:
+                            params.add(getClockRateParameter());
+                            params.add(getParameter(ClockType.HMCLN_SCALE));
+                            break;
+                        default:
+                            throw new UnsupportedOperationException("Only lognormal supported for HMC");
+                    }
+                    break;
+
                 case AUTOCORRELATED:
                     throw new UnsupportedOperationException("Autocorrelated clock not implemented yet");
 //                    params.add(getParameter("branchRates.var"));
@@ -371,6 +401,18 @@ public class PartitionClockModel extends PartitionOptions {
                         break;
                     case MODEL_AVERAGING:
                         break;
+                    default:
+                        throw new UnsupportedOperationException("Unknown clock distribution type");
+                }
+                break;
+
+            case HMC:
+                switch (clockDistributionType) {
+                    case LOGNORMAL:
+                        rateParam = getParameter(ClockType.HMCLN_LOCATION);
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Only lognormal supported for HMC relaxed clock");
                 }
                 break;
 
@@ -519,6 +561,16 @@ public class PartitionClockModel extends PartitionOptions {
                         }
                         break;
 
+                    case HMC:
+                        switch (clockDistributionType) {
+                            case LOGNORMAL:
+                                ops.add(getOperator("HMCLN"));
+                                break;
+                            default:
+                                throw new UnsupportedOperationException("Only lognormal supported for HMC relaxed clock");
+                        }
+                        break;
+
                     case AUTOCORRELATED:
                         throw new UnsupportedOperationException("Autocorrelated clock not implemented yet");
 //                        break;
@@ -536,11 +588,11 @@ public class PartitionClockModel extends PartitionOptions {
             ops.add(getOperator(options.useNuRelativeRates() ? "deltaNus" : "deltaMus"));
         }
 
-        if (options.operatorSetType != OperatorSetType.CUSTOM) {
+        if (options.operatorSetType == OperatorSetType.ADAPTIVE_MULTIVARIATE) {
             // unless a custom mix has been chosen these operators should be off if AMTK is on
             for (Operator op : ops) {
-                if (op.getParameter1().isAdaptiveMultivariateCompatible) {
-                    op.setUsed(options.operatorSetType != OperatorSetType.ADAPTIVE_MULTIVARIATE);
+                if (op.getParameter1() != null && op.getParameter1().isAdaptiveMultivariateCompatible) {
+                    op.setUsed(false);
                 }
             }
         }

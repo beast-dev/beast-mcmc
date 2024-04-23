@@ -147,15 +147,8 @@ public class BeastMain {
             messageHandler.setLevel(Level.WARNING);
             errorLogger.addHandler(messageHandler);
 
-            for (String pluginName : PluginLoader.getAvailablePlugins()) {
-                Plugin plugin = PluginLoader.loadPlugin(pluginName);
-                if (plugin != null) {
-                    Set<XMLObjectParser> parserSet = plugin.getParsers();
-                    for (XMLObjectParser pluginParser : parserSet) {
-                        parser.addXMLObjectParser(pluginParser);
-                    }
-                }
-            }
+
+            PluginLoader.loadPlugins(parser);
 
             // Install the checkpointer. This creates a factory that returns
             // appropriate savers and loaders according to the user's options.
@@ -204,17 +197,8 @@ public class BeastMain {
 
                     parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML, version);
 
-                    // DM: Hot chains also need to add plugin parsers
-                    for (String pluginName : PluginLoader.getAvailablePlugins()) {
-                        Plugin plugin = PluginLoader.loadPlugin(pluginName);
-                        if (plugin != null) {
-                            Set<XMLObjectParser> parserSet = plugin.getParsers();
-                            for (XMLObjectParser pluginParser : parserSet) {
-                                parser.addXMLObjectParser(pluginParser);
-                            }
-                        }
-                    }
-
+                    PluginLoader.loadPlugins(parser);
+                    
                     chains[i] = (MCMC) parser.parse(fileReader, MCMC.class);
                     if (chains[i] == null) {
                         throw new dr.xml.XMLParseException("BEAST XML file is missing an MCMC element");
@@ -303,6 +287,7 @@ public class BeastMain {
 
         try {
             dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.releaseAllBeagleInstances();
+            dr.evomodel.coalescent.basta.BeagleBastaLikelihoodDelegate.releaseAllBeagleBastaInstances();
         } catch (Throwable e) {
            throw new RuntimeException("Terminate");
         }
@@ -418,6 +403,7 @@ public class BeastMain {
                         new Arguments.Option("force_resume", "Force resuming from a saved state"),
 
                         new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
+                        new Arguments.StringOption("plugins_dir", "FILENAME", "Specify a directory to load plugins from, multiple can be separated with ':' "),
 
                         new Arguments.Option("version", "Print the version and credits and stop"),
                         new Arguments.Option("help", "Print this information and stop"),
@@ -694,6 +680,11 @@ public class BeastMain {
             System.setProperty("adaptation_target",
                     Double.toString(arguments.getRealOption("mcmc.adaptation_target")));
         }
+        if (arguments.hasOption("plugins_dir")) {
+            System.setProperty("beast.plugins.dir",
+                     arguments.getStringOption("plugins_dir")+":"+System.getProperty("beast.plugins.dir"));
+        }
+
 
         if (!usingSMC) {
             // ignore these other options
@@ -770,7 +761,7 @@ public class BeastMain {
 
         BeastConsoleApp consoleApp = null;
 
-        String nameString = "BEAST " + version.getVersionString();
+        String nameString = "BEAST X" + version.getVersionString();
 
         if (window) {
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");

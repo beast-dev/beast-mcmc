@@ -26,8 +26,8 @@
 package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.bigfasttree.thorney.ConstrainableTreeOperator;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainableTreeOperator;
 import dr.math.MathUtils;
 
 /**

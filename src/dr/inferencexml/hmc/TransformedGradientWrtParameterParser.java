@@ -29,6 +29,7 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.TransformedGradientWrtParameter;
 import dr.inference.model.GradientProvider;
 import dr.inference.model.Parameter;
+import dr.inference.model.ReciprocalLikelihood;
 import dr.inference.model.TransformedParameter;
 import dr.xml.*;
 
@@ -41,6 +42,8 @@ public class TransformedGradientWrtParameterParser extends AbstractXMLObjectPars
 
     private static final String PARSER_NAME = "transformedGradient";
     private static final String WRT = "wrt";
+    private static final String JACOBIAN = "includeJacobian";
+    private static final String INVERSE = "inverse";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -49,6 +52,11 @@ public class TransformedGradientWrtParameterParser extends AbstractXMLObjectPars
                 xo.getChild(GradientWrtParameterProvider.class);
 
         TransformedParameter parameter = (TransformedParameter) xo.getChild(TransformedParameter.class);
+
+        boolean includeJacobian = xo.getAttribute(JACOBIAN, true);
+        boolean inverse = xo.getAttribute(INVERSE, false);
+
+        ReciprocalLikelihood reciprocalLikelihood = (ReciprocalLikelihood) xo.getChild(ReciprocalLikelihood.class);
 
         if (xo.hasChildNamed(WRT)) {
 
@@ -59,7 +67,8 @@ public class TransformedGradientWrtParameterParser extends AbstractXMLObjectPars
             }
         }
 
-        return new TransformedGradientWrtParameter(gradient, parameter);
+        return new TransformedGradientWrtParameter(gradient, parameter, reciprocalLikelihood,
+                includeJacobian, inverse);
     }
 
     @Override
@@ -70,9 +79,12 @@ public class TransformedGradientWrtParameterParser extends AbstractXMLObjectPars
                         new ElementRule(GradientProvider.class)
                 ),
                 new ElementRule(TransformedParameter.class),
+                new ElementRule(ReciprocalLikelihood.class, true),
                 new ElementRule(WRT, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class),
                 }, true),
+                AttributeRule.newBooleanRule(JACOBIAN, true),
+                AttributeRule.newBooleanRule(INVERSE, true),
         };
     }
 

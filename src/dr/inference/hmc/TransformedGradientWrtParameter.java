@@ -27,6 +27,7 @@ package dr.inference.hmc;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.inference.model.ReciprocalLikelihood;
 import dr.inference.model.TransformedParameter;
 import dr.util.Transform;
 import dr.xml.Reportable;
@@ -40,14 +41,26 @@ public class TransformedGradientWrtParameter implements GradientWrtParameterProv
 
     private final GradientWrtParameterProvider gradient;
     private final TransformedParameter parameter;
+    private final ReciprocalLikelihood reciprocalLikelihood;
+    private final boolean includeJacobian;
+    private final boolean inverse;
 
     public TransformedGradientWrtParameter(GradientWrtParameterProvider gradient,
-                                           TransformedParameter parameter) {
+                                           TransformedParameter parameter,
+                                           ReciprocalLikelihood reciprocalLikelihood,
+                                           boolean includeJacobian,
+                                           boolean inverse) {
         this.gradient = gradient;
         this.parameter = parameter;
+        this.reciprocalLikelihood = reciprocalLikelihood;
+        this.includeJacobian = includeJacobian;
+        this.inverse = inverse;
     }
     @Override
     public Likelihood getLikelihood() {
+        if (reciprocalLikelihood != null) {
+            return reciprocalLikelihood;
+        }
         return gradient.getLikelihood();
     }
 
@@ -68,14 +81,38 @@ public class TransformedGradientWrtParameter implements GradientWrtParameterProv
         double[] untransformedValues = parameter.getParameterUntransformedValues();
 
         Transform transform = parameter.getTransform();
+        if (inverse) {
+            transform = transform.inverseTransform();
+        }
 
         double[] untransformedGradient;
         if (transform instanceof Transform.MultivariableTransform) {
             Transform.MultivariableTransform multivariableTransform = (Transform.MultivariableTransform) transform;
             untransformedGradient = multivariableTransform.updateGradientLogDensity(transformedGradient, untransformedValues,
                     0, untransformedValues.length);
+
+            if (!includeJacobian) {
+                throw new RuntimeException("Not yet implemented");
+            }
         } else {
-            throw new RuntimeException("Not yet implemented");
+
+            double[] transformedValues = parameter.getParameterValues();
+            untransformedGradient = new double[transformedGradient.length];
+            for (int i = 0; i < untransformedGradient.length; ++i) {
+                untransformedGradient[i] = transform.updateGradientLogDensity(transformedGradient[i], transformedValues[i]);
+            }
+
+            if (!includeJacobian) {
+                for (int i = 0; i < untransformedGradient.length; ++i) {
+                    untransformedGradient[i] -= transform.gradientLogJacobianInverse(parameter.getParameterValue(i));
+                }
+            }
+        }
+
+        if (reciprocalLikelihood != null) {
+            for (int i = 0; i < untransformedGradient.length; ++i) {
+                untransformedGradient[i] *= -1;
+            }
         }
 
         return untransformedGradient;

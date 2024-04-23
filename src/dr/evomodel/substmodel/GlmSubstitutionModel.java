@@ -56,6 +56,11 @@ public class GlmSubstitutionModel extends ComplexSubstitutionModel
 
     }
 
+    @Override
+    public LogAdditiveCtmcRateProvider getRateProvider() {
+        return glm;
+    }
+
     public GeneralizedLinearModel getGeneralizedLinearModel() {
         if (glm instanceof GeneralizedLinearModel) {
             return (GeneralizedLinearModel) glm;

@@ -32,6 +32,7 @@ import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate;
 import dr.inference.model.Bounds;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 
 import java.util.List;
@@ -42,9 +43,11 @@ import java.util.List;
  */
 public class NodeHeightToRatiosFullTransformDelegate extends NodeHeightToRatiosTransformDelegate {
 
-    private final double maxTipHeight;
+    private double maxTipHeight;
     private final Parameter heightParameter;
     private CompoundParameter rootHeightAndRatios;
+
+    private boolean tipHeightChanged = true;
 
     public NodeHeightToRatiosFullTransformDelegate(TreeModel treeModel,
                                                    Parameter nodeHeights,
@@ -56,14 +59,8 @@ public class NodeHeightToRatiosFullTransformDelegate extends NodeHeightToRatiosT
             throw new RuntimeException("Use all internal node (including root) for this transform.");
         }
 
-        double tmpMaxTipHeight = 0.0;
-        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            double tipHeight = tree.getNodeHeight(tree.getNode(i));
-            if (tipHeight > tmpMaxTipHeight) {
-                tmpMaxTipHeight = tipHeight;
-            }
-        }
-        this.maxTipHeight = tmpMaxTipHeight;
+
+        this.maxTipHeight = getMaxTipHeight();
 
         this.heightParameter = new HeightParameter(tree,
                 new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
@@ -71,6 +68,21 @@ public class NodeHeightToRatiosFullTransformDelegate extends NodeHeightToRatiosT
                 new Parameter[]{heightParameter, ratios});
         this.nodeHeights = new NodeHeightProxyParameter("internalNodeHeights", tree, true);
 
+    }
+
+    private double getMaxTipHeight() {
+        if (tipHeightChanged) {
+            double tmpMaxTipHeight = 0.0;
+            for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+                double tipHeight = tree.getNodeHeight(tree.getNode(i));
+                if (tipHeight > tmpMaxTipHeight) {
+                    tmpMaxTipHeight = tipHeight;
+                }
+            }
+            maxTipHeight = tmpMaxTipHeight;
+            tipHeightChanged = false;
+        }
+        return maxTipHeight;
     }
 
     private class HeightParameter extends Parameter.Proxy {
@@ -96,7 +108,7 @@ public class NodeHeightToRatiosFullTransformDelegate extends NodeHeightToRatiosT
 
         @Override
         public double getParameterValue(int dim) {
-            return tree.getNodeHeight(tree.getRoot()) - maxTipHeight;
+            return tree.getNodeHeight(tree.getRoot()) - getMaxTipHeight();
         }
 
         @Override
@@ -116,7 +128,7 @@ public class NodeHeightToRatiosFullTransformDelegate extends NodeHeightToRatiosT
     }
 
     private double getRootHeight(double heightValue) {
-        return heightValue + maxTipHeight;
+        return heightValue + getMaxTipHeight();
     }
 
     @Override
@@ -124,6 +136,14 @@ public class NodeHeightToRatiosFullTransformDelegate extends NodeHeightToRatiosT
         setNodeHeights(values);
         updateRatios();
         return setCombinedValues();
+    }
+
+    @Override
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        super.handleModelChangedEvent(model, object, index);
+        if (model == tree) {
+            tipHeightChanged = true;
+        }
     }
 
     @Override

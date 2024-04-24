@@ -58,7 +58,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             }
         }
         if (priorType == PriorType.UNIFORM_PRIOR && !isInputValid()) {
-            error = "Invalid uniform bound !";
+            error = "Invalid uniform bound";
             return true;
         }
         if (isTruncatable && isTruncatedCheck.isSelected()) {
@@ -69,10 +69,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
                 error = upperField.getErrorMessage();
                 return true;
             } else if (lowerField.getValue() >= upperField.getValue()) {
-                error = "Invalid truncation bound !";
+                error = "Invalid truncation bound";
                 return true;
             } else if (getValue(OFFSET) > -1 && lowerField.getValue() < getValue(OFFSET)) {
-                error = "Offset cannot be smaller than truncation lower !";
+                error = "Offset cannot be smaller than truncation lower";
                 return true;
             } else {
                 error = "";
@@ -264,17 +264,17 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         setupComponents();
     }
 
-    protected double getValue(int i) {
+    protected Double getValue(int i) {
         return ((RealNumberField) argumentFields.get(i)).getValue();
     }
 
-    protected double getValue(String fieldName) {
+    protected Double getValue(String fieldName) {
         int i = argumentNames.indexOf(fieldName);
-        if (i < 0) return -1; // has no offset field
+        if (i < 0) return Double.valueOf(-1); // has no offset field
         return ((RealNumberField) argumentFields.get(i)).getValue();
     }
 
-    protected String getArguName(int i) {
+    protected String getArgumentName(int i) {
         return argumentNames.get(i);
     }
 
@@ -428,8 +428,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             getField(0).setValue(parameter.uniformUpper);
             getField(1).setValue(parameter.uniformLower);
 
-            getField(0).setLabel(parameter.getName() + " " + getArguName(0).toLowerCase());
-            getField(1).setLabel(parameter.getName() + " " + getArguName(1).toLowerCase());
+            getField(0).setLabel(parameter.getName() + " " + getArgumentName(0).toLowerCase());
+            getField(1).setLabel(parameter.getName() + " " + getArgumentName(1).toLowerCase());
         }
 
         void getArguments(Parameter parameter) {
@@ -461,8 +461,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             getField(0).setValue(parameter.mean != 0.0 ? parameter.mean : 1.0);
             getField(1).setValue(parameter.offset);
 
-            getField(0).setLabel(parameter.getName() + " " + getArguName(0).toLowerCase());
-            getField(1).setLabel(parameter.getName() + " " + getArguName(1).toLowerCase());
+            getField(0).setLabel(parameter.getName() + " " + getArgumentName(0).toLowerCase());
+            getField(1).setLabel(parameter.getName() + " " + getArgumentName(1).toLowerCase());
         }
 
         public void getArguments(Parameter parameter) {
@@ -491,8 +491,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             setFieldRange(getField(0), true, false);
             getField(1).setValue(parameter.scale);
 
-            getField(0).setLabel(parameter.getName() + " " + getArguName(0).toLowerCase());
-            getField(1).setLabel(parameter.getName() + " " + getArguName(1).toLowerCase());
+            getField(0).setLabel(parameter.getName() + " " + getArgumentName(0).toLowerCase());
+            getField(1).setLabel(parameter.getName() + " " + getArgumentName(1).toLowerCase());
         }
 
         public void getArguments(Parameter parameter) {
@@ -521,8 +521,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             getField(0).setValue(parameter.mean);
             getField(1).setValue(parameter.stdev);
 
-            getField(0).setLabel(parameter.getName() + " " + getArguName(0).toLowerCase());
-            getField(1).setLabel(parameter.getName() + " " + getArguName(1).toLowerCase());
+            getField(0).setLabel(parameter.getName() + " " + getArgumentName(0).toLowerCase());
+            getField(1).setLabel(parameter.getName() + " " + getArgumentName(1).toLowerCase());
         }
 
         public void getArguments(Parameter parameter) {
@@ -600,9 +600,9 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             getField(3).setValue(parameter.offset);
             parametersInRealSpaceCheck.setSelected(parameter.isInRealSpace());
 
-            getField(1).setLabel(parameter.getName() + " " + getArguName(0).toLowerCase());
-            getField(2).setLabel(parameter.getName() + " " + getArguName(1).toLowerCase());
-            getField(3).setLabel(parameter.getName() + " " + getArguName(2).toLowerCase());
+            getField(1).setLabel(parameter.getName() + " " + getArgumentName(0).toLowerCase());
+            getField(2).setLabel(parameter.getName() + " " + getArgumentName(1).toLowerCase());
+            getField(3).setLabel(parameter.getName() + " " + getArgumentName(2).toLowerCase());
         }
 
         public void getArguments(Parameter parameter) {
@@ -637,9 +637,9 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             getField(1).setValue(parameter.scale);
             getField(2).setValue(parameter.offset);
 
-            getField(0).setLabel(parameter.getName() + " " + getArguName(0).toLowerCase());
-            getField(1).setLabel(parameter.getName() + " " + getArguName(1).toLowerCase());
-            getField(2).setLabel(parameter.getName() + " " + getArguName(2).toLowerCase());
+            getField(0).setLabel(parameter.getName() + " " + getArgumentName(0).toLowerCase());
+            getField(1).setLabel(parameter.getName() + " " + getArgumentName(1).toLowerCase());
+            getField(2).setLabel(parameter.getName() + " " + getArgumentName(2).toLowerCase());
         }
 
         public void getArguments(Parameter parameter) {
@@ -672,9 +672,9 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             getField(1).setValue(parameter.scale);
             getField(2).setValue(parameter.offset);
 
-            getField(0).setLabel(parameter.getName() + " " + getArguName(0).toLowerCase());
-            getField(1).setLabel(parameter.getName() + " " + getArguName(1).toLowerCase());
-            getField(2).setLabel(parameter.getName() + " " + getArguName(2).toLowerCase());
+            getField(0).setLabel(parameter.getName() + " " + getArgumentName(0).toLowerCase());
+            getField(1).setLabel(parameter.getName() + " " + getArgumentName(1).toLowerCase());
+            getField(2).setLabel(parameter.getName() + " " + getArgumentName(2).toLowerCase());
         }
 
         public void getArguments(Parameter parameter) {
@@ -730,9 +730,9 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             getField(1).setValue(parameter.shapeB);
             getField(2).setValue(parameter.offset);
 
-            getField(0).setLabel(parameter.getName() + " " + getArguName(0).toLowerCase());
-            getField(1).setLabel(parameter.getName() + " " + getArguName(1).toLowerCase());
-            getField(2).setLabel(parameter.getName() + " " + getArguName(2).toLowerCase());
+            getField(0).setLabel(parameter.getName() + " " + getArgumentName(0).toLowerCase());
+            getField(1).setLabel(parameter.getName() + " " + getArgumentName(1).toLowerCase());
+            getField(2).setLabel(parameter.getName() + " " + getArgumentName(2).toLowerCase());
         }
 
         public void getArguments(Parameter parameter) {

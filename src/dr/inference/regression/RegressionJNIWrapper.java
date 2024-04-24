@@ -48,6 +48,8 @@ public class RegressionJNIWrapper {
 
     public native double getLogLikelihood(int instance);
 
+    public native void getLogLikelihoodGradient(int instance, double[] gradient);
+
     public native double getLogPrior(int instance);
 
     public native double getBeta(int instance, int index);

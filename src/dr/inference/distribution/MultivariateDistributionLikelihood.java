@@ -162,7 +162,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
             if (transforms != null) {
                 double[] y = new double[x.length];
                 for (int i = 0; i < x.length; ++i) {
-                    logL += transforms[i].getLogJacobian(x[i]);
+                    logL += transforms[i].logJacobian(x[i]);
                     y[i] = transforms[i].transform(x[i]);
                 }
                 logL += distribution.logPdf(y);

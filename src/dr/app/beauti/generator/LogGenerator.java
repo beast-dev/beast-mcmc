@@ -540,6 +540,12 @@ public class LogGenerator extends Generator {
                             BranchRateModel.RATE, prefix + BranchRateModel.RATE);
                     break;
 
+                case HMC:
+                    writeTreeTrait(writer, ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES,
+                            prefix + BranchRateModel.BRANCH_RATES,
+                            BranchRateModel.RATE, prefix + BranchRateModel.RATE);
+                    break;
+
                 case RANDOM_LOCAL_CLOCK:
                     writeTreeTrait(writer, RandomLocalClockModelParser.LOCAL_BRANCH_RATES,
                             prefix + BranchRateModel.BRANCH_RATES,

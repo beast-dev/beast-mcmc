@@ -54,6 +54,9 @@ public class PartitionClockModelPanel extends OptionsPanel {
             ClockDistributionType.EXPONENTIAL,
             //ClockDistributionType.MODEL_AVERAGING
     });
+    private JComboBox clockHMCDistributionCombo = new JComboBox (new ClockDistributionType[] {
+            ClockDistributionType.LOGNORMAL
+    });
     private JCheckBox continuousQuantileCheck = new JCheckBox("Use continuous quantile parameterization.");
 
     private JLabel modelAveragingInfo = new JLabel(
@@ -138,6 +141,14 @@ public class PartitionClockModelPanel extends OptionsPanel {
                                 "Rambaut (2006) PLoS Biology 4, e88.<html>"));
                 addComponentWithLabel("Relaxed Distribution:", clockDistributionCombo);
                 addComponent(continuousQuantileCheck);
+                break;
+
+            case HMC:
+                addComponent(new JLabel(
+                        "<html>" +
+                                "Using the Hamiltonian Monte Carlo relaxed clock model of Ji, Zhang, Holbrook,<br>" +
+                                "Nishimura, Baele, Rambaut, Lemey & Suchard (2020) Mol Biol Evol 37, 3047–3060.<html>"));
+                addComponentWithLabel("Relaxed Distribution:", clockHMCDistributionCombo);
                 break;
 
             case AUTOCORRELATED:

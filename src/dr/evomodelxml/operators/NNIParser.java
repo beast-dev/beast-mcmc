@@ -25,11 +25,12 @@
 
 package dr.evomodelxml.operators;
 
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeModel;
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeOperator;
+import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.operators.NNI;
 import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainedTreeModel;
-import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainedTreeOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
 
@@ -49,7 +50,7 @@ public class NNIParser extends AbstractXMLObjectParser {
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         NNI op = new NNI(treeModel,weight);
         if(treeModel instanceof ConstrainedTreeModel){
-            return new ConstrainedTreeOperator((ConstrainedTreeModel) treeModel, weight, op);
+            return ConstrainedTreeOperator.parse((ConstrainedTreeModel) treeModel, weight, op,xo);
         }else{
             return op;
         }
@@ -66,7 +67,7 @@ public class NNIParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return NNI.class;
+        return AbstractTreeOperator.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

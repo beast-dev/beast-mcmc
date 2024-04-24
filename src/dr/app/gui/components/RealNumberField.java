@@ -67,7 +67,6 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
 
     public RealNumberField(double min, double max) {
         this(min, max, "Value");
-        this.addFocusListener(this);
     }
 
     public RealNumberField(double min, double max, String label) { // no FocusListener
@@ -82,6 +81,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
         this.includeMax = includeMax;
         setLabel(label);
         range_check = true;
+        this.addFocusListener(this);
     }
 
     public void setAllowEmpty(boolean allowEmpty) {
@@ -100,7 +100,11 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
             range_checked = true;
             isValueValid = isValueValid();
             if (!isValueValid) {
-                displayErrorMessage();
+                if (isFieldEmpty()) {
+                    displayEmptyFieldErrorMessage();
+                } else {
+                    displayInvalidValueErrorMessage();
+                }
                 // regain focus for this component
                 this.requestFocus();
             }
@@ -108,8 +112,12 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
 
     }
 
+    public boolean isFieldEmpty() {
+        return getText().trim().equals("");
+    }
+
     public boolean isValueValid() {
-        if (getText().trim().equals("") && allowEmpty) {
+        if (allowEmpty && isFieldEmpty()) {
             return true;
         }
         if (range_check) {
@@ -178,9 +186,14 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
         return label + " must be" + message;
     }
 
-    private void displayErrorMessage() {
+    private void displayInvalidValueErrorMessage() {
         JOptionPane.showMessageDialog(null,
-                getErrorMessage(), "Invalid value", JOptionPane.ERROR_MESSAGE);
+                getErrorMessage(), "Field value is not valid", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void displayEmptyFieldErrorMessage() {
+        JOptionPane.showMessageDialog(null,
+                getErrorMessage(), "Field is empty", JOptionPane.ERROR_MESSAGE);
     }
 
     public void setRange(double min, double max) {
@@ -192,15 +205,15 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
     public void setValue(double value) {
         if (range_check) {
             if (value < min || value > max) {
-                displayErrorMessage();
+                displayInvalidValueErrorMessage();
                 return;
             }
             if (!includeMin && value == min) {
-                displayErrorMessage();
+                displayInvalidValueErrorMessage();
                 return;
             }
             if (!includeMax && value == max) {
-                displayErrorMessage();
+                displayInvalidValueErrorMessage();
                 return;
             }
         }

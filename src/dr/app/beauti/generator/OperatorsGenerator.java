@@ -32,18 +32,27 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser;
 import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
+import dr.evomodelxml.continuous.hmc.BranchRateGradientParser;
 import dr.evomodelxml.operators.*;
+import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
+import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.HessianProvider;
 import dr.inference.model.ParameterParser;
 import dr.inference.operators.AdaptableVarianceMultivariateNormalOperator;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.operators.RandomWalkOperator;
 import dr.inference.operators.RateBitExchangeOperator;
 import dr.inferencexml.SignTransformParser;
+import dr.inferencexml.distribution.DistributionLikelihoodParser;
 import dr.inferencexml.hmc.CompoundGradientParser;
+import dr.inferencexml.hmc.HessianWrapperParser;
+import dr.inferencexml.hmc.JointGradientParser;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.operators.*;
 import dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser;
@@ -227,6 +236,10 @@ public class OperatorsGenerator extends Generator {
                 break;
             case ADAPTIVE_MULTIVARIATE:
                 writeAdaptiveMultivariateOperator(operator, writer);
+                break;
+            case RELAXED_CLOCK_HMC_OPERATOR:
+                writeRelaxedClockHMCOperator(operator, prefix,4, 1E-2, "diagonal",
+                        0, 10, writer);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown operator type");
@@ -518,7 +531,7 @@ public class OperatorsGenerator extends Generator {
                         new Attribute.Default<Integer>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING_UPDATE_FREQUENCY, 100)
                 }
         );
-        writer.writeIDref(CompoundGradientParser.SUM_DERIVATIVE2, treePriorPrefix + "full.skygrid.gradient");
+        writer.writeIDref(CompoundGradientParser.COMPOUND_GRADIENT, treePriorPrefix + "full.skygrid.gradient");
         writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, treePriorPrefix + "skygrid.parameters");
         writer.writeOpenTag(
                 SignTransformParser.NAME,
@@ -528,6 +541,43 @@ public class OperatorsGenerator extends Generator {
                 }
         );
         writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, treePriorPrefix + "skygrid.parameters");
+        writer.writeCloseTag(SignTransformParser.NAME);
+        writer.writeCloseTag(HamiltonianMonteCarloOperatorParser.HMC_OPERATOR);
+    }
+
+    private void writeRelaxedClockHMCOperator(Operator operator, String prefix,
+                                  int nSteps, double stepSize,
+                                  String preconditioning, int preconditioningDelay, int preconditioningUpdateFrequency,
+                                  XMLWriter writer) {
+        writer.writeOpenTag(
+                HamiltonianMonteCarloOperatorParser.HMC_OPERATOR,
+                new Attribute[]{
+                        getWeightAttribute(operator.getWeight()),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.N_STEPS, nSteps),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.STEP_SIZE, stepSize),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.MODE, "vanilla"),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_COUNT, 0),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING, preconditioning),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING_UPDATE_FREQUENCY, preconditioningUpdateFrequency)
+                }
+        );
+        writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT);
+
+        writer.writeOpenTag(HessianWrapperParser.NAME);
+        writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, prefix + "ratesPrior");
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rates");
+        writer.writeCloseTag(HessianWrapperParser.NAME);
+
+        writer.writeOpenTag(BranchRateGradientParser.NAME, new Attribute.Default<>("traitName", "Sequence"));
+        writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, prefix + "treeLikelihood");
+        writer.writeCloseTag(BranchRateGradientParser.NAME);
+
+        writer.writeCloseTag(JointGradientParser.JOINT_GRADIENT);
+
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rates");
+
+        writer.writeOpenTag(SignTransformParser.NAME);
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rates");
         writer.writeCloseTag(SignTransformParser.NAME);
         writer.writeCloseTag(HamiltonianMonteCarloOperatorParser.HMC_OPERATOR);
     }

@@ -64,7 +64,7 @@ public class MachineAccuracy
 	 * @return true if the relative difference between the two parameters
 	 * is smaller than SQRT_EPSILON.
 	 */
-	public static boolean same(double a, double b) {
+	public static boolean isSame(double a, double b) {
 		return Math.abs((a/b)-1.0) <= SQRT_EPSILON;
 	}
 }

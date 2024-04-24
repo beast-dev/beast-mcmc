@@ -111,10 +111,10 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
                 treeModel, scaleByTime, useTreeLength);
         // End Parse Tree and rates
 
-
         // Begin Parse Evolution Model
         List<BranchRateModel> driftModels = AbstractMultivariateTraitLikelihood.parseDriftModels(xo, diffusionModel);
         List<BranchRateModel> optimalTraitsModels = AbstractMultivariateTraitLikelihood.parseOptimalValuesModels(xo, diffusionModel);
+
 
         MultivariateElasticModel elasticModel = null;
         if (xo.hasChildNamed(STRENGTH_OF_SELECTION_MATRIX)) {
@@ -218,7 +218,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         // Begin Assemble Model
         dataModel.addTreeAndRateModel(treeModel, rateTransformation);
 
-
         ContinuousDataLikelihoodDelegate delegate = new ContinuousDataLikelihoodDelegate(treeModel,
                 diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel, allowSingular);
 
@@ -275,7 +274,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
 
         }
         // End Trait Reconstruction Parsing
-
 
         delegate.setExtensionHelper();
 

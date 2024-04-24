@@ -84,8 +84,8 @@ public class TransformedParameterRandomWalkOperator extends RandomWalkOperator {
         }
 
         if (checkValid) { // GH: below is sloppy, but best I could do without refactoring how Parameter handles bounds
-            if (generalBounds == null) {
-                if (!parameter.isWithinBounds()) return Double.NEGATIVE_INFINITY;
+            if (generalBounds == null && !parameter.isWithinBounds()) {
+                return Double.NEGATIVE_INFINITY;
             } else if (!generalBounds.isWithinBounds(parameter.getParameterValues())) {
                 return Double.NEGATIVE_INFINITY;
             }

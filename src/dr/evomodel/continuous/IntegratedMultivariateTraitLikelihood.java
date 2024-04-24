@@ -402,7 +402,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                 System.err.println("Conditional root MVN precision = \n" + new Matrix(T));
                 System.err.println("Conditional root MVN density = " + MultivariateNormalDistribution.logPdf(
                         conditionalRootMean, new double[dimTrait], T,
-                        Math.log(MultivariateNormalDistribution.calculatePrecisionMatrixDeterminate(T)), 1.0));
+                        MultivariateNormalDistribution.calculatePrecisionMatrixLogDeterminate(T), 1.0));
             }
 
             if (integrateRoot) {

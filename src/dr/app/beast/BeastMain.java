@@ -70,6 +70,7 @@ public class BeastMain {
             Iterator iter = parser.getThreads();
             while (iter.hasNext()) {
                 Thread thread = (Thread) iter.next();
+                //noinspection removal
                 thread.stop(); // http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
             }
         }
@@ -145,20 +146,13 @@ public class BeastMain {
             messageHandler.setLevel(Level.WARNING);
             errorLogger.addHandler(messageHandler);
 
-            for (String pluginName : PluginLoader.getAvailablePlugins()) {
-                Plugin plugin = PluginLoader.loadPlugin(pluginName);
-                if (plugin != null) {
-                    Set<XMLObjectParser> parserSet = plugin.getParsers();
-                    for (XMLObjectParser pluginParser : parserSet) {
-                        parser.addXMLObjectParser(pluginParser);
-                    }
-                }
-            }
+
+            PluginLoader.loadPlugins(parser);
 
             // Install the checkpointer. This creates a factory that returns
             // appropriate savers and loaders according to the user's options.
             //new BeastCheckpointer();
-            if (Boolean.parseBoolean(System.getProperty("checkpointOverrule"))) {
+            if (Boolean.parseBoolean(System.getProperty("checkpointOverrule", "true"))) {
                 BeastCheckpointer.getInstance(null, -1, -1, false);
                 Logger.getLogger("dr.apps.beast").info("Overriding checkpointing settings in the provided XML file");
             }
@@ -202,17 +196,8 @@ public class BeastMain {
 
                     parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML, version);
 
-                    // DM: Hot chains also need to add plugin parsers
-                    for (String pluginName : PluginLoader.getAvailablePlugins()) {
-                        Plugin plugin = PluginLoader.loadPlugin(pluginName);
-                        if (plugin != null) {
-                            Set<XMLObjectParser> parserSet = plugin.getParsers();
-                            for (XMLObjectParser pluginParser : parserSet) {
-                                parser.addXMLObjectParser(pluginParser);
-                            }
-                        }
-                    }
-
+                    PluginLoader.loadPlugins(parser);
+                    
                     chains[i] = (MCMC) parser.parse(fileReader, MCMC.class);
                     if (chains[i] == null) {
                         throw new dr.xml.XMLParseException("BEAST XML file is missing an MCMC element");
@@ -301,6 +286,7 @@ public class BeastMain {
 
         try {
             dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.releaseAllBeagleInstances();
+            dr.evomodel.coalescent.basta.BeagleBastaLikelihoodDelegate.releaseAllBeagleBastaInstances();
         } catch (Throwable e) {
            throw new RuntimeException("Terminate");
         }
@@ -369,8 +355,12 @@ public class BeastMain {
                         new Arguments.Option("adaptation_off", "Don't adapt operator sizes"),
                         new Arguments.RealOption("adaptation_target", 0.0, 1.0, "Target acceptance rate for adaptive operators (default 0.234)"),
 
+                        new Arguments.StringOption("pattern_compression", new String[]{"off", "unique", "ambiguous_constant", "ambiguous_all"},
+                                false, "Site pattern compression mode (default unique)"),
+
                         new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
+                        new Arguments.Option("beagle_auto", "BEAGLE: automatically select fastest resource for analysis"),
                         new Arguments.StringOption("beagle_order", "order", "BEAGLE: set order of resource use"),
                         new Arguments.IntegerOption("beagle_instances", "BEAGLE: divide site patterns amongst instances"),
                         new Arguments.StringOption("beagle_multipartition", new String[]{"auto", "on", "off"},
@@ -412,17 +402,11 @@ public class BeastMain {
                         new Arguments.Option("force_resume", "Force resuming from a saved state"),
 
                         new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
+                        new Arguments.StringOption("plugins_dir", "FILENAME", "Specify a directory to load plugins from, multiple can be separated with ':' "),
 
                         new Arguments.Option("version", "Print the version and credits and stop"),
                         new Arguments.Option("help", "Print this information and stop"),
                 });
-
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        if (versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1) {
-            arguments.addOption("beagle_auto",
-                    "BEAGLE: automatically select fastest resource for analysis",
-                    "beagle_info");
-        };
 
         int argumentCount = 0;
 
@@ -515,6 +499,12 @@ public class BeastMain {
 
             if (arguments.hasOption("prefix")) {
                 fileNamePrefix = arguments.getStringOption("prefix");
+            }
+
+            // ============= Evaluation approximations =============
+
+            if (arguments.hasOption("pattern_compression")) {
+                System.setProperty("patterns.compression", arguments.getStringOption("pattern_compression").toLowerCase());
             }
 
             // ============= MC^3 settings =============
@@ -689,6 +679,11 @@ public class BeastMain {
             System.setProperty("adaptation_target",
                     Double.toString(arguments.getRealOption("mcmc.adaptation_target")));
         }
+        if (arguments.hasOption("plugins_dir")) {
+            System.setProperty("beast.plugins.dir",
+                     arguments.getStringOption("plugins_dir")+":"+System.getProperty("beast.plugins.dir"));
+        }
+
 
         if (!usingSMC) {
             // ignore these other options
@@ -765,7 +760,7 @@ public class BeastMain {
 
         BeastConsoleApp consoleApp = null;
 
-        String nameString = "BEAST " + version.getVersionString();
+        String nameString = "BEAST X" + version.getVersionString();
 
         if (window) {
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");
@@ -866,12 +861,11 @@ public class BeastMain {
 
         BeagleInfo.printVersionInformation();
 
-        if (BeagleInfo.getVersion().startsWith("1.")) {
-            System.err.println("WARNING: You are currenly using BEAGLE v1.x. For best performance and compatibility\n" +
-                    "with models in BEAST, please upgrade to BEAGLE v3.x at http://github.com/beagle-dev/beagle-lib/\n");
-        } else if (BeagleInfo.getVersion().startsWith("2.")) {
-            System.err.println("WARNING: You are currenly using BEAGLE v2.x. For best performance and compatibility\n" +
-                    "with models in BEAST, please upgrade to BEAGLE v3.x at http://github.com/beagle-dev/beagle-lib/\n");
+        int[] versionNumbers = BeagleInfo.getVersionNumbers();
+        if (versionNumbers.length != 0 && versionNumbers[0] < 4) {
+            System.err.println("BEAST v" + BeastVersion.INSTANCE.getVersion() + " requires BEAGLE v4.0 or later.\n" +
+                    "Please install or upgrade to the latest BEAGLE from https://beagle-dev.github.io/");
+            throw new RuntimeException("Terminate");
         }
 
         if (beagleShowInfo) {

@@ -245,7 +245,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             treesPanel.updateLinkTreePriorEnablility();
         }
 
-        switch ((TreePriorType) treePriorCombo.getSelectedItem()) {
+        TreePriorType type = (TreePriorType) treePriorCombo.getSelectedItem();
+        switch (type) {
             case CONSTANT:
                 citation = citationCoalescent;
                 break;
@@ -294,6 +295,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 break;
 
             case SKYGRID:
+            case SKYGRID_HMC:
                 skyGridPointsField.setColumns(6);
                 addComponentWithLabel("Number of parameters:", skyGridPointsField);
                 skyGridInterval.setColumns(6);
@@ -304,7 +306,12 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
                 citation = //citationCoalescent + "\n" +
                         "Gill MS, Lemey P, Faria NR, Rambaut A, Shapiro B, Suchard MA (2013) Mol Biol Evol 30, 713-724 [SkyGrid Coalescent].";
+
+                if (type == TreePriorType.SKYGRID_HMC) {
+                    citation += "\nBaele G, Gill MS, Lemey P & Suchard MA (2020) Wellcome Open Res 5:53 [Hamiltonian SkyGrid]";
+                }
                 break;
+
 
             case YULE:
                 citation = "Gernhard T (2008) J Theor Biol 253, 769-778 [Yule Process]." +

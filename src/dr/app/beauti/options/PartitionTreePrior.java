@@ -418,12 +418,10 @@ public class PartitionTreePrior extends PartitionOptions {
         } else if (nodeHeightPrior == TreePriorType.GMRF_SKYRIDE) {
             ops.add(getOperator("gmrfGibbsOperator"));
         } else if (nodeHeightPrior == TreePriorType.SKYGRID) {
-            if (options.operatorSetType == OperatorSetType.HMC) {
-                ops.add(getOperator("gmrfSkyGridHMCOperator"));
-            } else {
-                ops.add(getOperator("gmrfSkyGridGibbsOperator"));
-                ops.add(getOperator("skygrid.precision"));
-            }
+            ops.add(getOperator("gmrfSkyGridGibbsOperator"));
+            ops.add(getOperator("skygrid.precision"));
+        } else if (nodeHeightPrior == TreePriorType.SKYGRID_HMC) {
+            ops.add(getOperator("gmrfSkyGridHMCOperator"));
         } else if (nodeHeightPrior == TreePriorType.EXTENDED_SKYLINE) {
             ops.add(getOperator("demographic.populationMean"));
             ops.add(getOperator("demographic.popSize"));

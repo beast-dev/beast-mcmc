@@ -25,8 +25,10 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.CompoundParameter;
+import org.ejml.data.DenseMatrix64F;
 
 import static dr.math.matrixAlgebra.missingData.MissingOps.blockUnwrap;
 import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
@@ -132,6 +134,15 @@ public class IntegratedProcessTraitDataModel extends
 
     public boolean[] getOriginalDataMissingIndicators() {
         return super.getDataMissingIndicators();
+    }
+    public void updateTipDataGradient(DenseMatrix64F precision, DenseMatrix64F variance, NodeRef node,
+                                      int offset, int dimGradient) {
+        throw new RuntimeException("not yet implemented");
+    }
+
+    @Override
+    public boolean needToUpdateTipDataGradient(int offset, int dimGradient) {
+        throw new RuntimeException("not yet implemented");
     }
 
 }

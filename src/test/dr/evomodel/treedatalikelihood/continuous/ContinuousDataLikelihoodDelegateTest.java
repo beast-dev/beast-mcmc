@@ -1070,7 +1070,7 @@ public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
 
     private void testConditionalMoments(TreeDataLikelihood dataLikelihood, ContinuousDataLikelihoodDelegate likelihoodDelegate) {
         new TreeTipGradient("" +
-                "trait", dataLikelihood, likelihoodDelegate, null);
+                "trait", null, dataLikelihood, likelihoodDelegate, null);
         TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
                 new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
                 TreeTraitLogger.NodeRestriction.EXTERNAL, false);

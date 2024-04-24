@@ -149,8 +149,8 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
     protected void calculatePrecisionInfo() {
         diffusionPrecisionMatrix = diffusionPrecisionMatrixParameter.getParameterAsMatrix();
         determinatePrecisionMatrix =
-                MultivariateNormalDistribution.calculatePrecisionMatrixDeterminate(
-                        diffusionPrecisionMatrix);
+                Math.exp(MultivariateNormalDistribution.calculatePrecisionMatrixLogDeterminate(
+                        diffusionPrecisionMatrix));
     }
 
     // *****************************************************************

@@ -432,10 +432,10 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptab
                     for (int k = 0; k < temp.length; k++) {
                         parameter.setParameterValueQuietly(currentIndex + k, temp[k]);
                     }
-                    logJacobian += transformations[i].getLogJacobian(x, currentIndex, currentIndex + transformationSizes[i] - 1) - transformations[i].getLogJacobian(temp, 0, transformationSizes[i] - 1);
+                    logJacobian += transformations[i].logJacobian(x, currentIndex, currentIndex + transformationSizes[i] - 1) - transformations[i].logJacobian(temp, 0, transformationSizes[i] - 1);
                 } else {
                     parameter.setParameterValueQuietly(currentIndex, transformations[i].inverse(transformedX[currentIndex]));
-                    logJacobian += transformations[i].getLogJacobian(x[currentIndex]) - transformations[i].getLogJacobian(parameter.getParameterValue(currentIndex));
+                    logJacobian += transformations[i].logJacobian(x[currentIndex]) - transformations[i].logJacobian(parameter.getParameterValue(currentIndex));
                 }
                 if (DEBUG) {
                     System.err.println("Current logJacobian = " + logJacobian);
@@ -446,7 +446,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptab
                     throw new RuntimeException("Transformations on more than 1 parameter value should be set quietly");
                 } else {
                     parameter.setParameterValue(currentIndex, transformations[i].inverse(transformedX[currentIndex]));
-                    logJacobian += transformations[i].getLogJacobian(x[currentIndex]) - transformations[i].getLogJacobian(parameter.getParameterValue(currentIndex));
+                    logJacobian += transformations[i].logJacobian(x[currentIndex]) - transformations[i].logJacobian(parameter.getParameterValue(currentIndex));
                 }
                 if (DEBUG) {
                     System.err.println("Current logJacobian = " + logJacobian);

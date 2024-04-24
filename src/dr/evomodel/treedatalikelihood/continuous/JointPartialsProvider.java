@@ -1,5 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
@@ -197,6 +198,15 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
 
     @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
+        if (precisionType != PrecisionType.FULL) {
+            throw new RuntimeException("Currently only implemented for full precision");
+        }
+        if (fullyObserved) {
+            throw new RuntimeException("Wishart statistics currently not implemented for joint partials provider");
+            // TODO: need to implement scalar precision type then go from there
+        }
+
+
         double[] partial = new double[precisionType.getPartialsDimension(traitDim)];
 
         int meanOffset = precisionType.getMeanOffset(traitDim);
@@ -398,6 +408,37 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
         throw new RuntimeException("Partials provider does not have trait '" + trait + "', nor did any of its sub-models");
     }
 
+    @Override
+    public void updateTipDataGradient(DenseMatrix64F precision, DenseMatrix64F variance,
+                                      NodeRef node, int offset, int dimGradient) {
+
+
+        ContinuousTraitPartialsProvider provider = getProviderOffset(offset, dimGradient);
+        provider.updateTipDataGradient(precision, variance, node, 0, dimGradient);
+    }
+
+    private ContinuousTraitPartialsProvider getProviderOffset(int offset, int dimTrait) {
+        int thisOffset = 0;
+        int i = 0;
+        while (thisOffset < offset) {
+            thisOffset += providers[i].getTraitDimension();
+            i++;
+        }
+
+        ContinuousTraitPartialsProvider provider = providers[i];
+
+        if (thisOffset != offset || provider.getTraitDimension() != dimTrait) {
+            throw new RuntimeException("Offset and dimension must perfectly align with a child model (for now)");
+        }
+
+        return provider;
+    }
+
+    @Override
+    public boolean needToUpdateTipDataGradient(int offset, int dimGradient) {
+        ContinuousTraitPartialsProvider provider = getProviderOffset(offset, dimGradient);
+        return provider.needToUpdateTipDataGradient(offset, dimGradient);
+    }
 
     public static final AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
         private static final String PARSER_NAME = "jointPartialsProvider";

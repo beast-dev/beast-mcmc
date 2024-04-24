@@ -44,21 +44,21 @@ import static dr.evomodel.branchratemodel.ArbitraryBranchRates.make;
 public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
     public static final String ARBITRARY_BRANCH_RATES = "arbitraryBranchRates";
-    private static final String RATES = "rates";
-    static final String RECIPROCAL = "reciprocal";
-    static final String EXP = "exp";
-    private static final String MULTIPLIER = "multiplier";
-    private static final String CENTER_AT_ONE = "centerAtOne";
-    private static final String RANDOMIZE_RATES = "randomizeRates";
-    private static final String RANDOM_SCALE = "randomScale";
+    public static final String RATES = "rates";
+    public static final String RECIPROCAL = "reciprocal";
+    public static final String EXP = "exp";
+    public static final String MULTIPLIER = "multiplier";
+    public static final String CENTER_AT_ONE = "centerAtOne";
+    public static final String RANDOMIZE_RATES = "randomizeRates";
+    public  static final String RANDOM_SCALE = "randomScale";
 
-    private static final String INCLUDE_ROOT = "includeRoot";
-    private static final String RANDOM_INDICATOR = "randomIndicator"; // keep some rates fixed but randomize others
+    public static final String INCLUDE_ROOT = "includeRoot";
+    public static final String RANDOM_INDICATOR = "randomIndicator"; // keep some rates fixed but randomize others
 
-    private static final String SHRINKAGE = "shrinkage";
+    public static final String SHRINKAGE = "shrinkage";
 
-    static final String LOCATION = "location";
-    static final String SCALE = "scale";
+    public static final String LOCATION = "location";
+    public static final String SCALE = "scale";
 
     public String getParserName() {
         return ARBITRARY_BRANCH_RATES;
@@ -76,9 +76,9 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
         boolean randomizeRates = xo.getAttribute(RANDOMIZE_RATES, false);
 
-        if (centerAtOne && randomizeRates) {
-            throw new XMLParseException("Cannot centerAtOne and randomize the starting rates");
-        }
+//        if (centerAtOne && randomizeRates) {
+//            throw new XMLParseException("Cannot centerAtOne and randomize the starting rates");
+//        }
 
         final int numBranches = tree.getNodeCount() - 1;
         if (rateCategoryParameter.getDimension() > 1 && (rateCategoryParameter.getDimension() != numBranches)) {
@@ -117,6 +117,19 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
                     double increment = MathUtils.nextGaussian() * scale;
                     double x = transform.randomize(increment);
                     rateCategoryParameter.setValue(i, x);
+                }
+            }
+
+            if (centerAtOne) {
+                double mean = 0.0;
+                for (int i = 0; i < rateCategoryParameter.getDimension(); ++i) {
+                    mean += rateCategoryParameter.getParameterValue(i);
+                }
+                mean /= rateCategoryParameter.getDimension();
+                
+                for (int i = 0; i < rateCategoryParameter.getDimension(); ++i) {
+                    rateCategoryParameter.setParameterValue(i,
+                            rateCategoryParameter.getParameterValue(i) - mean + 1.0);
                 }
             }
         }

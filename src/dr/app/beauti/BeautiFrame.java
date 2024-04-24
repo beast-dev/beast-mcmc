@@ -52,6 +52,7 @@ import dr.app.beauti.generator.Generator;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.operatorspanel.OperatorsPanel;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.priorspanel.DefaultPriorTableDialog;
 import dr.app.beauti.priorspanel.PriorsPanel;
@@ -60,6 +61,7 @@ import dr.app.beauti.taxonsetspanel.TaxonSetPanel;
 import dr.app.beauti.tipdatepanel.TipDatesPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.TreesPanel;
+import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.TextUtil;
 import dr.app.gui.FileDrop;
@@ -669,6 +671,14 @@ public class BeautiFrame extends DocumentFrame {
         if (!defaultPriorDialog.showDialog(options)) {
             return false;
         }
+        //TODO make remove this or put warnings in check above? Seems more appropriate here for now
+        if(!generator.checkUserTreeIsBifurcating()){
+            JOptionPane.showMessageDialog(this, "At least one  user-specified starting tree " +
+                        "is not fully bifurcating.\nBEAST will randomly resolve it into a bifurcating (binary) tree.",
+                        "Unresolved user-specified starting tree",
+                        JOptionPane.WARNING_MESSAGE);
+        }
+
 
         File file = selectExportFile("Generate BEAST XML File...", new FileNameExtensionFilter("BEAST XML File", "xml", "beast"));
 

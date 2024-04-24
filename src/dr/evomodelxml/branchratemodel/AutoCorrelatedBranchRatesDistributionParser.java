@@ -34,10 +34,10 @@ import dr.xml.*;
  */
 public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObjectParser {
 
-    private static final String AUTO_CORRELATED_RATES = "autoCorrelatedRatesPrior";
-    private static final String SCALING = "scaling";
-    private static final String LOG = "log";
-    private static final String OPERATE_ON_INCREMENTS = "operateOnIncrements";
+    public static final String AUTO_CORRELATED_RATES = "autoCorrelatedRatesPrior";
+    public static final String SCALING = "scaling";
+    public static final String LOG = "log";
+    public static final String OPERATE_ON_INCREMENTS = "operateOnIncrements";
 
     public String getParserName() {
         return AUTO_CORRELATED_RATES;

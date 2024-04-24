@@ -30,7 +30,7 @@ package dr.app.beauti.types;
  */
 public enum OperatorSetType {
 
-    DEFAULT("new tree operator mix"),
+    DEFAULT("default operator mix"),
     FIXED_TREE_TOPOLOGY("fixed tree topology"),
     FIXED_TREE("fixed tree"),
     CLASSIC("classic tree operator mix"),

@@ -34,6 +34,9 @@ import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
+import dr.evomodelxml.branchratemodel.AutoCorrelatedBranchRatesDistributionParser;
+import dr.evomodelxml.branchratemodel.AutoCorrelatedGradientWrtIncrementsParser;
+import dr.evomodelxml.branchratemodel.BranchRateGradientWrtIncrementsParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser;
 import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
@@ -41,6 +44,7 @@ import dr.evomodelxml.continuous.hmc.BranchRateGradientParser;
 import dr.evomodelxml.operators.*;
 import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.hmc.GradientWrtIncrement;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.HessianProvider;
 import dr.inference.model.ParameterParser;
@@ -50,12 +54,15 @@ import dr.inference.operators.RandomWalkOperator;
 import dr.inference.operators.RateBitExchangeOperator;
 import dr.inferencexml.SignTransformParser;
 import dr.inferencexml.distribution.DistributionLikelihoodParser;
+import dr.inferencexml.distribution.shrinkage.BayesianBridgeDistributionModelParser;
 import dr.inferencexml.hmc.CompoundGradientParser;
+import dr.inferencexml.hmc.GradientWrtIncrementParser;
 import dr.inferencexml.hmc.HessianWrapperParser;
 import dr.inferencexml.hmc.JointGradientParser;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.operators.*;
 import dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser;
+import dr.inferencexml.operators.shrinkage.BayesianBridgeShrinkageOperatorParser;
 import dr.oldevomodel.substmodel.AbstractSubstitutionModel;
 import dr.oldevomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.util.Attribute;
@@ -65,6 +72,8 @@ import dr.xml.XMLParser;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static dr.inferencexml.distribution.PriorParsers.GAMMA_PRIOR;
 
 /**
  * @author Alexei Drummond
@@ -238,6 +247,13 @@ public class OperatorsGenerator extends Generator {
                 writeAdaptiveMultivariateOperator(operator, writer);
                 break;
             case RELAXED_CLOCK_HMC_OPERATOR:
+                writeRelaxedClockHMCOperator(operator, prefix,4, 1E-2, "diagonal",
+                        0, 10, writer);
+                break;
+            case SHRINKAGE_CLOCK_HMC_OPERATOR:
+                writeShrinkageClockGibbsOperator(operator, prefix, writer);
+                writeShrinkageClockHMCOperator(operator, prefix, writer);
+            case SHRINKAGE_CLOCK_GIBBS_OPERATOR:
                 writeRelaxedClockHMCOperator(operator, prefix,4, 1E-2, "diagonal",
                         0, 10, writer);
                 break;
@@ -562,17 +578,43 @@ public class OperatorsGenerator extends Generator {
                 }
         );
         writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT);
+    }
 
-        writer.writeOpenTag(HessianWrapperParser.NAME);
-        writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, prefix + "ratesPrior");
-        writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rates");
-        writer.writeCloseTag(HessianWrapperParser.NAME);
+    private void writeShrinkageClockGibbsOperator(Operator operator, String prefix, XMLWriter writer) {
+//		<bayesianBridgeGibbsOperator weight="4">
+//			<autoCorrelatedRatesPrior idref="substBranchRatesPrior"/>
+//			<gammaPrior idref="globalScalePrior"/>
+//		</bayesianBridgeGibbsOperator>
+        writer.writeOpenTag(
+                BayesianBridgeShrinkageOperatorParser.BAYESIAN_BRIDGE_PARSER,
+                getWeightAttribute(operator.getWeight()));
+        writer.writeIDref(AutoCorrelatedBranchRatesDistributionParser.AUTO_CORRELATED_RATES, prefix + "substBranchRatesPrior");
+        writer.writeIDref(GAMMA_PRIOR, prefix + "globalScalePrior");
+        writer.writeCloseTag(BayesianBridgeShrinkageOperatorParser.BAYESIAN_BRIDGE_PARSER);
+    }
 
-        writer.writeOpenTag(BranchRateGradientParser.NAME, new Attribute.Default<>("traitName", "Sequence"));
-        writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, prefix + "treeLikelihood");
-        writer.writeCloseTag(BranchRateGradientParser.NAME);
-
+    private void writeShrinkageClockHMCOperator(Operator operator, String prefix, XMLWriter writer) {
+        writer.writeOpenTag(
+                HamiltonianMonteCarloOperatorParser.HMC_OPERATOR,
+                new Attribute[]{
+                        getWeightAttribute(operator.getWeight()),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.N_STEPS, 5),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.STEP_SIZE, 1E-3),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.MODE, "vanilla"),
+                        new Attribute.Default<>("drawVariance", "1.0"),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING_UPDATE_FREQUENCY, 1),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_COUNT, 100),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_TOLERANCE, 0.2)
+                }
+        );
+        writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT);
+        writer.writeIDref(BranchRateGradientWrtIncrementsParser.GRADIENT, prefix + "branchRateGradientWrtIncrements");
+        writer.writeIDref(AutoCorrelatedGradientWrtIncrementsParser.GRADIENT, prefix + "incrementGradient");
         writer.writeCloseTag(JointGradientParser.JOINT_GRADIENT);
+
+        writer.writeOpenTag("preconditioner");
+        writer.writeIDref(BayesianBridgeDistributionModelParser.BAYESIAN_BRIDGE_DISTRIBUTION, prefix + "bbDistribution");
+        writer.writeCloseTag("preconditioner");
 
         writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rates");
 

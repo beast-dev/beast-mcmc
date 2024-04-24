@@ -69,7 +69,9 @@ public enum OperatorType {
     SKY_GRID_HMC_OPERATOR("gmrfHMCOperator"),
 //    PRECISION_GMRF_OPERATOR("precisionGMRFOperator"),
     WILSON_BALDING("wilsonBalding"),
-    RELAXED_CLOCK_HMC_OPERATOR("relaxedClockHMCOperator");
+    RELAXED_CLOCK_HMC_OPERATOR("relaxedClockHMCOperator"),
+    SHRINKAGE_CLOCK_HMC_OPERATOR("shrinkageClockHMCOperator"),
+    SHRINKAGE_CLOCK_GIBBS_OPERATOR("relaxedClockGibbsOperator");
 
     OperatorType(String displayName) {
         this.displayName = displayName;

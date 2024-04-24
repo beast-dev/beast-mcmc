@@ -26,37 +26,26 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.MixtureModelBranchRates;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.evomodel.tree.TMRCAStatistic;
-import dr.evomodel.tree.TreeLengthStatistic;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.*;
 import dr.evomodelxml.tree.TreeLengthStatisticParser;
-import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
-import dr.inference.model.CompoundLikelihood;
 import dr.inferencexml.loggers.CheckpointLoggerParser;
 import dr.oldevomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
-import dr.evomodelxml.speciation.*;
 import dr.evomodelxml.tree.TMRCAStatisticParser;
 import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.model.ParameterParser;
-import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.loggers.ColumnsParser;
 import dr.inferencexml.loggers.LoggerParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
-import dr.oldevomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
-import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -540,7 +529,13 @@ public class LogGenerator extends Generator {
                             BranchRateModel.RATE, prefix + BranchRateModel.RATE);
                     break;
 
-                case HMC:
+                case SHRINKAGE_LOCAL_CLOCK:
+                    writeTreeTrait(writer, ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES,
+                            prefix + BranchRateModel.BRANCH_RATES,
+                            BranchRateModel.RATE, prefix + BranchRateModel.RATE);
+                    break;
+
+                case HMC_CLOCK:
                     writeTreeTrait(writer, ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES,
                             prefix + BranchRateModel.BRANCH_RATES,
                             BranchRateModel.RATE, prefix + BranchRateModel.RATE);

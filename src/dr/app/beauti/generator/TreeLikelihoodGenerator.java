@@ -27,7 +27,6 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.types.ClockType;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ComponentFactory;
@@ -42,7 +41,6 @@ import dr.oldevomodel.sitemodel.SiteModel;
 import dr.oldevomodel.substmodel.AsymmetricQuadraticModel;
 import dr.oldevomodel.substmodel.LinearBiasModel;
 import dr.oldevomodel.substmodel.TwoPhaseModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.tree.MicrosatelliteSamplerTreeModelParser;
 import dr.oldevomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
@@ -102,7 +100,7 @@ public class TreeLikelihoodGenerator extends Generator {
         Attribute[] attributes = new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, idString),
                 new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood()),
-                new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_PREORDER, clockModel.getClockType() == ClockType.HMC)
+                new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_PREORDER, clockModel.getClockType() == ClockType.HMC_CLOCK)
         };
 
         writer.writeComment("Likelihood for tree given sequence data");

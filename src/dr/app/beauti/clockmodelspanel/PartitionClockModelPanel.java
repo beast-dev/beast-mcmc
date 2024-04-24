@@ -143,7 +143,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
                 addComponent(continuousQuantileCheck);
                 break;
 
-            case HMC:
+            case HMC_CLOCK:
                 addComponent(new JLabel(
                         "<html>" +
                                 "Using the Hamiltonian Monte Carlo relaxed clock model of Ji, Zhang, Holbrook,<br>" +
@@ -155,6 +155,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
                 addComponentWithLabel("Relaxed Distribution:", clockDistributionCombo);
                 break;
 
+            case SHRINKAGE_LOCAL_CLOCK:
             case RANDOM_LOCAL_CLOCK:
             case FIXED_LOCAL_CLOCK:
                 break;

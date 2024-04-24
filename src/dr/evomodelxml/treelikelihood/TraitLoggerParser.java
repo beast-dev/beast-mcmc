@@ -53,7 +53,7 @@ public class TraitLoggerParser extends AbstractXMLObjectParser {
         boolean taxonNameExplicit = xo.getAttribute(TAXON_NAME_EXPLICIT, false);
 
         TaxonList taxonList = (TaxonList) xo.getChild(TaxonList.class);
-        if (taxonList != null) {
+        if (taxonList != null && taxonList != treeModel) {
             TreeTraitLogger logger = null;
             try {
                 logger = new TreeTraitLogger(treeModel, new TreeTrait[] { trait }, taxonList);

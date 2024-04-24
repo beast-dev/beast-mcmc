@@ -84,6 +84,7 @@ public class BeastMain {
                      boolean parserWarning, boolean strictXML, List<String> additionalParsers,
                      MCMCMCOptions mc3Options) {
 
+
         if (inputFile == null) {
             throw new RuntimeException("Error: no input file specified");
         }

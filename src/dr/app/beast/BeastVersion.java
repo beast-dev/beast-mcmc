@@ -125,10 +125,11 @@ public class BeastVersion implements Version, Citable {
                         "<p>Source code distributed under the GNU LGPL:<br>" +
                         "<a href=\"http://github.com/beast-dev/beast-mcmc\">http://github.com/beast-dev/beast-mcmc</a></p>" +
                         "<p>BEAST developers:<br>" +
-                        "Alex Alekseyenko, Guy Baele, Trevor Bedford, Filip Bielejec, Erik Bloomquist, Matthew Hall,<br>"+
-                        "Joseph Heled, Sebastian Hoehna, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li,<br>"+
-                        "Gerton Lunter, Sidney Markowitz, Vladimir Minin, Michael Defoin Platel,<br>"+
-                        "Oliver Pybus, Chieh-Hsi Wu, Walter Xie</p>" +
+                        "Alex Alekseyenko, Daniel Ayres, Guy Baele, Trevor Bedford, Filip Bielejec, Erik Bloomquist,<br>"+
+                        "Michael Karcher, Gabriela Cybis, Mandev Gill, Matthew Hall, Gabe Hassler, Joseph Heled,<br>"+
+                        "Sebastian Hoehna, Xiang Ji, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li, Gerton Lunter,<br>"+
+                        "Andy Magee, Sidney Markowitz, JT McCrone, Volodymyr Minin, Julia Palacios, Michael Defoin Platel,<br>"+
+                        "Oliver Pybus, Yucai Shao, Max Tolkoff, Chieh-Hsi Wu, Walter Xie and Zhenyu Zhang</p>" +
                         "<p>Thanks to Roald Forsberg, Beth Shapiro and Korbinian Strimmer</p>";
     }
 

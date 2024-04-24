@@ -18,8 +18,8 @@
         </taxon>
     </taxa>
 
-    <newick id="tree">
-        ((A:2,(B:1,C:1):1):2,(D:3, E:3):1);
+    <newick id="tree" usingDates="false" usingHeights="true">
+        ((A:3.4,(B:1.5,C:1.9):3.5):2.2,(D:3.5,E:3.5):1);
     </newick>
 
     <treeModel id="treeModel">
@@ -55,28 +55,6 @@
         <traitParameter>
             <parameter idref="leafTraits"/>
         </traitParameter>
-        <driftModels>
-            <strictClockBranchRates>
-                <rate>
-                    <parameter id="rate.1" value="-1.4"/>
-                </rate>
-            </strictClockBranchRates>
-            <strictClockBranchRates>
-                <rate>
-                    <parameter id="rate.2" value="1.0"/>
-                </rate>
-            </strictClockBranchRates>
-            <strictClockBranchRates>
-                <rate>
-                    <parameter id="rate.3" value="0.0"/>
-                </rate>
-            </strictClockBranchRates>
-            <strictClockBranchRates>
-                <rate>
-                    <parameter id="rate.4" value="1.2"/>
-                </rate>
-            </strictClockBranchRates>
-        </driftModels>
         <conjugateRootPrior>
             <meanParameter>
                 <parameter id="meanRoot"  value="-0.5 1.0 -0.5 1.0 1.0 -2.0 1.0 -2.0"/>
@@ -108,6 +86,9 @@
                 <treeModel idref="treeModel"/>
             </traitLogger> 
         </log>
+        <logTree id="treeFileLog" logEvery="10" nexusFormat="true" fileName="testIBMDiffusion.trees" sortTranslationTable="true">
+            <treeModel idref="treeModel"/>
+        </logTree>
     </mcmc>
 
     <assertEqual tolerance="1e-3" verbose="true">
@@ -122,6 +103,75 @@
         </expected>
     </assertEqual>
 
+    <assertEqual tolerance="1e-3" verbose="true">
+        <message>
+            Check log likelihood of observed data
+        </message>
+        <actual regex="logDatumLikelihood:\s+(.*)\n">
+            <traitDataLikelihood idref="ibmLikelihood"/>
+        </actual>
+        <expected regex="likelihood:\s+(.*)\n">
+            -23.57097
+        </expected>
+    </assertEqual>
+
+    <!--
+    ## R Code to reproduce and check the result
+    library(ape)
+
+    #############################################################################
+    ## Data
+    #############################################################################
+
+    tree <- read.tree(text = "((A:3.4,(B:1.5,C:1.9):3.5):2.2,(D:3.5,E:3.5):1);")
+
+    dat <- matrix(c(10, NA, 1, 0,
+                    NA, NA, 2, NA,
+                    NA, 0, NA, NA,
+                    -2, 3, 4, NA,
+                    NA, NA, NA, NA), nrow = 5, byrow = TRUE)
+    rownames(dat) <- LETTERS[1:5]
+    colnames(dat) <- paste0("X", 1:4)
+    dat <- dat[match(tree$tip.label, rownames(dat)), ]
+
+    nonmissing <- !is.na(dat)
+    vec_nonmissing <- as.vector(nonmissing)
+
+    #############################################################################
+    ## Likelihood
+    #############################################################################
+
+    priorSampleSize <- 10
+    VBM <- vcv(tree)
+    times <- diag(VBM)
+    VIBM <- VBM * times %*% t(times) + VBM^3/3 - VBM^2 * outer(times, times, "+") / 2
+    VIBM <- VIBM + 1 / priorSampleSize
+
+    ## Root
+    root_test <- matrix(c(-0.5, 1.0, -0.5, 1.0, 1.0, -2.0, 1.0, -2.0), nrow = 2, byrow = TRUE)
+    # root_test <- matrix(rep(0, 8), nrow = 2, byrow = TRUE)
+    ## Drift
+    root_test <- rbind(rep(0, 4), root_test)
+    ## mean
+    X <- cbind(times^2/2, times, rep(1.0, nrow(dat)))
+    mu_test <- X %*% root_test
+    P_test <- matrix(c(1.0, 0.1, -0.5, -0.1,
+                       0.1, 2.0, -0.6, -0.1,
+                       -0.5, -0.6, 3.0, 0.4,
+                       -0.1, -0.1, 0.4, 4.0),
+                     ncol = 4)
+    R_test <- solve(P_test)
+
+    vec_obs <- as.vector(dat)
+    vec_mu <- as.vector(mu_test)
+    vec_var <- kronecker(R_test, VIBM)
+
+    mvtnorm::dmvnorm(vec_obs[vec_nonmissing],
+                     vec_mu[vec_nonmissing],
+                     vec_var[vec_nonmissing, vec_nonmissing],
+                     log = TRUE)
+    # [1] -23.57097
+    -->
 
 </beast>
 

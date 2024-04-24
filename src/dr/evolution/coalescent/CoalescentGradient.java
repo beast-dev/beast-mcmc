@@ -102,10 +102,16 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
 
     @Override
     public double[] getGradientLogDensity() {
+
+        if (likelihood.getPopulationSizeModel() != null) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
         return provider.getGradientLogDensity(null);
     }
 
     private double[] getGradientLogDensityWrtNodeHeights() {
+
         final double logLikelihood = likelihood.getLogLikelihood();
         double[] gradient = new double[tree.getInternalNodeCount()];
 
@@ -164,7 +170,6 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
 
         return gradient;
     }
-
 
     private final double tolerance;
 

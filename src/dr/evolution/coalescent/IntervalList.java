@@ -102,12 +102,13 @@ public interface IntervalList extends Units {
 	 */
 	boolean isCoalescentOnly();
 
+
 	/**
 	 * Recalculates all the intervals from the tree model.
 	 */
 	void calculateIntervals();
 
-	public class Utils {	
+	public class Utils {
 
 		/**
 		 * @return the number of lineages at time t.

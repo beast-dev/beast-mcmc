@@ -45,9 +45,9 @@ public abstract class ModelOptions implements Serializable {
 
     private static final long serialVersionUID = 6199011531067286245L;
 
-    protected final Map<String, Parameter> parameters = new HashMap<String, Parameter>();
-    protected final Map<String, Operator> operators = new HashMap<String, Operator>();
-    protected final Map<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
+    protected final Map<String, Parameter> parameters = new HashMap<>();
+    protected final Map<String, Operator> operators = new HashMap<>();
+    protected final Map<TaxonList, Parameter> statistics = new HashMap<>();
 
     public static final double demoTuning = 0.75;
     public static final double demoWeights = 3.0;
@@ -56,7 +56,7 @@ public abstract class ModelOptions implements Serializable {
     protected static final double treeWeights = 30.0;
     protected static final double rateWeights = 3.0;
 
-    private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();
+    private final List<ComponentOptions> components = new ArrayList<>();
 
     //+++++++++++++++++++ Abstract Methods ++++++++++++++++++++++++++++++++
 

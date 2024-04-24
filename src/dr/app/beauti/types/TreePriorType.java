@@ -35,6 +35,7 @@ public enum TreePriorType {
     LOGISTIC("Coalescent: Logistic Growth"),
     EXPANSION("Coalescent: Expansion Growth"),
     SKYGRID("Coalescent: Bayesian SkyGrid"),
+    SKYGRID_HMC("Coalescent: Hamiltonian Monte Carlo SkyGrid"),
     GMRF_SKYRIDE("Coalescent: GMRF Bayesian Skyride"),
     SKYLINE("Coalescent: Bayesian Skyline"),
     EXTENDED_SKYLINE("Coalescent: Extended Bayesian Skyline Plot"),

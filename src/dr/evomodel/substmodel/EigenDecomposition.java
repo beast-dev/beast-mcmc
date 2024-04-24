@@ -49,6 +49,30 @@ public class EigenDecomposition implements Serializable {
         return new EigenDecomposition(evec, ievc, eval);
     }
 
+    public EigenDecomposition transpose() {
+        // note: exchange e/ivec
+        int dim = (int) Math.sqrt(Ievc.length);
+        double[] evec = Ievc.clone();
+        transposeInPlace(evec, dim);
+        double[] ievc = Evec.clone();
+        transposeInPlace(ievc, dim);
+        double[] eval = Eval.clone();
+        return new EigenDecomposition(evec, ievc, eval);
+    }
+
+    private static void transposeInPlace(double[] matrix, int n) {
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                int index1 = i * n + j;
+                int index2 = j * n + i;
+
+                double temp = matrix[index1];
+                matrix[index1] = matrix[index2];
+                matrix[index2] = temp;
+            }
+        }
+    }
+
     /**
      * This function returns the Eigen vectors.
      * @return the array

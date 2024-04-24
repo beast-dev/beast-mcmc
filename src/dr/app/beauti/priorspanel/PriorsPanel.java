@@ -193,19 +193,18 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         messageLabel.setText(getMessage());
 
-        Action classicPriorsAction = new AbstractAction("Use classic priors/operators") {
-            public void actionPerformed(ActionEvent actionEvent) {
-                options.useClassicOperatorsAndPriors = classicPriorsCheck.isSelected();
-                priorTableModel.fireTableDataChanged();
-                frame.setAllOptions();
-            }
-        };
-
-        classicPriorsCheck = new JCheckBox(classicPriorsAction);
-        classicPriorsCheck.setVisible(true);
-        classicPriorsCheck.setEnabled(true);
-        classicPriorsCheck.setToolTipText("<html>Whether to use the older (v1.8 style) prior and operator combinations.</html>");
-
+//        Action classicPriorsAction = new AbstractAction("Use classic priors/operators") {
+//            public void actionPerformed(ActionEvent actionEvent) {
+//                options.useClassicOperatorsAndPriors = classicPriorsCheck.isSelected();
+//                priorTableModel.fireTableDataChanged();
+//                frame.setAllOptions();
+//            }
+//        };
+//
+//        classicPriorsCheck = new JCheckBox(classicPriorsAction);
+//        classicPriorsCheck.setVisible(true);
+//        classicPriorsCheck.setEnabled(true);
+//        classicPriorsCheck.setToolTipText("<html>Whether to use the older (v1.8 style) prior and operator combinations.</html>");
 
         setOpaque(false);
         setLayout(new BorderLayout(0, 0));
@@ -247,8 +246,8 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             toolBar2.setBorder(BorderFactory.createEmptyBorder());
             toolBar2.setLayout(new BoxLayout(toolBar2, BoxLayout.X_AXIS));
 
-            PanelUtils.setupComponent(classicPriorsCheck);
-            toolBar2.add(classicPriorsCheck);
+//            PanelUtils.setupComponent(classicPriorsCheck);
+//            toolBar2.add(classicPriorsCheck);
 
             add(toolBar2, BorderLayout.NORTH);
         } else {

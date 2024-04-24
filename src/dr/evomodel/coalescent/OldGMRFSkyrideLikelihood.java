@@ -25,10 +25,12 @@
 
 package dr.evomodel.coalescent;
 
+import dr.evolution.coalescent.IntervalList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
+import dr.inference.distribution.shrinkage.OldBayesianBridgeLikelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -52,6 +54,7 @@ import java.util.List;
  * @author Marc Suchard
  * @version $Id: GMRFSkylineLikelihood.java,v 1.3 2007/03/20 22:40:04 msuchard Exp $
  */
+@Deprecated
 public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood implements CoalescentIntervalProvider, Citable {
 
     // PUBLIC STUFF
@@ -524,6 +527,7 @@ public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood im
 
         return currentLike;
     }
+
 
 
 //    public static double logGeneralizedDeterminant(SymmTridiagMatrix X) {

@@ -173,7 +173,6 @@ public class PartitionTreeModel extends PartitionOptions {
             boolean branchesInUse = false;
             boolean newTreeOperatorsInUse = false;
             boolean adaptiveMultivariateInUse = false;
-            boolean HMCinUse = false;
 
             // if not a fixed tree then sample tree space
             if (options.operatorSetType != OperatorSetType.FIXED_TREE) {
@@ -187,8 +186,6 @@ public class PartitionTreeModel extends PartitionOptions {
                 } else if (options.operatorSetType == OperatorSetType.ADAPTIVE_MULTIVARIATE) {
                     newTreeOperatorsInUse = true;
                     adaptiveMultivariateInUse = true;
-                } else if (options.operatorSetType == OperatorSetType.HMC) {
-                    HMCinUse = true;
                 } else {
                     throw new IllegalArgumentException("Unknown operator set type");
                 }

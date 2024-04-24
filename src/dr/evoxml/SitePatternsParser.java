@@ -69,8 +69,9 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
         TaxonList taxa = null;
 
         SitePatterns.CompressionType compression = SitePatterns.DEFAULT_COMPRESSION_TYPE;
-        if (xo.hasAttribute(UNIQUE) && xo.getBooleanAttribute(UNIQUE)) {
-            compression = SitePatterns.CompressionType.UNIQUE_ONLY;
+        if (xo.hasAttribute(UNIQUE) && !xo.getBooleanAttribute(UNIQUE)) {
+            compression = SitePatterns.CompressionType.UNCOMPRESSED;
+        } else {
             if (xo.hasAttribute(AMBIGUOUS_CONSTANT) && xo.getBooleanAttribute(AMBIGUOUS_CONSTANT)) {
                 compression = SitePatterns.CompressionType.AMBIGUOUS_CONSTANT;
             }

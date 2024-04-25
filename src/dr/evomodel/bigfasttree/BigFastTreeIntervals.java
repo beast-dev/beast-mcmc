@@ -273,13 +273,10 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
 
     @Override
     public void calculateIntervals() {
-        TreeModel tree1 = this.tree;
-        if (tree instanceof EmpiricalTreeDistributionModel) {
-            Tree t = ((EmpiricalTreeDistributionModel) this.tree).getCurrentTree();
-            tree1 = new DefaultTreeModel(t);
-        }
-
-        TreeModel tree = tree1;
+        TreeModel tree =
+                this.tree instanceof EmpiricalTreeDistributionModel ?
+                        ((EmpiricalTreeDistributionModel) this.tree).getCurrentTreeModel() :
+                        this.tree;
 
         //If dirty we rebuild the evens and sort them using parallel sort
         if (dirty) {

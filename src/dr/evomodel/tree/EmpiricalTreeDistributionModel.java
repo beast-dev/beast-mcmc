@@ -296,6 +296,8 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel implements 
         return columns;
     }
 
+    public Tree getCurrentTree() { return currentTree; }
+
     private LogColumn[] columns;
 
     public static final String EMPIRICAL_TREE_DISTRIBUTION_MODEL = "empiricalTreeDistributionModel";

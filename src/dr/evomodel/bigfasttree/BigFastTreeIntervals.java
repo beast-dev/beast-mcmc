@@ -5,6 +5,8 @@ import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
+import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
@@ -271,6 +273,14 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
 
     @Override
     public void calculateIntervals() {
+        TreeModel tree1 = this.tree;
+        if (tree instanceof EmpiricalTreeDistributionModel) {
+            Tree t = ((EmpiricalTreeDistributionModel) this.tree).getCurrentTree();
+            tree1 = new DefaultTreeModel(t);
+        }
+
+        TreeModel tree = tree1;
+
         //If dirty we rebuild the evens and sort them using parallel sort
         if (dirty) {
             // Resort nodes by heights

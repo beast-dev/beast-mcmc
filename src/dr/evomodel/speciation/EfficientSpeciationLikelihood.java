@@ -31,6 +31,7 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.bigfasttree.ModelCompressedBigFastTreeIntervals;
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.math.MathUtils;
@@ -67,7 +68,9 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         likelihoodTime = 0;
         likelihoodCounts = 0;
 
-        fixTimes();
+        if (!(tree instanceof EmpiricalTreeDistributionModel)) {
+            fixTimes();
+        }
 
         treeIntervals = new BigFastTreeIntervals((TreeModel)tree);
 

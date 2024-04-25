@@ -117,7 +117,7 @@ public class BeastVersion implements Version, Citable {
                         "Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard</p>" +
                         "<p>Department of Computer Science, University of Auckland<br>" +
                         "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +
-                        "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
+                        "<p>Institute of Ecology and Evolution, University of Edinburgh<br>" +
                         "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
                         "<p>David Geffen School of Medicine, University of California, Los Angeles<br>" +
                         "<a href=\"mailto:msuchard@ucla.edu\">msuchard@ucla.edu</a></p>" +

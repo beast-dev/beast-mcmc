@@ -25,11 +25,13 @@
 
 package dr.app.beauti;
 
+import dr.app.beast.BeastMain;
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
 import dr.app.util.OSType;
 import dr.util.Version;
 import jam.framework.*;
+import jam.util.IconUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -248,12 +250,7 @@ public class BeautiApp extends MultiDocApplication {
                 }
             }
 
-            java.net.URL url = BeautiApp.class.getResource("images/beauti.png");
-            Icon icon = null;
-
-            if (url != null) {
-                icon = new ImageIcon(url);
-            }
+            javax.swing.Icon icon = IconUtils.resize(IconUtils.getIcon(BeautiApp.class, "images/beauti.png"), 128, 128);
 
             final String nameString = "BEAUti";
             final String versionString = VERSION.getVersionString();
@@ -263,7 +260,6 @@ public class BeautiApp extends MultiDocApplication {
                     "<center>" +
                     "<div style=\"font-size:13\"><p>Bayesian Evolutionary Analysis Utility<br>" +
                     "Version " + versionString + ", " + VERSION.getDateString() + "</p>" +
-                    "<p>by Alexei J. Drummond, Andrew Rambaut, Marc A. Suchard and Walter Xie</p></div>" +
                     "<hr><div style=\"font-size:11;\">Part of the BEAST package:" +
                     VERSION.getHTMLCredits() +
                     "</div></center></div></html>";

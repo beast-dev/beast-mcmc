@@ -46,9 +46,12 @@ import java.util.Locale;
 public class BeautiApp extends MultiDocApplication {
     public final static Version VERSION = new BeastVersion();
 
+    public final static String backgroundColor =  "#35484F";
+    public final static String foregroundColor = "#CBB944";
+
     public BeautiApp(String nameString, String aboutString, Icon icon,
                      String websiteURLString, String helpURLString) {
-        super(new BeautiMenuBarFactory(), nameString, aboutString, icon, websiteURLString, helpURLString);
+        super(new BeautiMenuBarFactory(), nameString, nameString, aboutString, Color.decode(backgroundColor), Color.decode(foregroundColor), icon, websiteURLString, helpURLString);
     }
 
     public static void centreLine(String line, int pageWidth) {
@@ -175,58 +178,6 @@ public class BeautiApp extends MultiDocApplication {
             System.setProperty("apple.awt.draggableWindowBackground", "true");
             System.setProperty("apple.awt.showGrowBox", "true");
 
-//            int javaVersion = Integer.parseInt(System.getProperty("java.version").split("\\.")[0]);
-//
-//            System.out.println("Java version: " + javaVersion);
-//
-//
-//            if (javaVersion < 10) {
-//                try {
-//                    // set the Quaqua Look and Feel in the UIManager
-//                    javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
-//                        public void run() {
-//                            try {
-//                                System.setProperty(
-//                                        "Quaqua.design", "Sierra"
-//                                );
-//
-//                                try {
-//                                    // We need to do this using dynamic class loading to avoid other platforms
-//                                    // having to link to this class. If the Quaqua library is not on the classpath
-//                                    // it simply won't be used.
-//                                    Class<?> qm = Class.forName("ch.randelshofer.quaqua.QuaquaManager");
-//
-////                                Method method = qm.getMethod("setIncludedUIs", Set.class);
-////                                Set<String> includes = new HashSet<String>();
-//////                                includes.add("ColorChooser");
-//////                                includes.add("FileChooser");
-////                                includes.add("Button");
-////                                includes.add("SplitPane");
-////                                includes.add("Table");
-////                                includes.add("Panel");
-////                                method.invoke(null, includes);
-//
-//                                    Method method = qm.getMethod("setExcludedUIs", Set.class);
-//                                    Set<String> excludes = new HashSet<String>();
-//                                    excludes.add("RootPane");
-////                                excludes.add("Table");
-//                                    excludes.add("TextField");
-//                                    method.invoke(null, excludes);
-//
-//                                } catch (Throwable e) {
-//                                }
-//
-//                                //set the Quaqua Look and Feel in the UIManager
-//                                UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel");
-//                                lafLoaded = true;
-//                            } catch (Exception e) {
-//                            }
-//                        }
-//                    });
-//                } catch (Exception e) {
-//                }
-//            }
-
             UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
             UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
         }
@@ -256,7 +207,10 @@ public class BeautiApp extends MultiDocApplication {
             final String versionString = VERSION.getVersionString();
 
             String aboutString = "<html>" +
-                    "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; font-weight: 100\">" +
+                    "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; " +
+                    "font-weight: 100;" +
+                    "background-color: " + backgroundColor + "; color: " + foregroundColor + ";" +
+                    "\">" +
                     "<center>" +
                     "<div style=\"font-size:13\"><p>Bayesian Evolutionary Analysis Utility<br>" +
                     "Version " + versionString + ", " + VERSION.getDateString() + "</p>" +

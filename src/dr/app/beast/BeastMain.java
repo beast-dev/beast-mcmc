@@ -27,6 +27,7 @@ package dr.app.beast;
 
 import beagle.BeagleFlag;
 import beagle.BeagleInfo;
+import dr.app.beauti.BeautiMenuBarFactory;
 import dr.app.checkpoint.BeastCheckpointer;
 import dr.app.plugin.Plugin;
 import dr.app.plugin.PluginLoader;
@@ -44,11 +45,13 @@ import dr.xml.XMLParser;
 import jam.util.IconUtils;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 import java.util.logging.*;
 
 public class BeastMain {
@@ -60,9 +63,11 @@ public class BeastMain {
 
     static class BeastConsoleApp extends jam.console.ConsoleApplication {
         XMLParser parser = null;
+        public final static String backgroundColor =  "#35484F";
+        public final static String foregroundColor = "#CBB944";
 
         public BeastConsoleApp(String nameString, String titleString, String aboutString, javax.swing.Icon icon) throws IOException {
-            super(nameString, titleString, aboutString, icon, false);
+            super(nameString, titleString, aboutString, Color.decode(backgroundColor), Color.decode(foregroundColor), icon, false);
             getDefaultFrame().setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         }
 
@@ -778,12 +783,14 @@ public class BeastMain {
                     "</div></html>";
 
             String aboutString = "<html>" +
-                    "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; font-weight: 100\">" +
+                    "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; " +
+                    "font-weight: 100;" +
+                    "background: #35484F; color: #CBB944\">" +
                     "<center>" +
                     version.getHTMLCredits() +
                     "</div></center></div></html>";
 
-            consoleApp = new BeastConsoleApp(nameString, titleString, aboutString, icon);
+            consoleApp = new BeastConsoleApp(nameString, titleString, aboutString,  icon);
             consoleApp.initialize();
 
         }

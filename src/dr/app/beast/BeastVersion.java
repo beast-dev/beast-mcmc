@@ -116,14 +116,15 @@ public class BeastVersion implements Version, Citable {
                 "<p>Designed and developed by<br>" +
                         "Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard</p>" +
                         "<p>Department of Computer Science, University of Auckland<br>" +
-                        "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +
+                        "alexei@cs.auckland.ac.nz</p>" +
                         "<p>Institute of Ecology and Evolution, University of Edinburgh<br>" +
-                        "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
+                        "a.rambaut@ed.ac.uk</p>" +
                         "<p>David Geffen School of Medicine, University of California, Los Angeles<br>" +
-                        "<a href=\"mailto:msuchard@ucla.edu\">msuchard@ucla.edu</a></p>" +
-                        "<p><a href=\"http://beast.community\">http://beast.community</a></p>" +
+                        "msuchard@ucla.edu</p>" +
+                        "<p>BEAST website and documentation:<br>" +
+                        "<em>http://beast.community</em></p>" +
                         "<p>Source code distributed under the GNU LGPL:<br>" +
-                        "<a href=\"http://github.com/beast-dev/beast-mcmc\">http://github.com/beast-dev/beast-mcmc</a></p>" +
+                        "<em>http://github.com/beast-dev/beast-mcmc</em></p>" +
                         "<p>BEAST developers:<br>" +
                         "Alex Alekseyenko, Daniel Ayres, Guy Baele, Trevor Bedford, Filip Bielejec, Erik Bloomquist,<br>"+
                         "Michael Karcher, Gabriela Cybis, Mandev Gill, Matthew Hall, Gabe Hassler, Joseph Heled,<br>"+

@@ -170,9 +170,6 @@ public class OperatorsGenerator extends Generator {
             case UP_DOWN:
                 writeUpDownOperator(UpDownOperatorParser.UP_DOWN_OPERATOR, operator, writer);
                 break;
-            case MICROSAT_UP_DOWN:
-                writeUpDownOperator(MicrosatelliteUpDownOperatorParser.MICROSAT_UP_DOWN_OPERATOR, operator, writer);
-                break;
             case SCALE_ALL:
                 writeScaleAllOperator(operator, writer);
                 break;

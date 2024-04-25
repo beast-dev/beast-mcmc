@@ -43,7 +43,6 @@ public enum OperatorType {
     RANDOM_WALK_LOGIT("randomWalkLogit"),
     INTEGER_RANDOM_WALK("integerRandomWalk"),
     UP_DOWN("upDown"),
-    MICROSAT_UP_DOWN("microsatUpDown"),
     SCALE_ALL(ScaleOperatorParser.SCALE_ALL),
     SCALE_INDEPENDENTLY("scaleIndependently"),
     DELTA_EXCHANGE("deltaExchange"),

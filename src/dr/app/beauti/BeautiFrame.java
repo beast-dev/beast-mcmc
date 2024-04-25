@@ -487,10 +487,8 @@ public class BeautiFrame extends DocumentFrame {
 
     public final void doImport() {
         File[] files = selectImportFiles("Import Aligment...", true, new FileNameExtensionFilter[]{
-                new FileNameExtensionFilter("Microsatellite (tab-delimited *.txt) Files", "txt"),
                 new FileNameExtensionFilter(
                         "NEXUS, BEAST or FASTA Files", "nex", "nexus", "nx", "xml", "beast", "fa", "fasta", "afa")});
-        // new FileNameExtensionFilter( "Microsatellite (tab-delimited *.txt) Files", "txt");
         if (files != null && files.length != 0) {
             importFiles(files);
             tabbedPane.setSelectedComponent(dataPanel);
@@ -515,8 +513,6 @@ public class BeautiFrame extends DocumentFrame {
                     JOptionPane.showMessageDialog(this, "File I/O Error unable to read file:\n    " + ioe.getMessage(),
                             "Unable to read file", JOptionPane.ERROR_MESSAGE);
                     ioe.printStackTrace();
-                    // there may be other files in the list so don't return
-//                    return;
 
                 } catch (MissingBlockException ex) {
                     JOptionPane.showMessageDialog(this, "TAXON, DATA or CHARACTERS block is missing in Nexus file:\n    " + ex.getMessage(),

@@ -258,11 +258,6 @@ public class PartitionClockModel extends PartitionOptions {
                 "Scales clock rate inversely to node heights of the tree",
                 getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
                 getParameter(ClockType.HMC_CLOCK_LOCATION), OperatorType.UP_DOWN, demoTuning, rateWeights);
-
-        createUpDownOperator("microsatUpDownRateHeights", "Evolutionary rate and heights",
-                "Scales substitution rates inversely to node heights of the tree",
-                getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
-                getParameter("clock.rate"), OperatorType.MICROSAT_UP_DOWN, demoTuning, branchWeights);
     }
 
     // From PartitionClockModelTreeModelLink

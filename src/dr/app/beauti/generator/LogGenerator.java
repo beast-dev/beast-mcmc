@@ -157,11 +157,6 @@ public class LogGenerator extends Generator {
 
         }
 
-        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-            if (model.getDataType().getType() == DataType.MICRO_SAT)
-                substitutionModelGenerator.writeMicrosatSubstModelParameterRef(model, writer);
-        }
-
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_SCREEN_LOG, writer);
 
         writer.writeCloseTag(LoggerParser.LOG);

@@ -37,7 +37,6 @@ import dr.app.beauti.types.TreePriorType;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Microsatellite;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
@@ -167,13 +166,9 @@ public class BeautiOptions extends ModelOptions {
 
 //        traitsOptions = new TraitsOptions(this);
 
-        microsatelliteOptions = new MicrosatelliteOptions(this);
-
         parameters.clear();
         operators.clear();
         statistics.clear();
-
-        shareMicroSat = true;
 
         clearDataPartitionCaches();
     }
@@ -297,10 +292,6 @@ public class BeautiOptions extends ModelOptions {
             prior.selectParameters(parameters);
         }
 
-        if (contains(Microsatellite.INSTANCE)) {
-            microsatelliteOptions.selectParameters(parameters);
-        }
-
 //        for (TraitData trait : getTraitsList()) { // all traits including locations
 //            if (!trait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))
 //        	   trait.gets.selectParameters(parameters);
@@ -344,10 +335,6 @@ public class BeautiOptions extends ModelOptions {
 
         for (PartitionTreePrior prior : getPartitionTreePriors()) {
             prior.selectOperators(ops);
-        }
-
-        if (contains(Microsatellite.INSTANCE)) {
-            microsatelliteOptions.selectOperators(ops);
         }
 
 //        for (TraitData trait : getTraitsList()) { // all traits including locations
@@ -397,30 +384,6 @@ public class BeautiOptions extends ModelOptions {
             }
         }
         return false;
-    }
-
-    public void shareMicroSat() {
-        Microsatellite microsatellite = null;
-        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels(Microsatellite.INSTANCE)) {
-            if (microsatellite == null) {
-                microsatellite = model.getMicrosatellite();
-            } else {
-                model.setMicrosatellite(microsatellite);
-            }
-        }
-    }
-
-    public void unshareMicroSat() {
-        Microsatellite microsatellite = null;
-        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels(Microsatellite.INSTANCE)) {
-            if (microsatellite == null) {
-                microsatellite = model.getMicrosatellite();
-            } else {
-                microsatellite = new Microsatellite(model.getName() + ".microsat",
-                        microsatellite.getMin(), microsatellite.getMax(), 1);
-                model.setMicrosatellite(microsatellite);
-            }
-        }
     }
 
     public boolean hasPartitionData(String name) {
@@ -1392,10 +1355,6 @@ public class BeautiOptions extends ModelOptions {
     public boolean useNewFrequenciesPrior() {
         return !useClassicOperatorsAndPriors() || !FREQUENCIES_DIRICHLET_PRIOR;
     }
-
-    public MicrosatelliteOptions microsatelliteOptions = new MicrosatelliteOptions(this);
-
-    public boolean shareMicroSat = true;
 
     public boolean logCoalescentEventsStatistic = false;
 

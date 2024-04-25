@@ -26,7 +26,6 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.types.*;
-import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.Tree;
 
 import java.util.List;
@@ -46,10 +45,6 @@ public class PartitionTreeModel extends PartitionOptions {
     private Tree userStartingTree = null;
 
     private boolean isNewick = true;
-
-    //TODO if use EBSP and *BEAST, validate Ploidy of every PD is same for each tree that the PD(s) belongs to
-    // BeastGenerator.checkOptions()
-    private PloidyType ploidyType = PloidyType.AUTOSOMAL_NUCLEAR;
 
     private boolean hasTipCalibrations = false;
     private boolean hasNodeCalibrations = false;
@@ -77,7 +72,6 @@ public class PartitionTreeModel extends PartitionOptions {
 
         isNewick = source.isNewick;
 //        initialRootHeight = source.initialRootHeight;
-        ploidyType = source.ploidyType;
 
         initModelParametersAndOpererators();
     }
@@ -256,14 +250,6 @@ public class PartitionTreeModel extends PartitionOptions {
 
     public boolean hasNodeCalibrations() {
         return hasNodeCalibrations;
-    }
-
-    public void setPloidyType(PloidyType ploidyType) {
-        this.ploidyType = ploidyType;
-    }
-
-    public PloidyType getPloidyType() {
-        return ploidyType;
     }
 
     public double getInitialRootHeight() {

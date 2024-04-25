@@ -589,10 +589,10 @@ public class BeautiOptions extends ModelOptions {
         pcmlCache.clear();
     }
 
-    public boolean isEBSPSharingSamePrior() {
-        return getPartitionTreePriors().size() >= 1 &&
-                (isShareSameTreePrior() && getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE);
-    }
+//    public boolean isEBSPSharingSamePrior() {
+//        return getPartitionTreePriors().size() >= 1 &&
+//                (isShareSameTreePrior() && getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE);
+//    }
 
     // ++++++++++++++ Partition Substitution Model ++++++++++++++
 //    public void addPartitionSubstitutionModel(PartitionSubstitutionModel model) {

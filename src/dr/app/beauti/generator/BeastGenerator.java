@@ -648,11 +648,6 @@ public class BeastGenerator extends Generator {
             if (options.performTraceAnalysis) {
                 writeTraceAnalysis(writer);
             }
-            if (options.generateCSV) {
-                for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-                    treePriorGenerator.writeEBSPAnalysisToCSVfile(prior, writer);
-                }
-            }
         } catch (Exception e) {
             e.printStackTrace();
             throw new GeneratorException("The last part of XML generation has failed:\n" + e.getMessage());

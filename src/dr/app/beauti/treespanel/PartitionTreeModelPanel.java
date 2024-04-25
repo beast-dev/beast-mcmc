@@ -34,7 +34,6 @@ import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import jam.panels.OptionsPanel;
@@ -58,7 +57,6 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private static final long serialVersionUID = 8096349200725353543L;
 
     private final String NO_TREE = "no tree loaded";
-    private JComboBox ploidyTypeCombo = new JComboBox(PloidyType.values());
 
     private ButtonGroup startingTreeGroup = new ButtonGroup();
     private JRadioButton randomTreeRadio = new JRadioButton("Random starting tree");
@@ -96,16 +94,6 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         PanelUtils.setupComponent(initRootHeightField);
         initRootHeightField.setColumns(10);
         initRootHeightField.setEnabled(false);
-
-        PanelUtils.setupComponent(ploidyTypeCombo);
-        ploidyTypeCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                partitionTreeModel.setPloidyType((PloidyType) ploidyTypeCombo.getSelectedItem());
-            }
-        });
-        if (options.isEBSPSharingSamePrior()) {
-            ploidyTypeCombo.setSelectedItem(partitionTreeModel.getPloidyType());
-        }
 
         PanelUtils.setupComponent(randomTreeRadio);
         PanelUtils.setupComponent(upgmaTreeRadio);
@@ -197,10 +185,6 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     public void setupPanel() {
 
         removeAll();
-
-        if (options.isEBSPSharingSamePrior()) {
-            addComponentWithLabel("Ploidy type:", ploidyTypeCombo);
-        }
 
         if (partitionTreeModel.getDataType().getType() != DataType.MICRO_SAT) {
             addSpanningComponent(randomTreeRadio);

@@ -249,8 +249,7 @@ public class LogGenerator extends Generator {
         // coalescentLikelihood
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             PartitionTreePrior prior = model.getPartitionTreePrior();
-            if (prior.getNodeHeightPrior() != TreePriorType.EXTENDED_SKYLINE &&
-                prior.getNodeHeightPrior() != TreePriorType.SKYGRID) {
+            if (prior.getNodeHeightPrior() != TreePriorType.SKYGRID) {
                 // if not using a multi-locus model...
                 treePriorGenerator.writePriorLikelihoodReferenceLog(prior, model, writer);
                 writer.writeText("");
@@ -258,9 +257,7 @@ public class LogGenerator extends Generator {
         }
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-            if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
-                writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
-            } else if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
+            if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, prior.getPrefix() + "skygrid");
             }
         }
@@ -363,9 +360,7 @@ public class LogGenerator extends Generator {
         }
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-            if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
-                writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
-            } else if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
+            if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, prior.getPrefix() + "skygrid");
             }
         }

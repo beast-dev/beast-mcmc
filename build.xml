@@ -749,7 +749,7 @@
         <jarbundler dir="${Mac_package_dir}"
                     name="${BEAUti_name} v${version}"
                     mainclass="dr.app.beauti.BeautiApp"
-                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub_BEAST"
+                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/beauti.icns"
                     jvmversion="${jvm_version}"
@@ -761,7 +761,7 @@
                     bundleid="dr.app.beauti">
             <documenttype name="BEAUti document"
                           extensions="beauti bti"
-                          iconFile="BEAUtiDoc.icns"
+                          iconFile="beautidoc.icns"
                           role="Editor"/>
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beauti.jar"/>

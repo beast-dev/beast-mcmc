@@ -651,11 +651,6 @@ public class OperatorsGenerator extends Generator {
         writer.writeIDref(BayesianBridgeDistributionModelParser.BAYESIAN_BRIDGE_DISTRIBUTION, prefix + "bbDistribution");
         writer.writeCloseTag("preconditioner");
 
-        writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rates");
-
-        writer.writeOpenTag(SignTransformParser.NAME);
-        writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rates");
-        writer.writeCloseTag(SignTransformParser.NAME);
         writer.writeCloseTag(HamiltonianMonteCarloOperatorParser.HMC_OPERATOR);
     }
 

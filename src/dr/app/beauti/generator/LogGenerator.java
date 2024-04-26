@@ -520,7 +520,7 @@ public class LogGenerator extends Generator {
                     break;
 
                 case SHRINKAGE_LOCAL_CLOCK:
-                    writeTreeTrait(writer, ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES,
+                    writeTreeTrait(writer, ScaledByTreeTimeBranchRateModelParser.TREE_TIME_BRANCH_RATES,
                             prefix + BranchRateModel.BRANCH_RATES,
                             BranchRateModel.RATE, prefix + BranchRateModel.RATE);
                     break;

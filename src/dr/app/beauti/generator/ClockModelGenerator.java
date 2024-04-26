@@ -305,7 +305,7 @@ public class ClockModelGenerator extends Generator {
 
                 attributes = new Attribute[] {
                         new Attribute.Default<>(XMLParser.ID,
-                                prefix  + "branchRates"),
+                                prefix  + "substBranchRates"),
                         new Attribute.Default<>("centerAtOne", false),
                         new Attribute.Default<>("randomizeRates", true),
                         new Attribute.Default<>("randomScale", "0.1")
@@ -315,14 +315,14 @@ public class ClockModelGenerator extends Generator {
                 writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
 
                 writer.writeOpenTag(ArbitraryBranchRatesParser.RATES);
-                writeParameter(clockModel.getParameter("branchRates.rates"), -1, writer);
+                writeParameter(clockModel.getParameter("substBranchRates.rates"), -1, writer);
                 writer.writeCloseTag(ArbitraryBranchRatesParser.RATES);
                 writer.writeCloseTag(tag);
 
                 writer.writeOpenTag(BayesianBridgeDistributionModelParser.BAYESIAN_BRIDGE_DISTRIBUTION,
                         new Attribute.Default<>(XMLParser.ID,prefix  + "bbDistribution"));
                 writer.writeOpenTag(BayesianBridgeDistributionModelParser.DIMENSION);
-                writer.writeIDref(PARAMETER, prefix + "branchRates.rates");
+                writer.writeIDref(PARAMETER, prefix + "substBranchRates.rates");
                 writer.writeCloseTag(BayesianBridgeDistributionModelParser.DIMENSION);
                 writer.writeOpenTag(SLAB_WIDTH);
                 writeParameter(prefix + SLAB_WIDTH, -1, 2.0, Double.NaN, Double.NaN, writer);
@@ -346,7 +346,7 @@ public class ClockModelGenerator extends Generator {
                                 new Attribute.Default<>(AutoCorrelatedBranchRatesDistributionParser.LOG, true),
                                 new Attribute.Default<>(AutoCorrelatedBranchRatesDistributionParser.OPERATE_ON_INCREMENTS, true),
                         });
-                writer.writeIDref(ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES, prefix  + "branchRates");
+                writer.writeIDref(ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES, prefix  + "substBranchRates");
                 writer.writeIDref(BayesianBridgeDistributionModelParser.BAYESIAN_BRIDGE_DISTRIBUTION, prefix  + "bbDistribution");
                 writer.writeCloseTag(AutoCorrelatedBranchRatesDistributionParser.AUTO_CORRELATED_RATES);
 
@@ -361,8 +361,8 @@ public class ClockModelGenerator extends Generator {
                 writer.writeCloseTag(GAMMA_PRIOR);
 
                 writer.writeOpenTag(ScaledByTreeTimeBranchRateModelParser.TREE_TIME_BRANCH_RATES,
-                        new Attribute.Default<>(XMLParser.ID, prefix  + "treeTimeBranchRates"));
-                writer.writeIDref(ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES, prefix  + "branchRates");
+                        new Attribute.Default<>(XMLParser.ID, prefix  + "branchRates"));
+                writer.writeIDref(ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES, prefix  + "substBranchRates");
                 writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix  + "treeModel");
                 writeParameter(clockModel.getParameter("branchRates.rate"), -1, writer);
                 writer.writeCloseTag(ScaledByTreeTimeBranchRateModelParser.TREE_TIME_BRANCH_RATES);
@@ -379,12 +379,12 @@ public class ClockModelGenerator extends Generator {
                 writer.writeIDref(AutoCorrelatedBranchRatesDistributionParser.AUTO_CORRELATED_RATES, prefix + "substBranchRatesPrior");
                 writer.writeCloseTag(AutoCorrelatedGradientWrtIncrementsParser.GRADIENT);
 
-                writer.writeComment("log branch rates for tree");
-                writer.writeOpenTag(TransformedTreeTraitParser.NAME,
-                        new Attribute.Default<>(XMLParser.ID, prefix  + "logBranchRates"));
-                writer.writeTag("signTransform", true);
-                writer.writeIDref(ArbitraryBranchRatesParser.RATES, prefix  + "branchRates");
-                writer.writeCloseTag(TransformedTreeTraitParser.NAME);
+//                writer.writeComment("log branch rates for tree");
+//                writer.writeOpenTag(TransformedTreeTraitParser.NAME,
+//                        new Attribute.Default<>(XMLParser.ID, prefix  + "logBranchRates"));
+//                writer.writeTag("signTransform", true);
+//                writer.writeIDref(ArbitraryBranchRatesParser.RATES, prefix  + "branchRates");
+//                writer.writeCloseTag(TransformedTreeTraitParser.NAME);
 
                 break;
 
@@ -565,26 +565,15 @@ public class ClockModelGenerator extends Generator {
 //                                new Attribute.Default<String>(ParameterParser.VALUE, "0.01")}, true);
 //                    }
 //                }
-//
 //                writer.writeCloseTag(tag);
 //
 //                //continue with the fixedEffects XML block
 //                tag = BranchSpecificFixedEffectsParser.FIXED_EFFECTS;
-//
-//
-//
 //                writer.writeCloseTag(tag);
 //
 //                //and then the arbitraryBranchRates
 //                tag = ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES;
-//
-//
-//
 //                writer.writeCloseTag(tag);
-//
-//
-//
-//
 //                break;
 
             default:
@@ -675,6 +664,8 @@ public class ClockModelGenerator extends Generator {
                 break;
 
             case SHRINKAGE_LOCAL_CLOCK:
+                writer.writeIDref(GAMMA_PRIOR, "globalScalePrior");
+                writer.writeIDref(AutoCorrelatedBranchRatesDistributionParser.AUTO_CORRELATED_RATES, "substBranchRatesPrior");
                 tag = ScaledByTreeTimeBranchRateModelParser.TREE_TIME_BRANCH_RATES;
                 id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
                 break;

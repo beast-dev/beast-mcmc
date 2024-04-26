@@ -139,6 +139,7 @@ public class PartitionClockModel extends PartitionOptions {
         createOperator("HMC_SHRINKAGE_CLOCK", "shrinkage local clock",
                 "shrinkage local clock Hamiltonian operator", null, OperatorType.SHRINKAGE_CLOCK_HMC_OPERATOR ,1 , 8.0);
         createScaleOperator(ClockType.SHRINKAGE_CLOCK_LOCATION, demoTuning, rateWeights);
+        createParameter("substBranchRates.rates", "shrinkage local clock branch rates", 1.0);
 
         // Random local clock
         createParameterGammaPrior(ClockType.LOCAL_CLOCK + ".relativeRates", "random local clock relative rates",
@@ -169,8 +170,6 @@ public class PartitionClockModel extends PartitionOptions {
 
         // Uncorrelated clock
         createParameter("branchRates.categories", "relaxed clock branch rate categories");
-
-        createParameter("branchRates.rates", "relaxed clock branch rates", 1.0);
 
         //createZeroOneParameter("branchRates.quantiles", "relaxed clock branch rate quantiles", 0.5);
         createZeroOneParameterUniformPrior("branchRates.quantiles", "relaxed clock branch rate quantiles", 0.5);

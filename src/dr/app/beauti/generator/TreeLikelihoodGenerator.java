@@ -90,7 +90,9 @@ public class TreeLikelihoodGenerator extends Generator {
         Attribute[] attributes = new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, idString),
                 new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood()),
-                new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_PREORDER, clockModel.getClockType() == ClockType.HMC_CLOCK)
+                new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_PREORDER,
+                        clockModel.getClockType() == ClockType.HMC_CLOCK ||
+                                clockModel.getClockType() == ClockType.SHRINKAGE_LOCAL_CLOCK)
         };
 
         writer.writeComment("Likelihood for tree given sequence data");

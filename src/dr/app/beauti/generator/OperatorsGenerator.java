@@ -632,7 +632,18 @@ public class OperatorsGenerator extends Generator {
                 }
         );
         writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT);
-        writer.writeIDref(BranchRateGradientWrtIncrementsParser.GRADIENT, prefix + "branchRateGradientWrtIncrements");
+
+        writer.writeComment("gradient of likelihood wrt increments");
+        writer.writeOpenTag(BranchRateGradientWrtIncrementsParser.GRADIENT);
+
+        writer.writeComment("gradient of likelihood wrt subst branch rates");
+        writer.writeOpenTag(BranchRateGradientParser.NAME, new Attribute.Default<>("traitName", "Sequence"));
+        writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, prefix + "treeLikelihood");
+        writer.writeCloseTag(BranchRateGradientParser.NAME);
+
+        writer.writeIDref(AutoCorrelatedGradientWrtIncrementsParser.GRADIENT, prefix + "incrementGradient");
+        writer.writeCloseTag(BranchRateGradientWrtIncrementsParser.GRADIENT);
+
         writer.writeIDref(AutoCorrelatedGradientWrtIncrementsParser.GRADIENT, prefix + "incrementGradient");
         writer.writeCloseTag(JointGradientParser.JOINT_GRADIENT);
 

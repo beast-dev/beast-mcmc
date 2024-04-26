@@ -469,7 +469,7 @@ public class PartitionClockModel extends PartitionOptions {
             case STRICT_CLOCK:
                 return getOperator("upDownRateHeights");
             case SHRINKAGE_LOCAL_CLOCK:
-                return getOperator("upDownRateHeights");
+                return getOperator("upDownShrinkageRateHeights");
             case RANDOM_LOCAL_CLOCK:
                 return getOperator("upDownRateHeights");
             case FIXED_LOCAL_CLOCK:

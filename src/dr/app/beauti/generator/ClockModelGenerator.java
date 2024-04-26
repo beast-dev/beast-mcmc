@@ -62,6 +62,7 @@ import dr.inferencexml.model.SumStatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
+import static dr.inference.model.ParameterParser.DIMENSION;
 import static dr.inference.model.ParameterParser.PARAMETER;
 import static dr.inferencexml.distribution.PriorParsers.*;
 import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.*;
@@ -320,6 +321,9 @@ public class ClockModelGenerator extends Generator {
 
                 writer.writeOpenTag(BayesianBridgeDistributionModelParser.BAYESIAN_BRIDGE_DISTRIBUTION,
                         new Attribute.Default<>(XMLParser.ID,prefix  + "bbDistribution"));
+                writer.writeOpenTag(BayesianBridgeDistributionModelParser.DIMENSION);
+                writer.writeIDref(PARAMETER, prefix + "branchRates.rates");
+                writer.writeCloseTag(BayesianBridgeDistributionModelParser.DIMENSION);
                 writer.writeOpenTag(SLAB_WIDTH);
                 writeParameter(prefix + SLAB_WIDTH, -1, 2.0, Double.NaN, Double.NaN, writer);
                 writer.writeCloseTag(SLAB_WIDTH);
@@ -374,22 +378,6 @@ public class ClockModelGenerator extends Generator {
                         new Attribute.Default<>(XMLParser.ID, prefix  + "incrementGradient"));
                 writer.writeIDref(AutoCorrelatedBranchRatesDistributionParser.AUTO_CORRELATED_RATES, prefix + "substBranchRatesPrior");
                 writer.writeCloseTag(AutoCorrelatedGradientWrtIncrementsParser.GRADIENT);
-
-                writer.writeComment("gradient of likelihood wrt subst branch rates");
-                writer.writeOpenTag(BranchRateGradientParser.NAME, new Attribute[] {
-                        new Attribute.Default<>(XMLParser.ID,
-                                prefix  + "substBranchRateGradient"),
-                        new Attribute.Default<>("traitName", "Sequence")
-                });
-                writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, prefix + "treeLikelihood");
-                writer.writeCloseTag(BranchRateGradientParser.NAME);
-
-                writer.writeComment("gradient of likelihood wrt increments");
-                writer.writeOpenTag(BranchRateGradientWrtIncrementsParser.GRADIENT,
-                        new Attribute.Default<>(XMLParser.ID, prefix  + "branchRateGradientWrtIncrements"));
-                writer.writeIDref(BranchRateGradientParser.NAME, prefix + "substBranchRateGradient");
-                writer.writeIDref(AutoCorrelatedGradientWrtIncrementsParser.GRADIENT, prefix + "incrementGradient");
-                writer.writeCloseTag(BranchRateGradientWrtIncrementsParser.GRADIENT);
 
                 writer.writeComment("log branch rates for tree");
                 writer.writeOpenTag(TransformedTreeTraitParser.NAME,

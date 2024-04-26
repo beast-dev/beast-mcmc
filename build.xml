@@ -673,7 +673,8 @@
     </target>
 
     <!-- this will only work on Andrew's computer -->
-    <property name="AppleSigner" value="Developer ID Application: Andrew Rambaut (9E4WXAQ6SE)" />
+    <property name="AppleSignerApplication" value="Developer ID Application: Andrew Rambaut (9E4WXAQ6SE)" />
+    <property name="AppleSignerInstaller" value="Developer ID Installer: Andrew Rambaut (9E4WXAQ6SE)" />
 
     <target name="mac" depends="dist"
             description="release Mac version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
@@ -738,7 +739,7 @@
         <exec executable="codesign">
             <arg value="--deep"/>
             <arg value="-s"/>
-            <arg value="${AppleSigner}"/>
+            <arg value="${AppleSignerApplication}"/>
             <arg value="-v"/>
             <arg value="${Mac_package_dir}/${BEAST_name} v${version}.app"/>
         </exec>
@@ -746,7 +747,7 @@
         <jarbundler dir="${Mac_package_dir}"
                     name="${BEAUti_name} v${version}"
                     mainclass="dr.app.beauti.BeautiApp"
-                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub_BEAST"
+                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/beauti.icns"
                     jvmversion="${jvm_version}"
@@ -777,7 +778,7 @@
         <exec executable="codesign">
             <arg value="--deep"/>
             <arg value="-s"/>
-            <arg value="${AppleSigner}"/>
+            <arg value="${AppleSignerApplication}"/>
             <arg value="-v"/>
             <arg value="${Mac_package_dir}/${BEAUti_name} v${version}.app"/>
         </exec>
@@ -806,7 +807,7 @@
         <exec executable="codesign">
             <arg value="--deep"/>
             <arg value="-s"/>
-            <arg value="${AppleSigner}"/>
+            <arg value="${AppleSignerApplication}"/>
             <arg value="-v"/>
             <arg value="${Mac_package_dir}/${LogCombiner_name} v${version}.app"/>
         </exec>
@@ -835,7 +836,7 @@
         <exec executable="codesign">
             <arg value="--deep"/>
             <arg value="-s"/>
-            <arg value="${AppleSigner}"/>
+            <arg value="${AppleSignerApplication}"/>
             <arg value="-v"/>
             <arg value="${Mac_package_dir}/${TreeAnnotator_name} v${version}.app"/>
         </exec>
@@ -851,7 +852,7 @@
                     highresolutioncapable="true"
                     arguments=""
                     version="${version}"
-                    copyright="${TreeStat_name} v${version}, ${copyright}, Alexei J. Drummond and Andrew Rambaut"
+                    copyright="${TreeStat_name} v${version}, ${copyright}, Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard"
                     bundleid="dr.app.treestat">
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>
@@ -864,7 +865,7 @@
         <exec executable="codesign">
             <arg value="--deep"/>
             <arg value="-s"/>
-            <arg value="${AppleSigner}"/>
+            <arg value="${AppleSignerApplication}"/>
             <arg value="-v"/>
             <arg value="${Mac_package_dir}/${TreeStat_name} v${version}.app"/>
         </exec>
@@ -884,7 +885,7 @@
 
         <exec executable="codesign">
             <arg value="-s"/>
-            <arg value="${AppleSigner}"/>
+            <arg value="${AppleSignerInstaller}"/>
             <arg value="-v"/>
             <arg value="${release_dir}/${BEAST_name} v${version}.dmg"/>
         </exec>

@@ -10,7 +10,7 @@ import dr.xml.*;
  */
 public class TransformedTreeTraitParser extends AbstractXMLObjectParser {
 
-    private static final String NAME = "transformedTrait";
+    public static final String NAME = "transformedTrait";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

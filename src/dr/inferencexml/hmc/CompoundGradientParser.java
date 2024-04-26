@@ -41,7 +41,7 @@ import java.util.List;
 public class CompoundGradientParser extends AbstractXMLObjectParser {
 
     public final static String SUM_DERIVATIVE = "appendedPotentialDerivative";
-    public static final String SUM_DERIVATIVE2 = "compoundGradient";
+    public static final String COMPOUND_GRADIENT = "compoundGradient";
 
     @Override
     public String getParserName() {
@@ -50,7 +50,7 @@ public class CompoundGradientParser extends AbstractXMLObjectParser {
 
     @Override
     public String[] getParserNames() {
-        return new String[]{SUM_DERIVATIVE, SUM_DERIVATIVE2};
+        return new String[]{SUM_DERIVATIVE, COMPOUND_GRADIENT};
     }
 
     @Override

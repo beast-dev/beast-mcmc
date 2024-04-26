@@ -32,9 +32,14 @@ public enum ClockType {
 
     STRICT_CLOCK("Strict clock"),
     UNCORRELATED("Uncorrelated relaxed clock"),
-    RANDOM_LOCAL_CLOCK("Random local clock"),
+    HMC_CLOCK("Hamiltonian Monte Carlo relaxed clock"),
+
+    SHRINKAGE_LOCAL_CLOCK("Shrinkage local clock"),
+    RANDOM_LOCAL_CLOCK("Classic random local clock"),
     FIXED_LOCAL_CLOCK("Fixed local clock"),
-    MIXED_EFFECTS_CLOCK("Mixed effects clock"),
+
+    // @todo - this doesn't seem to have been fully implemented so am removing for now
+//    MIXED_EFFECTS_CLOCK("Mixed effects clock"),
     AUTOCORRELATED("Autocorrelated relaxed clock");
 
     ClockType(String displayName) {
@@ -53,6 +58,9 @@ public enum ClockType {
     final public static String UCLD_STDEV = "ucld.stdev";
     final public static String UCGD_MEAN = "ucgd.mean";
     final public static String UCGD_SHAPE = "ucgd.shape";
+    final public static String SHRINKAGE_CLOCK_LOCATION = "branchRates.rate";
+    final public static String HMC_CLOCK_LOCATION = "branchRates.rate";
+    final public static String HMCLN_SCALE = "branchRates.scale";
 
     final public static String ACLD_MEAN = "acld.mean";
     final public static String ACLD_STDEV = "acld.stdev";

@@ -35,7 +35,6 @@ import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.*;
 import dr.evolution.io.FastaImporter;
 import dr.evolution.io.Importer.ImportException;
-import dr.evolution.io.MicroSatImporter;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.NexusImporter.MissingBlockException;
@@ -91,9 +90,6 @@ public class BEAUTiImporter {
 //            } else {
 //                // assume it is a tab-delimited traits file and see if that works...
 //                importTraits(file);
-            } else if ((line != null && line.toUpperCase().contains("#MICROSAT"))) {
-                // MicroSatellite
-                importMicroSatFile(file);
             } else {
                 throw new ImportException("Unrecognized format for imported file.");
             }
@@ -114,37 +110,6 @@ public class BEAUTiImporter {
 
         bufferedReader.close();
         return line;
-    }
-
-    // micro-sat
-    private void importMicroSatFile(File file) throws IOException, ImportException {
-        try {
-            Reader reader = new FileReader(file);
-            BufferedReader bufferedReader = new BufferedReader(reader);
-
-            MicroSatImporter importer = new MicroSatImporter(bufferedReader);
-
-            List<Patterns> microsatPatList = importer.importPatterns();
-            Taxa unionSetTaxonList = importer.getUnionSetTaxonList();
-            Microsatellite microsatellite = importer.getMicrosatellite();
-//            options.allowDifferentTaxa = importer.isHasDifferentTaxon();
-
-            bufferedReader.close();
-
-            PartitionSubstitutionModel substModel = new PartitionSubstitutionModel(options, microsatPatList.get(0).getId());
-            substModel.setMicrosatellite(microsatellite);
-
-            for (Patterns patterns : microsatPatList) {
-                setData(file.getName(), unionSetTaxonList, patterns, substModel, null);
-            }
-            // has to call after data is imported
-            options.microsatelliteOptions.initModelParametersAndOpererators();
-
-        } catch (ImportException e) {
-            throw new ImportException(e.getMessage());
-        } catch (IOException e) {
-            throw new IOException(e.getMessage());
-        }
     }
 
     // xml

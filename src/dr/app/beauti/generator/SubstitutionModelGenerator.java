@@ -29,7 +29,6 @@ import dr.app.beauti.options.*;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.types.FrequencyPolicyType;
-import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
@@ -165,10 +164,6 @@ public class SubstitutionModelGenerator extends Generator {
             case DataType.GENERAL:
             case DataType.CONTINUOUS:
                 //handled by component
-                break;
-
-            case DataType.MICRO_SAT:
-                writeMicrosatSubstModel(model, writer);
                 break;
 
             case DataType.DUMMY:
@@ -564,10 +559,6 @@ public class SubstitutionModelGenerator extends Generator {
                 // these datatypes are handled by components
                 break;
 
-            case DataType.MICRO_SAT:
-                writeMicrosatSubstModelParameterRef(model, writer);
-                break;
-
             case DataType.DUMMY:
                 //Do nothing
                 break;
@@ -595,32 +586,6 @@ public class SubstitutionModelGenerator extends Generator {
             } else {
                 writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "pInv");
             }
-        }
-    }
-
-    public void writeMicrosatSubstModelParameterRef(PartitionSubstitutionModel model, XMLWriter writer) {
-        if (model.getRatePorportion() == MicroSatModelType.RateProportionality.EQUAL_RATE) {
-
-        } else if (model.getRatePorportion() == MicroSatModelType.RateProportionality.PROPORTIONAL_RATE) {
-            writeParameterRef(model.getPrefix() + "propLinear", writer);
-        } else if (model.getRatePorportion() == MicroSatModelType.RateProportionality.ASYM_QUAD) {
-
-        }
-        if (model.getMutationBias() == MicroSatModelType.MutationalBias.UNBIASED) {
-
-        } else if (model.getMutationBias() == MicroSatModelType.MutationalBias.CONSTANT_BIAS) {
-            writeParameterRef(model.getPrefix() + "biasConst", writer);
-        } else if (model.getMutationBias() == MicroSatModelType.MutationalBias.LINEAR_BIAS) {
-            writeParameterRef(model.getPrefix() + "biasConst", writer);
-            writeParameterRef(model.getPrefix() + "biasLinear", writer);
-        }
-        if (model.getPhase() == MicroSatModelType.Phase.ONE_PHASE) {
-
-        } else if (model.getPhase() == MicroSatModelType.Phase.TWO_PHASE) {
-            writeParameterRef(model.getPrefix() + "geomDist", writer);
-        } else if (model.getPhase() == MicroSatModelType.Phase.TWO_PHASE_STAR) {
-            writeParameterRef(model.getPrefix() + "geomDist", writer);
-            writeParameterRef(model.getPrefix() + "onePhaseProb", writer);
         }
     }
 
@@ -899,77 +864,6 @@ public class SubstitutionModelGenerator extends Generator {
                 new Attribute.Default<String>(StatisticParser.NAME, "mu")});
         writer.writeIDref(siteModelTag, prefix + siteModelTag);
         writer.writeCloseTag(StatisticParser.STATISTIC);
-    }
-
-    private void writeMicrosatSubstModel(PartitionSubstitutionModel model, XMLWriter writer) {
-
-        writer.writeOpenTag(AsymmetricQuadraticModel.ASYMQUAD_MODEL, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + AsymmetricQuadraticModel.ASYMQUAD_MODEL),
-                new Attribute.Default<Boolean>(AsymQuadModelParser.IS_SUBMODEL,
-                        !(model.getMutationBias() == MicroSatModelType.MutationalBias.UNBIASED
-                                && model.getPhase() == MicroSatModelType.Phase.ONE_PHASE)), // ?U1 is false
-        });
-        writer.writeIDref(MicrosatelliteParser.MICROSAT, model.getMicrosatellite().getName());
-
-//        if (model.getRatePorportion() == MicroSatModelType.RateProportionality.EQUAL_RATE) {
-//            // no xml
-//        } else
-        if (model.getRatePorportion() == MicroSatModelType.RateProportionality.PROPORTIONAL_RATE) {
-            writeParameter(AsymQuadModelParser.EXPANSION_LIN, "propLinear", model, writer);
-            writeParameterRef(AsymQuadModelParser.CONTRACTION_LIN, model.getPrefix() + "propLinear", writer);
-        } else if (model.getRatePorportion() == MicroSatModelType.RateProportionality.ASYM_QUAD) {
-
-        }
-        writer.writeCloseTag(AsymmetricQuadraticModel.ASYMQUAD_MODEL);
-
-        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        if (model.getMutationBias() != MicroSatModelType.MutationalBias.UNBIASED) {
-            writer.writeOpenTag(LinearBiasModel.LINEAR_BIAS_MODEL, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + LinearBiasModel.LINEAR_BIAS_MODEL),
-                    new Attribute.Default<Boolean>(LinearBiasModelParser.LOGISTICS, true),
-                    new Attribute.Default<Boolean>(LinearBiasModelParser.ESTIMATE_SUBMODEL_PARAMS,
-                            model.getMutationBias() == MicroSatModelType.MutationalBias.LINEAR_BIAS),
-                    new Attribute.Default<Boolean>(LinearBiasModelParser.IS_SUBMODEL,
-                            model.getPhase() != MicroSatModelType.Phase.ONE_PHASE),
-            });
-            writer.writeIDref(MicrosatelliteParser.MICROSAT, model.getMicrosatellite().getName());
-
-//            if (model.getMutationBias() == MicroSatModelType.MutationalBias.CONSTANT_BIAS)
-            writeParameterRef(LinearBiasModelParser.SUBMODEL, model.getPrefix() + AsymmetricQuadraticModel.ASYMQUAD_MODEL, writer);
-
-            writeParameter(LinearBiasModelParser.BIAS_CONSTANT, "biasConst", model, writer);
-
-            if (model.getMutationBias() == MicroSatModelType.MutationalBias.LINEAR_BIAS) {
-                writeParameter(LinearBiasModelParser.BIAS_LINEAR, "biasLinear", model, writer);
-            }
-            writer.writeCloseTag(LinearBiasModel.LINEAR_BIAS_MODEL);
-        }
-
-        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        if (model.getPhase() != MicroSatModelType.Phase.ONE_PHASE) {
-            writer.writeOpenTag(TwoPhaseModel.TWO_PHASE_MODEL, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + TwoPhaseModel.TWO_PHASE_MODEL),
-                    new Attribute.Default<Boolean>(TwoPhaseModelParser.ESTIMATE_SUBMODEL_PARAMS, true),
-            });
-            writer.writeIDref(MicrosatelliteParser.MICROSAT, model.getMicrosatellite().getName());
-
-            if (model.getMutationBias() == MicroSatModelType.MutationalBias.UNBIASED) {
-                writeParameterRef(TwoPhaseModelParser.SUBMODEL, model.getPrefix() + AsymmetricQuadraticModel.ASYMQUAD_MODEL, writer);
-            } else {
-                writeParameterRef(TwoPhaseModelParser.SUBMODEL, model.getPrefix() + LinearBiasModel.LINEAR_BIAS_MODEL, writer);
-            }
-
-            if (model.getPhase() == MicroSatModelType.Phase.TWO_PHASE) {
-                writeParameter(TwoPhaseModelParser.GEO_PARAM, "geomDist", model, writer);
-                writer.writeOpenTag(TwoPhaseModelParser.ONEPHASEPR_PARAM);
-                writeParameter(model.getPrefix() + "onePhaseProb", 1, 0.0, Double.NaN, Double.NaN, writer);
-                writer.writeCloseTag(TwoPhaseModelParser.ONEPHASEPR_PARAM);
-            } else if (model.getPhase() == MicroSatModelType.Phase.TWO_PHASE_STAR) {
-                writeParameter(TwoPhaseModelParser.GEO_PARAM, "geomDist", model, writer);
-                writeParameter(TwoPhaseModelParser.ONEPHASEPR_PARAM, "onePhaseProb", model, writer);
-            }
-            writer.writeCloseTag(TwoPhaseModel.TWO_PHASE_MODEL);
-        }
     }
 
 }

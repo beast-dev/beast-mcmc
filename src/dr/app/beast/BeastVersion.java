@@ -102,10 +102,11 @@ public class BeastVersion implements Version, Citable {
                 "",
                 "BEAST developers:",
                 "\tAlex Alekseyenko, Daniel Ayres, Guy Baele, Trevor Bedford, Filip Bielejec, Erik Bloomquist, ",
-                "\tMichael Karcher, Gabriela Cybis, Mandev Gill, Matthew Hall, Gabe Hassler, Joseph Heled, ",
-                "\tSebastian Hoehna, Xiang Ji, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li, Gerton Lunter, ",
-                "\tAndy Magee, Sidney Markowitz, JT McCrone, Volodymyr Minin, Julia Palacios, Michael Defoin Platel, ",
-                "\tOliver Pybus, Yucai Shao, Max Tolkoff, Chieh-Hsi Wu, Walter Xie and Zhenyu Zhang",
+                "\tLuiz Max Carvalho, Gabriela Cybis, Mandev Gill, Matthew Hall, Gabe Hassler, Joseph Heled, ",
+                "\tSebastian Hoehna, Xiang Ji, Michael Karcher, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li, ",
+                "\tGerton Lunter, Andy Magee, Sidney Markowitz, JT McCrone, Volodymyr Minin, Julia Palacios, ",
+                "\tMichael Defoin Platel, Oliver Pybus, Yucai Shao, Max Tolkoff, Chieh-Hsi Wu, Walter Xie and ",
+                "\tZhenyu Zhang",
                 "",
                 "Thanks to:",
                 "\tRoald Forsberg, Beth Shapiro and Korbinian Strimmer"};
@@ -116,19 +117,22 @@ public class BeastVersion implements Version, Citable {
                 "<p>Designed and developed by<br>" +
                         "Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard</p>" +
                         "<p>Department of Computer Science, University of Auckland<br>" +
-                        "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +
-                        "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
-                        "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
+                        "alexei@cs.auckland.ac.nz</p>" +
+                        "<p>Institute of Ecology and Evolution, University of Edinburgh<br>" +
+                        "a.rambaut@ed.ac.uk</p>" +
                         "<p>David Geffen School of Medicine, University of California, Los Angeles<br>" +
-                        "<a href=\"mailto:msuchard@ucla.edu\">msuchard@ucla.edu</a></p>" +
-                        "<p><a href=\"http://beast.community\">http://beast.community</a></p>" +
+                        "msuchard@ucla.edu</p>" +
+                        "<p>BEAST website and documentation:<br>" +
+                        "<em>http://beast.community</em></p>" +
                         "<p>Source code distributed under the GNU LGPL:<br>" +
-                        "<a href=\"http://github.com/beast-dev/beast-mcmc\">http://github.com/beast-dev/beast-mcmc</a></p>" +
+                        "<em>http://github.com/beast-dev/beast-mcmc</em></p>" +
                         "<p>BEAST developers:<br>" +
-                        "Alex Alekseyenko, Guy Baele, Trevor Bedford, Filip Bielejec, Erik Bloomquist, Matthew Hall,<br>"+
-                        "Joseph Heled, Sebastian Hoehna, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li,<br>"+
-                        "Gerton Lunter, Sidney Markowitz, Vladimir Minin, Michael Defoin Platel,<br>"+
-                        "Oliver Pybus, Chieh-Hsi Wu, Walter Xie</p>" +
+                        "Alex Alekseyenko, Daniel Ayres, Guy Baele, Trevor Bedford, Filip Bielejec, Erik Bloomquist,<br>"+
+                        "Luiz Max Carvalho, Gabriela Cybis, Mandev Gill, Matthew Hall, Gabe Hassler, Joseph Heled,<br>"+
+                        "Sebastian Hoehna, Xiang Ji, Michael Karcher, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li,<br>"+
+                        "Gerton Lunter, Andy Magee, Sidney Markowitz, JT McCrone, Volodymyr Minin, Julia Palacios,<br>"+
+                        "Michael Defoin Platel, Oliver Pybus, Yucai Shao, Max Tolkoff, Chieh-Hsi Wu, Walter Xie and<br>"+
+                        "Zhenyu Zhang</p>" +
                         "<p>Thanks to Roald Forsberg, Beth Shapiro and Korbinian Strimmer</p>";
     }
 

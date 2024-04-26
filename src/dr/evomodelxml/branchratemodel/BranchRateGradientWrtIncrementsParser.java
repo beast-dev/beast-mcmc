@@ -41,7 +41,7 @@ import java.util.List;
 
 public class BranchRateGradientWrtIncrementsParser extends AbstractXMLObjectParser {
 
-    private static final String GRADIENT = "branchRateGradientWrtIncrements";
+    public static final String GRADIENT = "branchRateGradientWrtIncrements";
 
     public String getParserName() {
         return GRADIENT;

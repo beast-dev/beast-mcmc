@@ -118,6 +118,28 @@ public class PartitionClockModel extends PartitionOptions {
                 .initial(1.0 / 3.0).mean(1.0 / 3.0).offset(0.0).partitionOptions(this)
                 .isAdaptiveMultivariateCompatible(true).build(parameters);
 
+        new Parameter.Builder(ClockType.HMC_CLOCK_LOCATION, "HMC relaxed clock rate").
+                prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
+                .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(false).build(parameters);
+
+        new Parameter.Builder(ClockType.SHRINKAGE_CLOCK_LOCATION, "Shrinkage clock rate").
+                prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
+                .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(false).build(parameters);
+
+        new Parameter.Builder(ClockType.HMCLN_SCALE, "HMC relaxed clock scale").
+                prior(PriorType.EXPONENTIAL_PRIOR).isNonNegative(true)
+                .initial(1.0).mean(1.0).offset(0.0).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(false).build(parameters);
+
+        // Shrinkage clock
+        createOperator("GIBBS_SHRINKAGE_CLOCK", "shrinkage local clock",
+                "shrinkage local clock Gibbs operator", null, OperatorType.SHRINKAGE_CLOCK_GIBBS_OPERATOR ,1 , 4.0);
+        createOperator("HMC_SHRINKAGE_CLOCK", "shrinkage local clock",
+                "shrinkage local clock Hamiltonian operator", null, OperatorType.SHRINKAGE_CLOCK_HMC_OPERATOR ,1 , 8.0);
+        createScaleOperator(ClockType.SHRINKAGE_CLOCK_LOCATION, demoTuning, rateWeights);
+
         // Random local clock
         createParameterGammaPrior(ClockType.LOCAL_CLOCK + ".relativeRates", "random local clock relative rates",
                 PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.5, 2.0, false, false);
@@ -148,6 +170,8 @@ public class PartitionClockModel extends PartitionOptions {
         // Uncorrelated clock
         createParameter("branchRates.categories", "relaxed clock branch rate categories");
 
+        createParameter("branchRates.rates", "relaxed clock branch rates", 1.0);
+
         //createZeroOneParameter("branchRates.quantiles", "relaxed clock branch rate quantiles", 0.5);
         createZeroOneParameterUniformPrior("branchRates.quantiles", "relaxed clock branch rate quantiles", 0.5);
 
@@ -165,6 +189,12 @@ public class PartitionClockModel extends PartitionOptions {
         createScaleOperator(ClockType.UCLD_STDEV, demoTuning, rateWeights);
         createScaleOperator(ClockType.UCGD_MEAN, demoTuning, rateWeights);
         createScaleOperator(ClockType.UCGD_SHAPE, demoTuning, rateWeights);
+
+        createOperator("HMCLN", "HMC relaxed clock",
+                "Hamiltonian Monte Carlo relaxed clock operator", null, OperatorType.RELAXED_CLOCK_HMC_OPERATOR ,1 , 1.0);
+        createScaleOperator(ClockType.HMC_CLOCK_LOCATION, demoTuning, rateWeights);
+        createScaleOperator(ClockType.HMCLN_SCALE, demoTuning, rateWeights);
+
 
         // Random local clock
         createOperator(ClockType.LOCAL_CLOCK + ".relativeRates", OperatorType.RANDOM_WALK, demoTuning, treeWeights);
@@ -201,9 +231,10 @@ public class PartitionClockModel extends PartitionOptions {
                 "branchRates.distributionIndex", OperatorType.INTEGER_UNIFORM, 0, branchWeights / 3);
 
         createUpDownOperator("upDownRateHeights", "Evolutionary rate and heights",
-                "Scales substitution rates inversely to node heights of the tree",
+                "Scales clock rate inversely to node heights of the tree",
                 getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
-                getParameter("clock.rate"), OperatorType.UP_DOWN, demoTuning, rateWeights);
+                getClockRateParameter(), OperatorType.UP_DOWN, demoTuning, rateWeights);
+
         createUpDownOperator("upDownUCEDMeanHeights", "UCED mean and heights",
                 "Scales UCED mean inversely to node heights of the tree",
                 getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
@@ -218,10 +249,15 @@ public class PartitionClockModel extends PartitionOptions {
                 getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
                 getParameter(ClockType.UCGD_MEAN), OperatorType.UP_DOWN, demoTuning, rateWeights);
 
-        createUpDownOperator("microsatUpDownRateHeights", "Evolutionary rate and heights",
-                "Scales substitution rates inversely to node heights of the tree",
+        createUpDownOperator("upDownShrinkageRateHeights", "Evolutionary rate and heights",
+                "Scales clock rate inversely to node heights of the tree",
                 getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
-                getParameter("clock.rate"), OperatorType.MICROSAT_UP_DOWN, demoTuning, branchWeights);
+                getParameter(ClockType.SHRINKAGE_CLOCK_LOCATION), OperatorType.UP_DOWN, demoTuning, rateWeights);
+
+        createUpDownOperator("upDownHMCRateHeights", "Evolutionary rate and heights",
+                "Scales clock rate inversely to node heights of the tree",
+                getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
+                getParameter(ClockType.HMC_CLOCK_LOCATION), OperatorType.UP_DOWN, demoTuning, rateWeights);
     }
 
     // From PartitionClockModelTreeModelLink
@@ -260,6 +296,10 @@ public class PartitionClockModel extends PartitionOptions {
 
             switch (clockType) {
                 case STRICT_CLOCK:
+                    params.add(getClockRateParameter());
+                    break;
+
+                case SHRINKAGE_LOCAL_CLOCK:
                     params.add(getClockRateParameter());
                     break;
 
@@ -321,6 +361,19 @@ public class PartitionClockModel extends PartitionOptions {
                     }
                     break;
 
+                case HMC_CLOCK:
+                    // add the scale parameter (if needed) for the distribution. The location parameter will be added
+                    // in getClockRateParameter.
+                    switch (clockDistributionType) {
+                        case LOGNORMAL:
+                            params.add(getClockRateParameter());
+                            params.add(getParameter(ClockType.HMCLN_SCALE));
+                            break;
+                        default:
+                            throw new UnsupportedOperationException("Only lognormal supported for HMC");
+                    }
+                    break;
+
                 case AUTOCORRELATED:
                     throw new UnsupportedOperationException("Autocorrelated clock not implemented yet");
 //                    params.add(getParameter("branchRates.var"));
@@ -347,6 +400,10 @@ public class PartitionClockModel extends PartitionOptions {
                 rateParam = getParameter("clock.rate");
                 break;
 
+            case SHRINKAGE_LOCAL_CLOCK:
+                rateParam = getParameter(ClockType.SHRINKAGE_CLOCK_LOCATION);
+                break;
+
             case RANDOM_LOCAL_CLOCK:
                 rateParam = getParameter("clock.rate");
                 break;
@@ -371,6 +428,18 @@ public class PartitionClockModel extends PartitionOptions {
                         break;
                     case MODEL_AVERAGING:
                         break;
+                    default:
+                        throw new UnsupportedOperationException("Unknown clock distribution type");
+                }
+                break;
+
+            case HMC_CLOCK:
+                switch (clockDistributionType) {
+                    case LOGNORMAL:
+                        rateParam = getParameter(ClockType.HMC_CLOCK_LOCATION);
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Only lognormal supported for HMC relaxed clock");
                 }
                 break;
 
@@ -399,6 +468,8 @@ public class PartitionClockModel extends PartitionOptions {
         switch (clockType) {
             case STRICT_CLOCK:
                 return getOperator("upDownRateHeights");
+            case SHRINKAGE_LOCAL_CLOCK:
+                return getOperator("upDownRateHeights");
             case RANDOM_LOCAL_CLOCK:
                 return getOperator("upDownRateHeights");
             case FIXED_LOCAL_CLOCK:
@@ -415,9 +486,11 @@ public class PartitionClockModel extends PartitionOptions {
 //                            break;
                     case EXPONENTIAL:
                         return getOperator("upDownUCEDMeanHeights");
+                    default:
+                        throw new UnsupportedOperationException("Unknown clock distribution type");
                 }
-                break;
-
+            case HMC_CLOCK:
+                return getOperator("upDownHMCRateHeights");
             case AUTOCORRELATED:
                 throw new UnsupportedOperationException("Autocorrelated clock not implemented yet");
 //                    rateParam = getParameter("treeModel.rootRate");//TODO fix tree?
@@ -426,7 +499,6 @@ public class PartitionClockModel extends PartitionOptions {
             default:
                 throw new IllegalArgumentException("Unknown clock model");
         }
-        return null;
     }
 
     @Override
@@ -450,6 +522,13 @@ public class PartitionClockModel extends PartitionOptions {
                     case STRICT_CLOCK:
                         ops.add(rateOperator);
                         addUpDownOperator(ops, rateOperator);
+                        break;
+
+                    case SHRINKAGE_LOCAL_CLOCK:
+                        ops.add(rateOperator = getOperator(ClockType.SHRINKAGE_CLOCK_LOCATION));
+                        addUpDownOperator(ops, rateOperator);
+                        ops.add(getOperator("GIBBS_SHRINKAGE_CLOCK"));
+                        ops.add(getOperator("HMC_SHRINKAGE_CLOCK"));
                         break;
 
                     case RANDOM_LOCAL_CLOCK:
@@ -519,6 +598,19 @@ public class PartitionClockModel extends PartitionOptions {
                         }
                         break;
 
+                    case HMC_CLOCK:
+                        switch (clockDistributionType) {
+                            case LOGNORMAL:
+                                ops.add(rateOperator = getOperator(ClockType.HMC_CLOCK_LOCATION));
+                                ops.add(getOperator(ClockType.HMCLN_SCALE));
+                                addUpDownOperator(ops, rateOperator);
+                                ops.add(getOperator("HMCLN"));
+                                break;
+                            default:
+                                throw new UnsupportedOperationException("Only lognormal supported for HMC relaxed clock");
+                        }
+                        break;
+
                     case AUTOCORRELATED:
                         throw new UnsupportedOperationException("Autocorrelated clock not implemented yet");
 //                        break;
@@ -536,11 +628,11 @@ public class PartitionClockModel extends PartitionOptions {
             ops.add(getOperator(options.useNuRelativeRates() ? "deltaNus" : "deltaMus"));
         }
 
-        if (options.operatorSetType != OperatorSetType.CUSTOM) {
+        if (options.operatorSetType == OperatorSetType.ADAPTIVE_MULTIVARIATE) {
             // unless a custom mix has been chosen these operators should be off if AMTK is on
             for (Operator op : ops) {
-                if (op.getParameter1().isAdaptiveMultivariateCompatible) {
-                    op.setUsed(options.operatorSetType != OperatorSetType.ADAPTIVE_MULTIVARIATE);
+                if (op.getParameter1() != null && op.getParameter1().isAdaptiveMultivariateCompatible) {
+                    op.setUsed(false);
                 }
             }
         }

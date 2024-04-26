@@ -407,14 +407,16 @@ public class HierarchicalPriorDialog {
     // options panels
 
     class NormalOptionsPanel extends PriorOptionsPanel {
+        private final double MEAN_DEFAULT = 0.0;
+        private final double STDEV_DEFAULT = 1000.0;
 
         public NormalOptionsPanel() {
             super(false);
         }
 
         public void setup() {
-            addField("Hyperprior Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-            addField("Hyperprior Stdev", 1000.0, 0.0, Double.MAX_VALUE);
+            addField("Hyperprior Mean", MEAN_DEFAULT, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            addField("Hyperprior Stdev", STDEV_DEFAULT, 0.0, Double.MAX_VALUE);
         }
 
         public Distribution getDistribution() {
@@ -440,14 +442,16 @@ public class HierarchicalPriorDialog {
     }
 
     class GammaOptionsPanel extends PriorOptionsPanel {
+        private final double SHAPE_DEFAULT = 0.001;
+        private final double SCALE_DEFAULT = 1000.0;
 
         public GammaOptionsPanel() {
             super(false);
         }
 
         public void setup() {
-            addField("Hyperprior Shape", 0.001, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
-            addField("Hyperprior Scale", 1000.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+            addField("Hyperprior Shape", SHAPE_DEFAULT, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+            addField("Hyperprior Scale", SCALE_DEFAULT, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
 //            addField("Offset", 0.0, 0.0, Double.POSITIVE_INFINITY);
         }
 

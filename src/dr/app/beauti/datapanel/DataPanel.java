@@ -38,7 +38,6 @@ import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.DummyDataType;
-import dr.evolution.datatype.Microsatellite;
 import dr.evolution.util.Taxa;
 import jam.framework.Exportable;
 import jam.panels.ActionPanel;
@@ -554,10 +553,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
             for (AbstractPartitionData partition : selectedPartitionData) {
                 partition.setPartitionSubstitutionModel(model);
             }
-        }
-
-        if (options.getPartitionSubstitutionModels(Microsatellite.INSTANCE).size() <= 1) {
-            options.shareMicroSat = true;
         }
 
         modelsChanged();

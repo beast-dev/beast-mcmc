@@ -284,7 +284,14 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
             // will this update the tree nodes?
 
             NodeRef[] nodes = new NodeRef[tree.getNodeCount()];
-            System.arraycopy(tree.getNodes(), 0, nodes, 0, tree.getNodeCount());
+
+            if (tree instanceof EmpiricalTreeDistributionModel) {
+                for (int i = 0; i < tree.getNodeCount(); ++i) {
+                    nodes[i] = tree.getNode(i);
+                }
+            } else {
+                System.arraycopy(tree.getNodes(), 0, nodes, 0, tree.getNodeCount());
+            }
             Arrays.parallelSort(nodes, (a, b) -> Double.compare(tree.getNodeHeight(a), tree.getNodeHeight(b)));
 
             intervalCount = nodes.length - 1;

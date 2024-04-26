@@ -298,18 +298,18 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel implements 
         return columns;
     }
 
-    public TreeModel getCurrentTreeModel() {
-
-        if (treeModelCache.containsKey(currentTree)) {
-            return treeModelCache.get(currentTree);
-        } else {
-            TreeModel treeModel = new DefaultTreeModel(currentTree);
-            treeModelCache.put(currentTree, treeModel);
-            return treeModel;
-        }
-    }
-
-    Map<Tree, TreeModel> treeModelCache = new HashMap<>();
+//    public TreeModel getCurrentTreeModel() {
+//
+//        if (treeModelCache.containsKey(currentTree)) {
+//            return treeModelCache.get(currentTree);
+//        } else {
+//            TreeModel treeModel = new DefaultTreeModel(currentTree);
+//            treeModelCache.put(currentTree, treeModel);
+//            return treeModel;
+//        }
+//    }
+//
+//    Map<Tree, TreeModel> treeModelCache = new HashMap<>();
 
     private LogColumn[] columns;
 

@@ -309,7 +309,7 @@ public class BeastMain {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("BEAST " + version.getVersionString() + ", " + version.getDateString(), 60);
+        centreLine("BEAST X " + version.getVersionString() + ", " + version.getDateString(), 60);
         centreLine("Bayesian Evolutionary Analysis Sampling Trees", 60);
         for (String creditLine : version.getCredits()) {
             centreLine(creditLine, 60);
@@ -766,7 +766,7 @@ public class BeastMain {
 
         BeastConsoleApp consoleApp = null;
 
-        String nameString = "BEAST X" + version.getVersionString();
+        String nameString = "BEAST X " + version.getVersionString();
 
         if (window) {
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");
@@ -777,7 +777,7 @@ public class BeastMain {
 
             String titleString = "<html>" +
                     "<div style=\"font: HelveticaNeue, Helvetica, Arial, sans-serif\">" +
-                    "<p style=\"font-weight: 100; font-size: 42px\">BEAST</p>" +
+                    "<p style=\"font-weight: 100; font-size: 42px\">BEAST X</p>" +
                     "<p style=\"font-weight: 200; font-size: 12px\">Bayesian Evolutionary Analysis Sampling Trees</p>" +
                     "<p style=\"font-weight: 300; font-size: 11px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
                     "</div></html>";
@@ -803,7 +803,7 @@ public class BeastMain {
 
             String titleString = "<html>" +
                     "<div style=\"font: HelveticaNeue, Helvetica, Arial, sans-serif\">" +
-                    "<div style=\"font-weight: 100; font-size: 42px\">BEAST</div>" +
+                    "<div style=\"font-weight: 100; font-size: 42px\">BEAST X</div>" +
                     "<div style=\"font-weight: 200; font-size: 11px\">Bayesian Evolutionary Analysis Sampling Trees</div>" +
                     "<div style=\"font-weight: 300; font-size: 10px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</div>" +
                     "<div style=\"font-weight: 300; font-size: 10px\"><a href=\"" + version.getBuildString() + "\">" +
@@ -901,7 +901,7 @@ public class BeastMain {
 
             if (inputFileName == null) {
                 // No input file name was given so throw up a dialog box...
-                inputFile = Utils.getLoadFile("BEAST " + version.getVersionString() + " - Select XML input file");
+                inputFile = Utils.getLoadFile("BEAST X " + version.getVersionString() + " - Select XML input file");
             }
         }
 

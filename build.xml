@@ -412,6 +412,7 @@
 
     <property name="release_dir" value="release"/>
     <property name="BEAST_name" value="BEAST"/>
+    <property name="BEAST_package_name" value="BEAST X"/>
     <property name="BEAUti_name" value="BEAUti"/>
     <property name="TreeAnnotator_name" value="TreeAnnotator"/>
     <property name="LogCombiner_name" value="LogCombiner"/>
@@ -427,10 +428,10 @@
     <property name="Windows_launchers_dir" value="${release_dir}/Windows_Launchers"/>
     <property name="Packaging_dir" value="packaging_tools/windows"/>
 
-    <property name="Mac_package_dir" value="${Mac_dir}/${BEAST_name} v${version}"/>
-    <property name="Linux_package_dir" value="${Linux_dir}/${BEAST_name}v${version}"/>
-    <property name="Windows_package_dir" value="${Windows_dir}/${BEAST_name} v${version}"/>
-    <property name="Windows_launchers_package_dir" value="${Windows_launchers_dir}/${BEAST_name} v${version}"/>
+    <property name="Mac_package_dir" value="${Mac_dir}/${BEAST_package_name} v${version}"/>
+    <property name="Linux_package_dir" value="${Linux_dir}/${BEAST_package_name}v${version}"/>
+    <property name="Windows_package_dir" value="${Windows_dir}/${BEAST_package_name} v${version}"/>
+    <property name="Windows_launchers_package_dir" value="${Windows_launchers_dir}/${BEAST_package_name} v${version}"/>
 
     <!-- Need to either install Launch4j under {BEAST workspace}/${release}
                   or install it in the default directory and change the location of launch4j.dir -->
@@ -522,8 +523,8 @@
                     productVersion="${version}.0"
                     txtProductVersion="${version}"/>	-->
 
-        <zip destfile="${release_dir}/${BEAST_name} v${version}.zip">
-            <zipfileset dir="${Windows_package_dir}" prefix="${BEAST_name} v${version}"/>
+        <zip destfile="${release_dir}/${BEAST_package_name} v${version}.zip">
+            <zipfileset dir="${Windows_package_dir}" prefix="${BEAST_package_name} v${version}"/>
         </zip>
 
         <echo message="Windows version release is finished."/>
@@ -620,8 +621,8 @@
                     productVersion="${version}.0"
                     txtProductVersion="${version}"/>	-->
 
-        <zip destfile="${release_dir}/${BEAST_name} v${version}_launchers.zip">
-            <zipfileset dir="${Windows_launchers_package_dir}" prefix="${BEAST_name} v${version}"/>
+        <zip destfile="${release_dir}/${BEAST_package_name} v${version}_launchers.zip">
+            <zipfileset dir="${Windows_launchers_package_dir}" prefix="${BEAST_package_name} v${version}"/>
         </zip>
 
         <echo message="Windows launchers version release is finished."/>
@@ -703,7 +704,8 @@
         <copy file="${dist}/beast.jar" todir="${Mac_package_dir}/lib"/>
         <!-- <copy file="${dist}/beast-beagle.jar" todir="${Mac_package_dir}/lib"/> -->
         <copy todir="${Mac_package_dir}/lib">
-            <fileset dir="${Mac_dir}/lib"/>
+<!--         	<fileset dir="${Mac_dir}/lib"/> -->
+        	<fileset dir="lib"/>
         </copy>
         <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Mac_package_dir}"/>
         <copy file="${common_dir}/README.txt" todir="${Mac_package_dir}"/>
@@ -747,7 +749,7 @@
         <jarbundler dir="${Mac_package_dir}"
                     name="${BEAUti_name} v${version}"
                     mainclass="dr.app.beauti.BeautiApp"
-                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub_BEAST"
+                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/beauti.icns"
                     jvmversion="${jvm_version}"
@@ -759,7 +761,7 @@
                     bundleid="dr.app.beauti">
             <documenttype name="BEAUti document"
                           extensions="beauti bti"
-                          iconFile="BEAUtiDoc.icns"
+                          iconFile="beautidoc.icns"
                           role="Editor"/>
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beauti.jar"/>
@@ -880,14 +882,14 @@
             <arg value="${Mac_package_dir}"/>
             <arg value="-volname"/>
             <arg value="${BEAST_name} v${version}"/>
-            <arg value="${release_dir}/${BEAST_name} v${version}.dmg"/>
+            <arg value="${release_dir}/${BEAST_package_name} v${version}.dmg"/>
         </exec>
 
         <exec executable="codesign">
             <arg value="-s"/>
             <arg value="${AppleSigner}"/>
             <arg value="-v"/>
-            <arg value="${release_dir}/${BEAST_name} v${version}.dmg"/>
+            <arg value="${release_dir}/${BEAST_package_name} v${version}.dmg"/>
         </exec>
 
 

@@ -36,7 +36,7 @@ import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodPar
 public class BayesianBridgeDistributionModelParser extends AbstractXMLObjectParser {
 
     public static final String BAYESIAN_BRIDGE_DISTRIBUTION = "bayesianBridgeDistribution";
-    private static final String DIMENSION = "dim";
+    public static final String DIMENSION = "dimension";
 
     public String getParserName() {
         return BAYESIAN_BRIDGE_DISTRIBUTION;

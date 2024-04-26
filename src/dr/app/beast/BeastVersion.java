@@ -105,8 +105,7 @@ public class BeastVersion implements Version, Citable {
                 "\tLuiz Max Carvalho, Gabriela Cybis, Mandev Gill, Matthew Hall, Gabe Hassler, Joseph Heled, ",
                 "\tSebastian Hoehna, Xiang Ji, Michael Karcher, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li, ",
                 "\tGerton Lunter, Andy Magee, Sidney Markowitz, JT McCrone, Volodymyr Minin, Julia Palacios, ",
-                "\tMichael Defoin Platel, Oliver Pybus, Yucai Shao, Max Tolkoff, Chieh-Hsi Wu, Walter Xie and ",
-                "\tZhenyu Zhang",
+                "\tMichael Defoin Platel, Oliver Pybus, Yucai Shao, Max Tolkoff, Chieh-Hsi Wu, Walter Xie and Zhenyu Zhang",
                 "",
                 "Thanks to:",
                 "\tRoald Forsberg, Beth Shapiro and Korbinian Strimmer"};
@@ -131,8 +130,7 @@ public class BeastVersion implements Version, Citable {
                         "Luiz Max Carvalho, Gabriela Cybis, Mandev Gill, Matthew Hall, Gabe Hassler, Joseph Heled,<br>"+
                         "Sebastian Hoehna, Xiang Ji, Michael Karcher, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li,<br>"+
                         "Gerton Lunter, Andy Magee, Sidney Markowitz, JT McCrone, Volodymyr Minin, Julia Palacios,<br>"+
-                        "Michael Defoin Platel, Oliver Pybus, Yucai Shao, Max Tolkoff, Chieh-Hsi Wu, Walter Xie and<br>"+
-                        "Zhenyu Zhang</p>" +
+                        "Michael Defoin Platel, Oliver Pybus, Yucai Shao, Max Tolkoff, Chieh-Hsi Wu, Walter Xie and Zhenyu Zhang</p>" +
                         "<p>Thanks to Roald Forsberg, Beth Shapiro and Korbinian Strimmer</p>";
     }
 

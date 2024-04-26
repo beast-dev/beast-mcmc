@@ -33,12 +33,14 @@ import dr.xml.XMLSyntaxRule;
 
 /**
  * @author Alexei Drummond
+ * @author Andrew Rambaut
  * @version $Id: XMLUnits.java,v 1.2 2005/05/24 20:25:59 rambaut Exp $
  */
 public interface XMLUnits extends Units {
 
     final static String GENERATIONS = "generations";
     final static String DAYS = "days";
+    final static String WEEKS = "weeks";
     final static String MONTHS = "months";
     final static String YEARS = "years";
     public final static String SUBSTITUTIONS = "substitutions";
@@ -53,20 +55,21 @@ public interface XMLUnits extends Units {
 
     class Utils {
 
-        public static Units.Type getUnitsAttr(XMLObject
-                xo) throws XMLParseException {
+        public static Units.Type getUnitsAttr(XMLObject xo) throws XMLParseException {
 
-            Units.Type units = dr.evolution.util.Units.Type.GENERATIONS;
+            Units.Type units = Type.GENERATIONS;
             if (xo.hasAttribute(UNITS)) {
                 String unitsAttr = (String) xo.getAttribute(UNITS);
                 if (unitsAttr.equals(YEARS)) {
-                    units = dr.evolution.util.Units.Type.YEARS;
+                    units = Type.YEARS;
                 } else if (unitsAttr.equals(MONTHS)) {
-                    units = dr.evolution.util.Units.Type.MONTHS;
+                    units = Type.MONTHS;
+                } else if (unitsAttr.equals(WEEKS)) {
+                    units = Type.WEEKS;
                 } else if (unitsAttr.equals(DAYS)) {
-                    units = dr.evolution.util.Units.Type.DAYS;
+                    units = Type.DAYS;
                 } else if (unitsAttr.equals(SUBSTITUTIONS) || unitsAttr.equals(MUTATIONS)) {
-                    units = dr.evolution.util.Units.Type.SUBSTITUTIONS;
+                    units = Type.SUBSTITUTIONS;
                 }
             }
             return units;

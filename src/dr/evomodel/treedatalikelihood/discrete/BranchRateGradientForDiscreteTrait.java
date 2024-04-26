@@ -25,8 +25,10 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.evolution.tree.*;
-import dr.evomodel.treedatalikelihood.*;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.Parameter;
 
 
@@ -50,7 +52,13 @@ public class BranchRateGradientForDiscreteTrait extends DiscreteTraitBranchRateG
     }
 
     @Override
+    double[] updateBranchRateGradientLogDensity(double[] result) {
+        return branchRateModel.updateGradientLogDensity(result, null, 0, result.length);
+    }
+
+    @Override
     protected double getChainSecondDerivative(Tree tree, NodeRef node) {
         return branchRateModel.getBranchRateSecondDifferential(tree, node) * tree.getBranchLength(node);
     }
+
 }

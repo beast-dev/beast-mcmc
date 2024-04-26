@@ -10,6 +10,7 @@ import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.oldevomodel.substmodel.FrequencyModel;
 import dr.oldevomodel.substmodel.HKY;
@@ -47,7 +48,7 @@ public class AncestralStateTreeLikelihoodTest extends TestCase {
 
     public void testJointLikelihood() {
 
-        TreeModel treeModel = new TreeModel("treeModel", tree);
+        TreeModel treeModel = new DefaultTreeModel("treeModel", tree);
 
         Sequence[] sequence = new Sequence[3];
 

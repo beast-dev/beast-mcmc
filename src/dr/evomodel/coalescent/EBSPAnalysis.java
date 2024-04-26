@@ -44,6 +44,7 @@ import java.util.Arrays;
 /**
  * @author Joseph Heled
  */
+@Deprecated
 public class EBSPAnalysis extends TabularData {
 
     private final double[] xPoints;

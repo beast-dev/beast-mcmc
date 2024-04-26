@@ -25,6 +25,8 @@
 
 package dr.evolution.datatype;
 
+import java.util.function.Function;
+
 /**
  * @author Marc Suchard
  */
@@ -34,6 +36,20 @@ public interface HiddenDataType {
     int getHiddenClassCount();
 
     int getStateCount();
+
+    String getCodeWithoutHiddenState(int state);
+
+    static String getCodeImpl(int state, int stateCount,
+                              Function<Integer, String> parentGetCode) {
+        int hiddenState = state / stateCount;
+        return getCodeWithoutHiddenStateImpl(state, stateCount, parentGetCode) + hiddenState;
+    }
+
+    static String getCodeWithoutHiddenStateImpl(int state, int stateCount,
+                                                Function<Integer, String> parentGetCode) {
+        int innerState = state % stateCount;
+        return parentGetCode.apply(innerState);
+    }
 
     class Utils {
 

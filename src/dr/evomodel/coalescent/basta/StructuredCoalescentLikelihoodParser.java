@@ -1,7 +1,7 @@
 /*
  * StructuredCoalescentParser.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,12 +26,17 @@
 package dr.evomodel.coalescent.basta;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.datatype.DataType;
+import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -48,6 +53,14 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
     public static final String SUBINTERVALS = "subIntervals";
+    private static final String THREADS = "threads";
+
+    public static final String MAP_RECONSTRUCTION = "useMAP";
+
+    public static final Boolean USE_OLD_CODE = false;
+    private static final boolean USE_DELEGATE = true;
+    private static final boolean USE_BEAGLE = false;
+    private static final boolean TRANSPOSE = true;
 
     public String getParserName() {
         return STRUCTURED_COALESCENT;
@@ -70,16 +83,20 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             }
         }
 
-        int subIntervals = 2;
-        if (xo.hasAttribute(SUBINTERVALS)) {
-            subIntervals = xo.getIntegerAttribute(SUBINTERVALS);
-            if (subIntervals != 2) {
-                throw new XMLParseException("The number of subintervals currently has to be set to 2.");
-            }
+        int subIntervals = xo.getAttribute(SUBINTERVALS, 1);
+
+        if (subIntervals != 1) {
+            throw new XMLParseException("The number of sub-intervals currently has to be set to 1.");
         }
 
+
+        boolean useMAP = xo.getAttribute(MAP_RECONSTRUCTION, false);
+
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
+        DataType dataType = patternList.getDataType();
+        String tag = xo.getAttribute(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG);
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         GeneralSubstitutionModel generalSubstitutionModel = (GeneralSubstitutionModel) xo.getChild(GeneralSubstitutionModel.class);
         Parameter popSizes = (Parameter) xo.getChild(Parameter.class);
@@ -90,9 +107,34 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             }
         }
 
+        int threads = xo.getAttribute(THREADS, 1);
+
         if (treeModel != null) {
             try {
-                return new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList, generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees);
+                if (USE_OLD_CODE) {
+                    return new OldStructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList,
+                            generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees);
+                } else {
+                    if (USE_DELEGATE) {
+                        final BastaLikelihoodDelegate delegate;
+                        if (USE_BEAGLE) {
+                            delegate = new BeagleBastaLikelihoodDelegate("name", treeModel,
+                                    generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE);
+                        } else {
+                            delegate = (threads != 1) ?
+                                    new ParallelBastaLikelihoodDelegate("name", treeModel,
+                                            generalSubstitutionModel.getDataType().getStateCount(), threads, TRANSPOSE) :
+                                    new GenericBastaLikelihoodDelegate("name", treeModel,
+                                            generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE);
+                        }
+                        return new BastaLikelihood("name", treeModel, patternList, generalSubstitutionModel,
+                                popSizes, branchRateModel, delegate, subIntervals, true);
+                    } else {
+                        return new FasterStructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList,
+                                dataType, tag, generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees,
+                                useMAP);
+                    }
+                }
             } catch (TreeUtils.MissingTaxonException mte) {
                 throw new XMLParseException("treeModel missing a taxon from taxon list in " + getParserName() + " element");
             }
@@ -111,7 +153,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     }
 
     public Class getReturnType() {
-        return StructuredCoalescentLikelihood.class;
+        return OldStructuredCoalescentLikelihood.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -120,6 +162,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(SUBINTERVALS, true),
+            AttributeRule.newIntegerRule(THREADS, true),
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
             new ElementRule(BranchRateModel.class, true),

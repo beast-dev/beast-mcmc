@@ -1,21 +1,21 @@
 package dr.inference.operators.factorAnalysis;
 
-import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.ConditionalTraitSimulationHelper;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.LatentFactorModel;
-import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
+import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
+import dr.xml.*;
 
-import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
-import static dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser.FACTOR_NAME;
+import java.util.ArrayList;
 
 /**
  * @author Marc A. Suchard
+ * @author Gabriel Hassler
  */
-public interface FactorAnalysisOperatorAdaptor {
+public interface FactorAnalysisOperatorAdaptor extends Reportable {
 
     int getNumberOfTaxa();
 
@@ -27,6 +27,8 @@ public interface FactorAnalysisOperatorAdaptor {
 
     double getDataValue(int trait, int taxon);
 
+    double getLoadingsValue(int dim);
+
     double getColumnPrecision(int index);
 
     void setLoadingsForTraitQuietly(int trait, double[] value);
@@ -36,15 +38,28 @@ public interface FactorAnalysisOperatorAdaptor {
     void fireLoadingsChanged();
 
     void drawFactors();
-    
+
     boolean isNotMissing(int trait, int taxon);
 
-    abstract class Abstract implements FactorAnalysisOperatorAdaptor {
+    Parameter[] getFactorDependentParameters();
+
+    Parameter[] getLoadingsDependentParameter();
+
+    MatrixParameterInterface getLoadings();
+
+    ArrayList<Likelihood> getLikelihoods();
+
+    abstract class Abstract implements FactorAnalysisOperatorAdaptor, Reportable {
 
         private final MatrixParameterInterface loadings;
 
         Abstract(MatrixParameterInterface loadings) {
             this.loadings = loadings;
+        }
+
+        @Override
+        public MatrixParameterInterface getLoadings() {
+            return loadings;
         }
 
         @Override
@@ -68,6 +83,67 @@ public interface FactorAnalysisOperatorAdaptor {
         @Override
         public void fireLoadingsChanged() {
             loadings.fireParameterChangedEvent();
+        }
+
+        @Override
+        public double getLoadingsValue(int dim) {
+            return loadings.getParameterValue(dim);
+        }
+
+        @Override
+        public String getReport() {
+            int repeats = 20000;
+            int nFac = getNumberOfFactors();
+            int nTaxa = getNumberOfTaxa();
+            int dim = nFac * nTaxa;
+
+            double[] sums = new double[dim];
+            double[][] sumSquares = new double[dim][dim];
+
+
+            for (int i = 0; i < repeats; i++) {
+
+                fireLoadingsChanged();
+                drawFactors();
+                for (int j = 0; j < nTaxa; j++) {
+                    for (int k = 0; k < nFac; k++) {
+                        double x = getFactorValue(k, j);
+                        sums[k + j * nFac] += x;
+
+                        for (int l = 0; l < nTaxa; l++) {
+                            for (int m = 0; m < nFac; m++) {
+                                double y = getFactorValue(m, l);
+                                sumSquares[k + j * nFac][m + l * nFac] += x * y;
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            double[] mean = new double[dim];
+            double[][] cov = new double[dim][dim];
+            for (int i = 0; i < dim; i++) {
+                mean[i] = sums[i] / repeats;
+                for (int j = 0; j < dim; j++) {
+                    sumSquares[i][j] /= repeats;
+                }
+            }
+            for (int i = 0; i < dim; i++) {
+                for (int j = 0; j < dim; j++) {
+                    cov[i][j] = sumSquares[i][j] - mean[i] * mean[j];
+                }
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(this.getClass() + "Report:\n");
+            sb.append("Factor mean:\n");
+            sb.append(new Vector(mean));
+            sb.append("\n\n");
+            sb.append("Factor covariance:\n");
+            sb.append(new Matrix(cov));
+            sb.append("\n\n");
+            return sb.toString();
         }
     }
 
@@ -132,17 +208,38 @@ public interface FactorAnalysisOperatorAdaptor {
 
             return missing == null || missing.getParameterValue(index) != 1.0;
         }
+
+        @Override
+        public Parameter[] getFactorDependentParameters() {
+            return new Parameter[]{LFM.getFactors()};
+        }
+
+        @Override
+        public Parameter[] getLoadingsDependentParameter() {
+            return new Parameter[]{
+                    LFM.getFactors(),
+                    LFM.getColumnPrecision(),
+                    LFM.getData()
+            };
+        }
+
+        @Override
+        public ArrayList<Likelihood> getLikelihoods() {
+            ArrayList<Likelihood> likelihoods = new ArrayList<>();
+            likelihoods.add(LFM);
+            return likelihoods;
+        }
     }
 
     class IntegratedFactors extends Abstract {
 
         private final IntegratedFactorAnalysisLikelihood factorLikelihood;
         private final TreeDataLikelihood treeLikelihood;
+        private final ConditionalTraitSimulationHelper factorSimulationHelper;
 
         private final Parameter precision;
         private final CompoundParameter data;
 
-        private final TreeTrait factorTrait;
         private double[] factors;
 
         public IntegratedFactors(IntegratedFactorAnalysisLikelihood factorLikelihood,
@@ -153,20 +250,32 @@ public interface FactorAnalysisOperatorAdaptor {
 
             this.precision = factorLikelihood.getPrecision();
             this.data = factorLikelihood.getParameter();
+            this.factorSimulationHelper =
+                    ((ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate()).getExtensionHelper();
 
-            factorTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + FACTOR_NAME);
+            //TODO: (below)
+//            if (factorSimulationHelper.getTreeTrait().getTraitName() != factorLikelihood.getTipTraitName()) {
+//                throw new RuntimeException("Tip trait names must match: '" +
+//                        factorSimulationHelper.getTreeTrait().getTraitName() + "' != '" +
+//                        factorLikelihood.getTipTraitName());
+//            }
 
-            assert (factorTrait != null);
         }
 
         @Override
-        public int getNumberOfTaxa() { return factorLikelihood.getNumberOfTaxa(); }
+        public int getNumberOfTaxa() {
+            return factorLikelihood.getNumberOfTaxa();
+        }
 
         @Override
-        public int getNumberOfTraits() { return factorLikelihood.getNumberOfTraits(); }
+        public int getNumberOfTraits() {
+            return factorLikelihood.getNumberOfTraits();
+        }
 
         @Override
-        public int getNumberOfFactors() { return factorLikelihood.getNumberOfFactors(); }
+        public int getNumberOfFactors() {
+            return factorLikelihood.getNumberOfFactors();
+        }
 
         @Override
         public double getFactorValue(int factor, int taxon) {
@@ -185,7 +294,7 @@ public interface FactorAnalysisOperatorAdaptor {
 
         @Override
         public void drawFactors() {
-            factors = (double[]) factorTrait.getTrait(treeLikelihood.getTree(), null);
+            factors = factorSimulationHelper.drawTraitsAbove(factorLikelihood);
 
             if (DEBUG) {
                 System.err.println("factors: " + new Vector(factors));
@@ -194,8 +303,44 @@ public interface FactorAnalysisOperatorAdaptor {
 
         @Override
         public boolean isNotMissing(int trait, int taxon) {
-            // TODO
-            return true;
+            int index = taxon * getNumberOfTraits() + trait;
+            return !factorLikelihood.getDataMissingIndicators()[index];
+        }
+
+        @Override
+        public Parameter[] getFactorDependentParameters() {
+            return new Parameter[]{
+                    factorLikelihood.getLoadings(),
+                    factorLikelihood.getParameter(),
+                    factorLikelihood.getPrecision()
+            };
+        }
+
+        @Override
+        public Parameter[] getLoadingsDependentParameter() {
+            return getFactorDependentParameters();
+        }
+
+        @Override
+        public ArrayList<Likelihood> getLikelihoods() {
+            ArrayList<Likelihood> likelihoods = new ArrayList<>();
+            likelihoods.add(factorLikelihood);
+            likelihoods.add(treeLikelihood);
+            return likelihoods;
+        }
+
+        @Override
+        public String getReport() {
+
+            StringBuilder sb = new StringBuilder(factorSimulationHelper.getReport());
+            sb.append("\n\n");
+            sb.append(super.getReport());
+            sb.append("Taxon order:");
+            for (int i = 0; i < getNumberOfTaxa(); i++) {
+                sb.append(" " + treeLikelihood.getTree().getTaxonId(i));
+            }
+
+            return sb.toString();
         }
 
         private static final boolean DEBUG = false;

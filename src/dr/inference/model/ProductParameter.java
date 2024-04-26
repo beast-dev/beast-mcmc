@@ -36,6 +36,7 @@ public class ProductParameter extends Parameter.Abstract implements VariableList
         this.paramList = parameter;
         for (Parameter p : paramList) {
             p.addVariableListener(this);
+            Parameter.CONNECTED_PARAMETER_SET.add(p);
         }
     }
 
@@ -45,7 +46,7 @@ public class ProductParameter extends Parameter.Abstract implements VariableList
 
     @Override
     public boolean isImmutable() {
-        return false;
+        return true;
     }
 
     protected void storeValues() {

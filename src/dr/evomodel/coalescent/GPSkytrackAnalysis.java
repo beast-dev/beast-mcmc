@@ -53,6 +53,7 @@ import java.util.StringTokenizer;
 /**
  * @author Joseph Heled
  */
+@Deprecated
 public class GPSkytrackAnalysis extends TabularData {
 //    TabularData
 

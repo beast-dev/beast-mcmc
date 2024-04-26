@@ -37,10 +37,18 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.discrete.*;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.JointGradient;
 import dr.inference.model.BranchParameter;
+import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static dr.evomodelxml.continuous.hmc.BranchRateGradientParser.checkBranchRateModels;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 public class LocationScaleGradientParser extends AbstractXMLObjectParser {
@@ -59,7 +67,36 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
         boolean useHessian = xo.getAttribute(USE_HESSIAN, false);
 
-        final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+        final Object child = xo.getChild(TreeDataLikelihood.class);
+
+        if (child != null) {
+            return parseTreeDataLikelihood(xo, (TreeDataLikelihood) child, traitName, useHessian);
+        } else {
+
+            CompoundLikelihood compoundLikelihood = (CompoundLikelihood) xo.getChild(CompoundLikelihood.class);
+            List<GradientWrtParameterProvider> providers = new ArrayList<>();
+
+            for (Likelihood likelihood : compoundLikelihood.getLikelihoods()) {
+                if (!(likelihood instanceof TreeDataLikelihood)) {
+                    throw new XMLParseException("Unknown likelihood type");
+                }
+
+                GradientWrtParameterProvider provider = parseTreeDataLikelihood(xo, (TreeDataLikelihood) likelihood,
+                        traitName, useHessian);
+
+                providers.add(provider);
+            }
+
+            checkBranchRateModels(providers);
+
+            return new JointGradient(providers);
+        }
+    }
+
+    private GradientWrtParameterProvider parseTreeDataLikelihood(XMLObject xo, TreeDataLikelihood treeDataLikelihood,
+                                                                 String traitName,
+                                                                 boolean useHessian) throws XMLParseException {
+
 
         BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
 
@@ -91,17 +128,19 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
 
                 BranchParameter branchParameter = (BranchParameter) xo.getChild(BranchParameter.class);
 
+                Double tolerance = xo.getAttribute(BranchSubstitutionParameterGradientParser.GRADIENT_CHECK_TOLERANCE, null);
+
                 if (xo.hasChildNamed(LOCATION)) {
 
                     BranchSpecificFixedEffects location = parseLocation(xo);
 
                     return new BranchSubstitutionParameterLocationGradient(traitName, treeDataLikelihood, beagleData, branchParameter,
-                            useHessian, location);
+                            tolerance, useHessian, location);
 
                 } else if (xo.hasChildNamed(SCALE)) {
 
                     Parameter scale = (Parameter) xo.getElementFirstChild(SCALE);
-                    return new BranchSubstitutionParameterScaleGradient(traitName, treeDataLikelihood, beagleData, branchParameter, scale, useHessian);
+                    return new BranchSubstitutionParameterScaleGradient(traitName, treeDataLikelihood, beagleData, branchParameter, scale, tolerance, useHessian);
 
                 } else {
                     throw new XMLParseException("Not yet implemented.");
@@ -139,7 +178,10 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TRAIT_NAME),
 
-            new ElementRule(TreeDataLikelihood.class),
+            new XORRule(
+                    new ElementRule(TreeDataLikelihood.class),
+                    new ElementRule(CompoundLikelihood.class)
+            ),
 
             new XORRule(
                 new ElementRule(LOCATION, new XMLSyntaxRule[]{

@@ -49,6 +49,7 @@ import dr.math.matrixAlgebra.Vector;
 import dr.util.Attribute;
 import dr.xml.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -218,7 +219,6 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         dim = precisionParam.getRowDimension(); // assumed to be square
 
 
-
         multivariateLikelihood = null;
     }
 
@@ -295,7 +295,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
             System.err.println(new Vector(debug.getScaleMatrix()));
             System.exit(-1);
         }
-        
+
         final int dim = S.length;
         for (int i = 0; i < dim; i++) {
             System.arraycopy(outerProducts, i * dim, S[i], 0, dim);
@@ -387,6 +387,13 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
     public double doOperation() {
 
+        doOperationDontFireChange();
+        precisionParam.fireParameterChangedEvent();
+
+        return 0;
+    }
+
+    public void doOperationDontFireChange() {
         if (wishartIsModel) {
             setupWishartStatistics(priorModel); // TODO Deprecate
             priorStatistics = setupStatistics(priorModel);
@@ -394,7 +401,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
         final double[][] scaleMatrix = getOperationScaleMatrixAndSetObservationCount();
         final double treeDf = numberObservations;
-        
+
         final double df = priorDf + treeDf * pathWeight;
 
         double[][] draw = WishartDistribution.nextWishart(df, scaleMatrix);
@@ -408,9 +415,14 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
             for (int j = 0; j < dim; j++)
                 column.setParameterValueQuietly(j, draw[j][i]);
         }
-        precisionParam.fireParameterChangedEvent();
+    }
 
-        return 0;
+    public MatrixParameterInterface getPrecisionParam() {
+        return precisionParam;
+    }
+
+    public ConjugateWishartStatisticsProvider getConjugateWishartProvider() {
+        return conjugateWishartProvider;
     }
 
     public String getPerformanceSuggestion() {
@@ -496,6 +508,8 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
                 );
             } else if (ws != null) {
 
+                ws = checkForMultipleWishartStatisticProviders(ws, xo);
+
                 if (precMatrix instanceof DiagonalConstrainedMatrixView) {
                     precMatrix = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
 
@@ -510,7 +524,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
                 if (xo.hasChildNamed(WORKING)) {
                     workingDistribution = (WishartStatistics) xo.getElementFirstChild(WORKING);
                 }
-                
+
                 return new PrecisionMatrixGibbsOperator(
                         ws, precMatrix, (WishartStatistics) prior.getDistribution(),
                         workingDistribution,
@@ -520,6 +534,32 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
             } else {
                 return new PrecisionMatrixGibbsOperator(likelihood, (WishartStatistics) prior.getDistribution(), weight);
             }
+        }
+
+        private ConjugateWishartStatisticsProvider checkForMultipleWishartStatisticProviders(
+                ConjugateWishartStatisticsProvider ws,
+                XMLObject xo) throws XMLParseException {
+
+            List<ConjugateWishartStatisticsProvider> providers = new ArrayList<>();
+            for (int i = 0; i < xo.getChildCount(); ++i) {
+                Object cxo = xo.getChild(i);
+                if (cxo instanceof ConjugateWishartStatisticsProvider) {
+                    providers.add((ConjugateWishartStatisticsProvider) cxo);
+                }
+            }
+
+            if (providers.size() > 1) {
+                MatrixParameterInterface precision = providers.get(0).getPrecisionParameter();
+                for (int i = 1; i < providers.size(); ++i) {
+                    if (providers.get(i).getPrecisionParameter() != precision) {
+                        throw new XMLParseException("All Wishart statistics providers must act on the same precision parameter");
+                    }
+                }
+
+                ws = new ConjugateWishartStatisticsProvider.CompoundWishartStatistics(providers);
+            }
+
+            return ws;
         }
 
         //************************************************************************

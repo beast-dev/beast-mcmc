@@ -29,12 +29,9 @@ import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Model;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-
 public class StateSaverChainListener implements MarkovChainListener {
 
-    private StateSaver stateSaver;
+    protected StateSaver stateSaver;
 
     public StateSaverChainListener(StateSaver stateSaver, final long writeState, final boolean isRepeating) {
         this.stateSaver = stateSaver;

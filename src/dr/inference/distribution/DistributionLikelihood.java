@@ -29,6 +29,7 @@ import dr.inference.model.Parameter;
 import dr.math.distributions.Distribution;
 import dr.math.matrixAlgebra.Vector;
 import dr.util.Attribute;
+import dr.xml.Reportable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -40,7 +41,7 @@ import org.w3c.dom.Element;
  * @version $Id: DistributionLikelihood.java,v 1.11 2005/05/25 09:35:28 rambaut Exp $
  */
 
-public class DistributionLikelihood extends AbstractDistributionLikelihood {
+public class DistributionLikelihood extends AbstractDistributionLikelihood implements Reportable {
 
     public final static boolean DEBUG = false;
 
@@ -124,14 +125,6 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
                 final double value = attributeValue[j] - offset;
 
-                if (offset > 0.0 && value < 0.0) {
-                    // fixes a problem with the offset on exponential distributions not
-                    // actually bounding the distribution. This only performs this check
-                    // if a non-zero offset is actually given otherwise it assumes the
-                    // parameter is either legitimately allowed to go negative or is bounded
-                    // at zero anyway.
-                    return Double.NEGATIVE_INFINITY;
-                }
                 logL += getLogPDF(value, count);
                 count += 1;
             }
@@ -181,5 +174,10 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
     protected Distribution distribution;
     private final double offset;
     private final double scale;
+
+    @Override
+    public String getReport() {
+        return "Distribution " + getId() + " " + getLogLikelihood();
+    }
 }
 

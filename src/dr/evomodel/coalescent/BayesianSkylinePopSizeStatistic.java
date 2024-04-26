@@ -27,6 +27,7 @@ package dr.evomodel.coalescent;
 
 import dr.inference.model.Statistic;
 
+@Deprecated
 public class BayesianSkylinePopSizeStatistic extends Statistic.Abstract{
 
 	public double time;

@@ -83,7 +83,7 @@ public class TransformedTreeModel extends AbstractModel implements MutableTreeMo
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == treeTransform) {
-            fireModelChanged(new TreeChangedEvent.WholeTree()); // All internal node heights have changed!
+            fireModelChanged(TreeChangedEvent.create()); // All internal node heights have changed!
         } else if (model == treeModel) {
             fireModelChanged(object, index);
         } else {

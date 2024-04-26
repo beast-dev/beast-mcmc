@@ -27,6 +27,7 @@ package dr.evomodel.speciation;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.inference.model.Parameter;

@@ -25,7 +25,8 @@
 
 package dr.evolution.alignment;
 
-import dr.app.beauti.util.NexusApplicationImporter;
+import dr.app.beauti.util.CharSet;
+import dr.app.beauti.util.CharSetBlock;
 import dr.evolution.sequence.Sequence;
 
 /**
@@ -37,7 +38,7 @@ import dr.evolution.sequence.Sequence;
  */
 public class CharSetAlignment extends SimpleAlignment {
 
-    public CharSetAlignment(NexusApplicationImporter.CharSet charset, Alignment parentAlignment) {
+    public CharSetAlignment(CharSet charset, Alignment parentAlignment) {
         setId(charset.getName());
 
         for (int i = 0; i < parentAlignment.getSequenceCount(); i++) {
@@ -52,9 +53,9 @@ public class CharSetAlignment extends SimpleAlignment {
         setDataType(parentAlignment.getDataType());
     }
 
-    private String filter(NexusApplicationImporter.CharSet charset, String sequenceString) {
+    private String filter(CharSet charset, String sequenceString) {
         StringBuilder filtered = new StringBuilder();
-        for (NexusApplicationImporter.CharSetBlock block : charset.getBlocks()) {
+        for (CharSetBlock block : charset.getBlocks()) {
             int toSite = block.getToSite();
             if (toSite <= 0) {
                 toSite = sequenceString.length();

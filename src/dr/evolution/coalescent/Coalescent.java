@@ -80,8 +80,14 @@ public class Coalescent implements MultivariateFunction, Units {
 
         double logL = 0.0;
 
-        double startTime = 0.0;
         final int n = intervals.getIntervalCount();
+
+        if (n == 0) {
+            return 0.0;
+        }
+
+        double startTime = intervals.getStartTime();
+
         for (int i = 0; i < n; i++) {
 
             final double duration = intervals.getInterval(i);
@@ -92,6 +98,7 @@ public class Coalescent implements MultivariateFunction, Units {
                 return Double.NEGATIVE_INFINITY;
             }
             final int lineageCount = intervals.getLineageCount(i);
+
 
             final double kChoose2 = Binomial.choose2(lineageCount);
             // common part
@@ -121,6 +128,7 @@ public class Coalescent implements MultivariateFunction, Units {
 
         return logL;
     }
+
 
     /**
      * Calculates the log likelihood of this set of coalescent intervals,

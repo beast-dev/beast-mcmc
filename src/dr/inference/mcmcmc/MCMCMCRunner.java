@@ -42,28 +42,34 @@ public class MCMCMCRunner extends Thread {
         this.disableCoerce = disableCoerce;
     }
 
+    public void runSubChain() {
+        markovChain.runChain(length, disableCoerce);
+    }
+
 	public void run() {
         long i = 0;
         while (i < totalLength) {
-            markovChain.runChain(length, disableCoerce/*, 0*/);
+            runSubChain();
 
             i += length;
 
 	        chainDone();
 
-	        if (i < totalLength) {
-		        while (isChainDone()) {
-			        try {
-				        synchronized(this) {
-					        wait();
-				        }
-			        } catch (InterruptedException e) {
-				        // continue...
-			        }
-		        }
-	        }
+            if (i < totalLength) {
+                synchronized(this) {
+                    while (isChainDone()) { //DM. This test needs to be synchronized too. Otherwise, there is a nonzero chance that the MCMCMC.run thread calls continueChain, setting this.chainDone=false and notifies the thread to continue right before it starts listening, making the MC3 hang forever 
+                        try {
+                            //synchronized(this) {
+                                wait();
+                            //}
+                        } catch (InterruptedException e) {
+                            // continue...
+                        }
+                    }
+                }
+            }
         }
-	}
+    }
 
 	private synchronized void chainDone() {
 		chainDone = true;

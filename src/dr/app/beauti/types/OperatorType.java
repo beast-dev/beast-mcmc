@@ -43,7 +43,6 @@ public enum OperatorType {
     RANDOM_WALK_LOGIT("randomWalkLogit"),
     INTEGER_RANDOM_WALK("integerRandomWalk"),
     UP_DOWN("upDown"),
-    MICROSAT_UP_DOWN("microsatUpDown"),
     SCALE_ALL(ScaleOperatorParser.SCALE_ALL),
     SCALE_INDEPENDENTLY("scaleIndependently"),
     DELTA_EXCHANGE("deltaExchange"),
@@ -66,8 +65,12 @@ public enum OperatorType {
     WIDE_EXCHANGE("wideExchange"),
     GMRF_GIBBS_OPERATOR("gmrfGibbsOperator"),
     SKY_GRID_GIBBS_OPERATOR("gmrfGibbsOperator"),
+    SKY_GRID_HMC_OPERATOR("gmrfHMCOperator"),
 //    PRECISION_GMRF_OPERATOR("precisionGMRFOperator"),
-    WILSON_BALDING("wilsonBalding");
+    WILSON_BALDING("wilsonBalding"),
+    RELAXED_CLOCK_HMC_OPERATOR("relaxedClockHMCOperator"),
+    SHRINKAGE_CLOCK_HMC_OPERATOR("shrinkageClockHMCOperator"),
+    SHRINKAGE_CLOCK_GIBBS_OPERATOR("relaxedClockGibbsOperator");
 
     OperatorType(String displayName) {
         this.displayName = displayName;

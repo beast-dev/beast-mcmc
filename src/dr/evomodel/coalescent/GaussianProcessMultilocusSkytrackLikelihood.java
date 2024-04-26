@@ -213,10 +213,10 @@ public class GaussianProcessMultilocusSkytrackLikelihood extends GaussianProcess
                 intervalsKnown = false;
                 likelihoodKnown = false;
             } else {
-                throw new RuntimeException("Unknown tree modified in GMRFMultilocusSkyrideLikelihood");
+                throw new RuntimeException("Unknown tree modified in GMRFSkygridLikelihood");
             }
         } else {
-            throw new RuntimeException("Unknown object modified in GMRFMultilocusSkyrideLikelihood");
+            throw new RuntimeException("Unknown object modified in GMRFSkygridLikelihood");
         }
     }
 

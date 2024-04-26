@@ -85,6 +85,10 @@ public class XMLWriter extends java.io.PrintWriter {
         writeTag(tagname, attributes.toArray(new Attribute[attributes.size()]), false);
     }
 
+    public void writeTag(String tagname, boolean close) {
+        writeTag(tagname, new Attribute[]{null}, close);
+    }
+
     public void writeTag(String tagname, Attribute attribute, boolean close) {
         writeTag(tagname, new Attribute[]{attribute}, close);
     }

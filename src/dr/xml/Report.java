@@ -36,21 +36,24 @@ import java.util.ArrayList;
  * @author Marc A. Suchard
  * @version $Id: Report.java,v 1.15 2005/05/24 20:26:01 rambaut Exp $
  */
-public class Report {
+public class Report implements Reportable {
 
     public static final String REPORT = "report";
     public static final String FILENAME = "fileName";
 
     protected String title = "";
-    protected ArrayList<Object> objects = new ArrayList<Object>();
+    protected ArrayList<Object> objects = new ArrayList<>();
     private PrintWriter writer;
+    private StringBuilder buffer;
 
     public void createReport() {
-    	
-		if (!title.equalsIgnoreCase("")) {
-			writer.println(getTitle());
-			writer.println();
-		}
+
+        if (!title.equalsIgnoreCase("")) {
+                  writer.println(getTitle());
+                  writer.println();
+        }
+
+        buffer = new StringBuilder();
  
         for (Object object : objects) {
             final String item;
@@ -68,7 +71,24 @@ public class Report {
     }
 
     public void setOutput(PrintWriter writer) {
-        this.writer = writer;
+        this.writer = new PrintWriter(writer) {
+            @Override
+            public void print(String s) {
+                super.print(s);
+                buffer.append(s);
+            }
+
+            @Override
+            public void println() {
+                super.println();
+                buffer.append("\n");
+            }
+        };
+    }
+
+    @Override
+    public String getReport() {
+        return buffer.toString();
     }
 
     /**

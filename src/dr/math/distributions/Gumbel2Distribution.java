@@ -25,6 +25,7 @@
 
 package dr.math.distributions;
 import dr.math.MathUtils;
+import dr.inference.model.GradientProvider;
 import dr.math.GammaFunction;
 import dr.math.UnivariateFunction;
 
@@ -38,7 +39,7 @@ import dr.math.UnivariateFunction;
  * <p/>
  * @author Luiz Max Carvalho
  */
-public class Gumbel2Distribution implements Distribution {
+public class Gumbel2Distribution implements Distribution, GradientProvider {
     //
     // Public stuff
     //
@@ -136,10 +137,20 @@ public class Gumbel2Distribution implements Distribution {
      */
     public static double logPdf(double x, double shape, double scale) {
     	if (x < 0) return Double.NEGATIVE_INFINITY;
-    	double ans =  Math.log(shape) + Math.log(scale) -( shape + 1)*x -scale*Math.pow(x, -shape);
+    	double ans =  Math.log(shape) + Math.log(scale) -(shape + 1) * x -scale * Math.pow(x, -shape);
         return ans;
     }
+    
+    public static double gradLogPdf(double x, double shape, double scale) {
+    	//(-(a*b)/x^a-a-1)/x
+        return (-shape*scale * Math.pow(x, -shape) - shape - 1)/x;
+    }
 
+    public static double hessianLogPdf(double x, double shape, double scale) {
+    	// (a+1)*x^(-a-2)*(x^a+a*b)
+        return (shape + 1) * Math.pow(x, -shape-2) * (Math.pow(x,  shape) + shape*scale);
+    }
+    
     /**
      * cumulative density function of the Gumbel II distribution
      *
@@ -149,7 +160,7 @@ public class Gumbel2Distribution implements Distribution {
      */
     public static double cdf(double x, double shape, double scale) {
     	if(x < 0) return(0);
-        return Math.exp(-scale*Math.pow(x, -shape));
+        return Math.exp(-scale * Math.pow(x, -shape));
     }
 
 
@@ -204,4 +215,19 @@ public class Gumbel2Distribution implements Distribution {
     // parameters of the Gumbel type II
     double shape;
     double scale;
+    
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = gradLogPdf(x[i], shape, scale);
+        }
+        return result;
+    }
 }

@@ -57,6 +57,16 @@ public class HiddenAminoAcids extends AminoAcids implements HiddenDataType {
         return stateCount * hiddenClassCount;
     }
 
+    @Override
+    public String getCode(int state) {
+        return HiddenDataType.getCodeImpl(state, stateCount, super::getCode);
+    }
+
+    @Override
+    public String getCodeWithoutHiddenState(int state) {
+        return HiddenDataType.getCodeWithoutHiddenStateImpl(state, stateCount, super::getCode);
+    }
+
     public int getHiddenClassCount() {
         return hiddenClassCount;
     }

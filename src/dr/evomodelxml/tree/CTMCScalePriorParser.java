@@ -57,9 +57,9 @@ public class CTMCScalePriorParser extends AbstractXMLObjectParser {
         boolean trial = xo.getAttribute(TRIAL, false);
         SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 
-        Logger.getLogger("dr.evolution").info("Creating CTMC Scale Reference Prior model.");
+        Logger.getLogger("dr.evolution").info("\nCreating CTMC Scale Reference Prior model");
         if (taxa != null) {
-            Logger.getLogger("dr.evolution").info("Acting on subtree of size " + taxa.getTaxonCount());
+            Logger.getLogger("dr.evolution").info("  Acting on subtree of size " + taxa.getTaxonCount());
         }
         return new CTMCScalePrior(MODEL_NAME, ctmcScale, treeModel, taxa, reciprocal, substitutionModel, trial);
     }
@@ -83,7 +83,6 @@ public class CTMCScalePriorParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             new ElementRule(TreeModel.class),
             new ElementRule(TaxonList.class, true),
-            new ElementRule(SCALEPARAMETER, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(SCALEPARAMETER, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             AttributeRule.newBooleanRule(RECIPROCAL, true),
             new ElementRule(SubstitutionModel.class, true),

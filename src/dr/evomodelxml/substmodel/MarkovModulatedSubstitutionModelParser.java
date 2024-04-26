@@ -49,6 +49,7 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
     public static final String RATE_SCALAR = "rateScalar";
     public static final String GEOMETRIC_RATES = "geometricRates";
     public static final String RENORMALIZE = "renormalize";
+    private static final String RELATIVE_WEIGHTS = "relativeWeights";
 
     public String getParserName() {
         return MARKOV_MODULATED_MODEL;
@@ -58,7 +59,8 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
 
         DataType dataType = DataTypeUtils.getDataType(xo);
         if (!(dataType instanceof HiddenDataType)) {
-            throw new XMLParseException("Must construct " + MARKOV_MODULATED_MODEL + " with hidden data types");
+            throw new XMLParseException("Must construct " + MARKOV_MODULATED_MODEL + " with hidden data types. " +
+                    "You may need to provide the `-universal` extension to your hidden code type.");
         }
 
         Parameter switchingRates = (Parameter) xo.getElementFirstChild(SWITCHING_RATES);
@@ -84,8 +86,13 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
             }
         }
 
+        Parameter relativeWeights = null;
+        if (xo.hasChildNamed(RELATIVE_WEIGHTS)) {
+            relativeWeights = (Parameter) xo.getElementFirstChild(RELATIVE_WEIGHTS);
+        }
+
         MarkovModulatedSubstitutionModel mmsm = new MarkovModulatedSubstitutionModel(xo.getId(), substModels, switchingRates, dataType, null,
-                rateScalar, geometricRates, siteRateModel);
+                rateScalar, geometricRates, siteRateModel, relativeWeights);
 
         if (xo.getAttribute(RENORMALIZE, false)) {
             mmsm.setNormalization(true);
@@ -123,7 +130,8 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
             AttributeRule.newBooleanRule(RENORMALIZE, true),
             new ElementRule(RATE_SCALAR,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
-
+            new ElementRule(RELATIVE_WEIGHTS,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(SiteRateModel.class, true),
     };
 }

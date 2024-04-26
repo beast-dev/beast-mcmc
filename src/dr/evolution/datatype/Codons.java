@@ -216,7 +216,7 @@ public class Codons extends DataType {
      *              <p/>
      *              return corresponding triplet string
      */
-    public final String getTriplet(int state) {
+    public String getTriplet(int state) {
         return CODON_TRIPLETS[stateMap[state]];
     }
 

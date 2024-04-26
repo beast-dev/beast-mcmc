@@ -1,5 +1,6 @@
 package test.dr.evomodel.substmodel;
 
+import dr.evomodel.tree.DefaultTreeModel;
 import junit.framework.TestCase;
 import dr.evolution.datatype.Microsatellite;
 import dr.evolution.util.Taxa;
@@ -44,7 +45,7 @@ public class MsatFullLikelihoodTest extends TestCase {
         Tree tree =  importer.importTree(null);
 
         //treeModel
-        TreeModel treeModel = new TreeModel(tree);
+        TreeModel treeModel = new DefaultTreeModel(tree);
 
         //msatsubstModel
         AsymmetricQuadraticModel aqm1 = new AsymmetricQuadraticModel(msat, null);
@@ -88,7 +89,7 @@ public class MsatFullLikelihoodTest extends TestCase {
         Tree tree =  importer.importTree(null);
 
         //treeModel
-        TreeModel treeModel = new TreeModel(tree);
+        TreeModel treeModel = new DefaultTreeModel(tree);
 
         //msatsubstModel
         AsymmetricQuadraticModel aqm2 = new AsymmetricQuadraticModel(msat, null);
@@ -132,7 +133,7 @@ public class MsatFullLikelihoodTest extends TestCase {
         Tree tree =  importer.importTree(null);
 
         //treeModel
-        TreeModel treeModel = new TreeModel(tree);
+        TreeModel treeModel = new DefaultTreeModel(tree);
 
         //msatsubstModel
         AsymmetricQuadraticModel aqm3 = new AsymmetricQuadraticModel(msat, null);

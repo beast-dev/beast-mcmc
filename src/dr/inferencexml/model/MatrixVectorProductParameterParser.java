@@ -50,6 +50,7 @@ public class MatrixVectorProductParameterParser extends AbstractXMLObjectParser 
         }
 
         return new MatrixVectorProductParameter(matrix, vector);
+
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

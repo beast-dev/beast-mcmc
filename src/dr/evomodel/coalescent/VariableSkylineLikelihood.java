@@ -46,6 +46,7 @@ import java.util.List;
  *
  * @author Alexei Drummond
  */
+@Deprecated
 public class VariableSkylineLikelihood extends OldAbstractCoalescentLikelihood implements Citable {
 
     // PUBLIC STUFF

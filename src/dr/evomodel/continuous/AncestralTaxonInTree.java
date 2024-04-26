@@ -43,18 +43,29 @@ import java.util.Set;
  */
 public class AncestralTaxonInTree extends AbstractModel {
 
-    public AncestralTaxonInTree(Taxon ancestor,
-                                MutableTreeModel treeModel,
-                                TaxonList taxonList,
-                                Parameter priorSampleSize) throws TreeUtils.MissingTaxonException {
-        this(ancestor, treeModel, taxonList, priorSampleSize, null, -1);
-    }
+//    public class Mrca extends AncestralTaxonInTree {
+//
+//        public Mrca(Taxon ancestor, MutableTreeModel treeModel, TaxonList descendents, Parameter priorSampleSize, NodeRef node, int index) throws TreeUtils.MissingTaxonException {
+//            super(ancestor, treeModel, descendents, priorSampleSize, null, node, index);
+//        }
+//    }
+
+//    public AncestralTaxonInTree(Taxon ancestor,
+//                                MutableTreeModel treeModel,
+//                                TaxonList taxonList,
+//                                Parameter priorSampleSize) throws TreeUtils.MissingTaxonException {
+//        this(ancestor, treeModel, taxonList, priorSampleSize, null, null, -1);
+//    }
 
     public AncestralTaxonInTree(Taxon ancestor,
                                 MutableTreeModel treeModel,
                                 TaxonList descendents,
                                 Parameter priorSampleSize,
-                                NodeRef node, int index) throws TreeUtils.MissingTaxonException {
+                                Parameter height,
+                                NodeRef node, int index,
+                                double offset,
+                                boolean alwaysContrainedToRoot,
+                                boolean addTipHeightBound) throws TreeUtils.MissingTaxonException {
 
         super(ancestor.getId());
 
@@ -62,13 +73,24 @@ public class AncestralTaxonInTree extends AbstractModel {
         this.treeModel = treeModel;
         this.descendents = descendents;
         this.pseudoBranchLength = priorSampleSize;
+        this.height = height;
+        this.offset = offset;
         this.index = index;
         this.node = node;
 
         this.tips = TreeUtils.getTipsForTaxa(treeModel, descendents);
         this.tipBitSet = TreeUtils.getTipsBitSetForTaxa(treeModel, descendents);
 
-        addVariable(priorSampleSize);
+        if (priorSampleSize != null) {
+            addVariable(priorSampleSize);
+        }
+
+        if (height != null) {
+            addVariable(height);
+        }
+
+        isAtRoot = alwaysContrainedToRoot;
+        this.addTipHeightBound = addTipHeightBound;
     }
 
     // Public API
@@ -77,23 +99,25 @@ public class AncestralTaxonInTree extends AbstractModel {
         return pseudoBranchLength.getParameterValue(0);
     }
 
-    final MutableTreeModel getTreeModel() { return treeModel; }
-
-//    final double[] getPartials() { return meanParameter.getParameterValues(); }
-
-//    final double getPartial(int i) { return meanParameter.getParameterValue(i); }
-
-//    final double getPriorSampleSize() { return pseudoBranchLength.getParameterValue(0); }
-
-    final double[] getRestrictedPartials() {
-        assert(false);
-        return null;
+    final public double getHeight() { // TODO Refactor into subclasses
+        if (height != null) {
+            return height.getParameterValue(0) + offset;
+        } else {
+            return 0.0;
+        }
     }
 
-//    final PrecisionType getPrecisionType() {
-//        assert(false);
-//        return PrecisionType.SCALAR;
-//    }
+    final public boolean isOnAncestralPath() { return height != null; } // TODO Refactor into subclass
+
+    final public boolean isAtRoot() { return isAtRoot; }
+
+    final public boolean addTipHeightBound() { return addTipHeightBound; }
+
+    final public NodeRef getTipNode() { return tipNode; } // TODO Refactor into subclass
+
+    final public void setTipNode(NodeRef tipNode) { this.tipNode = tipNode; }
+
+    final MutableTreeModel getTreeModel() { return treeModel; }
 
     final public int getIndex() { return index; }
 
@@ -102,6 +126,15 @@ public class AncestralTaxonInTree extends AbstractModel {
     final public NodeRef getNode() { return node; }
 
     final public void setNode(NodeRef node) { this.node = node; }
+
+    final public void setNode(NodeRef node, int pathViaChildNumber) {
+        this.node = node;
+        this.pathViaChildNumber = pathViaChildNumber;
+    }
+
+    final public int getPathChildNumber() {
+        return pathViaChildNumber;
+    }
 
     // AbstractModel implementation
 
@@ -112,12 +145,18 @@ public class AncestralTaxonInTree extends AbstractModel {
 
     @Override
     protected void storeState() {
-
+        storedIndex = index;
+        storedPathViaChildNumber = pathViaChildNumber;
+        storedNode = node;
+        storedTipNodel = tipNode;
     }
 
     @Override
     protected void restoreState() {
-
+        index = storedIndex;
+        pathViaChildNumber = storedPathViaChildNumber;
+        node = storedNode;
+        tipNode = storedTipNodel;
     }
 
     @Override
@@ -127,7 +166,7 @@ public class AncestralTaxonInTree extends AbstractModel {
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        fireModelChanged(variable, index);
+        // Do nothing (handled in AbstractModel)
     }
 
     final private Taxon ancestor;
@@ -138,9 +177,20 @@ public class AncestralTaxonInTree extends AbstractModel {
     final private BitSet tipBitSet;
 
     final private Parameter pseudoBranchLength;
+    final private Parameter height;
+    final private double offset;
+    final private boolean isAtRoot;
+    final private boolean addTipHeightBound;
 
     private int index;
     private NodeRef node;
+    private NodeRef tipNode;
+    private int pathViaChildNumber = -1;
+
+    private int storedIndex;
+    private NodeRef storedNode;
+    private NodeRef storedTipNodel;
+    private int storedPathViaChildNumber;
 
     public TaxonList getTaxonList() {
         return descendents;

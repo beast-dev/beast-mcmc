@@ -80,6 +80,8 @@ public class PanelUtils {
 		if (comp instanceof JComboBox) {
 			comp.putClientProperty("JComboBox.isPopDown", Boolean.TRUE);
 			// comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
+			ComboBoxRenderer renderer= new ComboBoxRenderer();
+			((JComboBox)comp).setRenderer(renderer);
 		}
         if (comp instanceof JTextArea) {
             ((JTextArea) comp).setEditable(false);
@@ -101,5 +103,17 @@ public class PanelUtils {
 		}
 		return result;
 	}// END: getActiveFrame
+
+	static class ComboBoxRenderer extends JLabel implements ListCellRenderer<Object> {
+		public Component getListCellRendererComponent(JList<? extends Object> list,
+													  Object value, int index, boolean isSelected, boolean cellHasFocus) {
+			if (value instanceof JSeparator){
+				return (Component)value;
+			}else{
+				setText("  " + value.toString() + " ");
+			}
+			return this;
+		}
+	}
 
 }

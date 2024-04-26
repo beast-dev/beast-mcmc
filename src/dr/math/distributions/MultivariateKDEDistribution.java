@@ -25,10 +25,12 @@
 
 package dr.math.distributions;
 
+import dr.inference.model.GradientProvider;
+
 /**
  * @author Guy Baele
  */
-public class MultivariateKDEDistribution implements MultivariateDistribution {
+public class MultivariateKDEDistribution implements MultivariateDistribution, GradientProvider {
 	
 	public static final String TYPE = "multivariateKDE";
     public static final boolean DEBUG = false;
@@ -98,6 +100,27 @@ public class MultivariateKDEDistribution implements MultivariateDistribution {
 
 	public String getType() {
 		return TYPE;
+	}
+
+	@Override
+	public int getDimension() {
+		return dimension;
+	}
+
+	@Override
+	public double[] getGradientLogDensity(Object obj) {
+		double[] x = GradientProvider.toDoubleArray(obj);
+
+		if (x.length != dimension) {
+			throw new IllegalArgumentException("data array is of the wrong dimension");
+		}
+		double[] gradLogPdf = new double[x.length];
+		for (int i = 0; i < dimension; i++) {
+			assert multivariateKDE[i] instanceof NormalKDEDistribution :
+					"Gradient of the working prior is only implemented for the (transformed) normal KDE estimator.";
+			gradLogPdf[i] = ((NormalKDEDistribution) multivariateKDE[i]).getGradLogDensity(x[i]);
+		}
+		return gradLogPdf;
 	}
 	
 }

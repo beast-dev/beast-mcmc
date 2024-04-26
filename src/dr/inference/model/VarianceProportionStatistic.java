@@ -25,22 +25,13 @@
 
 package dr.inference.model;
 
-import cern.colt.matrix.DoubleMatrix1D;
-import cern.colt.matrix.DoubleMatrix2D;
-import cern.colt.matrix.impl.DenseDoubleMatrix2D;
+import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.RateRescalingScheme;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.MultivariateTraitDebugUtilities;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
-import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.RobustEigenDecomposition;
-import dr.xml.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A Statistic class that computes the expected proportion of the variance in the data due to diffusion on the tree
@@ -49,64 +40,42 @@ import java.util.List;
  * @author Gabriel Hassler
  */
 
-public class VarianceProportionStatistic extends Statistic.Abstract implements VariableListener, ModelListener {
+public class VarianceProportionStatistic extends AbstractVarianceProportionStatistic implements VariableListener, ModelListener {
 
-
-    public static final String PARSER_NAME = "varianceProportionStatistic";
-    private static final String MATRIX_RATIO = "matrixRatio";
-    private static final String ELEMENTWISE = "elementWise";
-    private static final String SYMMETRIC_DIVISION = "symmetricDivision";
-
-    private final TreeModel tree;
     private final MultivariateDiffusionModel diffusionModel;
-    private final RepeatedMeasuresTraitDataModel dataModel;
-    private final TreeDataLikelihood treeLikelihood;
-    private Matrix diffusionProportion;
     private TreeVarianceSums treeSums;
+
     private Matrix diffusionVariance;
     private Matrix samplingVariance;
-
-    private Matrix diffusionComponent;
-    private Matrix samplingComponent;
 
     private boolean treeKnown = false;
     private boolean varianceKnown = false;
 
-    private final MatrixRatios ratio;
-
-    private final int dimTrait;
-
-
-    public VarianceProportionStatistic(TreeModel tree, TreeDataLikelihood treeLikelihood,
+    public VarianceProportionStatistic(Tree tree, TreeDataLikelihood treeLikelihood,
                                        RepeatedMeasuresTraitDataModel dataModel,
                                        MultivariateDiffusionModel diffusionModel,
                                        MatrixRatios ratio) {
-        this.tree = tree;
-        this.treeLikelihood = treeLikelihood;
+
+        super(tree, treeLikelihood, dataModel, ratio);
+
         this.diffusionModel = diffusionModel;
-        this.dataModel = dataModel;
-        this.dimTrait = dataModel.getTraitDimension();
-        this.diffusionVariance = new Matrix(dimTrait, dimTrait);
-        this.samplingVariance = new Matrix(dimTrait, dimTrait);
-        this.diffusionProportion = new Matrix(dimTrait, dimTrait);
-        this.diffusionComponent = new Matrix(dimTrait, dimTrait);
-        this.samplingComponent = new Matrix(dimTrait, dimTrait);
-
-
         this.treeSums = new TreeVarianceSums(0, 0);
 
-        tree.addModelListener(this);
+        this.diffusionVariance = null;
+        this.samplingVariance = null;
 
+        if (isTreeRandom) {
+            ((AbstractModel) tree).addModelListener(this);
+        }
         diffusionModel.getPrecisionParameter().addParameterListener(this);
-        dataModel.getPrecisionMatrix().addParameterListener(this);
-
-        this.ratio = ratio;
+        dataModel.getExtensionPrecision().addParameterListener(this);
     }
+
 
     /**
      * a class that stores the sum of the diagonal elements and all elements of a matrix
      */
-    private class TreeVarianceSums {
+    protected class TreeVarianceSums {
 
         private double diagonalSum;
         private double totalSum;
@@ -117,97 +86,28 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
             this.totalSum = totalSum;
         }
 
-    }
-
-    private enum MatrixRatios {
-        ELEMENT_WISE {
-            @Override
-            void setMatrixRatio(Matrix numeratorMatrix, Matrix otherMatrix, Matrix destination) {
-                int dim = destination.rows();
-
-                for (int i = 0; i < dim; i++) {
-                    for (int j = 0; j < dim; j++) {
-
-                        double n = Math.abs(numeratorMatrix.component(i, j));
-                        double d = Math.abs(otherMatrix.component(i, j));
-
-                        if (n == 0 && d == 0) {
-                            destination.set(i, j, 0);
-                        } else {
-                            destination.set(i, j, n / (n + d));
-                        }
-
-                    }
-                }
-
-            }
-        },
-        SYMMETRIC_DIVISION {
-            @Override
-            void setMatrixRatio(Matrix numeratorMatrix, Matrix otherMatrix, Matrix destination)
-                    throws IllegalDimension {
-
-                int dim = destination.rows();
-
-                Matrix M1 = numeratorMatrix.add(otherMatrix); //M1 = numeratorMatrix + otherMatrix
-                Matrix M2 = getMatrixSqrt(M1, true); //M2 = inv(sqrt(numeratorMatrix + otherMatrix))
-                Matrix M3 = M2.product(numeratorMatrix.product(M2));//M3 = inv(sqrt(numeratorMatrix + otherMatrix)) *
-                //                                            numeratorMatrix * inv(sqrt(numeratorMatrix + otherMatrix))
-                for (int i = 0; i < dim; i++) {
-                    for (int j = 0; j < dim; j++) {
-                        destination.set(i, j, M3.component(i, j));
-                    }
-                }
-
-            }
-        };
-
-        abstract void setMatrixRatio(Matrix numeratorMatrix, Matrix otherMatrix, Matrix destination)
-                throws IllegalDimension;
-    }
-
-    private void updateDiffsionProportion() throws IllegalDimension {
-        updateVarianceComponents();
-        ratio.setMatrixRatio(diffusionComponent, samplingComponent, diffusionProportion);
-    }
-
-    /**
-     * recalculates the diffusionProportion statistic based on current parameters
-     */
-    //TODO: Move method below to a different class
-    private static Matrix getMatrixSqrt(Matrix M, Boolean invert) {
-        DoubleMatrix2D S = new DenseDoubleMatrix2D(M.toComponents());
-        RobustEigenDecomposition eigenDecomp = new RobustEigenDecomposition(S, 100);
-        DoubleMatrix1D eigenValues = eigenDecomp.getRealEigenvalues();
-        int dim = eigenValues.size();
-        for (int i = 0; i < dim; i++) {
-            double value = Math.sqrt(eigenValues.get(i));
-            if (invert) {
-                value = 1 / value;
-            }
-            eigenValues.set(i, value);
+        public double getDiagonalSum() {
+            return diagonalSum;
         }
 
-        DoubleMatrix2D eigenVectors = eigenDecomp.getV();
-        for (int i = 0; i < dim; i++) {
-            for (int j = 0; j < dim; j++) {
-                eigenVectors.set(i, j, eigenVectors.get(i, j) * eigenValues.get(j));
-
-            }
+        public double getTotalSum() {
+            return totalSum;
         }
-        DoubleMatrix2D storageMatrix = new DenseDoubleMatrix2D(dim, dim);
-        eigenVectors.zMult(eigenDecomp.getV(), storageMatrix, 1, 0, false, true);
 
+        public void setDiagonalSum(double diagonalSum) {
+            this.diagonalSum = diagonalSum;
+        }
 
-        return new Matrix(storageMatrix.toArray());
-
+        public void setTotalSum(double totalSum) {
+            this.totalSum = totalSum;
+        }
     }
 
-    private void updateVarianceComponents() {
+    protected void updateVarianceComponents() {
 
         double n = tree.getExternalNodeCount();
 
-        double diffusionScale = (treeSums.diagonalSum / n - treeSums.totalSum / (n * n));
+        double diffusionScale = (treeSums.getDiagonalSum() / n - treeSums.getTotalSum() / (n * n));
         double samplingScale = (n - 1) / n;
 
         for (int i = 0; i < dimTrait; i++) {
@@ -228,9 +128,31 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
             }
         }
-
     }
 
+    @Override
+    protected boolean needToUpdate(int dim) {
+        boolean needToUpdate = false;
+        if (!treeKnown) {
+
+            updateTreeSums();
+            treeKnown = true;
+            needToUpdate = true;
+
+        }
+
+        if (!varianceKnown) {
+
+            samplingVariance = dataModel.getSamplingVariance();
+            diffusionVariance = new Matrix(diffusionModel.getPrecisionmatrix()).inverse();
+
+            varianceKnown = true;
+
+            needToUpdate = true;
+
+        }
+        return needToUpdate;
+    }
 
     /**
      * recalculates the the sum of the diagonal elements and sum of all the elements of the tree variance
@@ -250,74 +172,20 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
             normalization = tree.getNodeHeight(tree.getRoot());
         } else if (rescalingScheme == RateRescalingScheme.TREE_LENGTH) {
             //TODO: find function that returns tree length
-            System.err.println("VarianceProportionStatistic not yet implemented for " +
+            throw new RuntimeException("VarianceProportionStatistic not yet implemented for " +
                     "traitDataLikelihood argument useTreeLength='true'.");
         } else if (rescalingScheme != RateRescalingScheme.NONE) {
-            System.err.println("VarianceProportionStatistic not yet implemented for RateRescalingShceme" +
+            throw new RuntimeException("VarianceProportionStatistic not yet implemented for RateRescalingShceme" +
                     rescalingScheme.getText() + ".");
         }
 
-        treeSums.diagonalSum = diagonalSum / normalization;
-        treeSums.totalSum = (diagonalSum + offDiagonalSum) / normalization;
+        treeSums.setDiagonalSum(diagonalSum / normalization);
+        treeSums.setTotalSum((diagonalSum + offDiagonalSum) / normalization);
     }
-
-    private void updateSamplingVariance() {
-        samplingVariance = dataModel.getSamplingVariance();
-    }
-
-    private void updateDiffusionVariance() {
-        diffusionVariance = new Matrix(diffusionModel.getPrecisionmatrix()).inverse();
-    }
-
-
-    @Override
-    public int getDimension() {
-        return dimTrait * dimTrait;
-    }
-
-    @Override
-    public double getStatisticValue(int dim) {
-
-        boolean needToUpdate = false;
-
-        if (!treeKnown) {
-
-            updateTreeSums();
-            treeKnown = true;
-            needToUpdate = true;
-
-        }
-
-        if (!varianceKnown) {
-
-            updateSamplingVariance();
-            updateDiffusionVariance();
-            varianceKnown = true;
-            needToUpdate = true;
-
-        }
-
-        if (needToUpdate) {
-
-            try {
-                updateDiffsionProportion();
-            } catch (IllegalDimension illegalDimension) {
-                illegalDimension.printStackTrace();
-            }
-
-        }
-
-
-        int d1 = dim / dimTrait;
-        int d2 = dim - d1 * dimTrait;
-        return diffusionProportion.component(d1, d2);
-
-    }
-
 
     @Override
     public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-        assert (variable == dataModel.getSamplingPrecision() || variable == diffusionModel.getPrecisionParameter());
+        assert (variable == dataModel.getExtensionPrecision() || variable == diffusionModel.getPrecisionParameter());
 
         varianceKnown = false;
     }
@@ -326,71 +194,10 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     public void modelChangedEvent(Model model, Object object, int index) {
         assert (model == tree);
 
+        if (!isTreeRandom) throw new IllegalStateException("Attempting to change a fixed tree");
+
         treeKnown = false;
     }
-
-    //TODO: make its own class in evomodelxml
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        @Override
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-            RepeatedMeasuresTraitDataModel dataModel = (RepeatedMeasuresTraitDataModel)
-                    xo.getChild(RepeatedMeasuresTraitDataModel.class);
-
-            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
-                    xo.getChild(MultivariateDiffusionModel.class);
-
-            TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-
-            String ratioString = xo.getStringAttribute(MATRIX_RATIO);
-
-            MatrixRatios ratio = null;
-
-            if (ratioString.equalsIgnoreCase(ELEMENTWISE)) {
-                ratio = MatrixRatios.ELEMENT_WISE;
-            } else if (ratioString.equalsIgnoreCase(SYMMETRIC_DIVISION)) {
-                ratio = MatrixRatios.SYMMETRIC_DIVISION;
-            } else {
-                throw new RuntimeException(PARSER_NAME + " must have attibute " + MATRIX_RATIO +
-                        " with one of the following values: " + MatrixRatios.values());
-            }
-
-            return new VarianceProportionStatistic(tree, treeLikelihood, dataModel, diffusionModel,
-                    ratio);
-        }
-
-        private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newStringRule(MATRIX_RATIO, false),
-                new ElementRule(TreeModel.class),
-                new ElementRule(TreeDataLikelihood.class),
-                new ElementRule(RepeatedMeasuresTraitDataModel.class),
-                new ElementRule(MultivariateDiffusionModel.class)
-        };
-
-        @Override
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        @Override
-        public String getParserDescription() {
-            return "This element returns a statistic that computes proportion of variance due to diffusion on the tree";
-        }
-
-        @Override
-        public Class getReturnType() {
-            return VarianceProportionStatistic.class;
-        }
-
-        @Override
-        public String getParserName() {
-            return PARSER_NAME;
-        }
-    };
-
 
     @Override
     public void modelRestored(Model model) {

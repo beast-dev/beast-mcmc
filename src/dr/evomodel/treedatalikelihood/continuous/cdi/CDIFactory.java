@@ -113,7 +113,7 @@ public class CDIFactory {
         }
 
         return new ContinuousDiffusionIntegrator.Basic(
-                precisionType, numTraits, dimTrait, bufferCount, diffusionCount
+                precisionType, numTraits, dimTrait, dimTrait, bufferCount, diffusionCount
         );
     }
 

@@ -1,0 +1,140 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+	<parameter id="data" value="1 2 3 6"/>
+
+	<taxa id="taxa">
+		<taxon id="A"/>
+		<taxon id="B"/>
+		<taxon id="C"/>
+		<taxon id="D"/>
+		<taxon id="E"/>
+	</taxa>
+
+	<newick id="startingTree">
+
+		((((A:1,B:1):2,C:2):3,D:4):4,E:10)
+
+	<!--
+		(((A:1,B:1):1,(C:1,D:1):1):1,E:3)
+	-->
+	</newick>
+
+	<!-- Generate a tree model                                                   -->
+	<treeModel id="treeModel">
+		<coalescentTree idref="startingTree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+	</treeModel>
+
+	<randomField id="gmrf">
+		<distribution>
+			<GaussianMarkovRandomField dim="4" matchPseudoDeterminant="false">
+				<precision>
+					<parameter id="precision" value="3"/>
+				</precision>
+				<mean>
+					<parameter id="mean" value="3"/>
+				</mean>
+				<weightProvider>
+					<treeModel idref="treeModel"/>
+				</weightProvider>
+			</GaussianMarkovRandomField>
+		</distribution>
+		<data>
+			<parameter idref="data"/>
+		</data>
+	</randomField>
+
+
+	<report>
+		<randomField idref="gmrf"/>
+	</report>
+
+	<randomFieldGradient id="gradient">
+		<randomField idref="gmrf"/>
+		<parameter idref="data"/>
+	</randomFieldGradient>
+
+	<report>
+		<randomFieldGradient idref="gradient"/>
+	</report>
+
+	<randomFieldGradient id="gradientPrecision">
+		<randomField idref="gmrf"/>
+		<parameter idref="precision"/>
+	</randomFieldGradient>
+
+	<report>
+		<randomFieldGradient idref="gradientPrecision"/>
+	</report>
+
+	<randomFieldGradient id="gradientMean">
+		<randomField idref="gmrf"/>
+		<parameter idref="mean"/>
+	</randomFieldGradient>
+
+	<report>
+		<randomFieldGradient idref="gradientMean"/>
+	</report>
+<!--
+	<randomField id="gmrfProper">
+		<distribution>
+			<GaussianMarkovRandomField dim="4" matchPseudoDeterminant="true">
+				<precision>
+					<parameter id="precisionProper" value="1.5"/>
+				</precision>
+				<mean>
+					<parameter id="meanProper" value="0.0"/>
+				</mean>
+				<lambda>
+					<parameter id="lambda" value="0.9"/>
+				</lambda>
+			</GaussianMarkovRandomField>
+		</distribution>
+		<data>
+			<parameter idref="data"/>
+		</data>
+	</randomField>
+
+
+	<report>
+		<randomField idref="gmrfProper"/>
+	</report>
+
+	<randomFieldGradient id="gradientProper">
+		<randomField idref="gmrfProper"/>
+		<parameter idref="data"/>
+	</randomFieldGradient>
+
+	<report>
+		<randomFieldGradient idref="gradientProper"/>
+	</report>
+
+	<randomFieldGradient id="gradientPrecisionProper">
+		<randomField idref="gmrfProper"/>
+		<parameter idref="precisionProper"/>
+	</randomFieldGradient>
+
+	<report>
+		<randomFieldGradient idref="gradientPrecisionProper"/>
+	</report>
+
+	<randomFieldGradient id="gradientMeanProper">
+		<randomField idref="gmrfProper"/>
+		<parameter idref="meanProper"/>
+	</randomFieldGradient>
+
+	<report>
+		<randomFieldGradient idref="gradientMeanProper"/>
+	</report>
+-->
+
+</beast>

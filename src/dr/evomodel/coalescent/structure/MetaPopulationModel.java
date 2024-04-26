@@ -26,7 +26,7 @@
 package dr.evomodel.coalescent.structure;
 
 import dr.evolution.coalescent.structure.MetaPopulation;
-import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.inference.model.*;
 import dr.xml.*;
 

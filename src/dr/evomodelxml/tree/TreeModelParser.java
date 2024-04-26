@@ -31,6 +31,7 @@ import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
@@ -124,7 +125,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
     }
 
     public String getParserName() {
-        return TreeModel.TREE_MODEL;
+        return DefaultTreeModel.TREE_MODEL;
     }
 
     /**
@@ -136,7 +137,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
         boolean fixHeights = xo.getAttribute(FIX_HEIGHTS, false);
         boolean fixTree = xo.getAttribute(FIX_TREE, false);
 
-        TreeModel treeModel = new TreeModel(xo.getId(), tree, fixHeights, fixTree);
+        DefaultTreeModel treeModel = new DefaultTreeModel(xo.getId(), tree, fixHeights, fixTree);
 
         Logger.getLogger("dr.evomodel").info("\nCreating the tree model, '" + xo.getId() + "'");
 
@@ -262,14 +263,32 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("illegal child element in  " + getParserName() + ": " + xo.getChildName(i) + " " + xo.getChild(i));
             }
         }
-        
+
+        double minTaxonHeight = Double.MAX_VALUE;
+        double maxTaxonHeight = -Double.MAX_VALUE;
+        for (int i = 0; i < treeModel.getTaxonCount(); i++) {
+            Taxon taxon = treeModel.getTaxon(i);
+            double h = 0;
+            if (taxon.getDate() != null) {
+                h = Taxon.getHeightFromDate(taxon.getDate());
+            }
+            if (h < minTaxonHeight) {
+                minTaxonHeight = h;
+            }
+            if (h > maxTaxonHeight) {
+                maxTaxonHeight = h;
+            }
+        }
+
 //        Logger.getLogger("dr.evomodel").info("  initial tree topology = " + TreeUtils.uniqueNewick(treeModel, treeModel.getRoot()));
-        Logger.getLogger("dr.evomodel").info("  taxon count = " + treeModel.getExternalNodeCount());
-        Logger.getLogger("dr.evomodel").info("  tree height = " + treeModel.getNodeHeight(treeModel.getRoot()));
+        Logger.getLogger("dr.evomodel").info("             taxon count = " + treeModel.getExternalNodeCount());
+        Logger.getLogger("dr.evomodel").info("             tree height = " + treeModel.getNodeHeight(treeModel.getRoot()));
+        Logger.getLogger("dr.evomodel").info("          min tip height = " + minTaxonHeight);
+        Logger.getLogger("dr.evomodel").info("          max tip height = " + maxTaxonHeight);
         return treeModel;
     }
 
-    public static void parseNodeTraits(XMLObject cxo, TreeModel treeModel) throws XMLParseException {
+    public static void parseNodeTraits(XMLObject cxo, DefaultTreeModel treeModel) throws XMLParseException {
 
         boolean rootNode = cxo.getAttribute(ROOT_NODE, false);
         boolean internalNodes = cxo.getAttribute(INTERNAL_NODES, false);
@@ -352,7 +371,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return TreeModel.class;
+        return DefaultTreeModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

@@ -25,6 +25,7 @@
 
 package dr.inference.markovjumps;
 
+import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.math.MathUtils;
 
@@ -46,7 +47,7 @@ public class StateHistory {
 //        this(0.0, startingState, stateCount);
 //    }
 
-    protected StateHistory(double startingTime, int startingState, int stateCount) {
+    public StateHistory(double startingTime, int startingState, int stateCount) {
         stateList = new ArrayList<StateChange>();
         stateList.add(new StateChange(startingTime, startingState));
         this.stateCount = stateCount;
@@ -293,7 +294,11 @@ public class StateHistory {
                     sb.append(",");
                 }
                 double time = stateList.get(i).getTime(); // + startTime;
-                addEventToStringBuilder(sb, dataType.getCode(currentState), dataType.getCode(nextState), time, site);
+                if (dataType instanceof Codons) {
+                    addEventToStringBuilder(sb, dataType.getTriplet(currentState), dataType.getTriplet(nextState), time, site);
+                } else {
+                    addEventToStringBuilder(sb, dataType.getCode(currentState), dataType.getCode(nextState), time, site);
+                }
                 firstChange = false;
                 currentState = nextState;
             }

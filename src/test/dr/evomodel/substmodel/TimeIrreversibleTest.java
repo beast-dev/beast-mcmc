@@ -83,7 +83,7 @@ public class TimeIrreversibleTest extends TestCase {
             this.x = x;
         }
 
-        public double[] getRates(int id) {
+        public double[] getRates(int id, Random randomGenerator) {
             double[] originalRates = super.getRates();
             System.out.println("original rates:");
             printRateMatrix(originalRates, getDataType().getStateCount());
@@ -93,7 +93,7 @@ public class TimeIrreversibleTest extends TestCase {
 
             for (int r = 0; r < originalRates.length; r++) {
                 if (r == id) {
-                    uniform[r] = (new Random()).nextDouble() * ((1 / x) - x) + x;
+                    uniform[r] = randomGenerator.nextDouble() * ((1 / x) - x) + x;
                     newRates[r] = originalRates[r] * uniform[r];
                 } else {
                     newRates[r] = originalRates[r];
@@ -116,11 +116,14 @@ public class TimeIrreversibleTest extends TestCase {
         double[] csm_orig = testComplexSubstitutionModel(originalTest, originalTest.getRates());
         double[] svs_orig = testSVSComplexSubstitutionModel(originalTest, originalTest.getRates());
 
+        Random randomGenerator = new Random();
+        randomGenerator.setSeed(20130721); // set the seed
+
         Test test = new Test(0.8);
         for (int r = 0; r < test.getRates().length; r++) {
             System.out.println("==================== changing index = " + r + " (start from 0) ====================");
 
-            double[] newRate = test.getRates(r);
+            double[] newRate = test.getRates(r, randomGenerator);
             double[] csm_test = testComplexSubstitutionModel(test, newRate);
             reportMatrix(csm_orig, csm_test);
 

@@ -42,7 +42,7 @@ import java.util.Set;
  */
 public class MRCATraitStatistic extends TreeStatistic {
 
-    public MRCATraitStatistic(String name, String trait, TreeModel tree, TaxonList taxa) throws TreeUtils.MissingTaxonException {
+    public MRCATraitStatistic(String name, String trait, DefaultTreeModel tree, TaxonList taxa) throws TreeUtils.MissingTaxonException {
         super(name);
         this.tree = tree;
         this.trait = trait;
@@ -51,7 +51,7 @@ public class MRCATraitStatistic extends TreeStatistic {
     }
 
     public void setTree(Tree tree) {
-        this.tree = (TreeModel) tree;
+        this.tree = (DefaultTreeModel) tree;
     }
 
     public Tree getTree() {
@@ -75,7 +75,7 @@ public class MRCATraitStatistic extends TreeStatistic {
         return tree.getNodeTrait(node, trait);
     }
 
-    private TreeModel tree = null;
+    private DefaultTreeModel tree = null;
     private Set<String> leafSet = null;
     private String trait;
     private boolean isRate;

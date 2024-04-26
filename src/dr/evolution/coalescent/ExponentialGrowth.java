@@ -101,6 +101,27 @@ public class ExponentialGrowth extends ConstantPopulation {
         }
     }
 
+    @Override
+    public double getIntensityGradient(double finishTime) {
+        double r = getGrowthRate();
+        if (r == 0.0) {
+            return 1.0 / getN0();
+        } else {
+            return Math.exp(finishTime * r) / getN0();
+        }
+    }
+
+    @Override
+    public double getLogDemographicGradient(double finishTime) {
+        double r = getGrowthRate();
+        if (r == 0) {
+            return 0.0;
+        } else {
+            return -r;
+        }
+    }
+
+
     public double getInverseIntensity(double x) {
 
         double r = getGrowthRate();

@@ -45,20 +45,19 @@ public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
     // LKJ transform with CPCs constrained between -1 and 1.
     // transform: from correlation matrix to constrained CPCs
 
-    public LKJTransformConstrained(int dim) {
-        super(dim);
+    public LKJTransformConstrained(int dimVector) {
+        super(dimVector);
     }
 
     // "Cholesky" transform from Stan manual
     @Override
-    public double[] inverse(double[] values, int from, int to) {
-        WrappedMatrix.WrappedUpperTriangularMatrix L
-                = fillDiagonal(super.inverse(values, 0, values.length), dim);
+    protected double[] inverse(double[] values) {
+        WrappedMatrix.WrappedUpperTriangularMatrix L = fillDiagonal(super.inverse(values), dimVector);
 
         SymmetricMatrix R = L.transposedProduct();
 
         if (DEBUG) {
-            System.err.println("Z: " + compoundCorrelationSymmetricMatrix(values, dim));
+            System.err.println("Z: " + compoundCorrelationSymmetricMatrix(values, dimVector));
             System.err.println("R: " + R);
             try {
                 if (!R.isPD()) {
@@ -73,10 +72,8 @@ public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
     }
 
     @Override
-    public double[] transform(double[] values, int from, int to) {
-        assert from == 0 && to == values.length : "The transform function can only be applied to the whole array of values.";
-
-        SymmetricMatrix R = compoundCorrelationSymmetricMatrix(values, dim);
+    protected double[] transform(double[] values) {
+        SymmetricMatrix R = compoundCorrelationSymmetricMatrix(values, dimVector);
         double[] L;
         try {
             L = (new CholeskyDecomposition(R)).getStrictlyUpperTriangular();
@@ -84,12 +81,12 @@ public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
             throw new RuntimeException("Unable to decompose matrix in LKJ inverse transform.");
         }
 
-        double[] results = super.transform(L, 0, L.length);
+        double[] results = super.transform(L);
 
         if (DEBUG) {
-            System.err.println("R: " + compoundCorrelationSymmetricMatrix(values, dim));
-            System.err.println("L: " + new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(L, dim));
-            System.err.println("Z: " + compoundCorrelationSymmetricMatrix(results, dim));
+            System.err.println("R: " + compoundCorrelationSymmetricMatrix(values, dimVector));
+            System.err.println("L: " + new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(L, dimVector));
+            System.err.println("Z: " + compoundCorrelationSymmetricMatrix(results, dimVector));
         }
 
         return results;
@@ -110,15 +107,13 @@ public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
     }
 
     @Override
-    public double getLogJacobian(double[] values, int from, int to) {
-        assert from == 0 && to == values.length
-                : "The logJacobian function can only be applied to the whole array of values.";
+    protected double getLogJacobian(double[] values) {
         double[] transformedValues = transform(values);
         double logJacobian = 0;
         int k = 0;
-        for (int i = 0; i < dim - 2; i++) { // Sizes of conditioning sets
-            for (int j = i + 1; j < dim; j++) {
-                logJacobian += (dim - i - 2) * Math.log(1.0 - Math.pow(transformedValues[k], 2));
+        for (int i = 0; i < dimVector - 2; i++) { // Sizes of conditioning sets
+            for (int j = i + 1; j < dimVector; j++) {
+                logJacobian += (dimVector - i - 2) * Math.log(1.0 - Math.pow(transformedValues[k], 2));
                 k++;
             }
         }
@@ -128,9 +123,9 @@ public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
     public double[] getGradientLogJacobianInverse(double[] values) {
         double[] gradientLogJacobian = new double[values.length];
         int k = 0;
-        for (int i = 0; i < dim - 2; i++) { // Sizes of conditioning sets
-            for (int j = i + 1; j < dim; j++) {
-                gradientLogJacobian[k] = -(dim - i - 2) * values[k] / (1.0 - Math.pow(values[k], 2));
+        for (int i = 0; i < dimVector - 2; i++) { // Sizes of conditioning sets
+            for (int j = i + 1; j < dimVector; j++) {
+                gradientLogJacobian[k] = -(dimVector - i - 2) * values[k] / (1.0 - Math.pow(values[k], 2));
                 k++;
             }
         }
@@ -142,11 +137,10 @@ public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
 
     // Returns the *transpose* of the Jacobian matrix: jacobian[pos(k, l)][pos(i, j)] = d R_{ij} / d Z_{kl}
     public double[][] computeJacobianMatrixInverse(double[] values) {
-        int dimJac = dim * (dim - 1) / 2;
-        double[][] jacobian = new double[dimJac][dimJac];
+        double[][] jacobian = new double[dim][dim];
 
         // Initialization
-        for (int j = 1; j < dim; j++) {
+        for (int j = 1; j < dimVector; j++) {
             jacobian[pos(0, j)][j - 1] = 1.0;
         }
 
@@ -156,8 +150,8 @@ public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
     }
 
     private void recursionJacobian(double[][] jacobian, double[] values) {
-        for (int i = 1; i < dim - 1; i++) {
-            for (int j = i + 1; j < dim; j++) {
+        for (int i = 1; i < dimVector - 1; i++) {
+            for (int j = i + 1; j < dimVector; j++) {
                 jacobian[pos(i, j)][pos(i, j)] = values[pos(i, j)];
                 for (int iota = 1; iota < i + 1; iota++) {
                     setUpperTriangular(jacobian[pos(i, j)], i, j, recursionFormulaJacobian(jacobian[pos(i, j)], values, i, j, iota, i, j));
@@ -210,7 +204,7 @@ public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
     }
 
     private int pos(int i, int j) {
-        return i * (2 * dim - i - 1) / 2 + (j - i - 1);
+        return i * (2 * dimVector - i - 1) / 2 + (j - i - 1);
     }
 
     // ************************************************************************* //
@@ -219,7 +213,7 @@ public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
 
     public double[] inverseRecursion(double[] values, int from, int to) {
         assert from == 0 && to == values.length : "The transform function can only be applied to the whole array of values.";
-        assert dim * (dim - 1) / 2 == values.length : "The transform function can only be applied to the whole array of values.";
+        assert dimVector * (dimVector - 1) / 2 == values.length : "The transform function can only be applied to the whole array of values.";
         for (int k = 0; k < dim; k++) {
             assert values[k] <= 1.0 && values[k] >= -1.0 : "CPCs must be between -1.0 and 1.0";
         }
@@ -242,7 +236,7 @@ public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
         recursion(inv);
 
         if (DEBUG) {
-            SymmetricMatrix Z = compoundCorrelationSymmetricMatrix(values, dim);
+            SymmetricMatrix Z = compoundCorrelationSymmetricMatrix(values, dimVector);
             try {
                 if (!Z.isPD()) {
                     throw new RuntimeException("The LKJ transform should produce a Positive Definite matrix.");
@@ -256,8 +250,8 @@ public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
     }
 
     private void recursionInverse(double[] trans, double[] values) {
-        for (int i = 1; i < dim; i++) {
-            for (int j = i + 1; j < dim; j++) {
+        for (int i = 1; i < dimVector; i++) {
+            for (int j = i + 1; j < dimVector; j++) {
                 for (int iota = 1; iota < i + 1; iota++) {
                     setUpperTriangular(trans, i, j, recursionInverseFormula(trans, values, i, j, iota));
                 }
@@ -273,8 +267,8 @@ public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
     }
 
     private void recursion(double[] inv) {
-        for (int i = 1; i < dim; i++) {
-            for (int j = i + 1; j < dim; j++) {
+        for (int i = 1; i < dimVector; i++) {
+            for (int j = i + 1; j < dimVector; j++) {
                 for (int iota = 1; iota < i + 1; iota++) {
                     setUpperTriangular(inv, i, j, recursionFormula(inv, i, j, iota));
                 }

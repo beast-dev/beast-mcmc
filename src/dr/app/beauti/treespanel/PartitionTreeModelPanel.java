@@ -29,20 +29,22 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.types.StartingTreeType;
+import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.*;
 
 /**
  * @author Andrew Rambaut
@@ -55,23 +57,24 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private static final long serialVersionUID = 8096349200725353543L;
 
     private final String NO_TREE = "no tree loaded";
-    private JComboBox ploidyTypeCombo = new JComboBox(PloidyType.values());
 
     private ButtonGroup startingTreeGroup = new ButtonGroup();
     private JRadioButton randomTreeRadio = new JRadioButton("Random starting tree");
     private JRadioButton upgmaTreeRadio = new JRadioButton("UPGMA starting tree");
     private JRadioButton userTreeRadio = new JRadioButton("User-specified starting tree");
-
+    private ImportTreeAction importTreeAction = new ImportTreeAction();
+    private JButton importTreeButton = new JButton(importTreeAction);
     private JLabel userTreeLabel = new JLabel("Select user-specified tree:");
     private JComboBox userTreeCombo = new JComboBox();
 
     private JLabel treeFormatLabel = new JLabel("Export format for tree:");
-    private JComboBox treeFormatCombo = new JComboBox(new String[] {"Newick", "XML"});
+    private JComboBox treeFormatCombo = new JComboBox(new String[]{"Newick", "XML"});
 
     private JLabel userTreeInfo = new JLabel("<html>" +
             "Import user-specified starting trees from <b>NEXUS</b><br>" +
             "format  data files using the 'Import Data' menu option.<br>" +
-            "Trees must be rooted and strictly bifurcating (binary).</html>");
+            "Starting trees that are not rooted and strictly bifurcating <br>" +
+            " (binary) will be randomly resolved.</html>");
 
     private RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY, "Init root height");
 
@@ -91,16 +94,6 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         PanelUtils.setupComponent(initRootHeightField);
         initRootHeightField.setColumns(10);
         initRootHeightField.setEnabled(false);
-
-        PanelUtils.setupComponent(ploidyTypeCombo);
-        ploidyTypeCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                partitionTreeModel.setPloidyType((PloidyType) ploidyTypeCombo.getSelectedItem());
-            }
-        });
-        if (options.isEBSPSharingSamePrior()) {
-            ploidyTypeCombo.setSelectedItem(partitionTreeModel.getPloidyType());
-        }
 
         PanelUtils.setupComponent(randomTreeRadio);
         PanelUtils.setupComponent(upgmaTreeRadio);
@@ -166,27 +159,32 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private void setUserSpecifiedStartingTree() {
         if (userTreeCombo.getSelectedItem() != null && (!userTreeCombo.getSelectedItem().toString().equalsIgnoreCase(NO_TREE))) {
             Tree seleTree = getSelectedUserTree();
-            if (seleTree == null || isBifurcatingTree(seleTree, seleTree.getRoot())) {
+            if (seleTree != null) {
                 partitionTreeModel.setUserStartingTree(seleTree);
             } else {
                 JOptionPane.showMessageDialog(parent, "The selected user-specified starting tree " +
-                        "is not fully bifurcating.\nBEAST requires rooted, bifurcating (binary) trees.",
+                                "is not fully bifurcating.\nBEAST requires rooted, bifurcating (binary) trees.",
                         "Illegal user-specified starting tree",
                         JOptionPane.ERROR_MESSAGE);
 
                 userTreeCombo.setSelectedItem(NO_TREE);
                 partitionTreeModel.setUserStartingTree(null);
             }
+//            else {
+//                JOptionPane.showMessageDialog(parent, "The selected user-specified starting tree " +
+//                        "is not fully bifurcating.\nBEAST requires rooted, bifurcating (binary) trees.",
+//                        "Illegal user-specified starting tree",
+//                        JOptionPane.ERROR_MESSAGE);
+//
+//                userTreeCombo.setSelectedItem(NO_TREE);
+//                partitionTreeModel.setUserStartingTree(null);
+//            }
         }
     }
 
     public void setupPanel() {
 
         removeAll();
-
-        if (options.isEBSPSharingSamePrior()) {
-            addComponentWithLabel("Ploidy type:", ploidyTypeCombo);
-        }
 
         if (partitionTreeModel.getDataType().getType() != DataType.MICRO_SAT) {
             addSpanningComponent(randomTreeRadio);
@@ -211,6 +209,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
             addComponents(treeFormatLabel, treeFormatCombo);
             addComponent(userTreeInfo);
+            addComponent(importTreeButton);
 
         }
 
@@ -253,6 +252,76 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             }
         }
         return null;
+    }
+
+    private class ImportTreeAction extends AbstractAction {
+        public ImportTreeAction() {
+            super("Import additional tree(s) from file ...");
+            setToolTipText("Import newick-formatted trees from a file. These trees can be used as a starting tree.");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            doImportTrees();
+        }
+    }
+
+    private final boolean doImportTrees() {
+        File[] files = parent.selectImportFiles("Import Trees File...", false, new FileNameExtensionFilter[]{
+                new FileNameExtensionFilter("Nexus files or text files containing newick trees", "txt", "nex", "nexus", "nwk")});
+
+        BEAUTiImporter beautiImporter = new BEAUTiImporter(parent, options);
+
+        if (files != null && files.length != 0) {
+
+            File file = files[0];
+            int nTreesBefore = options.userTrees.size();
+
+            try {
+
+                String line = beautiImporter.findFirstLine(file);
+
+                if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
+                    // is a NEXUS file
+                    beautiImporter.importNexusFile(file, true);
+                } else {
+                    beautiImporter.importNewickFile(files[0]);
+                }
+
+            } catch (FileNotFoundException fnfe) {
+                JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
+                        "Unable to open file",
+                        JOptionPane.ERROR_MESSAGE);
+                return false;
+            } catch (IOException ioe) {
+                JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
+                        "Unable to read file",
+                        JOptionPane.ERROR_MESSAGE);
+                return false;
+            } catch (Exception ex) {
+                ex.printStackTrace(System.err);
+                JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
+                        "Error reading file",
+                        JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+                return false;
+            }
+
+            int nTreesAfter = options.userTrees.size();
+            if (nTreesAfter == nTreesBefore) {
+                JOptionPane.showMessageDialog(this,
+                        "Did not find any trees in file '" + file.getName() + "'",
+                        "No trees found",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            return false;
+        }
+
+        setupPanel();
+        setOptions();
+
+        return true;
     }
 
 }

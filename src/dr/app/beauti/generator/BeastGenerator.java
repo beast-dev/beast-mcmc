@@ -37,6 +37,8 @@ import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -117,36 +119,7 @@ public class BeastGenerator extends Generator {
      * @throws IllegalArgumentException if there is a problem with the current settings
      */
     public void checkOptions() throws GeneratorException {
-        //++++++++++++++ Microsatellite +++++++++++++++
-        // this has to execute before all checking below
-        // mask all ? from microsatellite data for whose tree only has 1 data partition
-
         try{
-            if (options.contains(Microsatellite.INSTANCE)) {
-                // clear all masks
-                for (PartitionPattern partitionPattern : options.getPartitionPattern()) {
-                    partitionPattern.getPatterns().clearMask();
-                }
-
-                // set mask
-                for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-                    // if a tree only has 1 data partition, which mostly mean unlinked trees
-                    if (options.getDataPartitions(model).size() == 1) {
-                        PartitionPattern partition = (PartitionPattern) options.getDataPartitions(model).get(0);
-                        Patterns patterns = partition.getPatterns();
-
-                        for (int i = 0; i < patterns.getTaxonCount(); i++) {
-                            int state = patterns.getPatternState(i, 0);
-                            // mask ? from data
-                            if (state < 0) {
-                                patterns.addMask(i);
-                            }
-                        }
-
-//                        System.out.println("mask set = " + patterns.getMaskSet() + " in partition " + partition.getName());
-                    }
-                }
-            }
 
             //++++++++++++++++ Taxon List ++++++++++++++++++
             TaxonList taxonList = options.taxonList;
@@ -306,6 +279,23 @@ public class BeastGenerator extends Generator {
 
 
     }
+    public boolean checkUserTreeIsBifurcating(){
+        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+            if(model.getStartingTreeType()==StartingTreeType.USER){
+                if(!(isBifurcatingTree(model.getUserStartingTree(),model.getUserStartingTree().getRoot()))){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    public boolean isBifurcatingTree(Tree tree, NodeRef node) {
+        if (tree.getChildCount(node) > 2) return false;
+        for (int i = 0; i < tree.getChildCount(node); i++) {
+            if (!isBifurcatingTree(tree, tree.getChild(node, i))) return false;
+        }
+        return true;
+    }
 
     /**
      * Generate a beast xml file from these beast options
@@ -407,7 +397,6 @@ public class BeastGenerator extends Generator {
         try {
             // Construct pattern lists even if sampling from a null alignment
             //if (!options.samplePriorOnly) {
-                List<Microsatellite> microsatList = new ArrayList<Microsatellite>();
                 for (AbstractPartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
                     if (partition.getTaxonList() != null) {
                         switch (partition.getDataType().getType()) {
@@ -425,10 +414,10 @@ public class BeastGenerator extends Generator {
                                 // attribute patterns which is generated next bit of this method.
                                 break;
 
-                            case DataType.MICRO_SAT:
-                                // microsat does not have alignment
-                                patternListGenerator.writePatternList((PartitionPattern) partition, microsatList, writer);
+                            case DataType.DUMMY:
+                                //Do nothing
                                 break;
+
                             default:
                                 throw new IllegalArgumentException("Unsupported data type");
                         }
@@ -623,11 +612,6 @@ public class BeastGenerator extends Generator {
             writer.writeText("");
             if (options.performTraceAnalysis) {
                 writeTraceAnalysis(writer);
-            }
-            if (options.generateCSV) {
-                for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-                    treePriorGenerator.writeEBSPAnalysisToCSVfile(prior, writer);
-                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -856,6 +840,9 @@ public class BeastGenerator extends Generator {
 
         // write tree log to file
         logGenerator.writeTreeLogToFile(writer);
+
+        //write current state of chain to checkpoint file
+        logGenerator.writeCheckpointToFile(writer);
 
         writer.writeCloseTag("mcmc");
     }

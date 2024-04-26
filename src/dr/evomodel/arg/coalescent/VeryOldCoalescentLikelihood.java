@@ -29,7 +29,7 @@ import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.math.Binomial;

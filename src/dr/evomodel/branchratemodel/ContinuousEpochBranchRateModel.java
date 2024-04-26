@@ -82,6 +82,5 @@ public class ContinuousEpochBranchRateModel extends RateEpochBranchRateModel {
     private Parameter rootHeight;
     private double normalization;
     private double savedNormalization;
-    private boolean normalizationKnown = false;
-
+    private boolean normalizationKnown;
 }

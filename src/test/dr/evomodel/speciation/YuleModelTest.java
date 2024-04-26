@@ -7,6 +7,7 @@ import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeHeightStatistic;
 import dr.evomodel.tree.TreeLengthStatistic;
 import dr.evomodel.tree.TreeModel;
@@ -58,7 +59,7 @@ public class YuleModelTest extends TraceCorrelationAssert {
 
     public void testYuleWithSubtreeSlide() {
 
-        TreeModel treeModel = new TreeModel("treeModel", tree);
+        DefaultTreeModel treeModel = new DefaultTreeModel("treeModel", tree);
 
         OperatorSchedule schedule = new SimpleOperatorSchedule();
         MCMCOperator operator =

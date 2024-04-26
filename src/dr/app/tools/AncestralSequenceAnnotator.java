@@ -27,7 +27,8 @@ package dr.app.tools;
 
 
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
-import dr.evomodelxml.siteratemodel.GammaSiteModelParser;
+import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodelxml.siteratemodel.SiteModelParser;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.aminoacid.EmpiricalAminoAcidModel;
@@ -806,8 +807,8 @@ public class AncestralSequenceAnnotator {
             }
 
             //System.out.println("alpha and pinv parameters: " + alphaParameter.getParameterValue(0) + "\t" + pInvParameter.getParameterValue(0));
-            //GammaSiteRateModel siteModel = new GammaSiteRateModel(sml.getSubstitutionModel(), new Parameter.Default(1.0), alphaParameter, categories, pInvParameter);
-            GammaSiteRateModel siteModel = new GammaSiteRateModel(GammaSiteModelParser.SITE_MODEL, new Parameter.Default(1.0), alphaParameter, categories, pInvParameter);
+            //GammaSiteRateModelParser siteModel = new GammaSiteRateModelParser(sml.getSubstitutionModel(), new Parameter.Default(1.0), alphaParameter, categories, pInvParameter);
+            GammaSiteRateModel siteModel = new GammaSiteRateModel(SiteModelParser.SITE_MODEL, new Parameter.Default(1.0), 1.0, alphaParameter, categories, GammaSiteRateModel.DiscretizationType.EQUAL, pInvParameter);
             siteModel.setSubstitutionModel(sml.getSubstitutionModel());
             //SiteModel siteModel = new GammaSiteModel(sml.getSubstitutionModel(), new Parameter.Default(1.0), new Parameter.Default(1.0), 1, new Parameter.Default(0.5));
             //SiteModel siteModel = new GammaSiteModel(sml.getSubstitutionModel(), null, null, 0, null);
@@ -815,8 +816,8 @@ public class AncestralSequenceAnnotator {
         }
 
         /* Default with no gamma or pinv */
-        //SiteRateModel siteModel = new GammaSiteRateModel(sml.getSubstitutionModel());
-        GammaSiteRateModel siteModel = new GammaSiteRateModel(GammaSiteModelParser.SITE_MODEL);
+        //SiteRateModel siteModel = new GammaSiteRateModelParser(sml.getSubstitutionModel());
+        GammaSiteRateModel siteModel = new GammaSiteRateModel(SiteModelParser.SITE_MODEL);
         siteModel.setSubstitutionModel(sml.getSubstitutionModel());
         return siteModel;
 
@@ -898,7 +899,7 @@ public class AncestralSequenceAnnotator {
         flexTree.adoptTreeModelOrdering();
         FlexibleTree finalTree = new FlexibleTree(tree);
         finalTree.adoptTreeModelOrdering();
-        TreeModel treeModel = new TreeModel(tree);
+        TreeModel treeModel = new DefaultTreeModel(tree);
 
         // Turn off noisy logging by TreeLikelihood constructor
         Logger logger = Logger.getLogger("dr.evomodel");

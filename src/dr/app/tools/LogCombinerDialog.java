@@ -56,7 +56,7 @@ public class LogCombinerDialog {
 
 	private final JComboBox fileTypeCombo = new JComboBox(new String[] { "Log Files", "Tree Files" });
 	private final JCheckBox decimalCheck = new JCheckBox("Convert numbers from scientific to decimal notation");
-          private final JCheckBox renumberOutput = new JCheckBox("Renumber output states");
+	private final JCheckBox renumberOutput = new JCheckBox("Renumber output states");
 	private final JCheckBox resampleCheck = new JCheckBox("Resample states at lower frequency: ");
 	private final WholeNumberField resampleText = new WholeNumberField(0, Integer.MAX_VALUE);
 
@@ -213,7 +213,7 @@ public class LogCombinerDialog {
 		return decimalCheck.isSelected();
 	}
 
-          public boolean renumberOutputStates() {
+	public boolean renumberOutputStates() {
                     return renumberOutput.isSelected();
           }
 
@@ -222,7 +222,7 @@ public class LogCombinerDialog {
 	}
 
 	public long getResampleFrequency() {
-		return resampleText.getValue();
+		return resampleText.getLongValue();
 	}
 
 	public String getOutputFileName() {

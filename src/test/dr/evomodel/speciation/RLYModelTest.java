@@ -7,6 +7,7 @@ import dr.evomodel.operators.TreeBitRandomWalkOperator;
 import dr.evomodel.speciation.RandomLocalYuleModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeHeightStatistic;
 import dr.evomodel.tree.TreeLengthStatistic;
 import dr.evomodel.tree.TreeModel;
@@ -63,7 +64,7 @@ public class RLYModelTest extends TraceCorrelationAssert {
 
     public void testTreeBitRandomWalk() {
 
-        TreeModel treeModel = new TreeModel("treeModel", tree);
+        DefaultTreeModel treeModel = new DefaultTreeModel("treeModel", tree);
 
         Parameter I = treeModel.createNodeTraitsParameter(
                 birthRateIndicator, new double[]{1});

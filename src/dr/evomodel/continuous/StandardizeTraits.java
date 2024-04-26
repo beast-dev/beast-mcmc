@@ -28,7 +28,6 @@ package dr.evomodel.continuous;
 import dr.inference.model.MatrixParameterInterface;
 import dr.xml.*;
 
-import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -47,15 +46,13 @@ public class StandardizeTraits {
         this(matrix, null, 1.0);
     }
 
-    public StandardizeTraits(MatrixParameterInterface matrix, List<Integer> missingIndices, double targetSd) {
+    public StandardizeTraits(MatrixParameterInterface matrix, boolean[] missingIndicators, double targetSd) {
 
         this.matrix = matrix;
         this.missing = new boolean[matrix.getDimension()];
 
-        if (missingIndices != null) {
-            for (int m : missingIndices) {
-                missing[m] = true;
-            }
+        if (missingIndicators != null) {
+            System.arraycopy(missingIndicators, 0, missing, 0, missingIndicators.length);
         }
 
         this.targetSd = targetSd;
@@ -298,7 +295,7 @@ public class StandardizeTraits {
             return STANDARDIZE_TRAITS;
         }
 
-        private final XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 //                AttributeRule.newStringRule(TRAIT_NAME),
 //                new ElementRule(Taxa.class),
                 new ElementRule(MatrixParameterInterface.class),

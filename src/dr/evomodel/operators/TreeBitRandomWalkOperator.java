@@ -26,6 +26,7 @@
 package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.TreeBitRandomWalkOperatorParser;
 import dr.inference.operators.SimpleMCMCOperator;
@@ -45,7 +46,7 @@ import java.util.List;
  */
 public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
 
-    public TreeBitRandomWalkOperator(TreeModel tree, String t1, String t2, double weight, int k, boolean swapTrait2) {
+    public TreeBitRandomWalkOperator(DefaultTreeModel tree, String t1, String t2, double weight, int k, boolean swapTrait2) {
         this.tree = tree;
         this.indicatorTrait = t1;
         this.trait2 = t2;
@@ -125,7 +126,7 @@ public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
         return 0.0;
     }
 
-    public final int rateChange(TreeModel tree, NodeRef node) {
+    public final int rateChange(DefaultTreeModel tree, NodeRef node) {
         return (int) Math.round(tree.getNodeTrait(node, indicatorTrait));
     }
 
@@ -145,7 +146,7 @@ public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
 
     // Private instance variables
 
-    private TreeModel tree;
+    private DefaultTreeModel tree;
     private String indicatorTrait;
     private String trait2;
     private int k;

@@ -1,7 +1,7 @@
 /*
  * GradientWrtParameterProvider.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,6 +25,8 @@
 
 package dr.inference.hmc;
 
+import dr.inference.distribution.AutoRegressiveNormalDistributionModel;
+import dr.inference.distribution.CompoundSymmetryNormalDistributionModel;
 import dr.inference.model.*;
 
 import java.util.HashMap;
@@ -38,43 +40,36 @@ public interface PrecisionColumnProvider {
 
     double[] getColumn(int index);
 
-    class Generic extends AbstractModel implements PrecisionColumnProvider {
+    abstract class Base extends AbstractModel implements PrecisionColumnProvider {
 
-        private final MatrixParameterInterface matrix;
-        private final Map<Integer, double[]> cache = new HashMap<Integer, double[]>();
+        private final Map<Integer, double[]> cache = new HashMap<>();
+        private final boolean useCache;
 
-        public Generic(MatrixParameterInterface matrix) {
-            super("precisionColumnProvider.Generic");
-            this.matrix = matrix;
+        private Base(String name, boolean useCache) {
+            super(name);
+            this.useCache = useCache;
+        }
 
-            addVariable(matrix);
+        @Override
+        protected void handleModelChangedEvent(Model model, Object object, int index) {
+            cache.clear();
+        }
+
+        @Override
+        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+            cache.clear();
         }
 
         @Override
         public double[] getColumn(int index) {
-
-            if (!cache.containsKey(index)) {
-
-                final int dim = matrix.getRowDimension();
-
-                double[] column = new double[dim];
-                for (int row = 0; row < dim; ++row) {
-                    column[row] = matrix.getParameterValue(row, index);
+            if (useCache) {
+                if (!cache.containsKey(index)) {
+                    cache.put(index, getColumnWithoutCache(index));
                 }
 
-                cache.put(index, column);
-            }
-
-            return cache.get(index);
-        }
-
-        @Override
-        protected void handleModelChangedEvent(Model model, Object object, int index) { }
-
-        @Override
-        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-            if (variable == matrix) {
-                cache.clear();
+                return cache.get(index);
+            } else {
+                return getColumnWithoutCache(index);
             }
         }
 
@@ -86,5 +81,64 @@ public interface PrecisionColumnProvider {
 
         @Override
         protected void acceptState() { }
+
+        abstract double[] getColumnWithoutCache(int index);
+    }
+
+    class Generic extends Base {
+
+        private final MatrixParameterInterface matrix;
+
+        public Generic(MatrixParameterInterface matrix, boolean useCache) {
+            super("precisionColumnProvider.Generic" , useCache);
+
+            this.matrix = matrix;
+            addVariable(matrix);
+        }
+
+        @Override @SuppressWarnings("Duplicates")
+        double[] getColumnWithoutCache(int index) {
+
+            final int dim = matrix.getRowDimension();
+
+            double[] column = new double[dim];
+            for (int row = 0; row < dim; ++row) {
+                column[row] = matrix.getParameterValue(row, index);
+            }
+
+            return column;
+        }
+    }
+
+    class AutoRegressive extends Base {
+
+        private final AutoRegressiveNormalDistributionModel ar;
+
+        public AutoRegressive(AutoRegressiveNormalDistributionModel ar, boolean useCache) {
+            super("precisionColumnProvider.AutoRegressive", useCache);
+
+            this.ar = ar;
+            addModel(ar);
+        }
+
+        @Override
+        double[] getColumnWithoutCache(int index) {
+            return ar.getPrecisionColumn(index);
+        }
+    }
+
+    class CompoundSymmetry extends Base {
+        private final CompoundSymmetryNormalDistributionModel cs;
+
+        public CompoundSymmetry(CompoundSymmetryNormalDistributionModel cs, boolean useCache) {
+            super("precisionColumnProvider.CompoundSymmetry", useCache);
+
+            this.cs = cs;
+            addModel(cs);
+        }
+
+        double[] getColumnWithoutCache(int index) {
+            return cs.getPrecisionColumn(index);
+        }
     }
 }

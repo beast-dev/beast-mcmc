@@ -36,35 +36,34 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariateTrans
     // LKJ transform with CPCs constrained between -1 and 1.
     // transform: from cholesky of correlation matrix to constrained CPCs
 
-    protected int dim;
+    int dimVector;
 
-    public LKJCholeskyTransformConstrained(int dim) {
-        this.dim = dim;
+    public LKJCholeskyTransformConstrained(int dimVector) {
+        super(dimVector * (dimVector - 1) / 2);
+        this.dimVector = dimVector;
     }
 
     // values = CPCs
     @Override
-    public double[] inverse(double[] values, int from, int to) {
-        assert from == 0 && to == values.length : "The transform function can only be applied to the whole array of values.";
-        assert dim * (dim - 1) / 2 == values.length : "The transform function can only be applied to the whole array of values.";
-        for (int k = 0; k < values.length; k++) {
+    protected double[] inverse(double[] values) {
+        for (int k = 0; k < dim; k++) {
             assert values[k] <= 1.0 && values[k] >= -1.0 : "CPCs must be between -1.0 and 1.0";
         }
 
         WrappedMatrix.WrappedStrictlyUpperTriangularMatrix L
-                = new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(dim);
+                = new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(dimVector);
         WrappedMatrix.WrappedStrictlyUpperTriangularMatrix Z
-                = new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(values, dim, 1.0);
+                = new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(values, dimVector, 1.0);
 
         double acc;
         double temp;
 //        L.set(0, 0, 1.0);
-        for (int j = 1; j < dim; j++) {
+        for (int j = 1; j < dimVector; j++) {
             acc = 1.0;
             for (int i = 0; i < j; i++) {
                 temp = Z.get(i, j);
                 L.set(i, j, temp * acc);
-                acc *= Math.sqrt(1 - Math.pow(temp, 2));
+                acc *= Math.sqrt(1 - temp * temp);
             }
         }
 
@@ -73,27 +72,41 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariateTrans
 
     // values = Cholesky of correlation
     @Override
-    public double[] transform(double[] values, int from, int to) {
-        assert from == 0 && to == values.length : "The transform function can only be applied to the whole array of values.";
-
+    protected double[] transform(double[] values) {
         WrappedMatrix.WrappedStrictlyUpperTriangularMatrix L
-                = new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(values, dim);
+                = new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(values, dimVector);
 
         WrappedMatrix.WrappedStrictlyUpperTriangularMatrix Z
-                = new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(dim);
+                = new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(dimVector);
 
         double acc;
         double temp;
-        for (int j = 1; j < dim; j++) {
+        for (int j = 1; j < dimVector; j++) {
             acc = 1.0;
             for (int i = 0; i < j; i++) {
                 temp = L.get(i, j) / acc;
                 Z.set(i, j, temp);
-                acc *= Math.sqrt(1 - Math.pow(temp, 2));
+                acc *= Math.sqrt(1 - temp * temp);
             }
         }
 
         return Z.getBuffer();
+    }
+
+    @Override
+    public boolean isInInteriorDomain(double[] values) {
+        WrappedMatrix.WrappedStrictlyUpperTriangularMatrix L
+                = new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(values, dimVector);
+
+        if (Math.abs(L.get(0, 0)) >= 1.0) return false;
+        for (int j = 1; j < dimVector; j++) {
+            double norm = 0.0;
+            for (int i = 0; i < j; i++) {
+                norm += Math.pow(L.get(i, j), 2);
+            }
+            if (norm >= 1.0) return false;
+        }
+        return true;
     }
 
     @Override
@@ -116,16 +129,14 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariateTrans
     }
 
     @Override
-    public double getLogJacobian(double[] values, int from, int to) {
-        assert from == 0 && to == values.length
-                : "The logJacobian function can only be applied to the whole array of values.";
+    protected double getLogJacobian(double[] values) {
         double[] transformedValues = transform(values);
         double logJacobian = 0;
         int k = 0;
-        for (int i = 0; i < dim - 2; i++) {
+        for (int i = 0; i < dimVector - 2; i++) {
             k++;
-            for (int j = i + 2; j < dim; j++) {
-                logJacobian += (j - i - 1) * Math.log(1.0 - Math.pow(transformedValues[k], 2));
+            for (int j = i + 2; j < dimVector; j++) {
+                logJacobian += (j - i - 1) * (Math.log1p(-transformedValues[k]) + Math.log1p(transformedValues[k]));
                 k++;
             }
         }
@@ -135,9 +146,9 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariateTrans
     public double[] getGradientLogJacobianInverse(double[] values) {
         double[] gradientLogJacobian = new double[values.length];
         int k = 0;
-        for (int i = 0; i < dim - 2; i++) { // Sizes of conditioning sets
+        for (int i = 0; i < dimVector - 2; i++) { // Sizes of conditioning sets
             k++;
-            for (int j = i + 2; j < dim; j++) {
+            for (int j = i + 2; j < dimVector; j++) {
                 gradientLogJacobian[k] = -(j - i - 1) * values[k] / (1.0 - Math.pow(values[k], 2));
                 k++;
             }
@@ -151,12 +162,12 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariateTrans
 
     // Returns the *transpose* of the Jacobian matrix: jacobian[posStrict(k, l)][posStrict(i, j)] = d W_{ij} / d Z_{kl}
     public double[][] computeJacobianMatrixInverse(double[] values) {
-        double[][] jacobian = new double[dim * (dim - 1) / 2][dim * (dim - 1) / 2];
+        double[][] jacobian = new double[dim][dim];
 
         WrappedMatrix.WrappedStrictlyUpperTriangularMatrix Z
-                = new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(values, dim, 1.0);
+                = new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(values, dimVector, 1.0);
 
-        for (int j = 1; j < dim; j++) {
+        for (int j = 1; j < dimVector; j++) {
             for (int k = 0; k < j; k++) {
                 recursionJacobian(jacobian, Z, k, j);
             }
@@ -170,7 +181,7 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariateTrans
         // 0 <= k < j
 
         WrappedMatrix.WrappedStrictlyUpperTriangularMatrix L
-                = new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(jacobian[posStrict(k, j)], dim);
+                = new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(jacobian[posStrict(k, j)], dimVector);
 
         double acc;
         double temp;
@@ -196,6 +207,6 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariateTrans
     // ************************************************************************* //
 
     private int posStrict(int i, int j) {
-        return i * (2 * dim - i - 1) / 2 + (j - i - 1);
+        return i * (2 * dimVector - i - 1) / 2 + (j - i - 1);
     }
 }

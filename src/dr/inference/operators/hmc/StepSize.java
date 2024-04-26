@@ -46,7 +46,7 @@ class StepSize {
         double kappa = 0.75;
         double t0 = 10.0;
         double gamma = 0.05;
-        double targetAcceptRate = 0.9;
+        double targetAcceptRate = 0.85;
         double muFactor = 10.0;
         int adaptLength = 1000;
     }

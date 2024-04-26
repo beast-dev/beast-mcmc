@@ -25,6 +25,7 @@
 
 package dr.inference.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,11 +33,14 @@ import java.util.List;
  */
 public class SumParameter extends Parameter.Abstract implements VariableListener {
 
-    public SumParameter(List<Parameter> parameterList) {
-        this.parameterList = parameterList;
-        dimension = parameterList.size() == 1 ? 1 : parameterList.get(0).getDimension();;
-        for (Parameter p : parameterList) {
-            p.addVariableListener(this);
+    public SumParameter(List<Statistic> statisticList) {
+        this.statisticList = statisticList;
+        dimension = statisticList.size() == 1 ? 1 : statisticList.get(0).getDimension();
+        for (Statistic s : statisticList) {
+            if (s instanceof Parameter) {
+                parameterList.add(((Parameter) s));
+                ((Parameter) s).addVariableListener(this);
+            }
         }
     }
 
@@ -73,15 +77,15 @@ public class SumParameter extends Parameter.Abstract implements VariableListener
 
     public double getParameterValue(int dim) {
         double value = 0;
-        if (dimension == 1) {
-            value = parameterList.get(0).getParameterValue(0);
-            for (int i = 1; i < parameterList.get(0).getDimension(); i++) {
-                value += parameterList.get(0).getParameterValue(i);
+        if (statisticList.size() == 1) {
+            value = statisticList.get(0).getStatisticValue(0);
+            for (int i = 1; i < statisticList.get(0).getDimension(); i++) {
+                value += statisticList.get(0).getStatisticValue(i);
             }
         } else {
-            value = parameterList.get(0).getParameterValue(dim);
-            for (int i = 1; i < parameterList.size(); i++) {
-                value += parameterList.get(i).getParameterValue(dim);
+            value = statisticList.get(0).getStatisticValue(dim);
+            for (int i = 1; i < statisticList.size(); i++) {
+                value += statisticList.get(i).getStatisticValue(dim);
             }
         }
         return value;
@@ -102,8 +106,8 @@ public class SumParameter extends Parameter.Abstract implements VariableListener
     public String getParameterName() {
         if (getId() == null) {
             StringBuilder sb = new StringBuilder("sum");
-            for (Parameter p : parameterList) {
-                sb.append(".").append(p.getId());
+            for (Statistic s : statisticList) {
+                sb.append(".").append(s.getId());
             }
             setId(sb.toString());
         }
@@ -134,7 +138,8 @@ public class SumParameter extends Parameter.Abstract implements VariableListener
         fireParameterChangedEvent(index,type);
     }
 
-    private final List<Parameter> parameterList;
+    private final List<Statistic> statisticList;
+    private final List<Parameter> parameterList = new ArrayList<>();
     private final int dimension;
     private Bounds bounds = null;
 }

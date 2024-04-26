@@ -30,8 +30,8 @@
 
 package dr.evomodel.epidemiology;
 
-import dr.evomodel.coalescent.*;
 import dr.evolution.coalescent.DemographicFunction;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.inference.model.Parameter;
 
 /**

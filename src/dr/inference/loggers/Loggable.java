@@ -25,6 +25,8 @@
 
 package dr.inference.loggers;
 
+import dr.xml.Reportable;
+
 /**
  * An interface for an item that can be logged.
  *
@@ -37,5 +39,17 @@ package dr.inference.loggers;
 public interface Loggable {
 
 	LogColumn[] getColumns();
+
+	static LogColumn[] getColumnsFromReport(Reportable reporter, String label) {
+		LogColumn[] columns = new LogColumn[1];
+		columns[0] = new LogColumn.Default(label, new Object() {
+			@Override
+			public String toString() {
+				return "\n" + reporter.getReport();
+			}
+		});
+
+		return columns;
+	}
 	
 }

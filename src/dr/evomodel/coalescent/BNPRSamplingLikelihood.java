@@ -5,6 +5,8 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
+import dr.evomodel.coalescent.demographicmodel.PiecewisePopulationModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.BNPRSamplingLikelihoodParser;
 import dr.inference.model.*;

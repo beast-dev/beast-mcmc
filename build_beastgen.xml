@@ -72,7 +72,7 @@
         </jar>
     </target>
 
-    <property name="version" value="1.0.2" />
+    <property name="version" value="0.3pre_thorney" />
     <property name="release_dir" value="release_beastgen" />
     <property name="name" value="BEASTGen" />
 

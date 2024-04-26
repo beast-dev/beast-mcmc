@@ -33,6 +33,7 @@ import dr.inference.model.Statistic;
  *          Created by IntelliJ IDEA.
  *          User: joseph Date: 5/02/2007 Time: 16:17:11
  */
+@Deprecated
 public class PopulationSizeGraph extends Statistic.Abstract {
 
     private double tm = 0;

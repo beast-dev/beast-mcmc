@@ -142,19 +142,38 @@ public abstract class SimpleOperator implements MCMCOperator {
         return span;
     }
 
+    @Override
     public double getMeanEvaluationTime() {
         return (double) sumEvaluationTime / (double) (accepted + rejected);
     }
 
+    @Override
     public long getTotalEvaluationTime() {
         return sumEvaluationTime;
     }
 
+    @Override
     public void addEvaluationTime(long time) {
         sumEvaluationTime += time;
     }
 
+    @Override
+    public double getMeanCalculationCount() {
+        return (double) sumCalculationCount / (double) (accepted + rejected);
+    }
+
+    @Override
+    public void addCalculationCount(long count) {
+        sumCalculationCount += count;
+    }
+
+    @Override
+    public long getTotalCalculationCount() {
+        return sumCalculationCount;
+    }
+
     private long sumEvaluationTime = 0;
+    private long sumCalculationCount = 0;
 
     private double[] spanDeviation = {Double.MAX_VALUE,-Double.MAX_VALUE};
     private int spanCount = 0;

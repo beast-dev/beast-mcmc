@@ -34,6 +34,7 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.*;
@@ -214,7 +215,7 @@ public class Coevolve {
         muParameter.setId("mu");
 
         SiteModel siteModel = new GammaSiteModel(substModel, muParameter, null, 1, null);
-        TreeModel treeModel = new TreeModel(tree);
+        DefaultTreeModel treeModel = new DefaultTreeModel(tree);
         final TreeLikelihood treeLikelihood = new TreeLikelihood(patternList, treeModel, siteModel, null, null, false, false, true, false, false);
         treeLikelihood.setId("likelihood");
 

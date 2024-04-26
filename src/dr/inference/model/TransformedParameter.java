@@ -39,10 +39,15 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
     }
 
     public TransformedParameter(Parameter parameter, Transform transform, boolean inverse) {
+
         this.parameter = parameter;
         this.transform = transform;
         this.inverse = inverse;
         this.parameter.addVariableListener(this);
+        Bounds bounds = parameter.getBounds();
+        if (bounds != null && !(transform instanceof Transform.MultivariateTransform)) {
+            addBounds(bounds);
+        }
     }
 
     public int getDimension() {
@@ -105,6 +110,10 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         return parameter.getParameterValues();
     }
 
+    public void setParameterUntransformedValue(int dim, double a) {
+        parameter.setParameterValue(dim, a);
+    }
+
     public Parameter getUntransformedParameter() {
         return parameter;
     }
@@ -132,8 +141,15 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         final double[] lower = new double[dim];
         final double[] upper = new double[dim];
         for (int i = 0; i < dim; ++i) {
-            lower[i] = inverse(bounds.getLowerLimit(i));
-            upper[i] = inverse(bounds.getUpperLimit(i));
+            final double transformedLowerBound = transform(bounds.getLowerLimit(i));
+            final double transformedUpperBound = transform(bounds.getUpperLimit(i));
+            if (transformedLowerBound < transformedUpperBound) {
+                lower[i] = transformedLowerBound;
+                upper[i] = transformedUpperBound;
+            } else {
+                lower[i] = transformedUpperBound;
+                upper[i] = transformedLowerBound;
+            }
         }
         transformedBounds = new DefaultBounds(upper, lower);
 
@@ -157,8 +173,12 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
 //        }
 //        System.err.println("\n");
 //
-        parameter.addBounds(transformedBounds);
+//        parameter.addBounds(transformedBounds);
 //        throw new RuntimeException("Should not call addBounds() on transformed parameter");
+    }
+
+    public boolean check() {
+        return parameter.check();
     }
 
     public Bounds<Double> getBounds() {
@@ -174,24 +194,42 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         throw new RuntimeException("Not yet implemented.");
     }
 
-    public void variableChangedEvent(Variable variable, int index, ChangeType type) {
-        // Propogate change up model graph
-        fireParameterChangedEvent(index, type);
+    @Override
+    public void fireParameterChangedEvent() {
+
+        doNotPropagateChangeUp = true;
+        parameter.fireParameterChangedEvent();
+        doNotPropagateChangeUp = false;
+
+        fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
+    }
+
+    @Override
+    public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (!doNotPropagateChangeUp) {
+            fireParameterChangedEvent(index, type);
+        }
     }
 
     public double diffLogJacobian(double[] oldValues, double[] newValues) {
         // Takes **untransformed** values
         if (inverse) {
-            return -transform.getLogJacobian(oldValues, 0, oldValues.length)
-                    + transform.getLogJacobian(newValues, 0, newValues.length);
+            return -transform.logJacobian(transform(oldValues), 0, oldValues.length)
+                    + transform.logJacobian(transform(newValues), 0, newValues.length);
         } else {
-            return transform.getLogJacobian(oldValues, 0, oldValues.length)
-                    - transform.getLogJacobian(newValues, 0, newValues.length);
+            return transform.logJacobian(oldValues, 0, oldValues.length)
+                    - transform.logJacobian(newValues, 0, newValues.length);
         }
+    }
+
+    public Transform getTransform() {
+        return transform;
     }
 
     protected final Parameter parameter;
     protected final Transform transform;
     protected final boolean inverse;
-    private Bounds<Double> transformedBounds = null;
+    protected Bounds<Double> transformedBounds;
+
+    protected boolean doNotPropagateChangeUp = false;
 }

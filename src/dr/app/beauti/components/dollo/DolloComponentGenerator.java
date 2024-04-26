@@ -30,6 +30,7 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
@@ -278,7 +279,7 @@ public class DolloComponentGenerator extends BaseComponentGenerator {
             }
         }
 
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
         writer.writeIDref(GammaSiteModel.SITE_MODEL, prefix + SiteModel.SITE_MODEL);
 
         writer.writeTag(ALSTreeLikelihoodParser.OBSERVATION_PROCESS,

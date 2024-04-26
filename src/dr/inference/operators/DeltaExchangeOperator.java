@@ -128,7 +128,7 @@ public class DeltaExchangeOperator extends AbstractAdaptableOperator {
 
     // Interface MCMCOperator
     public final String getOperatorName() {
-        return parameter.getParameterName();
+        return "deltaExchange(" + parameter.getParameterName() + ")";
     }
 
     @Override

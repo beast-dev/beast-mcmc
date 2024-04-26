@@ -356,7 +356,7 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel imple
 
             }
         }
-
+//        System.err.println("logL is " + logL);
         return logL;
     }
 

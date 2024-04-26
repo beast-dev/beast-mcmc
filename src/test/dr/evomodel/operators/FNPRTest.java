@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Set;
 
 import dr.evolution.tree.TreeUtils;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.inference.operators.*;
 import junit.framework.TestSuite;
 import junit.framework.Test;
@@ -53,7 +54,7 @@ public class FNPRTest extends OperatorAssert{
 
         for (int i = 0; i < reps; i++) {
 
-            TreeModel treeModel = new TreeModel("treeModel", tree5);
+            DefaultTreeModel treeModel = new DefaultTreeModel("treeModel", tree5);
             FNPR operator = new FNPR(treeModel, 1);
             operator.doOperation();
 
@@ -83,7 +84,7 @@ public class FNPRTest extends OperatorAssert{
         
 	}
 	
-	public OperatorSchedule getOperatorSchedule(TreeModel treeModel) {
+	public OperatorSchedule getOperatorSchedule(DefaultTreeModel treeModel) {
 
         Parameter rootParameter = treeModel.createNodeHeightsParameter(true, false, false);
         Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);

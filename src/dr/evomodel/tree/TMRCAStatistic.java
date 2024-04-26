@@ -30,7 +30,6 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.inference.model.Statistic;
 
 import java.util.Set;
 
@@ -70,6 +69,10 @@ public class TMRCAStatistic extends TreeStatistic {
 
     public Tree getTree() {
         return tree;
+    }
+
+    public Set<String> getLeafSet() {
+        return leafSet;
     }
 
     public int getDimension() {

@@ -46,17 +46,18 @@ public class BranchSubstitutionParameterLocationGradient extends HyperParameterB
                                                        BeagleDataLikelihoodDelegate likelihoodDelegate,
 //                                                       Parameter branchSubstitutionParameter,
                                                        BranchParameter branchParameter,
+                                                       Double tolerance,
                                                        boolean useHessian,
                                                        BranchSpecificFixedEffects fixedEffects) {
         super(traitName, treeDataLikelihood, likelihoodDelegate, branchParameter,
-                fixedEffects.getFixedEffectsParameter(), useHessian);
+                fixedEffects.getFixedEffectsParameter(), tolerance, useHessian);
 
         this.fixedEffects = fixedEffects;
     }
 
     @Override
     double[] getDifferential(Tree tree, NodeRef node) {
-        double rate = branchParameter.getParameterValue(node.getNumber());
+        double rate = branchRateModel.getBranchRate(tree, node);
         double[] results = fixedEffects.getDifferential(rate, tree, node);
 
         return results;

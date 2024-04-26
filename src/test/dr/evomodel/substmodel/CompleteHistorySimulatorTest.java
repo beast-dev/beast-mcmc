@@ -13,6 +13,7 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.markovjumps.MarkovJumpsCore;
 import dr.inference.markovjumps.MarkovJumpsType;
@@ -36,7 +37,7 @@ public class CompleteHistorySimulatorTest extends MathTestCase {
         NewickImporter importer = new NewickImporter("(1:2.0,(2:1.0,3:1.0):1.0);");
 
         tree = importer.importTree(null);
-        treeModel = new TreeModel("treeModel", tree);
+        treeModel = new DefaultTreeModel("treeModel", tree);
     }
 
     public void testHKYSimulation() {
@@ -50,7 +51,7 @@ public class CompleteHistorySimulatorTest extends MathTestCase {
 
         Parameter mu = new Parameter.Default(1, 0.5);
         Parameter alpha = new Parameter.Default(1, 0.5);
-        GammaSiteRateModel siteModel = new GammaSiteRateModel("gammaModel", mu, alpha, 4, null);
+        GammaSiteRateModel siteModel = new GammaSiteRateModel("gammaModel", mu, 1.0, alpha, 4, GammaSiteRateModel.DiscretizationType.EQUAL, null);
         siteModel.setSubstitutionModel(hky);
         BranchRateModel branchRateModel = new DefaultBranchRateModel();
 
@@ -92,7 +93,7 @@ public class CompleteHistorySimulatorTest extends MathTestCase {
 
         Parameter mu = new Parameter.Default(1, 0.5);
         Parameter alpha = new Parameter.Default(1, 0.5);
-        GammaSiteRateModel siteModel = new GammaSiteRateModel("gammaModel", mu, alpha, 4, null);
+        GammaSiteRateModel siteModel = new GammaSiteRateModel("gammaModel", mu, 1.0, alpha, 4, GammaSiteRateModel.DiscretizationType.EQUAL, null);
         siteModel.setSubstitutionModel(codonModel);
         BranchRateModel branchRateModel = new DefaultBranchRateModel();
 

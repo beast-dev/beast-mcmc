@@ -117,7 +117,7 @@ public class ProgressiveScalarTreeTransform extends TreeTransform {
         Tree tree = importer.importTree(null);
         Parameter scale = new Parameter.Default(0.5);
         TreeTransform xform = new ProgressiveScalarTreeTransform(scale);
-        TreeModel treeModel = new TreeModel("original", tree);
+        TreeModel treeModel = new DefaultTreeModel("original", tree);
         TransformedTreeModel model = new TransformedTreeModel("tree", treeModel, xform);
         System.err.println(model.toString());
 

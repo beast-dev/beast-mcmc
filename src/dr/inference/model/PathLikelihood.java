@@ -40,7 +40,7 @@ import java.util.Set;
  * @author Marc Suchard
  * @version $Id: CompoundLikelihood.java,v 1.19 2005/05/25 09:14:36 rambaut Exp $
  */
-public class PathLikelihood implements Likelihood {
+public class PathLikelihood implements Likelihood, Profileable {
 
     public static final String PATH_LIKELIHOOD = "pathLikelihood";
     public static final String PATH_PARAMETER = "theta";
@@ -137,6 +137,18 @@ public class PathLikelihood implements Likelihood {
 
         return Double.toString(getLogLikelihood());
 
+    }
+
+    @Override
+    public long getTotalCalculationCount() {
+        long count = 0;
+        if (source instanceof Profileable) {
+            count += ((Profileable)source).getTotalCalculationCount();
+        }
+        if (destination instanceof Profileable) {
+            count += ((Profileable)destination).getTotalCalculationCount();
+        }
+        return count;
     }
 
     // **************************************************************

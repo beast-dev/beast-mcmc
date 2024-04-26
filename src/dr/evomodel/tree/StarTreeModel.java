@@ -34,8 +34,10 @@ import dr.inference.model.Variable;
 
 /**
  * @author Marc Suchard
+ *
+ * @todo - this should extend the abstract TreeModel rather than inheriting from DefaultTreeModel
  */
-public class StarTreeModel extends TreeModel {
+public class StarTreeModel extends DefaultTreeModel {
 
     public StarTreeModel(String id, Tree tree) {
         super(id, tree);
@@ -120,7 +122,7 @@ public class StarTreeModel extends TreeModel {
         return node.getHeight();
     }
 
-    public void setSharedRootHeightParameter(TreeModel sharedRoot) {
+    public void setSharedRootHeightParameter(DefaultTreeModel sharedRoot) {
         this.sharedRoot = sharedRoot;
         addModel(sharedRoot);
     }
@@ -191,5 +193,5 @@ public class StarTreeModel extends TreeModel {
     private double savedMaxTipHeight;
 
     private Parameter rootHeightParameter = null;
-    private TreeModel sharedRoot = null;
+    private DefaultTreeModel sharedRoot = null;
 }

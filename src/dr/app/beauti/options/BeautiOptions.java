@@ -37,7 +37,6 @@ import dr.app.beauti.types.TreePriorType;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Microsatellite;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
@@ -69,6 +68,9 @@ public class BeautiOptions extends ModelOptions {
     // Switches to a dirichlet prior & delta exchange on state frequencies
     private static final boolean FREQUENCIES_DIRICHLET_PRIOR = true;
 
+    // Switches to a gamma prior on population size parameters
+    private static final boolean POPSIZE_GAMMA_PRIOR = true;
+
     private static final long serialVersionUID = -3676802825545741012L;
 
     public BeautiOptions() {
@@ -83,6 +85,7 @@ public class BeautiOptions extends ModelOptions {
 
     /**
      * This will register the list of components if not already there...
+     *
      * @param components
      */
     public void registerComponents(ComponentFactory[] components) {
@@ -97,7 +100,6 @@ public class BeautiOptions extends ModelOptions {
 
 
     /**
-     *
      * resets the options to the initial conditions
      */
     public void reset() {
@@ -108,7 +110,7 @@ public class BeautiOptions extends ModelOptions {
         taxonSetsIncludeStem.clear();
         taxonSetsTreeModel.clear();
 
-//        meanDistance = 1.0;
+        // meanDistance = 1.0;
         datesUnits = DateUnitsType.YEARS;
         datesDirection = DateUnitsType.FORWARDS;
         maximumTipHeight = 0.0;
@@ -116,16 +118,16 @@ public class BeautiOptions extends ModelOptions {
 
         dataPartitions.clear();
         traits.clear();
-//        partitionModels.clear();
-//        partitionTreeModels.clear();
-//        partitionTreePriors.clear();
-//        partitionClockTreeLinks.clear();
-//        activedSameTreePrior = null;
-//        shareSameTreePrior = true;
+        // partitionModels.clear();
+        // partitionTreeModels.clear();
+        // partitionTreePriors.clear();
+        // partitionClockTreeLinks.clear();
+        // activedSameTreePrior = null;
+        // shareSameTreePrior = true;
         userTrees.clear();
 
-//        rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
-//        meanSubstitutionRate = 1.0;
+        // rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
+        // meanSubstitutionRate = 1.0;
         unlinkPartitionRates = true;
 
         units = Units.Type.SUBSTITUTIONS;
@@ -137,6 +139,7 @@ public class BeautiOptions extends ModelOptions {
         chainLength = 10000000;
         logEvery = 1000;
         echoEvery = 1000;
+        checkpointEvery = 1000000;
         burnIn = 100000;
         fileName = null;
         autoOptimize = true;
@@ -146,6 +149,7 @@ public class BeautiOptions extends ModelOptions {
 
         fileNameStem = MCMCPanel.DEFAULT_FILE_NAME_STEM;
         logFileName = null;
+        checkpointFileName = null;
         allowOverwriteLog = false;
 //        mapTreeLog = false;
 //        mapTreeFileName = null;
@@ -162,13 +166,9 @@ public class BeautiOptions extends ModelOptions {
 
 //        traitsOptions = new TraitsOptions(this);
 
-        microsatelliteOptions = new MicrosatelliteOptions(this);
-
         parameters.clear();
         operators.clear();
         statistics.clear();
-
-        shareMicroSat = true;
 
         clearDataPartitionCaches();
     }
@@ -259,7 +259,7 @@ public class BeautiOptions extends ModelOptions {
             for (PartitionSubstitutionModel substitutionModel : substitutionModels) {
                 relativeRateParameters.addAll(substitutionModel.getRelativeRateParameters());
             }
-            Parameter allMuNus = model.getParameter(useNuRelativeRates() ? "allNus" : "allMus" );
+            Parameter allMuNus = model.getParameter(useNuRelativeRates() ? "allNus" : "allMus");
             allMuNus.clearSubParameters();
             if (relativeRateParameters.size() > 1) {
 
@@ -286,11 +286,10 @@ public class BeautiOptions extends ModelOptions {
         treeModelOptions.selectParameters(parameters);
 
         for (PartitionTreePrior prior : getPartitionTreePriors()) {
-            prior.selectParameters(parameters);
-        }
+            //refresh prior choices
+            prior.alternatePopulationSizePriors();
 
-        if (contains(Microsatellite.INSTANCE)) {
-            microsatelliteOptions.selectParameters(parameters);
+            prior.selectParameters(parameters);
         }
 
 //        for (TraitData trait : getTraitsList()) { // all traits including locations
@@ -338,10 +337,6 @@ public class BeautiOptions extends ModelOptions {
             prior.selectOperators(ops);
         }
 
-        if (contains(Microsatellite.INSTANCE)) {
-            microsatelliteOptions.selectOperators(ops);
-        }
-
 //        for (TraitData trait : getTraitsList()) { // all traits including locations
 //        	if (!trait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))
 //                trait.getTraitData().selectOperators(ops);
@@ -378,8 +373,6 @@ public class BeautiOptions extends ModelOptions {
     }
 
 
-
-
     public boolean hasData() {
         return dataPartitions.size() > 0;
     }
@@ -391,30 +384,6 @@ public class BeautiOptions extends ModelOptions {
             }
         }
         return false;
-    }
-
-    public void shareMicroSat() {
-        Microsatellite microsatellite = null;
-        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels(Microsatellite.INSTANCE)) {
-            if (microsatellite == null) {
-                microsatellite = model.getMicrosatellite();
-            } else {
-                model.setMicrosatellite(microsatellite);
-            }
-        }
-    }
-
-    public void unshareMicroSat() {
-        Microsatellite microsatellite = null;
-        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels(Microsatellite.INSTANCE)) {
-            if (microsatellite == null) {
-                microsatellite = model.getMicrosatellite();
-            } else {
-                microsatellite = new Microsatellite(model.getName() + ".microsat",
-                        microsatellite.getMin(), microsatellite.getMax(), 1);
-                model.setMicrosatellite(microsatellite);
-            }
-        }
     }
 
     public boolean hasPartitionData(String name) {
@@ -583,10 +552,10 @@ public class BeautiOptions extends ModelOptions {
         pcmlCache.clear();
     }
 
-    public boolean isEBSPSharingSamePrior() {
-        return getPartitionTreePriors().size() >= 1 &&
-                (isShareSameTreePrior() && getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE);
-    }
+//    public boolean isEBSPSharingSamePrior() {
+//        return getPartitionTreePriors().size() >= 1 &&
+//                (isShareSameTreePrior() && getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE);
+//    }
 
     // ++++++++++++++ Partition Substitution Model ++++++++++++++
 //    public void addPartitionSubstitutionModel(PartitionSubstitutionModel model) {
@@ -971,8 +940,9 @@ public class BeautiOptions extends ModelOptions {
     /**
      * given a list of BEAUti AbstractPartitionData, take the union of taxon list from them
      * but if partition instanceof PartitionPattern and taxon is masked in Patterns class, then not count.
-     * @param partitionDataList    can be BEAUti PartitionData or PartitionPattern or both
-     * @return  num of taxon
+     *
+     * @param partitionDataList can be BEAUti PartitionData or PartitionPattern or both
+     * @return num of taxon
      */
     public int getTaxonCount(List<AbstractPartitionData> partitionDataList) {
         if (partitionDataList == null || partitionDataList.size() == 0) return 0;
@@ -1094,6 +1064,23 @@ public class BeautiOptions extends ModelOptions {
         return selRow; // only for trait panel
     }
 
+    public boolean onlyContinuousPartitions() {
+        if (dataPartitions.isEmpty()) {
+            return false;
+        }
+
+        boolean onlyContinuous = true;
+
+        for (AbstractPartitionData partition : dataPartitions) {
+            if (partition.getDataType().getType() != DataType.CONTINUOUS) {
+                onlyContinuous = false;
+                break;
+            }
+        }
+
+        return onlyContinuous;
+    }
+
     private void updateTraitParameters(AbstractPartitionData partition) {
         if (partition.isCreatedFromTrait()) {
             ContinuousComponentOptions comp = (ContinuousComponentOptions) getComponentOptions(ContinuousComponentOptions.class);
@@ -1211,7 +1198,7 @@ public class BeautiOptions extends ModelOptions {
     // ++++++++++++++++++++ message bar +++++++++++++++++
 
     public String statusMessage() {
-//        String message = "<html><p>";
+        // String message = "<html><p>";
         String message = "";
         if (hasData()) {
             message += "Data: " + taxonList.getTaxonCount() + " taxa, ";
@@ -1222,11 +1209,11 @@ public class BeautiOptions extends ModelOptions {
                         (userTrees.size() > 1 ? " trees" : " tree");
             }
 
-//            if (hasPhylogeographic()) {
-//                message += ";    Phylogeographic Analysis";
-//            }
+            // if (hasPhylogeographic()) {
+            //      message += ";    Phylogeographic Analysis";
+            // }
 
-//            message += "; " + clockModelOptions.statusMessageClockModel();
+            // message += "; " + clockModelOptions.statusMessageClockModel();
 
         } else if (userTrees.size() > 0) { // TODO
             message += "Trees only : " + userTrees.size() +
@@ -1237,7 +1224,7 @@ public class BeautiOptions extends ModelOptions {
         } else {
             message += "No data loaded - select 'Import Data...' from the 'File' menu.";
         }
-//        message += "</p></html>";
+        // message += "</p></html>";
         return message;
     }
 
@@ -1286,10 +1273,10 @@ public class BeautiOptions extends ModelOptions {
 
 
     public DateGuesser dateGuesser = new DateGuesser();
-//    public TraitGuesser traitGuesser = new TraitGuesser();
-//
-//    public List<String> selecetedTraits = new ArrayList<String>();
-//    public Map<String, TraitGuesser.TraitType> traitTypes = new HashMap<String, TraitGuesser.TraitType>();
+    // public TraitGuesser traitGuesser = new TraitGuesser();
+    //
+    // public List<String> selecetedTraits = new ArrayList<String>();
+    // public Map<String, TraitGuesser.TraitType> traitTypes = new HashMap<String, TraitGuesser.TraitType>();
 
     // Data
     public List<AbstractPartitionData> dataPartitions = new ArrayList<AbstractPartitionData>();
@@ -1312,6 +1299,7 @@ public class BeautiOptions extends ModelOptions {
     public int chainLength = 10000000;
     public int logEvery = 1000;
     public int echoEvery = 1000;
+    public int checkpointEvery = 1000000;
     public int burnIn = 100000;
     public String fileName = null;
     public boolean autoOptimize = true;
@@ -1321,14 +1309,15 @@ public class BeautiOptions extends ModelOptions {
 
     public String fileNameStem = MCMCPanel.DEFAULT_FILE_NAME_STEM;
     public String logFileName = null;
+    public String checkpointFileName = null;
 
     public boolean generateDemographicLogFile = false;
     public String demographicModelName = null;
     public String demographicLogFileName = null;
 
     public boolean allowOverwriteLog = false;
-    //    public boolean mapTreeLog = false;
-    //    public String mapTreeFileName = null;
+    // public boolean mapTreeLog = false;
+    // public String mapTreeFileName = null;
     public List<String> treeFileName = new ArrayList<String>();
     public boolean substTreeLog = false;
     public List<String> substTreeFileName = new ArrayList<String>();
@@ -1346,9 +1335,13 @@ public class BeautiOptions extends ModelOptions {
     public boolean useClassicOperatorsAndPriors() {
         return useClassicOperatorsAndPriors;
     }
-    
+
     public boolean useNuRelativeRates() {
         return !useClassicOperatorsAndPriors() || !NEW_RELATIVE_RATE_PARAMETERIZATION;
+    }
+
+    public boolean useGammaPriorPopSize() {
+        return !useClassicOperatorsAndPriors() || !POPSIZE_GAMMA_PRIOR;
     }
 
     public boolean useNewGTR() {
@@ -1362,10 +1355,6 @@ public class BeautiOptions extends ModelOptions {
     public boolean useNewFrequenciesPrior() {
         return !useClassicOperatorsAndPriors() || !FREQUENCIES_DIRICHLET_PRIOR;
     }
-
-    public MicrosatelliteOptions microsatelliteOptions = new MicrosatelliteOptions(this);
-
-    public boolean shareMicroSat = true;
 
     public boolean logCoalescentEventsStatistic = false;
 

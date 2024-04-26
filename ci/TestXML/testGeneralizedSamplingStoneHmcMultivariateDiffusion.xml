@@ -1,0 +1,305 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+	<taxa id="taxa">
+        <taxon id="t2"> <attr name="X"> 1.27886087 -0.89489828 </attr> </taxon>
+        <taxon id="t7"> <attr name="X"> 0.79704654  0.60095970 </attr> </taxon>
+        <taxon id="t6"> <attr name="X">-0.09726915 -1.51709121 </attr> </taxon>
+        <taxon id="t5"> <attr name="X"> 1.26208467  0.10363748 </attr> </taxon>
+        <taxon id="t4"> <attr name="X"> 1.84580448  2.27099836 </attr> </taxon>
+        <taxon id="t1"> <attr name="X"> 2.16410606  0.98739050 </attr> </taxon>
+        <taxon id="t10"> <attr name="X">0.71656575  1.69471517 </attr> </taxon>
+        <taxon id="t8"> <attr name="X"> 0.03570950  2.15714592 </attr> </taxon>
+        <taxon id="t3"> <attr name="X"> 0.59215087  0.05502388 </attr> </taxon>
+        <taxon id="t9"> <attr name="X"> 0.23721299 -1.19731825 </attr> </taxon>
+	</taxa>
+
+	<newick id="tree" usingHeights="true" usingDates="false">
+        ((((t7:0.3986083996,(t4:0.2718849295,t1:0.2718849295):0.1267234701):0.3290298194,((t10:0.11519601,t8:0.11519601):0.4657010935,(t6:0.3741970882,t5:0.3741970882):0.2067000153):0.1467411155):0.09195480534,t2:0.8195930243):0.1804069757,(t3:0.1894355484,t9:0.1894355484):0.8105644516):0;
+	</newick>
+
+	<treeModel id="treeModel" fixHeights="true">
+		<newick idref="tree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+		<nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="2">
+			<parameter id="leafTraits"/>
+		</nodeTraits>
+	</treeModel>
+
+    <multivariateDiffusionModel id="X.diffusionModel">
+        <precisionMatrix>
+            <compoundSymmetricMatrix id="X.precisionMatrix" asCorrelation="true" isCholesky="true">
+                <diagonal>
+                    <parameter id="X.precision.diagonal" value="1 1" lower="0 0"/>
+                </diagonal>
+                <offDiagonal>
+                    <parameter id="X.precision.offDiagonal" value="0"/>
+                </offDiagonal>
+            </compoundSymmetricMatrix>
+        </precisionMatrix>
+	</multivariateDiffusionModel>
+
+    <LKJCorrelationPrior id="X.precision.offDiagonal.prior" shapeParameter="0.5" dimension="2">
+		<data>
+            <parameter idref="X.precision.offDiagonal"/>
+		</data>
+	</LKJCorrelationPrior>
+
+    <distributionLikelihood id="X.precision.diagonal.prior">
+        <distribution>
+            <gammaDistributionModel>
+                <shape>
+                    1
+                </shape>
+                <scale>
+                    2
+                </scale>
+            </gammaDistributionModel>
+        </distribution>
+        <data>
+            <parameter idref="X.precision.diagonal"/>
+        </data>
+    </distributionLikelihood>
+
+    <traitDataLikelihood id="X.traitLikelihood" traitName="X" forceFullPrecision="true" allowSingular="true">
+		<multivariateDiffusionModel idref="X.diffusionModel"/>
+        <treeModel idref="treeModel"/>
+		<traitParameter>
+			<parameter idref="leafTraits"/>
+		</traitParameter>
+		<conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="10"/> 
+            </priorSampleSize>
+		</conjugateRootPrior>
+	</traitDataLikelihood>
+
+    <!-- ************************************************** -->
+    <!-- HMC  -->
+
+    <precisionGradient id="gradient.likelihood" parameter="both" traitName="X">
+        <traitDataLikelihood idref="X.traitLikelihood"/> 
+        <compoundSymmetricMatrix idref="X.precisionMatrix"/>
+    </precisionGradient>
+
+    <compoundGradient id="gradient.prior">
+        <gradient id="gradient.prior.diagonal">
+            <distributionLikelihood idref="X.precision.diagonal.prior"/>
+            <parameter idref="X.precision.diagonal"/>
+        </gradient>
+        <gradient id="gradient.prior.offDiagonal">
+            <distributionLikelihood idref="X.precision.offDiagonal.prior"/>
+        </gradient>
+    </compoundGradient>
+
+    <jointGradient id="gradient.posterior">
+        <diffusionGradient idref="gradient.likelihood"/>
+        <compoundGradient idref="gradient.prior"/>
+    </jointGradient>
+
+    <report>
+        Initial posterior gradient:
+        <jointGradient idref="gradient.posterior"/>
+    </report>
+
+	<operators id="operators.hmc">
+	    <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
+                                       drawVariance="1.0" gradientCheckCount="10" gradientCheckTolerance="0.1">
+           <gradient idref="gradient.posterior"/>
+           <compoundParameter id="X.compound.parameter">
+                <parameter idref="X.precision.diagonal"/>
+                <parameter idref="X.precision.offDiagonal"/>
+            </compoundParameter>
+            <multivariateCompoundTransform id="X.compound.transform">
+                <transform type="log" dim="2"/>
+                <LKJTransform dimension="2"/>
+            </multivariateCompoundTransform>
+        </hamiltonianMonteCarloOperator>
+	</operators>
+
+	<mcmc id="mcmc.hmc" chainLength="2000" autoOptimize="true">
+		<posterior id="posterior.hmc">
+			<prior id="prior.hmc">
+                <LKJCorrelationPrior idref="X.precision.offDiagonal.prior"/>
+                <gammaPrior idref="X.precision.diagonal.prior"/>
+			</prior>
+			<likelihood id="likelihood.hmc">
+				<traitDataLikelihood idref="X.traitLikelihood"/> 
+			</likelihood>
+		</posterior>
+		<operators idref="operators.hmc"/>
+
+		<log id="screenLog.hmc" logEvery="1000">
+			<column label="Posterior" dp="4" width="12">
+				<posterior idref="posterior.hmc"/>
+			</column>
+			<column label="Prior" dp="4" width="12">
+				<prior idref="prior.hmc"/>
+			</column>
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood.hmc"/>
+			</column>
+			<column label="Precision" dp="4" width="12">
+                <matrixParameter idref="X.precisionMatrix"/>
+			</column>
+		</log>
+
+		<log id="fileLog.hmc" logEvery="10" fileName="testGeneralizedSamplingStoneHmcMultivariateDiffusion.log" overwrite="false">
+			<posterior idref="posterior.hmc"/>
+			<prior idref="prior.hmc"/>
+			<likelihood idref="likelihood.hmc"/>
+			<matrixParameter idref="X.precisionMatrix"/>
+            <parameter idref="X.precision.diagonal"/>
+            <parameter idref="X.precision.offDiagonal"/>
+		</log>
+	</mcmc>
+
+	<traceAnalysis fileName="testGeneralizedSamplingStoneHmcMultivariateDiffusion.log" stdError="true"/>
+
+    <!-- ************************************************** -->
+    <!-- GSS  -->
+
+    <logTransformedNormalReferencePrior id="X.precision.diagonal.workingPrior" fileName="testGeneralizedSamplingStoneHmcMultivariateDiffusion.log" parameterColumn="X.precision.diagonal" dimension="2" burnin="1000">
+        <parameter idref="X.precision.diagonal"/>
+    </logTransformedNormalReferencePrior>
+    <normalReferencePrior id="X.precision.offDiagonal.workingPrior" fileName="testGeneralizedSamplingStoneHmcMultivariateDiffusion.log" parameterColumn="X.precision.offDiagonal" dimension="1" burnin="1000">
+        <parameter idref="X.precision.offDiagonal"/>
+    </normalReferencePrior>
+
+    <compoundGradient id="gradient.workingPrior">
+        <gradient id="gradient.workingPrior.diagonal">
+            <distributionLikelihood idref="X.precision.diagonal.workingPrior"/>
+            <parameter idref="X.precision.diagonal"/>
+        </gradient>
+        <gradient id="gradient.workingPrior.offDiagonal">
+            <distributionLikelihood idref="X.precision.offDiagonal.workingPrior"/>
+            <parameter idref="X.precision.offDiagonal"/>
+        </gradient>
+    </compoundGradient>
+
+	<operators id="operators.hmc.GSS">
+        <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla" drawVariance="1.0" 
+            gradientCheckCount="100" gradientCheckTolerance="0.1">
+            <pathGradient>
+                <source>
+                    <gradient idref="gradient.posterior"/>
+                </source>
+                <destination>
+                    <gradient idref="gradient.workingPrior"/>
+                </destination>
+            </pathGradient>
+            <compoundParameter idref="X.compound.parameter"/>
+            <multivariateCompoundTransform idref="X.compound.transform"/>
+        </hamiltonianMonteCarloOperator>
+	</operators>
+
+
+    <marginalLikelihoodEstimator chainLength="1000" pathSteps="21" pathScheme="betaquantile" alpha="0.3">
+		<samplers>
+            <mcmc id="mcmc.hmc.GSS" chainLength="0" autoOptimize="true">
+                <posterior idref="posterior.hmc"/>
+                <operators idref="operators.hmc.GSS"/>
+                <log idref="screenLog.hmc"/>
+                <log idref="fileLog.hmc"/>
+            </mcmc>
+		</samplers>
+		<pathLikelihood id="pathLikelihood.hmc.GSS">
+			<source>
+				<posterior idref="posterior.hmc"/>
+			</source>
+			<destination>
+				<workingPrior>
+                    <logTransformedNormalReferencePrior idref="X.precision.diagonal.workingPrior"/>
+                    <normalReferencePrior idref="X.precision.offDiagonal.workingPrior"/>
+				</workingPrior>
+			</destination>
+		</pathLikelihood>
+		<log id="MLE.GSS" logEvery="500" fileName="testGeneralizedSamplingStoneHmcMultivariateDiffusion.MLE">
+			<pathLikelihood idref="pathLikelihood.hmc.GSS"/>
+		</log>
+	</marginalLikelihoodEstimator>
+
+    <generalizedSteppingStoneSamplingAnalysis id="MLE.GSS.Analysis" fileName="testGeneralizedSamplingStoneHmcMultivariateDiffusion.MLE">
+        <sourceColumn name="pathLikelihood.hmc.GSS.source"/>
+        <destinationColumn name="pathLikelihood.hmc.GSS.destination"/>
+        <thetaColumn name="pathLikelihood.hmc.GSS.theta"/>      
+    </generalizedSteppingStoneSamplingAnalysis> 
+
+    <report>
+    	Analytic answer = -32.56001
+    </report>
+
+    <assertEqual tolerance="1e-1" verbose="true">
+        <message>
+            Check MLE with GSS and HMC
+        </message>
+        <actual regex="log marginal likelihood \(.*\)\s*=\s*(.*?)$">
+            <generalizedSteppingStoneSamplingAnalysis idref="MLE.GSS.Analysis"/>
+        </actual>
+        <expected>
+            -32.56001
+        </expected>
+    </assertEqual>
+
+</beast>
+
+<!--
+# Analytic computation of Marginal likelihood for simple BM
+library(ape)
+
+# Simulations
+ntaxa <- 10
+ntraits <- 2
+
+## Simulate tree
+set.seed(20070621)
+tree <- TreeSim::sim.bd.taxa.age(n = ntaxa, numbsim = 1, lambda = 1, mu = 0, age = 1, mrca = TRUE)[[1]]
+ape::write.tree(tree)
+
+## Simulate Process
+sigma <- matrix(0.1, ntraits, ntraits)
+diag(sigma) <- 1:ntraits
+
+set.seed(20110721)
+data_sim <- mvMORPH::mvSIM(tree,
+                           nsim = 1,
+                           model = "BM1",
+                           param = list(theta = c(0, 0), sigma = sigma))
+
+# Compute MLE
+
+## Data and parameters
+Y <- data_sim
+
+V <- vcv(tree)
+priorSampleSize <- 10
+V <- V + 1 / priorSampleSize
+
+## Constant
+MLL <- 0
+MLL <- MLL - ntaxa * ntraits / 2 * log(2 * pi) 
+MLL <- MLL - ntraits / 2 * as.vector(determinant(V)$modulus) 
+
+## Wishart on precision
+nuWishart <- ntraits
+scaleWishartInv <- diag(ntraits)
+
+nu <- nuWishart + ntaxa
+phiInv <- scaleWishartInv + t(Y) %*% solve(V) %*% Y
+
+MLL <- MLL + ntaxa * ntraits / 2 * log(2)
+MLL <- MLL + CholWishart::lmvgamma(nu/2, ntraits) - CholWishart::lmvgamma(nuWishart/2, ntraits)
+MLL <- MLL - nu / 2 * as.vector(determinant(phiInv)$modulus) + nuWishart / 2 * as.vector(determinant(scaleWishartInv)$modulus)
+MLL
+-->

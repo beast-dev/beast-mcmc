@@ -25,8 +25,7 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
+import dr.inference.model.*;
 import dr.util.Attribute;
 
 import java.util.ArrayList;
@@ -52,6 +51,9 @@ public abstract class AbstractDistributionLikelihood extends Likelihood.Abstract
      */
     public void addData(Attribute<double[]> data) {
         dataList.add(data);
+        if (getModel() instanceof AbstractModel && data instanceof Variable) {
+            ((AbstractModel) getModel()).addVariable((Variable) data);
+        }
     }
 
     protected ArrayList<Attribute<double[]>> dataList = new ArrayList<Attribute<double[]>>();

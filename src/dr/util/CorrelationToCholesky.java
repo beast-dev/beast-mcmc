@@ -29,6 +29,7 @@ import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.matrixAlgebra.WrappedMatrix;
+import dr.xml.*;
 
 import static dr.math.matrixAlgebra.SymmetricMatrix.compoundCorrelationSymmetricMatrix;
 import static dr.math.matrixAlgebra.SymmetricMatrix.extractUpperTriangular;
@@ -42,19 +43,17 @@ public class CorrelationToCholesky extends Transform.MultivariateTransform {
 
     // Transform a correlation matrix into a Cholesky matrix
 
-    protected int dim;
+    private int dimVector;
 
-    public CorrelationToCholesky(int dim) {
-        this.dim = dim;
+    public CorrelationToCholesky(int dimVector) {
+        super(dimVector * (dimVector - 1) / 2);
+        this.dimVector = dimVector;
     }
 
     // values = cholesky
     @Override
-    public double[] inverse(double[] values, int from, int to) {
-        assert from == 0 && to == values.length : "The transform function can only be applied to the whole array of values.";
-        assert dim * (dim - 1) / 2 == values.length : "The transform function can only be applied to the whole array of values.";
-
-        WrappedMatrix.WrappedUpperTriangularMatrix L = fillDiagonal(values, dim);
+    protected double[] inverse(double[] values) {
+        WrappedMatrix.WrappedUpperTriangularMatrix L = fillDiagonal(values, dimVector);
 
         SymmetricMatrix R = L.transposedProduct();
 
@@ -63,10 +62,8 @@ public class CorrelationToCholesky extends Transform.MultivariateTransform {
 
     // values = correlation
     @Override
-    public double[] transform(double[] values, int from, int to) {
-        assert from == 0 && to == values.length : "The transform function can only be applied to the whole array of values.";
-
-        SymmetricMatrix R = compoundCorrelationSymmetricMatrix(values, dim);
+    protected double[] transform(double[] values) {
+        SymmetricMatrix R = compoundCorrelationSymmetricMatrix(values, dimVector);
         double[] L;
         try {
             L = (new CholeskyDecomposition(R)).getStrictlyUpperTriangular();
@@ -80,6 +77,11 @@ public class CorrelationToCholesky extends Transform.MultivariateTransform {
     @Override
     public double[] inverse(double[] values, int from, int to, double sum) {
         throw new RuntimeException("Not relevant for the correlation to Cholesky transform.");
+    }
+
+    @Override
+    public boolean isInInteriorDomain(double[] values) {
+        throw new RuntimeException("Not yet implemented");
     }
 
     public String getTransformName() {
@@ -97,25 +99,23 @@ public class CorrelationToCholesky extends Transform.MultivariateTransform {
     }
 
     @Override
-    public double getLogJacobian(double[] values, int from, int to) {
-        assert from == 0 && to == values.length
-                : "The logJacobian function can only be applied to the whole array of values.";
-        WrappedMatrix.WrappedUpperTriangularMatrix L = fillDiagonal(transform(values), dim);
+    protected double getLogJacobian(double[] values) {
+        WrappedMatrix.WrappedUpperTriangularMatrix L = fillDiagonal(transform(values), dimVector);
         double logJacobian = 0;
-        for (int i = 0; i < dim - 1; i++) {
-            logJacobian += (dim - i - 1) * Math.log(L.get(i, i));
+        for (int i = 0; i < dimVector - 1; i++) {
+            logJacobian += (dimVector - i - 1) * Math.log(L.get(i, i));
         }
         return -logJacobian;
     }
 
     @Override
     protected double[] getGradientLogJacobianInverse(double[] values) {
-        WrappedMatrix.WrappedUpperTriangularMatrix L = fillDiagonal(values, dim);
+        WrappedMatrix.WrappedUpperTriangularMatrix L = fillDiagonal(values, dimVector);
         double[] gradientLogJacobian = new double[values.length];
         int k = 0;
-        for (int i = 0; i < dim - 1; i++) {
-            for (int j = i + 1; j < dim; j++) {
-                gradientLogJacobian[k] = -(dim - j - 1) * L.get(i, j) / Math.pow(L.get(j, j), 2);
+        for (int i = 0; i < dimVector - 1; i++) {
+            for (int j = i + 1; j < dimVector; j++) {
+                gradientLogJacobian[k] = -(dimVector - j - 1) * L.get(i, j) / Math.pow(L.get(j, j), 2);
                 k++;
             }
         }
@@ -128,12 +128,12 @@ public class CorrelationToCholesky extends Transform.MultivariateTransform {
 
     // Returns the *transpose* of the Jacobian matrix: jacobian[posStrict(k, l)][posStrict(i, j)] = d R_{ij} / d V_{kl}
     public double[][] computeJacobianMatrixInverse(double[] values) {
-        double[][] jacobian = new double[dim * (dim - 1) / 2][dim * (dim - 1) / 2];
+        double[][] jacobian = new double[dim][dim];
 
-        WrappedMatrix.WrappedUpperTriangularMatrix W = fillDiagonal(values, dim);
+        WrappedMatrix.WrappedUpperTriangularMatrix W = fillDiagonal(values, dimVector);
 
-        for (int i = 0; i < dim - 1; i++) {
-            for (int j = i + 1; j < dim; j++) {
+        for (int i = 0; i < dimVector - 1; i++) {
+            for (int j = i + 1; j < dimVector; j++) {
                 double temp = W.get(i, j) / W.get(i, i);
                 for (int k = 0; k < i; k++) {
                     jacobian[posStrict(k, i)][posStrict(i, j)] = W.get(k, j) - W.get(k, i) * temp;
@@ -151,8 +151,44 @@ public class CorrelationToCholesky extends Transform.MultivariateTransform {
     // ************************************************************************* //
 
     private int posStrict(int i, int j) {
-        return i * (2 * dim - i - 1) / 2 + (j - i - 1);
+        return i * (2 * dimVector - i - 1) / 2 + (j - i - 1);
     }
+
+
+    public static final AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
+        private static final String DIMENSION = "dimension";
+        private static final String CORRELATION_TO_CHOLESKY = "correlationToCholeskyTransform";
+
+
+        @Override
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+            int dim = xo.getIntegerAttribute(DIMENSION);
+            return new CorrelationToCholesky(dim);
+        }
+
+        @Override
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return new XMLSyntaxRule[]{
+                    AttributeRule.newIntegerRule(DIMENSION)
+            };
+        }
+
+        @Override
+        public String getParserDescription() {
+            return "transforms the off-diagonal elements of a correlation to the off-diagonal elements of its" +
+                    " Cholesky decomposition";
+        }
+
+        @Override
+        public Class getReturnType() {
+            return CorrelationToCholesky.class;
+        }
+
+        @Override
+        public String getParserName() {
+            return CORRELATION_TO_CHOLESKY;
+        }
+    };
 
 }
 

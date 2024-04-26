@@ -26,6 +26,7 @@
 package dr.evomodel.treelikelihood;
 
 import beagle.Beagle;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evomodelxml.treelikelihood.BeagleOperationParser;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -136,7 +137,7 @@ public class BeagleOperationReport extends AbstractSinglePartitionTreeLikelihood
     }
 
 
-    public TreeModel getTreeModel() {
+    public MutableTreeModel getTreeModel() {
         return treeModel;
     }
 

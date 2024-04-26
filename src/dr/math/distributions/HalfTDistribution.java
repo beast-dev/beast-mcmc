@@ -50,4 +50,8 @@ public class HalfTDistribution extends TDistribution {
         throw new RuntimeException("Not yet implemented");
     }
 
+    public static double gradLogPdf(double x, double x0, double scale, double df) {
+        return x < 0.0 ? 0.0 : TDistribution.gradLogPdf(x, x0, scale, df);
+    }
+
 }

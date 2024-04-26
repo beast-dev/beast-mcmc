@@ -113,7 +113,7 @@ public class GMRFSkyrideBlockUpdateOperatorParser extends AbstractXMLObjectParse
         if (xo.getAttribute(OLD_SKYRIDE, true)
                 && !(xo.getName().compareTo(GRID_BLOCK_UPDATE_OPERATOR) == 0)
                 ) {
-            GMRFSkyrideLikelihood gmrfLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
+           GMRFSkyrideLikelihood gmrfLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
             return new GMRFSkyrideBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
                     maxIterations, stopValue);
         } else {

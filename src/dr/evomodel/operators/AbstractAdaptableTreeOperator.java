@@ -45,6 +45,11 @@ public abstract class AbstractAdaptableTreeOperator extends AbstractTreeOperator
         return adaptationCount;
     }
 
+    @Override
+    public void setAdaptationCount(long count) {
+        adaptationCount = count;
+    }
+
     /**
      * Sets the adaptable parameter value.
      *

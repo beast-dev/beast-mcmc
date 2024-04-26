@@ -34,6 +34,8 @@ import dr.xml.*;
  */
 public class TipStateSwapOperatorParser extends AbstractXMLObjectParser {
 
+    private static final String UNIFORM_RANDOMIZATION = "uniformRandomization";
+
     public String getParserName() {
         return TipStateSwapOperator.TIP_STATE_OPERATOR;
     }
@@ -43,7 +45,9 @@ public class TipStateSwapOperatorParser extends AbstractXMLObjectParser {
         AncestralStateBeagleTreeLikelihood treeLikelihood =
                 (AncestralStateBeagleTreeLikelihood) xo.getChild(AncestralStateBeagleTreeLikelihood.class);
         final double weight = xo.getDoubleAttribute("weight");
-        return new TipStateSwapOperator(treeLikelihood, weight);
+        final boolean uniformRandomization = xo.getAttribute(UNIFORM_RANDOMIZATION, false);
+
+        return new TipStateSwapOperator(treeLikelihood, weight, uniformRandomization);
     }
 
     //************************************************************************

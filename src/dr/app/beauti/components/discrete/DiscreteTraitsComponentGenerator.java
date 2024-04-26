@@ -25,6 +25,8 @@
 
 package dr.app.beauti.components.discrete;
 
+import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodelxml.substmodel.GlmSubstitutionModelParser;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.generator.BaseComponentGenerator;
@@ -40,11 +42,9 @@ import dr.inferencexml.distribution.BinomialLikelihoodParser;
 import dr.inferencexml.distribution.GeneralizedLinearModelParser;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.oldevomodel.substmodel.AbstractSubstitutionModel;
-import dr.evomodel.tree.TreeModel;
 import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
 import dr.oldevomodelxml.substmodel.ComplexSubstitutionModelParser;
 import dr.oldevomodelxml.substmodel.FrequencyModelParser;
-import dr.oldevomodelxml.substmodel.GLMSubstitutionModelParser;
 import dr.oldevomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.oldevomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
@@ -309,7 +309,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         } else if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
             writer.writeComment("GLM substitution model");
 
-            writer.writeOpenTag(GLMSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, new Attribute[] {
+            writer.writeOpenTag(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, new Attribute[] {
                     new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL)
             });
 
@@ -362,7 +362,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             writer.writeCloseTag(GeneralizedLinearModelParser.GLM_LIKELIHOOD);
 
-            writer.writeCloseTag(GLMSubstitutionModelParser.GLM_SUBSTITUTION_MODEL);
+            writer.writeCloseTag(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL);
 
             writer.writeComment("GLM: statistic that returns the product of the coefficients and the respective indicators for the predictors");
 
@@ -397,7 +397,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
                 // not strictly necessary but makes the XML consistent
-                writer.writeIDref(GLMSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, model.getName() + "." + AbstractSubstitutionModel.MODEL);
+                writer.writeIDref(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, model.getName() + "." + AbstractSubstitutionModel.MODEL);
             } else {
                 writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, model.getName() + "." + AbstractSubstitutionModel.MODEL);
             }
@@ -439,7 +439,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
         if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
             // not strictly necessary but makes the XML consistent
-            writer.writeIDref(GLMSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
+            writer.writeIDref(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
         } else {
             writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
         }
@@ -533,12 +533,12 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         });
 
         writer.writeIDref(AttributePatternsParser.ATTRIBUTE_PATTERNS, prefix + "pattern");
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
         writer.writeIDref(SiteModel.SITE_MODEL, substModel.getName() + "." + SiteModel.SITE_MODEL);
 
         if (partition.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
             // not strictly necessary but makes the XML consistent
-            writer.writeIDref(GLMSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
+            writer.writeIDref(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
         } else {
             writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
         }
@@ -604,11 +604,15 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeComment("Using the binomialLikelihood we specify a 50% prior mass on no predictors being included.");
         writer.writeOpenTag(BinomialLikelihood.BINOMIAL_LIKELIHOOD);
         writer.writeOpenTag(BinomialLikelihoodParser.PROPORTION);
-        writer.writeTag("parameter", new Attribute.Default<Double>("value", proportion), true);
+        writer.writeTag("parameter", new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, prefix + BinomialLikelihoodParser.PROPORTION),
+                new Attribute.Default<Double>("value", proportion)
+        }, true);
         writer.writeCloseTag(BinomialLikelihoodParser.PROPORTION);
         // the dimension of this parameter will be set automatically to be the same as the counts.
         writer.writeOpenTag(BinomialLikelihoodParser.TRIALS);
         writer.writeTag("parameter", new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, prefix + BinomialLikelihoodParser.TRIALS),
                 new Attribute.Default<Double>("value", 1.0)
         }, true);
         writer.writeCloseTag(BinomialLikelihoodParser.TRIALS);

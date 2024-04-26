@@ -25,6 +25,7 @@
 
 package dr.evomodel.coalescent;
 
+import dr.evolution.coalescent.IntervalList;
 import dr.evolution.tree.Tree;
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evomodel.tree.TreeModel;
@@ -38,6 +39,7 @@ import java.util.List;
  * @author Joseph Heled
  *         Date: 19/11/2007
  */
+@Deprecated
 public interface MultiLociTreeSet {
     /**
      *
@@ -57,7 +59,7 @@ public interface MultiLociTreeSet {
      * @param nt index of tree to return
      * @return  Coalecsent intervals for nt's tree
      */
-    TreeIntervals getTreeIntervals(int nt);
+    IntervalList getTreeIntervals(int nt);
 
     /**
      *

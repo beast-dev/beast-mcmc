@@ -61,7 +61,7 @@ public class UniformOperator extends SimpleMCMCOperator {
     /**
      * change the parameter and return the hastings ratio.
      */
-    public final double doOperation() {
+    public double doOperation() {
 
         final int index = MathUtils.nextInt(parameter.getDimension());
         final Bounds<Double> bounds = parameter.getBounds();
@@ -76,12 +76,11 @@ public class UniformOperator extends SimpleMCMCOperator {
     }
 
     //MCMCOperator INTERFACE
-    public final String getOperatorName() {
+    public String getOperatorName() {
         return "uniform(" + parameter.getParameterName() + ")";
     }
 
     public final void optimize(double targetProb) {
-
         throw new RuntimeException("This operator cannot be optimized!");
     }
 
@@ -111,7 +110,7 @@ public class UniformOperator extends SimpleMCMCOperator {
 
     //PRIVATE STUFF
 
-    private Parameter parameter = null;
-    private final Double lowerBound;
-    private final Double upperBound;
+    protected Parameter parameter = null;
+    protected final Double lowerBound;
+    protected final Double upperBound;
 }

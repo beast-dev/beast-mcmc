@@ -116,7 +116,7 @@ public class CoalescentEventsStatistic extends Statistic.Abstract {
                     System.err.println("coalescent.getCoalescentIntervalDimension() = " + coalescent.getCoalescentIntervalDimension());
                 }
                 for (int j = 0; j < coalescent.getCoalescentIntervalDimension(); j++) {
-                    if (coalescent instanceof GMRFMultilocusSkyrideLikelihood) {
+                    if (coalescent instanceof GMRFSkygridLikelihood) {
                         if (coalescent.getCoalescentIntervalType(j) == IntervalType.COALESCENT) {
                             if (LOG_COMBINATIONS) {
                                 this.coalescentValues[counter] += coalescent.getCoalescentInterval(j)*(coalescent.getCoalescentIntervalLineageCount(j)*(coalescent.getCoalescentIntervalLineageCount(j)-1.0))/2.0;

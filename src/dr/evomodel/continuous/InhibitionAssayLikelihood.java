@@ -27,6 +27,7 @@ package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
@@ -60,11 +61,10 @@ public class InhibitionAssayLikelihood extends AbstractModelLikelihood /*impleme
     public static final String IN_REAL_TIME = "inRealTime";
     public static final String PRECISION = "precision";
 
-    public InhibitionAssayLikelihood(TreeModel treeModel,
-
+    public InhibitionAssayLikelihood(DefaultTreeModel treeModel,
 //	                                   List<Integer> missingIndices,
-MatrixParameter dataParameter,
-Parameter precision) {
+                                     MatrixParameter dataParameter,
+                                     Parameter precision) {
 
         super(TRAIT_LIKELIHOOD);
         this.treeModel = treeModel;
@@ -95,7 +95,7 @@ Parameter precision) {
     }
 
 
-    private double getBranchMean(TreeModel tree, NodeRef node) {
+    private double getBranchMean(DefaultTreeModel tree, NodeRef node) {
 
         if (tree.isRoot(node)) {
             return tree.getNodeTrait(node, "mean");
@@ -111,16 +111,16 @@ Parameter precision) {
         }
     }
 
-    public final boolean isClusterChangeOnBranchAbove(TreeModel tree, NodeRef node) {
+    public final boolean isClusterChangeOnBranchAbove(DefaultTreeModel tree, NodeRef node) {
         return tree.getNodeTrait(node, "indicator") == 1;
     }
 
 
-    public final boolean areNodesInSameCluster(TreeModel tree, NodeRef node1, NodeRef node2) {
+    public final boolean areNodesInSameCluster(DefaultTreeModel tree, NodeRef node1, NodeRef node2) {
         return clusterStart(tree, node1) == clusterStart(tree, node2);
     }
 
-    public final NodeRef clusterStart(TreeModel tree, NodeRef node) {
+    public final NodeRef clusterStart(DefaultTreeModel tree, NodeRef node) {
         if (tree.isRoot(node) || isClusterChangeOnBranchAbove(tree, node))
             return node;
         return clusterStart(tree, tree.getParent(node));
@@ -414,7 +414,7 @@ Parameter precision) {
 //            System.err.println("did i get here?");
 
 //            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            DefaultTreeModel treeModel = (DefaultTreeModel) xo.getChild(DefaultTreeModel.class);
 //			CompoundParameter traitParameter = (CompoundParameter) xo.getSocketChild(TRAIT_PARAMETER);
 
             MatrixParameter data = (MatrixParameter) xo.getChild(MatrixParameter.class);
@@ -537,7 +537,7 @@ Parameter precision) {
 //				new StringAttributeRule(TRAIT_NAME, "The name of the trait for which a likelihood should be calculated"),
 //				AttributeRule.newBooleanRule(IN_REAL_TIME, true),
 //				new ElementRule(MultivariateDiffusionModel.class),
-                new ElementRule(TreeModel.class),
+                new ElementRule(DefaultTreeModel.class),
                 new ElementRule(MatrixParameter.class),
 //                new ElementRule("precision", Parameter)
 //                new ElementRule(Parameter.class)
@@ -605,7 +605,7 @@ Parameter precision) {
 //		}
     };
 
-    private TreeModel treeModel = null;
+    private DefaultTreeModel treeModel = null;
     private MatrixParameter dataParameter = null;
     private final Parameter precision = null;
 

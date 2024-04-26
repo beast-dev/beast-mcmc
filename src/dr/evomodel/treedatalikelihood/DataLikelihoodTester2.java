@@ -45,10 +45,11 @@ import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
-import dr.evomodelxml.siteratemodel.GammaSiteModelParser;
+import dr.evomodelxml.siteratemodel.SiteModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.inference.model.Parameter;
 
@@ -87,9 +88,9 @@ public class DataLikelihoodTester2 {
         //siteModel
         double alpha = 0.5;
         GammaSiteRateModel siteRateModel = new GammaSiteRateModel("gammaModel", alpha, 4);
-//        GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteRateModel");
+//        GammaSiteRateModelParser siteRateModel = new GammaSiteRateModelParser("siteRateModel");
         siteRateModel.setSubstitutionModel(hky);
-        Parameter mu = new Parameter.Default(GammaSiteModelParser.SUBSTITUTION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter mu = new Parameter.Default(SiteModelParser.SUBSTITUTION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
         siteRateModel.setRelativeRateParameter(mu);
 
         FrequencyModel f2 = new FrequencyModel(Nucleotides.INSTANCE, freqs);
@@ -132,10 +133,12 @@ public class DataLikelihoodTester2 {
                 treeModel,
                 patterns,
                 branchModel,
-                siteRateModel, false,
+                siteRateModel,
+                false,
+                false,
                 PartialsRescalingScheme.NONE,
                 false,
-                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
+                PreOrderSettings.getDefault());
 
         TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(
                 dataLikelihoodDelegate,
@@ -157,10 +160,12 @@ public class DataLikelihoodTester2 {
                 treeModel,
                 patterns,
                 branchModel2,
-                siteRateModel2, false,
+                siteRateModel2,
+                false,
+                false,
                 PartialsRescalingScheme.NONE,
                 false,
-                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
+                PreOrderSettings.getDefault());
 
         treeDataLikelihood = new TreeDataLikelihood(
                 dataLikelihoodDelegate,
@@ -457,10 +462,12 @@ public class DataLikelihoodTester2 {
                 treeModel,
                 patterns,
                 branchModel,
-                siteRateModel, false,
+                siteRateModel,
+                false,
+                false,
                 PartialsRescalingScheme.NONE,
                 false,
-                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
+                PreOrderSettings.getDefault());
 
         TreeDataLikelihood treeDataLikelihoodOne = new TreeDataLikelihood(
                 dataLikelihoodDelegateOne,
@@ -483,10 +490,12 @@ public class DataLikelihoodTester2 {
                 treeModel,
                 morePatterns,
                 branchModel2,
-                siteRateModel2, false,
+                siteRateModel2,
+                false,
+                false,
                 PartialsRescalingScheme.NONE,
                 false,
-                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
+                PreOrderSettings.getDefault());
 
         TreeDataLikelihood treeDataLikelihoodTwo = new TreeDataLikelihood(
                 dataLikelihoodDelegateTwo,
@@ -620,7 +629,7 @@ public class DataLikelihoodTester2 {
         NewickImporter importer = new NewickImporter(t);
         Tree tree = importer.importTree(null);
 
-        return new TreeModel(tree);//treeModel
+        return new DefaultTreeModel(tree);//treeModel
     }
 
     static private String sequences[][] = {

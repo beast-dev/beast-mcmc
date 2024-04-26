@@ -25,19 +25,23 @@
 
 package dr.inferencexml.distribution.shrinkage;
 
-import dr.inference.distribution.shrinkage.BayesianBridgeLikelihood;
-import dr.inference.distribution.shrinkage.JointBayesianBridge;
-import dr.inference.distribution.shrinkage.MarginalBayesianBridge;
-import dr.inference.model.MatrixParameter;
+import dr.inference.distribution.shrinkage.*;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterParser;
 import dr.xml.*;
 
 public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String BAYESIAN_BRIDGE = "bayesianBridge";
-    private static final String GLOBAL_SCALE = "globalScale";
-    private static final String LOCAL_SCALE = "localScale";
-    private static final String EXPONENT = "exponent";
+
+    public static final String GLOBAL_SCALE = "globalScale";
+    public static final String LOCAL_SCALE = "localScale";
+    public static final String EXPONENT = "exponent";
+    public static final String SLAB_WIDTH = "slabWidth";
+    public static final String NORMALIZATION_CONSTANT = "includeNormalization";
+
+    private static final String RESET_DIMENSIONS = "resetDimensions";
+    private static final String OLD = "old";
 
     public String getParserName() {
         return BAYESIAN_BRIDGE;
@@ -56,18 +60,45 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
             localScale = (Parameter) localXo.getChild(Parameter.class);
 
             if (localScale.getDimension() != coefficients.getDimension()) {
-                throw new XMLParseException("Local scale dimension (" + localScale.getDimension()
-                        + ") != coefficient dimension (" + coefficients.getDimension() + ")");
+
+                if (xo.getAttribute(RESET_DIMENSIONS, true)) {
+                    localScale.setDimension(coefficients.getDimension());
+                } else {
+                    throw new XMLParseException("Local scale dimension (" + localScale.getDimension()
+                            + ") != coefficient dimension (" + coefficients.getDimension() + ")");
+                }
             }
+        }
+
+        Parameter slabWidth = ParameterParser.getOptionalParameter(xo, SLAB_WIDTH);
+
+        if (localScale == null && slabWidth != null) {
+            throw new XMLParseException("Slab-regularization is only available under the joint Bayesian bridge");
         }
 
         XMLObject exponentXo = xo.getChild(EXPONENT);
         Parameter exponent = (Parameter) exponentXo.getChild(Parameter.class);
 
+        boolean includeNormalizingConstant = xo.getAttribute(NORMALIZATION_CONSTANT, false);
+
+        boolean old = xo.getAttribute(OLD, false);
+
         if (localScale != null) {
-            return new JointBayesianBridge(coefficients, globalScale, localScale, exponent);
+            if (old) {
+                return new OldJointBayesianBridge(coefficients, globalScale, localScale, exponent);
+            } else {
+                return new BayesianBridgeLikelihood(coefficients,
+                        new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent, slabWidth,
+                                coefficients.getDimension(), includeNormalizingConstant));
+            }
         } else {
-            return new MarginalBayesianBridge(coefficients, globalScale, exponent);
+            if (old) {
+                return new OldMarginalBayesianBridge(coefficients, globalScale, exponent);
+            } else {
+                return new BayesianBridgeLikelihood(coefficients,
+                        new MarginalBayesianBridgeDistributionModel(globalScale, exponent,
+                                coefficients.getDimension(), includeNormalizingConstant));
+            }
         }
     }
 
@@ -86,7 +117,11 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(EXPONENT,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(LOCAL_SCALE,
-                    new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, true),
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(SLAB_WIDTH,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            AttributeRule.newBooleanRule(OLD, true),
+            AttributeRule.newBooleanRule(RESET_DIMENSIONS, true),
     };
 
     public String getParserDescription() {

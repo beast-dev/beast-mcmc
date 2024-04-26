@@ -85,6 +85,5 @@ public class PartitionPattern extends AbstractPartitionData {
 
     public void setName(String name) {
         this.name = name;
-        options.microsatelliteOptions.initModelParametersAndOpererators();
     }
 }

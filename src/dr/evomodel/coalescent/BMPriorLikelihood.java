@@ -38,7 +38,7 @@ import dr.inference.model.Variable;
  */
 
 // It should be a model since it may be the only user of parameter sigma
-
+@Deprecated
 public class BMPriorLikelihood extends AbstractModelLikelihood {
     // private final Parameter mean;
     private final Parameter sigma;

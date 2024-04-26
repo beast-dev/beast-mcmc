@@ -30,6 +30,7 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
@@ -114,7 +115,7 @@ public class TMRCAStatisticsGenerator extends Generator {
                 writer.writeOpenTag(MonophylyStatisticParser.MRCA);
                 writer.writeIDref(TaxaParser.TAXA, taxa.getId());
                 writer.writeCloseTag(MonophylyStatisticParser.MRCA);
-                writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
                 writer.writeCloseTag(MonophylyStatisticParser.MONOPHYLY_STATISTIC);
             }
         }
@@ -131,7 +132,7 @@ public class TMRCAStatisticsGenerator extends Generator {
         writer.writeOpenTag(TMRCAStatisticParser.MRCA);
         writer.writeIDref(TaxaParser.TAXA, taxa.getId());
         writer.writeCloseTag(TMRCAStatisticParser.MRCA);
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(TMRCAStatisticParser.TMRCA_STATISTIC);
     }
 

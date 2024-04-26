@@ -40,6 +40,7 @@ import static dr.evolution.tree.TreeTrait.DA.factory;
  * @author Xiang Ji
  * @author Marc Suchard
  */
+@Deprecated // What is this class?
 public class LocalBranchRateDelegate extends ProcessSimulationDelegate.AbstractDelegate
         implements TreeTrait.TraitInfo<double[]> {
 

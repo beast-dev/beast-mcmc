@@ -31,18 +31,38 @@ import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
-import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
+import dr.evomodelxml.branchratemodel.AutoCorrelatedBranchRatesDistributionParser;
+import dr.evomodelxml.branchratemodel.AutoCorrelatedGradientWrtIncrementsParser;
+import dr.evomodelxml.branchratemodel.BranchRateGradientWrtIncrementsParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser;
 import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
+import dr.evomodelxml.continuous.hmc.BranchRateGradientParser;
 import dr.evomodelxml.operators.*;
+import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
+import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.hmc.GradientWrtIncrement;
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.HessianProvider;
 import dr.inference.model.ParameterParser;
 import dr.inference.operators.AdaptableVarianceMultivariateNormalOperator;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.operators.RandomWalkOperator;
 import dr.inference.operators.RateBitExchangeOperator;
+import dr.inferencexml.SignTransformParser;
+import dr.inferencexml.distribution.DistributionLikelihoodParser;
+import dr.inferencexml.distribution.shrinkage.BayesianBridgeDistributionModelParser;
+import dr.inferencexml.hmc.CompoundGradientParser;
+import dr.inferencexml.hmc.GradientWrtIncrementParser;
+import dr.inferencexml.hmc.HessianWrapperParser;
+import dr.inferencexml.hmc.JointGradientParser;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.operators.*;
+import dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser;
+import dr.inferencexml.operators.shrinkage.BayesianBridgeShrinkageOperatorParser;
 import dr.oldevomodel.substmodel.AbstractSubstitutionModel;
 import dr.oldevomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.util.Attribute;
@@ -52,6 +72,8 @@ import dr.xml.XMLParser;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static dr.inferencexml.distribution.PriorParsers.GAMMA_PRIOR;
 
 /**
  * @author Alexei Drummond
@@ -148,9 +170,6 @@ public class OperatorsGenerator extends Generator {
             case UP_DOWN:
                 writeUpDownOperator(UpDownOperatorParser.UP_DOWN_OPERATOR, operator, writer);
                 break;
-            case MICROSAT_UP_DOWN:
-                writeUpDownOperator(MicrosatelliteUpDownOperatorParser.MICROSAT_UP_DOWN_OPERATOR, operator, writer);
-                break;
             case SCALE_ALL:
                 writeScaleAllOperator(operator, writer);
                 break;
@@ -218,8 +237,22 @@ public class OperatorsGenerator extends Generator {
             case SKY_GRID_GIBBS_OPERATOR:
                 writeSkyGridGibbsOperator(operator, prefix, writer);
                 break;
+            case SKY_GRID_HMC_OPERATOR:
+                writeSkyGridHMCOperator(operator, prefix, writer);
+                break;
             case ADAPTIVE_MULTIVARIATE:
                 writeAdaptiveMultivariateOperator(operator, writer);
+                break;
+            case RELAXED_CLOCK_HMC_OPERATOR:
+                writeRelaxedClockHMCOperator(operator, prefix,4, 1E-2, "diagonal",
+                        0, 10, writer);
+                break;
+            case SHRINKAGE_CLOCK_HMC_OPERATOR:
+                writeShrinkageClockGibbsOperator(operator, prefix, writer);
+                writeShrinkageClockHMCOperator(operator, prefix, writer);
+            case SHRINKAGE_CLOCK_GIBBS_OPERATOR:
+                writeRelaxedClockHMCOperator(operator, prefix,4, 1E-2, "diagonal",
+                        0, 10, writer);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown operator type");
@@ -425,7 +458,7 @@ public class OperatorsGenerator extends Generator {
     private void writeTreeBitMoveOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(TreeBitMoveOperatorParser.BIT_MOVE_OPERATOR,
                 getWeightAttribute(operator.getWeight()));
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(TreeBitMoveOperatorParser.BIT_MOVE_OPERATOR);
     }
 
@@ -448,21 +481,21 @@ public class OperatorsGenerator extends Generator {
     private void writeNarrowExchangeOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(ExchangeOperatorParser.NARROW_EXCHANGE,
                 getWeightAttribute(operator.getWeight()));
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(ExchangeOperatorParser.NARROW_EXCHANGE);
     }
 
     private void writeWideExchangeOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(ExchangeOperatorParser.WIDE_EXCHANGE,
                 getWeightAttribute(operator.getWeight()));
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(ExchangeOperatorParser.WIDE_EXCHANGE);
     }
 
     private void writeWilsonBaldingOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(WilsonBaldingParser.WILSON_BALDING,
                 getWeightAttribute(operator.getWeight()));
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(WilsonBaldingParser.WILSON_BALDING);
     }
 
@@ -495,6 +528,97 @@ public class OperatorsGenerator extends Generator {
         );
         writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, treePriorPrefix + "skygrid");
         writer.writeCloseTag(GMRFSkyrideBlockUpdateOperatorParser.GRID_BLOCK_UPDATE_OPERATOR);
+    }
+
+    private void writeSkyGridHMCOperator(Operator operator, String treePriorPrefix, XMLWriter writer) {
+        writer.writeOpenTag(
+                HamiltonianMonteCarloOperatorParser.HMC_OPERATOR,
+                new Attribute[]{
+                        getWeightAttribute(operator.getWeight()),
+                        new Attribute.Default<Integer>(HamiltonianMonteCarloOperatorParser.N_STEPS, 50),
+                        new Attribute.Default<Double>(HamiltonianMonteCarloOperatorParser.STEP_SIZE, 1E-2),
+                        new Attribute.Default<String>(HamiltonianMonteCarloOperatorParser.MODE, "vanilla"),
+                        new Attribute.Default<Integer>(HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_COUNT, 0),
+                        new Attribute.Default<Double>(HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_TOLERANCE, 1E-1),
+                        new Attribute.Default<String>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING, "none"),
+                        new Attribute.Default<Integer>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING_UPDATE_FREQUENCY, 100)
+                }
+        );
+        writer.writeIDref(CompoundGradientParser.COMPOUND_GRADIENT, treePriorPrefix + "full.skygrid.gradient");
+        writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, treePriorPrefix + "skygrid.parameters");
+        writer.writeOpenTag(
+                SignTransformParser.NAME,
+                new Attribute[]{
+                        new Attribute.Default<Integer>(TransformParsers.START, 1),
+                        new Attribute.Default<Integer>(TransformParsers.END, 1)
+                }
+        );
+        writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, treePriorPrefix + "skygrid.parameters");
+        writer.writeCloseTag(SignTransformParser.NAME);
+        writer.writeCloseTag(HamiltonianMonteCarloOperatorParser.HMC_OPERATOR);
+    }
+
+    private void writeRelaxedClockHMCOperator(Operator operator, String prefix,
+                                  int nSteps, double stepSize,
+                                  String preconditioning, int preconditioningDelay, int preconditioningUpdateFrequency,
+                                  XMLWriter writer) {
+        writer.writeOpenTag(
+                HamiltonianMonteCarloOperatorParser.HMC_OPERATOR,
+                new Attribute[]{
+                        getWeightAttribute(operator.getWeight()),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.N_STEPS, nSteps),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.STEP_SIZE, stepSize),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.MODE, "vanilla"),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_COUNT, 0),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING, preconditioning),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING_UPDATE_FREQUENCY, preconditioningUpdateFrequency)
+                }
+        );
+        writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT);
+    }
+
+    private void writeShrinkageClockGibbsOperator(Operator operator, String prefix, XMLWriter writer) {
+//		<bayesianBridgeGibbsOperator weight="4">
+//			<autoCorrelatedRatesPrior idref="substBranchRatesPrior"/>
+//			<gammaPrior idref="globalScalePrior"/>
+//		</bayesianBridgeGibbsOperator>
+        writer.writeOpenTag(
+                BayesianBridgeShrinkageOperatorParser.BAYESIAN_BRIDGE_PARSER,
+                getWeightAttribute(operator.getWeight()));
+        writer.writeIDref(AutoCorrelatedBranchRatesDistributionParser.AUTO_CORRELATED_RATES, prefix + "substBranchRatesPrior");
+        writer.writeIDref(GAMMA_PRIOR, prefix + "globalScalePrior");
+        writer.writeCloseTag(BayesianBridgeShrinkageOperatorParser.BAYESIAN_BRIDGE_PARSER);
+    }
+
+    private void writeShrinkageClockHMCOperator(Operator operator, String prefix, XMLWriter writer) {
+        writer.writeOpenTag(
+                HamiltonianMonteCarloOperatorParser.HMC_OPERATOR,
+                new Attribute[]{
+                        getWeightAttribute(operator.getWeight()),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.N_STEPS, 5),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.STEP_SIZE, 1E-3),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.MODE, "vanilla"),
+                        new Attribute.Default<>("drawVariance", "1.0"),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING_UPDATE_FREQUENCY, 1),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_COUNT, 100),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_TOLERANCE, 0.2)
+                }
+        );
+        writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT);
+        writer.writeIDref(BranchRateGradientWrtIncrementsParser.GRADIENT, prefix + "branchRateGradientWrtIncrements");
+        writer.writeIDref(AutoCorrelatedGradientWrtIncrementsParser.GRADIENT, prefix + "incrementGradient");
+        writer.writeCloseTag(JointGradientParser.JOINT_GRADIENT);
+
+        writer.writeOpenTag("preconditioner");
+        writer.writeIDref(BayesianBridgeDistributionModelParser.BAYESIAN_BRIDGE_DISTRIBUTION, prefix + "bbDistribution");
+        writer.writeCloseTag("preconditioner");
+
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rates");
+
+        writer.writeOpenTag(SignTransformParser.NAME);
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rates");
+        writer.writeCloseTag(SignTransformParser.NAME);
+        writer.writeCloseTag(HamiltonianMonteCarloOperatorParser.HMC_OPERATOR);
     }
 
     private void writeGMRFGibbsOperator(Operator operator, String treePriorPrefix, XMLWriter writer) {
@@ -532,7 +656,7 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.getWeight())
                 }
         );
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(SubtreeLeapOperatorParser.SUBTREE_LEAP);
     }
 
@@ -542,7 +666,7 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.getWeight())
                 }
         );
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(FixedHeightSubtreePruneRegraftOperatorParser.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT);
     }
 
@@ -554,7 +678,7 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.getWeight())
                 }
         );
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(SubtreeJumpOperatorParser.SUBTREE_JUMP);
     }
 
@@ -566,7 +690,7 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.getWeight())
                 }
         );
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(SubtreeSlideOperatorParser.SUBTREE_SLIDE);
     }
 

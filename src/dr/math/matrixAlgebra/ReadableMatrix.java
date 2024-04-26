@@ -41,6 +41,28 @@ public interface ReadableMatrix extends ReadableVector {
 
     class Utils {
 
+        public static double[][] toMatrixArray(ReadableMatrix Y) { // defeats the purpose of wrapping but useful helper function sometimes
+            double[][] X = new double[Y.getMajorDim()][Y.getMinorDim()];
+            for (int i = 0; i < Y.getMajorDim(); i++) {
+                for (int j = 0; j < Y.getMinorDim(); j++) {
+                    X[i][j] = Y.get(i, j);
+                }
+            }
+            return X;
+        }
+
+        public static double[] toArray(ReadableMatrix matrix) {
+            double[] array = new double[matrix.getDim()];
+            int offset = 0;
+            for (int i = 0; i < matrix.getMajorDim(); ++i) {
+                for (int j = 0; j < matrix.getMinorDim(); ++j) {
+                    array[offset] = matrix.get(i, j);
+                    ++offset;
+                }
+            }
+            return array;
+        }
+
         public static WrappedVector product(ReadableMatrix matrix, ReadableVector vector) {
 
             final int majorDim = matrix.getMajorDim();

@@ -25,13 +25,14 @@
 
 package dr.math.distributions;
 
+import dr.inference.model.GradientProvider;
 import dr.math.GammaFunction;
 import dr.math.UnivariateFunction;
 
 /**
  * @author Marc A. Suchard
  */
-public class TDistribution implements Distribution {
+public class TDistribution implements Distribution, GradientProvider {
 
     public TDistribution(double center, double scale, double df) {
         this.center = center;
@@ -101,6 +102,29 @@ public class TDistribution implements Distribution {
                 - (df + 1) / 2 * Math.log(1 + loc * loc / df / scale);
 
         return logPDF;
+    }
+
+    // Gradient
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = gradLogPdf(x[i], center, scale, df);
+        }
+        return result;
+    }
+
+    public static double gradLogPdf(double x, double x0, double scale, double df) {
+
+        double loc = x - x0;
+
+        return - (df + 1)  * loc / (df * scale + loc * loc);
     }
 
     private double df;

@@ -28,10 +28,13 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.inference.model.Model;
 import dr.math.KroneckerOperation;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
 import java.util.List;
 
@@ -44,7 +47,6 @@ import java.util.List;
  */
 public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffusionModelDelegate {
 
-    protected final int dim;
     private final List<BranchRateModel> branchRateModels;
 
     AbstractDriftDiffusionModelDelegate(Tree tree,
@@ -53,8 +55,6 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
                                         int partitionNumber) {
         super(tree, diffusionModel, partitionNumber);
         this.branchRateModels = branchRateModels;
-
-        dim = diffusionModel.getPrecisionParameter().getColumnDimension();
 
         if (branchRateModels != null) {
 
@@ -104,8 +104,36 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
         return drift;
     }
 
+    double[] getDriftRate(NodeRef node) {
+
+        final double[] drift = new double[dim];
+
+        if (branchRateModels != null) {
+            for (int model = 0; model < dim; ++model) {
+                drift[model] = branchRateModels.get(model).getBranchRate(tree, node);
+            }
+        }
+
+        return drift;
+    }
+
+    public boolean isConstantDrift() {
+        if (branchRateModels == null) return false;
+        for (int model = 0; model < dim; ++model) {
+            if (!(branchRateModels.get(model) instanceof StrictClockBranchRates)) return false;
+        }
+        return true;
+    }
+
+    DenseMatrix64F getGradientDisplacementWrtDrift(NodeRef node,
+                                                   ContinuousDiffusionIntegrator cdi,
+                                                   ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                   DenseMatrix64F gradient) {
+        return scaleGradient(node, cdi, likelihoodDelegate, gradient);
+    }
+
     @Override
-    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi) {
+    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi, int dim) {
         final double[] drift = new double[dim];
         System.arraycopy(priorMean, 0, drift, 0, priorMean.length);
         double[] displacement = new double[dim];
@@ -117,17 +145,17 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
                 actualization = new double[dim * dim];
             }
         }
-        recursivelyAccumulateDrift(node, drift, cdi, displacement, actualization);
+        recursivelyAccumulateDrift(node, drift, cdi, displacement, actualization, dim);
         return drift;
     }
 
     private void recursivelyAccumulateDrift(final NodeRef node, final double[] drift,
                                             ContinuousDiffusionIntegrator cdi,
-                                            double[] displacement, double[] actualization) {
+                                            double[] displacement, double[] actualization, int dim) {
         if (!tree.isRoot(node)) {
 
             // Compute parent
-            recursivelyAccumulateDrift(tree.getParent(node), drift, cdi, displacement, actualization);
+            recursivelyAccumulateDrift(tree.getParent(node), drift, cdi, displacement, actualization, dim);
 
             // Node
             cdi.getBranchDisplacement(getMatrixBufferOffsetIndex(node.getNumber()), displacement);
@@ -145,5 +173,19 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
     public double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance,
                                        final double[][] treeSharedLengths, final double[][] traitVariance) {
         return KroneckerOperation.product(treeVariance, traitVariance);
+    }
+
+    @Override
+    public void getMeanTipVariances(final double priorSampleSize,
+                                    final double[] treeLengths,
+                                    final DenseMatrix64F traitVariance,
+                                    final DenseMatrix64F varSum) {
+        double sumLengths = 0;
+        for (double treeLength : treeLengths) {
+            sumLengths += treeLength;
+        }
+        sumLengths /= treeLengths.length;
+        CommonOps.scale(sumLengths, traitVariance, varSum);
+        CommonOps.addEquals(varSum, 1 / priorSampleSize, traitVariance);
     }
 }

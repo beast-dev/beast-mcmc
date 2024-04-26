@@ -392,4 +392,14 @@ public class DiscreteStatistics {
 
         return Math.exp(gm/(double) len);
     }
+
+    public static double negativeProbability(double[] values) {
+
+        double negativeCount = 0;
+        for (int i = 1; i < values.length; i++) {
+            if (values[i] < 0) negativeCount = negativeCount + 1;
+        }
+        return negativeCount / values.length;
+
+    }
 }

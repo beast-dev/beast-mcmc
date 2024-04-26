@@ -15,7 +15,7 @@ public class PermutationIndices {
     private int[] zeroIndices;
     private int[] infiniteIndices;
 
-    PermutationIndices(DenseMatrix64F matrix) {
+    public PermutationIndices(DenseMatrix64F matrix) {
 
         this.matrix = matrix;
         dim = matrix.getNumCols();

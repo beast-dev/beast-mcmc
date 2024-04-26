@@ -46,6 +46,7 @@ public class NewickParser extends AbstractXMLObjectParser {
     public static final String UNITS = "units";
     public static final String RESCALE_HEIGHT = "rescaleHeight";
     public static final String RESCALE_LENGTH = "rescaleLength";
+    public static final String SCALE = "scale";
     public static final String USING_DATES = SimpleTreeParser.USING_DATES;
     public static final String USING_HEIGHTS = "usingHeights";
 
@@ -55,6 +56,7 @@ public class NewickParser extends AbstractXMLObjectParser {
                 AttributeRule.newBooleanRule(USING_HEIGHTS, true),
                 AttributeRule.newDoubleRule(RESCALE_HEIGHT, true, "Attempt to rescale the tree to the given root height"),
                 AttributeRule.newDoubleRule(RESCALE_LENGTH, true, "Attempt to rescale the tree to the given total length"),
+                AttributeRule.newDoubleRule(SCALE, true, "Attempt to rescale the branch lengths by a factor."),
                 new StringAttributeRule(UNITS, "The branch length units of this tree", Units.UNIT_NAMES, true),
                 new ElementRule(String.class, "The NEWICK format tree. Tip labels are taken to be Taxon IDs")
         };
@@ -174,34 +176,34 @@ public class NewickParser extends AbstractXMLObjectParser {
                     translateNodes = false;
                 }
 
-                if (Math.abs(diff) > 1e-8 && (i == 0 || !translateNodes) ) {
-
-                    System.out.println("  Changing height of node " + tree.getTaxon(node.getNumber()) + " from " + nodeHeight + " to " + height);
-                    tree.setNodeHeight(node, height);
-                }
+//                if (Math.abs(diff) > 1e-8 && (i == 0 || !translateNodes) ) {
+//
+//                    System.out.println("  Changing height of node " + tree.getTaxon(node.getNumber()) + " from " + nodeHeight + " to " + height);
+                tree.setNodeHeight(node, height);
+//                }
             }
 
             if (translateNodes) {
                 System.out.println("  Changing height of all nodes by " + fixedDiff);
+
+                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                    NodeRef node = tree.getInternalNode(i);
+
+                    dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getNodeAttribute(node, dr.evolution.util.Date.DATE);
+
+                    if (date != null) {
+                        double height = Taxon.getHeightFromDate(date);
+                        tree.setNodeHeight(node, height);
+                    } else if (translateNodes) {
+                        tree.setNodeHeight(node, tree.getNodeHeight(node) + fixedDiff);
+                    }
+
+                }// END: i loop
             }
-
-            for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-                NodeRef node = tree.getInternalNode(i);
-
-                dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getNodeAttribute(node, dr.evolution.util.Date.DATE);
-
-                if (date != null) {
-                    double height = Taxon.getHeightFromDate(date);
-                    tree.setNodeHeight(node, height);
-                } else if (translateNodes) {
-                    tree.setNodeHeight(node, tree.getNodeHeight(node) + fixedDiff);
-                }
-
-            }// END: i loop
 
             MutableTree.Utils.correctHeightsForTips(tree);
 
-        } else if (!usingDates && !usingHeights) {
+        } else if (!usingHeights) {
 
             System.out.println("Tree is assumed to be ultrametric");
 
@@ -236,6 +238,16 @@ public class NewickParser extends AbstractXMLObjectParser {
         if (xo.hasAttribute(RESCALE_LENGTH)) {
             double rescaleLength = xo.getDoubleAttribute(RESCALE_LENGTH);
             double scale = rescaleLength / TreeUtils.getTreeLength(tree, tree.getRoot());
+            for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                NodeRef n = tree.getInternalNode(i);
+                tree.setNodeHeight(n, tree.getNodeHeight(n) * scale);
+            }
+        }
+        if(xo.hasAttribute(SCALE)){
+            double scale = xo.getDoubleAttribute(SCALE);
+            if(scale<=0){
+                throw new IllegalArgumentException("Scale must be greater than 0.");
+            }
             for (int i = 0; i < tree.getInternalNodeCount(); i++) {
                 NodeRef n = tree.getInternalNode(i);
                 tree.setNodeHeight(n, tree.getNodeHeight(n) * scale);

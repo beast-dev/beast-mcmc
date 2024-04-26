@@ -56,7 +56,7 @@ public class SplitBySiteTraitLogger extends TreeTraitProvider.Helper implements 
             throw new XMLParseException("TreeTraitProvider does not provide trait named '" + traitName + ".");
         }
 
-        TreeModel tree = treeLikelihood.getTreeModel();
+        Tree tree = treeLikelihood.getTreeModel();
         int length;
         Object obj = trait.getTrait(tree, tree.getNode(0));
 

@@ -30,8 +30,6 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeChangedEvent;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.loggers.LogColumn;
@@ -48,7 +46,8 @@ import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -351,6 +350,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             final int dim = driftModels.size();
             double[] drift = new double[dim];
             double realTimeBranchLength = treeModel.getBranchLength(node);
+            realTimeBranchLength = rescaleLength(realTimeBranchLength); // Drift should be normalized if tree is normalized
             for (int i = 0; i < dim; ++i) {
                 drift[i] = driftModels.get(i).getBranchRate(treeModel, node) * realTimeBranchLength;
             }
@@ -514,13 +514,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     }
 
     protected double getTreeLength() {
-        double treeLength = 0;
-        for (int i = 0; i < treeModel.getNodeCount(); i++) {
-            NodeRef node = treeModel.getNode(i);
-            if (!treeModel.isRoot(node))
-                treeLength += treeModel.getBranchLength(node); // Bug was here
-        }
-        return treeLength;
+        return Tree.getTreeLength(treeModel);
     }
 
     public void recalculateTreeLength() {
@@ -777,13 +771,12 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             }
 
             TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
-            String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
             TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                    utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, integrate);
+                    utilities.parseTraitsFromTaxonAttributes(xo, treeModel, integrate);
             CompoundParameter traitParameter = returnValue.traitParameter;
-            List<Integer> missingIndices = returnValue.missingIndices;
-            traitName = returnValue.traitName;
+            List<Integer> missingIndices = returnValue.getMissingIndices();
+            String traitName = returnValue.traitName;
 
             /* TODO Add partially integrated traits here */
 
@@ -904,7 +897,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                                         scaleByTime, useTreeLength,
                                         rateModel, null, optimalValues, strengthOfSelection,
                                         samplingDensity, reportAsMultivariate,
-                                        mean, restrictedPartialsList,pseudoObservations, reciprocalRates);
+                                        mean, restrictedPartialsList, pseudoObservations, reciprocalRates);
                             }
                         } else {
                             like = new FullyConjugateMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
@@ -929,7 +922,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             }
 
             if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
-                utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndices);
+                utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndices,
+                        traitParameter.getDimension());
             }
 
             if (xo.hasChildNamed(CHECK)) {

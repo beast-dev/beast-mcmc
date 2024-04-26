@@ -37,6 +37,7 @@ import java.util.List;
 /**
  * @author Joseph Heled
  */
+@Deprecated
 public class VDdemographicFunction extends DemographicFunction.Abstract {
     private double[] values;
     private double[] times;

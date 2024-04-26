@@ -33,9 +33,9 @@ import dr.math.distributions.NormalDistribution;
  * @author Andrew Rambaut
  * @author Marc Suchard
  * @version $Id$
- *
+ * <p>
  * $HeadURL$
- *
+ * <p>
  * $LastChangedBy$
  * $LastChangedDate$
  * $LastChangedRevision$
@@ -47,7 +47,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     public void initialize(int embeddingDimension, int locationCount, long flags) {
         this.embeddingDimension = embeddingDimension;
         this.locationCount = locationCount;
-        this.observationCount = (locationCount * (locationCount - 1)) / 2;
+        this.observationCount = (locationCount * (locationCount - 1)) / 2; // TODO Fix for missing values
 
         observations = new double[locationCount][locationCount];
         increments = new double[locationCount][locationCount];
@@ -61,6 +61,20 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
         locations = new double[locationCount][embeddingDimension];
         storedLocations = new double[locationCount][embeddingDimension];
+    }
+
+    @Override
+    public void initialize(int embeddingDimension, MultiDimensionalScalingLayout layout, long flags) {
+        throw new RuntimeException("Not yet implemented.\nIf you are trying to use the MassiveMDS parallelization " +
+                "library, then you need to specify the system property 'mds.required.flags' to be some number greater " +
+                "than 0.\nFor example: 'java -Dmds.required.flags=1 <everything else you would normally put to run " +
+                "BEAST>'");
+    }
+
+    @Override
+    public void setNonMissingObservationCount(int count) {
+        // this.nonMissingObservationCount = count;
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
@@ -109,7 +123,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
             // more than one location updated - do a full re-computation
             incrementsKnown = false;
             storedIncrements = null;
-         }
+        }
 
         if (locationIndex != -1) {
             updatedLocation = locationIndex;
@@ -166,7 +180,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
         // Handle locations
         for (int i = 0; i < locationCount; i++) {
-            System.arraycopy(locations[i], 0 , storedLocations[i], 0, embeddingDimension);
+            System.arraycopy(locations[i], 0, storedLocations[i], 0, embeddingDimension);
         }
         updatedLocation = -1;
 
@@ -181,10 +195,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
         sumOfIncrementsKnown = true;
 
         if (storedIncrements != null) {
-            System.arraycopy(storedIncrements, 0 , increments[updatedLocation], 0, locationCount);
-//            for (int j = 0; j < locationCount; j++) { // Do not write transposed values
-//                increments[j][updatedLocation] = storedIncrements[j];
-//            }
+            System.arraycopy(storedIncrements, 0, increments[updatedLocation], 0, locationCount);
             incrementsKnown = true;
         } else {
             incrementsKnown = false;
@@ -210,6 +221,11 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
     @Override
     public void getGradient(double[] location) {
+        throw new RuntimeException("Not yet implemented.");
+    }
+
+    @Override
+    public void getObservationGradient(double[] location) {
         throw new RuntimeException("Not yet implemented.");
     }
 

@@ -76,6 +76,12 @@ public interface AdaptableMCMCOperator extends MCMCOperator {
     long getAdaptationCount();
 
     /**
+     * sets the number of times the setAdaptableParameter method has been called (checkpointing)
+     * @param count
+     */
+    void setAdaptationCount(long count);
+
+    /**
      * @return the underlying tuning parameter value
      */
     double getRawParameter();

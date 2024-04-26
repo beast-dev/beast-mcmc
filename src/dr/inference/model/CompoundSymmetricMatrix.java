@@ -50,7 +50,7 @@ public class CompoundSymmetricMatrix extends AbstractTransformedCompoundMatrix {
     }
 
     private static Transform.MultivariableTransform getTransformation(int dim, Boolean isCholesky) {
-        return isCholesky ? new CorrelationToCholesky(dim) : new Transform.NoTransformMultivariable();
+        return isCholesky ? new CorrelationToCholesky(dim) : null;
     }
 
     @Override
@@ -74,21 +74,11 @@ public class CompoundSymmetricMatrix extends AbstractTransformedCompoundMatrix {
                         Math.sqrt(diagonalParameter.getParameterValue(row) * diagonalParameter.getParameterValue(col));
             }
             return offDiagonalParameter.getParameterValue(getUpperTriangularIndex(row, col));
+        } else if (isStrictlyUpperTriangular) {
+            return diagonalParameter.getParameterValue(row);
         }
-        return diagonalParameter.getParameterValue(row);
-    }
-
-    private int getUpperTriangularIndex(int i, int j) {
-        assert i != j;
-        if (i < j) {
-            return upperTriangularTransformation(i, j);
-        } else {
-            return upperTriangularTransformation(j, i);
-        }
-    }
-
-    private int upperTriangularTransformation(int i, int j) {
-        return i * (2 * dim - i - 1) / 2 + (j - i - 1);
+        return diagonalParameter.getParameterValue(row) *
+                offDiagonalParameter.getParameterValue(getUpperTriangularIndex(row, row));
     }
 
     @Override
@@ -148,6 +138,24 @@ public class CompoundSymmetricMatrix extends AbstractTransformedCompoundMatrix {
         }
 
         return updateGradientCorrelation(vechuGradient);
+    }
+
+    public double[] updateGradientFullOffDiagonal(double[] gradient) {
+        assert gradient.length == dim * dim;
+
+        double[] diagQ = diagonalParameter.getParameterValues();
+
+        double[] offDiagGradient = new double[gradient.length];
+
+        int k = 0;
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                offDiagGradient[k] = gradient[i * dim + j] * Math.sqrt(diagQ[i] * diagQ[j]);
+                ++k;
+            }
+        }
+
+        return offDiagGradient;
     }
 
     public double[] updateGradientCorrelation(double[] gradient) {

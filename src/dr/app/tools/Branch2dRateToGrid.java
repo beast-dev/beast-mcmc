@@ -1194,7 +1194,7 @@ public class Branch2dRateToGrid {
         return null;
     }
 
-    private static String[] parseVariableLengthStringArray(String inString) {
+    public static String[] parseVariableLengthStringArray(String inString) {
 
         List<String> returnList = new ArrayList<String>();
         StringTokenizer st = new StringTokenizer(inString, ",");
@@ -1416,12 +1416,7 @@ public class Branch2dRateToGrid {
     }
 
     public static void centreLine(String line, int pageWidth) {
-        int n = pageWidth - line.length();
-        int n1 = n / 2;
-        for (int i = 0; i < n1; i++) {
-            progressStream.print(" ");
-        }
-        progressStream.println(line);
+        BaseTreeTool.centreLine(line, pageWidth, progressStream);
     }
 
     public static void printTitle() {

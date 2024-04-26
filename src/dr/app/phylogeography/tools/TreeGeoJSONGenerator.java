@@ -34,10 +34,8 @@ import jebl.evolution.trees.RootedTree;
 
 import java.awt.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -81,14 +79,19 @@ public class TreeGeoJSONGenerator {
 
 
     private final RootedTree tree;
-    private final Map<String, Location> locationMap = new HashMap<String, Location>();
+    private final int locationHPDPercentile;
+    private final Map<String, Location> locationMap;
     private final List<GeoPoint> points = new ArrayList<GeoPoint>();
     private final List<GeoLine> lines = new ArrayList<GeoLine>();
+    private final List<GeoPoly> polys = new ArrayList<GeoPoly>();
 
-    public TreeGeoJSONGenerator(RootedTree tree, List<Location> locationList) {
+    public TreeGeoJSONGenerator(RootedTree tree, List<Location> locationList, int locationHPDPercentile) {
         this.tree = tree;
 
+        this.locationHPDPercentile = locationHPDPercentile;
+
         if (locationList != null) {
+            this.locationMap = new HashMap<String, Location>();
             double minLat = Double.MAX_VALUE;
             double maxLat = -Double.MAX_VALUE;
             double minLong = Double.MAX_VALUE;
@@ -111,6 +114,8 @@ public class TreeGeoJSONGenerator {
                 locationMap.put(location.getState(), location);
             }
 
+        } else {
+            this.locationMap = null;
         }
 
         traverseTree(tree, tree.getRootNode());
@@ -119,15 +124,41 @@ public class TreeGeoJSONGenerator {
     private GeoPoint traverseTree(RootedTree tree, Node node) {
         GeoPoint point = new GeoPoint();
         point.time = tree.getHeight(node);
-        point.location = (String)node.getAttribute("location");
-        point.host = (String)node.getAttribute("host");
-        point.longitude = locationMap.get(point.location).getLongitude();
-        point.latitude = locationMap.get(point.location).getLatitude();
+        if (locationMap != null) {
+            point.location = (String) node.getAttribute("location");
+//            point.host = (String) node.getAttribute("host");
+            point.longitude = locationMap.get(point.location).getLongitude();
+            point.latitude = locationMap.get(point.location).getLatitude();
+        } else {
+            // is continuous
+            point.latitude = Double.parseDouble(node.getAttribute("Location1").toString());
+            point.longitude = Double.parseDouble(node.getAttribute("Location2").toString());
 
-        if (tree.isExternal(node)) {
+            GeoPoly poly = new GeoPoly();
+            poly.label = "hpd_" + locationHPDPercentile;
+
+            if (node.getAttribute("Location_" + locationHPDPercentile + "%HPD_modality") != null) {
+                int modality = Integer.parseInt(node.getAttribute("Location_" + locationHPDPercentile + "%HPD_modality").toString());
+
+                poly.time = point.time;
+                poly.latitude = new Double[modality][];
+                poly.longitude = new Double[modality][];
+
+                for (int i = 0; i < modality; i++) {
+                    Object[] lat = (Object[]) node.getAttribute("Location1_" + locationHPDPercentile + "%HPD_" + (i + 1));
+                    poly.latitude[i] = Arrays.copyOf(lat, lat.length, Double[].class);
+                    Object[] lon = (Object[]) node.getAttribute("Location2_" + locationHPDPercentile + "%HPD_" + (i + 1));
+                    poly.longitude[i] = Arrays.copyOf(lon, lon.length, Double[].class);
+                }
+
+                polys.add(poly);
+            }
+        }
+
+        point.isExternal = tree.isExternal(node);
+
+        if (point.isExternal) {
             point.label = tree.getTaxon(node).getName();
-            point.probability = 1;
-
         } else {
             point.label = "";
             point.probability = (Double)node.getAttribute("posterior");
@@ -145,8 +176,8 @@ public class TreeGeoJSONGenerator {
                 line.location0 = point.location;
                 line.location1 = point1.location;
 
-                line.host0 = point.host;
-                line.host1 = point1.host;
+//                line.host0 = point.host;
+//                line.host1 = point1.host;
 
                 line.longitude0 = point.longitude;
                 line.longitude1 = point1.longitude;
@@ -163,39 +194,133 @@ public class TreeGeoJSONGenerator {
         return point;
     }
 
-    public void generate(String documentName, PrintWriter writer) {
-        writer.println("{ \"type\": \"FeatureCollection\",");
-        writer.println("\t\"features\": [");
-        for (GeoPoint point : points) {
-            generatePoint(writer, point);
+    public void generate(String documentName, String fileNameStem) {
+        if (points.size() > 0) {
+            try {
+                PrintWriter writer = new PrintWriter(fileNameStem + "_tips.geojson");
+
+                writer.println("{ \"type\": \"FeatureCollection\",");
+                writer.println("\t\"features\": [");
+                for (GeoPoint point : points) {
+                    if (point.isExternal) {
+                        generatePoint(writer, point);
+                    }
+                }
+                writer.println("\t]");
+                writer.println("}");
+
+                writer.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+
+            try {
+                PrintWriter writer = new PrintWriter(fileNameStem + "_nodes.geojson");
+
+                writer.println("{ \"type\": \"FeatureCollection\",");
+                writer.println("\t\"features\": [");
+                for (GeoPoint point : points) {
+                    if (!point.isExternal) {
+                        generatePoint(writer, point);
+                    }
+                }
+                writer.println("\t]");
+                writer.println("}");
+
+                writer.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
         }
-        writer.println("\t]");
-        writer.println("},");
-        writer.println("{ \"type\": \"FeatureCollection\",");
-        writer.println("\t\"features\": [");
-        for (GeoLine line : lines) {
-            generateLine(writer, line);
+
+        if (lines.size() > 0) {
+            try {
+                PrintWriter writer = new PrintWriter(fileNameStem + "_tree.geojson");
+                writer.println("{ \"type\": \"FeatureCollection\",");
+                writer.println("\t\"features\": [");
+                for (GeoLine line : lines) {
+                    generateLine(writer, line);
+                }
+                writer.println("\t]");
+                writer.println("}");
+                writer.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
         }
-        writer.println("\t]");
-        writer.println("}");
+
+        if (polys.size() > 0) {
+            try {
+                PrintWriter writer = new PrintWriter(fileNameStem + "_hpds.geojson");
+
+                writer.println("{ \"type\": \"FeatureCollection\",");
+                writer.println("\t\"features\": [");
+                for (GeoPoly poly : polys) {
+                    generatePoly(writer, poly);
+                }
+                writer.println("\t]");
+                writer.println("}");
+                writer.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+        }
 
     }
 
-    public void generatePoint(PrintWriter writer, GeoPoint point) {
+    private void generatePoint(PrintWriter writer, GeoPoint point) {
         writer.println("\t\t{ \"type\": \"Feature\",");
         writer.println("\t\t\t\"geometry\": {\"type\": \"Point\", \"coordinates\": [" + point.longitude + ", " + point.latitude + "]},");
-        writer.println("\t\t\t\"properties\": {\"label\": \"" + point.label + "\", \"time\": \"" + point.time + "\", \"probability\": \"" + point.probability +
-                "\", \"location\": \"" + point.location + "\", \"host\": \"" + point.host + "\"}");
+        if (locationMap != null) {
+            if (point.isExternal) {
+                writer.println("\t\t\t\"properties\": {\"label\": \"" + point.label + "\", \"time\": \"" + point.time + "\", \"probability\": \"" + point.probability +
+                        "\", \"location\": \"" + point.location + "\"}");
+            } else {
+                writer.println("\t\t\t\"properties\": {\"label\": \"" + point.label + "\", \"time\": \"" + point.time + "\", \"probability\": \"" + point.probability +
+                        "\", \"location\": \"" + point.location + "\"}");
+            }
+        } else {
+            if (point.isExternal) {
+                writer.println("\t\t\t\"properties\": {\"label\": \"" + point.label + "\", \"time\": \"" + point.time + "\"}");
+            } else {
+                writer.println("\t\t\t\"properties\": {\"label\": \"" + point.label + "\", \"time\": \"" + point.time + "\", \"probability\": \"" + point.probability + "\"}");
+            }
+        }
+        writer.println("\t\t},");
+    }
+
+    private void generateLine(PrintWriter writer, GeoLine line) {
+        writer.println("\t\t{ \"type\": \"Feature\",");
+        writer.println("\t\t\t\"geometry\": {\"type\": \"LineString\", \"coordinates\": [[" + line.longitude0 + ", " + line.latitude0 + "], [" + line.longitude1 + ", " + line.latitude1 + "]]},");
+        if (locationMap != null) {
+            writer.println("\t\t\t\"properties\": {\"label\": \"" + line.label + "\", \"time0\": \"" + line.time0 + "\", \"time0\": \"" + line.time1 +
+                    "\", \"location0\": \"" + line.location0 + "\", \"location1\": \"" + line.location1 +
+                    "\", \"host\": \"" + line.host0 + "\", \"host1\": \"" + line.host1 + "\"}");
+        } else {
+            writer.println("\t\t\t\"properties\": {\"label\": \"" + line.label + "\", \"time0\": \"" + line.time0 + "\", \"time0\": \"" + line.time1 + "\"}");
+        }
         writer.println("},");
     }
 
-    public void generateLine(PrintWriter writer, GeoLine line) {
+    private void generatePoly(PrintWriter writer, GeoPoly poly) {
         writer.println("\t\t{ \"type\": \"Feature\",");
-        writer.println("\t\t\t\"geometry\": {\"type\": \"LineString\", \"coordinates\": [[" + line.longitude0 + ", " + line.latitude0 + "], [" + line.longitude1 + ", " + line.latitude1 + "]]},");
-        writer.println("\t\t\t\"properties\": {\"label\": \"" + line.label + "\", \"time0\": \"" + line.time0 + "\", \"time0\": \"" + line.time1 +
-                "\", \"location0\": \"" + line.location0 + "\", \"location1\": \"" + line.location1 +
-                "\", \"host\": \"" + line.host0 + "\", \"host1\": \"" + line.host1 + "\"}");
-        writer.println("},");
+        writer.print("\t\t\t\"geometry\": {\"type\": \"Polygon\", \"coordinates\": [");
+        for (int i = 0; i < poly.latitude.length; i++) {
+            if (i > 0) {
+                writer.print(", ");
+            }
+            writer.print("[");
+            for (int j = 0; j < poly.latitude[i].length; j++) {
+                if (j > 0) {
+                    writer.print(", ");
+                }
+                writer.print("[" + poly.longitude[i][j] + ", " + poly.latitude[i][j] + "]");
+            }
+            writer.print("]");
+        }
+        writer.println("]},");
+        writer.println("\t\t\t\"properties\": {\"label\": \"" + poly.label + "\", \"time\": \"" + poly.time + "\"}");
+        writer.println("\t\t},");
     }
 
     class GeoPoint {
@@ -206,6 +331,7 @@ public class TreeGeoJSONGenerator {
         String host;
         double longitude;
         double latitude;
+        boolean isExternal;
     }
 
     class GeoLine {
@@ -220,6 +346,13 @@ public class TreeGeoJSONGenerator {
         double latitude0;
         double longitude1;
         double latitude1;
+    }
+
+    class GeoPoly {
+        String label;
+        double time;
+        Double[][] longitude;
+        Double[][] latitude;
     }
 
     public static void main(String[] args) {
@@ -239,12 +372,8 @@ public class TreeGeoJSONGenerator {
             return;
         }
 
-        TreeGeoJSONGenerator generator = new TreeGeoJSONGenerator(tree, null);
-        try {
-            generator.generate("", new PrintWriter(new File("output.geojson")));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
+        TreeGeoJSONGenerator generator = new TreeGeoJSONGenerator(tree, null, 80);
+        generator.generate("", args[1]);
     }
 
 }

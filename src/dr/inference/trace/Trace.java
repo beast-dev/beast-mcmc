@@ -186,12 +186,12 @@ public class Trace {
             }
             Collections.sort(values, new Comparator<Pair<Comparable, Integer>>() {
                 public int compare(Pair<Comparable, Integer> value1, Pair<Comparable, Integer> value2) {
-                    return value1.fst.compareTo(value2.fst);
+                    return value1.first.compareTo(value2.first);
                 }
             });
             order = new ArrayList<Integer>();
             for (Pair<Comparable, Integer> value : values) {
-                order.add(value.snd);
+                order.add(value.second);
             }
         } else {
             order = new ArrayList<Integer>(getFrequencyCounter().getUniqueValues());
@@ -316,5 +316,13 @@ public class Trace {
 
     public Filter getFilter() {
         return filter;
+    }
+
+    public static double[] toArray(List<Double> list) {
+        double[] primitive = new double[list.size()];
+        for (int i = 0; i < list.size(); ++i) {
+            primitive[i] = list.get(i);
+        }
+        return primitive;
     }
 }

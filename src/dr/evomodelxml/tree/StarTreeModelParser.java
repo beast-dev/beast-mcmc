@@ -28,6 +28,7 @@ package dr.evomodelxml.tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.StarTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
@@ -68,7 +69,7 @@ public class StarTreeModelParser extends AbstractXMLObjectParser {
                 new ElementRule(Tree.class),
                 new XORRule(
                         new ElementRule(ROOT_HEIGHT, Parameter.class, "A parameter definition with id only (cannot be a reference!)", false),
-                        new ElementRule(SHARE_ROOT, TreeModel.class)
+                        new ElementRule(SHARE_ROOT, DefaultTreeModel.class)
                 ),
                 new ElementRule(LEAF_HEIGHT,
                         new XMLSyntaxRule[]{
@@ -114,7 +115,7 @@ public class StarTreeModelParser extends AbstractXMLObjectParser {
                     }
 
                 } else if (cxo.getName().equals(SHARE_ROOT)) {
-                    TreeModel sharedRoot = (TreeModel) cxo.getChild(TreeModel.class);
+                    DefaultTreeModel sharedRoot = (DefaultTreeModel) cxo.getChild(DefaultTreeModel.class);
                     treeModel.setSharedRootHeightParameter(sharedRoot);
                 } else if (cxo.getName().equals(LEAF_HEIGHT)) {
 

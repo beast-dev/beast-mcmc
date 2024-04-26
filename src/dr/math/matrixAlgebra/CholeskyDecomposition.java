@@ -77,7 +77,7 @@ public class CholeskyDecomposition {
 				}
 				Lrowj[k] = s = (A[j][k] - s) / L[k][k];
 				d = d + s * s;
-				isspd = isspd & (A[k][j] == A[j][k]);
+				isspd = isspd & (Math.abs(A[k][j] - A[j][k]) < tol);
 			}
 			d = A[j][j] - d;
 			isspd = isspd & (d > 0.0);
@@ -139,4 +139,5 @@ public class CholeskyDecomposition {
 		}
 		return result;
 	}
+	final static double tol = 1e-8;
 }

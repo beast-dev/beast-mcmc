@@ -34,4 +34,15 @@ public interface GradientProvider {
     int getDimension();
 
     double[] getGradientLogDensity(Object x);
+
+    static double[] toDoubleArray(Object obj) {
+        double[] x;
+        if (obj instanceof double[]) {
+            x = (double[]) obj;
+        } else {
+            x = new double[1];
+            x[0] = (Double) obj;
+        }
+        return x;
+    }
 }

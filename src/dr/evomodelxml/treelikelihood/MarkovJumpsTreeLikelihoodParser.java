@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.treelikelihood;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
@@ -36,7 +37,6 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
 import dr.inference.markovjumps.MarkovJumpsType;
@@ -64,13 +64,14 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
     public static final String COMPACT_HISTORY = "compactHistory";
     public static final String NUMBER_OF_SIMULANTS = "numberOfSimulants";
     public static final String REPORT_UNCONDITIONED_COLUMNS = "reportUnconditionedValues";
+    private static final String ALLOW_COMPRESSED_SITES = "allowCompressedSites";
 
 
     public String getParserName() {
         return MARKOV_JUMP_TREE_LIKELIHOOD;
     }
 
-    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
+    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, MutableTreeModel treeModel,
                                                         BranchModel branchModel,
                                                         GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
@@ -89,12 +90,13 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
 
         boolean useMAP = xo.getAttribute(MAP_RECONSTRUCTION, false);
         boolean useMarginalLogLikelihood = xo.getAttribute(MARGINAL_LIKELIHOOD, true);
+        boolean conditionalProbabilitiesInLogSpace = xo.getAttribute(CONDITIONAL_PROBABILITIES_IN_LOG_SPACE, false);
 
         boolean useUniformization = xo.getAttribute(USE_UNIFORMIZATION, false);
         boolean reportUnconditionedColumns = xo.getAttribute(REPORT_UNCONDITIONED_COLUMNS, false);
         int nSimulants = xo.getAttribute(NUMBER_OF_SIMULANTS, 1);
 
-        if (patternList.areUnique()) {
+        if (patternList.areUnique() && !xo.getAttribute(ALLOW_COMPRESSED_SITES, false)) {
             throw new XMLParseException("Markov Jumps reconstruction cannot be used with compressed (unique) patterns.");
         }
 
@@ -115,7 +117,8 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                 useMarginalLogLikelihood,
                 useUniformization,
                 reportUnconditionedColumns,
-                nSimulants
+                nSimulants,
+                conditionalProbabilitiesInLogSpace
         );
 
         int registersFound = parseAllChildren(xo, treeLikelihood, dataType.getStateCount(), jumpTag,
@@ -225,12 +228,13 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                     AttributeRule.newBooleanRule(SAVE_HISTORY, true),
                     AttributeRule.newBooleanRule(LOG_HISTORY, true),
                     AttributeRule.newBooleanRule(COMPACT_HISTORY, true),
+                    AttributeRule.newBooleanRule(ALLOW_COMPRESSED_SITES, true),
                     new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {
                             new ElementRule(TaxonList.class),
                             new ElementRule(Parameter.class),
                     }, true),
                     new ElementRule(PatternList.class),
-                    new ElementRule(TreeModel.class),
+                    new ElementRule(MutableTreeModel.class),
                     new ElementRule(GammaSiteRateModel.class),
                     new ElementRule(BranchModel.class, true),
                     new ElementRule(SubstitutionModel.class, true),

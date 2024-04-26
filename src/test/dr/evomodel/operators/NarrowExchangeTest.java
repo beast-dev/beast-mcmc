@@ -7,6 +7,7 @@ package test.dr.evomodel.operators;
 import java.io.IOException;
 
 import dr.evolution.tree.TreeUtils;
+import dr.evomodel.tree.DefaultTreeModel;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -49,7 +50,7 @@ public class NarrowExchangeTest  extends OperatorAssert{
 
         for (int i = 0; i < reps; i++) {
 
-            TreeModel treeModel = new TreeModel("treeModel", tree5);
+            DefaultTreeModel treeModel = new DefaultTreeModel("treeModel", tree5);
             ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 1);
             operator.doOperation();
 
@@ -70,7 +71,7 @@ public class NarrowExchangeTest  extends OperatorAssert{
         
 	}
 	
-	public OperatorSchedule getOperatorSchedule(TreeModel treeModel) {
+	public OperatorSchedule getOperatorSchedule(DefaultTreeModel treeModel) {
 
         Parameter rootParameter = treeModel.createNodeHeightsParameter(true, false, false);
         Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);

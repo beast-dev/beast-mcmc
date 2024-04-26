@@ -25,6 +25,10 @@
 
 package dr.evomodelxml.operators;
 
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeModel;
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeOperator;
+import dr.evomodel.bigfasttree.thorney.UniformSubtreePruneRegraft;
+import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.MCMCOperator;
@@ -47,7 +51,13 @@ public class WilsonBaldingParser extends AbstractXMLObjectParser {
 
         final TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
-        return new WilsonBalding(treeModel, weight);
+        WilsonBalding op = new WilsonBalding(treeModel,weight);
+        if(treeModel instanceof ConstrainedTreeModel){
+            return ConstrainedTreeOperator.parse((ConstrainedTreeModel) treeModel, weight, op,xo);
+        }else{
+            return op;
+        }
+        
     }
 
     //************************************************************************
@@ -68,6 +78,6 @@ public class WilsonBaldingParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return WilsonBalding.class;
+        return AbstractTreeOperator.class;
     }
 }

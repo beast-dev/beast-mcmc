@@ -35,34 +35,107 @@ public interface DifferentialMassProvider {
 
     double[] getDifferentialMassMatrix(double time);
 
+    enum Mode {
+        EXACT("exact") {
+            @Override
+            public double[] dispatch(double time,
+                                     DifferentiableSubstitutionModel model,
+                                     WrappedMatrix infinitesimalDifferentialMatrix) {
+
+                return DifferentiableSubstitutionModelUtil.getExactDifferentialMassMatrix(
+                        time, infinitesimalDifferentialMatrix, model.getEigenDecomposition());
+            }
+
+            @Override
+            public String getReport() {
+                return "Exact";
+            }
+        },
+        FIRST_ORDER("firstOrder") {
+            @Override
+            public double[] dispatch(double time,
+                                     DifferentiableSubstitutionModel model,
+                                     WrappedMatrix infinitesimalDifferentialMatrix) {
+
+                return DifferentiableSubstitutionModelUtil.getApproximateDifferentialMassMatrix(
+                        time, infinitesimalDifferentialMatrix);
+            }
+
+            @Override
+            public String getReport() {
+                return "Approximate wrt parameter";
+            }
+        },
+        AFFINE("affineCorrected") {
+            @Override
+            public double[] dispatch(double time,
+                                     DifferentiableSubstitutionModel model,
+                                     WrappedMatrix infinitesimalDifferentialMatrix) {
+
+                return DifferentiableSubstitutionModelUtil.getAffineDifferentialMassMatrix(
+                        time, infinitesimalDifferentialMatrix, model.getEigenDecomposition());
+            }
+
+            @Override
+            public String getReport() {
+                return "Affine-corrected wrt parameter";
+            }
+        };
+
+        private final String label;
+
+        Mode(String label) {
+            this.label = label;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public abstract double[] dispatch(double time,
+                                   DifferentiableSubstitutionModel model,
+                                   WrappedMatrix infinitesimalDifferentialMatrix);
+
+        public abstract String getReport();
+
+        public static Mode parse(String label) {
+            for (Mode mode : Mode.values()) {
+                if (mode.label.equalsIgnoreCase(label)) {
+                    return mode;
+                }
+            }
+            throw new IllegalArgumentException("Unknown mode");
+        }
+    }
+
     class DifferentialWrapper implements DifferentialMassProvider {
-
-
+        
         private final DifferentiableSubstitutionModel baseModel;
         private final WrtParameter wrt;
+        private final Mode mode;
 
         public DifferentialWrapper(DifferentiableSubstitutionModel baseModel,
-                                   WrtParameter wrt) {
+                                   WrtParameter wrt,
+                                   Mode mode) {
             this.baseModel = baseModel;
             this.wrt = wrt;
+            this.mode = mode;
         }
 
         @Override
         public double[] getDifferentialMassMatrix(double time) {
-
-            WrappedMatrix infinitesimalDifferentialMatrix = baseModel.getInfinitesimalDifferentialMatrix(wrt);
-
-            return DifferentiableSubstitutionModelUtil.getDifferentialMassMatrix(time, baseModel.getDataType().getStateCount(),
-                    infinitesimalDifferentialMatrix, baseModel.getEigenDecomposition());
-
+            return mode.dispatch(time, baseModel, baseModel.getInfinitesimalDifferentialMatrix(wrt));
         }
 
         public interface WrtParameter {
 
-            double getRate(int switchCase, double normalizingConstant,
-                           DifferentiableSubstitutionModel substitutionModel);
+            double getRate(int switchCase);
 
+            double getNormalizationDifferential();
+
+            void setupDifferentialFrequencies(double[] differentialFrequencies, double[] frequencies);
+
+            void setupDifferentialRates(double[] differentialRates, double[] relativeRates, double normalizingConstant);
         }
     }
-
 }

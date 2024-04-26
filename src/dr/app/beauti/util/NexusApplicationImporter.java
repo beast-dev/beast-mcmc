@@ -32,8 +32,6 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.types.StartingTreeType;
-import dr.evolution.alignment.Alignment;
-import dr.evolution.alignment.CharSetAlignment;
 import dr.evolution.io.NexusImporter;
 
 import java.io.IOException;
@@ -389,60 +387,6 @@ public class NexusApplicationImporter extends NexusImporter {
         }
 
         return reference.startsWith(target.toUpperCase());
-    }
-
-    public class CharSet {
-
-        String name;
-        List<CharSetBlock> blocks;
-
-        public CharSet(String name) {
-            this.name = name;
-            blocks = new ArrayList<CharSetBlock>();
-        }
-
-        public List<CharSetBlock> getBlocks() {
-            return blocks;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void addCharSetBlock(CharSetBlock b) {
-            blocks.add(b);
-        }
-
-        public Alignment constructCharSetAlignment(Alignment alignment) {
-
-            return new CharSetAlignment(this, alignment);
-        }
-    }
-
-    public class CharSetBlock {
-
-        public CharSetBlock(int fromSite, int toSite, int every) {
-
-            this.fromSite = fromSite;
-            this.toSite = toSite;
-            this.every = every;
-        }
-
-        public int getFromSite() {
-            return fromSite;
-        }
-
-        public int getToSite() {
-            return toSite;
-        }
-
-        public int getEvery() {
-            return every;
-        }
-
-        private final int fromSite;
-        private final int toSite;
-        private final int every;
     }
 
     public class TaxSet {

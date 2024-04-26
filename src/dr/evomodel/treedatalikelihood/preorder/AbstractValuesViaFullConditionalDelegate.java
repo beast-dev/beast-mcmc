@@ -61,16 +61,21 @@ public abstract class AbstractValuesViaFullConditionalDelegate extends TipFullCo
                     cdi.getPreOrderPartial(nodeBuffer, conditionalNodeBuffer);
                 }
 
-                System.err.println("Missing tip = " + node.getNumber() + " (" + nodeBuffer + "), trait = " + trait);
+                if (DEBUG)
+                    System.err.println("Missing tip = " + node.getNumber() + " (" + nodeBuffer + "), trait = " + trait);
+
 
                 final WrappedVector preMean = new WrappedVector.Raw(conditionalNodeBuffer, partialOffset, dimTrait);
                 final DenseMatrix64F preVar = wrap(conditionalNodeBuffer, partialOffset + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
                 final WrappedVector postObs = new WrappedVector.Raw(partialNodeBuffer, partialOffset, dimTrait);
 
-                System.err.println("post: " + postObs);
-                System.err.println("pre : " + preMean);
-                System.err.println("V: " + preVar);
+                if (DEBUG) {
+                    System.err.println("post: " + postObs);
+                    System.err.println("pre : " + preMean);
+                    System.err.println("V: " + preVar);
+                }
+
 
                 if (!missingInformation.isCompletelyMissing(node.getNumber(), trait)) {
 
@@ -90,12 +95,15 @@ public abstract class AbstractValuesViaFullConditionalDelegate extends TipFullCo
 
                     computeValueWithMissing(cM, // input mean
                             transform.getConditionalCholesky(), // input variance,
-                            new WrappedVector.Indexed(sample, sampleOffset, missing, missing.length), // output sample
+                            new WrappedVector.Indexed(sample, sampleOffset, missing), // output sample
                             transform.getTemporaryStorage());
 
-                    System.err.println("cM: " + cM);
-                    System.err.println("CV: " + transform.getConditionalVariance());
-                    System.err.println("value: " + new WrappedVector.Raw(sample, sampleOffset, dimTrait));
+                    if (DEBUG) {
+                        System.err.println("cM: " + cM);
+                        System.err.println("CV: " + transform.getConditionalVariance());
+                        System.err.println("value: " + new WrappedVector.Raw(sample, sampleOffset, dimTrait));
+                    }
+
                 }
 
             } else {
@@ -118,4 +126,6 @@ public abstract class AbstractValuesViaFullConditionalDelegate extends TipFullCo
                                                     final double[][] cholesky,
                                                     final WrappedVector output,
                                                     final double[] buffer);
+
+    private static Boolean DEBUG = false;
 }

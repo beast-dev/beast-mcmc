@@ -27,8 +27,8 @@ package dr.evolution.tree;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * An interface for objects that can provide TreeTraits (i.e., information about the nodes and
@@ -58,7 +58,7 @@ public interface TreeTraitProvider {
      * class or as a delegate. It is itself a TreeTraitProvider so can be instantiated and
      * passed as is.
      */
-    public class Helper implements TreeTraitProvider {
+    class Helper implements TreeTraitProvider {
 
         /**
          * Default constructor
@@ -159,9 +159,7 @@ public interface TreeTraitProvider {
 
             Helper helper = (Helper) o;
 
-            if (traits != null ? !traits.equals(helper.traits) : helper.traits != null) return false;
-
-            return true;
+            return Objects.equals(traits, helper.traits);
         }
 
         @Override
@@ -171,6 +169,6 @@ public interface TreeTraitProvider {
 
         // Private members
 
-        private Map<String, TreeTrait> traits = new HashMap<String, TreeTrait>();
+        private Map<String, TreeTrait> traits = new HashMap<>();
     }
 }

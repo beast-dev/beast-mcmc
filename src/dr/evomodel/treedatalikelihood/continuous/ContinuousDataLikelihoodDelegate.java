@@ -58,7 +58,10 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 import java.util.logging.Logger;
 
 public class ContinuousDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate,
@@ -66,6 +69,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     private final int numTraits;
     private final int dimTrait;
+    private final int dimProcess;
     private final PrecisionType precisionType;
     private final ContinuousRateTransformation rateTransformation;
     private final Tree tree;
@@ -79,6 +83,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     private boolean allowSingular = false;
 
     private TreeDataLikelihood callbackLikelihood = null;
+    private ConditionalTraitSimulationHelper extensionHelper = null;
 
     public ContinuousDataLikelihoodDelegate(Tree tree,
                                             DiffusionProcessDelegate diffusionProcessDelegate,
@@ -169,57 +174,76 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                         precisionType,
                         numTraits,
                         dimTrait,
+                        dimTrait,
                         partialBufferCount,
                         matrixBufferCount
                 );
 
             } else if (precisionType == PrecisionType.FULL) {
 
-                if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
-                    if (((OUDiffusionModelDelegate) diffusionProcessDelegate).hasDiagonalActualization()) {
-                        base = new SafeMultivariateDiagonalActualizedWithDriftIntegrator(
-                                precisionType,
-                                numTraits,
-                                dimTrait,
-                                partialBufferCount,
-                                matrixBufferCount
-                        );
-                    } else {
-                        base = new SafeMultivariateActualizedWithDriftIntegrator(
-                                precisionType,
-                                numTraits,
-                                dimTrait,
-                                partialBufferCount,
-                                matrixBufferCount,
-                                ((OUDiffusionModelDelegate) diffusionProcessDelegate).isSymmetric()
-                        );
-                    }
+                if (diffusionProcessDelegate instanceof IntegratedOUDiffusionModelDelegate) {
+                    assert dimTrait % 2 == 0 : "dimTrait should be twice dimProcess.";
+                    base = new SafeMultivariateActualizedWithDriftIntegrator(
+                            precisionType,
+                            numTraits,
+                            dimTrait,
+                            dimTrait / 2,
+                            partialBufferCount,
+                            matrixBufferCount,
+                            ((OUDiffusionModelDelegate) diffusionProcessDelegate).isSymmetric()
+                    );
                 } else {
-                    if (diffusionProcessDelegate instanceof DriftDiffusionModelDelegate) {
-                        base = new SafeMultivariateWithDriftIntegrator(
-                                precisionType,
-                                numTraits,
-                                dimTrait,
-                                partialBufferCount,
-                                matrixBufferCount
-                        );
-                    } else {
-                        if (allowSingular) {
-                            base = new SafeMultivariateIntegrator(
+                    if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
+                        if (((OUDiffusionModelDelegate) diffusionProcessDelegate).hasDiagonalActualization()) {
+                            base = new SafeMultivariateDiagonalActualizedWithDriftIntegrator(
                                     precisionType,
                                     numTraits,
+                                    dimTrait,
                                     dimTrait,
                                     partialBufferCount,
                                     matrixBufferCount
                             );
                         } else {
-                            base = new MultivariateIntegrator(
+                            base = new SafeMultivariateActualizedWithDriftIntegrator(
                                     precisionType,
                                     numTraits,
+                                    dimTrait,
+                                    dimTrait,
+                                    partialBufferCount,
+                                    matrixBufferCount,
+                                    ((OUDiffusionModelDelegate) diffusionProcessDelegate).isSymmetric()
+                            );
+                        }
+                    } else {
+                        if (diffusionProcessDelegate instanceof DriftDiffusionModelDelegate) {
+                            base = new SafeMultivariateWithDriftIntegrator(
+                                    precisionType,
+                                    numTraits,
+                                    dimTrait,
                                     dimTrait,
                                     partialBufferCount,
                                     matrixBufferCount
                             );
+                        } else {
+                            if (allowSingular) {
+                                base = new SafeMultivariateIntegrator(
+                                        precisionType,
+                                        numTraits,
+                                        dimTrait,
+                                        dimTrait,
+                                        partialBufferCount,
+                                        matrixBufferCount
+                                );
+                            } else {
+                                base = new MultivariateIntegrator(
+                                        precisionType,
+                                        numTraits,
+                                        dimTrait,
+                                        dimTrait,
+                                        partialBufferCount,
+                                        matrixBufferCount
+                                );
+                            }
                         }
                     }
                 }
@@ -229,6 +253,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
             cdi = base;
             System.err.println("Base CDI is " + cdi.getClass().getCanonicalName());
+            this.dimProcess = cdi.getDimProcess();
 
             // TODO Make separate library
 //            cdi = CDIFactory.loadCDIInstance();
@@ -265,10 +290,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 final int index = node.getNumber();
 
                 assert (i == index);
-
-                if (!checkDataAlignment(node, tree)) {
-                    throw new TaxonList.MissingTaxonException("Missing taxon");
-                }
+                checkDataAlignment(node, tree);
             }
 
             setAllTipData(dataModel.bufferTips());
@@ -280,21 +302,33 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
     }
 
-    public TreeDataLikelihood getCallbackLikelihood() { return callbackLikelihood; }
+    public TreeDataLikelihood getCallbackLikelihood() {
+        return callbackLikelihood;
+    }
+
+    public ConditionalTraitSimulationHelper getExtensionHelper() {
+        return extensionHelper;
+    }
 
     public PrecisionType getPrecisionType() {
         return precisionType;
     }
 
-    public ContinuousTraitPartialsProvider getDataModel() { return dataModel; }
+    public ContinuousTraitPartialsProvider getDataModel() {
+        return dataModel;
+    }
 
     public RootProcessDelegate getRootProcessDelegate() {
         return rootProcessDelegate;
     }
 
-    public ConjugateRootTraitPrior getRootPrior() { return rootPrior; }
+    public ConjugateRootTraitPrior getRootPrior() {
+        return rootPrior;
+    }
 
-    public int getPartialBufferCount() { return partialBufferHelper.getBufferCount(); }
+    public int getPartialBufferCount() {
+        return partialBufferHelper.getBufferCount();
+    }
 
     public double[][] getTreeVariance() {
 
@@ -360,12 +394,21 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         double[][] jointVariance = diffusionProcessDelegate.getJointVariance(priorSampleSize, treeVariance, treeSharedLengths, traitVariance.toComponents());
 
         if (dataModel instanceof RepeatedMeasuresTraitDataModel) {
-            for (int tip = 0; tip < tipCount; ++tip) {
-                double[] partial = dataModel.getTipPartial(tip, false);
-                WrappedMatrix tipVariance = new WrappedMatrix.Raw(partial, dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-                for (int row = 0; row < dimTrait; ++row) {
-                    for (int col = 0; col < dimTrait; ++col) {
-                        jointVariance[tip * dimTrait + row][tip * dimTrait + col] += tipVariance.get(row, col);
+            if (dimTrait == 1 && precisionType == PrecisionType.SCALAR) {
+                double samplingVariance =
+                        ((RepeatedMeasuresTraitDataModel) dataModel).getSamplingVariance().component(0, 0);
+                for (int tip = 0; tip < tipCount; ++tip) {
+                    jointVariance[tip][tip] += samplingVariance;
+                }
+            } else {
+                for (int tip = 0; tip < tipCount; ++tip) {
+                    double[] partial = dataModel.getTipPartial(tip, false);
+                    WrappedMatrix tipVariance = new WrappedMatrix.Raw(partial, dimTrait + dimTrait * dimTrait,
+                            dimTrait, dimTrait);
+                    for (int row = 0; row < dimTrait; ++row) {
+                        for (int col = 0; col < dimTrait; ++col) {
+                            jointVariance[tip * dimTrait + row][tip * dimTrait + col] += tipVariance.get(row, col);
+                        }
                     }
                 }
             }
@@ -410,7 +453,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         double[] drift = KroneckerOperation.vectorize(treeDrift);
 
-        final int datumLength = tipCount * dimTrait;
+        final int datumLength = tipCount * dimProcess;
 
         sb.append("Tree dim : ").append(treeStructure.length).append("\n");
         sb.append("dimTrait : ").append(dimTrait).append("\n");
@@ -424,7 +467,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         if (dataModel instanceof ContinuousTraitDataModel) {
             for (int tip = 0; tip < tipCount; ++tip) {
                 double[] tipData = ((ContinuousTraitDataModel) dataModel).getTipObservation(tip, precisionType);
-                System.arraycopy(tipData, 0, data, tip * numTraits * dimTrait, numTraits * dimTrait);
+                System.arraycopy(tipData, 0, data, tip * numTraits * dimProcess, numTraits * dimProcess);
             }
         }
 
@@ -447,8 +490,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             List<Integer> missing = new ArrayList<Integer>();
             int index = 0;
             for (int tip = 0; tip < tipCount; ++tip) {
-                for (int dim = 0; dim < dimTrait; ++dim) {
-                    double d = data[tip * dimTrait * numTraits + trait * dimTrait + dim];
+                for (int dim = 0; dim < dimProcess; ++dim) {
+                    double d = data[tip * dimProcess * numTraits + trait * dimProcess + dim];
                     rawDatum[index] = d;
                     if (Double.isNaN(d)) {
                         missing.add(index);
@@ -490,28 +533,28 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             sb.append("logDatumLikelihood: ").append(logDensity).append("\n\n");
 
             // Compute joint for internal nodes
-            int[] cNotMissingJoint = new int[dimTrait * tipCount];
-            int[] cMissingJoint = new int[dimTrait * (tipCount - 1)];
+            int[] cNotMissingJoint = new int[dimProcess * tipCount];
+            int[] cMissingJoint = new int[dimProcess * (tipCount - 1)];
 
             // External nodes
-            for (int tipTrait = 0; tipTrait < dimTrait * tipCount; ++tipTrait) {
+            for (int tipTrait = 0; tipTrait < dimProcess * tipCount; ++tipTrait) {
                 cNotMissingJoint[tipTrait] = tipTrait;
             }
 
             // Internal nodes
-            for (int tipTrait = dimTrait * tipCount; tipTrait < dimTrait * (2 * tipCount - 1); ++tipTrait) {
-                cMissingJoint[tipTrait - dimTrait * tipCount] = tipTrait;
+            for (int tipTrait = dimProcess * tipCount; tipTrait < dimProcess * (2 * tipCount - 1); ++tipTrait) {
+                cMissingJoint[tipTrait - dimProcess * tipCount] = tipTrait;
             }
 
-            double[] rawDatumJoint = new double[dimTrait * (2 * tipCount - 1)];
+            double[] rawDatumJoint = new double[dimProcess * (2 * tipCount - 1)];
             System.arraycopy(rawDatum, 0, rawDatumJoint, 0, rawDatum.length);
 
             double[][] driftJointMatrix = MultivariateTraitDebugUtilities.getGraphDrift(tree, cdi, diffusionProcessDelegate);
             double[] driftJoint = KroneckerOperation.vectorize(driftJointMatrix);
 
-            for (int idx = 0; idx < driftJoint.length / dimTrait; ++idx) {
-                for (int dim = 0; dim < dimTrait; ++dim) {
-                    driftJoint[idx * dimTrait + dim] += priorMean[dim];
+            for (int idx = 0; idx < driftJoint.length / dimProcess; ++idx) {
+                for (int dim = 0; dim < dimProcess; ++dim) {
+                    driftJoint[idx * dimProcess + dim] += priorMean[dim];
                 }
             }
 
@@ -531,19 +574,19 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
             for (int tip = 0; tip < tipCount; ++tip) {
 
-                int offset = tip * dimTrait;
+                int offset = tip * dimProcess;
                 int dimTip = 0;
-                for (int cTrait = 0; cTrait < dimTrait; cTrait++) {
+                for (int cTrait = 0; cTrait < dimProcess; cTrait++) {
                     if ((offsetNotMissing2 + cTrait < notMissingIndices.length)
-                            && notMissingIndices[offsetNotMissing2 + cTrait] < offset + dimTrait) {
+                            && notMissingIndices[offsetNotMissing2 + cTrait] < offset + dimProcess) {
                         dimTip++;
                     }
                 }
 
-                int[] cMissing = new int[dimTrait];
+                int[] cMissing = new int[dimProcess];
                 int[] cNotMissing = new int[notMissingIndices.length - dimTip];
 
-                for (int cTrait = 0; cTrait < dimTrait; ++cTrait) {
+                for (int cTrait = 0; cTrait < dimProcess; ++cTrait) {
                     cMissing[cTrait] = offset + cTrait;
                 }
 
@@ -564,7 +607,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 Matrix cVar = cVariance.getConditionalVariance();
 
                 sb.append("cMean #").append(tip).append(" ").append(new dr.math.matrixAlgebra.Vector(cMean))
-                    .append(" cVar [").append(cVar).append("]\n");
+                        .append("\ncVar [").append(cVar).append("]\n\n");
             }
         }
 
@@ -608,9 +651,27 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return rateTransformation;
     }
 
+    public final double getRateTransformationNormalization() {
+        return rateTransformation.getNormalization();
+    }
+
     @Override
     public void setCallback(TreeDataLikelihood treeDataLikelihood) {
         this.callbackLikelihood = treeDataLikelihood;
+    }
+
+    public void setExtensionHelper() {
+        this.extensionHelper = new ConditionalTraitSimulationHelper(callbackLikelihood);
+    }
+
+    @Override
+    public void setComputePostOrderStatisticsOnly(boolean computePostOrderStatistic) {
+        this.computeRemainders = !computePostOrderStatistic;
+    }
+
+    @Override
+    public boolean providesPostOrderStatisticsOnly() {
+        return cdi instanceof ContinuousDiffusionIntegrator.Basic; // TODO Check instanceDetails
     }
 
     @Override
@@ -620,7 +681,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         int k = 0;
         for (NodeOperation op : nodeOperations) {
 
-            operations[k    ] = getActiveNodeIndex(op.getNodeNumber());
+            operations[k] = getActiveNodeIndex(op.getNodeNumber());
             operations[k + 1] = getActiveNodeIndex(op.getLeftChild());    // source node 1
             operations[k + 2] = getActiveMatrixIndex(op.getLeftChild());  // source matrix 1
             operations[k + 3] = getActiveNodeIndex(op.getRightChild());   // source node 2
@@ -648,7 +709,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 //        return sb.toString();
 //    }
 
-    public DiffusionProcessDelegate getDiffusionProcessDelegate() { return diffusionProcessDelegate; }
+    public DiffusionProcessDelegate getDiffusionProcessDelegate() {
+        return diffusionProcessDelegate;
+    }
 
     public MultivariateDiffusionModel getDiffusionModel() {
         return diffusionProcessDelegate.getDiffusionModel(0);
@@ -656,7 +719,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     private void setAllTipData(boolean flip) {
         for (int index = 0; index < tipCount; index++) {
-             setTipData(index, flip);
+            setTipData(index, flip);
         }
         updateTipData.clear();
     }
@@ -675,15 +738,17 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 tipPartial);
     }
 
-    private boolean checkDataAlignment(NodeRef node, Tree tree) {
+    private void checkDataAlignment(NodeRef node, Tree tree) throws TaxonList.MissingTaxonException {
         int index = node.getNumber();
         Parameter traitParameter = dataModel.getParameter().getParameter(index);
-        if (traitParameter == null) {
-            return true;
-        } else {
+        if (traitParameter != null) {
             String name1 = traitParameter.getParameterName();
             Taxon taxon = tree.getNodeTaxon(node);
-            return name1.contains(taxon.getId());
+            boolean contains = name1.contains(taxon.getId());
+            if (!contains) {
+                throw new TaxonList.MissingTaxonException(
+                        "Parameter name '" + name1 + "' does not contain taxon name '" + taxon.getId() + "'");
+            }
         }
     }
 
@@ -707,14 +772,14 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         for (BranchOperation op : branchOperations) {
             branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
             branchLengths[branchUpdateCount] = op.getBranchLength() * branchNormalization;
-            branchUpdateCount ++;
+            branchUpdateCount++;
         }
 
         if (!updateTipData.isEmpty()) {
             if (updateTipData.getFirst() == -1) { // Update all tips
                 setAllTipData(flip);
             } else {
-                while(!updateTipData.isEmpty()) {
+                while (!updateTipData.isEmpty()) {
                     int tipIndex = updateTipData.removeFirst();
                     setTipData(tipIndex, flip);
                 }
@@ -749,16 +814,17 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         if (computeWishartStatistics) {
             degreesOfFreedom = new int[numTraits];
-            outerProducts = new double[dimTrait * dimTrait  * numTraits];
+            outerProducts = new double[dimTrait * dimTrait * numTraits];
             cdi.setWishartStatistics(degreesOfFreedom, outerProducts);
         }
 
-        cdi.updatePostOrderPartials(operations, operationCount, computeWishartStatistics);
+        cdi.updatePostOrderPartials(operations, operationCount, getActivePrecisionIndex(0), computeRemainders, computeWishartStatistics);
 
         double[] logLikelihoods = new double[numTraits];
 
         rootProcessDelegate.calculateRootLogLikelihood(cdi, partialBufferHelper.getOffsetIndex(rootNodeNumber),
-                logLikelihoods, computeWishartStatistics);
+                getActivePrecisionIndex(0),
+                logLikelihoods, computeWishartStatistics, diffusionProcessDelegate.isIntegratedProcess());
 
         if (computeWishartStatistics) {
             cdi.getWishartStatistics(degreesOfFreedom, outerProducts);
@@ -785,6 +851,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     public final int getActiveMatrixIndex(final int index) {
         return diffusionProcessDelegate.getMatrixIndex(index);
+    }
+
+    public final int getActivePrecisionIndex(final int index) {
+        return diffusionProcessDelegate.getEigenBufferOffsetIndex(index);
     }
 
     public void getPostOrderPartial(final int nodeNumber, double[] vector) {
@@ -864,6 +934,16 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     }
 
     // **************************************************************
+    // INSTANCE PROFILEABLE
+    // **************************************************************
+
+    @Override
+    public long getTotalCalculationCount() {
+        // not returning data at the moment
+        return 0;
+    }
+
+// **************************************************************
     // INSTANCE CITABLE
     // **************************************************************
 
@@ -874,12 +954,15 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     @Override
     public String getDescription() {
-        return "TODO";
+        return "Multivariate diffusion model (first citation) with efficiently integrated internal traits (second citation)";
     }
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.LEMEY_2010_PHYLOGEOGRAPHY);
+        List<Citation> citations = new ArrayList<Citation>();
+        citations.add(CommonCitations.LEMEY_2010_PHYLOGEOGRAPHY);
+        citations.add(CommonCitations.PYBUS_2012_UNIFYING);
+        return citations;
     }
 
     // **************************************************************
@@ -911,6 +994,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     private WishartSufficientStatistics wishartStatistics = null;
 
     private boolean computeWishartStatistics = false;
+    private boolean computeRemainders = true;
 
     @Override
     public WishartSufficientStatistics getWishartStatistics() {
@@ -926,13 +1010,15 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return getDiffusionModel().getPrecisionParameter();
     }
 
-    public void addFullConditionalGradientTrait(String traitName) {
+    public void addFullConditionalGradientTrait(String traitName, int offset, int dimTrait) {
 
         ProcessSimulationDelegate gradientDelegate = new TipGradientViaFullConditionalDelegate(traitName,
                 (MutableTreeModel) getCallbackLikelihood().getTree(),
                 getDiffusionModel(),
                 getDataModel(), getRootPrior(),
-                getRateTransformation(), this);
+                getRateTransformation(), this,
+                offset,
+                dimTrait);
 
         TreeTraitProvider traitProvider = new ProcessSimulation(getCallbackLikelihood(), gradientDelegate);
 
@@ -1028,7 +1114,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         ContinuousTraitPartialsProvider newDataModel = new ContinuousTraitDataModel(((ContinuousTraitDataModel) likelihoodDelegate.dataModel).getName(),
                 likelihoodDelegate.dataModel.getParameter(),
-                ((ContinuousTraitDataModel) likelihoodDelegate.dataModel).getOriginalMissingIndices(),
+                ((ContinuousTraitDataModel) likelihoodDelegate.dataModel).getOriginalMissingIndicators(),
                 true,
                 likelihoodDelegate.getTraitDim(), PrecisionType.FULL);
 
@@ -1040,5 +1126,17 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 likelihoodDelegate.rateModel,
                 false,
                 likelihoodDelegate.allowSingular);
+    }
+
+    public double[] getPostOrderRootMean() {
+        PrecisionType type = getDataModel().getPrecisionType();
+
+        double[] partial = new double[type.getPartialsDimension(dimProcess)];
+
+        getIntegrator().getPostOrderPartial(getActiveNodeIndex(tree.getRoot().getNumber()), partial);
+        double mean[] = new double[dimProcess];
+        System.arraycopy(partial, type.getMeanOffset(dimProcess), mean, 0, dimProcess);
+
+        return mean;
     }
 }

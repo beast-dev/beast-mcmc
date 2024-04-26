@@ -25,8 +25,13 @@
 
 package dr.evomodelxml.operators;
 
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeModel;
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeOperator;
+import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.operators.ExchangeOperator;
+import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
 
@@ -37,6 +42,8 @@ public class ExchangeOperatorParser {
     public static final String NARROW_EXCHANGE = "narrowExchange";
     public static final String WIDE_EXCHANGE = "wideExchange";
 
+
+
     public static XMLObjectParser NARROW_EXCHANGE_OPERATOR_PARSER = new AbstractXMLObjectParser() {
         public String getParserName() {
             return NARROW_EXCHANGE;
@@ -46,7 +53,13 @@ public class ExchangeOperatorParser {
 
             final TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
             final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-            return new ExchangeOperator(ExchangeOperator.NARROW, treeModel, weight);
+
+            ExchangeOperator op = new ExchangeOperator(ExchangeOperator.NARROW,treeModel,weight);
+            if(treeModel instanceof ConstrainedTreeModel){
+                return ConstrainedTreeOperator.parse((ConstrainedTreeModel) treeModel, weight, op, xo);
+            }else{
+                return op;
+            }
         }
 
         // ************************************************************************
@@ -85,7 +98,12 @@ public class ExchangeOperatorParser {
             }
             final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-            return new ExchangeOperator(ExchangeOperator.WIDE, treeModel, weight);
+            ExchangeOperator op = new ExchangeOperator(ExchangeOperator.WIDE,treeModel,weight);
+            if(treeModel instanceof ConstrainedTreeModel){
+                return ConstrainedTreeOperator.parse((ConstrainedTreeModel) treeModel, weight, op, xo);
+            }else{
+                return op;
+            }
         }
 
         // ************************************************************************
@@ -98,7 +116,7 @@ public class ExchangeOperatorParser {
         }
 
         public Class getReturnType() {
-            return ExchangeOperator.class;
+            return AbstractTreeOperator.class;
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {

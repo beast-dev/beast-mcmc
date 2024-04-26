@@ -27,6 +27,7 @@ package dr.evolution.util;
 
 import dr.util.Identifiable;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -84,6 +85,22 @@ public interface TaxonList extends Identifiable, Iterable<Taxon> {
         public static boolean hasAttribute(TaxonList taxa, int index, String name) {
             return taxa.getTaxonAttribute(index, name) != null;
         }
+
+        public static List<Taxon> asList(TaxonList taxonList) {
+            List<Taxon> taxa = new ArrayList<>();
+            for (int i = 0, n = taxonList.getTaxonCount(); i < n; i++) {
+                taxa.add(taxonList.getTaxon(i));
+            }
+            return taxa;
+        }
+
+        public static int getTaxonIndex(TaxonList taxonList, String id) {
+            for (int i = 0, n = taxonList.getTaxonCount(); i < n; i++) {
+                if (taxonList.getTaxonId(i).equals(id)) return i;
+            }
+            return -1;
+        }
+
 
         public static Set<String> getTaxonListIdSet(TaxonList taxa) {
             Set<String> taxaSet = new HashSet<String>();

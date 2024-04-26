@@ -4,10 +4,12 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.PathDependent;
 
+import java.util.Arrays;
+
 /**
  * @author Marc A. Suchard
  */
-public class PathGradient implements GradientWrtParameterProvider, PathDependent {
+public class PathGradient implements HessianWrtParameterProvider, PathDependent {
 
     private final int dimension;
     private final Likelihood likelihood;
@@ -27,8 +29,14 @@ public class PathGradient implements GradientWrtParameterProvider, PathDependent
         this.dimension = source.getDimension();
         this.parameter = source.getParameter();
 
-        if (destination.getParameter() != parameter) {
-            throw new RuntimeException("Invalid construction");
+//        if (destination.getParameter() != parameter) {
+//            throw new RuntimeException("Invalid construction");
+//        }
+        if (destination.getDimension() != dimension) {
+            throw new RuntimeException("Unequal parameter dimensions");
+        }
+        if (!Arrays.equals(destination.getParameter().getParameterValues(), parameter.getParameterValues())){
+            throw new RuntimeException("Unequal parameter values");
         }
 
         this.likelihood = new Likelihood.Abstract(source.getLikelihood().getModel()) {
@@ -86,5 +94,31 @@ public class PathGradient implements GradientWrtParameterProvider, PathDependent
 
     private static double blend(double source, double destination, double beta) {
         return beta * source + (1.0 - beta) * destination;
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity() {
+
+        if (!(source instanceof HessianWrtParameterProvider) ||
+                !(destination instanceof HessianWrtParameterProvider)) {
+            throw new RuntimeException("Must use Hessian providers");
+        }
+
+        final double[] likelihood = ((HessianWrtParameterProvider) source).getDiagonalHessianLogDensity();
+
+        if (beta != 1.0) {
+            final double[] second = ((HessianWrtParameterProvider) destination).getDiagonalHessianLogDensity();
+
+            for (int i = 0; i < likelihood.length; ++i) {
+                likelihood[i] = blend(likelihood[i], second[i], beta);
+            }
+        }
+
+        return likelihood;
+    }
+
+    @Override
+    public double[][] getHessianLogDensity() {
+        throw new RuntimeException("Not yet implemented");
     }
 }

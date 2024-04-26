@@ -29,11 +29,18 @@ package dr.inference.model;
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public interface HessianProvider extends GradientProvider{
-
-//    int getDimension();
+public interface HessianProvider extends GradientProvider {
 
     double[] getDiagonalHessianLogDensity(Object x);
 
     double[][] getHessianLogDensity(Object x);
+
+    static double[][] expandDiagonals(double[] diagonals) {
+        final int length = diagonals.length;
+        double[][] result = new double[length][length];
+        for (int i = 0; i < length; ++i) {
+            result[i][i] = diagonals[i];
+        }
+        return result;
+    }
 }

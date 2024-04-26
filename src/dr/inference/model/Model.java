@@ -42,7 +42,7 @@ import java.util.*;
 public interface Model extends Identifiable, Serializable {
 
 	/**
-	 * Adds a listener that is notified when the this model changes.
+	 * Adds a listener that is notified when this model changes.
 	 */
 	void addModelListener(ModelListener listener);
 
@@ -170,8 +170,8 @@ public interface Model extends Identifiable, Serializable {
 
 
     // set to store all created models
-    final static Set<Model> FULL_MODEL_SET = new HashSet<Model>();
-	final static Set<Model> CONNECTED_MODEL_SET = new HashSet<Model>();
+    final static Set<Model> FULL_MODEL_SET = new LinkedHashSet<Model>();
+	final static Set<Model> CONNECTED_MODEL_SET = new LinkedHashSet<Model>();
 
 }
 

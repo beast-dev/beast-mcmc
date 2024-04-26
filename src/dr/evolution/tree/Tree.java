@@ -165,4 +165,15 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
      */
     public Tree getCopy();
 
+    static double getTreeLength(Tree tree) {
+        double treeLength = 0;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
+            if (!tree.isRoot(node)) {
+                treeLength += tree.getBranchLength(node);
+            }
+        }
+        return treeLength;
+    }
+
 }

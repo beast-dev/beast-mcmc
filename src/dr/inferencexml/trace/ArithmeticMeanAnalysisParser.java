@@ -25,21 +25,17 @@
 
 package dr.inferencexml.trace;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.List;
-
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.MarginalLikelihoodAnalysis;
 import dr.inference.trace.TraceException;
 import dr.util.Attribute;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.ElementRule;
-import dr.xml.StringAttributeRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
 
 /**
 * 
@@ -59,62 +55,80 @@ public class ArithmeticMeanAnalysisParser extends AbstractXMLObjectParser {
     }
     
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-    	
+
+        // Set bootstrapLength
+        int bootstrapLength = xo.getAttribute(BOOTSTRAP_LENGTH, 1000);
+
+        long burnin = xo.getAttribute(BURN_IN, 0);
+
     	String fileName = xo.getStringAttribute(FILE_NAME);
+        // Find likelihood column
+        XMLObject cxo = xo.getChild(COLUMN_NAME);
+        String likelihoodName = cxo.getStringAttribute(Attribute.NAME);
+
+        StringTokenizer tokenFileName = new StringTokenizer(fileName);
+        int numberOfFiles = tokenFileName.countTokens();
+
+        ArrayList<Double> sampleLogLikelihood = new ArrayList<Double>();
+
+        // Set analysisType
+        String analysisType = "arithmetic";
+
         try {
 
-            // Open file
-            File file = new File(fileName);
-            String name = file.getName();
-            String parent = file.getParent();
-            if (!file.isAbsolute()) {
-                parent = System.getProperty("user.dir");
-            }
-            file = new File(parent, name);
-            fileName = file.getAbsolutePath();
+            for (int j = 0; j < numberOfFiles; j++) {
 
-            // Set analysisType
-            String analysisType = "arithmetic";
-            
-            // Set bootstrapLength
-            int bootstrapLength = xo.getAttribute(BOOTSTRAP_LENGTH, 1000);
-            
-            // Load traces and remove burnin
-            LogFileTraces traces = new LogFileTraces(fileName, file);
-            traces.loadTraces();
-            long maxState = traces.getMaxState();
+                // Open file
+                File file = new File(tokenFileName.nextToken());
+                String name = file.getName();
 
-            long burnin = xo.getAttribute(BURN_IN, maxState / 10);
+                System.out.println("Parsing samples from file: " + name);
 
-            if (burnin < 0 || burnin >= maxState) {
-                burnin = maxState / 10;
-                System.out.println("WARNING: Burn-in larger than total number of states - using to 10%");
-            }
-
-            traces.setBurnIn(burnin);
-            
-            // Find likelihood column
-            XMLObject cxo = xo.getChild(COLUMN_NAME);
-            String likelihoodName = cxo.getStringAttribute(Attribute.NAME);
-            int traceIndex = -1;
-
-            for (int i = 0; i < traces.getTraceCount(); i++) {
-                String traceName = traces.getTraceName(i);
-                if (traceName.equals(likelihoodName)) {
-                    traceIndex = i;
-                    break;
+                String parent = file.getParent();
+                if (!file.isAbsolute()) {
+                    parent = System.getProperty("user.dir");
                 }
-            }
-            
-            if (traceIndex == -1) {
-                throw new XMLParseException("Column '" + likelihoodName + "' can not be found for " + getParserName() + " element.");
+                file = new File(parent, name);
+                fileName = file.getAbsolutePath();
+
+                // Load traces and remove burnin
+                LogFileTraces traces = new LogFileTraces(fileName, file);
+                traces.loadTraces();
+
+                long maxState = traces.getMaxState();
+
+                if (burnin < 0 || burnin >= maxState) {
+                    burnin = maxState / 10;
+                    System.out.println("WARNING: Burn-in larger than total number of states - using to 10%");
+                }
+
+                traces.setBurnIn(burnin);
+
+                int traceIndex = -1;
+
+                for (int i = 0; i < traces.getTraceCount(); i++) {
+                    String traceName = traces.getTraceName(i);
+                    if (traceName.equals(likelihoodName)) {
+                        traceIndex = i;
+                        break;
+                    }
+                }
+
+                if (traceIndex == -1) {
+                    throw new XMLParseException("Column '" + likelihoodName + "' can not be found for " + getParserName() + " element.");
+                }
+
+                // Get samples and perform analysis
+                List<Double> sample = (List)traces.getValues(traceIndex);
+
+                sampleLogLikelihood.addAll(sample);
+
             }
 
-            // Get samples and perform analysis
-            List<Double> sample = (List)traces.getValues(traceIndex);
+            System.out.println("Total number of collected samples: " + sampleLogLikelihood.size());
 
-            MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(sample,
-                    traces.getTraceName(traceIndex), (int)burnin, analysisType, bootstrapLength);
+            MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(sampleLogLikelihood,
+                    likelihoodName, (int)burnin, analysisType, bootstrapLength);
 
             System.out.println(analysis.toString());
 

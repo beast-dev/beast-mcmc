@@ -42,7 +42,7 @@ public interface StateLoader {
      * @param markovChain the MarkovChain object
      * @return the state number
      */
-    long loadState(MarkovChain markovChain, double savedLnL[]);
+    long loadState(MarkovChain markovChain, double[] savedLnL);
 
     void checkLoadState(double savedLnL, double lnL);
 }

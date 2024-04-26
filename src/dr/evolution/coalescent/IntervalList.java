@@ -25,7 +25,11 @@
 
 package dr.evolution.coalescent;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.util.Units;
+import dr.util.HeapSort;
+
+import java.util.List;
 
 /**
  * An interface for a set of coalescent intevals.
@@ -48,9 +52,19 @@ public interface IntervalList extends Units {
 	int getSampleCount();
 
 	/**
+	 * get the time of the first event
+	 */
+	double getStartTime();
+
+	/**
 	 * Gets an interval.
 	 */
 	double getInterval(int i);
+
+	/**
+	 * Returns the time of the start of an interval
+	 */
+	double getIntervalTime(int i);
 
 	/**
 	 * Returns the number of uncoalesced lineages within this interval.
@@ -89,7 +103,12 @@ public interface IntervalList extends Units {
 	boolean isCoalescentOnly();
 
 
-	public class Utils {	
+	/**
+	 * Recalculates all the intervals from the tree model.
+	 */
+	void calculateIntervals();
+
+	public class Utils {
 
 		/**
 		 * @return the number of lineages at time t.

@@ -6,7 +6,7 @@ import junit.framework.TestCase;
 /**
  * @author Marc A. Suchard
  */
-public class MathTestCase extends TestCase {
+public abstract class MathTestCase extends TestCase {
 
     public MathTestCase() {        
     }

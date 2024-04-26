@@ -865,7 +865,8 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                     if (index == -1) {
                         // taxon not found in taxon list...
                         // ...perhaps it is a numerical taxon reference?
-                        throw new UnknownTaxonException(token3);
+                        throw new UnknownTaxonException("Taxon '" + token3 + "' in nexus '" + token + "' block but " +
+                                "not in the taxon list (taxon list may or may not originate from the nexus file)");
                     } else {
                         taxon = taxonList.getTaxon(index);
                     }
@@ -1342,10 +1343,10 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
         while (matcher.find()) {
             String label = matcher.group(1);
-            if (label.charAt(0) == '\"') {
+            if (label.length() > 1 && label.startsWith("\"")) {
                 label = label.substring(1, label.length() - 1);
             }
-            if (label == null || label.trim().length() == 0) {
+            if (label.trim().length() == 0) {
                 throw new Importer.BadFormatException("Badly formatted attribute: '" + matcher.group() + "'");
             }
             final String value = matcher.group(2);
@@ -1471,6 +1472,9 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         }
 
         // return the trimmed string
+        if (value.charAt(0) == '\"') {
+            value = value.substring(1, value.length() - 1);
+        }
         return value;
     }
 

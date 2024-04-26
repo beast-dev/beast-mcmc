@@ -1,7 +1,6 @@
 <?xml version="1.0" standalone="yes"?>
 
 <beast>
-	
 	<!-- Data likelihoods -->
 	<distributionLikelihood id="samplingDensity.random">
 		<distribution>
@@ -36,9 +35,21 @@
 	</distributionLikelihood>
 	
 	<!-- Prior under fixed model -->
-	<normalPrior id="normalMeanPrior.fixed" mean="0" stdev="1">
-        <parameter idref="mu"/>
-    </normalPrior>
+    <distributionLikelihood id="normalMeanPrior.fixed">
+        <distribution>
+            <normalDistributionModel id="priorDistributionModel.fixed">
+                <mean>
+                    <parameter value="0"/>
+                </mean>
+                <precision>
+                    <parameter value="1"/>
+                </precision>
+            </normalDistributionModel>
+        </distribution>
+        <data>
+            <parameter idref="mu"/>
+        </data>
+    </distributionLikelihood>
     
     <!-- Prior under random model -->    
     <distributionLikelihood id="normalMeanPrior.random">
@@ -57,9 +68,21 @@
     	</data>
     </distributionLikelihood>
 
-    <gammaPrior id="gammaPrecisionPrior" shape="1" scale="1" offset="0">
-        <parameter idref="tau"/>
-    </gammaPrior>
+    <distributionLikelihood id="gammaPrecisionPrior">
+        <distribution>
+            <gammaDistributionModel>
+                <shape>
+                    1
+                </shape>
+                <scale>
+                    1
+                </scale>
+            </gammaDistributionModel>
+        </distribution>
+        <data>
+            <parameter idref="tau"/>
+        </data>
+    </distributionLikelihood>
     
    <operators id="operators.fixed">
         <randomWalkOperator windowSize="0.75" weight="1">
@@ -67,6 +90,33 @@
         </randomWalkOperator>
 	</operators>    
     
+    <gradient id="gradient.likelihood.fixed.mu">
+        <distributionLikelihood idref="samplingDensity.fixed"/>
+        <parameter idref="mu"/>
+    </gradient>
+    <gradient id="gradient.prior.fixed.mu">
+        <distributionLikelihood idref="normalMeanPrior.fixed"/>
+        <parameter idref="mu"/>
+    </gradient>
+    <jointGradient id="gradient.posterior.fixed.mu">
+        <gradient idref="gradient.likelihood.fixed.mu"/>
+        <gradient idref="gradient.prior.fixed.mu"/>
+    </jointGradient>
+
+    <operators id="operators.fixed.hmc">
+        <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla" drawVariance="1.0">
+            <pathGradient>
+                <source>
+                    <gradient idref="gradient.posterior.fixed.mu"/>
+                </source>
+                <destination>
+                    <gradient idref="gradient.prior.fixed.mu"/>
+                </destination>
+            </pathGradient>
+            <parameter idref="mu"/>
+        </hamiltonianMonteCarloOperator>
+    </operators>
+
    <operators id="operators.random">
         <randomWalkOperator windowSize="0.75" weight="1">
         	<parameter idref="mu"/>
@@ -75,7 +125,62 @@
             <parameter idref="tau"/>
         </scaleOperator>
 	</operators>
+
+    <gradient id="gradient.likelihood.random.mu">
+        <distributionLikelihood idref="samplingDensity.random"/>
+        <parameter idref="mu"/>
+    </gradient>
+    <gradient id="gradient.prior.random.mu">
+        <distributionLikelihood idref="normalMeanPrior.random"/>
+        <parameter idref="mu"/>
+    </gradient>
+    <jointGradient id="gradient.posterior.random.mu">
+        <gradient idref="gradient.likelihood.random.mu"/>
+        <gradient idref="gradient.prior.random.mu"/>
+    </jointGradient>
+
+    <gradient id="gradient.likelihood.random.tau">
+        <distributionLikelihood idref="samplingDensity.random"/>
+        <parameter idref="tau"/>
+    </gradient>
+    <gradient id="gradient.prior.random.tau">
+        <distributionLikelihood idref="gammaPrecisionPrior"/>
+        <parameter idref="tau"/>
+    </gradient>
+    <jointGradient id="gradient.posterior.random.tau">
+        <gradient idref="gradient.likelihood.random.tau"/>
+        <gradient idref="gradient.prior.random.tau"/>
+    </jointGradient>
+
+    <operators id="operators.random.hmc">
+        <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla" drawVariance="1.0">
+            <pathGradient>
+                <source>
+                    <gradient idref="gradient.posterior.random.mu"/>
+                </source>
+                <destination>
+                    <gradient idref="gradient.prior.random.mu"/>
+                </destination>
+            </pathGradient>
+            <parameter idref="mu"/>
+        </hamiltonianMonteCarloOperator>
+        <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla" drawVariance="1.0">
+            <pathGradient>
+                <source>
+                    <gradient idref="gradient.posterior.random.tau"/>
+                </source>
+                <destination>
+                    <gradient idref="gradient.prior.random.tau"/>
+                </destination>
+            </pathGradient>
+            <parameter idref="tau"/>
+            <transform type="log"/>
+        </hamiltonianMonteCarloOperator>
+    </operators>
 	  
+	<!-- ***************************************************************************** -->
+	<!-- Fixed - Random walk -->
+	<!-- ***************************************************************************** -->
 	<mcmc id="mcmc.fixed" chainLength="1000000" autoOptimize="true">
         <posterior id="posterior.fixed">
             <likelihood id="likelihood.fixed">
@@ -106,13 +211,13 @@
 			<parameter idref="tau"/>            
 		</log>
 	</mcmc>	
-	
+
 	<traceAnalysis fileName="testSimplePathSampling.fixed.log" stdError="true"/>
-	
+
 	<marginalLikelihoodAnalysis fileName="testSimplePathSampling.fixed.log">
         <likelihoodColumn name="likelihood.fixed" harmonicOnly="true" bootstrap="true"/>
     </marginalLikelihoodAnalysis> 
-    
+
     <marginalLikelihoodEstimator chainLength="500000" pathSteps="11" pathScheme="oneSidedBeta">
     	<samplers>
 	        <mcmc idref="mcmc.fixed"/>
@@ -129,17 +234,90 @@
             <pathLikelihood idref="pathLikelihood.fixed"/>
         </log>
     </marginalLikelihoodEstimator>
+
+
     
-   	<pathSamplingAnalysis fileName="testSimplePathSampling.fixed.log">
+    <!-- ***************************************************************************** -->
+    <!-- Fixed - HMC -->
+    <!-- ***************************************************************************** -->
+    <mcmc id="mcmc.fixed.hmc" chainLength="1000000" autoOptimize="true">
+        <posterior id="posterior.fixed.hmc">
+            <likelihood id="likelihood.fixed.hmc">
+                <distributionLikelihood idref="samplingDensity.fixed"/>
+            </likelihood>
+            <prior id="prior.fixed.hmc">
+                <normalPrior idref="normalMeanPrior.fixed"/>
+                <gammaPrior idref="gammaPrecisionPrior"/>
+            </prior>
+        </posterior>
+        <operators idref="operators.fixed.hmc"/>
+        <log logEvery="100000">
+            <column label="posterior" dp="4" width="12">
+                <likelihood idref="likelihood.fixed.hmc"/>
+                <prior idref="prior.fixed.hmc"/>
+            </column>
+            <column label="Mean" sf="6" width="12">
+                <parameter idref="mu"/>
+            </column>
+            <column label="Precision" sf="6" width="12">
+                <parameter idref="tau"/>
+            </column>
+        </log>
+        <log logEvery="1000" fileName="testSimplePathSampling.fixed.hmc.log">
+            <likelihood idref="likelihood.fixed.hmc"/>
+            <prior idref="prior.fixed.hmc"/>
+            <parameter idref="mu"/>
+            <parameter idref="tau"/>
+        </log>
+    </mcmc>
+
+    <traceAnalysis fileName="testSimplePathSampling.fixed.hmc.log" stdError="true"/>
+
+    <marginalLikelihoodAnalysis fileName="testSimplePathSampling.fixed.hmc.log">
+        <likelihoodColumn name="likelihood.fixed.hmc" harmonicOnly="true" bootstrap="true"/>
+    </marginalLikelihoodAnalysis>
+
+    <marginalLikelihoodEstimator chainLength="500000" pathSteps="11" pathScheme="oneSidedBeta">
+        <samplers>
+            <mcmc idref="mcmc.fixed.hmc"/>
+        </samplers>
+        <pathLikelihood id="pathLikelihood.fixed.hmc">
+            <source>
+                <posterior idref="posterior.fixed.hmc"/>
+            </source>
+            <destination>
+                <prior idref="prior.fixed.hmc"/>
+            </destination>
+        </pathLikelihood>
+        <log logEvery="100" fileName="testSimplePathSampling.fixed.hmc.log">
+            <pathLikelihood idref="pathLikelihood.fixed.hmc"/>
+        </log>
+    </marginalLikelihoodEstimator>
+
+
+
+    <!-- ***************************************************************************** -->
+    <!-- Fixed - MLE -->
+    <!-- ***************************************************************************** -->
+    <pathSamplingAnalysis fileName="testSimplePathSampling.fixed.log">
         <likelihoodColumn name="pathLikelihood.fixed.delta"/>
         <thetaColumn name="pathLikelihood.fixed.theta"/>      
     </pathSamplingAnalysis>
-    
+
+    <pathSamplingAnalysis fileName="testSimplePathSampling.fixed.hmc.log">
+        <likelihoodColumn name="pathLikelihood.fixed.hmc.delta"/>
+        <thetaColumn name="pathLikelihood.fixed.hmc.theta"/>
+    </pathSamplingAnalysis>
+
     <report>
     	Fixed logML = -0.5 * log(4 * \pi) - x^2 / 4 = -7.5155 
-    	
     </report>
+
+
     
+    <!-- ***************************************************************************** -->
+    <!-- Random - Random walk -->
+    <!-- ***************************************************************************** -->
 	<mcmc id="mcmc.random" chainLength="1000000" autoOptimize="true">
         <posterior id="posterior.random">
             <likelihood id="likelihood.random">
@@ -170,13 +348,13 @@
 			<parameter idref="tau"/>            
 		</log>
 	</mcmc>	
-	
+
 	<traceAnalysis fileName="testSimplePathSampling.random.log" stdError="true"/>
-	
+
 	<marginalLikelihoodAnalysis fileName="testSimplePathSampling.random.log">
         <likelihoodColumn name="likelihood.random" harmonicOnly="true" bootstrap="true"/>
     </marginalLikelihoodAnalysis> 
-    
+
     <marginalLikelihoodEstimator chainLength="500000" pathSteps="21" pathScheme="oneSidedBeta" beta="0.25">
     	<samplers>
 	        <mcmc idref="mcmc.random"/>
@@ -193,17 +371,85 @@
             <pathLikelihood idref="pathLikelihood.random"/>
         </log>
     </marginalLikelihoodEstimator>
+
+    <!-- ***************************************************************************** -->
+    <!-- Random - HMC -->
+    <!-- ***************************************************************************** -->
+    <mcmc id="mcmc.random.hmc" chainLength="1000000" autoOptimize="true">
+        <posterior id="posterior.random.hmc">
+            <likelihood id="likelihood.random.hmc">
+                <distributionLikelihood idref="samplingDensity.random"/>
+            </likelihood>
+            <prior id="prior.random.hmc">
+                <distributionLikelihood idref="normalMeanPrior.random"/>
+                <gammaPrior idref="gammaPrecisionPrior"/>
+            </prior>
+        </posterior>
+        <operators idref="operators.random.hmc"/>
+        <log logEvery="100000">
+            <column label="posterior" dp="4" width="12">
+                <likelihood idref="likelihood.random.hmc"/>
+                <prior idref="prior.random.hmc"/>
+            </column>
+            <column label="Mean" sf="6" width="12">
+                <parameter idref="mu"/>
+            </column>
+            <column label="Precision" sf="6" width="12">
+                <parameter idref="tau"/>
+            </column>
+        </log>
+        <log logEvery="1000" fileName="testSimplePathSampling.random.hmc.log">
+            <likelihood idref="likelihood.random.hmc"/>
+            <prior idref="prior.random.hmc"/>
+            <parameter idref="mu"/>
+            <parameter idref="tau"/>
+        </log>
+    </mcmc>
+
+    <traceAnalysis fileName="testSimplePathSampling.random.hmc.log" stdError="true"/>
+
+    <marginalLikelihoodAnalysis fileName="testSimplePathSampling.random.hmc.log">
+        <likelihoodColumn name="likelihood.random.hmc" harmonicOnly="true" bootstrap="true"/>
+    </marginalLikelihoodAnalysis>
+
+    <marginalLikelihoodEstimator chainLength="500000" pathSteps="21" pathScheme="oneSidedBeta" beta="0.25">
+        <samplers>
+            <mcmc idref="mcmc.random.hmc"/>
+        </samplers>
+        <pathLikelihood id="pathLikelihood.random.hmc">
+            <source>
+                <posterior idref="posterior.random.hmc"/>
+            </source>
+            <destination>
+                <prior idref="prior.random.hmc"/>
+            </destination>
+        </pathLikelihood>
+        <log logEvery="100" fileName="testSimplePathSampling.random.hmc.log">
+            <pathLikelihood idref="pathLikelihood.random.hmc"/>
+        </log>
+    </marginalLikelihoodEstimator>
     
-   	<pathSamplingAnalysis fileName="testSimplePathSampling.random.log">
+    <!-- ***************************************************************************** -->
+	<!-- Random - MLE -->
+	<!-- ***************************************************************************** -->
+
+    <pathSamplingAnalysis fileName="testSimplePathSampling.random.log">
         <likelihoodColumn name="pathLikelihood.random.delta"/>
-        <thetaColumn name="pathLikelihood.random.theta"/>      
+        <thetaColumn name="pathLikelihood.random.theta"/>
+    </pathSamplingAnalysis>
+
+    <pathSamplingAnalysis fileName="testSimplePathSampling.random.hmc.log">
+        <likelihoodColumn name="pathLikelihood.random.hmc.delta"/>
+        <thetaColumn name="pathLikelihood.random.hmc.theta"/>
     </pathSamplingAnalysis>
 
 	<report>
 		Fixed logML = logGamma(3/2) - 0.5*log(4 * pi) - 3/2*log(1 + x^2 / 4) = -4.3578
-		
 	</report>
 	
+	<!-- ***************************************************************************** -->
+	<!-- Fixed to Random -->
+	<!-- ***************************************************************************** -->
 	<marginalLikelihoodEstimator chainLength="500000" pathSteps="21" pathScheme="beta" alpha="0.5" beta="0.25">
 		<samplers>
 			<mcmc idref="mcmc.random"/>
@@ -224,14 +470,38 @@
          </log>
      </marginalLikelihoodEstimator>	
 
+     <marginalLikelihoodEstimator chainLength="500000" pathSteps="21" pathScheme="beta" alpha="0.5" beta="0.25">
+         <samplers>
+             <mcmc idref="mcmc.random.hmc"/>
+             <mcmc idref="mcmc.fixed.hmc"/>
+         </samplers>
+         <pathLikelihood id="pathLikelihood.hmc">
+             <source>
+                 <posterior idref="posterior.fixed.hmc"/>
+             </source>
+             <destination>
+                 <posterior idref="posterior.random.hmc"/>
+             </destination>
+         </pathLikelihood>
+         <log logEvery="100" fileName="testSimplePathSampling.hmc.log">
+             <pathLikelihood idref="pathLikelihood.hmc"/>
+             <posterior idref="posterior.random.hmc"/>
+             <posterior idref="posterior.fixed.hmc"/>
+         </log>
+     </marginalLikelihoodEstimator>
+
 	 <pathSamplingAnalysis fileName="testSimplePathSampling.log">
         <likelihoodColumn name="pathLikelihood.delta"/>
         <thetaColumn name="pathLikelihood.theta"/>      
     </pathSamplingAnalysis>
-    
+
+    <pathSamplingAnalysis fileName="testSimplePathSampling.hmc.log">
+        <likelihoodColumn name="pathLikelihood.hmc.delta"/>
+        <thetaColumn name="pathLikelihood.hmc.theta"/>
+    </pathSamplingAnalysis>
+
     <report>
     	Analytic answer = 3.158
-    	
     </report>
 
 </beast>

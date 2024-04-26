@@ -26,17 +26,18 @@
 package dr.app.beauti.components.ancestralstates;
 
 import dr.app.beauti.generator.BaseComponentGenerator;
-import dr.app.beauti.generator.ComponentGenerator;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.AbstractPartitionData;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
-import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.oldevomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.util.Attribute;
-import dr.xml.XMLParser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +73,8 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
             if (component.reconstructAtMRCA(partition)) reconstructAtMRCA = true;
             if (component.isCountingStates(partition)) countingStates = true;
             if (component.dNdSRobustCounting(partition)) dNdSRobustCounting = true;
-            if (component.isCountingStates(partition) && component.isCompleteHistoryLogging(partition)) completeHistory = true;
+            if (component.isCountingStates(partition) && component.isCompleteHistoryLogging(partition))
+                completeHistory = true;
         }
 
         if (!reconstructAtNodes && !reconstructAtMRCA && !countingStates && !dNdSRobustCounting) {
@@ -120,7 +122,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 writeLogs(writer, component);
                 break;
             case IN_TREES_LOG:
-                writeTreeLogs(writer, component, (PartitionTreeModel)item);
+                writeTreeLogs(writer, component, (PartitionTreeModel) item);
                 break;
             case AFTER_TREES_LOG:
                 writeAncestralStateLoggers(writer, component);
@@ -346,7 +348,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 }
         );
         if (partition.getDataType().getType() == DataType.CONTINUOUS) {
-            writer.writeIDref("multivariateTraitLikelihood", prefix + "traitLikelihood");
+            writer.writeIDref("traitDataLikelihood", prefix + "traitLikelihood");
         } else {
             writer.writeIDref("ancestralTreeLikelihood", prefix + "treeLikelihood");
         }
@@ -378,7 +380,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         writer.writeOpenTag("log", new Attribute[]{
                 new Attribute.Default<String>("id", "fileLog_" + partition.getName()),
                 new Attribute.Default<String>("logEvery", Integer.toString(options.logEvery)),
-                new Attribute.Default<String>("fileName",  options.fileNameStem + "." + partition.getName() + STATE_LOG_SUFFIX)});
+                new Attribute.Default<String>("fileName", options.fileNameStem + "." + partition.getName() + STATE_LOG_SUFFIX)});
 
         PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
         int cpCount = partition.getPartitionSubstitutionModel().getCodonPartitionCount();
@@ -403,8 +405,8 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
     /**
      * write tree log to file with complete history logger
      *
-     * @param writer XMLWriter
-     * @param partition the Data Partition              
+     * @param writer    XMLWriter
+     * @param partition the Data Partition
      */
     private void writeCompleteHistoryTreeLogToFile(XMLWriter writer, AbstractPartitionData partition) {
         writer.writeComment("write complete history tree log to file");
@@ -426,7 +428,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         writer.writeOpenTag(TreeLoggerParser.LOG_TREE, attributes);
 
-        writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, tree.getPrefix() + DefaultTreeModel.TREE_MODEL);
 
         String historyLoggerId = partition.getPrefix() + "treeLikelihood";
         writer.writeIDref(MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD, historyLoggerId);
@@ -449,7 +451,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         writer.writeIDref("treeModel", partition.getPartitionTreeModel().getPrefix() + "treeModel");
 
         if (partition.getDataType().getType() == DataType.CONTINUOUS) {
-            writer.writeIDref("multivariateTraitLikelihood", prefix + "traitLikelihood");
+            writer.writeIDref("traitDataLikelihood", prefix + "traitLikelihood");
         } else {
             writer.writeIDref("ancestralTreeLikelihood", prefix + "treeLikelihood");
         }

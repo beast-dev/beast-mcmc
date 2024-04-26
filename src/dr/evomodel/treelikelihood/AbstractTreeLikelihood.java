@@ -27,7 +27,9 @@ package dr.evomodel.treelikelihood;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.xml.Reportable;
@@ -45,7 +47,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
 
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;
 
-    public AbstractTreeLikelihood(String name, TreeModel treeModel) {
+    public AbstractTreeLikelihood(String name, MutableTreeModel treeModel) {
 
         super(name);
 
@@ -228,7 +230,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
     /**
      * the tree
      */
-    protected TreeModel treeModel = null;
+    protected MutableTreeModel treeModel = null;
 
     /**
      * the number of nodes in the tree

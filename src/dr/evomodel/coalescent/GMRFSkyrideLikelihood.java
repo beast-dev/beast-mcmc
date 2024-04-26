@@ -25,12 +25,14 @@
 
 package dr.evomodel.coalescent;
 
+import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
+import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.inference.model.MatrixParameter;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.MathUtils;
@@ -38,11 +40,8 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 import no.uib.cipr.matrix.DenseVector;
-import no.uib.cipr.matrix.NotConvergedException;
-import no.uib.cipr.matrix.SymmTridiagEVD;
 import no.uib.cipr.matrix.SymmTridiagMatrix;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -55,7 +54,7 @@ import java.util.List;
  * @author Marc Suchard
  * @version $Id: GMRFSkylineLikelihood.java,v 1.3 2007/03/20 22:40:04 msuchard Exp $
  */
-public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood implements CoalescentIntervalProvider, Citable {
+public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implements Citable {
 
     // PUBLIC STUFF
 
@@ -64,6 +63,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
 
     // PRIVATE STUFF
 
+    private IntervalList intervalList;
     protected Parameter popSizeParameter;
     protected Parameter groupSizeParameter;
     protected Parameter precisionParameter;
@@ -95,24 +95,75 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         super(name);
     }
 
-    public GMRFSkyrideLikelihood(Tree tree, Parameter popParameter, Parameter groupParameter, Parameter precParameter,
-                                 Parameter lambda, Parameter beta, MatrixParameter dMatrix,
-                                 boolean timeAwareSmoothing, boolean rescaleByRootHeight) {
-        this(wrapTree(tree), popParameter, groupParameter, precParameter, lambda, beta, dMatrix, timeAwareSmoothing,
-                rescaleByRootHeight);
+    public GMRFSkyrideLikelihood(IntervalList intervalList, Parameter popParameter, Parameter groupParameter, Parameter precParameter,
+                                    Parameter lambda, Parameter beta, MatrixParameter dMatrix,
+                                    boolean timeAwareSmoothing, boolean rescaleByRootHeight) {
+
+        super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD,intervalList);
+
+        // adding the key word to the the model means the keyword will be logged in the
+        // header of the logfile.
+        this.addKeyword("skyride");
+
+        this.intervalList = this.getIntervalList(); // pull this down from the AbtractCoalescentLikelihood for ease of access.
+        this.popSizeParameter = popParameter;
+        this.groupSizeParameter = groupParameter;
+        this.precisionParameter = precParameter;
+        this.lambdaParameter = lambda;
+        this.betaParameter = beta;
+        this.dMatrix = dMatrix;
+        this.timeAwareSmoothing = timeAwareSmoothing;
+        this.rescaleByRootHeight = rescaleByRootHeight;
+
+        addVariable(popSizeParameter);
+        addVariable(precisionParameter);
+        addVariable(lambdaParameter);
+        if (betaParameter != null) {
+            addVariable(betaParameter);
+        }
+        addModel((Model)intervalList);
+
+        //setTree(treeList);
+
+        int correctFieldLength = getCorrectFieldLength();
+
+        if (popSizeParameter.getDimension() <= 1) {
+            // popSize dimension hasn't been set yet, set it here:
+            popSizeParameter.setDimension(correctFieldLength);
+        }
+
+        fieldLength = popSizeParameter.getDimension();
+        if (correctFieldLength != fieldLength) {
+            throw new IllegalArgumentException("Population size parameter should have length " + correctFieldLength);
+        }
+
+        // Field length must be set by this point
+        //wrapSetupIntervals();
+        coalescentIntervals = new double[fieldLength];
+        storedCoalescentIntervals = new double[fieldLength];
+        sufficientStatistics = new double[fieldLength];
+        storedSufficientStatistics = new double[fieldLength];
+
+        setupGMRFWeights();
+
+        addStatistic(new DeltaStatistic());
+
+        initializationReport();
+
+        /* Force all entries in groupSizeParameter = 1 for compatibility with Tracer */
+        if (groupSizeParameter != null) {
+            for (int i = 0; i < groupSizeParameter.getDimension(); i++)
+                groupSizeParameter.setParameterValue(i, 1.0);
+        }
     }
 
-    private static List<Tree> wrapTree(Tree tree) {
-        List<Tree> treeList = new ArrayList<Tree>();
-        treeList.add(tree);
-        return treeList;
-    }
 
-    public GMRFSkyrideLikelihood(List<Tree> treeList, Parameter popParameter, Parameter groupParameter, Parameter precParameter,
-                                 Parameter lambda, Parameter beta, MatrixParameter dMatrix,
-                                 boolean timeAwareSmoothing, boolean rescaleByRootHeight) {
 
-        super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
+    public GMRFSkyrideLikelihood(List<IntervalList> intervalsList, Parameter popParameter, Parameter groupParameter, Parameter precParameter,
+                                    Parameter lambda, Parameter beta, MatrixParameter dMatrix,
+                                    boolean timeAwareSmoothing, boolean rescaleByRootHeight) {
+
+        super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD,intervalsList.get(0));
 
         // adding the key word to the the model means the keyword will be logged in the
         // header of the logfile.
@@ -134,7 +185,8 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
             addVariable(betaParameter);
         }
 
-        setTree(treeList);
+        //setTree(treeList);
+        setIntervalList(intervalsList);
 
         int correctFieldLength = getCorrectFieldLength();
 
@@ -149,7 +201,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         }
 
         // Field length must be set by this point
-        wrapSetupIntervals();
+        //wrapSetupIntervals();
         coalescentIntervals = new double[fieldLength];
         storedCoalescentIntervals = new double[fieldLength];
         sufficientStatistics = new double[fieldLength];
@@ -169,13 +221,18 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
     }
 
     protected int getCorrectFieldLength() {
-        return tree.getExternalNodeCount() - 1;
+        //return tree.getExternalNodeCount() - 1;
+
+        // Change later in case we are not working with entire tree
+        return intervalList.getSampleCount()-1;
     }
 
+    /*
     protected void wrapSetupIntervals() {
         setupIntervals();
-    }
+    }*/
 
+    /*
     protected int setTree(List<Tree> treeList) {
         if (treeList.size() != 1) {
             throw new RuntimeException("GMRFSkyrideLikelihood only implemented for one tree");
@@ -185,6 +242,15 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         if (tree instanceof TreeModel) {
             addModel((TreeModel) tree);
         }
+        return 1;
+    } */
+
+    protected int setIntervalList(List<IntervalList> intervalsList) {
+        if (intervalsList.size() != 1) {
+            throw new RuntimeException("GMRFSkyrideLikelihood only implemented for one tree");
+        }
+        this.intervalList = this.getIntervalList(); // pull this down from the AbtractCoalescentLikelihood for ease of access.
+
         return 1;
     }
 
@@ -228,12 +294,10 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
     // Likelihood IMPLEMENTATION
     // **************************************************************
 
-    public double getLogLikelihood() {
-        if (!likelihoodKnown) {
-            logLikelihood = calculateLogCoalescentLikelihood();
-            logFieldLikelihood = calculateLogFieldLikelihood();
-            likelihoodKnown = true;
-        }
+    //public double getLogLikelihood() {
+    protected double calculateLogLikelihood(){
+        logLikelihood = calculateLogCoalescentLikelihood();
+        logFieldLikelihood = calculateLogFieldLikelihood();
         return logLikelihood + logFieldLikelihood;
     }
 
@@ -258,10 +322,10 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
 
         double length = 0;
         double weight = 0;
-        for (int i = 0; i < getIntervalCount(); i++) {
-            length += getInterval(i);
-            weight += getInterval(i) * getLineageCount(i) * (getLineageCount(i) - 1);
-            if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
+        for (int i = 0; i < intervalList.getIntervalCount(); i++) {
+            length += intervalList.getInterval(i);
+            weight += intervalList.getInterval(i) * intervalList.getLineageCount(i) * (intervalList.getLineageCount(i) - 1);
+            if (intervalList.getIntervalType(i) == IntervalType.COALESCENT) {
                 coalescentIntervals[index] = length;
                 sufficientStatistics[index] = weight / 2.0;
                 index++;
@@ -274,7 +338,8 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
     protected double getFieldScalar() {
         final double rootHeight;
         if (rescaleByRootHeight) {
-            rootHeight = tree.getNodeHeight(tree.getRoot());
+            // rootHeight = tree.getNodeHeight(tree.getRoot());
+            rootHeight = intervalList.getTotalDuration();
         } else {
             rootHeight = 1.0;
         }
@@ -325,6 +390,11 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         return a;
     }
 
+    public void setupCoalescentIntervals() {
+//        this.intervalList.calculateIntervals(); // Done lazily in IntervalList
+        setupSufficientStatistics();
+    }
+
     public SymmTridiagMatrix getStoredScaledWeightMatrix(double precision) {
         SymmTridiagMatrix a = storedWeightMatrix.copy();
         for (int i = 0; i < a.numRows() - 1; i++) {
@@ -351,7 +421,8 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
 
     private void makeIntervalsKnown() {
         if (!intervalsKnown) {
-            wrapSetupIntervals();
+            // intervalsKnown -> false when handleModelChanged event occurs in super.
+            intervalList.calculateIntervals();
             setupGMRFWeights();
             intervalsKnown = true;
         }
@@ -376,7 +447,10 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
     }*/
 
     public int getNumberOfCoalescentEvents() {
-        return tree.getExternalNodeCount() - 1;
+        //  return tree.getExternalNodeCount() - 1;
+
+        // Change later to deal with case where we aren't working with entire tree
+        return intervalList.getSampleCount() - 1;
     }
 
     public double getCoalescentEventsStatisticValue(int i) {
@@ -543,6 +617,27 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         }
         return weightedSSE;
 
+    }
+
+    // **************************************************************
+    // Units IMPLEMENTATION
+    // **************************************************************
+
+    /**
+     * Sets the units these coalescent intervals are
+     * measured in.
+     */
+    public final void setUnits(Type u) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Returns the units these coalescent intervals are
+     * measured in.
+     */
+    public final Type getUnits() {
+        // Change this
+        throw new UnsupportedOperationException();
     }
 
     @Override

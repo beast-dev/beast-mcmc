@@ -29,7 +29,6 @@ import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
-import dr.inference.operators.hmc.NumericalHessianFromGradient;
 import dr.math.MultivariateFunction;
 
 /**
@@ -42,10 +41,8 @@ public class PrecisionGradient extends AbstractPrecisionGradient implements Hess
                              Likelihood likelihood,
                              MatrixParameterInterface parameter) {
 
-        super(gradientWrtPrecisionProvider, likelihood, parameter);
+        super(gradientWrtPrecisionProvider, likelihood, parameter, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY);
     }
-
-    NumericalHessianFromGradient hessianFromGradient;
 
     @Override
     double[] getGradientParameter(double[] gradient) {
@@ -59,7 +56,7 @@ public class PrecisionGradient extends AbstractPrecisionGradient implements Hess
 
     @Override
     public Parameter getParameter() {
-        return compoundSymmetricMatrix;
+        return compoundSymmetricMatrix.getUntransformedCompoundParameter();
     }
 
     @Override
@@ -68,27 +65,29 @@ public class PrecisionGradient extends AbstractPrecisionGradient implements Hess
     }
 
     private double[] mergeGradients(double[] gradientDiagonal, double[] gradientCorrelation) {
+        double[] gradient = new double[gradientDiagonal.length + gradientCorrelation.length];
+        System.arraycopy(gradientDiagonal, 0, gradient, 0, gradientDiagonal.length);
+        System.arraycopy(gradientCorrelation, 0, gradient, gradientDiagonal.length, gradientCorrelation.length);
+        return gradient;
+    }
+
+    MultivariateFunction getNumeric() {
         throw new RuntimeException("Not yet implemented");
     }
 
-
-    MultivariateFunction getNumeric() {
-        return null;
-    }
-
     @Override
-    String checkNumeric(double[] analytic) {
-        return "";
+    public String getReport() {
+        return "precisionGradient." + compoundSymmetricMatrix.getParameterName() + "\n" +
+                super.getReport();
     }
 
     @Override
     public double[] getDiagonalHessianLogDensity() {
-
-        return new double[0];
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
     public double[][] getHessianLogDensity() {
-        return new double[0][];
+        throw new RuntimeException("Not yet implemented");
     }
 }

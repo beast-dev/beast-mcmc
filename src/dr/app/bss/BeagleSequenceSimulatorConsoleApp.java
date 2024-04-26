@@ -634,6 +634,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 
             if (dataList.setSeed) {
                 MathUtils.setSeed(dataList.startingSeed);
+                System.out.println("Starting seed: " + dataList.startingSeed);
             }
 
             if (leftoverArguments.length > 2) {

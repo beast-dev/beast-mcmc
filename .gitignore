@@ -6,3 +6,17 @@ build/
 dist/
 out/
 .idea
+.DS_Store
+
+*.log
+*.trees
+*.tree
+*.xml
+!examples/**/*.xml
+!ci/**/*.xml
+
+zig_zag
+src/revision.txt
+*.dmg
+release/Mac
+src/revision.txt

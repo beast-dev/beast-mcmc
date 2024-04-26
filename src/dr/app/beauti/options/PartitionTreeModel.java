@@ -26,7 +26,6 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.types.*;
-import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.Tree;
 
 import java.util.List;
@@ -46,10 +45,6 @@ public class PartitionTreeModel extends PartitionOptions {
     private Tree userStartingTree = null;
 
     private boolean isNewick = true;
-
-    //TODO if use EBSP and *BEAST, validate Ploidy of every PD is same for each tree that the PD(s) belongs to
-    // BeastGenerator.checkOptions()
-    private PloidyType ploidyType = PloidyType.AUTOSOMAL_NUCLEAR;
 
     private boolean hasTipCalibrations = false;
     private boolean hasNodeCalibrations = false;
@@ -77,7 +72,6 @@ public class PartitionTreeModel extends PartitionOptions {
 
         isNewick = source.isNewick;
 //        initialRootHeight = source.initialRootHeight;
-        ploidyType = source.ploidyType;
 
         initModelParametersAndOpererators();
     }
@@ -175,18 +169,20 @@ public class PartitionTreeModel extends PartitionOptions {
             boolean adaptiveMultivariateInUse = false;
 
             // if not a fixed tree then sample tree space
-            if (options.operatorSetType == OperatorSetType.DEFAULT) {
-                defaultInUse = true;
-                branchesInUse = true;
-            } else if (options.operatorSetType == OperatorSetType.NEW_TREE_MIX) {
-                newTreeOperatorsInUse = true;
-            } else if (options.operatorSetType == OperatorSetType.FIXED_TREE_TOPOLOGY) {
-                branchesInUse = true;
-            } else if (options.operatorSetType == OperatorSetType.ADAPTIVE_MULTIVARIATE) {
-                newTreeOperatorsInUse = true;
-                adaptiveMultivariateInUse = true;
-            } else {
-                throw new IllegalArgumentException("Unknown operator set type");
+            if (options.operatorSetType != OperatorSetType.FIXED_TREE) {
+                if (options.operatorSetType == OperatorSetType.DEFAULT) {
+                    newTreeOperatorsInUse = true;    // default is now the new tree operators
+                } else if (options.operatorSetType == OperatorSetType.CLASSIC) {
+                    defaultInUse = true;
+                    branchesInUse = true;
+                } else if (options.operatorSetType == OperatorSetType.FIXED_TREE_TOPOLOGY) {
+                    branchesInUse = true;
+                } else if (options.operatorSetType == OperatorSetType.ADAPTIVE_MULTIVARIATE) {
+                    newTreeOperatorsInUse = true;
+                    adaptiveMultivariateInUse = true;
+                } else {
+                    throw new IllegalArgumentException("Unknown operator set type");
+                }
             }
 
             getOperator("subtreeSlide").setUsed(defaultInUse);
@@ -195,10 +191,12 @@ public class PartitionTreeModel extends PartitionOptions {
             getOperator("wilsonBalding").setUsed(defaultInUse);
 
             getOperator("treeModel.rootHeight").setUsed(branchesInUse);
+            getOperator("treeModel.allInternalNodeHeights").setUsed(branchesInUse);
             getOperator("uniformHeights").setUsed(branchesInUse);
 
             getOperator("subtreeLeap").setUsed(newTreeOperatorsInUse);
             getOperator("FHSPR").setUsed(newTreeOperatorsInUse);
+
         }
         return operators;
     }
@@ -252,14 +250,6 @@ public class PartitionTreeModel extends PartitionOptions {
 
     public boolean hasNodeCalibrations() {
         return hasNodeCalibrations;
-    }
-
-    public void setPloidyType(PloidyType ploidyType) {
-        this.ploidyType = ploidyType;
-    }
-
-    public PloidyType getPloidyType() {
-        return ploidyType;
     }
 
     public double getInitialRootHeight() {

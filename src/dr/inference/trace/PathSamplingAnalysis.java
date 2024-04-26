@@ -34,6 +34,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -170,7 +171,11 @@ public class PathSamplingAnalysis {
                     String parent = file.getParent();
 
                     if (!file.isAbsolute()) {
-                        parent = System.getProperty("user.dir");
+                        if (parent == null) {
+                            parent = System.getProperty("user.dir");
+                        } else {
+                            parent = Paths.get(System.getProperty("user.dir"), parent).toString();
+                        }
                     }
 
                     final String fileNamePrefix = System.getProperty("file.name.prefix");

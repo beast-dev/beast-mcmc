@@ -25,8 +25,7 @@
 
 package dr.evomodel.epidemiology.casetocase;
 
-import dr.app.tools.NexusExporter;
-import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.loggers.LogColumn;
@@ -34,7 +33,6 @@ import dr.inference.loggers.Loggable;
 import dr.inference.model.*;
 import dr.xml.*;
 
-import java.io.PrintStream;
 import java.util.*;
 
 /**

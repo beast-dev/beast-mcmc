@@ -614,8 +614,7 @@ public class OperatorsGenerator extends Generator {
     private void writeShrinkageClockHMCOperator(Operator operator, String prefix, XMLWriter writer) {
         int nSteps = 5;
         double stepSize = 1E-2;
-        int gradientCheckCount = 100;
-        double gradientCheckTolerance = 0.2;
+        int gradientCheckCount = 0;
         int preconditioningUpdateFrequency = 1;
 
         writer.writeOpenTag(
@@ -628,7 +627,6 @@ public class OperatorsGenerator extends Generator {
                         new Attribute.Default<>("drawVariance", "1.0"),
                         new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING_UPDATE_FREQUENCY, preconditioningUpdateFrequency),
                         new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_COUNT, gradientCheckCount),
-                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_TOLERANCE, gradientCheckTolerance)
                 }
         );
         writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT);

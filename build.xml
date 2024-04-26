@@ -425,6 +425,7 @@
     <property name="Linux_dir" value="${release_dir}/Linux"/>
     <property name="Windows_dir" value="${release_dir}/Windows"/>
     <property name="Windows_launchers_dir" value="${release_dir}/Windows_Launchers"/>
+    <property name="Packaging_dir" value="packaging_tools/windows"/>
 
     <property name="Mac_package_dir" value="${Mac_dir}/${BEAST_name} v${version}"/>
     <property name="Linux_package_dir" value="${Linux_dir}/${BEAST_name}v${version}"/>
@@ -440,7 +441,7 @@
         <!-- Create the release directory -->
         <mkdir dir="${Windows_package_dir}"/>
 
-        <property name="launch4j.dir" location="${Windows_dir}/launch4j"/>
+        <property name="launch4j.dir" location="${Packaging_dir}/launch4j"/>
         <taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask"
                  classpath="${launch4j.dir}/launch4j.jar :${launch4j.dir}/lib/xstream.jar"/>
 
@@ -535,7 +536,7 @@
         <!-- Create the release directory -->
         <mkdir dir="${Windows_launchers_package_dir}"/>
 
-        <property name="launch4j.dir" location="${Windows_launchers_dir}/launch4j"/>
+        <property name="launch4j.dir" location="${Packaging_dir}/launch4j"/>
         <taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask"
                  classpath="${launch4j.dir}/launch4j.jar :${launch4j.dir}/lib/xstream.jar"/>
 

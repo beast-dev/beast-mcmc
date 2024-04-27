@@ -270,12 +270,12 @@ public class PartitionTreePrior extends PartitionOptions {
         createOperatorUsing2Parameters("demographic.scaleActive", "demographic.scaleActive", "", "demographic.popSize",
                 "demographic.indicators", OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
         createOperatorUsing2Parameters("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF Skyride", "skyride.logPopSize",
-                "skyride.precision", OperatorType.GMRF_GIBBS_OPERATOR, 2, 2);
+                "skyride.precision", OperatorType.GMRF_GIBBS_OPERATOR, -1, 2);
         createOperatorUsing2Parameters("gmrfSkyGridGibbsOperator", "skygrid.logPopSize", "Gibbs sampler for Bayesian SkyGrid", "skygrid.logPopSize",
-                "skygrid.precision", OperatorType.SKY_GRID_GIBBS_OPERATOR, 1.0, 2);
+                "skygrid.precision", OperatorType.SKY_GRID_GIBBS_OPERATOR, -1, 2);
         createScaleOperator("skygrid.precision", "skygrid precision", 0.75, 1.0);
         createOperatorUsing2Parameters("gmrfSkyGridHMCOperator", "Multiple", "HMC transition kernel for Bayesian SkyGrid", "skygrid.logPopSize",
-                "skygrid.precision", OperatorType.SKY_GRID_HMC_OPERATOR, 1.0, 2);
+                "skygrid.precision", OperatorType.SKY_GRID_HMC_OPERATOR, -1, 2);
 
         createScaleOperator("yule.birthRate", demoTuning, demoWeights);
 

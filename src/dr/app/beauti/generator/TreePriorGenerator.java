@@ -343,6 +343,11 @@ public class TreePriorGenerator extends Generator {
 //                writer.writeCloseTag(BirthDeathEpidemiologyModelParser.BIRTH_DEATH_EPIDEMIOLOGY);
 //
 //                break;
+            case SKYGRID_HMC:
+            case SKYGRID:
+            case GMRF_SKYRIDE:
+                // do nothing here...
+                break;
             default:
                 throw new UnsupportedOperationException("Unknown Tree Prior type");
         }
@@ -579,6 +584,7 @@ public class TreePriorGenerator extends Generator {
                 break;
 
             case SKYGRID:
+            case SKYGRID_HMC:
                 break;
 
             default:
@@ -622,6 +628,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, priorPrefix + "skyride");
                 break;
             case SKYGRID:
+            case SKYGRID_HMC:
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, priorPrefix + "skygrid");
                 break;
             case YULE:
@@ -805,6 +812,7 @@ public class TreePriorGenerator extends Generator {
 //                writeParameterRef(priorPrefix + "skyline.groupSize", writer);
 //                break;
             case SKYGRID:
+            case SKYGRID_HMC:
                 writeParameterRef(priorPrefix + "skygrid.precision", writer);
                 writeParameterRef(priorPrefix + "skygrid.logPopSize", writer);
                 writeParameterRef(priorPrefix + "skygrid.cutOff", writer);
@@ -873,6 +881,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, prefix + "skyride");
                 break;
             case SKYGRID:
+            case SKYGRID_HMC:
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, prefix + "skygrid");
                 // only 1 coalescent, so write it separately after this method
                 break;
@@ -908,6 +917,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, prefix + "skyride");
                 break;
             case SKYGRID:
+            case SKYGRID_HMC:
 //                writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, prefix + "skygrid");
                 // only 1 coalescent, so write it separately after this method
                 break;
@@ -918,7 +928,7 @@ public class TreePriorGenerator extends Generator {
 
     public void writeMultiLociLikelihoodReference(PartitionTreePrior prior, XMLWriter writer) {
         String prefix = prior.getPrefix();
-        if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
+        if ((prior.getNodeHeightPrior() == TreePriorType.SKYGRID || prior.getNodeHeightPrior() == TreePriorType.SKYGRID_HMC)) {
             writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, prefix + "skygrid");
         }
 

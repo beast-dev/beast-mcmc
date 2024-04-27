@@ -193,7 +193,7 @@ public class PartitionClockModel extends PartitionOptions {
                 "Hamiltonian Monte Carlo relaxed clock operator", null, OperatorType.RELAXED_CLOCK_HMC_OPERATOR ,1 , 1.0);
         createScaleOperator(ClockType.HMC_CLOCK_LOCATION, demoTuning, rateWeights);
         createScaleOperator(ClockType.HMCLN_SCALE, demoTuning, rateWeights);
-
+        createParameter("branchRates.rates", "HMC relaxed clock branch rates", 1.0);
 
         // Random local clock
         createOperator(ClockType.LOCAL_CLOCK + ".relativeRates", OperatorType.RANDOM_WALK, demoTuning, treeWeights);

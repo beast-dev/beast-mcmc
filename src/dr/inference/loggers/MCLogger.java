@@ -251,7 +251,13 @@ public class MCLogger implements Logger {
             if (performanceReport) {
                 long time = System.currentTimeMillis();
                 rollingTime.add(time);
+                if (rollingTime.size() > PERFORMANCE_SAMPLE_SIZE) {
+                    rollingTime.removeFirst();
+                }
                 rollingState.add(state);
+                if (rollingState.size() > PERFORMANCE_SAMPLE_SIZE) {
+                    rollingState.removeFirst();
+                }
 
                 if (performanceReportStarted) {
                     double hoursPerMillionStates =
@@ -307,8 +313,8 @@ public class MCLogger implements Logger {
     private long startTime;
     private long startState;
 
-    private Deque<Long> rollingTime = new ArrayDeque<>(PERFORMANCE_SAMPLE_SIZE);
-    private Deque<Long> rollingState = new ArrayDeque<>(PERFORMANCE_SAMPLE_SIZE);
+    private Deque<Long> rollingTime = new LinkedList<>();
+    private Deque<Long> rollingState = new LinkedList<>();
 
     private final NumberFormat formatter = NumberFormat.getNumberInstance();
     public String getTimePerMillion(long state, double hoursPerMillionStates) {

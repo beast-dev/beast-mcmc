@@ -678,6 +678,11 @@
     <property name="AppleSignerApplication" value="Developer ID Application: Andrew Rambaut (9E4WXAQ6SE)" />
     <property name="AppleSignerInstaller" value="Developer ID Installer: Andrew Rambaut (9E4WXAQ6SE)" />
 
+<!-- 
+    <property name="AppleSignerApplication" value="Developer ID Application: Marc Suchard (LC992Z5R7E)"/>
+    <property name="AppleSignerInstaller" value="Developer ID Installer: Marc Suchard (LC992Z5R7E)"/>
+ -->
+    
     <target name="mac" depends="dist"
             description="release Mac version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
         <delete dir="${Mac_package_dir}"/>

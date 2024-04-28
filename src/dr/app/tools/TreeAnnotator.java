@@ -211,7 +211,7 @@ public class TreeAnnotator {
 
             } catch (Importer.ImportException e) {
                 System.err.println("Error Parsing Input Tree: " + e.getMessage());
-                return;
+                System.exit(1);
             }
             fileReader.close();
             long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
@@ -219,13 +219,13 @@ public class TreeAnnotator {
             progressStream.println();
 
             if (totalTrees < 1) {
-                System.err.println("No trees");
-                return;
+                System.err.println("No trees in input file");
+                System.exit(1);
             }
             if (totalTreesUsed < 1) {
                 if (burninTrees > 0 || burninStates > 0) {
-                    System.err.println("No trees to use: burnin too high");
-                    return;
+                    System.err.println("No trees to use: burnin greater than number of trees in input file");
+                    System.exit(1);
                 }
             }
             cladeSystem.calculateCladeCredibilities(totalTreesUsed);
@@ -260,16 +260,16 @@ public class TreeAnnotator {
                         }
                         if (tree == null) {
                             System.err.println("No tree in target nexus or newick file " + targetTreeFileName);
-                            return;
+                            System.exit(1);
                         }
                         targetTree = new FlexibleTree(tree);
                     } catch (Importer.ImportException e) {
                         System.err.println("Error Parsing Target Tree: " + e.getMessage());
-                        return;
+                        System.exit(1);
                     }
                 } else {
                     System.err.println("No user target tree specified.");
-                    return;
+                    System.exit(1);
                 }
                 break;
             }
@@ -329,7 +329,7 @@ public class TreeAnnotator {
             cladeSystem.calculateCladeCredibilities(totalTreesUsed);
         } catch (Importer.ImportException e) {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
-            return;
+            System.exit(1);
         }
         long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("* [" + timeElapsed + " secs]");
@@ -346,7 +346,7 @@ public class TreeAnnotator {
             }
         } catch (Exception e) {
             System.err.println("Error annotating tree: " + e.getMessage() + "\nPlease check the tree log file format.");
-            return;
+            System.exit(1);
         }
 
         progressStream.println("Writing annotated tree....");
@@ -359,7 +359,7 @@ public class TreeAnnotator {
             new NexusExporter(stream).exportTree(targetTree);
         } catch (Exception e) {
             System.err.println("Error to write annotated tree file: " + e.getMessage());
-            return;
+            System.exit(1);
         }
 
     }
@@ -421,7 +421,7 @@ public class TreeAnnotator {
             }
         } catch (Importer.ImportException e) {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
-            return null;
+            System.exit(1);
         }
         long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("* [" + timeElapsed + " secs]");
@@ -1415,7 +1415,7 @@ public class TreeAnnotator {
         centreLine("by", 60);
         centreLine("Andrew Rambaut and Alexei J. Drummond", 60);
         progressStream.println();
-        centreLine("Institute of Evolutionary Biology", 60);
+        centreLine("Institute of Ecology and Evolution", 60);
         centreLine("University of Edinburgh", 60);
         centreLine("a.rambaut@ed.ac.uk", 60);
         progressStream.println();

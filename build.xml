@@ -413,6 +413,7 @@
     <property name="release_dir" value="release"/>
     <property name="BEAST_name" value="BEAST"/>
     <property name="BEAST_package_name" value="BEAST X"/>
+    <property name="BEAST_package_name_linux" value="BEAST_X"/>
     <property name="BEAUti_name" value="BEAUti"/>
     <property name="TreeAnnotator_name" value="TreeAnnotator"/>
     <property name="LogCombiner_name" value="LogCombiner"/>
@@ -428,7 +429,7 @@
     <property name="Packaging_dir" value="packaging_tools/windows"/>
 
     <property name="Mac_package_dir" value="${Mac_dir}/${BEAST_package_name} v${version}"/>
-    <property name="Linux_package_dir" value="${Linux_dir}/${BEAST_package_name}v${version}"/>
+    <property name="Linux_package_dir" value="${Linux_dir}/${BEAST_package_name_linux}v${version}"/>
     <property name="Windows_package_dir" value="${Windows_dir}/${BEAST_package_name} v${version}"/>
     <property name="Windows_launchers_package_dir" value="${Windows_launchers_dir}/${BEAST_package_name} v${version}"/>
 

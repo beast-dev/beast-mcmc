@@ -655,8 +655,22 @@
 
 <!-- 
     <property name="AppleSignerApplication" value="Developer ID Application: Marc Suchard (LC992Z5R7E)"/>
-    <property name="AppleSignerInstaller" value="Developer ID Installer: Marc Suchard (LC992Z5R7E)"/>
+    <property name="AppleSignerInstaller" value="Developer ID Application: Marc Suchard (LC992Z5R7E)"/>
  -->
+    
+    <!--
+    	documentation on how to notarization for Apple: https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow    
+    	
+    	run once: 
+    	xcrun notarytool store-credentials "notarytool-password"
+               --apple-id msuchard@mac.com
+               --team-id LC992Z5R7E
+               --password <secret_2FA_password> # from appleid.apple.com, app-specific password
+    	
+    	to notarize:
+    	xcrun notarytool submit release/BEAST\ X\ v10.5.0.dmg --keychain-profile "notarytool-password" --wait
+    	xcrun stapler staple release/BEAST\ X\ v10.5.0.dmg     	
+    -->
     
     <target name="mac" depends="dist"
             description="release Mac version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">

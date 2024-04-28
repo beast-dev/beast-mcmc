@@ -222,8 +222,8 @@ public class TreeAnnotator {
                 System.err.println("No trees");
                 return;
             }
-            if (totalTreesUsed <= 1) {
-                if (burnin > 0) {
+            if (totalTreesUsed < 1) {
+                if (burninTrees > 0 || burninStates > 0) {
                     System.err.println("No trees to use: burnin too high");
                     return;
                 }

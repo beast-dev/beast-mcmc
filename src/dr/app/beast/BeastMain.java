@@ -251,8 +251,11 @@ public class BeastMain {
                                 "the button at the bottom right of the window.");
 
             } else {
-                infoLogger.severe("Parsing error - poorly formed BEAST file, " + fileName + ":\n" +
-                        pxe.getMessage() + "\n\nError thrown at: " + pxe.getStackTrace()[0] + "\n");
+                infoLogger.severe(
+                        "\n******\nError in input BEAST XML file, " + fileName + ":\n" +
+                        pxe.getMessage() +
+                        "\n******\n"
+                );
             }
             throw new RuntimeException("Terminate");
         } catch (RuntimeException rex) {

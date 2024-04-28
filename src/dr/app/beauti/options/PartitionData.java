@@ -126,6 +126,9 @@ public class PartitionData extends AbstractPartitionData {
         if (patterns == null && alignment != null) {
             patterns = new Patterns(alignment);
         }
+        if (alignment == null) {
+            return traits.size();
+        }
         return patterns.getPatternCount();
     }
 

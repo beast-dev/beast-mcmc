@@ -31,21 +31,16 @@ import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
-import dr.evomodelxml.continuous.ContinuousTraitDataModelParser;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.*;
 import dr.math.matrixAlgebra.missingData.InversionResult;
 import dr.math.matrixAlgebra.missingData.MissingOps;
-import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static dr.evomodelxml.continuous.ContinuousTraitDataModelParser.NUM_TRAITS;
-import static dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser.FORCE_FULL_PRECISION;
 
 /**
  * @author Marc A. Suchard
@@ -504,142 +499,18 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         return repeatedTraits;
     }
 
+    @Override
+    public void updateTipDataGradient(DenseMatrix64F precision, DenseMatrix64F variance, NodeRef node,
+                                      int offset, int dimGradient) {
+        NormalExtensionProvider.extendTipDataGradient(this, precision, variance, node, offset, dimGradient);
+    }
+
+    @Override
+    public boolean needToUpdateTipDataGradient(int offset, int dimGradient) {
+        return true;
+    }
+
     private static final boolean DEBUG = false;
-
-    // TODO Move remainder into separate class file
-    public static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
-    private static final String PRECISION = "samplingPrecision";
-    private static final String SCALE_BY_TIP_HEIGHT = "scaleByTipHeight";
-
-    public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
-        @Override
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            final ContinuousTraitPartialsProvider subModel;
-
-
-            XMLObject cxo = xo.getChild(PRECISION);
-            MatrixParameterInterface samplingPrecision = (MatrixParameterInterface)
-                    cxo.getChild(MatrixParameterInterface.class);
-
-            CholeskyDecomposition chol;
-            try {
-                chol = new CholeskyDecomposition(samplingPrecision.getParameterAsMatrix());
-            } catch (IllegalDimension illegalDimension) {
-                throw new XMLParseException(PRECISION + " must be a square matrix.");
-            }
-
-            if (!chol.isSPD()) {
-                throw new XMLParseException(PRECISION + " must be a positive definite matrix.");
-            }
-
-
-            boolean scaleByTipHeight = xo.getAttribute(SCALE_BY_TIP_HEIGHT, false);
-
-            int dimTrait = samplingPrecision.getColumnDimension();
-            final PrecisionType precisionType;
-            if (xo.getAttribute(ContinuousTraitDataModelParser.FORCE_FULL_PRECISION, false) ||
-                    dimTrait > 1) {
-                precisionType = PrecisionType.FULL;
-            } else {
-                precisionType = PrecisionType.SCALAR;
-            }
-
-            if (xo.hasChildNamed(TreeTraitParserUtilities.TRAIT_PARAMETER)) {
-                subModel = ContinuousTraitDataModelParser.parseContinuousTraitDataModel(xo, precisionType);
-            } else {
-                subModel = (ContinuousTraitPartialsProvider) xo.getChild(ContinuousTraitPartialsProvider.class);
-                if (subModel.getPrecisionType() != precisionType) {
-                    throw new XMLParseException("Precision type of " + REPEATED_MEASURES_MODEL + " is " +
-                            precisionType.getClass() + ", but the precision type of the child model " +
-                            subModel.getModelName() + " is " + subModel.getPrecisionType().getClass());
-                }
-            }
-            String modelName = subModel.getModelName();
-
-            int numTraits = xo.getAttribute(NUM_TRAITS, subModel.getTraitCount());
-
-            if (subModel.getTraitDimension() != dimTrait) {
-                throw new XMLParseException("sub-model has trait dimension " + subModel.getTraitDimension() +
-                        ", but sampling precision has dimension " + dimTrait);
-            }
-
-            // Jitter
-            TreeTraitParserUtilities utilities = new TreeTraitParserUtilities(); // TODO: ideally this wouldn't be here
-            if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
-                utilities.jitter(xo, samplingPrecision.getColumnDimension(), subModel.getDataMissingIndicators());
-            }
-
-
-            if (!scaleByTipHeight) {
-                return new RepeatedMeasuresTraitDataModel(
-                        modelName,
-                        subModel,
-                        subModel.getParameter(),
-                        subModel.getDataMissingIndicators(),
-//                    missingIndicators,
-                        true,
-                        dimTrait,
-                        numTraits,
-//                    diffusionModel.getPrecisionParameter().getRowDimension(),
-                        samplingPrecision,
-                        precisionType
-                );
-            } else {
-                return new TreeScaledRepeatedMeasuresTraitDataModel(
-                        modelName,
-                        subModel,
-                        subModel.getParameter(),
-                        subModel.getDataMissingIndicators(),
-                        true,
-                        dimTrait,
-                        subModel.getTraitCount(),
-                        samplingPrecision,
-                        precisionType
-                );
-            }
-        }
-
-        @Override
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        @Override
-        public String getParserDescription() {
-            return null;
-        }
-
-        @Override
-        public Class getReturnType() {
-            return RepeatedMeasuresTraitDataModel.class;
-        }
-
-        @Override
-        public String getParserName() {
-            return REPEATED_MEASURES_MODEL;
-        }
-    };
-
-    private final static XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new ElementRule(PRECISION, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class),
-            }),
-            // Tree trait parser
-//            new ElementRule(MutableTreeModel.class),
-//            AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME),
-            new XORRule(
-                    new ElementRule(ContinuousTraitPartialsProvider.class),
-                    new AndRule(ContinuousTraitDataModelParser.rules)
-            ),
-            new ElementRule(TreeTraitParserUtilities.MISSING, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
-            }, true),
-            AttributeRule.newBooleanRule(SCALE_BY_TIP_HEIGHT, true),
-//            new ElementRule(MultivariateDiffusionModel.class),
-            TreeTraitParserUtilities.jitterRules(true),
-            AttributeRule.newBooleanRule(FORCE_FULL_PRECISION, true),
-    };
 
 
 }

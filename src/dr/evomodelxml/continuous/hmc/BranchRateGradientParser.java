@@ -51,9 +51,9 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRA
 
 public class BranchRateGradientParser extends AbstractXMLObjectParser {
 
-    private static final String NAME = "branchRateGradient";
-    private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
-    private static final String USE_HESSIAN = "useHessian";
+    public static final String NAME = "branchRateGradient";
+    public static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
+    public static final String USE_HESSIAN = "useHessian";
 
     @Override
     public String getParserName() {

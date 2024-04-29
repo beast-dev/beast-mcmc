@@ -76,6 +76,8 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
     } // No parameters to respond to
+        // Currently GMRF likelihoods have parameters but they override this method. In the future the GMRF bit may
+        // be extracted out and then such classes would not have to override this method. -JT
 
     // **************************************************************
     // Model IMPLEMENTATION
@@ -131,12 +133,16 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
 
 
     public IntervalList getIntervalList() {
-            return intervalList;
+        return intervalList;
     }
 
     public String toString() {
         return Double.toString(logLikelihood);
     }
+
+
+
+
 
     // ****************************************************************
     // Inner classes
@@ -163,7 +169,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     // Private and protected stuff
     // ****************************************************************
 
-    private IntervalList intervalList = null;
+    protected IntervalList intervalList = null;
 
     protected double logLikelihood;
     protected double storedLogLikelihood;

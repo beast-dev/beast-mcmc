@@ -61,7 +61,7 @@ public class DiscreteTraitBranchRateGradient
         implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable, Citable {
 
     protected final TreeDataLikelihood treeDataLikelihood;
-    private final TreeTrait treeTraitProvider;
+    protected final TreeTrait treeTraitProvider;
     protected final Tree tree;
     protected final boolean useHessian;
     protected final Parameter rateParameter;

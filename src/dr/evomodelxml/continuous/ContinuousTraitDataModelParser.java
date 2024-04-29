@@ -2,6 +2,7 @@ package dr.evomodelxml.continuous;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
+import dr.evomodel.treedatalikelihood.continuous.HomogeneousDiffusionModelDelegate;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedProcessTraitDataModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
@@ -60,7 +61,9 @@ public class ContinuousTraitDataModelParser extends AbstractXMLObjectParser {
             precisionType = PrecisionType.SCALAR;
 
             if (xo.getAttribute(FORCE_FULL_PRECISION, false) ||
-                    (useMissingIndices && !xo.getAttribute(FORCE_COMPLETELY_MISSING, false))) {
+                    (useMissingIndices && !xo.getAttribute(FORCE_COMPLETELY_MISSING, false))
+//                    || !(diffusionProcessDelegate instanceof HomogeneousDiffusionModelDelegate)
+                    ) {
                 precisionType = PrecisionType.FULL;
             }
         }

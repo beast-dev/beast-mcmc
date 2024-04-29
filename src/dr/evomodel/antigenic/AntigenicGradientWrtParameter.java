@@ -2,6 +2,8 @@ package dr.evomodel.antigenic;
 
 import dr.inference.model.Parameter;
 
+import java.util.Arrays;
+
 public interface AntigenicGradientWrtParameter {
 
     boolean requiresLocationGradient();
@@ -18,8 +20,32 @@ public interface AntigenicGradientWrtParameter {
 
     class VirusLocations extends Locations {
 
-        VirusLocations(int viruses, int sera, int mdsDim, Parameter parameter, NewAntigenicLikelihood.Layout layout) {
+        VirusLocations(int viruses, int sera, int mdsDim, Parameter parameter, NewAntigenicLikelihood.Layout layout,
+                       int startOffset, int tipSize) {
             super(viruses, sera, mdsDim, parameter, layout);
+            this.startOffset = startOffset;
+            this.tipSize = tipSize;
+        }
+
+        @Override
+        public void getGradient(double[] gradient, int offset,
+                                double[] locationGradient,
+                                double[] observationGradient) {
+            if (tipSize == mdsDim) {
+                super.getGradient(gradient, offset, locationGradient, observationGradient);
+            } else {
+
+                final int locationGradientOffset = getLocationOffset();
+
+                Arrays.fill(gradient, offset, offset + getSize(), 0.0);
+
+                for (int v = 0; v < viruses; ++v) {
+                    for (int j = 0; j < mdsDim; ++j) {
+                        gradient[offset + v * tipSize + startOffset + j] =
+                                locationGradient[locationGradientOffset + v * mdsDim + j];
+                    }
+                }
+            }
         }
 
         @Override
@@ -29,8 +55,11 @@ public interface AntigenicGradientWrtParameter {
 
         @Override
         public int getSize() {
-            return viruses * mdsDim;
+            return viruses * tipSize;
         }
+
+        private final int startOffset;
+        private final int tipSize;
     }
 
     class SerumLocations extends Locations {

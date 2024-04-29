@@ -25,8 +25,8 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
-import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
+import dr.evolution.coalescent.TreeIntervalList;
+import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Bounds;
 import dr.inference.model.Model;
@@ -40,18 +40,21 @@ import dr.inference.model.Variable;
 @Deprecated
 public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightTransformDelegate {
 
-    private OldGMRFSkyrideLikelihood skyrideLikelihood;
+    private GMRFSkyrideLikelihood skyrideLikelihood;
     private Parameter coalescentIntervals;
-    private OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping;
+    private TreeIntervalList intervalNodeMapping;
 
     public NodeHeightToCoalescentIntervalsDelegate(TreeModel treeModel,
                                                    Parameter nodeHeights,
-                                                   OldGMRFSkyrideLikelihood skyrideLikelihood) {
+                                                   GMRFSkyrideLikelihood skyrideLikelihood) {
 
         super(treeModel, nodeHeights);
 
         this.skyrideLikelihood = skyrideLikelihood;
-        this.intervalNodeMapping = skyrideLikelihood.getIntervalNodeMapping();
+        //Casting guaranteed by parser
+        TreeIntervalList intervalList = (TreeIntervalList)skyrideLikelihood.getIntervalList();
+        intervalList.setBuildIntervalNodeMapping(true);
+        this.intervalNodeMapping = intervalList;
         this.coalescentIntervals = createProxyForCoalescentIntervals();
         this.coalescentIntervals.addBounds(new NodeHeightToCoalescentIntervalsDelegate.CoalescentIntervalBounds());
         addVariable(coalescentIntervals);
@@ -190,7 +193,7 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
 
             private void updateCoalescentIntervals() {
                 if (!proxyValuesKnown) {
-                    System.arraycopy(skyrideLikelihood.getCoalescentIntervals(), 0,
+                    System.arraycopy(intervalNodeMapping.getCoalescentIntervals(), 0,
                             proxy, 0, proxy.length);
                     ((NodeHeightToCoalescentIntervalsDelegate.CoalescentIntervalBounds) getBounds()).setupBounds();
                     proxyValuesKnown = true;

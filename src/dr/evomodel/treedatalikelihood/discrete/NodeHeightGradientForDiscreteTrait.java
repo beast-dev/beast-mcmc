@@ -33,6 +33,7 @@ import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
@@ -45,7 +46,7 @@ import java.util.Arrays;
  */
 
 public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateGradient
-        implements GradientWrtParameterProvider, Reportable, Loggable {
+        implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
 
     private final TreeModel treeModel;
     protected TreeParameterModel indexHelper;
@@ -75,7 +76,7 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
     protected ProcessSimulationDelegate makeGradientDelegate(String traitName, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate) {
         return new DiscreteTraitNodeHeightDelegate(traitName,
                 tree,
-                likelihoodDelegate);
+                likelihoodDelegate, branchRateModel);
     }
     @Override
     public Parameter getParameter() {
@@ -83,32 +84,50 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
     }
 
     protected double getChainGradient(Tree tree, NodeRef node) {
+//        throw new RuntimeException("This should not be called anymore.");
         return branchRateModel.getBranchRate(tree, node);
     }
 
     @Override
     public double[] getGradientLogDensity() {
 
-        double[] result = new double[tree.getInternalNodeCount()];
-        Arrays.fill(result, 0.0);
+        if (treeTraitProvider.getTraitName() == super.getTraitName(null)) {
+            double[] result = new double[tree.getInternalNodeCount()];
+            Arrays.fill(result, 0.0);
 
-        double[] gradient = super.getGradientLogDensity();
+            double[] gradient = super.getGradientLogDensity();
 
-        for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
+            for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
 
-            final  NodeRef node = tree.getNode(i + tree.getExternalNodeCount());
+                final  NodeRef node = tree.getNode(i + tree.getExternalNodeCount());
 
-            for (int j = 0; j < tree.getChildCount(node); j++) {
-                NodeRef childNode = tree.getChild(node, j);
-                final int childNodeIndex = indexHelper.getParameterIndexFromNodeNumber(childNode.getNumber());
-                result[i] += gradient[childNodeIndex];
+                for (int j = 0; j < tree.getChildCount(node); j++) {
+                    NodeRef childNode = tree.getChild(node, j);
+                    final int childNodeIndex = indexHelper.getParameterIndexFromNodeNumber(childNode.getNumber());
+                    result[i] += gradient[childNodeIndex];
+                }
+                if (!tree.isRoot(node)) {
+                    final int nodeIndex = indexHelper.getParameterIndexFromNodeNumber(node.getNumber());
+                    result[i] -= gradient[nodeIndex];
+                }
             }
-            if (!tree.isRoot(node)) {
-                final int nodeIndex = indexHelper.getParameterIndexFromNodeNumber(node.getNumber());
-                result[i] -= gradient[nodeIndex];
-            }
+            return result;
         }
-        return result;
+
+        double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
+
+        return Arrays.copyOf(gradient, tree.getInternalNodeCount());
+    }
+
+    public double[] getDiagonalHessianLogDensity() {
+
+        //Do single call to traitProvider with node == null (get full tree)
+        double[] gradient = new double[tree.getInternalNodeCount()];
+
+        double[] diagonalHessian = (double[]) treeDataLikelihood.getTreeTrait(DiscreteTraitNodeHeightDelegate.HESSIAN_TRAIT_NAME).getTrait(tree, null);
+
+
+        return diagonalHessian;
     }
 
     protected int getParameterIndexFromNode(NodeRef node) {
@@ -119,7 +138,8 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
     public String getReport() {
 
         String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY,
-                tolerance, smallValueThreshold);
+                tolerance, smallValueThreshold)
+                + HessianWrtParameterProvider.getReportAndCheckForError(this, tolerance);
 
         return message;
     }

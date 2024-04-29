@@ -26,7 +26,7 @@
 package dr.evomodelxml.coalescent.operators;
 
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
-import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator;
 import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
 import dr.inference.operators.AdaptableMCMCOperator;
@@ -113,7 +113,7 @@ public class GMRFSkyrideBlockUpdateOperatorParser extends AbstractXMLObjectParse
         if (xo.getAttribute(OLD_SKYRIDE, true)
                 && !(xo.getName().compareTo(GRID_BLOCK_UPDATE_OPERATOR) == 0)
                 ) {
-            OldGMRFSkyrideLikelihood gmrfLikelihood = (OldGMRFSkyrideLikelihood) xo.getChild(OldGMRFSkyrideLikelihood.class);
+           GMRFSkyrideLikelihood gmrfLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
             return new GMRFSkyrideBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
                     maxIterations, stopValue);
         } else {
@@ -147,7 +147,7 @@ public class GMRFSkyrideBlockUpdateOperatorParser extends AbstractXMLObjectParse
             AttributeRule.newDoubleRule(STOP_VALUE, true),
             AttributeRule.newIntegerRule(MAX_ITERATIONS, true),
             AttributeRule.newBooleanRule(OLD_SKYRIDE, true),
-            new ElementRule(OldGMRFSkyrideLikelihood.class)
+            new ElementRule(GMRFSkyrideLikelihood.class)
     };
 
 }

@@ -83,7 +83,7 @@ public class EuclideanTransformTest extends TraceCorrelationAssert {
         double jacobianDetBis = Math.log(CommonOps.det(new DenseMatrix64F(jacobianMat)));
 
         // Determinant
-        double jacobianDet = (new Transform.InverseMultivariate(transform)).getLogJacobian(unconstrained, 0, unconstrained.length);
+        double jacobianDet = (new Transform.InverseMultivariate(transform)).logJacobian(unconstrained, 0, unconstrained.length);
 
         System.out.println("Log Jacobiant Det direct=" + jacobianDet);
         System.out.println("Log Jacobiant Det matrix=" + jacobianDetBis);

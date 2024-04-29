@@ -313,12 +313,26 @@ public class XMLObject {
         return getBoolean(getAndTest(name));
     }
 
+    /**
+     * @return the named attribute as a boolean.
+     */
+    public boolean getBooleanAttribute(String name, boolean defaultValue) throws XMLParseException {
+        return getBoolean(getOrDefault(name, defaultValue));
+    }
+
 
     /**
      * @return the named attribute as a double.
      */
     public double getDoubleAttribute(String name) throws XMLParseException {
         return getDouble(getAndTest(name));
+    }
+
+    /**
+     * @return the named attribute as a double.
+     */
+    public double getDoubleAttribute(String name, double defaultValue) throws XMLParseException {
+        return getDouble(getOrDefault(name, defaultValue));
     }
 
     /**
@@ -352,6 +366,13 @@ public class XMLObject {
     }
 
     /**
+     * @return the named attribute as an integer.
+     */
+    public int getIntegerAttribute(String name, int defaultValue) throws XMLParseException {
+        return getInteger(getOrDefault(name, defaultValue));
+    }
+
+    /**
      * @return the named attribute as a long integer.
      */
     public long getLongIntegerAttribute(String name) throws XMLParseException {
@@ -359,10 +380,24 @@ public class XMLObject {
     }
 
     /**
+     * @return the named attribute as a long integer.
+     */
+    public long getLongIntegerAttribute(String name, long defaultValue) throws XMLParseException {
+        return getLongInteger(getOrDefault(name, defaultValue));
+    }
+
+    /**
      * @return the named attribute as a string.
      */
     public String getStringAttribute(String name) throws XMLParseException {
         return getString(getAndTest(name));
+    }
+
+    /**
+     * @return the named attribute as a string.
+     */
+    public String getStringAttribute(String name, String defaultValue) throws XMLParseException {
+        return getString(getOrDefault(name, defaultValue));
     }
 
     /**
@@ -386,7 +421,7 @@ public class XMLObject {
                 if (token.compareToIgnoreCase(missingValue) == 0)
                     d = Double.NaN;
                 else
-                    d = new Double(token);
+                    d = Double.parseDouble(token);
                 if (valueList != null) valueList.add(d);
             }
             return true;
@@ -404,7 +439,7 @@ public class XMLObject {
         try {
             StringTokenizer st = new StringTokenizer(s);
             while (st.hasMoreTokens()) {
-                Integer d = new Integer(st.nextToken());
+                Integer d = Integer.parseInt(st.nextToken());
                 if (valueList != null) valueList.add(d);
             }
             return true;
@@ -649,6 +684,16 @@ public class XMLObject {
         }
         throw new XMLParseException("'" + name + "' attribute was not found in " + element.getTagName() + " element.");
     }
+    /**
+     * @return the named attribute if it exists, return defaultValue otherwise.
+     */
+    private Object getOrDefault(String name, Object defaultValue) throws XMLParseException {
+        if (element.hasAttribute(name)) {
+            return element.getAttribute(name);
+        }
+        return defaultValue;
+    }
+
 
     public XMLObject getParent() {
         return parent;

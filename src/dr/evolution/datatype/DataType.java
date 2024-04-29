@@ -28,6 +28,8 @@ package dr.evolution.datatype;
 import java.io.Serializable;
 import java.util.*;
 
+import dr.inference.model.Bounds.Int;
+
 /**
  * Base class for sequence data types.
  *
@@ -49,6 +51,9 @@ public abstract class DataType implements Serializable {
 
     public static final int P2PTYPE = 7;
     public static final int CONTINUOUS = 8;
+    public static final int INTEGER = 9;
+
+    public static final int DUMMY = 9;
 
     public static final char UNKNOWN_CHARACTER = '?';
     public static final char GAP_CHARACTER = '-';
@@ -108,6 +113,7 @@ public abstract class DataType implements Serializable {
             registerDataType(Microsatellite.DESCRIPTION, Microsatellite.INSTANCE);
             registerDataType(P2P.DESCRIPTION, P2P.INSTANCE);
             registerDataType(ContinuousDataType.DESCRIPTION, ContinuousDataType.INSTANCE);
+            registerDataType(IntegerDataType.DESCRIPTION, IntegerDataType.INSTANCE);
         }
     }
 
@@ -359,6 +365,22 @@ public abstract class DataType implements Serializable {
         return (1.0 - (sumMatch / (sum1 * sum2)));
     }
 
+    /**
+     * returns whether two states are definitely different given the ambiguity in either
+     */
+    public boolean areUnambiguouslyDifferent(int state1, int state2) {
+        boolean[] stateSet1 = getStateSet(state1);
+        boolean[] stateSet2 = getStateSet(state2);
+        for (int i = 0; i < stateSet1.length; i++) {
+            if (stateSet1[i] && stateSet2[i]) {
+                // at least one state is present in both sets
+                return false;
+            }
+        }
+        return true;
+    }
+
+
     public String toString() {
         return getDescription();
     }
@@ -437,6 +459,8 @@ public abstract class DataType implements Serializable {
                 return "Continuous Traits";
             case DataType.MICRO_SAT:
                 return "Microsatellite";
+            case DataType.DUMMY:
+                return "Dummy";
             default:
                 throw new IllegalArgumentException("Unsupported data type");
 

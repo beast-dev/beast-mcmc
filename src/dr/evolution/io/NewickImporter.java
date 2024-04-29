@@ -257,6 +257,9 @@ public class NewickImporter extends Importer implements TreeImporter {
         // If there is a label before the colon, store it:
         try {
             String label = readToken(",():;");
+            if ((char) getLastDelimiter() == ';') {
+                unreadCharacter(';');
+            }
             if (label.length() > 0) {
                 node.setAttribute("label", label);
             }

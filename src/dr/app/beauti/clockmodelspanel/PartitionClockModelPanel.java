@@ -46,13 +46,16 @@ public class PartitionClockModelPanel extends OptionsPanel {
     private static final long serialVersionUID = -1645661616353099424L;
 
     private JComboBox clockTypeCombo = new JComboBox(EnumSet.range(
-            ClockType.STRICT_CLOCK, ClockType.FIXED_LOCAL_CLOCK).toArray());
+            ClockType.STRICT_CLOCK, ClockType.MIXED_EFFECTS_CLOCK).toArray());
     private JComboBox clockDistributionCombo = new JComboBox (new ClockDistributionType[] {
             ClockDistributionType.LOGNORMAL,
             ClockDistributionType.GAMMA,
 //            ClockDistributionType.CAUCHY,
             ClockDistributionType.EXPONENTIAL,
             //ClockDistributionType.MODEL_AVERAGING
+    });
+    private JComboBox clockHMCDistributionCombo = new JComboBox (new ClockDistributionType[] {
+            ClockDistributionType.LOGNORMAL
     });
     private JCheckBox continuousQuantileCheck = new JCheckBox("Use continuous quantile parameterization.");
 
@@ -138,6 +141,14 @@ public class PartitionClockModelPanel extends OptionsPanel {
                                 "Rambaut (2006) PLoS Biology 4, e88.<html>"));
                 addComponentWithLabel("Relaxed Distribution:", clockDistributionCombo);
                 addComponent(continuousQuantileCheck);
+                break;
+
+            case HMC:
+                addComponent(new JLabel(
+                        "<html>" +
+                                "Using the Hamiltonian Monte Carlo relaxed clock model of Ji, Zhang, Holbrook,<br>" +
+                                "Nishimura, Baele, Rambaut, Lemey & Suchard (2020) Mol Biol Evol 37, 3047–3060.<html>"));
+                addComponentWithLabel("Relaxed Distribution:", clockHMCDistributionCombo);
                 break;
 
             case AUTOCORRELATED:

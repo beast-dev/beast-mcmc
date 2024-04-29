@@ -45,12 +45,14 @@ import dr.app.beauti.components.linkedparameters.LinkedParameterComponentFactory
 import dr.app.beauti.components.marginalLikelihoodEstimation.MarginalLikelihoodEstimationComponentFactory;
 import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentFactory;
 import dr.app.beauti.components.tipdatesampling.TipDateSamplingComponentFactory;
+import dr.app.beauti.datapanel.CreateBadTraitFormatDialog;
 import dr.app.beauti.datapanel.DataPanel;
 import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.generator.Generator;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.operatorspanel.OperatorsPanel;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.priorspanel.DefaultPriorTableDialog;
 import dr.app.beauti.priorspanel.PriorsPanel;
@@ -59,6 +61,7 @@ import dr.app.beauti.taxonsetspanel.TaxonSetPanel;
 import dr.app.beauti.tipdatepanel.TipDatesPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.TreesPanel;
+import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.TextUtil;
 import dr.app.gui.FileDrop;
@@ -147,7 +150,7 @@ public class BeautiFrame extends DocumentFrame {
 
         getZoomWindowAction().setEnabled(false);
 
-        components = new ComponentFactory[] {
+        components = new ComponentFactory[]{
                 AncestralStatesComponentFactory.INSTANCE,
                 ContinuousComponentFactory.INSTANCE,
                 DiscreteTraitsComponentFactory.INSTANCE,
@@ -483,8 +486,8 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public final void doImport() {
-        File[] files = selectImportFiles("Import Aligment...", true, new FileNameExtensionFilter[] {
-                new FileNameExtensionFilter( "Microsatellite (tab-delimited *.txt) Files", "txt"),
+        File[] files = selectImportFiles("Import Aligment...", true, new FileNameExtensionFilter[]{
+                new FileNameExtensionFilter("Microsatellite (tab-delimited *.txt) Files", "txt"),
                 new FileNameExtensionFilter(
                         "NEXUS, BEAST or FASTA Files", "nex", "nexus", "nx", "xml", "beast", "fa", "fasta", "afa")});
         // new FileNameExtensionFilter( "Microsatellite (tab-delimited *.txt) Files", "txt");
@@ -546,47 +549,47 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public final boolean doImportTraits() {
-        if (options.taxonList != null) { // validation of check empty taxonList
-            File[] files = selectImportFiles("Import Traits File...", false, new FileNameExtensionFilter[] {
-                    new FileNameExtensionFilter("Tab-delimited text files", "txt", "tab", "dat") });
+        File[] files = selectImportFiles("Import Traits File...", false, new FileNameExtensionFilter[]{
+                new FileNameExtensionFilter("Tab-delimited text files", "txt", "tab", "dat")});
 
-            if (files != null && files.length != 0) {
-                try {
-                    BEAUTiImporter beautiImporter = new BEAUTiImporter(this, options);
-                    beautiImporter.importTraits(files[0]);
-                } catch (FileNotFoundException fnfe) {
-                    JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
-                            "Unable to open file",
-                            JOptionPane.ERROR_MESSAGE);
-                    return false;
-                } catch (IOException ioe) {
-                    JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
-                            "Unable to read file",
-                            JOptionPane.ERROR_MESSAGE);
-                    return false;
-                } catch (Exception ex) {
-                    ex.printStackTrace(System.err);
-                    JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
-                            "Error reading file",
-                            JOptionPane.ERROR_MESSAGE);
-                    ex.printStackTrace();
-                    return false;
+        if (files != null && files.length != 0) {
+            try {
+                BEAUTiImporter beautiImporter = new BEAUTiImporter(this, options);
+                if (options.taxonList == null) {
+                    beautiImporter.importTaxaFromTraits(files[0]);
+                    setDirty();
                 }
-            } else {
+                beautiImporter.importTraits(files[0]);
+            } catch (FileNotFoundException fnfe) {
+                JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
+                        "Unable to open file",
+                        JOptionPane.ERROR_MESSAGE);
+                return false;
+            } catch (IOException ioe) {
+                JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
+                        "Unable to read file",
+                        JOptionPane.ERROR_MESSAGE);
+                return false;
+            } catch (Exception ex) {
+                ex.printStackTrace(System.err);
+
+                CreateBadTraitFormatDialog dialog = new CreateBadTraitFormatDialog(this);
+                dialog.showDialog();
+
+                ex.printStackTrace();
                 return false;
             }
-
-            traitsPanel.fireTraitsChanged();
-            setAllOptions();
-
-            tabbedPane.setSelectedComponent(traitsPanel);
-            return true;
-
         } else {
-            JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file.",
-                    "No taxa loaded", JOptionPane.ERROR_MESSAGE);
             return false;
         }
+
+        traitsPanel.fireTraitsChanged();
+        setAllOptions();
+
+        tabbedPane.setSelectedComponent(traitsPanel);
+        return true;
+
+
     }
 
     public boolean validateTraitName(String traitName) {
@@ -668,6 +671,14 @@ public class BeautiFrame extends DocumentFrame {
         if (!defaultPriorDialog.showDialog(options)) {
             return false;
         }
+        //TODO make remove this or put warnings in check above? Seems more appropriate here for now
+        if(!generator.checkUserTreeIsBifurcating()){
+            JOptionPane.showMessageDialog(this, "At least one  user-specified starting tree " +
+                        "is not fully bifurcating.\nBEAST will randomly resolve it into a bifurcating (binary) tree.",
+                        "Unresolved user-specified starting tree",
+                        JOptionPane.WARNING_MESSAGE);
+        }
+
 
         File file = selectExportFile("Generate BEAST XML File...", new FileNameExtensionFilter("BEAST XML File", "xml", "beast"));
 
@@ -703,6 +714,7 @@ public class BeautiFrame extends DocumentFrame {
     /**
      * Use the native file dialog on the Mac because the Swing one is bad. On linux, the native
      * one is bad. No preference on Windows.
+     *
      * @param title
      * @return
      */
@@ -716,7 +728,7 @@ public class BeautiFrame extends DocumentFrame {
 
             importDialog.setVisible(true);
             if (importDialog.getFile() != null) {
-                return new File[] { new File(importDialog.getDirectory(), importDialog.getFile()) };
+                return new File[]{new File(importDialog.getDirectory(), importDialog.getFile())};
             }
         } else {
             JFileChooser importChooser = fileChoosers.get(title);
@@ -737,7 +749,7 @@ public class BeautiFrame extends DocumentFrame {
                 if (importChooser.isMultiSelectionEnabled()) {
                     return importChooser.getSelectedFiles();
                 } else {
-                    return new File[] { importChooser.getSelectedFile() };
+                    return new File[]{importChooser.getSelectedFile()};
                 }
             }
         }
@@ -748,6 +760,7 @@ public class BeautiFrame extends DocumentFrame {
     /**
      * Use the native file dialog on the Mac because the Swing one is bad. On linux, the native
      * one is bad. No preference on Windows.
+     *
      * @param title
      * @return
      */

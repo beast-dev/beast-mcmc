@@ -64,8 +64,35 @@
             description="Clean and Build all run-time stuff with unit test">
     </target>
 
+<!--    https://stackoverflow.com/questions/2974106/how-to-lookup-the-latest-git-commit-hash-from-an-ant-build-script-->
+    <available file=".git" type="dir" property="git.present"/>
+    <target name="git.commit" description="Store git revision in ${repository.commit}" if="git.present">
+        <exec executable="git" outputproperty="git.commit" failifexecutionfails="true" errorproperty="">
+            <arg value="describe"/>
+            <arg value="--always"/>
+            <arg value="--dirty"/>
+        </exec>
+        <condition property="repository.commit" value="${git.commit}" else="git-commit-unavailable">
+            <and>
+                <isset property="git.commit"/>
+                <length string="${git.commit}" trim="yes" length="0" when="greater"/>
+            </and>
+        </condition>
+    </target>
+
+    <target name="revision" depends="git.commit" description="build revision.txt from template">
+        <copy file="revision.txt.template" tofile="src/revision.txt" overwrite="yes">
+            <filterchain>
+                <replacetokens>
+                    <token key="repository.commit" value="${repository.commit}" />
+                </replacetokens>
+            </filterchain>
+        </copy>
+    </target>
+
+
     <!-- compile Java source code -->
-    <target name="compile-all" depends="init">
+    <target name="compile-all" depends="init,revision">
         <mkdir dir="${build}"/>
 
         <!-- Compile the java code from ${src} into ${build} /bin -->
@@ -160,6 +187,7 @@
             </fileset>
             <fileset dir="${src}">
                 <include name="dr/**/*.png"/>
+                <include name="revision.txt"/>
                 <include name="org/virion/jam/**/*.png"/>
                 <include name="dr/**/*.properties"/>
             </fileset>
@@ -203,13 +231,14 @@
                 <include name="dr/evomodel/branchratemodel/**/*.class"/>
                 <include name="dr/evomodel/clock/**/*.class"/>
                 <include name="dr/evomodel/coalescent/**/*.class"/>
+                <include name="dr/evomodel/continuous/**/*.class"/>
                 <include name="dr/evomodel/operators/**/*.class"/>
                 <include name="dr/evomodel/sitemodel/**/*.class"/>
                 <include name="dr/evomodel/speciation/**/*.class"/>
                 <include name="dr/evomodel/substmodel/**/*.class"/>
                 <include name="dr/evomodel/tree/**/*.class"/>
                 <include name="dr/evomodel/treelikelihood/**/*.class"/>
-                <exclude name="dr/evomodel/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
+                <include name="dr/evomodel/treedatalikelihood/**/*.class"/>
                 <include name="dr/evomodelxml/**/*.class"/>
                 <exclude name="dr/evomodelxml/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
                 <include name="dr/evoxml/**/*.class"/>
@@ -375,11 +404,11 @@
     <!--
     <property name="version" value="1.9"/>
      -->
-    <property name="version" value="1.10.5pre"/>
-    <property name="jvm_version" value="1.7+"/>
+    <property name="version" value="10.5.0"/>
+    <property name="jvm_version" value="1.8+"/>
 
-    <property name="version_number" value="1.10.5"/>
-    <property name="copyright" value="Copyright 2002-2019"/>
+    <property name="version_number" value="10.5.0"/>
+    <property name="copyright" value="Copyright 2002-2024"/>
 
     <property name="release_dir" value="release"/>
     <property name="BEAST_name" value="BEAST"/>

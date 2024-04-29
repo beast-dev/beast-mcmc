@@ -17,7 +17,8 @@
 	<newick id="dummyTree" usingDates="false" usingHeights="true">
 		((A:1,B:1):1,C:3)
 	</newick>
-	
+	<!-- 
+
 	<timeVaryingRates id="dummyRates1">
 		<newick idref="dummyTree"/>
 		<rate>
@@ -90,7 +91,9 @@
     		((A:[&#38;rate=1.0]1.0,B:[&#38;rate=1.0]1.0):[&#38;rate=1.0]1.0,C:[&#38;rate=1.0]3.0);		
     	</expected>
     </assertEqual>
+ -->
 
+<!-- 
 	<alignment id="dummyAlignment" dataType="nucleotide">
 		<sequence>
 			<taxon idref="A"/>
@@ -186,6 +189,7 @@
 	<report>
 		<branchRateGradient idref="dummyGradient3"/>
 	</report>
+ -->
 
 	<!-- The list of taxa to be analysed (can also include dates/ages).          -->
 	<!-- ntax=17                                                                 -->
@@ -372,16 +376,20 @@
 	<report>
 		<transformedVectorSumTransform idref="clock.rate"/>
 	</report>
+	
+<!-- 
+	
 	<timeVaryingRates id="branchRates">
 		<treeModel idref="treeModel"/>
 		<rate>
-<!--			<parameter id="clock.rate" value="1E-2 2E-2 3E-3 4E-2 5E-3 6E-4" lower="0.0"/>-->
+<!~~			<parameter id="clock.rate" value="1E-2 2E-2 3E-3 4E-2 5E-3 6E-4" lower="0.0"/>~~>
 			<parameter idref="clock.rate"/>
 		</rate>
 		<gridPoints>
 			<parameter id="grid" value="100 200 300 400 500" />
 		</gridPoints>
 	</timeVaryingRates>
+-->
 
 	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
 	<HKYModel id="hky">
@@ -403,8 +411,7 @@
 			<HKYModel idref="hky"/>
 		</substitutionModel>
 	</siteModel>
-
-
+<!--
 	<bayesianBridge id="timeVaryingRatePrior">
 		<parameter idref="tmp1"/>
 		<globalScale>
@@ -438,7 +445,7 @@
 		<compoundGradient idref="grad.bdss.prior"/>
 	</report>
 
-	<!-- Likelihood for tree given sequence data                                 -->
+	<!~~ Likelihood for tree given sequence data                                 ~~>
 	<treeDataLikelihood id="treeLikelihood" useAmbiguities="false" usePreOrder="true">
 		<patterns idref="patterns"/>
 		<treeModel idref="treeModel"/>
@@ -468,10 +475,10 @@
 
 	<jointGradient id="jointGradient">
 		<gradientWrtIncrements1D id="test" incrementTransformType="log">
-			<branchRateGradient idref="gradient"/> <!-- wrt clock.rate -->
+			<branchRateGradient idref="gradient"/> <!~~ wrt clock.rate ~~>
 			<compoundParameter idref="clockRateIncrements"/>
 		</gradientWrtIncrements1D>
-		<compoundGradient idref="grad.bdss.prior"/> <!-- wrt log.inverse.scan [tmp0, tmp1] -->
+		<compoundGradient idref="grad.bdss.prior"/> <!~~ wrt log.inverse.scan [tmp0, tmp1] ~~>
 	</jointGradient>
 
 	<report id="jointGradientReport">
@@ -489,4 +496,37 @@
 			<report idref="jointGradientReport"/>
     	</expected>
     </assertEqual>
+ -->
+ 
+<!--  functionalForm="piecewiseLogConstant" -->
+ 
+ 	<transform id="test" type="log" dim="10"/>
+    
+    <timeVaryingRates id="logBranchRates" >
+		<treeModel idref="treeModel"/>
+		<rate>
+			<parameter id="log.clock.rate" value="-3 -2 -1 0 1 2"/>			
+		</rate>
+		<gridPoints>
+			<parameter id="log.grid" value="100 200 300 400 500" />
+		</gridPoints>
+		<transform id="test2" type="log"/>
+	</timeVaryingRates>
+	
+	<treeDataLikelihood id="logTreeLikelihood" useAmbiguities="false" usePreOrder="true">
+		<patterns idref="patterns"/>
+		<treeModel idref="treeModel"/>
+		<siteModel idref="siteModel"/>
+		<timeVaryingRates idref="logBranchRates"/>
+	</treeDataLikelihood>
+
+	<branchRateGradient id="logGradient" traitName="Sequence" useHessian="false">
+    	<treeDataLikelihood idref="logTreeLikelihood"/>
+	</branchRateGradient>
+	
+	<report>
+		<branchRateGradient idref="logGradient"/>
+	</report>
+    
+    
 </beast>

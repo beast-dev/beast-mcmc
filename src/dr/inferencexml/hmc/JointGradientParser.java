@@ -40,7 +40,7 @@ import java.util.List;
 public class JointGradientParser extends AbstractXMLObjectParser {
 
     private final static String SUM_DERIVATIVE = "sumDerivative";
-    public final static String SUM_DERIVATIVE2 = "jointGradient";
+    public final static String JOINT_GRADIENT = "jointGradient";
     private static final String THREADS = "threads";
 
     @Override
@@ -50,7 +50,7 @@ public class JointGradientParser extends AbstractXMLObjectParser {
 
     @Override
     public String[] getParserNames() {
-        return new String[] { SUM_DERIVATIVE, SUM_DERIVATIVE2 };
+        return new String[] { SUM_DERIVATIVE, JOINT_GRADIENT };
     }
 
     @Override

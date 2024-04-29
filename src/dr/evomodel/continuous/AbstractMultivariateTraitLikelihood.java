@@ -46,7 +46,8 @@ import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -349,6 +350,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             final int dim = driftModels.size();
             double[] drift = new double[dim];
             double realTimeBranchLength = treeModel.getBranchLength(node);
+            realTimeBranchLength = rescaleLength(realTimeBranchLength); // Drift should be normalized if tree is normalized
             for (int i = 0; i < dim; ++i) {
                 drift[i] = driftModels.get(i).getBranchRate(treeModel, node) * realTimeBranchLength;
             }

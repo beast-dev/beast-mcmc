@@ -48,10 +48,7 @@ import dr.inference.hmc.GradientWrtIncrement;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.HessianProvider;
 import dr.inference.model.ParameterParser;
-import dr.inference.operators.AdaptableVarianceMultivariateNormalOperator;
-import dr.inference.operators.OperatorSchedule;
-import dr.inference.operators.RandomWalkOperator;
-import dr.inference.operators.RateBitExchangeOperator;
+import dr.inference.operators.*;
 import dr.inferencexml.SignTransformParser;
 import dr.inferencexml.distribution.DistributionLikelihoodParser;
 import dr.inferencexml.distribution.shrinkage.BayesianBridgeDistributionModelParser;
@@ -543,6 +540,7 @@ public class OperatorsGenerator extends Generator {
                         new Attribute.Default<Integer>(HamiltonianMonteCarloOperatorParser.N_STEPS, nSteps),
                         new Attribute.Default<Double>(HamiltonianMonteCarloOperatorParser.STEP_SIZE, stepSize),
                         new Attribute.Default<String>(HamiltonianMonteCarloOperatorParser.MODE, "vanilla"),
+                        new Attribute.Default<String>(AdaptableMCMCOperator.AUTO_OPTIMIZE, "true"),
                         new Attribute.Default<Integer>(HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_COUNT, gradientCheckCount),
                         new Attribute.Default<Double>(HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_TOLERANCE, gradientCheckTolerance),
                         new Attribute.Default<String>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING, preconditioning),
@@ -614,8 +612,7 @@ public class OperatorsGenerator extends Generator {
     private void writeShrinkageClockHMCOperator(Operator operator, String prefix, XMLWriter writer) {
         int nSteps = 5;
         double stepSize = 1E-2;
-        int gradientCheckCount = 100;
-        double gradientCheckTolerance = 0.2;
+        int gradientCheckCount = 0;
         int preconditioningUpdateFrequency = 1;
 
         writer.writeOpenTag(
@@ -628,7 +625,6 @@ public class OperatorsGenerator extends Generator {
                         new Attribute.Default<>("drawVariance", "1.0"),
                         new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING_UPDATE_FREQUENCY, preconditioningUpdateFrequency),
                         new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_COUNT, gradientCheckCount),
-                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_TOLERANCE, gradientCheckTolerance)
                 }
         );
         writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT);
@@ -651,11 +647,6 @@ public class OperatorsGenerator extends Generator {
         writer.writeIDref(BayesianBridgeDistributionModelParser.BAYESIAN_BRIDGE_DISTRIBUTION, prefix + "bbDistribution");
         writer.writeCloseTag("preconditioner");
 
-        writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rates");
-
-        writer.writeOpenTag(SignTransformParser.NAME);
-        writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rates");
-        writer.writeCloseTag(SignTransformParser.NAME);
         writer.writeCloseTag(HamiltonianMonteCarloOperatorParser.HMC_OPERATOR);
     }
 

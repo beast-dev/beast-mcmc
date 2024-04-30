@@ -144,6 +144,7 @@ public abstract class AbstractPartitionData implements Serializable {
 
     public abstract int getSiteCount();
 
+    public abstract int getPatternCount();
     public abstract DataType getDataType();
 
     public abstract String getDataDescription();

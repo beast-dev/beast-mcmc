@@ -26,7 +26,7 @@
 <!-- Build BEAST MCMC. It is also used by Hudson BEAST_MCMC project. JUnit test is available for this build. -->
 <project basedir="." default="dist" name="BEAST">
     <description>
-        Build BEAST MCMC. It is also used by Hudson BEAST_MCMC project. JUnit test is available for this build.
+        Build BEAST MCMC. JUnit test is available for this build.
         $Id$
     </description>
 
@@ -413,11 +413,11 @@
     <property name="release_dir" value="release"/>
     <property name="BEAST_name" value="BEAST"/>
     <property name="BEAST_package_name" value="BEAST X"/>
+    <property name="BEAST_package_name_linux" value="BEAST_X"/>
     <property name="BEAUti_name" value="BEAUti"/>
     <property name="TreeAnnotator_name" value="TreeAnnotator"/>
     <property name="LogCombiner_name" value="LogCombiner"/>
     <property name="LogAnalyser_name" value="LogAnalyser"/>
-    <property name="TreeStat_name" value="TreeStat"/>
 
     <property name="packaging_tools" value="packaging_tools" />
     <property name="common_dir" value="${release_dir}/common"/>
@@ -429,7 +429,7 @@
     <property name="Packaging_dir" value="packaging_tools/windows"/>
 
     <property name="Mac_package_dir" value="${Mac_dir}/${BEAST_package_name} v${version}"/>
-    <property name="Linux_package_dir" value="${Linux_dir}/${BEAST_package_name}v${version}"/>
+    <property name="Linux_package_dir" value="${Linux_dir}/${BEAST_package_name_linux}v${version}"/>
     <property name="Windows_package_dir" value="${Windows_dir}/${BEAST_package_name} v${version}"/>
     <property name="Windows_launchers_package_dir" value="${Windows_launchers_dir}/${BEAST_package_name} v${version}"/>
 
@@ -501,14 +501,6 @@
         <launch4j configFile="${Windows_dir}/LogCombiner_launch4j.xml"
                   jar="${dist}/beast.jar"
                   outfile="${Windows_package_dir}/${LogCombiner_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <launch4j configFile="${Windows_dir}/TreeStat_launch4j.xml"
-                  jar="${dist}/beast.jar"
-                  outfile="${Windows_package_dir}/${TreeStat_name} v${version}.exe"
                   fileVersion="${version_number}.0"
                   txtFileVersion="${version}"
                   productVersion="${version_number}.0"
@@ -605,22 +597,6 @@
                   productVersion="${version_number}.0"
                   txtProductVersion="${version}"/>
 
-        <launch4j configFile="${Windows_launchers_dir}/TreeStat_launch4j.xml"
-                  outfile="${Windows_launchers_package_dir}/${TreeStat_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <!-- LogAnalyser v?.?.?.exe
-          <launch4j configFile="${Windows_dir}/LogAnalyser_launch4j.xml"
-                    jar="${dist}/beast.jar"
-                    outfile="${Windows_package_dir}/${LogAnalyser_name}v${version}.exe"
-                    fileVersion="${version}.0"
-                    txtFileVersion="${version}"
-                    productVersion="${version}.0"
-                    txtProductVersion="${version}"/>	-->
-
         <zip destfile="${release_dir}/${BEAST_package_name} v${version}_launchers.zip">
             <zipfileset dir="${Windows_launchers_package_dir}" prefix="${BEAST_package_name} v${version}"/>
         </zip>
@@ -678,6 +654,25 @@
     <property name="AppleSignerApplication" value="Developer ID Application: Andrew Rambaut (9E4WXAQ6SE)" />
     <property name="AppleSignerInstaller" value="Developer ID Installer: Andrew Rambaut (9E4WXAQ6SE)" />
 
+<!-- 
+    <property name="AppleSignerApplication" value="Developer ID Application: Marc Suchard (LC992Z5R7E)"/>
+    <property name="AppleSignerInstaller" value="Developer ID Application: Marc Suchard (LC992Z5R7E)"/>
+ -->
+    
+    <!--
+    	documentation on how to notarization for Apple: https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow    
+    	
+    	run once: 
+    	xcrun notarytool store-credentials "notarytool-password"
+               --apple-id msuchard@mac.com
+               --team-id LC992Z5R7E
+               --password <secret_2FA_password> # from appleid.apple.com, app-specific password
+    	
+    	to notarize:
+    	xcrun notarytool submit release/BEAST\ X\ v10.5.0.dmg --keychain-profile "notarytool-password" --wait
+    	xcrun stapler staple release/BEAST\ X\ v10.5.0.dmg     	
+    -->
+    
     <target name="mac" depends="dist"
             description="release Mac version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
         <delete dir="${Mac_package_dir}"/>
@@ -842,35 +837,6 @@
             <arg value="${AppleSignerApplication}"/>
             <arg value="-v"/>
             <arg value="${Mac_package_dir}/${TreeAnnotator_name} v${version}.app"/>
-        </exec>
-
-        <jarbundler dir="${Mac_package_dir}"
-                    name="${TreeStat_name} v${version}"
-                    mainclass="dr.app.treestat.TreeStatApp"
-                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
-					useJavaXKey="true"
-                    icon="${common_dir}/icons/TreeStat.icns"
-                    jvmversion="${jvm_version}"
-                    vmoptions="-Xmx1024M"
-                    highresolutioncapable="true"
-                    arguments=""
-                    version="${version}"
-                    copyright="${TreeStat_name} v${version}, ${copyright}, Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard"
-                    bundleid="dr.app.treestat">
-            <jarfileset dir="${Mac_package_dir}/lib">
-                <include name="**/beast.jar"/>
-            </jarfileset>
-            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
-            <!--<javaproperty name="java.library.path" value="$JAVAROOT"/>-->
-        </jarbundler>
-
-        <!-- code signing -->
-        <exec executable="codesign">
-            <arg value="--deep"/>
-            <arg value="-s"/>
-            <arg value="${AppleSignerApplication}"/>
-            <arg value="-v"/>
-            <arg value="${Mac_package_dir}/${TreeStat_name} v${version}.app"/>
         </exec>
 
         <echo message="Building disk image."/>

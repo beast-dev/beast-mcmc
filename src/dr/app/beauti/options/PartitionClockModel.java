@@ -135,10 +135,11 @@ public class PartitionClockModel extends PartitionOptions {
 
         // Shrinkage clock
         createOperator("GIBBS_SHRINKAGE_CLOCK", "shrinkage local clock",
-                "shrinkage local clock Gibbs operator", null, OperatorType.SHRINKAGE_CLOCK_GIBBS_OPERATOR ,1 , 4.0);
+                "shrinkage local clock Gibbs operator", null, OperatorType.SHRINKAGE_CLOCK_GIBBS_OPERATOR ,-1 , 4.0);
         createOperator("HMC_SHRINKAGE_CLOCK", "shrinkage local clock",
-                "shrinkage local clock Hamiltonian operator", null, OperatorType.SHRINKAGE_CLOCK_HMC_OPERATOR ,1 , 8.0);
+                "shrinkage local clock Hamiltonian operator", null, OperatorType.SHRINKAGE_CLOCK_HMC_OPERATOR ,-1 , 8.0);
         createScaleOperator(ClockType.SHRINKAGE_CLOCK_LOCATION, demoTuning, rateWeights);
+        createParameter("substBranchRates.rates", "shrinkage local clock branch rates", 1.0);
 
         // Random local clock
         createParameterGammaPrior(ClockType.LOCAL_CLOCK + ".relativeRates", "random local clock relative rates",
@@ -170,8 +171,6 @@ public class PartitionClockModel extends PartitionOptions {
         // Uncorrelated clock
         createParameter("branchRates.categories", "relaxed clock branch rate categories");
 
-        createParameter("branchRates.rates", "relaxed clock branch rates", 1.0);
-
         //createZeroOneParameter("branchRates.quantiles", "relaxed clock branch rate quantiles", 0.5);
         createZeroOneParameterUniformPrior("branchRates.quantiles", "relaxed clock branch rate quantiles", 0.5);
 
@@ -191,10 +190,10 @@ public class PartitionClockModel extends PartitionOptions {
         createScaleOperator(ClockType.UCGD_SHAPE, demoTuning, rateWeights);
 
         createOperator("HMCLN", "HMC relaxed clock",
-                "Hamiltonian Monte Carlo relaxed clock operator", null, OperatorType.RELAXED_CLOCK_HMC_OPERATOR ,1 , 1.0);
+                "Hamiltonian Monte Carlo relaxed clock operator", null, OperatorType.RELAXED_CLOCK_HMC_OPERATOR ,-1 , 1.0);
         createScaleOperator(ClockType.HMC_CLOCK_LOCATION, demoTuning, rateWeights);
         createScaleOperator(ClockType.HMCLN_SCALE, demoTuning, rateWeights);
-
+        createParameter("branchRates.rates", "HMC relaxed clock branch rates", 1.0);
 
         // Random local clock
         createOperator(ClockType.LOCAL_CLOCK + ".relativeRates", OperatorType.RANDOM_WALK, demoTuning, treeWeights);

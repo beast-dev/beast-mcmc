@@ -582,6 +582,49 @@ public class BEAUTiImporter {
             }
         }
 
+        Set<String> attributeNames = new HashSet<>();
+        for (Taxon taxon : taxonList) {
+            if (taxon.getDate() != null) {
+                options.useTipDates = true;
+            }
+            for (Iterator<String> it = taxon.getAttributeNames(); it.hasNext(); ) {
+                String name = it.next();
+                if (!name.equalsIgnoreCase("Date")) {
+                    attributeNames.add(name);
+                }
+            }
+        }
+        // attempt to work out the type of the trait
+        for (String name : attributeNames) {
+            TraitData.TraitType type = null;
+            for (Taxon taxon : taxonList) {
+                String value = taxon.getAttribute(name).toString();
+                if (value.equals("NA") || value.equals("?")) {
+                    taxon.setAttribute(name, "");
+                } else {
+                    try {
+                        Integer.parseInt(value);
+                        if (type == null || type == TraitData.TraitType.INTEGER) {
+                            type = TraitData.TraitType.INTEGER;
+                        }
+                    } catch (NumberFormatException e) {
+                        try {
+                            Double.parseDouble(value);
+                            if (type == null || type == TraitData.TraitType.INTEGER || type == TraitData.TraitType.CONTINUOUS) {
+                                type = TraitData.TraitType.CONTINUOUS;
+                            }
+                        } catch (NumberFormatException e1) {
+                            type = TraitData.TraitType.DISCRETE;
+                        }
+                    }
+                }
+            }
+            if (type == null) {
+                type = TraitData.TraitType.DISCRETE;
+            }
+            options.traits.add(new TraitData(options, name, fileName, type));
+        }
+
         addTaxonList(taxonList);
 
         addAlignment(alignment, charSets, model, fileName, fileNameStem);

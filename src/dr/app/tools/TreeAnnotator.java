@@ -64,6 +64,7 @@ public class TreeAnnotator {
     private final static Version version = new BeastVersion();
 
     private final static boolean USE_R = false;
+    private static final HeightsSummary DEFAULT_HEIGHTS_SUMMARY = HeightsSummary.MEAN_HEIGHTS;
 
     private static boolean forceIntegerToDiscrete = false;
     private boolean computeESS = false;
@@ -159,14 +160,21 @@ public class TreeAnnotator {
         long stepSize = totalTrees / 60;
         if (stepSize < 1) stepSize = 1;
 
+        int taxonCount = -1;
+
         if (targetOption != Target.USER_TARGET_TREE) {
             cladeSystem = new CladeSystem();
             FileReader fileReader = new FileReader(inputFileName);
             TreeImporter importer = new NexusImporter(fileReader, true);
+            long startTime = System.currentTimeMillis();
             try {
                 totalTrees = 0;
                 while (importer.hasTree()) {
                     Tree tree = importer.importNextTree();
+
+                    if (taxonCount < 0) {
+                        taxonCount = tree.getTaxonCount();
+                    }
 
                     long state = Long.MAX_VALUE;
 
@@ -203,25 +211,28 @@ public class TreeAnnotator {
 
             } catch (Importer.ImportException e) {
                 System.err.println("Error Parsing Input Tree: " + e.getMessage());
-                return;
+                System.exit(1);
             }
             fileReader.close();
-            progressStream.println();
+            long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
+            progressStream.println("* [" + timeElapsed + " secs]");
             progressStream.println();
 
             if (totalTrees < 1) {
-                System.err.println("No trees");
-                return;
+                System.err.println("No trees in input file");
+                System.exit(1);
             }
-            if (totalTreesUsed <= 1) {
-                if (burnin > 0) {
-                    System.err.println("No trees to use: burnin too high");
-                    return;
+            if (totalTreesUsed < 1) {
+                if (burninTrees > 0 || burninStates > 0) {
+                    System.err.println("No trees to use: burnin greater than number of trees in input file");
+                    System.exit(1);
                 }
             }
             cladeSystem.calculateCladeCredibilities(totalTreesUsed);
 
+
             progressStream.println("Total trees read: " + totalTrees);
+            progressStream.println("Size of trees: " + taxonCount + " tips");
             if (burninTrees > 0) {
                 progressStream.println("Ignoring first " + burninTrees + " trees" +
                         (burninStates > 0 ? " (" + burninStates + " states)." : "." ));
@@ -249,16 +260,16 @@ public class TreeAnnotator {
                         }
                         if (tree == null) {
                             System.err.println("No tree in target nexus or newick file " + targetTreeFileName);
-                            return;
+                            System.exit(1);
                         }
                         targetTree = new FlexibleTree(tree);
                     } catch (Importer.ImportException e) {
                         System.err.println("Error Parsing Target Tree: " + e.getMessage());
-                        return;
+                        System.exit(1);
                     }
                 } else {
                     System.err.println("No user target tree specified.");
-                    return;
+                    System.exit(1);
                 }
                 break;
             }
@@ -275,7 +286,6 @@ public class TreeAnnotator {
             default: throw new IllegalArgumentException("Unknown targetOption");
         }
 
-
         progressStream.println("Collecting node information...");
         progressStream.println("0              25             50             75            100");
         progressStream.println("|--------------|--------------|--------------|--------------|");
@@ -285,6 +295,8 @@ public class TreeAnnotator {
 
         FileReader fileReader = new FileReader(inputFileName);
         NexusImporter importer = new NexusImporter(fileReader);
+
+        long startTime = System.currentTimeMillis();
 
         // this call increments the clade counts and it shouldn't
         // this is remedied with removeClades call after while loop below
@@ -317,9 +329,10 @@ public class TreeAnnotator {
             cladeSystem.calculateCladeCredibilities(totalTreesUsed);
         } catch (Importer.ImportException e) {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
-            return;
+            System.exit(1);
         }
-        progressStream.println();
+        long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
+        progressStream.println("* [" + timeElapsed + " secs]");
         progressStream.println();
         fileReader.close();
 
@@ -333,7 +346,7 @@ public class TreeAnnotator {
             }
         } catch (Exception e) {
             System.err.println("Error annotating tree: " + e.getMessage() + "\nPlease check the tree log file format.");
-            return;
+            System.exit(1);
         }
 
         progressStream.println("Writing annotated tree....");
@@ -346,7 +359,7 @@ public class TreeAnnotator {
             new NexusExporter(stream).exportTree(targetTree);
         } catch (Exception e) {
             System.err.println("Error to write annotated tree file: " + e.getMessage());
-            return;
+            System.exit(1);
         }
 
     }
@@ -371,6 +384,8 @@ public class TreeAnnotator {
 
     private Tree getMCCTree(int burnin, CladeSystem cladeSystem, String inputFileName)
             throws IOException {
+
+        long startTime = System.currentTimeMillis();
 
         Tree bestTree = null;
         double bestScore = Double.NEGATIVE_INFINITY;
@@ -406,9 +421,10 @@ public class TreeAnnotator {
             }
         } catch (Importer.ImportException e) {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
-            return null;
+            System.exit(1);
         }
-        progressStream.println();
+        long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
+        progressStream.println("* [" + timeElapsed + " secs]");
         progressStream.println();
         progressStream.println("Best tree: " + bestTree.getId() + " (tree number " + bestTreeNumber + ")");
         progressStream.println("Highest Log Clade Credibility: " + bestScore);
@@ -418,6 +434,8 @@ public class TreeAnnotator {
 
     private Tree getHIPSTRTree(CladeSystem cladeSystem) {
 
+        long startTime = System.currentTimeMillis();
+
         CladeSystem.Clade rootClade = cladeSystem.getRootClade();
 
         credibilityCache.clear();
@@ -426,6 +444,8 @@ public class TreeAnnotator {
 
         SimpleTree tree = new SimpleTree(buildHIPSTRTree(cladeSystem, rootClade));
 
+        long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
+        progressStream.println("[" + timeElapsed + " secs]");
         progressStream.println();
         progressStream.println("Highest Log Marginal Clade Credibility: " + score);
         progressStream.println();
@@ -1395,7 +1415,7 @@ public class TreeAnnotator {
         centreLine("by", 60);
         centreLine("Andrew Rambaut and Alexei J. Drummond", 60);
         progressStream.println();
-        centreLine("Institute of Evolutionary Biology", 60);
+        centreLine("Institute of Ecology and Evolution", 60);
         centreLine("University of Edinburgh", 60);
         centreLine("a.rambaut@ed.ac.uk", 60);
         progressStream.println();
@@ -1473,7 +1493,7 @@ public class TreeAnnotator {
             String aboutString = "<html><center><p>" + versionString + ", " + version.getDateString() + "</p>" +
                     "<p>by<br>" +
                     "Andrew Rambaut and Alexei J. Drummond</p>" +
-                    "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
+                    "<p>Institute of Ecology and Evolution, University of Edinburgh<br>" +
                     "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
                     "<p>Department of Computer Science, University of Auckland<br>" +
                     "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +
@@ -1582,7 +1602,7 @@ public class TreeAnnotator {
             System.exit(0);
         }
 
-        HeightsSummary heights = HeightsSummary.CA_HEIGHTS;
+        HeightsSummary heights = DEFAULT_HEIGHTS_SUMMARY;
         if (arguments.hasOption("heights")) {
             String value = arguments.getStringOption("heights");
             if (value.equalsIgnoreCase("mean")) {
@@ -1694,6 +1714,9 @@ public class TreeAnnotator {
 
     boolean setTreeHeightsByCA(MutableTree targetTree, final String inputFileName, final int burnin)
             throws IOException, Importer.ImportException {
+
+        long startTime = System.currentTimeMillis();
+
         progressStream.println("Setting node heights...");
         progressStream.println("0              25             50             75            100");
         progressStream.println("|--------------|--------------|--------------|--------------|");
@@ -1764,7 +1787,8 @@ public class TreeAnnotator {
         }
         fileReader.close();
 
-        progressStream.println();
+        long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
+        progressStream.println("* [" + timeElapsed + " secs]");
         progressStream.println();
 
         return true;

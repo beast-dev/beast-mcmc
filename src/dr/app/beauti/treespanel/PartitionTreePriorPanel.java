@@ -437,7 +437,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //                partitionTreePrior.setSkylineGroupCount(5);
 //            }
 //        } else
-        if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
+        if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.SKYGRID ||
+                partitionTreePrior.getNodeHeightPrior() == TreePriorType.SKYGRID_HMC) {
             Double interval = skyGridInterval.getValue();
             if (interval != null) {
                 partitionTreePrior.setSkyGridInterval(interval);

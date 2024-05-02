@@ -592,8 +592,6 @@ public interface MassPreconditioner {
                     boundedMassInverse[i] = lowerBound.getParameterValue(0);
                 } else if (boundedMassInverse[i] > upperBound.getParameterValue(0)) {
                     boundedMassInverse[i] = upperBound.getParameterValue(0);
-                } else {
-                    boundedMassInverse[i] = 1.0;
                 }
             }
 

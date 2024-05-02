@@ -117,20 +117,26 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
     /**
      * @param node the node to retrieve the rate of
      * @return the rate of node in the tree.
+     * @deprecated this method should not be used and will be removed at some point
      */
+    @Deprecated
     double getNodeRate(NodeRef node);
 
     /**
      * @param node the node whose attribute is being fetched.
      * @param name the name of the attribute of interest.
      * @return an object representing the named attributed for the given node.
+     * @deprecated this method should not be used and will be removed at some point
      */
+    @Deprecated
     Object getNodeAttribute(NodeRef node, String name);
 
     /**
      * @param node the node whose attribute is being fetched.
      * @return an interator of attribute names available for this node.
+     * @deprecated this method should not be used and will be removed at some point
      */
+    @Deprecated
     Iterator getNodeAttributeNames(NodeRef node);
 
     /**

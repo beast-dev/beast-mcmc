@@ -85,7 +85,7 @@ public class BeastVersion implements Version, Citable {
                 "University of Auckland",
                 "alexei@cs.auckland.ac.nz",
                 "",
-                "Institute of Evolutionary Biology",
+                "Institute of Ecology and Evolution",
                 "University of Edinburgh",
                 "a.rambaut@ed.ac.uk",
                 "",

@@ -59,6 +59,10 @@ public class PartitionPattern extends AbstractPartitionData {
         return 1;
     }
 
+    public int getPatternCount() {
+        return 1;
+    }
+
     public DataType getDataType() {
         if (patterns != null) {
             return patterns.getDataType();
@@ -85,6 +89,5 @@ public class PartitionPattern extends AbstractPartitionData {
 
     public void setName(String name) {
         this.name = name;
-        options.microsatelliteOptions.initModelParametersAndOpererators();
     }
 }

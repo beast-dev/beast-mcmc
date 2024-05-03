@@ -38,7 +38,6 @@ import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.DummyDataType;
-import dr.evolution.datatype.Microsatellite;
 import dr.evolution.util.Taxa;
 import jam.framework.Exportable;
 import jam.panels.ActionPanel;
@@ -556,10 +555,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
             }
         }
 
-        if (options.getPartitionSubstitutionModels(Microsatellite.INSTANCE).size() <= 1) {
-            options.shareMicroSat = true;
-        }
-
         modelsChanged();
 
         fireDataChanged();
@@ -734,7 +729,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     class DataTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Partition Name", "File Name", "Taxa", "Sites", "Data Type", "Site Model", "Clock Model", "Partition Tree"};
+        String[] columnNames = {"Partition Name", "File Name", "Taxa", "Sites", "Patterns", "Data Type", "Site Model", "Clock Model", "Partition Tree"};
 
         public DataTableModel() {
         }
@@ -762,14 +757,14 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case 3:
                     return "" + (partition.getSiteCount() >= 0 ? partition.getSiteCount() : "-");
                 case 4:
-                    return partition.getDataDescription();
+                    return "" + (partition.getSiteCount() >= 0 ? partition.getPatternCount() : "-");
                 case 5:
-//                    return partition.getPloidyType();
-//                case 6:
-                    return partition.getPartitionSubstitutionModel().getName();
+                    return partition.getDataDescription();
                 case 6:
-                    return "" + (partition.getPartitionClockModel() != null ? partition.getPartitionClockModel().getName() : "-");
+                    return partition.getPartitionSubstitutionModel().getName();
                 case 7:
+                    return "" + (partition.getPartitionClockModel() != null ? partition.getPartitionClockModel().getName() : "-");
+                case 8:
                     return partition.getPartitionTreeModel().getName();
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
@@ -790,18 +785,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
                         options.renamePartition(partition, name);
                     }
                     break;
-                case 5:
-//                    partition.setPloidyType((PloidyType) aValue);
-//                    break;
-//                case 6:
+                case 6:
                     if (((PartitionSubstitutionModel) aValue).getDataType().equals(partition.getDataType())) {
                         partition.setPartitionSubstitutionModel((PartitionSubstitutionModel) aValue);
                     }
                     break;
-                case 6:
+                case 7:
                     partition.setPartitionClockModel((PartitionClockModel) aValue);
                     break;
-                case 7:
+                case 8:
                     partition.setPartitionTreeModel((PartitionTreeModel) aValue);
                     break;
             }

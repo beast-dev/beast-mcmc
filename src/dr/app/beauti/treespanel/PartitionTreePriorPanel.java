@@ -42,6 +42,7 @@ import jam.panels.OptionsPanel;
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.Component;
 import java.util.EnumSet;
 
 /**
@@ -262,24 +263,14 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //                        + "\nDrummond AJ, Rambaut A, Shapiro B, Pybus OG (2005) Mol Biol Evol 22, 1185-1192.";
                 break;
 
-            case SKYLINE:
-                groupCountField.setColumns(6);
-                addComponentWithLabel("Number of groups:", groupCountField);
-                addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
-
-                citation = //citationCoalescent + "\n" +
-                        "Drummond AJ, Rambaut A, Shapiro B, Pybus OG (2005) Mol Biol Evol 22, 1185-1192 [Skyline Coalescent].";
-                break;
-
-            case EXTENDED_SKYLINE:
-                addComponentWithLabel("Model Type:", extendedBayesianSkylineCombo);
-                treesPanel.linkTreePriorCheck.setSelected(true);
-                treesPanel.linkTreePriorCheck.setEnabled(false);
-                treesPanel.updateShareSameTreePriorChanged();
-
-                citation = //citationCoalescent + "\n" +
-                        "Heled J, Drummond AJ (2008) BMC Evol Biol 8, 289 [Extended Skyline Coalescent].";
-                break;
+//            case SKYLINE:
+//                groupCountField.setColumns(6);
+//                addComponentWithLabel("Number of groups:", groupCountField);
+//                addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
+//
+//                citation = //citationCoalescent + "\n" +
+//                        "Drummond AJ, Rambaut A, Shapiro B, Pybus OG (2005) Mol Biol Evol 22, 1185-1192 [Skyline Coalescent].";
+//                break;
 
             case GMRF_SKYRIDE:
                 addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
@@ -335,9 +326,9 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 citation = BirthDeathSerialSamplingModelParser.getCitationPsiOrg();
                 break;
 
-            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
-                citation = BirthDeathSerialSamplingModelParser.getCitationRT();
-                break;
+//            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
+//                citation = BirthDeathSerialSamplingModelParser.getCitationRT();
+//                break;
 
             default:
                 throw new RuntimeException("No such tree prior has been specified so cannot refer to it");
@@ -438,14 +429,16 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
 //        partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
 
-        if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.SKYLINE) {
-            Integer groupCount = groupCountField.getValue();
-            if (groupCount != null) {
-                partitionTreePrior.setSkylineGroupCount(groupCount);
-            } else {
-                partitionTreePrior.setSkylineGroupCount(5);
-            }
-        } else if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
+//        if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.SKYLINE) {
+//            Integer groupCount = groupCountField.getValue();
+//            if (groupCount != null) {
+//                partitionTreePrior.setSkylineGroupCount(groupCount);
+//            } else {
+//                partitionTreePrior.setSkylineGroupCount(5);
+//            }
+//        } else
+        if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.SKYGRID ||
+                partitionTreePrior.getNodeHeightPrior() == TreePriorType.SKYGRID_HMC) {
             Double interval = skyGridInterval.getValue();
             if (interval != null) {
                 partitionTreePrior.setSkyGridInterval(interval);
@@ -471,16 +464,16 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         for (TreePriorType treePriorType : EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH_SERIAL_SAMPLING)) {
             treePriorCombo.addItem(treePriorType);
+            if (treePriorType == TreePriorType.EXPANSION ||
+                treePriorType == TreePriorType.GMRF_SKYRIDE) {
+                treePriorCombo.addItem(new JSeparator(JSeparator.HORIZONTAL));
+            }
         }
-
-        // REMOVED due to unresolved issues with model
-        // treePriorCombo.addItem(TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER);
-
 
         // would be much better to disable these rather than removing them
-        if (isMultiLocus) {
-            treePriorCombo.removeItem(TreePriorType.SKYLINE);
-        }
+//        if (isMultiLocus) {
+//            treePriorCombo.removeItem(TreePriorType.SKYLINE);
+//        }
 
         if (isTipCalibrated) {
             // remove models that require contemporaneous tips...
@@ -497,3 +490,4 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         }
     }
 }
+

@@ -37,8 +37,6 @@ import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
-import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Microsatellite;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -504,13 +502,8 @@ public class MCMCPanel extends BeautiPanel {
 
         updateOtherFileNames(options);
 
-        if (options.contains(Microsatellite.INSTANCE)) {
-            samplePriorCheckBox.setSelected(false);
-            samplePriorCheckBox.setVisible(false);
-        } else {
-            samplePriorCheckBox.setVisible(true);
-            samplePriorCheckBox.setSelected(options.samplePriorOnly);
-        }
+        samplePriorCheckBox.setVisible(true);
+        samplePriorCheckBox.setSelected(options.samplePriorOnly);
 
         optionsPanel.validate();
         optionsPanel.repaint();

@@ -35,7 +35,6 @@ import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.*;
 import dr.evolution.io.FastaImporter;
 import dr.evolution.io.Importer.ImportException;
-import dr.evolution.io.MicroSatImporter;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.NexusImporter.MissingBlockException;
@@ -91,9 +90,6 @@ public class BEAUTiImporter {
 //            } else {
 //                // assume it is a tab-delimited traits file and see if that works...
 //                importTraits(file);
-            } else if ((line != null && line.toUpperCase().contains("#MICROSAT"))) {
-                // MicroSatellite
-                importMicroSatFile(file);
             } else {
                 throw new ImportException("Unrecognized format for imported file.");
             }
@@ -114,37 +110,6 @@ public class BEAUTiImporter {
 
         bufferedReader.close();
         return line;
-    }
-
-    // micro-sat
-    private void importMicroSatFile(File file) throws IOException, ImportException {
-        try {
-            Reader reader = new FileReader(file);
-            BufferedReader bufferedReader = new BufferedReader(reader);
-
-            MicroSatImporter importer = new MicroSatImporter(bufferedReader);
-
-            List<Patterns> microsatPatList = importer.importPatterns();
-            Taxa unionSetTaxonList = importer.getUnionSetTaxonList();
-            Microsatellite microsatellite = importer.getMicrosatellite();
-//            options.allowDifferentTaxa = importer.isHasDifferentTaxon();
-
-            bufferedReader.close();
-
-            PartitionSubstitutionModel substModel = new PartitionSubstitutionModel(options, microsatPatList.get(0).getId());
-            substModel.setMicrosatellite(microsatellite);
-
-            for (Patterns patterns : microsatPatList) {
-                setData(file.getName(), unionSetTaxonList, patterns, substModel, null);
-            }
-            // has to call after data is imported
-            options.microsatelliteOptions.initModelParametersAndOpererators();
-
-        } catch (ImportException e) {
-            throw new ImportException(e.getMessage());
-        } catch (IOException e) {
-            throw new IOException(e.getMessage());
-        }
     }
 
     // xml
@@ -618,6 +583,49 @@ public class BEAUTiImporter {
                     throw new ImportException("The sequences in the alignment file are of different lengths - BEAST requires aligned sequences");
                 }
             }
+        }
+
+        Set<String> attributeNames = new HashSet<>();
+        for (Taxon taxon : taxonList) {
+            if (taxon.getDate() != null) {
+                options.useTipDates = true;
+            }
+            for (Iterator<String> it = taxon.getAttributeNames(); it.hasNext(); ) {
+                String name = it.next();
+                if (!name.equalsIgnoreCase("Date")) {
+                    attributeNames.add(name);
+                }
+            }
+        }
+        // attempt to work out the type of the trait
+        for (String name : attributeNames) {
+            TraitData.TraitType type = null;
+            for (Taxon taxon : taxonList) {
+                String value = taxon.getAttribute(name).toString();
+                if (value.equals("NA") || value.equals("?")) {
+                    taxon.setAttribute(name, "");
+                } else {
+                    try {
+                        Integer.parseInt(value);
+                        if (type == null || type == TraitData.TraitType.INTEGER) {
+                            type = TraitData.TraitType.INTEGER;
+                        }
+                    } catch (NumberFormatException e) {
+                        try {
+                            Double.parseDouble(value);
+                            if (type == null || type == TraitData.TraitType.INTEGER || type == TraitData.TraitType.CONTINUOUS) {
+                                type = TraitData.TraitType.CONTINUOUS;
+                            }
+                        } catch (NumberFormatException e1) {
+                            type = TraitData.TraitType.DISCRETE;
+                        }
+                    }
+                }
+            }
+            if (type == null) {
+                type = TraitData.TraitType.DISCRETE;
+            }
+            options.traits.add(new TraitData(options, name, fileName, type));
         }
 
         addTaxonList(taxonList);

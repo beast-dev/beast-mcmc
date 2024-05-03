@@ -52,13 +52,13 @@ public class LdDefaults {
 			"head/head.o" });
 	
 	private static final List<String> JNI_GUI_32_OBJECTS = Arrays.asList(new String[] {
-			"w32api_jni/crt2.o",
+			"w32api/crt2.o",
 			"head_jni_BETA/jniguihead.o",
 			"head_jni_BETA/head.o",
 			"head_jni_BETA/jnihead.o" });
 
 	private static final List<String> JNI_CONSOLE_32_OBJECTS = Arrays.asList(new String[] {
-			"w32api_jni/crt2.o",
+			"w32api/crt2.o",
 			"head_jni_BETA/jniconsolehead.o",
 			"head_jni_BETA/head.o",
 			"head_jni_BETA/jnihead.o" });
@@ -67,23 +67,14 @@ public class LdDefaults {
 
 	private static final List<String> LIBS = Arrays.asList(new String[] {
 			"w32api/libmingw32.a",
+			"w32api/libmingwex.a",
 			"w32api/libgcc.a",
 			"w32api/libmsvcrt.a",
+			"w32api/libmoldname.a",
 			"w32api/libkernel32.a",
 			"w32api/libuser32.a",
 			"w32api/libadvapi32.a",
 			"w32api/libshell32.a" });
-
-	private static final List<String> JNI_LIBS = Arrays.asList(new String[] {
-			"w32api_jni/libmingw32.a",
-			"w32api_jni/libmingwex.a",
-			"w32api_jni/libgcc.a",
-			"w32api_jni/libmsvcrt.a",
-			"w32api_jni/libmoldname.a",
-			"w32api_jni/libkernel32.a",
-			"w32api_jni/libuser32.a",
-			"w32api_jni/libadvapi32.a",
-			"w32api_jni/libshell32.a" });
 
 	static {
 		HEADER_OBJECTS = new ArrayList<List<String>>();
@@ -109,7 +100,7 @@ public class LdDefaults {
 
 		if (Config.JNI_GUI_HEADER_32.equals(headerType)
 				|| Config.JNI_CONSOLE_HEADER_32.equals(headerType)) {
-			return JNI_LIBS;
+			return LIBS;
 		}
 		
 		throw new IllegalArgumentException("Unknown headerType: " + headerType);

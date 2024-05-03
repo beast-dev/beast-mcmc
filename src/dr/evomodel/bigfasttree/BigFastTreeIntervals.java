@@ -352,6 +352,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
                         NodeRef node = ((TreeChangedEvent) object).getNode();
                         updatedNodes.add(node.getNumber());
                         intervalsKnown = false;
+                        onlyUpdateTimes = false;
                     }
 
                 } else if (treeChangedEvent.isTreeChanged()) {

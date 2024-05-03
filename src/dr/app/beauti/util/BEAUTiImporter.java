@@ -430,7 +430,10 @@ public class BEAUTiImporter {
 
         addTaxonList(taxa);
 
-        setData(file.getName(), taxa, null, null, null, null, null, null, true);
+        SimpleAlignment dummyAlignment = new SimpleAlignment();
+        dummyAlignment.setDataType(new DummyDataType());
+
+        setData(file.getName(), taxa, dummyAlignment, null, null, null, null, null, true);
     }
 
     public void importNewickFile(final File file) throws Exception {

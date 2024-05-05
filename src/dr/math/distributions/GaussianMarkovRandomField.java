@@ -128,25 +128,24 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     protected SymmetricTriDiagonalMatrix getQ() {
         if (!qKnown) {
-            double precision = precisionParameter.getParameterValue(0);
             if (weightProvider == null) {
-                Q.diagonal[0] = precision;
+                Q.diagonal[0] = 1.0;
                 for (int i = 1; i < dim - 1; ++i) {
-                    Q.diagonal[i] = 2 * precision;
+                    Q.diagonal[i] = 2.0;
                 }
-                Q.diagonal[dim - 1] = precision;
+                Q.diagonal[dim - 1] = 1.0;
                 for (int i = 0; i < dim - 1; ++i) {
-                    Q.offDiagonal[i] = -precision;
+                    Q.offDiagonal[i] = -1.0;
                 }
             } else {
 
-                Q.diagonal[0] = precision * weightProvider.weight(0, 1);
+                Q.diagonal[0] = weightProvider.weight(0, 1);
                 for (int i = 1; i < dim - 1; ++i) {
-                    Q.diagonal[i] = precision * (weightProvider.weight(i - 1, i) + weightProvider.weight(i, i + 1));
+                    Q.diagonal[i] = weightProvider.weight(i - 1, i) + weightProvider.weight(i, i + 1);
                 }
-                Q.diagonal[dim - 1] = precision * weightProvider.weight(dim - 2, dim - 1);
+                Q.diagonal[dim - 1] = weightProvider.weight(dim - 2, dim - 1);
                 for (int i = 0; i < dim - 1; ++i) {
-                    Q.offDiagonal[i] = -precision * weightProvider.weight(i, i + 1);
+                    Q.offDiagonal[i] = -weightProvider.weight(i, i + 1);
                 }
             }
             if (lambdaParameter != null) {
@@ -210,7 +209,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
                 @Override
                 public double[] getGradientLogDensity(Object x) {
 
-                    double[] gradient = gradLogPdf((double[]) x, getMean(), getQ());
+                    double[] gradient = gradLogPdf((double[]) x, getMean(), precisionParameter.getParameterValue(0), getQ());
 
                     if (meanParameter.getDimension() == dim) {
                         for (int i = 0; i < dim; ++i) {
@@ -265,7 +264,6 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
                     logDet += Math.log(v);
                 }
             }
-            logDet = logDet - effectiveDim * Math.log(precisionParameter.getParameterValue(0));
         }
 
 //        if (CHECK_DETERMINANT) {
@@ -303,16 +301,16 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     @Override
     public double logPdf(double[] x) {
-        return logPdf(x, getMean(), getQ(), isImproper(), getLogDeterminant());
+        return logPdf(x, getMean(), precisionParameter.getParameterValue(0), getQ(), isImproper(), getLogDeterminant());
     }
 
     public static double gradLogPdfWrtPrecision(double[] x, double[] mean, SymmetricTriDiagonalMatrix Q,
                                                 double precision, boolean isImproper) {
         final int effectiveDim = isImproper ? x.length - 1 : x.length;
-        return 0.5 * (effectiveDim - getSSE(x, mean, Q)) / precision;
+        return 0.5 * ((effectiveDim - getSSE(x, mean, precision, Q))/precision);
     }
 
-    public static double[] gradLogPdf(double[] x, double[] mean, SymmetricTriDiagonalMatrix Q) {
+    public static double[] gradLogPdf(double[] x, double[] mean, double precision, SymmetricTriDiagonalMatrix Q) {
 
         final int dim = x.length;
 
@@ -323,40 +321,44 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
             delta[i] = mean[i] - x[i];
         }
 
-        gradient[0] = Q.diagonal[0] * delta[0] + Q.offDiagonal[0] * delta[1];
+        gradient[0] = precision * (Q.diagonal[0] * delta[0] + Q.offDiagonal[0] * delta[1]);
         for (int i = 1; i < dim - 1; ++i) {
-            gradient[i] = Q.offDiagonal[i - 1] * delta[i - 1] + Q.diagonal[i] * delta[i] + Q.offDiagonal[i] * delta[i + 1];
+            gradient[i] = precision * (Q.offDiagonal[i - 1] * delta[i - 1] + Q.diagonal[i] * delta[i] + Q.offDiagonal[i] * delta[i + 1]);
         }
-        gradient[dim - 1] = Q.offDiagonal[dim - 2] * delta[dim - 2] + Q.diagonal[dim - 1] * delta[dim - 1];
+        gradient[dim - 1] = precision * (Q.offDiagonal[dim - 2] * delta[dim - 2] + Q.diagonal[dim - 1] * delta[dim - 1]);
 
         return gradient;
     }
 
-    public static double[][] hessianLogPdf(double[] x, SymmetricTriDiagonalMatrix Q) { // TODO test
+    public static double[][] hessianLogPdf(double[] x, double precision, SymmetricTriDiagonalMatrix Q) { // TODO test
         final int dim = x .length;
         final double[][] hessian = new double[dim][dim];
 
-        hessian[0][0] = -Q.diagonal[0];
-        hessian[0][1] = -Q.offDiagonal[0];
+        hessian[0][0] = -precision * Q.diagonal[0];
+        hessian[0][1] = -precision * Q.offDiagonal[0];
 
         for (int i = 1; i < dim - 1; ++i) {
-            hessian[i][i - 1] = -Q.offDiagonal[i - 1];
-            hessian[i][i]     = -Q.diagonal[i];
-            hessian[i][i + 1] = -Q.offDiagonal[i];
+            hessian[i][i - 1] = -precision * Q.offDiagonal[i - 1];
+            hessian[i][i]     = -precision * Q.diagonal[i];
+            hessian[i][i + 1] = -precision * Q.offDiagonal[i];
         }
 
-        hessian[dim - 1][dim - 2] = -Q.offDiagonal[dim - 2];
-        hessian[dim - 1][dim - 1] = -Q.diagonal[dim - 1];
+        hessian[dim - 1][dim - 2] = -precision * Q.offDiagonal[dim - 2];
+        hessian[dim - 1][dim - 1] = -precision * Q.diagonal[dim - 1];
 
         return hessian;
     }
 
-    public static double[] diagonalHessianLogPdf(double[] x, SymmetricTriDiagonalMatrix Q) {
+    public static double[] diagonalHessianLogPdf(double[] x, double precision, SymmetricTriDiagonalMatrix Q) {
         final int dim = x.length;
         final double[] hessian = new double[dim];
 
         System.arraycopy(Q.diagonal, 0, hessian, 0, dim);
         // TODO do we not need to negate each element of hessian?
+
+        for (int i = 0; i < dim; i++) {
+            hessian[i] = hessian[i] * precision;
+        }
 
         return hessian;
     }
@@ -455,12 +457,12 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 //        return currentLike;
 //    }
 
-    private static double logPdf(double[] x, double[] mean, SymmetricTriDiagonalMatrix Q,
+    private static double logPdf(double[] x, double[] mean, double precision, SymmetricTriDiagonalMatrix Q,
                                  boolean isImproper, double logDeterminant) {
-        return getLogNormalization(x.length, isImproper, logDeterminant) - 0.5 * getSSE(x, mean, Q);
+        return getLogNormalization(x.length, isImproper, logDeterminant) - 0.5 * getSSE(x, mean, precision, Q);
     }
 
-    private static double getSSE(double[] x, double[] mean, SymmetricTriDiagonalMatrix Q) {
+    private static double getSSE(double[] x, double[] mean, double precision, SymmetricTriDiagonalMatrix Q) {
 
         final int dim = x.length;
         final double[] delta = new double[dim];
@@ -475,7 +477,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         }
         SSE += Q.diagonal[dim - 1] * delta[dim - 1] * delta[dim - 1];
 
-        return SSE;
+        return SSE * precision;
     }
 
     static class SymmetricTriDiagonalMatrix {
@@ -520,17 +522,17 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     @Override
     public double[] getGradientLogDensity(Object x) {
-        return gradLogPdf((double[]) x, getMean(), getQ());
+        return gradLogPdf((double[]) x, getMean(), precisionParameter.getParameterValue(0), getQ());
     }
 
     @Override
     public double[] getDiagonalHessianLogDensity(Object x) {
-        return diagonalHessianLogPdf((double[]) x, getQ());
+        return diagonalHessianLogPdf((double[]) x, precisionParameter.getParameterValue(0), getQ());
     }
 
     @Override
     public double[][] getHessianLogDensity(Object x) {
-        return hessianLogPdf((double[]) x,getQ());
+        return hessianLogPdf((double[]) x, precisionParameter.getParameterValue(0), getQ());
     }
 
     @Override

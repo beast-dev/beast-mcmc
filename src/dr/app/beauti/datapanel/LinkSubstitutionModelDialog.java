@@ -1,5 +1,5 @@
 /*
- * SelectClockDialog.java
+ * SelectModelDialog.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -25,45 +25,44 @@
 
 package dr.app.beauti.datapanel;
 
-import dr.app.beauti.options.PartitionClockModel;
+import dr.app.beauti.options.PartitionSubstitutionModel;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.event.*;
 
 /**
  * @author Andrew Rambaut
- * @author Walter Xie
- * @version $Id:$
+ * @author Alexei Drummond
+ * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
-public class SelectClockDialog {
+public class LinkSubstitutionModelDialog {
 
     private JFrame frame;
 
-    JComboBox treeCombo;
+    JComboBox modelCombo;
     JCheckBox copyCheck;
     JTextField nameField;
 
     OptionsPanel optionPanel;
 
-    public SelectClockDialog(JFrame frame) {
+    public LinkSubstitutionModelDialog(JFrame frame) {
         this.frame = frame;
 
-        treeCombo = new JComboBox();
+        modelCombo = new JComboBox();
 
-        copyCheck = new JCheckBox("Rename clock model partition to:");
+        copyCheck = new JCheckBox("Rename substitution model partition to:");
         nameField = new JTextField();
         nameField.setColumns(20);
         nameField.setEnabled(false);
 
         optionPanel = new OptionsPanel(12, 12);
-        optionPanel.addComponentWithLabel("Partition clock model:", treeCombo);
+        optionPanel.addComponentWithLabel("Partition Model:", modelCombo);
         optionPanel.addComponents(copyCheck, nameField);
 
         copyCheck.addItemListener(
-                new ItemListener() {
-                    public void itemStateChanged(ItemEvent ev) {
+                new java.awt.event.ItemListener() {
+                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
                         nameField.setEnabled(copyCheck.isSelected());
                     }
                 }
@@ -73,9 +72,9 @@ public class SelectClockDialog {
 
     public int showDialog(Object[] models) {
 
-        treeCombo.removeAllItems();
+        modelCombo.removeAllItems();
         for (Object model : models) {
-            treeCombo.addItem(model);
+            modelCombo.addItem(model);
         }
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
@@ -86,7 +85,7 @@ public class SelectClockDialog {
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "Create New Partition Clock Model");
+        final JDialog dialog = optionPane.createDialog(frame, "Create New Model");
         dialog.pack();
 
         dialog.setVisible(true);
@@ -100,8 +99,8 @@ public class SelectClockDialog {
         return result;
     }
 
-    public PartitionClockModel getModel() {
-        return (PartitionClockModel) treeCombo.getSelectedItem();
+    public PartitionSubstitutionModel getModel() {
+        return (PartitionSubstitutionModel)modelCombo.getSelectedItem();
     }
 
     public boolean getMakeCopy() {

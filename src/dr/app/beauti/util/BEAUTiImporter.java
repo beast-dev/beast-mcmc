@@ -401,7 +401,11 @@ public class BEAUTiImporter {
     public void importNewickFile(final File file) throws Exception {
         NewickImporter importer = new NewickImporter(new FileReader(file));
         Tree[] trees = importer.importTrees(options.taxonList);
-        addTrees(Arrays.asList(trees));
+        String fileNameStem = file.getName();
+        if (fileNameStem.lastIndexOf(".") != -1) {
+            fileNameStem = fileNameStem.substring(0, fileNameStem.lastIndexOf("."));
+        }
+        addTrees(fileNameStem, Arrays.asList(trees));
     }
 
     public boolean importPredictors(final File file, final TraitData trait) throws Exception {
@@ -633,7 +637,7 @@ public class BEAUTiImporter {
 
         addTraits(traits);
 
-        addTrees(trees);
+        addTrees(fileNameStem, trees);
     }
 
     // for Patterns
@@ -814,13 +818,7 @@ public class BEAUTiImporter {
             treeModel.setPartitionTreePrior(ptp);
         } else { //if (options.getPartitionTreeModels() != null) {
 //                        && options.getPartitionTreeModels().size() == 1) {
-            if (partition.getDataType().getType() == DataType.MICRO_SAT) {
-                treeModel = new PartitionTreeModel(options, partition.getName()); // different tree model,
-                PartitionTreePrior ptp = options.getPartitionTreePriors().get(0); // but same tree prior
-                treeModel.setPartitionTreePrior(ptp);
-            } else {
-                treeModel = options.getPartitionTreeModels().get(0); // same tree model,
-            }
+            treeModel = options.getPartitionTreeModels().get(0); // same tree model,
             partition.setPartitionTreeModel(treeModel); // if same tree model, therefore same prior
         }
 
@@ -831,13 +829,7 @@ public class BEAUTiImporter {
             partition.setPartitionClockModel(pcm);
         } else { //if (options.getPartitionClockModels() != null) {
 //                        && options.getPartitionClockModels().size() == 1) {
-            PartitionClockModel pcm;
-            if (partition.getDataType().getType() == DataType.MICRO_SAT) {
-                pcm = new PartitionClockModel(options, partition.getName(), partition, treeModel);
-            } else {
-                // make sure in the same data type
-                pcm = options.getPartitionClockModels(partition.getDataType()).get(0);
-            }
+            PartitionClockModel pcm = options.getPartitionClockModels(partition.getDataType()).get(0);
             partition.setPartitionClockModel(pcm);
         }
     }
@@ -861,25 +853,17 @@ public class BEAUTiImporter {
         }
     }
 
-    private void addTrees(List<Tree> trees) {
+    private void addTrees(String fileNameStem, List<Tree> trees) {
         if (trees != null && !trees.isEmpty()) {
+            int i = 1;
             for (Tree tree : trees) {
                 String id = tree.getId();
                 if (id == null || id.trim().isEmpty()) {
-                    tree.setId("tree_" + (options.userTrees.size() + 1));
-                } else {
-                    String newId = id;
-                    int count = 1;
-                    for (Tree tree1 : options.userTrees) {
-                        if (tree1.getId().equals(newId)) {
-                            newId = id + "_" + count;
-                            count++;
-                        }
-                    }
-                    tree.setId(newId);
+                    tree.setId("tree_" + i);
                 }
-                options.userTrees.add(tree);
+                i++;
             }
+            options.userTrees.put(fileNameStem, new TreeHolder(trees, fileNameStem));
         }
     }
 

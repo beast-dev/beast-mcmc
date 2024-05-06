@@ -1,5 +1,5 @@
 /*
- * SelectModelDialog.java
+ * SelectTreeDialog.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -25,44 +25,44 @@
 
 package dr.app.beauti.datapanel;
 
-import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.options.PartitionTreeModel;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import java.awt.event.*;
 
 /**
  * @author Andrew Rambaut
- * @author Alexei Drummond
- * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
+ * @version $Id:$
  */
-public class SelectModelDialog {
+public class LinkTreeModelDialog {
 
     private JFrame frame;
 
-    JComboBox modelCombo;
+    JComboBox treeCombo;
     JCheckBox copyCheck;
     JTextField nameField;
 
     OptionsPanel optionPanel;
 
-    public SelectModelDialog(JFrame frame) {
+    public LinkTreeModelDialog(JFrame frame) {
         this.frame = frame;
 
-        modelCombo = new JComboBox();
+        treeCombo = new JComboBox();
 
-        copyCheck = new JCheckBox("Rename substitution model partition to:");
+        copyCheck = new JCheckBox("Rename partition tree model to:");
         nameField = new JTextField();
         nameField.setColumns(20);
         nameField.setEnabled(false);
 
         optionPanel = new OptionsPanel(12, 12);
-        optionPanel.addComponentWithLabel("Partition Model:", modelCombo);
+        optionPanel.addComponentWithLabel("Partition tree:", treeCombo);
         optionPanel.addComponents(copyCheck, nameField);
 
         copyCheck.addItemListener(
-                new java.awt.event.ItemListener() {
-                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
+                new ItemListener() {
+                    public void itemStateChanged(ItemEvent ev) {
                         nameField.setEnabled(copyCheck.isSelected());
                     }
                 }
@@ -70,11 +70,11 @@ public class SelectModelDialog {
 
     }
 
-    public int showDialog(Object[] models) {
+    public int showDialog(Object[] trees) {
 
-        modelCombo.removeAllItems();
-        for (Object model : models) {
-            modelCombo.addItem(model);
+        treeCombo.removeAllItems();
+        for (Object tree : trees) {
+            treeCombo.addItem(tree);
         }
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
@@ -85,7 +85,7 @@ public class SelectModelDialog {
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "Create New Model");
+        final JDialog dialog = optionPane.createDialog(frame, "Link Partition Tree Model");
         dialog.pack();
 
         dialog.setVisible(true);
@@ -99,8 +99,8 @@ public class SelectModelDialog {
         return result;
     }
 
-    public PartitionSubstitutionModel getModel() {
-        return (PartitionSubstitutionModel)modelCombo.getSelectedItem();
+    public PartitionTreeModel getTree() {
+        return (PartitionTreeModel) treeCombo.getSelectedItem();
     }
 
     public boolean getMakeCopy() {

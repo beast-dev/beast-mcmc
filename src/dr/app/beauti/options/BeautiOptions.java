@@ -671,7 +671,7 @@ public class BeautiOptions extends ModelOptions {
         List<PartitionTreeModel> ptmList = ptmlCache.get(givenDataPartitions);
 
         if (ptmList == null) {
-            Set<PartitionTreeModel> activeTrees = new LinkedHashSet<PartitionTreeModel>();
+            Set<PartitionTreeModel> activeTrees = new LinkedHashSet<>();
 
             for (AbstractPartitionData partition : givenDataPartitions) {
                 if (partition.getPartitionTreeModel() != null) {
@@ -679,7 +679,7 @@ public class BeautiOptions extends ModelOptions {
                 }
             }
 
-            ptmList = new ArrayList<PartitionTreeModel>(activeTrees);
+            ptmList = new ArrayList<>(activeTrees);
 
             ptmlCache.put(givenDataPartitions, ptmList);
         }
@@ -1195,6 +1195,39 @@ public class BeautiOptions extends ModelOptions {
         return type;
     }
 
+    // ++++++++++++++++++++ tree partition +++++++++++++++++
+
+    public int createPartitionForTree(TreeHolder tree) {
+        int selRow = -1;
+
+        TreePartitionData partition = new TreePartitionData(this, tree.toString(), tree.getFileNameStem(), tree.getTrees().get(0));
+        dataPartitions.add(partition);
+        selRow = dataPartitions.size() - 1;
+
+
+//        if (partition.getPartitionSubstitutionModel() == null) {
+//            PartitionSubstitutionModel substModel = new PartitionSubstitutionModel(this, partition.getName(),
+//                    partition);
+//            partition.setPartitionSubstitutionModel(substModel);
+//        }
+
+        if (partition.getPartitionTreeModel() == null) {
+            PartitionTreeModel treeModel = new PartitionTreeModel(this, partition);
+            PartitionTreePrior ptp = new PartitionTreePrior(this, treeModel);
+            treeModel.setPartitionTreePrior(ptp);
+            partition.setPartitionTreeModel(treeModel);// always use 1st tree
+//            getPartitionTreeModels().get(0).addPartitionData(newTrait);
+        }
+
+//        if (partition.getPartitionClockModel() == null && partition.getDataType().getType() != DataType.CONTINUOUS) {
+//            // PartitionClockModel based on PartitionData
+//            PartitionClockModel pcm = new PartitionClockModel(this, partition.getName(), partition, partition.getPartitionTreeModel());
+//            partition.setPartitionClockModel(pcm);
+//        }
+
+        return selRow;
+    }
+
     // ++++++++++++++++++++ message bar +++++++++++++++++
 
     public String statusMessage() {
@@ -1286,7 +1319,7 @@ public class BeautiOptions extends ModelOptions {
     public List<AbstractPartitionData> otherPartitions = new ArrayList<AbstractPartitionData>();
 
     // list of starting tree from user import
-    public List<Tree> userTrees = new ArrayList<Tree>();
+    public Map<String, TreeHolder> userTrees = new HashMap<>();
 
     public boolean unlinkPartitionRates = true;
 

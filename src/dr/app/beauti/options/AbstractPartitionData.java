@@ -35,8 +35,8 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @author Alexei Drummond
  * @author Walter Xie
  */
 public abstract class AbstractPartitionData implements Serializable {

@@ -253,6 +253,10 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                 ancestralReconstructionAvailable = false;
                 countingAvailable = false;
                 break;
+            case DataType.TREE:
+                ancestralReconstructionAvailable = false;
+                countingAvailable = false;
+                break;
             case DataType.DUMMY:
                 //Do nothing
                 break;

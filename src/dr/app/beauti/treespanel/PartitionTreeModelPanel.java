@@ -28,6 +28,7 @@ package dr.app.beauti.treespanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.TreeHolder;
 import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.PanelUtils;
@@ -197,8 +198,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                 userTreeCombo.addItem(NO_TREE);
             } else {
                 Object selectedItem = userTreeCombo.getSelectedItem();
-                for (Tree tree : options.userTrees) {
-                    userTreeCombo.addItem(tree.getId());
+                for (TreeHolder tree : options.userTrees.values()) {
+                    userTreeCombo.addItem(tree);
                 }
                 if (selectedItem != null) {
                     userTreeCombo.setSelectedItem(selectedItem);
@@ -245,13 +246,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     }
 
     private Tree getSelectedUserTree() {
-        String treeId = (String) userTreeCombo.getSelectedItem();
-        for (Tree tree : options.userTrees) {
-            if (tree.getId().equals(treeId)) {
-                return tree;
-            }
-        }
-        return null;
+        TreeHolder treeHolder = (TreeHolder) userTreeCombo.getSelectedItem();
+        return treeHolder.getTrees().get(0);
     }
 
     private class ImportTreeAction extends AbstractAction {

@@ -234,6 +234,9 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
             case DataType.MICRO_SAT:
                 title = "Microsatellite";
                 break;
+            case DataType.TREE:
+                title = "Tree";
+                break;
             case DataType.DUMMY:
                 title = "NA";
                 break;

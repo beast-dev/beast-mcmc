@@ -1,5 +1,5 @@
 /*
- * SelectTreeDialog.java
+ * SelectTraitDialog.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -25,55 +25,56 @@
 
 package dr.app.beauti.datapanel;
 
-import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.TreeHolder;
+import dr.evolution.tree.Tree;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.event.*;
+import java.awt.*;
+import java.util.Map;
 
 /**
  * @author Andrew Rambaut
- * @version $Id:$
+ * @author Alexei Drummond
+ * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
-public class SelectTreeDialog {
+public class CreateTreePartitionDialog {
 
     private JFrame frame;
 
+    //    JComboBox traitCombo;
     JComboBox treeCombo;
     JCheckBox copyCheck;
     JTextField nameField;
 
     OptionsPanel optionPanel;
 
-    public SelectTreeDialog(JFrame frame) {
+    public CreateTreePartitionDialog(JFrame frame) {
         this.frame = frame;
 
         treeCombo = new JComboBox();
 
-        copyCheck = new JCheckBox("Rename tree model partition to:");
+        optionPanel = new OptionsPanel(12, 12);
+        optionPanel.addComponentWithLabel("Create partition from:", treeCombo);
+
+        copyCheck = new JCheckBox("Name tree partition:");
         nameField = new JTextField();
         nameField.setColumns(20);
         nameField.setEnabled(false);
 
-        optionPanel = new OptionsPanel(12, 12);
-        optionPanel.addComponentWithLabel("Partition tree:", treeCombo);
         optionPanel.addComponents(copyCheck, nameField);
 
         copyCheck.addItemListener(
-                new ItemListener() {
-                    public void itemStateChanged(ItemEvent ev) {
-                        nameField.setEnabled(copyCheck.isSelected());
-                    }
-                }
+                ev -> nameField.setEnabled(copyCheck.isSelected())
         );
+
 
     }
 
-    public int showDialog(Object[] trees) {
-
+    public int showDialog(Map<String, TreeHolder> trees, String defaultName, Component parent) {
         treeCombo.removeAllItems();
-        for (Object tree : trees) {
+        for (TreeHolder tree : trees.values()) {
             treeCombo.addItem(tree);
         }
 
@@ -85,7 +86,7 @@ public class SelectTreeDialog {
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "Create New Partition Tree");
+        final JDialog dialog = optionPane.createDialog(frame, "Create New Partition from Tree");
         dialog.pack();
 
         dialog.setVisible(true);
@@ -99,8 +100,8 @@ public class SelectTreeDialog {
         return result;
     }
 
-    public PartitionTreeModel getTree() {
-        return (PartitionTreeModel) treeCombo.getSelectedItem();
+    public TreeHolder getTree() {
+        return (TreeHolder) treeCombo.getSelectedItem();
     }
 
     public boolean getMakeCopy() {

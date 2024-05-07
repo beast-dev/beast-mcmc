@@ -138,7 +138,7 @@ public abstract class AbstractPartitionData implements Serializable {
        return traits != null;
     }
 
-    public abstract String getPrefix(); // be careful of microsatellite PartitionPattern
+    public abstract String getPrefix();
 
     public abstract TaxonList getTaxonList();
 

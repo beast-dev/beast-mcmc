@@ -34,9 +34,7 @@ import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.util.Arguments;
 import dr.evolution.alignment.Alignment;
-import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Microsatellite;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
@@ -378,7 +376,7 @@ public class BeastGenerator extends Generator {
         try {
             for (AbstractPartitionData partition : options.dataPartitions) {
                 Alignment alignment = null;
-                if (partition instanceof PartitionData) { // microsat has no alignment
+                if (partition instanceof PartitionData) {
                     alignment = ((PartitionData) partition).getAlignment();
                 }
                 if (alignment != null && !alignments.contains(alignment)) {

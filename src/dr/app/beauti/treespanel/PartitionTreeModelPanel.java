@@ -187,7 +187,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
         removeAll();
 
-        if (partitionTreeModel.getDataType().getType() != DataType.MICRO_SAT) {
+        if (partitionTreeModel.getDataType().getType() != DataType.TREE) {
             addSpanningComponent(randomTreeRadio);
             addSpanningComponent(upgmaTreeRadio);
             addSpanningComponent(userTreeRadio);

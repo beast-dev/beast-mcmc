@@ -161,7 +161,7 @@ public class PartitionData extends AbstractPartitionData {
         } else {
             // this method provides prefix as long as multi-data-partitions case,
             // because options.dataPartitions may contain traits, use options.getPartitionData()
-            if (options.getPartitionData().size() > 1) { // getPartitionData() already excludes traits and microsatellite
+            if (options.getPartitionData().size() > 1) { // getPartitionData() already excludes traits
                 prefix += getName() + ".";
             }
         }

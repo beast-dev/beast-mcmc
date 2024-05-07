@@ -249,10 +249,6 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             case DataType.CONTINUOUS:
                 countingAvailable = false;
                 break;
-            case DataType.MICRO_SAT:
-                ancestralReconstructionAvailable = false;
-                countingAvailable = false;
-                break;
             case DataType.TREE:
                 ancestralReconstructionAvailable = false;
                 countingAvailable = false;

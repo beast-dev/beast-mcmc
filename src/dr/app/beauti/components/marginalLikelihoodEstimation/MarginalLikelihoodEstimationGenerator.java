@@ -783,8 +783,6 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
                     case DataType.CONTINUOUS:
 
-                    case DataType.MICRO_SAT:
-
                     default:
                         throw new IllegalArgumentException("Unknown data type");
                 }

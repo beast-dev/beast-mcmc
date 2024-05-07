@@ -506,12 +506,12 @@ public class PartitionClockModel extends PartitionOptions {
 
         if (options.hasData()) {
             Operator op;
-            if (getDataType().getType() == DataType.MICRO_SAT) {
+            if (getDataType().getType() == DataType.TREE) {
                 if (getClockType() == ClockType.STRICT_CLOCK) {
-                    op = getOperator("microsatUpDownRateHeights");
+                    op = getOperator("upDownRateHeights");
                     ops.add(op);
                 } else {
-                    throw new UnsupportedOperationException("Microsatellite only supports strict clock model");
+                    throw new UnsupportedOperationException("Tree data only supports strict clock model");
                 }
 
             } else {

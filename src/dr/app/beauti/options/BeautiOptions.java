@@ -404,10 +404,10 @@ public class BeautiOptions extends ModelOptions {
     }
 
     /**
-     * exclude microsatellite and traits
+     * exclude traits
      */
     public List<PartitionData> getPartitionData() {
-        List<PartitionData> pdList = new ArrayList<PartitionData>();
+        List<PartitionData> pdList = new ArrayList<>();
         for (AbstractPartitionData partition : dataPartitions) {
             if (partition instanceof PartitionData && partition.getTraits() == null) {
                 pdList.add((PartitionData) partition);
@@ -760,96 +760,6 @@ public class BeautiOptions extends ModelOptions {
     }
 
     // ++++++++++++++ Partition Clock Model ++++++++++++++
-
-//    public List<PartitionClockModelTreeModelLink> getPartitionClockTreeLinks() {
-//        return partitionClockTreeLinks;
-//    }
-//
-//    public List<PartitionClockModelSubstModelLink> getTraitClockSubstLinks() {
-//        return partitionClockSubstLinks;
-//    }
-//
-//    public PartitionClockModelTreeModelLink getPartitionClockTreeLink(PartitionClockModel model, PartitionTreeModel tree) {
-//        for (PartitionClockModelTreeModelLink clockTree : getPartitionClockTreeLinks()) {
-//            if (clockTree.getPartitionClockModel().equals(model) && clockTree.getPartitionTreeTree().equals(tree)) {
-//                return clockTree;
-//            }
-//        }
-//
-//        return null;
-//    }
-//
-//    public void updatePartitionAllLinks() {
-//        clearDataPartitionCaches();
-//        partitionClockTreeLinks.clear();
-//        partitionClockSubstLinks.clear();
-//
-//        for (PartitionClockModel model : getPartitionClockModels()) {
-//            for (PartitionTreeModel tree : getPartitionTreeModels(getDataPartitions(model))) {
-//                PartitionClockModelTreeModelLink clockTree = new PartitionClockModelTreeModelLink(this, model, tree);
-//
-//                if (!partitionClockTreeLinks.contains(clockTree)) {
-//                    partitionClockTreeLinks.add(clockTree);
-//                }
-//            }
-//        }
-//
-//    }
-
-//    public void updateAll() {
-//        updatePartitionAllLinks();
-//        for (ClockModelGroup clockModelGroup : clockModelOptions.getClockModelGroups()) {
-//            if (clockModelGroup.contain(Microsatellite.INSTANCE, this)) {
-//                if (getPartitionClockModels(clockModelGroup).size() == 1) {
-//                    clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup);
-//                    getPartitionClockModels(clockModelGroup).get(0).setEstimatedRate(true);
-//                } else {
-//                    clockModelOptions.fixMeanRate(clockModelGroup);
-//                }
-//            } else if (!(clockModelGroup.getRateTypeOption() == FixRateType.TIP_CALIBRATED
-//                    || clockModelGroup.getRateTypeOption() == FixRateType.NODE_CALIBRATED
-//                    || clockModelGroup.getRateTypeOption() == FixRateType.RATE_CALIBRATED)) {
-//                //TODO correct?
-//                clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup);
-//            }
-//        }
-//    }
-
-    // update links (e.g List<PartitionData> allPartitionData), after use (e.g partition.setPartitionSubstitutionModel(model))
-
-//    public void updateLinksBetweenPDPCMPSMPTMPTPP() {
-//        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
-//            model.clearAllPartitionData();
-//        }
-//
-//        for (PartitionClockModel model : getPartitionClockModels()) {
-//            model.clearAllPartitionData();
-//        }
-//
-//        for (PartitionTreeModel tree : getPartitionTreeModels()) {
-//            tree.clearAllPartitionData();
-//        }
-//
-//        //TODO update PartitionTreePrior ?
-//
-//        for (PartitionData partition : dataPartitions) {
-//            PartitionSubstitutionModel psm = partition.getPartitionSubstitutionModel();
-//            if (!psm.getDataPartitions().contains(partition)) {
-//                psm.addPartitionData(partition);
-//            }
-//
-//            PartitionClockModel pcm = partition.getPartitionClockModel();
-//            if (!pcm.getDataPartitions().contains(partition)) {
-//                pcm.addPartitionData(partition);
-//            }
-//
-//            PartitionTreeModel ptm = partition.getPartitionTreeModel();
-//            if (!ptm.getDataPartitions().contains(partition)) {
-//                ptm.addPartitionData(partition);
-//            }
-//        }
-//
-//    }
 
     public double getAveWeightedMeanDistance(List<AbstractPartitionData> partitions) {
         double meanDistance = 0;

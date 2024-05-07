@@ -287,10 +287,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
                         options.useTipDates);
                 // setTreePriorChoices should be always before setOptions
                 ptpp.setOptions();
-//                    if (options.contains(Microsatellite.INSTANCE)) {
-//                        ptpp.setMicrosatelliteTreePrior();
-//                    } else
-
                 ptpp.repaint();
             }
         }

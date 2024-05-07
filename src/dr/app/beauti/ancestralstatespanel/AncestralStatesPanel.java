@@ -231,9 +231,6 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
             case DataType.CONTINUOUS:
                 title = "Continuous Traits";
                 break;
-            case DataType.MICRO_SAT:
-                title = "Microsatellite";
-                break;
             case DataType.TREE:
                 title = "Tree";
                 break;

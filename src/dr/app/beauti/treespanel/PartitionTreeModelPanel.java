@@ -30,6 +30,7 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.TreeHolder;
 import dr.app.beauti.types.StartingTreeType;
+import dr.app.beauti.types.TreePriorParameterizationType;
 import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
@@ -212,6 +213,19 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             addComponent(userTreeInfo);
             addComponent(importTreeButton);
 
+        } else {
+            JTextArea citationText = new JTextArea(1, 40);
+            citationText.setLineWrap(true);
+            citationText.setWrapStyleWord(true);
+            citationText.setEditable(false);
+            citationText.setFont(this.getFont());
+            citationText.setOpaque(false);
+
+            addComponentWithLabel("Tree as data model:", new JLabel("ThorneyBEAST"));
+            String citation = //citationCoalescent +  "\n" +
+                    "McCrone et al.";
+            addComponentWithLabel("Citation:", citationText);
+            citationText.setText(citation);
         }
 
         validate();

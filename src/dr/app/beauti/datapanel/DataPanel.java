@@ -64,6 +64,16 @@ import java.util.Set;
  */
 public class DataPanel extends BeautiPanel implements Exportable {
 
+    private static final int NAME_COLUMN = 0;
+    private static final int FILENAME_COLUMN = 1;
+    private static final int TAXA_COLUMN = 2;
+    private static final int SITE_COLUMN = 3;
+    private static final int PATTERN_COLUMN = 4;
+    private static final int DATATYPE_COLUMN = 5;
+    private static final int SUBSTITUTION_COLUMN = 6;
+    private static final int CLOCK_COLUMN = 7;
+    private static final int TREE_COLUMN = 8;
+
     JScrollPane scrollPane = new JScrollPane();
     JTable dataTable = null;
     DataTableModel dataTableModel = null;
@@ -105,15 +115,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
 //        dataTable.getTableHeader().setDefaultRenderer(
 //                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-        TableColumn col = dataTable.getColumnModel().getColumn(5);
+        TableColumn col = dataTable.getColumnModel().getColumn(SUBSTITUTION_COLUMN);
         ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
         col.setCellRenderer(comboBoxRenderer);
 
-        col = dataTable.getColumnModel().getColumn(6);
+        col = dataTable.getColumnModel().getColumn(CLOCK_COLUMN);
         comboBoxRenderer = new ComboBoxRenderer();
         col.setCellRenderer(comboBoxRenderer);
 
-        col = dataTable.getColumnModel().getColumn(7);
+        col = dataTable.getColumnModel().getColumn(TREE_COLUMN);
         comboBoxRenderer = new ComboBoxRenderer();
         col.setCellRenderer(comboBoxRenderer);
 
@@ -269,13 +279,13 @@ public class DataPanel extends BeautiPanel implements Exportable {
     }
 
     private void modelsChanged() {
-        TableColumn col = dataTable.getColumnModel().getColumn(5);
+        TableColumn col = dataTable.getColumnModel().getColumn(SUBSTITUTION_COLUMN);
         col.setCellEditor(new ComboBoxCellEditor());
 
-        col = dataTable.getColumnModel().getColumn(6);
+        col = dataTable.getColumnModel().getColumn(CLOCK_COLUMN);
         col.setCellEditor(new ComboBoxCellEditor());
 
-        col = dataTable.getColumnModel().getColumn(7);
+        col = dataTable.getColumnModel().getColumn(TREE_COLUMN);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(options.getPartitionTreeModels().toArray())));
     }
 
@@ -290,11 +300,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             ((JComboBox) editorComponent).removeAllItems();
 
-            if (column == 5) {
+            if (column == SUBSTITUTION_COLUMN) {
                 for (Object ob : options.getPartitionSubstitutionModels()) {
                     ((JComboBox) editorComponent).addItem(ob);
                 }
-            } else if (column == 6) {
+            } else if (column == CLOCK_COLUMN) {
                 for (Object ob : options.getPartitionClockModels()) {
                     ((JComboBox) editorComponent).addItem(ob);
                 }
@@ -788,11 +798,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
 //            PartitionData partition = options.getPartitionDataNoSpecies().get(row);
             AbstractPartitionData partition = options.dataPartitions.get(row);
             switch (col) {
-                case 0:
+                case NAME_COLUMN:
                     return partition.getName();
-                case 1:
+                case FILENAME_COLUMN:
                     return partition.getFileName();
-                case 2:
+                case TAXA_COLUMN:
                     final String nTaxa;
                     if (partition.getTraits() == null) {
                         nTaxa = partition.getTaxonCount() >= 0 ? String.valueOf(partition.getTaxonCount()) : "-";
@@ -800,17 +810,17 @@ public class DataPanel extends BeautiPanel implements Exportable {
                         nTaxa = String.valueOf(options.taxonList.getTaxonCount());
                     }
                     return nTaxa;
-                case 3:
+                case SITE_COLUMN:
                     return "" + (partition.getSiteCount() >= 0 ? partition.getSiteCount() : "-");
-                case 4:
+                case PATTERN_COLUMN:
                     return "" + (partition.getSiteCount() >= 0 ? partition.getPatternCount() : "-");
-                case 5:
+                case DATATYPE_COLUMN:
                     return partition.getDataDescription();
-                case 6:
+                case SUBSTITUTION_COLUMN:
                     return "" + (partition.getPartitionSubstitutionModel() != null ? partition.getPartitionSubstitutionModel().getName() : "-");
-                case 7:
+                case CLOCK_COLUMN:
                     return "" + (partition.getPartitionClockModel() != null ? partition.getPartitionClockModel().getName() : "-");
-                case 8:
+                case TREE_COLUMN:
                     return partition.getPartitionTreeModel().getName();
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
@@ -820,7 +830,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         public void setValueAt(Object aValue, int row, int col) {
             AbstractPartitionData partition = options.dataPartitions.get(row);
             switch (col) {
-                case 0:
+                case NAME_COLUMN:
                     String name = ((String) aValue).trim();
                     if (options.hasPartitionData(name)) {
                         JOptionPane.showMessageDialog(frame, "Duplicate partition name.",
@@ -831,15 +841,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
                         options.renamePartition(partition, name);
                     }
                     break;
-                case 6:
+                case SUBSTITUTION_COLUMN:
                     if (((PartitionSubstitutionModel) aValue).getDataType().equals(partition.getDataType())) {
                         partition.setPartitionSubstitutionModel((PartitionSubstitutionModel) aValue);
                     }
                     break;
-                case 7:
+                case CLOCK_COLUMN:
                     partition.setPartitionClockModel((PartitionClockModel) aValue);
                     break;
-                case 8:
+                case TREE_COLUMN:
                     partition.setPartitionTreeModel((PartitionTreeModel) aValue);
                     break;
             }
@@ -852,20 +862,17 @@ public class DataPanel extends BeautiPanel implements Exportable {
             AbstractPartitionData partition = options.dataPartitions.get(row);
 
             switch (col) {
-                case 0:// name
+                case NAME_COLUMN:// name
                     editable = true;
                     break;
-//                case 5:// ploidy type selection menu
-//                    editable = true;
-//                    break;
-                case 5:// substitution model selection menu
-                    editable = partition.getDataType().getType() != DataType.CONTINUOUS;
+                case SUBSTITUTION_COLUMN:// substitution model selection menu
+                    editable = partition.getDataType().getType() != DataType.CONTINUOUS && partition.getDataType().getType() != DataType.TREE;
                     break;
-                case 6:// clock model selection menu
-                    editable = partition.getDataType().getType() != DataType.CONTINUOUS;
+                case CLOCK_COLUMN:// clock model selection menu
+                    editable = partition.getDataType().getType() != DataType.CONTINUOUS && partition.getDataType().getType() != DataType.TREE;
                     break;
-                case 7:// tree selection menu
-                    editable = true;
+                case TREE_COLUMN:// tree selection menu
+                    editable = partition.getDataType().getType() != DataType.TREE;
                     break;
                 default:
                     editable = false;

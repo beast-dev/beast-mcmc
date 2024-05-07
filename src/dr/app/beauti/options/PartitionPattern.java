@@ -86,8 +86,4 @@ public class PartitionPattern extends AbstractPartitionData {
         }
         return prefix;
     }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 }

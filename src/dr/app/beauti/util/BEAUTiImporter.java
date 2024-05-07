@@ -408,7 +408,7 @@ public class BEAUTiImporter {
         if (fileNameStem.lastIndexOf(".") != -1) {
             fileNameStem = fileNameStem.substring(0, fileNameStem.lastIndexOf("."));
         }
-        addTrees(fileNameStem, Arrays.asList(trees));
+        addTrees(fileNameStem, file.getName(), Arrays.asList(trees));
     }
 
     public boolean importPredictors(final File file, final TraitData trait) throws Exception {
@@ -640,7 +640,7 @@ public class BEAUTiImporter {
 
         addTraits(traits);
 
-        addTrees(fileNameStem, trees);
+        addTrees(fileNameStem, fileName, trees);
     }
 
     // for Patterns
@@ -856,7 +856,7 @@ public class BEAUTiImporter {
         }
     }
 
-    private void addTrees(String fileNameStem, List<Tree> trees) {
+    private void addTrees(String fileNameStem, String fileName, List<Tree> trees) {
         if (trees != null && !trees.isEmpty()) {
             int i = 1;
             for (Tree tree : trees) {
@@ -866,7 +866,7 @@ public class BEAUTiImporter {
                 }
                 i++;
             }
-            options.userTrees.put(fileNameStem, new TreeHolder(trees, fileNameStem));
+            options.userTrees.put(fileNameStem, new TreeHolder(trees, fileNameStem, fileName));
         }
     }
 

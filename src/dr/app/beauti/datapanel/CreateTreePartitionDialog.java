@@ -45,7 +45,7 @@ public class CreateTreePartitionDialog {
 
     //    JComboBox traitCombo;
     JComboBox treeCombo;
-    JCheckBox copyCheck;
+    JCheckBox renameCheck;
     JTextField nameField;
 
     OptionsPanel optionPanel;
@@ -58,15 +58,15 @@ public class CreateTreePartitionDialog {
         optionPanel = new OptionsPanel(12, 12);
         optionPanel.addComponentWithLabel("Create partition from:", treeCombo);
 
-        copyCheck = new JCheckBox("Name tree partition:");
+        renameCheck = new JCheckBox("Name tree partition:");
         nameField = new JTextField();
         nameField.setColumns(20);
         nameField.setEnabled(false);
 
-        optionPanel.addComponents(copyCheck, nameField);
+        optionPanel.addComponents(renameCheck, nameField);
 
-        copyCheck.addItemListener(
-                ev -> nameField.setEnabled(copyCheck.isSelected())
+        renameCheck.addItemListener(
+                ev -> nameField.setEnabled(renameCheck.isSelected())
         );
 
 
@@ -104,8 +104,8 @@ public class CreateTreePartitionDialog {
         return (TreeHolder) treeCombo.getSelectedItem();
     }
 
-    public boolean getMakeCopy() {
-        return copyCheck.isSelected();
+    public boolean getRenamePartition() {
+        return renameCheck.isSelected();
     }
 
     public String getName() {

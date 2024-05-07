@@ -1107,10 +1107,10 @@ public class BeautiOptions extends ModelOptions {
 
     // ++++++++++++++++++++ tree partition +++++++++++++++++
 
-    public int createPartitionForTree(TreeHolder tree) {
+    public int createPartitionForTree(TreeHolder tree, String partitionName) {
         int selRow = -1;
 
-        TreePartitionData partition = new TreePartitionData(this, tree.toString(), tree.getFileNameStem(), tree.getTrees().get(0));
+        TreePartitionData partition = new TreePartitionData(this, partitionName, tree.getFileName(), tree.getTrees().get(0));
         dataPartitions.add(partition);
         selRow = dataPartitions.size() - 1;
 

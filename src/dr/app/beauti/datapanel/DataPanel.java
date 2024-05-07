@@ -529,12 +529,30 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         int selRow = -1;
 
-        int result = createTreeDialog.showDialog(options.userTrees, null, this);
-        if (result != JOptionPane.CANCEL_OPTION) {
-            TreeHolder tree = createTreeDialog.getTree();
-            selRow = options.createPartitionForTree(tree);
-        } else {
-            return false;
+        boolean done = false;
+        while (!done) {
+            int result = createTreeDialog.showDialog(options.userTrees, null, this);
+            if (result != JOptionPane.CANCEL_OPTION) {
+                TreeHolder tree = createTreeDialog.getTree();
+                String name = tree.getName();
+                if (createTreeDialog.getRenamePartition()) {
+                    name = createTreeDialog.getName();
+                    if (name.trim().isEmpty()) {
+                        continue;
+                    }
+                }
+                if (options.hasPartitionData(name)) {
+                    JOptionPane.showMessageDialog(this, "A partition with this name already exists.\nProvide a new name.",
+                            "Duplicate partition name",
+                            JOptionPane.ERROR_MESSAGE);
+                    continue;
+                }
+
+                selRow = options.createPartitionForTree(tree, name);
+                done = true;
+            } else {
+                return false;
+            }
         }
 
         modelsChanged();

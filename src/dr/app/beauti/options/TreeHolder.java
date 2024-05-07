@@ -16,30 +16,37 @@ import java.util.Collections;
 import java.util.List;
 
 public class TreeHolder {
-    public TreeHolder(Tree tree, String fileNameStem) {
+    public TreeHolder(Tree tree, String name, String fileName) {
         this.trees = Collections.singletonList(tree);
-        this.fileNameStem = fileNameStem;
+        this.name = name;
+        this.fileName = fileName;
     }
 
-    public TreeHolder(Collection<Tree> trees, String fileNameStem) {
+    public TreeHolder(Collection<Tree> trees, String name, String fileName) {
         this.trees = new ArrayList<>(trees);
-        this.fileNameStem = fileNameStem;
+        this.name = name;
+        this.fileName = fileName;
     }
 
     public List<Tree> getTrees() {
         return trees;
     }
 
-    public String getFileNameStem() {
-        return fileNameStem;
+    public String getName() {
+        return name;
+    }
+
+    public String getFileName() {
+        return fileName;
     }
 
     @Override
     public String toString() {
-        return fileNameStem;
+        return name;
     }
 
     private final List<Tree> trees;
-    private final String fileNameStem;
+    private final String name;
+    private final String fileName;
 
 }

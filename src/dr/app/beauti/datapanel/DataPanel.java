@@ -214,12 +214,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
         PanelUtils.setupComponent(button);
         controlPanel1.add(button);
 
-
-        //JPanel panel1 = new JPanel(new BorderLayout());
-        //panel1.setOpaque(false);
-        //panel1.add(useStarBEASTCheck, BorderLayout.NORTH);
-        //panel1.add(toolBar1, BorderLayout.SOUTH);
-
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
@@ -238,9 +232,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             if (partition instanceof PartitionData) alignment = ((PartitionData) partition).getAlignment();
 
-            // alignment == null if partition is trait or microsat http://code.google.com/p/beast-mcmc/issues/detail?id=343
             if (alignment == null) {
-                JOptionPane.showMessageDialog(this, "Cannot display traits or microsatellite data currently.\nUse the traits panel to view and edit traits.",
+                JOptionPane.showMessageDialog(this, "Cannot display traits or trees data currently.\nUse the traits panel to view and edit traits.",
                         "Illegal Argument Exception",
                         JOptionPane.ERROR_MESSAGE);
                 return;
@@ -809,6 +802,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         public Object getValueAt(int row, int col) {
 //            PartitionData partition = options.getPartitionDataNoSpecies().get(row);
             AbstractPartitionData partition = options.dataPartitions.get(row);
+            boolean isTreePartition = partition.getDataType().getType() == DataType.TREE;
             switch (col) {
                 case NAME_COLUMN:
                     return partition.getName();
@@ -829,11 +823,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case DATATYPE_COLUMN:
                     return partition.getDataDescription();
                 case SUBSTITUTION_COLUMN:
-                    return "" + (partition.getPartitionSubstitutionModel() != null ? partition.getPartitionSubstitutionModel().getName() : "-");
+                    return "" + (!isTreePartition ? partition.getPartitionSubstitutionModel().getName() : "-");
                 case CLOCK_COLUMN:
-                    return "" + (partition.getPartitionClockModel() != null ? partition.getPartitionClockModel().getName() : "-");
+                    return "" + (!isTreePartition ? partition.getPartitionClockModel().getName() : "-");
                 case TREE_COLUMN:
-                    return partition.getPartitionTreeModel().getName();
+                    return "" + (!isTreePartition ? partition.getPartitionTreeModel().getName() : "-");
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }

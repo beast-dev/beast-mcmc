@@ -95,7 +95,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
     private final DistanceKernelType distanceKernel;
     private final boolean slideOnly;
 
-    private final List<NodeRef> tips;
+    private final List<Integer> tips;
 
     /**
      * Constructor
@@ -150,14 +150,14 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
         this.size = size;
         this.distanceKernel = distanceKernel;
         this.slideOnly = false;
-        this.tips = new ArrayList<NodeRef>();
+        this.tips = new ArrayList<Integer>();
 
         for (Taxon taxon : taxa) {
             boolean found = false;
             for (int i = 0; i < tree.getExternalNodeCount(); i++) {
                 NodeRef tip = tree.getExternalNode(i);
                 if (tree.getNodeTaxon(tip).equals(taxon)) {
-                    tips.add(tip);
+                    tips.add(tip.getNumber());
                     found = true;
                     break;
                 }
@@ -193,7 +193,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
             } while (node == root);
         } else {
             // Pick a tip from the specified set of tips.
-            node = tips.get(MathUtils.nextInt(tips.size()));
+            node = tree.getNode(tips.get(MathUtils.nextInt(tips.size())));
         }
 
         // get its parent - this is the node we will prune/graft

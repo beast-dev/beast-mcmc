@@ -28,9 +28,7 @@ package dr.app.beauti.treespanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.TreePriorType;
 import dr.app.gui.table.TableEditorStopper;
-import dr.evolution.datatype.Microsatellite;
 import jam.framework.Exportable;
 import jam.table.TableRenderer;
 
@@ -60,12 +58,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     public final static boolean DEBUG = false;
 
     private static final long serialVersionUID = 2778103564318492601L;
-
-//    private JComboBox userTreeCombo = new JComboBox();
-//    private JButton button;
-
-//    private CreateTreeAction createTreeAction = new CreateTreeAction();
-//    private TreeDisplayPanel treeDisplayPanel;
 
     private BeautiFrame frame = null;
     public BeautiOptions options = null;
@@ -270,9 +262,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     }
 
     public void updateLinkTreePriorEnablility() {
-        boolean selected = !(options.getPartitionTreeModels().size() < 2
-                || options.contains(Microsatellite.INSTANCE));
-
+        boolean selected = options.getPartitionTreeModels().size() > 1;
         linkTreePriorCheck.setEnabled(selected);
     }
 
@@ -297,10 +287,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
                         options.useTipDates);
                 // setTreePriorChoices should be always before setOptions
                 ptpp.setOptions();
-//                    if (options.contains(Microsatellite.INSTANCE)) {
-//                        ptpp.setMicrosatelliteTreePrior();
-//                    } else
-
                 ptpp.repaint();
             }
         }

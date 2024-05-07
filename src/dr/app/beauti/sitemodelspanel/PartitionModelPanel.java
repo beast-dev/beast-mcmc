@@ -36,13 +36,11 @@ import dr.app.beauti.components.dollo.DolloComponentOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.types.BinaryModelType;
 import dr.app.beauti.types.FrequencyPolicyType;
-import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Microsatellite;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -134,21 +132,6 @@ public class PartitionModelPanel extends OptionsPanel {
     );
 
     private JTextArea citationText;
-
-    // =========== micro sat ===========
-    private JTextField microsatName = new JTextField();
-    private WholeNumberField microsatMax = new WholeNumberField(2,
-            Integer.MAX_VALUE);
-    private WholeNumberField microsatMin = new WholeNumberField(1,
-            Integer.MAX_VALUE);
-    private JComboBox rateProportionCombo = new JComboBox(
-            MicroSatModelType.RateProportionality.values());
-    private JComboBox mutationBiasCombo = new JComboBox(
-            MicroSatModelType.MutationalBias.values());
-    private JComboBox phaseCombo = new JComboBox(MicroSatModelType.Phase
-            .values());
-    JCheckBox shareMicroSatCheck = new JCheckBox(
-            "Share one microsatellite among all substitution model(s)");
 
     protected final PartitionSubstitutionModel model;
 
@@ -491,85 +474,6 @@ public class PartitionModelPanel extends OptionsPanel {
                 .setToolTipText("<html>Set-up design of phylogenetic GLM.</html>");
         setupGLMButton.setEnabled(model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST);
 
-        // ============ micro-sat ================
-        microsatName.setColumns(30);
-        microsatName.addKeyListener(new java.awt.event.KeyListener() {
-            public void keyTyped(KeyEvent e) {
-            }
-
-            public void keyPressed(KeyEvent e) {
-            }
-
-            public void keyReleased(KeyEvent e) {
-                model.getMicrosatellite().setName(microsatName.getText());
-            }
-        });
-        microsatMax.setColumns(10);
-        microsatMax.addKeyListener(new java.awt.event.KeyListener() {
-            public void keyTyped(KeyEvent e) {
-            }
-
-            public void keyPressed(KeyEvent e) {
-            }
-
-            public void keyReleased(KeyEvent e) {
-                model.getMicrosatellite().setMax(
-                        Integer.parseInt(microsatMax.getText()));
-            }
-        });
-        microsatMin.setColumns(10);
-        microsatMin.addKeyListener(new java.awt.event.KeyListener() {
-            public void keyTyped(KeyEvent e) {
-            }
-
-            public void keyPressed(KeyEvent e) {
-            }
-
-            public void keyReleased(KeyEvent e) {
-                model.getMicrosatellite().setMin(
-                        Integer.parseInt(microsatMin.getText()));
-            }
-        });
-
-        PanelUtils.setupComponent(shareMicroSatCheck);
-        shareMicroSatCheck.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                model.getOptions().shareMicroSat = shareMicroSatCheck
-                        .isSelected();
-                if (shareMicroSatCheck.isSelected()) {
-                    model.getOptions().shareMicroSat();
-                } else {
-                    model.getOptions().unshareMicroSat();
-                }
-                setOptions();
-            }
-        });
-
-        PanelUtils.setupComponent(rateProportionCombo);
-        rateProportionCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                model
-                        .setRatePorportion((MicroSatModelType.RateProportionality) rateProportionCombo
-                                .getSelectedItem());
-            }
-        });
-        // rateProportionCombo.setToolTipText("<html>Select the type of microsatellite substitution model.</html>");
-        PanelUtils.setupComponent(mutationBiasCombo);
-        mutationBiasCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                model
-                        .setMutationBias((MicroSatModelType.MutationalBias) mutationBiasCombo
-                                .getSelectedItem());
-            }
-        });
-        PanelUtils.setupComponent(phaseCombo);
-        phaseCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                model.setPhase((MicroSatModelType.Phase) phaseCombo
-                        .getSelectedItem());
-            }
-        });
-
         setupPanel();
         setOpaque(false);
     }
@@ -635,20 +539,6 @@ public class PartitionModelPanel extends OptionsPanel {
                 treatIndependentCheck.setEnabled(model.getContinuousTraitCount() > 1);
 
                 useLambdaCheck.setSelected(component.useLambda(model));
-                break;
-            case DataType.MICRO_SAT:
-                microsatName.setText(model.getMicrosatellite().getName());
-                microsatMax.setText(Integer.toString(model.getMicrosatellite()
-                        .getMax()));
-                microsatMin.setText(Integer.toString(model.getMicrosatellite()
-                        .getMin()));
-                shareMicroSatCheck.setSelected(model.getOptions().shareMicroSat);
-                rateProportionCombo.setSelectedItem(model.getRatePorportion());
-                mutationBiasCombo.setSelectedItem(model.getMutationBias());
-                phaseCombo.setSelectedItem(model.getPhase());
-                shareMicroSatCheck.setEnabled(model.getOptions()
-                        .getPartitionSubstitutionModels(Microsatellite.INSTANCE)
-                        .size() > 1);
                 break;
 
             case DataType.DUMMY:
@@ -825,19 +715,6 @@ public class PartitionModelPanel extends OptionsPanel {
                 addSeparator();
                 addComponentWithLabel("Model Extension:", modelExtensionCombo);
 
-                break;
-
-            case DataType.MICRO_SAT:
-                addComponentWithLabel("Microsatellite Name:", microsatName);
-                addComponentWithLabel("Max of Length:", microsatMax);
-                addComponentWithLabel("Min of Length:", microsatMin);
-                addComponent(shareMicroSatCheck);
-
-                addSeparator();
-
-                addComponentWithLabel("Rate Proportionality:", rateProportionCombo);
-                addComponentWithLabel("Mutational Bias:", mutationBiasCombo);
-                addComponentWithLabel("Phase:", phaseCombo);
                 break;
 
             case DataType.DUMMY:

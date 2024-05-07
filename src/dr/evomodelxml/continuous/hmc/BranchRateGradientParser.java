@@ -122,6 +122,9 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
             } else if (delegate instanceof BeagleDataLikelihoodDelegate) {
 
                 BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) delegate;
+                if (!beagleData.isUsePreOrder()) {
+                    throw new XMLParseException("To use gradients TreeDataLikelihood must have attribute usePreOrder=\"true\"");
+                }
                 return new BranchRateGradientForDiscreteTrait(traitName, treeDataLikelihood, beagleData, branchRates, useHessian);
 
             } else {

@@ -27,6 +27,7 @@ package dr.app.beast;
 
 import beagle.BeagleFlag;
 import beagle.BeagleInfo;
+import dr.app.beauti.BeautiMenuBarFactory;
 import dr.app.checkpoint.BeastCheckpointer;
 import dr.app.plugin.Plugin;
 import dr.app.plugin.PluginLoader;
@@ -44,11 +45,13 @@ import dr.xml.XMLParser;
 import jam.util.IconUtils;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 import java.util.logging.*;
 
 public class BeastMain {
@@ -60,9 +63,11 @@ public class BeastMain {
 
     static class BeastConsoleApp extends jam.console.ConsoleApplication {
         XMLParser parser = null;
+        public final static String backgroundColor =  "#35484F";
+        public final static String foregroundColor = "#CBB944";
 
         public BeastConsoleApp(String nameString, String titleString, String aboutString, javax.swing.Icon icon) throws IOException {
-            super(nameString, titleString, aboutString, icon, false);
+            super(nameString, titleString, aboutString, Color.decode(backgroundColor), Color.decode(foregroundColor), icon, false);
             getDefaultFrame().setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         }
 
@@ -246,8 +251,11 @@ public class BeastMain {
                                 "the button at the bottom right of the window.");
 
             } else {
-                infoLogger.severe("Parsing error - poorly formed BEAST file, " + fileName + ":\n" +
-                        pxe.getMessage() + "\n\nError thrown at: " + pxe.getStackTrace()[0] + "\n");
+                infoLogger.severe(
+                        "\n******\nError in input BEAST XML file, " + fileName + ":\n" +
+                        pxe.getMessage() +
+                        "\n******\n"
+                );
             }
             throw new RuntimeException("Terminate");
         } catch (RuntimeException rex) {
@@ -304,7 +312,7 @@ public class BeastMain {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("BEAST " + version.getVersionString() + ", " + version.getDateString(), 60);
+        centreLine("BEAST X " + version.getVersionString() + ", " + version.getDateString(), 60);
         centreLine("Bayesian Evolutionary Analysis Sampling Trees", 60);
         for (String creditLine : version.getCredits()) {
             centreLine(creditLine, 60);
@@ -761,29 +769,31 @@ public class BeastMain {
 
         BeastConsoleApp consoleApp = null;
 
-        String nameString = "BEAST X" + version.getVersionString();
+        String nameString = "BEAST X " + version.getVersionString();
 
         if (window) {
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");
             System.setProperty("apple.laf.useScreenMenuBar", "true");
             System.setProperty("apple.awt.showGrowBox", "true");
 
-            javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
+            javax.swing.Icon icon = IconUtils.resize(IconUtils.getIcon(BeastMain.class, "images/beast.png"), 128, 128);
 
             String titleString = "<html>" +
                     "<div style=\"font: HelveticaNeue, Helvetica, Arial, sans-serif\">" +
-                    "<p style=\"font-weight: 100; font-size: 42px\">BEAST</p>" +
+                    "<p style=\"font-weight: 100; font-size: 42px\">BEAST X</p>" +
                     "<p style=\"font-weight: 200; font-size: 12px\">Bayesian Evolutionary Analysis Sampling Trees</p>" +
                     "<p style=\"font-weight: 300; font-size: 11px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
                     "</div></html>";
 
             String aboutString = "<html>" +
-                    "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; font-weight: 100\">" +
+                    "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; " +
+                    "font-weight: 100;" +
+                    "background: #35484F; color: #CBB944\">" +
                     "<center>" +
                     version.getHTMLCredits() +
                     "</div></center></div></html>";
 
-            consoleApp = new BeastConsoleApp(nameString, titleString, aboutString, icon);
+            consoleApp = new BeastConsoleApp(nameString, titleString, aboutString,  icon);
             consoleApp.initialize();
 
         }
@@ -796,13 +806,13 @@ public class BeastMain {
 
             String titleString = "<html>" +
                     "<div style=\"font: HelveticaNeue, Helvetica, Arial, sans-serif\">" +
-                    "<div style=\"font-weight: 100; font-size: 42px\">BEAST</div>" +
+                    "<div style=\"font-weight: 100; font-size: 42px\">BEAST X</div>" +
                     "<div style=\"font-weight: 200; font-size: 11px\">Bayesian Evolutionary Analysis Sampling Trees</div>" +
                     "<div style=\"font-weight: 300; font-size: 10px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</div>" +
                     "<div style=\"font-weight: 300; font-size: 10px\"><a href=\"" + version.getBuildString() + "\">" +
                     version.getBuildString() + "</a></div>" +
                     "</div></html>";
-            javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
+            javax.swing.Icon icon = IconUtils.resize(IconUtils.getIcon(BeastMain.class, "images/beast.png"), 128, 128);
 
             BeastDialog dialog = new BeastDialog(new JFrame(), titleString, icon);
 
@@ -894,7 +904,7 @@ public class BeastMain {
 
             if (inputFileName == null) {
                 // No input file name was given so throw up a dialog box...
-                inputFile = Utils.getLoadFile("BEAST " + version.getVersionString() + " - Select XML input file");
+                inputFile = Utils.getLoadFile("BEAST X " + version.getVersionString() + " - Select XML input file");
             }
         }
 

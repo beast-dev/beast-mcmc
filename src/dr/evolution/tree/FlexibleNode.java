@@ -228,14 +228,18 @@ public class FlexibleNode implements NodeRef, Attributable {
 
 	/**
 	 * Get the rate at this node.
+	 * @deprecated this method should not be used and will be removed at some point
 	 */
+	@Deprecated
 	public final double getRate() {
 		return rate;
 	}
 
 	/**
 	 * Set the rate at this node.
+	 * @deprecated this method should not be used and will be removed at some point
 	 */
+	@Deprecated
 	public final void setRate(double value) {
 		rate = value;
 	}

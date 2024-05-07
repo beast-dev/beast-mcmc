@@ -28,6 +28,7 @@ package dr.app.beauti.clockmodelspanel;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.types.ClockDistributionType;
 import dr.app.beauti.types.ClockType;
+import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.util.OSType;
 import jam.panels.OptionsPanel;
@@ -45,8 +46,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
     // Components
     private static final long serialVersionUID = -1645661616353099424L;
 
-    private JComboBox clockTypeCombo = new JComboBox(EnumSet.range(
-            ClockType.STRICT_CLOCK, ClockType.MIXED_EFFECTS_CLOCK).toArray());
+    private JComboBox clockTypeCombo = new JComboBox();
     private JComboBox clockDistributionCombo = new JComboBox (new ClockDistributionType[] {
             ClockDistributionType.LOGNORMAL,
             ClockDistributionType.GAMMA,
@@ -71,6 +71,13 @@ public class PartitionClockModelPanel extends OptionsPanel {
         super(12, (OSType.isMac() ? 6 : 24));
 
         this.model = partitionModel;
+
+        for (ClockType clockType : EnumSet.range(ClockType.STRICT_CLOCK, ClockType.FIXED_LOCAL_CLOCK)) {
+            clockTypeCombo.addItem(clockType);
+            if (clockType == ClockType.STRICT_CLOCK || clockType == ClockType.HMC_CLOCK) {
+                clockTypeCombo.addItem(new JSeparator(JSeparator.HORIZONTAL));
+            }
+        }
 
         PanelUtils.setupComponent(clockTypeCombo);
         clockTypeCombo.addItemListener(new ItemListener() {
@@ -143,7 +150,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
                 addComponent(continuousQuantileCheck);
                 break;
 
-            case HMC:
+            case HMC_CLOCK:
                 addComponent(new JLabel(
                         "<html>" +
                                 "Using the Hamiltonian Monte Carlo relaxed clock model of Ji, Zhang, Holbrook,<br>" +
@@ -155,6 +162,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
                 addComponentWithLabel("Relaxed Distribution:", clockDistributionCombo);
                 break;
 
+            case SHRINKAGE_LOCAL_CLOCK:
             case RANDOM_LOCAL_CLOCK:
             case FIXED_LOCAL_CLOCK:
                 break;

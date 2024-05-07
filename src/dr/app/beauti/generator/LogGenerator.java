@@ -26,37 +26,26 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.MixtureModelBranchRates;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.evomodel.tree.TMRCAStatistic;
-import dr.evomodel.tree.TreeLengthStatistic;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.*;
 import dr.evomodelxml.tree.TreeLengthStatisticParser;
-import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
-import dr.inference.model.CompoundLikelihood;
 import dr.inferencexml.loggers.CheckpointLoggerParser;
 import dr.oldevomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
-import dr.evomodelxml.speciation.*;
 import dr.evomodelxml.tree.TMRCAStatisticParser;
 import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.model.ParameterParser;
-import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.loggers.ColumnsParser;
 import dr.inferencexml.loggers.LoggerParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
-import dr.oldevomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
-import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -168,11 +157,6 @@ public class LogGenerator extends Generator {
 
         }
 
-        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-            if (model.getDataType().getType() == DataType.MICRO_SAT)
-                substitutionModelGenerator.writeMicrosatSubstModelParameterRef(model, writer);
-        }
-
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_SCREEN_LOG, writer);
 
         writer.writeCloseTag(LoggerParser.LOG);
@@ -260,8 +244,7 @@ public class LogGenerator extends Generator {
         // coalescentLikelihood
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             PartitionTreePrior prior = model.getPartitionTreePrior();
-            if (prior.getNodeHeightPrior() != TreePriorType.EXTENDED_SKYLINE &&
-                prior.getNodeHeightPrior() != TreePriorType.SKYGRID) {
+            if ((prior.getNodeHeightPrior() != TreePriorType.SKYGRID && prior.getNodeHeightPrior() != TreePriorType.SKYGRID_HMC)) {
                 // if not using a multi-locus model...
                 treePriorGenerator.writePriorLikelihoodReferenceLog(prior, model, writer);
                 writer.writeText("");
@@ -269,9 +252,7 @@ public class LogGenerator extends Generator {
         }
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-            if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
-                writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
-            } else if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
+            if ((prior.getNodeHeightPrior() == TreePriorType.SKYGRID || prior.getNodeHeightPrior() == TreePriorType.SKYGRID_HMC)) {
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, prior.getPrefix() + "skygrid");
             }
         }
@@ -374,9 +355,7 @@ public class LogGenerator extends Generator {
         }
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-            if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
-                writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
-            } else if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
+            if ((prior.getNodeHeightPrior() == TreePriorType.SKYGRID || prior.getNodeHeightPrior() == TreePriorType.SKYGRID_HMC)) {
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, prior.getPrefix() + "skygrid");
             }
         }
@@ -540,7 +519,13 @@ public class LogGenerator extends Generator {
                             BranchRateModel.RATE, prefix + BranchRateModel.RATE);
                     break;
 
-                case HMC:
+                case SHRINKAGE_LOCAL_CLOCK:
+                    writeTreeTrait(writer, ScaledByTreeTimeBranchRateModelParser.TREE_TIME_BRANCH_RATES,
+                            prefix + BranchRateModel.BRANCH_RATES,
+                            BranchRateModel.RATE, prefix + BranchRateModel.RATE);
+                    break;
+
+                case HMC_CLOCK:
                     writeTreeTrait(writer, ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES,
                             prefix + BranchRateModel.BRANCH_RATES,
                             BranchRateModel.RATE, prefix + BranchRateModel.RATE);

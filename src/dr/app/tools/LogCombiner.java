@@ -613,7 +613,7 @@ public class LogCombiner {
         centreLine("by", 60);
         centreLine("Andrew Rambaut and Alexei J. Drummond", 60);
         System.out.println();
-        centreLine("Institute of Evolutionary Biology", 60);
+        centreLine("Institute of Ecology and Evolution", 60);
         centreLine("University of Edinburgh", 60);
         centreLine("a.rambaut@ed.ac.uk", 60);
         System.out.println();
@@ -678,7 +678,7 @@ public class LogCombiner {
             String aboutString = "<html><center><p>" + versionString + ", " + version.getDateString() + "</p>" +
                     "<p>by<br>" +
                     "Andrew Rambaut and Alexei J. Drummond</p>" +
-                    "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
+                    "<p>Institute of Ecology and Evolution, University of Edinburgh<br>" +
                     "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
                     "<p>Department of Computer Science, University of Auckland<br>" +
                     "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +

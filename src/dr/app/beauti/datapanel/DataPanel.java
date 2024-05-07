@@ -327,6 +327,16 @@ public class DataPanel extends BeautiPanel implements Exportable {
         boolean canUnlink = options.dataPartitions.size() > 1 && hasSelection;
         boolean canLink = options.dataPartitions.size() > 1 && hasSelection && selRows.length > 1;
 
+        if (hasSelection) {
+            for (int selRow : selRows) {
+                if (options.dataPartitions.get(selRow) instanceof TreePartitionData) {
+                    canUnlink = false;
+                    canLink = false;
+                    break;
+                }
+            }
+        }
+
         unlinkModelsAction.setEnabled(canUnlink);
         linkModelsAction.setEnabled(canLink);
 
@@ -697,12 +707,14 @@ public class DataPanel extends BeautiPanel implements Exportable {
             // When unlinking trees, the clocks must also be unlinked. Perhaps a dialog is need
             // to say this? The parameters of the clocks could be linked in the priors panel.
             PartitionClockModel clockModel = partition.getPartitionClockModel();
-            if (!clockModel.getName().equals(partition.getName())) {
-                clockModel = new PartitionClockModel(options, partition.getName(), clockModel);
-                partition.setPartitionClockModel(clockModel);
-            }
+            if (clockModel != null) {
+                if (!clockModel.getName().equals(partition.getName())) {
+                    clockModel = new PartitionClockModel(options, partition.getName(), clockModel);
+                    partition.setPartitionClockModel(clockModel);
+                }
 
-            clockModel.setPartitionTreeModel(treeModel);
+                clockModel.setPartitionTreeModel(treeModel);
+            }
         }
 
 

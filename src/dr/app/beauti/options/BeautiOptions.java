@@ -453,6 +453,16 @@ public class BeautiOptions extends ModelOptions {
         return pdList;
     }
 
+    public List<AbstractPartitionData> getDataPartitionsExceptTrees() {
+        List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
+        for (AbstractPartitionData pd : dataPartitions) {
+            if (pd.getDataType().getType() != DataType.TREE) {
+                pdList.add(pd);
+            }
+        }
+        return pdList;
+    }
+
     public List<AbstractPartitionData> getDataPartitions(PartitionOptions model) {
         if (model instanceof PartitionSubstitutionModel) {
             return getDataPartitions((PartitionSubstitutionModel) model);

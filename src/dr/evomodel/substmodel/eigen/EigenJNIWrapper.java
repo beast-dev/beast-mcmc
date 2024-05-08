@@ -45,7 +45,8 @@ public class EigenJNIWrapper {
     public native int setMatrix(int matrix,
                                 int[] indices,
                                 double[] values,
-                                int nonZeroCount);
+                                int nonZeroCount,
+                                int stateCount);
 
     public native String getVersion();
 

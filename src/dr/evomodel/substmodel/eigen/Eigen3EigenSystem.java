@@ -66,7 +66,7 @@ public class Eigen3EigenSystem implements EigenSystem {
                 }
             }
         }
-        eigenJNIWrapper.setMatrix(0, indices, values, nonZero);
+        eigenJNIWrapper.setMatrix(0, indices, values, nonZero, stateCount);
         double[] eigenValues = new double[2 * stateCount];
         double[] eigenVectors = new double[2 * stateCount * stateCount];
         double[] inverseEigenVectors = new double[2 * stateCount * stateCount];

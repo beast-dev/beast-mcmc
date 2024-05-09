@@ -821,6 +821,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 //            PartitionData partition = options.getPartitionDataNoSpecies().get(row);
             AbstractPartitionData partition = options.dataPartitions.get(row);
             boolean isTreePartition = partition.getDataType().getType() == DataType.TREE;
+            boolean isTraitPartition = partition.getTraits() != null;
             switch (col) {
                 case NAME_COLUMN:
                     return partition.getName();
@@ -828,7 +829,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                     return partition.getFileName();
                 case TAXA_COLUMN:
                     final String nTaxa;
-                    if (partition.getTraits() == null) {
+                    if (!isTraitPartition) {
                         nTaxa = partition.getTaxonCount() >= 0 ? String.valueOf(partition.getTaxonCount()) : "-";
                     } else {
                         nTaxa = String.valueOf(options.taxonList.getTaxonCount());
@@ -843,7 +844,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case SUBSTITUTION_COLUMN:
                     return "" + (!isTreePartition ? partition.getPartitionSubstitutionModel().getName() : "-");
                 case CLOCK_COLUMN:
-                    return "" + (!isTreePartition ? partition.getPartitionClockModel().getName() : "-");
+                    return "" + (!(isTreePartition || isTraitPartition) ? partition.getPartitionClockModel().getName() : "-");
                 case TREE_COLUMN:
                     return "" + (!isTreePartition ? partition.getPartitionTreeModel().getName() : "-");
                 default:

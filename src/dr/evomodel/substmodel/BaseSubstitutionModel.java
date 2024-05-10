@@ -26,6 +26,8 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
+import dr.evomodel.substmodel.eigen.Eigen3EigenSystem;
+import dr.evomodel.substmodel.geneconversion.PairedParalogGeneConversionSubstitutionModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -77,14 +79,20 @@ public abstract class BaseSubstitutionModel extends AbstractModel
     public BaseSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, EigenSystem eigenSystem) {
         super(name);
 
-        if (eigenSystem == null)
-            this.eigenSystem = getDefaultEigenSystem(dataType.getStateCount());
-        else
-            this.eigenSystem = eigenSystem;
-
         this.dataType = dataType;
 
         setStateCount(dataType.getStateCount());
+
+        if (eigenSystem == null) {
+            if (this instanceof PairedParalogGeneConversionSubstitutionModel) {
+                this.eigenSystem = new Eigen3EigenSystem(stateCount);
+            } else {
+                this.eigenSystem = getDefaultEigenSystem(dataType.getStateCount());
+            }
+        }
+        else {
+            this.eigenSystem = eigenSystem;
+        }
 
         if (freqModel != null) {
             // freqModel can be null at this point but must be
@@ -268,6 +276,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
     private void decompose() {
 
         double normalization = setupMatrix();
+
 
         eigenDecomposition = eigenSystem.decomposeMatrix(q);
 

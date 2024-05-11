@@ -606,8 +606,8 @@ public class BEAUTiImporter {
             TraitData.TraitType type = null;
             for (Taxon taxon : taxonList) {
                 String value = taxon.getAttribute(name).toString();
-                if (value.equals("NA") || value.equals("?")) {
-                    taxon.setAttribute(name, "");
+                if (value.equals("NA") || value.equals("?")) { // need to check "?" to avoid 'else' block
+                    taxon.setAttribute(name, "?");
                 } else {
                     try {
                         Integer.parseInt(value);

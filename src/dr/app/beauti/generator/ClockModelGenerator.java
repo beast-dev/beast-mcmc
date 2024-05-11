@@ -542,39 +542,39 @@ public class ClockModelGenerator extends Generator {
                 writeCovarianceStatistic(writer, tag, prefix, treePrefix);
                 break;
 
-//            case MIXED_EFFECTS_CLOCK:
-//                writer.writeComment("The mixed effects clock model (Bletsa et al., Virus Evol., 2019)");
-//
-//                tag = CompoundParameterParser.COMPOUND_PARAMETER;
-//
-//                //first write the CompoundParameter XML bit
-//                writer.writeOpenTag(tag,
-//                        new Attribute[]{
-//                                new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffectsParser.FIXED_EFFECTS)
-//                        }
-//                );
-//
-//                writer.writeTag(PARAMETER, new Attribute[]{
-//                        new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffectsParser.INTERCEPT),
-//                        new Attribute.Default<String>(ParameterParser.VALUE, "-0.01")}, true);
-//                int parameterNumber = 1;
-//                for (Taxa taxonSet : options.taxonSets) {
-//                    if (options.taxonSetsMono.get(taxonSet)) {
-//                        writer.writeTag(PARAMETER, new Attribute[]{
-//                                new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffectsParser.COEFFICIENT + parameterNumber),
-//                                new Attribute.Default<String>(ParameterParser.VALUE, "0.01")}, true);
-//                    }
-//                }
-//                writer.writeCloseTag(tag);
-//
-//                //continue with the fixedEffects XML block
-//                tag = BranchSpecificFixedEffectsParser.FIXED_EFFECTS;
-//                writer.writeCloseTag(tag);
-//
-//                //and then the arbitraryBranchRates
-//                tag = ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES;
-//                writer.writeCloseTag(tag);
-//                break;
+            case MIXED_EFFECTS_CLOCK:
+                writer.writeComment("The mixed effects clock model (Bletsa et al., Virus Evol., 2019)");
+
+                tag = CompoundParameterParser.COMPOUND_PARAMETER;
+
+                //first write the CompoundParameter XML bit
+                writer.writeOpenTag(tag,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffectsParser.FIXED_EFFECTS)
+                        }
+                );
+
+                writer.writeTag(PARAMETER, new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffectsParser.INTERCEPT),
+                        new Attribute.Default<String>(ParameterParser.VALUE, "-0.01")}, true);
+                int parameterNumber = 1;
+                for (Taxa taxonSet : options.taxonSets) {
+                    if (options.taxonSetsMono.get(taxonSet)) {
+                        writer.writeTag(PARAMETER, new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffectsParser.COEFFICIENT + parameterNumber),
+                                new Attribute.Default<String>(ParameterParser.VALUE, "0.01")}, true);
+                    }
+                }
+                writer.writeCloseTag(tag);
+
+                //continue with the fixedEffects XML block
+                tag = BranchSpecificFixedEffectsParser.FIXED_EFFECTS;
+                writer.writeCloseTag(tag);
+
+                //and then the arbitraryBranchRates
+                tag = ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES;
+                writer.writeCloseTag(tag);
+                break;
 
             default:
                 throw new IllegalArgumentException("Unknown clock model");
@@ -877,6 +877,7 @@ public class ClockModelGenerator extends Generator {
                 writer.writeIDref(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC, prefix + "covariance");
                 break;
 
+            case MIXED_EFFECTS_CLOCK:
             case SHRINKAGE_LOCAL_CLOCK:
                 break;
 

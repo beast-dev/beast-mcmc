@@ -28,6 +28,7 @@ package dr.app.beauti.options;
 import dr.app.beauti.types.*;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxa;
+import dr.evomodelxml.branchratemodel.BranchSpecificFixedEffectsParser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -140,6 +141,16 @@ public class PartitionClockModel extends PartitionOptions {
                 "shrinkage local clock Hamiltonian operator", null, OperatorType.SHRINKAGE_CLOCK_HMC_OPERATOR ,-1 , 8.0);
         createScaleOperator(ClockType.SHRINKAGE_CLOCK_LOCATION, demoTuning, rateWeights);
         createParameter("substBranchRates.rates", "shrinkage local clock branch rates", 1.0);
+
+        // Mixed effects clock
+        createScaleOperator(ClockType.ME_CLOCK_LOCATION, demoTuning, rateWeights);
+        createScaleOperator(ClockType.ME_CLOCK_SCALE, demoTuning, rateWeights);
+        new Parameter.Builder(BranchSpecificFixedEffectsParser.INTERCEPT, "intercept").
+                prior(PriorType.NORMAL_HPM_PRIOR).initial(rate)
+                .isCMTCRate(true).isNonNegative(false).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(true).build(parameters);
+        createOperator("RANDOMWALK_INTERCEPT_ME_CLOCK", "mixed effects clock", "mixed effects clock intercept operator",
+                BranchSpecificFixedEffectsParser.INTERCEPT, OperatorType.RANDOM_WALK, demoTuning, rateWeights);
 
         // Random local clock
         createParameterGammaPrior(ClockType.LOCAL_CLOCK + ".relativeRates", "random local clock relative rates",
@@ -257,6 +268,11 @@ public class PartitionClockModel extends PartitionOptions {
                 "Scales clock rate inversely to node heights of the tree",
                 getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
                 getParameter(ClockType.HMC_CLOCK_LOCATION), OperatorType.UP_DOWN, demoTuning, rateWeights);
+
+        createUpDownOperator("upDownMERateHeights", "Evolutionary rate and heights",
+                "Scales clock rate inversely to node heights of the tree",
+                getPartitionTreeModel().getParameter("treeModel.allInternalNodeHeights"),
+                getParameter(ClockType.ME_CLOCK_LOCATION), OperatorType.UP_DOWN, demoTuning, rateWeights);
     }
 
     // From PartitionClockModelTreeModelLink
@@ -326,6 +342,32 @@ public class PartitionClockModel extends PartitionOptions {
                             }
 
                             params.add(getParameter(taxonSet.getId() + ".rate"));
+                        }
+                    }
+                    break;
+
+                case MIXED_EFFECTS_CLOCK:
+                    params.add(getClockRateParameter());
+                    params.add(getParameter(ClockType.ME_CLOCK_SCALE));
+                    params.add(getParameter(BranchSpecificFixedEffectsParser.INTERCEPT));
+                    int coeff = 1;
+                    for (Taxa taxonSet : options.taxonSets) {
+                        if (options.taxonSetsMono.get(taxonSet)) {
+                            String parameterName = BranchSpecificFixedEffectsParser.COEFFICIENT + coeff;
+                            if (!hasParameter(parameterName)) {
+                                new Parameter.Builder(parameterName, "fixed effect")
+                                        .prior(PriorType.NORMAL_HPM_PRIOR)
+                                        .initial(0.01)
+                                        .isCMTCRate(false).isNonNegative(false)
+                                        .partitionOptions(this)
+                                        .taxonSet(taxonSet)
+                                        .build(parameters);
+                                createOperator("RANDOMWALK_COEFFICIENT_" + coeff +  "_ME_CLOCK", "mixed effects clock coefficient " + coeff, "mixed effects clock coefficient operator",
+                                        BranchSpecificFixedEffectsParser.COEFFICIENT + coeff, OperatorType.RANDOM_WALK, demoTuning, rateWeights);
+                            }
+
+                            params.add(getParameter(BranchSpecificFixedEffectsParser.COEFFICIENT + coeff));
+                            coeff++;
                         }
                     }
                     break;
@@ -411,6 +453,10 @@ public class PartitionClockModel extends PartitionOptions {
                 rateParam = getParameter("clock.rate");
                 break;
 
+            case MIXED_EFFECTS_CLOCK:
+                rateParam = getParameter(ClockType.ME_CLOCK_LOCATION);
+                break;
+
             case UNCORRELATED:
                 switch (clockDistributionType) {
                     case LOGNORMAL:
@@ -473,6 +519,8 @@ public class PartitionClockModel extends PartitionOptions {
                 return getOperator("upDownRateHeights");
             case FIXED_LOCAL_CLOCK:
                 return getOperator("upDownRateHeights");
+            case MIXED_EFFECTS_CLOCK:
+                return getOperator("upDownMERateHeights");
 
             case UNCORRELATED:
                 switch (clockDistributionType) {
@@ -541,6 +589,20 @@ public class PartitionClockModel extends PartitionOptions {
                         for (Taxa taxonSet : options.taxonSets) {
                             if (options.taxonSetsMono.get(taxonSet)) {
                                 ops.add(getOperator(taxonSet.getId() + ".rate"));
+                            }
+                        }
+                        break;
+
+                    case MIXED_EFFECTS_CLOCK:
+                        ops.add(rateOperator = getOperator(ClockType.ME_CLOCK_LOCATION));
+                        ops.add(getOperator(ClockType.ME_CLOCK_SCALE));
+                        addUpDownOperator(ops, rateOperator);
+                        ops.add(getOperator("RANDOMWALK_INTERCEPT_ME_CLOCK"));
+                        int coeff = 1;
+                        for (Taxa taxonSet : options.taxonSets) {
+                            if (options.taxonSetsMono.get(taxonSet)) {
+                                ops.add(getOperator("RANDOMWALK_COEFFICIENT_" + coeff +  "_ME_CLOCK"));
+                                coeff++;
                             }
                         }
                         break;

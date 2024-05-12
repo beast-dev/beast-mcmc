@@ -525,6 +525,7 @@ public class LogGenerator extends Generator {
                             BranchRateModel.RATE, prefix + BranchRateModel.RATE);
                     break;
 
+                case MIXED_EFFECTS_CLOCK:
                 case HMC_CLOCK:
                     writeTreeTrait(writer, ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES,
                             prefix + BranchRateModel.BRANCH_RATES,

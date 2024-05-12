@@ -679,6 +679,12 @@ public class ClockModelGenerator extends Generator {
                 tag = LocalClockModelParser.LOCAL_CLOCK_MODEL;
                 id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
                 break;
+
+            case MIXED_EFFECTS_CLOCK:
+                tag = ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES;
+                id = model.getPrefix() + ArbitraryBranchRates.BRANCH_RATES;
+                break;
+
             case AUTOCORRELATED:
                 tag = ACLikelihoodParser.AC_LIKELIHOOD;
                 throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
@@ -754,6 +760,8 @@ public class ClockModelGenerator extends Generator {
                 }
             case SHRINKAGE_LOCAL_CLOCK:
                 return prefix + ClockType.SHRINKAGE_CLOCK_LOCATION;
+            case MIXED_EFFECTS_CLOCK:
+                return prefix + ClockType.ME_CLOCK_LOCATION;
             case AUTOCORRELATED:
                 //TODO
                 throw new IllegalArgumentException("Autocorrelated Relaxed Clock, writeAllClockRateRefs(PartitionClockModel model, XMLWriter writer)");
@@ -840,6 +848,10 @@ public class ClockModelGenerator extends Generator {
 
             case SHRINKAGE_LOCAL_CLOCK:
                 writer.writeIDref(PARAMETER, prefix + ClockType.SHRINKAGE_CLOCK_LOCATION);
+                break;
+
+            case MIXED_EFFECTS_CLOCK:
+                writer.writeIDref(PARAMETER, prefix + ClockType.ME_CLOCK_LOCATION);
                 break;
 
             case HMC_CLOCK:

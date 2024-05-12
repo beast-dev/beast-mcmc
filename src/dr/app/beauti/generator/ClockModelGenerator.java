@@ -569,9 +569,18 @@ public class ClockModelGenerator extends Generator {
 
                 //continue with the fixedEffects XML block
                 tag = BranchSpecificFixedEffectsParser.FIXED_EFFECTS;
+                writer.writeOpenTag(tag,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffectsParser.FIXED_EFFECTS + "Model")
+                        }
+                );
+
+                //TODO continue implementing here
+
                 writer.writeCloseTag(tag);
 
                 //and then the arbitraryBranchRates
+                //TODO continue implementing here
                 tag = ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES;
                 writer.writeCloseTag(tag);
                 break;

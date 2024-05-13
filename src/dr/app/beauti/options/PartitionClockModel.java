@@ -134,12 +134,12 @@ public class PartitionClockModel extends PartitionOptions {
                 .initial(1.0).mean(1.0).offset(0.0).partitionOptions(this)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
 
-        new Parameter.Builder(ClockType.ME_CLOCK_LOCATION, "Mixed effects clock rate").
+        new Parameter.Builder(ClockType.ME_CLOCK_LOCATION, "mixed effects clock rate").
                 prior(PriorType.NORMAL_HPM_PRIOR).initial(rate)
                 .isCMTCRate(false).isNonNegative(false).partitionOptions(this)
                 .isAdaptiveMultivariateCompatible(true).build(parameters);
 
-        new Parameter.Builder(ClockType.ME_CLOCK_SCALE, "Mixed effects clock scale").
+        new Parameter.Builder(ClockType.ME_CLOCK_SCALE, "mixed effects clock scale").
                 prior(PriorType.NORMAL_HPM_PRIOR).initial(0.15)
                 .isCMTCRate(false).isNonNegative(false).partitionOptions(this)
                 .isAdaptiveMultivariateCompatible(true).build(parameters);
@@ -357,8 +357,7 @@ public class PartitionClockModel extends PartitionOptions {
                     break;
 
                 case MIXED_EFFECTS_CLOCK:
-                    //TODO where did the first two get their prior???
-                    params.add(getClockRateParameter());
+                    params.add(getParameter(ClockType.ME_CLOCK_LOCATION));
                     params.add(getParameter(ClockType.ME_CLOCK_SCALE));
                     params.add(getParameter(BranchSpecificFixedEffectsParser.INTERCEPT));
                     int coeff = 1;

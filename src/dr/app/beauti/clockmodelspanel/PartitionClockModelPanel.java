@@ -72,7 +72,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
 
         this.model = partitionModel;
 
-        for (ClockType clockType : EnumSet.range(ClockType.STRICT_CLOCK, ClockType.FIXED_LOCAL_CLOCK)) {
+        for (ClockType clockType : EnumSet.range(ClockType.STRICT_CLOCK, ClockType.MIXED_EFFECTS_CLOCK)) {
             clockTypeCombo.addItem(clockType);
             if (clockType == ClockType.STRICT_CLOCK || clockType == ClockType.HMC_CLOCK) {
                 clockTypeCombo.addItem(new JSeparator(JSeparator.HORIZONTAL));
@@ -165,6 +165,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
             case SHRINKAGE_LOCAL_CLOCK:
             case RANDOM_LOCAL_CLOCK:
             case FIXED_LOCAL_CLOCK:
+            case MIXED_EFFECTS_CLOCK:
                 break;
 
             default:

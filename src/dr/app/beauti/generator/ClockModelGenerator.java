@@ -33,6 +33,7 @@ import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodelxml.branchmodel.BranchSpecificBranchModelParser;
 import dr.evomodelxml.continuous.hmc.BranchRateGradientParser;
 import dr.evomodelxml.tree.TransformedTreeTraitParser;
 import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
@@ -40,7 +41,9 @@ import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.RandomField;
 import dr.inference.hmc.GradientWrtIncrement;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.StatisticParser;
+import dr.inferencexml.SignTransformParser;
 import dr.inferencexml.distribution.DistributionLikelihoodParser;
 import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.distribution.shrinkage.BayesianBridgeDistributionModelParser;
@@ -575,13 +578,48 @@ public class ClockModelGenerator extends Generator {
                         }
                 );
 
-                //TODO continue implementing here
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
+                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, prefix + BranchSpecificFixedEffectsParser.FIXED_EFFECTS);
+
+                int counter = 1;
+                for (Taxa taxonSet : options.taxonSets) {
+                    writer.writeOpenTag(BranchSpecificFixedEffectsParser.CATEGORY,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(XMLParser.ID, "" + counter)
+                            }
+                    );
+                    writer.writeOpenTag(BranchSpecificBranchModelParser.CLADE,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(XMLParser.ID, "" + (counter+1)),
+                                    new Attribute.Default<String>(LocalClockModelParser.INCLUDE_STEM, Boolean.toString(options.taxonSetsIncludeStem.get(taxonSet))),
+                                    new Attribute.Default<String>(LocalClockModelParser.EXCLUDE_CLADE, "false")
+                            }
+                    );
+                    writer.writeIDref(TaxaParser.TAXA, taxonSet.getId());
+                    writer.writeCloseTag(BranchSpecificBranchModelParser.CLADE);
+                    writer.writeCloseTag(BranchSpecificFixedEffectsParser.CATEGORY);
+                    counter++;
+                }
+                writer.writeTag(SignTransformParser.NAME, true);
 
                 writer.writeCloseTag(tag);
 
                 //and then the arbitraryBranchRates
-                //TODO continue implementing here
                 tag = ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES;
+                writer.writeOpenTag(tag,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, prefix + ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES),
+                                new Attribute.Default<String>(ArbitraryBranchRatesParser.RECIPROCAL, "false"),
+                                new Attribute.Default<String>(ArbitraryBranchRatesParser.EXP, "false"),
+                                new Attribute.Default<String>(ArbitraryBranchRatesParser.CENTER_AT_ONE, "false")
+                        }
+                );
+
+                //TODO continue implementing here
+
+
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
+
                 writer.writeCloseTag(tag);
                 break;
 

@@ -615,8 +615,27 @@ public class ClockModelGenerator extends Generator {
                         }
                 );
 
-                //TODO continue implementing here
+                writer.writeOpenTag(ArbitraryBranchRatesParser.RATES);
+                writer.writeTag(PARAMETER,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, prefix + ClockType.ME_CLOCK_LOCATION),
+                                new Attribute.Default<Double>(ParameterParser.VALUE, 0.2),
+                                new Attribute.Default<Double>(ParameterParser.LOWER, 0.0)
+                        }, true);
+                writer.writeCloseTag(ArbitraryBranchRatesParser.RATES);
 
+                writer.writeOpenTag(ArbitraryBranchRatesParser.SCALE);
+                writer.writeTag(PARAMETER,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, prefix + ClockType.ME_CLOCK_SCALE),
+                                new Attribute.Default<Double>(ParameterParser.VALUE, 0.15),
+                                new Attribute.Default<Double>(ParameterParser.LOWER, 0.0)
+                        }, true);
+                writer.writeCloseTag(ArbitraryBranchRatesParser.SCALE);
+
+                writer.writeOpenTag(ArbitraryBranchRatesParser.LOCATION);
+                writer.writeIDref(BranchSpecificFixedEffectsParser.FIXED_EFFECTS, BranchSpecificFixedEffectsParser.FIXED_EFFECTS + "Model");
+                writer.writeCloseTag(ArbitraryBranchRatesParser.LOCATION);
 
                 writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
 

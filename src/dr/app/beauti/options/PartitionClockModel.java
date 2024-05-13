@@ -134,6 +134,16 @@ public class PartitionClockModel extends PartitionOptions {
                 .initial(1.0).mean(1.0).offset(0.0).partitionOptions(this)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
 
+        new Parameter.Builder(ClockType.ME_CLOCK_LOCATION, "Mixed effects clock rate").
+                prior(PriorType.NORMAL_HPM_PRIOR).initial(rate)
+                .isCMTCRate(false).isNonNegative(false).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(true).build(parameters);
+
+        new Parameter.Builder(ClockType.ME_CLOCK_SCALE, "Mixed effects clock scale").
+                prior(PriorType.NORMAL_HPM_PRIOR).initial(0.15)
+                .isCMTCRate(false).isNonNegative(false).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(true).build(parameters);
+
         // Shrinkage clock
         createOperator("GIBBS_SHRINKAGE_CLOCK", "shrinkage local clock",
                 "shrinkage local clock Gibbs operator", null, OperatorType.SHRINKAGE_CLOCK_GIBBS_OPERATOR ,-1 , 4.0);
@@ -147,7 +157,7 @@ public class PartitionClockModel extends PartitionOptions {
         createScaleOperator(ClockType.ME_CLOCK_SCALE, demoTuning, rateWeights);
         new Parameter.Builder(BranchSpecificFixedEffectsParser.INTERCEPT, "intercept").
                 prior(PriorType.NORMAL_HPM_PRIOR).initial(rate)
-                .isCMTCRate(true).isNonNegative(false).partitionOptions(this)
+                .isCMTCRate(false).isNonNegative(false).partitionOptions(this)
                 .isAdaptiveMultivariateCompatible(true).build(parameters);
         createOperator("RANDOMWALK_INTERCEPT_ME_CLOCK", "mixed effects clock", "mixed effects clock intercept operator",
                 BranchSpecificFixedEffectsParser.INTERCEPT, OperatorType.RANDOM_WALK, demoTuning, rateWeights);
@@ -347,6 +357,7 @@ public class PartitionClockModel extends PartitionOptions {
                     break;
 
                 case MIXED_EFFECTS_CLOCK:
+                    //TODO where did the first two get their prior???
                     params.add(getClockRateParameter());
                     params.add(getParameter(ClockType.ME_CLOCK_SCALE));
                     params.add(getParameter(BranchSpecificFixedEffectsParser.INTERCEPT));
@@ -355,7 +366,7 @@ public class PartitionClockModel extends PartitionOptions {
                         if (options.taxonSetsMono.get(taxonSet)) {
                             String parameterName = BranchSpecificFixedEffectsParser.COEFFICIENT + coeff;
                             if (!hasParameter(parameterName)) {
-                                new Parameter.Builder(parameterName, "fixed effect")
+                                new Parameter.Builder(parameterName, "fixed effect " + coeff)
                                         .prior(PriorType.NORMAL_HPM_PRIOR)
                                         .initial(0.01)
                                         .isCMTCRate(false).isNonNegative(false)

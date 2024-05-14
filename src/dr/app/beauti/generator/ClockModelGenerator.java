@@ -44,8 +44,7 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.StatisticParser;
 import dr.inferencexml.SignTransformParser;
-import dr.inferencexml.distribution.DistributionLikelihoodParser;
-import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
+import dr.inferencexml.distribution.*;
 import dr.inferencexml.distribution.shrinkage.BayesianBridgeDistributionModelParser;
 import dr.inferencexml.hmc.GradientWrtIncrementParser;
 import dr.inferencexml.operators.shrinkage.BayesianBridgeShrinkageOperatorParser;
@@ -59,7 +58,6 @@ import dr.evoxml.TaxaParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.model.ParameterParser;
-import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.model.SumStatisticParser;
 import dr.util.Attribute;
@@ -640,6 +638,126 @@ public class ClockModelGenerator extends Generator {
                 writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
 
                 writer.writeCloseTag(tag);
+
+                tag = DistributionLikelihood.DISTRIBUTION_LIKELIHOOD;
+
+                // branch rates prior
+                writer.writeOpenTag(tag,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, "ratesPrior")
+                        }
+                        );
+                writer.writeOpenTag(DistributionLikelihoodParser.DATA);
+                writer.writeIDref(PARAMETER, ClockType.ME_CLOCK_LOCATION);
+                writer.writeCloseTag(DistributionLikelihoodParser.DATA);
+                writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
+                writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
+                        new Attribute[]{
+                                new Attribute.Default<String>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, "true")
+                        }
+                        );
+                writer.writeOpenTag(LogNormalDistributionModelParser.MEAN);
+                writer.writeTag(PARAMETER,
+                        new Attribute[]{
+                                new Attribute.Default<String>(ParameterParser.VALUE, "1.0"),
+                                new Attribute.Default<String>(ParameterParser.LOWER, "0.0")
+                        }, true);
+                writer.writeCloseTag(LogNormalDistributionModelParser.MEAN);
+                writer.writeOpenTag(LogNormalDistributionModelParser.STDEV);
+                writer.writeTag(PARAMETER,
+                        new Attribute[]{
+                                new Attribute.Default<String>(ParameterParser.VALUE, "1.0"),
+                                new Attribute.Default<String>(ParameterParser.LOWER, "0.0")
+                        }, true);
+                writer.writeCloseTag(LogNormalDistributionModelParser.STDEV);
+                writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
+                writer.writeCloseTag(DistributionLikelihoodParser.DISTRIBUTION);
+                writer.writeCloseTag(tag);
+
+                // branch rates scale prior
+                writer.writeOpenTag(tag,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, "scalePrior")
+                        }
+                );
+                writer.writeOpenTag(DistributionLikelihoodParser.DATA);
+                writer.writeIDref(PARAMETER, ClockType.ME_CLOCK_SCALE);
+                writer.writeCloseTag(DistributionLikelihoodParser.DATA);
+                writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
+                writer.writeOpenTag(ExponentialDistributionModelParser.MEAN);
+                writer.writeTag(PARAMETER,
+                        new Attribute[]{
+                                new Attribute.Default<String>(ParameterParser.VALUE, "1.0"),
+                                new Attribute.Default<String>(ParameterParser.LOWER, "0.0")
+                        }, true);
+                writer.writeCloseTag(ExponentialDistributionModelParser.MEAN);
+                writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
+                writer.writeCloseTag(DistributionLikelihoodParser.DISTRIBUTION);
+                writer.writeCloseTag(tag);
+
+                // intercept prior
+                writer.writeOpenTag(tag,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, "interceptPrior")
+                        }
+                );
+                writer.writeOpenTag(DistributionLikelihoodParser.DATA);
+                writer.writeIDref(PARAMETER, BranchSpecificFixedEffectsParser.INTERCEPT);
+                writer.writeCloseTag(DistributionLikelihoodParser.DATA);
+                writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
+                writer.writeOpenTag(NormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
+                writer.writeOpenTag(LogNormalDistributionModelParser.MEAN);
+                writer.writeTag(PARAMETER,
+                        new Attribute[]{
+                                new Attribute.Default<String>(ParameterParser.VALUE, "0.0"),
+                                new Attribute.Default<String>(ParameterParser.LOWER, "0.0")
+                        }, true);
+                writer.writeCloseTag(LogNormalDistributionModelParser.MEAN);
+                writer.writeOpenTag(LogNormalDistributionModelParser.STDEV);
+                writer.writeTag(PARAMETER,
+                        new Attribute[]{
+                                new Attribute.Default<String>(ParameterParser.VALUE, "100.0"),
+                                new Attribute.Default<String>(ParameterParser.LOWER, "0.0")
+                        }, true);
+                writer.writeCloseTag(LogNormalDistributionModelParser.STDEV);
+                writer.writeCloseTag(NormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
+                writer.writeCloseTag(DistributionLikelihoodParser.DISTRIBUTION);
+                writer.writeCloseTag(tag);
+
+                // fixed effects priors
+                counter = 1;
+                for (Taxa taxonSet : options.taxonSets) {
+                    writer.writeOpenTag(tag,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(XMLParser.ID, BranchSpecificFixedEffectsParser.FIXED_EFFECTS + "Likelihood" + counter)
+                            }
+                    );
+                    writer.writeOpenTag(DistributionLikelihoodParser.DATA);
+                    writer.writeIDref(PARAMETER, BranchSpecificFixedEffectsParser.COEFFICIENT + counter);
+                    writer.writeCloseTag(DistributionLikelihoodParser.DATA);
+                    writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
+                    writer.writeOpenTag(NormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
+                    writer.writeOpenTag(LogNormalDistributionModelParser.MEAN);
+                    writer.writeTag(PARAMETER,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(ParameterParser.VALUE, "0.0"),
+                                    new Attribute.Default<String>(ParameterParser.LOWER, "0.0")
+                            }, true);
+                    writer.writeCloseTag(LogNormalDistributionModelParser.MEAN);
+                    writer.writeOpenTag(LogNormalDistributionModelParser.STDEV);
+                    writer.writeTag(PARAMETER,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(XMLParser.ID, "betweenGroupStd" + counter),
+                                    new Attribute.Default<String>(ParameterParser.VALUE, "100.0"),
+                                    new Attribute.Default<String>(ParameterParser.LOWER, "0.0")
+                            }, true);
+                    writer.writeCloseTag(LogNormalDistributionModelParser.STDEV);
+                    writer.writeCloseTag(NormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
+                    writer.writeCloseTag(DistributionLikelihoodParser.DISTRIBUTION);
+                    writer.writeCloseTag(tag);
+                    counter++;
+                }
+
                 break;
 
             default:

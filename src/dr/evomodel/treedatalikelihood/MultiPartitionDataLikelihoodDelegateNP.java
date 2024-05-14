@@ -276,6 +276,7 @@ public class MultiPartitionDataLikelihoodDelegateNP extends AbstractModel implem
             // first set the rescaling scheme to use from the parser
             this.rescalingScheme = rescalingScheme;
             this.delayRescalingUntilUnderflow = delayRescalingUntilUnderflow;
+            this.useAmbiguities = useAmbiguities;
 
             int[] resourceList = null;
             long preferenceFlags = 0;
@@ -1401,6 +1402,10 @@ public class MultiPartitionDataLikelihoodDelegateNP extends AbstractModel implem
         beagle.setPartials(partialBufferHelper.getOffsetIndex(number), partials);
     }*/
 
+    public int getPartitionCat(){
+        return 0;
+    };
+
     @Override
     public void makeDirty() {
         //System.err.println("makeDirty() got called");
@@ -1540,6 +1545,31 @@ public class MultiPartitionDataLikelihoodDelegateNP extends AbstractModel implem
     protected void acceptState() {
     }
 
+    @Override
+    public PreOrderSettings getPreOrderSettings() {
+        return null;
+    }
+
+    @Override
+    public boolean getPreferGPU() {
+        return true;
+    }
+
+    @Override
+    public boolean getUseAmbiguities() {
+        return useAmbiguities;
+    }
+
+    @Override
+    public PartialsRescalingScheme getRescalingScheme() {
+        return rescalingScheme;
+    }
+
+    @Override
+    public boolean getDelayRescalingUntilUnderflow() {
+        return delayRescalingUntilUnderflow;
+    }
+
     // **************************************************************
     // INSTANCE PROFILEABLE
     // **************************************************************
@@ -1595,6 +1625,7 @@ public class MultiPartitionDataLikelihoodDelegateNP extends AbstractModel implem
     private PartialsRescalingScheme rescalingScheme;
     private int rescalingFrequency = RESCALE_FREQUENCY;
     private boolean delayRescalingUntilUnderflow = true;
+    private boolean useAmbiguities;
 
     private int threadCount = -1;
 

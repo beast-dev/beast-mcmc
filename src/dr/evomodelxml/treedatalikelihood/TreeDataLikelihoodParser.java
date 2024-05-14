@@ -73,6 +73,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     public static final String USE_PREORDER = "usePreOrder";
     public static final String BRANCHRATE_DERIVATIVE = "branchRateDerivative";
     public static final String BRANCHINFINITESIMAL_DERIVATIVE = "branchInfinitesimalDerivative";
+    public static final String OLD = "old";
+    public static final String INITIAL_NUM_CATS = "initialNumCats";
 
     public static final String PARTITION = "partition";
 
@@ -94,7 +96,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                                                   Parameter siteAssignInd,
                                                   List<Parameter> polyaPartitionCategories,
                                                   List<SiteRateModel> polyaSiteRateModels,
-                                                  List<BranchModel> polyaBranchModels
+                                                  List<BranchModel> polyaBranchModels,
+                                                  int initialNumCats,
+                                                  boolean old
                                                   ) throws XMLParseException {
 
         if (tipStatesModel != null) {
@@ -203,31 +207,72 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
             }
         }else{
-            // Generalize this later if we have multiple PatternLists for urn process partition model
-            List<PatternList> repeatedPatternLists = new ArrayList<>();
-            for(int i = 0; i < polyaSiteRateModels.size(); i++){
-                repeatedPatternLists.add(patternLists.get(0));
-            }
 
-            try {
-                DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegateNP(
-                        treeModel,
-                        repeatedPatternLists,
-                        polyaBranchModels,
-                        polyaSiteRateModels,
-                        useAmbiguities,
-                        scalingScheme,
-                        delayRescalingUntilUnderflow,
-                        siteAssignInd,
-                        polyaPartitionCategories
-                );
+            if(!old) {
+                //for (int i = 0; i < polyaSiteRateModels.size(); i++) {
+                for (int i = 0; i < initialNumCats; i++) {
 
-                return new TreeDataLikelihood(
-                        dataLikelihoodDelegate,
-                        treeModel,
-                        branchRateModel);
-            } catch (DataLikelihoodDelegate.DelegateTypeException dte) {
-                System.err.println("DelegateTypeException");
+                        DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+                                treeModel,
+                                patternLists.get(0),
+                                polyaBranchModels.get(i),
+                                polyaSiteRateModels.get(i),
+                                useAmbiguities,
+                                preferGPU,
+                                scalingScheme,
+                                delayRescalingUntilUnderflow,
+                                settings,
+                                siteAssignInd,
+                                polyaPartitionCategories.get(i));
+
+                        treeDataLikelihoods.add(
+                                new TreeDataLikelihood(
+                                        dataLikelihoodDelegate,
+                                        treeModel,
+                                        branchRateModel));
+
+                }
+
+                for (int i = initialNumCats; i < polyaSiteRateModels.size(); i++) {
+
+                    DataLikelihoodDelegate dld = null;
+
+                    treeDataLikelihoods.add(
+                            new TreeDataLikelihood(
+                                    dld,
+                                    treeModel,
+                                    branchRateModel));
+
+                }
+
+            }else {
+
+                // Generalize this later if we have multiple PatternLists for urn process partition model
+                List<PatternList> repeatedPatternLists = new ArrayList<>();
+                for (int i = 0; i < polyaSiteRateModels.size(); i++) {
+                    repeatedPatternLists.add(patternLists.get(0));
+                }
+
+                try {
+                    DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegateNP(
+                            treeModel,
+                            repeatedPatternLists,
+                            polyaBranchModels,
+                            polyaSiteRateModels,
+                            useAmbiguities,
+                            scalingScheme,
+                            delayRescalingUntilUnderflow,
+                            siteAssignInd,
+                            polyaPartitionCategories
+                    );
+
+                    return new TreeDataLikelihood(
+                            dataLikelihoodDelegate,
+                            treeModel,
+                            branchRateModel);
+                } catch (DataLikelihoodDelegate.DelegateTypeException dte) {
+                    System.err.println("DelegateTypeException");
+                }
             }
         }
 
@@ -241,6 +286,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+        boolean old = xo.getAttribute(OLD, false);
+        int initialNumCats = xo.getAttribute(INITIAL_NUM_CATS, 3);
         boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
         boolean usePreOrder = xo.getAttribute(USE_PREORDER, false);
         boolean branchRateDerivative = xo.getAttribute(BRANCHRATE_DERIVATIVE, usePreOrder);
@@ -314,7 +361,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                         Parameter category = new Parameter.Default(1);
                         category.setParameterValue(0,numSiteModelsInPartition);
                         polyaPartitionCategories.add(category);
-                        BranchModel polyaBranchModel = new HomogeneousBranchModel(polyaSiteRateModel.getSubstitutionModel(), (FrequencyModel) xo.getChild(BranchModel.class));
+                        BranchModel polyaBranchModel = new HomogeneousBranchModel(polyaSiteRateModel.getSubstitutionModel(), null);
                         polyaBranchModels.add(polyaBranchModel);
                         // System.err.println("instanceof GammaSiteRateModel and partitioncat: " + numSiteModelsInPartition);
                         numSiteModelsInPartition += 1;
@@ -397,7 +444,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 indicators,
                 polyaPartitionCategories,
                 polyaSiteRateModels,
-                polyaBranchModels);
+                polyaBranchModels,
+                initialNumCats,
+                old);
     }
 
     //************************************************************************

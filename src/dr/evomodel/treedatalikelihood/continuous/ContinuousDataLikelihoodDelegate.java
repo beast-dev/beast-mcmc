@@ -47,6 +47,7 @@ import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.*;
 import dr.evomodel.treedatalikelihood.preorder.*;
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.*;
 import dr.math.KroneckerOperation;
 import dr.math.distributions.MultivariateNormalDistribution;
@@ -836,6 +837,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return logL;
     }
 
+    public int getPartitionCat(){
+        return 0;
+    };
+
     public double[] getSiteLogLikelihoods(){
         throw new RuntimeException("getSiteLogLikelihoods() not implemented");
     }
@@ -926,6 +931,31 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     @Override
     protected void acceptState() {
+    }
+
+    @Override
+    public PreOrderSettings getPreOrderSettings() {
+        return null;
+    }
+
+    @Override
+    public boolean getPreferGPU() {
+        return true;
+    }
+
+    @Override
+    public boolean getUseAmbiguities() {
+        return true;
+    }
+
+    @Override
+    public PartialsRescalingScheme getRescalingScheme() {
+        return null;
+    }
+
+    @Override
+    public boolean getDelayRescalingUntilUnderflow() {
+        return true;
     }
 
     // **************************************************************

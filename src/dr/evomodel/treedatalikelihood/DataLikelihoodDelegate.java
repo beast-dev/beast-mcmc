@@ -25,6 +25,7 @@
 
 package dr.evomodel.treedatalikelihood;
 
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.Model;
 import dr.inference.model.Profileable;
 import dr.xml.Reportable;
@@ -55,6 +56,8 @@ public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Pr
 
     int getTraitDim();
 
+    int getPartitionCat();
+
     RateRescalingScheme getRateRescalingScheme();
 
     class DelegateTypeException extends Exception { }
@@ -72,4 +75,14 @@ public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Pr
     void setComputePostOrderStatisticsOnly(boolean computePostOrderStatistics);
 
     boolean providesPostOrderStatisticsOnly();
+
+    PreOrderSettings getPreOrderSettings();
+
+    boolean getPreferGPU();
+
+    boolean getUseAmbiguities();
+
+    PartialsRescalingScheme getRescalingScheme();
+
+    boolean getDelayRescalingUntilUnderflow();
 }

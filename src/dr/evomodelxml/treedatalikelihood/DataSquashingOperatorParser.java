@@ -1,11 +1,16 @@
 package dr.evomodelxml.treedatalikelihood;
 
 import dr.evolution.alignment.PatternList;
-import dr.evomodel.treedatalikelihood.GenPolyaUrnProcessPrior;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.DataSquashingOperator;
+import dr.evolution.tree.Tree;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
+import dr.evomodel.treedatalikelihood.*;
+import dr.inference.model.CompoundLikelihood;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DataSquashingOperatorParser extends AbstractXMLObjectParser {
 
@@ -21,15 +26,26 @@ public class DataSquashingOperatorParser extends AbstractXMLObjectParser {
     public static final String EPSILON = "epsilon";
     public static final String SAMPLE_PROPORTION = "sampleProportion";
     public static final String MAX_NEW_CAT = "maxNewCat";
+    public static final String SITE_MODELS = "siteModels";
+    public static final String OLD = "old";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+        boolean old = xo.getAttribute(OLD, false);
 
         GenPolyaUrnProcessPrior gpuprocess = (GenPolyaUrnProcessPrior) xo.getChild(GenPolyaUrnProcessPrior.class);
 
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
 
-        TreeDataLikelihood tdl = (TreeDataLikelihood) xo.getElementFirstChild(DATA_LOG_LIKELIHOOD);
+        CompoundLikelihood cl = null;
+        TreeDataLikelihood tdl = null;
+
+        if(old){
+            tdl = (TreeDataLikelihood) xo.getElementFirstChild(DATA_LOG_LIKELIHOOD);
+        }else{
+            cl = (CompoundLikelihood) xo.getElementFirstChild(DATA_LOG_LIKELIHOOD);
+        }
 
         boolean cyclical = xo.getBooleanAttribute(CYCLICAL);
 
@@ -77,8 +93,27 @@ public class DataSquashingOperatorParser extends AbstractXMLObjectParser {
 
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-        return new dr.evomodel.treedatalikelihood.DataSquashingOperator(gpuprocess,
+        Tree treeModel = (Tree) xo.getChild(Tree.class);
+
+        List<SiteRateModel> siteRateModelList = new ArrayList<SiteRateModel>();
+
+        XMLObject cxo = xo.getChild(SITE_MODELS);
+
+        if(cxo != null) {
+            for (int j = 0; j < cxo.getChildCount(); j++) {
+                Object testObject = cxo.getChild(j);
+                if (testObject instanceof GammaSiteRateModel) {
+                    GammaSiteRateModel srm = (GammaSiteRateModel) testObject;
+                    siteRateModelList.add(srm);
+                }
+            }
+        }
+
+        return new DataSquashingOperator(gpuprocess,
                 tdl,
+                cl,
+                siteRateModelList,
+                treeModel,
                 patternList,
                 M,
                 weight,
@@ -88,7 +123,8 @@ public class DataSquashingOperatorParser extends AbstractXMLObjectParser {
                 sampleProportion,
                 fixedNumber,
                 strictCutoff,
-                maxNewCat
+                maxNewCat,
+                old
         );
 
     }// END: parseXMLObject

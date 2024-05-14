@@ -1,9 +1,15 @@
 package dr.evomodel.treedatalikelihood;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.tree.Tree;
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchmodel.lineagespecific.CountableRealizationsParameter;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodelxml.treedatalikelihood.HDPDataSquashingOperatorParser;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
+import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.SimpleMCMCOperator;
@@ -38,6 +44,7 @@ public class HDPDataSquashingOperator extends SimpleMCMCOperator {
     private Parameter commonBaseDistMass;
     private List<ParametricMultivariateDistributionModel> commonBaseDistBaseDist;
     private TreeDataLikelihood tdl;
+    private CompoundLikelihood cl;
     private int order;
     private double epsilon;
     private double sampleProportion;
@@ -57,20 +64,29 @@ public class HDPDataSquashingOperator extends SimpleMCMCOperator {
     // BEGIN ADDED
     private int maxNewCat;
     // END ADDED
+    private boolean old;
+    private List<SiteRateModel> siteRateModelList;
+    private Tree treeModel;
 
     public HDPDataSquashingOperator(HDPPolyaUrn hdp,
-                                       TreeDataLikelihood tdl,
-                                       PatternList patternList,
-                                       int mhSteps,
-                                       double weight,
-                                       boolean cyclical,
-                                       int distMethod,
-                                       double eps,
-                                       double sampleProp,
-                                       int fixedNumber,
-                                       boolean strictCutoff,
-                                       int maxNewCat
+                                    TreeDataLikelihood tdl,
+                                    CompoundLikelihood cl,
+                                    List<SiteRateModel> siteRateModelList,
+                                    Tree treeModel,
+                                    PatternList patternList,
+                                    int mhSteps,
+                                    double weight,
+                                    boolean cyclical,
+                                    int distMethod,
+                                    double eps,
+                                    double sampleProp,
+                                    int fixedNumber,
+                                    boolean strictCutoff,
+                                    int maxNewCat,
+                                    boolean old
     ) {
+        this.old = old;
+
         this.hdp = hdp;
 
         // g_i, i=0,...,n-1
@@ -105,20 +121,22 @@ public class HDPDataSquashingOperator extends SimpleMCMCOperator {
         this.isIHMM = hdp.isIHMM();
 
         this.sampleProportion = sampleProp;
-        System.err.println("sampleProportion: " + sampleProportion);
+        //System.err.println("sampleProportion: " + sampleProportion);
         this.epsilon = eps;
-        System.err.println("epsilon: " + epsilon);
+        //System.err.println("epsilon: " + epsilon);
         this.distMethod = distMethod;
-        System.err.println("distMethod: " + distMethod);
+        //System.err.println("distMethod: " + distMethod);
         this.fixedNumber = fixedNumber;
-        System.err.println("fixedNumber: " + fixedNumber);
+        //System.err.println("fixedNumber: " + fixedNumber);
         this.cyclical = cyclical;
-        System.err.println("cyclical: " + cyclical);
+        //System.err.println("cyclical: " + cyclical);
         this.strictCutoff = strictCutoff;
-        System.err.println("strictCutoff: " + strictCutoff);
+        //System.err.println("strictCutoff: " + strictCutoff);
 
         this.tdl = tdl;
-
+        this.cl = cl;
+        this.siteRateModelList = siteRateModelList;
+        this.treeModel = treeModel;
         this.patternList = patternList;
 
         this.uniquePatternCount = patternList.getPatternCount();
@@ -397,46 +415,121 @@ public class HDPDataSquashingOperator extends SimpleMCMCOperator {
 
         // BEGIN ADDED
 
+        // newCatInProposal[j] == 1 if cat j is currently empty but will be used as one of the potential new
+        // categories in the proposal
         int[] newCatInProposal = new int[hdp.maxCategoryCount];
 
-        int idx = 0;
-
-        // Change values of uniquelyRealizedParameter corresponding to empty categories
-        // to do: can we replace emptyCats.size() in line below with something else? Careful about needing empty cats in backward move
-        for(int k = 0; k < emptyCats.size(); k++){
-            if(idx < maxNewCat) {
-                newCatInProposal[emptyCats.get(k)] = 1;
+        int currentNumDelegates = 0;
+        for(int d = 0; d < cl.getLikelihoodCount(); d++){
+            if (((TreeDataLikelihood)cl.getLikelihood(d)).getDataLikelihoodDelegate() != null){
+                currentNumDelegates++;
+            }else {
+                break;
             }
-            //double[] valueForNewCat = commonBaseDistBaseDist.nextRandom();
-            double[] valueForNewCat = new double[parameterDimension];
-
-            int counter = 0;
-            for(int b = 0; b < commonBaseDistBaseDist.size(); b++){
-                double[] distVal = commonBaseDistBaseDist.get(b).nextRandom();
-                for(int d = 0; d < distVal.length; d++){
-                    valueForNewCat[counter] = distVal[d];
-                    counter++;
-                }
-            }
-
-            for(int l = 0; l < parameterDimension; l++){
-                uniquelyRealizedParameters.getParameter(emptyCats.get(k)).setParameterValue(l, valueForNewCat[l]);
-            }
-            idx++;
         }
 
-        tdl.makeDirty();
+
+        if(old) {
+            int idx = 0;
+
+            // Change values of uniquelyRealizedParameter corresponding to empty categories
+            // to do: can we replace emptyCats.size() in line below with something else? Careful about needing empty cats in backward move
+            for (int k = 0; k < emptyCats.size(); k++) {
+                if (idx < maxNewCat) {
+                    newCatInProposal[emptyCats.get(k)] = 1;
+                }
+                //double[] valueForNewCat = commonBaseDistBaseDist.nextRandom();
+                double[] valueForNewCat = new double[parameterDimension];
+
+                int counter = 0;
+                for (int b = 0; b < commonBaseDistBaseDist.size(); b++) {
+                    double[] distVal = commonBaseDistBaseDist.get(b).nextRandom();
+                    for (int d = 0; d < distVal.length; d++) {
+                        valueForNewCat[counter] = distVal[d];
+                        counter++;
+                    }
+                }
+
+                for (int l = 0; l < parameterDimension; l++) {
+                    uniquelyRealizedParameters.getParameter(emptyCats.get(k)).setParameterValue(l, valueForNewCat[l]);
+                }
+                idx++;
+            }
+
+            tdl.makeDirty();
+        }else {
+
+            // Change values of uniquelyRealizedParameter corresponding to empty categories
+            for (int k = 0; k < maxNewCat; k++) {
+                newCatInProposal[emptyCats.get(k)] = 1;
+
+                double[] valueForNewCat = new double[parameterDimension];
+
+                int counter = 0;
+                for (int b = 0; b < commonBaseDistBaseDist.size(); b++) {
+                    double[] distVal = commonBaseDistBaseDist.get(b).nextRandom();
+                    for (int d = 0; d < distVal.length; d++) {
+                        valueForNewCat[counter] = distVal[d];
+                        counter++;
+                    }
+                }
+
+                for (int l = 0; l < parameterDimension; l++) {
+                    uniquelyRealizedParameters.getParameter(emptyCats.get(k)).setParameterValue(l, valueForNewCat[l]);
+                }
+
+                if(emptyCats.get(k) >= currentNumDelegates){
+
+                    if(emptyCats.get(k) > currentNumDelegates){
+                        throw new RuntimeException("next empty category should not be greater than currentNumDelegates");
+                    }
+
+                    System.out.println("New data likelihood delegate being created");
+                    GammaSiteRateModel srm = (GammaSiteRateModel) siteRateModelList.get(currentNumDelegates);
+                    BranchModel bm = new HomogeneousBranchModel(srm.getSubstitutionModel(), null);
+                    Parameter newCatParam = new Parameter.Default(1);
+                    newCatParam.setParameterValue(0,currentNumDelegates);
+
+                    DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+                            treeModel,
+                            patternList,
+                            bm,
+                            srm,
+                            ((TreeDataLikelihood)cl.getLikelihood(0)).getDataLikelihoodDelegate().getUseAmbiguities(),
+                            ((TreeDataLikelihood)cl.getLikelihood(0)).getDataLikelihoodDelegate().getPreferGPU(),
+                            ((TreeDataLikelihood)cl.getLikelihood(0)).getDataLikelihoodDelegate().getRescalingScheme(),
+                            ((TreeDataLikelihood)cl.getLikelihood(0)).getDataLikelihoodDelegate().getDelayRescalingUntilUnderflow(),
+                            ((TreeDataLikelihood)cl.getLikelihood(0)).getDataLikelihoodDelegate().getPreOrderSettings(),
+                            categoriesParameter,
+                            newCatParam);
+
+                    ((TreeDataLikelihood)cl.getLikelihood(emptyCats.get(k))).setDataLikelihoodDelegate(dataLikelihoodDelegate);
+
+                    currentNumDelegates++;
+                }
+                cl.getLikelihood(emptyCats.get(k)).makeDirty();
+            }
+        }
 
         // END ADDED
 
-        double[] patternLogLikelihoods = tdl.getDataLikelihoodDelegate().getSiteLogLikelihoods();
+        double[] patternLogLikelihoods = null;
+        if(old) {
+            patternLogLikelihoods = tdl.getDataLikelihoodDelegate().getSiteLogLikelihoods();
+        }
 
         // entry (i,j) is probability of mass function sitesToUpdate.get(i) assuming value j in {0,...,K-1}
         // Where K is number of unique categories, across all groups
         // mass function needed for each site in sitesToUpdate
 
-        double[][] logMassFunctions = computeLogMassFunctions(sitesToUpdate, currentNumCat, counts, numSitesInGroup,
-                currentGroupAssignments, currentComBaseDistWeights, currentCategoriesParameter, patternLogLikelihoods);
+        double[][] logMassFunctions = null;
+        if(old) {
+            logMassFunctions = computeLogMassFunctions(sitesToUpdate, currentNumCat, counts, numSitesInGroup,
+                    currentGroupAssignments, currentComBaseDistWeights, currentCategoriesParameter, patternLogLikelihoods);
+        }else{
+            logMassFunctions = computeLogMassFunctionsNew(sitesToUpdate, currentNumCat, counts, numSitesInGroup,
+                    currentGroupAssignments, currentComBaseDistWeights, currentCategoriesParameter);
+        }
 
 
         // Identify sites delta-similar to site at siteIndex
@@ -788,9 +881,12 @@ public class HDPDataSquashingOperator extends SimpleMCMCOperator {
             // BEGIN ADDED
             if(newCatInProposal[k] == 1) {
 
-                indexWithCategoryOffset = uniquePatternCount * k + patternList.getPatternIndex(siteIndex);
-
-                logAllocVar[k] = patternLogLikelihoods[indexWithCategoryOffset];
+                if(old) {
+                    indexWithCategoryOffset = uniquePatternCount * k + patternList.getPatternIndex(siteIndex);
+                    logAllocVar[k] = patternLogLikelihoods[indexWithCategoryOffset];
+                }else{
+                    logAllocVar[k] = ((TreeDataLikelihood) cl.getLikelihood(k)).getDataLikelihoodDelegate().getSiteLogLikelihoods()[patternList.getPatternIndex(siteIndex)];
+                }
 
                 if(logAllocVar[k] == Double.POSITIVE_INFINITY || Double.isNaN(logAllocVar[k])){
                     logAllocVar[k] = Double.NEGATIVE_INFINITY;
@@ -817,13 +913,17 @@ public class HDPDataSquashingOperator extends SimpleMCMCOperator {
 
                 if (currentOccupiedCats[k] == 1) {
 
-                    indexWithCategoryOffset = uniquePatternCount * k + patternList.getPatternIndex(siteIndex);
+                    if(old) {
+                        indexWithCategoryOffset = uniquePatternCount * k + patternList.getPatternIndex(siteIndex);
 
-                    logAllocVar[k] = patternLogLikelihoods[indexWithCategoryOffset];
-
-                    if(Double.isNaN(patternLogLikelihoods[indexWithCategoryOffset]) || patternLogLikelihoods[indexWithCategoryOffset] == Double.POSITIVE_INFINITY){
-                        System.out.println("patternLogLikelihoods for cat " + k + " is: " + patternLogLikelihoods[indexWithCategoryOffset]);
+                        logAllocVar[k] = patternLogLikelihoods[indexWithCategoryOffset];
+                    }else{
+                        logAllocVar[k] = ((TreeDataLikelihood) cl.getLikelihood(k)).getDataLikelihoodDelegate().getSiteLogLikelihoods()[patternList.getPatternIndex(siteIndex)];
                     }
+
+                    //if(Double.isNaN(patternLogLikelihoods[indexWithCategoryOffset]) || patternLogLikelihoods[indexWithCategoryOffset] == Double.POSITIVE_INFINITY){
+                    //    System.out.println("patternLogLikelihoods for cat " + k + " is: " + patternLogLikelihoods[indexWithCategoryOffset]);
+                    //}
 
                     if (DEBUG) {
                         System.err.println("Computing allocation variable for category: " + k);
@@ -939,7 +1039,7 @@ public class HDPDataSquashingOperator extends SimpleMCMCOperator {
         //ArrayList<Integer> sitesStillNeedingProposals = new ArrayList<Integer>(0);
         // END REMOVED
 
-        double currentll = tdl.getLogLikelihood();
+        //double currentll = tdl.getLogLikelihood();
         //System.err.println("currentll: " + currentll);
 
 
@@ -1073,11 +1173,11 @@ public class HDPDataSquashingOperator extends SimpleMCMCOperator {
             System.err.println("hRatio before accounting for backward move: " + hRatio);
         }
 
-        double forwardRatio = hRatio;
+        //double forwardRatio = hRatio;
 
         //System.err.println("hRatio for forward move: " + Math.exp(-forwardRatio));
 
-        double proposedll = tdl.getLogLikelihood();
+        //double proposedll = tdl.getLogLikelihood();
         //System.err.println("proposedll: " + proposedll);
 
         // 3. l)
@@ -1199,9 +1299,10 @@ public class HDPDataSquashingOperator extends SimpleMCMCOperator {
 
         // BEGIN ADDED
 
-        // equal to 1 if cat is occupied in current value but not in proposal (so "new" with resepct to proposal)
+        // equal to 1 if cat is occupied in current value but not in proposal (so "new" with respect to proposal)
         int[] newCatInCurrent = new int[hdp.maxCategoryCount];
 
+        // newPotentialCatInCurrent[k] == 1 if cat k is one of the maxNewCat potential new cats to be used in backward move
         int[] newPotentialCatInCurrent = new int[hdp.maxCategoryCount];
 
         // number of categories that are occupied in current value but not in proposal
@@ -1210,19 +1311,79 @@ public class HDPDataSquashingOperator extends SimpleMCMCOperator {
         for(int k = 0; k < hdp.maxCategoryCount; k++){
             if((currentOccupiedCats[k] == 1) && (proposedOccupiedCats[k] != 1)){
                 newCatInCurrent[k] = 1;
+                // cat k is a newPotentialCatInCurrent if (but not only if) it is not occupied in proposed state, but is occupied in current state
                 newPotentialCatInCurrent[k] = 1;
                 numNewCatsInCurrent++;
             }
         }
 
+        // backward move needs maxNewCat potential new categories. Some of these potential new categories will
+        // correspond to categories that are occupied in the current state but not the proposed state. We
+        // need additional potential new categories if the number of categories occupied in the current state but
+        // not proposed state (numNewCatsInCurrent) is less than maxNewCat
         if(numNewCatsInCurrent < maxNewCat && maxNewCat <= proposedEmptyCats.size()){
             int numNewCatsInCurrentStillNeeded = maxNewCat-numNewCatsInCurrent;
-            int counterIndex = 0;
 
-            for(int k = 0; k < proposedEmptyCats.size(); k++){
-                if(newPotentialCatInCurrent[proposedEmptyCats.get(k)] != 1 && counterIndex < numNewCatsInCurrentStillNeeded){
+            //int counterIndex = 0;
+
+            //for(int k = 0; k < proposedEmptyCats.size(); k++){
+            //    if(newPotentialCatInCurrent[proposedEmptyCats.get(k)] != 1 && counterIndex < numNewCatsInCurrentStillNeeded){
+            //        newPotentialCatInCurrent[proposedEmptyCats.get(k)] = 1;
+            //        counterIndex++;
+            //    }
+            //}
+
+
+            for(int k = 0; k < numNewCatsInCurrentStillNeeded; k++){
+                if(newPotentialCatInCurrent[proposedEmptyCats.get(k)] != 1){
                     newPotentialCatInCurrent[proposedEmptyCats.get(k)] = 1;
-                    counterIndex++;
+                }
+
+                double[] valForNewCat = new double[parameterDimension];
+
+                int count = 0;
+                for (int b = 0; b < commonBaseDistBaseDist.size(); b++) {
+                    double[] val = commonBaseDistBaseDist.get(b).nextRandom();
+                    for (int d = 0; d < val.length; d++) {
+                        valForNewCat[count] = val[d];
+                        count++;
+                    }
+                }
+
+                for (int l = 0; l < parameterDimension; l++) {
+                    uniquelyRealizedParameters.getParameter(proposedEmptyCats.get(k)).setParameterValue(l, valForNewCat[l]);
+                }
+
+                if(proposedEmptyCats.get(k) >= currentNumDelegates){
+
+                    if(proposedEmptyCats.get(k) > currentNumDelegates){
+                        throw new RuntimeException("next empty category should not be greater than currentNumDelegates");
+                    }
+
+                    System.out.println("New data likelihood delegate being created");
+                    GammaSiteRateModel srm = (GammaSiteRateModel) siteRateModelList.get(currentNumDelegates);
+                    BranchModel bm = new HomogeneousBranchModel(srm.getSubstitutionModel(), null);
+                    Parameter newCatParam = new Parameter.Default(1);
+                    newCatParam.setParameterValue(0,currentNumDelegates);
+
+                    DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+                            treeModel,
+                            patternList,
+                            bm,
+                            srm,
+                            ((TreeDataLikelihood)cl.getLikelihood(0)).getDataLikelihoodDelegate().getUseAmbiguities(),
+                            ((TreeDataLikelihood)cl.getLikelihood(0)).getDataLikelihoodDelegate().getPreferGPU(),
+                            ((TreeDataLikelihood)cl.getLikelihood(0)).getDataLikelihoodDelegate().getRescalingScheme(),
+                            ((TreeDataLikelihood)cl.getLikelihood(0)).getDataLikelihoodDelegate().getDelayRescalingUntilUnderflow(),
+                            ((TreeDataLikelihood)cl.getLikelihood(0)).getDataLikelihoodDelegate().getPreOrderSettings(),
+                            categoriesParameter,
+                            newCatParam);
+
+                    ((TreeDataLikelihood)cl.getLikelihood(proposedEmptyCats.get(k))).setDataLikelihoodDelegate(dataLikelihoodDelegate);
+
+                    currentNumDelegates++;
+                }else{
+                    cl.getLikelihood(proposedEmptyCats.get(k)).makeDirty();
                 }
             }
         }
@@ -1240,10 +1401,16 @@ public class HDPDataSquashingOperator extends SimpleMCMCOperator {
                     //if(k == 0){
                     //    System.err.println("cat 0 in newPotentialCatInCurrent");
                     //}
-
-                    indexWithCategoryOffset = uniquePatternCount * k + patternList.getPatternIndex(siteIndex);
-
-                    backwardLogAllocVar[k] = patternLogLikelihoods[indexWithCategoryOffset];
+                    if(old) {
+                        indexWithCategoryOffset = uniquePatternCount * k + patternList.getPatternIndex(siteIndex);
+                        backwardLogAllocVar[k] = patternLogLikelihoods[indexWithCategoryOffset];
+                    }else{
+                        //System.out.println("currentNumDelegates: " + currentNumDelegates);
+                        //System.out.println("k: " + k);
+                        //System.out.println("proposedNumCat: " + proposedNumCat);
+                        //System.out.println("currentNumCat: " + currentNumCat);
+                        backwardLogAllocVar[k] = ((TreeDataLikelihood) cl.getLikelihood(k)).getDataLikelihoodDelegate().getSiteLogLikelihoods()[patternList.getPatternIndex(siteIndex)];
+                    }
 
                     backwardLogAllocVar[k] =
                             backwardLogAllocVar[k]
@@ -1290,10 +1457,12 @@ public class HDPDataSquashingOperator extends SimpleMCMCOperator {
                         // if(k == 0){
                         //     System.err.println("cat 0 in proposedOccupiedCats");
                         //}
-
-                        indexWithCategoryOffset = uniquePatternCount * k + patternList.getPatternIndex(siteIndex);
-
-                        backwardLogAllocVar[k] = patternLogLikelihoods[indexWithCategoryOffset];
+                        if(old) {
+                            indexWithCategoryOffset = uniquePatternCount * k + patternList.getPatternIndex(siteIndex);
+                            backwardLogAllocVar[k] = patternLogLikelihoods[indexWithCategoryOffset];
+                        }else{
+                            backwardLogAllocVar[k] = ((TreeDataLikelihood) cl.getLikelihood(k)).getDataLikelihoodDelegate().getSiteLogLikelihoods()[patternList.getPatternIndex(siteIndex)];
+                        }
 
                         if (DEBUG) {
                             System.err.println("Computing allocation variable for category: " + k);
@@ -1650,6 +1819,116 @@ public class HDPDataSquashingOperator extends SimpleMCMCOperator {
 
                     //logMassFunctions[i][j] = tdl.getDataLikelihoodDelegate().getSiteLogLikelihoods()[indexWithCatOffset];
                     logMassFunctions[sitesToUpdate.get(i)][activeCatCounter] = patternLogLikelihoods[indexWithCatOffset];
+
+                    // b_g
+                    logMassFunctions[sitesToUpdate.get(i)][activeCatCounter] = logMassFunctions[sitesToUpdate.get(i)][activeCatCounter]
+                            +  Math.log((counts[groupNum][j] + commonMass*weights[j])/(commonMass + numSitesInGroup[groupNum]));
+
+                    if(order == 1 && orderOneAdditions){
+
+                        if((sitesToUpdate.get(i)+1) < realizationCount) {
+
+                            // int groupForSiteAfterSiteIndex = (int) currentGroupAssign.getParameterValue(sitesToUpdate.get(i)+1);
+                            int groupForSiteAfterSiteIndex = j + 1;
+
+                            int d1 = 0;
+                            int d2 = 0;
+                            if(groupNum == groupForSiteAfterSiteIndex){
+                                d1 = 1;
+                            }
+                            int catSiteIndex = j;
+                            int catSiteAfterSiteIndex = (int) currentCatParam.getParameterValue(sitesToUpdate.get(i)+1);
+                            if(catSiteIndex == catSiteAfterSiteIndex){
+                                d2 = 1;
+                            }
+                            //System.err.println("activeCatCounter: " + activeCatCounter);
+                            //System.err.println("sitesToUpdate.get(i): " + sitesToUpdate.get(i));
+                            //System.err.println("groupForSiteAfterSiteIndex: " + groupForSiteAfterSiteIndex);
+                            //System.err.println("catSiteAfterSiteIndex: " + catSiteAfterSiteIndex);
+
+                            logMassFunctions[sitesToUpdate.get(i)][activeCatCounter] = logMassFunctions[sitesToUpdate.get(i)][activeCatCounter] + Math.log(
+                                    (commonMass*weights[catSiteAfterSiteIndex] + counts[groupForSiteAfterSiteIndex][catSiteAfterSiteIndex] + d1*d2)/(commonMass + numSitesInGroup[groupForSiteAfterSiteIndex] + d1));
+
+                        }
+                    }
+
+                    activeCatCounter++;
+                }
+            }
+
+            // compute logNormalizingConstant
+
+            // first, subtract logMassFunctions[i][0],...,logMassFunctions[i][currentNumCat-1]
+            // by maxValue to ensure numerical stability
+            double maxValue = logMassFunctions[sitesToUpdate.get(i)][0];
+
+            for(int j = 1; j < currentNumCat; j++){
+                if(logMassFunctions[sitesToUpdate.get(i)][j] > maxValue){
+                    maxValue = logMassFunctions[sitesToUpdate.get(i)][j];
+                }
+            }
+
+            for(int j = 0; j < currentNumCat; j++){
+                logMassFunctions[sitesToUpdate.get(i)][j] = logMassFunctions[sitesToUpdate.get(i)][j] - maxValue;
+                normalizingConst = normalizingConst + Math.exp(logMassFunctions[sitesToUpdate.get(i)][j]);
+            }
+
+            // normalize the entries for mass function i
+            for (int j = 0; j < currentNumCat; j++) {
+                // System.err.println("log normalizing const: " + Math.log(normalizingConst));
+                // System.err.println(" log mass: " + logMassFunctions[i][j]);
+
+                logMassFunctions[sitesToUpdate.get(i)][j] = logMassFunctions[sitesToUpdate.get(i)][j] - Math.log(normalizingConst);
+            }
+        }
+        return logMassFunctions;
+    }
+
+    private double[][] computeLogMassFunctionsNew(ArrayList<Integer> sitesToUpdate,
+                                               int currentNumCat,
+                                               int[][] counts,
+                                               int[] numSitesInGroup,
+                                               Parameter currentGroupAssign,
+                                               double[] weights,
+                                               Parameter currentCatParam
+                                                //,
+                                               //double[] patternLogLikelihoods
+                                                ){
+
+        double[][] logMassFunctions = new double[realizationCount][currentNumCat];
+
+        double commonMass = massParameterList.get(0).getParameterValue(0);
+        //double comBaseDistMass = commonBaseDistMass.getParameterValue(0);
+
+        /*
+        int[] tablesForEachCat = new int[hdp.maxCategoryCount];
+        int numTables = 0;
+
+        for(int k = 0; k < hdp.maxCategoryCount; k++){
+            for(int g = 0; g < hdp.maxGroupCount; g++) {
+                tablesForEachCat[k] = (int) tblCts.getParameter(g).getParameterValue(k);
+            }
+            numTables = numTables + tablesForEachCat[k];
+        }
+        */
+
+        for(int i = 0; i < sitesToUpdate.size(); i++) {
+
+            double normalizingConst = 0.0;
+
+            int activeCatCounter = 0;
+
+            for (int j = 0; j < hdp.maxCategoryCount; j++) {
+
+                int groupNum = (int) currentGroupAssign.getParameterValue(sitesToUpdate.get(i));
+
+                if (counts[groupNum][j] != 0) {
+                    //int indexWithCatOffset = uniquePatternCount*j + patternList.getPatternIndex(sitesToUpdate.get(i));
+                    // System.err.println("indexwithcatoffset: " + indexWithCatOffset);
+
+                    //logMassFunctions[i][j] = tdl.getDataLikelihoodDelegate().getSiteLogLikelihoods()[indexWithCatOffset];
+                    //logMassFunctions[sitesToUpdate.get(i)][activeCatCounter] = patternLogLikelihoods[indexWithCatOffset];
+                    logMassFunctions[sitesToUpdate.get(i)][activeCatCounter] = ((TreeDataLikelihood)cl.getLikelihood(j)).getDataLikelihoodDelegate().getSiteLogLikelihoods()[patternList.getPatternIndex(sitesToUpdate.get(i))];
 
                     // b_g
                     logMassFunctions[sitesToUpdate.get(i)][activeCatCounter] = logMassFunctions[sitesToUpdate.get(i)][activeCatCounter]

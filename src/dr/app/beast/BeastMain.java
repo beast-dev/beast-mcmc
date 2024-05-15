@@ -96,7 +96,7 @@ public class BeastMain {
 
         String fileName = inputFile.getName();
 
-        final Logger infoLogger = Logger.getLogger("dr.app.beast");
+        final Logger infoLogger = Logger.getLogger("dr.apps.beast");
         try {
 
             FileReader fileReader = new FileReader(inputFile);
@@ -133,11 +133,14 @@ public class BeastMain {
             });
             infoLogger.addHandler(errorHandler);
 
-            if (System.getProperty("citations.filename") != null) {
+            /*if (System.getProperty("citations.filename") != null) {
                 FileOutputStream citationStream = new FileOutputStream(System.getProperty("citations.filename"));
                 Handler citationHandler = new MessageLogHandler(citationStream);
                 Logger.getLogger("dr.apps.beast").addHandler(citationHandler);
-            }
+            }*/
+            FileOutputStream citationStream = new FileOutputStream("citations.txt");
+            Handler citationHandler = new MessageLogHandler(citationStream);
+            Logger.getLogger("dr.app.beast").addHandler(citationHandler);
 
             logger.setUseParentHandlers(false);
 

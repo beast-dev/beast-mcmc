@@ -25,6 +25,7 @@
 
 package dr.app.beast;
 
+import beagle.BeagleInfo;
 import dr.util.Citation;
 import dr.util.Pair;
 import dr.util.Version;
@@ -57,7 +58,10 @@ public class BeastParser extends XMLParser {
     public BeastParser(String[] args, List<String> additionalParsers, boolean verbose, boolean parserWarnings, boolean strictXML, Version version) {
         super(verbose, parserWarnings, strictXML, version);
 
+        //add BEAST citation
         addCitable(BeastVersion.INSTANCE);
+        //add BEAGLE citation
+        addCitable(BeagleVersion.INSTANCE);
 
         setup(args);
 

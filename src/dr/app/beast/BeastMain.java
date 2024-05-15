@@ -415,6 +415,7 @@ public class BeastMain {
                         new Arguments.Option("force_resume", "Force resuming from a saved state"),
 
                         new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
+                        //new Arguments.Option("citations_off", "Turn off writing citations to file"),
                         new Arguments.StringOption("plugins_dir", "FILENAME", "Specify a directory to load plugins from, multiple can be separated with ':' "),
 
                         new Arguments.Option("version", "Print the version and credits and stop"),

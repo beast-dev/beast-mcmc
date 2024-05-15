@@ -133,12 +133,13 @@ public class BeastMain {
             });
             infoLogger.addHandler(errorHandler);
 
-            /*if (System.getProperty("citations.filename") != null) {
-                FileOutputStream citationStream = new FileOutputStream(System.getProperty("citations.filename"));
-                Handler citationHandler = new MessageLogHandler(citationStream);
-                Logger.getLogger("dr.apps.beast").addHandler(citationHandler);
-            }*/
-            FileOutputStream citationStream = new FileOutputStream("citations.txt");
+            FileOutputStream citationStream = null;
+            if (System.getProperty("citations.filename") != null) {
+                citationStream = new FileOutputStream(System.getProperty("citations.filename"));
+
+            } else {
+                citationStream = new FileOutputStream(fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + ".txt");
+            }
             Handler citationHandler = new MessageLogHandler(citationStream);
             Logger.getLogger("dr.app.beast").addHandler(citationHandler);
 

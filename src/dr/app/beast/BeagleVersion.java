@@ -29,8 +29,10 @@ import beagle.BeagleInfo;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
+import dr.util.CommonCitations;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -62,28 +64,7 @@ public class BeagleVersion implements Citable {
 
     @Override
     public List<Citation> getCitations() {
-        return Arrays.asList(CITATIONS);
+        return Collections.singletonList(CommonCitations.AYRES_2019_BEAGLE);
     }
-
-    public static Citation[] CITATIONS = new Citation[] {
-            new Citation(
-                    new Author[]{
-                            new Author("DL", "Ayres"),
-                            new Author("MP", "Cummings"),
-                            new Author("G", "Baele"),
-                            new Author("AE", "Darling"),
-                            new Author("PO", "Lewis"),
-                            new Author("DL", "Swofford"),
-                            new Author("JP", "Huelsenbeck"),
-                            new Author("P", "Lemey"),
-                            new Author("A", "Rambaut"),
-                            new Author("MA", "Suchard")
-                    },
-                    "BEAGLE 3: Improved performance, scaling, and usability for a high-performance computing library for statistical phylogenetics",
-                    2019,
-                    "Systematic Biology",
-                    68, 1052, 1061,
-                    "10.1093/sysbio/syz020")
-    };
 
 }

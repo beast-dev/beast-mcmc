@@ -96,7 +96,7 @@ public class BeastMain {
 
         String fileName = inputFile.getName();
 
-        final Logger infoLogger = Logger.getLogger("dr.app.beast");
+        final Logger infoLogger = Logger.getLogger("dr.apps.beast");
         try {
 
             FileReader fileReader = new FileReader(inputFile);
@@ -133,11 +133,15 @@ public class BeastMain {
             });
             infoLogger.addHandler(errorHandler);
 
+            FileOutputStream citationStream = null;
             if (System.getProperty("citations.filename") != null) {
-                FileOutputStream citationStream = new FileOutputStream(System.getProperty("citations.filename"));
-                Handler citationHandler = new MessageLogHandler(citationStream);
-                Logger.getLogger("dr.apps.beast").addHandler(citationHandler);
+                citationStream = new FileOutputStream(System.getProperty("citations.filename"));
+
+            } else {
+                citationStream = new FileOutputStream(fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + ".txt");
             }
+            Handler citationHandler = new MessageLogHandler(citationStream);
+            Logger.getLogger("dr.app.beast").addHandler(citationHandler);
 
             logger.setUseParentHandlers(false);
 
@@ -411,6 +415,7 @@ public class BeastMain {
                         new Arguments.Option("force_resume", "Force resuming from a saved state"),
 
                         new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
+                        //new Arguments.Option("citations_off", "Turn off writing citations to file"),
                         new Arguments.StringOption("plugins_dir", "FILENAME", "Specify a directory to load plugins from, multiple can be separated with ':' "),
 
                         new Arguments.Option("version", "Print the version and credits and stop"),

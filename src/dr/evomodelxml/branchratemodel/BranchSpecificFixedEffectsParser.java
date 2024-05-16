@@ -59,7 +59,7 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
     private static final String INCLUDE_INTERCEPT = "includeIntercept";
     private static final String TIME_DEPENDENT_EFFECT = "timeEffect";
     private static final String TIME_MODEL = "model";
-    private static final String CATEGORY = "category";
+    public static final String CATEGORY = "category";
 
     public String getParserName() {
         return FIXED_EFFECTS;

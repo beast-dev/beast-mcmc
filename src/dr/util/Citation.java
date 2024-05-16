@@ -96,14 +96,14 @@ public class Citation {
         this(authors, title, year, journal, -1, location, null);
     }
 
-    public Citation(Author[] authors, String title, int year, String journal, int volumn, String location,
+    public Citation(Author[] authors, String title, int year, String journal, int volume, String location,
                     String DOI) {
         this.authors = authors;
         this.title = title;
         this.year = year;
         this.journal = journal;
         this.location = location;
-        this.volume = volumn;
+        this.volume = volume;
         this.startpage = -1;
         this.endpage = -1;
         this.DOI = DOI;

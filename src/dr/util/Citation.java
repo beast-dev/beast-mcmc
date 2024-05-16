@@ -243,7 +243,7 @@ public class Citation {
 
     public enum Category {
         FRAMEWORK("Framework"),
-        COMPUTATIONAL_LIBRARY("Computational library"),
+        COMPUTATIONAL_LIBRARY("High-Performance Computing"),
         SUBSTITUTION_MODELS("Substitution Models"),
         PRIOR_MODELS("Prior Models"),
         TRAIT_MODELS("Trait Models"),

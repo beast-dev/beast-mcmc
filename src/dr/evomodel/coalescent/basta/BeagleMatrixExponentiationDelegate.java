@@ -56,7 +56,7 @@ import java.util.logging.Logger;
 import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
 
 @Deprecated
-public class BeagleMatrixExponentiationDelegate extends AbstractModel implements Citable {
+public class BeagleMatrixExponentiationDelegate extends AbstractModel {
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -337,25 +337,6 @@ public class BeagleMatrixExponentiationDelegate extends AbstractModel implements
 
     @Override
     protected void acceptState() {
-    }
-
-    // **************************************************************
-    // INSTANCE CITABLE
-    // **************************************************************
-
-    @Override
-    public Citation.Category getCategory() {
-        return Citation.Category.FRAMEWORK;
-    }
-
-    @Override
-    public String getDescription() {
-        return "Using BEAGLE likelihood calculation library";
-    }
-
-    @Override
-    public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.AYRES_2019_BEAGLE);
     }
 
     // **************************************************************

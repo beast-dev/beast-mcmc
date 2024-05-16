@@ -138,7 +138,7 @@ public class BeastMain {
                 citationStream = new FileOutputStream(System.getProperty("citations.filename"));
 
             } else {
-                citationStream = new FileOutputStream(fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + ".txt");
+                citationStream = new FileOutputStream(fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + ".citations.txt");
             }
             Handler citationHandler = new MessageLogHandler(citationStream);
             Logger.getLogger("dr.app.beast").addHandler(citationHandler);

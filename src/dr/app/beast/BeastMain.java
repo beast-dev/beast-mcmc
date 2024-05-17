@@ -37,6 +37,7 @@ import dr.inference.mcmc.MCMC;
 import dr.inference.mcmcmc.MCMCMC;
 import dr.inference.mcmcmc.MCMCMCOptions;
 import dr.math.MathUtils;
+import dr.util.CitationLogHandler;
 import dr.util.ErrorLogHandler;
 import dr.util.MessageLogHandler;
 import dr.util.Version;
@@ -60,6 +61,8 @@ public class BeastMain {
 
     public static final double DEFAULT_DELTA = 1.0;
     public static final int DEFAULT_SWAP_CHAIN_EVERY = 100;
+
+    private static final String CITATION_FILE_SUFFIX = ".citations.txt";
 
     static class BeastConsoleApp extends jam.console.ConsoleApplication {
         XMLParser parser = null;
@@ -133,14 +136,18 @@ public class BeastMain {
             });
             infoLogger.addHandler(errorHandler);
 
-            /*if (System.getProperty("citations.filename") != null) {
-                FileOutputStream citationStream = new FileOutputStream(System.getProperty("citations.filename"));
-                Handler citationHandler = new MessageLogHandler(citationStream);
-                Logger.getLogger("dr.apps.beast").addHandler(citationHandler);
-            }*/
-            FileOutputStream citationStream = new FileOutputStream("citations.txt");
-            Handler citationHandler = new MessageLogHandler(citationStream);
-            Logger.getLogger("dr.app.beast").addHandler(citationHandler);
+            if (Boolean.parseBoolean(System.getProperty("output_citations"))) {
+                FileOutputStream citationStream = null;
+                if (System.getProperty("citations.filename") != null) {
+                    citationStream = new FileOutputStream(System.getProperty("citations.filename"));
+                } else {
+                    citationStream = new FileOutputStream(fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + CITATION_FILE_SUFFIX);
+                }
+                //Handler citationHandler = new MessageLogHandler(citationStream);
+                Handler citationHandler = CitationLogHandler.getHandler(citationStream);
+                //Logger.getLogger("dr.app.beast").addHandler(citationHandler);
+                Logger.getLogger("dr.util").addHandler(citationHandler);
+            }
 
             logger.setUseParentHandlers(false);
 
@@ -154,7 +161,6 @@ public class BeastMain {
             messageHandler = new ErrorLogHandler(maxErrorCount);
             messageHandler.setLevel(Level.WARNING);
             errorLogger.addHandler(messageHandler);
-
 
             PluginLoader.loadPlugins(parser);
 
@@ -414,6 +420,7 @@ public class BeastMain {
                         new Arguments.Option("force_resume", "Force resuming from a saved state"),
 
                         new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
+                        new Arguments.Option("citations_off", "Turn off writing citations to file"),
                         new Arguments.StringOption("plugins_dir", "FILENAME", "Specify a directory to load plugins from, multiple can be separated with ':' "),
 
                         new Arguments.Option("version", "Print the version and credits and stop"),
@@ -696,6 +703,11 @@ public class BeastMain {
                      arguments.getStringOption("plugins_dir")+":"+System.getProperty("beast.plugins.dir"));
         }
 
+        if (arguments.hasOption("citations_off")) {
+            System.setProperty("output_citations", Boolean.FALSE.toString());
+        } else {
+            System.setProperty("output_citations", Boolean.TRUE.toString());
+        }
 
         if (!usingSMC) {
             // ignore these other options

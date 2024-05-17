@@ -262,7 +262,6 @@ public class XMLParser {
 
             if (verbose) System.out.println("  Restoring idref=" + idref);
 
-
             return new Reference(restoredXMLObject);
 
         } else {
@@ -378,6 +377,9 @@ public class XMLParser {
                 } else if (obj instanceof Runnable && !concurrent) {
 
                     executingRunnable();
+
+                    //close citationHandler
+                    CitationLogHandler.closeHandler();
 
                     if (obj instanceof Spawnable && !((Spawnable) obj).getSpawnable()) {
                         ((Spawnable) obj).run();

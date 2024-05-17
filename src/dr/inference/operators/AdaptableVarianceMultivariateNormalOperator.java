@@ -886,7 +886,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptab
 
     @Override
     public Citation.Category getCategory() {
-        return Citation.Category.FRAMEWORK;
+        return Citation.Category.ADVANCED_ESTIMATION_METHODS;
     }
 
     @Override

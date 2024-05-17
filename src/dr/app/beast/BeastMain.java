@@ -61,7 +61,7 @@ public class BeastMain {
     public static final double DEFAULT_DELTA = 1.0;
     public static final int DEFAULT_SWAP_CHAIN_EVERY = 100;
 
-    private static final String CITATION_FILE_SUFFIX = "_citations.txt";
+    private static final String CITATION_FILE_SUFFIX = ".citations.txt";
 
     static class BeastConsoleApp extends jam.console.ConsoleApplication {
         XMLParser parser = null;

@@ -25,7 +25,6 @@
 
 package dr.app.beast;
 
-import beagle.BeagleInfo;
 import dr.util.Citation;
 import dr.util.Pair;
 import dr.util.Version;
@@ -209,7 +208,8 @@ public class BeastParser extends XMLParser {
 
     @Override
     protected void executingRunnable() {
-        Logger.getLogger("dr.app.beast").info("\nCitations for this analysis: ");
+        //Logger.getLogger("dr.app.beast").info("\nCitations for this analysis: ");
+        Logger.getLogger("dr.util").info("\nCitations for this analysis: ");
 
         Map<String, Set<Pair<String, String>>> categoryMap = new LinkedHashMap<String, Set<Pair<String, String>>>();
 
@@ -226,14 +226,14 @@ public class BeastParser extends XMLParser {
         }
 
         for (String category : categoryMap.keySet()) {
-            Logger.getLogger("dr.app.beast").info("\n"+category.toUpperCase());
+            Logger.getLogger("dr.util").info("\n"+category.toUpperCase());
             Set<Pair<String, String>> pairSet = categoryMap.get(category);
 
             for (Pair<String, String>keyPair : pairSet) {
-                Logger.getLogger("dr.app.beast").info(keyPair.second + ":");
+                Logger.getLogger("dr.util").info(keyPair.second + ":");
 
                 for (Citation citation : getCitationStore().get(keyPair)) {
-                    Logger.getLogger("dr.app.beast").info("\t" + citation.toString());
+                    Logger.getLogger("dr.util").info("\t" + citation.toString());
                 }
             }
         }
@@ -241,7 +241,7 @@ public class BeastParser extends XMLParser {
         // clear the citation store so all the same citations don't get cited again
         getCitationStore().clear();
 
-        Logger.getLogger("dr.app.beast").info("\n");
+        Logger.getLogger("dr.util").info("\n");
 
     }
 

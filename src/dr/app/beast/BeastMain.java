@@ -61,6 +61,8 @@ public class BeastMain {
     public static final double DEFAULT_DELTA = 1.0;
     public static final int DEFAULT_SWAP_CHAIN_EVERY = 100;
 
+    private static final String CITATION_FILE_SUFFIX = "_citations.txt";
+
     static class BeastConsoleApp extends jam.console.ConsoleApplication {
         XMLParser parser = null;
         public final static String backgroundColor =  "#35484F";
@@ -138,7 +140,7 @@ public class BeastMain {
                 citationStream = new FileOutputStream(System.getProperty("citations.filename"));
 
             } else {
-                citationStream = new FileOutputStream(fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + ".txt");
+                citationStream = new FileOutputStream(fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + CITATION_FILE_SUFFIX);
             }
             Handler citationHandler = new MessageLogHandler(citationStream);
             Logger.getLogger("dr.app.beast").addHandler(citationHandler);

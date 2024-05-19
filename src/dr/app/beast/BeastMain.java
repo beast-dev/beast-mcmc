@@ -36,6 +36,7 @@ import dr.app.util.Utils;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmcmc.MCMCMC;
 import dr.inference.mcmcmc.MCMCMCOptions;
+import dr.inference.operators.OperatorSchedule;
 import dr.math.MathUtils;
 import dr.util.CitationLogHandler;
 import dr.util.ErrorLogHandler;
@@ -365,10 +366,11 @@ public class BeastMain {
                         new Arguments.Option("overwrite", "Allow overwriting of log files"),
                         new Arguments.IntegerOption("errors", "Specify maximum number of numerical errors before stopping"),
                         new Arguments.IntegerOption("threads", "The maximum number of computational threads to use (default auto)"),
-                        new Arguments.Option("fail_threads", "Exit with error on uncaught exception in thread."),
+                        new Arguments.Option("fail_threads", "Exit with error on uncaught exception in thread"),
                         new Arguments.Option("java", "Use Java only, no native implementations"),
                         new Arguments.LongOption("tests", "The number of full evaluation tests to perform (default 1000)"),
                         new Arguments.RealOption("threshold", 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 0.1)"),
+                        new Arguments.Option(OperatorSchedule.SHOW_OPERATORS, "Print transition kernel performance to file"),
 
                         new Arguments.Option("adaptation_off", "Don't adapt operator sizes"),
                         new Arguments.RealOption("adaptation_target", 0.0, 1.0, "Target acceptance rate for adaptive operators (default 0.234)"),
@@ -707,6 +709,10 @@ public class BeastMain {
             System.setProperty("output_citations", Boolean.FALSE.toString());
         } else {
             System.setProperty("output_citations", Boolean.TRUE.toString());
+        }
+
+        if (arguments.hasOption(OperatorSchedule.SHOW_OPERATORS)) {
+            System.setProperty(OperatorSchedule.SHOW_OPERATORS, Boolean.TRUE.toString());
         }
 
         if (!usingSMC) {

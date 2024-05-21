@@ -32,6 +32,7 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.branchmodel.BranchSpecificBranchModelParser;
 import dr.evomodelxml.continuous.hmc.BranchRateGradientParser;
@@ -42,6 +43,7 @@ import dr.inference.distribution.RandomField;
 import dr.inference.hmc.GradientWrtIncrement;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.Likelihood;
 import dr.inference.model.StatisticParser;
 import dr.inferencexml.SignTransformParser;
 import dr.inferencexml.distribution.*;
@@ -62,6 +64,8 @@ import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.model.SumStatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
+
+import java.util.Map;
 
 import static dr.inference.model.ParameterParser.DIMENSION;
 import static dr.inference.model.ParameterParser.PARAMETER;
@@ -572,7 +576,7 @@ public class ClockModelGenerator extends Generator {
                 tag = BranchSpecificFixedEffectsParser.FIXED_EFFECTS;
                 writer.writeOpenTag(tag,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffectsParser.FIXED_EFFECTS + "Model")
+                                new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffectsParser.FIXED_EFFECTS_MODEL)
                         }
                 );
 
@@ -632,7 +636,7 @@ public class ClockModelGenerator extends Generator {
                 writer.writeCloseTag(ArbitraryBranchRatesParser.SCALE);
 
                 writer.writeOpenTag(ArbitraryBranchRatesParser.LOCATION);
-                writer.writeIDref(BranchSpecificFixedEffectsParser.FIXED_EFFECTS, BranchSpecificFixedEffectsParser.FIXED_EFFECTS + "Model");
+                writer.writeIDref(BranchSpecificFixedEffectsParser.FIXED_EFFECTS, BranchSpecificFixedEffectsParser.FIXED_EFFECTS_MODEL);
                 writer.writeCloseTag(ArbitraryBranchRatesParser.LOCATION);
 
                 writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
@@ -644,7 +648,7 @@ public class ClockModelGenerator extends Generator {
                 // branch rates prior
                 writer.writeOpenTag(tag,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, "ratesPrior")
+                                new Attribute.Default<String>(XMLParser.ID, BranchSpecificFixedEffects.RATES_PRIOR)
                         }
                         );
                 writer.writeOpenTag(DistributionLikelihoodParser.DATA);
@@ -677,7 +681,7 @@ public class ClockModelGenerator extends Generator {
                 // branch rates scale prior
                 writer.writeOpenTag(tag,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, "scalePrior")
+                                new Attribute.Default<String>(XMLParser.ID, BranchSpecificFixedEffects.SCALE_PRIOR)
                         }
                 );
                 writer.writeOpenTag(DistributionLikelihoodParser.DATA);
@@ -698,7 +702,7 @@ public class ClockModelGenerator extends Generator {
                 // intercept prior
                 writer.writeOpenTag(tag,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, "interceptPrior")
+                                new Attribute.Default<String>(XMLParser.ID, BranchSpecificFixedEffects.INTERCEPT_PRIOR)
                         }
                 );
                 writer.writeOpenTag(DistributionLikelihoodParser.DATA);
@@ -729,7 +733,7 @@ public class ClockModelGenerator extends Generator {
                 for (Taxa taxonSet : options.taxonSets) {
                     writer.writeOpenTag(tag,
                             new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, BranchSpecificFixedEffectsParser.FIXED_EFFECTS + "Likelihood" + counter)
+                                    new Attribute.Default<String>(XMLParser.ID, BranchSpecificFixedEffectsParser.FIXED_EFFECTS_LIKELIHOOD + counter)
                             }
                     );
                     writer.writeOpenTag(DistributionLikelihoodParser.DATA);
@@ -865,6 +869,19 @@ public class ClockModelGenerator extends Generator {
                 break;
 
             case MIXED_EFFECTS_CLOCK:
+                //always write distribution likelihoods for rate, scale and intercept
+                writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffects.RATES_PRIOR);
+                writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffects.SCALE_PRIOR);
+                writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffects.INTERCEPT_PRIOR);
+                //check for coefficients
+                String coeff = BranchSpecificFixedEffectsParser.COEFFICIENT;
+                int number = 1;
+                String concat = coeff + number;
+                while (model.hasParameter(concat)) {
+                    writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffectsParser.FIXED_EFFECTS_LIKELIHOOD + number);
+                    number++;
+                    concat = coeff + number;
+                }
                 tag = ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES;
                 id = model.getPrefix() + ArbitraryBranchRates.BRANCH_RATES;
                 break;

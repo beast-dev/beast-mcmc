@@ -135,7 +135,7 @@ public class PartitionClockModel extends PartitionOptions {
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
 
         new Parameter.Builder(ClockType.ME_CLOCK_LOCATION, "mixed effects clock rate").
-                prior(PriorType.NORMAL_HPM_PRIOR).initial(rate)
+                prior(PriorType.LOGNORMAL_HPM_PRIOR).initial(rate)
                 .isCMTCRate(false).isNonNegative(false).partitionOptions(this)
                 .isAdaptiveMultivariateCompatible(true).build(parameters);
 

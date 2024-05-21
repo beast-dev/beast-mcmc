@@ -54,6 +54,7 @@ public enum PriorType {
     CTMC_RATE_REFERENCE_PRIOR("CTMC Rate Reference", true, false, false),
     LOGNORMAL_HPM_PRIOR("Lognormal HPM", true, false, false),
     NORMAL_HPM_PRIOR("Normal HPM", true, false, false),
+    EXPONENTIAL_HPM_PRIOR("Exponential HPM", true, false, false),
     LINKED_PARAMETER("Linked Parameter", false, false, false),
     POISSON_PRIOR("Poisson", false, false, false);
 
@@ -118,6 +119,8 @@ public enum PriorType {
             case NORMAL_HPM_PRIOR:
                 break;
             case LOGNORMAL_HPM_PRIOR:
+                break;
+            case EXPONENTIAL_HPM_PRIOR:
                 break;
         }
         if (dist != null && parameter.isTruncated) {
@@ -255,6 +258,11 @@ public enum PriorType {
                 buffer.append(parameter.linkedName);
                 buffer.append("]");
                 break;
+            case EXPONENTIAL_HPM_PRIOR:
+                buffer.append("Exponential HPM [");
+                buffer.append(parameter.linkedName);
+                buffer.append("]");
+                break;
             default:
                 throw new IllegalArgumentException("Unknown prior type");
         }
@@ -265,7 +273,6 @@ public enum PriorType {
             buffer.append(NumberUtil.formatDecimal(parameter.truncationUpper, 10, 6));
             buffer.append("]");
         }
-
 
         if (parameter.priorType == NONE_FIXED) {
             buffer.append(", value=").append(NumberUtil.formatDecimal(parameter.getInitial(), 10, 6));
@@ -362,7 +369,8 @@ public enum PriorType {
         if (parameter.isHierarchical) {
             return new PriorType[]{
                     LOGNORMAL_HPM_PRIOR,
-                    NORMAL_HPM_PRIOR};
+                    NORMAL_HPM_PRIOR,
+                    EXPONENTIAL_HPM_PRIOR};
         }
         if (parameter.isMaintainedSum) {
             return new PriorType[]{
@@ -400,7 +408,6 @@ public enum PriorType {
                     INVERSE_GAMMA_PRIOR,
                     ONE_OVER_X_PRIOR};
         }
-
 
         // just a continuous parameter
         return new PriorType[]{

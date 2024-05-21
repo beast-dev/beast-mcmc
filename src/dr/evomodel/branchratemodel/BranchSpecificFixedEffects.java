@@ -18,6 +18,10 @@ import java.util.List;
  */
 public interface BranchSpecificFixedEffects {
 
+    String RATES_PRIOR = "ratesPrior";
+    String SCALE_PRIOR = "scalePrior";
+    String INTERCEPT_PRIOR = "interceptPrior";
+
     double getEffect(final Tree tree, final NodeRef node);
 
     double[] getDesignVector(final Tree tree, final NodeRef node);

@@ -335,6 +335,7 @@ public class ParameterPriorGenerator extends Generator {
                 break;
             case NORMAL_HPM_PRIOR:
             case LOGNORMAL_HPM_PRIOR:
+            case EXPONENTIAL_HPM_PRIOR:
                 // Do nothing, densities are already in a distributionLikelihood
                 break;
             case DIRICHLET_PRIOR:

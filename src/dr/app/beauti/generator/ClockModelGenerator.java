@@ -366,7 +366,7 @@ public class ClockModelGenerator extends Generator {
                 writer.writeCloseTag(GAMMA_PRIOR);
 
                 writer.writeOpenTag(ScaledByTreeTimeBranchRateModelParser.TREE_TIME_BRANCH_RATES,
-                        new Attribute.Default<>(XMLParser.ID, prefix  + "branchRates"));
+                        new Attribute.Default<>(XMLParser.ID, prefix  + BranchRateModel.BRANCH_RATES));
                 writer.writeIDref(ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES, prefix  + "substBranchRates");
                 writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix  + "treeModel");
                 writeParameter(clockModel.getParameter("branchRates.rate"), -1, writer);
@@ -569,6 +569,7 @@ public class ClockModelGenerator extends Generator {
                                 new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffectsParser.COEFFICIENT + parameterNumber),
                                 new Attribute.Default<String>(ParameterParser.VALUE, "0.01")}, true);
                     }
+                    parameterNumber++;
                 }
                 writer.writeCloseTag(tag);
 
@@ -592,7 +593,7 @@ public class ClockModelGenerator extends Generator {
                     );
                     writer.writeOpenTag(BranchSpecificBranchModelParser.CLADE,
                             new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, "" + (counter+1)),
+                                    new Attribute.Default<String>(BranchSpecificFixedEffectsParser.CATEGORY, "" + (counter+1)),
                                     new Attribute.Default<String>(LocalClockModelParser.INCLUDE_STEM, Boolean.toString(options.taxonSetsIncludeStem.get(taxonSet))),
                                     new Attribute.Default<String>(LocalClockModelParser.EXCLUDE_CLADE, "false")
                             }
@@ -610,7 +611,7 @@ public class ClockModelGenerator extends Generator {
                 tag = ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES;
                 writer.writeOpenTag(tag,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, prefix + ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES),
+                                new Attribute.Default<String>(XMLParser.ID, prefix + BranchRateModel.BRANCH_RATES),
                                 new Attribute.Default<String>(ArbitraryBranchRatesParser.RECIPROCAL, "false"),
                                 new Attribute.Default<String>(ArbitraryBranchRatesParser.EXP, "false"),
                                 new Attribute.Default<String>(ArbitraryBranchRatesParser.CENTER_AT_ONE, "false")
@@ -687,6 +688,7 @@ public class ClockModelGenerator extends Generator {
                 writer.writeOpenTag(DistributionLikelihoodParser.DATA);
                 writer.writeIDref(PARAMETER, ClockType.ME_CLOCK_SCALE);
                 writer.writeCloseTag(DistributionLikelihoodParser.DATA);
+                writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
                 writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
                 writer.writeOpenTag(ExponentialDistributionModelParser.MEAN);
                 writer.writeTag(PARAMETER,

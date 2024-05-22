@@ -134,14 +134,14 @@ public class PartitionClockModel extends PartitionOptions {
                 .initial(1.0).mean(1.0).offset(0.0).partitionOptions(this)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
 
-        new Parameter.Builder(ClockType.ME_CLOCK_LOCATION, "mixed effects clock rate").
+        new Parameter.Builder(ClockType.ME_CLOCK_LOCATION, "mixed effects clock rate (fixed prior)").
                 prior(PriorType.LOGNORMAL_HPM_PRIOR).initial(rate)
-                .isCMTCRate(false).isNonNegative(false).partitionOptions(this)
+                .isCMTCRate(false).isNonNegative(false).partitionOptions(this).isPriorFixed(true)
                 .isAdaptiveMultivariateCompatible(true).build(parameters);
 
-        new Parameter.Builder(ClockType.ME_CLOCK_SCALE, "mixed effects clock scale").
+        new Parameter.Builder(ClockType.ME_CLOCK_SCALE, "mixed effects clock scale (fixed prior)").
                 prior(PriorType.EXPONENTIAL_HPM_PRIOR).initial(0.15)
-                .isCMTCRate(false).isNonNegative(false).partitionOptions(this)
+                .isCMTCRate(false).isNonNegative(false).partitionOptions(this).isPriorFixed(true)
                 .isAdaptiveMultivariateCompatible(true).build(parameters);
 
         // Shrinkage clock
@@ -155,9 +155,9 @@ public class PartitionClockModel extends PartitionOptions {
         // Mixed effects clock
         createScaleOperator(ClockType.ME_CLOCK_LOCATION, demoTuning, rateWeights);
         createScaleOperator(ClockType.ME_CLOCK_SCALE, demoTuning, rateWeights);
-        new Parameter.Builder(BranchSpecificFixedEffectsParser.INTERCEPT, "intercept").
+        new Parameter.Builder(BranchSpecificFixedEffectsParser.INTERCEPT, "intercept (fixed prior)").
                 prior(PriorType.NORMAL_HPM_PRIOR).initial(rate)
-                .isCMTCRate(false).isNonNegative(false).partitionOptions(this)
+                .isCMTCRate(false).isNonNegative(false).partitionOptions(this).isPriorFixed(true)
                 .isAdaptiveMultivariateCompatible(true).build(parameters);
         createOperator("RANDOMWALK_INTERCEPT_ME_CLOCK", "mixed effects clock", "mixed effects clock intercept operator",
                 BranchSpecificFixedEffectsParser.INTERCEPT, OperatorType.RANDOM_WALK, demoTuning, rateWeights);
@@ -365,10 +365,10 @@ public class PartitionClockModel extends PartitionOptions {
                         if (options.taxonSetsMono.get(taxonSet)) {
                             String parameterName = BranchSpecificFixedEffectsParser.COEFFICIENT + coeff;
                             if (!hasParameter(parameterName)) {
-                                new Parameter.Builder(parameterName, "fixed effect " + coeff)
+                                new Parameter.Builder(parameterName, "fixed effect " + coeff + " (fixed prior)")
                                         .prior(PriorType.NORMAL_HPM_PRIOR)
                                         .initial(0.01)
-                                        .isCMTCRate(false).isNonNegative(false)
+                                        .isCMTCRate(false).isNonNegative(false).isPriorFixed(true)
                                         .partitionOptions(this)
                                         .taxonSet(taxonSet)
                                         .build(parameters);

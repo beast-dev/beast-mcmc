@@ -35,8 +35,8 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @author Alexei Drummond
  * @author Walter Xie
  */
 public abstract class AbstractPartitionData implements Serializable {
@@ -138,7 +138,7 @@ public abstract class AbstractPartitionData implements Serializable {
        return traits != null;
     }
 
-    public abstract String getPrefix(); // be careful of microsatellite PartitionPattern
+    public abstract String getPrefix();
 
     public abstract TaxonList getTaxonList();
 

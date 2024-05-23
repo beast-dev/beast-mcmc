@@ -664,13 +664,15 @@
     	
     	run once: 
     	xcrun notarytool store-credentials "notarytool-password"
-               --apple-id msuchard@mac.com
-               --team-id LC992Z5R7E
-               --password <secret_2FA_password> # from appleid.apple.com, app-specific password
+               ~~apple-id msuchard@mac.com
+               ~~team-id LC992Z5R7E
+               ~~password <secret_2FA_password> # from appleid.apple.com, app-specific password
     	
     	to notarize:
-    	xcrun notarytool submit release/BEAST\ X\ v10.5.0.dmg --keychain-profile "notarytool-password" --wait
-    	xcrun stapler staple release/BEAST\ X\ v10.5.0.dmg     	
+    	xcrun notarytool submit release/BEAST\ X\ v10.5.0.dmg ~~keychain-profile "notarytool-password" ~~wait
+    	xcrun stapler staple release/BEAST\ X\ v10.5.0.dmg     
+    	
+    	Note: change ~~ to double-dash	
     -->
     
     <target name="mac" depends="dist"

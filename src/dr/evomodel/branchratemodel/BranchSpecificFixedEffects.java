@@ -18,6 +18,10 @@ import java.util.List;
  */
 public interface BranchSpecificFixedEffects {
 
+    String RATES_PRIOR = "ratesPrior";
+    String SCALE_PRIOR = "scalePrior";
+    String INTERCEPT_PRIOR = "interceptPrior";
+
     double getEffect(final Tree tree, final NodeRef node);
 
     double[] getDesignVector(final Tree tree, final NodeRef node);
@@ -28,7 +32,7 @@ public interface BranchSpecificFixedEffects {
 
     int getDimension();
 
-    abstract class Base extends AbstractModel implements BranchSpecificFixedEffects {
+    abstract class Base extends AbstractModel implements BranchSpecificFixedEffects, Citable {
 
         public Base(String name) {
             super(name);
@@ -42,6 +46,40 @@ public interface BranchSpecificFixedEffects {
             }
             return result;
         }
+
+        @Override
+        public Citation.Category getCategory() {
+            return Citation.Category.MOLECULAR_CLOCK;
+        }
+
+        @Override
+        public String getDescription() {
+            return "Mixed effects clock model";
+        }
+
+        @Override
+        public List<Citation> getCitations() {
+            Citation citation = new Citation(
+                    new Author[]{
+                            new Author("M", "Bletsa"),
+                            new Author("MA", "Suchard"),
+                            new Author("X", "Ji"),
+                            new Author("S", "Gryseels"),
+                            new Author("B", "Vrancken"),
+                            new Author("G", "Baele"),
+                            new Author("M", "Worobey"),
+                            new Author("P", "Lemey")
+                    },
+                    "Divergence dating using mixed effects clock modelling: an application to HIV-1",
+                    2019,
+                    "Virus Evolution",
+                    5,
+                    "vez036",
+                    "10.1093/ve/vez036"
+            );
+            return Collections.singletonList(citation);
+        }
+
     }
 
     class None extends Base implements BranchSpecificFixedEffects {
@@ -98,6 +136,7 @@ public interface BranchSpecificFixedEffects {
         public int getDimension() {
             return 1;
         }
+
     }
 
     class Transformed extends Base implements BranchSpecificFixedEffects {

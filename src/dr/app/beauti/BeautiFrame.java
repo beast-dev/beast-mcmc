@@ -628,14 +628,6 @@ public class BeautiFrame extends DocumentFrame {
         setStatusMessage();
     }
 
-    public void setupEBSP() {
-        dataPanel.selectAll();
-
-        dataPanel.unlinkAll();
-
-        setAllOptions();
-    }
-
     public PartitionTreePrior getCurrentPartitionTreePrior() {
         treesPanel.setOptions(options); // need this to refresh the currentTreeModel
         return treesPanel.currentTreeModel.getPartitionTreePrior();

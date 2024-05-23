@@ -59,12 +59,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
     private static final long serialVersionUID = 2778103564318492601L;
 
-//    private JComboBox userTreeCombo = new JComboBox();
-//    private JButton button;
-
-//    private CreateTreeAction createTreeAction = new CreateTreeAction();
-//    private TreeDisplayPanel treeDisplayPanel;
-
     private BeautiFrame frame = null;
     public BeautiOptions options = null;
 
@@ -293,10 +287,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
                         options.useTipDates);
                 // setTreePriorChoices should be always before setOptions
                 ptpp.setOptions();
-//                    if (options.contains(Microsatellite.INSTANCE)) {
-//                        ptpp.setMicrosatelliteTreePrior();
-//                    } else
-
                 ptpp.repaint();
             }
         }

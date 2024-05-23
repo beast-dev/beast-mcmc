@@ -379,26 +379,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         createScaleOperator("bcov.s", demoTuning, substWeights);
         createOperator("hfrequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
-        //=============== microsat ======================
-        createParameterGammaPrior("propLinear", "Proportionality linear function",
-                PriorScaleType.NONE, 0.5, 1.0, 1.0, false, true);
-        createParameterNormalPrior("biasConst", "Constant bias", PriorScaleType.NONE,
-                0.0, 0.0, 10.0, 0.0, true);
-        createParameterNormalPrior("biasLinear", "Linear bias", PriorScaleType.NONE,
-                0.0, 0.0, 10.0, 0.0, true);
-        createZeroOneParameterUniformPrior("geomDist", "The success probability of geometric distribution", 0.1, true);
-        createZeroOneParameterUniformPrior("onePhaseProb", "A probability of geomDist being the last step of series", 1.0, true);
-
-        createScaleOperator("propLinear", demoTuning, substWeights);
-//        createOperator("deltaBiasConst", "deltaBiasConst", "Delta exchange on constant bias", "biasConst",
-//                OperatorType.DELTA_EXCHANGE, 0.001, 1.6);
-        createOperator("randomWalkBiasConst", "randomWalkBiasConst", "Random walk on constant bias", "biasConst",
-                OperatorType.RANDOM_WALK, 0.01, 2.0);
-        createOperator("randomWalkBiasLinear", "randomWalkBiasLinear", "Random walk on linear bias", "biasLinear",
-                OperatorType.RANDOM_WALK, 0.001, 2.0);
-        createOperator("randomWalkGeom", "randomWalkGeom", "Random walk on geomDist", "geomDist",
-                OperatorType.RANDOM_WALK, 0.01, 2.0);
-
     }
 
     ////////////////////////////////////////////////////////////////

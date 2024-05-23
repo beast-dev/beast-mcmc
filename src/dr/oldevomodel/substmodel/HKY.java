@@ -406,7 +406,7 @@ public class HKY extends AbstractNucleotideModel implements Citable {
             },
             "Dating the human-ape splitting by a molecular clock of mitochondrial DNA",
             1985,
-            "J. Mol. Evol.",
+            "Journal of Molecular Evolution",
             22,
             160, 174,
             Citation.Status.PUBLISHED

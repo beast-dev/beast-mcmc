@@ -404,10 +404,10 @@ public class BeautiOptions extends ModelOptions {
     }
 
     /**
-     * exclude microsatellite and traits
+     * exclude traits
      */
     public List<PartitionData> getPartitionData() {
-        List<PartitionData> pdList = new ArrayList<PartitionData>();
+        List<PartitionData> pdList = new ArrayList<>();
         for (AbstractPartitionData partition : dataPartitions) {
             if (partition instanceof PartitionData && partition.getTraits() == null) {
                 pdList.add((PartitionData) partition);
@@ -447,6 +447,16 @@ public class BeautiOptions extends ModelOptions {
         List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
         for (AbstractPartitionData pd : dataPartitions) {
             if (pd.getDataType().getType() == dataType.getType()) {
+                pdList.add(pd);
+            }
+        }
+        return pdList;
+    }
+
+    public List<AbstractPartitionData> getDataPartitionsExceptTrees() {
+        List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
+        for (AbstractPartitionData pd : dataPartitions) {
+            if (pd.getDataType().getType() != DataType.TREE) {
                 pdList.add(pd);
             }
         }
@@ -671,7 +681,7 @@ public class BeautiOptions extends ModelOptions {
         List<PartitionTreeModel> ptmList = ptmlCache.get(givenDataPartitions);
 
         if (ptmList == null) {
-            Set<PartitionTreeModel> activeTrees = new LinkedHashSet<PartitionTreeModel>();
+            Set<PartitionTreeModel> activeTrees = new LinkedHashSet<>();
 
             for (AbstractPartitionData partition : givenDataPartitions) {
                 if (partition.getPartitionTreeModel() != null) {
@@ -679,7 +689,7 @@ public class BeautiOptions extends ModelOptions {
                 }
             }
 
-            ptmList = new ArrayList<PartitionTreeModel>(activeTrees);
+            ptmList = new ArrayList<>(activeTrees);
 
             ptmlCache.put(givenDataPartitions, ptmList);
         }
@@ -760,96 +770,6 @@ public class BeautiOptions extends ModelOptions {
     }
 
     // ++++++++++++++ Partition Clock Model ++++++++++++++
-
-//    public List<PartitionClockModelTreeModelLink> getPartitionClockTreeLinks() {
-//        return partitionClockTreeLinks;
-//    }
-//
-//    public List<PartitionClockModelSubstModelLink> getTraitClockSubstLinks() {
-//        return partitionClockSubstLinks;
-//    }
-//
-//    public PartitionClockModelTreeModelLink getPartitionClockTreeLink(PartitionClockModel model, PartitionTreeModel tree) {
-//        for (PartitionClockModelTreeModelLink clockTree : getPartitionClockTreeLinks()) {
-//            if (clockTree.getPartitionClockModel().equals(model) && clockTree.getPartitionTreeTree().equals(tree)) {
-//                return clockTree;
-//            }
-//        }
-//
-//        return null;
-//    }
-//
-//    public void updatePartitionAllLinks() {
-//        clearDataPartitionCaches();
-//        partitionClockTreeLinks.clear();
-//        partitionClockSubstLinks.clear();
-//
-//        for (PartitionClockModel model : getPartitionClockModels()) {
-//            for (PartitionTreeModel tree : getPartitionTreeModels(getDataPartitions(model))) {
-//                PartitionClockModelTreeModelLink clockTree = new PartitionClockModelTreeModelLink(this, model, tree);
-//
-//                if (!partitionClockTreeLinks.contains(clockTree)) {
-//                    partitionClockTreeLinks.add(clockTree);
-//                }
-//            }
-//        }
-//
-//    }
-
-//    public void updateAll() {
-//        updatePartitionAllLinks();
-//        for (ClockModelGroup clockModelGroup : clockModelOptions.getClockModelGroups()) {
-//            if (clockModelGroup.contain(Microsatellite.INSTANCE, this)) {
-//                if (getPartitionClockModels(clockModelGroup).size() == 1) {
-//                    clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup);
-//                    getPartitionClockModels(clockModelGroup).get(0).setEstimatedRate(true);
-//                } else {
-//                    clockModelOptions.fixMeanRate(clockModelGroup);
-//                }
-//            } else if (!(clockModelGroup.getRateTypeOption() == FixRateType.TIP_CALIBRATED
-//                    || clockModelGroup.getRateTypeOption() == FixRateType.NODE_CALIBRATED
-//                    || clockModelGroup.getRateTypeOption() == FixRateType.RATE_CALIBRATED)) {
-//                //TODO correct?
-//                clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup);
-//            }
-//        }
-//    }
-
-    // update links (e.g List<PartitionData> allPartitionData), after use (e.g partition.setPartitionSubstitutionModel(model))
-
-//    public void updateLinksBetweenPDPCMPSMPTMPTPP() {
-//        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
-//            model.clearAllPartitionData();
-//        }
-//
-//        for (PartitionClockModel model : getPartitionClockModels()) {
-//            model.clearAllPartitionData();
-//        }
-//
-//        for (PartitionTreeModel tree : getPartitionTreeModels()) {
-//            tree.clearAllPartitionData();
-//        }
-//
-//        //TODO update PartitionTreePrior ?
-//
-//        for (PartitionData partition : dataPartitions) {
-//            PartitionSubstitutionModel psm = partition.getPartitionSubstitutionModel();
-//            if (!psm.getDataPartitions().contains(partition)) {
-//                psm.addPartitionData(partition);
-//            }
-//
-//            PartitionClockModel pcm = partition.getPartitionClockModel();
-//            if (!pcm.getDataPartitions().contains(partition)) {
-//                pcm.addPartitionData(partition);
-//            }
-//
-//            PartitionTreeModel ptm = partition.getPartitionTreeModel();
-//            if (!ptm.getDataPartitions().contains(partition)) {
-//                ptm.addPartitionData(partition);
-//            }
-//        }
-//
-//    }
 
     public double getAveWeightedMeanDistance(List<AbstractPartitionData> partitions) {
         double meanDistance = 0;
@@ -1195,6 +1115,39 @@ public class BeautiOptions extends ModelOptions {
         return type;
     }
 
+    // ++++++++++++++++++++ tree partition +++++++++++++++++
+
+    public int createPartitionForTree(TreeHolder tree, String partitionName) {
+        int selRow = -1;
+
+        TreePartitionData partition = new TreePartitionData(this, partitionName, tree.getFileName(), tree.getTrees().get(0));
+        dataPartitions.add(partition);
+        selRow = dataPartitions.size() - 1;
+
+
+//        if (partition.getPartitionSubstitutionModel() == null) {
+//            PartitionSubstitutionModel substModel = new PartitionSubstitutionModel(this, partition.getName(),
+//                    partition);
+//            partition.setPartitionSubstitutionModel(substModel);
+//        }
+
+        if (partition.getPartitionTreeModel() == null) {
+            PartitionTreeModel treeModel = new PartitionTreeModel(this, partition);
+            PartitionTreePrior ptp = new PartitionTreePrior(this, treeModel);
+            treeModel.setPartitionTreePrior(ptp);
+            partition.setPartitionTreeModel(treeModel);// always use 1st tree
+//            getPartitionTreeModels().get(0).addPartitionData(newTrait);
+        }
+
+//        if (partition.getPartitionClockModel() == null && partition.getDataType().getType() != DataType.CONTINUOUS) {
+//            // PartitionClockModel based on PartitionData
+//            PartitionClockModel pcm = new PartitionClockModel(this, partition.getName(), partition, partition.getPartitionTreeModel());
+//            partition.setPartitionClockModel(pcm);
+//        }
+
+        return selRow;
+    }
+
     // ++++++++++++++++++++ message bar +++++++++++++++++
 
     public String statusMessage() {
@@ -1286,7 +1239,7 @@ public class BeautiOptions extends ModelOptions {
     public List<AbstractPartitionData> otherPartitions = new ArrayList<AbstractPartitionData>();
 
     // list of starting tree from user import
-    public List<Tree> userTrees = new ArrayList<Tree>();
+    public Map<String, TreeHolder> userTrees = new HashMap<>();
 
     public boolean unlinkPartitionRates = true;
 

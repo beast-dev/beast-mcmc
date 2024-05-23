@@ -60,7 +60,7 @@ import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
  * @version $Id$
  */
 
-public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
+public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate {
 
     private static final boolean COUNT_CALCULATIONS = true; // keep a cumulative total of number of computations
 
@@ -1319,25 +1319,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     public long getTotalCalculationCount() {
         // Can only return one count at the moment so return the number of partials updated
         return totalPartialsUpdateCount;
-    }
-
-    // **************************************************************
-    // INSTANCE CITABLE
-    // **************************************************************
-
-    @Override
-    public Citation.Category getCategory() {
-        return Citation.Category.FRAMEWORK;
-    }
-
-    @Override
-    public String getDescription() {
-        return "BEAGLE likelihood calculation library";
-    }
-
-    @Override
-    public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.AYRES_2019_BEAGLE);
     }
 
     // **************************************************************

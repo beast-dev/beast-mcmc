@@ -28,7 +28,9 @@ package dr.app.beauti.treespanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.TreeHolder;
 import dr.app.beauti.types.StartingTreeType;
+import dr.app.beauti.types.TreePriorParameterizationType;
 import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
@@ -186,7 +188,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
         removeAll();
 
-        if (partitionTreeModel.getDataType().getType() != DataType.MICRO_SAT) {
+        if (partitionTreeModel.getDataType().getType() != DataType.TREE) {
             addSpanningComponent(randomTreeRadio);
             addSpanningComponent(upgmaTreeRadio);
             addSpanningComponent(userTreeRadio);
@@ -197,8 +199,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                 userTreeCombo.addItem(NO_TREE);
             } else {
                 Object selectedItem = userTreeCombo.getSelectedItem();
-                for (Tree tree : options.userTrees) {
-                    userTreeCombo.addItem(tree.getId());
+                for (TreeHolder tree : options.userTrees.values()) {
+                    userTreeCombo.addItem(tree);
                 }
                 if (selectedItem != null) {
                     userTreeCombo.setSelectedItem(selectedItem);
@@ -211,6 +213,19 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             addComponent(userTreeInfo);
             addComponent(importTreeButton);
 
+        } else {
+            JTextArea citationText = new JTextArea(1, 40);
+            citationText.setLineWrap(true);
+            citationText.setWrapStyleWord(true);
+            citationText.setEditable(false);
+            citationText.setFont(this.getFont());
+            citationText.setOpaque(false);
+
+            addComponentWithLabel("Tree as data model:", new JLabel("ThorneyBEAST"));
+            String citation = //citationCoalescent +  "\n" +
+                    "McCrone et al.";
+            addComponentWithLabel("Citation:", citationText);
+            citationText.setText(citation);
         }
 
         validate();
@@ -245,13 +260,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     }
 
     private Tree getSelectedUserTree() {
-        String treeId = (String) userTreeCombo.getSelectedItem();
-        for (Tree tree : options.userTrees) {
-            if (tree.getId().equals(treeId)) {
-                return tree;
-            }
-        }
-        return null;
+        TreeHolder treeHolder = (TreeHolder) userTreeCombo.getSelectedItem();
+        return treeHolder.getTrees().get(0);
     }
 
     private class ImportTreeAction extends AbstractAction {

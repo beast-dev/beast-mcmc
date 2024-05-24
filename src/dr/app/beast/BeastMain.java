@@ -367,6 +367,7 @@ public class BeastMain {
                         new Arguments.IntegerOption("errors", "Specify maximum number of numerical errors before stopping"),
                         new Arguments.IntegerOption("threads", "The maximum number of computational threads to use (default auto)"),
                         new Arguments.Option("fail_threads", "Exit with error on uncaught exception in thread"),
+                        new Arguments.Option("ignore_versions", "Ignore mismatches between XML and BEAST versions"),
                         new Arguments.Option("java", "Use Java only, no native implementations"),
                         new Arguments.LongOption("tests", "The number of full evaluation tests to perform (default 1000)"),
                         new Arguments.RealOption("threshold", 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 0.1)"),
@@ -472,6 +473,10 @@ public class BeastMain {
         final boolean warnings = arguments.hasOption("warnings"); // if dev, then auto turn on, otherwise default to turn off
         if (warnings) {
             System.setProperty("show_warnings", Boolean.toString(true));
+        }
+
+        if (arguments.hasOption("ignore_versions")) {
+            System.setProperty("ignore.versions", Boolean.toString(true));
         }
 
         final boolean strictXML = arguments.hasOption("strict");

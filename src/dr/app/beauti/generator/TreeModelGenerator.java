@@ -50,13 +50,30 @@ public class TreeModelGenerator extends Generator {
         super(options, components);
     }
 
+    void writeTreeModel(PartitionTreeModel model, XMLWriter writer) {
+        writeDefaultTreeModel(model, writer);
+
+        //if ThorneyBEAST
+        //writeConstrainedTreeModel(model, writer);
+    }
+
     /**
-     * Write tree model XML block.
+     * Write constrained tree model XML block.
      *
      * @param model
      * @param writer the writer
      */
-    void writeTreeModel(PartitionTreeModel model, XMLWriter writer) {
+    void writeConstrainedTreeModel(PartitionTreeModel model, XMLWriter writer) {
+
+    }
+
+    /**
+     * Write default tree model XML block.
+     *
+     * @param model
+     * @param writer the writer
+     */
+    void writeDefaultTreeModel(PartitionTreeModel model, XMLWriter writer) {
 
         String prefix = model.getPrefix();
 

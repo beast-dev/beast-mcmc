@@ -26,13 +26,15 @@
 package dr.app.beauti.types;
 
 /**
+ * @author Andrew Rambaut
  * @author Alexei Drummond
  */
 public enum StartingTreeType {
 
     RANDOM("randomly generated"),
     UPGMA("UPGMA generated"),
-    USER("user-specified");
+    USER("user-specified"),
+    EMPIRICAL("empirical");
 
     StartingTreeType(String name) {
         this.name = name;

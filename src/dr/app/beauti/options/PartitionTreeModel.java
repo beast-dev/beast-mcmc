@@ -252,15 +252,7 @@ private final TreePartitionData treePartitionData;
     public void setUserStartingTree(Tree userStartingTree) {
         this.userStartingTree = userStartingTree;
     }
-
-    public boolean isNewick() {
-        return isNewick;
-    }
-
-    public void setNewick(boolean isNewick) {
-        this.isNewick = isNewick;
-    }
-
+    
     public void setTipCalibrations(boolean hasTipCalibrations) {
         this.hasTipCalibrations = hasTipCalibrations;
     }

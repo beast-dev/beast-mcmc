@@ -64,19 +64,20 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private JRadioButton randomTreeRadio = new JRadioButton("Random starting tree");
     private JRadioButton upgmaTreeRadio = new JRadioButton("UPGMA starting tree");
     private JRadioButton userTreeRadio = new JRadioButton("User-specified starting tree");
+    private JRadioButton empiricalTreeRadio = new JRadioButton("Empirical tree set");
     private ImportTreeAction importTreeAction = new ImportTreeAction();
     private JButton importTreeButton = new JButton(importTreeAction);
     private JLabel userTreeLabel = new JLabel("Select user-specified tree:");
     private JComboBox userTreeCombo = new JComboBox();
 
-    private JLabel treeFormatLabel = new JLabel("Export format for tree:");
-    private JComboBox treeFormatCombo = new JComboBox(new String[]{"Newick", "XML"});
-
     private JLabel userTreeInfo = new JLabel("<html>" +
-            "Import user-specified starting trees from <b>NEXUS</b><br>" +
-            "format  data files using the 'Import Data' menu option.<br>" +
+            "Use a tree imported using the 'Import Data' menu option.<br>" +
             "Starting trees that are not rooted and strictly bifurcating <br>" +
             " (binary) will be randomly resolved.</html>");
+
+    private JLabel empiricalTreeInfo = new JLabel("<html>" +
+            "Use a trees in a specified <b>NEXUS</b> or <b>Newick</b> format data file<br>" +
+            "as a set of empirical trees to sample over.</html>");
 
     private RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY, "Init root height");
 
@@ -100,24 +101,23 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         PanelUtils.setupComponent(randomTreeRadio);
         PanelUtils.setupComponent(upgmaTreeRadio);
         PanelUtils.setupComponent(userTreeRadio);
+        PanelUtils.setupComponent(empiricalTreeRadio);
 
         startingTreeGroup.add(randomTreeRadio);
         startingTreeGroup.add(upgmaTreeRadio);
         startingTreeGroup.add(userTreeRadio);
+        startingTreeGroup.add(empiricalTreeRadio);
 
         randomTreeRadio.setSelected(partitionTreeModel.getStartingTreeType() == StartingTreeType.RANDOM);
         upgmaTreeRadio.setSelected(partitionTreeModel.getStartingTreeType() == StartingTreeType.UPGMA);
         userTreeRadio.setSelected(partitionTreeModel.getStartingTreeType() == StartingTreeType.USER);
         userTreeRadio.setEnabled(options.userTrees.size() > 0);
+        empiricalTreeRadio.setSelected(partitionTreeModel.getStartingTreeType() == StartingTreeType.EMPIRICAL);
 
         boolean enabled = partitionTreeModel.getStartingTreeType() == StartingTreeType.USER;
         userTreeLabel.setEnabled(enabled);
         userTreeCombo.setEnabled(enabled);
-        treeFormatLabel.setEnabled(enabled);
-        treeFormatCombo.setEnabled(enabled);
         userTreeInfo.setEnabled(enabled);
-
-        PanelUtils.setupComponent(treeFormatCombo);
 
         ActionListener listener = new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
@@ -131,20 +131,12 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                 boolean enabled = partitionTreeModel.getStartingTreeType() == StartingTreeType.USER;
                 userTreeLabel.setEnabled(enabled);
                 userTreeCombo.setEnabled(enabled);
-                treeFormatLabel.setEnabled(enabled);
-                treeFormatCombo.setEnabled(enabled);
                 userTreeInfo.setEnabled(enabled);
             }
         };
         randomTreeRadio.addActionListener(listener);
         upgmaTreeRadio.addActionListener(listener);
         userTreeRadio.addActionListener(listener);
-
-        treeFormatCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent itemEvent) {
-                partitionTreeModel.setNewick(treeFormatCombo.getSelectedItem().equals("Newick"));
-            }
-        });
 
         PanelUtils.setupComponent(userTreeCombo);
 
@@ -209,9 +201,11 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                 }
             }
 
-            addComponents(treeFormatLabel, treeFormatCombo);
             addComponent(userTreeInfo);
             addComponent(importTreeButton);
+
+            addSpanningComponent(empiricalTreeRadio);
+            addComponent(empiricalTreeInfo);
 
         } else {
             JTextArea citationText = new JTextArea(1, 40);

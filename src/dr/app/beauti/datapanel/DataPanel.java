@@ -210,6 +210,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         controlPanel1.add(button);
 
         button = new JButton(createTreePartitionAction);
+        //button.setEnabled(false);
         controlPanel1.add(new JLabel("   "));
         PanelUtils.setupComponent(button);
         controlPanel1.add(button);
@@ -340,6 +341,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         linkTreesAction.setEnabled(canLink);
 
         viewPartitionAction.setEnabled(options.dataPartitions.size() > 0 && hasSelection);
+
     }
 
     public void setOptions(BeautiOptions options) {
@@ -350,9 +352,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         boolean taxaAvailable = options.taxonList != null && options.taxonList.getTaxonCount() > 0;
         boolean traitAvailable = options.traits != null && options.traits.size() > 0;
+        boolean treePartition = !options.userTrees.isEmpty();
 
-//        createTraitPartitionAction.setEnabled(traitAvailable);
+        //createTraitPartitionAction.setEnabled(traitAvailable);
         createTraitPartitionAction.setEnabled(true);
+        createTreePartitionAction.setEnabled(treePartition);
 
         dataTableModel.fireTableDataChanged();
     }
@@ -480,7 +484,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
             maxRow = minRow;
 
         }
-
 
         modelsChanged();
         dataTableModel.fireTableDataChanged();
@@ -1063,9 +1066,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             createFromTree(DataPanel.this);
 
             selectDataPanel();
-
         }
-
 
     }
 

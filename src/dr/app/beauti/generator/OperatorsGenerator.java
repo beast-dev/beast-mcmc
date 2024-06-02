@@ -516,8 +516,9 @@ public class OperatorsGenerator extends Generator {
     private void writeSkyGridGibbsOperator(Operator operator, String treePriorPrefix, XMLWriter writer) {
         writer.writeOpenTag(
                 GMRFSkyrideBlockUpdateOperatorParser.GRID_BLOCK_UPDATE_OPERATOR,
-                new Attribute[]{
-                        new Attribute.Default<Double>(GMRFSkyrideBlockUpdateOperatorParser.SCALE_FACTOR, operator.getTuning()),
+                new Attribute[] {
+// This is a Gibbs operator so shouldn't have a tuning parameter?
+//                        new Attribute.Default<Double>(GMRFSkyrideBlockUpdateOperatorParser.SCALE_FACTOR, operator.getTuning()),
                         getWeightAttribute(operator.getWeight())
                 }
         );

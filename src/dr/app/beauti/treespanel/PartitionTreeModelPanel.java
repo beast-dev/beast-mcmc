@@ -30,7 +30,6 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.TreeHolder;
 import dr.app.beauti.types.StartingTreeType;
-import dr.app.beauti.types.TreePriorParameterizationType;
 import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
@@ -42,10 +41,7 @@ import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.io.*;
 
 /**
@@ -67,8 +63,11 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private JRadioButton empiricalTreeRadio = new JRadioButton("Empirical tree set");
     private ImportTreeAction importTreeAction = new ImportTreeAction();
     private JButton importTreeButton = new JButton(importTreeAction);
-    private JLabel userTreeLabel = new JLabel("Select user-specified tree:");
+    private JLabel userTreeLabel = new JLabel("User-specified tree:");
     private JComboBox userTreeCombo = new JComboBox();
+
+    private JLabel empiricalTreeLabel = new JLabel("Trees filename:");
+    private JTextArea empiricalFilenameField = new JTextArea("empirical.trees");
 
     private JLabel userTreeInfo = new JLabel("<html>" +
             "Use a tree imported using the 'Import Data' menu option.<br>" +
@@ -76,8 +75,10 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             " (binary) will be randomly resolved.</html>");
 
     private JLabel empiricalTreeInfo = new JLabel("<html>" +
-            "Use a trees in a specified <b>NEXUS</b> or <b>Newick</b> format data file<br>" +
-            "as a set of empirical trees to sample over.</html>");
+            "Use trees from a specified <b>NEXUS</b> or <b>Newick</b> format data file<br>" +
+            "as a set of empirical trees to sample over. It should have the same taxon<br>" +
+            "names as the data partition. BEAST will look for the file in the current<br>" +
+            "working directory or the folder containing the XML file.</html>");
 
     private RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY, "Init root height");
 
@@ -119,6 +120,11 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         userTreeCombo.setEnabled(enabled);
         userTreeInfo.setEnabled(enabled);
 
+        enabled = partitionTreeModel.getStartingTreeType() == StartingTreeType.EMPIRICAL;
+        empiricalTreeInfo.setEnabled(enabled);
+        empiricalTreeLabel.setEnabled(enabled);
+        empiricalFilenameField.setEnabled(enabled);
+
         ActionListener listener = new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
                 if (randomTreeRadio.isSelected()) {
@@ -127,16 +133,24 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                     partitionTreeModel.setStartingTreeType(StartingTreeType.UPGMA);
                 } else if (userTreeRadio.isSelected()) {
                     partitionTreeModel.setStartingTreeType(StartingTreeType.USER);
+                } else  if (empiricalTreeRadio.isSelected()) {
+                    partitionTreeModel.setStartingTreeType(StartingTreeType.EMPIRICAL);
                 }
                 boolean enabled = partitionTreeModel.getStartingTreeType() == StartingTreeType.USER;
                 userTreeLabel.setEnabled(enabled);
                 userTreeCombo.setEnabled(enabled);
                 userTreeInfo.setEnabled(enabled);
+
+                enabled = partitionTreeModel.getStartingTreeType() == StartingTreeType.EMPIRICAL;
+                empiricalTreeInfo.setEnabled(enabled);
+                empiricalTreeLabel.setEnabled(enabled);
+                empiricalFilenameField.setEnabled(enabled);
             }
         };
         randomTreeRadio.addActionListener(listener);
         upgmaTreeRadio.addActionListener(listener);
         userTreeRadio.addActionListener(listener);
+        empiricalTreeRadio.addActionListener(listener);
 
         PanelUtils.setupComponent(userTreeCombo);
 
@@ -202,9 +216,14 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             }
 
             addComponent(userTreeInfo);
-            addComponent(importTreeButton);
+
+            // hiding this as the text says import trees from File menu
+//            addComponent(importTreeButton);
 
             addSpanningComponent(empiricalTreeRadio);
+            addComponents(empiricalTreeLabel, empiricalFilenameField);
+            empiricalFilenameField.setColumns(32);
+            empiricalFilenameField.setEditable(true);
             addComponent(empiricalTreeInfo);
 
         } else {
@@ -239,10 +258,17 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
         settingOptions = false;
 
+        String empiricalFilename = "empirical.trees";
+        if (partitionTreeModel.getEmpiricalTreesFilename() != null) {
+            empiricalFilename = partitionTreeModel.getEmpiricalTreesFilename();
+        }
+        empiricalFilenameField.setText(empiricalFilename);
     }
 
     public void getOptions(BeautiOptions options) {
         if (settingOptions) return;
+
+        partitionTreeModel.setEmpiricalTreesFilename(empiricalFilenameField.getText());
     }
 
     public boolean isBifurcatingTree(Tree tree, NodeRef node) {
@@ -270,9 +296,10 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         }
     }
 
-    private final boolean doImportTrees() {
+    private boolean doImportTrees() {
         File[] files = parent.selectImportFiles("Import Trees File...", false, new FileNameExtensionFilter[]{
-                new FileNameExtensionFilter("Nexus files or text files containing newick trees", "txt", "nex", "nexus", "nwk")});
+                new FileNameExtensionFilter("Nexus files or text files containing newick trees",
+                        "tree", "trees", "treefile", "txt", "nex", "nexus", "nwk", "newick")});
 
         BEAUTiImporter beautiImporter = new BEAUTiImporter(parent, options);
 

@@ -25,6 +25,7 @@
 
 package dr.app.beauti.options;
 
+import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.types.*;
 import dr.evolution.tree.Tree;
 
@@ -43,6 +44,8 @@ public class PartitionTreeModel extends PartitionOptions {
 
     private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
     private Tree userStartingTree = null;
+
+    private String empiricalTreesFilename = null;
 
     private boolean isNewick = true;
 
@@ -252,7 +255,19 @@ private final TreePartitionData treePartitionData;
     public void setUserStartingTree(Tree userStartingTree) {
         this.userStartingTree = userStartingTree;
     }
-    
+
+    public boolean isUsingEmpiricalTrees() {
+        return startingTreeType == StartingTreeType.EMPIRICAL;
+    }
+
+    public String getEmpiricalTreesFilename() {
+        return empiricalTreesFilename;
+    }
+
+    public void setEmpiricalTreesFilename(String empiricalTreesFilename) {
+        this.empiricalTreesFilename = empiricalTreesFilename;
+    }
+
     public void setTipCalibrations(boolean hasTipCalibrations) {
         this.hasTipCalibrations = hasTipCalibrations;
     }

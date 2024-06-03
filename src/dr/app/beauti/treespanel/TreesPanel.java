@@ -65,9 +65,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     private JTable treesTable = null;
     private TreesTableModel treesTableModel = null;
 
-    //    private GenerateTreeDialog generateTreeDialog = null;
     private boolean settingOptions = false;
-//    boolean hasAlignment = false;
 
     public JCheckBox linkTreePriorCheck = new JCheckBox("Link tree prior for all trees");
 

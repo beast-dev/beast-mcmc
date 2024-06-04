@@ -56,31 +56,29 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
     private final String NO_TREE = "no tree loaded";
 
-    private ButtonGroup startingTreeGroup = new ButtonGroup();
-    private JRadioButton randomTreeRadio = new JRadioButton("Random starting tree");
-    private JRadioButton upgmaTreeRadio = new JRadioButton("UPGMA starting tree");
-    private JRadioButton userTreeRadio = new JRadioButton("User-specified starting tree");
-    private JRadioButton empiricalTreeRadio = new JRadioButton("Empirical tree set");
-    private ImportTreeAction importTreeAction = new ImportTreeAction();
-    private JButton importTreeButton = new JButton(importTreeAction);
-    private JLabel userTreeLabel = new JLabel("User-specified tree:");
-    private JComboBox userTreeCombo = new JComboBox();
+    private final ButtonGroup startingTreeGroup = new ButtonGroup();
+    private final JRadioButton randomTreeRadio = new JRadioButton("Random starting tree");
+    private final JRadioButton upgmaTreeRadio = new JRadioButton("UPGMA starting tree");
+    private final JRadioButton userTreeRadio = new JRadioButton("User-specified starting tree");
+    private final JRadioButton empiricalTreeRadio = new JRadioButton("Empirical tree set");
+    private final ImportTreeAction importTreeAction = new ImportTreeAction();
+    private final JButton importTreeButton = new JButton(importTreeAction);
+    private final JLabel userTreeLabel = new JLabel("User-specified tree:");
+    private final JComboBox userTreeCombo = new JComboBox();
 
-    private JLabel empiricalTreeLabel = new JLabel("Trees filename:");
-    private JTextArea empiricalFilenameField = new JTextArea("empirical.trees");
+    private final JLabel empiricalTreeLabel = new JLabel("Trees filename:");
+    private final JTextArea empiricalFilenameField = new JTextArea("empirical.trees");
 
-    private JLabel userTreeInfo = new JLabel("<html>" +
+    private final JLabel userTreeInfo = new JLabel("<html>" +
             "Use a tree imported using the 'Import Data' menu option.<br>" +
-            "Starting trees that are not rooted and strictly bifurcating <br>" +
-            " (binary) will be randomly resolved.</html>");
+            "Starting trees that are not rooted and strictly bifurcating (binary) will be randomly resolved.</html>");
 
-    private JLabel empiricalTreeInfo = new JLabel("<html>" +
-            "Use trees from a specified <b>NEXUS</b> or <b>Newick</b> format data file<br>" +
-            "as a set of empirical trees to sample over. It should have the same taxon<br>" +
-            "names as the data partition. BEAST will look for the file in the current<br>" +
-            "working directory or the folder containing the XML file.</html>");
+    private final JLabel empiricalTreeInfo = new JLabel("<html>" +
+            "Use trees from a specified <b>NEXUS</b> or <b>Newick</b> format data file as a set of empirical trees<br>" +
+            "to sample over. It should have the same taxon names as the data partition. <br>" +
+            "BEAST will look for the file in the current working directory or the folder containing the XML file.</html>");
 
-    private RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY, "Init root height");
+    private final RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY, "Init root height");
 
     private BeautiOptions options = null;
     private final BeautiFrame parent;
@@ -112,7 +110,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         randomTreeRadio.setSelected(partitionTreeModel.getStartingTreeType() == StartingTreeType.RANDOM);
         upgmaTreeRadio.setSelected(partitionTreeModel.getStartingTreeType() == StartingTreeType.UPGMA);
         userTreeRadio.setSelected(partitionTreeModel.getStartingTreeType() == StartingTreeType.USER);
-        userTreeRadio.setEnabled(options.userTrees.size() > 0);
+        userTreeRadio.setEnabled(!options.userTrees.isEmpty());
         empiricalTreeRadio.setSelected(partitionTreeModel.getStartingTreeType() == StartingTreeType.EMPIRICAL);
 
         boolean enabled = partitionTreeModel.getStartingTreeType() == StartingTreeType.USER;
@@ -124,28 +122,34 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         empiricalTreeInfo.setEnabled(enabled);
         empiricalTreeLabel.setEnabled(enabled);
         empiricalFilenameField.setEnabled(enabled);
+        if (partitionTreeModel.getEmpiricalTreesFilename() != null &&
+                !partitionTreeModel.getEmpiricalTreesFilename().isEmpty()) {
+            empiricalFilenameField.setText(partitionTreeModel.getEmpiricalTreesFilename());
+        } else {
+            partitionTreeModel.setEmpiricalTreesFilename(empiricalFilenameField.getText().trim());
+        }
 
-        ActionListener listener = new ActionListener() {
-            public void actionPerformed(ActionEvent actionEvent) {
-                if (randomTreeRadio.isSelected()) {
-                    partitionTreeModel.setStartingTreeType(StartingTreeType.RANDOM);
-                } else if (upgmaTreeRadio.isSelected()) {
-                    partitionTreeModel.setStartingTreeType(StartingTreeType.UPGMA);
-                } else if (userTreeRadio.isSelected()) {
-                    partitionTreeModel.setStartingTreeType(StartingTreeType.USER);
-                } else  if (empiricalTreeRadio.isSelected()) {
-                    partitionTreeModel.setStartingTreeType(StartingTreeType.EMPIRICAL);
-                }
-                boolean enabled = partitionTreeModel.getStartingTreeType() == StartingTreeType.USER;
-                userTreeLabel.setEnabled(enabled);
-                userTreeCombo.setEnabled(enabled);
-                userTreeInfo.setEnabled(enabled);
-
-                enabled = partitionTreeModel.getStartingTreeType() == StartingTreeType.EMPIRICAL;
-                empiricalTreeInfo.setEnabled(enabled);
-                empiricalTreeLabel.setEnabled(enabled);
-                empiricalFilenameField.setEnabled(enabled);
+        ActionListener listener = actionEvent -> {
+            if (randomTreeRadio.isSelected()) {
+                partitionTreeModel.setStartingTreeType(StartingTreeType.RANDOM);
+            } else if (upgmaTreeRadio.isSelected()) {
+                partitionTreeModel.setStartingTreeType(StartingTreeType.UPGMA);
+            } else if (userTreeRadio.isSelected()) {
+                partitionTreeModel.setStartingTreeType(StartingTreeType.USER);
+            } else  if (empiricalTreeRadio.isSelected()) {
+                partitionTreeModel.setStartingTreeType(StartingTreeType.EMPIRICAL);
             }
+            boolean enabled1 = partitionTreeModel.getStartingTreeType() == StartingTreeType.USER;
+            userTreeLabel.setEnabled(enabled1);
+            userTreeCombo.setEnabled(enabled1);
+            userTreeInfo.setEnabled(enabled1);
+
+            enabled1 = partitionTreeModel.getStartingTreeType() == StartingTreeType.EMPIRICAL;
+            empiricalTreeInfo.setEnabled(enabled1);
+            empiricalTreeLabel.setEnabled(enabled1);
+            empiricalFilenameField.setEnabled(enabled1);
+
+            parent.setDirty();
         };
         randomTreeRadio.addActionListener(listener);
         upgmaTreeRadio.addActionListener(listener);
@@ -154,11 +158,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
         PanelUtils.setupComponent(userTreeCombo);
 
-        userTreeCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                setUserSpecifiedStartingTree();
-            }
-        });
+        userTreeCombo.addItemListener(ev -> setUserSpecifiedStartingTree());
 
         setupPanel();
         setOptions();
@@ -201,7 +201,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
             addComponents(userTreeLabel, userTreeCombo);
             userTreeCombo.removeAllItems();
-            if (options.userTrees.size() < 1) {
+            if (options.userTrees.isEmpty()) {
                 userTreeCombo.addItem(NO_TREE);
             } else {
                 Object selectedItem = userTreeCombo.getSelectedItem();
@@ -234,7 +234,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                 }
 
                 public void keyReleased(KeyEvent e) {
-                    partitionTreeModel.setEmpiricalTreesFilename(empiricalFilenameField.getText());
+                    partitionTreeModel.setEmpiricalTreesFilename(empiricalFilenameField.getText().trim());
                     parent.setDirty();
                 }
             });
@@ -267,7 +267,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         settingOptions = true;
         initRootHeightField.setValue(partitionTreeModel.getInitialRootHeight());
 
-        userTreeRadio.setEnabled(options.userTrees.size() > 0);
+        userTreeRadio.setEnabled(!options.userTrees.isEmpty());
 
         settingOptions = false;
 

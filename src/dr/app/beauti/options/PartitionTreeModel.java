@@ -52,7 +52,7 @@ public class PartitionTreeModel extends PartitionOptions {
     private boolean hasTipCalibrations = false;
     private boolean hasNodeCalibrations = false;
 
-private final TreePartitionData treePartitionData;
+    private final TreePartitionData treePartitionData;
 
     public PartitionTreeModel(BeautiOptions options, String name) {
         super(options, name);
@@ -65,7 +65,7 @@ private final TreePartitionData treePartitionData;
     public PartitionTreeModel(BeautiOptions options, TreePartitionData treePartitionData) {
         super(options, treePartitionData.getName());
 
-       this.treePartitionData = treePartitionData;
+        this.treePartitionData = treePartitionData;
         initModelParametersAndOpererators();
     }
 
@@ -168,72 +168,71 @@ private final TreePartitionData treePartitionData;
     public List<Operator> selectOperators(List<Operator> operators) {
 //        setAvgRootAndRate();
 
-        if (treePartitionData == null) {
-            Operator subtreeSlideOp = getOperator("subtreeSlide");
-            if (!subtreeSlideOp.isTuningEdited()) {
-                double tuning = 1.0;
-                if (!Double.isNaN(getInitialRootHeight()) && !Double.isInfinite(getInitialRootHeight())) {
-                    tuning = getInitialRootHeight() / 10.0;
-                }
-                subtreeSlideOp.setTuning(tuning);
-            }
-
-            operators.add(subtreeSlideOp);
-            operators.add(getOperator("narrowExchange"));
-            operators.add(getOperator("wideExchange"));
-            operators.add(getOperator("wilsonBalding"));
-
-            operators.add(getOperator("treeModel.rootHeight"));
-            operators.add(getOperator("uniformHeights"));
-
-            operators.add(getOperator("subtreeLeap"));
-            operators.add(getOperator("FHSPR"));
-
-            if (options.operatorSetType != OperatorSetType.CUSTOM) {
-                // do nothing
-                boolean defaultInUse = false;
-                boolean branchesInUse = false;
-                boolean newTreeOperatorsInUse = false;
-                boolean adaptiveMultivariateInUse = false;
-
-                // if not a fixed tree then sample tree space
-                if (options.operatorSetType != OperatorSetType.FIXED_TREE) {
-                    if (options.operatorSetType == OperatorSetType.DEFAULT) {
-                        newTreeOperatorsInUse = true;    // default is now the new tree operators
-                    } else if (options.operatorSetType == OperatorSetType.CLASSIC) {
-                        defaultInUse = true;
-                        branchesInUse = true;
-                    } else if (options.operatorSetType == OperatorSetType.FIXED_TREE_TOPOLOGY) {
-                        branchesInUse = true;
-                    } else if (options.operatorSetType == OperatorSetType.ADAPTIVE_MULTIVARIATE) {
-                        newTreeOperatorsInUse = true;
-                        adaptiveMultivariateInUse = true;
-                    } else {
-                        throw new IllegalArgumentException("Unknown operator set type");
-                    }
-                }
-
-                getOperator("subtreeSlide").setUsed(defaultInUse);
-                getOperator("narrowExchange").setUsed(defaultInUse);
-                getOperator("wideExchange").setUsed(defaultInUse);
-                getOperator("wilsonBalding").setUsed(defaultInUse);
-
-                getOperator("treeModel.rootHeight").setUsed(branchesInUse);
-                getOperator("treeModel.allInternalNodeHeights").setUsed(branchesInUse);
-                getOperator("uniformHeights").setUsed(branchesInUse);
-
-                getOperator("subtreeLeap").setUsed(newTreeOperatorsInUse);
-                getOperator("FHSPR").setUsed(newTreeOperatorsInUse);
-            }
-        } else {
-            getOperator("subtreeLeap").setUsed(true);
-            getOperator("FHSPR").setUsed(true);
-        }
-
         if (isUsingEmpiricalTrees()) {
             operators.add(getOperator("empiricalTreeSwap"));
-        }
+        } else {
+            if (treePartitionData == null) {
+                Operator subtreeSlideOp = getOperator("subtreeSlide");
+                if (!subtreeSlideOp.isTuningEdited()) {
+                    double tuning = 1.0;
+                    if (!Double.isNaN(getInitialRootHeight()) && !Double.isInfinite(getInitialRootHeight())) {
+                        tuning = getInitialRootHeight() / 10.0;
+                    }
+                    subtreeSlideOp.setTuning(tuning);
+                }
 
+                operators.add(subtreeSlideOp);
+                operators.add(getOperator("narrowExchange"));
+                operators.add(getOperator("wideExchange"));
+                operators.add(getOperator("wilsonBalding"));
+
+                operators.add(getOperator("treeModel.rootHeight"));
+                operators.add(getOperator("uniformHeights"));
+
+                operators.add(getOperator("subtreeLeap"));
+                operators.add(getOperator("FHSPR"));
+
+                if (options.operatorSetType != OperatorSetType.CUSTOM) {
+                    // do nothing
+                    boolean defaultInUse = false;
+                    boolean branchesInUse = false;
+                    boolean newTreeOperatorsInUse = false;
+                    boolean adaptiveMultivariateInUse = false;
+
+                    // if not a fixed tree then sample tree space
+                    if (options.operatorSetType != OperatorSetType.FIXED_TREE) {
+                        if (options.operatorSetType == OperatorSetType.DEFAULT) {
+                            newTreeOperatorsInUse = true;    // default is now the new tree operators
+                        } else if (options.operatorSetType == OperatorSetType.CLASSIC) {
+                            defaultInUse = true;
+                            branchesInUse = true;
+                        } else if (options.operatorSetType == OperatorSetType.FIXED_TREE_TOPOLOGY) {
+                            branchesInUse = true;
+                        } else if (options.operatorSetType == OperatorSetType.ADAPTIVE_MULTIVARIATE) {
+                            newTreeOperatorsInUse = true;
+                            adaptiveMultivariateInUse = true;
+                        } else {
+                            throw new IllegalArgumentException("Unknown operator set type");
+                        }
+                    }
+
+                    getOperator("subtreeSlide").setUsed(defaultInUse);
+                    getOperator("narrowExchange").setUsed(defaultInUse);
+                    getOperator("wideExchange").setUsed(defaultInUse);
+                    getOperator("wilsonBalding").setUsed(defaultInUse);
+
+                    getOperator("treeModel.rootHeight").setUsed(branchesInUse);
+                    getOperator("treeModel.allInternalNodeHeights").setUsed(branchesInUse);
+                    getOperator("uniformHeights").setUsed(branchesInUse);
+
+                    getOperator("subtreeLeap").setUsed(newTreeOperatorsInUse);
+                    getOperator("FHSPR").setUsed(newTreeOperatorsInUse);
+                }
+            } else {
+                getOperator("subtreeLeap").setUsed(true);
+                getOperator("FHSPR").setUsed(true);
+            }
+        }
         return operators;
     }
 

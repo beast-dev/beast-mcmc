@@ -285,36 +285,13 @@ public class PartitionClockModel extends PartitionOptions {
                 getParameter(ClockType.ME_CLOCK_LOCATION), OperatorType.UP_DOWN, demoTuning, rateWeights);
     }
 
-    // From PartitionClockModelTreeModelLink
-//    public List<Parameter> selectParameters(List<Parameter> params) {
-//        setAvgRootAndRate();
-//        getParameter("branchRates.categories");
-//        getParameter("treeModel.rootRate");
-//        getParameter("treeModel.nodeRates");
-//        getParameter("treeModel.allRates");
-//
-//        if (options.hasData()) {
-//            // if not fixed then do mutation rate move and up/down move
-//            boolean fixed = !model.isEstimatedRate();
-//
-//            Parameter rateParam;
-//
-//            switch (model.getClockType()) {
-//                case AUTOCORRELATED:
-//                    rateParam = getParameter("treeModel.rootRate");
-//                    rateParam.isFixed = fixed;
-//                    if (!fixed) params.add(rateParam);
-//
-//                    params.add(getParameter("branchRates.var"));
-//                    break;
-//            }
-//        }
-//        return params;
-//    }
-
     @Override
     public List<Parameter> selectParameters(List<Parameter> params) {
-//        setAvgRootAndRate();
+        if (getPartitionTreeModel().isUsingEmpiricalTrees()) {
+            // empirical trees has no clock model
+            return params;
+        }
+
         double rate = 1.0;
 
         if (options.hasData()) {
@@ -560,6 +537,11 @@ public class PartitionClockModel extends PartitionOptions {
 
     @Override
     public List<Operator> selectOperators(List<Operator> operators) {
+        if (getPartitionTreeModel().isUsingEmpiricalTrees()) {
+            // empirical trees has no clock model
+            return operators;
+        }
+
         List<Operator> ops = new ArrayList<Operator>();
 
         if (options.hasData()) {

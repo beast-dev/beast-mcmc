@@ -42,8 +42,8 @@
     <property name="main_class_BEAST" value="dr.app.beast.BeastMain"/>
     <property name="main_class_BEAUTI" value="dr.app.beauti.BeautiApp"/>
     <property name="main_class_TRACER" value="dr.app.tracer.application.TracerApp"/>
-    <property name="main_class_Annotator" value="dr.app.tools.TreeAnnotator"/>
-    <property name="main_class_LogCombiner" value="dr.app.tools.LogCombiner"/>
+    <property name="main_class_Annotator" value="dr.app.tools.treeannotator.TreeAnnotator"/>
+    <property name="main_class_LogCombiner" value="dr.app.tools.logcombiner.LogCombiner"/>
     <property name="report" value="${build}/junitreport"/>
 
     <path id="classpath">
@@ -785,7 +785,7 @@
 
         <jarbundler dir="${Mac_package_dir}"
                     name="${LogCombiner_name} v${version}"
-                    mainclass="dr.app.tools.LogCombiner"
+                    mainclass="dr.app.tools.logcombiner.LogCombiner"
                     stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/utility.icns"
@@ -814,7 +814,7 @@
 
         <jarbundler dir="${Mac_package_dir}"
                     name="${TreeAnnotator_name} v${version}"
-                    mainclass="dr.app.tools.TreeAnnotator"
+                    mainclass="dr.app.tools.treeannotator.TreeAnnotator"
                     stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/utility.icns"

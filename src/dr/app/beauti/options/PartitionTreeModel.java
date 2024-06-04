@@ -135,6 +135,9 @@ private final TreePartitionData treePartitionData;
             createOperator("FHSPR", "Tree", "Performs the fixed-height subtree prune/regraft of the tree", "tree",
                     OperatorType.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT, 1.0, weight);
         }
+
+        createOperator("empiricalTreeSwap", "Tree", "Sets the current tree from the empirical set", "tree",
+                OperatorType.EMPIRICAL_TREE_SWAP, -1.0, treeWeights);
     }
 
     @Override
@@ -226,6 +229,11 @@ private final TreePartitionData treePartitionData;
             getOperator("subtreeLeap").setUsed(true);
             getOperator("FHSPR").setUsed(true);
         }
+
+        if (isUsingEmpiricalTrees()) {
+            operators.add(getOperator("empiricalTreeSwap"));
+        }
+
         return operators;
     }
 

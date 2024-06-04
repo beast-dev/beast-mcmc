@@ -51,7 +51,6 @@ public class PartitionTreePrior extends PartitionOptions {
     private TreePriorParameterizationType skyrideSmoothing = TreePriorParameterizationType.TIME_AWARE_SKYRIDE;
     private int skyGridCount = 50;
     private double skyGridInterval = Double.NaN;
-    private VariableDemographicModel.Type extendedSkylineModel = VariableDemographicModel.Type.LINEAR;
     private double birthDeathSamplingProportion = 1.0;
     private PopulationSizeModelType populationSizeModel = PopulationSizeModelType.CONTINUOUS_CONSTANT;
     private CalibrationPoints.CorrectionType calibCorrectionType = CalibrationPoints.CorrectionType.EXACT;
@@ -81,7 +80,6 @@ public class PartitionTreePrior extends PartitionOptions {
         this.skyGridCount = source.skyGridCount;
         this.skyGridInterval = source.skyGridInterval;
 
-        this.extendedSkylineModel = source.extendedSkylineModel;
         this.birthDeathSamplingProportion = source.birthDeathSamplingProportion;
         this.populationSizeModel = source.populationSizeModel;
         this.calibCorrectionType = source.calibCorrectionType;
@@ -548,14 +546,6 @@ public class PartitionTreePrior extends PartitionOptions {
 
     public void setFixedTree(boolean fixedTree) {
         this.fixedTree = fixedTree;
-    }
-
-    public void setExtendedSkylineModel(VariableDemographicModel.Type extendedSkylineModel) {
-        this.extendedSkylineModel = extendedSkylineModel;
-    }
-
-    public VariableDemographicModel.Type getExtendedSkylineModel() {
-        return extendedSkylineModel;
     }
 
     public PopulationSizeModelType getPopulationSizeModel() {

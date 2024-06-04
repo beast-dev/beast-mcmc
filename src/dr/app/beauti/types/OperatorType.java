@@ -63,6 +63,7 @@ public enum OperatorType {
     ADAPTIVE_MULTIVARIATE("adaptiveMultivariate"),
     NARROW_EXCHANGE("narrowExchange"),
     WIDE_EXCHANGE("wideExchange"),
+    EMPIRICAL_TREE_SWAP("empiricalSwap"),
     GMRF_GIBBS_OPERATOR("gmrfGibbsOperator"),
     SKY_GRID_GIBBS_OPERATOR("gmrfGibbsOperator"),
     SKY_GRID_HMC_OPERATOR("gmrfHMCOperator"),

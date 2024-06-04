@@ -60,13 +60,6 @@ public class PartitionTreePriorPanel extends OptionsPanel {
     private JComboBox parameterizationCombo = new JComboBox(EnumSet.range(TreePriorParameterizationType.GROWTH_RATE,
             TreePriorParameterizationType.DOUBLING_TIME).toArray());
     //    private JComboBox parameterizationCombo1 = new JComboBox(EnumSet.of(TreePriorParameterizationType.DOUBLING_TIME).toArray());
-    private JComboBox bayesianSkylineCombo = new JComboBox(EnumSet.range(TreePriorParameterizationType.CONSTANT_SKYLINE,
-            TreePriorParameterizationType.LINEAR_SKYLINE).toArray());
-    private WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
-
-    private JComboBox extendedBayesianSkylineCombo = new JComboBox(
-            new VariableDemographicModel.Type[]{VariableDemographicModel.Type.LINEAR, VariableDemographicModel.Type.STEPWISE});
-
     private JComboBox gmrfBayesianSkyrideCombo = new JComboBox(EnumSet.range(TreePriorParameterizationType.UNIFORM_SKYRIDE,
             TreePriorParameterizationType.TIME_AWARE_SKYRIDE).toArray());
 
@@ -124,26 +117,6 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             }
         });
 
-//        PanelUtils.setupComponent(parameterizationCombo1);
-//        parameterizationCombo1.addItemListener(new ItemListener() {
-//            public void itemStateChanged(ItemEvent ev) {
-//            	partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo1.getSelectedItem());
-//            }
-//        });
-
-        PanelUtils.setupComponent(groupCountField);
-        groupCountField.setToolTipText("<html>" +
-                "Set the number of groups to be used in the Skyline model<br>" +
-                "It will affect the resolution of the reconstruction. This<br>" +
-                "should be set at fewer than the number of nodes in the<br>" +
-                "tree.<html>");
-        groupCountField.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent ev) {
-                // move to here?
-                // it will set value for each typing
-            }
-        });
-
         PanelUtils.setupComponent(skyGridInterval);
         skyGridInterval.setToolTipText("<html>" +
                 "This sets the time interval over which the change-points<br>" +
@@ -152,23 +125,6 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 "age of the tree.<html>");
         skyGridInterval.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent ev) {
-            }
-        });
-
-        PanelUtils.setupComponent(bayesianSkylineCombo);
-        bayesianSkylineCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                partitionTreePrior.setSkylineModel((TreePriorParameterizationType) bayesianSkylineCombo.getSelectedItem());
-                parent.fireTreePriorsChanged();
-            }
-        });
-
-        PanelUtils.setupComponent(extendedBayesianSkylineCombo);
-        extendedBayesianSkylineCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                partitionTreePrior.setExtendedSkylineModel(((VariableDemographicModel.Type)
-                        extendedBayesianSkylineCombo.getSelectedItem()));
-                parent.fireTreePriorsChanged();
             }
         });
 
@@ -206,16 +162,6 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                                                 }
                                             }
         );
-
-//        PanelUtils.setupComponent(calibrationCorrectionCombo);
-//        calibrationCorrectionCombo.addItemListener(new ItemListener() {
-//            public void itemStateChanged(ItemEvent ev) {
-//                partitionTreePrior.setCalibCorrectionType((CalibrationPoints.CorrectionType) calibrationCorrectionCombo.getSelectedItem());
-//                parent.fireTreePriorsChanged();
-//            }
-//        }
-//        );
-//	        samplingProportionField.addKeyListener(keyListener);
 
         setOptions();
         setupPanel();
@@ -370,13 +316,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         treePriorCombo.setSelectedItem(partitionTreePrior.getNodeHeightPrior());
 
-        groupCountField.setValue(partitionTreePrior.getSkylineGroupCount());
-        //samplingProportionField.setValue(partitionTreePrior.birthDeathSamplingProportion);
 
         parameterizationCombo.setSelectedItem(partitionTreePrior.getParameterization());
-        bayesianSkylineCombo.setSelectedItem(partitionTreePrior.getSkylineModel());
-
-        extendedBayesianSkylineCombo.setSelectedItem(partitionTreePrior.getExtendedSkylineModel());
 
         gmrfBayesianSkyrideCombo.setSelectedItem(partitionTreePrior.getSkyrideSmoothing());
 

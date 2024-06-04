@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.tools;
+package dr.app.tools.treeannotator;
 
 import dr.app.gui.components.RealNumberField;
 import dr.app.gui.FileDrop;

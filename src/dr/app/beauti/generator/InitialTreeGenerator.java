@@ -134,6 +134,10 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_SIMULATOR);
                 }
                 break;
+            case EMPIRICAL:
+                // nothing to do here - empiricalTreeModel loads its own starting tree
+                break;
+
             default:
                 throw new IllegalArgumentException("Unknown StartingTreeType");
 

@@ -35,6 +35,8 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.branchratemodel.*;
 import dr.evomodelxml.tree.TreeLengthStatisticParser;
+import dr.inference.model.Statistic;
+import dr.inference.model.StatisticParser;
 import dr.inferencexml.loggers.CheckpointLoggerParser;
 import dr.oldevomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
@@ -214,6 +216,9 @@ public class LogGenerator extends Generator {
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             writer.writeIDref(TreeLengthStatisticParser.TREE_LENGTH_STATISTIC, model.getPrefix() + "treeLength");
+            if (model.isUsingEmpiricalTrees()) {
+                writer.writeIDref(StatisticParser.STATISTIC, model.getPrefix() + DefaultTreeModel.TREE_MODEL + ".currentTree");
+            }
         }
 
         tmrcaStatisticsGenerator.writeTMRCAStatisticReferences(writer);

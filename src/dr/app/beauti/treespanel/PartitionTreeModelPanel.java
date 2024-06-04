@@ -226,6 +226,19 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             empiricalFilenameField.setEditable(true);
             addComponent(empiricalTreeInfo);
 
+            empiricalFilenameField.addKeyListener(new java.awt.event.KeyListener() {
+                public void keyTyped(KeyEvent e) {
+                }
+
+                public void keyPressed(KeyEvent e) {
+                }
+
+                public void keyReleased(KeyEvent e) {
+                    partitionTreeModel.setEmpiricalTreesFilename(empiricalFilenameField.getText());
+                    parent.setDirty();
+                }
+            });
+
         } else {
             JTextArea citationText = new JTextArea(1, 40);
             citationText.setLineWrap(true);
@@ -267,8 +280,6 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
     public void getOptions(BeautiOptions options) {
         if (settingOptions) return;
-
-        partitionTreeModel.setEmpiricalTreesFilename(empiricalFilenameField.getText());
     }
 
     public boolean isBifurcatingTree(Tree tree, NodeRef node) {

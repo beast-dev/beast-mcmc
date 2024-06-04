@@ -30,12 +30,17 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
+import dr.evomodelxml.tree.EmpiricalTreeDistributionModelParser;
 import dr.evomodelxml.tree.TMRCAStatisticParser;
 import dr.evomodelxml.tree.TreeLengthStatisticParser;
 import dr.evomodelxml.tree.TreeModelParser;
+import dr.evoxml.TaxaParser;
 import dr.evoxml.UPGMATreeParser;
 import dr.inference.model.ParameterParser;
+import dr.inference.model.Statistic;
+import dr.inference.model.StatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -51,7 +56,11 @@ public class TreeModelGenerator extends Generator {
     }
 
     void writeTreeModel(PartitionTreeModel model, XMLWriter writer) {
-        writeDefaultTreeModel(model, writer);
+        if (model.isUsingEmpiricalTrees()) {
+            writeEmpiricalTreeModel(model, writer);
+        } else {
+            writeDefaultTreeModel(model, writer);
+        }
 
         //if ThorneyBEAST
         //writeConstrainedTreeModel(model, writer);
@@ -66,6 +75,45 @@ public class TreeModelGenerator extends Generator {
     void writeConstrainedTreeModel(PartitionTreeModel model, XMLWriter writer) {
 
     }
+
+    /**
+     * Write an empirical tree model XML block.
+     *
+     * @param model
+     * @param writer the writer
+            <empiricalTreeDistributionModel id="treeModel" fileName="subset1.trees">
+            <taxa idref="subset1"/>
+            </empiricalTreeDistributionModel>
+            <statistic id="treeModel.currentTree" name="Current Tree">
+            <empiricalTreeDistributionModel idref="treeModel"/>
+            </statistic>
+     */
+    void writeEmpiricalTreeModel(PartitionTreeModel model, XMLWriter writer) {
+        String prefix = model.getPrefix();
+
+        final String treeModelName = prefix + DefaultTreeModel.TREE_MODEL; // treemodel.treeModel or treeModel
+
+        writer.writeComment("An empirical distribution of trees");
+        writer.writeTag(EmpiricalTreeDistributionModel.EMPIRICAL_TREE_DISTRIBUTION_MODEL,
+                new Attribute[] {
+                        new Attribute.Default<>(XMLParser.ID, treeModelName),
+                        new Attribute.Default<>(EmpiricalTreeDistributionModelParser.FILE_NAME, model.getEmpiricalTreesFilename())
+                }, false);
+
+        writer.writeIDref(TaxaParser.TAXA, "taxa"); // @todo - get the actual taxon set for the partition
+        writer.writeCloseTag(EmpiricalTreeDistributionModel.EMPIRICAL_TREE_DISTRIBUTION_MODEL);
+
+        writer.writeComment("Statistic to give the current empirical tree");
+        writer.writeTag(StatisticParser.STATISTIC,
+                new Attribute[]{
+                        new Attribute.Default<>(XMLParser.ID, treeModelName + ".currentTree"),
+                        new Attribute.Default<>(StatisticParser.NAME,  "Current Tree"),
+                }, false);
+        writer.writeIDref(EmpiricalTreeDistributionModel.EMPIRICAL_TREE_DISTRIBUTION_MODEL, treeModelName);
+        writer.writeCloseTag(StatisticParser.STATISTIC);
+
+    }
+
 
     /**
      * Write default tree model XML block.

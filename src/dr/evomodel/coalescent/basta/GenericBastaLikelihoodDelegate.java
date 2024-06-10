@@ -138,19 +138,26 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     }
 
     @Override
-    protected void computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations) {
-        computeInnerTransitionProbabilityOperations(matrixOperations, 0, matrixOperations.size(), temp);
+    protected void computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations,
+                                                          Mode mode) {
+        computeInnerTransitionProbabilityOperations(matrixOperations, 0, matrixOperations.size(), mode, temp);
     }
 
     protected void computeInnerTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations,
-                                                               int start, int end, double[] temp) {
+                                                               int start, int end, Mode mode, double[] temp) {
         for (int i = start; i < end; ++i) {
             TransitionMatrixOperation operation = matrixOperations.get(i);
-            computeTransitionProbabilities(
-                    operation.time,
-                    matrices, operation.outputBuffer * stateCount * stateCount,
-                    decompositions[operation.decompositionBuffer],
-                    stateCount, temp);
+
+            if (mode == Mode.LIKELIHOOD) {
+                computeTransitionProbabilities(
+                        operation.time,
+                        matrices, operation.outputBuffer * stateCount * stateCount,
+                        decompositions[operation.decompositionBuffer],
+                        stateCount, temp);
+            } else if (mode == Mode.GRADIENT) {
+                computeTransitionProbabilitiesGrad(operation.time,
+                        operation.outputBuffer * stateCount * stateCount);
+            }
 
             if (PRINT_COMMANDS) {
                 System.err.println(operation + " " +
@@ -361,18 +368,18 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     }
 
 
-    @Override
-    protected void computeTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations) {
-        computeInnerTransitionProbabilityOperationsGrad(matrixOperations, 0, matrixOperations.size());
-    }
-
-    protected void computeInnerTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations,
-                                                               int start, int end) {
-        for (int i = start; i < end; ++i) {
-            TransitionMatrixOperation operation = matrixOperations.get(i);
-            computeTransitionProbabilitiesGrad(operation.time, operation.outputBuffer * stateCount * stateCount);
-        }
-    }
+//    @Override
+//    protected void computeTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations) {
+//        computeInnerTransitionProbabilityOperationsGrad(matrixOperations, 0, matrixOperations.size());
+//    }
+//
+//    protected void computeInnerTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations,
+//                                                               int start, int end) {
+//        for (int i = start; i < end; ++i) {
+//            TransitionMatrixOperation operation = matrixOperations.get(i);
+//            computeTransitionProbabilitiesGrad(operation.time, operation.outputBuffer * stateCount * stateCount);
+//        }
+//    }
 
     private void computeTransitionProbabilitiesGrad(double distance, int matrixOffset) {
         for (int a = 0; a < stateCount; a++) {

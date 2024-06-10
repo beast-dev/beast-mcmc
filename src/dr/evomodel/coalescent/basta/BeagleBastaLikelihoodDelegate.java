@@ -101,7 +101,8 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
 
 
     @Override
-    protected void computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations) {
+    protected void computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations,
+                                                          Mode mode) {
 
         int[] transitionMatrixIndices = new int[matrixOperations.size()]; // TODO instantiate once
         double[] branchLengths = new double[matrixOperations.size()]; // TODO instantiate once
@@ -110,8 +111,13 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
 
         int eigenIndex = eigenBufferHelper.getOffsetIndex(0);
 
-        beagle.updateTransitionMatrices(eigenIndex, transitionMatrixIndices, null, null,
-                branchLengths, matrixOperations.size());
+        if (mode == Mode.LIKELIHOOD) {
+            beagle.updateTransitionMatrices(eigenIndex, transitionMatrixIndices, null, null,
+                    branchLengths, matrixOperations.size());
+        } else if (mode == Mode.GRADIENT) {
+            beagle.updateTransitionMatricesGrad(transitionMatrixIndices,
+                    branchLengths, matrixOperations.size());
+        }
 
         if (PRINT_COMMANDS) {
             double[] matrix = new double[stateCount * stateCount];
@@ -159,17 +165,17 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
 //                intervals, intervalStarts.size(),
 //                populationSizeIndex, COALESCENT_PROBABILITY_INDEX);
 //    }
-
-    @Override
-    protected void computeTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations) {
-        int[] transitionMatrixIndices = new int[matrixOperations.size()]; // TODO instantiate once
-        double[] branchLengths = new double[matrixOperations.size()]; // TODO instantiate once
-
-        vectorizeTransitionMatrixOperations(matrixOperations, transitionMatrixIndices, branchLengths);
-
-        beagle.updateTransitionMatricesGrad(transitionMatrixIndices,
-                branchLengths, matrixOperations.size());
-    }
+//
+//    @Override
+//    protected void computeTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations) {
+//        int[] transitionMatrixIndices = new int[matrixOperations.size()]; // TODO instantiate once
+//        double[] branchLengths = new double[matrixOperations.size()]; // TODO instantiate once
+//
+//        vectorizeTransitionMatrixOperations(matrixOperations, transitionMatrixIndices, branchLengths);
+//
+//        beagle.updateTransitionMatricesGrad(transitionMatrixIndices,
+//                branchLengths, matrixOperations.size());
+//    }
 
     @Override
     protected double[][] computeCoalescentIntervalReductionGrad(List<Integer> intervalStarts, List<BranchIntervalOperation> branchIntervalOperations) {

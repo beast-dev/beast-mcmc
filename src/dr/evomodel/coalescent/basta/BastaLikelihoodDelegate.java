@@ -31,7 +31,6 @@ import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
-import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.Reportable;
@@ -157,8 +156,21 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
             FULL
         }
 
+        enum Mode {
+            LIKELIHOOD {
+                public final int getModeAsInt() { return 0; }
+            },
+            GRADIENT {
+                public final int getModeAsInt() { return 1; }
+            };
+
+            abstract int getModeAsInt();
+        }
+
         abstract protected void computeBranchIntervalOperations(List<Integer> intervalStarts,
-                                                                List<BranchIntervalOperation> branchIntervalOperations);
+                                                                List<BranchIntervalOperation> branchIntervalOperations,
+                                                                List<TransitionMatrixOperation> matrixOperations,
+                                                                Mode mode);
 
         abstract protected void computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations);
 
@@ -176,7 +188,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
             }
 
             computeTransitionProbabilityOperations(matrixOperation);
-            computeBranchIntervalOperations(intervalStarts, branchOperations);
+            computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperation, Mode.LIKELIHOOD);
 
             double logL = computeCoalescentIntervalReduction(intervalStarts, branchOperations);
 
@@ -191,8 +203,8 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
             return logL;
         }
 
-        abstract protected void computeBranchIntervalOperationsGrad(List<Integer> intervalStarts, List<TransitionMatrixOperation> matrixOperations,
-                                                                List<BranchIntervalOperation> branchIntervalOperations);
+//        abstract protected void computeBranchIntervalOperationsGrad(List<Integer> intervalStarts, List<TransitionMatrixOperation> matrixOperations,
+//                                                                List<BranchIntervalOperation> branchIntervalOperations);
 
         abstract protected void computeTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations);
 
@@ -214,7 +226,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
 
             computeTransitionProbabilityOperationsGrad(matrixOperation);
 
-            computeBranchIntervalOperationsGrad(intervalStarts, matrixOperation, branchOperations);
+            computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperation, Mode.GRADIENT);
 
             double[][] grad = computeCoalescentIntervalReductionGrad(intervalStarts, branchOperations);
 
@@ -230,7 +242,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         }
 
         @Override
-        public double[]calculateGradientPopSize(List<BranchIntervalOperation> branchOperations,
+        public double[] calculateGradientPopSize(List<BranchIntervalOperation> branchOperations,
                                             List<TransitionMatrixOperation> matrixOperation,
                                             List<Integer> intervalStarts,
                                             int rootNodeNumber) {
@@ -239,17 +251,9 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
                 System.err.println("Tree = " + tree);
             }
 
-            computeBranchIntervalOperationsGrad(intervalStarts, matrixOperation, branchOperations);
+            computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperation, Mode.GRADIENT);
 
             double[] grad = computeCoalescentIntervalReductionGradPopSize(intervalStarts, branchOperations);
-
-//            if (PRINT_COMMANDS) {
-//                System.err.println("logL = " + logL + " " + getStamp() + "\n");
-//                if (printCount > 1000) {
-//                    System.exit(-1);
-//                }
-//                ++printCount;
-//            }
 
             return grad;
         }

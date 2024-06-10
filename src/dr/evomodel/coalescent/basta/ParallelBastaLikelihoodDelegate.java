@@ -39,15 +39,16 @@ public class ParallelBastaLikelihoodDelegate extends GenericBastaLikelihoodDeleg
 
     @Override
     protected void computeInnerBranchIntervalOperations(List<BranchIntervalOperation> branchIntervalOperations,
-                                                      int start, int end) {
+                                                        List<TransitionMatrixOperation> matrixOperations,
+                                                        int start, int end, Mode mode) {
 
         int totalTasks = end - start;
-//        System.err.println(totalTasks);
 
         if (totalTasks <= MIN_BRANCH_TASKS) {
-            super.computeInnerBranchIntervalOperations(branchIntervalOperations, start, end);
+            super.computeInnerBranchIntervalOperations(branchIntervalOperations, matrixOperations, start, end, mode);
         } else {
-            forkJoin((s, e, t) -> super.computeInnerBranchIntervalOperations(branchIntervalOperations, s, e),
+            forkJoin((s, e, t) -> super.computeInnerBranchIntervalOperations(branchIntervalOperations, matrixOperations,
+                            s, e, mode),
                     start, end);
         }
     }
@@ -64,19 +65,19 @@ public class ParallelBastaLikelihoodDelegate extends GenericBastaLikelihoodDeleg
         }
     }
 
-    @Override
-    protected void computeInnerBranchIntervalOperationsGrad(List<BranchIntervalOperation> branchIntervalOperations, List<TransitionMatrixOperation> matrixOperations, int start, int end){
-
-        int totalTasks = end - start;
-//        System.err.println(totalTasks);
-
-        if (totalTasks <= MIN_BRANCH_TASKS) {
-            super.computeInnerBranchIntervalOperationsGrad(branchIntervalOperations, matrixOperations, start, end);
-        } else {
-            forkJoin((s, e, t) -> super.computeInnerBranchIntervalOperationsGrad(branchIntervalOperations, matrixOperations, s, e),
-                    start, end);
-        }
-    }
+//    @Override
+//    protected void computeInnerBranchIntervalOperationsGrad(List<BranchIntervalOperation> branchIntervalOperations, List<TransitionMatrixOperation> matrixOperations, int start, int end){
+//
+//        int totalTasks = end - start;
+////        System.err.println(totalTasks);
+//
+//        if (totalTasks <= MIN_BRANCH_TASKS) {
+//            super.computeInnerBranchIntervalOperationsGrad(branchIntervalOperations, matrixOperations, start, end);
+//        } else {
+//            forkJoin((s, e, t) -> super.computeInnerBranchIntervalOperationsGrad(branchIntervalOperations, matrixOperations, s, e),
+//                    start, end);
+//        }
+//    }
 
     @Override
     protected void computeInnerTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations,

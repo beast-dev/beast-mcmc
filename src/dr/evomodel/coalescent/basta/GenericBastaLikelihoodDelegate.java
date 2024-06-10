@@ -78,7 +78,9 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
     @Override
     protected void computeBranchIntervalOperations(List<Integer> intervalStarts,
-                                                   List<BranchIntervalOperation> branchIntervalOperations) {
+                                                   List<BranchIntervalOperation> branchIntervalOperations,
+                                                   List<TransitionMatrixOperation> matrixOperations,
+                                                   Mode mode) {
 
         Arrays.fill(coalescent, 0.0);
 
@@ -87,7 +89,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             int start = intervalStarts.get(interval);
             int end = intervalStarts.get(interval + 1);
 
-            computeInnerBranchIntervalOperations(branchIntervalOperations, start, end);
+            computeInnerBranchIntervalOperations(branchIntervalOperations, matrixOperations, start, end, mode);
         }
 
         if (PRINT_COMMANDS) {
@@ -96,20 +98,37 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     }
 
     protected void computeInnerBranchIntervalOperations(List<BranchIntervalOperation> branchIntervalOperations,
-                                                      int start, int end) {
+                                                        List<TransitionMatrixOperation> matrixOperations,
+                                                        int start, int end,
+                                                        Mode mode) {
 
         for (int i = start; i < end; ++i) {
             BranchIntervalOperation operation = branchIntervalOperations.get(i);
 
-            peelPartials(
-                    partials, operation.outputBuffer,
-                    operation.inputBuffer1, operation.inputBuffer2,
-                    matrices,
-                    operation.inputMatrix1, operation.inputMatrix2,
-                    operation.accBuffer1, operation.accBuffer2,
-                    coalescent, operation.intervalNumber,
-                    sizes, 0,
-                    stateCount);
+            if (mode == Mode.LIKELIHOOD) {
+                peelPartials(
+                        partials, operation.outputBuffer,
+                        operation.inputBuffer1, operation.inputBuffer2,
+                        matrices,
+                        operation.inputMatrix1, operation.inputMatrix2,
+                        operation.accBuffer1, operation.accBuffer2,
+                        coalescent, operation.intervalNumber,
+                        sizes, 0,
+                        stateCount);
+
+            } else if (mode == Mode.GRADIENT) {
+
+                TransitionMatrixOperation Matrixoperation = matrixOperations.get(operation.intervalNumber);
+                peelPartialsGrad(
+                        partials, Matrixoperation.time, operation.outputBuffer,
+                        operation.inputBuffer1, operation.inputBuffer2,
+                        matrices,
+                        operation.inputMatrix1, operation.inputMatrix2,
+                        operation.accBuffer1, operation.accBuffer2,
+                        coalescent, operation.intervalNumber,
+                        sizes, 0,
+                        stateCount);
+            }
 
             if (PRINT_COMMANDS) {
                 System.err.println(operation + " " +
@@ -180,33 +199,33 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         return logL;
     }
 
-    @Override
-    protected void computeBranchIntervalOperationsGrad(List<Integer> intervalStarts, List<TransitionMatrixOperation> matrixOperations, List<BranchIntervalOperation> branchIntervalOperations) {
-        for (int interval = 0; interval < intervalStarts.size() - 1; ++interval) { // execute in series by intervalNumber
-            // TODO try grouping by executionOrder (unclear if more efficient, same total #)
-            int start = intervalStarts.get(interval);
-            int end = intervalStarts.get(interval + 1);
-            computeInnerBranchIntervalOperationsGrad(branchIntervalOperations, matrixOperations, start, end);
-        }
-    }
-
-    protected void computeInnerBranchIntervalOperationsGrad(List<BranchIntervalOperation> branchIntervalOperations, List<TransitionMatrixOperation> matrixOperations, int start, int end) {
-        for (int i = start; i < end; ++i) {
-            BranchIntervalOperation operation = branchIntervalOperations.get(i);
-            TransitionMatrixOperation Matrixoperation = matrixOperations.get(operation.intervalNumber);
-
-            peelPartialsGrad(
-                    partials, Matrixoperation.time, operation.outputBuffer,
-                    operation.inputBuffer1, operation.inputBuffer2,
-                    matrices,
-                    operation.inputMatrix1, operation.inputMatrix2,
-                    operation.accBuffer1, operation.accBuffer2,
-                    coalescent, operation.intervalNumber,
-                    sizes, 0,
-                    stateCount);
-
-        }
-    }
+//    @Override
+//    protected void computeBranchIntervalOperationsGrad(List<Integer> intervalStarts, List<TransitionMatrixOperation> matrixOperations, List<BranchIntervalOperation> branchIntervalOperations) {
+//        for (int interval = 0; interval < intervalStarts.size() - 1; ++interval) { // execute in series by intervalNumber
+//            // TODO try grouping by executionOrder (unclear if more efficient, same total #)
+//            int start = intervalStarts.get(interval);
+//            int end = intervalStarts.get(interval + 1);
+//            computeInnerBranchIntervalOperationsGrad(branchIntervalOperations, matrixOperations, start, end);
+//        }
+//    }
+//
+//    protected void computeInnerBranchIntervalOperationsGrad(List<BranchIntervalOperation> branchIntervalOperations, List<TransitionMatrixOperation> matrixOperations, int start, int end) {
+//        for (int i = start; i < end; ++i) {
+//            BranchIntervalOperation operation = branchIntervalOperations.get(i);
+//            TransitionMatrixOperation Matrixoperation = matrixOperations.get(operation.intervalNumber);
+//
+//            peelPartialsGrad(
+//                    partials, Matrixoperation.time, operation.outputBuffer,
+//                    operation.inputBuffer1, operation.inputBuffer2,
+//                    matrices,
+//                    operation.inputMatrix1, operation.inputMatrix2,
+//                    operation.accBuffer1, operation.accBuffer2,
+//                    coalescent, operation.intervalNumber,
+//                    sizes, 0,
+//                    stateCount);
+//
+//        }
+//    }
 
     private void peelPartialsGrad(double[] partials,
                                   double distance, int resultOffset,

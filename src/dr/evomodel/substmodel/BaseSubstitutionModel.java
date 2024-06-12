@@ -84,11 +84,11 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         setStateCount(dataType.getStateCount());
 
         if (eigenSystem == null) {
-            if (this instanceof PairedParalogGeneConversionSubstitutionModel) {
-                this.eigenSystem = new Eigen3EigenSystem(stateCount);
-            } else {
+//            if (this instanceof PairedParalogGeneConversionSubstitutionModel) {
+//                this.eigenSystem = new Eigen3EigenSystem(stateCount);
+//            } else {
                 this.eigenSystem = getDefaultEigenSystem(dataType.getStateCount());
-            }
+//            }
         }
         else {
             this.eigenSystem = eigenSystem;

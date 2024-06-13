@@ -6,7 +6,7 @@
 <!--       Institute of Evolutionary Biology, University of Edinburgh        -->
 <!--       David Geffen School of Medicine, University of California, Los Angeles-->
 <!--       http://beast.community/                                           -->
-<beast version="10.5.0">
+<beast>
 	
 
 	<!-- The list of taxa to be analysed (can also include dates/ages).          -->
@@ -257,7 +257,7 @@
 	</coalescentLikelihood>
 
 	<!-- Define operators                                                        -->
-	<operators id="operators" optimizationSchedule="power">
+	<operators id="operators">
 		<empiricalTreeDistributionOperator weight="30">
 			<empiricalTreeDistributionModel idref="treeModel"/>
 		</empiricalTreeDistributionOperator>
@@ -292,7 +292,7 @@
 			<column label="Likelihood" dp="4" width="12">
 				<likelihood idref="likelihood"/>
 			</column>
-			<column label="tree#" sf="0" width="12">
+			<column label="tree#" sf="3" width="12">
 				<statistic idref="treeModel.currentTree" />
 			</column>
 		</log>

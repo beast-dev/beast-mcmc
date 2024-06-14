@@ -23,9 +23,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.tools;
+package dr.app.tools.logcombiner;
 
 import dr.app.beast.BeastVersion;
+import dr.app.tools.NexusExporter;
 import dr.app.util.Arguments;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;

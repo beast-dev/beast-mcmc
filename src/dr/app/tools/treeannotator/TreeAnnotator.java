@@ -23,9 +23,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.tools;
+package dr.app.tools.treeannotator;
 
 import dr.app.beast.BeastVersion;
+import dr.app.tools.logcombiner.LogCombiner;
+import dr.app.tools.NexusExporter;
 import dr.app.util.Arguments;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
@@ -44,9 +46,6 @@ import dr.util.HeapSort;
 import dr.util.Pair;
 import dr.util.Version;
 import jam.console.ConsoleApplication;
-//import org.rosuda.JRI.REXP;
-//import org.rosuda.JRI.RVector;
-//import org.rosuda.JRI.Rengine;
 
 import javax.swing.*;
 import java.io.FileOutputStream;
@@ -648,7 +647,7 @@ public class TreeAnnotator {
                             value = tree.getNodeHeight(node);
                         } else if (attributeName.equals("length")) {
                             value = tree.getBranchLength(node);
-// AR - we deal with this once everything                             
+// AR - we deal with this once everything
 //                        } else if (attributeName.equals(location1Attribute)) {
 //                            // If this is one of the two specified bivariate location names then
 //                            // merge this and the other one into a single array.
@@ -701,34 +700,6 @@ public class TreeAnnotator {
                 clade.setCredibility(((double) clade.getCount()) / (double) totalTreesUsed);
             }
         }
-
-//        public double getSumCladeCredibility(Tree tree, NodeRef node, BitSet bits) {
-//
-//            double sum = 0.0;
-//
-//            if (tree.isExternal(node)) {
-//
-//                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
-//                bits.set(index);
-//            } else {
-//
-//                BitSet bits2 = new BitSet();
-//                for (int i = 0; i < tree.getChildCount(node); i++) {
-//
-//                    NodeRef node1 = tree.getChild(node, i);
-//
-//                    sum += getSumCladeCredibility(tree, node1, bits2);
-//                }
-//
-//                sum += getCladeCredibility(bits2);
-//
-//                if (bits != null) {
-//                    bits.or(bits2);
-//                }
-//            }
-//
-//            return sum;
-//        }
 
         public double getLogCladeCredibility(Tree tree, NodeRef node, BitSet bits) {
 
@@ -937,7 +908,7 @@ public class TreeAnnotator {
 //                                    if (name.equals(location1Attribute)) {
 //                                        name = locationOutputAttribute;
 //                                    }
-                                    boolean want2d = processBivariateAttributes && lenArray == 2;
+                                    boolean want2d = PROCESS_BIVARIATE_ATTRIBUTES && lenArray == 2;
                                     if (name.equals("dmv")) {  // terrible hack
                                         want2d = false;
                                     }
@@ -1390,23 +1361,7 @@ public class TreeAnnotator {
     Set<String> attributeNames = new HashSet<String>();
     TaxonList taxa = null;
 
-    static boolean processBivariateAttributes = false;
-
-    static {
-        try {
-            System.loadLibrary("jri");
-            processBivariateAttributes = true;
-            System.err.println("JRI loaded. Will process bivariate attributes");
-        } catch (UnsatisfiedLinkError e) {
-//            System.err.print("JRI not available. ");
-            if (!USE_R) {
-                processBivariateAttributes = true;
-//                System.err.println("Using Java bivariate attributes");
-            } else {
-//                System.err.println("Will not process bivariate attributes");
-            }
-        }
-    }
+    private final static boolean PROCESS_BIVARIATE_ATTRIBUTES = true;
 
     public static void printTitle() {
         progressStream.println();
@@ -1427,7 +1382,7 @@ public class TreeAnnotator {
     }
 
     public static void centreLine(String line, int pageWidth) {
-        BaseTreeTool.centreLine(line, 60, progressStream);
+        centreLine(line, 60);
     }
 
 
@@ -1454,7 +1409,7 @@ public class TreeAnnotator {
 
         }
 
-        if (returnList.size()>0) {
+        if (!returnList.isEmpty()) {
             double[] doubleArray = new double[returnList.size()];
             for(int i=0; i<doubleArray.length; i++)
                 doubleArray[i] = returnList.get(i);

@@ -486,7 +486,7 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public final void doImport() {
-        File[] files = selectImportFiles("Import Aligment...", true, new FileNameExtensionFilter[]{
+        File[] files = selectImportFiles("Import Alignment...", true, new FileNameExtensionFilter[]{
                 new FileNameExtensionFilter(
                         "NEXUS, BEAST or FASTA Files", "nex", "nexus", "nx", "xml", "beast", "fa", "fasta", "afa")});
         if (files != null && files.length != 0) {

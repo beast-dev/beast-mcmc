@@ -45,6 +45,7 @@ import java.util.stream.IntStream;
  * @author Xiang Ji
  * @author Marc Suchard
  */
+@Deprecated
 public class OldActionBeagleDelegate implements Beagle {
 
     public static final boolean DEBUG = false;
@@ -221,6 +222,11 @@ public class OldActionBeagleDelegate implements Beagle {
     @Override
     public void setEigenDecomposition(int i, double[] doubles, double[] doubles1, double[] doubles2) {
         throw new RuntimeException("Should not be called with action likelihood");
+    }
+
+    @Override
+    public void setSparseMatrix(int i, int[] ints, int[] ints1, double[] doubles, int i1) {
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override

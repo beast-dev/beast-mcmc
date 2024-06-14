@@ -47,6 +47,7 @@ public class PartitionTreeModel extends PartitionOptions {
 
     private TreeAsDataType treeAsDataType = TreeAsDataType.EMPRICAL_TREES;
 
+    private boolean isUsingExternalEmpiricalTreeFile = false;
     private String empiricalTreesFilename = null;
 
     private boolean isNewick = true;
@@ -274,6 +275,13 @@ public class PartitionTreeModel extends PartitionOptions {
 
     public boolean isUsingEmpiricalTrees() {
         return treeAsDataType == TreeAsDataType.EMPRICAL_TREES;
+    }
+
+    public void setUsingExternalEmpiricalTreeFile(boolean isUsingExternalEmpiricalTreeFile) {
+        this.isUsingExternalEmpiricalTreeFile = isUsingExternalEmpiricalTreeFile;
+    }
+    public boolean isUsingExternalEmpiricalTreeFile() {
+        return isUsingExternalEmpiricalTreeFile;
     }
 
     public String getEmpiricalTreesFilename() {

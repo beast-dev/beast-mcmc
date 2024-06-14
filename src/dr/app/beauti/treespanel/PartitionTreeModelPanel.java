@@ -61,6 +61,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
     private static final long serialVersionUID = 8096349200725353543L;
 
+    private static final Insets FIELD_INSETS = new Insets(3,6,3,6);
+
     private final String NO_TREE = "no tree loaded";
 
 
@@ -68,8 +70,6 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private final JRadioButton randomTreeRadio = new JRadioButton("Random starting tree");
     private final JRadioButton upgmaTreeRadio = new JRadioButton("UPGMA starting tree");
     private final JRadioButton userTreeRadio = new JRadioButton("User-specified starting tree");
-    private final ImportTreeAction importTreeAction = new ImportTreeAction();
-    private final JButton importTreeButton = new JButton(importTreeAction);
     private final JLabel userTreeLabel = new JLabel("User-specified tree:");
     private final JComboBox userTreeCombo = new JComboBox();
     private final JLabel userTreeInfo = new JLabel("<html>" +
@@ -82,8 +82,9 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private final OptionsPanel thorneyBEASTPanel;
     private final JLabel thorneyBEASTInfo = new JLabel("<html>" +
             "Use the tree and branch lengths in substitutions per site as data, integrating over unresolved<br> " +
-            "polytomies and sampling branch lengths.<br>" +
-            "Citation: McCrone et al.</html>");
+            "polytomies and sampling branch lengths.<br><br>" +
+            "Citation: du Plessis L, McCrone JT, <i>et al.</i> (2021) Establishment and lineage dynamics of the SARS-CoV-2 epidemic<br>" +
+            "in the UK. <i>Science</i> <b>371</b>, 708-712. DOI:10.1126/science.abf2946</html>");
 
     private final OptionsPanel empiricalTreePanel;
     private final JLabel empiricalTreeLabel = new JLabel("Trees filename:");
@@ -136,7 +137,10 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             treeAsDataModelCombo.addItem(treeAsDataType);
         }
         PanelUtils.setupComponent(treeAsDataModelCombo);
-        treeAsDataModelCombo.addItemListener(ev -> setupPanel());
+        treeAsDataModelCombo.addItemListener(ev -> {
+            partitionTreeModel.setTreeAsDataType((TreeAsDataType)treeAsDataModelCombo.getSelectedItem());
+            setupPanel();
+        });
 
         ActionListener listener = actionEvent -> {
             if (randomTreeRadio.isSelected()) {
@@ -168,11 +172,25 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         empiricalExternalFileCheck.addActionListener(ev -> {
             empiricalTreeLabel.setEnabled(empiricalExternalFileCheck.isSelected());
             empiricalFilenameField.setEnabled(empiricalExternalFileCheck.isSelected());
+            partitionTreeModel.setUsingExternalEmpiricalTreeFile(empiricalExternalFileCheck.isSelected());
+            parent.setDirty();
         });
 
-        empiricalFilenameField.setBorder(new EmptyBorder(6,3,3,6));
+        empiricalFilenameField.setBorder(new EmptyBorder(FIELD_INSETS));
         empiricalTreePanel = new OptionsPanel();
         empiricalTreePanel.setOpaque(false);
+        empiricalFilenameField.addKeyListener(new java.awt.event.KeyListener() {
+            public void keyTyped(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
+
+            public void keyReleased(KeyEvent e) {
+                partitionTreeModel.setEmpiricalTreesFilename(empiricalFilenameField.getText().trim());
+                parent.setDirty();
+            }
+        });
 
         setupPanel();
         setOptions();
@@ -222,22 +240,6 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
             addComponent(userTreeInfo);
 
-            // hiding this as the text says import trees from File menu
-//            addComponent(importTreeButton);
-
-            empiricalFilenameField.addKeyListener(new java.awt.event.KeyListener() {
-                public void keyTyped(KeyEvent e) {
-                }
-
-                public void keyPressed(KeyEvent e) {
-                }
-
-                public void keyReleased(KeyEvent e) {
-                    partitionTreeModel.setEmpiricalTreesFilename(empiricalFilenameField.getText().trim());
-                    parent.setDirty();
-                }
-            });
-
         } else {
 
             addComponentWithLabel("Tree as data model:", treeAsDataModelCombo);
@@ -247,7 +249,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
             empiricalTreePanel.removeAll();
             empiricalTreePanel.addComponent(empiricalTreeInfo);
-            empiricalTreePanel.addComponent(empiricalExternalFileCheck);
+
+            empiricalTreePanel.addSpanningComponent(empiricalExternalFileCheck);
 
             empiricalTreeLabel.setEnabled(empiricalExternalFileCheck.isSelected());
             empiricalFilenameField.setEnabled(empiricalExternalFileCheck.isSelected());
@@ -284,6 +287,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         settingOptions = false;
 
         treeAsDataModelCombo.setSelectedItem(partitionTreeModel.getTreeAsDataType());
+        empiricalExternalFileCheck.setSelected(partitionTreeModel.isUsingExternalEmpiricalTreeFile());
         String empiricalFilename = "empirical.trees";
         if (partitionTreeModel.getEmpiricalTreesFilename() != null) {
             empiricalFilename = partitionTreeModel.getEmpiricalTreesFilename();
@@ -306,77 +310,6 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private Tree getSelectedUserTree() {
         TreeHolder treeHolder = (TreeHolder) userTreeCombo.getSelectedItem();
         return treeHolder.getTrees().get(0);
-    }
-
-    private class ImportTreeAction extends AbstractAction {
-        public ImportTreeAction() {
-            super("Import additional tree(s) from file ...");
-            setToolTipText("Import newick-formatted trees from a file. These trees can be used as a starting tree.");
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            doImportTrees();
-        }
-    }
-
-    private boolean doImportTrees() {
-        File[] files = parent.selectImportFiles("Import Trees File...", false, new FileNameExtensionFilter[]{
-                new FileNameExtensionFilter("Nexus files or text files containing newick trees",
-                        "tree", "trees", "treefile", "txt", "nex", "nexus", "nwk", "newick")});
-
-        BEAUTiImporter beautiImporter = new BEAUTiImporter(parent, options);
-
-        if (files != null && files.length != 0) {
-
-            File file = files[0];
-            int nTreesBefore = options.userTrees.size();
-
-            try {
-
-                String line = beautiImporter.findFirstLine(file);
-
-                if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
-                    // is a NEXUS file
-                    beautiImporter.importNexusFile(file, true);
-                } else {
-                    beautiImporter.importNewickFile(files[0]);
-                }
-
-            } catch (FileNotFoundException fnfe) {
-                JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
-                        "Unable to open file",
-                        JOptionPane.ERROR_MESSAGE);
-                return false;
-            } catch (IOException ioe) {
-                JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
-                        "Unable to read file",
-                        JOptionPane.ERROR_MESSAGE);
-                return false;
-            } catch (Exception ex) {
-                ex.printStackTrace(System.err);
-                JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
-                        "Error reading file",
-                        JOptionPane.ERROR_MESSAGE);
-                ex.printStackTrace();
-                return false;
-            }
-
-            int nTreesAfter = options.userTrees.size();
-            if (nTreesAfter == nTreesBefore) {
-                JOptionPane.showMessageDialog(this,
-                        "Did not find any trees in file '" + file.getName() + "'",
-                        "No trees found",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        } else {
-            return false;
-        }
-
-        setupPanel();
-        setOptions();
-
-        return true;
     }
 
 }

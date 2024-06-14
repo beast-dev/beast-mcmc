@@ -558,7 +558,7 @@ public class BEAUTiImporter {
                          List<NexusApplicationImporter.TaxSet> taxSets,
                          PartitionSubstitutionModel model,
                          List<TraitData> traits, List<Tree> trees) throws ImportException, IllegalArgumentException {
-        setData(fileName, taxonList, alignment, charSets, taxSets, model, traits, trees, false);
+        setData(fileName, taxonList, alignment, charSets, taxSets, model, traits, trees, true);
     }
 
     // for Alignment
@@ -576,8 +576,11 @@ public class BEAUTiImporter {
         }
 
         // Importing some data - see what it is and ask what to do with it...
+
         boolean createTreePartition = false;
         if (alignment == null && traits == null && trees != null) {
+            // If only importing trees then ask if a tree-data partition should be created.
+            // Doing this first in case the cancel button is pressed
             int result = JOptionPane.showConfirmDialog(this.frame, "File for importing contains trees:\nCreate 'tree-as-data' partition?",
                     "Importing Trees", JOptionPane.YES_NO_CANCEL_OPTION);
             if (result == JOptionPane.CANCEL_OPTION) {
@@ -588,9 +591,16 @@ public class BEAUTiImporter {
 
         if (alignment != null) {
             // check the alignment before adding it...
-            if (!allowEmpty && alignment.getSiteCount() == 0) {
-                // sequences are different lengths
-                throw new ImportException("This alignment is of zero length");
+            if (alignment.getSiteCount() == 0) {
+                if (allowEmpty) {
+                    int result = JOptionPane.showConfirmDialog(this.frame, "File contains zero length sequences:\nCreate empty partition?",
+                            "Importing zero length sequences", JOptionPane.OK_CANCEL_OPTION);
+                    if (result == JOptionPane.CANCEL_OPTION) {
+                        return;
+                    }
+                } else {
+                    throw new ImportException("This alignment is of zero length");
+                }
             }
 
             for (Sequence seq : alignment.getSequences()) {

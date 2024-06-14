@@ -568,10 +568,22 @@ public class BEAUTiImporter {
                          PartitionSubstitutionModel model,
                          List<TraitData> traits, List<Tree> trees,
                          boolean allowEmpty) throws ImportException, IllegalArgumentException {
+
         String fileNameStem = Utils.trimExtensions(fileName,
                 new String[]{"NEX", "NEXUS", "FA", "FAS", "FASTA", "TRE", "TREE", "XML", "TXT"});
         if (options.fileNameStem == null || options.fileNameStem.equals(MCMCPanel.DEFAULT_FILE_NAME_STEM)) {
             options.fileNameStem = fileNameStem;
+        }
+
+        // Importing some data - see what it is and ask what to do with it...
+        boolean createTreePartition = false;
+        if (alignment == null && traits == null && trees != null) {
+            int result = JOptionPane.showConfirmDialog(this.frame, "File for importing contains trees:\nCreate 'tree-as-data' partition?",
+                    "Importing Trees", JOptionPane.YES_NO_CANCEL_OPTION);
+            if (result == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+            createTreePartition = result == JOptionPane.YES_OPTION;
         }
 
         if (alignment != null) {
@@ -601,6 +613,7 @@ public class BEAUTiImporter {
                 }
             }
         }
+
         // attempt to work out the type of the trait
         for (String name : attributeNames) {
             TraitData.TraitType type = null;
@@ -640,24 +653,11 @@ public class BEAUTiImporter {
 
         addTraits(traits);
 
-        addTrees(fileNameStem, fileName, trees);
-    }
+        TreeHolder treeHolder = addTrees(fileNameStem, fileName, trees);
 
-    // for Patterns
-    private void setData(String fileName, Taxa taxonList, Patterns patterns,
-                         PartitionSubstitutionModel model, List<TraitData> traits
-    ) throws ImportException, IllegalArgumentException {
-        String fileNameStem = Utils.trimExtensions(fileName,
-                new String[]{"NEX", "NEXUS", "FA", "FAS", "FASTA", "TRE", "TREE", "XML", "TXT"});
-        if (options.fileNameStem == null || options.fileNameStem.equals(MCMCPanel.DEFAULT_FILE_NAME_STEM)) {
-            options.fileNameStem = fileNameStem;
+        if (createTreePartition) {
+            options.createPartitionForTree(treeHolder, fileNameStem);
         }
-
-        addTaxonList(taxonList);
-
-        addPatterns(patterns, model, fileName);
-
-        addTraits(traits);
     }
 
     private void addTaxonList(TaxonList taxonList) throws ImportException {
@@ -856,7 +856,8 @@ public class BEAUTiImporter {
         }
     }
 
-    private void addTrees(String fileNameStem, String fileName, List<Tree> trees) {
+    private TreeHolder addTrees(String fileNameStem, String fileName, List<Tree> trees) {
+        TreeHolder treeHolder = null;
         if (trees != null && !trees.isEmpty()) {
             int i = 1;
             for (Tree tree : trees) {
@@ -866,8 +867,11 @@ public class BEAUTiImporter {
                 }
                 i++;
             }
-            options.userTrees.put(fileNameStem, new TreeHolder(trees, fileNameStem, fileName));
+            treeHolder = new TreeHolder(trees, fileNameStem, fileName);
+            options.userTrees.put(fileNameStem, treeHolder);
         }
+
+        return treeHolder;
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * StartingTreeType.java
+ * TreePriorType.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -27,20 +27,13 @@ package dr.app.beauti.types;
 
 /**
  * @author Andrew Rambaut
- * @author Alexei Drummond
  */
-public enum StartingTreeType {
+public enum TreeAsDataType {
+    EMPRICAL_TREES("Empirical Trees"),
+    THORNEY_BEAST("ThorneyBEAST");
 
-    RANDOM("randomly generated"),
-    UPGMA("UPGMA generated"),
-    USER("user-specified");
-
-    StartingTreeType(String name) {
+    TreeAsDataType(String name) {
         this.name = name;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public String toString() {

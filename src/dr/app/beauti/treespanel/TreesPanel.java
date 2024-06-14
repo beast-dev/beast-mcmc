@@ -146,7 +146,11 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         JPanel panel4 = new JPanel(new BorderLayout());
         panel4.setOpaque(false);
         panel4.add(treePriorPanelParent, BorderLayout.NORTH);
-        panel4.add(scrollPane2, BorderLayout.CENTER);
+        JPanel panel5 = new JPanel(new BorderLayout());
+        panel5.setOpaque(false);
+        panel5.add(new JLabel(" "), BorderLayout.NORTH);
+        panel5.add(scrollPane2, BorderLayout.CENTER);
+        panel4.add(panel5, BorderLayout.CENTER);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, panel4);
         splitPane.setDividerLocation(180);

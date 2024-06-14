@@ -45,6 +45,8 @@ public class PartitionTreeModel extends PartitionOptions {
     private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
     private Tree userStartingTree = null;
 
+    private TreeAsDataType treeAsDataType = TreeAsDataType.EMPRICAL_TREES;
+
     private String empiricalTreesFilename = null;
 
     private boolean isNewick = true;
@@ -263,8 +265,15 @@ public class PartitionTreeModel extends PartitionOptions {
         this.userStartingTree = userStartingTree;
     }
 
+    public void setTreeAsDataType(TreeAsDataType treeAsDataType) {
+        this.treeAsDataType = treeAsDataType;
+    }
+    public TreeAsDataType getTreeAsDataType() {
+        return treeAsDataType;
+    }
+
     public boolean isUsingEmpiricalTrees() {
-        return startingTreeType == StartingTreeType.EMPIRICAL;
+        return treeAsDataType == TreeAsDataType.EMPRICAL_TREES;
     }
 
     public String getEmpiricalTreesFilename() {

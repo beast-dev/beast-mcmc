@@ -84,10 +84,10 @@ public class PartitionTreePriorPanel extends OptionsPanel {
     private boolean settingOptions = false;
 
 
-    public PartitionTreePriorPanel(PartitionTreePrior parTreePrior, final TreesPanel parent) {
+    public PartitionTreePriorPanel(PartitionTreePrior partitionTreePrior, final TreesPanel parent) {
         super(12, (OSType.isMac() ? 6 : 24));
 
-        this.partitionTreePrior = parTreePrior;
+        this.partitionTreePrior = partitionTreePrior;
         this.treesPanel = parent;
 
         setTreePriorChoices(false, false);
@@ -99,7 +99,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 if (treePriorCombo.getSelectedItem() != null) {
                     setupPanel();
 
-                    partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
+                    PartitionTreePriorPanel.this.partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
                     parent.fireTreePriorsChanged();
                 }
             }
@@ -112,7 +112,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 "nature of the model but may assist with mixing.<html>");
         parameterizationCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
+                PartitionTreePriorPanel.this.partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
                 parent.fireTreePriorsChanged();
             }
         });
@@ -131,7 +131,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         PanelUtils.setupComponent(gmrfBayesianSkyrideCombo);
         gmrfBayesianSkyrideCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                partitionTreePrior.setSkyrideSmoothing((TreePriorParameterizationType) gmrfBayesianSkyrideCombo.getSelectedItem());
+                PartitionTreePriorPanel.this.partitionTreePrior.setSkyrideSmoothing((TreePriorParameterizationType) gmrfBayesianSkyrideCombo.getSelectedItem());
                 parent.fireTreePriorsChanged();
             }
         });
@@ -157,7 +157,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         PanelUtils.setupComponent(populationSizeCombo);
         populationSizeCombo.addItemListener(new ItemListener() {
                                                 public void itemStateChanged(ItemEvent ev) {
-                                                    partitionTreePrior.setPopulationSizeModel((PopulationSizeModelType) populationSizeCombo.getSelectedItem());
+                                                    PartitionTreePriorPanel.this.partitionTreePrior.setPopulationSizeModel((PopulationSizeModelType) populationSizeCombo.getSelectedItem());
                                                     parent.fireTreePriorsChanged();
                                                 }
                                             }

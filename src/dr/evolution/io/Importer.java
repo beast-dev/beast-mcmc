@@ -124,6 +124,10 @@ public abstract class Importer {
 		this.commentWriter = commentWriter != null ? new BufferedWriter(commentWriter) : null;
 	}
 
+	public LineNumberReader getReader() {
+		return reader;
+	}
+
 	public void setCommentDelimiters(char line) {
 		hasComments = true;
 		this.lineComment = line;

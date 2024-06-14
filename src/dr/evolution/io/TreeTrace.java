@@ -33,6 +33,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -122,14 +123,14 @@ public class TreeTrace implements Identifiable {
 
         if (line.toUpperCase().startsWith("#NEXUS")) {
             NexusImporter importer = new NexusImporter(reader);
-            Tree[] trees = importer.importTrees(null);
+            List<Tree> trees = importer.importTrees(null);
 
-            if (trees.length < 2) {
+            if (trees.size() < 2) {
                 throw new Importer.ImportException("Less than two trees in the trace file");
             }
 
-            String id1 = trees[0].getId();
-            String id2 = trees[1].getId();
+            String id1 = trees.get(0).getId();
+            String id2 = trees.get(1).getId();
 
             minState = getStateNumber(id1);
             stepSize = getStateNumber(id2) - minState;

@@ -96,8 +96,7 @@ public class NormaliseMeanTreeRate {
 
             NexusExporter exporter = new NexusExporter(System.out);
             exporter.setSortedTranslationTable(true);
-            exporter.exportTrees(treeList.toArray(new Tree[treeList.size()]),
-                true, treeNames.toArray(new String[treeNames.size()]));
+            exporter.exportTrees(treeList, true, treeNames);
 
         } catch (Importer.ImportException e) {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());

@@ -53,7 +53,7 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel implements 
      * @param trees
      * @param startingTree
      */
-    public EmpiricalTreeDistributionModel(final Tree[] trees, int startingTree) {
+    public EmpiricalTreeDistributionModel(final List<Tree> trees, int startingTree) {
         this(trees, null, startingTree);
     }
 
@@ -67,7 +67,7 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel implements 
         this(null, importer, startingTree);
     }
 
-    private EmpiricalTreeDistributionModel(final Tree[] trees, final TreeImporter importer, int startingTree) {
+    private EmpiricalTreeDistributionModel(final List<Tree> trees, final TreeImporter importer, int startingTree) {
         super(EMPIRICAL_TREE_DISTRIBUTION_MODEL);
 
         this.trees = trees;
@@ -86,11 +86,11 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel implements 
         });
     }
 
-    public Tree[] getTrees() { return trees; }
+    public List<Tree> getTrees() { return trees; }
 
     public void setTree(int index) {
         currentTreeIndex = index;
-        currentTree = trees[index];
+        currentTree = trees.get(index);
         fireModelChanged();
     }
 
@@ -128,11 +128,11 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel implements 
             currentTreeIndex += 1;
         } else {
             if (treeNumber == -1) {
-                currentTreeIndex = MathUtils.nextInt(trees.length);
-                currentTree = trees[currentTreeIndex];
+                currentTreeIndex = MathUtils.nextInt(trees.size());
+                currentTree = trees.get(currentTreeIndex);
             } else {
                 currentTreeIndex = treeNumber;
-                currentTree = trees[currentTreeIndex];
+                currentTree = trees.get(currentTreeIndex);
             }
         }
 
@@ -174,7 +174,7 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel implements 
     }
 
     public Taxon getNodeTaxon(final NodeRef node) {
-        return trees[currentTreeIndex].getNodeTaxon(node);
+        return trees.get(currentTreeIndex).getNodeTaxon(node);
     }
 
     public boolean hasNodeHeights() {
@@ -300,7 +300,7 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel implements 
 
     public static final String EMPIRICAL_TREE_DISTRIBUTION_MODEL = "empiricalTreeDistributionModel";
 
-    private final Tree[] trees;
+    private final List<Tree> trees;
     private final TreeImporter importer;
     private Tree currentTree;
     private Tree storedCurrentTree;

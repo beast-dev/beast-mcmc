@@ -20,12 +20,14 @@ public class TreeHolder {
         this.trees = Collections.singletonList(tree);
         this.name = name;
         this.fileName = fileName;
+        this.treeCount = 1;
     }
 
-    public TreeHolder(Collection<Tree> trees, String name, String fileName) {
+    public TreeHolder(Collection<Tree> trees, int treeCount, String name, String fileName) {
         this.trees = new ArrayList<>(trees);
         this.name = name;
         this.fileName = fileName;
+        this.treeCount = treeCount;
     }
 
     public List<Tree> getTrees() {
@@ -46,6 +48,7 @@ public class TreeHolder {
     }
 
     private final List<Tree> trees;
+    private final int treeCount;
     private final String name;
     private final String fileName;
 

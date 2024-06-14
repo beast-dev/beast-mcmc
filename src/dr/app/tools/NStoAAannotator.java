@@ -63,7 +63,7 @@ public class NStoAAannotator extends BaseTreeTool {
 
         List<Tree> trees = new ArrayList<>();
         readTrees(trees, inputFileName, burnIn);
-        outputTrees = new Tree[trees.size()-burnIn];
+        outputTrees = new ArrayList<>();
 
         //TODO: go throught the first tree to collect all sites that entertain NS and use this site list in case no site selection is provided
 
@@ -86,7 +86,7 @@ public class NStoAAannotator extends BaseTreeTool {
         for (int i = burnIn; i < trees.size(); ++i) {
             Tree tree = trees.get(i);
             FlexibleTree treeToAnnotate = annotateOneTree(new FlexibleTree(tree, true), sitesToAnnotate);
-            outputTrees[i - burnIn] = treeToAnnotate;
+            outputTrees.add(treeToAnnotate);
         }
     }
 
@@ -145,10 +145,10 @@ public class NStoAAannotator extends BaseTreeTool {
     }
 
     private void annotateJointState(String[] sitesToAnnotate) {
-        for (int i = 0; i < outputTrees.length; ++i) {
-            Tree tree = outputTrees[i];
+        for (int i = 0; i < outputTrees.size(); ++i) {
+            Tree tree = outputTrees.get(i);
             FlexibleTree treeToAnnotate = annotateJointStateOneTree(new FlexibleTree(tree, true), sitesToAnnotate);
-            outputTrees[i] = treeToAnnotate;
+            outputTrees.set(i, treeToAnnotate);
         }
     }
     private FlexibleTree annotateJointStateOneTree(FlexibleTree tree, String[] sitesToAnnotate){
@@ -261,7 +261,7 @@ public class NStoAAannotator extends BaseTreeTool {
         return recentState;
     }
 
-    private Tree[] outputTrees;
+    private List<Tree> outputTrees;
     GeneticCode geneticCode = GeneticCode.UNIVERSAL;
     Codons codons = Codons.UNIVERSAL;
 

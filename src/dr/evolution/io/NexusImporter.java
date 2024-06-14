@@ -45,6 +45,7 @@ import dr.util.Attributable;
 import java.awt.*;
 import java.io.*;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -184,8 +185,12 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
     /**
      * Parses a 'TREES' block.
      */
-    public Tree[] parseTreesBlock(TaxonList taxonList) throws ImportException, IOException {
-        return readTreesBlock(taxonList, false);
+    public List<Tree> parseTreesBlock(TaxonList taxonList) throws ImportException, IOException {
+        return parseTreesBlock(taxonList, -1);
+    }
+
+    public List<Tree> parseTreesBlock(TaxonList taxonList, int maxTrees) throws ImportException, IOException {
+        return readTreesBlock(taxonList, false, maxTrees);
     }
 
     /**
@@ -293,18 +298,37 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
     /**
      * import an array of all trees.
      */
-    public Tree[] importTrees(TaxonList taxonList) throws IOException, ImportException {
+    public List<Tree> importTrees(TaxonList taxonList) throws IOException, ImportException {
         return importTrees(taxonList, false);
     }
 
-    public Tree[] importTrees(TaxonList taxonList, boolean useTaxonListNumbering) throws IOException, ImportException {
+    public List<Tree> importTrees(TaxonList taxonList, boolean useTaxonListNumbering) throws IOException, ImportException {
         isReadingTreesBlock = false;
         TaxonList[] aTaxonList = new TaxonList[1];
         aTaxonList[0] = taxonList;
         if (!startReadingTrees(aTaxonList)) {
             throw new MissingBlockException("TREES block is missing");
         }
-        return readTreesBlock(aTaxonList[0], useTaxonListNumbering);
+        return readTreesBlock(aTaxonList[0], useTaxonListNumbering, -1);
+    }
+
+    @Override
+    public int countTrees() throws IOException {
+        int treeCount = 0;
+        try {
+            String token = readToken(";");
+            while (true) {
+                if (token.equalsIgnoreCase("UTREE") || token.equalsIgnoreCase("TREE")) {
+                    treeCount += 1;
+                } else if (token.equalsIgnoreCase("ENDBLOCK") || token.equalsIgnoreCase("END")) {
+                    return treeCount;
+                }
+                token = readToken(";");
+            }
+        } catch (EOFException ignored) {
+        }
+
+        return treeCount;
     }
 
     /**
@@ -793,8 +817,9 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
     /**
      * Reads a 'TREES' block.
+     * @param maxTrees - maximium number of trees to read (-1 for all)
      */
-    private Tree[] readTreesBlock(TaxonList taxonList, boolean useTaxonListNumbering) throws ImportException, IOException {
+    private List<Tree> readTreesBlock(TaxonList taxonList, boolean useTaxonListNumbering, int maxTrees) throws ImportException, IOException {
         ArrayList<Tree> trees = new ArrayList<Tree>();
 
         String[] lastToken = new String[1];
@@ -815,6 +840,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
             );
         }
 
+        int treeCount = 0;
         boolean done = false;
         do {
 
@@ -822,21 +848,22 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
             if (tree != null) {
                 trees.add(tree);
+                treeCount += 1;
+                if (maxTrees > 0 && treeCount == maxTrees) {
+                    done = true;
+                }
             } else {
                 done = true;
             }
         } while (!done);
 
-        if (trees.size() == 0) {
+        if (trees.isEmpty()) {
             throw new BadFormatException("No trees defined in TREES block");
         }
 
-        Tree[] treeArray = new Tree[trees.size()];
-        trees.toArray(treeArray);
-
         nextBlock = UNKNOWN_BLOCK;
 
-        return treeArray;
+        return trees;
     }
 
     private HashMap<String, Taxon> readTranslationList(TaxonList taxonList, String[] lastToken) throws ImportException, IOException {
@@ -994,7 +1021,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                                 if (e < 0) e = c.length();
 
                                 try {
-                                    final Float value = new Float(c.substring(2, e));
+                                    final Float value = Float.parseFloat(c.substring(2, e));
                                     tree.setAttribute("weight", value);
                                 } catch (NumberFormatException ex) {
                                     // don't fail, ignore
@@ -1466,7 +1493,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
         // Attempt to format the value as a double
         try {
-            return new Double(value);
+            return Double.parseDouble(value);
         } catch (NumberFormatException nfe2) {
             // not a double
         }

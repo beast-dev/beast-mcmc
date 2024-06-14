@@ -149,28 +149,30 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
             SubstitutionModel substitutionModel = getSubstitutionModel(i);
             substitutionModel.getInfinitesimalMatrix(tmpQ);
 
-            ArrayList positions = new ArrayList<Double>();
+            ArrayList rowIndices = new ArrayList<Integer>();
+            ArrayList colIndices = new ArrayList<Integer>();
             ArrayList values = new ArrayList<Double>();
             int nonZeros = 0;
             for (int row = 0; row < stateCount; row++) {
                 for (int col = 0; col < stateCount; col++) {
                     if (tmpQ[row * stateCount + col] != 0) {
-                        positions.add((double) row);
-                        positions.add((double) col);
+                        rowIndices.add(row);
+                        colIndices.add(col);
                         values.add(tmpQ[row * stateCount + col]);
                         nonZeros++;
                     }
                 }
             }
-            double[] inPositions = new double[positions.size()];
+            int[] inRowIndices = new int[rowIndices.size()];
+            int[] inColIndices = new int[colIndices.size()];
             double[] inValues = new double[values.size()];
             for (int j = 0; j < nonZeros; j++) {
-                inPositions[2 * j] = (double) positions.get(2 * j);
-                inPositions[2 * j + 1] = (double) positions.get(2 * j + 1);
+                inRowIndices[j] = (int) rowIndices.get(j);
+                inColIndices[j] = (int) colIndices.get(j);
                 inValues[j] = (double) values.get(j);
             }
 
-            beagle.setEigenDecomposition(i, inPositions, new double[]{nonZeros},  inValues);
+            beagle.setSparseMatrix(i, inRowIndices, inColIndices, inValues, nonZeros);
         }
 
     }

@@ -445,8 +445,8 @@ public class BEAUTiImporter {
         if (treeCount > 1) {
             int result = JOptionPane.showConfirmDialog(this.frame,
                     "This file contains " + treeCount + " trees.\n" +
-                            "Do you want to import all the trees or just\n" +
-                            "the first one?",
+                            "Do you want to import all the trees?\n" +
+                            "Choose 'No' to just import the first tree in the file?",
                     "Importing Data", JOptionPane.YES_NO_CANCEL_OPTION);
             if (result == JOptionPane.CANCEL_OPTION) {
                 return;

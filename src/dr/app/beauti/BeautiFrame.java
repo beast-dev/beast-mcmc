@@ -52,7 +52,6 @@ import dr.app.beauti.generator.Generator;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.operatorspanel.OperatorsPanel;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.priorspanel.DefaultPriorTableDialog;
 import dr.app.beauti.priorspanel.PriorsPanel;
@@ -61,7 +60,6 @@ import dr.app.beauti.taxonsetspanel.TaxonSetPanel;
 import dr.app.beauti.tipdatepanel.TipDatesPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.TreesPanel;
-import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.TextUtil;
 import dr.app.gui.FileDrop;
@@ -178,7 +176,7 @@ public class BeautiFrame extends DocumentFrame {
 
     public void initializeComponents() {
 
-        dataPanel = new DataPanel(this, getImportAction(), getDeleteAction()/*, getImportTraitsAction()*/);
+        dataPanel = new DataPanel(this, getImportAction(), getRemoveAction()/*, getImportTraitsAction()*/);
         tipDatesPanel = new TipDatesPanel(this);
         traitsPanel = new TraitsPanel(this, dataPanel, getImportTraitsAction());
         taxonSetPanel = new TaxonSetPanel(this);
@@ -828,14 +826,26 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public Action getImportAction() {
-        return importAlignmentAction;
+        return importDataAction;
     }
 
-    protected AbstractAction importAlignmentAction = new AbstractAction("Import Data...") {
+    protected AbstractAction importDataAction = new AbstractAction("Import Data...") {
         private static final long serialVersionUID = 3217702096314745005L;
 
         public void actionPerformed(java.awt.event.ActionEvent ae) {
             doImport();
+        }
+    };
+
+    public Action getRemoveAction() {
+        return removeDataAction;
+    }
+
+    protected AbstractAction removeDataAction = new AbstractAction("Remove Partition") {
+        private static final long serialVersionUID = 3217702096314745005L;
+
+        public void actionPerformed(java.awt.event.ActionEvent ae) {
+            doDelete();
         }
     };
 

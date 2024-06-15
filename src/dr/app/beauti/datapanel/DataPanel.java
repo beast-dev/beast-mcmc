@@ -90,6 +90,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
     CreateTraitPartitionAction createTraitPartitionAction = new CreateTraitPartitionAction();
     CreateTreePartitionAction createTreePartitionAction = new CreateTreePartitionAction();
 
+    private final Action removePartitionAction;
+
     ViewPartitionAction viewPartitionAction = new ViewPartitionAction();
 
 //    ShowAction showAction = new ShowAction();
@@ -104,9 +106,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     BeautiOptions options = null;
 
-    public DataPanel(BeautiFrame parent, Action importDataAction, Action removeDataAction/*, Action importTraitsAction*/) {
+    public DataPanel(BeautiFrame parent, Action importDataAction, Action removePartitionAction) {
 
         this.frame = parent;
+
+        this.removePartitionAction = removePartitionAction;
 
         dataTableModel = new DataTableModel();
         dataTable = new JTable(dataTableModel);
@@ -189,18 +193,25 @@ public class DataPanel extends BeautiPanel implements Exportable {
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
 
-        ActionPanel actionPanel1 = new ActionPanel(false);
-        actionPanel1.setAddAction(importDataAction);
-        actionPanel1.setRemoveAction(removeDataAction);
-        removeDataAction.setEnabled(false);
+//        ActionPanel actionPanel1 = new ActionPanel(false);
+//        actionPanel1.setAddAction(importDataAction);
+//        actionPanel1.setRemoveAction(removeDataAction);
+
 
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
-        controlPanel1.add(actionPanel1);
+//        controlPanel1.add(actionPanel1);
 
-        button = new JButton(viewPartitionAction);
+        button = new JButton(importDataAction);
+        button.setToolTipText("Import data from a file - sequences, trees or traits");
         controlPanel1.add(new JLabel("   "));
-        viewPartitionAction.setEnabled(false);
+        PanelUtils.setupComponent(button);
+        controlPanel1.add(button);
+
+        button = new JButton(removePartitionAction);
+        removePartitionAction.setEnabled(false);
+        button.setToolTipText("Remove selected data partition");
+        controlPanel1.add(new JLabel("   "));
         PanelUtils.setupComponent(button);
         controlPanel1.add(button);
 
@@ -212,6 +223,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
         button = new JButton(createTreePartitionAction);
         //button.setEnabled(false);
         controlPanel1.add(new JLabel("   "));
+        PanelUtils.setupComponent(button);
+        controlPanel1.add(button);
+
+        button = new JButton(viewPartitionAction);
+        controlPanel1.add(new JLabel("   "));
+        viewPartitionAction.setEnabled(false);
         PanelUtils.setupComponent(button);
         controlPanel1.add(button);
 
@@ -340,7 +357,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         unlinkTreesAction.setEnabled(canUnlink);
         linkTreesAction.setEnabled(canLink);
 
-        viewPartitionAction.setEnabled(options.dataPartitions.size() > 0 && hasSelection);
+        removePartitionAction.setEnabled(!options.dataPartitions.isEmpty() && hasSelection);
+        viewPartitionAction.setEnabled(!options.dataPartitions.isEmpty() && hasSelection);
 
     }
 

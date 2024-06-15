@@ -91,10 +91,13 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private final JCheckBox empiricalExternalFileCheck = new JCheckBox("Read empirical trees from an external file:");
     private final JTextArea empiricalFilenameField = new JTextArea("empirical.trees");
 
-    private final JLabel empiricalTreeInfo = new JLabel("<html>" +
-            "Use trees from a specified <b>NEXUS</b> or <b>Newick</b> format data file as a set of empirical trees<br>" +
-            "to sample over. It should have the same taxon names as the data partition. <br>" +
-            "BEAST will look for the file in the current working directory or the folder containing the XML file.</html>");
+    private final JLabel empiricalTreeInfo = new JLabel(
+            "<html>" +
+                    "Specify a file from which to load the empirical trees when BEAST is run. The trees should<br>" +
+                    "have the same taxa as the loaded tree partition.<br>" +
+                    "BEAST will look for the file in the same folder as the XML file or in the current working<br>" +
+                    "directory. The file can also be specified with a relative or absolute path." +
+                    "</html>");
 
     private final RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY, "Init root height");
 
@@ -170,6 +173,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
         PanelUtils.setupComponent(empiricalExternalFileCheck);
         empiricalExternalFileCheck.addActionListener(ev -> {
+            empiricalTreeInfo.setEnabled(empiricalExternalFileCheck.isSelected());
             empiricalTreeLabel.setEnabled(empiricalExternalFileCheck.isSelected());
             empiricalFilenameField.setEnabled(empiricalExternalFileCheck.isSelected());
             this.partitionTreeModel.setUsingExternalEmpiricalTreeFile(empiricalExternalFileCheck.isSelected());
@@ -248,20 +252,23 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             thorneyBEASTPanel.addComponent(thorneyBEASTInfo);
 
             empiricalTreePanel.removeAll();
-            empiricalTreePanel.addComponent(empiricalTreeInfo);
+            empiricalTreePanel.addComponent(new JLabel( "Use the loaded trees as an empirical set to sample over."));
             TreeHolder trees = partitionTreeModel.getTreePartitionData().getTrees();
             empiricalTreePanel.addComponent(new JLabel(""));
             empiricalTreePanel.addComponent(new JLabel("<html>" +
-                    "\"" + partitionTreeModel.getName() + "\" is a set of " + trees.getTreeCount() + " trees.<br>" +
+                    "This tree partition, " + partitionTreeModel.getName() + ", is a set of " + trees.getTreeCount() + " trees.<br>" +
+                    "<br>" +
                     (trees.getTrees().size() == 1 ? "Only one tree loaded - specify file to read full tree set from:": "") +
                     "</html>"));
 
-            empiricalTreePanel.addSpanningComponent(empiricalExternalFileCheck);
+            empiricalTreePanel.addComponent(empiricalExternalFileCheck);
             empiricalExternalFileCheck.setSelected(trees.getTrees().size() == 1);
 
+            empiricalTreeInfo.setEnabled(empiricalExternalFileCheck.isSelected());
             empiricalTreeLabel.setEnabled(empiricalExternalFileCheck.isSelected());
             empiricalFilenameField.setEnabled(empiricalExternalFileCheck.isSelected());
 
+            empiricalTreePanel.addComponent(empiricalTreeInfo);
             empiricalTreePanel.addComponents(empiricalTreeLabel, empiricalFilenameField);
             empiricalFilenameField.setColumns(32);
             empiricalFilenameField.setEditable(true);

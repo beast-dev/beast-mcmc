@@ -1117,24 +1117,17 @@ public class BeautiOptions extends ModelOptions {
 
     // ++++++++++++++++++++ tree partition +++++++++++++++++
 
-    public int createPartitionForTree(TreeHolder tree, String partitionName) {
+    public int createPartitionForTree(TreeHolder trees, String partitionName) {
         int selRow = -1;
 
-        TreePartitionData partition = new TreePartitionData(this, partitionName, tree.getFileName(), tree.getTrees().get(0));
+        TreePartitionData partition = new TreePartitionData(this, partitionName, trees.getFileName(), trees);
         dataPartitions.add(partition);
         selRow = dataPartitions.size() - 1;
 
-
-//        if (partition.getPartitionSubstitutionModel() == null) {
-//            PartitionSubstitutionModel substModel = new PartitionSubstitutionModel(this, partition.getName(),
-//                    partition);
-//            partition.setPartitionSubstitutionModel(substModel);
-//        }
-
         if (partition.getPartitionTreeModel() == null) {
             PartitionTreeModel treeModel = new PartitionTreeModel(this, partition);
-            PartitionTreePrior ptp = new PartitionTreePrior(this, treeModel);
-            treeModel.setPartitionTreePrior(ptp);
+            PartitionTreePrior partitionTreePrior = new PartitionTreePrior(this, treeModel);
+            treeModel.setPartitionTreePrior(partitionTreePrior);
             partition.setPartitionTreeModel(treeModel);// always use 1st tree
 //            getPartitionTreeModels().get(0).addPartitionData(newTrait);
         }

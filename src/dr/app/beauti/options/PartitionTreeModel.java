@@ -65,6 +65,10 @@ public class PartitionTreeModel extends PartitionOptions {
         initModelParametersAndOpererators();
     }
 
+    public TreePartitionData getTreePartitionData() {
+        return treePartitionData;
+    }
+
     public PartitionTreeModel(BeautiOptions options, TreePartitionData treePartitionData) {
         super(options, treePartitionData.getName());
 

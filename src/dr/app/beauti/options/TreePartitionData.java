@@ -20,10 +20,10 @@ import dr.evolution.util.TaxonList;
  * @author Andrew Rambaut
  */
 public class TreePartitionData extends AbstractPartitionData {
-    public TreePartitionData(BeautiOptions options, String name, String fileName, Tree tree) {
+    public TreePartitionData(BeautiOptions options, String name, String fileName, TreeHolder trees) {
         super(options, name, fileName);
 
-        this.tree = tree;
+        this.trees = trees;
     }
 
     @Override
@@ -33,7 +33,7 @@ public class TreePartitionData extends AbstractPartitionData {
 
     @Override
     public TaxonList getTaxonList() {
-        return tree;
+        return trees.getTrees().get(0);
     }
 
     @Override
@@ -56,5 +56,14 @@ public class TreePartitionData extends AbstractPartitionData {
         return TreeDataType.INSTANCE.getDescription();
     }
 
-    private final Tree tree;
+    public TreeHolder getTrees() {
+        return trees;
+    }
+
+    public int getTreeCount() {
+        return trees.getTreeCount();
+    }
+
+
+    private final TreeHolder trees;
 }

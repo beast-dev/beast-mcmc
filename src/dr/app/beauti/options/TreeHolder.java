@@ -42,6 +42,10 @@ public class TreeHolder {
         return fileName;
     }
 
+    public int getTreeCount() {
+        return treeCount;
+    }
+
     @Override
     public String toString() {
         return name;

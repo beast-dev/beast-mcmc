@@ -367,12 +367,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         modelsChanged();
 
-        boolean taxaAvailable = options.taxonList != null && options.taxonList.getTaxonCount() > 0;
         boolean traitAvailable = options.traits != null && options.traits.size() > 0;
         boolean treePartition = !options.userTrees.isEmpty();
 
-        //createTraitPartitionAction.setEnabled(traitAvailable);
-        createTraitPartitionAction.setEnabled(true);
+        createTraitPartitionAction.setEnabled(traitAvailable);
         createTreePartitionAction.setEnabled(treePartition);
 
         dataTableModel.fireTableDataChanged();
@@ -423,7 +421,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     public boolean createPartitionFromTraits(List<TraitData> traits, Component parent) {
 
-        // Keep Import data for loading traits
+        // Keep "Import data" for loading traits.
+        // The Create Trait Partition button will now be inactive if no traits exist
 //        if (options.traits.isEmpty()) {
 //            boolean result = frame.doImportTraits();
 //

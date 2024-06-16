@@ -45,7 +45,6 @@ import dr.app.beauti.components.linkedparameters.LinkedParameterComponentFactory
 import dr.app.beauti.components.marginalLikelihoodEstimation.MarginalLikelihoodEstimationComponentFactory;
 import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentFactory;
 import dr.app.beauti.components.tipdatesampling.TipDateSamplingComponentFactory;
-import dr.app.beauti.datapanel.CreateBadTraitFormatDialog;
 import dr.app.beauti.datapanel.DataPanel;
 import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.generator.Generator;
@@ -172,6 +171,10 @@ public class BeautiFrame extends DocumentFrame {
                 setStatusMessage();
             }
         });
+    }
+
+    public DataPanel getDataPanel() {
+        return dataPanel;
     }
 
     public void initializeComponents() {
@@ -564,13 +567,8 @@ public class BeautiFrame extends DocumentFrame {
                         "Unable to read file",
                         JOptionPane.ERROR_MESSAGE);
                 return false;
-            } catch (Exception ex) {
+            } catch (ImportException ex) {
                 ex.printStackTrace(System.err);
-
-                CreateBadTraitFormatDialog dialog = new CreateBadTraitFormatDialog(this);
-                dialog.showDialog();
-
-                ex.printStackTrace();
                 return false;
             }
         } else {

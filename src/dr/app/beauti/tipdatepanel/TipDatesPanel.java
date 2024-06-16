@@ -850,7 +850,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 Date date = taxon.getDate();
                 if (date != null) {
                     heights[i] = timeScale.convertTime(date.getTimeValue(), date) - time0;
-                    taxon.setAttribute("height", heights[i]);
+                    taxon.setAttribute("_height", heights[i]);
                     if (heights[i] > options.maximumTipHeight) options.maximumTipHeight = heights[i];
                 }
             }

@@ -26,6 +26,7 @@
 package dr.app.beauti.util;
 
 import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.datapanel.BadTraitFormatDialog;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.options.*;
 import dr.app.util.Utils;
@@ -342,7 +343,7 @@ public class BEAUTiImporter {
         return (value.equals("?") || value.equals("NA") || value.length() == 0);
     }
 
-    public void importTraits(final File file) throws IOException, ImportException {
+    public void importTraits(final File file) throws IOException {
         List<TraitData> importedTraits = new ArrayList<TraitData>();
 
         if (options.taxonList == null) {
@@ -391,32 +392,37 @@ public class BEAUTiImporter {
                     (c == Integer.class) ? TraitData.TraitType.INTEGER : TraitData.TraitType.CONTINUOUS;
             TraitData newTrait = new TraitData(options, traitName, file.getName(), t);
 
-            if (validateTraitName(traitName)) {
+            if (frame.validateTraitName(traitName)) {
                 importedTraits.add(newTrait);
-            }
 
-            int j = 0;
-            for (final String taxonName : taxonNames) {
-                final int index = taxa.getTaxonIndex(taxonName);
-                Taxon taxon;
-                if (index >= 0) {
-                    taxon = taxa.getTaxon(index);
-                } else {
-                    taxon = new Taxon(taxonName);
-                    taxa.addTaxon(taxon);
-                }
-                if (!isMissingValue(values[j])) {
-                    taxon.setAttribute(traitName, Utils.constructFromString(c, values[j]));
-                } else {
-                    // AR - merge rather than replace existing trait values
-                    if (taxon.getAttribute(traitName) == null) {
-                        taxon.setAttribute(traitName, "?");
+                int j = 0;
+                for (final String taxonName : taxonNames) {
+                    final int index = taxa.getTaxonIndex(taxonName);
+                    Taxon taxon;
+                    if (index >= 0) {
+                        taxon = taxa.getTaxon(index);
+                    } else {
+                        taxon = new Taxon(taxonName);
+                        taxa.addTaxon(taxon);
                     }
+                    if (!isMissingValue(values[j])) {
+                        taxon.setAttribute(traitName, Utils.constructFromString(c, values[j]));
+                    } else {
+                        // AR - merge rather than replace existing trait values
+                        if (taxon.getAttribute(traitName) == null) {
+                            taxon.setAttribute(traitName, "?");
+                        }
+                    }
+                    j++;
                 }
-                j++;
             }
         }
-        setData(file.getName(), taxa, null, null, null, null, importedTraits, null, 0, true);
+        try {
+            setData(file.getName(), taxa, null, null, null, null, importedTraits, null, 0, true);
+        } catch (ImportException ie) {
+            BadTraitFormatDialog dialog = new BadTraitFormatDialog(frame);
+            dialog.showDialog();
+        }
     }
 
     public void importTaxaFromTraits(final File file) throws ImportException, IOException {
@@ -574,42 +580,6 @@ public class BEAUTiImporter {
         return true;
     }
 
-    private boolean validateTraitName(String traitName) {
-        // check that the name is valid
-        if (traitName.trim().length() == 0) {
-            Toolkit.getDefaultToolkit().beep();
-            return false;
-        }
-
-        // disallow a trait called 'date'
-        if (traitName.equalsIgnoreCase("date")) {
-            JOptionPane.showMessageDialog(frame,
-                    "This trait name has a special meaning. Use the 'Tip Date' panel\n" +
-                            " to set dates for taxa.",
-                    "Reserved trait name",
-                    JOptionPane.WARNING_MESSAGE);
-
-            return false;
-        }
-
-        // check that the trait name doesn't exist
-        if (options.traitExists(traitName)) {
-            int option = JOptionPane.showConfirmDialog(frame,
-                    "A trait of this name already exists. Do you wish to replace\n" +
-                            "it with this new trait? This may result in the loss or change\n" +
-                            "in trait values for the taxa.",
-                    "Overwrite trait?",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.WARNING_MESSAGE);
-
-            if (option == JOptionPane.NO_OPTION) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     // for Alignment
     private void setData(String fileName, TaxonList taxonList, Alignment alignment,
                          List<CharSet> charSets,
@@ -639,7 +609,7 @@ public class BEAUTiImporter {
         }
 
         boolean createTraitPartition = false;
-        if (alignment == null && trees == null && traits != null) {
+        if (alignment == null && trees == null && traits != null && !traits.isEmpty()) {
             // If only importing traits then ask if a trait-data partition should be created.
             // Doing this first in case the cancel button is pressed
             int result = JOptionPane.showConfirmDialog(this.frame, "File for importing contains traits:\nCreate a traits partition?",
@@ -673,13 +643,15 @@ public class BEAUTiImporter {
         }
 
         Set<String> attributeNames = new HashSet<>();
+
         for (Taxon taxon : taxonList) {
             if (taxon.getDate() != null) {
                 options.useTipDates = true;
             }
             for (Iterator<String> it = taxon.getAttributeNames(); it.hasNext(); ) {
                 String name = it.next();
-                if (!name.equalsIgnoreCase("Date")) {
+                if (!name.equalsIgnoreCase("Date") && !name.equals("_height")) {
+                    // "_height" is a magic value used by BEAUti
                     attributeNames.add(name);
                 }
             }
@@ -687,35 +659,38 @@ public class BEAUTiImporter {
 
         // attempt to work out the type of the trait
         for (String name : attributeNames) {
-            TraitData.TraitType type = null;
-            for (Taxon taxon : taxonList) {
-                if (taxon.getAttribute(name) != null) {
-                    String value = taxon.getAttribute(name).toString();
-                    if (value.equals("NA") || value.equals("?")) { // need to check "?" to avoid 'else' block
-                        taxon.setAttribute(name, "?");
-                    } else {
-                        try {
-                            Integer.parseInt(value);
-                            if (type == null || type == TraitData.TraitType.INTEGER) {
-                                type = TraitData.TraitType.INTEGER;
-                            }
-                        } catch (NumberFormatException e) {
+            if (!options.traitExists(name)) {
+                TraitData.TraitType type = null;
+                for (Taxon taxon : taxonList) {
+                    if (taxon.getAttribute(name) != null) {
+                        String value = taxon.getAttribute(name).toString();
+                        if (value.equals("NA") || value.equals("?")) { // need to check "?" to avoid 'else' block
+                            taxon.setAttribute(name, "?");
+                        } else {
                             try {
-                                Double.parseDouble(value);
-                                if (type == null || type == TraitData.TraitType.INTEGER || type == TraitData.TraitType.CONTINUOUS) {
-                                    type = TraitData.TraitType.CONTINUOUS;
+                                Integer.parseInt(value);
+                                if (type == null || type == TraitData.TraitType.INTEGER) {
+                                    type = TraitData.TraitType.INTEGER;
                                 }
-                            } catch (NumberFormatException e1) {
-                                type = TraitData.TraitType.DISCRETE;
+                            } catch (NumberFormatException e) {
+                                try {
+                                    Double.parseDouble(value);
+                                    if (type == null || type == TraitData.TraitType.INTEGER || type == TraitData.TraitType.CONTINUOUS) {
+                                        type = TraitData.TraitType.CONTINUOUS;
+                                    }
+                                } catch (NumberFormatException e1) {
+                                    type = TraitData.TraitType.DISCRETE;
+                                }
                             }
                         }
                     }
                 }
+                if (type == null) {
+                    type = TraitData.TraitType.DISCRETE;
+                }
+
+                options.traits.add(new TraitData(options, name, fileName, type));
             }
-            if (type == null) {
-                type = TraitData.TraitType.DISCRETE;
-            }
-            options.traits.add(new TraitData(options, name, fileName, type));
         }
 
         addTaxonList(taxonList);
@@ -733,7 +708,7 @@ public class BEAUTiImporter {
         }
 
         if (createTraitPartition) {
-            options.createPartitionForTraits(fileNameStem, traits);
+            frame.getDataPanel().createPartitionFromTraits(null, fileNameStem, frame);
         }
     }
 

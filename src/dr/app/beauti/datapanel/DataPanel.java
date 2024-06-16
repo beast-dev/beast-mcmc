@@ -99,7 +99,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     LinkClockModelDialog selectClockDialog = null;
     LinkTreeModelDialog selectTreeDialog = null;
 
-    SelectTraitDialog selectTraitDialog = null;
+    CreateTraitPartitionDialog selectTraitDialog = null;
     CreateTreePartitionDialog createTreeDialog = null;
     BeautiFrame frame = null;
 
@@ -419,72 +419,75 @@ public class DataPanel extends BeautiPanel implements Exportable {
         dataTable.selectAll();
     }
 
-    public boolean createPartitionFromTraits(List<TraitData> traits, Component parent) {
-
-        // Keep "Import data" for loading traits.
-        // The Create Trait Partition button will now be inactive if no traits exist
-//        if (options.traits.isEmpty()) {
-//            boolean result = frame.doImportTraits();
-//
-//            if (!result) {
-//                return false;
-//            }
-//        }
+    public boolean createPartitionFromTraits(List<TraitData> selectedTraits, String partitionName, Component parent) {
 
         if (selectTraitDialog == null) {
-            selectTraitDialog = new SelectTraitDialog(frame);
+            selectTraitDialog = new CreateTraitPartitionDialog(frame);
         }
 
-        boolean alreadySelected = false;
-        if (traits == null || traits.isEmpty()) {
-            int result = selectTraitDialog.showDialog(options.traits, null, this, true);
-            alreadySelected = true;
-            if (result != JOptionPane.CANCEL_OPTION) {
-                traits = selectTraitDialog.getTraits();
+        List<TraitData> traits = (selectedTraits == null ? options.traits : selectedTraits);
+        boolean selectTraits = selectedTraits == null;
 
-            } else {
+        String name = partitionName;
+
+        boolean done = false;
+        while (!done) {
+            int result = selectTraitDialog.showDialog(traits, name, this, selectTraits);
+            if (result == JOptionPane.CANCEL_OPTION) {
                 return false;
             }
-        }
 
-        String name;
+            if (!checkSelectedTraits(selectTraitDialog.getTraits())) {
+                JOptionPane.showMessageDialog(parent, "You can't mix discrete and continuous traits when creating partition(s).", "Mixed Trait Types", JOptionPane.ERROR_MESSAGE);
+                continue;
+            }
 
-        if (traits.size() > 1 && !selectTraitDialog.getForceIndependent()) {
-            // a set of traits have been passed to the function
-            int result;
-            if (alreadySelected && selectTraitDialog.getMakeCopy()) { //selectTraitDialog should not allow an empty name
+            if (selectTraitDialog.getRenamePartition()) {
                 name = selectTraitDialog.getName();
-            } else {
-                result = selectTraitDialog.showDialog(traits, null, this, false);
-                name = selectTraitDialog.getName();
-
-                if (result == JOptionPane.CANCEL_OPTION) {
-                    return false;
+                if (name.trim().isEmpty()) {
+                    continue;
                 }
             }
-
-        } else {
-            name = traits.get(0).getName();
-            if (selectTraitDialog.getMakeCopy()) {
-                name = selectTraitDialog.getName();
+            if (options.hasPartitionData(name)) {
+                JOptionPane.showMessageDialog(this, "A partition with this name already exists.\nProvide a new name.",
+                        "Duplicate partition name",
+                        JOptionPane.ERROR_MESSAGE);
+                continue;
             }
+
+            selectedTraits = selectTraitDialog.getTraits();
+            done = true;
         }
 
-        boolean validSelection = checkSelectedTraits(traits);
-
-        if (!validSelection) {
-            JOptionPane.showMessageDialog(parent, "Don't mix discrete and continuous traits when creating partition(s).", "Mixed Trait Types", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
+//        if (selectedTraits.size() > 1 && !selectTraitDialog.getForceIndependent()) {
+//            // a set of traits have been passed to the function
+//            int result;
+//            if (alreadySelected && selectTraitDialog.getMakeCopy()) { //selectTraitDialog should not allow an empty name
+//                name = selectTraitDialog.getName();
+//            } else {
+//                result = selectTraitDialog.showDialog(selectedTraits, partitionName, this, false);
+//                name = selectTraitDialog.getName();
+//
+//                if (result == JOptionPane.CANCEL_OPTION) {
+//                    return false;
+//                }
+//            }
+//
+//        } else {
+//            name = selectedTraits.get(0).getName();
+//            if (selectTraitDialog.getMakeCopy()) {
+//                name = selectTraitDialog.getName();
+//            }
+//        }
 
         int minRow = -1;
         int maxRow;
 
-        if (traits.get(0).getTraitType() == TraitData.TraitType.DISCRETE || selectTraitDialog.getForceIndependent()) {
+        if (selectedTraits.get(0).getTraitType() == TraitData.TraitType.DISCRETE || selectTraitDialog.getForceIndependent()) {
 
-            for (int i = 0; i < traits.size(); i++) {
+            for (int i = 0; i < selectedTraits.size(); i++) {
 
-                TraitData trait = traits.get(i);
+                TraitData trait = selectedTraits.get(i);
 
                 int selRow = options.createPartitionForTraits(trait.getName(), trait);
 
@@ -493,9 +496,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 }
             }
 
-            maxRow = minRow + traits.size() - 1;
+            maxRow = minRow + selectedTraits.size() - 1;
         } else {
-            minRow = options.createPartitionForTraits(name, traits);
+            minRow = options.createPartitionForTraits(name, selectedTraits);
             maxRow = minRow;
 
         }
@@ -1045,7 +1048,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            createPartitionFromTraits(null, DataPanel.this);
+            createPartitionFromTraits(null, null, DataPanel.this);
 
             for (AbstractPartitionData partition : options.dataPartitions) {
 

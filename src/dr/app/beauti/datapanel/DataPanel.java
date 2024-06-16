@@ -40,7 +40,6 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.DummyDataType;
 import dr.evolution.util.Taxa;
 import jam.framework.Exportable;
-import jam.panels.ActionPanel;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -422,23 +421,23 @@ public class DataPanel extends BeautiPanel implements Exportable {
         dataTable.selectAll();
     }
 
-    public boolean createFromTraits(List<TraitData> traits, Component parent) {
+    public boolean createPartitionFromTraits(List<TraitData> traits, Component parent) {
 
-        if (options.traits.size() == 0) {
-            Boolean result = frame.doImportTraits();
-
-            if (result == false) {
-                return false;
-            }
-        }
-
+        // Keep Import data for loading traits
+//        if (options.traits.isEmpty()) {
+//            boolean result = frame.doImportTraits();
+//
+//            if (!result) {
+//                return false;
+//            }
+//        }
 
         if (selectTraitDialog == null) {
             selectTraitDialog = new SelectTraitDialog(frame);
         }
 
         boolean alreadySelected = false;
-        if (traits == null || traits.size() == 0) {
+        if (traits == null || traits.isEmpty()) {
             int result = selectTraitDialog.showDialog(options.traits, null, this, true);
             alreadySelected = true;
             if (result != JOptionPane.CANCEL_OPTION) {
@@ -471,7 +470,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 name = selectTraitDialog.getName();
             }
         }
-
 
         boolean validSelection = checkSelectedTraits(traits);
 
@@ -538,7 +536,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         return true;
     }
 
-    public boolean createFromTree(Component parent) {
+    public void createPartitionFromTrees() {
 
         if (options.userTrees.isEmpty()) {
             throw new UnsupportedOperationException("No trees loaded - this button should be disabled");
@@ -572,7 +570,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 selRow = options.createPartitionForTree(tree, name);
                 done = true;
             } else {
-                return false;
+                return;
             }
         }
 
@@ -588,7 +586,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
         fireDataChanged();
         repaint();
 
-        return true;
     }
 
     public void unlinkSubstitutionModels() {
@@ -1049,7 +1046,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            createFromTraits(null, DataPanel.this);
+            createPartitionFromTraits(null, DataPanel.this);
 
             for (AbstractPartitionData partition : options.dataPartitions) {
 
@@ -1081,7 +1078,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            createFromTree(DataPanel.this);
+            createPartitionFromTrees();
 
             selectDataPanel();
         }

@@ -101,11 +101,11 @@ public class BEAUTiImporter {
                 importBEASTFile(file);
             } else if ((line != null && line.startsWith("("))) {
                 importNewickFile(file);
-//            } else {
-//                // assume it is a tab-delimited traits file and see if that works...
-//                importTraits(file);
             } else {
-                throw new ImportException("Unrecognized format for imported file.");
+                // assume it is a tab-delimited traits file and see if that works...
+                importTraits(file);
+//            } else {
+//                throw new ImportException("Unrecognized format for imported file.");
             }
 
         } catch (IOException e) {
@@ -342,15 +342,18 @@ public class BEAUTiImporter {
         return (value.equals("?") || value.equals("NA") || value.length() == 0);
     }
 
-    public void importTraits(final File file) throws Exception {
+    public void importTraits(final File file) throws IOException, ImportException {
         List<TraitData> importedTraits = new ArrayList<TraitData>();
+
+        if (options.taxonList == null) {
+            options.taxonList = new Taxa();
+        }
         Taxa taxa = options.taxonList;
 
         DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(file));
 
         String[] traitNames = dataTable.getColumnLabels();
         String[] taxonNames = dataTable.getRowLabels();
-
 
         for (int i = 0; i < dataTable.getColumnCount(); i++) {
             boolean warningGiven = false;
@@ -394,7 +397,6 @@ public class BEAUTiImporter {
 
             int j = 0;
             for (final String taxonName : taxonNames) {
-
                 final int index = taxa.getTaxonIndex(taxonName);
                 Taxon taxon;
                 if (index >= 0) {
@@ -636,6 +638,18 @@ public class BEAUTiImporter {
             createTreePartition = result == JOptionPane.YES_OPTION;
         }
 
+        boolean createTraitPartition = false;
+        if (alignment == null && trees == null && traits != null) {
+            // If only importing traits then ask if a trait-data partition should be created.
+            // Doing this first in case the cancel button is pressed
+            int result = JOptionPane.showConfirmDialog(this.frame, "File for importing contains traits:\nCreate a traits partition?",
+                    "Importing Traits", JOptionPane.YES_NO_CANCEL_OPTION);
+            if (result == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+            createTraitPartition = result == JOptionPane.YES_OPTION;
+        }
+
         if (alignment != null) {
             // check the alignment before adding it...
             if (alignment.getSiteCount() == 0) {
@@ -675,23 +689,25 @@ public class BEAUTiImporter {
         for (String name : attributeNames) {
             TraitData.TraitType type = null;
             for (Taxon taxon : taxonList) {
-                String value = taxon.getAttribute(name).toString();
-                if (value.equals("NA") || value.equals("?")) { // need to check "?" to avoid 'else' block
-                    taxon.setAttribute(name, "?");
-                } else {
-                    try {
-                        Integer.parseInt(value);
-                        if (type == null || type == TraitData.TraitType.INTEGER) {
-                            type = TraitData.TraitType.INTEGER;
-                        }
-                    } catch (NumberFormatException e) {
+                if (taxon.getAttribute(name) != null) {
+                    String value = taxon.getAttribute(name).toString();
+                    if (value.equals("NA") || value.equals("?")) { // need to check "?" to avoid 'else' block
+                        taxon.setAttribute(name, "?");
+                    } else {
                         try {
-                            Double.parseDouble(value);
-                            if (type == null || type == TraitData.TraitType.INTEGER || type == TraitData.TraitType.CONTINUOUS) {
-                                type = TraitData.TraitType.CONTINUOUS;
+                            Integer.parseInt(value);
+                            if (type == null || type == TraitData.TraitType.INTEGER) {
+                                type = TraitData.TraitType.INTEGER;
                             }
-                        } catch (NumberFormatException e1) {
-                            type = TraitData.TraitType.DISCRETE;
+                        } catch (NumberFormatException e) {
+                            try {
+                                Double.parseDouble(value);
+                                if (type == null || type == TraitData.TraitType.INTEGER || type == TraitData.TraitType.CONTINUOUS) {
+                                    type = TraitData.TraitType.CONTINUOUS;
+                                }
+                            } catch (NumberFormatException e1) {
+                                type = TraitData.TraitType.DISCRETE;
+                            }
                         }
                     }
                 }
@@ -714,6 +730,10 @@ public class BEAUTiImporter {
 
         if (createTreePartition) {
             options.createPartitionForTree(treeHolder, fileNameStem);
+        }
+
+        if (createTraitPartition) {
+            options.createPartitionForTraits(fileNameStem, traits);
         }
     }
 
@@ -781,18 +801,19 @@ public class BEAUTiImporter {
                               List<CharSet> charSets,
                               PartitionSubstitutionModel model,
                               String fileName, String fileNameStem) {
-        if (alignment != null) {
-            List<AbstractPartitionData> partitions = new ArrayList<AbstractPartitionData>();
-            if (charSets != null && charSets.size() > 0) {
-                for (CharSet charSet : charSets) {
-                    partitions.add(new PartitionData(options, charSet.name, fileName,
-                            charSet.constructCharSetAlignment(alignment)));
-                }
-            } else {
-                partitions.add(new PartitionData(options, fileNameStem, fileName, alignment));
-            }
-            createPartitionFramework(model, partitions);
+        if (alignment == null) {
+            return;
         }
+        List<AbstractPartitionData> partitions = new ArrayList<AbstractPartitionData>();
+        if (charSets != null && charSets.size() > 0) {
+            for (CharSet charSet : charSets) {
+                partitions.add(new PartitionData(options, charSet.name, fileName,
+                        charSet.constructCharSetAlignment(alignment)));
+            }
+        } else {
+            partitions.add(new PartitionData(options, fileNameStem, fileName, alignment));
+        }
+        createPartitionFramework(model, partitions);
     }
 
     private void addPatterns(Patterns patterns, PartitionSubstitutionModel model, String fileName) {
@@ -842,7 +863,7 @@ public class BEAUTiImporter {
             if (model != null) {
                 setSubstModel(partition, model);
 
-                setClockAndTree(partition);//TODO Cannot load Clock Model and Tree Model from BEAST file yet
+                options.setClockAndTree(partition);//TODO Cannot load Clock Model and Tree Model from BEAST file yet
 
             } else {// only this works
                 if (options.getPartitionSubstitutionModels(partition.getDataType()).isEmpty()) {// use same substitution model in beginning
@@ -855,7 +876,7 @@ public class BEAUTiImporter {
                     setSubstModel(partition, psm);
                 }
 
-                setClockAndTree(partition);
+                options.setClockAndTree(partition);
             }
         }
 
@@ -863,36 +884,36 @@ public class BEAUTiImporter {
 //        options.clockModelOptions.initClockModelGroup();
     }
 
-    private void setClockAndTree(AbstractPartitionData partition) {
-
-        PartitionTreeModel treeModel;
-
-        // use same tree model and same tree prior in beginning
-        if (options.getPartitionTreeModels().isEmpty()) {
-            // PartitionTreeModel based on PartitionData
-            treeModel = new PartitionTreeModel(options, DEFAULT_NAME);
-            partition.setPartitionTreeModel(treeModel);
-
-            // PartitionTreePrior always based on PartitionTreeModel
-            PartitionTreePrior ptp = new PartitionTreePrior(options, treeModel);
-            treeModel.setPartitionTreePrior(ptp);
-        } else { //if (options.getPartitionTreeModels() != null) {
-//                        && options.getPartitionTreeModels().size() == 1) {
-            treeModel = options.getPartitionTreeModels().get(0); // same tree model,
-            partition.setPartitionTreeModel(treeModel); // if same tree model, therefore same prior
-        }
-
-        // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
-        if (options.getPartitionClockModels(partition.getDataType()).isEmpty()) {
-            // PartitionClockModel based on PartitionData
-            PartitionClockModel pcm = new PartitionClockModel(options, DEFAULT_NAME, partition, treeModel);
-            partition.setPartitionClockModel(pcm);
-        } else { //if (options.getPartitionClockModels() != null) {
-//                        && options.getPartitionClockModels().size() == 1) {
-            PartitionClockModel pcm = options.getPartitionClockModels(partition.getDataType()).get(0);
-            partition.setPartitionClockModel(pcm);
-        }
-    }
+//    private void setClockAndTree(AbstractPartitionData partition) {
+//
+//        PartitionTreeModel treeModel;
+//
+//        // use same tree model and same tree prior in beginning
+//        if (options.getPartitionTreeModels().isEmpty()) {
+//            // PartitionTreeModel based on PartitionData
+//            treeModel = new PartitionTreeModel(options, DEFAULT_NAME);
+//            partition.setPartitionTreeModel(treeModel);
+//
+//            // PartitionTreePrior always based on PartitionTreeModel
+//            PartitionTreePrior ptp = new PartitionTreePrior(options, treeModel);
+//            treeModel.setPartitionTreePrior(ptp);
+//        } else { //if (options.getPartitionTreeModels() != null) {
+////                        && options.getPartitionTreeModels().size() == 1) {
+//            treeModel = options.getPartitionTreeModels().get(0); // same tree model,
+//            partition.setPartitionTreeModel(treeModel); // if same tree model, therefore same prior
+//        }
+//
+//        // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
+//        if (options.getPartitionClockModels(partition.getDataType()).isEmpty()) {
+//            // PartitionClockModel based on PartitionData
+//            PartitionClockModel pcm = new PartitionClockModel(options, DEFAULT_NAME, partition, treeModel);
+//            partition.setPartitionClockModel(pcm);
+//        } else { //if (options.getPartitionClockModels() != null) {
+////                        && options.getPartitionClockModels().size() == 1) {
+//            PartitionClockModel pcm = options.getPartitionClockModels(partition.getDataType()).get(0);
+//            partition.setPartitionClockModel(pcm);
+//        }
+//    }
 
     private void setSubstModel(AbstractPartitionData partition, PartitionSubstitutionModel psm) {
         partition.setPartitionSubstitutionModel(psm);

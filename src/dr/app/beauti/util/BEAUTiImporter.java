@@ -476,7 +476,6 @@ public class BEAUTiImporter {
 
     public boolean importPredictors(final File file, final TraitData trait) throws ImportException, IOException {
         List<Predictor> importedPredictors = new ArrayList<Predictor>();
-//        Taxa taxa = options.taxonList;
 
         // This is the order that states will be in...
         Set<String> states = trait.getStatesOfTrait();

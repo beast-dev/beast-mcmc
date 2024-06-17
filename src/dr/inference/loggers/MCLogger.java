@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
  */
 public class MCLogger implements Logger {
 
-    private static final int PERFORMANCE_SAMPLE_SIZE = 50;
+    private static final int PERFORMANCE_SAMPLE_SIZE = 100;
     /**
      * Output performance stats in this log
      */

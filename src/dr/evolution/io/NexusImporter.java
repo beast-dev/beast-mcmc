@@ -133,7 +133,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
      */
     public NexusBlock findNextBlock() throws IOException {
         findToken("BEGIN", true);
-        String blockName = readToken(";");
+        String blockName = readToken(";", true);
         return findBlockName(blockName);
     }
 
@@ -316,14 +316,14 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
     public int countTrees() throws IOException {
         int treeCount = 0;
         try {
-            String token = readToken(";");
+            String line = readLine(true).trim().toUpperCase();
             while (true) {
-                if (token.equalsIgnoreCase("UTREE") || token.equalsIgnoreCase("TREE")) {
+                if (line.startsWith("UTREE") || line.startsWith("TREE")) {
                     treeCount += 1;
-                } else if (token.equalsIgnoreCase("ENDBLOCK") || token.equalsIgnoreCase("END")) {
+                } else if (line.startsWith("ENDBLOCK") || line.startsWith("END")) {
                     return treeCount;
                 }
-                token = readToken(";");
+                line = readLine(true).trim().toUpperCase();
             }
         } catch (EOFException ignored) {
         }
@@ -405,7 +405,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
         do {
 
-            token = readToken();
+            token = readToken("", true);
 
             if ((ignoreCase && token.equalsIgnoreCase(query)) || token.equals(query)) {
                 found = true;

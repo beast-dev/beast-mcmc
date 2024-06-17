@@ -279,7 +279,7 @@ public class PartitionTreeModel extends PartitionOptions {
     }
 
     public boolean isUsingEmpiricalTrees() {
-        return treeAsDataType == TreeAsDataType.EMPRICAL_TREES;
+        return treePartitionData != null && treeAsDataType == TreeAsDataType.EMPRICAL_TREES;
     }
 
     public void setUsingExternalEmpiricalTreeFile(boolean isUsingExternalEmpiricalTreeFile) {

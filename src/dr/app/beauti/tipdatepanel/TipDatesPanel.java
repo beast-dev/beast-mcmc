@@ -96,9 +96,9 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     //    JComboBox tipDateSamplingCombo = new JComboBox( TipDateSamplingType.values() );
     private JComboBox tipDateSamplingCombo = new JComboBox(new TipDateSamplingType[] {
             TipDateSamplingType.NO_SAMPLING,
-            TipDateSamplingType.SAMPLE_INDIVIDUALLY,
+            TipDateSamplingType.SAMPLE_PRECISION,
+            TipDateSamplingType.SAMPLE_INDIVIDUALLY
 //            TipDateSamplingType.SAMPLE_JOINT,
-            TipDateSamplingType.SAMPLE_PRECISION
     });
     private JComboBox tipDateTaxonSetCombo = new JComboBox();
 
@@ -368,7 +368,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
             options.originDate = null;
         }
         if ( options.originDate != null) {
-            originDateLabel.setText(" date value: " + Double.toString(options.originDate.getTimeValue()));
+            originDateLabel.setText(" date value: " + options.originDate.getTimeValue());
         } else {
             originDateLabel.setText(" unable to parse date");
         }
@@ -381,7 +381,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
             }
         }
 
-        dataTableModel.fireTableDataChanged();
+        setupTable();
         frame.setDirty();
     }
 
@@ -402,8 +402,6 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         calculateHeights();
         usingTipDates.setSelected(options.useTipDates);
 
-        dataTableModel.fireTableDataChanged();
-
         Object item = tipDateTaxonSetCombo.getSelectedItem();
 
         tipDateTaxonSetCombo.removeAllItems();
@@ -420,6 +418,23 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     }
 
     private void setupTable() {
+        boolean hasVariableUncertainty = false;
+        double uncertainty = -1.0;
+
+        if (options.taxonList != null) {
+            for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+                Date date = options.taxonList.getTaxon(i).getDate();
+                if (uncertainty < 0.0) {
+                    uncertainty = date.getUncertainty();
+                } else if (date.getUncertainty() != uncertainty) {
+                    hasVariableUncertainty = true;
+                }
+            }
+            if (hasVariableUncertainty && tipDateSamplingCombo.getSelectedItem().equals(TipDateSamplingType.NO_SAMPLING)) {
+                tipDateSamplingCombo.setSelectedItem(TipDateSamplingType.SAMPLE_PRECISION);
+            }
+        }
+
         dataTableModel.fireTableDataChanged();
     }
 
@@ -495,7 +510,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
             // adjust the dates to the current timescale...
             timeScaleChanged();
 
-            dataTableModel.fireTableDataChanged();
+            setupTable();
         } while (result < 0);
     }
 
@@ -546,7 +561,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 }
             }
 
-            dataTableModel.fireTableDataChanged();
+            setupTable();
         } while (result < 0);
     }
 
@@ -563,7 +578,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         // adjust the dates to the current timescale...
         timeScaleChanged();
 
-        dataTableModel.fireTableDataChanged();
+        setupTable();
     }
 
     private void guessDates() {
@@ -607,7 +622,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         // adjust the dates to the current timescale...
         timeScaleChanged();
 
-        dataTableModel.fireTableDataChanged();
+        setupTable();
     }
 
     private void importDates() {
@@ -726,7 +741,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         // adjust the dates to the current timescale...
         timeScaleChanged();
 
-        dataTableModel.fireTableDataChanged();
+        setupTable();
     }
 
     public class SetDatesAction extends AbstractAction {
@@ -835,7 +850,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 Date date = taxon.getDate();
                 if (date != null) {
                     heights[i] = timeScale.convertTime(date.getTimeValue(), date) - time0;
-                    taxon.setAttribute("height", heights[i]);
+                    taxon.setAttribute("_height", heights[i]);
                     if (heights[i] > options.maximumTipHeight) options.maximumTipHeight = heights[i];
                 }
             }

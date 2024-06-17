@@ -33,7 +33,6 @@ import dr.app.beauti.components.discrete.DiscreteSubstModelType;
 import dr.app.beauti.types.*;
 import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Microsatellite;
 import dr.evolution.datatype.Nucleotides;
 
 import java.util.ArrayList;
@@ -82,10 +81,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     private boolean dolloModel = false;
 
-    private MicroSatModelType.RateProportionality ratePorportion = MicroSatModelType.RateProportionality.EQUAL_RATE;
-    private MicroSatModelType.MutationalBias mutationBias = MicroSatModelType.MutationalBias.UNBIASED;
-    private MicroSatModelType.Phase phase = MicroSatModelType.Phase.ONE_PHASE;
-    private Microsatellite microsatellite = null;
     private boolean isLatitudeLongitude = false;
     private boolean isIndependent = false;
     private double jitterWindow = 0.0;
@@ -151,12 +146,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         unlinkedFrequencyModel = source.unlinkedFrequencyModel;
 
         dolloModel = source.dolloModel;
-
-        ratePorportion = source.ratePorportion;
-        mutationBias = source.mutationBias;
-        phase = source.phase;
-
-        microsatellite = source.microsatellite;
 
         initModelParametersAndOpererators();
     }
@@ -390,26 +379,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         createScaleOperator("bcov.s", demoTuning, substWeights);
         createOperator("hfrequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
-        //=============== microsat ======================
-        createParameterGammaPrior("propLinear", "Proportionality linear function",
-                PriorScaleType.NONE, 0.5, 1.0, 1.0, false, true);
-        createParameterNormalPrior("biasConst", "Constant bias", PriorScaleType.NONE,
-                0.0, 0.0, 10.0, 0.0, true);
-        createParameterNormalPrior("biasLinear", "Linear bias", PriorScaleType.NONE,
-                0.0, 0.0, 10.0, 0.0, true);
-        createZeroOneParameterUniformPrior("geomDist", "The success probability of geometric distribution", 0.1, true);
-        createZeroOneParameterUniformPrior("onePhaseProb", "A probability of geomDist being the last step of series", 1.0, true);
-
-        createScaleOperator("propLinear", demoTuning, substWeights);
-//        createOperator("deltaBiasConst", "deltaBiasConst", "Delta exchange on constant bias", "biasConst",
-//                OperatorType.DELTA_EXCHANGE, 0.001, 1.6);
-        createOperator("randomWalkBiasConst", "randomWalkBiasConst", "Random walk on constant bias", "biasConst",
-                OperatorType.RANDOM_WALK, 0.01, 2.0);
-        createOperator("randomWalkBiasLinear", "randomWalkBiasLinear", "Random walk on linear bias", "biasLinear",
-                OperatorType.RANDOM_WALK, 0.001, 2.0);
-        createOperator("randomWalkGeom", "randomWalkGeom", "Random walk on geomDist", "geomDist",
-                OperatorType.RANDOM_WALK, 0.01, 2.0);
-
     }
 
     ////////////////////////////////////////////////////////////////
@@ -551,32 +520,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
             case DataType.CONTINUOUS:
                 // This model is controlled by ContinuousTraitComponentOptions
-                break;
-
-            case DataType.MICRO_SAT:
-                if (ratePorportion == MicroSatModelType.RateProportionality.EQUAL_RATE) {
-
-                } else if (ratePorportion == MicroSatModelType.RateProportionality.PROPORTIONAL_RATE) {
-                    params.add(getParameter("propLinear"));
-                } else if (ratePorportion == MicroSatModelType.RateProportionality.ASYM_QUAD) {
-
-                }
-                if (mutationBias == MicroSatModelType.MutationalBias.UNBIASED) {
-
-                } else if (mutationBias == MicroSatModelType.MutationalBias.CONSTANT_BIAS) {
-                    params.add(getParameter("biasConst"));
-                } else if (mutationBias == MicroSatModelType.MutationalBias.LINEAR_BIAS) {
-                    params.add(getParameter("biasConst"));
-                    params.add(getParameter("biasLinear"));
-                }
-                if (phase == MicroSatModelType.Phase.ONE_PHASE) {
-
-                } else if (phase == MicroSatModelType.Phase.TWO_PHASE) {
-                    params.add(getParameter("geomDist"));
-                } else if (phase == MicroSatModelType.Phase.TWO_PHASE_STAR) {
-                    params.add(getParameter("geomDist"));
-                    params.add(getParameter("onePhaseProb"));
-                }
                 break;
 
             case DataType.DUMMY:
@@ -825,32 +768,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             case DataType.CONTINUOUS:
                 break;
 
-            case DataType.MICRO_SAT:
-                if (ratePorportion == MicroSatModelType.RateProportionality.EQUAL_RATE) {
-
-                } else if (ratePorportion == MicroSatModelType.RateProportionality.PROPORTIONAL_RATE) {
-                    ops.add(getOperator("propLinear"));
-                } else if (ratePorportion == MicroSatModelType.RateProportionality.ASYM_QUAD) {
-
-                }
-                if (mutationBias == MicroSatModelType.MutationalBias.UNBIASED) {
-
-                } else if (mutationBias == MicroSatModelType.MutationalBias.CONSTANT_BIAS) {
-                    ops.add(getOperator("randomWalkBiasConst"));
-                } else if (mutationBias == MicroSatModelType.MutationalBias.LINEAR_BIAS) {
-                    ops.add(getOperator("randomWalkBiasConst"));
-                    ops.add(getOperator("randomWalkBiasLinear"));
-                }
-                if (phase == MicroSatModelType.Phase.ONE_PHASE) {
-
-                } else if (phase == MicroSatModelType.Phase.TWO_PHASE) {
-                    ops.add(getOperator("randomWalkGeom"));
-                } else if (phase == MicroSatModelType.Phase.TWO_PHASE_STAR) {
-//                    ops.add(getOperator("randomWalkGeom"));
-//                    ops.add(getOperator("onePhaseProb"));
-                }
-                break;
-
             case DataType.DUMMY:
                 //Do nothing
                 break;
@@ -1088,38 +1005,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         return extendedTraitCount;
     }
 
-    public MicroSatModelType.RateProportionality getRatePorportion() {
-        return ratePorportion;
-    }
-
-    public void setRatePorportion(MicroSatModelType.RateProportionality ratePorportion) {
-        this.ratePorportion = ratePorportion;
-    }
-
-    public MicroSatModelType.MutationalBias getMutationBias() {
-        return mutationBias;
-    }
-
-    public void setMutationBias(MicroSatModelType.MutationalBias mutationBias) {
-        this.mutationBias = mutationBias;
-    }
-
-    public MicroSatModelType.Phase getPhase() {
-        return phase;
-    }
-
-    public void setPhase(MicroSatModelType.Phase phase) {
-        this.phase = phase;
-    }
-
-    public Microsatellite getMicrosatellite() {
-        return microsatellite;
-    }
-
-    public void setMicrosatellite(Microsatellite microsatellite) {
-        this.microsatellite = microsatellite;
-    }
-
     public boolean isActivateBSSVS() {
         return discreteSubstType != DiscreteSubstModelType.GLM_SUBST && activateBSSVS;
     }
@@ -1300,12 +1185,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         unlinkedFrequencyModel = source.unlinkedFrequencyModel;
 
         dolloModel = source.dolloModel;
-
-        ratePorportion = source.ratePorportion;
-        mutationBias = source.mutationBias;
-        phase = source.phase;
-
-        microsatellite = source.microsatellite;
     }
 
     @Override

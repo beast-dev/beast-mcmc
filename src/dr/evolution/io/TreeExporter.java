@@ -27,6 +27,8 @@ package dr.evolution.io;
 
 import dr.evolution.tree.Tree;
 
+import java.util.List;
+
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
@@ -36,5 +38,5 @@ public interface TreeExporter {
 
 	void exportTree(Tree tree);
 
-	void exportTrees(Tree[] trees);
+	void exportTrees(List<Tree> trees);
 }

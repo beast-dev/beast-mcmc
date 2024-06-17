@@ -95,7 +95,7 @@ public class TreeTraitParserUtilities {
                 AttributeRule.newDoubleArrayRule(WINDOW),
                 AttributeRule.newBooleanRule(DUPLICATES, true),
                 new ElementRule(Parameter.class),
-                new ElementRule(TaxonList.class, true),
+
         }, optional);
     }
 
@@ -212,31 +212,6 @@ public class TreeTraitParserUtilities {
                     update[traitArray[i - 1].getIndex()] = true;
                     update[traitArray[i].getIndex()] = true;
                 }
-            }
-        }
-        if (taxonList != null) {
-
-            if (!(trait instanceof CompoundParameter)) {
-                throw new IllegalArgumentException("Currently unable to match taxon names with a FastMatrixParameter");
-            }
-
-            Set<String> includedTaxonNames = new HashSet<>();
-            for (int i = 0; i < taxonList.getTaxonCount(); ++i) {
-                includedTaxonNames.add(taxonList.getTaxonId(i));
-            }
-
-            CompoundParameter cParameter = (CompoundParameter) trait;
-            int offset = 0;
-            for (int i = 0; i < cParameter.getParameterCount(); ++i) {
-                String name = cParameter.getParameter(i).getParameterName();
-                if (!includedTaxonNames.contains(name)) {
-                    update[offset] = false;
-                    if (verbose) {
-                        Logger.getLogger("dr.evomodel.continuous").info(
-                                "  Excluding taxon '" + name + "' from jitter.");
-                    }
-                }
-                ++offset;
             }
         }
         for (int i = 0; i < numTraits; i++) {

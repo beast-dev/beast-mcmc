@@ -31,7 +31,7 @@ import dr.xml.*;
 
 public class AutoCorrelatedGradientWrtIncrementsParser extends AbstractXMLObjectParser {
 
-    private static final String GRADIENT = "gradientWrtIncrements";
+    public static final String GRADIENT = "gradientWrtIncrements";
 
     public String getParserName() {
         return GRADIENT;

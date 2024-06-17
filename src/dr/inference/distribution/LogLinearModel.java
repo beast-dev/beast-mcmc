@@ -34,7 +34,7 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
-public class LogLinearModel extends GeneralizedLinearModel implements LogAdditiveCtmcRateProvider {
+public class LogLinearModel extends GeneralizedLinearModel implements LogAdditiveCtmcRateProvider.Integrated {
 
     public LogLinearModel(Parameter dependentParam) {
         super(dependentParam);
@@ -51,6 +51,10 @@ public class LogLinearModel extends GeneralizedLinearModel implements LogAdditiv
             xBeta[i] = Math.exp(xBeta[i]);
         }
         return xBeta;
+    }
+
+    public Parameter getLogRateParameter() {
+        throw new RuntimeException("Not yet implemented.");
     }
 
     protected double calculateLogLikelihood(double[] beta) {

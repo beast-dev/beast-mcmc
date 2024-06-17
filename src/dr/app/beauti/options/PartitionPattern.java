@@ -34,7 +34,7 @@ import dr.evolution.util.TaxonList;
  * @author Walter Xie
  */
 public class PartitionPattern extends AbstractPartitionData {
-    private static final long serialVersionUID = 6631884346312113086L; // microsatellite
+    private static final long serialVersionUID = 6631884346312113086L;
 
     private final Patterns patterns;
 
@@ -56,6 +56,10 @@ public class PartitionPattern extends AbstractPartitionData {
     }
 
     public int getSiteCount() {
+        return 1;
+    }
+
+    public int getPatternCount() {
         return 1;
     }
 
@@ -81,10 +85,5 @@ public class PartitionPattern extends AbstractPartitionData {
             prefix += getName() + ".";
         }
         return prefix;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-        options.microsatelliteOptions.initModelParametersAndOpererators();
     }
 }

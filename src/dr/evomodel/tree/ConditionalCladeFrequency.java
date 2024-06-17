@@ -188,7 +188,7 @@ public class ConditionalCladeFrequency extends
       	  
         if (line.toUpperCase().startsWith("#NEXUS")) {
         	NexusImporter importer = new NexusImporter(reader);
-        	Tree[] trees = importer.importTrees(null);
+        	List<Tree> trees = importer.importTrees(null);
 
         	for (Tree tree : trees) {
         		referenceTrees.add(tree);

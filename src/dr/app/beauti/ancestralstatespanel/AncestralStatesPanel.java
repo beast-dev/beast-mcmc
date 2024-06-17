@@ -126,7 +126,7 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
     }
 
     private void resetPanel() {
-        if (!options.hasData()) {
+        if (options.getDataPartitionsExceptTrees().size() == 0) {
             currentPartition = null;
             optionsPanels.clear();
             optionsPanelParent.removeAll();
@@ -143,13 +143,13 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
 
         int selRow = partitionTable.getSelectedRow();
         partitionTableModel.fireTableDataChanged();
-        if (options.getDataPartitions().size() > 0) {
+        if (options.getDataPartitionsExceptTrees().size() > 0) {
             if (selRow < 0) {
                 selRow = 0;
             }
             partitionTable.getSelectionModel().setSelectionInterval(selRow, selRow);
 
-            setCurrentPartition(options.getDataPartitions().get(selRow));
+            setCurrentPartition(options.getDataPartitionsExceptTrees().get(selRow));
         }
 
         AncestralStatesOptionsPanel panel = optionsPanels.get(currentPartition);
@@ -231,8 +231,8 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
             case DataType.CONTINUOUS:
                 title = "Continuous Traits";
                 break;
-            case DataType.MICRO_SAT:
-                title = "Microsatellite";
+            case DataType.TREE:
+                title = "Tree";
                 break;
             case DataType.DUMMY:
                 title = "NA";
@@ -267,11 +267,11 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
-            return options.getDataPartitions().size();
+            return options.getDataPartitionsExceptTrees().size();
         }
 
         public Object getValueAt(int row, int col) {
-            AbstractPartitionData partition = options.getDataPartitions().get(row);
+            AbstractPartitionData partition = options.getDataPartitionsExceptTrees().get(row);
             switch (col) {
                 case 0:
                     return partition.getName();

@@ -290,7 +290,7 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
     public double transformGetLogJacobian(double[] untransformedValue) {
         double[] untransformedPositionB = new double[dimOuter];
         System.arraycopy(untransformedValue, dimInner, untransformedPositionB, 0, dimOuter);
-        return outer.getTransform().getLogJacobian(untransformedPositionB, 0, dimOuter);
+        return outer.getTransform().logJacobian(untransformedPositionB, 0, dimOuter);
     }
 
     public double[] transformupdateGradientLogDensity(double[] analyticalGradientOriginal, Parameter parameter) {

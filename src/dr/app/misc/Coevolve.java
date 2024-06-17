@@ -47,6 +47,7 @@ import dr.oldevomodel.substmodel.GeneralSubstitutionModel;
 import dr.oldevomodel.substmodel.SubstitutionModel;
 
 import java.io.*;
+import java.util.List;
 
 /**
  * @author Alexei Drummond
@@ -318,7 +319,7 @@ public class Coevolve {
     private Tree readTreeFile(String fileName) throws java.io.IOException {
 
         Alignment alignment = null;
-        Tree[] trees = null;
+        List<Tree> trees = null;
         TaxonList taxonList = null;
 
         try {
@@ -370,7 +371,7 @@ public class Coevolve {
             System.err.println("Error reading alignment: " + ime);
         }
 
-        return trees[0];
+        return trees.get(0);
     }
 
     // Main entry point

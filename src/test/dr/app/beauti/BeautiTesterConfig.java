@@ -46,6 +46,7 @@ import dr.evoxml.util.DateUnitsType;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -339,9 +340,9 @@ public class BeautiTesterConfig {
                             throw new NexusImporter.MissingBlockException("TREES block already defined");
                         }
 
-                        Tree[] trees = importer.parseTreesBlock(taxa);
-                        if (trees.length > 0) {
-                            tree = trees[0];
+                        List<Tree> trees = importer.parseTreesBlock(taxa);
+                        if (!trees.isEmpty()) {
+                            tree = trees.get(0);
                         }
 
                     } else if (block == NexusApplicationImporter.PAUP_BLOCK) {

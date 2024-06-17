@@ -125,8 +125,8 @@ public class TipDateSamplingComponentOptions implements ComponentOptions {
 
         if (parameter == null) {
             double height = 0.0;
-            if (taxon.getAttribute("height") != null) {
-                height = (Double)taxon.getAttribute("height");
+            if (taxon.getAttribute("_height") != null) {
+                height = (Double)taxon.getAttribute("_height");
             }
 
             parameter = new Parameter.Builder("age(" + taxon.getId() + ")", "sampled age of taxon, " + taxon.getId())

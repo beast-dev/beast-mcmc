@@ -131,6 +131,14 @@ public class MissingOps {
         }
     }
 
+    public static DenseMatrix64F gatherRowsAndColumns(final DenseMatrix64F source,
+                                                      final int[] rowIndices, final int[] colIndices) {
+
+        DenseMatrix64F destination = new DenseMatrix64F(rowIndices.length, colIndices.length);
+        gatherRowsAndColumns(source, destination, rowIndices, colIndices);
+        return destination;
+    }
+
     public static void copyRowsAndColumns(final DenseMatrix64F source, final DenseMatrix64F destination,
                                           final int[] rowIndices, final int[] colIndices, final boolean clear) {
         if (clear) {
@@ -668,11 +676,11 @@ public class MissingOps {
 
     private static double[] buffer = new double[16];
 
-    public static void safeWeightedAverage(final WrappedVector mi,
+    public static void safeWeightedAverage(final ReadableVector mi,
                                            final DenseMatrix64F Pi,
-                                           final WrappedVector mj,
+                                           final ReadableVector mj,
                                            final DenseMatrix64F Pj,
-                                           final WrappedVector mk,
+                                           final WritableVector mk,
                                            final DenseMatrix64F Vk,
                                            final int dimTrait) {
 //        countZeroDiagonals(Vk);

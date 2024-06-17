@@ -104,7 +104,12 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
 
         int currentModelSegment = 0;
 
-        double logL = speciationModel.processSampling(0, treeIntervals.getStartTime()); // TODO Fix for getStartTime() != 0.0
+        while (treeIntervals.getStartTime() >= modelBreakPoints[currentModelSegment]) { // TODO Maybe it's >= ?
+            ++currentModelSegment;
+            speciationModel.updateLikelihoodModelValues(currentModelSegment);
+        }
+
+        double logL = speciationModel.processSampling(currentModelSegment, treeIntervals.getStartTime()); // TODO Fix for getStartTime() != 0.0
 
         for (int i = 0; i < treeIntervals.getIntervalCount(); ++i) {
 

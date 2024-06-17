@@ -31,10 +31,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * A class for a general purpose logger.
@@ -45,6 +43,7 @@ import java.util.Set;
  */
 public class MCLogger implements Logger {
 
+    private static final int PERFORMANCE_SAMPLE_SIZE = 50;
     /**
      * Output performance stats in this log
      */
@@ -250,11 +249,22 @@ public class MCLogger implements Logger {
             }
 
             if (performanceReport) {
+                long time = System.currentTimeMillis();
+                rollingTime.add(time);
+                if (rollingTime.size() > PERFORMANCE_SAMPLE_SIZE) {
+                    rollingTime.removeFirst();
+                }
+                rollingState.add(state);
+                if (rollingState.size() > PERFORMANCE_SAMPLE_SIZE) {
+                    rollingState.removeFirst();
+                }
+
                 if (performanceReportStarted) {
+                    double hoursPerMillionStates =
+                            ((double)rollingTime.getLast() - rollingTime.getFirst()) /
+                            (3.6 * rollingState.getLast() - rollingState.getFirst());
 
-                    long time = System.currentTimeMillis();
-
-                    double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (state - startState));
+//                    double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (state - startState));
 
                     String timePerMillion = getTimePerMillion(state, hoursPerMillionStates);
                     String units = getUnits(hoursPerMillionStates, timePerMillion);
@@ -302,6 +312,9 @@ public class MCLogger implements Logger {
     private boolean performanceReportStarted = false;
     private long startTime;
     private long startState;
+
+    private Deque<Long> rollingTime = new LinkedList<>();
+    private Deque<Long> rollingState = new LinkedList<>();
 
     private final NumberFormat formatter = NumberFormat.getNumberInstance();
     public String getTimePerMillion(long state, double hoursPerMillionStates) {

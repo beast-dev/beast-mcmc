@@ -491,7 +491,7 @@ public class TreeTraceAnalysis {
         }
 
         if (trees.size() > 0) {
-            exporter.exportTrees(trees.toArray(new Tree[trees.size()]), true);
+            exporter.exportTrees(trees, true);
         }
     }
 

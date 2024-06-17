@@ -134,6 +134,7 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_SIMULATOR);
                 }
                 break;
+
             default:
                 throw new IllegalArgumentException("Unknown StartingTreeType");
 
@@ -144,11 +145,7 @@ public class InitialTreeGenerator extends Generator {
 
         switch (model.getStartingTreeType()) {
             case USER:
-                if (model.isNewick()) {
-                    writeNewickTree(model.getUserStartingTree(), writer);
-                } else {
-                    writeSimpleTree(model.getUserStartingTree(), writer);
-                }
+                writeNewickTree(model.getUserStartingTree(), writer);
                 break;
 
             case UPGMA:

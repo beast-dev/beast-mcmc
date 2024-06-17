@@ -220,8 +220,7 @@ public class DataModelImporter {
 //                            throw new MissingBlockException("TREES block already defined");
 //                        }
 
-                        Tree[] treeArray = importer.parseTreesBlock(taxa);
-                        trees.addAll(Arrays.asList(treeArray));
+                        trees.addAll(importer.parseTreesBlock(taxa));
 
                         if (taxa == null && trees.size() > 0) {
                             taxa = trees.get(0);

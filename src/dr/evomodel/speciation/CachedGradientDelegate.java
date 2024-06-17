@@ -82,6 +82,11 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
 
         int currentModelSegment = 0;
 
+        while (treeIntervals.getStartTime() >= modelBreakPoints[currentModelSegment]) { // TODO Maybe it's >= ?
+            ++currentModelSegment;
+            speciationModel.updateLikelihoodModelValues(currentModelSegment);
+        }
+
         provider.processGradientSampling(gradient, currentModelSegment, treeIntervals.getStartTime()); // TODO Fix for getStartTime() != 0.0
 
         for (int i = 0; i < treeIntervals.getIntervalCount(); ++i) {

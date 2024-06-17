@@ -33,6 +33,7 @@ import dr.evolution.tree.TreeUtils;
 import dr.matrix.Matrix;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.io.*;
 
@@ -124,9 +125,9 @@ public class PatristicDistanceMatrix extends DistanceMatrix {
 
         NexusImporter importer = new NexusImporter(new FileReader(file));
 
-        Tree[] trees = importer.importTrees(null);
+        List<Tree> trees = importer.importTrees(null);
 
-        System.out.println("Found " + trees.length + " trees.");
+        System.out.println("Found " + trees.size() + " trees.");
 
         for (Tree tree : trees) {
 

@@ -46,6 +46,7 @@ import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
 import dr.inference.markovjumps.MarkovJumpsType;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
@@ -62,7 +63,7 @@ import java.util.*;
  *         Journal of Mathematical Biology, 56, 391-412.
  */
 public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLikelihood
-        implements MarkovJumpsRegisterAcceptor, MarkovJumpsTraitProvider {
+        implements MarkovJumpsRegisterAcceptor, MarkovJumpsTraitProvider, Citable {
 
     public MarkovJumpsBeagleTreeLikelihood(PatternList patternList, MutableTreeModel treeModel,
                                            BranchModel branchModel,
@@ -184,7 +185,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                     final int registerNumber = numRegisters;
 
                     public String getTraitName() {
-                        return tag;
+                        return traitName;
                     }
 
                     public Intent getIntent() {
@@ -673,14 +674,17 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
     }
 
     @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.COUNTING_PROCESSES;
+    }
+
+    @Override
     public String getDescription() {
-        return super.getDescription() + " (first citation) with MarkovJumps inference techniques (second citation)";
+        return "MarkovJumps inference techniques";
     }
 
     public List<Citation> getCitations() {
-        List<Citation> citationList = new ArrayList<Citation>(super.getCitations());
-        citationList.add(CommonCitations.MININ_2008_COUNTING);
-        return citationList;
+        return Collections.singletonList(CommonCitations.MININ_2008_COUNTING);
     }
 
     public static final String ALL_HISTORY = "history_all";

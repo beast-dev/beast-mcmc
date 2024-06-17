@@ -1120,14 +1120,8 @@ public class BeautiOptions extends ModelOptions {
             PartitionTreePrior partitionTreePrior = new PartitionTreePrior(this, treeModel);
             treeModel.setPartitionTreePrior(partitionTreePrior);
             partition.setPartitionTreeModel(treeModel);// always use 1st tree
-//            getPartitionTreeModels().get(0).addPartitionData(newTrait);
+            treeModel.setEmpiricalTreesFilename(trees.getFileName());
         }
-
-//        if (partition.getPartitionClockModel() == null && partition.getDataType().getType() != DataType.CONTINUOUS) {
-//            // PartitionClockModel based on PartitionData
-//            PartitionClockModel pcm = new PartitionClockModel(this, partition.getName(), partition, partition.getPartitionTreeModel());
-//            partition.setPartitionClockModel(pcm);
-//        }
 
         return selRow;
     }

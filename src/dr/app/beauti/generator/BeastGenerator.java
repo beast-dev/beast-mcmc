@@ -413,6 +413,7 @@ public class BeastGenerator extends Generator {
                                 // attribute patterns which is generated next bit of this method.
                                 break;
 
+                            case DataType.TREE:
                             case DataType.DUMMY:
                                 //Do nothing
                                 break;

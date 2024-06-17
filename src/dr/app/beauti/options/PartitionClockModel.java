@@ -545,17 +545,7 @@ public class PartitionClockModel extends PartitionOptions {
         List<Operator> ops = new ArrayList<Operator>();
 
         if (options.hasData()) {
-            Operator op;
-            if (getDataType().getType() == DataType.TREE) {
-                if (getClockType() == ClockType.STRICT_CLOCK) {
-                    op = getOperator("upDownRateHeights");
-                    ops.add(op);
-                } else {
-                    throw new UnsupportedOperationException("Tree data only supports strict clock model");
-                }
-
-            } else {
-
+            if (getDataType().getType() != DataType.TREE) {
                 Operator rateOperator = getOperator("clock.rate");
                 switch (clockType) {
                     case STRICT_CLOCK:

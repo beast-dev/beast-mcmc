@@ -302,11 +302,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
         treeAsDataModelCombo.setSelectedItem(partitionTreeModel.getTreeAsDataType());
         empiricalExternalFileCheck.setSelected(partitionTreeModel.isUsingExternalEmpiricalTreeFile());
-        String empiricalFilename = "empirical.trees";
-        if (partitionTreeModel.getEmpiricalTreesFilename() != null) {
-            empiricalFilename = partitionTreeModel.getEmpiricalTreesFilename();
-        }
-        empiricalFilenameField.setText(empiricalFilename);
+        empiricalFilenameField.setText(partitionTreeModel.getEmpiricalTreesFilename());
     }
 
     public void getOptions(BeautiOptions options) {

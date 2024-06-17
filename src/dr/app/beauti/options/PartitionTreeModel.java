@@ -39,6 +39,7 @@ import java.util.List;
 public class PartitionTreeModel extends PartitionOptions {
 
     private static final long serialVersionUID = 4829401415152235625L;
+    private static final String DEFAULT_EMPIRICAL_TREES_FILENAME = "empirical.trees";
 
     private PartitionTreePrior treePrior;
 
@@ -289,6 +290,9 @@ public class PartitionTreeModel extends PartitionOptions {
     }
 
     public String getEmpiricalTreesFilename() {
+        if (empiricalTreesFilename == null || empiricalTreesFilename.isEmpty()) {
+            empiricalTreesFilename = DEFAULT_EMPIRICAL_TREES_FILENAME;
+        }
         return empiricalTreesFilename;
     }
 

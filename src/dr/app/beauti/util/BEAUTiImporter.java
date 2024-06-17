@@ -209,17 +209,17 @@ public class BEAUTiImporter {
                 }
             }
 
-            boolean importAllTrees = false;
-            if (treeCount > 1) {
+            boolean importAllTrees = true;
+            if (treeCount > 10) {
                 int result = JOptionPane.showConfirmDialog(this.frame,
                         "This file contains " + treeCount + " trees.\n" +
-                                "Do you want to import all the trees or just\n" +
-                                "the first one?",
+                                "Do you want to just import the first tree in the file (recommended)?\n" +
+                                "Choose 'No' to import all the trees.",
                         "Importing Data", JOptionPane.YES_NO_CANCEL_OPTION);
                 if (result == JOptionPane.CANCEL_OPTION) {
                     return;
                 }
-                importAllTrees = result == JOptionPane.YES_OPTION;
+                importAllTrees = result == JOptionPane.NO_OPTION;
             }
 
             // reset file for reading
@@ -449,17 +449,17 @@ public class BEAUTiImporter {
         NewickImporter importer = new NewickImporter(reader);
         int treeCount = importer.countTrees();
 
-        boolean importAllTrees = false;
-        if (treeCount > 1) {
+        boolean importAllTrees = true;
+        if (treeCount > 10) {
             int result = JOptionPane.showConfirmDialog(this.frame,
                     "This file contains " + treeCount + " trees.\n" +
-                            "Do you want to import all the trees?\n" +
-                            "Choose 'No' to just import the first tree in the file?",
+                            "Do you want to just import the first tree in the file (recommended)?\n" +
+                            "Choose 'No' to import all the trees.",
                     "Importing Data", JOptionPane.YES_NO_CANCEL_OPTION);
             if (result == JOptionPane.CANCEL_OPTION) {
                 return;
             }
-            importAllTrees = result == JOptionPane.YES_OPTION;
+            importAllTrees = result == JOptionPane.NO_OPTION;
         }
 
         // reset file after counting trees

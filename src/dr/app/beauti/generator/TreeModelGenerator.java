@@ -32,10 +32,7 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
-import dr.evomodelxml.tree.EmpiricalTreeDistributionModelParser;
-import dr.evomodelxml.tree.TMRCAStatisticParser;
-import dr.evomodelxml.tree.TreeLengthStatisticParser;
-import dr.evomodelxml.tree.TreeModelParser;
+import dr.evomodelxml.tree.*;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.UPGMATreeParser;
 import dr.inference.model.ParameterParser;
@@ -81,12 +78,12 @@ public class TreeModelGenerator extends Generator {
      *
      * @param model
      * @param writer the writer
-            <empiricalTreeDistributionModel id="treeModel" fileName="subset1.trees">
-            <taxa idref="subset1"/>
-            </empiricalTreeDistributionModel>
-            <statistic id="treeModel.currentTree" name="Current Tree">
-            <empiricalTreeDistributionModel idref="treeModel"/>
-            </statistic>
+    <empiricalTreeDistributionModel id="treeModel" fileName="subset1.trees">
+    <taxa idref="subset1"/>
+    </empiricalTreeDistributionModel>
+    <statistic id="treeModel.currentTree" name="Current Tree">
+    <empiricalTreeDistributionModel idref="treeModel"/>
+    </statistic>
      */
     void writeEmpiricalTreeModel(PartitionTreeModel model, XMLWriter writer) {
         String prefix = model.getPrefix();
@@ -112,6 +109,7 @@ public class TreeModelGenerator extends Generator {
         writer.writeIDref(EmpiricalTreeDistributionModel.EMPIRICAL_TREE_DISTRIBUTION_MODEL, treeModelName);
         writer.writeCloseTag(StatisticParser.STATISTIC);
 
+        writeTreeModelStatistics(model, writer);
     }
 
 
@@ -235,6 +233,7 @@ public class TreeModelGenerator extends Generator {
 
         writer.writeCloseTag(DefaultTreeModel.TREE_MODEL);
 
+        writeTreeModelStatistics(model, writer);
 //        if (autocorrelatedClockCount == 1) {
 //        if (count[0] == 1) {
 //            writer.writeText("");
@@ -244,6 +243,20 @@ public class TreeModelGenerator extends Generator {
 //            writer.writeIDref(ParameterParser.PARAMETER, treeModelName + "." + RateEvolutionLikelihood.ROOTRATE);
 //            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
 //        }
+    }
+
+    void writeTreeModelStatistics(PartitionTreeModel model, XMLWriter writer) {
+        String prefix = model.getPrefix();
+
+        final String treeModelName = prefix + DefaultTreeModel.TREE_MODEL; // treemodel.treeModel or treeModel
+
+        writer.writeComment("Statistic for height of the root of the tree");
+        writer.writeTag(TreeHeightStatisticParser.TREE_HEIGHT_STATISTIC,
+                new Attribute[]{
+                        new Attribute.Default<>(XMLParser.ID, prefix + "rootHeight"),
+                }, false);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelName);
+        writer.writeCloseTag(TreeHeightStatisticParser.TREE_HEIGHT_STATISTIC);
 
         writer.writeComment("Statistic for sum of the branch lengths of the tree (tree length)");
         writer.writeTag(TreeLengthStatisticParser.TREE_LENGTH_STATISTIC,

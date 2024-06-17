@@ -50,23 +50,31 @@ public class ScaleOperator extends AbstractAdaptableOperator {
     private double indicatorOnProb;
 
     public ScaleOperator(Variable variable, double scale) {
-
-        this(variable, scale, AdaptationMode.ADAPTATION_ON, 1.0);
+        this((Parameter)variable, scale, AdaptationMode.ADAPTATION_ON, 1.0);
     }
 
-    public ScaleOperator(Variable<Double> variable, double scale, AdaptationMode mode, double weight) {
+    public ScaleOperator(Parameter parameter, double scale) {
 
-        this(variable, false, 0, scale, mode, weight, null, 1.0, false);
+        this(parameter, scale, AdaptationMode.ADAPTATION_ON, 1.0);
     }
 
-    public ScaleOperator(Variable<Double> variable, boolean scaleAll, int degreesOfFreedom, double scale,
-                         AdaptationMode mode, double weight, Parameter indicator, double indicatorOnProb, boolean scaleAllInd) {
+    public ScaleOperator(Variable variable, double scale, AdaptationMode mode, double weight) {
+        this((Parameter)variable, scale, mode, weight);
+    }
+
+    public ScaleOperator(Parameter parameter, double scale, AdaptationMode mode, double weight) {
+
+        this(parameter, false, 0, scale, mode, weight, null, 1.0, false);
+    }
+
+    public ScaleOperator(Parameter parameter, boolean scaleAll, int degreesOfFreedom, double scale,
+                            AdaptationMode mode, double weight, Parameter indicator, double indicatorOnProb, boolean scaleAllInd) {
 
         super(mode);
 
         setWeight(weight);
 
-        this.variable = variable;
+        this.parameter = parameter;
         this.indicator = indicator;
         this.indicatorOnProb = indicatorOnProb;
         this.scaleAll = scaleAll;
@@ -79,12 +87,12 @@ public class ScaleOperator extends AbstractAdaptableOperator {
     /**
      * @return the parameter this operator acts on.
      */
-    public Variable getVariable() {
-        return variable;
+    public Parameter getParameter() {
+        return parameter;
     }
 
     /**
-     * change the parameter and return the hastings ratio.
+     * change the parameter and return the Hastings ratio.
      */
     public final double doOperation() {
 
@@ -92,8 +100,8 @@ public class ScaleOperator extends AbstractAdaptableOperator {
 
         double logq;
 
-        final Bounds<Double> bounds = variable.getBounds();
-        final int dim = variable.getSize();
+        final Bounds<Double> bounds = parameter.getBounds();
+        final int dim = parameter.getSize();
 
         if (scaleAllIndependently) {
             // update all dimensions independently.
@@ -104,7 +112,7 @@ public class ScaleOperator extends AbstractAdaptableOperator {
                 final double offset = bounds.getLowerLimit(i);
 
                 // scale offset by the lower bound
-                final double value = ((variable.getValue(i) - offset) * scaleOne) + offset;
+                final double value = ((parameter.getValue(i) - offset) * scaleOne) + offset;
 
                 logq -= Math.log(scaleOne);
 
@@ -113,7 +121,7 @@ public class ScaleOperator extends AbstractAdaptableOperator {
                     throw new RuntimeException("proposed value greater than upper bound");
                 }
 
-                variable.setValue(i, value);
+                parameter.setValue(i, value);
 
             }
         } else if (scaleAll) {
@@ -131,7 +139,7 @@ public class ScaleOperator extends AbstractAdaptableOperator {
             for (int i = 0; i < dim; i++) {
                 // For scale all we scale by the same factor (i.e., not relative to their individual
                 // origins).
-                variable.setValue(i, variable.getValue(i) * scale);
+                parameter.setValue(i, parameter.getValue(i) * scale);
             }
 
             if (REJECT_IF_OUT_OF_BOUNDS) {
@@ -139,16 +147,16 @@ public class ScaleOperator extends AbstractAdaptableOperator {
                 // where nodes below may bound a height) if the proposed scale will put any
                 // of the dimensions out of bounds then reject the move.
                 for (int i = 0; i < dim; i++) {
-                    if (variable.getValue(i) > variable.getBounds().getUpperLimit(i) ||
-                            variable.getValue(i) < variable.getBounds().getLowerLimit(i)) {
+                    if (parameter.getValue(i) > parameter.getBounds().getUpperLimit(i) ||
+                            parameter.getValue(i) < parameter.getBounds().getLowerLimit(i)) {
                         return Double.NEGATIVE_INFINITY;
                     }
                 }
             } else {
                 for (int i = 0; i < dim; i++) {
-                    if (variable.getValue(i) > variable.getBounds().getUpperLimit(i)) {
+                    if (parameter.getValue(i) > parameter.getBounds().getUpperLimit(i)) {
                         throw new RuntimeException("proposed value greater than upper bound");
-                    } else if (variable.getValue(i) < variable.getBounds().getLowerLimit(i)) {
+                    } else if (parameter.getValue(i) < parameter.getBounds().getLowerLimit(i)) {
                         throw new RuntimeException("proposed value less than lower bound");
                     }
                 }
@@ -191,7 +199,7 @@ public class ScaleOperator extends AbstractAdaptableOperator {
                 index = MathUtils.nextInt(dim);
             }
 
-            final double oldValue = variable.getValue(index);
+            final double oldValue = parameter.getValue(index);
             double offset = bounds.getLowerLimit(index);
 
             if (offset == Double.NEGATIVE_INFINITY) {
@@ -201,20 +209,20 @@ public class ScaleOperator extends AbstractAdaptableOperator {
             if (oldValue == 0) {
                 Logger.getLogger("dr.inference").severe("The " + ScaleOperatorParser.SCALE_OPERATOR +
                         " for " +
-                        variable.getVariableName()
+                        parameter.getVariableName()
                         + " has failed since the parameter has a value of 0.0." +
                         "\nTo fix this problem, initalize the value of " +
-                        variable.getVariableName() + " to be a positive real number"
+                        parameter.getVariableName() + " to be a positive real number"
                 );
             }
             final double newValue = ((oldValue - offset) * scale) + offset;
 
             if (newValue > bounds.getUpperLimit(index)) {
                 // if bounded then perhaps this could be reflected.
-                throw new RuntimeException("proposed value greater than upper bound: " + newValue + " (" + variable.getId() + ")");
+                throw new RuntimeException("proposed value greater than upper bound: " + newValue + " (" + parameter.getId() + ")");
             }
 
-            variable.setValue(index, newValue);
+            parameter.setValue(index, newValue);
 
             // provides a hook for subclasses
             cleanupOperation(newValue, oldValue);
@@ -235,7 +243,7 @@ public class ScaleOperator extends AbstractAdaptableOperator {
 
     //MCMCOperator INTERFACE
     public final String getOperatorName() {
-        return "scale(" + variable.getVariableName() + ")";
+        return "scale(" + parameter.getVariableName() + ")";
     }
 
     public double getAdaptableParameterValue() {
@@ -259,12 +267,12 @@ public class ScaleOperator extends AbstractAdaptableOperator {
     }
 
     public String toString() {
-        return ScaleOperatorParser.SCALE_OPERATOR + "(" + variable.getVariableName() + " [" + scaleFactor + ", " + (1.0 / scaleFactor) + "]";
+        return ScaleOperatorParser.SCALE_OPERATOR + "(" + parameter.getVariableName() + " [" + scaleFactor + ", " + (1.0 / scaleFactor) + "]";
     }
 
     //PRIVATE STUFF
 
-    private Variable<Double> variable = null;
+    private Parameter parameter = null;
     private boolean scaleAll = false;
     private boolean scaleAllIndependently = false;
     private int degreesOfFreedom = 0;

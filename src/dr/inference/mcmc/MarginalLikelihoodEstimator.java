@@ -124,8 +124,8 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
                     long time = System.currentTimeMillis();
                     double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (currentState - startState));
                     MCLogger mcLogger = (MCLogger) logger;
-                    String timePerMillion = mcLogger.getTimePerMillion(currentState, hoursPerMillionStates);
-                    String units = mcLogger.getUnits(hoursPerMillionStates, timePerMillion);
+                    String timePerMillion = mcLogger.getTimePerMillion(hoursPerMillionStates);
+                    String units = mcLogger.getUnits(hoursPerMillionStates);
                     System.out.println("Time per million: " + timePerMillion + units);
                 }
             }

@@ -262,12 +262,12 @@ public class MCLogger implements Logger {
                 if (performanceReportStarted) {
                     double hoursPerMillionStates =
                             ((double)rollingTime.getLast() - rollingTime.getFirst()) /
-                            (3.6 * rollingState.getLast() - rollingState.getFirst());
+                            (3.6 * (rollingState.getLast() - rollingState.getFirst()));
 
 //                    double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (state - startState));
 
-                    String timePerMillion = getTimePerMillion(state, hoursPerMillionStates);
-                    String units = getUnits(hoursPerMillionStates, timePerMillion);
+                    String timePerMillion = getTimePerMillion(hoursPerMillionStates);
+                    String units = getUnits(hoursPerMillionStates);
                     values[columnCount + 1] = timePerMillion + units;
 
                 } else {
@@ -317,7 +317,7 @@ public class MCLogger implements Logger {
     private Deque<Long> rollingState = new LinkedList<>();
 
     private final NumberFormat formatter = NumberFormat.getNumberInstance();
-    public String getTimePerMillion(long state, double hoursPerMillionStates) {
+    public String getTimePerMillion(double hoursPerMillionStates) {
 
         String timePerMillion = formatter.format(hoursPerMillionStates);
         if (hoursPerMillionStates < 0.1) {
@@ -331,7 +331,7 @@ public class MCLogger implements Logger {
         return timePerMillion;
     }
 
-    public String getUnits(double hoursPerMillionStates, String timePerMillion) {
+    public String getUnits(double hoursPerMillionStates) {
         String units = " hours/million states";
         if (hoursPerMillionStates < 0.1) {
             double minutesPerMillionStates = hoursPerMillionStates * 60;

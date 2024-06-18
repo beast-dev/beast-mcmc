@@ -55,6 +55,7 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
     public static final String FREQUENCY_MODEL = "frequencyModel";
     public static final String NORMALIZE = "normalize";
     private static final String COMPRESS = "compress";
+    private static final String ALLOW_NOT_NORMALIZED = "allowNotNormalized";
 
     private static final String COMPOSITION = "composition";
     private static final String FREQ_3x4 = "3x4";
@@ -178,6 +179,8 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
             }
         }
 
+        boolean checkNormalization = !xo.getAttribute(ALLOW_NOT_NORMALIZED, false);
+
         NumberFormat format = NumberFormat.getNumberInstance();
         format.setMaximumFractionDigits(5);
 
@@ -198,7 +201,7 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
             return new CodonFromNucleotideFrequencyModel((Codons) dataType, nucleotideFrequencyModel, codonFrequencies);
 
         } else {
-            return new FrequencyModel(dataType, freqsParam);
+            return new FrequencyModel(dataType, freqsParam, checkNormalization);
         }
     }// END: parseXMLObject
 
@@ -322,6 +325,8 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
 
             new ElementRule(FREQUENCIES, new XMLSyntaxRule[]{new ElementRule(
                     Parameter.class)}),
+
+            AttributeRule.newBooleanRule(ALLOW_NOT_NORMALIZED, true),
     };
 
     public static final String STOP_CODONS[] = new String[] { "TAA", "TAG", "TGA" };

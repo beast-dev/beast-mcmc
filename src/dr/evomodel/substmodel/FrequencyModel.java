@@ -60,12 +60,16 @@ public class FrequencyModel extends AbstractModel {
     }
 
     public FrequencyModel(DataType dataType, Parameter frequencyParameter) {
+        this(dataType, frequencyParameter, true);
+    }
+
+    public FrequencyModel(DataType dataType, Parameter frequencyParameter, boolean checkNormalization) {
 
         super(FrequencyModelParser.FREQUENCY_MODEL);
 
         double sum = getSumOfFrequencies(frequencyParameter);
 
-        if (Math.abs(sum - 1.0) > 1e-8) {
+        if (checkNormalization && Math.abs(sum - 1.0) > 1e-8) {
             throw new IllegalArgumentException("Frequencies do not sum to 1, they sum to " + sum);
         }
 

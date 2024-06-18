@@ -38,7 +38,7 @@ public class FreeRateSimplexTransform extends Transform.MultivariateTransform {
 
     @Override
     public String getTransformName() {
-        return "realDifferencesToSimplex";
+        return "freeRateSimplex";
     }
 
 

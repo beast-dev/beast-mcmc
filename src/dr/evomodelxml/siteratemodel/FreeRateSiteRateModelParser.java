@@ -46,6 +46,7 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
 
     public static final String FREE_RATE_SITE_RATE_MODEL = "freeRateSiteRateModel";
     public static final String SUBSTITUTION_MODEL = "substitutionModel";
+    public static final String BRANCH_SUBSTITUTION_MODEL = "branchSubstitutionModel";
     public static final String MUTATION_RATE = "mutationRate";
     public static final String SUBSTITUTION_RATE = "substitutionRate";
     public static final String RELATIVE_RATE = "relativeRate";
@@ -84,6 +85,10 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
 
         if(xo.hasChildNamed(SUBSTITUTION_MODEL)){
             substitutionModel = (SubstitutionModel)xo.getElementFirstChild(SUBSTITUTION_MODEL);
+        }
+
+        if(xo.hasChildNamed(BRANCH_SUBSTITUTION_MODEL)){
+            substitutionModel = (SubstitutionModel)xo.getElementFirstChild(BRANCH_SUBSTITUTION_MODEL);
         }
 
         int catCount = 4;

@@ -62,6 +62,8 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
     public static final CompressionType DEFAULT_COMPRESSION_TYPE = UNIQUE_ONLY;
 
+    public static final int MINIMUM_UNAMBIGUOUS = 2;
+
     private final boolean isCompressed;
 
     /**
@@ -441,7 +443,9 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
             int count = constantOnly ? getStateCount() : i;
             for (int j = 0; j < count; j++) {
                 if (patterns[j] != null) {
-                    if (comparePatterns(patterns[i], patterns[j], true)) {
+                    // if the
+                    if (getCanonicalStateCount(patterns[i]) >= MINIMUM_UNAMBIGUOUS &&
+                            comparePatterns(patterns[i], patterns[j], true)) {
                         if (!constantOnly && getCanonicalStateCount(patterns[i]) > getCanonicalStateCount(patterns[j])) {
                             // if this is a less ambiguous pattern then this becomes the 'type' pattern
                             patterns[j] = patterns[i];

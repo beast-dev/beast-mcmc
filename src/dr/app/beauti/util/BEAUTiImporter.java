@@ -814,14 +814,14 @@ public class BEAUTiImporter {
 
         SitePatterns.CompressionType compressionType = SitePatterns.CompressionType.UNIQUE_ONLY;
         PatternList patterns = new SitePatterns(alignment, alignment, compressionType);
-        createPartitionFramework(model, Collections.singletonList(new PartitionPatterns(options, fileNameStem, fileName, patterns)));
+        createPartitionFramework(model, Collections.singletonList(new PartitionData(options, fileNameStem, fileName, patterns)));
     }
 
     private void createPartitionFramework(PartitionSubstitutionModel model, List<AbstractPartitionData> partitions) {
         for (AbstractPartitionData partition : partitions) {
             String name = partition.getName();
 
-            while (name.length() == 0 || options.hasPartitionData(name)) {
+            while (name.isEmpty() || options.hasPartitionData(name)) {
                 String text;
                 if (options.hasPartitionData(name)) {
                     text = "<html>" +
@@ -871,41 +871,7 @@ public class BEAUTiImporter {
                 options.setClockAndTree(partition);
             }
         }
-
-//        options.updatePartitionAllLinks();
-//        options.clockModelOptions.initClockModelGroup();
     }
-
-//    private void setClockAndTree(AbstractPartitionData partition) {
-//
-//        PartitionTreeModel treeModel;
-//
-//        // use same tree model and same tree prior in beginning
-//        if (options.getPartitionTreeModels().isEmpty()) {
-//            // PartitionTreeModel based on PartitionData
-//            treeModel = new PartitionTreeModel(options, DEFAULT_NAME);
-//            partition.setPartitionTreeModel(treeModel);
-//
-//            // PartitionTreePrior always based on PartitionTreeModel
-//            PartitionTreePrior ptp = new PartitionTreePrior(options, treeModel);
-//            treeModel.setPartitionTreePrior(ptp);
-//        } else { //if (options.getPartitionTreeModels() != null) {
-////                        && options.getPartitionTreeModels().size() == 1) {
-//            treeModel = options.getPartitionTreeModels().get(0); // same tree model,
-//            partition.setPartitionTreeModel(treeModel); // if same tree model, therefore same prior
-//        }
-//
-//        // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
-//        if (options.getPartitionClockModels(partition.getDataType()).isEmpty()) {
-//            // PartitionClockModel based on PartitionData
-//            PartitionClockModel pcm = new PartitionClockModel(options, DEFAULT_NAME, partition, treeModel);
-//            partition.setPartitionClockModel(pcm);
-//        } else { //if (options.getPartitionClockModels() != null) {
-////                        && options.getPartitionClockModels().size() == 1) {
-//            PartitionClockModel pcm = options.getPartitionClockModels(partition.getDataType()).get(0);
-//            partition.setPartitionClockModel(pcm);
-//        }
-//    }
 
     private void setSubstModel(AbstractPartitionData partition, PartitionSubstitutionModel psm) {
         partition.setPartitionSubstitutionModel(psm);

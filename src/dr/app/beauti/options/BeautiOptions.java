@@ -418,19 +418,6 @@ public class BeautiOptions extends ModelOptions {
         return pdList;
     }
 
-    /**
-     * exclude PartitionData and traits
-     */
-    public List<PartitionPatterns> getPartitionPatterns() {
-        List<PartitionPatterns> pdList = new ArrayList<PartitionPatterns>();
-        for (AbstractPartitionData partition : dataPartitions) {
-            if (partition instanceof PartitionPatterns) {
-                pdList.add((PartitionPatterns) partition);
-            }
-        }
-        return pdList;
-    }
-
     public List<AbstractPartitionData> getDataPartitions() {
         return dataPartitions;
     }
@@ -831,13 +818,7 @@ public class BeautiOptions extends ModelOptions {
             if (partition.getTaxonList() != null) { // not a trait partition
                 for (Taxon t : partition.getTaxonList()) {
                     if (!taxonNameList.contains(t.getId())) {
-                        if (partition instanceof PartitionPatterns) {
-                            PatternList patterns = ((PartitionPatterns) partition).getPatterns();
-//                            if (!patterns.isMasked(patterns.getTaxonIndex(t)))
-                            taxonNameList.add(t.getId());
-                        } else {
-                            taxonNameList.add(t.getId());
-                        }
+                        taxonNameList.add(t.getId());
                     }
                 }
             }

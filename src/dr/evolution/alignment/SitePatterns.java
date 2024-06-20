@@ -117,6 +117,10 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         this(alignment, taxa, 0, 0, 1, true);
     }
 
+    public SitePatterns(Alignment alignment, TaxonList taxa, CompressionType compressionType) {
+        this(alignment, taxa, 0, 0, 1, true, compressionType);
+    }
+
     /**
      * Constructor
      */

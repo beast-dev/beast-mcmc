@@ -35,9 +35,9 @@ import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.types.OperatorSetType;
 import dr.app.beauti.types.TreePriorType;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
-import dr.evolution.tree.Tree;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -421,11 +421,11 @@ public class BeautiOptions extends ModelOptions {
     /**
      * exclude PartitionData and traits
      */
-    public List<PartitionPattern> getPartitionPattern() {
-        List<PartitionPattern> pdList = new ArrayList<PartitionPattern>();
+    public List<PartitionPatterns> getPartitionPatterns() {
+        List<PartitionPatterns> pdList = new ArrayList<PartitionPatterns>();
         for (AbstractPartitionData partition : dataPartitions) {
-            if (partition instanceof PartitionPattern) {
-                pdList.add((PartitionPattern) partition);
+            if (partition instanceof PartitionPatterns) {
+                pdList.add((PartitionPatterns) partition);
             }
         }
         return pdList;
@@ -824,17 +824,17 @@ public class BeautiOptions extends ModelOptions {
      * @return num of taxon
      */
     public int getTaxonCount(List<AbstractPartitionData> partitionDataList) {
-        if (partitionDataList == null || partitionDataList.size() == 0) return 0;
+        if (partitionDataList == null || partitionDataList.isEmpty()) return 0;
 
-        List<String> taxonNameList = new ArrayList<String>();
+        List<String> taxonNameList = new ArrayList<>();
         for (AbstractPartitionData partition : partitionDataList) {
             if (partition.getTaxonList() != null) { // not a trait partition
                 for (Taxon t : partition.getTaxonList()) {
                     if (!taxonNameList.contains(t.getId())) {
-                        if (partition instanceof PartitionPattern) {
-                            Patterns patterns = ((PartitionPattern) partition).getPatterns();
-                            if (!patterns.isMasked(patterns.getTaxonIndex(t)))
-                                taxonNameList.add(t.getId());
+                        if (partition instanceof PartitionPatterns) {
+                            PatternList patterns = ((PartitionPatterns) partition).getPatterns();
+//                            if (!patterns.isMasked(patterns.getTaxonIndex(t)))
+                            taxonNameList.add(t.getId());
                         } else {
                             taxonNameList.add(t.getId());
                         }

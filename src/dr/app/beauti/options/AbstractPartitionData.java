@@ -25,6 +25,7 @@
 
 package dr.app.beauti.options;
 
+import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.distance.DistanceMatrix;
@@ -60,7 +61,7 @@ public abstract class AbstractPartitionData implements Serializable {
         this.fileName = fileName;
     }
 
-    protected void calculateMeanDistance(Patterns patterns) {
+    protected void calculateMeanDistance(PatternList patterns) {
         if (patterns != null) {
             distances = new JukesCantorDistanceMatrix(patterns);
             meanDistance = distances.getMeanDistance();

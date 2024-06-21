@@ -88,6 +88,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     CreateTraitPartitionAction createTraitPartitionAction = new CreateTraitPartitionAction();
     CreateTreePartitionAction createTreePartitionAction = new CreateTreePartitionAction();
+    CompressPatternsAction compressPatternsAction = new CompressPatternsAction();
+
 
     private final Action removePartitionAction;
 
@@ -101,6 +103,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     CreateTraitPartitionDialog selectTraitDialog = null;
     CreateTreePartitionDialog createTreeDialog = null;
+    CompressPatternsDialog compressPatternsDialog = null;
     BeautiFrame frame = null;
 
     BeautiOptions options = null;
@@ -192,10 +195,13 @@ public class DataPanel extends BeautiPanel implements Exportable {
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
 
-//        ActionPanel actionPanel1 = new ActionPanel(false);
-//        actionPanel1.setAddAction(importDataAction);
-//        actionPanel1.setRemoveAction(removeDataAction);
+        toolBar1.addSeparator();
 
+        button = new JButton(compressPatternsAction);
+        //button.setEnabled(false);
+        compressPatternsAction.setEnabled(false);
+        PanelUtils.setupComponent(button);
+        toolBar1.add(button);
 
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
@@ -224,6 +230,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         controlPanel1.add(new JLabel("   "));
         PanelUtils.setupComponent(button);
         controlPanel1.add(button);
+
 
         button = new JButton(viewPartitionAction);
         controlPanel1.add(new JLabel("   "));
@@ -334,6 +341,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         boolean hasSelection = (selRows != null && selRows.length != 0);
         frame.dataSelectionChanged(hasSelection);
 
+        boolean canCompress = hasSelection;
+
         boolean canUnlink = options.dataPartitions.size() > 1 && hasSelection;
         boolean canLink = options.dataPartitions.size() > 1 && hasSelection && selRows.length > 1;
 
@@ -342,6 +351,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 if (options.dataPartitions.get(selRow) instanceof TreePartitionData) {
                     canUnlink = false;
                     canLink = false;
+                    break;
+                }
+            }
+            for (int selRow : selRows) {
+                if (!(options.dataPartitions.get(selRow) instanceof PartitionData)) {
+                    canCompress = false;
                     break;
                 }
             }
@@ -355,10 +370,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         unlinkTreesAction.setEnabled(canUnlink);
         linkTreesAction.setEnabled(canLink);
+        compressPatternsAction.setEnabled(canCompress);
 
         removePartitionAction.setEnabled(!options.dataPartitions.isEmpty() && hasSelection);
         viewPartitionAction.setEnabled(!options.dataPartitions.isEmpty() && hasSelection);
-
     }
 
     public void setOptions(BeautiOptions options) {
@@ -582,6 +597,53 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (selRow != -1) {
             dataTable.getSelectionModel().setSelectionInterval(selRow, selRow);
         }
+
+        frame.setAllOptions();
+
+        fireDataChanged();
+        repaint();
+
+    }
+
+    public void compressSitePatterns() {
+        int[] selRows = dataTable.getSelectedRows();
+
+        if (compressPatternsDialog == null) {
+            compressPatternsDialog = new CompressPatternsDialog(frame);
+        }
+
+        boolean done = false;
+        while (!done) {
+            int result = compressPatternsDialog.showDialog(options.userTrees, null, this);
+            if (result != JOptionPane.CANCEL_OPTION) {
+//                TreeHolder tree = compressPatternsDialog.getTree();
+//                String name = tree.getName();
+//                if (compressPatternsDialog.getRenamePartition()) {
+//                    name = compressPatternsDialog.getName();
+//                    if (name.trim().isEmpty()) {
+//                        continue;
+//                    }
+//                }
+//
+//                selRow = options.createPartitionForTree(tree, name);
+                done = true;
+            } else {
+                return;
+            }
+        }
+
+        for (int row : selRows) {
+            PartitionData partition = (PartitionData)options.dataPartitions.get(row);
+            partition.compressPatterns();
+        }
+
+        modelsChanged();
+
+        fireDataChanged();
+        repaint();
+
+        modelsChanged();
+        dataTableModel.fireTableDataChanged();
 
         frame.setAllOptions();
 
@@ -858,7 +920,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case SITE_COLUMN:
                     return "" + (partition.getSiteCount() >= 0 ? partition.getSiteCount() : "-");
                 case PATTERN_COLUMN:
-                    return "" + (partition.getSiteCount() >= 0 ? partition.getPatternCount() : "-");
+                    return "" + (partition.getPatternCount() >= 0 ? partition.getPatternCount() : "-");
                 case DATATYPE_COLUMN:
                     return partition.getDataDescription();
                 case SUBSTITUTION_COLUMN:
@@ -1087,6 +1149,19 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     }
 
+    public class CompressPatternsAction extends AbstractAction {
+        public CompressPatternsAction() {
+            super("Compress patterns...");
+            setToolTipText("Compress an alignment into a weighted set of unique site patterns.");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            compressSitePatterns();
+
+            selectDataPanel();
+        }
+
+    }
 
     private void selectDataPanel() {
         frame.tabbedPane.setSelectedComponent(this);

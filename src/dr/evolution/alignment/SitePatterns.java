@@ -109,7 +109,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
      * Constructor
      */
     public SitePatterns(Alignment alignment) {
-        this(alignment, null, 0, 0, 1);
+        this(alignment, null, -1, -1, 1);
     }
 
     /**
@@ -443,7 +443,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
             int count = constantOnly ? getStateCount() : i;
             for (int j = 0; j < count; j++) {
                 if (patterns[j] != null) {
-                    // if the
+                    // the pattern should have at least 2 non-ambiguous characters
                     if (getCanonicalStateCount(patterns[i]) >= MINIMUM_UNAMBIGUOUS &&
                             comparePatterns(patterns[i], patterns[j], true)) {
                         if (!constantOnly && getCanonicalStateCount(patterns[i]) > getCanonicalStateCount(patterns[j])) {
@@ -571,15 +571,16 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
      */
     protected boolean comparePatterns(int[] pattern1, int[] pattern2, boolean allowAmbiguities) {
 
-        int len = pattern1.length;
         if (!allowAmbiguities) {
-            for (int i = 0; i < len; i++) {
-                if (pattern1[i] != pattern2[i]) {
-                    return false;
-                }
-            }
+            return Arrays.equals(pattern1, pattern2);
+
+//            for (int i = 0; i < len; i++) {
+//                if (pattern1[i] != pattern2[i]) {
+//                    return false;
+//                }
+//            }
         } else {
-            for (int i = 0; i < len; i++) {
+            for (int i = 0; i < pattern1.length; i++) {
                 if (getDataType().areUnambiguouslyDifferent(pattern1[i], pattern2[i])) {
                     return false;
                 }

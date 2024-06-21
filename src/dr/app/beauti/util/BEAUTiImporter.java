@@ -615,7 +615,7 @@ public class BEAUTiImporter {
             createTraitPartition = result == JOptionPane.YES_OPTION;
         }
 
-        boolean compressPatterns = false;
+        boolean compressPatterns = true;
         if (alignment != null) {
             // check the alignment before adding it...
             for (Sequence seq : alignment.getSequences()) {
@@ -637,7 +637,7 @@ public class BEAUTiImporter {
                 }
             }
 
-            if (charSets != null && alignment.getSiteCount() > 50000) {
+            if (charSets == null && alignment.getSiteCount() > 50000) {
                 int result = JOptionPane.showConfirmDialog(this.frame,
                         "The alignment contains long sequences (" + alignment.getSiteCount() + " sites):\n" +
                                 "Do you want to compress the alignment into site-patterns? This will\n" +
@@ -706,11 +706,7 @@ public class BEAUTiImporter {
         addTaxonList(taxonList);
 
         if (alignment != null) {
-            if (compressPatterns) {
-                addPatterns(alignment, model, fileName, fileNameStem);
-            } else {
-                addAlignment(alignment, charSets, model, fileName, fileNameStem);
-            }
+            addAlignment(alignment, charSets, compressPatterns, model, fileName, fileNameStem);
         }
 
         if (taxSets != null) {
@@ -793,6 +789,7 @@ public class BEAUTiImporter {
 
     private void addAlignment(Alignment alignment,
                               List<CharSet> charSets,
+                              boolean compressPatterns,
                               PartitionSubstitutionModel model,
                               String fileName, String fileNameStem) {
         assert alignment != null;
@@ -800,22 +797,23 @@ public class BEAUTiImporter {
         List<AbstractPartitionData> partitions = new ArrayList<AbstractPartitionData>();
         if (charSets != null && !charSets.isEmpty()) {
             for (CharSet charSet : charSets) {
-                partitions.add(new PartitionData(options, charSet.name, fileName,
-                        charSet.constructCharSetAlignment(alignment)));
+                PartitionData partitionData = new PartitionData(options, charSet.name, fileName,
+                        charSet.constructCharSetAlignment(alignment));
+                if (compressPatterns) {
+                    partitionData.compressPatterns();
+                }
+                partitions.add(partitionData);
             }
         } else {
-            partitions.add(new PartitionData(options, fileNameStem, fileName, alignment));
+            PartitionData partitionData = new PartitionData(options, fileNameStem, fileName, alignment);
+            if (compressPatterns) {
+                partitionData.compressPatterns();
+            }
+            partitions.add(partitionData);
         }
         createPartitionFramework(model, partitions);
     }
 
-    private void addPatterns(Alignment alignment, PartitionSubstitutionModel model, String fileName, String fileNameStem) {
-        assert alignment != null;
-
-        SitePatterns.CompressionType compressionType = SitePatterns.CompressionType.UNIQUE_ONLY;
-        PatternList patterns = new SitePatterns(alignment, alignment, compressionType);
-        createPartitionFramework(model, Collections.singletonList(new PartitionData(options, fileNameStem, fileName, patterns)));
-    }
 
     private void createPartitionFramework(PartitionSubstitutionModel model, List<AbstractPartitionData> partitions) {
         for (AbstractPartitionData partition : partitions) {

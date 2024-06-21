@@ -28,6 +28,7 @@ package dr.app.beauti.options;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
+import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.TaxonList;
 
@@ -140,12 +141,20 @@ public class PartitionData extends AbstractPartitionData {
         }
     }
 
+    public void compressPatterns() {
+        assert alignment != null;
+
+        patterns = new SitePatterns(alignment);
+    }
+
+
     public int getPatternCount() {
-        if (patterns == null && alignment != null) {
-            patterns = new Patterns(alignment);
-        }
         if (alignment == null) {
             return traits.size();
+        }
+        if (patterns == null) {
+            return -1;
+//            patterns = new SitePatterns(alignment);
         }
         return patterns.getPatternCount();
     }

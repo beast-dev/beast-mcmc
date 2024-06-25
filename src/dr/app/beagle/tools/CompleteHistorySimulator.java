@@ -25,6 +25,8 @@
 
 package dr.app.beagle.tools;
 
+import dr.evolution.datatype.GeneralDataType;
+import dr.evolution.sequence.DelimitedSequence;
 import dr.evolution.tree.*;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
@@ -199,9 +201,16 @@ public class CompleteHistorySimulator extends SimpleAlignment
             } else {
                 String c = dataType.getCode(seq[i]);
                 sSeq += c;
+                if (dataType.isDelimited() && i < nReplications - 1) {
+                    sSeq += dataType.getDelimiter();
+                }
             }
         }
-        return new Sequence(tree.getNodeTaxon(node), sSeq);
+        if (dataType.isDelimited()) {
+            return new DelimitedSequence(tree.getNodeTaxon(node), sSeq, dataType);
+        } else {
+            return new Sequence(tree.getNodeTaxon(node), sSeq);
+        }
     }
 
     public void addAlignmentTrait() {

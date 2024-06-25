@@ -50,6 +50,9 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     public ComplexSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, Parameter parameter) {
         super(name, dataType, freqModel, parameter, -1);
         probability = new double[stateCount * stateCount];
+
+        flat = new double[stateCount];
+        Arrays.fill(flat, 1.0);
     }
 
     @Override
@@ -202,7 +205,9 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
         return mat;
     }
 
-    protected void setupQMatrix(double[] rates, double[] pi, double[][] matrix) {
+    protected void setupQMatrix(double[] rates, double[] inPi, double[][] matrix) {
+
+        double[] pi = frequencyScaling ? inPi : flat;
         int i, j, k = 0;
         for (i = 0; i < stateCount; i++) {
             for (j = i + 1; j < stateCount; j++) {
@@ -260,6 +265,10 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
 
     public void setNormalization(boolean doNormalization) {
         this.doNormalization = doNormalization;
+    }
+
+    public void setScaleRatesByFrequencies(boolean frequencyScaling) {
+        this.frequencyScaling = frequencyScaling;
     }
 
     public boolean getNormalization() {
@@ -350,4 +359,6 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     }
 
     private boolean doNormalization = true;
+    private boolean frequencyScaling = true;
+    private final double[] flat;
 }

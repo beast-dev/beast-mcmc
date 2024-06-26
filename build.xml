@@ -199,7 +199,6 @@
             <zipgroupfileset dir="${lib}" includes="JRI.jar"/>
             <zipgroupfileset dir="${lib}" includes="colt.jar"/>
             <zipgroupfileset dir="${lib}" includes="beagle.jar"/>
-            <zipgroupfileset dir="${lib}" includes="beagle.jar"/>
             <zipgroupfileset dir="${lib}" includes="EJML-core-0.30.jar"/>
             <zipgroupfileset dir="${lib}" includes="lbfgs4j-0.2.1.jar"/>
             <zipgroupfileset dir="${lib}" includes="EJML-dense64-0.30.jar"/>
@@ -429,7 +428,7 @@
     <property name="Packaging_dir" value="packaging_tools/windows"/>
 
     <property name="Mac_package_dir" value="${Mac_dir}/${BEAST_package_name} v${version}"/>
-    <property name="Linux_package_dir" value="${Linux_dir}/${BEAST_package_name_linux}v${version}"/>
+    <property name="Linux_package_dir" value="${Linux_dir}/${BEAST_package_name_linux}_v${version}"/>
     <property name="Windows_package_dir" value="${Windows_dir}/${BEAST_package_name} v${version}"/>
     <property name="Windows_launchers_package_dir" value="${Windows_launchers_dir}/${BEAST_package_name} v${version}"/>
 

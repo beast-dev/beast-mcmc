@@ -174,7 +174,7 @@ public class AncestralSequenceAnnotator {
             System.out.println("\tIgnoring first " + burnin + " trees.");
         }
 
-        simulationResults.exportTrees(simulatedTree.toArray(new Tree[simulatedTree.size()]));
+        simulationResults.exportTrees(simulatedTree);
 
         MutableTree targetTree;
 

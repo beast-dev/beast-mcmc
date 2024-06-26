@@ -146,8 +146,7 @@ public class BranchJumpPlotter {
                 count++;
                 System.out.println();
             }
-            Tree[] treeArray = trees.toArray(new Tree[trees.size()]);
-            treesOut.exportTrees(treeArray);
+            treesOut.exportTrees(trees);
         } catch(IOException e){
             System.out.println("Problem reading file ("+e.toString()+")");
         } catch(Importer.ImportException e){

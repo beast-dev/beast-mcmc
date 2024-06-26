@@ -34,6 +34,7 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 
 import java.io.*;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -71,7 +72,7 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
 
         final File file = FileHelpers.getFile(fileName);
 
-        Tree[] trees = null;
+        List<Tree> trees = null;
         NexusImporter importer = null;
         try {
             FileReader reader = new FileReader(file);
@@ -93,7 +94,7 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
             Logger.getLogger("dr.evomodel").info("    Iterate over each tree from file, " + fileName);
             return new EmpiricalTreeDistributionModel(importer, startingTree);
         } else {
-            Logger.getLogger("dr.evomodel").info("    Randomly jump between " + trees.length + " trees from file, " + fileName);
+            Logger.getLogger("dr.evomodel").info("    Randomly jump between " + trees.size() + " trees from file, " + fileName);
             return new EmpiricalTreeDistributionModel(trees, startingTree);
         }
     }

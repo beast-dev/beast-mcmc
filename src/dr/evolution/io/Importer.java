@@ -124,6 +124,10 @@ public abstract class Importer {
 		this.commentWriter = commentWriter != null ? new BufferedWriter(commentWriter) : null;
 	}
 
+	public LineNumberReader getReader() {
+		return reader;
+	}
+
 	public void setCommentDelimiters(char line) {
 		hasComments = true;
 		this.lineComment = line;
@@ -216,6 +220,10 @@ public abstract class Importer {
 	 * Reads a line, skipping over any comments.
 	 */
 	public String readLine() throws IOException {
+	 return readLine(false);
+	}
+
+	public String readLine(boolean ignoreComments) throws IOException {
 
 		StringBuffer line = new StringBuffer();
 
@@ -225,7 +233,7 @@ public abstract class Importer {
 
 			while (ch != '\n' && ch != '\r') {
 
-				if (hasComments) {
+				if (!ignoreComments && hasComments) {
 					if (ch == lineComment) {
 						skipComments(ch);
 						break;
@@ -451,13 +459,18 @@ public abstract class Importer {
 		return readToken("");
 	}
 
+	public String readToken(String delimiters) throws IOException {
+		return readToken(delimiters, false);
+	}
+
 	/**
 	 * Reads a token stopping when any whitespace, a comment or when any character
 	 * in delimiters is found. If the token begins with a quote char
 	 * then all characters will be included in token until a matching
 	 * quote is found (including whitespace or comments).
+	 * @ignoreComments if true this will not skip comment but just add them to the token.
 	 */
-	public String readToken(String delimiters) throws IOException {
+	public String readToken(String delimiters, boolean ignoreComments) throws IOException {
 		int space = 0;
 		char ch, ch2, quoteChar = '\0';
 		boolean done = false, first = true, quoted = false, isSpace;
@@ -493,7 +506,7 @@ public abstract class Importer {
 					quoteChar = ch;
 					first = false;
 					space = 0;
-				} else if ( ch == startComment || ch == lineComment ) {
+				} else if (!ignoreComments && (ch == startComment || ch == lineComment) ) {
 					skipComments(ch);
 					lastDelimiter = ' ';
 					done = true;

@@ -37,6 +37,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -115,11 +116,33 @@ public class NewickImporter extends Importer implements TreeImporter {
     }
 
     /**
+     * countTrees.
+     * Counts the number of trees in the file without importing them
+     */
+    public int countTrees() throws IOException {
+        boolean done = false;
+        int count = 0;
+
+        do {
+            try {
+                skipUntil("(");
+                skipUntil(";");
+                count++;
+
+            } catch (EOFException e) {
+                done = true;
+            }
+        } while (!done);
+
+        return count;
+    }
+
+    /**
      * importTrees.
      */
-    public Tree[] importTrees(TaxonList taxonList) throws IOException, ImportException {
+    public List<Tree> importTrees(TaxonList taxonList) throws IOException, ImportException {
         boolean done = false;
-        ArrayList<FlexibleTree> array = new ArrayList<FlexibleTree>();
+        List<Tree> trees = new ArrayList<>();
 
         do {
 
@@ -130,7 +153,7 @@ public class NewickImporter extends Importer implements TreeImporter {
 
                 FlexibleNode root = readInternalNode(taxonList);
                 FlexibleTree tree = new FlexibleTree(root, false, true);
-                array.add(tree);
+                trees.add(tree);
 
                 if (taxonList == null) {
                     taxonList = tree;
@@ -144,9 +167,6 @@ public class NewickImporter extends Importer implements TreeImporter {
                 done = true;
             }
         } while (!done);
-
-        Tree[] trees = new Tree[array.size()];
-        array.toArray(trees);
 
         return trees;
     }

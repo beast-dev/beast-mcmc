@@ -1,5 +1,5 @@
 /*
- * PathogenMenuBarFactory.java
+ * TreePriorType.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,31 +23,22 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.pathogen;
+package dr.app.beauti.types;
 
-import jam.mac.MacEditMenuFactory;
-import jam.mac.MacHelpMenuFactory;
-import jam.mac.MacWindowMenuFactory;
-import jam.framework.DefaultMenuBarFactory;
-import jam.framework.DefaultEditMenuFactory;
-import jam.framework.DefaultHelpMenuFactory;
+/**
+ * @author Andrew Rambaut
+ */
+public enum TreeAsDataType {
+    EMPRICAL_TREES("Empirical Trees"),
+    THORNEY_BEAST("ThorneyBEAST");
 
-import dr.app.util.OSType;
+    TreeAsDataType(String name) {
+        this.name = name;
+    }
 
+    public String toString() {
+        return name;
+    }
 
-public class PathogenMenuBarFactory extends DefaultMenuBarFactory {
-
-	public PathogenMenuBarFactory() {
-		if (OSType.isMac()) {
-			registerMenuFactory(new PathogenMacFileMenuFactory());
-			registerMenuFactory(new MacEditMenuFactory());
-			registerMenuFactory(new MacWindowMenuFactory());
-			registerMenuFactory(new MacHelpMenuFactory());
-		} else {
-			registerMenuFactory(new PathogenDefaultFileMenuFactory());
-			registerMenuFactory(new DefaultEditMenuFactory());
-			registerMenuFactory(new DefaultHelpMenuFactory());
-		}
-	}
-
+    private final String name;
 }

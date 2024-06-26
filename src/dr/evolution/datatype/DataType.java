@@ -381,6 +381,9 @@ public abstract class DataType implements Serializable {
         return true;
     }
 
+    public boolean isDelimited() { return false; }
+
+    public String getDelimiter() { return null; }
 
     public String toString() {
         return getDescription();

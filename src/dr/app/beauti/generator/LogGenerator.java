@@ -34,14 +34,13 @@ import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.branchratemodel.*;
-import dr.evomodelxml.tree.TreeLengthStatisticParser;
+import dr.evomodelxml.tree.*;
+import dr.inference.model.Statistic;
+import dr.inference.model.StatisticParser;
 import dr.inferencexml.loggers.CheckpointLoggerParser;
 import dr.oldevomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
-import dr.evomodelxml.tree.TMRCAStatisticParser;
-import dr.evomodelxml.tree.TreeLoggerParser;
-import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.loggers.ColumnsParser;
 import dr.inferencexml.loggers.LoggerParser;
@@ -133,7 +132,7 @@ public class LogGenerator extends Generator {
             if (model.hasTipCalibrations()) {
                 writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, model.getPrefix() + "age(root)");
             } else {
-                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + DefaultTreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
+                writer.writeIDref(TreeHeightStatisticParser.TREE_HEIGHT_STATISTIC, model.getPrefix() + TreeModelParser.ROOT_HEIGHT);
             }
 
             writer.writeCloseTag(ColumnsParser.COLUMN);
@@ -201,7 +200,7 @@ public class LogGenerator extends Generator {
         }
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + DefaultTreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
+            writer.writeIDref(TreeHeightStatisticParser.TREE_HEIGHT_STATISTIC, model.getPrefix() + TreeModelParser.ROOT_HEIGHT);
         }
 
         // for convenience, log root age statistic - gives the absolute age of the root given the tip dates.
@@ -214,6 +213,9 @@ public class LogGenerator extends Generator {
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             writer.writeIDref(TreeLengthStatisticParser.TREE_LENGTH_STATISTIC, model.getPrefix() + "treeLength");
+            if (model.isUsingEmpiricalTrees()) {
+                writer.writeIDref(StatisticParser.STATISTIC, model.getPrefix() + DefaultTreeModel.TREE_MODEL + ".currentTree");
+            }
         }
 
         tmrcaStatisticsGenerator.writeTMRCAStatisticReferences(writer);

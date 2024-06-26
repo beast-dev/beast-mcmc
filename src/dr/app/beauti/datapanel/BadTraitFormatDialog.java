@@ -8,7 +8,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class CreateBadTraitFormatDialog {
+public class BadTraitFormatDialog {
 
     private final BeautiFrame frame;
     private final JButton exampleButton = new JButton("Show example of mapping file format");
@@ -16,7 +16,7 @@ public class CreateBadTraitFormatDialog {
 
     OptionsPanel optionPanel;
 
-    public CreateBadTraitFormatDialog(final BeautiFrame frame) {
+    public BadTraitFormatDialog(final BeautiFrame frame) {
         this.frame = frame;
         optionPanel = new OptionsPanel(12, 12);
 

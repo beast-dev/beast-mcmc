@@ -110,29 +110,29 @@ public class NexusExporter implements TreeExporter {
      * @param attributes true if the nodes should be annotated with their attributes
      * @param treeNames  Names of the trees
      */
-    public void exportTrees(Tree[] trees, boolean attributes, String[] treeNames) {
-        if(!(treeNames==null) && trees.length != treeNames.length) {
+    public void exportTrees(List<Tree> trees, boolean attributes, List<String> treeNames) {
+        if(!(treeNames==null) && trees.size() != treeNames.size()) {
             throw new RuntimeException("Number of trees and number of tree names is not the same");
         }
-        Map<String, Integer> idMap = writeNexusHeader(trees[0]);
+        Map<String, Integer> idMap = writeNexusHeader(trees.get(0));
         out.println("\t\t;");
-        for (int i = 0; i < trees.length; i++) {
+        for (int i = 0; i < trees.size(); i++) {
             if(treeNames==null) {
-                writeNexusTree(trees[i], treePrefix + i, attributes, idMap);
+                writeNexusTree(trees.get(i), treePrefix + i, attributes, idMap);
             }
             else {
-                writeNexusTree(trees[i], treeNames[i], attributes, idMap);
+                writeNexusTree(trees.get(i), treeNames.get(i), attributes, idMap);
             }
         }
         out.println("End;");
     }
 
-    public void exportTrees(Tree[] trees, boolean attributes) {
+    public void exportTrees(List<Tree> trees, boolean attributes) {
         exportTrees(trees, attributes, null);
     }
 
 
-    public void exportTrees(Tree[] trees) {
+    public void exportTrees(List<Tree> trees) {
         exportTrees(trees, true, null);
     }
 

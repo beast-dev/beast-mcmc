@@ -43,6 +43,8 @@ public class GeneralDataType extends DataType implements Identifiable {
     public static final int TYPE = GENERAL;
     public static final GeneralDataType INSTANCE = new GeneralDataType();
 
+    public static final String DELIMITER = ":";
+
     // for BEAUti trait PartitionSubstitutionModel
     public GeneralDataType() {}
     /**
@@ -162,6 +164,17 @@ public class GeneralDataType extends DataType implements Identifiable {
         }
         return stateMap.get(code).number;
     }
+
+    public boolean isDelimited() {
+        for (State state : states) {
+            if (state.code.length() > 1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public String getDelimiter() { return DELIMITER; }
 
     /**
      * Override this function to cast to string codes...

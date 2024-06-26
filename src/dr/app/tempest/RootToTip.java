@@ -202,10 +202,7 @@ public class RootToTip {
             }
 
             NexusExporter exporter = new NexusExporter(printStream);
-            Tree[] treeArray = new Tree[trees.size()];
-            trees.toArray(treeArray);
-
-            exporter.exportTrees(treeArray);
+            exporter.exportTrees(trees);
 
             printStream.close();
         }

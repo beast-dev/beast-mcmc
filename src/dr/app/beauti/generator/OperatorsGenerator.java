@@ -31,7 +31,9 @@ import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
+import dr.evomodel.operators.EmpiricalTreeDistributionOperator;
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
 import dr.evomodelxml.branchratemodel.AutoCorrelatedBranchRatesDistributionParser;
@@ -208,6 +210,9 @@ public class OperatorsGenerator extends Generator {
                 break;
             case FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT:
                 writeFHSPROperator(operator, prefix, writer);
+                break;
+            case EMPIRICAL_TREE_SWAP:
+                writeEmpiricalTreeSwapOperator(operator, prefix, writer);
                 break;
             case SUBTREE_SLIDE:
                 writeSubtreeSlideOperator(operator, prefix, writer);
@@ -698,6 +703,16 @@ public class OperatorsGenerator extends Generator {
         );
         writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(FixedHeightSubtreePruneRegraftOperatorParser.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT);
+    }
+
+    private void writeEmpiricalTreeSwapOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
+        writer.writeOpenTag(EmpiricalTreeDistributionOperator.EMPIRICAL_TREE_DISTRIBUTION_OPERATOR,
+                new Attribute[]{
+                        getWeightAttribute(operator.getWeight())
+                }
+        );
+        writer.writeIDref(EmpiricalTreeDistributionModel.EMPIRICAL_TREE_DISTRIBUTION_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
+        writer.writeCloseTag(EmpiricalTreeDistributionOperator.EMPIRICAL_TREE_DISTRIBUTION_OPERATOR);
     }
 
     // tuneable version of FHSPR but not currently being used

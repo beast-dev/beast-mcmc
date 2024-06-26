@@ -34,6 +34,7 @@ import java.io.FileReader;
 import java.io.PrintStream;
 import java.io.FileOutputStream;
 import java.text.NumberFormat;
+import java.util.List;
 
 /**
  * A simple routine to alphabetically order the taxa translation table
@@ -47,8 +48,8 @@ public class OrderNexusTranslationTable {
 
         NexusImporter importer = new NexusImporter(new FileReader(args[0]));
 
-        Tree[] trees = importer.importTrees(null);
-        System.out.println("Read " + trees.length + " trees from " + args[0]);
+        List<Tree> trees = importer.importTrees(null);
+        System.out.println("Read " + trees.size() + " trees from " + args[0]);
 
         String newFileName = args[0] + ".new";
 
@@ -66,7 +67,7 @@ public class OrderNexusTranslationTable {
 
         ps.flush();
         ps.close();
-        System.out.println("Wrote " + trees.length + " trees to " + newFileName);
+        System.out.println("Wrote " + trees.size() + " trees to " + newFileName);
     }
 
 }

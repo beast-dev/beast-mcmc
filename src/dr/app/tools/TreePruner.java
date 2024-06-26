@@ -245,7 +245,7 @@ public class TreePruner extends BaseTreeTool {
                 new Arguments.Option[]{
                         new Arguments.StringOption("taxaToPrune", "list","a list of taxon names to prune"),
                         new Arguments.StringOption(NAME_CONTENT, falseTrue, false,
-                                "add true noise [default = true])"),
+                                "Using common string in taxa names to define taxa set)"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 

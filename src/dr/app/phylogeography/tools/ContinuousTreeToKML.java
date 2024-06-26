@@ -62,8 +62,8 @@ public class ContinuousTreeToKML {
 
     public static void main(String[] args) {
 
-        double altitude = 0;            // altitutude of the root of the 3D trees
-        double mostRecentDate = 2010;  // required to convert heights to calendar dates
+        double altitude = 0;            // altitude of the root of the 3D trees
+        double mostRecentDate = 2013;  // required to convert heights to calendar dates
         String coordinateLabel = "loc";
 
         boolean makeTreeSlices = false;

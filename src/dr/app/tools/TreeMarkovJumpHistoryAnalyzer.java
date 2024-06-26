@@ -134,11 +134,13 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
                             }
                         }
                     } else {
-                        Object[] jump = getMJApproximation(node, tree, nodeStateAnnotation);
-                        if (jump != null) {
-                            if (!ignoredStates.contains(jump[1]) && !ignoredStates.contains(jump[2])) {
-                                Row row = new Row(treeId, (String) jump[1], (String) jump[2], adjust((Double) jump[0]));
-                                ps.println(row);
+                        if(!tree.isRoot(node)) {
+                            Object[] jump = getMJApproximation(node, tree, nodeStateAnnotation);
+                            if (jump != null) {
+                                if (!ignoredStates.contains(jump[1]) && !ignoredStates.contains(jump[2])) {
+                                    Row row = new Row(treeId, (String) jump[1], (String) jump[2], adjust((Double) jump[0]));
+                                    ps.println(row);
+                                }
                             }
                         }
                     }

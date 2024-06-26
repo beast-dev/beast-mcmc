@@ -515,8 +515,8 @@ public class CheckPointTreeModifier {
 
                 //begin change
                 //TODO: only for Sam, revert back to the line below !!!
-                //double timeForDistance = distance / rateModel.getBranchRate(treeModel, closestRef);
-                double timeForDistance = distance / getBranchRate(traitModels.get(0), closestRef, numTaxaSoFar);
+                double timeForDistance = distance / rateModel.getBranchRate(treeModel, closestRef);
+                //double timeForDistance = distance / getBranchRate(traitModels.get(0), closestRef, numTaxaSoFar);
                 //end change
 
                 System.out.println("timeForDistance = " + timeForDistance);

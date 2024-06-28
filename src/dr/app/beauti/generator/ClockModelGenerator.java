@@ -1,6 +1,4 @@
 /*
- * BranchRatesModelGenerator.java
- *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.

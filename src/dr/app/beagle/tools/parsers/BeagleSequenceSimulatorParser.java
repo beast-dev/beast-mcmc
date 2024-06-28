@@ -33,6 +33,7 @@ import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
+import dr.evoxml.AttributePatternsParser;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -47,6 +48,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
     public static final String PARALLEL = "parallel";
     public static final String OUTPUT_ANCESTRAL_SEQUENCES = "outputAncestralSequences";
     public static final String OUTPUT = "output";
+    public static final String ATTRIBUTE = AttributePatternsParser.ATTRIBUTE;
 
     public String getParserName() {
         return BEAGLE_SEQUENCE_SIMULATOR;
@@ -73,7 +75,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
                         
                 		SimpleAlignment.OutputType.values(), //TODO: this should ignore upper/lower cas
                         false),
-                        
+                AttributeRule.newStringRule(ATTRIBUTE, true),
                 new ElementRule(Partition.class, 1, Integer.MAX_VALUE)
         };
     }// END: getSyntaxRules
@@ -98,6 +100,8 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
             output = SimpleAlignment.OutputType.parseFromString(
                     xo.getStringAttribute(OUTPUT));
         }
+
+        String attributeName = xo.hasAttribute(ATTRIBUTE) ? xo.getStringAttribute(ATTRIBUTE) : null;
 
         int siteCount = 0;
         int to = 0;
@@ -163,7 +167,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
             Logger.getLogger("dr.app.beagle.tools").info("\nUsing Beagle Sequence Simulator: " + msg + "\n");
         }
 
-        BeagleSequenceSimulator s = new BeagleSequenceSimulator(partitionsList);
+        BeagleSequenceSimulator s = new BeagleSequenceSimulator(partitionsList, attributeName);
         SimpleAlignment alignment = s.simulate(parallel, outputAncestralSequences);
 
         alignment.setOutputType(output);

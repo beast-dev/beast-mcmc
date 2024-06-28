@@ -31,17 +31,13 @@ import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
-import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.branchratemodel.*;
 import dr.evomodelxml.tree.*;
-import dr.inference.model.Statistic;
 import dr.inference.model.StatisticParser;
 import dr.inferencexml.loggers.CheckpointLoggerParser;
-import dr.oldevomodelxml.clock.ACLikelihoodParser;
-import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.loggers.ColumnsParser;
@@ -473,8 +469,9 @@ public class LogGenerator extends Generator {
                 tag = LocalClockModelParser.LOCAL_CLOCK_MODEL;
                 break;
             case AUTOCORRELATED:
-                tag = ACLikelihoodParser.AC_LIKELIHOOD;
-                break;
+                throw new UnsupportedOperationException("AC clock not implemented");
+//                tag = ACLikelihoodParser.AC_LIKELIHOOD;
+//                break;
 
             default:
                 throw new IllegalArgumentException("Unknown clock model");
@@ -549,12 +546,13 @@ public class LogGenerator extends Generator {
                     break;
 
                 case AUTOCORRELATED:
-                    writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD,
-                            prefix + BranchRateModel.BRANCH_RATES);
-                    writeTreeTrait(writer, ACLikelihoodParser.AC_LIKELIHOOD,
-                            prefix + BranchRateModel.BRANCH_RATES,
-                            BranchRateModel.RATE, model.getPrefix() + BranchRateModel.RATE);
-                    break;
+//                    writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD,
+//                            prefix + BranchRateModel.BRANCH_RATES);
+//                    writeTreeTrait(writer, ACLikelihoodParser.AC_LIKELIHOOD,
+//                            prefix + BranchRateModel.BRANCH_RATES,
+//                            BranchRateModel.RATE, model.getPrefix() + BranchRateModel.RATE);
+//                    break;
+                    throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
 
                 default:
                     throw new IllegalArgumentException("Unknown clock model");

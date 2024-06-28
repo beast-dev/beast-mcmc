@@ -35,7 +35,8 @@ import java.util.ArrayList;
 
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.evomodelxml.substmodel.MG94CodonModelParser;
+import dr.evomodelxml.siteratemodel.OldGammaSiteModelParser;
+import dr.evomodelxml.substmodel.*;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beagle.tools.parsers.BeagleSequenceSimulatorParser;
@@ -45,20 +46,12 @@ import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
-import dr.oldevomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
 import dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.ExponentialGrowthModelParser;
-import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
-import dr.oldevomodelxml.substmodel.EmpiricalAminoAcidModelParser;
-import dr.oldevomodelxml.substmodel.FrequencyModelParser;
-import dr.oldevomodelxml.substmodel.GTRParser;
-import dr.oldevomodelxml.substmodel.HKYParser;
-import dr.oldevomodelxml.substmodel.TN93Parser;
-import dr.oldevomodelxml.substmodel.YangCodonModelParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.NewickParser;
 import dr.evoxml.SequenceParser;
@@ -73,6 +66,10 @@ import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 import dr.util.Attribute;
 import dr.xml.Report;
 import dr.xml.XMLParser;
+
+import static dr.app.bss.Utils.SUBSTITUTION_MODEL;
+import static dr.evomodelxml.siteratemodel.SiteModelParser.SITE_MODEL;
+import static dr.evomodelxml.substmodel.GY94CodonModelParser.*;
 
 /**
  * @author Filip Bielejec
@@ -526,7 +523,7 @@ public class XMLGenerator {
 
 			case 3: // Yang Codon Model
 
-				writer.writeIDref(YangCodonModelParser.YANG_CODON_MODEL,
+				writer.writeIDref(YANG_CODON_MODEL,
 						data.substitutionModelIdref);
 				break;
 
@@ -580,7 +577,7 @@ public class XMLGenerator {
 				
 			}// END: switch
 
-			writer.writeIDref(SiteModel.SITE_MODEL, data.siteRateModelIdref);
+			writer.writeIDref(SITE_MODEL, data.siteRateModelIdref);
 
 			int clockModel = data.clockModelIndex;
 			switch (clockModel) {
@@ -1025,11 +1022,11 @@ public class XMLGenerator {
 
 	private void writeSiteRateModel(PartitionData data, XMLWriter writer, int suffix) {
 
-		writer.writeOpenTag(SiteModel.SITE_MODEL,
+		writer.writeOpenTag(SITE_MODEL,
 				new Attribute[] { new Attribute.Default<String>(XMLParser.ID,
 						data.siteRateModelIdref) });
 
-		writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
+		writer.writeOpenTag(SUBSTITUTION_MODEL);
 
 		int substitutionModelIndex = data.substitutionModelIndex;
 		switch (substitutionModelIndex) {
@@ -1053,7 +1050,7 @@ public class XMLGenerator {
 
 		case 3: // GY94CodonModel
 
-			writer.writeIDref(YangCodonModelParser.YANG_CODON_MODEL,
+			writer.writeIDref(YANG_CODON_MODEL,
 					data.substitutionModelIdref);
 			break;
 			
@@ -1113,7 +1110,7 @@ public class XMLGenerator {
 			
 		}// END: switch
 
-		writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
+		writer.writeCloseTag(SUBSTITUTION_MODEL);
 
 		int siteRateModelIndex = data.siteRateModelIndex;
 		switch (siteRateModelIndex) {
@@ -1127,9 +1124,9 @@ public class XMLGenerator {
 		case 1: // GammaSiteRateModelParser
 			
 			writer.writeOpenTag(
-					GammaSiteModelParser.GAMMA_SHAPE,
+					OldGammaSiteModelParser.GAMMA_SHAPE,
 					new Attribute.Default<String>(
-							GammaSiteModelParser.GAMMA_CATEGORIES,
+							OldGammaSiteModelParser.GAMMA_CATEGORIES,
 							String.valueOf((int) data.siteRateModelParameterValues[0])));
 
 			//TODO
@@ -1137,10 +1134,10 @@ public class XMLGenerator {
 					String.valueOf(data.siteRateModelParameterValues[1]),
 					writer);
 
-			writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
+			writer.writeCloseTag(OldGammaSiteModelParser.GAMMA_SHAPE);
 
 			if (data.siteRateModelParameterValues[2] > 0.0) {
-				writeParameter(GammaSiteModelParser.PROPORTION_INVARIANT, "pInv", 1,
+				writeParameter(OldGammaSiteModelParser.PROPORTION_INVARIANT, "pInv", 1,
 						String.valueOf(data.siteRateModelParameterValues[2]),
 						writer);
 			}
@@ -1148,7 +1145,7 @@ public class XMLGenerator {
 			break;
 		}// END: switch
 
-		writer.writeCloseTag(SiteModel.SITE_MODEL);
+		writer.writeCloseTag(SITE_MODEL);
 
 	}// END: writeSiteModel
 
@@ -1234,23 +1231,23 @@ public class XMLGenerator {
 
 		case 3: // Yang Codon Model
 
-			writer.writeOpenTag(YangCodonModelParser.YANG_CODON_MODEL,
+			writer.writeOpenTag(YANG_CODON_MODEL,
 					new Attribute[] { new Attribute.Default<String>(
 							XMLParser.ID, data.substitutionModelIdref) });
 
 			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL,
 					data.frequencyModelIdref);
 
-			writeParameter(YangCodonModelParser.OMEGA,
-					YangCodonModelParser.OMEGA + suffix, 1,
+			writeParameter(OMEGA,
+					OMEGA + suffix, 1,
 					String.valueOf(data.substitutionParameterValues[9]), writer);
 
-			writeParameter(YangCodonModelParser.KAPPA,
-					YangCodonModelParser.KAPPA + suffix, 1,
+			writeParameter(KAPPA,
+					KAPPA + suffix, 1,
 					String.valueOf(data.substitutionParameterValues[10]),
 					writer);
 
-			writer.writeCloseTag(YangCodonModelParser.YANG_CODON_MODEL);
+			writer.writeCloseTag(YANG_CODON_MODEL);
 
 			break;
 

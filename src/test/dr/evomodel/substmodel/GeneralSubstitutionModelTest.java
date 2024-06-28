@@ -32,14 +32,10 @@ import dr.evolution.datatype.GeneralDataType;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.WilsonBalding;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.oldevomodel.sitemodel.GammaSiteModel;
-import dr.oldevomodel.substmodel.FrequencyModel;
-import dr.oldevomodel.substmodel.GeneralSubstitutionModel;
-import dr.oldevomodel.treelikelihood.TreeLikelihood;
-import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
-import dr.oldevomodelxml.substmodel.GeneralSubstitutionModelParser;
-import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
+import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
@@ -57,6 +53,8 @@ import test.dr.inference.trace.TraceCorrelationAssert;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static dr.evomodelxml.siteratemodel.SiteModelParser.MUTATION_RATE;
 
 /**
  * @author Walter Xie
@@ -98,101 +96,102 @@ public class GeneralSubstitutionModelTest extends TraceCorrelationAssert {
 
 
     public void testGeneralSubstitutionModel() {
+        throw new UnsupportedOperationException("Not implemented - uses oldevomodel.treelikelihood, now deleted");
 
         // Sub model
-        FrequencyModel freqModel = new FrequencyModel(dataType, alignment.getStateFrequencies());
-        Parameter ratesPara = new Parameter.Default(GeneralSubstitutionModelParser.RATES, 5, 1.0); // dimension="5" value="1.0"
-        GeneralSubstitutionModel generalSubstitutionModel = new GeneralSubstitutionModel(dataType, freqModel, ratesPara, 4); // relativeTo="5"
-
-        //siteModel
-        GammaSiteModel siteModel = new GammaSiteModel(generalSubstitutionModel);
-        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        siteModel.setMutationRateParameter(mu);
-
-        //treeLikelihood
-        SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
-        
-        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
-                false, false, true, false, false);
-        treeLikelihood.setId(TreeLikelihoodParser.TREE_LIKELIHOOD);
-
-        // Operators
-        OperatorSchedule schedule = new SimpleOperatorSchedule();
-
-        MCMCOperator operator = new ScaleOperator(ratesPara, 0.5);
-        operator.setWeight(1.0);
-        schedule.addOperator(operator);
-
-        Parameter rootHeight = ((DefaultTreeModel)treeModel).getRootHeightParameter();
-        rootHeight.setId(TREE_HEIGHT);         
-        operator = new ScaleOperator(rootHeight, 0.5);
-        operator.setWeight(1.0);
-        schedule.addOperator(operator);
-
-        Parameter internalHeights = ((DefaultTreeModel)treeModel).createNodeHeightsParameter(false, true, false);
-        operator = new UniformOperator(internalHeights, 10.0);
-        schedule.addOperator(operator);
-
-        operator = new SubtreeSlideOperator(((DefaultTreeModel)treeModel), 1, 1, true, false, false, false, AdaptationMode.ADAPTATION_ON, AdaptableMCMCOperator.DEFAULT_ADAPTATION_TARGET);
-        schedule.addOperator(operator);
-
-        operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 1.0);
-//        operator.doOperation();
-        schedule.addOperator(operator);
-
-        operator = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 1.0);
-//        operator.doOperation();
-        schedule.addOperator(operator);
-
-        operator = new WilsonBalding(treeModel, 1.0);
-//        operator.doOperation();
-        schedule.addOperator(operator);
-
-        // Log
-        ArrayLogFormatter formatter = new ArrayLogFormatter(false);
-
-        MCLogger[] loggers = new MCLogger[2];
-        loggers[0] = new MCLogger(formatter, 1000, false);
-        loggers[0].add(treeLikelihood);
-        loggers[0].add(rootHeight);
-        loggers[0].add(ratesPara);
-
-        loggers[1] = new MCLogger(new TabDelimitedFormatter(System.out), 100000, false);
-        loggers[1].add(treeLikelihood);
-        loggers[1].add(rootHeight);
-        loggers[1].add(ratesPara);
-
-        // MCMC
-        MCMC mcmc = new MCMC("mcmc1");
-        MCMCOptions options = new MCMCOptions(10000000);
-
-        mcmc.setShowOperatorAnalysis(true);
-        mcmc.init(options, treeLikelihood, schedule, loggers);
-        mcmc.run();
-        
-        // time
-        System.out.println(mcmc.getTimer().toString());
-
-        // Tracer
-        List<Trace> traces = formatter.getTraces();
-        ArrayTraceList traceList = new ArrayTraceList("GeneralSubstitutionModelTest", traces, 0);
-
-        for (int i = 1; i < traces.size(); i++) {
-            traceList.analyseTrace(i);
-        }
-
-//      <expectation name="likelihood" value="-1815.75"/>
-//		<expectation name="treeModel.rootHeight" value="6.42048E-2"/>
-//		<expectation name="rateAC" value="6.08986E-2"/>
-
-        TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihoodParser.TREE_LIKELIHOOD));
-        assertExpectation(TreeLikelihoodParser.TREE_LIKELIHOOD, likelihoodStats, -1815.75);
-
-        TraceCorrelation treeHeightStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TREE_HEIGHT));
-        assertExpectation(TREE_HEIGHT, treeHeightStats, 0.0640787258170083);
-
-        TraceCorrelation rateACStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(GeneralSubstitutionModelParser.RATES + "1"));
-        assertExpectation(GeneralSubstitutionModelParser.RATES + "1", rateACStats, 0.061071756742081366);
+//        FrequencyModel freqModel = new FrequencyModel(dataType, alignment.getStateFrequencies());
+//        Parameter ratesPara = new Parameter.Default(GeneralSubstitutionModelParser.RATES, 5, 1.0); // dimension="5" value="1.0"
+//        GeneralSubstitutionModel generalSubstitutionModel = new GeneralSubstitutionModel(dataType, freqModel, ratesPara, 4); // relativeTo="5"
+//
+//        //siteModel
+//        GammaSiteModel siteModel = new GammaSiteModel(generalSubstitutionModel);
+//        Parameter mu = new Parameter.Default(MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+//        siteModel.setMutationRateParameter(mu);
+//
+//        //treeLikelihood
+//        SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
+//
+//        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
+//                false, false, true, false, false);
+//        treeLikelihood.setId(TreeLikelihoodParser.TREE_LIKELIHOOD);
+//
+//        // Operators
+//        OperatorSchedule schedule = new SimpleOperatorSchedule();
+//
+//        MCMCOperator operator = new ScaleOperator(ratesPara, 0.5);
+//        operator.setWeight(1.0);
+//        schedule.addOperator(operator);
+//
+//        Parameter rootHeight = ((DefaultTreeModel)treeModel).getRootHeightParameter();
+//        rootHeight.setId(TREE_HEIGHT);
+//        operator = new ScaleOperator(rootHeight, 0.5);
+//        operator.setWeight(1.0);
+//        schedule.addOperator(operator);
+//
+//        Parameter internalHeights = ((DefaultTreeModel)treeModel).createNodeHeightsParameter(false, true, false);
+//        operator = new UniformOperator(internalHeights, 10.0);
+//        schedule.addOperator(operator);
+//
+//        operator = new SubtreeSlideOperator(((DefaultTreeModel)treeModel), 1, 1, true, false, false, false, AdaptationMode.ADAPTATION_ON, AdaptableMCMCOperator.DEFAULT_ADAPTATION_TARGET);
+//        schedule.addOperator(operator);
+//
+//        operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 1.0);
+////        operator.doOperation();
+//        schedule.addOperator(operator);
+//
+//        operator = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 1.0);
+////        operator.doOperation();
+//        schedule.addOperator(operator);
+//
+//        operator = new WilsonBalding(treeModel, 1.0);
+////        operator.doOperation();
+//        schedule.addOperator(operator);
+//
+//        // Log
+//        ArrayLogFormatter formatter = new ArrayLogFormatter(false);
+//
+//        MCLogger[] loggers = new MCLogger[2];
+//        loggers[0] = new MCLogger(formatter, 1000, false);
+//        loggers[0].add(treeLikelihood);
+//        loggers[0].add(rootHeight);
+//        loggers[0].add(ratesPara);
+//
+//        loggers[1] = new MCLogger(new TabDelimitedFormatter(System.out), 100000, false);
+//        loggers[1].add(treeLikelihood);
+//        loggers[1].add(rootHeight);
+//        loggers[1].add(ratesPara);
+//
+//        // MCMC
+//        MCMC mcmc = new MCMC("mcmc1");
+//        MCMCOptions options = new MCMCOptions(10000000);
+//
+//        mcmc.setShowOperatorAnalysis(true);
+//        mcmc.init(options, treeLikelihood, schedule, loggers);
+//        mcmc.run();
+//
+//        // time
+//        System.out.println(mcmc.getTimer().toString());
+//
+//        // Tracer
+//        List<Trace> traces = formatter.getTraces();
+//        ArrayTraceList traceList = new ArrayTraceList("GeneralSubstitutionModelTest", traces, 0);
+//
+//        for (int i = 1; i < traces.size(); i++) {
+//            traceList.analyseTrace(i);
+//        }
+//
+////      <expectation name="likelihood" value="-1815.75"/>
+////		<expectation name="treeModel.rootHeight" value="6.42048E-2"/>
+////		<expectation name="rateAC" value="6.08986E-2"/>
+//
+//        TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihoodParser.TREE_LIKELIHOOD));
+//        assertExpectation(TreeLikelihoodParser.TREE_LIKELIHOOD, likelihoodStats, -1815.75);
+//
+//        TraceCorrelation treeHeightStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TREE_HEIGHT));
+//        assertExpectation(TREE_HEIGHT, treeHeightStats, 0.0640787258170083);
+//
+//        TraceCorrelation rateACStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(GeneralSubstitutionModelParser.RATES + "1"));
+//        assertExpectation(GeneralSubstitutionModelParser.RATES + "1", rateACStats, 0.061071756742081366);
     }
 
     public static Test suite() {

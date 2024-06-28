@@ -31,10 +31,11 @@ import dr.evomodel.siteratemodel.DiscretizedSiteRateModel;
 import dr.evomodel.siteratemodel.GammaSiteRateDelegate;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.Parameter;
-import dr.oldevomodel.sitemodel.SiteModel;
 import dr.xml.*;
 
 import java.util.logging.Logger;
+
+import static dr.evomodelxml.siteratemodel.SiteModelParser.SITE_MODEL;
 
 /**
  * This is a replacement to GammaSiteModelParser that uses the modular
@@ -129,7 +130,7 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
 
         GammaSiteRateDelegate delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParam, catCount, type, invarParam);
 
-        DiscretizedSiteRateModel siteRateModel = new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
+        DiscretizedSiteRateModel siteRateModel = new DiscretizedSiteRateModel(SITE_MODEL, muParam, muWeight, delegate);
 
         if (substitutionModel != null) {
             siteRateModel.setSubstitutionModel(substitutionModel);

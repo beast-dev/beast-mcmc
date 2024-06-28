@@ -31,10 +31,11 @@ import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evolution.datatype.Nucleotides;
-import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
-import dr.oldevomodelxml.substmodel.HKYParser;
 import dr.inference.model.Parameter;
 import test.dr.inference.trace.TraceCorrelationAssert;
+
+import static dr.evomodelxml.siteratemodel.SiteModelParser.MUTATION_RATE;
+import static dr.evomodelxml.substmodel.HKYParser.KAPPA;
 
 /**
  * @author Marc A. Suchard
@@ -59,7 +60,7 @@ public class TinyTest extends TraceCorrelationAssert {
 
         //substitutionModel
         Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25, 0.25, 0.25});
-        Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 1.0, 0, 100);
+        Parameter kappa = new Parameter.Default(KAPPA, 1.0, 0, 100);
         FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
         HKY hky = new HKY(kappa, f);
 
@@ -67,7 +68,7 @@ public class TinyTest extends TraceCorrelationAssert {
         double alpha = 0.5;
         GammaSiteRateModel siteRateModel = new GammaSiteRateModel("gammaModel", alpha, 4);
         siteRateModel.setSubstitutionModel(hky);
-        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter mu = new Parameter.Default(MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
         siteRateModel.setRelativeRateParameter(mu);
 
         // @todo update to use latest beagle

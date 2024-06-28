@@ -33,23 +33,22 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.oldevomodel.sitemodel.GammaSiteModel;
-import dr.oldevomodel.sitemodel.SiteModel;
-import dr.evomodel.tree.TreeModel;
-import dr.oldevomodelxml.MSSD.ALSSiteModelParser;
-import dr.oldevomodelxml.MSSD.ALSTreeLikelihoodParser;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
-import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
-import dr.oldevomodelxml.substmodel.MutationDeathModelParser;
-import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
+import dr.evomodelxml.substmodel.MutationDeathModelParser;
+import dr.evomodelxml.treelikelihood.ALSTreeLikelihoodParser;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.MutationDeathTypeParser;
 import dr.evoxml.SitePatternsParser;
 import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
+
+import static dr.evomodelxml.siteratemodel.SiteModelParser.*;
+import static dr.evomodelxml.substmodel.MutationDeathModelParser.MD_MODEL;
+import static dr.evomodelxml.treelikelihood.BeagleTreeLikelihoodParser.TREE_LIKELIHOOD;
+import static dr.evomodelxml.treelikelihood.BeagleTreeLikelihoodParser.USE_AMBIGUITIES;
 
 /**
  * @author Marc Suchard
@@ -196,7 +195,7 @@ public class DolloComponentGenerator extends BaseComponentGenerator {
             if (model.isDolloModel()) {
                 writeDolloSubstitutionModel(partition, writer, component);
                 writeDolloSiteModel(partition, writer, component);
-                writeDolloTreeLikelihood(TreeLikelihoodParser.TREE_LIKELIHOOD, -1, partition, writer);
+                writeDolloTreeLikelihood(TREE_LIKELIHOOD, -1, partition, writer);
             }
         }
     }
@@ -204,42 +203,42 @@ public class DolloComponentGenerator extends BaseComponentGenerator {
     private void writeDolloSubstitutionModel(AbstractPartitionData partition, XMLWriter writer, DolloComponentOptions component) {
         String prefix = partition.getName() + ".";
 //        String prefix = partition.getPrefix(); // TODO Fix
-        writer.writeOpenTag(MutationDeathModelParser.MD_MODEL,
+        writer.writeOpenTag(MD_MODEL,
                 new Attribute.Default<String>(XMLParser.ID, prefix + DolloComponentOptions.MODEL_NAME ));
         writeParameter(prefix + DolloComponentOptions.DEATH_RATE,
                 component.getOptions().getParameter(prefix + DolloComponentOptions.DEATH_RATE), writer);
         writer.writeTag(DataType.DATA_TYPE, new Attribute.Default<String>(XMLParser.IDREF, DolloComponentOptions.DATA_NAME), true);
-        writer.writeCloseTag(MutationDeathModelParser.MD_MODEL);
+        writer.writeCloseTag(MD_MODEL);
         writer.write("\n");
     }
 
     private void writeDolloSiteModel(AbstractPartitionData partition, XMLWriter writer, DolloComponentOptions components) {
         String prefix = partition.getName() + ".";
-        writer.writeOpenTag(ALSSiteModelParser.ALS_SITE_MODEL,
-                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + SiteModel.SITE_MODEL)});
+        writer.writeOpenTag(SITE_MODEL,
+                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + SITE_MODEL)});
 
 
-        writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
+        writer.writeOpenTag(SUBSTITUTION_MODEL);
         writer.writeIDref(MutationDeathModelParser.MD_MODEL, prefix + DolloComponentOptions.MODEL_NAME);
-        writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
+        writer.writeCloseTag(SUBSTITUTION_MODEL);
 
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
         if (model.hasCodonPartitions()) {
-            writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
+            writeParameter(RELATIVE_RATE, "mu", model, writer);
         }
 
         if (model.isGammaHetero()) {
-            writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE,
-                    new Attribute.Default<String>(GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
+            writer.writeOpenTag(GAMMA_SHAPE,
+                    new Attribute.Default<String>(GAMMA_CATEGORIES, "" + model.getGammaCategories()));
             writeParameter(prefix + "alpha", model, writer);
-            writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
+            writer.writeCloseTag(GAMMA_SHAPE);
         }
 
         if (model.isInvarHetero()) {
-            writeParameter(GammaSiteModelParser.PROPORTION_INVARIANT, "pInv", model, writer);
+            writeParameter(PROPORTION_INVARIANT, "pInv", model, writer);
         }
 
-        writer.writeCloseTag(ALSSiteModelParser.ALS_SITE_MODEL);
+        writer.writeCloseTag(SITE_MODEL);
     }
 
 //    private void writeDolloTreeLikelihoods(XMLWriter writer, DolloComponentOptions component) {
@@ -267,7 +266,7 @@ public class DolloComponentGenerator extends BaseComponentGenerator {
                 ALSTreeLikelihoodParser.LIKE_NAME,
                 new Attribute[]{
                         new Attribute.Default<String>(XMLParser.ID, oldPrefix + id),
-                        new Attribute.Default<Boolean>(TreeLikelihoodParser.USE_AMBIGUITIES, true),
+                        new Attribute.Default<Boolean>(USE_AMBIGUITIES, true),
                         new Attribute.Default<Boolean>(ALSTreeLikelihoodParser.INTEGRATE_GAIN_RATE, true)}
         );
 
@@ -281,7 +280,7 @@ public class DolloComponentGenerator extends BaseComponentGenerator {
         }
 
         writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
-        writer.writeIDref(GammaSiteModel.SITE_MODEL, prefix + SiteModel.SITE_MODEL);
+        writer.writeIDref(SITE_MODEL, prefix + SITE_MODEL);
 
         writer.writeTag(ALSTreeLikelihoodParser.OBSERVATION_PROCESS,
                 new Attribute.Default<String>(ALSTreeLikelihoodParser.OBSERVATION_TYPE,ALSTreeLikelihoodParser.ANY_TIP),

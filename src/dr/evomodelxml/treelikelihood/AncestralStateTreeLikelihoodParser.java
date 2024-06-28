@@ -40,8 +40,6 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.tree.TreeModel;
-import dr.oldevomodel.treelikelihood.AncestralStateTreeLikelihood;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -57,7 +55,7 @@ import java.util.Set;
 public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodParser {
 
     public static final String RECONSTRUCTING_TREE_LIKELIHOOD = "ancestralTreeLikelihood";
-    public static final String RECONSTRUCTION_TAG = AncestralStateTreeLikelihood.STATES_KEY;
+    public static final String RECONSTRUCTION_TAG = "states";
     public static final String RECONSTRUCTION_TAG_NAME = "stateTagName";
     public static final String MAP_RECONSTRUCTION = "useMAP";
     public static final String MARGINAL_LIKELIHOOD = "useMarginalLikelihood";

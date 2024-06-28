@@ -35,13 +35,7 @@ import dr.evolution.sequence.Sequence;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
-import dr.oldevomodel.sitemodel.GammaSiteModel;
-import dr.oldevomodel.substmodel.FrequencyModel;
-import dr.oldevomodel.substmodel.HKY;
 import dr.evomodel.tree.TreeModel;
-import dr.oldevomodel.treelikelihood.TreeLikelihood;
-import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
-import dr.oldevomodelxml.substmodel.HKYParser;
 import dr.inference.model.Parameter;
 import test.dr.inference.trace.TraceCorrelationAssert;
 
@@ -131,23 +125,24 @@ public class SequenceLikelihoodTest extends TraceCorrelationAssert {
     }
 
     protected double[] computeSitePatternLikelihoods(SitePatterns patterns) {
+        throw new UnsupportedOperationException("Not implemented - uses oldevomodel.treelikelihood, now deleted");
         // Sub model
-        Parameter freqs = new Parameter.Default(alignment.getStateFrequencies());
-        Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 29.739445, 0, 100);
-
-        FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
-        HKY hky = new HKY(kappa, f);
-
-        //siteModel
-        GammaSiteModel siteModel = new GammaSiteModel(hky);
-        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        siteModel.setMutationRateParameter(mu);
-
-        //treeLikelihood
-        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
-                false, false, true, false, false);
-
-        return treeLikelihood.getPatternLogLikelihoods();
+//        Parameter freqs = new Parameter.Default(alignment.getStateFrequencies());
+//        Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 29.739445, 0, 100);
+//
+//        FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
+//        HKY hky = new HKY(kappa, f);
+//
+//        //siteModel
+//        GammaSiteModel siteModel = new GammaSiteModel(hky);
+//        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+//        siteModel.setMutationRateParameter(mu);
+//
+//        //treeLikelihood
+//        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
+//                false, false, true, false, false);
+//
+//        return treeLikelihood.getPatternLogLikelihoods();
     }
 
     protected double computeSumOfPatterns(SitePatterns patterns) {

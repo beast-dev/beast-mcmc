@@ -47,8 +47,6 @@ import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.ConvertAlignment;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.SimpleAlignment;
-//import dr.evolution.datatype.AminoAcids;
-//import dr.evolution.datatype.GeneralDataType;
 import dr.evolution.datatype.*;
 import dr.evolution.io.*;
 import dr.evolution.sequence.Sequence;
@@ -59,7 +57,6 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
-import dr.oldevomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.inference.model.Parameter;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
@@ -73,6 +70,8 @@ import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import java.io.*;
 import java.util.*;
 import java.util.logging.Logger;
+
+import static dr.evomodelxml.substmodel.GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL;
 
 /*
  * @author Marc A. Suchard
@@ -463,7 +462,7 @@ public class AncestralSequenceAnnotator {
                 }
                 System.out.println("Number of site transition rate categories (debuggin): " + rates.length);
                 //substModel = new GeneralSubstitutionModel(freqModel.getDataType(), freqModel, new Parameter.Default(rates), 1);
-                substModel = new GeneralSubstitutionModel(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, freqModel.getDataType(), freqModel, new Parameter.Default(rates), 1, null);
+                substModel = new GeneralSubstitutionModel(GENERAL_SUBSTITUTION_MODEL, freqModel.getDataType(), freqModel, new Parameter.Default(rates), 1, null);
             }
         }
         public DataType getDataType() {

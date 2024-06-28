@@ -118,7 +118,7 @@ public class CompleteHistorySimulatorTest extends MathTestCase {
                                Parameter valuesParam) {
 
         CompleteHistorySimulator simulator = new CompleteHistorySimulator(tree, siteModel, branchRateModel, nSites,
-                false, variableParam, valuesParam);
+                false, variableParam, valuesParam, null);
 
         for (int r = 0; r < registers.length; r++) {
             Parameter registerParameter = new Parameter.Default(registers[r]);

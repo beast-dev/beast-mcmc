@@ -800,14 +800,14 @@ public class BEAUTiImporter {
                 PartitionData partitionData = new PartitionData(options, charSet.name, fileName,
                         charSet.constructCharSetAlignment(alignment));
                 if (compressPatterns) {
-                    partitionData.compressPatterns();
+                    partitionData.compressPatterns(SitePatterns.CompressionType.UNIQUE_ONLY);
                 }
                 partitions.add(partitionData);
             }
         } else {
             PartitionData partitionData = new PartitionData(options, fileNameStem, fileName, alignment);
             if (compressPatterns) {
-                partitionData.compressPatterns();
+                partitionData.compressPatterns(SitePatterns.CompressionType.UNIQUE_ONLY);
             }
             partitions.add(partitionData);
         }

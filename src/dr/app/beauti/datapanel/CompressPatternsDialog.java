@@ -26,6 +26,7 @@
 package dr.app.beauti.datapanel;
 
 import dr.app.beauti.options.TreeHolder;
+import dr.evolution.alignment.SitePatterns;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -42,40 +43,21 @@ public class CompressPatternsDialog {
 
     private JFrame frame;
 
-    //    JComboBox traitCombo;
-    JComboBox treeCombo;
-    JCheckBox renameCheck;
-    JTextField nameField;
+    JComboBox compressionTypeCombo;
 
     OptionsPanel optionPanel;
 
     public CompressPatternsDialog(JFrame frame) {
         this.frame = frame;
 
-        treeCombo = new JComboBox();
+        compressionTypeCombo = new JComboBox(SitePatterns.CompressionType.values());
 
         optionPanel = new OptionsPanel(12, 12);
-        optionPanel.addComponentWithLabel("Create partition from:", treeCombo);
-
-        renameCheck = new JCheckBox("Name tree partition:");
-        nameField = new JTextField();
-        nameField.setColumns(20);
-        nameField.setEnabled(false);
-
-        optionPanel.addComponents(renameCheck, nameField);
-
-        renameCheck.addItemListener(
-                ev -> nameField.setEnabled(renameCheck.isSelected())
-        );
-
+        optionPanel.addComponentWithLabel("Compression type:", compressionTypeCombo);
 
     }
 
-    public int showDialog(Map<String, TreeHolder> trees, String defaultName, Component parent) {
-        treeCombo.removeAllItems();
-        for (TreeHolder tree : trees.values()) {
-            treeCombo.addItem(tree);
-        }
+    public int showDialog(Component parent) {
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
                 JOptionPane.QUESTION_MESSAGE,
@@ -85,7 +67,7 @@ public class CompressPatternsDialog {
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "Create New Partition from Tree");
+        final JDialog dialog = optionPane.createDialog(frame, "Compress alignment patterns");
         dialog.pack();
 
         dialog.setVisible(true);
@@ -99,16 +81,8 @@ public class CompressPatternsDialog {
         return result;
     }
 
-    public TreeHolder getTree() {
-        return (TreeHolder) treeCombo.getSelectedItem();
-    }
-
-    public boolean getRenamePartition() {
-        return renameCheck.isSelected();
-    }
-
-    public String getName() {
-        return nameField.getText();
+    public SitePatterns.CompressionType getCompressionType() {
+        return (SitePatterns.CompressionType)compressionTypeCombo.getSelectedItem();
     }
 
 }

@@ -141,10 +141,10 @@ public class PartitionData extends AbstractPartitionData {
         }
     }
 
-    public void compressPatterns() {
+    public void compressPatterns(SitePatterns.CompressionType compressionType) {
         assert alignment != null;
 
-        patterns = new SitePatterns(alignment);
+        patterns = new SitePatterns(alignment, alignment, compressionType);
     }
 
 

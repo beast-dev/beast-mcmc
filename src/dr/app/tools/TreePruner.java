@@ -1,7 +1,8 @@
 /*
  * TreePruner.java
  *
- * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.tools;
@@ -245,7 +247,7 @@ public class TreePruner extends BaseTreeTool {
                 new Arguments.Option[]{
                         new Arguments.StringOption("taxaToPrune", "list","a list of taxon names to prune"),
                         new Arguments.StringOption(NAME_CONTENT, falseTrue, false,
-                                "add true noise [default = true])"),
+                                "Using common string in taxa names to define taxa set)"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 

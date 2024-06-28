@@ -33,7 +33,6 @@ package dr.inference.model;
  *
  * @author Andrew Rambaut
  *
- * @version $Id: DummyLikelihood.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
 public class DummyLikelihood extends Likelihood.Abstract {
 

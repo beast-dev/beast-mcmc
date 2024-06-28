@@ -30,7 +30,6 @@ package dr.evolution.coalescent;
 /**
  * This class models a two-stage exponential growth with a constant plateau separating them.
  * 
- * @version $Id: ExpConstExpDemographic.java,v 1.4 2006/09/28 20:45:48 alexei Exp $
  *
  * @author Alexei Drummond
  */

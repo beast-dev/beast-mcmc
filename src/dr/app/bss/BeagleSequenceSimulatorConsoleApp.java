@@ -46,7 +46,6 @@ import java.util.Arrays;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class BeagleSequenceSimulatorConsoleApp {
 

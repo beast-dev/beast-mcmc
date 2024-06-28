@@ -37,7 +37,6 @@ import java.util.List;
 /**
  * A collection of tree shape summary statistics.
  *
- * @version $Id: TreeShape.java,v 1.7 2005/05/24 20:25:57 rambaut Exp $
  *
  * @author Alexei Drummond
  */

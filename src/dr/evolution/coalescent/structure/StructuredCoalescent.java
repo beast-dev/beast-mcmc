@@ -36,7 +36,6 @@ import dr.evolution.tree.Tree;
  * @author Alexei Drummond
  * @author Gerton Lunter
  * @author Andrew Rambaut
- * @version $Id: StructuredCoalescent.java,v 1.17 2006/09/11 09:33:01 gerton Exp $
  */
 public class StructuredCoalescent {
 

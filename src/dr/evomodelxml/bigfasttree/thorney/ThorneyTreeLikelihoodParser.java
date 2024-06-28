@@ -43,7 +43,6 @@ import dr.xml.*;
 /**
  * @author Andrew Rambaut
  * @author JT McCrone
- * @version $Id$
  */
 public class ThorneyTreeLikelihoodParser extends AbstractXMLObjectParser {
 

@@ -37,7 +37,6 @@ import java.util.List;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class SelectParametersDialog {
 

@@ -36,7 +36,6 @@ import java.util.*;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: GeneralDataType.java,v 1.11 2005/05/24 20:25:56 rambaut Exp $
  */
 public class GeneralDataType extends DataType implements Identifiable {
 

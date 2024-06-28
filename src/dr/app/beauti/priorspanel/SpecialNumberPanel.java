@@ -41,7 +41,6 @@ import java.text.NumberFormat;
  * @author Walter Xie
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: SpecialNumberPanel.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class SpecialNumberPanel extends JPanel implements ActionListener {
     private final JButton b1, b2, b3, b4, b5;

@@ -38,7 +38,6 @@ import java.awt.event.KeyEvent;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class MacFileMenuFactory implements MenuFactory {
 

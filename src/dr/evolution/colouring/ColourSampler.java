@@ -34,7 +34,6 @@ import dr.evolution.tree.Tree;
  * @author Alexei Drummond
  * @author Gerton Lunter
  * @author Andrew Rambaut
- * @version $Id: ColourSampler.java,v 1.5 2006/09/11 09:33:01 gerton Exp $
  */
 public interface ColourSampler {
 

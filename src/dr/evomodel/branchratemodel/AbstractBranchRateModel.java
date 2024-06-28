@@ -35,7 +35,6 @@ import dr.inference.model.*;
 /**
  * An abstract base class for BranchRateModels to help implement some of the interfaces
  * @author Andrew Rambaut
- * @version $Id:$
  */
 public abstract class AbstractBranchRateModel extends AbstractModelLikelihood implements BranchRateModel {
     /**

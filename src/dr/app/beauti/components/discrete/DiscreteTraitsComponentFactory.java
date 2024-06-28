@@ -34,7 +34,6 @@ import dr.app.beauti.options.BeautiOptions;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class DiscreteTraitsComponentFactory implements ComponentFactory {
 

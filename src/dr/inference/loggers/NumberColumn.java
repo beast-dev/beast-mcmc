@@ -32,7 +32,6 @@ import java.text.DecimalFormat;
 /**
  * An interface for a numerical column in a log.
  *
- * @version $Id: NumberColumn.java,v 1.4 2005/05/24 20:25:59 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

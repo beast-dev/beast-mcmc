@@ -39,7 +39,6 @@ import java.io.Serializable;
 /**
  * A simple substitution model delegate with the same substitution model over the whole tree
  * @author Andrew Rambaut
- * @version $Id$
  */
 public final class HomogenousSubstitutionModelDelegate implements EvolutionaryProcessDelegate, Serializable {
 

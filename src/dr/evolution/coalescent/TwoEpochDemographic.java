@@ -32,7 +32,6 @@ package dr.evolution.coalescent;
  * 
  * @author Alexei Drummond
  *
- * @version $Id: TwoEpochDemographic.java,v 1.7 2005/05/24 20:25:56 rambaut Exp $
  */
 public class TwoEpochDemographic extends DemographicFunction.Abstract {
 

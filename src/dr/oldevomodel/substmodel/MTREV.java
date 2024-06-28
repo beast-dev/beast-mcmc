@@ -38,7 +38,6 @@ import java.util.*;
  * (complete sequence data of mtDNA from 24 vertebrate species)
  * Adachi, J., and Hasegawa, M. 1996. J. Mol. Evol. 42:459-468.
  *
- * @version $Id: MTREV.java,v 1.4 2005/05/24 20:25:58 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

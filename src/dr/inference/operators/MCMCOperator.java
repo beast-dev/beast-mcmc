@@ -34,7 +34,6 @@ import java.io.Serializable;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: MCMCOperator.java,v 1.6 2005/06/14 10:40:34 rambaut Exp $
  */
 public interface MCMCOperator extends Serializable {
 

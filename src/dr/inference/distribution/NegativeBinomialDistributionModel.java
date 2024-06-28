@@ -41,7 +41,6 @@ import org.w3c.dom.Element;
  * A class that acts as a model for Negative Binomially distributed data.
  *
  * @author Andrew Rambaut
- * @version $Id$
  */
 
 public class NegativeBinomialDistributionModel extends AbstractModel implements ParametricDistributionModel {

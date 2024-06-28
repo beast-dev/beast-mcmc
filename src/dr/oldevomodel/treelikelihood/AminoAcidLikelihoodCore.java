@@ -30,7 +30,6 @@ package dr.oldevomodel.treelikelihood;
 /**
  * AminoAcidLikelihoodCore - An implementation of LikelihoodCore for Amino Acid data
  *
- * @version $Id: AminoAcidLikelihoodCore.java,v 1.8 2006/08/31 14:57:24 rambaut Exp $
  *
  * @author Andrew Rambaut
  */

@@ -41,7 +41,6 @@ import java.util.Date;
  * A likelihood function for a sky**** function where exponential growth or decay parameters are what are piecewise
  * constant
  *
- * @version $Id: BayesianSkylineLikelihood.java,v 1.5 2006/03/06 11:26:49 rambaut Exp $
  *
  * @author Alexei Drummond
  */

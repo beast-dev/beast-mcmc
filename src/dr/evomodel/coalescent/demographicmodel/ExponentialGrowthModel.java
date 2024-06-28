@@ -39,7 +39,6 @@ import dr.inference.model.Parameter;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: ExponentialGrowthModel.java,v 1.14 2005/05/24 20:25:57 rambaut Exp $
  */
 public class ExponentialGrowthModel extends DemographicModel {
 

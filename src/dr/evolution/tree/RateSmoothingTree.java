@@ -38,7 +38,6 @@ import dr.math.MultivariateMinimum;
  * to find the set of node heights that requires the smallest differences
  * in rates across nodes.
  *
- * @version $Id: RateSmoothingTree.java,v 1.8 2005/05/24 20:25:56 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

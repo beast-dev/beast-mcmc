@@ -42,7 +42,6 @@ import java.util.List;
  * @author Alexei Drummond
  * @author Gerton Lunter
  *
- * @version $Id: TwoColourSampler.java,v 1.2 2006/07/03 15:15:39 gerton Exp $
  */
 //public class TwoColourSampler implements ColourSampler {
 abstract class TwoColourSampler implements ColourSampler {

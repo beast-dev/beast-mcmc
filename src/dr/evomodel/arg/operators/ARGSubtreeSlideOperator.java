@@ -51,7 +51,6 @@ import java.util.ArrayList;
  * Implements the subtree slide move.
  *
  * @author Alexei Drummond
- * @version $Id: ARGSubtreeSlideOperator.java,v 1.1.2.2 2006/11/06 01:38:30 msuchard Exp $
  */
 public class ARGSubtreeSlideOperator extends AbstractAdaptableOperator {
 //		SimpleMCMCOperator implements AdaptableMCMCOperator {

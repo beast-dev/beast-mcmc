@@ -40,7 +40,6 @@ import java.util.logging.Logger;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 

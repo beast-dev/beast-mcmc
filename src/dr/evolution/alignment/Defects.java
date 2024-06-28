@@ -44,7 +44,6 @@ import java.util.TreeSet;
 /**
  * @author Alexei Drummond
  *
- * @version $Id: Defects.java,v 1.6 2005/05/23 10:44:07 alexei Exp $
  */
 public class Defects {
 

@@ -44,7 +44,6 @@ import java.util.Iterator;
  * speed (particularly storing/restoring) on very large trees.
  *
  * @author Andrew Rambaut
- * @version $Id:$
  */
 public class BigFastTreeModel extends TreeModel {
 

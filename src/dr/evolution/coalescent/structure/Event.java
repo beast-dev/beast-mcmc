@@ -31,7 +31,6 @@ import dr.evolution.coalescent.IntervalType;
 
 /**
  * @author Alexei
- * @version $Id: Event.java,v 1.5 2005/09/21 15:58:34 rambaut Exp $
  */
 public class Event implements Comparable {
 

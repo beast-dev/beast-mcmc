@@ -34,7 +34,6 @@ import java.io.Serializable;
  *
  * @author Alexei Drummond
  *
- * @version $Id: Acceptor.java,v 1.3 2005/05/24 20:25:59 rambaut Exp $
  */
 public interface Acceptor extends Serializable {
 

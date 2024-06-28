@@ -48,7 +48,6 @@ import java.util.*;
 
 /**
  * @author alexei
- * @version $Id: AlignmentScore.java,v 1.2 2005/04/11 11:29:37 alexei Exp $
  */
 public class AlignmentScore implements UnivariateFunction, MultivariateFunction {
 

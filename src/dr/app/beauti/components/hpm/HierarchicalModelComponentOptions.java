@@ -38,7 +38,6 @@ import java.util.List;
 
 /**
  * @author Marc A. Suchard
- * @version $Id$
  */
 public class HierarchicalModelComponentOptions implements ComponentOptions {
 

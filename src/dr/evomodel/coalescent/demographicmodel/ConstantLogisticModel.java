@@ -43,7 +43,6 @@ import java.util.List;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: ConstantLogisticModel.java,v 1.7 2005/04/11 11:24:39 alexei Exp $
  */
 public class ConstantLogisticModel extends DemographicModel implements Citable {
 

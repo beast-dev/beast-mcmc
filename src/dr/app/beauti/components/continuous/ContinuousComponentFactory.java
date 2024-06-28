@@ -34,7 +34,6 @@ import dr.app.beauti.options.ComponentOptions;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 
 public class ContinuousComponentFactory implements ComponentFactory {

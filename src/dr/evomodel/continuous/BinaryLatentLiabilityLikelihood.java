@@ -51,7 +51,6 @@ import java.util.logging.Logger;
  *
  * @author Marc A. Suchard
  * @author Joe Felsenstein
- * @version $Id$
  */
 
 public class BinaryLatentLiabilityLikelihood extends AbstractModelLikelihood implements LatentTruncation, Citable, SoftThresholdLikelihood {

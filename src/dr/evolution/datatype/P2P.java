@@ -28,7 +28,6 @@
 package dr.evolution.datatype;
 
 /**
- * @version 08/01/2010
  *
  * @author Marc A. Suchard
  * @author Yu-Nong Gong

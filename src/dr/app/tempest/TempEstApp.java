@@ -36,7 +36,6 @@ import java.awt.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class TempEstApp extends MultiDocApplication {
     private final static Version version = new Version() {

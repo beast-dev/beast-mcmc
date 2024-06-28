@@ -48,7 +48,6 @@ import dr.xml.XORRule;
  * This is a replacement to GammaSiteModelParser to keep old XML that used
  * the <siteModel></siteModel> element working.
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class SiteModelParser extends AbstractXMLObjectParser {
 

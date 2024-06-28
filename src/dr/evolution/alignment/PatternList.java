@@ -35,7 +35,6 @@ import dr.util.Identifiable;
  * interface for any list of patterns with weights.
  *
  * @author Andrew Rambaut
- * @version $Id: PatternList.java,v 1.12 2005/05/24 20:25:55 rambaut Exp $
  */
 public interface PatternList extends TaxonList, Identifiable {
     /**

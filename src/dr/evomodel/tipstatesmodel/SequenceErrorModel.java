@@ -49,7 +49,6 @@ import java.util.List;
  * (2004: Sinauer Associates) and was elaborated on for DNA damage in Rambaut et al
  * (2008, MBE
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class SequenceErrorModel extends TipStatesModel implements Citable {
     public enum ErrorType {

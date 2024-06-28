@@ -33,7 +33,6 @@ import dr.util.XHTMLable;
 /**
  * A generates an XHTML report from the elements within it.
  *
- * @version $Id: XHTMLReport.java,v 1.5 2005/05/24 20:26:01 rambaut Exp $
  *
  * @author Andrew Rambaut
  */

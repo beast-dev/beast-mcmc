@@ -60,7 +60,6 @@ import java.util.Map;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: DataPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class SamplesPanel extends JPanel implements Exportable {
 

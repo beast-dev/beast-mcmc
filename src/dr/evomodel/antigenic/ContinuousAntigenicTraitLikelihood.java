@@ -40,7 +40,6 @@ import java.util.logging.Logger;
  * Antigenic evolution assuming each virus's antigenic property diffuses independently.
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 @Deprecated // for the moment at least
 public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood implements Citable {

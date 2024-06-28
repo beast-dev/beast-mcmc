@@ -42,7 +42,6 @@ import org.w3c.dom.Element;
  *
  * @author Andrew Rambaut
  *
- * @version $Id: MLOptimizer.java,v 1.5 2006/06/13 03:50:54 alexei Exp $
  */
 public class MLOptimizer implements Runnable, Identifiable {
 

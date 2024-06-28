@@ -30,7 +30,6 @@ package dr.util;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id$
  */
 public interface TaskListener {
     /**

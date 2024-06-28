@@ -49,7 +49,6 @@ import java.util.List;
  *
  * @author Korbinian Strimmer
  * @author Gerton Lunter
- * @version $Id: GammaDistribution.java,v 1.9 2006/03/30 11:12:47 rambaut Exp $
  */
 public class GammaDistribution implements Distribution, GradientProvider, HessianProvider {
     //

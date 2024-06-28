@@ -31,7 +31,6 @@ package test.dr.integration;
  * GTR Parameter Estimation Tester.
  *
  * @author Walter Xie
- * @version 1.0
  * @since <pre>08/06/2009</pre>
  */
 public class BEASTInputFile {

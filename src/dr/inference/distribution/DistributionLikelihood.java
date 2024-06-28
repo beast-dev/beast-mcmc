@@ -40,7 +40,6 @@ import org.w3c.dom.Element;
  * being distributed according to the given parametric distribution.
  *
  * @author Alexei Drummond
- * @version $Id: DistributionLikelihood.java,v 1.11 2005/05/25 09:35:28 rambaut Exp $
  */
 
 public class DistributionLikelihood extends AbstractDistributionLikelihood implements Reportable {

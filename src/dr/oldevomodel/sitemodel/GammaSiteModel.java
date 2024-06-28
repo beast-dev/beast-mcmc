@@ -39,7 +39,6 @@ import dr.math.distributions.GammaDistribution;
  * GammaSiteModel - A SiteModel that has a gamma distributed rates across sites.
  *
  * @author Andrew Rambaut
- * @version $Id: GammaSiteModel.java,v 1.31 2005/09/26 14:27:38 rambaut Exp $
  */
 
 public class GammaSiteModel extends AbstractModel implements SiteModel {

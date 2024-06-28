@@ -56,7 +56,6 @@ import java.util.regex.Pattern;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: NexusImporter.java,v 1.30 2006/04/25 14:39:37 rambaut Exp $
  */
 public class NexusImporter extends Importer implements SequenceImporter, TreeImporter {
 

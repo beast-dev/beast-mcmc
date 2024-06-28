@@ -36,7 +36,6 @@ import java.io.PrintWriter;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: TabDelimitedFormatter.java,v 1.5 2005/05/24 20:25:59 rambaut Exp $
  */
 public class TabDelimitedFormatter implements LogFormatter {
 

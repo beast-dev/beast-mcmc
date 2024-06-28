@@ -42,7 +42,6 @@ import org.w3c.dom.Element;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id: FrequencyModel.java,v 1.26 2005/05/24 20:25:58 rambaut Exp $
  */
 public class FrequencyModel extends AbstractModel {
     /**

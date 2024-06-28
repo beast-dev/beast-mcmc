@@ -32,7 +32,6 @@ import dr.evolution.datatype.AminoAcids;
 /**
  * base class of substitution models for amino acids
  *
- * @version $Id: AbstractAminoAcidModel.java,v 1.3 2005/05/24 20:25:58 rambaut Exp $
  *
  * @author Andrew Rambaut
  */

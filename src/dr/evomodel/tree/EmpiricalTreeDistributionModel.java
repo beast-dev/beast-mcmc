@@ -44,7 +44,6 @@ import java.util.List;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  *
  * @todo - this should extend TreeModel rather than inheriting from DefaultTreeModel
  */

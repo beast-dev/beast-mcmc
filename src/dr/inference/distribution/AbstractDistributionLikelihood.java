@@ -36,7 +36,6 @@ import java.util.List;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: AbstractDistributionLikelihood.java,v 1.4 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public abstract class AbstractDistributionLikelihood extends Likelihood.Abstract {

@@ -34,7 +34,6 @@ import dr.math.distributions.NormalDistribution;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  * <p>
  * $HeadURL$
  * <p>

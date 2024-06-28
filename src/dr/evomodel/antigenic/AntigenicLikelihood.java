@@ -43,7 +43,6 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @author Trevor Bedford
  * @author Marc Suchard
- * @version $Id$
  */
 /*
     Both virus locations and serum locations are shifted by the parameter locationDrift.

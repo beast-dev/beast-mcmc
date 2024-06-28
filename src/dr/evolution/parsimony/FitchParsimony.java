@@ -39,7 +39,6 @@ import dr.evolution.util.Taxon;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: FitchParsimony.java,v 1.4 2005/06/22 16:44:18 rambaut Exp $
  */
 public class FitchParsimony implements ParsimonyCriterion {
 

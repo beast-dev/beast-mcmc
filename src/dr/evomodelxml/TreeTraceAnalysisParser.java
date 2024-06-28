@@ -40,7 +40,6 @@ import java.io.Reader;
 
 /**
  * @author Alexei Drummond
- * @version $Id: TreeTraceAnalysisParser.java,v 1.6 2005/05/24 20:25:58 rambaut Exp $
  */
 public class TreeTraceAnalysisParser extends AbstractXMLObjectParser {
 

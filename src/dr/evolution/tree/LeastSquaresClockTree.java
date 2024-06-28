@@ -33,7 +33,6 @@ import dr.math.MultivariateMinimum;
 
 /**
  *
- * @version $Id: LeastSquaresClockTree.java,v 1.4 2005/05/24 20:25:56 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

@@ -34,7 +34,6 @@ import dr.evolution.tree.Tree;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  *
- * @version $Id: TreeColouring.java,v 1.8 2006/08/23 10:46:33 rambaut Exp $
  */
 public class DefaultTreeColouring implements TreeColouring {
 

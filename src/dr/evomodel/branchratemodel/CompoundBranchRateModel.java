@@ -43,7 +43,6 @@ import java.util.List;
  * work, one model should drive the actual rate of evolution and the others should be set up to provide
  * relative rates.
  * @author Andrew Rambaut
- * @version $Id:=$
  */
 public class CompoundBranchRateModel extends AbstractBranchRateModel {
 

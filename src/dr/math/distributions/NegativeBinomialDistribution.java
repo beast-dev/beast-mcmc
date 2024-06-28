@@ -35,7 +35,6 @@ import dr.math.*;
 
 /**
  * @author Trevor Bedford
- * @version $Id$
  */
 public class NegativeBinomialDistribution implements Distribution {
 

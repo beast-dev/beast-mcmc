@@ -38,7 +38,6 @@ import java.util.List;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Profileable, Reportable {
 

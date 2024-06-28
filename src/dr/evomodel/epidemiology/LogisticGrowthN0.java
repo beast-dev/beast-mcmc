@@ -43,7 +43,6 @@ import dr.evolution.coalescent.*;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Matthew Hall
- * @version $Id: LogisticGrowth.java,v 1.15 2008/03/21 20:25:56 rambaut Exp $
  */
 public class LogisticGrowthN0 extends ExponentialGrowth {
 

@@ -47,7 +47,6 @@ import dr.inference.model.*;
  * AbstractTreeLikelihood - a base class for likelihood calculators of sites on a tree.
  *
  * @author Andrew Rambaut
- * @version $Id: AbstractARGLikelihood.java,v 1.1 2006/10/10 22:57:55 msuchard Exp $
  */
 
 public abstract class AbstractARGLikelihood extends AbstractModelLikelihood implements ParallelLikelihood {

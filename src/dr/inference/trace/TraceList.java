@@ -34,7 +34,6 @@ import java.util.List;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: TraceList.java,v 1.2 2006/05/22 15:52:06 rambaut Exp $
  */
 
 public interface TraceList {

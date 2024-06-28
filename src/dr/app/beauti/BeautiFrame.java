@@ -89,7 +89,6 @@ import java.util.Map;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: BeautiFrame.java,v 1.22 2006/09/09 16:07:06 rambaut Exp $
  */
 public class BeautiFrame extends DocumentFrame {
 

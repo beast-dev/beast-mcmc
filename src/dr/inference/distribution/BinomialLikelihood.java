@@ -40,7 +40,6 @@ import org.w3c.dom.Element;
  * being distributed according to a binomial distribution.
  *
  * @author Alexei Drummond
- * @version $Id: BinomialLikelihood.java,v 1.5 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public class BinomialLikelihood extends AbstractModelLikelihood {

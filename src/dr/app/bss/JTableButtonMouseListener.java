@@ -35,7 +35,6 @@ import javax.swing.JTable;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class JTableButtonMouseListener extends MouseAdapter {
 

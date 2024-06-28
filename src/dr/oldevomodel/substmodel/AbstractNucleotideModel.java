@@ -32,7 +32,6 @@ import dr.evolution.datatype.Nucleotides;
 /**
  * base class for nucleotide rate matrices
  *
- * @version $Id: AbstractNucleotideModel.java,v 1.3 2005/05/24 20:25:58 rambaut Exp $
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut

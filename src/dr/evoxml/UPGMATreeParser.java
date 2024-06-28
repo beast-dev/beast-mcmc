@@ -42,7 +42,6 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Marc A. Suchard
- * @version $Id: UPGMATreeParser.java,v 1.6 2006/07/28 11:27:32 rambaut Exp $
  */
 public class UPGMATreeParser extends AbstractXMLObjectParser {
 

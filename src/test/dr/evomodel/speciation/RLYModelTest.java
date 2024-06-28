@@ -63,7 +63,6 @@ import java.util.List;
  * YuleModel Tester.
  *
  * @author Alexei Drummond
- * @version 1.0
  * @since <pre>08/26/2007</pre>
  */
 public class RLYModelTest extends TraceCorrelationAssert {

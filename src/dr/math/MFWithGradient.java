@@ -31,7 +31,6 @@ package dr.math;
 /**
  * interface for a function of several variables with a gradient
  *
- * @version $Id: MFWithGradient.java,v 1.3 2005/05/24 20:26:01 rambaut Exp $
  *
  * @author Korbinian Strimmer
  */

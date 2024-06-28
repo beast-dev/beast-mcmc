@@ -35,7 +35,6 @@ import java.util.TreeSet;
  * A syntax rule to ensure that exactly one of the given element
  * appears as a child.
  *
- * @version $Id: ElementRule.java,v 1.22 2005/05/24 20:26:01 rambaut Exp $
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut

@@ -41,7 +41,6 @@ import java.awt.*;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Walter Xie
- * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class DefaultPriorTableDialog {
 

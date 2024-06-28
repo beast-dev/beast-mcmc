@@ -42,7 +42,6 @@ import javax.swing.JMenuItem;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class DefaultHelpMenuFactory implements MenuFactory {
 

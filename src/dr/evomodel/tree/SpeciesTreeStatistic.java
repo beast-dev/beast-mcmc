@@ -40,7 +40,6 @@ import java.util.Set;
  * Interface for a phylogenetic tree that may contain population level data
  *
  * @author Alexei Drummond
- * @version $Id: SpeciesTreeStatistic.java,v 1.14 2005/07/11 14:06:25 rambaut Exp $
  */
 public class SpeciesTreeStatistic extends TreeStatistic implements BooleanStatistic {
 

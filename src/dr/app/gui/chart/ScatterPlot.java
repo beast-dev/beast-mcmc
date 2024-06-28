@@ -41,7 +41,6 @@ import java.util.Vector;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: ScatterPlot.java,v 1.10 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public class ScatterPlot extends Plot.AbstractPlot {

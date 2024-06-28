@@ -43,7 +43,6 @@ import dr.xml.*;
 /**
  * PurifyingTreeLikelihood - implements a Likelihood Function for sequences on a tree.
  *
- * @version $Id: PurifyingTreeLikelihood.java,v 1.6 2006/01/10 16:48:28 rambaut Exp $
  *
  * @author Andrew Rambaut
  */

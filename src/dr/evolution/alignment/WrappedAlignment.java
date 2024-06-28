@@ -42,7 +42,6 @@ import java.util.List;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id$
  */
 public abstract class WrappedAlignment extends Alignment.Abstract {
     protected WrappedAlignment(Alignment alignment) {

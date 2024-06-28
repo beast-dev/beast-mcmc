@@ -36,7 +36,6 @@ import java.io.File;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class TreeSpaceApp extends MultiDocApplication {
 

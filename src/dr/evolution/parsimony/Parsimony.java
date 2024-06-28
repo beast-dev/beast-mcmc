@@ -35,7 +35,6 @@ import dr.evolution.tree.Tree;
 /**
  * Utility class for doing parsimony reconstruction of patterns on a tree.
  *
- * @version $Id: Parsimony.java,v 1.7 2005/06/27 21:18:40 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

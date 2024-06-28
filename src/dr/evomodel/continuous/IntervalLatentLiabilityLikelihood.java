@@ -48,7 +48,6 @@ import java.util.logging.Logger;
  *
  * @author Marc A. Suchard
  * @author Philippe Lemey
- * @version $Id$
  */
 
 public class IntervalLatentLiabilityLikelihood extends AbstractModelLikelihood implements LatentTruncation, Citable, SoftThresholdLikelihood {

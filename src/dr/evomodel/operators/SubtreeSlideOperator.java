@@ -43,7 +43,6 @@ import java.util.List;
  * Implements the subtree slide move.
  *
  * @author Alexei Drummond
- * @version $Id: SubtreeSlideOperator.java,v 1.15 2005/06/14 10:40:34 rambaut Exp $
  */
 public class SubtreeSlideOperator extends AbstractAdaptableTreeOperator {
 

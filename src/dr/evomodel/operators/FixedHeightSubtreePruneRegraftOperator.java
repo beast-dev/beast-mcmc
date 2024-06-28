@@ -42,7 +42,6 @@ import java.util.List;
  * Implements the fixed height subtree prune regraft move. Described by Sebastian Hoehna et al
  *
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class FixedHeightSubtreePruneRegraftOperator extends AbstractTreeOperator {
 

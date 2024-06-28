@@ -41,7 +41,6 @@ import dr.inference.model.Parameter;
 /**
  * Logistic growth.
  * 
- * @version $Id: LogisticGrowthN0Model.java,v 1.21 2008/03/21 20:25:57 rambaut Exp $
  *
  * @author Daniel Wilson
  * @author Alexei Drummond

@@ -37,7 +37,6 @@ import java.awt.*;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: TreeStatPanel.java,v 1.3 2006/05/09 10:24:27 rambaut Exp $
  */
 public class TreeStatPanel extends javax.swing.JPanel implements Exportable {
 

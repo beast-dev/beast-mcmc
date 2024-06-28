@@ -33,7 +33,6 @@ import java.io.Serializable;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @Author Marc A. Suchard
- * @version $Id$
  */
 public class EigenDecomposition implements Serializable {
 

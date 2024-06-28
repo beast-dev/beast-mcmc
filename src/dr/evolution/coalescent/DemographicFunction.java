@@ -40,7 +40,6 @@ import org.apache.commons.math.analysis.integration.RombergIntegrator;
  *
  * Parts of this class were derived from C++ code provided by Oliver Pybus.
  *
- * @version $Id: DemographicFunction.java,v 1.12 2005/05/24 20:25:55 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

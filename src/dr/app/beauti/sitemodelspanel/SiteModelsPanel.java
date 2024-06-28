@@ -55,7 +55,6 @@ import java.util.logging.Logger;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: ModelPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class SiteModelsPanel extends BeautiPanel implements Exportable {
 

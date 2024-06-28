@@ -59,7 +59,6 @@ import org.apache.commons.math.stat.descriptive.rank.Median;
  *
  * @author Matthew Hall
  * @author Andrew Rambaut
- * @version $Id: $
  */
 
 public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements Loggable, Citable,

@@ -30,7 +30,6 @@ package dr.matrix;
 /**
  * An inteface for a mutable matrix.
  *
- * @version $Id: MutableMatrix.java,v 1.3 2005/05/24 20:26:01 rambaut Exp $
  *
  * @author Andrew Rambaut
  */

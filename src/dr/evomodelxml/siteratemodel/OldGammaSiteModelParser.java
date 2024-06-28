@@ -38,7 +38,6 @@ import java.util.logging.Logger;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id$
  */
 public class OldGammaSiteModelParser extends AbstractXMLObjectParser {
 

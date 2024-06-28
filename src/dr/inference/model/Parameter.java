@@ -38,7 +38,6 @@ import java.util.*;
  * Represents a multi-dimensional continuous parameter.
  *
  * @author Alexei Drummond
- * @version $Id: Parameter.java,v 1.22 2005/06/08 11:23:25 alexei Exp $
  */
 public interface Parameter extends Statistic, Variable<Double> {
 

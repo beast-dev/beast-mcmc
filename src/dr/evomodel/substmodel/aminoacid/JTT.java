@@ -41,7 +41,6 @@ import java.util.List;
  * The rapid generation of mutation data matrices from protein sequences
  * CABIOS  vol. 8 no. 3 1992 pp. 275-282
  *
- * @version $Id: JTT.java,v 1.3 2005/05/24 20:25:58 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

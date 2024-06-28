@@ -38,7 +38,6 @@ import javax.swing.table.TableCellRenderer;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 @SuppressWarnings("serial")
 public class JTableButtonCellRenderer extends JButton implements

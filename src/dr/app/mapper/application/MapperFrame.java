@@ -57,7 +57,6 @@ import java.util.List;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: BeautiFrame.java,v 1.22 2006/09/09 16:07:06 rambaut Exp $
  */
 public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler {
 

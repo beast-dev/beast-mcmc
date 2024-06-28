@@ -31,7 +31,6 @@ import java.util.List;
 
 /**
  * @author alexei
- * @version $Id: PairDistance.java,v 1.2 2005/04/11 11:29:37 alexei Exp $
  */
 public class PairDistance implements Comparable<PairDistance> {
     int x, y;

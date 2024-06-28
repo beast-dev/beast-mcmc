@@ -37,7 +37,6 @@ import dr.inference.model.Parameter;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: UpDownOperator.java,v 1.25 2005/06/14 10:40:34 rambaut Exp $
  */
 
 public interface Scalable {

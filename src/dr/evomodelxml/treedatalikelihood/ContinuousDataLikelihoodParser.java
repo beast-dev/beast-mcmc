@@ -52,7 +52,6 @@ import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuous
 /**
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser implements BeautiModelIDProvider {
 

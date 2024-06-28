@@ -37,7 +37,6 @@ import static dr.inference.hawkes.NativeHPHSingleton.THREADS;
  *
  * @author Marc Suchard
  * @author Andrew Rambaut
- * @version $Id$
  *          <p/>
  *          $HeadURL$
  *          <p/>

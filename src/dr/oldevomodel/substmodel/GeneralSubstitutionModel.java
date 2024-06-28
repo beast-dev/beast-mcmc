@@ -38,7 +38,6 @@ import dr.inference.model.Parameter;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: GeneralSubstitutionModel.java,v 1.37 2006/05/05 03:05:10 alexei Exp $
  */
 public class GeneralSubstitutionModel extends AbstractSubstitutionModel implements dr.util.XHTMLable {
 

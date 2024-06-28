@@ -36,7 +36,6 @@ import java.util.List;
 /**
  * various utility functions on trees.
  *
- * @version $Id: TreeMetrics.java,v 1.7 2005/05/24 20:25:57 rambaut Exp $
  *
  * @author Alexei Drummond
  * @author Korbinian Strimmer

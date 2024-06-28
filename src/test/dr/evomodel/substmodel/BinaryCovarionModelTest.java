@@ -46,7 +46,6 @@ import junit.framework.TestSuite;
  * BinaryCovarionModel Tester.
  *
  * @author Alexei Drummond
- * @version 1.0
  * @since <pre>08/26/2007</pre>
  */
 public class BinaryCovarionModelTest extends TestCase {

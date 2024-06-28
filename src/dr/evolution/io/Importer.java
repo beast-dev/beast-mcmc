@@ -34,7 +34,6 @@ import java.io.*;
 /**
  * Base class for phylogenetic file format importers
  *
- * @version $Id: Importer.java,v 1.19 2006/04/25 14:41:08 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

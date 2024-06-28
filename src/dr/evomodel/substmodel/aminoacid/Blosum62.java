@@ -39,7 +39,6 @@ import java.util.List;
  * BLOSUM62 model of amino acid evolution
  * Henikoff, S., and J. G. Henikoff. 1992. PNAS USA 89:10915-10919.
  *
- * @version $Id: Blosum62.java,v 1.3 2005/05/24 20:25:58 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

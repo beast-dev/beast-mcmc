@@ -1652,8 +1652,7 @@ public class TreeAnnotator {
 
     /**
      * @author Andrew Rambaut
-     * @version $Id$
-     */
+         */
     public static interface TreeAnnotationPlugin {
         Set<String> setAttributeNames(Set<String> attributeNames);
 

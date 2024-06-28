@@ -37,7 +37,6 @@ import dr.inference.model.Statistic;
  * A statistic that returns the values of various tree shape statistics.
  *
  * @author Alexei Drummond
- * @version $Id: TreeShapeStatistic.java,v 1.4 2005/07/11 14:06:25 rambaut Exp $
  */
 public class TreeShapeStatistic extends TreeStatistic {
 

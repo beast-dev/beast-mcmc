@@ -42,7 +42,6 @@ import dr.inference.model.Variable;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Korbinian Strimmer
- * @version $Id: DemographicModel.java,v 1.28 2005/09/26 14:27:38 rambaut Exp $
  */
 public abstract class DemographicModel extends AbstractModel implements Units {
 

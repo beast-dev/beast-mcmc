@@ -30,7 +30,6 @@ package dr.oldevomodel.treelikelihood;
 /**
  * GeneralLikelihoodCore - An implementation of LikelihoodCore for any data
  *
- * @version $Id: GeneralLikelihoodCore.java,v 1.28 2006/08/31 14:57:24 rambaut Exp $
  *
  * @author Andrew Rambaut
  */

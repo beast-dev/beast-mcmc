@@ -37,7 +37,6 @@ import dr.stats.DiscreteStatistics;
  * A statistic that tracks the covariance of rates on branches
  *
  * @author Alexei Drummond
- * @version $Id: RateCovarianceStatistic.java,v 1.5 2005/07/11 14:06:25 rambaut Exp $
  */
 public class RateCovarianceStatistic extends TreeStatistic {
 

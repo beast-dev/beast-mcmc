@@ -39,7 +39,6 @@ import org.w3c.dom.Element;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: LogNormalDistributionModel.java,v 1.8 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public class LogNormalDistributionModel extends AbstractModel implements

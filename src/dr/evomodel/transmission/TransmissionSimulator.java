@@ -42,7 +42,6 @@ import dr.xml.*;
  * hosts with known history of transmission. The viruses tree should have tip
  * attributes specifying which host they are from (host="").
  *
- * @version $Id: TransmissionSimulator.java,v 1.5 2005/06/15 17:20:55 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

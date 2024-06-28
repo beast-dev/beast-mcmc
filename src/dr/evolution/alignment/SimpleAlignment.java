@@ -51,7 +51,6 @@ import java.util.List;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: SimpleAlignment.java,v 1.46 2005/06/21 16:25:15 beth Exp $
  */
 @SuppressWarnings("serial")
 public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHTMLable {

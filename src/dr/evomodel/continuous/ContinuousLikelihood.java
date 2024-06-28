@@ -39,7 +39,6 @@ import java.util.ArrayList;
 /**
  * Calculates the likelihood of a set of continuous attributes on a tree.
  *
- * @version $Id: ContinuousLikelihood.java,v 1.6 2006/06/18 16:20:58 alexei Exp $
  *
  * @author Alexei Drummond
  */

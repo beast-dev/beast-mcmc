@@ -46,7 +46,6 @@ import static dr.evolution.alignment.SitePatterns.CompressionType.*;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: SitePatterns.java,v 1.47 2005/06/22 16:44:17 rambaut Exp $
  */
 public class SitePatterns implements SiteList, dr.util.XHTMLable {
     private final boolean DEBUG = false;

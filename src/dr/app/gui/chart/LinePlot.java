@@ -38,7 +38,6 @@ import java.util.List;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: LinePlot.java,v 1.8 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public class LinePlot extends Plot.AbstractPlot {

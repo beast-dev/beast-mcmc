@@ -55,7 +55,6 @@ import java.util.List;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  *
- * @version $Id: Coevolve.java,v 1.3 2006/01/09 15:12:17 rambaut Exp $
  */
 public class Coevolve {
 

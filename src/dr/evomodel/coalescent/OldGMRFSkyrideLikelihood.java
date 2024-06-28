@@ -54,7 +54,6 @@ import java.util.List;
  * @author Erik Bloomquist
  * @author Vladimir Minin
  * @author Marc Suchard
- * @version $Id: GMRFSkylineLikelihood.java,v 1.3 2007/03/20 22:40:04 msuchard Exp $
  */
 @Deprecated
 public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood implements CoalescentIntervalProvider, Citable {

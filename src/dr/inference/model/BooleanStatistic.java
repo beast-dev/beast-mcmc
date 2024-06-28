@@ -30,7 +30,6 @@ package dr.inference.model;
 /**
  * Abstract base class for boolean Statistics
  *
- * @version $Id: BooleanStatistic.java,v 1.2 2005/05/24 20:25:59 rambaut Exp $
  *
  * @author Andrew Rambaut
  */

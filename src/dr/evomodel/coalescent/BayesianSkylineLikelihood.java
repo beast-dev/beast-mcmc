@@ -47,7 +47,6 @@ import java.util.List;
 /**
  * A likelihood function for the generalized skyline plot coalescent. Takes a tree and population size and group size parameters.
  *
- * @version $Id: BayesianSkylineLikelihood.java,v 1.5 2006/03/06 11:26:49 rambaut Exp $
  *
  * @author Alexei Drummond
  */

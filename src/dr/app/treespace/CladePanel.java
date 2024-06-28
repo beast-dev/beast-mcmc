@@ -42,7 +42,6 @@ import java.awt.event.MouseEvent;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class CladePanel extends JPanel {
 

@@ -37,7 +37,6 @@ package dr.math.distributions;
  * (shape parameter = n/2.0, scale = 2.0).
  *
  * @author Korbinian Strimmer
- * @version $Id: ChiSquareDistribution.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
 public class ChiSquareDistribution extends GammaDistribution {
     //

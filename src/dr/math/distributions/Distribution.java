@@ -34,7 +34,6 @@ import dr.math.UnivariateFunction;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: Distribution.java,v 1.7 2005/05/24 20:26:00 rambaut Exp $
  */
 public interface Distribution {
     /**

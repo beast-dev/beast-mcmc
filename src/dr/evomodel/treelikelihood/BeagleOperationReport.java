@@ -51,7 +51,6 @@ import java.io.PrintWriter;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Marc Suchard
- * @version $Id$
  */
 
 public class BeagleOperationReport extends AbstractSinglePartitionTreeLikelihood {

@@ -36,7 +36,6 @@ import java.util.Arrays;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: Intervals.java,v 1.19 2005/09/21 18:47:58 gerton Exp $
  */
 public class Intervals implements IntervalList {
 

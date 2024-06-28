@@ -45,7 +45,6 @@ import java.util.logging.Logger;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 
 public final class TreeDataLikelihood extends AbstractModelLikelihood implements TreeTraitProvider, Citable, Profileable, Reportable {

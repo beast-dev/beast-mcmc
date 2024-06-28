@@ -40,7 +40,6 @@ import java.util.logging.Logger;
  * This class implements a simple operator schedule.
  *
  * @author Alexei Drummond
- * @version $Id: SimpleOperatorSchedule.java,v 1.5 2005/06/14 10:40:34 rambaut Exp $
  */
 public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 

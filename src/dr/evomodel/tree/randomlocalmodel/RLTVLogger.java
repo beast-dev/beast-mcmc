@@ -38,7 +38,6 @@ import dr.inference.loggers.MCLogger;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: TreeLogger.java,v 1.25 2006/09/05 13:29:34 rambaut Exp $
  */
 public class RLTVLogger extends MCLogger {
 

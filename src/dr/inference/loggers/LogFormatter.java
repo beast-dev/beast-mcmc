@@ -32,7 +32,6 @@ package dr.inference.loggers;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: LogFormatter.java,v 1.3 2005/05/24 20:25:59 rambaut Exp $
  */
 public interface LogFormatter {
 

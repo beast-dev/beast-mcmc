@@ -34,7 +34,6 @@ import dr.inference.model.Statistic;
  * A statistic that reports the heights of all intercoalescent intervals for a GMRF skyride likelihood plot 
  *
  * @author Marc A. Suchard
- * @version $Id:$
  */
 public class GMRFIntervalHeightsStatistic extends Statistic.Abstract {
 

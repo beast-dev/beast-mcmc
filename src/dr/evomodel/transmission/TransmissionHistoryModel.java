@@ -55,7 +55,6 @@ import java.util.logging.Logger;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: TransmissionHistoryModel.java,v 1.3 2005/04/11 11:25:50 alexei Exp $
  */
 public class TransmissionHistoryModel extends AbstractModel implements TreeColouringProvider, Units {
 

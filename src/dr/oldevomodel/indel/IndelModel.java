@@ -36,7 +36,6 @@ import dr.inference.model.AbstractModel;
  * This abstract class contains methods that are of general use for
  * modelling insertions and deletions.
  *
- * @version $$
  *
  * @author Alexei Drummond
  */

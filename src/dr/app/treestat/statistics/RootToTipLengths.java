@@ -33,7 +33,6 @@ import dr.evolution.util.TaxonList;
 
 /**
  *
- * @version $Id: RootToTipLengths.java,v 1.1 2005/09/28 13:50:56 rambaut Exp $
  *
  * @author Alexei Drummond
  */

@@ -42,7 +42,6 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Filip Bielejec
  * @author Marc A. Suchard
- * @version $Id$
  */
 public class ExternalInternalBranchModel extends AbstractModel implements BranchModel {
     public ExternalInternalBranchModel(TreeModel tree, SubstitutionModel externalSubstModel, SubstitutionModel internalSubstModel) {

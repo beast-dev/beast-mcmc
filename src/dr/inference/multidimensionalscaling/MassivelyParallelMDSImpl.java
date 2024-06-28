@@ -37,7 +37,6 @@ import static dr.inference.multidimensionalscaling.NativeMDSSingleton.THREADS;
  *
  * @author Marc Suchard
  * @author Andrew Rambaut
- * @version $Id$
  *          <p/>
  *          $HeadURL$
  *          <p/>

@@ -33,7 +33,6 @@ import dr.evolution.tree.Tree;
 /**
  * Returns the total time in the genealogy in which exactly k lineages are present.
  *
- * @version $Id: IntervalKStatistic.java,v 1.2 2005/09/28 13:50:56 rambaut Exp $
  *
  * @author Alexei Drummond
  */

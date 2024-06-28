@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @version $Id: MeanStatistic.java,v 1.9 2005/05/24 20:26:00 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

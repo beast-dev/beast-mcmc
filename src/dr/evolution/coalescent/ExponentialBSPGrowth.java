@@ -32,7 +32,6 @@ package dr.evolution.coalescent;
  * (Parameters: N0=present-day population size; r=growth rate).
  * This model is nested with the constant-population size model (r=0).
  *
- * @version $Id: ExponentialGrowth.java,v 1.7 2005/05/24 20:25:56 rambaut Exp $
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut

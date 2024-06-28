@@ -58,7 +58,6 @@ import java.util.Set;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Marc Suchard
- * @version $Id$
  */
 public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
 

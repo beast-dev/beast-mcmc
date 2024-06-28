@@ -37,7 +37,6 @@ import java.util.function.DoubleBinaryOperator;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: DefaultBranchRateModel.java,v 1.4 2005/05/24 20:25:57 rambaut Exp $
  */
 public final class DefaultBranchRateModel implements BranchRateModel, DifferentiableBranchRates {
     public double getBranchRate(Tree tree, NodeRef node) {

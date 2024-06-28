@@ -35,7 +35,6 @@ import dr.evolution.tree.Tree;
  * Date: Dec 3, 2004
  * Time: 9:59:49 AM
  *
- * @version $Id: CoordinateTransform.java,v 1.1 2005/11/29 12:59:36 rambaut Exp $
  */
 public interface CoordinateTransform {
 

@@ -31,7 +31,6 @@ package dr.inference.smc;
  * Options for the SMC class.
  *
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class SMCOptions {
 

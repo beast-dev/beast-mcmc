@@ -37,7 +37,6 @@ import javax.swing.border.EmptyBorder;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Walter Xie
- * @version $Id$
  */
 public class PartitionNameDialog {
 

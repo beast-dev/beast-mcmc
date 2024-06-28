@@ -32,7 +32,6 @@ import dr.evolution.distance.DistanceMatrix;
 /**
  * An abstract base class for clustering algorithms from pairwise distances
  *
- * @version $Id: ClusteringTree.java,v 1.8 2005/05/24 20:25:56 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

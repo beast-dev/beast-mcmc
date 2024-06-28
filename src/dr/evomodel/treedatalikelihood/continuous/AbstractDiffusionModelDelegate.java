@@ -46,7 +46,6 @@ import java.io.Serializable;
  *
  * @author Marc A. Suchard
  * @author Andrew Rambaut
- * @version $Id$
  */
 public abstract class AbstractDiffusionModelDelegate extends AbstractModel implements DiffusionProcessDelegate, Serializable {
 

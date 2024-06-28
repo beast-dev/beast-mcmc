@@ -38,7 +38,6 @@ package dr.evolution.coalescent;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  *
- * @version $Id: ConstantPopulation.java,v 1.9 2005/05/24 20:25:55 rambaut Exp $
  *
  */
 public class ConstantPopulation extends DemographicFunction.Abstract

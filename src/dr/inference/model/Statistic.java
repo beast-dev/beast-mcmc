@@ -37,7 +37,6 @@ import dr.xml.Reportable;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: Statistic.java,v 1.8 2005/05/24 20:26:00 rambaut Exp $
  */
 public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
 

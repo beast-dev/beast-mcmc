@@ -45,7 +45,6 @@ import java.util.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: LocalClockModel.java,v 1.1 2005/04/05 09:27:48 rambaut Exp $
  */
 public class LocalClockModel extends AbstractBranchRateModel implements Citable, DifferentiableBranchRates {
 

@@ -36,7 +36,6 @@ import dr.evomodel.substmodel.SubstitutionModel;
  *
  * @author Marc Suchard
  * @author Andrew Rambaut
- * @version $Id$
  */
 public interface EvolutionaryProcessDelegate {
 

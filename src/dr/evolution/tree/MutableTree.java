@@ -33,7 +33,6 @@ import dr.math.MathUtils;
 /**
  * Interface for a phylogenetic or genealogical tree.
  *
- * @version $Id: MutableTree.java,v 1.22 2006/07/28 11:27:32 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

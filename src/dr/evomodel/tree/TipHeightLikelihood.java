@@ -37,7 +37,6 @@ import org.w3c.dom.Element;
  * A class that returns the log likelihood of a set of data (statistics)
  * being distributed according to the given parametric distribution.
  * @author Alexei Drummond
- * @version $Id: TipHeightLikelihood.java,v 1.2 2005/05/17 16:54:41 rambaut Exp $
  */
 
 public class TipHeightLikelihood extends Likelihood.Abstract {

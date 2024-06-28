@@ -37,7 +37,6 @@ import dr.inference.model.Bounds.Int;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: DataType.java,v 1.13 2005/05/24 20:25:56 rambaut Exp $
  */
 public abstract class DataType implements Serializable {
     public static final String DATA_TYPE = "dataType";

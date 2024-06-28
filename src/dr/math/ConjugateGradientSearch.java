@@ -38,7 +38,6 @@ package dr.math;
  * user.  The line search is entirely based on derivative
  * evaluation, similar to the strategy used in macopt (Mackay).
  *
- * @version $Id: ConjugateGradientSearch.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  *
  * @author Korbinian Strimmer
  */

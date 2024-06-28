@@ -53,7 +53,6 @@ import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: ModelPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class ClockModelsPanel extends BeautiPanel implements Exportable {
 

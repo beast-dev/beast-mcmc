@@ -38,7 +38,6 @@ import java.awt.event.ActionEvent;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class MapperMacFileMenuFactory implements MenuFactory {
 

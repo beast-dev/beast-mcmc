@@ -38,7 +38,6 @@ import java.io.File;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id$
  */
 public class CoalGenData {
     public static final String version = "1.0";

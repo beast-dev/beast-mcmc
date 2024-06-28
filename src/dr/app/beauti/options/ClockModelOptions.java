@@ -43,7 +43,6 @@ import java.util.Set;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Walter Xie
- * @version $Id$
  */
 public class ClockModelOptions extends ModelOptions {
 

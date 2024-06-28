@@ -40,7 +40,6 @@ import dr.xml.*;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id: DirichletProcessGibbsOperator.java,v 1.16 2005/06/14 10:40:34 rambaut Exp $
  */
 public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
     public final static boolean DEBUG = false;

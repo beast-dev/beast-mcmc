@@ -37,7 +37,6 @@ import jam.mac.Utils;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class TreeSpaceMenuBarFactory extends DefaultMenuBarFactory {
 

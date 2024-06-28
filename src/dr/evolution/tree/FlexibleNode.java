@@ -40,7 +40,6 @@ import java.util.Iterator;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: FlexibleNode.java,v 1.9 2005/06/20 16:06:02 rambaut Exp $
  */
 public class FlexibleNode implements NodeRef, Attributable {
 

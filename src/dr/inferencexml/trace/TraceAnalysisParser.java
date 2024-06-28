@@ -38,7 +38,6 @@ import java.util.List;
 
 /**
  * @author Alexei Drummond
- * @version $Id: TraceAnalysisParser.java,v 1.18 2005/05/24 20:26:00 rambaut Exp $
  */
 public class TraceAnalysisParser extends AbstractXMLObjectParser {
 

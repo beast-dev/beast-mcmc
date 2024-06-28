@@ -39,7 +39,6 @@ import java.util.Set;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: TaxonList.java,v 1.16 2006/09/05 13:29:34 rambaut Exp $
  */
 public interface TaxonList extends Identifiable, Iterable<Taxon> {
 

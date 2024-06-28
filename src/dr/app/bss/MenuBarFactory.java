@@ -31,7 +31,6 @@ import jam.framework.DefaultMenuBarFactory;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class MenuBarFactory extends DefaultMenuBarFactory {
 

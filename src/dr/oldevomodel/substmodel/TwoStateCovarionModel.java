@@ -34,7 +34,6 @@ import dr.inference.model.Parameter;
 /**
  * @author Helen Shearman
  * @author Alexei Drummond
- * @version $Id$
  */
 public class TwoStateCovarionModel extends AbstractSubstitutionModel {
 

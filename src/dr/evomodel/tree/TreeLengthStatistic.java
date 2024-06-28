@@ -35,7 +35,6 @@ import dr.inference.model.Statistic;
  * A statistic that reports the total length of all the branches in the tree
  *
  * @author Alexei Drummond
- * @version $Id: RateStatistic.java,v 1.9 2005/07/11 14:06:25 rambaut Exp $
  */
 public class TreeLengthStatistic extends TreeStatistic {
 

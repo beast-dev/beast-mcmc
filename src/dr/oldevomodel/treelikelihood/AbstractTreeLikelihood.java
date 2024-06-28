@@ -41,7 +41,6 @@ import dr.xml.Reportable;
  * AbstractTreeLikelihood - a base class for likelihood calculators of sites on a tree.
  *
  * @author Andrew Rambaut
- * @version $Id: AbstractTreeLikelihood.java,v 1.16 2005/06/07 16:27:39 alexei Exp $
  */
 
 @Deprecated // Switching to BEAGLE

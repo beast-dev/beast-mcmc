@@ -36,7 +36,6 @@ import dr.inference.model.Parameter;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: EmpiricalAminoAcidModel.java,v 1.15 2005/05/24 20:25:58 rambaut Exp $
  */
 public class EmpiricalAminoAcidModel extends AbstractAminoAcidModel {
     /**

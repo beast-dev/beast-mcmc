@@ -41,7 +41,6 @@ import java.util.Iterator;
  * Class for reconstructing characters using the Sankoff generalized parsimony methods. This will be
  * slower than the Fitch algorithm but it allows Weighted Parsimony.
  *
- * @version $Id: SankoffParsimony.java,v 1.7 2005/06/29 16:54:18 beth Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

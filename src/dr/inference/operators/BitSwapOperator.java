@@ -51,7 +51,6 @@ import dr.math.MathUtils;
  * direction only.
  *
  * @author Joseph Heled
- * @version $Id$
  */
 public class BitSwapOperator extends SimpleMCMCOperator {
 

@@ -35,7 +35,6 @@ import java.util.*;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 public class BufferIndexHelper implements Serializable {
 

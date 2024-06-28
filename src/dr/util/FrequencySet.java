@@ -32,7 +32,6 @@ import java.util.*;
 /**
  * Stores a set of objects with frequencies
  *
- * @version $Id: FrequencySet.java,v 1.9 2005/06/27 21:18:40 rambaut Exp $
  *
  * @author Andrew Rambaut
  */

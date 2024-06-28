@@ -42,7 +42,6 @@ import java.util.List;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
  */
 public class ExternalLengthStatistic extends TreeStatistic {
 

@@ -31,7 +31,6 @@ package dr.oldevomodel.treelikelihood;
  * NucleotideLikelihoodCore - An implementation of LikelihoodCore optimised
  * for nucleotides.
  *
- * @version $Id: NucleotideLikelihoodCore.java,v 1.12 2006/08/31 14:57:24 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

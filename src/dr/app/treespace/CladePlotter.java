@@ -37,7 +37,6 @@ import dr.app.treespace.CladeSystem.Clade;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class CladePlotter extends JComponent {
 

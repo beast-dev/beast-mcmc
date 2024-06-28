@@ -30,7 +30,6 @@ package dr.evolution.alignment;
 /**
  * interface for any list of sites.
  *
- * @version $Id: SiteList.java,v 1.9 2005/05/24 20:25:55 rambaut Exp $
  *
  * @author Andrew Rambaut
  */

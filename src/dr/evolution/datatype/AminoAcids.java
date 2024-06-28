@@ -30,7 +30,6 @@ package dr.evolution.datatype;
 /**
  * implements DataType for amino acids.
  *
- * @version $Id: AminoAcids.java,v 1.12 2005/06/22 14:48:19 beth Exp $
  *
  * @author Andrew Rambaut
  * @author Korbinian Strimmer

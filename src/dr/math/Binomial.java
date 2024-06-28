@@ -30,7 +30,6 @@ package dr.math;
 /**
  * Binomial coefficients
  *
- * @version $Id: Binomial.java,v 1.11 2005/05/24 20:26:00 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

@@ -30,7 +30,6 @@ package dr.app.phylogeography.tools.kml;
 /**
  * @author Andrew Rambaut
  * @author Philippe Lemey
- * @version $Id$
  */
 public class TreeDefinition {
     public TreeDefinition(TreeType treeType, String traitName, String latitudeName, String longitudeName, double plotAltitude, double rootFraction, double arcAltitude, boolean taxaVisible, BranchStyle branchStyle, SurfaceDecoration locationContours, SurfaceDecoration groundContours, BranchStyle projections) {

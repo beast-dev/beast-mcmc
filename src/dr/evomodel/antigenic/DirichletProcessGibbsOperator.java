@@ -41,7 +41,6 @@ import dr.xml.*;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id: DirichletProcessGibbsOperator.java,v 1.16 2005/06/14 10:40:34 rambaut Exp $
  */
 public class DirichletProcessGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
     public final static String DIRICHLET_PROCESS_OPERATOR = "dirichletProcessOperator";

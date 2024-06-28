@@ -35,7 +35,6 @@ import java.lang.reflect.Method;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: Property.java,v 1.19 2005/05/24 20:26:01 rambaut Exp $
  */
 public class Property implements Attribute {
 

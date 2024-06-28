@@ -37,7 +37,6 @@ import java.util.*;
  * WAG model of amino acid evolution (S. Whelan and N. Goldman 2000)
  * Whelan, S. and N. Goldman. 2000. Bioinformatics ?.
  *
- * @version $Id: WAG.java,v 1.3 2005/05/24 20:25:58 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

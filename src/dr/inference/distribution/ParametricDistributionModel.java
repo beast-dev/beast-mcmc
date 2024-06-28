@@ -36,7 +36,6 @@ import dr.math.distributions.Distribution;
  * A class that describes a parametric distribution
  *
  * @author Alexei Drummond
- * @version $Id: ParametricDistributionModel.java,v 1.4 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public interface ParametricDistributionModel extends Distribution, DensityModel {

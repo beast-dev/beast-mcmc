@@ -33,7 +33,6 @@ import dr.inference.operators.SimpleMCMCOperator;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
 

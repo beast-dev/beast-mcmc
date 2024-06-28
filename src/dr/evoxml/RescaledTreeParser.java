@@ -39,7 +39,6 @@ import java.util.Set;
  * Parser takes a tree and rescales the node heights to match a set of clade heights defined by taxon sets.
  * @author Andrew Rambaut
  *
- * @version $Id$
  */
 public class RescaledTreeParser extends AbstractXMLObjectParser {
 

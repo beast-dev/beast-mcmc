@@ -40,7 +40,6 @@ import dr.math.Binomial;
  * as the "generalized" skyline plot method  described in
  * Strimmer and Pybus. 2001. MBE submitted.
  * 
- * @version $Id: Skyline.java,v 1.15 2005/05/24 20:25:56 rambaut Exp $
  *
  * @author Korbinian Strimmer
  */

@@ -30,7 +30,6 @@ package dr.app.treestat.statistics;
 /**
  * An interface and collection of tree summary statistics.
  *
- * @version $Id: SummaryStatisticDescription.java,v 1.1 2005/09/26 22:14:15 rambaut Exp $
  *
  * @author Alexei Drummond
  */

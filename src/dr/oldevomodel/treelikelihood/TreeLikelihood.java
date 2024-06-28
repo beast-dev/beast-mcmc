@@ -53,7 +53,6 @@ import java.util.logging.Logger;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: TreeLikelihood.java,v 1.31 2006/08/30 16:02:42 rambaut Exp $
  */
 
 @Deprecated // Switching to BEAGLE

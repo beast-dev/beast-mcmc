@@ -38,7 +38,6 @@ import dr.inference.model.Variable;
  * CategorySiteModel - A SiteModel that has a different rate for each category;
  *
  * @author Alexei Drummond
- * @version $Id: CategorySiteModel.java,v 1.3 2004/10/01 22:40:04 alexei Exp $
  */
 
 public class CategorySiteModel extends AbstractModel implements SiteModel {

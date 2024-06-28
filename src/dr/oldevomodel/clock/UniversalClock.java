@@ -38,7 +38,6 @@ import dr.inference.model.Variable;
  * A class that calculates the rate of evolution based on of the mass and temperature
  *
  * @author Alexei Drummond
- * @version $Id: UniversalClock.java,v 1.5 2005/02/21 15:16:09 rambaut Exp $
  */
 
 public class UniversalClock extends AbstractBranchRateModel {

@@ -30,7 +30,6 @@ package dr.util;
 /** 
  * This class is unfortunate but necessary to conform to JDK 1.1
  *
- * @version $Id: ComparableDouble.java,v 1.3 2005/05/24 20:26:01 rambaut Exp $
  *
  * @author Alexei Drummond
  */

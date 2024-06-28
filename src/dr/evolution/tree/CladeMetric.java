@@ -36,7 +36,6 @@ import java.util.*;
 
 /**
  * @author Sebastian Hehna
- * @version 1.0
  * 
  */
 

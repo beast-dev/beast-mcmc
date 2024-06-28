@@ -30,7 +30,6 @@ package dr.evolution.datatype;
 /**
  * implements DataType for nucleotides with hidden state(s)
  *
- * @version $Id: PairedDataType.java,v 1.6 2005/06/30 09:54:51 rambaut Exp $
  *
  * @author Alexei Drummond
  */

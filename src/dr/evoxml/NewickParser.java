@@ -40,7 +40,6 @@ import java.io.IOException;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: NewickParser.java,v 1.7 2006/04/25 14:41:08 rambaut Exp $
  */
 public class NewickParser extends AbstractXMLObjectParser {
 

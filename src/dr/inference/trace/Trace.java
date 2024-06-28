@@ -37,7 +37,6 @@ import java.util.*;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: Trace.java,v 1.11 2005/07/11 14:07:26 rambaut Exp $
  */
 public class Trace {
     public enum OrderType {

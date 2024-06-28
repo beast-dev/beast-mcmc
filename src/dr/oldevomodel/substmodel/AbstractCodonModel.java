@@ -33,7 +33,6 @@ import dr.evolution.datatype.GeneticCode;
 /**
  * base class for codon rate matrices
  *
- * @version $Id: AbstractCodonModel.java,v 1.6 2005/05/24 20:25:58 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Korbinian Strimmer

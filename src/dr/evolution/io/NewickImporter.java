@@ -47,7 +47,6 @@ import java.util.Map;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: NewickImporter.java,v 1.20 2005/12/07 11:25:35 rambaut Exp $
  */
 public class NewickImporter extends Importer implements TreeImporter {
     public static final String COMMENT = "comment";

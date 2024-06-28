@@ -36,7 +36,6 @@ import static dr.evolution.tree.treemetrics.TreeMetric.Utils.checkTreeTaxa;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class RobinsonFouldsMetric implements TreeMetric {
 	public static Type TYPE = Type.ROBINSON_FOULDS;

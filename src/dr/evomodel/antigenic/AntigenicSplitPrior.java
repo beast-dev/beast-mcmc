@@ -40,7 +40,6 @@ import java.util.*;
  * @author Andrew Rambaut
  * @author Trevor Bedford
  * @author Marc Suchard
- * @version $Id$
  */
 @Deprecated // drift prior incorporated into antigenicLikelihood
 public class AntigenicSplitPrior extends AbstractModelLikelihood implements Citable {

@@ -42,7 +42,6 @@ import dr.xml.*;
  * @author Trevor Bedford
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
     public final static boolean DEBUG = false;

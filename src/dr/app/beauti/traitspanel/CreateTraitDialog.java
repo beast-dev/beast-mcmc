@@ -43,7 +43,6 @@ import java.awt.event.ItemListener;
 /**
  * @author Andrew Rambaut
  * @author Walter Xie
- * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class CreateTraitDialog {
     public static final String EXAMPLE_FORMAT = "<html>A trait file is tab delimited. " +

@@ -30,7 +30,6 @@ package dr.evolution.tree;
 /**
  * @author Alexei Drummond
  *
- * @version $Id: ColourChange.java,v 1.2 2005/09/21 18:47:58 gerton Exp $
  */
 public class ColourChange {
 

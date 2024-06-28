@@ -41,7 +41,6 @@ import java.util.Map;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id$
  */
 public class DefaultTreeModel extends TreeModel {
 

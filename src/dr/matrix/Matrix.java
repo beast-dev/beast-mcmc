@@ -30,7 +30,6 @@ package dr.matrix;
 /**
  * An inteface for an immutable matrix.
  *
- * @version $Id: Matrix.java,v 1.8 2006/06/18 16:20:58 alexei Exp $
  *
  * @author Andrew Rambaut
  */

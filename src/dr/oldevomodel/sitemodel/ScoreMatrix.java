@@ -31,7 +31,6 @@ import dr.evolution.alignment.SitePatterns;
 
 /**
  * @author alexei
- * @version $Id: ScoreMatrix.java,v 1.2 2005/04/08 15:35:36 rambaut Exp $
  */
 public class ScoreMatrix {
 

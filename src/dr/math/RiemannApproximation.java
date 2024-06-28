@@ -33,7 +33,6 @@ import dr.math.distributions.NormalDistribution;
  * Approximates the integral of a given function using Riemann integration
  *
  * @author Alexei Drummond
- * @version $Id: RiemannApproximation.java,v 1.3 2005/05/24 20:26:01 rambaut Exp $
  */
 public class RiemannApproximation implements Integral {
 

@@ -40,7 +40,6 @@ import java.util.List;
 
 /**
  * @author Alexei Drummond
- * @version $Id: ColouredTreeIntervals.java,v 1.9 2005/12/08 13:48:41 rambaut Exp $
  */
 public class ColouredTreeIntervals implements StructuredIntervalList {
 

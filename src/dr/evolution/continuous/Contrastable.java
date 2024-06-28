@@ -30,7 +30,6 @@ package dr.evolution.continuous;
 /**
  * Interface for objects on which independent contrasts can be applied.
  *
- * @version $Id: Contrastable.java,v 1.4 2004/10/01 23:41:44 alexei Exp $
  *
  * @author Alexei Drummond
  */

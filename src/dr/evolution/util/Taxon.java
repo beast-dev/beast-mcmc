@@ -36,7 +36,6 @@ import java.util.Iterator;
 /**
  * Class for data about a taxon.
  *
- * @version $Id: Taxon.java,v 1.24 2006/09/05 13:29:34 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

@@ -46,7 +46,6 @@ import javax.swing.table.TableColumn;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 @SuppressWarnings("serial")
 public class TreesPanel extends JPanel implements Exportable {

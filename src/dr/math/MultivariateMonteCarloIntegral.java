@@ -35,7 +35,6 @@ import java.util.HashMap;
  *
  * @author Alexei Drummond
  *
- * @version $Id: MonteCarloIntegral.java,v 1.5 2005/05/24 20:26:01 rambaut Exp $
  */
 public class MultivariateMonteCarloIntegral implements MultivariateIntegral {
 

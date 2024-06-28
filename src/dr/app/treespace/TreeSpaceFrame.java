@@ -51,7 +51,6 @@ import java.io.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class TreeSpaceFrame extends DocumentFrame {
     private static final long serialVersionUID = 2114148696789612509L;

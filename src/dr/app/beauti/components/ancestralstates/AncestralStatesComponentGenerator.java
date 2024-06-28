@@ -46,7 +46,6 @@ import java.util.List;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 

@@ -36,7 +36,6 @@ import dr.util.FrequencyDistribution;
 /**
  * @author Marc A. Suchard
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class KernelDensityEstimate extends DensityEstimate {
 

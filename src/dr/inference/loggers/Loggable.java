@@ -32,7 +32,6 @@ import dr.xml.Reportable;
 /**
  * An interface for an item that can be logged.
  *
- * @version $Id: Loggable.java,v 1.2 2005/05/24 20:25:59 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

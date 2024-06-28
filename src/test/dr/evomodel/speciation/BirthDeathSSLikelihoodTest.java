@@ -44,7 +44,6 @@ import junit.framework.TestSuite;
  * YuleModel Tester.
  *
  * @author Alexei Drummond
- * @version 1.0
  * @since <pre>08/26/2007</pre>
  */
 public class BirthDeathSSLikelihoodTest extends TestCase {

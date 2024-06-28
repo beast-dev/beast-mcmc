@@ -39,7 +39,6 @@ import dr.xml.*;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: TransmissionDemographicModel.java,v 1.7 2005/05/24 20:25:58 rambaut Exp $
  */
 public class TransmissionDemographicModel extends DemographicModel {
 

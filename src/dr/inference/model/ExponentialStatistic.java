@@ -28,7 +28,6 @@
 package dr.inference.model;
 
 /**
- * @version $Id: ExponentialStatistic.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut

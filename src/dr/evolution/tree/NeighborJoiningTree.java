@@ -32,7 +32,6 @@ import dr.evolution.distance.DistanceMatrix;
 /**
  * constructs a neighbor-joining tree from pairwise distances
  * 
- * @version $Id: NeighborJoiningTree.java,v 1.15 2005/05/24 20:25:56 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

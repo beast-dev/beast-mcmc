@@ -37,7 +37,6 @@ import java.util.List;
 /**
  * @author Andrew Rambaut
  * @author Guy Baele
- * @version $Id$
  */
 public class MarginalLikelihoodEstimationOptions implements ComponentOptions {
 

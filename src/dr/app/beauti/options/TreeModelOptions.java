@@ -38,7 +38,6 @@ import java.util.List;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Walter Xie
- * @version $Id$
  */
 public class TreeModelOptions extends ModelOptions {
     private static final long serialVersionUID = 5328826852511460749L;

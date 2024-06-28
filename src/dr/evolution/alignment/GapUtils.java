@@ -32,7 +32,6 @@ import java.util.List;
 /**
  * @author Alexei Drummond
  *
- * @version $Id: GapUtils.java,v 1.3 2005/04/20 21:26:19 rambaut Exp $
  */
 public class GapUtils {
 

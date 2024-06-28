@@ -40,7 +40,6 @@ import java.awt.event.*;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Walter Xie
- * @version $Id: ViewAligmentPanel.java,v 1.5 2009/08/11 13:29:34 rambaut Exp$
  */
 
 public class ViewAligmentPanel extends JPanel {

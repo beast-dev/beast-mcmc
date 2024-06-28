@@ -30,7 +30,6 @@ package dr.app.phylogeography.tools.kml;
 /**
  * @author Andrew Rambaut
  * @author Philippe Lemey
- * @version $Id$
  */
 public class TreeSettings {
     public TreeSettings(String name, String description, TreeType treeType) {

@@ -47,7 +47,6 @@ import dr.xml.AttributeParser;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 
 public class ContinuousComponentGenerator extends BaseComponentGenerator {

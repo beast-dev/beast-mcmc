@@ -35,7 +35,6 @@ import dr.inference.operators.AdaptationMode;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public abstract class AbstractAdaptableTreeOperator extends AbstractTreeOperator implements AdaptableMCMCOperator {
 

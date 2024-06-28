@@ -58,7 +58,6 @@ import java.util.logging.Logger;
  * reasons such as BigFastTreeModel.
  *
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class UniformNodeHeightOperator extends AbstractTreeOperator {
 

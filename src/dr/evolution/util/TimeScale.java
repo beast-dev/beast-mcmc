@@ -30,7 +30,6 @@ package dr.evolution.util;
 /**
  * Class for defining and converting between time scales
  *
- * @version $Id: TimeScale.java,v 1.11 2005/05/24 20:25:57 rambaut Exp $
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut

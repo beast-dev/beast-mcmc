@@ -38,7 +38,6 @@ import dr.stats.DiscreteStatistics;
  * A statistic that tracks the mean, variance and coefficent of variation of the rates.
  *
  * @author Alexei Drummond
- * @version $Id: RateStatistic.java,v 1.9 2005/07/11 14:06:25 rambaut Exp $
  */
 public class RateStatistic extends TreeStatistic {
 

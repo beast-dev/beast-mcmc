@@ -33,7 +33,6 @@ import java.util.ArrayList;
  * A parameter which controls the values of a set of other parameters
  *
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class JointParameter extends Parameter.Abstract implements VariableListener {
 

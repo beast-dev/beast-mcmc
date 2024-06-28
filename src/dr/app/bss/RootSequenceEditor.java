@@ -46,7 +46,6 @@ import javax.swing.SwingUtilities;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class RootSequenceEditor {
 

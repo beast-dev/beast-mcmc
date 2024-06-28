@@ -37,7 +37,6 @@ import java.awt.event.*;
 /**
  * @author Andrew Rambaut
  * @author Walter Xie
- * @version $Id:$
  */
 public class LinkClockModelDialog {
 

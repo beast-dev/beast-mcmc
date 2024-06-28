@@ -42,7 +42,6 @@ import java.util.logging.Logger;
 /**
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood implements Reportable,
         GradientWrtParameterProvider {

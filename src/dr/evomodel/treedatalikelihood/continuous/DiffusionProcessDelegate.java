@@ -39,7 +39,6 @@ import org.ejml.data.DenseMatrix64F;
  *
  * @author Marc Suchard
  * @author Andrew Rambaut
- * @version $Id$
  */
 public interface DiffusionProcessDelegate extends Model {
 

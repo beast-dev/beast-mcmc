@@ -33,7 +33,6 @@ import java.awt.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: NucleotideDecorator.java,v 1.1 2005/11/11 16:40:41 rambaut Exp $
  */
 public class NucleotideDecorator implements StateDecorator {
 

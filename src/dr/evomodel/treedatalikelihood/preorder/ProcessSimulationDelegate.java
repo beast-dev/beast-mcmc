@@ -51,7 +51,6 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTraitProvider, ModelListener {
 

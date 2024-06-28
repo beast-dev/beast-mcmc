@@ -38,7 +38,6 @@ import dr.inference.model.*;
  * Calculates the likelihood of a set of continuous attributes on a tree.
  *
  * @author Alexei Drummond
- * @version $Id: TKF91Likelihood.java,v 1.17 2005/06/20 07:24:25 rambaut Exp $
  */
 public class TKF91Likelihood extends AbstractModelLikelihood {
 

@@ -37,7 +37,6 @@ import javax.swing.text.BadLocationException;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 @SuppressWarnings("serial")
 public class PartitionTableModel extends AbstractTableModel {

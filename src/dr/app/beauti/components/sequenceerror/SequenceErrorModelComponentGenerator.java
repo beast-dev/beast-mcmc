@@ -44,7 +44,6 @@ import dr.xml.XMLParser;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator {
 

@@ -40,7 +40,6 @@ import java.util.*;
  * Dayhoff, M.O. (ed.) Atlas of Protein Sequence Structur., Vol5, Suppl. 3,
  * National Biomedical Research Foundation, Washington DC, pp. 345-352.
  *
- * @version $Id: Dayhoff.java,v 1.3 2005/05/24 20:25:58 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

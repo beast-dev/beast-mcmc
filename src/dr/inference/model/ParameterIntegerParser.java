@@ -39,7 +39,6 @@ import dr.xml.XMLSyntaxRule;
  * @author Andrew Rambaut
  * @author Walter Xie
  *
- * @version $Id: ParameterParser.java,v 1.12 2005/05/24 20:26:00 rambaut Exp $
  */
 public class ParameterIntegerParser extends dr.xml.AbstractXMLObjectParser {
 

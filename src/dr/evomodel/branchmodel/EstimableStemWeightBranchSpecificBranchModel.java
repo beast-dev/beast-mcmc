@@ -42,7 +42,6 @@ import java.util.logging.Logger;
  * An extension of BranchSpecificBranchModel that allows for the stemWeight to be an estimated parameter.
  *
  * @author Andy Magee
- * @version $Id$
  */
 public class EstimableStemWeightBranchSpecificBranchModel extends BranchSpecificBranchModel {
 

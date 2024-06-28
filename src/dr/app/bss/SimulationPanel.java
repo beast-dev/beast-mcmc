@@ -42,7 +42,6 @@ import java.awt.event.ItemListener;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 @SuppressWarnings({ "rawtypes", "serial" })
 public class SimulationPanel extends JPanel implements Exportable {

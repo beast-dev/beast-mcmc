@@ -34,7 +34,6 @@ import java.util.List;
  * interface for a continuous variate.
  *
  * @author Andrew Rambaut
- * @version $Id: Variate.java,v 1.15 2006/02/20 17:36:23 rambaut Exp $
  */
 public interface Variate<T> {
     /**

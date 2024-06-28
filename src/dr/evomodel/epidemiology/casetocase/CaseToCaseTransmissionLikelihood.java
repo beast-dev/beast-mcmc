@@ -46,7 +46,6 @@ import java.util.*;
  * Latent periods are not implemented currently
  *
  * @author Matthew Hall
- * @version $Id: $
  */
 
 public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood implements Loggable {

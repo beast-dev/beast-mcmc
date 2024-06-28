@@ -32,7 +32,6 @@ import dr.evolution.tree.Tree;
 
 /**
  *
- * @version $Id: TreeLength.java,v 1.3 2005/09/28 13:50:56 rambaut Exp $
  *
  * @author Alexei Drummond
  */

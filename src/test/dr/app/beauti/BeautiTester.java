@@ -32,7 +32,6 @@ import dr.app.beauti.options.BeautiOptions;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: BeautiTester.java,v 1.2 2005/07/11 14:07:25 rambaut Exp $
  */
 public class BeautiTester {     
 

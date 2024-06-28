@@ -35,7 +35,6 @@ import java.util.List;
  * choosing the next operator during an MCMC run.
  *
  * @author Alexei Drummond
- * @version $Id: OperatorSchedule.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
 public interface OperatorSchedule extends Serializable {
 

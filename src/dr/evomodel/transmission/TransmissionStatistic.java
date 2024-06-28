@@ -47,7 +47,6 @@ import java.util.Set;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: TransmissionStatistic.java,v 1.11 2005/06/27 21:19:15 rambaut Exp $
  */
 public class TransmissionStatistic extends TreeStatistic implements BooleanStatistic {
 

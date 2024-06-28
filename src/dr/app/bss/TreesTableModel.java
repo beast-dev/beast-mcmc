@@ -42,7 +42,6 @@ import dr.evolution.util.Taxon;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 @SuppressWarnings("serial")
 public class TreesTableModel extends AbstractTableModel {

@@ -37,7 +37,6 @@ import dr.xml.*;
  * A generic operator that flips bits.
  *
  * @author Marc Suchard
- * @version $Id$
  */
 public class BitFlipInSubstitutionModelOperator extends AbstractAdaptableOperator {
 

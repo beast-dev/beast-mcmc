@@ -32,7 +32,6 @@ import java.util.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public interface DataTable<T> {
     int getColumnCount();

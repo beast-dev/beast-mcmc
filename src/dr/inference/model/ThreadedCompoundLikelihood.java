@@ -42,7 +42,6 @@ import dr.util.NumberFormatter;
  *
  * @author Marc Suchard
  * @author Andrew Rambaut
- * @version $Id: CompoundLikelihood.java,v 1.19 2005/05/25 09:14:36 rambaut Exp $
  */
 public class ThreadedCompoundLikelihood implements Likelihood {
 

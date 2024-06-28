@@ -40,7 +40,6 @@ import org.w3c.dom.Element;
  * A class that can calculate the likelihood of a diffusion rate given a distance and time.
  *
  * @author Alexei Drummond
- * @version $Id: DiffusionModel.java,v 1.5 2005/01/06 14:46:36 rambaut Exp $
  */
 
 public class DiffusionModel extends AbstractModel {

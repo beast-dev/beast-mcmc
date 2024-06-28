@@ -57,7 +57,6 @@ import java.util.EnumSet;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Walter Xie
- * @version $Id: PriorsPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
  */
 public class PartitionTreeModelPanel extends OptionsPanel {
 

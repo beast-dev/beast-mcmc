@@ -35,7 +35,6 @@ import dr.inference.markovchain.MarkovChain;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: MCMCOptions.java,v 1.7 2005/05/24 20:25:59 rambaut Exp $
  */
 public class MCMCOptions {
 

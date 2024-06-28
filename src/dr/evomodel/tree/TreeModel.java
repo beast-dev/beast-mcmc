@@ -39,7 +39,6 @@ import java.util.*;
 
 /**
  * @author Andrew Rambaut
- * @version $
  */
 public abstract class TreeModel extends AbstractModel implements MutableTreeModel, Keywordable, Citable {
 

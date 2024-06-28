@@ -49,7 +49,6 @@ import java.util.logging.Logger;
  * @author Gabrila Cybis
  * @author Marc A. Suchard
  * @author Joe Felsenstein
- * @version $Id$
  */
 
 public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood implements LatentTruncation, Citable,

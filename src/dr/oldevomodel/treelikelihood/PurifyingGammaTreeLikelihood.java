@@ -45,7 +45,6 @@ import dr.xml.*;
  * PurifyingGammaTreeLikelihood - implements a Likelihood Function for sequences on a tree.
  *
  * @author Andrew Rambaut
- * @version $Id: PurifyingGammaTreeLikelihood.java,v 1.6 2006/01/10 16:48:28 rambaut Exp $
  */
 
 @Deprecated // Switching to BEAGLE

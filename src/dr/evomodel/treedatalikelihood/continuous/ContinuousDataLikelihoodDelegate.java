@@ -35,7 +35,6 @@ package dr.evomodel.treedatalikelihood.continuous;
  * @author Andrew Rambaut
  * @author Marc Suchard
  * @author Philippe Lemey
- * @version $Id$
  */
 
 import dr.evolution.tree.MutableTreeModel;

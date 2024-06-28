@@ -35,7 +35,6 @@ import java.io.IOException;
 /**
  * Interface for importers that do sequences
  *
- * @version $Id: SequenceImporter.java,v 1.3 2005/05/24 20:25:56 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

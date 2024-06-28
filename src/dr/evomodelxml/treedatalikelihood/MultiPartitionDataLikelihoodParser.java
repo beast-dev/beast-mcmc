@@ -50,7 +50,6 @@ import java.util.List;
 
 /**
  * @author Guy Baele
- * @version $Id$
  */
 public class MultiPartitionDataLikelihoodParser extends AbstractXMLObjectParser {
 

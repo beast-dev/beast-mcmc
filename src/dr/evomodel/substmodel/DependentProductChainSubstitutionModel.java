@@ -38,7 +38,6 @@ import java.util.List;
  *
  * @author Marc A. Suchard
  * @author Yu-Nong Gong
- * @version 08/01/2010
  */
 public class DependentProductChainSubstitutionModel extends ProductChainSubstitutionModel {
 

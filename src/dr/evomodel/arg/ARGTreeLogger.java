@@ -45,7 +45,6 @@ import java.io.PrintWriter;
  * A logger that logs tree and clade frequencies from a given partition in an ARG
  *
  * @author Marc Suchard
- * @version $Id: ARGTreeLogger.java,v 1.25 2006/09/05 13:29:34 rambaut Exp $
  */
 public class ARGTreeLogger extends OldTreeLogger {
 

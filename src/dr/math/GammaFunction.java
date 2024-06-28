@@ -32,7 +32,6 @@ package dr.math;
  * gamma function
  *
  * @author Korbinian Strimmer
- * @version $Id: GammaFunction.java,v 1.3 2005/05/24 20:26:01 rambaut Exp $
  */
 public class GammaFunction {
     //

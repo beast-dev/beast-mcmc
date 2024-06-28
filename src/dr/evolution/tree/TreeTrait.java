@@ -31,7 +31,6 @@ package dr.evolution.tree;
  * @author Andrew Rambaut
  * @author Marc Suchard
  * @author Alexei Drummond
- * @version $Id$
  */
 public interface TreeTrait<T> {
     public enum Intent {

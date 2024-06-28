@@ -43,7 +43,6 @@ import java.util.List;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: ExpConstExpDemographicModel.java,v 1.2 2006/08/18 07:44:25 alexei Exp $
  */
 public class ExpConstExpDemographicModel extends DemographicModel implements Citable {
 

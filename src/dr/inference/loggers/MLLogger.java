@@ -34,7 +34,6 @@ import dr.inference.model.Likelihood;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: MLLogger.java,v 1.21 2005/07/27 22:09:21 rambaut Exp $
  */
 public class MLLogger extends MCLogger {
 

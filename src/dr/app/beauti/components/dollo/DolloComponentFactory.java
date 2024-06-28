@@ -34,7 +34,6 @@ import dr.app.beauti.options.ComponentOptions;
 
 /**
  * @author Marc Suchard
- * @version $Id$
  */
 
 public class DolloComponentFactory implements ComponentFactory {

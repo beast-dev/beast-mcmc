@@ -48,7 +48,6 @@ import dr.math.MathUtils;
  *         By incorporating bias at the nodes, the problem along branches gets worse, and this seems to
  *         affect the acceptance probabilities more than having the right bias at the nodes helps.  So,
  *         although the code still accepts the population sizes, it ignores it now.
- * @version $Id: BasicColourSampler.java,v 1.16 2006/09/11 09:33:01 gerton Exp $
  */
 public class BasicColourSampler implements ColourSampler {
 

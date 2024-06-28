@@ -36,7 +36,6 @@ import dr.xml.*;
  * A statistic that the population size at a particular time...
  *
  * @author Alexei Drummond
- * @version $Id: PopSizeStatistic.java,v 1.1 2005/10/28 02:49:39 alexei Exp $
  */
 public class PopSizeStatistic extends Statistic.Abstract {
 

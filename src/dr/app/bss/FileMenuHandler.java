@@ -31,7 +31,6 @@ import javax.swing.Action;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public interface FileMenuHandler {
 

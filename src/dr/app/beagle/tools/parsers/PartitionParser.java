@@ -52,7 +52,6 @@ import java.util.List;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class PartitionParser extends AbstractXMLObjectParser {
 

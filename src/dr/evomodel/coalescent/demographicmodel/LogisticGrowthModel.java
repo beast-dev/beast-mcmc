@@ -43,7 +43,6 @@ import java.util.List;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: LogisticGrowthModel.java,v 1.21 2005/05/24 20:25:57 rambaut Exp $
  */
 public class LogisticGrowthModel extends DemographicModel implements Citable {
 

@@ -30,7 +30,6 @@ package dr.inference.loggers;
 /**
  * An interface for a logger.
  *
- * @version $Id: Logger.java,v 1.6 2005/05/24 20:25:59 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

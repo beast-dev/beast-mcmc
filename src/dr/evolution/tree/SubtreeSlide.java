@@ -38,7 +38,6 @@ import java.util.ArrayList;
  *
  * @author Alexei Drummond
  *
- * @version $Id: SubtreeSlide.java,v 1.7 2005/05/24 20:25:57 rambaut Exp $
  */
 @Deprecated
 public class SubtreeSlide {

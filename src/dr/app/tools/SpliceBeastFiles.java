@@ -38,7 +38,6 @@ import java.util.*;
  * 100 is created.
  *
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class SpliceBeastFiles {
 

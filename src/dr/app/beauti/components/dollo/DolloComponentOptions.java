@@ -34,7 +34,6 @@ import java.util.List;
 
 /**
  * @author Marc Suchard
- * @version $Id$
  */
 
 public class DolloComponentOptions implements ComponentOptions {

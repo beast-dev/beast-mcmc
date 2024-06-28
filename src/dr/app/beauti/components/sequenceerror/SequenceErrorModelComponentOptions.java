@@ -38,7 +38,6 @@ import java.util.Map;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class SequenceErrorModelComponentOptions implements ComponentOptions {
     static public final String ERROR_MODEL = "errorModel";

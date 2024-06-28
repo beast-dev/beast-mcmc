@@ -36,7 +36,6 @@ import java.util.List;
 /**
  * @author Andrew Rambaut
  * @author Walter Xie
- * @version $Id$
  */
 public class PartitionTreeModel extends PartitionOptions {
 

@@ -32,7 +32,6 @@ import dr.util.Attribute;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: TestStatistic.java,v 1.12 2005/07/11 14:06:25 rambaut Exp $
  */
 public class TestStatistic extends Statistic.Abstract implements BooleanStatistic {
 

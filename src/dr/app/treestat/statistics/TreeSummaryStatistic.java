@@ -35,7 +35,6 @@ import java.util.Map;
 /**
  * An interface and collection of tree summary statistics.
  *
- * @version $Id: TreeSummaryStatistic.java,v 1.2 2005/09/28 13:50:56 rambaut Exp $
  *
  * @author Alexei Drummond
  */

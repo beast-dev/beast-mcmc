@@ -53,7 +53,6 @@ import dr.xml.XMLParser;
 
 /**
  * @author Marc Suchard
- * @version $Id$
  */
 
 public class DolloComponentGenerator extends BaseComponentGenerator {

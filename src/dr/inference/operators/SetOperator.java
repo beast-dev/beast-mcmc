@@ -37,7 +37,6 @@ import org.w3c.dom.Element;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: SetOperator.java,v 1.12 2005/05/24 20:26:00 rambaut Exp $
  */
 public class SetOperator extends SimpleMCMCOperator {
 

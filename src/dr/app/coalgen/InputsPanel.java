@@ -40,7 +40,6 @@ import java.io.IOException;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id$
  */
 public class InputsPanel extends JPanel implements Exportable {
 

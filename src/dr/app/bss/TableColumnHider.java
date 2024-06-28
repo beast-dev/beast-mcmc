@@ -36,7 +36,6 @@ import javax.swing.table.TableColumnModel;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class TableColumnHider {
 

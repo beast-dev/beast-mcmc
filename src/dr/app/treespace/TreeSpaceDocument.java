@@ -40,7 +40,6 @@ import java.util.Set;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id$
  */
 public class TreeSpaceDocument {
     private final List<InputFile> inputFiles = new ArrayList<InputFile>();

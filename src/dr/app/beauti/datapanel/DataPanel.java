@@ -61,7 +61,6 @@ import java.util.Set;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: DataPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class DataPanel extends BeautiPanel implements Exportable {
 

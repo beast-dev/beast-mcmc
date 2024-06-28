@@ -45,7 +45,6 @@ import java.util.List;
  *
  * @author Marc A. Suchard
  * @author Paul Bastide
- * @version $Id$
  */
 public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffusionModelDelegate {
 

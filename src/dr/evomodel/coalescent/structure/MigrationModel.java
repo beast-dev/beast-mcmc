@@ -32,7 +32,6 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 
 /**
- * @version $Id: MigrationModel.java,v 1.3 2006/09/08 14:28:07 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

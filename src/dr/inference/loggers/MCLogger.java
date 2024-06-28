@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id$
  */
 public class MCLogger implements Logger {
 

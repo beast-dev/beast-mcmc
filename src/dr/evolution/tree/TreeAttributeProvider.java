@@ -30,7 +30,6 @@ package dr.evolution.tree;
 /**
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 public interface TreeAttributeProvider {
 

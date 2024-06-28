@@ -39,7 +39,6 @@ import java.util.Locale;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class MapperApp extends MultiDocApplication {
     private final static Version version = new Version() {

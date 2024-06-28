@@ -34,7 +34,6 @@ import java.io.Serializable;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: LogColumn.java,v 1.5 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public interface LogColumn extends Serializable {

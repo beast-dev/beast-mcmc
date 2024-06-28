@@ -32,7 +32,6 @@ package dr.inference.model;
 /**
  * An interface that describes a list of statistics
  *
- * @version $Id: StatisticList.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  *
  * @author Alexei Drummond
  */

@@ -36,7 +36,6 @@ import dr.math.MathUtils;
  * A generic operator that flips bits.
  *
  * @author Alexei Drummond
- * @version $Id$
  */
 public class BitFlipOperator extends SimpleMCMCOperator {
 

@@ -40,7 +40,6 @@ import java.util.Set;
  * Description:	A line plot.
  *
  * @author Andrew Rambaut
- * @version $Id$
  */
 
 public class ParentPlot extends Plot.AbstractPlot {

@@ -35,7 +35,6 @@ import java.util.Comparator;
  * DiscretizedSiteRateModel - A SiteModel that has a discrete categories of rates across sites.
  *
  * @author Andrew Rambaut
- * @version $Id: $
  */
 
 public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateModel {

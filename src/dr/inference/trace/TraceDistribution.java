@@ -41,7 +41,6 @@ import static jebl.math.MachineAccuracy.EPSILON;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: TraceDistribution.java,v 1.1.1.2 2006/04/25 23:00:09 rambaut Exp $
  */
 public class TraceDistribution {
     private TraceType traceType;

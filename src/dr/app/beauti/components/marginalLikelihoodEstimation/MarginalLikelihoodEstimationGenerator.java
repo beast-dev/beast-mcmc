@@ -73,7 +73,6 @@ import static dr.app.beauti.types.PriorType.NONE_FIXED;
 /**
  * @author Andrew Rambaut
  * @author Guy Baele
- * @version $Id$
  */
 public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerator {
 

@@ -39,7 +39,6 @@ import java.util.ArrayList;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: MetaPopulationModel.java,v 1.3 2006/09/11 09:33:01 gerton Exp $
  */
 @Deprecated
 public class MetaPopulationModel extends AbstractModel implements MetaPopulation {

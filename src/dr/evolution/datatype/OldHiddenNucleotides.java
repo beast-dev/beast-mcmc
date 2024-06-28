@@ -31,7 +31,6 @@ package dr.evolution.datatype;
  * implements DataType for nucleotides with hidden state(s)
  *
  * @author Alexei Drummond
- * @version $Id: HiddenNucleotides.java,v 1.4 2005/05/24 20:25:56 rambaut Exp $
  */
 @Deprecated
 public class OldHiddenNucleotides extends DataType {

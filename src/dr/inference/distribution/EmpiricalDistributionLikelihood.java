@@ -46,7 +46,6 @@ import java.util.StringTokenizer;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id:$
  */
 
 public abstract class EmpiricalDistributionLikelihood extends AbstractDistributionLikelihood

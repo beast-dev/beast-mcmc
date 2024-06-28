@@ -38,7 +38,6 @@ import java.net.URISyntaxException;
  * a shared library called "NucleotideLikelihoodCore" but the exact name will be system
  * dependent (i.e. "libNucleotideLikelihoodCore.so" or "NucleotideLikelihoodCore.dll").
  *
- * @version $Id: NativeNucleotideLikelihoodCore.java,v 1.14 2006/08/31 14:57:24 rambaut Exp $
  *
  * @author Andrew Rambaut
  */

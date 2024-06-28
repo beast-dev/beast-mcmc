@@ -41,7 +41,6 @@ import org.w3c.dom.Element;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Gerton Lunter
- * @version $Id: ExponentialMarkovModel.java,v 1.8 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public class ExponentialMarkovModel extends AbstractModelLikelihood {

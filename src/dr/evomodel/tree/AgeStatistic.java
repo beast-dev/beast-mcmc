@@ -40,7 +40,6 @@ import java.util.Set;
  * A statistic that calculates the age (absolute time) from a height
  *
  * @author Andrew Rambaut
- * @version $Id: $
  */
 public class AgeStatistic extends Statistic.Abstract {
 

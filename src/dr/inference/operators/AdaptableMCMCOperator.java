@@ -32,7 +32,6 @@ package dr.inference.operators;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: AdaptableMCMCOperator.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
 public interface AdaptableMCMCOperator extends MCMCOperator {
 

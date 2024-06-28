@@ -44,7 +44,6 @@ import java.util.Map;
 
 /**
  * @author Joseph Heled
- * @version 1.0
  */
 @SuppressWarnings({"ConstantConditions"})
 // Cleaning out untouched stuff. Can be resurrected if needed

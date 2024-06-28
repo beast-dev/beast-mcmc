@@ -61,7 +61,6 @@ import static dr.evomodel.treedatalikelihood.BeagleFunctionality.parseSystemProp
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Marc Suchard
- * @version $Id$
  */
 
 @Deprecated

@@ -38,7 +38,6 @@ import dr.inference.model.Variable;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: StrictClockBranchRates.java,v 1.3 2006/01/09 17:44:30 rambaut Exp $
  */
 public class StrictClockBranchRates extends AbstractBranchRateModel implements DifferentiableBranchRates {
 

@@ -40,7 +40,6 @@ import org.ejml.ops.CommonOps;
  *
  * @author Marc A. Suchard
  * @author Andrew Rambaut
- * @version $Id$
  */
 public final class HomogeneousDiffusionModelDelegate extends AbstractDiffusionModelDelegate {
 

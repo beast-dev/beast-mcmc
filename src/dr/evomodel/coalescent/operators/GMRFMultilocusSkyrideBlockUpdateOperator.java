@@ -43,7 +43,6 @@ import java.util.logging.Logger;
  * @author Erik Bloomquist
  * @author Marc Suchard
  * @author Mandev Gill
- * @version $Id: GMRFMultilocusSkylineBlockUpdateOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
 public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractAdaptableOperator {
 

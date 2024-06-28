@@ -49,7 +49,6 @@ import java.util.List;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Michael Defoin Platel
- * @version $Id: DiscretizedBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
  */
 public class DiscretizedBranchRates extends AbstractBranchRateModel implements Citable {
     // Turn on an off the caching on rates for categories -

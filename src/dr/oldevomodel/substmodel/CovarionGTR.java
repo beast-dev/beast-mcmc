@@ -36,7 +36,6 @@ import dr.inference.model.Parameter;
  * covarion hidden rate categories.
  *
  * @author Alexei Drummond
- * @version $Id$
  */
 public class CovarionGTR extends AbstractCovarionDNAModel {
     /**

@@ -36,7 +36,6 @@ import dr.math.UnivariateFunction;
  * (Parameters: shape, scale; mean: ??; variance: ??)
  *
  * @author Joseph Heled
- * @version $Id$
  */
 public class InverseGammaDistribution implements Distribution {
 

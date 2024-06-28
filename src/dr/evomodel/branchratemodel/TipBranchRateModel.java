@@ -36,7 +36,6 @@ import dr.xml.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: TipBranchRateModel.java,v 1.1 2005/12/14 16:46:20 rambaut Exp $
  */
 public class TipBranchRateModel extends AbstractBranchRateModel {
 

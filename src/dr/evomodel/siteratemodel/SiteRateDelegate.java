@@ -31,7 +31,6 @@ import dr.inference.model.Model;
 
 /**
  * @author Andrew Rambaut
- * @version $
  */
 public interface SiteRateDelegate extends Model {
      int getCategoryCount();

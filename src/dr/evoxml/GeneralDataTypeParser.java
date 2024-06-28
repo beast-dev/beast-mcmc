@@ -53,7 +53,6 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  *
- * @version $Id: GeneralDataTypeParser.java,v 1.2 2005/05/24 20:25:59 rambaut Exp $
  */
 public class GeneralDataTypeParser extends AbstractXMLObjectParser {
 

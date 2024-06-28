@@ -32,7 +32,6 @@ package dr.math;
  *
  * @author Alexei Drummond
  *
- * @version $Id: MonteCarloIntegral.java,v 1.5 2005/05/24 20:26:01 rambaut Exp $
  */
 public class MonteCarloIntegral implements Integral {
 

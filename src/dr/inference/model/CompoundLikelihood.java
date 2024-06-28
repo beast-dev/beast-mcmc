@@ -39,7 +39,6 @@ import java.util.concurrent.*;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: CompoundLikelihood.java,v 1.19 2005/05/25 09:14:36 rambaut Exp $
  */
 public class CompoundLikelihood implements Likelihood, Profileable, Reportable, Keywordable {
 

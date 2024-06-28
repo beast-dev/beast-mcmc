@@ -34,7 +34,6 @@ package dr.evolution.colouring;
  * 
  * @author Gerton Lunter
  *
- * @version 1
  */
 
 

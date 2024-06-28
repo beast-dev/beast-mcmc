@@ -45,7 +45,6 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Filip Bielejec
  * @author Marc A. Suchard
- * @version $Id$
  */
 public final class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, Serializable {
 

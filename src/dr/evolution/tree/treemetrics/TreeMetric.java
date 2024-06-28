@@ -31,7 +31,6 @@ import dr.evolution.tree.Tree;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public interface TreeMetric {
 

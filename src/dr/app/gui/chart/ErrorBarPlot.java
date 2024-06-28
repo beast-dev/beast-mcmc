@@ -37,7 +37,6 @@ import java.util.List;
  * Description:	An error bar plot (to be put under a scatter plot).
  *
  * @author Andrew Rambaut
- * @version $Id: LinePlot.java,v 1.8 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public class ErrorBarPlot extends Plot.AbstractPlot {

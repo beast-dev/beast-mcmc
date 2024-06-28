@@ -36,7 +36,6 @@ import java.util.Iterator;
 /**
  * A simple implementation of the Node interface.
  *
- * @version $Id: SimpleNode.java,v 1.40 2005/08/16 16:03:17 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

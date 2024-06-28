@@ -34,7 +34,6 @@ import java.awt.geom.Rectangle2D;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: TreePaneSelector.java 822 2007-10-26 13:50:26Z rambaut $
  */
 public class ChartSelector implements MouseListener, MouseMotionListener {
 

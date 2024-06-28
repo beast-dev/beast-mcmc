@@ -33,7 +33,6 @@ import dr.evolution.sequence.Sequence;
 /**
  * @author Alexei Drummond
  *
- * @version $Id: ExtractPairs.java,v 1.3 2005/04/20 21:26:18 rambaut Exp $
  */
 public class ExtractPairs {
 

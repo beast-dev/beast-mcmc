@@ -41,7 +41,6 @@ import javax.swing.KeyStroke;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class DefaultFileMenuFactory implements MenuFactory {
 

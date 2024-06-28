@@ -36,7 +36,6 @@ import dr.util.FrequencyDistribution;
  * Creates a simple histogram-based density estimate
  *
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class DensityEstimate {
 

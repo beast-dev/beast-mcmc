@@ -40,7 +40,6 @@ import dr.math.MathUtils;
  * trees. It assumes explicitely bifurcating rooted trees.
  *
  * @author Sebastian Hoehna
- * @version 1.0
  */
 @Deprecated
 public class FNPR extends AbstractTreeOperator {

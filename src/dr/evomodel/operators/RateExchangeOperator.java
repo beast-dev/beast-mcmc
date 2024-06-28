@@ -41,7 +41,6 @@ import org.w3c.dom.Element;
  * Implements the RateExchange move.
  *
  * @author Alexei Drummond
- * @version $Id: RateExchangeOperator.java,v 1.3 2005/01/06 14:46:36 rambaut Exp $
  */
 public class RateExchangeOperator extends SimpleMCMCOperator {
 

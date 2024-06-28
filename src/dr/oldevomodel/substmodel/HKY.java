@@ -43,7 +43,6 @@ import java.util.List;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: HKY.java,v 1.42 2005/09/23 13:17:59 rambaut Exp $
  */
 public class HKY extends AbstractNucleotideModel implements Citable {
 

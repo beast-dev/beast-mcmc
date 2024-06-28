@@ -34,7 +34,6 @@ import org.apache.commons.math.linear.*;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 public class Procrustes {
     public Procrustes(RealMatrix X, RealMatrix Xstar, boolean allowTranslation, boolean allowDilation) {

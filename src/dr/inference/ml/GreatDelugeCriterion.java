@@ -34,7 +34,6 @@ import dr.inference.markovchain.Acceptor;
  *
  * @author Andrew Rambaut
  *
- * @version $Id: GreatDelugeCriterion.java,v 1.3 2006/06/13 03:50:54 alexei Exp $
  */
 public class GreatDelugeCriterion implements Acceptor  {
 

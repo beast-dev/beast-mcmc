@@ -45,7 +45,6 @@ import java.util.List;
 /**
  * A likelihood function for the coalescent. Takes a tree and a exponential markov model.
  * *
- * @version $Id: SkylineLikelihood.java,v 1.3 2004/10/01 22:40:04 alexei Exp $
  *
  * @author Alexei Drummond
  */

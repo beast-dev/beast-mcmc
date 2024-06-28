@@ -41,7 +41,6 @@ import dr.inference.model.Variable;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: BranchingLikelihood.java,v 1.4 2004/12/14 21:00:58 alexei Exp $
  */
 public class BranchingLikelihood extends AbstractModelLikelihood {
 

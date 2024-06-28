@@ -33,7 +33,6 @@ import dr.inference.model.Statistic;
 /**
  * An interface for statistics on trees
  *
- * @version $Id: TreeStatistic.java,v 1.14 2005/05/24 20:25:58 rambaut Exp $
  *
  * @author Andrew Rambaut
  *

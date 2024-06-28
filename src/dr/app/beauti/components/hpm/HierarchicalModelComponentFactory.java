@@ -34,7 +34,6 @@ import dr.app.beauti.options.ComponentOptions;
 
 /**
  * @author Marc A. Suchard
- * @version $Id$
  */
 public class HierarchicalModelComponentFactory implements ComponentFactory {
 

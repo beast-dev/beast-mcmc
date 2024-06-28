@@ -36,7 +36,6 @@ import java.util.StringTokenizer;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: LogFileTraces.java,v 1.4 2006/11/30 17:39:29 rambaut Exp $
  */
 
 public class LogFileTraces extends AbstractTraceList {

@@ -59,7 +59,6 @@ import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
  * @author Andrew Rambaut
  * @author Marc Suchard
  * @author Guy Baele
- * @version $Id$
  */
 
 public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate {

@@ -40,7 +40,6 @@ import java.util.List;
 /**
  * @author Andrew Rambaut
  * @author Marc A. Suchard
- * @version $Id$
  */
 public class LinkedParameterComponentGenerator extends BaseComponentGenerator {
 

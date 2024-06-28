@@ -36,7 +36,6 @@ import java.util.Collections;
 /**
  * @author Alexei Drummond
  *
- * @version $Id: DeltaStatistic.java,v 1.1 2006/05/09 10:24:27 rambaut Exp $
  */
 public class DeltaStatistic extends AbstractTreeSummaryStatistic {
 

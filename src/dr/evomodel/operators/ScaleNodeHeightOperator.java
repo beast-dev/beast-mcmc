@@ -43,7 +43,6 @@ import dr.util.Transform;
  * reasons such as BigFastTreeModel.
  *
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class ScaleNodeHeightOperator extends AbstractAdaptableTreeOperator {
 

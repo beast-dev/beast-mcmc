@@ -37,7 +37,6 @@ import dr.inference.model.Variable;
 
 /**
  * @author Marc A. Suchard
- * @version $Id$
  */
 public interface RootProcessDelegate extends Model {
 

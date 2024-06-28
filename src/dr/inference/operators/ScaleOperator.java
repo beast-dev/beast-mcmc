@@ -43,7 +43,6 @@ import java.util.logging.Logger;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: ScaleOperator.java,v 1.20 2005/06/14 10:40:34 rambaut Exp $
  */
 public class ScaleOperator extends AbstractAdaptableOperator {
     private final boolean REJECT_IF_OUT_OF_BOUNDS = true;

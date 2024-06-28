@@ -37,7 +37,6 @@ import dr.math.MathUtils;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: UniformOperator.java,v 1.16 2005/06/14 10:40:34 rambaut Exp $
  */
 public class UniformIntegerOperator extends SimpleMCMCOperator {
     private final int howMany;

@@ -33,7 +33,6 @@ import dr.evolution.tree.Tree;
 /**
  * @author Alexei Drummond
  *
- * @version $Id: ExternalInternalRatio.java,v 1.2 2005/09/28 13:50:56 rambaut Exp $
  */
 public class ExternalInternalRatio extends AbstractTreeSummaryStatistic {
 

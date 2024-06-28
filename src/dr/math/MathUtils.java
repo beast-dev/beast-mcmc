@@ -38,7 +38,6 @@ import java.text.ParseException;
  * @author Matthew Goode
  * @author Alexei Drummond
  * @author Gerton Lunter
- * @version $Id: MathUtils.java,v 1.13 2006/08/31 14:57:24 rambaut Exp $
  */
 public class MathUtils {
 

@@ -32,7 +32,6 @@ import java.awt.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class PanelUtils {
 	public static JPanel createAddRemoveButtonPanel(Action addAction,

@@ -29,7 +29,6 @@ package dr.app.phylogeography.tools.kml;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class Location {
     public Location(String name, String state, double latitude, double longitude) {

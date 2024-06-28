@@ -48,7 +48,6 @@ import java.io.FileWriter;
  * @author Julia Palacios
  * @author Vladimir Minin
  * @author Marc Suchard
- * @version $Id: GMRFSkylineBlockUpdateOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
 
 //public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractAdaptableOperator{

@@ -38,7 +38,6 @@ import dr.inference.model.*;
 
 /**
  * @author Wai Lok Sibon Li
- * @version $Id: DiscretizedBranchRates.java,v 1.11 2009/12/01 17:44:30 rambaut Exp $
  */
 public class MixtureModelBranchRates extends AbstractBranchRateModel {
 

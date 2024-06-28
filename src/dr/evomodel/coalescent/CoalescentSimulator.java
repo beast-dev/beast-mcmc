@@ -37,7 +37,6 @@ import dr.math.UnivariateFunction;
  * Simulates a set of coalescent intervals given a demographic model.
  *
  * @author Alexei Drummond
- * @version $Id: CoalescentSimulator.java,v 1.43 2005/10/27 10:40:48 rambaut Exp $
  */
 public class CoalescentSimulator {
 

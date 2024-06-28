@@ -41,7 +41,6 @@ import java.util.Set;
  * @author Roald Forsberg
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: MonophylyStatistic.java,v 1.16 2005/07/11 14:06:25 rambaut Exp $
  */
 public class MonophylyStatistic extends TreeStatistic implements BooleanStatistic {
 

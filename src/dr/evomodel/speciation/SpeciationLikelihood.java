@@ -46,7 +46,6 @@ import java.util.Set;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: SpeciationLikelihood.java,v 1.10 2005/05/18 09:51:11 rambaut Exp $
  */
 public class SpeciationLikelihood extends AbstractModelLikelihood implements Reportable, Units {
 

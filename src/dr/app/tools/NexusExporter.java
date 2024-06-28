@@ -48,7 +48,6 @@ import dr.evolution.util.Taxon;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: NexusExporter.java,v 1.5 2006/09/08 11:34:53 rambaut Exp $
  */
 public class NexusExporter implements TreeExporter {
 

@@ -31,7 +31,6 @@ package dr.inference.operators;
  * Utility functions to aid in operator optimization etc.
  *
  * @author Alexei Drummond
- * @version $Id: OperatorUtils.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
 public class OperatorUtils {
 

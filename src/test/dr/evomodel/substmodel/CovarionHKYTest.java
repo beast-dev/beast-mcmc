@@ -41,7 +41,6 @@ import junit.framework.TestSuite;
  * CovarionHKY Tester.
  *
  * @author Alexei Drummond
- * @version 1.0
  * @since <pre>08/20/2007</pre>
  */
 public class CovarionHKYTest extends TestCase {

@@ -34,7 +34,6 @@ import dr.app.util.OSType;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class MapperMenuBarFactory extends DefaultMenuBarFactory {
 

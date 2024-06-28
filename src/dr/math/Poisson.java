@@ -31,7 +31,6 @@ package dr.math;
 /**
  * @author Alexei Drummond
  *
- * @version $Id: Poisson.java,v 1.4 2005/04/28 16:51:44 rambaut Exp $
  */
 public class Poisson {
 

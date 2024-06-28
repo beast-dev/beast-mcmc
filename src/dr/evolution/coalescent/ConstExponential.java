@@ -33,7 +33,6 @@ package dr.evolution.coalescent;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  *
- * @version $Id: ConstExponential.java,v 1.8 2005/10/28 02:50:05 alexei Exp $
  *
  */
 public class ConstExponential extends ExponentialGrowth {

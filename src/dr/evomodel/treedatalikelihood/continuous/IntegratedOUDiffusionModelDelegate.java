@@ -45,7 +45,6 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
  *
  * @author Marc A. Suchard
  * @author Paul Bastide
- * @version $Id$
  */
 public class IntegratedOUDiffusionModelDelegate extends OUDiffusionModelDelegate {
 

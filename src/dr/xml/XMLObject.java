@@ -40,7 +40,6 @@ import java.util.Vector;
  * This class wraps a DOM Element for the purposes of parsing.
  *
  * @author Alexei Drummond
- * @version $Id: XMLObject.java,v 1.30 2005/07/11 14:06:25 rambaut Exp $
  */
 public class XMLObject {
 

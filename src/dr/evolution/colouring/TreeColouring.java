@@ -33,7 +33,6 @@ import dr.evolution.tree.Tree;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id$
  */
 public interface TreeColouring {
     int getColourCount();

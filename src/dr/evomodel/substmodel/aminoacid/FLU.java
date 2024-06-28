@@ -41,7 +41,6 @@ import java.util.List;
  * Cuong Cao Dang, Quang Si Le, Olivier Gascuel  and Vinh Sy Le (2010)
  * FLU, an amino acid substitution model for influenza proteins. BMC Evol Biol 10:99
  *
- * @version 08/01/2010
  *
  * @author Marc A. Suchard
  * @author Yu-Nong Gong

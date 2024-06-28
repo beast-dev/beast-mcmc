@@ -39,7 +39,6 @@ import dr.xml.*;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: SimpleTreeParser.java,v 1.3 2005/05/24 20:25:59 rambaut Exp $
  */
 public class SimpleTreeParser extends AbstractXMLObjectParser {
 

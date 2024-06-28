@@ -33,7 +33,6 @@ package dr.evolution.datatype;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  *
- * @version $Id: GeneticCode.java,v 1.11 2005/05/24 20:25:56 rambaut Exp $
  */
 
 public final class GeneticCode implements CodonTable {

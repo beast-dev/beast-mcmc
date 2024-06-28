@@ -41,7 +41,6 @@ import java.util.Iterator;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  *
- * @version $Id: SimpleSiteList.java,v 1.1 2005/06/23 13:53:41 rambaut Exp $
  */
 public class SimpleSiteList implements SiteList {
 

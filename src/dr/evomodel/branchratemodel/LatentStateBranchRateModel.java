@@ -43,7 +43,6 @@ import dr.inference.model.Variable;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  *          <p/>
  *          $HeadURL$
  *          <p/>

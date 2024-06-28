@@ -39,7 +39,6 @@ import java.util.logging.Logger;
 /**
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 @Deprecated
 public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood implements Citable {

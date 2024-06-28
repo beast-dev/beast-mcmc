@@ -35,7 +35,6 @@ import java.io.StringWriter;
 /**
  * data structure for a set of splits 
  *
- * @version $Id: SplitSystem.java,v 1.5 2005/05/24 20:25:57 rambaut Exp $
  *
  * @author Korbinian Strimmer
  */

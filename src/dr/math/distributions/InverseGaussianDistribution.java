@@ -36,7 +36,6 @@ import dr.math.iterations.NewtonZeroFinder;
  * normal distribution (pdf, cdf, quantile)
  *
  * @author Wai Lok Sibon Li
- * @version $Id: InverseGaussianDistribution.java,v 1.7 2008/04/24 20:26:01 rambaut Exp $
  *
  * Reading: Chhikara, R. S., and Folks, J. Leroy, (1989). The
  * inverse Gaussian distribution: Theory, methodology, and applications. Marcel Dekker, New York.

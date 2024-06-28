@@ -40,7 +40,6 @@ import java.util.Set;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
  */
 public class TMRCAStatistic extends TreeStatistic {
 

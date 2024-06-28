@@ -38,7 +38,6 @@ import static beagle.basta.BeagleBasta.BASTA_OPERATION_SIZE;
  *
  * @author Marc A. Suchard
  * @author Guy Baele
- * @version $Id$
  */
 public interface ProcessOnCoalescentIntervalDelegate {
 

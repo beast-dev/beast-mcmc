@@ -41,7 +41,6 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class BeagleSequenceSimulatorApp {
 

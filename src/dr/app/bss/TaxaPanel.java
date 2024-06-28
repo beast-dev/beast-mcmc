@@ -46,7 +46,6 @@ import dr.app.gui.table.TableEditorStopper;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 @SuppressWarnings("serial")
 public class TaxaPanel extends JPanel implements Exportable {

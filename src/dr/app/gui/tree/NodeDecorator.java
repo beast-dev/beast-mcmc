@@ -37,7 +37,6 @@ import java.awt.*;
  * Date: Dec 3, 2004
  * Time: 9:57:30 AM
  *
- * @version $Id: NodeDecorator.java,v 1.1 2005/11/29 12:59:36 rambaut Exp $
  */
 public interface NodeDecorator {
 

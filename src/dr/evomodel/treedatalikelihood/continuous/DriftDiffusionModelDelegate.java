@@ -37,7 +37,6 @@ import java.util.List;
  * A simple diffusion model delegate with branch-specific drift and constant diffusion
  *
  * @author Marc A. Suchard
- * @version $Id$
  */
 public final class DriftDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegate {
 

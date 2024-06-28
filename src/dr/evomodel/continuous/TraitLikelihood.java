@@ -44,7 +44,6 @@ import java.util.ArrayList;
  * being distributed according to the given parametric distribution.
  *
  * @author Alexei Drummond
- * @version $Id: TraitLikelihood.java,v 1.7 2004/11/25 12:19:56 rambaut Exp $
  */
 
 public class TraitLikelihood extends AbstractModelLikelihood {

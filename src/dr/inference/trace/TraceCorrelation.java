@@ -37,7 +37,6 @@ import java.util.Map;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: TraceCorrelation.java,v 1.2 2006/11/29 14:53:53 rambaut Exp $
  */
 public class TraceCorrelation extends TraceDistribution {
     private final long stepSize;

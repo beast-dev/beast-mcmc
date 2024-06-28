@@ -37,7 +37,6 @@ import dr.xml.*;
  * This class simulates a trait on a tree.
  *
  * @author Alexei Drummond
- * @version $Id: SimulateTrait.java,v 1.5 2004/10/01 22:40:04 alexei Exp $
  */
 
 public class SimulateTrait {	

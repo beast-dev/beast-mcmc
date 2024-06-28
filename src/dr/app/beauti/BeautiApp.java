@@ -43,7 +43,6 @@ import java.util.Locale;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: BeautiApp.java,v 1.18 2006/09/09 16:07:05 rambaut Exp $
  */
 public class BeautiApp extends MultiDocApplication {
     public final static Version VERSION = new BeastVersion();

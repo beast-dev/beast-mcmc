@@ -40,7 +40,6 @@ import java.util.*;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  *
- * @version $Id: PairedSitePatterns.java,v 1.3 2005/06/23 13:53:41 rambaut Exp $
  */
 public class PairedSitePatterns implements SiteList {
 

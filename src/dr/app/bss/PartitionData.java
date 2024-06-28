@@ -70,7 +70,6 @@ import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 @SuppressWarnings("serial")
 public class PartitionData implements Serializable {

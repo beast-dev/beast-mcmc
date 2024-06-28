@@ -34,7 +34,6 @@ import dr.util.Citable;
 /**
  * An interface for empirical rate matrices.
  *
- * @version $Id: EmpiricalRateMatrix.java,v 1.3 2005/05/24 20:25:58 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

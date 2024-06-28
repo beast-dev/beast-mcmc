@@ -32,7 +32,6 @@ import dr.math.MathUtils;
 /**
  * Provides bootstrap replicate patterns 
  *
- * @version $Id: ShuffledSiteList.java,v 1.3 2005/04/20 21:26:19 rambaut Exp $
  *
  * @author Andrew Rambaut
  */

@@ -52,7 +52,6 @@ import java.util.StringTokenizer;
  *
  * @author Alexei Drummond
  *
- * @version $Id: BranchRatePlotter.java,v 1.6 2005/12/08 13:52:46 rambaut Exp $
  */
 public class BranchRatePlotter {
 

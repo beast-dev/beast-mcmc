@@ -52,7 +52,6 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Marc A. Suchard
- * @version $Id: DiscretizedBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
  */
 public class RandomLocalClockModel extends AbstractBranchRateModel
         implements RandomLocalTreeVariable, Citable {

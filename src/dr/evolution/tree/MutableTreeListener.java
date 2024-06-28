@@ -30,7 +30,6 @@ package dr.evolution.tree;
 /**
  * Interface for a listener to a mutable tree.
  *
- * @version $Id: MutableTreeListener.java,v 1.4 2005/05/24 20:25:56 rambaut Exp $
  *
  * @author Andrew Rambaut
  */

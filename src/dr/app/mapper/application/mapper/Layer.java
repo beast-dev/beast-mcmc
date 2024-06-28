@@ -33,7 +33,6 @@ import java.util.List;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class Layer {
     public Layer(String name, Trace trace, LayerType type, List<String> labels) {

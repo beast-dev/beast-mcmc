@@ -40,7 +40,6 @@ import jam.framework.MenuFactory;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class DefaultEditMenuFactory implements MenuFactory  {
 

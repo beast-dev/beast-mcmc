@@ -44,7 +44,6 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Guy Baele
  * @author Marc Suchard
- * @version $Id: Transform.java,v 1.5 2005/05/24 20:26:01 rambaut Exp $
  */
 public interface Transform {
 

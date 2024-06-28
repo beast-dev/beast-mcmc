@@ -45,7 +45,6 @@ import junit.framework.TestSuite;
  * Birth-Death tester.
  *
  * @author Alexei Drummond
- * @version 1.0
  */
 public class BirthDeathLikelihoodTest extends TestCase {
 

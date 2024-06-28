@@ -30,7 +30,6 @@ package dr.evomodel.treelikelihood;
  * ${CLASS_NAME}
  *
  * @author Andrew Rambaut
- * @version $Id$
  *
  * $HeadURL$
  *

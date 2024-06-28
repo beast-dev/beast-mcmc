@@ -36,7 +36,6 @@ import dr.math.MathUtils;
  * A generic random walk operator for use with a multi-dimensional Integer parameters.
  *
  * @author Michael Defoin Platel
- * @version $Id: RandomWalkIntegerOperator.java$
  */
 public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
 

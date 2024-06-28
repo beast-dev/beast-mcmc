@@ -44,7 +44,6 @@ import java.util.logging.Logger;
 /**
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 @Deprecated // for the moment at least
 public abstract class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood implements Citable {

@@ -51,7 +51,6 @@ import java.io.PrintStream;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: MCMC.java,v 1.41 2005/07/11 14:06:25 rambaut Exp $
  */
 public class MCMC implements Identifiable, Spawnable, Loggable {
 

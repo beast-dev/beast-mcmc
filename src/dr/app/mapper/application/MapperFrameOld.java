@@ -60,7 +60,6 @@ import java.util.List;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class MapperFrameOld extends DocumentFrame {
     private final String[] columnToolTips = {"", "", ""};

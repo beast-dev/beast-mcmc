@@ -76,7 +76,6 @@ import dr.math.MathUtils;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class Utils {
 

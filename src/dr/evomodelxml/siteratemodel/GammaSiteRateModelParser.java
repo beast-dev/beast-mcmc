@@ -40,7 +40,6 @@ import java.util.logging.Logger;
  * This is a replacement to GammaSiteModelParser that uses the modular
  * DiscretizedSiteRateModel with a Gamma delegate.
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
 

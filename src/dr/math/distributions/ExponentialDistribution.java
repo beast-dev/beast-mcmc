@@ -39,7 +39,6 @@ import dr.math.UnivariateFunction;
  *
  * @author Alexei Drummond
  * @author Korbinian Strimmer
- * @version $Id: ExponentialDistribution.java,v 1.5 2005/05/24 20:26:00 rambaut Exp $
  */
 public class ExponentialDistribution implements Distribution {
     //

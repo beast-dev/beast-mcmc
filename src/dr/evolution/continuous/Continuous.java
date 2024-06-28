@@ -30,7 +30,6 @@ package dr.evolution.continuous;
 /**
  * a class for a single continuous value.
  *
- * @version $Id: Continuous.java,v 1.5 2006/06/18 16:20:58 alexei Exp $
  *
  * @author Alexei Drummond
  */

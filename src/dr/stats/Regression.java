@@ -31,7 +31,6 @@ package dr.stats;
  * simple regression of two variables
  *
  * @author Andrew Rambaut
- * @version $Id: Regression.java,v 1.5 2005/05/24 20:26:01 rambaut Exp $
  */
 public class Regression {
     private Variate.D xData = null;

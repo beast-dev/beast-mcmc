@@ -31,7 +31,6 @@ package dr.util;
  * Interface for all objects that can describe themselves in XHTML. 
  *
  * @author Andrew Rambaut
- * @version $Id: XHTMLable.java,v 1.3 2005/05/24 20:26:01 rambaut Exp $
  */
 
 

@@ -32,7 +32,6 @@ package dr.inference.hawkes;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 
 public interface HawkesCore {

@@ -44,7 +44,6 @@ import java.util.regex.Pattern;
 /**
  * @author Andrew Rambaut
  * @author Marc A. Suchard
- * @version $Id$
  */
 public class JumpHistoryAnalyser {
 

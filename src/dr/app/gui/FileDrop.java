@@ -71,7 +71,6 @@ import java.io.Reader;
  *
  * @author  Robert Harder
  * @author  rharder@users.sf.net
- * @version 1.0.1
  */
 public class FileDrop
 {
@@ -671,8 +670,7 @@ public class FileDrop
      *
      * @author  Robert Harder
      * @author  rob@iharder.net
-     * @version 1.2
-     */
+         */
     public static class Event extends java.util.EventObject {
 
         private java.io.File[] files;
@@ -749,8 +747,7 @@ public class FileDrop
      *
      * @author  Robert Harder
      * @author  rob@iharder.net
-     * @version 1.2
-     */
+         */
     public static class TransferableObject implements java.awt.datatransfer.Transferable
     {
         /**
@@ -940,8 +937,7 @@ public class FileDrop
          *
          * @author Robert Harder
          * @copyright 2001
-         * @version 1.1
-         * @since 1.1
+                 * @since 1.1
          */
         public static interface Fetcher
         {

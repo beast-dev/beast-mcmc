@@ -45,7 +45,6 @@ import java.util.logging.Logger;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: MarkovChain.java,v 1.10 2006/06/21 13:34:42 rambaut Exp $
  */
 public final class MarkovChain implements Serializable {
     private static final long serialVersionUID = 181L;

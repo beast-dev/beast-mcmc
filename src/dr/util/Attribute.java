@@ -34,7 +34,6 @@ import java.io.Serializable;
  * An immutable attribute has a name and value.
  *
  * @author Alexei Drummond
- * @version $Id: Attribute.java,v 1.24 2005/05/24 20:26:01 rambaut Exp $
  */
 
 

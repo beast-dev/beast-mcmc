@@ -34,7 +34,6 @@ import java.util.Map;
 /**
  * @author Andrew Rambaut
  *
- * @version $Id: Profiler.java,v 1.3 2004/12/16 10:25:01 alexei Exp $
  */
 public class Profiler {
 

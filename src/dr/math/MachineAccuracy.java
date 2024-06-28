@@ -31,7 +31,6 @@ package dr.math;
 /**
  * determines machine accuracy
  *
- * @version $Id: MachineAccuracy.java,v 1.4 2005/05/24 20:26:01 rambaut Exp $
  *
  * @author Korbinian Strimmer
  * @author Alexei Drummond

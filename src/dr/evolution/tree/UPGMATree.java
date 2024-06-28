@@ -32,7 +32,6 @@ import dr.evolution.distance.DistanceMatrix;
 /**
  * constructs a UPGMA tree from pairwise distances
  *
- * @version $Id: UPGMATree.java,v 1.14 2005/05/24 20:25:57 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

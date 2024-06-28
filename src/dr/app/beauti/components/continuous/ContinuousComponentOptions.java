@@ -39,7 +39,6 @@ import java.util.Map;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 
 public class ContinuousComponentOptions implements ComponentOptions {

@@ -36,7 +36,6 @@ import java.awt.event.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id:$
  */
 public class LinkTreeModelDialog {
 

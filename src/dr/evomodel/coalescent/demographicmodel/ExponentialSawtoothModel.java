@@ -34,7 +34,6 @@ import dr.inference.model.Parameter;
 
 /**
  * @author Alexei Drummond
- * @version $Id: ExponentialSawtoothModel.java,v 1.4 2005/04/11 11:24:39 alexei Exp $
  */
 public class ExponentialSawtoothModel extends DemographicModel {
 

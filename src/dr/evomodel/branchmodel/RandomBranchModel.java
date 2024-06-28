@@ -49,8 +49,7 @@ import dr.math.MathUtils;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
- * 
+ *
  */
 
 @SuppressWarnings("serial")

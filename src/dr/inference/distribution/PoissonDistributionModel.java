@@ -38,7 +38,6 @@ import org.w3c.dom.Element;
  * A class that acts as a model for Poisson distributed data.
  *
  * @author Andrew Rambaut
- * @version $Id$
  */
 
 public class PoissonDistributionModel extends AbstractModel implements ParametricDistributionModel {

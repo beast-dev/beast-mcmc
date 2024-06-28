@@ -40,7 +40,6 @@ import dr.inference.model.Variable;
  * to the user to keep them bounded and in strict order...
  *
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class RateEpochBranchRateModel extends AbstractBranchRateModel {
 

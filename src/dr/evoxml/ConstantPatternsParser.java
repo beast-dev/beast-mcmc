@@ -40,7 +40,6 @@ import java.util.logging.Logger;
  * Can be merged with other pattern lists to pad out polymorphic sites
  *
  * @author Andrew Rambaut
- * @version $Id: $
  */
 public class ConstantPatternsParser extends AbstractXMLObjectParser {
 

@@ -38,7 +38,6 @@ import dr.evolution.util.Taxon;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class TemporalStress {
 

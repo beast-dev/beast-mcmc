@@ -42,7 +42,6 @@ import java.util.*;
  * @author Filip Bielejec
  * @author Andrew Rambaut
  * @author Marc A. Suchard
- * @version $Id$
  */
 
 public class EpochBranchModel extends AbstractModel implements BranchModel, Citable {

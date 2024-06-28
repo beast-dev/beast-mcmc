@@ -35,7 +35,6 @@ import dr.inference.model.Parameter;
  * A model with hidden states that represent different rates.
  *
  * @author Alexei Drummond
- * @version $Id: CovarionHKY.java,v 1.4 2005/05/24 20:25:58 rambaut Exp $
  */
 public class CovarionHKY extends AbstractCovarionDNAModel {
     

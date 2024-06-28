@@ -42,7 +42,6 @@ import java.util.logging.Logger;
  * This is a FreeRateSiteRateModelParser that uses the modular
  * DiscretizedSiteRateModel with a FreeRates delegate.
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
 

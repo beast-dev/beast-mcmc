@@ -34,7 +34,6 @@ import dr.evolution.util.Taxon;
 /**
  * @author Alexei Drummond
  *
- * @version $Id: Consensus.java,v 1.6 2005/04/20 21:26:18 rambaut Exp $
  */
 public class Consensus {
 

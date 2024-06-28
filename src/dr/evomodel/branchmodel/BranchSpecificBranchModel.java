@@ -49,7 +49,6 @@ import java.util.logging.Logger;
  * substitution models.
  *
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class BranchSpecificBranchModel extends AbstractModel implements BranchModel {
 

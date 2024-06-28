@@ -33,7 +33,6 @@ import java.util.Arrays;
  * AbstractLikelihoodCore - An abstract base class for LikelihoodCores
  *
  * @author Andrew Rambaut
- * @version $Id: AbstractLikelihoodCore.java,v 1.11 2006/08/30 16:02:42 rambaut Exp $
  */
 
 @Deprecated // Switching to BEAGLE

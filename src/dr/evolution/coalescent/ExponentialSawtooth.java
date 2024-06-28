@@ -30,7 +30,6 @@ package dr.evolution.coalescent;
 /**
  * This class models a sawtooth demographic in which exponential growth is punctuated by frequent periodic crashes.
  * 
- * @version $Id: ExponentialSawtooth.java,v 1.3 2005/04/11 11:43:03 alexei Exp $
  *
  * @author Alexei Drummond
  */

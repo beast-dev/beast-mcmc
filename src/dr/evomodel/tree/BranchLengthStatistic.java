@@ -39,7 +39,6 @@ import java.util.Set;
  * A statistic that extracts the length of the stem branch of a set of taxa
  *
  * @author Andrew Rambaut
- * @version $Id:$
  */
 public class BranchLengthStatistic extends TreeStatistic {
 

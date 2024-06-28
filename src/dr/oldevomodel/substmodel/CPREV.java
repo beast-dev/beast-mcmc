@@ -37,7 +37,6 @@ import java.util.*;
  * CPREV 45 model of amino acid evolution
  * Adachi, J., P.J. Waddell, W. Martin, and M. Hasegawa. 2000. JME 50:348-358
  *
- * @version $Id: CPREV.java,v 1.3 2005/05/24 20:25:58 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

@@ -30,7 +30,6 @@ package dr.inference.model;
 import java.util.Vector;
 
 /**
- * @version $Id: ExpressionStatistic.java,v 1.4 2005/05/24 20:26:00 rambaut Exp $
  *
  * @author Alexei Drummond
  */

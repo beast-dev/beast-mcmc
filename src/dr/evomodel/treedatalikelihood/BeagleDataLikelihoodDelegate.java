@@ -56,7 +56,6 @@ import static dr.evomodel.treedatalikelihood.SubstitutionModelDelegate.BUFFER_PO
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 
 public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate {

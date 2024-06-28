@@ -45,7 +45,6 @@ import java.util.List;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: CataclysmicDemographicModel.java,v 1.6 2005/05/24 20:25:57 rambaut Exp $
  */
 public class CataclysmicDemographicModel extends DemographicModel implements Citable {
 

@@ -32,7 +32,6 @@ package dr.inference.multidimensionalscaling;
  *
  * @author Marc Suchard
  * @author Andrew Rambaut
- * @version $Id$
  *          <p/>
  *          $HeadURL$
  *          <p/>

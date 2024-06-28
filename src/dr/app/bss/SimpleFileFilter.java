@@ -33,7 +33,6 @@ import javax.swing.filechooser.FileFilter;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class SimpleFileFilter extends FileFilter {
 

@@ -40,7 +40,6 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Marc A. Suchard
- * @version $Id: SitePatternsParser.java,v 1.3 2005/07/11 14:06:25 rambaut Exp $
  */
 public class SitePatternsParser extends AbstractXMLObjectParser {
 

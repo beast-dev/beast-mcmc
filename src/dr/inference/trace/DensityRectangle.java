@@ -38,7 +38,6 @@ import java.util.List;
 
 /**
  * @author Alexei Drummond
- * @version $Id: DensityRectangle.java,v 1.4 2006/08/26 19:24:41 rambaut Exp $
  */
 public class DensityRectangle {
 

@@ -61,7 +61,6 @@ import java.util.*;
  * ARGLikelihood - implements a Likelihood Function for sequences on an ancestral recombination graph.
  *
  * @author Marc Suchard
- * @version $Id: ARGLikelihood.java,v 1.3 2006/10/23 04:13:41 msuchard Exp $
  */
 
 public class ARGLikelihood extends AbstractARGLikelihood {

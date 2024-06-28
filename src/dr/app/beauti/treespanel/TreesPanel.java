@@ -53,7 +53,6 @@ import java.util.Map;
 /**
  * @author Andrew Rambaut
  * @author Walter Xie
- * @version $Id:$
  */
 public class TreesPanel extends BeautiPanel implements Exportable {
 

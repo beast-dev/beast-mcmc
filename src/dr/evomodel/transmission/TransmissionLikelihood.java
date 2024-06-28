@@ -51,7 +51,6 @@ import dr.xml.*;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: TransmissionLikelihood.java,v 1.13 2005/06/15 17:20:54 rambaut Exp $
  */
 public class TransmissionLikelihood extends AbstractModelLikelihood implements Units {
 

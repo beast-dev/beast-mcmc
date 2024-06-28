@@ -33,7 +33,6 @@ import dr.xml.*;
 /**
  * @author Alexei Drummond
  *
- * @version $Id: PolarCoordinatesParser.java,v 1.1 2005/04/11 11:51:33 alexei Exp $
  */
 public class PolarCoordinatesParser extends AbstractXMLObjectParser {
 

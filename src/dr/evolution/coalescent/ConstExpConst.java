@@ -34,7 +34,6 @@ package dr.evolution.coalescent;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  *
- * @version $ID$
  *
  */
 public class ConstExpConst extends DemographicFunction.Abstract {

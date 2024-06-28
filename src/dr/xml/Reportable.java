@@ -35,7 +35,6 @@ package dr.xml;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id$
  */
 public interface Reportable {
     String getReport();

@@ -42,7 +42,6 @@ import dr.math.MathUtils;
  * Narrow Exchange but with manipulating the height of a node if necessary.
  *
  * @author Sebastian Hoehna
- * @version 1.0
  */
 public class NNI extends AbstractTreeOperator implements ConstrainableTreeOperator {
 

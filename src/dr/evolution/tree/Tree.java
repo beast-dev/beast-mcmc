@@ -43,7 +43,6 @@ import java.util.*;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: Tree.java,v 1.59 2006/09/08 17:34:23 rambaut Exp $
  */
 public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 

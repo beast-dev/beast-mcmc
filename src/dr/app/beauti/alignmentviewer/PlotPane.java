@@ -32,7 +32,6 @@ import java.awt.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: RulerPane.java,v 1.1 2005/11/01 23:52:04 rambaut Exp $
  */
 public abstract class PlotPane extends JComponent {
     private AlignmentBuffer alignment = null;

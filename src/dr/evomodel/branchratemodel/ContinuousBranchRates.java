@@ -44,7 +44,6 @@ import dr.math.MathUtils;
  * Molecular Biology and Evolution, 2012. 29(2): p. 751-761.
  *
  * @author Wai Lok Sibon Li
- * @version $Id: ContinuousBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
  */
 public class ContinuousBranchRates extends AbstractBranchRateModel {
 

@@ -33,7 +33,6 @@ import dr.evolution.sequence.SequenceList;
 /**
  * interface for any alignment data.
  *
- * @version $Id: Alignment.java,v 1.12 2005/05/24 20:25:55 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

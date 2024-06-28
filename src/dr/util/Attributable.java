@@ -34,7 +34,6 @@ import java.util.Iterator;
 /**
  * Interface for associating attributes with an object.
  *
- * @version $Id: Attributable.java,v 1.6 2005/05/24 20:26:01 rambaut Exp $
  *
  * @author Andrew Rambaut
  */

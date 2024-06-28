@@ -37,8 +37,7 @@ import dr.xml.XMLSyntaxRule;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
- * 
+ *
  */
 public class BranchSpecificTraitParser extends AbstractXMLObjectParser {
 

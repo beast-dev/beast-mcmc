@@ -37,7 +37,6 @@ import dr.inference.model.Statistic;
 /**
  * Yang model of codon evolution
  *
- * @version $Id: YangCodonModel.java,v 1.21 2005/05/24 20:25:58 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

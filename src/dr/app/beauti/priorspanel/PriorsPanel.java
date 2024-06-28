@@ -57,7 +57,6 @@ import java.util.List;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: PriorsPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
  */
 public class PriorsPanel extends BeautiPanel implements Exportable {
     private static final long serialVersionUID = -2936049032365493416L;

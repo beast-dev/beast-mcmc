@@ -38,7 +38,6 @@ import dr.app.treespace.InputFile;
 
 /**
  * @author Andrew Rambaut
- * @version $Id:$
  */
 public class InputFileSettingsDialog {
 

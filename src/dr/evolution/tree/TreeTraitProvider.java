@@ -37,7 +37,6 @@ import java.util.Objects;
  * branches of a tree).
  *
  * @author Andrew Rambaut
- * @version $Id$
  */
 public interface TreeTraitProvider {
 

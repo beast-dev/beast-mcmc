@@ -43,7 +43,6 @@ import java.util.Properties;
 /**
  * @author Alexei Drummond
  *
- * @version $Id: SelectionMapping.java,v 1.2 2005/04/20 21:26:19 rambaut Exp $
  */
 public class SelectionMapping {
 

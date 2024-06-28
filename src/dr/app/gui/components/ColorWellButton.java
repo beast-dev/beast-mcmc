@@ -36,7 +36,6 @@ import java.io.PrintWriter;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class ColorWellButton extends JButton {
 	private JColorChooser chooser;

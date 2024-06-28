@@ -45,7 +45,6 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: ARGDiscretizedBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
  */
 public class ARGDiscretizedBranchRates extends AbstractBranchRateModel {
 

@@ -38,7 +38,6 @@ import java.util.Arrays;
  * of grouping (for skyline-type plots).
  *
  * @author Andrew Rambaut
- * @version $Id:$
  */
 public class NodeHeightsStatistic extends TreeStatistic {
 

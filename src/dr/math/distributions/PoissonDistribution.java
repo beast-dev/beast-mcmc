@@ -34,7 +34,6 @@ import org.apache.commons.math.distribution.PoissonDistributionImpl;
 
 /**
  * @author Alexei Drummond
- * @version $Id$
  */
 public class PoissonDistribution implements Distribution {
 

@@ -40,7 +40,6 @@ import dr.stats.Variate;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: TreeUtils.java,v 1.7 2005/07/11 14:07:25 rambaut Exp $
  */
 public class TreeUtils {
 

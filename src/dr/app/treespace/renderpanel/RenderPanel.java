@@ -33,7 +33,6 @@ import javax.swing.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class RenderPanel extends JPanel implements Exportable {
     

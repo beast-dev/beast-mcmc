@@ -58,7 +58,6 @@ import java.util.List;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: TaxaPanel.java,v 1.1 2006/09/05 13:29:34 rambaut Exp $
  */
 public class TaxonSetsPanel extends JPanel implements Exportable {
 

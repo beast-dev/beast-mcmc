@@ -38,7 +38,6 @@ import dr.evolution.sequence.Sequence;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: SimpleAlignmentBuffer.java,v 1.2 2005/12/11 22:41:25 rambaut Exp $
  */
 public class BeautiAlignmentBuffer implements AlignmentBuffer {
 

@@ -38,7 +38,6 @@ import java.text.DecimalFormat;
  * It displays scientific notation for all other numbers (i.e. really big and really small absolute values) <BR>
  * <b>note</b>: Its display integers for doubles with integer value <BR>
  *
- * @version $Id: NumberFormatter.java,v 1.6 2005/05/24 20:26:01 rambaut Exp $
  *
  * @author Alexei Drummond
  */

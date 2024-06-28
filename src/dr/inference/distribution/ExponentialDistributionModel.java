@@ -38,7 +38,6 @@ import org.w3c.dom.Element;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: ExponentialDistributionModel.java,v 1.12 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public class ExponentialDistributionModel extends AbstractModel implements

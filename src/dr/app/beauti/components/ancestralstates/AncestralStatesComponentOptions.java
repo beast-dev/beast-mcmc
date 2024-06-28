@@ -34,7 +34,6 @@ import java.util.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class AncestralStatesComponentOptions implements ComponentOptions {
 

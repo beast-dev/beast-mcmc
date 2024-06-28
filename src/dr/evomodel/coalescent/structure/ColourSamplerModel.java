@@ -39,7 +39,6 @@ import java.util.logging.Logger;
 
 /**
  * @author Alexei Drummond
- * @version $Id: ColourSamplerModel.java,v 1.14 2006/09/11 09:33:01 gerton Exp $
  */
 
 @Deprecated

@@ -33,7 +33,6 @@ package dr.evolution.coalescent;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  *
- * @version $Id: ConstLogistic.java,v 1.4 2005/04/11 11:43:03 alexei Exp $
  *
  */
 public class ExponentialLogistic extends LogisticGrowth {

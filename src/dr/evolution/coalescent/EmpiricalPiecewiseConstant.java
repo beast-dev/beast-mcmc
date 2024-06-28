@@ -29,7 +29,6 @@ package dr.evolution.coalescent;
 
 /**
  *
- * @version $Id: EmpiricalPiecewiseConstant.java,v 1.4 2004/10/01 23:30:16 alexei Exp $
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut

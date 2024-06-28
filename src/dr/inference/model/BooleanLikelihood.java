@@ -35,7 +35,6 @@ import java.util.ArrayList;
  *
  * @author Andrew Rambaut
  *
- * @version $Id: BooleanLikelihood.java,v 1.8 2005/05/24 20:25:59 rambaut Exp $
  */
 public class BooleanLikelihood extends Likelihood.Abstract {
 

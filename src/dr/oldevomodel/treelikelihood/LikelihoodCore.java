@@ -33,7 +33,6 @@ import dr.evomodel.treelikelihood.LikelihoodPartialsProvider;
  * LikelihoodCore - An interface describing the core likelihood functions.
  *
  * @author Andrew Rambaut
- * @version $Id: LikelihoodCore.java,v 1.15 2006/08/29 18:07:23 rambaut Exp $
  */
 
 @Deprecated // Switching to BEAGLE

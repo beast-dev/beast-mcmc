@@ -41,7 +41,6 @@ import java.util.Map;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: FlexibleTree.java,v 1.34 2006/07/02 21:14:52 rambaut Exp $
  */
 public class FlexibleTree implements MutableTree {
 

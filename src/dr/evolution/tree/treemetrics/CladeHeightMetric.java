@@ -94,7 +94,6 @@ import static dr.evolution.tree.treemetrics.TreeMetric.Utils.checkTreeTaxa;
  * So the score is sqrt(8^2 + 10^2) = sqrt(164)
  *
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class CladeHeightMetric implements TreeMetric {
 	public static Type TYPE = Type.CLADE_HEIGHT;

@@ -33,7 +33,6 @@ import java.awt.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: ChemicalAminoAcidDecorator.java,v 1.1 2005/11/11 16:40:41 rambaut Exp $
  */
 public class ChemicalAminoAcidDecorator implements StateDecorator {
     Paint[] paints = new Paint[AminoAcids.getStateCount()];

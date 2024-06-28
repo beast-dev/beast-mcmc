@@ -40,7 +40,6 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Filip Bielejec
  * @author Marc A. Suchard
- * @version $Id$
  */
 public interface BranchModel extends Model  {
     /**

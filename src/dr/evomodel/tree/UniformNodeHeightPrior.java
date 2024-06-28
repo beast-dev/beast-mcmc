@@ -53,7 +53,6 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @author Erik Bloomquist
  * @author Marc Suchard
- * @version $Id: UniformRootPrior.java,v 1.10 2005/05/24 20:25:58 rambaut Exp $
  */
 public class UniformNodeHeightPrior extends AbstractModelLikelihood {
 

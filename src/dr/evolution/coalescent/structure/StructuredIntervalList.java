@@ -32,7 +32,6 @@ import dr.evolution.coalescent.IntervalList;
 /**
  * @author Alexei Drummond
  * 
- * @version $Id: StructuredIntervalList.java,v 1.4 2005/05/23 10:44:07 alexei Exp $
  */
 public interface StructuredIntervalList extends IntervalList {
 

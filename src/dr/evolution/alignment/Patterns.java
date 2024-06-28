@@ -42,7 +42,6 @@ import java.util.Set;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: Patterns.java,v 1.10 2005/07/08 11:27:53 rambaut Exp $
  */
 public class Patterns implements PatternList {
 

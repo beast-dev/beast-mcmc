@@ -47,7 +47,6 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Marc A. Suchard
- * @version $Id: YangCodonModel.java,v 1.21 2005/05/24 20:25:58 rambaut Exp $
  */
 public class GY94CodonModel extends AbstractCodonModel implements Citable,
         ParameterReplaceableSubstitutionModel, DifferentiableSubstitutionModel {

@@ -67,7 +67,6 @@ import dr.util.Citation;
  * @author Filip Bielejec
  * @author Guy Baele
  * @author Marc A. Suchard
- * @version $Id$
  */
 @SuppressWarnings("serial")
 public class LineageSpecificBranchModel extends AbstractModel implements BranchModel, Citable {

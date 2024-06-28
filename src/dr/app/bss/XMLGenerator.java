@@ -76,7 +76,6 @@ import dr.xml.XMLParser;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class XMLGenerator {
 

@@ -32,7 +32,6 @@ import dr.math.MathUtils;
 /**
  * Provides bootstrap replicate patterns
  *
- * @version $Id: BootstrapPatterns.java,v 1.12 2005/05/24 20:25:55 rambaut Exp $
  *
  * @author Andrew Rambaut
  */

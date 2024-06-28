@@ -50,7 +50,6 @@ import java.awt.event.ItemListener;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: StrainsPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class StrainsPanel extends JPanel implements Exportable, MapperDocument.Listener {
 

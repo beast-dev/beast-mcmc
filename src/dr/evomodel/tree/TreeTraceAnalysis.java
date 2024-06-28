@@ -47,7 +47,6 @@ import java.util.Set;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: TreeTraceAnalysis.java,v 1.20 2005/06/07 16:28:18 alexei Exp $
  */
 public class TreeTraceAnalysis {
 

@@ -34,7 +34,6 @@ import java.util.*;
 /**
  * @author Andrew Rambaut
  * @author Marc A. Suchard
- * @version $Id$
  */
 public class LinkedParameterComponentOptions implements ComponentOptions {
     private static final long serialVersionUID = 1L;

@@ -48,7 +48,6 @@ import java.util.ArrayList;
 /* A Metropolis-Hastings operator to update the GP proposal when a new tree is proposed
  *
  * @author Julia Palacios
- * @version $Id:  $
  */
 public class GaussianProcessSkytrackTreeOperator extends AbstractAdaptableOperator {
 

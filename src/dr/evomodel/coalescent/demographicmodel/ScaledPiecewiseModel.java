@@ -38,7 +38,6 @@ import dr.inference.model.Parameter;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: ScaledPiecewiseModel.java,v 1.3 2005/04/11 11:24:39 alexei Exp $
  */
 public class ScaledPiecewiseModel extends DemographicModel {
     //

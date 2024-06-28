@@ -34,7 +34,6 @@ import java.util.List;
 
 /**
  * @author Alexei Drummond
- * @version $Id: XMLWriter.java,v 1.3 2005/06/27 21:18:40 rambaut Exp $
  */
 public class XMLWriter extends java.io.PrintWriter {
 

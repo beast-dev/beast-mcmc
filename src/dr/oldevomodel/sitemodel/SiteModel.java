@@ -35,7 +35,6 @@ import dr.oldevomodel.substmodel.SubstitutionModel;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: SiteModel.java,v 1.77 2005/05/24 20:25:58 rambaut Exp $
  */
 
 public interface SiteModel extends SiteRateModel {

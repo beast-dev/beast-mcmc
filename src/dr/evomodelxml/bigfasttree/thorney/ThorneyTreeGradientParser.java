@@ -34,7 +34,6 @@ import dr.xml.*;
 /**
  * @author Xiang Ji
  * @author JT McCrone
- * @version $Id$
  */
 public class ThorneyTreeGradientParser extends AbstractXMLObjectParser {
 

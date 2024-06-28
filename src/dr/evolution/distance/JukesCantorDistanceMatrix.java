@@ -32,7 +32,6 @@ import dr.evolution.alignment.PatternList;
 /**
  * compute jukes-cantor corrected distance matrix
  *
- * @version $Id: JukesCantorDistanceMatrix.java,v 1.4 2005/05/24 20:25:56 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Korbinian Strimmer

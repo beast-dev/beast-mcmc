@@ -37,7 +37,6 @@ import java.util.List;
  * A generic operator that moves k 1 bits to k zero locations.
  *
  * @author Alexei Drummond
- * @version $Id$
  */
 public class BitMoveOperator extends SimpleMCMCOperator {
 

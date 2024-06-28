@@ -34,7 +34,6 @@ import java.util.List;
 /**
  * @author Alexei Drummond
  *
- * @version $Id: ColouredTree.java,v 1.7 2005/04/28 09:29:07 alexei Exp $
  */
 public interface ColouredTree extends Tree {
 

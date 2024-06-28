@@ -41,7 +41,6 @@ import java.util.List;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: RandomWalkOperator.java,v 1.16 2005/06/14 10:40:34 rambaut Exp $
  */
 public class RandomWalkOperator extends AbstractAdaptableOperator {
 

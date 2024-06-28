@@ -40,7 +40,6 @@ import java.util.*;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: DistanceMatrix.java,v 1.23 2005/07/11 14:06:25 rambaut Exp $
  */
 public class DistanceMatrix extends Matrix.AbstractMatrix implements TaxonList {
 

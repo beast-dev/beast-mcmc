@@ -48,7 +48,6 @@ import java.util.Map;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: ModelPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class AncestralStatesPanel extends BeautiPanel implements Exportable {
 

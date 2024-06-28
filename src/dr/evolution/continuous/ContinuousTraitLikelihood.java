@@ -39,7 +39,6 @@ import java.io.StringReader;
 /**
  * Calculates the likelihood of a trait and tree.
  *
- * @version $Id: ContinuousTraitLikelihood.java,v 1.8 2006/06/18 16:20:58 alexei Exp $
  *
  * @author Alexei Drummond
  */

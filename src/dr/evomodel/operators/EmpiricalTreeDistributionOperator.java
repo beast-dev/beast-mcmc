@@ -32,7 +32,6 @@ import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class EmpiricalTreeDistributionOperator extends SimpleMCMCOperator {
 

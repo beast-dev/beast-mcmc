@@ -36,8 +36,7 @@ import dr.inference.model.Parameter;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
- * 
+ *
  */
 public class BranchSpecificTrait implements TreeTraitProvider {
 

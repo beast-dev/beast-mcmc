@@ -36,7 +36,6 @@ package dr.math;
  * (Richard P. Brent.  1973.   Algorithms for finding zeros and extrema
  *  of functions without calculating derivatives.  Prentice-Hall.)
  *
- * @version $Id: UnivariateMinimum.java,v 1.3 2005/05/24 20:26:01 rambaut Exp $
  *
  * @author Korbinian Strimmer
  */

@@ -34,7 +34,6 @@ import dr.util.NumberFormatter;
  *
  * Description:	Provides an interface for axis
  * @author Andrew Rambaut
- * @version	$Id: Axis.java,v 1.11 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public interface Axis {

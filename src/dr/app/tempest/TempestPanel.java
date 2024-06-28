@@ -67,7 +67,6 @@ import java.util.List;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: PriorsPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
  */
 public class TempestPanel extends JPanel implements Exportable {
 

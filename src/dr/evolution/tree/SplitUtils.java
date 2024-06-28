@@ -32,7 +32,6 @@ import dr.evolution.util.TaxonList;
 /**
  * utilities for split systems
  *
- * @version $Id: SplitUtils.java,v 1.6 2005/05/24 20:25:57 rambaut Exp $
  *
  * @author Korbinian Strimmer
  */

@@ -30,7 +30,6 @@ package dr.inference.model;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: ExponentialStatistic.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
 public class LogarithmStatistic extends Statistic.Abstract {
 

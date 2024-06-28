@@ -32,7 +32,6 @@ package dr.inference.model;
  * statistic.
  *
  *
- * @version $Id: NegativeStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut

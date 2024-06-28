@@ -57,7 +57,6 @@ import java.util.Map;
  * @author Andrew Rambaut
  * @author Luiz Max Carvalho
  * @author Mathieu Fourment
- * @version $Id$
  */
 public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
 

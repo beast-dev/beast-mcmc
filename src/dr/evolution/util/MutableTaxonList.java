@@ -30,7 +30,6 @@ package dr.evolution.util;
 /**
  * Interface for a mutable list of taxa.
  *
- * @version $Id: MutableTaxonList.java,v 1.6 2005/05/24 20:25:57 rambaut Exp $
  *
  * @author Alexei Drummond
  */

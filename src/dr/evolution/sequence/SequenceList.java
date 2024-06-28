@@ -34,7 +34,6 @@ import java.util.List;
 /**
  * Interface for a list of sequences.
  *
- * @version $Id: SequenceList.java,v 1.10 2005/05/24 20:25:56 rambaut Exp $
  *
  * @author Andrew Rambaut
  */

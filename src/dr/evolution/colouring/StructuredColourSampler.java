@@ -42,7 +42,6 @@ import java.util.TreeMap;
 
 /**
  * @author Gerton Lunter
- * @version $Id: StructuredColourSampler.java,v 1.11 2006/09/11 09:33:01 gerton Exp $
  *          <p/>
  *          Samples tree colourings from a proposal distribution based on
  *          Felsenstein mutation process; biased at the nodes for coalescent rates;

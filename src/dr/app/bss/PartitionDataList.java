@@ -36,7 +36,6 @@ import java.util.LinkedList;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 @SuppressWarnings("serial")
 public class PartitionDataList extends ArrayList<PartitionData> implements Serializable {

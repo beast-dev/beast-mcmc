@@ -37,7 +37,6 @@ import java.util.List;
 /**
  * Class for a list of taxa.
  *
- * @version $Id: Taxa.java,v 1.29 2006/09/05 13:29:34 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

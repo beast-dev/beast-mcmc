@@ -40,7 +40,6 @@ import java.io.PrintWriter;
 
 /**
  * @author Marc Suchard
- * @version $Id$
  */
 public class BeagleOperationParser extends AbstractXMLObjectParser {
 

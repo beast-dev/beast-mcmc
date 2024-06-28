@@ -33,7 +33,6 @@ import java.util.ArrayList;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id$
  */
 public class Settings {
     public Settings(AnalysisType analysisType) {

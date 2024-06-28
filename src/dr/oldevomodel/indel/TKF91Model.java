@@ -39,7 +39,6 @@ import org.w3c.dom.Element;
  * (parameter: mu = mutation rate). <BR>
  *
  * @author Alexei Drummond
- * @version $Id: TKF91Model.java,v 1.7 2005/05/24 20:25:57 rambaut Exp $
  */
 public class TKF91Model extends IndelModel {
 

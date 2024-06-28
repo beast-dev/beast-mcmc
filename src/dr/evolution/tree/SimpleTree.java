@@ -41,7 +41,6 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  *
- * @version $Id: SimpleTree.java,v 1.65 2006/08/23 10:46:33 rambaut Exp $
  */
 public class SimpleTree implements MutableTree {
 

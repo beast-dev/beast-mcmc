@@ -57,7 +57,6 @@ import java.util.List;
  * part of a sequential Monte Carlo (SMC) sampler.
  *
  * @author Andrew Rambaut
- * @version $Id:$
  */
 public class SMC implements Identifiable, Spawnable, Loggable {
 

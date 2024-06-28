@@ -36,7 +36,6 @@ import java.util.*;
 
 /**
  *
- * @version $Id: TMRCASummaryStatistic.java,v 1.3 2006/05/09 10:24:27 rambaut Exp $
  *
  * @author Alexei Drummond
  */

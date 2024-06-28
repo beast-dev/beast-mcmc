@@ -34,7 +34,6 @@ import dr.math.UnivariateFunction;
  * log normal distribution (pdf, cdf, quantile)
  *
  * @author Korbinian Strimmer
- * @version $Id: LogNormalDistribution.java,v 1.3 2005/06/21 16:25:15 beth Exp $
  */
 public class LogNormalDistribution implements Distribution, GradientProvider {
     //

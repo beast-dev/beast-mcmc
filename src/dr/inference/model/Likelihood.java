@@ -39,7 +39,6 @@ import java.util.Set;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: Likelihood.java,v 1.16 2005/05/24 20:26:00 rambaut Exp $
  */
 
 public interface Likelihood extends Loggable, Identifiable {

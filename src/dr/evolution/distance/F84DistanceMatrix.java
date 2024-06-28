@@ -32,7 +32,6 @@ import dr.evolution.alignment.PatternList;
 /**
  * compute HKY corrected distance matrix
  *
- * @version $Id: F84DistanceMatrix.java,v 1.3 2005/05/24 20:25:56 rambaut Exp $
  *
  * @author Andrew Rambaut
  */

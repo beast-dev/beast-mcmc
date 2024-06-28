@@ -39,7 +39,6 @@ import java.util.Iterator;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: Sequence.java,v 1.35 2005/05/25 09:35:28 rambaut Exp $
  */
 public class Sequence implements Identifiable, Attributable {
 

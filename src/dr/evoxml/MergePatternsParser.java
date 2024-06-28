@@ -36,7 +36,6 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  *
- * @version $Id: MergePatternsParser.java,v 1.1 2005/07/08 11:27:53 rambaut Exp $
  */
 public class MergePatternsParser extends AbstractXMLObjectParser {
 

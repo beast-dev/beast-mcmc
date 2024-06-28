@@ -38,7 +38,6 @@ import java.util.logging.Logger;
 /**
  * @author Andrew Rambaut
  *
- * @version $Id$
  */
 public class MaskedPatternsParser extends AbstractXMLObjectParser {
 

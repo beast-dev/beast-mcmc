@@ -65,7 +65,6 @@ import org.w3c.dom.Element;
  * A class that acts as a model for normally distributed data.
  *
  * @author Alexei Drummond
- * @version $Id: NormalDistributionModel.java,v 1.6 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public class TruncatedNormalDistributionModel extends AbstractModel implements ParametricDistributionModel {

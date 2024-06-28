@@ -45,7 +45,6 @@ import java.util.Set;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: Plot.java,v 1.23 2006/01/03 10:26:20 rambaut Exp $
  */
 
 public interface Plot {

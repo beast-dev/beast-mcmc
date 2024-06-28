@@ -37,7 +37,6 @@ import java.io.Serializable;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  *
- * @version $Id: MarkovChainListener.java,v 1.3 2005/05/24 20:25:59 rambaut Exp $
  *
  */
 public interface MarkovChainListener extends Serializable {

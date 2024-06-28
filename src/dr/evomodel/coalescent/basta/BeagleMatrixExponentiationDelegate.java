@@ -34,7 +34,6 @@ package dr.evomodel.coalescent.basta;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 
 import beagle.*;

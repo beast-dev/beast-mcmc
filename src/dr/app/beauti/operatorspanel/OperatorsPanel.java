@@ -49,7 +49,6 @@ import java.util.List;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: OperatorsPanel.java,v 1.12 2005/07/11 14:07:25 rambaut Exp $
  */
 public class OperatorsPanel extends BeautiPanel implements Exportable {
 

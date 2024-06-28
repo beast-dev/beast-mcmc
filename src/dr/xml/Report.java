@@ -36,7 +36,6 @@ import java.util.ArrayList;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Marc A. Suchard
- * @version $Id: Report.java,v 1.15 2005/05/24 20:26:01 rambaut Exp $
  */
 public class Report implements Reportable {
 

@@ -47,7 +47,6 @@ import java.util.List;
 
 /**
  * @author Marc A. Suchard
- * @version $Id$
  */
 public class HierarchicalModelComponentGenerator extends BaseComponentGenerator {
 

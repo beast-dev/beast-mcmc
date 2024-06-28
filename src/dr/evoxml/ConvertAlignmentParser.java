@@ -39,7 +39,6 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  *
- * @version $Id: ConvertAlignmentParser.java,v 1.3 2005/07/11 14:06:25 rambaut Exp $
  */
 public class ConvertAlignmentParser extends AbstractXMLObjectParser {
 

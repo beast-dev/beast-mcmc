@@ -32,7 +32,6 @@ import java.io.Serializable;
 /**
  * An interface that provides a listener on a model.
  *
- * @version $Id: ModelListener.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut

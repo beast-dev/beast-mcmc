@@ -34,7 +34,6 @@ import dr.inference.markovchain.Acceptor;
  *
  * @author Alexei Drummond
  *
- * @version $Id: HillClimbingCriterion.java,v 1.1 2005/03/15 15:55:10 alexei Exp $
  */
 public class HillClimbingCriterion implements Acceptor  {
 

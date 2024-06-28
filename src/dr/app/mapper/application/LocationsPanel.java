@@ -58,7 +58,6 @@ import java.util.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: StrainsPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class LocationsPanel extends JPanel implements Exportable, MapperDocument.Listener {
 

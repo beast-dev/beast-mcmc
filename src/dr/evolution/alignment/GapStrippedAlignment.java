@@ -36,7 +36,6 @@ import java.util.*;
 /**
  * Provides bootstrap replicate patterns
  *
- * @version $Id: GapStrippedAlignment.java,v 1.4 2005/05/24 20:25:55 rambaut Exp $
  *
  * @author Andrew Rambaut
  */

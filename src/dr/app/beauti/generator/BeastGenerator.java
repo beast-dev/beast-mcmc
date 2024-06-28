@@ -70,7 +70,6 @@ import java.util.*;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Walter Xie
- * @version $Id: BeastGenerator.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class BeastGenerator extends Generator {
 

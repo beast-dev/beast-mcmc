@@ -35,7 +35,6 @@ import java.util.*;
 /**
  * Stores a set of unique clades (and their node heights) for a tree
  *
- * @version $Id: CladeSet.java,v 1.8 2005/05/24 20:25:56 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

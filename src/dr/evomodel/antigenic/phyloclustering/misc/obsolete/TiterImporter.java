@@ -46,7 +46,6 @@ import java.util.ArrayList;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: NewickImporter.java,v 1.20 2005/12/07 11:25:35 rambaut Exp $
  */
 public class TiterImporter extends Importer  {
     public static final String COMMENT = "comment";

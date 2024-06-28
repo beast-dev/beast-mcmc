@@ -46,7 +46,6 @@ import java.util.Map;
  * data type.
  *
  * @author Marc Suchard
- * @version $Id: PositiveDefiniteSubstitutionModel.java,v 1.37 2006/05/05 03:05:10 msuchard Exp $
  */
 
 public class PositiveDefiniteSubstitutionModel extends AbstractModel implements SubstitutionModel, Loggable {

@@ -40,7 +40,6 @@ import java.util.List;
  * A generic operator swaps a randomly selected rate change from parent to offspring or vice versa.
  *
  * @author Alexei Drummond
- * @version $Id$
  */
 public class TreeBitMoveOperator extends SimpleMCMCOperator {
 

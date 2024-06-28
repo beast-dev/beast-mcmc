@@ -46,7 +46,6 @@ import java.util.List;
  *
  * @author Andrew Rambaut
  * @author Luiz Max Carvalho
- * @version $Id$
  */
 public class SubtreeJumpOperator extends AbstractTreeOperator implements ConstrainableTreeOperator {
 

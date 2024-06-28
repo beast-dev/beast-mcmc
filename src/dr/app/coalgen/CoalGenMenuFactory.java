@@ -37,7 +37,6 @@ import javax.swing.*;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id$
  */
 public class CoalGenMenuFactory extends SingleDocMenuBarFactory {
 

@@ -38,7 +38,6 @@ import java.util.Set;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class DiscreteTraitsComponentOptions implements ComponentOptions {
 

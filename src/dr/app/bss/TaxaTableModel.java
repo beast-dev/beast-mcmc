@@ -31,7 +31,6 @@ import javax.swing.table.AbstractTableModel;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 @SuppressWarnings("serial")
 public class TaxaTableModel extends AbstractTableModel {

@@ -43,7 +43,6 @@ import java.util.Map;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class TipDateSamplingComponentOptions implements ComponentOptions {
 

@@ -30,7 +30,6 @@ package dr.evolution.datatype;
 /**
  * implements DataType for nucleotides with ambiguous characters
  *
- * @version $Id: Nucleotides.java,v 1.10 2006/08/31 14:57:24 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

@@ -41,7 +41,6 @@ import java.util.Set;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: ParsimonyStateStatistic.java,v 1.11 2005/07/11 14:06:25 rambaut Exp $
  */
 public class ParsimonyStateStatistic extends TreeStatistic {
 

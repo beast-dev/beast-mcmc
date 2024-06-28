@@ -40,7 +40,6 @@ import java.util.StringTokenizer;
  * @author Andrew Rambaut
  * @author Marc A. Suchard
  *
- * @version $Id: SequenceParser.java,v 1.2 2005/05/24 20:25:59 rambaut Exp $
  */
 public class SequenceParser extends AbstractXMLObjectParser {
 

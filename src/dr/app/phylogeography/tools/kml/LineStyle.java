@@ -32,7 +32,6 @@ import java.awt.*;
 /**
  * @author Andrew Rambaut
  * @author Philippe Lemey
- * @version $Id$
  */
 public class LineStyle {
     public LineStyle(double width, Color color) {

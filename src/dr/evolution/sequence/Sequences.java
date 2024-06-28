@@ -37,7 +37,6 @@ import java.util.*;
  * Class for storing sequences.
  *
  * @author Andrew Rambaut
- * @version $Id: Sequences.java,v 1.12 2005/05/24 20:25:56 rambaut Exp $
  */
 public class Sequences implements SequenceList, Attributable, Identifiable {
 

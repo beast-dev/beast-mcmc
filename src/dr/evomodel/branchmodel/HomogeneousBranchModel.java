@@ -42,7 +42,6 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Filip Bielejec
  * @author Marc Suchard
- * @version $Id$
  */
 public class HomogeneousBranchModel extends AbstractModel implements BranchModel {
     private final SubstitutionModel substitutionModel;

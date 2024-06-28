@@ -44,7 +44,6 @@ import java.util.List;
 
 /**
  * @author Joseph Heled
- * @version $Id$
  */
 @Deprecated
 public class VariableDemographicModel extends DemographicModel implements MultiLociTreeSet, Citable {

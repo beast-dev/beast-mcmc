@@ -37,7 +37,6 @@ import dr.math.UnivariateFunction;
  * normal distribution (pdf, cdf, quantile)
  *
  * @author Korbinian Strimmer
- * @version $Id: NormalDistribution.java,v 1.7 2005/05/24 20:26:01 rambaut Exp $
  */
 public class NormalDistribution implements Distribution, RandomGenerator, GradientProvider, NormalStatisticsProvider {
     //

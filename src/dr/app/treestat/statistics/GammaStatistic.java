@@ -36,7 +36,6 @@ import java.util.List;
 /**
  * @author Alexei Drummond
  *
- * @version $Id: GammaStatistic.java,v 1.5 2006/05/09 10:24:27 rambaut Exp $
  */
 public class GammaStatistic extends AbstractTreeSummaryStatistic {
 

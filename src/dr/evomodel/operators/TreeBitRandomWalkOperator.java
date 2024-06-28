@@ -44,7 +44,6 @@ import java.util.List;
  * at the new location, optionally the associated variable values are swapped as well.
  *
  * @author Alexei Drummond
- * @version $Id$
  */
 public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
 

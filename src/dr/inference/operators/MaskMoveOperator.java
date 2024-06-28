@@ -36,7 +36,6 @@ import java.util.List;
  * A generic operator that flips masks.
  *
  * @author Marc A. Suchard
- * @version $Id$
  */
 public class MaskMoveOperator extends SimpleMCMCOperator {
 

@@ -39,7 +39,6 @@ import org.w3c.dom.Element;
 
 /**
  * @author Wai Lok Sibon Li
- * @version $Id: InverseGaussianDistributionModel.java,v 1.8 2009/03/30 20:25:59 rambaut Exp $
  */
 
 public class InverseGaussianDistributionModel extends AbstractModel implements ParametricDistributionModel {

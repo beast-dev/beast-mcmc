@@ -32,7 +32,6 @@ import dr.stats.DiscreteStatistics;
 import java.util.Vector;
 
 /**
- * @version $Id: VarianceStatistic.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  *
  * @author Alexei Drummond
  */

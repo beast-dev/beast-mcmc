@@ -40,7 +40,6 @@ import java.util.logging.Logger;
  *
  * @author Andrew Rambaut
  *
- * @version $Id$
  */
 public class HypermutantAlignmentParser extends AbstractXMLObjectParser {
     public final static String HYPERMUTANT_ALIGNMENT = "hypermutantAlignment";

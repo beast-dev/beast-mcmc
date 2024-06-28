@@ -36,7 +36,6 @@ package dr.evolution.datatype;
  *		and '?' + '-' for unknown and gap
  *	Strings or chars of three nucleotide characters
  * 
- * @version $Id: SimpleCodons.java,v 1.1 2005/06/28 11:51:50 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

@@ -35,7 +35,6 @@ import dr.xml.XMLParseException;
 /**
  * @author Alexei Drummond
  *
- * @version $Id$
  */
 public class DataTypeUtils {
 

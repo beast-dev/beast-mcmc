@@ -47,7 +47,6 @@ import java.util.Set;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class TipDateSamplingComponentGenerator extends BaseComponentGenerator {
 

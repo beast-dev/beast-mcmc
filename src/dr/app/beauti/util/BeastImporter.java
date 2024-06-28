@@ -54,7 +54,6 @@ import java.util.Locale;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class BeastImporter {
 

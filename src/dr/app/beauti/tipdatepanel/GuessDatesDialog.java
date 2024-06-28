@@ -45,7 +45,6 @@ import java.util.prefs.Preferences;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class GuessDatesDialog {
 

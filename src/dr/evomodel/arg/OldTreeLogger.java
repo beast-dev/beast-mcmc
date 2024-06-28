@@ -41,7 +41,6 @@ import dr.inference.model.Likelihood;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: OldTreeLogger.java,v 1.25 2006/09/05 13:29:34 rambaut Exp $
  */
 public class OldTreeLogger extends MCLogger {
 

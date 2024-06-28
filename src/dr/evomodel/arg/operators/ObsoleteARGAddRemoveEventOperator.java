@@ -54,7 +54,6 @@ import java.util.ArrayList;
  * Implements the subtree slide move.
  *
  * @author Marc Suchard
- * @version $Id: ObsoleteARGAddRemoveEventOperator.java,v 1.18.2.4 2006/11/06 01:38:30 msuchard Exp $
  */
 public class ObsoleteARGAddRemoveEventOperator extends AbstractAdaptableOperator {
 //		SimpleMCMCOperator implements AdaptableMCMCOperator {

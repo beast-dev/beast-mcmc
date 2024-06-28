@@ -35,7 +35,6 @@ import java.util.prefs.Preferences;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class GeneralPreferencesSection implements PreferencesSection {
 	Icon projectToolIcon = IconUtils.getIcon(MapperApp.class, "images/prefsGeneral.png");

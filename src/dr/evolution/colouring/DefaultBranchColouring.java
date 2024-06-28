@@ -41,7 +41,6 @@ import java.util.List;
  * @author Gerton Lunter
  * @author Andrew Rambaut
  *
- * @version $Id: BranchColouring.java,v 1.6 2006/08/12 12:55:44 gerton Exp $
  */
 
 public class DefaultBranchColouring implements BranchColouring {

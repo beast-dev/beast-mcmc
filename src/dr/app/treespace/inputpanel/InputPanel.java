@@ -56,7 +56,6 @@ import jebl.evolution.io.ImportException;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class InputPanel extends JPanel implements DeleteActionResponder, Exportable {
     private JScrollPane scrollPane = new JScrollPane();

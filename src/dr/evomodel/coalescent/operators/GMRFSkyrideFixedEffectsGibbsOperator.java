@@ -41,7 +41,6 @@ import no.uib.cipr.matrix.*;
  * @author Erik Bloomquist
  * @author Vladimir Minin
  * @author Marc Suchard
- * @version $Id: GMRFSkylineFixedEffectsGibbsOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
 
 public class GMRFSkyrideFixedEffectsGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {

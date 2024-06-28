@@ -40,7 +40,6 @@ import java.util.*;
  * @author Andrew Rambaut
  * @author Trevor Bedford
  * @author Marc Suchard
- * @version $Id$
  */
 public class AntigenicDriftPrior extends AbstractModelLikelihood implements Citable {
 

@@ -36,7 +36,6 @@ import dr.math.MathUtils;
  * does not propose states outside the sum-constraints and thus does not require bounds checking on the proposed state
  *
  * @author Alexander V. Alekseyenko
- * @version $Id: DeltaMixOperator.java,v 1.6 2010/09/23 $
  */
 public class DeltaMixOperator extends AbstractAdaptableOperator {
 

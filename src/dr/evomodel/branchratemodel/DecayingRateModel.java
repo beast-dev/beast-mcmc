@@ -39,7 +39,6 @@ import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: DecayingRateModel.java,v 1.3 2006/01/10 16:48:27 rambaut Exp $
  */
 public class DecayingRateModel extends AbstractBranchRateModel {
 

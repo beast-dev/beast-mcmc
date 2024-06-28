@@ -32,7 +32,6 @@ import dr.app.beauti.options.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public interface ComponentFactory {
     Class getOptionsClass();

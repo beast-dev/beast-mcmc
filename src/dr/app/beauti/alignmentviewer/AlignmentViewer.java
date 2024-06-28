@@ -34,7 +34,6 @@ import java.awt.event.*;
 /**
  *
  * @author Andrew Rambaut
- * @version $Id: AlignmentViewer.java,v 1.2 2005/11/11 16:40:41 rambaut Exp $
  */
 public class AlignmentViewer extends JPanel {
 	private TaxonPane taxonPane;

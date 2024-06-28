@@ -37,7 +37,6 @@ import javax.swing.border.EmptyBorder;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Walter Xie
- * @version $Id: GuessTraitDialog.java,v 1.4 2009/05/25 13:29:34 rambaut Exp $
  */
 public class SetValueDialog {
 

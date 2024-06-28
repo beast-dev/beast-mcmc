@@ -33,7 +33,6 @@ import dr.evolution.util.TaxonList;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: AbstractTreeSummaryStatistic.java,v 1.1 2005/09/28 13:50:55 rambaut Exp $
  */
 public abstract  class AbstractTreeSummaryStatistic implements TreeSummaryStatistic {
     public int getStatisticDimensions(Tree tree) {

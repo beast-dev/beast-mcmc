@@ -32,7 +32,6 @@ import dr.math.MathUtils;
 /**
  * Provides 50% jackknife replicate patterns 
  *
- * @version $Id: JackknifePatterns.java,v 1.8 2005/05/24 20:25:55 rambaut Exp $
  *
  * @author Andrew Rambaut
  */

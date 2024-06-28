@@ -67,7 +67,6 @@ import static dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.ROOT_FREQ
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 

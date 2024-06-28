@@ -36,7 +36,6 @@ import dr.app.beauti.util.XMLWriter;
  * for that insertion point. Most implementations will be derived from the abstract
  * BaseComponent.
  * @author Andrew Rambaut
- * @version $Id$
  */
 public interface ComponentGenerator {
     enum InsertionPoint {

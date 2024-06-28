@@ -36,7 +36,6 @@ import dr.util.DataTable;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: UniformDistribution.java,v 1.3 2005/07/11 14:06:25 rambaut Exp $
  */
 public class UniformDistribution implements Distribution, GradientProvider {
     //

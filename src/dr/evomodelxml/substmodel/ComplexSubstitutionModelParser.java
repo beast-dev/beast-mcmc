@@ -94,10 +94,8 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
         int rateCount = (dataType.getStateCount() - 1) * dataType.getStateCount();
 
         if (ratesParameter == null) {
-
-            if (rateCount == 1) {
+            if (rateCount != 1) {
                 // simplest model for binary traits...
-            } else {
                 throw new XMLParseException("No rates parameter found in " + getParserName());
             }
         } else if (ratesParameter.getDimension() != rateCount) {
@@ -105,7 +103,6 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
         }
 
         boolean checkConditioning = xo.getAttribute(CHECK_CONDITIONING, true);
-        boolean scaleRatesByFrequencies = xo.getAttribute(SCALE_RATES_BY_FREQUENCIES, true);
 
         ComplexSubstitutionModel model;
 
@@ -146,7 +143,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
                 double tolerance = xo.getAttribute(BSSVS_TOLERANCE,
                         BayesianStochasticSearchVariableSelection.Utils.getTolerance());
                 if (tolerance > BayesianStochasticSearchVariableSelection.Utils.getTolerance()) {
-                    // Only increase smallest allowed tolerance
+                    // Only increase the smallest allowed tolerance
                     BayesianStochasticSearchVariableSelection.Utils.setTolerance(tolerance);
                     Logger.getLogger("dr.app.beagle.evomodel").info("\tIncreasing BSSVS tolerance to " + tolerance);
                 }

@@ -35,7 +35,6 @@ import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.math.matrixAlgebra.Vector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -279,15 +278,15 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
 
     }
 
-    public void printLastProbabilityMatrix() {
-        getLogLikelihood();
-        System.err.println((probability == null) ? "Null probability vector" : "Not null probability vector");
-        if (probability == null) {
-            boolean test = BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(probability, this);
-            System.err.println("BSSVS valid = " + test);
-        }
-        System.err.println(new Vector(probability));
-    }
+//    public void printLastProbabilityMatrix() {
+//        getLogLikelihood();
+//        System.err.println((probability == null) ? "Null probability vector" : "Not null probability vector");
+//        if (probability == null) {
+//            boolean test = BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(probability, this);
+//            System.err.println("BSSVS valid = " + test);
+//        }
+//        System.err.println(new Vector(probability));
+//    }
 
     @Override
     public Set<Likelihood> getLikelihoodSet() {

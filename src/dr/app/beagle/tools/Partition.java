@@ -364,7 +364,8 @@ public class Partition {
 				if (DEBUG) {
 					synchronized (this) {
 						System.out.println("Simulated sequence (translated):");
-						System.out.println(Utils.intArray2Sequence(taxon, partitionSequence, BeagleSequenceSimulator.gapFlag, dataType).getSequenceString());
+						System.out.println(Utils.intArray2Sequence(taxon, partitionSequence,
+								BeagleSequenceSimulator.gapFlag, dataType, null).getSequenceString());
 					}
 				}// END: DEBUG
 

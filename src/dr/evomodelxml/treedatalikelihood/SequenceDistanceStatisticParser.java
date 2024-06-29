@@ -28,19 +28,14 @@
 package dr.evomodelxml.treedatalikelihood;
 
 import dr.evolution.alignment.PatternList;
-import dr.evolution.datatype.Nucleotides;
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.SequenceDistanceStatistic;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
-import dr.inference.model.Statistic;
-import dr.oldevomodel.sitemodel.SiteModel;
 import dr.xml.*;
 
 /**

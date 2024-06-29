@@ -31,12 +31,11 @@ import dr.evomodel.siteratemodel.DiscretizedSiteRateModel;
 import dr.evomodel.siteratemodel.FreeRateDelegate;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
-import dr.inference.model.VariableListener;
-import dr.oldevomodel.sitemodel.SiteModel;
 import dr.xml.*;
 
 import java.util.logging.Logger;
+
+import static dr.evomodelxml.siteratemodel.SiteModelParser.SITE_MODEL;
 
 /**
  * This is a FreeRateSiteRateModelParser that uses the modular
@@ -108,7 +107,7 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
 //                parameterization,
                 ratesParameter, weightsParameter);
 
-        DiscretizedSiteRateModel siteRateModel =  new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
+        DiscretizedSiteRateModel siteRateModel =  new DiscretizedSiteRateModel(SITE_MODEL, muParam, muWeight, delegate);
 
         siteRateModel.setSubstitutionModel(substitutionModel);
         siteRateModel.addModel(substitutionModel);

@@ -68,7 +68,7 @@ public class LogRateSubstitutionModelParser extends AbstractXMLObjectParser {
 
         LogAdditiveCtmcRateProvider lrm = new LogAdditiveCtmcRateProvider.DataAugmented.Basic(logRates.getId(), logRates);
 
-        XMLObject cxo = xo.getChild(dr.oldevomodelxml.substmodel.ComplexSubstitutionModelParser.ROOT_FREQUENCIES);
+        XMLObject cxo = xo.getChild(ComplexSubstitutionModelParser.ROOT_FREQUENCIES);
         FrequencyModel rootFreq = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
         if (dataType != rootFreq.getDataType()) {

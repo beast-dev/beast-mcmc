@@ -116,16 +116,18 @@ public abstract class Importer {
 	 * Constructor
 	 */
 	public Importer(Reader reader) {
-		this.reader = new LineNumberReader(reader);
+//		this.reader = new LineNumberReader(reader);
+		this.reader = reader;
 		this.commentWriter = null;
 	}
 
 	public Importer(Reader reader, Writer commentWriter) {
-		this.reader = new LineNumberReader(reader);
+//		this.reader = new LineNumberReader(reader);
+		this.reader = reader;
 		this.commentWriter = commentWriter != null ? new BufferedWriter(commentWriter) : null;
 	}
 
-	public LineNumberReader getReader() {
+	public Reader getReader() {
 		return reader;
 	}
 
@@ -161,7 +163,11 @@ public abstract class Importer {
 	}
 
 	public int getLineNumber() {
-		return reader.getLineNumber();
+		if (reader instanceof LineNumberReader) {
+			return ((LineNumberReader)reader).getLineNumber();
+		} else {
+			return -1;
+		}
 	}
 
 	public int getLastDelimiter() {
@@ -691,7 +697,7 @@ public abstract class Importer {
 
 	// Private stuff
 
-	private LineNumberReader reader;
+	private Reader reader;
 	private BufferedWriter commentWriter = null;
 
 	private int lastChar = '\0';

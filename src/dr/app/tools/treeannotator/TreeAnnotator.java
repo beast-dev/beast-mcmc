@@ -28,6 +28,7 @@
 package dr.app.tools.treeannotator;
 
 import dr.app.beast.BeastVersion;
+import dr.app.tools.BaseTreeTool;
 import dr.app.tools.logcombiner.LogCombiner;
 import dr.app.tools.NexusExporter;
 import dr.app.util.Arguments;
@@ -50,17 +51,14 @@ import dr.util.Version;
 import jam.console.ConsoleApplication;
 
 import javax.swing.*;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
 
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class TreeAnnotator {
+public class TreeAnnotator extends BaseTreeTool {
 
     private final static Version version = new BeastVersion();
 
@@ -140,6 +138,8 @@ public class TreeAnnotator {
                          String outputFileName
     ) throws IOException {
 
+        long totalStartTime = System.currentTimeMillis();
+
         this.posteriorLimit = posteriorLimit;
         this.hpd2D = hpd2D;
         this.computeESS = computeESS;
@@ -165,8 +165,8 @@ public class TreeAnnotator {
 
         if (targetOption != Target.USER_TARGET_TREE) {
             cladeSystem = new CladeSystem();
-            FileReader fileReader = new FileReader(inputFileName);
-            TreeImporter importer = new NexusImporter(fileReader, true);
+            Reader reader = new BufferedReader(new FileReader(inputFileName));
+            TreeImporter importer = new NexusImporter(reader, true);
             long startTime = System.currentTimeMillis();
             try {
                 totalTrees = 0;
@@ -214,7 +214,7 @@ public class TreeAnnotator {
                 System.err.println("Error Parsing Input Tree: " + e.getMessage());
                 System.exit(1);
             }
-            fileReader.close();
+            reader.close();
             long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
             progressStream.println("* [" + timeElapsed + " secs]");
             progressStream.println();
@@ -362,6 +362,10 @@ public class TreeAnnotator {
             System.err.println("Error to write annotated tree file: " + e.getMessage());
             System.exit(1);
         }
+
+        timeElapsed =  (System.currentTimeMillis() - totalStartTime) / 1000;
+        progressStream.println("Total time: " + timeElapsed + " secs");
+        progressStream.println();
 
     }
 
@@ -1382,11 +1386,7 @@ public class TreeAnnotator {
         progressStream.println();
         progressStream.println();
     }
-
-    public static void centreLine(String line, int pageWidth) {
-        centreLine(line, 60);
-    }
-
+    
 
     public static void printUsage(Arguments arguments) {
 

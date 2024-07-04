@@ -79,7 +79,7 @@ public class FastaImporter extends Importer implements SequenceImporter {
 
             do {
                 final String name = readLine().trim();
-                StringBuffer seq = new StringBuffer();
+                StringBuilder seq = new StringBuilder();
 
                 readSequence(seq, dataType, "" + FASTA_FIRST_CHAR, Integer.MAX_VALUE, "-", "?", "", "");
 

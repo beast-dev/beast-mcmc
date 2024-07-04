@@ -91,8 +91,8 @@ public class PhylipSequentialImporter extends Importer implements SequenceImport
 					ch = read();
 					n++;
 				}
-				
-				StringBuffer seq = new StringBuffer(siteCount);
+
+				StringBuilder seq = new StringBuilder(siteCount);
 				readSequence(seq, dataType, "", siteCount, "-", "?", ".", firstSeq);
 				
 				if (firstSeq == null) { firstSeq = seq.toString(); }

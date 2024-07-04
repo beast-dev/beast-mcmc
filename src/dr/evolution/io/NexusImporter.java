@@ -1190,7 +1190,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
         Taxon taxon;
 
-        if (translationList.size() > 0) {
+        if (!translationList.isEmpty()) {
             taxon = translationList.get(label);
 
             if (taxon == null) {

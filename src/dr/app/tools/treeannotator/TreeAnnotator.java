@@ -209,7 +209,8 @@ public class TreeAnnotator extends BaseTreeTool {
             progressStream.println("|--------------|--------------|--------------|--------------|");
 
             reader = new BufferedReader(new FileReader(inputFileName));
-            importer = new BEASTTreesImporter(reader, true);
+//            importer = new BEASTTreesImporter(reader, true);
+            importer = new NexusImporter(reader, true);
             startTime = System.currentTimeMillis();
             try {
                 totalTrees = 0;
@@ -224,14 +225,14 @@ public class TreeAnnotator extends BaseTreeTool {
 
                     if (burninStates > 0) {
                         // if burnin has been specified in states, try to parse it out...
-//                        String name = tree.getId().trim();
-//
-//                        if (name != null && name.startsWith("STATE_")) {
-//                            state = Long.parseLong(name.split("_")[1]);
-//                            maxState = state;
-//                        }
-                        state = Long.parseLong(tree.getId());
-                        maxState = state;
+                        String name = tree.getId().trim();
+
+                        if (name != null && name.startsWith("STATE_")) {
+                            state = Long.parseLong(name.split("_")[1]);
+                            maxState = state;
+                        }
+//                        state = Long.parseLong(tree.getId());
+//                        maxState = state;
                     }
 
                     if (totalTrees >= burninTrees && state >= burninStates) {
@@ -659,10 +660,11 @@ public class TreeAnnotator extends BaseTreeTool {
 
             if (tree.isExternal(node)) {
 
-                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
-                if (index < 0) {
-                    throw new IllegalArgumentException("Taxon, " + tree.getNodeTaxon(node).getId() + ", not found in target tree");
-                }
+//                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+//                if (index < 0) {
+//                    throw new IllegalArgumentException("Taxon, " + tree.getNodeTaxon(node).getId() + ", not found in target tree");
+//                }
+                int index = node.getNumber();
                 bits.set(index);
 
             } else {
@@ -796,7 +798,8 @@ public class TreeAnnotator extends BaseTreeTool {
 
             if (tree.isExternal(node)) {
 
-                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+//                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+                int index = node.getNumber();
                 bits2.set(index);
 
                 annotateNode(tree, node, bits2, true, heightsOption);
@@ -1272,7 +1275,8 @@ public class TreeAnnotator extends BaseTreeTool {
 
             if (tree.isExternal(node)) {
 
-                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+//                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+                int index = node.getNumber();
                 bits.set(index);
 
                 if (includeTips) {
@@ -1313,7 +1317,8 @@ public class TreeAnnotator extends BaseTreeTool {
             final int inode = node.getNumber();
             codes[inode].clear();
             if (tree.isExternal(node)) {
-                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+//                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+                int index = node.getNumber();
                 codes[inode].set(index);
             } else {
                 for (int i = 0; i < tree.getChildCount(node); i++) {
@@ -1409,7 +1414,7 @@ public class TreeAnnotator extends BaseTreeTool {
     double posteriorLimit = 0.0;
     //PL:    double hpd2D = 0.80;
     double[] hpd2D = {0.80};
-    private final List<TreeAnnotationPlugin> plugins = new ArrayList<TreeAnnotationPlugin>();
+    private final List<TreeAnnotationPlugin> plugins = new ArrayList<>();
 
     Set<String> attributeNames = new HashSet<String>();
     TaxonList taxa = null;
@@ -1421,11 +1426,15 @@ public class TreeAnnotator extends BaseTreeTool {
         centreLine("TreeAnnotator " + version.getVersionString() + ", " + version.getDateString(), 60);
         centreLine("MCMC Output analysis", 60);
         centreLine("by", 60);
-        centreLine("Andrew Rambaut and Alexei J. Drummond", 60);
+        centreLine("Andrew Rambaut, Marc A. Suchard and Alexei J. Drummond", 60);
         progressStream.println();
         centreLine("Institute of Ecology and Evolution", 60);
         centreLine("University of Edinburgh", 60);
         centreLine("a.rambaut@ed.ac.uk", 60);
+        progressStream.println();
+        centreLine("David Geffen School of Medicine", 60);
+        centreLine("University of California, Los Angeles", 60);
+        centreLine("msuchard@ucla.edu", 60);
         progressStream.println();
         centreLine("Department of Computer Science", 60);
         centreLine("University of Auckland", 60);

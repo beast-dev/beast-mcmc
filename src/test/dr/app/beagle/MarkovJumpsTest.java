@@ -34,8 +34,6 @@ import dr.evolution.datatype.Nucleotides;
 import dr.evolution.alignment.SitePatterns;
 import dr.inference.model.Parameter;
 import dr.inference.markovjumps.MarkovJumpsType;
-import dr.oldevomodelxml.substmodel.HKYParser;
-import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
@@ -43,6 +41,9 @@ import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.math.MathUtils;
+
+import static dr.evomodelxml.siteratemodel.SiteModelParser.MUTATION_RATE;
+import static dr.evomodelxml.substmodel.HKYParser.KAPPA;
 
 /**
  * @author Marc Suchard
@@ -69,13 +70,13 @@ public class MarkovJumpsTest extends TraceCorrelationAssert {
 
         //substitutionModel
         Parameter freqs = new Parameter.Default(new double[]{0.40, 0.25, 0.25, 0.10});
-        Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 10.0, 0, 100);
+        Parameter kappa = new Parameter.Default(KAPPA, 10.0, 0, 100);
         FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
         HKY hky = new HKY(kappa, f);
 
         //siteModel
 //        double alpha = 0.5;
-        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 0.5, 0, Double.POSITIVE_INFINITY);
+        Parameter mu = new Parameter.Default(MUTATION_RATE, 0.5, 0, Double.POSITIVE_INFINITY);
 //        Parameter pInv = new Parameter.Default("pInv", 0.5, 0, 1);
         Parameter pInv = null;
         GammaSiteRateModel siteRateModel = new GammaSiteRateModel("gammaModel", mu, 1.0, null, -1, null, pInv);

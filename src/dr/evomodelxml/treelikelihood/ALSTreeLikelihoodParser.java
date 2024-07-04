@@ -29,19 +29,25 @@ package dr.evomodelxml.treelikelihood;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.util.Taxon;
-import dr.oldevomodel.MSSD.ALSTreeLikelihood;
-import dr.oldevomodel.MSSD.AbstractObservationProcess;
-import dr.oldevomodel.MSSD.AnyTipObservationProcess;
-import dr.oldevomodel.MSSD.SingleTipObservationProcess;
+import dr.evomodel.MSSD.ALSBeagleTreeLikelihood;
+import dr.evomodel.MSSD.AbstractObservationProcess;
+import dr.evomodel.MSSD.AnyTipObservationProcess;
+import dr.evomodel.MSSD.SingleTipObservationProcess;
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.oldevomodel.sitemodel.SiteModel;
-import dr.oldevomodel.substmodel.MutationDeathModel;
+import dr.evomodel.siteratemodel.DiscretizedSiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
+import dr.evomodel.substmodel.MutationDeathModel;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
-import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.logging.Logger;
+
+import static dr.evomodelxml.treelikelihood.BeagleTreeLikelihoodParser.USE_AMBIGUITIES;
 
 /**
  *
@@ -54,7 +60,9 @@ public class ALSTreeLikelihoodParser extends AbstractXMLObjectParser {
     public static final String OBSERVATION_TAXON = "taxon";
     public static final String ANY_TIP = "anyTip";
     public final static String IMMIGRATION_RATE = "immigrationRate";
-    public static final String FORCE_RESCALING = TreeLikelihoodParser.FORCE_RESCALING;
+    public static final String FORCE_RESCALING = "forceRescaling";
+    public static final String STORE_PARTIALS = "storePartials";
+
 
     public String getParserName() {
         return LIKE_NAME;
@@ -64,11 +72,11 @@ public class ALSTreeLikelihoodParser extends AbstractXMLObjectParser {
 
         boolean useAmbiguities = false;
         boolean storePartials = true;
-        if (xo.hasAttribute(TreeLikelihoodParser.USE_AMBIGUITIES)) {
-            useAmbiguities = xo.getBooleanAttribute(TreeLikelihoodParser.USE_AMBIGUITIES);
+        if (xo.hasAttribute(USE_AMBIGUITIES)) {
+            useAmbiguities = xo.getBooleanAttribute(USE_AMBIGUITIES);
         }
-        if (xo.hasAttribute(TreeLikelihoodParser.STORE_PARTIALS)) {
-            storePartials = xo.getBooleanAttribute(TreeLikelihoodParser.STORE_PARTIALS);
+        if (xo.hasAttribute(STORE_PARTIALS)) {
+            storePartials = xo.getBooleanAttribute(STORE_PARTIALS);
         }
 
         boolean integrateGainRate = xo.getBooleanAttribute(INTEGRATE_GAIN_RATE);
@@ -78,7 +86,18 @@ public class ALSTreeLikelihoodParser extends AbstractXMLObjectParser {
 
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-        SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);
+        DiscretizedSiteRateModel siteModel = (DiscretizedSiteRateModel) xo.getChild(DiscretizedSiteRateModel.class);
+        BranchModel branchModel = (BranchModel) xo.getChild(BranchModel.class);
+        if (branchModel == null) {
+            SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
+            if (substitutionModel == null) {
+                substitutionModel = siteModel.getSubstitutionModel();
+            }
+            if (substitutionModel == null) {
+                throw new XMLParseException("No substitution model available for TreeLikelihood: "+xo.getId());
+            }
+            branchModel = new HomogeneousBranchModel(substitutionModel);
+        }
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
         Parameter mu = ((MutationDeathModel) siteModel.getSubstitutionModel()).getDeathParameter();
         Parameter lam;
@@ -110,12 +129,13 @@ public class ALSTreeLikelihoodParser extends AbstractXMLObjectParser {
         }
         Logger.getLogger("dr.evolution").info("\tIf you publish results using Acquisition-Loss-Mutation (ALS) Model likelihood, please reference Alekseyenko, Lee and Suchard (2008) Syst. Biol 57: 772-784.\n---------------------------------\n");
 
-        boolean forceRescaling = xo.getAttribute(FORCE_RESCALING, false);
+        PartialsRescalingScheme rescalingScheme = PartialsRescalingScheme.DEFAULT;
+        if (xo.getAttribute(FORCE_RESCALING, false)) {
+            rescalingScheme = PartialsRescalingScheme.ALWAYS;
 
-//        forceRescaling = true;
-
-        return new ALSTreeLikelihood(observationProcess, patternList, treeModel, siteModel, branchRateModel,
-                useAmbiguities, storePartials, forceRescaling);
+        }
+        return new ALSBeagleTreeLikelihood(observationProcess, patternList, treeModel, branchModel,
+                siteModel, branchRateModel, null, useAmbiguities, rescalingScheme, true, null);
     }
 
     //************************************************************************
@@ -127,7 +147,7 @@ public class ALSTreeLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return ALSTreeLikelihood.class;
+        return ALSBeagleTreeLikelihood.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -135,14 +155,15 @@ public class ALSTreeLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newBooleanRule(TreeLikelihoodParser.USE_AMBIGUITIES, true),
-            AttributeRule.newBooleanRule(TreeLikelihoodParser.STORE_PARTIALS, true),
+            AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
+            AttributeRule.newBooleanRule(STORE_PARTIALS, true),
             AttributeRule.newBooleanRule(INTEGRATE_GAIN_RATE),
             AttributeRule.newBooleanRule(FORCE_RESCALING, true),
             new ElementRule(IMMIGRATION_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
-            new ElementRule(SiteModel.class),
+            new ElementRule(DiscretizedSiteRateModel.class),
+            new ElementRule(BranchModel.class, true),
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(OBSERVATION_PROCESS,
                     new XMLSyntaxRule[]{AttributeRule.newStringRule(OBSERVATION_TYPE, false),

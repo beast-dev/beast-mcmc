@@ -200,7 +200,7 @@ public class BaseTreeTool {
         return nameContentString != null && nameContentString.compareToIgnoreCase("true") == 0;
     }
 
-    protected static void centreLine(String line, int pageWidth) {
+    public static void centreLine(String line, int pageWidth) {
         centreLine(line, pageWidth, progressStream);
     }
 

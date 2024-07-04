@@ -33,7 +33,6 @@ import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.evomodel.coalescent.VDdemographicFunction;
-import dr.evomodel.operators.TreeNodeSlide;
 import dr.evomodel.tree.TreeLogger;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.inference.model.AbstractModel;
@@ -54,6 +53,8 @@ import java.util.*;
  *
  * @author Joseph Heled
  *         Date: 24/05/2008
+ *
+ * @deprecated - StarBEAST is in BEAST2
  */
 public class SpeciesTreeModel extends AbstractModel implements
         MutableTree, TreeTraitProvider, TreeLogger.LogUpon, Scalable, Citable {
@@ -931,7 +932,7 @@ public class SpeciesTreeModel extends AbstractModel implements
             }
 
             if (treeHeight > 0) {
-                sTree.setAttribute("check", new Double(rootHeight));
+                sTree.setAttribute("check", rootHeight);
             }
 
             {
@@ -989,7 +990,7 @@ public class SpeciesTreeModel extends AbstractModel implements
         return getModelName();
     }
 
-    static private TreeNodeSlide internalTreeOP = null;
+//    static private TreeNodeSlide internalTreeOP = null;
 
     public int scale(double scaleFactor, int nDims, boolean testBounds) {
         assert scaleFactor > 0;
@@ -1010,11 +1011,11 @@ public class SpeciesTreeModel extends AbstractModel implements
             if (nDims != 1) {
                 throw new UnsupportedOperationException("not implemented for count != 1");
             }
-            if (internalTreeOP == null) {
-                internalTreeOP = new TreeNodeSlide(this, species, 1);
-            }
-
-            internalTreeOP.operateOneNode(scaleFactor);
+//            if (internalTreeOP == null) {
+//                internalTreeOP = new TreeNodeSlide(this, species, 1);
+//            }
+//
+//            internalTreeOP.operateOneNode(scaleFactor);
             fireModelChanged(this, 1);
             return nDims;
         }

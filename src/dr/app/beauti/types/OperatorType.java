@@ -28,7 +28,6 @@
 package dr.app.beauti.types;
 
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
-import dr.evomodelxml.operators.TreeNodeSlideParser;
 import dr.inference.operators.RateBitExchangeOperator;
 import dr.inferencexml.operators.ScaleOperatorParser;
 

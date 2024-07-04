@@ -28,7 +28,11 @@
 package dr.app.beauti.components.discrete;
 
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodelxml.substmodel.ComplexSubstitutionModelParser;
+import dr.evomodelxml.substmodel.FrequencyModelParser;
+import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.evomodelxml.substmodel.GlmSubstitutionModelParser;
+import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.generator.BaseComponentGenerator;
@@ -42,14 +46,6 @@ import dr.inference.model.DesignMatrix;
 import dr.inference.operators.MultivariateNormalOperator;
 import dr.inferencexml.distribution.BinomialLikelihoodParser;
 import dr.inferencexml.distribution.GeneralizedLinearModelParser;
-import dr.oldevomodel.sitemodel.SiteModel;
-import dr.oldevomodel.substmodel.AbstractSubstitutionModel;
-import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
-import dr.oldevomodelxml.substmodel.ComplexSubstitutionModelParser;
-import dr.oldevomodelxml.substmodel.FrequencyModelParser;
-import dr.oldevomodelxml.substmodel.GeneralSubstitutionModelParser;
-import dr.oldevomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
-import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.evoxml.AttributePatternsParser;
 import dr.evoxml.GeneralDataTypeParser;
 import dr.evoxml.TaxaParser;
@@ -63,7 +59,12 @@ import dr.xml.XMLParser;
 
 import java.util.Set;
 
+import static dr.app.phylogeography.tools.DiscreteRatePriorGenerator.MODEL;
+import static dr.evomodelxml.siteratemodel.SiteModelParser.SITE_MODEL;
+import static dr.evomodelxml.siteratemodel.SiteModelParser.SUBSTITUTION_MODEL;
 import static dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.ROOT_FREQUENCIES;
+import static dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD;
+import static dr.evomodelxml.treelikelihood.BeagleTreeLikelihoodParser.TREE_LIKELIHOOD;
 
 /**
  * @author Andrew Rambaut
@@ -274,7 +275,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writer.writeComment("symmetric CTMC model for discrete state reconstructions");
 
             writer.writeOpenTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL)});
+                    new Attribute.Default<String>(XMLParser.ID, prefix + MODEL)});
 
             writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, prefix +  "dataType");
 
@@ -292,7 +293,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writer.writeComment("asymmetric CTMC model for discrete state reconstructions");
 
             writer.writeOpenTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL),
+                    new Attribute.Default<String>(XMLParser.ID, prefix + MODEL),
                     new Attribute.Default<Boolean>(ComplexSubstitutionModelParser.RANDOMIZE, false)});
 
             writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, prefix + "dataType");
@@ -311,7 +312,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writer.writeComment("GLM substitution model");
 
             writer.writeOpenTag(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, new Attribute[] {
-                    new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL)
+                    new Attribute.Default<String>(XMLParser.ID, prefix + MODEL)
             });
 
             writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, prefix + "dataType");
@@ -398,9 +399,9 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
                 // not strictly necessary but makes the XML consistent
-                writer.writeIDref(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, model.getName() + "." + AbstractSubstitutionModel.MODEL);
+                writer.writeIDref(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, model.getName() + "." + MODEL);
             } else {
-                writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, model.getName() + "." + AbstractSubstitutionModel.MODEL);
+                writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, model.getName() + "." + MODEL);
             }
         }
     }
@@ -434,19 +435,19 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
     private void writeDiscreteTraitsSiteModel(PartitionSubstitutionModel model, XMLWriter writer) {
         String prefix = model.getName() + ".";
-        writer.writeOpenTag(SiteModel.SITE_MODEL, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, prefix + SiteModel.SITE_MODEL)});
+        writer.writeOpenTag(SITE_MODEL, new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, prefix + SITE_MODEL)});
 
-        writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
+        writer.writeOpenTag(SUBSTITUTION_MODEL);
         if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
             // not strictly necessary but makes the XML consistent
-            writer.writeIDref(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
+            writer.writeIDref(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, prefix + MODEL);
         } else {
-            writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
+            writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, prefix + MODEL);
         }
-        writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
+        writer.writeCloseTag(SUBSTITUTION_MODEL);
 
-        writer.writeCloseTag(SiteModel.SITE_MODEL);
+        writer.writeCloseTag(SITE_MODEL);
     }
 
     private void writeRatesAndIndicators(PartitionSubstitutionModel model, int dimension, Integer relativeTo, XMLWriter writer) {
@@ -518,7 +519,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         PartitionClockModel clockModel = partition.getPartitionClockModel();
 
         AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions)options.getComponentOptions(AncestralStatesComponentOptions.class);
-        String treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
+        String treeLikelihoodTag = RECONSTRUCTING_TREE_LIKELIHOOD;
         if (ancestralStatesOptions.isCountingStates(partition)) {
             treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
         }
@@ -526,7 +527,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         boolean saveCompleteHistory = ancestralStatesOptions.isCompleteHistoryLogging(partition);
 
         writer.writeOpenTag(treeLikelihoodTag, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, prefix + TreeLikelihoodParser.TREE_LIKELIHOOD),
+                new Attribute.Default<String>(XMLParser.ID, prefix + TREE_LIKELIHOOD),
                 new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
                 new Attribute.Default<Boolean>(MarkovJumpsTreeLikelihoodParser.USE_UNIFORMIZATION, true),
                 new Attribute.Default<String>(MarkovJumpsTreeLikelihoodParser.SAVE_HISTORY, saveCompleteHistory ? "true" : "false"),
@@ -535,16 +536,16 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
         writer.writeIDref(AttributePatternsParser.ATTRIBUTE_PATTERNS, prefix + "pattern");
         writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
-        writer.writeIDref(SiteModel.SITE_MODEL, substModel.getName() + "." + SiteModel.SITE_MODEL);
+        writer.writeIDref(SITE_MODEL, substModel.getName() + "." + SITE_MODEL);
 
         if (partition.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
             // not strictly necessary but makes the XML consistent
-            writer.writeIDref(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
+            writer.writeIDref(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, prefix + MODEL);
         } else {
-            writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
+            writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, prefix + MODEL);
         }
 
-        writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, substModel.getName() + "." + AbstractSubstitutionModel.MODEL);
+        writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, substModel.getName() + "." + MODEL);
 
         ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
 
@@ -563,7 +564,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         for (AbstractPartitionData partition : options.dataPartitions) {
             if (partition.getTraits() != null) {
                 AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions)options.getComponentOptions(AncestralStatesComponentOptions.class);
-                String treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
+                String treeLikelihoodTag = RECONSTRUCTING_TREE_LIKELIHOOD;
                 if (ancestralStatesOptions.isCountingStates(partition)) {
                     treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
                 }
@@ -572,7 +573,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 String prefix = partition.getName() + ".";
                 if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
                     writer.writeIDref(treeLikelihoodTag,
-                            prefix + TreeLikelihoodParser.TREE_LIKELIHOOD);
+                            prefix + TREE_LIKELIHOOD);
                 }
             }
         }

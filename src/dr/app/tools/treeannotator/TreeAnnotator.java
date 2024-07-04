@@ -1196,7 +1196,7 @@ public class TreeAnnotator extends BaseTreeTool {
                 StringBuilder output = new StringBuilder();
                 int i = 0;
                 for (ContourPath p : paths) {
-                    output.append("\n<" + CORDINATE + ">\n");
+                    output.append("\n<").append(CORDINATE).append(">\n");
                     double[] xList = p.getAllX();
                     double[] yList = p.getAllY();
                     StringBuilder xString = new StringBuilder("{");

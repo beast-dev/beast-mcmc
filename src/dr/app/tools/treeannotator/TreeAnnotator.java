@@ -28,6 +28,7 @@
 package dr.app.tools.treeannotator;
 
 import dr.app.beast.BeastVersion;
+import dr.app.tools.BaseTreeTool;
 import dr.app.tools.logcombiner.LogCombiner;
 import dr.app.tools.NexusExporter;
 import dr.app.util.Arguments;
@@ -60,7 +61,7 @@ import java.util.*;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class TreeAnnotator {
+public class TreeAnnotator extends BaseTreeTool {
 
     private final static Version version = new BeastVersion();
 
@@ -1192,14 +1193,14 @@ public class TreeAnnotator {
                     System.err.println("Try decreasing the enclosed mass or increasing the number of samples.");
                 }
 
-                StringBuffer output = new StringBuffer();
+                StringBuilder output = new StringBuilder();
                 int i = 0;
                 for (ContourPath p : paths) {
                     output.append("\n<" + CORDINATE + ">\n");
                     double[] xList = p.getAllX();
                     double[] yList = p.getAllY();
-                    StringBuffer xString = new StringBuffer("{");
-                    StringBuffer yString = new StringBuffer("{");
+                    StringBuilder xString = new StringBuilder("{");
+                    StringBuilder yString = new StringBuilder("{");
                     for (int k = 0; k < xList.length; k++) {
                         xString.append(formattedLocation(xList[k])).append(",");
                         yString.append(formattedLocation(yList[k])).append(",");
@@ -1382,12 +1383,7 @@ public class TreeAnnotator {
         progressStream.println();
         progressStream.println();
     }
-
-    public static void centreLine(String line, int pageWidth) {
-        centreLine(line, 60);
-    }
-
-
+    
     public static void printUsage(Arguments arguments) {
 
         arguments.printUsage("treeannotator", "<input-file-name> [<output-file-name>]");

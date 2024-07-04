@@ -226,7 +226,7 @@ public abstract class Importer {
 
 	public String readLine(boolean ignoreComments) throws IOException {
 
-		StringBuffer line = new StringBuffer();
+		StringBuilder line = new StringBuilder();
 
 		char ch = read();
 
@@ -265,12 +265,12 @@ public abstract class Importer {
 
 	/**
 	 * Reads sequences, skipping over any comments and filtering using dataType.
-	 * @param sequence a StringBuffer into which the sequences is put
+	 * @param sequence a StringBuilder into which the sequences is put
 	 * @param dataType the dataType of the sequences
 	 * @param delimiters list of characters that will stop the reading
 	 * @param maxSites maximum number of sites to read
 	 */
-	public void readSequence(StringBuffer sequence, DataType dataType, 
+	public void readSequence(StringBuilder sequence, DataType dataType,
 								String delimiters, int maxSites,
 								String gapCharacters, String missingCharacters,
 								String matchCharacters, String matchSequence) throws IOException, ImportException {
@@ -330,11 +330,11 @@ public abstract class Importer {
 
 	/**
 	 * Reads a line of sequences, skipping over any comments and filtering using dataType.
-	 * @param sequence a StringBuffer into which the sequences is put
+	 * @param sequence a StringBuilder into which the sequences is put
 	 * @param dataType the dataType of the sequences
 	 * @param delimiters list of characters that will stop the reading
 	 */
-	public void readSequenceLine(StringBuffer sequence, DataType dataType,
+	public void readSequenceLine(StringBuilder sequence, DataType dataType,
 								String delimiters,
 								String gapCharacters, String missingCharacters,
 								String matchCharacters, String matchSequence) throws IOException, ImportException {
@@ -478,7 +478,7 @@ public abstract class Importer {
 
 		nextCharacter();
 
-		StringBuffer token = new StringBuffer();
+		StringBuilder token = new StringBuilder();
 
 		while (!done) {
 			ch = read();
@@ -564,7 +564,7 @@ public abstract class Importer {
 		char ch;
 		int n=1;
 		boolean write = false;
-        StringBuffer meta = null;
+		StringBuilder meta = null;
 
 		if (nextCharacter() == writeComment) {
 			read();
@@ -572,7 +572,7 @@ public abstract class Importer {
 		} else if (nextCharacter() == metaComment) {
 			read();
             // combine two consecutive meta comments
-            meta = lastMetaComment!= null ? new StringBuffer(lastMetaComment + ";") : new StringBuffer();
+            meta = lastMetaComment!= null ? new StringBuilder(lastMetaComment + ";") : new StringBuilder();
 		}
 
         lastMetaComment = null;

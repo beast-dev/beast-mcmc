@@ -318,7 +318,7 @@ public class NexusExporter implements TreeExporter {
 
 	public String exportAlignment(Alignment alignment) throws IOException, IllegalArgumentException {
 
-		StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 		
 		DataType dataType = null;
 		int seqLength = 0;

@@ -629,7 +629,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                         }
                     }
 
-                    StringBuffer buffer = new StringBuffer();
+                    StringBuilder buffer = new StringBuilder();
                     readSequenceLine(buffer, dataType, ";", gapCharacters, missingCharacters,
                             matchCharacters, firstSequence);
                     String seqString = buffer.toString();
@@ -690,7 +690,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
                 sequence.setTaxon(taxon);
 
-                StringBuffer buffer = new StringBuffer();
+                StringBuilder buffer = new StringBuilder();
                 readSequence(buffer, dataType, ";", siteCount, gapCharacters,
                         missingCharacters, matchCharacters, firstSequence);
                 String seqString = buffer.toString();

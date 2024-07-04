@@ -246,7 +246,7 @@ public class TimeSlicer {
     private Element contourFolderElement;
     private Element pointsFolderElement;
     private Element nodeFolderElement;
-    private StringBuffer tabOutput = new StringBuffer();
+    private final StringBuilder tabOutput = new StringBuilder();
 
     public void output(String outFileName, boolean summaryOnly, final boolean summarizeRoot, final boolean summarizeTips, boolean contours, boolean points, OutputFormat outputFormat, double[] hpdValues, String sdrFile, String snrFile) {
 
@@ -993,7 +993,7 @@ public class TimeSlicer {
                     TraceDistribution trace = new TraceDistribution(x, TraceType.REAL);
                     Element statsElement = new Element("stats");
                     addDimInfo(statsElement, j, dim);
-                    StringBuffer sb = new StringBuffer();
+                    StringBuilder sb = new StringBuilder();
                     sb.append(KMLCoordinates.NEWLINE);
                     tabOutput.append(KMLCoordinates.NEWLINE);
                     tabOutput.append(traits[traitIndex] + "\t");
@@ -1437,7 +1437,7 @@ public class TimeSlicer {
         return data;
     }
     private void outputHeader(String[] traits) {
-        StringBuffer sb = new StringBuffer("slice");
+        StringBuilder sb = new StringBuilder("slice");
         for (int i = 0; i < traits.length; i++) {
             // Load first value to check dimensionality
             Trait trait = values.get(0).get(i).get(0);
@@ -1607,7 +1607,7 @@ public class TimeSlicer {
         public String toString() {
             if (!isMultivariate)
                 return obj.toString();
-            StringBuffer sb = new StringBuffer(array[0].toString());
+            StringBuilder sb = new StringBuilder(array[0].toString());
             for (int i = 1; i < array.length; i++)
                 sb.append(sep).append(array[i]);
             return sb.toString();
@@ -1625,7 +1625,7 @@ public class TimeSlicer {
         int traitCount = thisSlice.size();
         int valueCount = thisSlice.get(0).size();
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         for (int v = 0; v < valueCount; v++) {
             if (Double.isNaN(sliceValue))

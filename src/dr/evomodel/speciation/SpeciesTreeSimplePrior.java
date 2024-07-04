@@ -38,7 +38,6 @@ import dr.inference.model.Parameter;
 /**
  * @author Joseph Heled
  *         Date: 8/12/2008
- * @deprecated - StarBEAST is in BEAST2
  */
 public class SpeciesTreeSimplePrior extends Likelihood.Abstract {
 

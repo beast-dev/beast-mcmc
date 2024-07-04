@@ -34,6 +34,7 @@ import dr.evomodel.siteratemodel.GammaSiteRateDelegate;
 import dr.evomodel.siteratemodel.HomogeneousRateDelegate;
 import dr.evomodel.siteratemodel.SiteRateDelegate;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.oldevomodel.sitemodel.SiteModel;
 import dr.inference.model.Parameter;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
@@ -136,7 +137,7 @@ public class SiteModelParser extends AbstractXMLObjectParser {
             delegate = new HomogeneousRateDelegate("HomogeneousRateDelegate");
         }
 
-        DiscretizedSiteRateModel siteRateModel = new DiscretizedSiteRateModel(SITE_MODEL, muParam, muWeight, delegate);
+        DiscretizedSiteRateModel siteRateModel = new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
 
         if (xo.hasChildNamed(SUBSTITUTION_MODEL)) {
 

@@ -25,7 +25,7 @@
  *
  */
 
-package dr.evomodel.substmodel;
+package dr.oldevomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 

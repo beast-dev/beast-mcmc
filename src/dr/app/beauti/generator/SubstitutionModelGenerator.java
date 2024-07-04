@@ -44,14 +44,17 @@ import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.evomodelxml.substmodel.TN93Parser;
 import dr.inference.model.StatisticParser;
+import dr.oldevomodel.substmodel.AsymmetricQuadraticModel;
+import dr.oldevomodel.substmodel.LinearBiasModel;
+import dr.oldevomodel.substmodel.TwoPhaseModel;
 import dr.evoxml.AlignmentParser;
+import dr.evoxml.MicrosatelliteParser;
 import dr.inference.model.ParameterParser;
+import dr.oldevomodelxml.substmodel.*;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
 import java.util.List;
-
-import static dr.evomodelxml.siteratemodel.SiteModelParser.RELATIVE_RATE;
 
 /**
  * @author Alexei Drummond
@@ -661,9 +664,9 @@ public class SubstitutionModelGenerator extends Generator {
             }
         } else {
             if (model.hasCodonPartitions()) {
-                writeParameter(num, RELATIVE_RATE, "mu", model, writer);
+                writeParameter(num, dr.oldevomodelxml.sitemodel.GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
             } else {
-                writeParameter(RELATIVE_RATE, "mu", model, writer);
+                writeParameter(dr.oldevomodelxml.sitemodel.GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
             }
         }
 
@@ -756,7 +759,7 @@ public class SubstitutionModelGenerator extends Generator {
                 writeNuRelativeRateBlock(writer, prefix1, parameter);
             }
         } else {
-            writeParameter(RELATIVE_RATE, "mu", model, writer);
+            writeParameter(SiteModelParser.RELATIVE_RATE, "mu", model, writer);
         }
 
         if (model.isGammaHetero()) {
@@ -809,7 +812,7 @@ public class SubstitutionModelGenerator extends Generator {
             }
 
         } else {
-            writeParameter(RELATIVE_RATE, "mu", model, writer);
+            writeParameter(SiteModelParser.RELATIVE_RATE, "mu", model, writer);
         }
 
         if (model.isGammaHetero()) {
@@ -843,12 +846,12 @@ public class SubstitutionModelGenerator extends Generator {
      */
     private void writeNuRelativeRateBlock(XMLWriter writer, String prefix, Parameter parameter) {
         double weight = ((double) parameter.getParent().getDimensionWeight()) / parameter.getDimensionWeight();
-        writer.writeOpenTag(RELATIVE_RATE,
+        writer.writeOpenTag(SiteModelParser.RELATIVE_RATE,
                 new Attribute.Default<String>(SiteModelParser.WEIGHT, "" + weight));
         // Initial values must sum to 1.0
         double initial = 1.0 / parameter.getParent().getSubParameters().size();
         writeParameter(prefix + "nu", 1, initial, 0.0, 1.0, writer);
-        writer.writeCloseTag(RELATIVE_RATE);
+        writer.writeCloseTag(SiteModelParser.RELATIVE_RATE);
     }
 
     /**

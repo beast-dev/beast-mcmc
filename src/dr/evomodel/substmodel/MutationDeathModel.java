@@ -39,12 +39,11 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
+import dr.oldevomodelxml.substmodel.MutationDeathModelParser;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 
 import java.util.Arrays;
-
-import static dr.evomodelxml.substmodel.MutationDeathModelParser.MD_MODEL;
 
 public class MutationDeathModel extends ComplexSubstitutionModel { //BaseSubstitutionModel {
     private SubstitutionModel CTMCModel;
@@ -59,7 +58,7 @@ public class MutationDeathModel extends ComplexSubstitutionModel { //BaseSubstit
 
     public MutationDeathModel(Parameter delParameter, DataType dT, SubstitutionModel evoModel,
                               FrequencyModel freqModel, Parameter mutationRate) {
-        super(MD_MODEL, dT, freqModel, null);
+        super(MutationDeathModelParser.MD_MODEL, dT, freqModel, null);
 
         CTMCModel = evoModel;
         stateCount = freqModel.getFrequencyCount();

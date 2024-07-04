@@ -56,6 +56,7 @@ import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.substmodel.aminoacid.*;
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.oldevomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evoxml.TaxaParser;
 import dr.inference.distribution.ExponentialDistributionModel;
@@ -66,8 +67,6 @@ import dr.inference.model.Parameter;
 import dr.inferencexml.distribution.DistributionModelParser;
 import dr.inferencexml.distribution.InverseGaussianDistributionModelParser;
 import dr.inferencexml.distribution.LogNormalDistributionModelParser;
-
-import static dr.evomodelxml.siteratemodel.SiteModelParser.SITE_MODEL;
 
 /**
  * @author Filip Bielejec
@@ -1043,10 +1042,10 @@ public class PartitionData implements Serializable {
 
 	public int siteRateModelIndex = 0;
 
-	public String siteRateModelIdref = SITE_MODEL;
+	public String siteRateModelIdref = SiteModel.SITE_MODEL;
 
 	public void resetSiteRateModelIdref() {
-		this.siteRateModelIdref = SITE_MODEL;
+		this.siteRateModelIdref = SiteModel.SITE_MODEL;
 	}
 	
 	public static String[] siteRateModels = { "No Model", //

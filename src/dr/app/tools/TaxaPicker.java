@@ -37,6 +37,7 @@ import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
+import dr.evomodel.arg.ARGModel;
 import dr.util.Version;
 
 import java.io.*;

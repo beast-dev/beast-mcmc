@@ -144,7 +144,7 @@ public class TreeAnnotator extends BaseTreeTool {
         attributeNames.add("height");
         attributeNames.add("length");
 
-        CladeSystem cladeSystem = new CladeSystem(this);
+        CladeSystem2 cladeSystem = new CladeSystem2(this);
 
         int burnin = -1;
 
@@ -317,7 +317,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
         // this call increments the clade counts and it shouldn't
         // this is remedied with removeClades call after while loop below
-        cladeSystem = new CladeSystem(this, targetTree);
+        cladeSystem = new CladeSystem2(this, targetTree);
         totalTreesUsed = 0;
         try {
             boolean firstTree = true;
@@ -403,7 +403,7 @@ public class TreeAnnotator extends BaseTreeTool {
         }
     }
 
-    private Tree getMCCTree(int burnin, CladeSystem cladeSystem, String inputFileName)
+    private Tree getMCCTree(int burnin, CladeSystem2 cladeSystem, String inputFileName)
             throws IOException {
 
         long startTime = System.currentTimeMillis();
@@ -453,11 +453,11 @@ public class TreeAnnotator extends BaseTreeTool {
         return bestTree;
     }
 
-    private Tree getHIPSTRTree(CladeSystem cladeSystem) {
+    private Tree getHIPSTRTree(CladeSystem2 cladeSystem) {
 
         long startTime = System.currentTimeMillis();
 
-        CladeSystem.Clade rootClade = cladeSystem.getRootClade();
+        CladeSystem2.Clade rootClade = cladeSystem.getRootClade();
 
         credibilityCache.clear();
 
@@ -474,9 +474,9 @@ public class TreeAnnotator extends BaseTreeTool {
         return tree;
     }
 
-    private Map<CladeSystem.Clade, Double> credibilityCache = new HashMap<>();
+    private Map<CladeSystem2.Clade, Double> credibilityCache = new HashMap<>();
 
-    private double findHIPSTRTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
+    private double findHIPSTRTree(CladeSystem2 cladeSystem, CladeSystem2.Clade clade) {
 
         double logCredibility = Math.log(clade.credibility);
 
@@ -485,7 +485,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
             for (Pair<BitSet, BitSet> subClade : clade.subClades) {
 
-                CladeSystem.Clade left = cladeSystem.getCladeMap().get(subClade.first);
+                CladeSystem2.Clade left = cladeSystem.getCladeMap().get(subClade.first);
                 if (left == null) {
                     throw new IllegalArgumentException("no clade found");
                 }
@@ -495,7 +495,7 @@ public class TreeAnnotator extends BaseTreeTool {
                     leftLogCredibility = findHIPSTRTree(cladeSystem, left);
                     credibilityCache.put(left, leftLogCredibility);
                 }
-                CladeSystem.Clade right = cladeSystem.getCladeMap().get(subClade.second);
+                CladeSystem2.Clade right = cladeSystem.getCladeMap().get(subClade.second);
                 if (right == null) {
                     throw new IllegalArgumentException("no clade found");
                 }
@@ -520,7 +520,7 @@ public class TreeAnnotator extends BaseTreeTool {
         return logCredibility;
     }
 
-    private SimpleNode buildHIPSTRTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
+    private SimpleNode buildHIPSTRTree(CladeSystem2 cladeSystem, CladeSystem2.Clade clade) {
         SimpleNode newNode = new SimpleNode();
         if (clade.size == 1) {
             newNode.setTaxon(clade.taxon);
@@ -531,11 +531,11 @@ public class TreeAnnotator extends BaseTreeTool {
         return newNode;
     }
 
-    private double scoreTree(Tree tree, CladeSystem cladeSystem) {
+    private double scoreTree(Tree tree, CladeSystem2 cladeSystem) {
         return cladeSystem.getLogCladeCredibility(tree, tree.getRoot(), null);
     }
 
-    public void annotateTree(MutableTree tree, NodeRef node, BitSet bits, CladeSystem cladeSystem, HeightsSummary heightsOption) {
+    public void annotateTree(MutableTree tree, NodeRef node, BitSet bits, CladeSystem2 cladeSystem, HeightsSummary heightsOption) {
 
         BitSet bits2 = new BitSet();
 
@@ -563,8 +563,8 @@ public class TreeAnnotator extends BaseTreeTool {
         }
     }
 
-    private void annotateNode(MutableTree tree, NodeRef node, BitSet bits, boolean isTip, CladeSystem cladeSystem, HeightsSummary heightsOption) {
-        CladeSystem.Clade clade = cladeSystem.getClade(bits);
+    private void annotateNode(MutableTree tree, NodeRef node, BitSet bits, boolean isTip, CladeSystem2 cladeSystem, HeightsSummary heightsOption) {
+        CladeSystem2.Clade clade = cladeSystem.getClade(bits);
         assert clade != null : "Clade missing?";
 
         boolean filter = false;
@@ -1328,86 +1328,86 @@ public class TreeAnnotator extends BaseTreeTool {
         return y.equals(x);
     }
 
-    boolean setTreeHeightsByCA(MutableTree targetTree, final String inputFileName, final int burnin)
-            throws IOException, Importer.ImportException {
-
-        long startTime = System.currentTimeMillis();
-
-        progressStream.println("Setting node heights...");
-        progressStream.println("0              25             50             75            100");
-        progressStream.println("|--------------|--------------|--------------|--------------|");
-
-        int reportStepSize = totalTrees / 60;
-        if (reportStepSize < 1) reportStepSize = 1;
-
-        final FileReader fileReader = new FileReader(inputFileName);
-        final NexusImporter importer = new NexusImporter(fileReader, true);
-
-        // this call increments the clade counts and it shouldn't
-        // this is remedied with removeClades call after while loop below
-        CladeSystem cladeSystem = new CladeSystem(this, targetTree);
-        final int nClades = cladeSystem.getCladeMap().size();
-
-        // allocate posterior tree nodes order once
-        int[] postOrderList = new int[nClades];
-        BitSet[] ctarget = new BitSet[nClades];
-        BitSet[] ctree = new BitSet[nClades];
-
-        for (int k = 0; k < nClades; ++k) {
-            ctarget[k] = new BitSet();
-            ctree[k] = new BitSet();
-        }
-
-        cladeSystem.getTreeCladeCodes(targetTree, ctarget);
-
-        // temp collecting heights inside loop allocated once
-        double[] hs = new double[nClades];
-
-        // heights total sum from posterior trees
-        double[] ths = new double[nClades];
-
-        totalTreesUsed = 0;
-
-        int counter = 0;
-        while (importer.hasTree()) {
-            final Tree tree = importer.importNextTree();
-
-            if (counter >= burnin) {
-                TreeUtils.preOrderTraversalList(tree, postOrderList);
-                cladeSystem.getTreeCladeCodes(tree, ctree);
-                for (int k = 0; k < nClades; ++k) {
-                    int j = postOrderList[k];
-                    for (int i = 0; i < nClades; ++i) {
-                        if( isSubSet(ctarget[i], ctree[j]) ) {
-                            hs[i] = tree.getNodeHeight(tree.getNode(j));
-                        }
-                    }
-                }
-                for (int k = 0; k < nClades; ++k) {
-                    ths[k] += hs[k];
-                }
-                totalTreesUsed += 1;
-            }
-            if (counter > 0 && counter % reportStepSize == 0) {
-                progressStream.print("*");
-                progressStream.flush();
-            }
-            counter++;
-
-        }
-        cladeSystem.removeClades(targetTree, targetTree.getRoot(), true);
-        for (int k = 0; k < nClades; ++k) {
-            ths[k] /= totalTreesUsed;
-            final NodeRef node = targetTree.getNode(k);
-            targetTree.setNodeHeight(node, ths[k]);
-        }
-        fileReader.close();
-
-        long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
-        progressStream.println("* [" + timeElapsed + " secs]");
-        progressStream.println();
-
-        return true;
-    }
+//    boolean setTreeHeightsByCA(MutableTree targetTree, final String inputFileName, final int burnin)
+//            throws IOException, Importer.ImportException {
+//
+//        long startTime = System.currentTimeMillis();
+//
+//        progressStream.println("Setting node heights...");
+//        progressStream.println("0              25             50             75            100");
+//        progressStream.println("|--------------|--------------|--------------|--------------|");
+//
+//        int reportStepSize = totalTrees / 60;
+//        if (reportStepSize < 1) reportStepSize = 1;
+//
+//        final FileReader fileReader = new FileReader(inputFileName);
+//        final NexusImporter importer = new NexusImporter(fileReader, true);
+//
+//        // this call increments the clade counts and it shouldn't
+//        // this is remedied with removeClades call after while loop below
+//        CladeSystem cladeSystem = new CladeSystem(this, targetTree);
+//        final int nClades = cladeSystem.getCladeMap().size();
+//
+//        // allocate posterior tree nodes order once
+//        int[] postOrderList = new int[nClades];
+//        BitSet[] ctarget = new BitSet[nClades];
+//        BitSet[] ctree = new BitSet[nClades];
+//
+//        for (int k = 0; k < nClades; ++k) {
+//            ctarget[k] = new BitSet();
+//            ctree[k] = new BitSet();
+//        }
+//
+//        cladeSystem.getTreeCladeCodes(targetTree, ctarget);
+//
+//        // temp collecting heights inside loop allocated once
+//        double[] hs = new double[nClades];
+//
+//        // heights total sum from posterior trees
+//        double[] ths = new double[nClades];
+//
+//        totalTreesUsed = 0;
+//
+//        int counter = 0;
+//        while (importer.hasTree()) {
+//            final Tree tree = importer.importNextTree();
+//
+//            if (counter >= burnin) {
+//                TreeUtils.preOrderTraversalList(tree, postOrderList);
+//                cladeSystem.getTreeCladeCodes(tree, ctree);
+//                for (int k = 0; k < nClades; ++k) {
+//                    int j = postOrderList[k];
+//                    for (int i = 0; i < nClades; ++i) {
+//                        if( isSubSet(ctarget[i], ctree[j]) ) {
+//                            hs[i] = tree.getNodeHeight(tree.getNode(j));
+//                        }
+//                    }
+//                }
+//                for (int k = 0; k < nClades; ++k) {
+//                    ths[k] += hs[k];
+//                }
+//                totalTreesUsed += 1;
+//            }
+//            if (counter > 0 && counter % reportStepSize == 0) {
+//                progressStream.print("*");
+//                progressStream.flush();
+//            }
+//            counter++;
+//
+//        }
+//        cladeSystem.removeClades(targetTree, targetTree.getRoot(), true);
+//        for (int k = 0; k < nClades; ++k) {
+//            ths[k] /= totalTreesUsed;
+//            final NodeRef node = targetTree.getNode(k);
+//            targetTree.setNodeHeight(node, ths[k]);
+//        }
+//        fileReader.close();
+//
+//        long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
+//        progressStream.println("* [" + timeElapsed + " secs]");
+//        progressStream.println();
+//
+//        return true;
+//    }
 }
 

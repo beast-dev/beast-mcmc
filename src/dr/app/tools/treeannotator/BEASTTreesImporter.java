@@ -29,11 +29,10 @@ package dr.app.tools.treeannotator;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.TreeImporter;
-import dr.evolution.tree.SimpleNode;
-import dr.evolution.tree.SimpleTree;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.*;
 import dr.evolution.util.TaxonList;
 
+import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.Reader;
@@ -59,9 +58,9 @@ public class BEASTTreesImporter extends Importer implements TreeImporter {
         }
     }
 
-        /**
-          * importTree.
-          */
+    /**
+     * importTree.
+     */
     public Tree importTree(TaxonList ignored) throws IOException, ImportException {
         throw new UnsupportedOperationException("this method is not available");
     }
@@ -72,14 +71,16 @@ public class BEASTTreesImporter extends Importer implements TreeImporter {
      */
     public int countTrees() throws IOException {
         int count = 0;
+        String line;
 
+        BufferedReader br = (BufferedReader)getReader();
         do {
-            String line = readLineStart("_;(,)[]").trim();
-            if (line.startsWith("tree STATE")) {
+            line = br.readLine();
+            if (line != null && line.trim().startsWith("tree STATE")) {
                 count++;
             }
 
-        } while (!isEOF());
+        } while (line != null);
 
         return count;
     }
@@ -98,8 +99,8 @@ public class BEASTTreesImporter extends Importer implements TreeImporter {
                 skipUntil("(");
                 unreadCharacter('(');
 
-                SimpleNode root = readInternalNode();
-                SimpleTree tree = new SimpleTree(root);
+                FlexibleNode root = readInternalNode();
+                FlexibleTree tree = new FlexibleTree(root);
                 trees.add(tree);
 
                 if (taxonList == null) {
@@ -145,15 +146,15 @@ public class BEASTTreesImporter extends Importer implements TreeImporter {
             treeName = readToken(",():;");
         }
 
-        SimpleTree tree = null;
+        FlexibleTree tree = null;
 
         try {
             skipUntil("(");
             unreadCharacter('(');
 
-            SimpleNode root = readInternalNode();
+            FlexibleNode root = readInternalNode();
 
-            tree = new SimpleTree(root);
+            tree = new FlexibleTree(root);
 
         } catch (EOFException e) {
             //
@@ -170,9 +171,9 @@ public class BEASTTreesImporter extends Importer implements TreeImporter {
      * accordingly). It then reads the branch length and SimpleNode that will
      * point at the new node or tip.
      */
-    private SimpleNode readBranch() throws IOException, ImportException {
+    private FlexibleNode readBranch() throws IOException, ImportException {
         double length = 0.0;
-        SimpleNode branch;
+        FlexibleNode branch;
 
         if (nextCharacter() == '(') {
             // is an internal node
@@ -202,8 +203,8 @@ public class BEASTTreesImporter extends Importer implements TreeImporter {
      * Reads a node in. This could be a polytomy. Calls readBranch on each branch
      * in the node.
      */
-    private SimpleNode readInternalNode() throws IOException, ImportException {
-        SimpleNode node = new SimpleNode();
+    private FlexibleNode readInternalNode() throws IOException, ImportException {
+        FlexibleNode node = new FlexibleNode();
 
         // read the opening '('
         final char ch = readCharacter();
@@ -247,8 +248,8 @@ public class BEASTTreesImporter extends Importer implements TreeImporter {
     /**
      * Reads an external node in.
      */
-    private SimpleNode readExternalNode() throws IOException {
-        SimpleNode node = new SimpleNode();
+    private FlexibleNode readExternalNode() throws IOException {
+        FlexibleNode node = new FlexibleNode();
         String label = readToken(":(),;");
         node.setNumber(Integer.parseInt(label) - 1); // node numbers index from 0
         return node;

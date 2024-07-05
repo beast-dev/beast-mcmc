@@ -141,6 +141,10 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         transitionMatricesKnown = false;
     }
 
+    public CoalescentIntervalTraversal getTraversalDelegate() { return treeTraversalDelegate; }
+
+    public SubstitutionModel getSubstitutionModel() { return substitutionModel; } // TODO generify for multiple models (e.g. epochs)
+
     private void setTipData() {
 
         int[] data = patternList.getPattern(0);
@@ -305,9 +309,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     public double[] getGradientLogDensity() {
 
         assert(substitutionModel instanceof SVSComplexSubstitutionModel);
-        SVSComplexSubstitutionModel svsComplexSubstitutionModel = (SVSComplexSubstitutionModel) substitutionModel;
-        Parameter parameters = svsComplexSubstitutionModel.getRatesParameter();
-
 
         final List<BranchIntervalOperation> branchOperations =
                 treeTraversalDelegate.getBranchIntervalOperations();
@@ -318,7 +319,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         final NodeRef root = tree.getRoot();
 
-        calculateLogLikelihood();
+        calculateLogLikelihood(); // TODO Only execute if necessary
         // log likelihood
 
         double[][] full_gradient = likelihoodDelegate.calculateGradient(branchOperations, matrixOperations, intervalStarts, root.getNumber());
@@ -345,9 +346,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
     public double[] getPopSizeGradientLogDensity() {
 
-        Parameter parameters = popSizeParameter;
-
-
         final List<BranchIntervalOperation> branchOperations =
                 treeTraversalDelegate.getBranchIntervalOperations();
         final List<TransitionMatrixOperation> matrixOperations =
@@ -357,12 +355,12 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         final NodeRef root = tree.getRoot();
 
-        calculateLogLikelihood();
+        calculateLogLikelihood(); // TODO Only execute if necessary
 
         double[] full_gradient =  likelihoodDelegate.calculateGradientPopSize(branchOperations, matrixOperations, intervalStarts, root.getNumber());
         double[] gradient = new double[stateCount];
         for (int i = 0; i < stateCount; ++i) {
-            gradient[i] = -full_gradient[i]*Math.pow(parameters.getParameterValue(i), -2);
+            gradient[i] = -full_gradient[i]*Math.pow(popSizeParameter.getParameterValue(i), -2);
         }
         return gradient;
     }

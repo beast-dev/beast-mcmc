@@ -77,6 +77,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         throw new RuntimeException("Not yet implemented");
     }
 
+    // TODO the next two functions do not belong in BastaLikelihoodDelegate; they compute gradients
     double[][] calculateGradient(List<BranchIntervalOperation> branchOperations,
                                  List<TransitionMatrixOperation> matrixOperation,
                                  List<Integer> intervalStarts,
@@ -209,6 +210,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
 //
 //        abstract protected void computeTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations);
 
+        // TODO remove all the gradient functions
         abstract protected double[][] computeCoalescentIntervalReductionGrad(List<Integer> intervalStarts,
                                                                      List<BranchIntervalOperation> branchIntervalOperations);
 

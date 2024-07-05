@@ -12,19 +12,40 @@ import java.util.List;
  */
 public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.AbstractBastaLikelihoodDelegate {
 
-    private final double[] partials;
-    private final double[] matrices;
-    private final double[] sizes;
-    private final double[] coalescent;
+    final static class InternalStorage {
 
-    private final double[] e;
-    private final double[] f;
-    private final double[] g;
-    private final double[] h;
+        final double[] partials;
+        final double[] matrices;
+        final double[] sizes;
+        final double[] coalescent;
 
+        final double[] e;
+        final double[] f;
+        final double[] g;
+        final double[] h;
+
+        final EigenDecomposition[] decompositions; // TODO flatten?
+
+        public InternalStorage(int maxNumCoalescentIntervals, int treeNodeCount, int stateCount) {
+
+            this.partials = new double[maxNumCoalescentIntervals * (treeNodeCount + 1) * stateCount]; // TODO much too large
+            this.matrices = new double[maxNumCoalescentIntervals * stateCount * stateCount]; // TODO much too small (except for strict-clock)
+            this.coalescent = new double[maxNumCoalescentIntervals];
+            this.sizes = new double[2 * stateCount];
+
+            this.e = new double[maxNumCoalescentIntervals * stateCount];
+            this.f = new double[maxNumCoalescentIntervals * stateCount];
+            this.g = new double[maxNumCoalescentIntervals * stateCount];
+            this.h = new double[maxNumCoalescentIntervals * stateCount];
+
+            this.decompositions = new EigenDecomposition[1];
+        }
+    }
+
+    private final InternalStorage storage;
     private final double[] temp;
 
-    private final EigenDecomposition[] decompositions; // TODO flatten?
+//    private final EigenDecomposition[] decompositions; // TODO flatten?
     private final double[][][] partialsGrad;
     private final double[][][] matricesGrad;
     private final double[][][] coalescentGrad;
@@ -46,16 +67,18 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                                           boolean transpose) {
         super(name, tree, stateCount, transpose);
 
-        this.partials = new double[maxNumCoalescentIntervals * (tree.getNodeCount() + 1) * stateCount]; // TODO much too large
-        this.matrices = new double[maxNumCoalescentIntervals * stateCount * stateCount]; // TODO much too small (except for strict-clock)
-        this.coalescent = new double[maxNumCoalescentIntervals];
-        this.sizes = new double[2 * stateCount];
-        this.decompositions = new EigenDecomposition[1];
+//        this.partials = new double[maxNumCoalescentIntervals * (tree.getNodeCount() + 1) * stateCount]; // TODO much too large
+//        this.matrices = new double[maxNumCoalescentIntervals * stateCount * stateCount]; // TODO much too small (except for strict-clock)
+//        this.coalescent = new double[maxNumCoalescentIntervals];
+//        this.sizes = new double[2 * stateCount];
+//        this.decompositions = new EigenDecomposition[1];
+//
+//        this.e = new double[maxNumCoalescentIntervals * stateCount];
+//        this.f = new double[maxNumCoalescentIntervals * stateCount];
+//        this.g = new double[maxNumCoalescentIntervals * stateCount];
+//        this.h = new double[maxNumCoalescentIntervals * stateCount];
 
-        this.e = new double[maxNumCoalescentIntervals * stateCount];
-        this.f = new double[maxNumCoalescentIntervals * stateCount];
-        this.g = new double[maxNumCoalescentIntervals * stateCount];
-        this.h = new double[maxNumCoalescentIntervals * stateCount];
+        this.storage = new InternalStorage(maxNumCoalescentIntervals, tree.getNodeCount(), stateCount);
 
         this.partialsGrad = new double[stateCount][stateCount][maxNumCoalescentIntervals * (tree.getNodeCount() + 1) * stateCount];
         this.matricesGrad = new double[stateCount][stateCount][maxNumCoalescentIntervals * stateCount * stateCount];
@@ -73,7 +96,12 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         this.fGradPopSize = new double[stateCount][maxNumCoalescentIntervals * stateCount];
         this.gGradPopSize = new double[stateCount][maxNumCoalescentIntervals * stateCount];
         this.hGradPopSize = new double[stateCount][maxNumCoalescentIntervals * stateCount];
+
         this.temp = new double[stateCount * stateCount];
+    }
+
+    public InternalStorage getInternalStorage() {
+        return storage;
     }
 
     @Override
@@ -82,7 +110,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                                                    List<TransitionMatrixOperation> matrixOperations,
                                                    Mode mode) {
 
-        Arrays.fill(coalescent, 0.0);
+        Arrays.fill(storage.coalescent, 0.0);
 
         for (int interval = 0; interval < intervalStarts.size() - 1; ++interval) { // execute in series by intervalNumber
             // TODO try grouping by executionOrder (unclear if more efficient, same total #)
@@ -93,7 +121,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         }
 
         if (PRINT_COMMANDS) {
-            System.err.println("coalescent: " + new WrappedVector.Raw(coalescent));
+            System.err.println("coalescent: " + new WrappedVector.Raw(storage.coalescent));
         }
     }
 
@@ -107,32 +135,32 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
             if (mode == Mode.LIKELIHOOD) {
                 peelPartials(
-                        partials, operation.outputBuffer,
+                        storage.partials, operation.outputBuffer,
                         operation.inputBuffer1, operation.inputBuffer2,
-                        matrices,
+                        storage.matrices,
                         operation.inputMatrix1, operation.inputMatrix2,
                         operation.accBuffer1, operation.accBuffer2,
-                        coalescent, operation.intervalNumber,
-                        sizes, 0,
+                        storage.coalescent, operation.intervalNumber,
+                        storage.sizes, 0,
                         stateCount);
 
             } else if (mode == Mode.GRADIENT) {
 
                 TransitionMatrixOperation Matrixoperation = matrixOperations.get(operation.intervalNumber);
                 peelPartialsGrad(
-                        partials, Matrixoperation.time, operation.outputBuffer,
+                        storage.partials, Matrixoperation.time, operation.outputBuffer,
                         operation.inputBuffer1, operation.inputBuffer2,
-                        matrices,
+                        storage.matrices,
                         operation.inputMatrix1, operation.inputMatrix2,
                         operation.accBuffer1, operation.accBuffer2,
-                        coalescent, operation.intervalNumber,
-                        sizes, 0,
+                        storage.coalescent, operation.intervalNumber,
+                        storage.sizes, 0,
                         stateCount);
             }
 
             if (PRINT_COMMANDS) {
                 System.err.println(operation + " " +
-                        new WrappedVector.Raw(partials, operation.outputBuffer * stateCount, stateCount));
+                        new WrappedVector.Raw(storage.partials, operation.outputBuffer * stateCount, stateCount));
             }
         }
     }
@@ -151,8 +179,8 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             if (mode == Mode.LIKELIHOOD) {
                 computeTransitionProbabilities(
                         operation.time,
-                        matrices, operation.outputBuffer * stateCount * stateCount,
-                        decompositions[operation.decompositionBuffer],
+                        storage.matrices, operation.outputBuffer * stateCount * stateCount,
+                        storage.decompositions[operation.decompositionBuffer],
                         stateCount, temp);
             } else if (mode == Mode.GRADIENT) {
                 computeTransitionProbabilitiesGrad(operation.time,
@@ -161,7 +189,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
             if (PRINT_COMMANDS) {
                 System.err.println(operation + " " +
-                        new WrappedVector.Raw(matrices,
+                        new WrappedVector.Raw(storage.matrices,
                                 operation.outputBuffer * stateCount * stateCount, stateCount * stateCount));
             }
         }
@@ -174,10 +202,10 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     protected double computeCoalescentIntervalReduction(List<Integer> intervalStarts,
                                                         List<BranchIntervalOperation> branchIntervalOperations) {
 
-        Arrays.fill(e, 0.0);
-        Arrays.fill(f, 0.0);
-        Arrays.fill(g, 0.0);
-        Arrays.fill(h, 0.0);
+        Arrays.fill(storage.e, 0.0);
+        Arrays.fill(storage.f, 0.0);
+        Arrays.fill(storage.g, 0.0);
+        Arrays.fill(storage.h, 0.0);
 
         for (int interval = 0; interval < intervalStarts.size() - 1; ++interval) { // TODO execute in parallel (no race conditions)
             int start = intervalStarts.get(interval);
@@ -185,7 +213,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
             for (int i = start; i < end; ++i) { // TODO execute in parallel (has race conditions)
                 BranchIntervalOperation operation = branchIntervalOperations.get(i);
-                reduceWithinInterval(e, f, g, h, partials,
+                reduceWithinInterval(storage.e, storage.f, storage.g, storage.h, storage.partials,
                         operation.inputBuffer1, operation.inputBuffer2,
                         operation.accBuffer1, operation.accBuffer2,
                         operation.intervalNumber,
@@ -198,9 +226,9 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         for (int i = 0; i < intervalStarts.size() - 1; ++i) { // TODO execute in parallel
             BranchIntervalOperation operation = branchIntervalOperations.get(intervalStarts.get(i));
 
-            logL += reduceAcrossIntervals(e, f, g, h,
+            logL += reduceAcrossIntervals(storage.e, storage.f, storage.g, storage.h,
                     operation.intervalNumber, operation.intervalLength,
-                    sizes, coalescent, stateCount);
+                    storage.sizes, storage.coalescent, stateCount);
         }
 
         return logL;
@@ -388,7 +416,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                     for (int d = 0; d < stateCount; d++) { // TODO MAS: last loop unnecessary (also S^4 storage is unnecessary)
                         if (d == b) {
                             // TODO MAS: should these be cached at all? why not generate on the fly (t * matrices[])
-                            matricesGrad[a][b][matrixOffset + c*stateCount + b] =  distance * matrices[matrixOffset + c*stateCount + a];
+                            matricesGrad[a][b][matrixOffset + c*stateCount + b] =  distance * storage.matrices[matrixOffset + c*stateCount + a];
                         } else {
                             matricesGrad[a][b][matrixOffset + c*stateCount + d] = 0; // TODO MAS: avoid caching (many) zeros
                         }
@@ -407,7 +435,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
             for (int i = start; i < end; ++i) { // TODO execute in parallel (has race conditions)
                 BranchIntervalOperation operation = branchIntervalOperations.get(i);
-                reduceWithinIntervalGrad(partials, partialsGrad,
+                reduceWithinIntervalGrad(storage.partials, partialsGrad,
                         operation.inputBuffer1, operation.inputBuffer2,
                         operation.accBuffer1, operation.accBuffer2,
                         operation.intervalNumber,
@@ -420,9 +448,9 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         for (int i = 0; i < intervalStarts.size() - 1; ++i) { // TODO execute in parallel
             BranchIntervalOperation operation = branchIntervalOperations.get(intervalStarts.get(i));
 
-            double[][] temp_grad =  reduceAcrossIntervalsGrad(e, f, g, h,
+            double[][] temp_grad =  reduceAcrossIntervalsGrad(storage.e, storage.f, storage.g, storage.h,
                     operation.intervalNumber, operation.intervalLength,
-                    sizes, coalescent, stateCount);
+                    storage.sizes, storage.coalescent, stateCount);
 
             for (int a = 0; a < stateCount; a++) {
                 for (int b = 0; b < stateCount; b++) {
@@ -447,7 +475,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
             for (int i = start; i < end; ++i) { // TODO execute in parallel (has race conditions)
                 BranchIntervalOperation operation = branchIntervalOperations.get(i);
-                reduceWithinIntervalGrad(partials, partialsGrad,
+                reduceWithinIntervalGrad(storage.partials, partialsGrad,
                         operation.inputBuffer1, operation.inputBuffer2,
                         operation.accBuffer1, operation.accBuffer2,
                         operation.intervalNumber,
@@ -459,9 +487,9 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         for (int i = 0; i < intervalStarts.size() - 1; ++i) { // TODO execute in parallel
             BranchIntervalOperation operation = branchIntervalOperations.get(intervalStarts.get(i));
 
-            double[] temp_grad =  reduceAcrossIntervalsGradPopSize(e, f, g, h,
+            double[] temp_grad =  reduceAcrossIntervalsGradPopSize(storage.e, storage.f, storage.g, storage.h,
                     operation.intervalNumber, operation.intervalLength,
-                    sizes, coalescent, stateCount);
+                    storage.sizes, storage.coalescent, stateCount);
 
             for (int a = 0; a < stateCount; a++) {
                     grad[a] += temp_grad[a];
@@ -606,7 +634,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     public void setPartials(int index, double[] partials) {
         assert partials.length == stateCount;
 
-        System.arraycopy(partials, 0, this.partials, index * stateCount, stateCount);
+        System.arraycopy(partials, 0, storage.partials, index * stateCount, stateCount);
     }
 
     @Override
@@ -616,14 +644,14 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             decomposition = decomposition.transpose();
         }
 
-        decompositions[index] = decomposition;
+        storage.decompositions[index] = decomposition;
     }
 
     @Override
     public void updatePopulationSizes(int index, double[] sizes, boolean flip) {
         assert sizes.length == stateCount;
 
-        System.arraycopy(sizes, 0, this.sizes, index * stateCount, stateCount);
+        System.arraycopy(sizes, 0, storage.sizes, index * stateCount, stateCount);
     }
 
     private static void peelPartials(double[] partials,

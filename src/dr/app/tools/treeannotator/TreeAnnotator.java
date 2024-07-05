@@ -47,6 +47,8 @@ import jam.console.ConsoleApplication;
 
 import javax.swing.*;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -132,7 +134,7 @@ public class TreeAnnotator extends BaseTreeTool {
         attributeNames.add("height");
         attributeNames.add("length");
 
-        CladeSystem cladeSystem = new CladeSystem();
+        CladeSystem cladeSystem = new FastCladeSystem();
 
         int burnin = -1;
 
@@ -298,14 +300,15 @@ public class TreeAnnotator extends BaseTreeTool {
         int stepSize = totalTrees / 60;
         if (stepSize < 1) stepSize = 1;
 
-        FileReader fileReader = new FileReader(inputFileName);
-        NexusImporter importer = new NexusImporter(fileReader);
+        Reader reader = new BufferedReader(new FileReader(inputFileName));
+//            importer = new BEASTTreesImporter(reader, true);
+        NexusImporter importer = new NexusImporter(reader, true);
 
         long startTime = System.currentTimeMillis();
 
         // this call increments the clade counts and it shouldn't
         // this is remedied with removeClades call after while loop below
-        cladeSystem = new CladeSystem(targetTree);
+        cladeSystem = new FastCladeSystem(targetTree);
         totalTreesUsed = 0;
         try {
             boolean firstTree = true;
@@ -339,12 +342,12 @@ public class TreeAnnotator extends BaseTreeTool {
         long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("* [" + timeElapsed + " secs]");
         progressStream.println();
-        fileReader.close();
+        reader.close();
 
         progressStream.println("Annotating target tree...");
 
         try {
-            annotateTree(targetTree, targetTree.getRoot(), null, cladeSystem, heightsOption);
+            annotateTree(targetTree, targetTree.getRoot(), heightsOption);
 
             if( heightsOption == HeightsSummary.CA_HEIGHTS ) {
 //                setTreeHeightsByCA(targetTree, inputFileName, burnin);
@@ -358,12 +361,12 @@ public class TreeAnnotator extends BaseTreeTool {
 
         try {
             final PrintStream stream = outputFileName != null ?
-                    new PrintStream(new FileOutputStream(outputFileName)) :
+                    new PrintStream(Files.newOutputStream(Paths.get(outputFileName))) :
                     System.out;
 
             new NexusExporter(stream).exportTree(targetTree);
         } catch (Exception e) {
-            System.err.println("Error to write annotated tree file: " + e.getMessage());
+            System.err.println("Error writing annotated tree file: " + e.getMessage());
             System.exit(1);
         }
 
@@ -436,7 +439,7 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println("* [" + timeElapsed + " secs]");
         progressStream.println();
         progressStream.println("Best tree: " + bestTree.getId() + " (tree number " + bestTreeNumber + ")");
-        progressStream.println("Highest Log Clade Credibility: " + bestScore);
+        progressStream.println("Highest Log FastClade Credibility: " + bestScore);
 
         return bestTree;
     }
@@ -445,7 +448,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
         long startTime = System.currentTimeMillis();
 
-        CladeSystem.Clade rootClade = cladeSystem.getRootClade();
+        Clade rootClade = cladeSystem.getRootClade();
 
         credibilityCache.clear();
 
@@ -456,24 +459,24 @@ public class TreeAnnotator extends BaseTreeTool {
         long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("[" + timeElapsed + " secs]");
         progressStream.println();
-        progressStream.println("Highest Log Marginal Clade Credibility: " + score);
+        progressStream.println("Highest Log Marginal FastClade Credibility: " + score);
         progressStream.println();
 
         return tree;
     }
 
-    private Map<CladeSystem.Clade, Double> credibilityCache = new HashMap<>();
+    private Map<FastClade, Double> credibilityCache = new HashMap<>();
 
-    private double findHIPSTRTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
+    private double findHIPSTRTree(CladeSystem cladeSystem, Clade clade) {
 
-        double logCredibility = Math.log(clade.credibility);
+        double logCredibility = Math.log(clade.getCredibility());
 
 //        if (clade.size > 1) {
 //            double bestLogCredibility = Double.NEGATIVE_INFINITY;
 //
 //            for (Pair<BitSet, BitSet> subClade : clade.subClades) {
 //
-//                CladeSystem2.Clade left = cladeSystem.getCladeMap().get(subClade.first);
+//                CladeSystem2.FastClade left = cladeSystem.getCladeMap().get(subClade.first);
 //                if (left == null) {
 //                    throw new IllegalArgumentException("no clade found");
 //                }
@@ -483,7 +486,7 @@ public class TreeAnnotator extends BaseTreeTool {
 //                    leftLogCredibility = findHIPSTRTree(cladeSystem, left);
 //                    credibilityCache.put(left, leftLogCredibility);
 //                }
-//                CladeSystem2.Clade right = cladeSystem.getCladeMap().get(subClade.second);
+//                CladeSystem2.FastClade right = cladeSystem.getCladeMap().get(subClade.second);
 //                if (right == null) {
 //                    throw new IllegalArgumentException("no clade found");
 //                }
@@ -508,53 +511,43 @@ public class TreeAnnotator extends BaseTreeTool {
         return logCredibility;
     }
 
-    private SimpleNode buildHIPSTRTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
+    private SimpleNode buildHIPSTRTree(CladeSystem cladeSystem, Clade clade) {
         SimpleNode newNode = new SimpleNode();
-//        if (clade.size == 1) {
-//            newNode.setTaxon(clade.taxon);
-//        } else {
-//            newNode.addChild(buildHIPSTRTree(cladeSystem, clade.bestLeft));
-//            newNode.addChild(buildHIPSTRTree(cladeSystem, clade.bestRight));
-//        }
+        if (clade.getSize() == 1) {
+            newNode.setTaxon(clade.getTaxon());
+        } else {
+            newNode.addChild(buildHIPSTRTree(cladeSystem, clade.getBestLeft()));
+            newNode.addChild(buildHIPSTRTree(cladeSystem, clade.getBestRight()));
+        }
         return newNode;
     }
 
     private double scoreTree(Tree tree, CladeSystem cladeSystem) {
-        double[] logCladeCredibility = { 0.0 };
-        cladeSystem.getLogCladeCredibility(tree, tree.getRoot(), logCladeCredibility);
-        return logCladeCredibility[0];
+        return cladeSystem.getLogCladeCredibility(tree);
     }
 
-    public void annotateTree(MutableTree tree, NodeRef node, BitSet bits, CladeSystem cladeSystem, HeightsSummary heightsOption) {
+    public Clade annotateTree(MutableTree tree, NodeRef node, HeightsSummary heightsOption) {
 
-//        if (tree.isExternal(node)) {
-//
-////                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
-//            int index = node.getNumber();
-//            CladeSystem2.Clade clade = new CladeSystem2.Clade(index);
-//
-//            annotateNode(tree, node, clade, true, heightsOption);
-//        } else {
-//
-//            for (int i = 0; i < tree.getChildCount(node); i++) {
-//
-//                NodeRef node1 = tree.getChild(node, i);
-//
-//                annotateTree(tree, node1, bits2, cladeSystem, heightsOption);
-//            }
-//
-//            annotateNode(tree, node, bits2, false, cladeSystem, heightsOption);
-//        }
-//
-//        if (bits != null) {
-//            bits.or(bits2);
-//        }
+        Clade clade;
+        if (tree.isExternal(node)) {
+            int index = node.getNumber();
+            clade = new FastClade(index);
+            annotateNode(tree, node, clade, true, heightsOption);
+        } else {
+            assert tree.getChildCount(node) == 2;
+
+            Clade clade1 = annotateTree(tree, tree.getChild(node, 0), heightsOption);
+            Clade clade2 = annotateTree(tree, tree.getChild(node, 1), heightsOption);
+
+            clade = new FastClade(clade1, clade2, tree.getExternalNodeCount());
+
+            annotateNode(tree, node, clade, false, heightsOption);
+        }
+
+        return clade;
     }
 
-    private void annotateNode(MutableTree tree, NodeRef node, CladeSystem.Clade clade, boolean isTip, HeightsSummary heightsOption) {
-//        CladeSystem2.Clade clade = cladeSystem.getClade(bits);
-//        assert clade != null : "Clade missing?";
-
+    private void annotateNode(MutableTree tree, NodeRef node, Clade clade, boolean isTip, HeightsSummary heightsOption) {
         boolean filter = false;
         if (!isTip) {
             final double posterior = clade.getCredibility();
@@ -567,12 +560,12 @@ public class TreeAnnotator extends BaseTreeTool {
         int i = 0;
         for (String attributeName : attributeNames) {
 
-            if (clade.attributeValues != null && clade.attributeValues.size() > 0) {
-                double[] values = new double[clade.attributeValues.size()];
+            if (clade.getAttributeValues() != null && clade.getAttributeValues().size() > 0) {
+                double[] values = new double[clade.getAttributeValues().size()];
 
-                HashMap<Object, Integer> hashMap = new HashMap<Object, Integer>();
+                HashMap<Object, Integer> hashMap = new HashMap<>();
 
-                Object[] v = clade.attributeValues.get(0);
+                Object[] v = clade.getAttributeValues().get(0);
                 if (v[i] != null) {
 
                     final boolean isHeight = attributeName.equals("height");
@@ -606,7 +599,7 @@ public class TreeAnnotator extends BaseTreeTool {
                     if (isDoubleArray) {
                         lenArray = ((Object[]) v[i]).length;
 
-                        valuesArray = new double[lenArray][clade.attributeValues.size()];
+                        valuesArray = new double[lenArray][clade.getAttributeValues().size()];
                         minValueArray = new double[lenArray];
                         maxValueArray = new double[lenArray];
 
@@ -616,8 +609,8 @@ public class TreeAnnotator extends BaseTreeTool {
                         }
                     }
 
-                    for (int j = 0; j < clade.attributeValues.size(); j++) {
-                        Object value = clade.attributeValues.get(j)[i];
+                    for (int j = 0; j < clade.getAttributeValues().size(); j++) {
+                        Object value = clade.getAttributeValues().get(j)[i];
                         if (isDiscrete) {
                             final Object s = value;
                             if (hashMap.containsKey(s)) {
@@ -1281,7 +1274,7 @@ public class TreeAnnotator extends BaseTreeTool {
         new TreeAnnotator(burninTrees, burninStates, heights, posteriorLimit, hpd2D, computeESS, target, targetTreeFileName, inputFileName, outputFileName);
 
         if (target == Target.MAX_CLADE_CREDIBILITY) {
-            progressStream.println("Constructed Maximum Clade Credibility (MCC) tree - citation: " +
+            progressStream.println("Constructed Maximum FastClade Credibility (MCC) tree - citation: " +
                     "Drummond and Rambaut: 'BEAST: Bayesian evolutionary analysis by sampling trees', BMC Ecology and Evolution 2007, 7: 214.");
         } else if (target == Target.HIPSTR) {
             progressStream.println("Constructed Highest Independent Posterior Sub-Tree (HIPSTR) tree - citation: In prep.");
@@ -1290,7 +1283,7 @@ public class TreeAnnotator extends BaseTreeTool {
         }
 
         if (heights == HeightsSummary.CA_HEIGHTS) {
-            progressStream.println("\nUsed Clade Height option - citation: " +
+            progressStream.println("\nUsed FastClade Height option - citation: " +
                     "Heled and Bouckaert: 'Looking for trees in the forest: " +
                     "summary tree from posterior samples'. BMC Evolutionary Biology 2013 13:221.");
         }

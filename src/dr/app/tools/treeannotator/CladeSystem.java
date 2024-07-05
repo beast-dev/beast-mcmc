@@ -2,10 +2,11 @@ package dr.app.tools.treeannotator;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.util.Pair;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 /**
@@ -32,13 +33,13 @@ class CladeSystem {
     public CladeSystem(TreeAnnotator treeAnnotator, Tree targetTree) {
         this.treeAnnotator = treeAnnotator;
         this.targetTree = targetTree;
-        add(targetTree, true);
+        add(targetTree);
     }
 
     /**
      * adds all the clades in the tree
      */
-    public void add(Tree tree, boolean includeTips) {
+    public void add(Tree tree) {
         if (taxonList == null) {
             taxonList = tree;
         }
@@ -46,70 +47,59 @@ class CladeSystem {
         // Recurse over the tree and add all the clades (or increment their
         // frequency if already present). The root clade is added too (for
         // annotation purposes).
-        BitSet rootBits = addClades(tree, tree.getRoot(), includeTips);
-        rootClade = cladeMap.get(rootBits);
+        rootClade = addClades(tree, tree.getRoot());
+
+        assert tipClades.size() == tree.getExternalNodeCount();
     }
 
     public Clade getRootClade() {
         return rootClade;
     }
 
-    private BitSet addClades(Tree tree, NodeRef node, boolean includeTips) {
-
-        BitSet bits = new BitSet();
-
+    private Clade addClades(Tree tree, NodeRef node) {
+        Clade clade;
         if (tree.isExternal(node)) {
 
 //                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
             int index = node.getNumber();
-            bits.set(index);
-
-            if (includeTips) {
-                Clade clade = addClade(bits);
-                clade.taxon = tree.getNodeTaxon(node);
-            }
+            clade = new Clade(index);
+//                clade.taxon = tree.getNodeTaxon(node);
 
         } else {
 
-            List<BitSet> subClades = new ArrayList<BitSet>();
+            assert tree.getChildCount(node) == 2 : "requires a strictly bifurcating tree";
 
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-
-                NodeRef node1 = tree.getChild(node, i);
-                BitSet subClade = addClades(tree, node1, includeTips);
-                bits.or(subClade);
-                subClades.add(subClade);
-            }
-
-            Clade clade = addClade(bits);
-
-            if (subClades.size() != 2) {
-                throw new IllegalArgumentException("TreeAnnotator requires strictly bifurcating trees");
-            }
-            clade.addSubclades(subClades.get(0), subClades.get(1));
+            Clade clade1 = addClades(tree, tree.getChild(node, 0));
+            Clade clade2 = addClades(tree, tree.getChild(node, 1));
+            clade = new Clade(clade1, clade2, tree.getExternalNodeCount());
         }
 
-        return bits;
+        return addClade(clade);
     }
 
-    private Clade addClade(BitSet bits) {
-        Clade clade = cladeMap.get(bits);
-        if (clade == null) {
-            clade = new Clade(bits);
-            cladeMap.put(bits, clade);
+    private Clade addClade(Clade clade) {
+        if (clade.bits != null) {
+            Clade c = cladeMap.get(clade.hash);
+            if (c == null) {
+                cladeMap.put(clade.hash, clade);
+                c = clade;
+            }
+            assert c.size == clade.size;
+            c.setCount(c.getCount() + 1);
+            return c;
+        } else {
+            tipClades.add(clade);
+            return clade;
         }
-        clade.setCount(clade.getCount() + 1);
-
-        return clade;
     }
 
     public void collectAttributes(Tree tree) {
         collectAttributes(tree, tree.getRoot());
     }
 
-    private BitSet collectAttributes(Tree tree, NodeRef node) {
+    private Clade collectAttributes(Tree tree, NodeRef node) {
 
-        BitSet bits = new BitSet();
+        Clade clade;
 
         if (tree.isExternal(node)) {
 
@@ -118,29 +108,26 @@ class CladeSystem {
 //                    throw new IllegalArgumentException("Taxon, " + tree.getNodeTaxon(node).getId() + ", not found in target tree");
 //                }
             int index = node.getNumber();
-            bits.set(index);
+            clade = new Clade(index);
 
         } else {
+            assert tree.getChildCount(node) == 2;
 
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-
-                NodeRef node1 = tree.getChild(node, i);
-
-                bits.or(collectAttributes(tree, node1));
-            }
+            Clade clade1 = collectAttributes(tree, tree.getChild(node, 0));
+            Clade clade2 = collectAttributes(tree, tree.getChild(node, 1));
+            clade = new Clade(clade1, clade2, tree.getExternalNodeCount());
         }
 
-        collectAttributesForClade(bits, tree, node);
+        collectAttributesForClade(clade, tree, node);
 
-        return bits;
+        return clade;
     }
 
-    private void collectAttributesForClade(BitSet bits, Tree tree, NodeRef node) {
-        Clade clade = cladeMap.get(bits);
+    private void collectAttributesForClade(Clade clade, Tree tree, NodeRef node) {
         if (clade != null) {
 
             if (clade.attributeValues == null) {
-                clade.attributeValues = new ArrayList<Object[]>();
+                clade.attributeValues = new ArrayList<>();
             }
 
             int i = 0;
@@ -187,13 +174,13 @@ class CladeSystem {
         }
     }
 
-    public Map<BitSet, Clade> getCladeMap() {
-        return cladeMap;
-    }
-
-    public Clade getClade(BitSet bitSet) {
-        return cladeMap.get(bitSet);
-    }
+//    public Map<BitSet, Clade> getCladeMap() {
+//        return cladeMap;
+//    }
+//
+//    public Clade getClade(BitSet bitSet) {
+//        return cladeMap.get(bitSet);
+//    }
 
     public void calculateCladeCredibilities(int totalTreesUsed) {
         for (Clade clade : cladeMap.values()) {
@@ -208,79 +195,73 @@ class CladeSystem {
         }
     }
 
-    public double getLogCladeCredibility(Tree tree, NodeRef node, BitSet bits) {
+    public Clade getLogCladeCredibility(Tree tree, NodeRef node, double[] logCladeCredibility) {
 
-        double logCladeCredibility = 0.0;
+        Clade clade;
 
         if (tree.isExternal(node)) {
 
 //                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
             int index = node.getNumber();
-            bits.set(index);
+            clade = new Clade(index);
         } else {
 
-            BitSet bits2 = new BitSet();
-            for (int i = 0; i < tree.getChildCount(node); i++) {
+            assert tree.getChildCount(node) == 2;
 
-                NodeRef node1 = tree.getChild(node, i);
+            Clade clade1 = getLogCladeCredibility(tree, tree.getChild(node, 0), logCladeCredibility);
+            Clade clade2 = getLogCladeCredibility(tree, tree.getChild(node, 1), logCladeCredibility);
 
-                logCladeCredibility += getLogCladeCredibility(tree, node1, bits2);
-            }
+            clade = new Clade(clade1, clade2, tree.getExternalNodeCount());
 
-            logCladeCredibility += Math.log(getCladeCredibility(bits2));
-
-            if (bits != null) {
-                bits.or(bits2);
-            }
+            logCladeCredibility[0] += Math.log(getCladeCredibility(clade.hash));
         }
 
-        return logCladeCredibility;
+        return clade;
     }
 
-    private double getCladeCredibility(BitSet bits) {
-        Clade clade = cladeMap.get(bits);
-        if (clade == null) {
-            return 0.0;
-        }
+    private double getCladeCredibility(int hash) {
+        Clade clade = cladeMap.get(hash);
+        assert clade != null;
+//        if (clade == null) {
+//            return 0.0;
+//        }
         return clade.getCredibility();
     }
 
-    public BitSet removeClades(Tree tree, NodeRef node, boolean includeTips) {
+//    public BitSet removeClades(Tree tree, NodeRef node, boolean includeTips) {
+//
+//        BitSet bits = new BitSet();
+//
+//        if (tree.isExternal(node)) {
+//
+////                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+//            int index = node.getNumber();
+//            bits.set(index);
+//
+//                removeClade(bits);
+//
+//        } else {
+//
+//            for (int i = 0; i < tree.getChildCount(node); i++) {
+//
+//                NodeRef node1 = tree.getChild(node, i);
+//
+//                bits.or(removeClades(tree, node1, includeTips));
+//            }
+//
+//            removeClade(bits);
+//        }
+//
+//        return bits;
+//    }
 
-        BitSet bits = new BitSet();
-
-        if (tree.isExternal(node)) {
-
-//                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
-            int index = node.getNumber();
-            bits.set(index);
-
-            if (includeTips) {
-                removeClade(bits);
-            }
-
-        } else {
-
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-
-                NodeRef node1 = tree.getChild(node, i);
-
-                bits.or(removeClades(tree, node1, includeTips));
-            }
-
-            removeClade(bits);
-        }
-
-        return bits;
-    }
-
-    private void removeClade(BitSet bits) {
-        Clade clade = cladeMap.get(bits);
-        if (clade != null) {
-            clade.setCount(clade.getCount() - 1);
-        }
-
-    }
+//    private void removeClade(Clade clade) {
+//        clade.setCount(clade.getCount() - 1);
+//        if (clade.getCount() == 0) {
+//            cladeSet.remove(clade);
+//        }
+//
+//    }
 
     // Get tree clades as bitSets on target taxa
     // codes is an array of existing BitSet objects, which are reused
@@ -307,12 +288,98 @@ class CladeSystem {
         return inode;
     }
 
-    class Clade {
-        public Clade(BitSet bits) {
-            this.bits = bits;
+    public int getCladeCount() {
+        return cladeMap.keySet().size();
+    }
+
+    static class Clade {
+        public Clade(int index) {
+            this.index = index;
+
+            count = 0;
+            credibility = 1.0;
+            size = 1;
+            bits = null;
+            hash = index;
+        }
+
+        public Clade(Clade subClade1, Clade subClade2, int tipCount) {
             count = 0;
             credibility = 0.0;
-            size = bits.cardinality();
+            size = subClade1.size + subClade2.size;
+            index = -1;
+
+            bits = new byte[(tipCount / 8) + 1] ;
+            if (subClade1.bits == null) {
+                int byteIndex = subClade1.index / 8;
+                int bitMask = 1 << (subClade1.index % 8);
+                bits[byteIndex] = (byte) bitMask;
+            } else {
+                System.arraycopy(subClade1.bits, 0, bits, 0, subClade1.bits.length);
+            }
+
+            if (subClade2.bits == null) {
+                int byteIndex = subClade2.index / 8;
+                int bitMask = 1 << (subClade2.index % 8);
+                bits[byteIndex] |= (byte) bitMask;
+            } else {
+                for (int i = 0; i < bits.length; i++) {
+                    bits[i] |= subClade2.bits[i];
+                }
+            }
+
+//            Clade sc1, sc2;
+//            if (subClade1.index < subClade2.index) {
+//                index = subClade1.index;
+//                sc1 = subClade1;
+//                sc2 = subClade2;
+//            } else {
+//                index = subClade2.index;
+//                sc1 = subClade2;
+//                sc2 = subClade1;
+//            }
+//
+//            int maxIndex = Math.max(sc1.maxIndex(), sc2.maxIndex());
+//            bits = new byte[maxIndex - index + 1];
+//
+//            if (sc1.bits == null) {
+//                bits[0] = 0b10000000;
+//            } else {
+//                System.arraycopy(sc1.bits, 0, bits, 0, sc1.bits.length);
+//            }
+//
+//            if (sc2.bits == null) {
+//                bits[sc2.index - index] = 1;
+//            } else {
+//                for (int i = 0; i < sc2.bits.length; i++) {
+//                    bits[i + sc2.index - index] |= sc2.bits[i];
+//                }
+//            }
+
+            MessageDigest digest = null;
+            try {
+                digest = MessageDigest.getInstance("SHA-256");
+                byte[] encodedhash = digest.digest(bits);
+                hash = Arrays.hashCode(encodedhash);
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+
+        private int maxIndex() {
+            if (bits != null) {
+                return (index + bits.length - 1);
+            } else {
+                return index;
+            }
+        }
+
+        private int byteIndex(int index) {
+            return index >> 8;
+        }
+        private int bitIndex(int index) {
+            return index | 8;
         }
 
         public int getCount() {
@@ -331,44 +398,33 @@ class CladeSystem {
             this.credibility = credibility;
         }
 
-        public void addSubclades(BitSet subClade1, BitSet subClade2) {
-            if (this.subClades == null) {
-                this.subClades = new HashSet<>();
-            }
-            // Store the subclade with lowest first set bit index as the first of the pair to make
-            // sure the order is the same if the pair is the same.
-            if (subClade1.nextSetBit(0) < subClade2.nextSetBit(0)) {
-                this.subClades.add(new Pair<>(subClade1, subClade2));
-            } else {
-                this.subClades.add(new Pair<>(subClade2, subClade1));
-            }
-        }
-
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            final Clade clade = (Clade) o;
+            if (((Clade) o).size != size) return false;
 
-            return !(bits != null ? !bits.equals(clade.bits) : clade.bits != null);
+            return !(bits != null ? !Arrays.equals(bits, ((Clade) o).bits) : ((Clade) o).bits != null);
 
         }
 
         public int hashCode() {
-            return (bits != null ? bits.hashCode() : 0);
+            return hash;
         }
 
         public String toString() {
-            return "clade " + bits.toString();
+            return "clade " + hashCode();
         }
 
         int count;
         double credibility;
         final int size;
-        final BitSet bits;
-        Taxon taxon = null;
+        final byte[] bits;
+        final int index;
+
+        final int hash;
         List<Object[]> attributeValues = null;
-        Set<Pair<BitSet, BitSet>> subClades = null;
+        Set<Pair<Clade, Clade>> subClades = null;
         Clade bestLeft = null;
         Clade bestRight = null;
         double bestSubTreeCredibility;
@@ -378,7 +434,8 @@ class CladeSystem {
     // Private stuff
     //
     TaxonList taxonList = null;
-    Map<BitSet, Clade> cladeMap = new HashMap<>();
+    Set<Clade> tipClades = new HashSet<>();
+    Map<Integer, Clade> cladeMap = new HashMap<>();
 
     Clade rootClade;
 

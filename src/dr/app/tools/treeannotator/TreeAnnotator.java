@@ -42,7 +42,6 @@ import dr.inference.trace.TraceCorrelation;
 import dr.inference.trace.TraceType;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
-import dr.util.Pair;
 import dr.util.Version;
 import jam.console.ConsoleApplication;
 
@@ -144,7 +143,7 @@ public class TreeAnnotator extends BaseTreeTool {
         attributeNames.add("height");
         attributeNames.add("length");
 
-        CladeSystem2 cladeSystem = new CladeSystem2(this);
+        CladeSystem cladeSystem = new CladeSystem(this);
 
         int burnin = -1;
 
@@ -197,7 +196,7 @@ public class TreeAnnotator extends BaseTreeTool {
                         // if burnin has been specified in states, try to parse it out...
                         String name = tree.getId().trim();
 
-                        if (name != null && name.startsWith("STATE_")) {
+                        if (name.startsWith("STATE_")) {
                             state = Long.parseLong(name.split("_")[1]);
                             maxState = state;
                         }
@@ -214,7 +213,7 @@ public class TreeAnnotator extends BaseTreeTool {
                             burnin = totalTrees;
                         }
 
-                        cladeSystem.add(tree, true);
+                        cladeSystem.add(tree);
 
                         totalTreesUsed += 1;
                     }
@@ -257,7 +256,7 @@ public class TreeAnnotator extends BaseTreeTool {
                 progressStream.println("Ignoring first " + burninStates + " states (" + burnin + " trees).");
             }
 
-            progressStream.println("Total unique clades: " + cladeSystem.getCladeMap().keySet().size());
+            progressStream.println("Total unique clades: " + cladeSystem.getCladeCount());
             progressStream.println();
         }
 
@@ -317,7 +316,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
         // this call increments the clade counts and it shouldn't
         // this is remedied with removeClades call after while loop below
-        cladeSystem = new CladeSystem2(this, targetTree);
+        cladeSystem = new CladeSystem(this, targetTree);
         totalTreesUsed = 0;
         try {
             boolean firstTree = true;
@@ -341,7 +340,7 @@ public class TreeAnnotator extends BaseTreeTool {
                 counter++;
 
             }
-            cladeSystem.removeClades(targetTree, targetTree.getRoot(), true);
+//            cladeSystem.removeClades(targetTree, targetTree.getRoot(), true);
             //progressStream.println("totalTreesUsed=" + totalTreesUsed);
             cladeSystem.calculateCladeCredibilities(totalTreesUsed);
         } catch (Importer.ImportException e) {
@@ -359,7 +358,7 @@ public class TreeAnnotator extends BaseTreeTool {
             annotateTree(targetTree, targetTree.getRoot(), null, cladeSystem, heightsOption);
 
             if( heightsOption == HeightsSummary.CA_HEIGHTS ) {
-                setTreeHeightsByCA(targetTree, inputFileName, burnin);
+//                setTreeHeightsByCA(targetTree, inputFileName, burnin);
             }
         } catch (Exception e) {
             System.err.println("Error annotating tree: " + e.getMessage() + "\nPlease check the tree log file format.");
@@ -403,7 +402,7 @@ public class TreeAnnotator extends BaseTreeTool {
         }
     }
 
-    private Tree getMCCTree(int burnin, CladeSystem2 cladeSystem, String inputFileName)
+    private Tree getMCCTree(int burnin, CladeSystem cladeSystem, String inputFileName)
             throws IOException {
 
         long startTime = System.currentTimeMillis();
@@ -453,11 +452,11 @@ public class TreeAnnotator extends BaseTreeTool {
         return bestTree;
     }
 
-    private Tree getHIPSTRTree(CladeSystem2 cladeSystem) {
+    private Tree getHIPSTRTree(CladeSystem cladeSystem) {
 
         long startTime = System.currentTimeMillis();
 
-        CladeSystem2.Clade rootClade = cladeSystem.getRootClade();
+        CladeSystem.Clade rootClade = cladeSystem.getRootClade();
 
         credibilityCache.clear();
 
@@ -474,98 +473,98 @@ public class TreeAnnotator extends BaseTreeTool {
         return tree;
     }
 
-    private Map<CladeSystem2.Clade, Double> credibilityCache = new HashMap<>();
+    private Map<CladeSystem.Clade, Double> credibilityCache = new HashMap<>();
 
-    private double findHIPSTRTree(CladeSystem2 cladeSystem, CladeSystem2.Clade clade) {
+    private double findHIPSTRTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
 
         double logCredibility = Math.log(clade.credibility);
 
-        if (clade.size > 1) {
-            double bestLogCredibility = Double.NEGATIVE_INFINITY;
-
-            for (Pair<BitSet, BitSet> subClade : clade.subClades) {
-
-                CladeSystem2.Clade left = cladeSystem.getCladeMap().get(subClade.first);
-                if (left == null) {
-                    throw new IllegalArgumentException("no clade found");
-                }
-
-                double leftLogCredibility = credibilityCache.getOrDefault(left, Double.NaN);
-                if (Double.isNaN(leftLogCredibility)) {
-                    leftLogCredibility = findHIPSTRTree(cladeSystem, left);
-                    credibilityCache.put(left, leftLogCredibility);
-                }
-                CladeSystem2.Clade right = cladeSystem.getCladeMap().get(subClade.second);
-                if (right == null) {
-                    throw new IllegalArgumentException("no clade found");
-                }
-                double rightLogCredibility = credibilityCache.getOrDefault(right, Double.NaN);
-                if (Double.isNaN(rightLogCredibility)) {
-                    rightLogCredibility = findHIPSTRTree(cladeSystem, right);
-                    credibilityCache.put(right, rightLogCredibility);
-                }
-
-                if (leftLogCredibility + rightLogCredibility > bestLogCredibility) {
-                    bestLogCredibility = leftLogCredibility + rightLogCredibility;
-                    clade.bestLeft = left;
-                    clade.bestRight = right;
-                }
-            }
-
-            logCredibility += bestLogCredibility;
-            clade.bestSubTreeCredibility = logCredibility;
-
-        }
+//        if (clade.size > 1) {
+//            double bestLogCredibility = Double.NEGATIVE_INFINITY;
+//
+//            for (Pair<BitSet, BitSet> subClade : clade.subClades) {
+//
+//                CladeSystem2.Clade left = cladeSystem.getCladeMap().get(subClade.first);
+//                if (left == null) {
+//                    throw new IllegalArgumentException("no clade found");
+//                }
+//
+//                double leftLogCredibility = credibilityCache.getOrDefault(left, Double.NaN);
+//                if (Double.isNaN(leftLogCredibility)) {
+//                    leftLogCredibility = findHIPSTRTree(cladeSystem, left);
+//                    credibilityCache.put(left, leftLogCredibility);
+//                }
+//                CladeSystem2.Clade right = cladeSystem.getCladeMap().get(subClade.second);
+//                if (right == null) {
+//                    throw new IllegalArgumentException("no clade found");
+//                }
+//                double rightLogCredibility = credibilityCache.getOrDefault(right, Double.NaN);
+//                if (Double.isNaN(rightLogCredibility)) {
+//                    rightLogCredibility = findHIPSTRTree(cladeSystem, right);
+//                    credibilityCache.put(right, rightLogCredibility);
+//                }
+//
+//                if (leftLogCredibility + rightLogCredibility > bestLogCredibility) {
+//                    bestLogCredibility = leftLogCredibility + rightLogCredibility;
+//                    clade.bestLeft = left;
+//                    clade.bestRight = right;
+//                }
+//            }
+//
+//            logCredibility += bestLogCredibility;
+//            clade.bestSubTreeCredibility = logCredibility;
+//
+//        }
 
         return logCredibility;
     }
 
-    private SimpleNode buildHIPSTRTree(CladeSystem2 cladeSystem, CladeSystem2.Clade clade) {
+    private SimpleNode buildHIPSTRTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
         SimpleNode newNode = new SimpleNode();
-        if (clade.size == 1) {
-            newNode.setTaxon(clade.taxon);
-        } else {
-            newNode.addChild(buildHIPSTRTree(cladeSystem, clade.bestLeft));
-            newNode.addChild(buildHIPSTRTree(cladeSystem, clade.bestRight));
-        }
+//        if (clade.size == 1) {
+//            newNode.setTaxon(clade.taxon);
+//        } else {
+//            newNode.addChild(buildHIPSTRTree(cladeSystem, clade.bestLeft));
+//            newNode.addChild(buildHIPSTRTree(cladeSystem, clade.bestRight));
+//        }
         return newNode;
     }
 
-    private double scoreTree(Tree tree, CladeSystem2 cladeSystem) {
-        return cladeSystem.getLogCladeCredibility(tree, tree.getRoot(), null);
+    private double scoreTree(Tree tree, CladeSystem cladeSystem) {
+        double[] logCladeCredibility = { 0.0 };
+        cladeSystem.getLogCladeCredibility(tree, tree.getRoot(), logCladeCredibility);
+        return logCladeCredibility[0];
     }
 
-    public void annotateTree(MutableTree tree, NodeRef node, BitSet bits, CladeSystem2 cladeSystem, HeightsSummary heightsOption) {
+    public void annotateTree(MutableTree tree, NodeRef node, BitSet bits, CladeSystem cladeSystem, HeightsSummary heightsOption) {
 
-        BitSet bits2 = new BitSet();
-
-        if (tree.isExternal(node)) {
-
-//                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
-            int index = node.getNumber();
-            bits2.set(index);
-
-            annotateNode(tree, node, bits2, true, cladeSystem, heightsOption);
-        } else {
-
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-
-                NodeRef node1 = tree.getChild(node, i);
-
-                annotateTree(tree, node1, bits2, cladeSystem, heightsOption);
-            }
-
-            annotateNode(tree, node, bits2, false, cladeSystem, heightsOption);
-        }
-
-        if (bits != null) {
-            bits.or(bits2);
-        }
+//        if (tree.isExternal(node)) {
+//
+////                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+//            int index = node.getNumber();
+//            CladeSystem2.Clade clade = new CladeSystem2.Clade(index);
+//
+//            annotateNode(tree, node, clade, true, heightsOption);
+//        } else {
+//
+//            for (int i = 0; i < tree.getChildCount(node); i++) {
+//
+//                NodeRef node1 = tree.getChild(node, i);
+//
+//                annotateTree(tree, node1, bits2, cladeSystem, heightsOption);
+//            }
+//
+//            annotateNode(tree, node, bits2, false, cladeSystem, heightsOption);
+//        }
+//
+//        if (bits != null) {
+//            bits.or(bits2);
+//        }
     }
 
-    private void annotateNode(MutableTree tree, NodeRef node, BitSet bits, boolean isTip, CladeSystem2 cladeSystem, HeightsSummary heightsOption) {
-        CladeSystem2.Clade clade = cladeSystem.getClade(bits);
-        assert clade != null : "Clade missing?";
+    private void annotateNode(MutableTree tree, NodeRef node, CladeSystem.Clade clade, boolean isTip, HeightsSummary heightsOption) {
+//        CladeSystem2.Clade clade = cladeSystem.getClade(bits);
+//        assert clade != null : "Clade missing?";
 
         boolean filter = false;
         if (!isTip) {

@@ -1,7 +1,35 @@
+/*
+ * CladeSystem.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.app.tools.treeannotator;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.util.Pair;
 
@@ -18,20 +46,17 @@ class CladeSystem {
     // Public stuff
     //
 
-    private final TreeAnnotator treeAnnotator;
 
     /**
      *
      */
-    public CladeSystem(TreeAnnotator treeAnnotator) {
-        this.treeAnnotator = treeAnnotator;
+    public CladeSystem() {
     }
 
     /**
      *
      */
-    public CladeSystem(TreeAnnotator treeAnnotator, Tree targetTree) {
-        this.treeAnnotator = treeAnnotator;
+    public CladeSystem(Tree targetTree) {
         this.targetTree = targetTree;
         add(targetTree);
     }
@@ -93,11 +118,11 @@ class CladeSystem {
         }
     }
 
-    public void collectAttributes(Tree tree) {
-        collectAttributes(tree, tree.getRoot());
+    public void collectAttributes(Set<String> attributeNames, Tree tree) {
+        collectAttributes(attributeNames, tree, tree.getRoot());
     }
 
-    private Clade collectAttributes(Tree tree, NodeRef node) {
+    private Clade collectAttributes(Set<String> attributeNames, Tree tree, NodeRef node) {
 
         Clade clade;
 
@@ -113,26 +138,26 @@ class CladeSystem {
         } else {
             assert tree.getChildCount(node) == 2;
 
-            Clade clade1 = collectAttributes(tree, tree.getChild(node, 0));
-            Clade clade2 = collectAttributes(tree, tree.getChild(node, 1));
+            Clade clade1 = collectAttributes(attributeNames, tree, tree.getChild(node, 0));
+            Clade clade2 = collectAttributes(attributeNames, tree, tree.getChild(node, 1));
             clade = new Clade(clade1, clade2, tree.getExternalNodeCount());
         }
 
-        collectAttributesForClade(clade, tree, node);
+        collectAttributesForClade(attributeNames, clade, tree, node);
 
         return clade;
     }
 
-    private void collectAttributesForClade(Clade clade, Tree tree, NodeRef node) {
+    private void collectAttributesForClade(Set<String> attributeNames, Clade clade, Tree tree, NodeRef node) {
         if (clade != null) {
 
             if (clade.attributeValues == null) {
-                clade.attributeValues = new ArrayList<>();
+                clade.attributeValues = new ArrayList<Object[]>();
             }
 
             int i = 0;
-            Object[] values = new Object[treeAnnotator.attributeNames.size()];
-            for (String attributeName : treeAnnotator.attributeNames) {
+            Object[] values = new Object[attributeNames.size()];
+            for (String attributeName : attributeNames) {
                 boolean processed = false;
 
                 if (!processed) {

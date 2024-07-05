@@ -110,17 +110,6 @@ public class TreeAnnotator extends BaseTreeTool {
     /**
      * Burnin can be specified as the number of trees or the number of states
      * (one or other should be zero).
-     * @param burninTrees
-     * @param burninStates
-     * @param heightsOption
-     * @param posteriorLimit
-     * @param hpd2D
-     * @param computeESS
-     * @param targetOption
-     * @param targetTreeFileName
-     * @param inputFileName
-     * @param outputFileName
-     * @throws IOException
      */
     public TreeAnnotator(final int burninTrees,
                          final long burninStates,
@@ -143,7 +132,7 @@ public class TreeAnnotator extends BaseTreeTool {
         attributeNames.add("height");
         attributeNames.add("length");
 
-        CladeSystem cladeSystem = new CladeSystem(this);
+        CladeSystem cladeSystem = new CladeSystem();
 
         int burnin = -1;
 
@@ -316,7 +305,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
         // this call increments the clade counts and it shouldn't
         // this is remedied with removeClades call after while loop below
-        cladeSystem = new CladeSystem(this, targetTree);
+        cladeSystem = new CladeSystem(targetTree);
         totalTreesUsed = 0;
         try {
             boolean firstTree = true;
@@ -330,7 +319,7 @@ public class TreeAnnotator extends BaseTreeTool {
                         firstTree = false;
                     }
 
-                    cladeSystem.collectAttributes(tree);
+                    cladeSystem.collectAttributes(attributeNames, tree);
                     totalTreesUsed += 1;
                 }
                 if (counter > 0 && counter % stepSize == 0) {

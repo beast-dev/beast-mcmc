@@ -62,10 +62,17 @@ public class BeagleSequenceSimulator {
 	private boolean fieldsSet = false;
 	LinkedHashMap<Integer, LinkedHashMap<NodeRef, int[]>> partitionSequencesMap;
 //	private boolean outputAncestralSequences = true;
-	
+
+	private final String attributeName;
+
 	public BeagleSequenceSimulator(ArrayList<Partition> partitions) {
+		this(partitions, null);
+	}
+
+	public BeagleSequenceSimulator(ArrayList<Partition> partitions, String attributeName) {
 
 		this.partitions = partitions;
+		this.attributeName = attributeName;
 		this.alignment = new SimpleAlignment();
 		alignment.setReportCountStatistics(false);
 
@@ -239,7 +246,8 @@ public class BeagleSequenceSimulator {
 			Sequence sequence = Utils.intArray2Sequence(taxon, //
 					intSequence, //
 					gapFlag, //
-					dataType
+					dataType,
+					attributeName
 			);
 			
 //			sequence.setDataType(dataType);

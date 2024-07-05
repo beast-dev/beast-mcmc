@@ -1485,7 +1485,7 @@ public class AncestralSequenceAnnotator {
                         for (int j = 0; j < numElements; j++)
                             index[j] = alignment.getTaxonIndex("" + j);
 
-                        StringBuffer sb = new StringBuffer();
+                        StringBuilder sb = new StringBuilder();
                         support = new double[alignment.getPatternCount()];
 
 //						System.err.println(new dr.math.matrixAlgebra.Vector(weight));
@@ -1550,8 +1550,8 @@ public class AncestralSequenceAnnotator {
                 // Trim out gaps from consensus and support
 //				ArrayList<Double> newSupport = new ArrayList<Double>(support.length);
                 boolean noComma = true;
-                StringBuffer newSupport = new StringBuffer("{");
-                StringBuffer newSeq = new StringBuffer();
+                StringBuilder newSupport = new StringBuilder("{");
+                StringBuilder newSeq = new StringBuilder();
                 if (consensusSeq.length() != support.length) {
                     System.err.println("What happened here?");
                     System.exit(-1);

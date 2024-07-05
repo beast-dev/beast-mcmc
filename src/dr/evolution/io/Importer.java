@@ -40,6 +40,8 @@ import java.io.*;
  */
 public abstract class Importer {
 
+	private boolean isEOF;
+
 	public static class ImportException extends Exception {
 		/**
 		 *
@@ -116,16 +118,20 @@ public abstract class Importer {
 	 * Constructor
 	 */
 	public Importer(Reader reader) {
-		this.reader = new LineNumberReader(reader);
+//		this.reader = new LineNumberReader(reader);
+		this.reader = reader;
 		this.commentWriter = null;
+		isEOF = false;
 	}
 
 	public Importer(Reader reader, Writer commentWriter) {
-		this.reader = new LineNumberReader(reader);
+//		this.reader = new LineNumberReader(reader);
+		this.reader = reader;
 		this.commentWriter = commentWriter != null ? new BufferedWriter(commentWriter) : null;
+		isEOF = false;
 	}
 
-	public LineNumberReader getReader() {
+	public Reader getReader() {
 		return reader;
 	}
 
@@ -161,7 +167,11 @@ public abstract class Importer {
 	}
 
 	public int getLineNumber() {
-		return reader.getLineNumber();
+		if (reader instanceof LineNumberReader) {
+			return ((LineNumberReader)reader).getLineNumber();
+		} else {
+			return -1;
+		}
 	}
 
 	public int getLastDelimiter() {
@@ -207,6 +217,7 @@ public abstract class Importer {
 		if (lastChar == '\0') {
 			ch = reader.read();
 			if (ch <= 0) {
+				isEOF = true;
 				throw new EOFException();
 			}
 		} else {
@@ -226,7 +237,7 @@ public abstract class Importer {
 
 	public String readLine(boolean ignoreComments) throws IOException {
 
-		StringBuffer line = new StringBuffer();
+		StringBuilder line = new StringBuilder();
 
 		char ch = read();
 
@@ -257,6 +268,33 @@ public abstract class Importer {
 			lastDelimiter = ch;
 
 		} catch (EOFException e) {
+			isEOF = true;
+			// We catch an EOF and return the line we have so far
+		}
+
+		return line.toString();
+	}
+
+	public String readLineStart(String delimiters) throws IOException {
+
+		StringBuilder line = new StringBuilder();
+		
+		try {
+			char ch = read();
+
+			while (ch != '\n' && ch != '\r' && delimiters.indexOf(ch) == -1) {
+				line.append(ch);
+				ch = read();
+			}
+
+			lastDelimiter = ch;
+
+			while (ch != '\n' && ch != '\r') {
+				ch = read();
+			}
+
+		} catch (EOFException e) {
+			isEOF = true;
 			// We catch an EOF and return the line we have so far
 		}
 
@@ -265,12 +303,12 @@ public abstract class Importer {
 
 	/**
 	 * Reads sequences, skipping over any comments and filtering using dataType.
-	 * @param sequence a StringBuffer into which the sequences is put
+	 * @param sequence a StringBuilder into which the sequences is put
 	 * @param dataType the dataType of the sequences
 	 * @param delimiters list of characters that will stop the reading
 	 * @param maxSites maximum number of sites to read
 	 */
-	public void readSequence(StringBuffer sequence, DataType dataType, 
+	public void readSequence(StringBuilder sequence, DataType dataType,
 								String delimiters, int maxSites,
 								String gapCharacters, String missingCharacters,
 								String matchCharacters, String matchSequence) throws IOException, ImportException {
@@ -324,17 +362,18 @@ public abstract class Importer {
 			}
 
 		} catch (EOFException e) {
+			isEOF = true;
 			// We catch an EOF and return the sequences we have so far
 		}
 	}
 
 	/**
 	 * Reads a line of sequences, skipping over any comments and filtering using dataType.
-	 * @param sequence a StringBuffer into which the sequences is put
+	 * @param sequence a StringBuilder into which the sequences is put
 	 * @param dataType the dataType of the sequences
 	 * @param delimiters list of characters that will stop the reading
 	 */
-	public void readSequenceLine(StringBuffer sequence, DataType dataType,
+	public void readSequenceLine(StringBuilder sequence, DataType dataType,
 								String delimiters,
 								String gapCharacters, String missingCharacters,
 								String matchCharacters, String matchSequence) throws IOException, ImportException {
@@ -397,6 +436,7 @@ public abstract class Importer {
 			}
 
 		} catch (EOFException e) {
+			isEOF = true;
 			// We catch an EOF and return the sequences we have so far
 		}
 	}
@@ -421,6 +461,31 @@ public abstract class Importer {
 		String token = readToken(delimiters);
 		try {
 			return Integer.parseInt(token);
+		} catch (NumberFormatException nfe) {
+			throw new ImportException("Number format error: " + nfe.getMessage());
+		}
+	}
+
+	/**
+	 * Attempts to read and parse a long integer delimited by whitespace.
+	 */
+	public long readLong() throws IOException, ImportException {
+		String token = readToken();
+		try {
+			return Long.parseLong(token);
+		} catch (NumberFormatException nfe) {
+			throw new ImportException("Number format error: " + nfe.getMessage());
+		}
+	}
+
+	/**
+	 * Attempts to read and parse a long integer delimited by whitespace or by
+	 * any character in delimiters.
+	 */
+	public long readLong(String delimiters) throws IOException, ImportException {
+		String token = readToken(delimiters);
+		try {
+			return Long.parseLong(token);
 		} catch (NumberFormatException nfe) {
 			throw new ImportException("Number format error: " + nfe.getMessage());
 		}
@@ -478,7 +543,7 @@ public abstract class Importer {
 
 		nextCharacter();
 
-		StringBuffer token = new StringBuffer();
+		StringBuilder token = new StringBuilder();
 
 		while (!done) {
 			ch = read();
@@ -537,11 +602,12 @@ public abstract class Importer {
 				}
 			} catch (EOFException e) {
 				// We catch an EOF and return the token we have so far
+				isEOF = true;
 				done = true;
 			}
 		}
 
-		if (Character.isWhitespace((char)lastDelimiter)) {
+		if (!isEOF() && Character.isWhitespace((char)lastDelimiter)) {
 			ch = nextCharacter();
 			while (Character.isWhitespace(ch)) {
 				read();
@@ -557,6 +623,83 @@ public abstract class Importer {
 	}
 
 	/**
+	 * Skips over a token stopping when any whitespace, a comment or when any character
+	 * in delimiters is found. If the token begins with a quote char
+	 * then all characters will be included in token until a matching
+	 * quote is found (including whitespace or comments).
+	 * @ignoreComments if true this will not skip comment but just add them to the token.
+	 */
+	public void skipToken(String delimiters) throws IOException {
+		int space = 0;
+		char ch, ch2, quoteChar = '\0';
+		boolean done = false, first = true, quoted = false, isSpace;
+
+		nextCharacter();
+
+		while (!done) {
+			ch = read();
+
+			try {
+				isSpace = Character.isWhitespace(ch);
+
+				if (quoted && ch == quoteChar) { // Found the closing quote
+					ch2 = read();
+
+					if (ch != ch2) {
+						// otherwise it terminates the token
+
+						lastDelimiter = ' ';
+						unreadCharacter(ch2);
+						done = true;
+						quoted = false;
+					}
+				} else if (first && (ch == '\'' || ch == '"')) {
+					// if the opening character is a quote
+					// read everything up to the closing quote
+					quoted = true;
+					quoteChar = ch;
+					first = false;
+					space = 0;
+				} else {
+					if (quoted) {
+						// compress multiple spaces into one
+						if (isSpace) {
+							space++;
+							ch = ' ';
+						} else {
+							space = 0;
+						}
+
+					} else if (isSpace) {
+						lastDelimiter = ' ';
+						done = true;
+					} else if (delimiters.indexOf(ch) != -1) {
+						done = true;
+						lastDelimiter = ch;
+						first = false;
+					}
+				}
+			} catch (EOFException e) {
+				// We catch an EOF and return the token we have so far
+				isEOF = true;
+				done = true;
+			}
+		}
+
+		if (!isEOF() && Character.isWhitespace((char)lastDelimiter)) {
+			ch = nextCharacter();
+			while (Character.isWhitespace(ch)) {
+				read();
+				ch = nextCharacter();
+			}
+
+			if (delimiters.indexOf(ch) != -1) {
+				lastDelimiter = readCharacter();
+			}
+		}
+	}
+
+	/**
 	 * Skips over any comments. The opening comment delimiter is passed.
 	 */
 	protected void skipComments(char delimiter) throws IOException {
@@ -564,7 +707,7 @@ public abstract class Importer {
 		char ch;
 		int n=1;
 		boolean write = false;
-        StringBuffer meta = null;
+		StringBuilder meta = null;
 
 		if (nextCharacter() == writeComment) {
 			read();
@@ -572,7 +715,7 @@ public abstract class Importer {
 		} else if (nextCharacter() == metaComment) {
 			read();
             // combine two consecutive meta comments
-            meta = lastMetaComment!= null ? new StringBuffer(lastMetaComment + ";") : new StringBuffer();
+            meta = lastMetaComment!= null ? new StringBuilder(lastMetaComment + ";") : new StringBuilder();
 		}
 
         lastMetaComment = null;
@@ -611,13 +754,13 @@ public abstract class Importer {
 	/**
 	 * Skips to the end of the line. If a comment is found then this is read.
 	 */
-	public void skipToEndOfLine() throws IOException {
+	public void skipToEndOfLine(boolean ignoreComments) throws IOException {
 
 		char ch;
 
 		do {
 			ch = read();
-			if (hasComments) {
+			if (hasComments && !ignoreComments) {
 				if (ch == lineComment) {
 					skipComments(ch);
 					break;
@@ -681,7 +824,24 @@ public abstract class Importer {
 		return ch;
 	}
 
-    public String getLastMetaComment() {
+	/**
+	 * Skips over the file until a token is found. Returns
+	 * the delimiter found. Will skip comments and will ignore delimiters within
+	 * comments.
+	 */
+	public char skipUntilToken(String target, String delimiters) throws IOException {
+		String token;
+
+		do {
+			token = readToken(delimiters);
+		} while (!isEOF() && !token.equals(target) );
+
+		return (char)lastDelimiter;
+	}
+
+
+
+	public String getLastMetaComment() {
         return lastMetaComment;
     }
 
@@ -689,9 +849,13 @@ public abstract class Importer {
         lastMetaComment = null;
     }
 
+	public boolean isEOF() {
+		return isEOF;
+	}
+
 	// Private stuff
 
-	private LineNumberReader reader;
+	private Reader reader;
 	private BufferedWriter commentWriter = null;
 
 	private int lastChar = '\0';

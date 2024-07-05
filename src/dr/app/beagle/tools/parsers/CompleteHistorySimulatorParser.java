@@ -37,6 +37,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evoxml.AttributePatternsParser;
 import dr.inference.markovjumps.MarkovJumpsType;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -67,6 +68,8 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
     public static final String ANNOTATE_WITH_ALIGNMENT = "annotateWithAlignment";
 
     public static final String ALIGNMENT_ONLY = "alignmentOnly";
+
+    public static final String ATTRIBUTE = AttributePatternsParser.ATTRIBUTE;
     
     public String getParserName() {
         return HISTORY_SIMULATOR;
@@ -89,6 +92,9 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
 
         boolean sumAcrossSites = xo.getAttribute(SUM_SITES, false);
 
+
+        String attribute = xo.hasAttribute(ATTRIBUTE) ? xo.getStringAttribute(ATTRIBUTE): null;
+
         Parameter branchSpecificParameter = null;
         Parameter variableValueParameter = null;
 
@@ -99,7 +105,7 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
         }
 
         CompleteHistorySimulator history = new CompleteHistorySimulator(tree, siteModel, rateModel, nReplications,
-                sumAcrossSites, branchSpecificParameter, variableValueParameter);
+                sumAcrossSites, branchSpecificParameter, variableValueParameter, attribute);
 
         XMLObject cxo = xo.getChild(COUNTS);
         if (cxo != null) {
@@ -173,6 +179,7 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(SUM_SITES, true),
             AttributeRule.newBooleanRule(ANNOTATE_WITH_ALIGNMENT, true),
             AttributeRule.newBooleanRule(ALIGNMENT_ONLY, true),
+            AttributeRule.newStringRule(ATTRIBUTE, true),
             new ElementRule(BRANCH_SPECIFIC_SPECIFICATION, new XMLSyntaxRule[] {
                     new ElementRule(VARIABLE_VALUE_PARAMETER, Parameter.class),
                     new ElementRule(BRANCH_VARIABLE_PARAMETER, Parameter.class),

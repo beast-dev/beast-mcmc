@@ -30,6 +30,7 @@ package dr.app.beagle.tools;
 import dr.evolution.datatype.GeneralDataType;
 import dr.evolution.sequence.DelimitedSequence;
 import dr.evolution.tree.*;
+import dr.evolution.util.Taxon;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evolution.alignment.SimpleAlignment;
@@ -109,6 +110,8 @@ public class CompleteHistorySimulator extends SimpleAlignment
     private Map<Integer,Sequence> alignmentTraitList;
 
     private boolean alignmentOnly = false;
+
+    private final String attributeName;
     
     /**
      * Constructor
@@ -131,7 +134,8 @@ public class CompleteHistorySimulator extends SimpleAlignment
 
     public CompleteHistorySimulator(Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel,
                                     int nReplications, boolean sumAcrossSites,
-                                    Parameter branchVariableParameter, Parameter branchPossibleValuesParameter) {
+                                    Parameter branchVariableParameter, Parameter branchPossibleValuesParameter,
+                                    String attributeName) {
         
     	this.tree = tree;
         this.siteModel = siteModel;
@@ -146,6 +150,8 @@ public class CompleteHistorySimulator extends SimpleAlignment
 //			System.out.println("Codon models give exception when put inside report and when count statistics are done on them. "
 //							+ "You can supress this by setting alignmentOnly to true.");
 //		}
+
+        this.attributeName = attributeName;
          
         this.sumAcrossSites = sumAcrossSites;
 
@@ -439,7 +445,13 @@ public class CompleteHistorySimulator extends SimpleAlignment
             processHistory(child, histories);
 
             if (tree.getChildCount(child) == 0) {
-                alignment.addSequence(intArray2Sequence(seq, child));
+                Sequence sequence = intArray2Sequence(seq, child);
+                alignment.addSequence(sequence);
+
+                if (attributeName != null) {
+                    Taxon taxon = tree.getNodeTaxon(child);
+                    taxon.setAttribute(attributeName, sequence.getSequenceString());
+                }
             }
             traverse(tree.getChild(node, iChild), seq, category, alignment, lambda);
         }

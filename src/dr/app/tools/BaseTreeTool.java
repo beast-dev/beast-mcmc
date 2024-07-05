@@ -40,7 +40,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
-class BaseTreeTool {
+public class BaseTreeTool {
 
     static final String NAME_CONTENT = "nameContent";
 
@@ -200,7 +200,7 @@ class BaseTreeTool {
         return nameContentString != null && nameContentString.compareToIgnoreCase("true") == 0;
     }
 
-    protected static void centreLine(String line, int pageWidth) {
+    public static void centreLine(String line, int pageWidth) {
         centreLine(line, pageWidth, progressStream);
     }
 

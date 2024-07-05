@@ -55,6 +55,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
 import dr.evolution.datatype.HiddenDataType;
+import dr.evolution.sequence.DelimitedSequence;
 import dr.evolution.tree.TreeUtils;
 
 import dr.app.bss.test.AncestralSequenceTrait;
@@ -1266,7 +1267,7 @@ public class Utils {
 	}// END: printTaxonList
 
 	public static Sequence intArray2Sequence(Taxon taxon, int[] seq,
-			int gapFlag, DataType dataType) {
+			int gapFlag, DataType dataType, String attributeName) {
 
 		StringBuilder sSeq = new StringBuilder();
 		int partitionSiteCount = seq.length;
@@ -1294,11 +1295,14 @@ public class Utils {
 				if (state == gapFlag) {
 					sSeq.append(dataType.getCode(dataType.getGapState()));
 				} else {
-					if(dataType instanceof HiddenDataType){
+					if (dataType instanceof HiddenDataType) {
 						sSeq.append(dataType.getCode(seq[i] %
 								(dataType.getStateCount()/((HiddenDataType) dataType).getHiddenClassCount())));
-					}else{
+					} else {
 						sSeq.append(dataType.getCode(seq[i]));
+					}
+					if (dataType.isDelimited() && i < partitionSiteCount - 1) {
+						sSeq.append(dataType.getDelimiter());
 					}
 				}// END: gap check
 
@@ -1306,7 +1310,15 @@ public class Utils {
 
 		}// END: dataType check
 
-		return new Sequence(taxon, sSeq.toString());
+		Sequence sequence = dataType.isDelimited() ?
+				new DelimitedSequence(taxon, sSeq.toString(), dataType) :
+				new Sequence(taxon, sSeq.toString());
+
+		if (attributeName != null) {
+			taxon.setAttribute(attributeName, sequence.getSequenceString());
+		}
+
+		return sequence;
 	}// END: intArray2Sequence
 
 	// //////////////////////

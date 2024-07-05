@@ -629,7 +629,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                         }
                     }
 
-                    StringBuffer buffer = new StringBuffer();
+                    StringBuilder buffer = new StringBuilder();
                     readSequenceLine(buffer, dataType, ";", gapCharacters, missingCharacters,
                             matchCharacters, firstSequence);
                     String seqString = buffer.toString();
@@ -690,7 +690,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
                 sequence.setTaxon(taxon);
 
-                StringBuffer buffer = new StringBuffer();
+                StringBuilder buffer = new StringBuilder();
                 readSequence(buffer, dataType, ";", siteCount, gapCharacters,
                         missingCharacters, matchCharacters, firstSequence);
                 String seqString = buffer.toString();
@@ -735,7 +735,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
         do {
             String name = readToken(";").trim();
-            if (name.length() > 0) {
+            if (!name.isEmpty()) {
                 Taxon taxon = new Taxon(name);
                 taxa.addTaxon(taxon);
             }
@@ -1008,7 +1008,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                     if (scomment != null) {
                         // below is correct only if [&W] appears on it own
                         String c = scomment;
-                        while (c.length() > 0) {
+                        while (!c.isEmpty()) {
                             final char ch = c.charAt(0);
                             if (ch == ';') {
                                 c = c.substring(1);
@@ -1087,7 +1087,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
         if (getLastDelimiter() != ':' && getLastDelimiter() != ',' && getLastDelimiter() != ')') {
             String label = readToken(",():;");
-            if (label.length() > 0) {
+            if (!label.isEmpty()) {
                 branch.setAttribute("label", label);
             }
         }
@@ -1190,7 +1190,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
         Taxon taxon;
 
-        if (translationList.size() > 0) {
+        if (!translationList.isEmpty()) {
             taxon = translationList.get(label);
 
             if (taxon == null) {

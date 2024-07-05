@@ -146,7 +146,7 @@ public class GetAncestralSequenceFromSplitTrait {
                 State[] statesArray = states.values().toArray(new State[states.size()]);
                 Arrays.sort(statesArray);
                 /* Set the default length to the number of characters that it would need */
-                StringBuffer sb = new StringBuffer(statesArray.length * statesArray[0].getState().length());
+                StringBuilder sb = new StringBuilder(statesArray.length * statesArray[0].getState().length());
                 for(State s : statesArray) {
                     sb.append(s.getState());
                 }

@@ -40,7 +40,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
-class BaseTreeTool {
+public class BaseTreeTool {
 
     static final String NAME_CONTENT = "nameContent";
 

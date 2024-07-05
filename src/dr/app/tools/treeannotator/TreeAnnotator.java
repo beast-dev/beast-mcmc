@@ -28,6 +28,7 @@
 package dr.app.tools.treeannotator;
 
 import dr.app.beast.BeastVersion;
+import dr.app.tools.BaseTreeTool;
 import dr.app.tools.logcombiner.LogCombiner;
 import dr.app.tools.NexusExporter;
 import dr.app.util.Arguments;
@@ -60,7 +61,7 @@ import java.util.*;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class TreeAnnotator {
+public class TreeAnnotator extends BaseTreeTool {
 
     private final static Version version = new BeastVersion();
 
@@ -1382,11 +1383,6 @@ public class TreeAnnotator {
         progressStream.println();
         progressStream.println();
     }
-
-    public static void centreLine(String line, int pageWidth) {
-        centreLine(line, 60);
-    }
-
 
     public static void printUsage(Arguments arguments) {
 

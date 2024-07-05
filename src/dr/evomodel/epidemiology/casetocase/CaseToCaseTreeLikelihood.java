@@ -41,7 +41,7 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.evomodel.tree.TreeModel;
-import dr.oldevomodel.treelikelihood.AbstractTreeLikelihood;
+import dr.evomodel.treelikelihood.AbstractTreeLikelihood;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.Model;
@@ -130,10 +130,10 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                                     Parameter maxFirstInfToRoot) {
 
 
-        super(name, caseData, tree);
+        super(name, tree);
 
 
-        if(stateCount!=treeModel.getExternalNodeCount()){
+        if(caseData.getStateCount() != treeModel.getExternalNodeCount()){
             throw new RuntimeException("There are duplicate tip outbreak.");
         }
 

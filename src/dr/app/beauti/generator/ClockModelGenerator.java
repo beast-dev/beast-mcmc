@@ -28,7 +28,10 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.Parameter;
+import dr.app.beauti.options.PartitionClockModel;
+import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.types.ClockType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
@@ -37,39 +40,24 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.branchmodel.BranchSpecificBranchModelParser;
-import dr.evomodelxml.continuous.hmc.BranchRateGradientParser;
-import dr.evomodelxml.tree.TransformedTreeTraitParser;
-import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
-import dr.inference.distribution.DistributionLikelihood;
-import dr.inference.distribution.RandomField;
-import dr.inference.hmc.GradientWrtIncrement;
-import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.Likelihood;
-import dr.inference.model.StatisticParser;
-import dr.inferencexml.SignTransformParser;
-import dr.inferencexml.distribution.*;
-import dr.inferencexml.distribution.shrinkage.BayesianBridgeDistributionModelParser;
-import dr.inferencexml.hmc.GradientWrtIncrementParser;
-import dr.inferencexml.operators.shrinkage.BayesianBridgeShrinkageOperatorParser;
-import dr.oldevomodel.clock.RateEvolutionLikelihood;
 import dr.evomodelxml.branchratemodel.*;
-import dr.oldevomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.tree.RateCovarianceStatisticParser;
 import dr.evomodelxml.tree.RateStatisticParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.TaxaParser;
+import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.model.ParameterParser;
+import dr.inference.model.StatisticParser;
+import dr.inferencexml.SignTransformParser;
+import dr.inferencexml.distribution.*;
+import dr.inferencexml.distribution.shrinkage.BayesianBridgeDistributionModelParser;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.model.SumStatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
-import java.util.Map;
-
-import static dr.inference.model.ParameterParser.DIMENSION;
 import static dr.inference.model.ParameterParser.PARAMETER;
 import static dr.inferencexml.distribution.PriorParsers.*;
 import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.*;
@@ -396,70 +384,71 @@ public class ClockModelGenerator extends Generator {
                 break;
 
             case AUTOCORRELATED:
-                writer.writeComment("The autocorrelated relaxed clock (Rannala & Yang, 2007)");
-
-                tag = ACLikelihoodParser.AC_LIKELIHOOD;
-
-                attributes = new Attribute[]{
-                        new Attribute.Default<String>(XMLParser.ID, prefix + BranchRateModel.BRANCH_RATES),
-                        new Attribute.Default<String>("episodic", "false"),
-                        new Attribute.Default<String>("logspace", "true"),
-                };
-
-                writer.writeOpenTag(tag, attributes);
-                writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
-
-//                    if (!model.isEstimatedRate()) { //TODO move to options or panel select method
-//                        Parameter parameter = tree.getParameter(DefaultTreeModel.TREE_MODEL + "." + RateEvolutionLikelihood.ROOTRATE);//"treeModel.rootRate"
-//                        parameter.isFixed = true;
-//                        parameter.initial = model.getRate();
-//                    }
-
-                writer.writeOpenTag(RateEvolutionLikelihood.RATES,
-                        new Attribute[]{
-                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
-                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
-                                new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
-                        });
-                writer.writeTag(PARAMETER,
-                        new Attribute.Default<String>(XMLParser.ID, treePrefix + DefaultTreeModel.TREE_MODEL + "."
-                                + TreeModelParser.NODE_RATES), true);
-                writer.writeCloseTag(RateEvolutionLikelihood.RATES);
-
-                writer.writeOpenTag(RateEvolutionLikelihood.ROOTRATE,
-                        new Attribute[]{
-                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "true"),
-                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "false"),
-                                new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "false")
-                        });
-                writer.writeTag(PARAMETER,
-                        new Attribute.Default<String>(XMLParser.ID, treePrefix + DefaultTreeModel.TREE_MODEL + "."
-                                + RateEvolutionLikelihood.ROOTRATE), true);
-                writer.writeCloseTag(RateEvolutionLikelihood.ROOTRATE);
-                //                writeParameterRef("rates", treePrefix + "treeModel.nodeRates", writer);
-                //                writeParameterRef(RateEvolutionLikelihood.ROOTRATE, treePrefix + "treeModel.rootRate", writer);
-                writeParameter("variance", "branchRates.var", treeModel, writer);
-
-                writer.writeCloseTag(tag);
-
-//                    if (model.isEstimatedRate()) {//TODO
-                writer.writeText("");
-                writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.ID, treePrefix + DefaultTreeModel.TREE_MODEL
-                                + "." + "allRates")});
-                writer.writeIDref(PARAMETER, treePrefix + DefaultTreeModel.TREE_MODEL + "."
-                        + TreeModelParser.NODE_RATES);
-                writer.writeIDref(PARAMETER, treePrefix + DefaultTreeModel.TREE_MODEL + "."
-                        + RateEvolutionLikelihood.ROOTRATE);
-                writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
-//                    }
-
-                writeMeanRateStatistic(writer, tag, prefix, treePrefix);
-
-                writeCoefficientOfVariationStatistic(writer, tag, prefix, treePrefix);
-
-                writeCovarianceStatistic(writer, tag, prefix, treePrefix);
-
+                throw new UnsupportedOperationException("AC clock not implemented");
+//                writer.writeComment("The autocorrelated relaxed clock (Rannala & Yang, 2007)");
+//
+//                tag = ACLikelihoodParser.AC_LIKELIHOOD;
+//
+//                attributes = new Attribute[]{
+//                        new Attribute.Default<String>(XMLParser.ID, prefix + BranchRateModel.BRANCH_RATES),
+//                        new Attribute.Default<String>("episodic", "false"),
+//                        new Attribute.Default<String>("logspace", "true"),
+//                };
+//
+//                writer.writeOpenTag(tag, attributes);
+//                writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
+//
+////                    if (!model.isEstimatedRate()) { //TODO move to options or panel select method
+////                        Parameter parameter = tree.getParameter(DefaultTreeModel.TREE_MODEL + "." + RateEvolutionLikelihood.ROOTRATE);//"treeModel.rootRate"
+////                        parameter.isFixed = true;
+////                        parameter.initial = model.getRate();
+////                    }
+//
+//                writer.writeOpenTag(RateEvolutionLikelihood.RATES,
+//                        new Attribute[]{
+//                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
+//                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
+//                                new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
+//                        });
+//                writer.writeTag(PARAMETER,
+//                        new Attribute.Default<String>(XMLParser.ID, treePrefix + DefaultTreeModel.TREE_MODEL + "."
+//                                + TreeModelParser.NODE_RATES), true);
+//                writer.writeCloseTag(RateEvolutionLikelihood.RATES);
+//
+//                writer.writeOpenTag(RateEvolutionLikelihood.ROOTRATE,
+//                        new Attribute[]{
+//                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "true"),
+//                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "false"),
+//                                new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "false")
+//                        });
+//                writer.writeTag(PARAMETER,
+//                        new Attribute.Default<String>(XMLParser.ID, treePrefix + DefaultTreeModel.TREE_MODEL + "."
+//                                + RateEvolutionLikelihood.ROOTRATE), true);
+//                writer.writeCloseTag(RateEvolutionLikelihood.ROOTRATE);
+//                //                writeParameterRef("rates", treePrefix + "treeModel.nodeRates", writer);
+//                //                writeParameterRef(RateEvolutionLikelihood.ROOTRATE, treePrefix + "treeModel.rootRate", writer);
+//                writeParameter("variance", "branchRates.var", treeModel, writer);
+//
+//                writer.writeCloseTag(tag);
+//
+////                    if (model.isEstimatedRate()) {//TODO
+//                writer.writeText("");
+//                writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
+//                        new Attribute[]{new Attribute.Default<String>(XMLParser.ID, treePrefix + DefaultTreeModel.TREE_MODEL
+//                                + "." + "allRates")});
+//                writer.writeIDref(PARAMETER, treePrefix + DefaultTreeModel.TREE_MODEL + "."
+//                        + TreeModelParser.NODE_RATES);
+//                writer.writeIDref(PARAMETER, treePrefix + DefaultTreeModel.TREE_MODEL + "."
+//                        + RateEvolutionLikelihood.ROOTRATE);
+//                writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
+////                    }
+//
+//                writeMeanRateStatistic(writer, tag, prefix, treePrefix);
+//
+//                writeCoefficientOfVariationStatistic(writer, tag, prefix, treePrefix);
+//
+//                writeCovarianceStatistic(writer, tag, prefix, treePrefix);
+//                  break;
             case RANDOM_LOCAL_CLOCK: // 1 random local clock CANNOT have different tree models
                 writer.writeComment("The random local clock model (Drummond & Suchard, 2010)");
 
@@ -891,7 +880,7 @@ public class ClockModelGenerator extends Generator {
                 break;
 
             case AUTOCORRELATED:
-                tag = ACLikelihoodParser.AC_LIKELIHOOD;
+//                tag = ACLikelihoodParser.AC_LIKELIHOOD;
                 throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
 
             default:

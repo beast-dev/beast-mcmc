@@ -64,8 +64,6 @@ import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.operators.*;
 import dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser;
 import dr.inferencexml.operators.shrinkage.BayesianBridgeShrinkageOperatorParser;
-import dr.oldevomodel.substmodel.AbstractSubstitutionModel;
-import dr.oldevomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.util.Attribute;
 import dr.util.Transform;
 import dr.util.TransformParsers;
@@ -74,6 +72,8 @@ import dr.xml.XMLParser;
 import java.util.ArrayList;
 import java.util.List;
 
+import static dr.evomodel.substmodel.BaseSubstitutionModel.MODEL;
+import static dr.evomodelxml.substmodel.GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL;
 import static dr.inferencexml.distribution.PriorParsers.GAMMA_PRIOR;
 
 /**
@@ -437,7 +437,7 @@ public class OperatorsGenerator extends Generator {
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
         PartitionSubstitutionModel model = (PartitionSubstitutionModel) operator.getOptions();
-        writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, model.getPrefix() + AbstractSubstitutionModel.MODEL);
+        writer.writeIDref(GENERAL_SUBSTITUTION_MODEL, model.getPrefix() + MODEL);
         // <svsGeneralSubstitutionModel idref="originModel"/>
         writer.writeCloseTag(BitFlipInSubstitutionModelOperator.BIT_FLIP_OPERATOR);
     }

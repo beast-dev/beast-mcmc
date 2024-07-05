@@ -45,6 +45,7 @@ import java.util.Map;
  *
  * @author Joseph Heled
  *         Date: 25/05/2008
+ * @deprecated - StarBEAST is in BEAST2
  */
 public class SpeciesBindings extends AbstractModel {
     // all gene trees

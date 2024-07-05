@@ -31,8 +31,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
-import dr.evomodel.tree.TreeModel;
-import dr.oldevomodel.treelikelihood.AncestralStateTreeLikelihood;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -40,6 +38,8 @@ import dr.xml.*;
 
 import java.util.*;
 import java.util.logging.Logger;
+
+import static dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG;
 
 /**
  * Takes a TreeTraitProvider that returns multiple-site traits and provides a new Trait for logging by site
@@ -86,7 +86,7 @@ public class SplitBySiteTraitLogger extends TreeTraitProvider.Helper implements 
             }
         } else if (isIntegerArray) {
             for (int i = 0; i < length; ++i) {
-                if (traitName.compareTo(AncestralStateTreeLikelihood.STATES_KEY) == 0) {
+                if (traitName.compareTo(RECONSTRUCTION_TAG) == 0) {
                     partitionedTraits[i] = new TreeTrait.PickEntryI(trait, i) {
                         public String getTraitString(Tree tree, NodeRef node) {
                             int[] state = new int[1];

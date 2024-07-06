@@ -34,6 +34,7 @@ import dr.app.tools.NexusExporter;
 import dr.app.util.Arguments;
 import dr.evolution.io.*;
 import dr.evolution.tree.*;
+import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.geo.contouring.ContourMaker;
 import dr.geo.contouring.ContourPath;
@@ -57,16 +58,22 @@ import java.util.*;
  */
 public class TreeAnnotator extends BaseTreeTool {
 
-    private final static Version version = new BeastVersion();
+    private static final Version VERSION = new BeastVersion();
 
-    private final static boolean USE_R = false;
+    private static final boolean USE_R = false;
     private static final HeightsSummary DEFAULT_HEIGHTS_SUMMARY = HeightsSummary.MEAN_HEIGHTS;
     private static final boolean COUNT_TREES = true;
 
-    private static boolean forceIntegerToDiscrete = false;
-    private boolean computeESS = false;
+    private static final List<TreeAnnotationPlugin> plugins = new ArrayList<>();
 
-    private double maxState = 1;
+    private static PrintStream progressStream = System.err;
+
+    private static CladeSystem createCladeSystem() {
+        return new BiCladeSystem();
+    }
+    private static CladeSystem createCladeSystem(Tree targetTree) {
+        return new FastCladeSystem(targetTree);
+    }
 
     enum Target {
         MAX_CLADE_CREDIBILITY("Maximum clade credibility tree"),
@@ -101,14 +108,6 @@ public class TreeAnnotator extends BaseTreeTool {
         }
     }
 
-
-    // Messages to stderr, output to stdout
-    private static PrintStream progressStream = System.err;
-
-    private final String location1Attribute = "longLat1";
-    private final String location2Attribute = "longLat2";
-    private final String locationOutputAttribute = "location";
-
     /**
      * Burnin can be specified as the number of trees or the number of states
      * (one or other should be zero).
@@ -134,112 +133,28 @@ public class TreeAnnotator extends BaseTreeTool {
         attributeNames.add("height");
         attributeNames.add("length");
 
-        CladeSystem cladeSystem = new FastCladeSystem();
+        CladeSystem cladeSystem = createCladeSystem();
 
         int burnin = -1;
 
         totalTrees = 10000;
         totalTreesUsed = 0;
 
-        int taxonCount = -1;
-
         if (targetOption != Target.USER_TARGET_TREE) {
-            Reader reader;
-            TreeImporter importer;
-
-            long startTime, timeElapsed;
-
             if (COUNT_TREES) {
-                progressStream.println("Counting trees...");
-                reader = new BufferedReader(new FileReader(inputFileName));
-                importer = new BEASTTreesImporter(reader, false);
-                totalTrees = importer.countTrees();
-                reader.close();
-                progressStream.println("Total number of trees: " + totalTrees);
-                progressStream.println();
+                countTrees(inputFileName);
                 progressStream.println("Reading trees...");
             } else {
+                totalTrees = 10000;
                 progressStream.println("Reading trees (assuming 10,000 trees)...");
             }
 
-            long stepSize = totalTrees / 60;
-            if (stepSize < 1) stepSize = 1;
+            burnin = readTrees(inputFileName, burninTrees, burninStates, cladeSystem);
 
-            progressStream.println("0              25             50             75            100");
-            progressStream.println("|--------------|--------------|--------------|--------------|");
-
-            reader = new BufferedReader(new FileReader(inputFileName));
-//            importer = new BEASTTreesImporter(reader, true);
-            importer = new NexusImporter(reader, true);
-            startTime = System.currentTimeMillis();
-            try {
-                totalTrees = 0;
-                while (importer.hasTree()) {
-                    Tree tree = importer.importNextTree();
-
-                    if (taxonCount < 0) {
-                        taxonCount = tree.getTaxonCount();
-                    }
-
-                    long state = Long.MAX_VALUE;
-
-                    if (burninStates > 0) {
-                        // if burnin has been specified in states, try to parse it out...
-                        String name = tree.getId().trim();
-
-                        if (name.startsWith("STATE_")) {
-                            state = Long.parseLong(name.split("_")[1]);
-                            maxState = state;
-                        }
-//                        state = Long.parseLong(tree.getId());
-//                        maxState = state;
-                    }
-
-                    if (totalTrees >= burninTrees && state >= burninStates) {
-                        // if either of the two burnin thresholds have been reached...
-
-                        if (burnin < 0) {
-                            // if this is the first time this point has been reached,
-                            // record the number of trees this represents for future use...
-                            burnin = totalTrees;
-                        }
-
-                        cladeSystem.add(tree);
-
-                        totalTreesUsed += 1;
-                    }
-
-                    if (totalTrees > 0 && totalTrees % stepSize == 0) {
-                        progressStream.print("*");
-                        progressStream.flush();
-                    }
-                    totalTrees++;
-                }
-
-            } catch (Importer.ImportException e) {
-                System.err.println("Error Parsing Input Tree: " + e.getMessage());
-                System.exit(1);
-            }
-            reader.close();
-            timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
-            progressStream.println("* [" + timeElapsed + " secs]");
-            progressStream.println();
-
-            if (totalTrees < 1) {
-                System.err.println("No trees in input file");
-                System.exit(1);
-            }
-            if (totalTreesUsed < 1) {
-                if (burninTrees > 0 || burninStates > 0) {
-                    System.err.println("No trees to use: burnin greater than number of trees in input file");
-                    System.exit(1);
-                }
-            }
             cladeSystem.calculateCladeCredibilities(totalTreesUsed);
 
-
             progressStream.println("Total trees read: " + totalTrees);
-            progressStream.println("Size of trees: " + taxonCount + " tips");
+            progressStream.println("Size of trees: " + taxa.getTaxonCount() + " tips");
             if (burninTrees > 0) {
                 progressStream.println("Ignoring first " + burninTrees + " trees" +
                         (burninStates > 0 ? " (" + burninStates + " states)." : "." ));
@@ -256,24 +171,7 @@ public class TreeAnnotator extends BaseTreeTool {
         switch (targetOption) {
             case USER_TARGET_TREE: {
                 if (targetTreeFileName != null) {
-                    progressStream.println("Reading user specified target tree, " + targetTreeFileName);
-
-                    NexusImporter importer = new NexusImporter(new FileReader(targetTreeFileName));
-                    try {
-                        Tree tree = importer.importNextTree();
-                        if (tree == null) {
-                            NewickImporter x = new NewickImporter(new FileReader(targetTreeFileName));
-                            tree = x.importNextTree();
-                        }
-                        if (tree == null) {
-                            System.err.println("No tree in target nexus or newick file " + targetTreeFileName);
-                            System.exit(1);
-                        }
-                        targetTree = new FlexibleTree(tree);
-                    } catch (Importer.ImportException e) {
-                        System.err.println("Error Parsing Target Tree: " + e.getMessage());
-                        System.exit(1);
-                    }
+                    targetTree = readUserTargetTree(targetTreeFileName, targetTree);
                 } else {
                     System.err.println("No user target tree specified.");
                     System.exit(1);
@@ -293,6 +191,113 @@ public class TreeAnnotator extends BaseTreeTool {
             default: throw new IllegalArgumentException("Unknown targetOption");
         }
 
+        collectNodeAttributes(inputFileName, targetTree, burnin);
+
+        annotateTargetTree(heightsOption, targetTree);
+
+        writeAnnotatedTree(outputFileName, targetTree);
+
+        long timeElapsed =  (System.currentTimeMillis() - totalStartTime) / 1000;
+        progressStream.println("Total time: " + timeElapsed + " secs");
+        progressStream.println();
+
+    }
+
+    private void countTrees(String inputFileName) throws IOException {
+        progressStream.println("Counting trees...");
+        Reader reader = new BufferedReader(new FileReader(inputFileName));
+        TreeImporter importer = new BEASTTreesImporter(reader, false);
+        totalTrees = importer.countTrees();
+        reader.close();
+        progressStream.println("Total number of trees: " + totalTrees);
+        progressStream.println();
+    }
+
+    private int readTrees(String inputFileName, int burninTrees, long burninStates, CladeSystem cladeSystem) throws IOException {
+        long timeElapsed;
+        TreeImporter importer;
+        Reader reader;
+        long startTime;
+
+        int burnin = -1;
+
+        long stepSize = totalTrees / 60;
+        if (stepSize < 1) stepSize = 1;
+
+        progressStream.println("0              25             50             75            100");
+        progressStream.println("|--------------|--------------|--------------|--------------|");
+
+        reader = new BufferedReader(new FileReader(inputFileName));
+//            importer = new BEASTTreesImporter(reader, true);
+        importer = new NexusImporter(reader, true);
+        startTime = System.currentTimeMillis();
+        try {
+            totalTrees = 0;
+            while (importer.hasTree()) {
+                Tree tree = importer.importNextTree();
+
+                if (taxa == null) {
+                    taxa = new Taxa(tree);
+                }
+
+                long state = Long.MAX_VALUE;
+
+                if (burninStates > 0) {
+                    // if burnin has been specified in states, try to parse it out...
+                    String name = tree.getId().trim();
+
+                    if (name.startsWith("STATE_")) {
+                        state = Long.parseLong(name.split("_")[1]);
+                        maxState = state;
+                    }
+//                        state = Long.parseLong(tree.getId());
+//                        maxState = state;
+                }
+
+                if (totalTrees >= burninTrees && state >= burninStates) {
+                    // if either of the two burnin thresholds have been reached...
+
+                    if (burnin < 0) {
+                        // if this is the first time this point has been reached,
+                        // record the number of trees this represents for future use...
+                        burnin = totalTrees;
+                    }
+
+                    cladeSystem.add(tree);
+
+                    totalTreesUsed += 1;
+                }
+
+                if (totalTrees > 0 && totalTrees % stepSize == 0) {
+                    progressStream.print("*");
+                    progressStream.flush();
+                }
+                totalTrees++;
+            }
+
+        } catch (Importer.ImportException e) {
+            System.err.println("Error Parsing Input Tree: " + e.getMessage());
+            System.exit(1);
+        }
+        reader.close();
+        timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
+        progressStream.println("* [" + timeElapsed + " secs]");
+        progressStream.println();
+
+        if (totalTrees < 1) {
+            System.err.println("No trees in input file");
+            System.exit(1);
+        }
+        if (totalTreesUsed < 1) {
+            if (burninTrees > 0 || burninStates > 0) {
+                System.err.println("No trees to use: burnin greater than number of trees in input file");
+                System.exit(1);
+            }
+        }
+        return burnin;
+    }
+
+    private void collectNodeAttributes(String inputFileName, MutableTree targetTree, int burnin) throws IOException {
         progressStream.println("Collecting node information...");
         progressStream.println("0              25             50             75            100");
         progressStream.println("|--------------|--------------|--------------|--------------|");
@@ -308,7 +313,9 @@ public class TreeAnnotator extends BaseTreeTool {
 
         // this call increments the clade counts and it shouldn't
         // this is remedied with removeClades call after while loop below
-        cladeSystem = new FastCladeSystem(targetTree);
+        assert true : "Fix this issue";
+
+        CladeSystem cladeSystem = createCladeSystem(targetTree);
         totalTreesUsed = 0;
         try {
             boolean firstTree = true;
@@ -343,37 +350,6 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println("* [" + timeElapsed + " secs]");
         progressStream.println();
         reader.close();
-
-        progressStream.println("Annotating target tree...");
-
-        try {
-            annotateTree(targetTree, targetTree.getRoot(), heightsOption);
-
-            if( heightsOption == HeightsSummary.CA_HEIGHTS ) {
-//                setTreeHeightsByCA(targetTree, inputFileName, burnin);
-            }
-        } catch (Exception e) {
-            System.err.println("Error annotating tree: " + e.getMessage() + "\nPlease check the tree log file format.");
-            System.exit(1);
-        }
-
-        progressStream.println("Writing annotated tree....");
-
-        try {
-            final PrintStream stream = outputFileName != null ?
-                    new PrintStream(Files.newOutputStream(Paths.get(outputFileName))) :
-                    System.out;
-
-            new NexusExporter(stream).exportTree(targetTree);
-        } catch (Exception e) {
-            System.err.println("Error writing annotated tree file: " + e.getMessage());
-            System.exit(1);
-        }
-
-        timeElapsed =  (System.currentTimeMillis() - totalStartTime) / 1000;
-        progressStream.println("Total time: " + timeElapsed + " secs");
-        progressStream.println();
-
     }
 
     private void setupAttributes(Tree tree) {
@@ -392,6 +368,30 @@ public class TreeAnnotator extends BaseTreeTool {
             Set<String> claimed = plugin.setAttributeNames(attributeNames);
             attributeNames.removeAll(claimed);
         }
+    }
+
+    private MutableTree readUserTargetTree(String targetTreeFileName, MutableTree targetTree) throws IOException {
+        progressStream.println("Reading user specified target tree, " + targetTreeFileName + ", ...");
+
+        NexusImporter importer = new NexusImporter(new FileReader(targetTreeFileName));
+        try {
+            Tree tree = importer.importNextTree();
+            if (tree == null) {
+                NewickImporter x = new NewickImporter(new FileReader(targetTreeFileName));
+                tree = x.importNextTree();
+            }
+            if (tree == null) {
+                System.err.println("No tree in target nexus or newick file " + targetTreeFileName);
+                System.exit(1);
+            }
+            targetTree = new FlexibleTree(tree);
+        } catch (Importer.ImportException e) {
+            System.err.println("Error Parsing Target Tree: " + e.getMessage());
+            System.exit(1);
+        }
+
+        progressStream.println();
+        return targetTree;
     }
 
     private Tree getMCCTree(int burnin, CladeSystem cladeSystem, String inputFileName)
@@ -439,7 +439,8 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println("* [" + timeElapsed + " secs]");
         progressStream.println();
         progressStream.println("Best tree: " + bestTree.getId() + " (tree number " + bestTreeNumber + ")");
-        progressStream.println("Highest Log FastClade Credibility: " + bestScore);
+        progressStream.println("Highest Log Clade Credibility: " + bestScore);
+        progressStream.println();
 
         return bestTree;
     }
@@ -464,6 +465,40 @@ public class TreeAnnotator extends BaseTreeTool {
 
         return tree;
     }
+
+    private void annotateTargetTree(HeightsSummary heightsOption, MutableTree targetTree) {
+        progressStream.println("Annotating target tree...");
+
+        try {
+            annotateTree(targetTree, targetTree.getRoot(), heightsOption);
+
+            if( heightsOption == HeightsSummary.CA_HEIGHTS ) {
+                assert true : "Implement this";
+//                setTreeHeightsByCA(targetTree, inputFileName, burnin);
+            }
+        } catch (Exception e) {
+            System.err.println("Error annotating tree: " + e.getMessage() + "\nPlease check the tree log file format.");
+            System.exit(1);
+        }
+        progressStream.println();
+    }
+
+    private void writeAnnotatedTree(String outputFileName, MutableTree targetTree) {
+        progressStream.println("Writing annotated tree...");
+
+        try {
+            final PrintStream stream = outputFileName != null ?
+                    new PrintStream(Files.newOutputStream(Paths.get(outputFileName))) :
+                    System.out;
+
+            new NexusExporter(stream).exportTree(targetTree);
+        } catch (Exception e) {
+            System.err.println("Error writing annotated tree file: " + e.getMessage());
+            System.exit(1);
+        }
+        progressStream.println();
+    }
+
 
     private Map<FastClade, Double> credibilityCache = new HashMap<>();
 
@@ -993,23 +1028,30 @@ public class TreeAnnotator extends BaseTreeTool {
         }
     }
 
-
-
     int totalTrees = 0;
     int totalTreesUsed = 0;
     double posteriorLimit = 0.0;
     //PL:    double hpd2D = 0.80;
     double[] hpd2D = {0.80};
-    private final List<TreeAnnotationPlugin> plugins = new ArrayList<>();
 
     Set<String> attributeNames = new HashSet<String>();
     TaxonList taxa = null;
+    private static boolean forceIntegerToDiscrete = false;
+    private boolean computeESS = false;
+
+    private double maxState = 1;
+
+    // Messages to stderr, output to stdout
+
+    private final String location1Attribute = "longLat1";
+    private final String location2Attribute = "longLat2";
+    private final String locationOutputAttribute = "location";
 
     private final static boolean PROCESS_BIVARIATE_ATTRIBUTES = true;
 
     public static void printTitle() {
         progressStream.println();
-        centreLine("TreeAnnotator " + version.getVersionString() + ", " + version.getDateString(), 60);
+        centreLine("TreeAnnotator " + VERSION.getVersionString() + ", " + VERSION.getDateString(), 60);
         centreLine("MCMC Output analysis", 60);
         centreLine("by", 60);
         centreLine("Andrew Rambaut, Marc A. Suchard and Alexei J. Drummond", 60);
@@ -1086,9 +1128,9 @@ public class TreeAnnotator extends BaseTreeTool {
                 icon = new javax.swing.ImageIcon(url);
             }
 
-            final String versionString = version.getVersionString();
+            final String versionString = VERSION.getVersionString();
             String nameString = "TreeAnnotator " + versionString;
-            String aboutString = "<html><center><p>" + versionString + ", " + version.getDateString() + "</p>" +
+            String aboutString = "<html><center><p>" + versionString + ", " + VERSION.getDateString() + "</p>" +
                     "<p>by<br>" +
                     "Andrew Rambaut and Alexei J. Drummond</p>" +
                     "<p>Institute of Ecology and Evolution, University of Edinburgh<br>" +
@@ -1294,7 +1336,7 @@ public class TreeAnnotator extends BaseTreeTool {
     /**
      * @author Andrew Rambaut
      */
-    public static interface TreeAnnotationPlugin {
+    public interface TreeAnnotationPlugin {
         Set<String> setAttributeNames(Set<String> attributeNames);
 
         boolean handleAttribute(Tree tree, NodeRef node, String attributeName, double[] values);
@@ -1390,5 +1432,6 @@ public class TreeAnnotator extends BaseTreeTool {
 //
 //        return true;
 //    }
+
 }
 

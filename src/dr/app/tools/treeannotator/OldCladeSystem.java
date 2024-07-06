@@ -15,20 +15,16 @@ class OldCladeSystem implements CladeSystem {
     // Public stuff
     //
 
-    private final TreeAnnotator treeAnnotator;
-
     /**
      *
      */
-    public OldCladeSystem(TreeAnnotator treeAnnotator) {
-        this.treeAnnotator = treeAnnotator;
+    public OldCladeSystem() {
     }
 
     /**
      *
      */
-    public OldCladeSystem(TreeAnnotator treeAnnotator, Tree targetTree) {
-        this.treeAnnotator = treeAnnotator;
+    public OldCladeSystem(Tree targetTree) {
         this.targetTree = targetTree;
         add(targetTree, true);
     }
@@ -63,11 +59,6 @@ class OldCladeSystem implements CladeSystem {
 
     public Clade getRootClade() {
         return rootClade;
-    }
-
-    @Override
-    public void collectAttributes(Set<String> attributeNames, Tree tree) {
-
     }
 
     private BitSet addClades(Tree tree, NodeRef node) {
@@ -117,11 +108,12 @@ class OldCladeSystem implements CladeSystem {
         return clade;
     }
 
-    public void collectAttributes(Tree tree) {
-        collectAttributes(tree, tree.getRoot());
+    @Override
+    public void collectAttributes(Set<String> attributeNames, Tree tree) {
+        collectAttributes(attributeNames, tree, tree.getRoot());
     }
 
-    private BitSet collectAttributes(Tree tree, NodeRef node) {
+    private BitSet collectAttributes(Set<String> attributeNames, Tree tree, NodeRef node) {
 
         BitSet bits = new BitSet();
 
@@ -140,22 +132,22 @@ class OldCladeSystem implements CladeSystem {
 
                 NodeRef node1 = tree.getChild(node, i);
 
-                bits.or(collectAttributes(tree, node1));
+                bits.or(collectAttributes(attributeNames, tree, node1));
             }
         }
 
-        collectAttributesForClade(bits, tree, node);
+        collectAttributesForClade(attributeNames, bits, tree, node);
 
         return bits;
     }
 
-    private void collectAttributesForClade(BitSet bits, Tree tree, NodeRef node) {
+    private void collectAttributesForClade(Set<String> attributeNames, BitSet bits, Tree tree, NodeRef node) {
         Clade clade = cladeMap.get(bits);
         if (clade != null) {
 
             int i = 0;
-            Object[] values = new Object[treeAnnotator.attributeNames.size()];
-            for (String attributeName : treeAnnotator.attributeNames) {
+            Object[] values = new Object[attributeNames.size()];
+            for (String attributeName : attributeNames) {
                 boolean processed = false;
 
                 if (!processed) {

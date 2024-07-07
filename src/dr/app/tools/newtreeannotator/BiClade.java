@@ -42,7 +42,7 @@ class BiClade implements Clade {
      * Clade for a tip
      * @param index number of the tip
      */
-    public BiClade(int index) {
+    public BiClade(int index, Taxon taxon) {
         this.index = index;
 
         count = 0;
@@ -50,6 +50,8 @@ class BiClade implements Clade {
         size = 1;
 
         key = index;
+
+        this.taxon = taxon;
     }
 
     public BiClade(Clade child1, Clade child2) {
@@ -68,7 +70,9 @@ class BiClade implements Clade {
         index = left.index;
         addSubClades(left, right);
 
-        key = BiClade.getKey(left, right);
+        key = BiClade.makeKey(left.key, right.key);
+
+        this.taxon = null;
     }
 
     public void addSubClades(Clade child1, Clade child2) {
@@ -124,7 +128,7 @@ class BiClade implements Clade {
 
     @Override
     public Taxon getTaxon() {
-        return null;
+        return taxon;
     }
 
     @Override
@@ -146,17 +150,19 @@ class BiClade implements Clade {
         return key;
     }
 
-    public static Object getKey(BiClade child1, BiClade child2) {
+    public static Object makeKey(Object key1, Object key2) {
         BitSet bits = new BitSet();
-        if (child1.size == 1) {
-            bits.set(child1.index);
+        if (key1 instanceof Integer) {
+            bits.set((Integer) key1);
         } else {
-            bits.or((BitSet) child1.getKey());
+            assert key1 instanceof BitSet;
+            bits.or((BitSet) key1);
         }
-        if (child2.size == 1) {
-            bits.set(child2.index);
+        if (key2 instanceof Integer) {
+            bits.set((Integer) key2);
         } else {
-            bits.or((BitSet) child2.getKey());
+            assert key2 instanceof BitSet;
+            bits.or((BitSet) key2);
         }
         return bits;
     }
@@ -186,6 +192,7 @@ class BiClade implements Clade {
 
     private final Object key;
 
+    private final Taxon taxon;
 
     private final Set<Pair<BiClade, BiClade>> subClades = new HashSet<>();
      BiClade bestLeft = null;

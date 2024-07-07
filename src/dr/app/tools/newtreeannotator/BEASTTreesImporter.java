@@ -54,11 +54,17 @@ public class BEASTTreesImporter extends Importer implements TreeImporter {
     /**
      * @param reader A reader to a source containing a tree in Newick format
      */
-    public BEASTTreesImporter(Reader reader, boolean hasComments) {
+    public BEASTTreesImporter(Reader reader) {
         super(reader, false);
-        if (hasComments) {
-            setCommentDelimiters('[', ']', '\0', '\0', '&');
-        }
+        setCommentDelimiters('[', ']', '\0', '\0', '&');
+    }
+
+    /**
+     * @param reader A reader to a source containing a tree in Newick format
+     */
+    public BEASTTreesImporter(Reader reader, boolean processComments) {
+        super(reader, processComments);
+        setCommentDelimiters('[', ']', '\0', '\0', '&');
     }
 
     /**

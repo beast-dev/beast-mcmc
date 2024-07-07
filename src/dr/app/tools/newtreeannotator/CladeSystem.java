@@ -40,6 +40,8 @@ import java.util.Set;
  * @version $
  */
 final class CladeSystem {
+    private double treeCount = 0;
+
     /**
      * Constructor starting with an empty clade system
      */
@@ -60,12 +62,19 @@ final class CladeSystem {
             taxonList = tree;
         }
 
+        if (treeCount == 0) {
+            // these will always be the same so create them once
+            addTipClades(tree);
+        }
+
         // Recurse over the tree and add all the clades (or increment their
         // frequency if already present). The root clade is added too (for
         // annotation purposes).
         rootClade = addClades(tree, tree.getRoot());
 
         assert rootClade.getSize() == tree.getExternalNodeCount();
+
+        treeCount += 1;
     }
 
     public Clade getRootClade() {
@@ -73,13 +82,24 @@ final class CladeSystem {
     }
 
     /**
+     * add all the tips in a tree
+     */
+    private void addTipClades(Tree tree) {
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            NodeRef tip = tree.getExternalNode(i);
+            int index = tip.getNumber();
+            Clade clade = new BiClade(index, tree.getNodeTaxon(tip));
+            tipClades.put(index, clade);
+        }
+    }
+    /**
      * recursively add all the clades in a tree
      */
     private Clade addClades(Tree tree, NodeRef node) {
         Clade clade;
         if (tree.isExternal(node)) {
-            int index = node.getNumber();
-            clade = getOrAddClade(index);
+            // all tip clades should already be there
+            clade = tipClades.get(node.getNumber());
         } else {
             assert tree.getChildCount(node) == 2 : "requires a strictly bifurcating tree";
 
@@ -87,6 +107,7 @@ final class CladeSystem {
             Clade clade2 = addClades(tree, tree.getChild(node, 1));
             clade = getOrAddClade(clade1, clade2);
         }
+        assert clade != null;
 
         clade.setCount(clade.getCount() + 1);
 
@@ -94,22 +115,10 @@ final class CladeSystem {
     }
 
     /**
-     * see if a tip clade exists otherwise create it
-     */
-    private Clade getOrAddClade(int tipIndex) {
-        BiClade clade = (BiClade)tipClades.get(tipIndex);
-        if (clade == null) {
-            clade = new BiClade(tipIndex);
-            tipClades.put(tipIndex, clade);
-        }
-        return clade;
-    }
-
-    /**
      * see if a clade exists otherwise create it
      */
     private Clade getOrAddClade(Clade child1, Clade child2) {
-        BiClade clade = (BiClade)cladeMap.get(BiClade.getKey((BiClade) child1, (BiClade) child2));
+        BiClade clade = (BiClade)cladeMap.get(BiClade.makeKey(child1.getKey(), child2.getKey()));
         if (clade == null) {
             clade = new BiClade(child1, child2);
             cladeMap.put(clade.getKey(), clade);
@@ -126,66 +135,31 @@ final class CladeSystem {
         return cladeMap.get(key);
     }
 
-    public void collectAttributes(Set<String> attributeNames, Tree tree) {
-        collectAttributes(attributeNames, tree, tree.getRoot());
+    public void traverseTree(Tree tree, CladeAction action) {
+        traverseTree(tree, tree.getRoot(), action);
     }
 
-    private Clade collectAttributes(Set<String> attributeNames, Tree tree, NodeRef node) {
+    private Object traverseTree(Tree tree, NodeRef node, CladeAction action) {
 
-        Clade clade;
+        Object key;
 
         if (tree.isExternal(node)) {
-
-//                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
-//                if (index < 0) {
-//                    throw new IllegalArgumentException("Taxon, " + tree.getNodeTaxon(node).getId() + ", not found in target tree");
-//                }
-            int index = node.getNumber();
-            clade = new BiClade(index);
-
+            key = node.getNumber();
         } else {
             assert tree.getChildCount(node) == 2;
 
-            Clade clade1 = collectAttributes(attributeNames, tree, tree.getChild(node, 0));
-            Clade clade2 = collectAttributes(attributeNames, tree, tree.getChild(node, 1));
-            clade = new BiClade(clade1, clade2);
+            Object key1 = traverseTree(tree, tree.getChild(node, 0), action);
+            Object key2 = traverseTree(tree, tree.getChild(node, 1), action);
+
+            key = BiClade.makeKey(key1, key2);
         }
 
-        collectAttributesForClade(attributeNames, clade, tree, node);
-
-        return clade;
-    }
-
-    private void collectAttributesForClade(Set<String> attributeNames, Clade clade, Tree tree, NodeRef node) {
+        Clade clade = getClade(key);
         if (clade != null) {
-
-            int i = 0;
-            Object[] values = new Object[attributeNames.size()];
-            for (String attributeName : attributeNames) {
-                boolean processed = false;
-
-                if (!processed) {
-                    Object value;
-                    if (attributeName.equals("height")) {
-                        value = tree.getNodeHeight(node);
-                    } else if (attributeName.equals("length")) {
-                        value = tree.getBranchLength(node);
-                    } else {
-                        value = tree.getNodeAttribute(node, attributeName);
-                        if (value instanceof String && ((String) value).startsWith("\"")) {
-                            value = ((String) value).replaceAll("\"", "");
-                        }
-                    }
-
-                    values[i] = value;
-                }
-                i++;
-            }
-            clade.addAttributeValues(values);
-
-            //progressStream.println(clade + " " + clade.getValuesSize());
-            clade.setCount(clade.getCount() + 1);
+            action.actOnClade(clade, tree, node);
         }
+
+        return key;
     }
 
     public void calculateCladeCredibilities(int totalTreesUsed) {
@@ -198,39 +172,15 @@ final class CladeSystem {
     }
 
     public double getLogCladeCredibility(Tree tree) {
-        double[] logCladeCredibility = { 0.0 };
-        logCladeCredibility(tree, tree.getRoot(), logCladeCredibility);
+        final double[] logCladeCredibility = {0.0};
+        traverseTree(tree, new CladeAction() {
+            @Override
+            public void actOnClade(Clade clade, Tree tree, NodeRef node) {
+                logCladeCredibility[0] += Math.log(clade.getCredibility());
+            }
+        });
         return logCladeCredibility[0];
     }
-
-    private Clade logCladeCredibility(Tree tree, NodeRef node, double[] logCladeCredibility) {
-
-        Clade clade;
-
-        if (tree.isExternal(node)) {
-            int index = node.getNumber();
-            clade = new BiClade(index);
-        } else {
-
-            assert tree.getChildCount(node) == 2;
-
-            Clade clade1 = logCladeCredibility(tree, tree.getChild(node, 0), logCladeCredibility);
-            Clade clade2 = logCladeCredibility(tree, tree.getChild(node, 1), logCladeCredibility);
-
-            clade = new BiClade(clade1, clade2);
-
-            logCladeCredibility[0] += Math.log(getCladeCredibility(clade));
-        }
-
-        return clade;
-    }
-
-    private double getCladeCredibility(Clade keyClade) {
-        Clade clade = cladeMap.get(keyClade.getKey());
-        assert clade != null;
-        return clade.getCredibility();
-    }
-
 
     public int getCladeCount() {
         return cladeMap.keySet().size();

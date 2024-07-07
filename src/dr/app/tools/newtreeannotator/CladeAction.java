@@ -1,5 +1,5 @@
 /*
- * Clade.java
+ * CladeAction.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -27,35 +27,9 @@
 
 package dr.app.tools.newtreeannotator;
 
-import dr.evolution.util.Taxon;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 
-import java.util.List;
-
-/**
- * @author Andrew Rambaut
- * @version $
- */
-public interface Clade {
-    int getCount();
-
-    void setCount(int count);
-
-    double getCredibility();
-
-    void setCredibility(double credibility);
-
-    int getSize();
-
-    Taxon getTaxon();
-
-    Clade getBestLeft();
-
-    Clade getBestRight();
-
-    Object getKey();
-
-    void addAttributeValues(Object[] values);
-
-    List<Object[]> getAttributeValues();
-
+interface CladeAction {
+    void actOnClade(Clade clade, Tree tree, NodeRef node);
 }

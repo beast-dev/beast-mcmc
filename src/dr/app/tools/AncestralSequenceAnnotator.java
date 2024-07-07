@@ -1,7 +1,8 @@
 /*
  * AncestralSequenceAnnotator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.tools;
@@ -1484,7 +1486,7 @@ public class AncestralSequenceAnnotator {
                         for (int j = 0; j < numElements; j++)
                             index[j] = alignment.getTaxonIndex("" + j);
 
-                        StringBuffer sb = new StringBuffer();
+                        StringBuilder sb = new StringBuilder();
                         support = new double[alignment.getPatternCount()];
 
 //						System.err.println(new dr.math.matrixAlgebra.Vector(weight));
@@ -1549,8 +1551,8 @@ public class AncestralSequenceAnnotator {
                 // Trim out gaps from consensus and support
 //				ArrayList<Double> newSupport = new ArrayList<Double>(support.length);
                 boolean noComma = true;
-                StringBuffer newSupport = new StringBuffer("{");
-                StringBuffer newSeq = new StringBuffer();
+                StringBuilder newSupport = new StringBuilder("{");
+                StringBuilder newSeq = new StringBuilder();
                 if (consensusSeq.length() != support.length) {
                     System.err.println("What happened here?");
                     System.exit(-1);

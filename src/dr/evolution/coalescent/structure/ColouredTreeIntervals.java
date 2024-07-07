@@ -1,7 +1,8 @@
 /*
  * ColouredTreeIntervals.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.coalescent.structure;
@@ -38,7 +40,6 @@ import java.util.List;
 
 /**
  * @author Alexei Drummond
- * @version $Id: ColouredTreeIntervals.java,v 1.9 2005/12/08 13:48:41 rambaut Exp $
  */
 public class ColouredTreeIntervals implements StructuredIntervalList {
 

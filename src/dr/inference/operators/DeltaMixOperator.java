@@ -1,7 +1,8 @@
 /*
  * DeltaMixOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -34,7 +36,6 @@ import dr.math.MathUtils;
  * does not propose states outside the sum-constraints and thus does not require bounds checking on the proposed state
  *
  * @author Alexander V. Alekseyenko
- * @version $Id: DeltaMixOperator.java,v 1.6 2010/09/23 $
  */
 public class DeltaMixOperator extends AbstractAdaptableOperator {
 

@@ -1,7 +1,8 @@
 /*
  * DirichletProcessGibbsOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.antigenic;
@@ -39,7 +41,6 @@ import dr.xml.*;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id: DirichletProcessGibbsOperator.java,v 1.16 2005/06/14 10:40:34 rambaut Exp $
  */
 public class DirichletProcessGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
     public final static String DIRICHLET_PROCESS_OPERATOR = "dirichletProcessOperator";

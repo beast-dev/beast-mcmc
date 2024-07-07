@@ -25,7 +25,7 @@
  *
  */
 
-package dr.app.tools.treeannotator;
+package dr.app.tools.newtreeannotator;
 
 import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;

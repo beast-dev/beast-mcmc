@@ -1,4 +1,4 @@
-package dr.app.tools.newtreeannotator;
+package dr.app.tools.treeannotator;
 
 import dr.evolution.util.Taxon;
 import dr.util.Pair;

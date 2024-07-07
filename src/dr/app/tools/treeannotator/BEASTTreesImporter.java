@@ -25,7 +25,7 @@
  *
  */
 
-package dr.app.tools.newtreeannotator;
+package dr.app.tools.treeannotator;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.TreeImporter;
@@ -44,7 +44,7 @@ import java.util.*;
  *
  * @author Andrew Rambaut
  */
-class BEASTTreesImporter extends Importer implements TreeImporter {
+public class BEASTTreesImporter extends Importer implements TreeImporter {
     public static final String COMMENT = "comment";
     private String treeName = null;
 

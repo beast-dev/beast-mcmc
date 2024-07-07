@@ -25,7 +25,7 @@
  *
  */
 
-package dr.app.tools.newtreeannotator;
+package dr.app.tools.treeannotator;
 
 import dr.app.gui.components.RealNumberField;
 import dr.app.gui.FileDrop;
@@ -42,7 +42,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
 import java.io.File;
 
-class TreeAnnotatorDialog {
+public class TreeAnnotatorDialog {
 	private JFrame frame;
 
 	private OptionsPanel optionPanel;

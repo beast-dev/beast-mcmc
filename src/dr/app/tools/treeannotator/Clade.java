@@ -1,6 +1,7 @@
-package dr.app.tools.newtreeannotator;
+package dr.app.tools.treeannotator;
 
 import dr.evolution.util.Taxon;
+import dr.util.FrequencySet;
 
 import java.util.List;
 
@@ -8,7 +9,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @version $
  */
-interface Clade {
+public interface Clade {
     int getCount();
 
     void setCount(int count);

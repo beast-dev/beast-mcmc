@@ -25,7 +25,7 @@
  *
  */
 
-package dr.app.tools.newtreeannotator;
+package dr.app.tools.treeannotator;
 
 import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
@@ -35,7 +35,7 @@ import dr.util.Pair;
 import java.util.HashMap;
 import java.util.Map;
 
-class HIPSTRTreeBuilder {
+public class HIPSTRTreeBuilder {
     private Map<Clade, Double> credibilityCache = new HashMap<>();
 
     public Tree getHIPSTRTree(CladeSystem cladeSystem) {

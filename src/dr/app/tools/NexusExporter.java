@@ -145,7 +145,11 @@ public class NexusExporter implements TreeExporter {
     public void exportTree(Tree tree) {
         Map<String, Integer> idMap = writeNexusHeader(tree);
         out.println("\t\t;");
-        writeNexusTree(tree, treePrefix + 1, true, idMap);
+        String name = treePrefix + 1;
+        if (tree.getId() != null) {
+            name = tree.getId();
+        }
+        writeNexusTree(tree, name, true, idMap);
         out.println("End;");
     }
 

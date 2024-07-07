@@ -51,10 +51,7 @@ import dr.util.Version;
 import jam.console.ConsoleApplication;
 
 import javax.swing.*;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -67,6 +64,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
     private final static boolean USE_R = false;
     private static final HeightsSummary DEFAULT_HEIGHTS_SUMMARY = HeightsSummary.MEAN_HEIGHTS;
+    private static final boolean COUNT_TREES = true;
 
     private static boolean forceIntegerToDiscrete = false;
     private boolean computeESS = false;
@@ -117,17 +115,6 @@ public class TreeAnnotator extends BaseTreeTool {
     /**
      * Burnin can be specified as the number of trees or the number of states
      * (one or other should be zero).
-     * @param burninTrees
-     * @param burninStates
-     * @param heightsOption
-     * @param posteriorLimit
-     * @param hpd2D
-     * @param computeESS
-     * @param targetOption
-     * @param targetTreeFileName
-     * @param inputFileName
-     * @param outputFileName
-     * @throws IOException
      */
     public TreeAnnotator(final int burninTrees,
                          final long burninStates,
@@ -140,6 +127,8 @@ public class TreeAnnotator extends BaseTreeTool {
                          String inputFileName,
                          String outputFileName
     ) throws IOException {
+
+        long totalStartTime = System.currentTimeMillis();
 
         this.posteriorLimit = posteriorLimit;
         this.hpd2D = hpd2D;
@@ -155,20 +144,39 @@ public class TreeAnnotator extends BaseTreeTool {
         totalTrees = 10000;
         totalTreesUsed = 0;
 
-        progressStream.println("Reading trees (bar assumes 10,000 trees)...");
-        progressStream.println("0              25             50             75            100");
-        progressStream.println("|--------------|--------------|--------------|--------------|");
-
-        long stepSize = totalTrees / 60;
-        if (stepSize < 1) stepSize = 1;
-
         int taxonCount = -1;
 
         if (targetOption != Target.USER_TARGET_TREE) {
-            cladeSystem = new CladeSystem();
-            FileReader fileReader = new FileReader(inputFileName);
-            TreeImporter importer = new NexusImporter(fileReader, true);
-            long startTime = System.currentTimeMillis();
+            Reader reader;
+            TreeImporter importer;
+
+            long startTime, timeElapsed;
+
+            if (COUNT_TREES) {
+                progressStream.println("Counting trees...");
+                reader = new BufferedReader(new FileReader(inputFileName));
+                // BEASTTreesImporter has a very fast tree counter...
+                importer = new BEASTTreesImporter(reader, false);
+                totalTrees = importer.countTrees();
+                reader.close();
+                progressStream.println("Total number of trees: " + totalTrees);
+                progressStream.println();
+                progressStream.println("Reading trees...");
+            } else {
+                progressStream.println("Reading trees (assuming 10,000 trees)...");
+            }
+
+            long stepSize = totalTrees / 60;
+            if (stepSize < 1) stepSize = 1;
+
+            progressStream.println("0              25             50             75            100");
+            progressStream.println("|--------------|--------------|--------------|--------------|");
+
+            reader = new BufferedReader(new FileReader(inputFileName));
+            // ignoreMetaComments speeds things up when you don't need annotations (i.e.,
+            // for this initial read to get clade frequencies)...
+            importer = new NexusImporter(reader, true);
+            startTime = System.currentTimeMillis();
             try {
                 totalTrees = 0;
                 while (importer.hasTree()) {
@@ -184,7 +192,7 @@ public class TreeAnnotator extends BaseTreeTool {
                         // if burnin has been specified in states, try to parse it out...
                         String name = tree.getId().trim();
 
-                        if (name != null && name.length() > 0 && name.startsWith("STATE_")) {
+                        if (name.startsWith("STATE_")) {
                             state = Long.parseLong(name.split("_")[1]);
                             maxState = state;
                         }
@@ -215,8 +223,8 @@ public class TreeAnnotator extends BaseTreeTool {
                 System.err.println("Error Parsing Input Tree: " + e.getMessage());
                 System.exit(1);
             }
-            fileReader.close();
-            long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
+            reader.close();
+            timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
             progressStream.println("* [" + timeElapsed + " secs]");
             progressStream.println();
 
@@ -292,7 +300,7 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println("0              25             50             75            100");
         progressStream.println("|--------------|--------------|--------------|--------------|");
 
-        stepSize = totalTrees / 60;
+        long stepSize = totalTrees / 60;
         if (stepSize < 1) stepSize = 1;
 
         FileReader fileReader = new FileReader(inputFileName);
@@ -363,6 +371,10 @@ public class TreeAnnotator extends BaseTreeTool {
             System.err.println("Error to write annotated tree file: " + e.getMessage());
             System.exit(1);
         }
+
+        timeElapsed =  (System.currentTimeMillis() - totalStartTime) / 1000;
+        progressStream.println("Total time: " + timeElapsed + " secs");
+        progressStream.println();
 
     }
 
@@ -783,7 +795,7 @@ public class TreeAnnotator extends BaseTreeTool {
             int i = 0;
             for (String attributeName : attributeNames) {
 
-                if (clade.attributeValues != null && clade.attributeValues.size() > 0) {
+            if (clade.attributeValues != null && !clade.attributeValues.isEmpty()) {
                     double[] values = new double[clade.attributeValues.size()];
 
                     HashMap<Object, Integer> hashMap = new HashMap<Object, Integer>();
@@ -1371,11 +1383,15 @@ public class TreeAnnotator extends BaseTreeTool {
         centreLine("TreeAnnotator " + version.getVersionString() + ", " + version.getDateString(), 60);
         centreLine("MCMC Output analysis", 60);
         centreLine("by", 60);
-        centreLine("Andrew Rambaut and Alexei J. Drummond", 60);
+        centreLine("Andrew Rambaut, Marc A. Suchard and Alexei J. Drummond", 60);
         progressStream.println();
         centreLine("Institute of Ecology and Evolution", 60);
         centreLine("University of Edinburgh", 60);
         centreLine("a.rambaut@ed.ac.uk", 60);
+        progressStream.println();
+        centreLine("David Geffen School of Medicine", 60);
+        centreLine("University of California, Los Angeles", 60);
+        centreLine("msuchard@ucla.edu", 60);
         progressStream.println();
         centreLine("Department of Computer Science", 60);
         centreLine("University of Auckland", 60);

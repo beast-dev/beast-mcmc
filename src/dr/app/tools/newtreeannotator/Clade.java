@@ -48,6 +48,7 @@ public interface Clade {
 
     Taxon getTaxon();
 
+    int getIndex();
     Clade getBestLeft();
 
     Clade getBestRight();

@@ -32,4 +32,6 @@ import dr.evolution.tree.Tree;
 
 interface CladeAction {
     void actOnClade(Clade clade, Tree tree, NodeRef node);
+
+    boolean expectAllClades();
 }

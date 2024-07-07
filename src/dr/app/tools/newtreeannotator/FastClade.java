@@ -186,6 +186,11 @@ class FastClade implements Clade {
     }
 
     @Override
+    public int getIndex() {
+        return index;
+    }
+
+    @Override
     public Clade getBestLeft() {
         return bestLeft;
     }

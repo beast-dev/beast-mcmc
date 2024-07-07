@@ -100,6 +100,7 @@ final class CladeSystem {
         if (tree.isExternal(node)) {
             // all tip clades should already be there
             clade = tipClades.get(node.getNumber());
+            assert clade.getTaxon().equals(tree.getNodeTaxon(node));
         } else {
             assert tree.getChildCount(node) == 2 : "requires a strictly bifurcating tree";
 
@@ -157,6 +158,8 @@ final class CladeSystem {
         Clade clade = getClade(key);
         if (clade != null) {
             action.actOnClade(clade, tree, node);
+        } else {
+            assert action.expectAllClades();
         }
 
         return key;
@@ -177,6 +180,11 @@ final class CladeSystem {
             @Override
             public void actOnClade(Clade clade, Tree tree, NodeRef node) {
                 logCladeCredibility[0] += Math.log(clade.getCredibility());
+            }
+
+            @Override
+            public boolean expectAllClades() {
+                return true;
             }
         });
         return logCladeCredibility[0];

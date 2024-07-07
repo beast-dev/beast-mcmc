@@ -50,32 +50,30 @@ class CollectionAction implements CladeAction {
         collectAttributesForClade(clade, attributeNames, tree, node);
     }
 
+    @Override
+    public boolean expectAllClades() {
+        return true;
+    }
+
     private void collectAttributesForClade(Clade clade, Set<String> attributeNames, Tree tree, NodeRef node) {
-        if (clade != null) {
-
-            int i = 0;
-            Object[] values = new Object[attributeNames.size()];
-            for (String attributeName : attributeNames) {
-                boolean processed = false;
-
-                if (!processed) {
-                    Object value;
-                    if (attributeName.equals("height")) {
-                        value = tree.getNodeHeight(node);
-                    } else if (attributeName.equals("length")) {
-                        value = tree.getBranchLength(node);
-                    } else {
-                        value = tree.getNodeAttribute(node, attributeName);
-                        if (value instanceof String && ((String) value).startsWith("\"")) {
-                            value = ((String) value).replaceAll("\"", "");
-                        }
-                    }
-
-                    values[i] = value;
+        int i = 0;
+        Object[] values = new Object[attributeNames.size()];
+        for (String attributeName : attributeNames) {
+            Object value;
+            if (attributeName.equals("height")) {
+                value = tree.getNodeHeight(node);
+            } else if (attributeName.equals("length")) {
+                value = tree.getBranchLength(node);
+            } else {
+                value = tree.getNodeAttribute(node, attributeName);
+                if (value instanceof String && ((String) value).startsWith("\"")) {
+                    value = ((String) value).replaceAll("\"", "");
                 }
-                i++;
             }
-            clade.addAttributeValues(values);
+
+            values[i] = value;
+            i++;
         }
+        clade.addAttributeValues(values);
     }
 }

@@ -196,15 +196,17 @@ public class TreeAnnotator extends BaseTreeTool {
             }
             case HIPSTR: {
                 progressStream.println("Finding highest independent posterior subtree reconstruction (HIPSTR) tree...");
-                targetTree = new FlexibleTree(getHIPSTRTree(cladeSystem));
+                targetTree = getHIPSTRTree(cladeSystem);
                 break;
             }
             default: throw new IllegalArgumentException("Unknown targetOption");
         }
 
-        collectNodeAttributes(inputFileName, targetTree, burnin);
+        CladeSystem targetCladeSystem = new CladeSystem(targetTree);
 
-        annotateTargetTree(cladeSystem, heightsOption, targetTree);
+        collectNodeAttributes(targetCladeSystem, inputFileName, burnin);
+
+        annotateTargetTree(targetCladeSystem, heightsOption, targetTree);
 
         writeAnnotatedTree(outputFileName, targetTree);
 
@@ -226,7 +228,6 @@ public class TreeAnnotator extends BaseTreeTool {
 
     private int readTrees(String inputFileName, int burninTrees, long burninStates, CladeSystem cladeSystem) throws IOException {
         long timeElapsed;
-        TreeImporter importer;
         Reader reader;
         long startTime;
 
@@ -238,20 +239,20 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println("0              25             50             75            100");
         progressStream.println("|--------------|--------------|--------------|--------------|");
 
-        reader = new BufferedReader(new FileReader(inputFileName));
-//        importer = new BEASTTreesImporter(reader);
-        importer = new NexusImporter(reader, true);
         startTime = System.currentTimeMillis();
+
+        reader = new BufferedReader(new FileReader(inputFileName));
+//        TreeImporter importer = new BEASTTreesImporter(reader);
+        NexusImporter importer = new NexusImporter(reader, true);
         try {
             totalTrees = 0;
             while (importer.hasTree()) {
                 Tree tree = importer.importNextTree();
+                long state = Long.MAX_VALUE;
 
                 if (taxa == null) {
                     taxa = new Taxa(tree);
                 }
-
-                long state = Long.MAX_VALUE;
 
                 if (burninStates > 0) {
                     // if burnin has been specified in states, try to parse it out...
@@ -308,7 +309,7 @@ public class TreeAnnotator extends BaseTreeTool {
         return burnin;
     }
 
-    private void collectNodeAttributes(String inputFileName, MutableTree targetTree, int burnin) throws IOException {
+    private void collectNodeAttributes(CladeSystem cladeSystem, String inputFileName, int burnin) throws IOException {
         progressStream.println("Collecting node information...");
         progressStream.println("0              25             50             75            100");
         progressStream.println("|--------------|--------------|--------------|--------------|");
@@ -317,17 +318,11 @@ public class TreeAnnotator extends BaseTreeTool {
         if (stepSize < 1) stepSize = 1;
 
         Reader reader = new BufferedReader(new FileReader(inputFileName));
-         TreeImporter importer = new BEASTTreesImporter(reader);
-//        TreeImporter importer = new NexusImporter(reader, true);
+//         TreeImporter importer = new BEASTTreesImporter(reader);
+        TreeImporter importer = new NexusImporter(reader, true);
 
         long startTime = System.currentTimeMillis();
 
-        // this call increments the clade counts and it shouldn't
-        // this is remedied with removeClades call after while loop below
-        assert true : "Fix this issue";
-
-        // @todo - do we need to create a new clade system?
-        CladeSystem cladeSystem = new CladeSystem(targetTree);
         totalTreesUsed = 0;
         try {
             boolean firstTree = true;
@@ -351,8 +346,6 @@ public class TreeAnnotator extends BaseTreeTool {
                 counter++;
 
             }
-//            cladeSystem.removeClades(targetTree, targetTree.getRoot(), true);
-            //progressStream.println("totalTreesUsed=" + totalTreesUsed);
             cladeSystem.calculateCladeCredibilities(totalTreesUsed);
         } catch (Importer.ImportException e) {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
@@ -461,12 +454,12 @@ public class TreeAnnotator extends BaseTreeTool {
         return bestTree;
     }
 
-    private Tree getHIPSTRTree(CladeSystem cladeSystem) {
+    private MutableTree getHIPSTRTree(CladeSystem cladeSystem) {
 
         long startTime = System.currentTimeMillis();
 
         HIPSTRTreeBuilder treeBuilder = new HIPSTRTreeBuilder();
-        Tree tree = treeBuilder.getHIPSTRTree(cladeSystem);
+        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa);
         double score = treeBuilder.getScore();
 
         long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
@@ -484,8 +477,8 @@ public class TreeAnnotator extends BaseTreeTool {
         try {
             cladeSystem.traverseTree(targetTree, annotationAction);
 
-            if( heightsOption == HeightsSummary.CA_HEIGHTS ) {
-                assert true : "Implement this";
+            if ( heightsOption == HeightsSummary.CA_HEIGHTS ) {
+                assert false : "Implement this";
 //                setTreeHeightsByCA(targetTree, inputFileName, burnin);
             }
         } catch (Exception e) {

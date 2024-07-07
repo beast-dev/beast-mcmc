@@ -27,9 +27,9 @@
 
 package dr.app.tools.newtreeannotator;
 
-import dr.evolution.tree.SimpleNode;
-import dr.evolution.tree.SimpleTree;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.*;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
 import dr.util.Pair;
 
 import java.util.HashMap;
@@ -38,19 +38,25 @@ import java.util.Map;
 public class HIPSTRTreeBuilder {
     private Map<Clade, Double> credibilityCache = new HashMap<>();
 
-    public Tree getHIPSTRTree(CladeSystem cladeSystem) {
+    public MutableTree getHIPSTRTree(CladeSystem cladeSystem, TaxonList taxonList) {
         BiClade rootClade = (BiClade)cladeSystem.getRootClade();
 
         credibilityCache.clear();
 
-        score = findHIPSTRTree(cladeSystem, rootClade);
+        score = findHIPSTRTree(rootClade);
 
-        SimpleTree tree = new SimpleTree(buildHIPSTRTree(cladeSystem, rootClade));
+        // create a map so that tip numbers are in the same order as the taxon list
+        Map<Taxon, Integer> taxonNumberMap = new HashMap<>();
+        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+            taxonNumberMap.put(taxonList.getTaxon(i), i);
+        }
 
+        FlexibleTree tree = new FlexibleTree(buildHIPSTRTree(rootClade), taxonNumberMap);
+        tree.setLengthsKnown(false);
         return tree;
     }
 
-    private double findHIPSTRTree(CladeSystem cladeSystem, BiClade clade) {
+    private double findHIPSTRTree(BiClade clade) {
 
         double logCredibility = Math.log(clade.getCredibility());
 
@@ -58,31 +64,32 @@ public class HIPSTRTreeBuilder {
             double bestLogCredibility = Double.NEGATIVE_INFINITY;
 
             for (Pair<BiClade, BiClade> subClade : clade.getSubClades()) {
-
-                BiClade left = (BiClade)cladeSystem.getClade(subClade.first.getKey());
-                if (left == null) {
-                    throw new IllegalArgumentException("no clade found");
-                }
+                BiClade left = subClade.first;
 
                 double leftLogCredibility = credibilityCache.getOrDefault(left, Double.NaN);
                 if (Double.isNaN(leftLogCredibility)) {
-                    leftLogCredibility = findHIPSTRTree(cladeSystem, left);
+                    leftLogCredibility = findHIPSTRTree(left);
                     credibilityCache.put(left, leftLogCredibility);
                 }
-                BiClade right = (BiClade)cladeSystem.getClade(subClade.second.getKey());
-                if (right == null) {
-                    throw new IllegalArgumentException("no clade found");
-                }
+
+                BiClade right = subClade.second;
+
                 double rightLogCredibility = credibilityCache.getOrDefault(right, Double.NaN);
                 if (Double.isNaN(rightLogCredibility)) {
-                    rightLogCredibility = findHIPSTRTree(cladeSystem, right);
+                    rightLogCredibility = findHIPSTRTree(right);
                     credibilityCache.put(right, rightLogCredibility);
                 }
 
                 if (leftLogCredibility + rightLogCredibility > bestLogCredibility) {
                     bestLogCredibility = leftLogCredibility + rightLogCredibility;
-                    clade.bestLeft = left;
-                    clade.bestRight = right;
+                    if (left.getSize() < right.getSize()) {
+                        // sort by clade size because why not...
+                        clade.bestLeft = left;
+                        clade.bestRight = right;
+                    } else {
+                        clade.bestLeft = right;
+                        clade.bestRight = left;
+                    }
                 }
             }
 
@@ -94,13 +101,15 @@ public class HIPSTRTreeBuilder {
         return logCredibility;
     }
 
-    private SimpleNode buildHIPSTRTree(CladeSystem cladeSystem, Clade clade) {
-        SimpleNode newNode = new SimpleNode();
+    private FlexibleNode buildHIPSTRTree(Clade clade) {
+        FlexibleNode newNode = new FlexibleNode();
         if (clade.getSize() == 1) {
             newNode.setTaxon(clade.getTaxon());
+            newNode.setNumber(clade.getIndex());
         } else {
-            newNode.addChild(buildHIPSTRTree(cladeSystem, clade.getBestLeft()));
-            newNode.addChild(buildHIPSTRTree(cladeSystem, clade.getBestRight()));
+            newNode.addChild(buildHIPSTRTree(clade.getBestLeft()));
+            newNode.addChild(buildHIPSTRTree(clade.getBestRight()));
+            newNode.setNumber(-1);
         }
         return newNode;
     }

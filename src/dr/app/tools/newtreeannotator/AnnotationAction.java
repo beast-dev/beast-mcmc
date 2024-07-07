@@ -82,6 +82,11 @@ public class AnnotationAction implements CladeAction {
         annotateNode((MutableTree)tree, node, clade);
     }
 
+    @Override
+    public boolean expectAllClades() {
+        return false;
+    }
+
     private void annotateNode(MutableTree tree, NodeRef node, Clade clade) {
         boolean filter = false;
         assert clade != null;
@@ -96,7 +101,6 @@ public class AnnotationAction implements CladeAction {
 
         int i = 0;
         for (String attributeName : attributeNames) {
-
             if (clade.getAttributeValues() != null && !clade.getAttributeValues().isEmpty()) {
                 double[] values = new double[clade.getAttributeValues().size()];
 

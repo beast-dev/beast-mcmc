@@ -37,6 +37,7 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.*;
+import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.geo.contouring.ContourMaker;
@@ -144,8 +145,6 @@ public class TreeAnnotator extends BaseTreeTool {
         totalTrees = 10000;
         totalTreesUsed = 0;
 
-        int taxonCount = -1;
-
         if (targetOption != Target.USER_TARGET_TREE) {
             Reader reader;
             TreeImporter importer;
@@ -182,8 +181,8 @@ public class TreeAnnotator extends BaseTreeTool {
                 while (importer.hasTree()) {
                     Tree tree = importer.importNextTree();
 
-                    if (taxonCount < 0) {
-                        taxonCount = tree.getTaxonCount();
+                    if (taxa == null) {
+                        taxa = new Taxa(tree);
                     }
 
                     long state = Long.MAX_VALUE;
@@ -242,7 +241,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
 
             progressStream.println("Total trees read: " + totalTrees);
-            progressStream.println("Size of trees: " + taxonCount + " tips");
+            progressStream.println("Size of trees: " + taxa.getTaxonCount() + " tips");
             if (burninTrees > 0) {
                 progressStream.println("Ignoring first " + burninTrees + " trees" +
                         (burninStates > 0 ? " (" + burninStates + " states)." : "." ));
@@ -273,6 +272,9 @@ public class TreeAnnotator extends BaseTreeTool {
                             System.exit(1);
                         }
                         targetTree = new FlexibleTree(tree);
+                        if (taxa == null) {
+                            taxa = new Taxa(targetTree);
+                        }
                     } catch (Importer.ImportException e) {
                         System.err.println("Error Parsing Target Tree: " + e.getMessage());
                         System.exit(1);

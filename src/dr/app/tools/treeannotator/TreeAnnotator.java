@@ -1127,66 +1127,66 @@ public class TreeAnnotator extends BaseTreeTool {
                                             double hpd, double[][] values) {
             int N = 50;
             if (USE_R) {
-
-                // Uses R-Java interface, and the HPD routines from 'emdbook' and 'coda'
-
-                if (rEngine == null) {
-
-                    if (!Rengine.versionCheck()) {
-                        throw new RuntimeException("JRI library version mismatch");
-                    }
-
-                    rEngine = new Rengine(rArgs, false, null);
-
-                    if (!rEngine.waitForR()) {
-                        throw new RuntimeException("Cannot load R");
-                    }
-
-                    for (String command : rBootCommands) {
-                        rEngine.eval(command);
-                    }
-                }
-
-                // todo Need a good method to pick grid size
-
-
-                REXP x = rEngine.eval("makeContour(" +
-                        makeRString(values[0]) + "," +
-                        makeRString(values[1]) + "," +
-                        hpd + "," +
-                        N + ")");
-
-                RVector contourList = x.asVector();
-                int numberContours = contourList.size();
-
-                if (numberContours > 1) {
-                    System.err.println("Warning: a node has a disjoint " + 100 * hpd + "% HPD region.  This may be an artifact!");
-                    System.err.println("Try decreasing the enclosed mass or increasing the number of samples.");
-                }
-
-
-                tree.setNodeAttribute(node, preLabel + postLabel + "_modality", numberContours);
-
-                StringBuffer output = new StringBuffer();
-                for (int i = 0; i < numberContours; i++) {
-                    output.append("\n<" + CORDINATE + ">\n");
-                    RVector oneContour = contourList.at(i).asVector();
-                    double[] xList = oneContour.at(1).asDoubleArray();
-                    double[] yList = oneContour.at(2).asDoubleArray();
-                    StringBuffer xString = new StringBuffer("{");
-                    StringBuffer yString = new StringBuffer("{");
-                    for (int k = 0; k < xList.length; k++) {
-                        xString.append(formattedLocation(xList[k])).append(",");
-                        yString.append(formattedLocation(yList[k])).append(",");
-                    }
-                    xString.append(formattedLocation(xList[0])).append("}");
-                    yString.append(formattedLocation(yList[0])).append("}");
-
-                    tree.setNodeAttribute(node, preLabel + "1" + postLabel + "_" + (i + 1), xString);
-                    tree.setNodeAttribute(node, preLabel + "2" + postLabel + "_" + (i + 1), yString);
-                }
-
-
+//
+//                // Uses R-Java interface, and the HPD routines from 'emdbook' and 'coda'
+//
+//                if (rEngine == null) {
+//
+//                    if (!Rengine.versionCheck()) {
+//                        throw new RuntimeException("JRI library version mismatch");
+//                    }
+//
+//                    rEngine = new Rengine(rArgs, false, null);
+//
+//                    if (!rEngine.waitForR()) {
+//                        throw new RuntimeException("Cannot load R");
+//                    }
+//
+//                    for (String command : rBootCommands) {
+//                        rEngine.eval(command);
+//                    }
+//                }
+//
+//                // todo Need a good method to pick grid size
+//
+//
+//                REXP x = rEngine.eval("makeContour(" +
+//                        makeRString(values[0]) + "," +
+//                        makeRString(values[1]) + "," +
+//                        hpd + "," +
+//                        N + ")");
+//
+//                RVector contourList = x.asVector();
+//                int numberContours = contourList.size();
+//
+//                if (numberContours > 1) {
+//                    System.err.println("Warning: a node has a disjoint " + 100 * hpd + "% HPD region.  This may be an artifact!");
+//                    System.err.println("Try decreasing the enclosed mass or increasing the number of samples.");
+//                }
+//
+//
+//                tree.setNodeAttribute(node, preLabel + postLabel + "_modality", numberContours);
+//
+//                StringBuffer output = new StringBuffer();
+//                for (int i = 0; i < numberContours; i++) {
+//                    output.append("\n<" + CORDINATE + ">\n");
+//                    RVector oneContour = contourList.at(i).asVector();
+//                    double[] xList = oneContour.at(1).asDoubleArray();
+//                    double[] yList = oneContour.at(2).asDoubleArray();
+//                    StringBuffer xString = new StringBuffer("{");
+//                    StringBuffer yString = new StringBuffer("{");
+//                    for (int k = 0; k < xList.length; k++) {
+//                        xString.append(formattedLocation(xList[k])).append(",");
+//                        yString.append(formattedLocation(yList[k])).append(",");
+//                    }
+//                    xString.append(formattedLocation(xList[0])).append("}");
+//                    yString.append(formattedLocation(yList[0])).append("}");
+//
+//                    tree.setNodeAttribute(node, preLabel + "1" + postLabel + "_" + (i + 1), xString);
+//                    tree.setNodeAttribute(node, preLabel + "2" + postLabel + "_" + (i + 1), yString);
+//                }
+//
+//
             } else { // do not use R
 
 

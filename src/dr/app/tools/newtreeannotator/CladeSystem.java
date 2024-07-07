@@ -25,7 +25,7 @@
  *
  */
 
-package dr.app.tools.treeannotator;
+package dr.app.tools.newtreeannotator;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -48,12 +48,12 @@ final class CladeSystem {
      * Constructor adding a single target tree
      */
     public CladeSystem(Tree targetTree) {
-        add(targetTree);
+        add(targetTree, false);
     }
     /**
      * adds all the clades in the tree
      */
-    public void add(Tree tree) {
+    public void add(Tree tree, boolean storeSubClades) {
         if (taxonList == null) {
             taxonList = tree;
         }
@@ -61,7 +61,7 @@ final class CladeSystem {
         // Recurse over the tree and add all the clades (or increment their
         // frequency if already present). The root clade is added too (for
         // annotation purposes).
-        rootClade = addClades(tree, tree.getRoot());
+        rootClade = addClades(tree, tree.getRoot(), storeSubClades);
 
         assert rootClade.getSize() == tree.getExternalNodeCount();
     }
@@ -73,7 +73,7 @@ final class CladeSystem {
     /**
      * recursively add all the clades in a tree
      */
-    private Clade addClades(Tree tree, NodeRef node) {
+    private Clade addClades(Tree tree, NodeRef node, boolean storeSubClades) {
         Clade clade;
         if (tree.isExternal(node)) {
             int index = node.getNumber();
@@ -81,9 +81,9 @@ final class CladeSystem {
         } else {
             assert tree.getChildCount(node) == 2 : "requires a strictly bifurcating tree";
 
-            Clade clade1 = addClades(tree, tree.getChild(node, 0));
-            Clade clade2 = addClades(tree, tree.getChild(node, 1));
-            clade = getOrAddClade(clade1, clade2);
+            Clade clade1 = addClades(tree, tree.getChild(node, 0), storeSubClades);
+            Clade clade2 = addClades(tree, tree.getChild(node, 1), storeSubClades);
+            clade = getOrAddClade(clade1, clade2, storeSubClades);
         }
 
         clade.setCount(clade.getCount() + 1);
@@ -106,10 +106,11 @@ final class CladeSystem {
     /**
      * see if a clade exists otherwise create it
      */
-    private Clade getOrAddClade(Clade child1, Clade child2) {
-        BiClade clade = (BiClade)cladeMap.get(BiClade.getKey((BiClade) child1, (BiClade) child2));
+    private Clade getOrAddClade(Clade child1, Clade child2, boolean storeSubClades) {
+        Object key = BiClade.makeKey((BiClade) child1, (BiClade) child2);
+        BiClade clade = (BiClade)cladeMap.get(key);
         if (clade == null) {
-            clade = new BiClade(child1, child2);
+            clade = new BiClade(key, child1.getSize() + child2.getSize());
             cladeMap.put(clade.getKey(), clade);
         } else {
             clade.addSubClades(child1, child2);

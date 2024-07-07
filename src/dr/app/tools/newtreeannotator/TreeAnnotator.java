@@ -25,7 +25,7 @@
  *
  */
 
-package dr.app.tools.treeannotator;
+package dr.app.tools.newtreeannotator;
 
 import dr.app.beast.BeastVersion;
 import dr.app.tools.BaseTreeTool;
@@ -256,7 +256,7 @@ public class TreeAnnotator extends BaseTreeTool {
                         burnin = totalTrees;
                     }
 
-                    cladeSystem.add(tree);
+                    cladeSystem.add(tree, true);
 
                     totalTreesUsed += 1;
                 }

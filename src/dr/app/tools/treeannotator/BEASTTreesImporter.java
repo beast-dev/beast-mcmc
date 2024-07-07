@@ -1,5 +1,5 @@
 /*
- * NewickImporter.java
+ * BEASTTreesImporter.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -39,7 +39,7 @@ import java.io.Reader;
 import java.util.*;
 
 /**
- * Class for importing Newick-type tree file format with numbered tips
+ * Class for importing Newick-type trees embedded in a NEXUS file format with numbered tips
  * This is intended only for reading BEAST trees files quickly.
  *
  * @author Andrew Rambaut
@@ -52,7 +52,7 @@ public class BEASTTreesImporter extends Importer implements TreeImporter {
      * @param reader A reader to a source containing a tree in Newick format
      */
     public BEASTTreesImporter(Reader reader, boolean hasComments) {
-        super(reader);
+        super(reader, false);
         if (hasComments) {
             setCommentDelimiters('[', ']', '\0', '\0', '&');
         }

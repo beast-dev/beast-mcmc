@@ -105,12 +105,16 @@ class BiClade implements Clade {
 
     @Override
     public Clade getBestLeft() {
-        return null;
+        return bestLeft;
     }
 
     @Override
     public Clade getBestRight() {
-        return null;
+        return bestRight;
+    }
+
+    public Set<Pair<BiClade, BiClade>> getSubClades() {
+        return subClades;
     }
 
     @Override
@@ -151,14 +155,20 @@ class BiClade implements Clade {
         return "clade " + hashCode();
     }
 
-    int count;
-    double credibility;
-    final int size;
-    final int index;
+    private int count;
+    private double credibility;
+    private final int size;
+    private final int index;
 
     private final Object key;
 
-    Set<Pair<BiClade, BiClade>> subClades = new HashSet<>();
-    List<Object[]> attributeValues = null;
-    double bestSubTreeCredibility;
+
+    private final Set<Pair<BiClade, BiClade>> subClades = new HashSet<>();
+     BiClade bestLeft = null;
+     BiClade bestRight = null;
+
+
+     double bestSubTreeCredibility;
+
+    private List<Object[]> attributeValues = null;
 }

@@ -290,7 +290,7 @@ public class TreeAnnotator extends BaseTreeTool {
             }
             case HIPSTR: {
                 progressStream.println("Finding highest independent posterior subtree reconstruction (HIPSTR) tree...");
-                targetTree = new FlexibleTree(getHIPSTRTree(cladeSystem));
+                targetTree = getHIPSTRTree(cladeSystem, taxa);
                 break;
             }
             default: throw new IllegalArgumentException("Unknown targetOption");
@@ -447,7 +447,7 @@ public class TreeAnnotator extends BaseTreeTool {
         return bestTree;
     }
 
-    private Tree getHIPSTRTree(CladeSystem cladeSystem) {
+    private MutableTree getHIPSTRTree(CladeSystem cladeSystem, TaxonList taxonList) {
 
         long startTime = System.currentTimeMillis();
 
@@ -457,7 +457,11 @@ public class TreeAnnotator extends BaseTreeTool {
 
         double score = findHIPSTRTree(cladeSystem, rootClade);
 
-        SimpleTree tree = new SimpleTree(buildHIPSTRTree(cladeSystem, rootClade));
+        Map<Taxon, Integer> taxonNumberMap = new HashMap<>();
+        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+            taxonNumberMap.put(taxonList.getTaxon(i), i);
+        }
+        FlexibleTree tree = new FlexibleTree(buildHIPSTRTree(cladeSystem, rootClade), taxonNumberMap);
 
         long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("[" + timeElapsed + " secs]");
@@ -514,8 +518,8 @@ public class TreeAnnotator extends BaseTreeTool {
         return logCredibility;
     }
 
-    private SimpleNode buildHIPSTRTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
-        SimpleNode newNode = new SimpleNode();
+    private FlexibleNode buildHIPSTRTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
+        FlexibleNode newNode = new FlexibleNode();
         if (clade.size == 1) {
             newNode.setTaxon(clade.taxon);
         } else {

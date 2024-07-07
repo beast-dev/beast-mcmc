@@ -40,18 +40,22 @@ import java.util.Set;
  * @version $
  */
 final class CladeSystem {
+    private final boolean keepSubClades;
     private double treeCount = 0;
 
     /**
      * Constructor starting with an empty clade system
+     * @param keepSubClades whether to keep all subtrees in each clade
      */
-    public CladeSystem() {
+    public CladeSystem(boolean keepSubClades) {
+        this.keepSubClades = keepSubClades;
     }
 
     /**
      * Constructor adding a single target tree
      */
     public CladeSystem(Tree targetTree) {
+        this.keepSubClades = false;
         add(targetTree);
     }
     /**
@@ -119,12 +123,19 @@ final class CladeSystem {
      * see if a clade exists otherwise create it
      */
     private Clade getOrAddClade(Clade child1, Clade child2) {
-        BiClade clade = (BiClade)cladeMap.get(BiClade.makeKey(child1.getKey(), child2.getKey()));
+        Object key = BiClade.makeKey(child1.getKey(), child2.getKey());
+        BiClade clade = (BiClade)cladeMap.get(key);
         if (clade == null) {
-            clade = new BiClade(child1, child2);
+            if (keepSubClades) {
+                clade = new BiClade(child1, child2);
+            } else {
+                clade = new BiClade(key, child1.getSize() + child2.getSize());
+            }
             cladeMap.put(clade.getKey(), clade);
         } else {
-            clade.addSubClades(child1, child2);
+            if (keepSubClades) {
+                clade.addSubClades(child1, child2);
+            }
         }
         return clade;
     }

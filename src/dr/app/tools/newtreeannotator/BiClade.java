@@ -54,6 +54,15 @@ class BiClade implements Clade {
         this.taxon = taxon;
     }
 
+    public BiClade(Object key, int size) {
+        this.index = -1;
+        count = 0;
+        credibility = 1.0;
+        this.size = size;
+        this.key = key;
+        this.taxon = null;
+    }
+
     public BiClade(Clade child1, Clade child2) {
         assert child1 instanceof BiClade;
         assert child2 instanceof BiClade;

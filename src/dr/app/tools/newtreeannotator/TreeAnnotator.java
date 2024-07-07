@@ -139,7 +139,7 @@ public class TreeAnnotator extends BaseTreeTool {
         collectionAction.addAttributeName("height");
         collectionAction.addAttributeName("length");
 
-        annotationAction = new AnnotationAction(heightsOption, posteriorLimit, hpd2D, true);
+        annotationAction = new AnnotationAction(heightsOption, posteriorLimit, hpd2D, computeESS, true);
 
         annotationAction.addAttributeName("height");
         annotationAction.addAttributeName("length");
@@ -149,9 +149,12 @@ public class TreeAnnotator extends BaseTreeTool {
         totalTrees = 10000;
         totalTreesUsed = 0;
 
-        CladeSystem cladeSystem = new CladeSystem();
+        CladeSystem cladeSystem = new CladeSystem(targetOption == Target.HIPSTR);
 
         if (targetOption != Target.USER_TARGET_TREE) {
+            // if we are not just annotating a specific target tree
+            // then we need to read all the trees into a CladeSystem
+            // to get Clade and SubTree frequencies.
             if (COUNT_TREES) {
                 countTrees(inputFileName);
                 progressStream.println("Reading trees...");

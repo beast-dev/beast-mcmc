@@ -202,6 +202,9 @@ public class TreeAnnotator extends BaseTreeTool {
             default: throw new IllegalArgumentException("Unknown targetOption");
         }
 
+        // Help garbage collector
+        cladeSystem = null;
+
         CladeSystem targetCladeSystem = new CladeSystem(targetTree);
 
         collectNodeAttributes(targetCladeSystem, inputFileName, burnin);

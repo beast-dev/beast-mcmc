@@ -216,7 +216,7 @@ public class BranchRatePlotter {
             }
         }
 
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         writeTree(targetTree, targetTree.getRoot(), buffer, true, false);
         buffer.append(";\n");
         writeTree(targetTree, targetTree.getRoot(), buffer, false, true);
@@ -250,7 +250,7 @@ public class BranchRatePlotter {
         }
     }
 
-    private static void writeTree(Tree tree, NodeRef node, StringBuffer buffer, boolean rates, boolean labels) {
+    private static void writeTree(Tree tree, NodeRef node, StringBuilder buffer, boolean rates, boolean labels) {
 
         if (tree.isExternal(node)) {
 		    buffer.append(tree.getTaxonId(node.getNumber()));

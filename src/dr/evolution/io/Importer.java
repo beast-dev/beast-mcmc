@@ -631,6 +631,83 @@ public abstract class Importer {
 	}
 
 	/**
+	 * Skips over a token stopping when any whitespace, a comment or when any character
+	 * in delimiters is found. If the token begins with a quote char
+	 * then all characters will be included in token until a matching
+	 * quote is found (including whitespace or comments).
+	 * @ignoreComments if true this will not skip comment but just add them to the token.
+	 */
+	public void skipToken(String delimiters) throws IOException {
+		int space = 0;
+		char ch, ch2, quoteChar = '\0';
+		boolean done = false, first = true, quoted = false, isSpace;
+
+		nextCharacter();
+
+		while (!done) {
+			ch = read();
+
+			try {
+				isSpace = Character.isWhitespace(ch);
+
+				if (quoted && ch == quoteChar) { // Found the closing quote
+					ch2 = read();
+
+					if (ch != ch2) {
+						// otherwise it terminates the token
+
+						lastDelimiter = ' ';
+						unreadCharacter(ch2);
+						done = true;
+						quoted = false;
+					}
+				} else if (first && (ch == '\'' || ch == '"')) {
+					// if the opening character is a quote
+					// read everything up to the closing quote
+					quoted = true;
+					quoteChar = ch;
+					first = false;
+					space = 0;
+				} else {
+					if (quoted) {
+						// compress multiple spaces into one
+						if (isSpace) {
+							space++;
+							ch = ' ';
+						} else {
+							space = 0;
+						}
+
+					} else if (isSpace) {
+						lastDelimiter = ' ';
+						done = true;
+					} else if (delimiters.indexOf(ch) != -1) {
+						done = true;
+						lastDelimiter = ch;
+						first = false;
+					}
+				}
+			} catch (EOFException e) {
+				// We catch an EOF and return the token we have so far
+				isEOF = true;
+				done = true;
+			}
+		}
+
+		if (!isEOF() && Character.isWhitespace((char)lastDelimiter)) {
+			ch = nextCharacter();
+			while (Character.isWhitespace(ch)) {
+				read();
+				ch = nextCharacter();
+			}
+
+			if (delimiters.indexOf(ch) != -1) {
+				lastDelimiter = readCharacter();
+			}
+		}
+	}
+
+	/**
 	 * Skips over any comments. The opening comment delimiter is passed.
 	 */
 	protected void skipComments(char delimiter) throws IOException {

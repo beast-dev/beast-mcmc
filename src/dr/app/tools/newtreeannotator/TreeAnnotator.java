@@ -459,18 +459,16 @@ public class TreeAnnotator extends BaseTreeTool {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
             System.exit(1);
         }
-        double minCladeCredibility = cladeSystem.getMinimumCladeCredibility(bestTree);
-        double meanCladeCredibility = cladeSystem.getMeanCladeCredibility(bestTree);
-        double top95CladeCredibility = cladeSystem.getTopCladeCredibility(bestTree, 0.95);
 
         long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("* [" + timeElapsed + " secs]");
         progressStream.println();
         progressStream.println("Best tree: " + bestTree.getId() + " (tree number " + bestTreeNumber + ")");
         progressStream.println("Best tree's log clade credibility: " + String.format("%.4f", bestScore));
-        progressStream.println("Lowest individual clade credibility: " + String.format("%.4f", minCladeCredibility));
-        progressStream.println("Mean individual clade credibility: " + String.format("%.4f", meanCladeCredibility));
-        progressStream.println("Number of clades with credibility > 0.95: " + String.format("%.4f", top95CladeCredibility));
+        progressStream.println("Lowest individual clade credibility: " + String.format("%.4f", cladeSystem.getMinimumCladeCredibility(bestTree)));
+        progressStream.println("Mean individual clade credibility: " + String.format("%.4f", cladeSystem.getMeanCladeCredibility(bestTree)));
+        progressStream.println("Number of clades with credibility > 0.95: " + cladeSystem.getTopCladeCredibility(bestTree, 0.95));
+        progressStream.println("Number of clades with credibility > 0.5: " + cladeSystem.getTopCladeCredibility(bestTree, 0.5));
         progressStream.println();
 
         return bestTree;
@@ -484,17 +482,14 @@ public class TreeAnnotator extends BaseTreeTool {
         MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa);
         double score = treeBuilder.getScore();
 
-        double minCladeCredibility = cladeSystem.getMinimumCladeCredibility(tree);
-        double meanCladeCredibility = cladeSystem.getMeanCladeCredibility(tree);
-        double top95CladeCredibility = cladeSystem.getTopCladeCredibility(tree, 0.95);
-
         long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("[" + timeElapsed + " secs]");
         progressStream.println();
         progressStream.println("HIPSTR tree's log clade credibility: " + String.format("%.4f", score));
-        progressStream.println("Lowest individual clade credibility: " + String.format("%.4f", minCladeCredibility));
-        progressStream.println("Mean individual clade credibility: " + String.format("%.4f", meanCladeCredibility));
-        progressStream.println("Number of clades with credibility > 0.95: " + String.format("%.4f", top95CladeCredibility));
+        progressStream.println("Lowest individual clade credibility: " + String.format("%.4f", cladeSystem.getMinimumCladeCredibility(tree)));
+        progressStream.println("Mean individual clade credibility: " + String.format("%.4f", cladeSystem.getMeanCladeCredibility(tree)));
+        progressStream.println("Number of clades with credibility > 0.95: " + cladeSystem.getTopCladeCredibility(tree, 0.95));
+        progressStream.println("Number of clades with credibility > 0.5: " + cladeSystem.getTopCladeCredibility(tree, 0.5));
         progressStream.println();
 
         return tree;

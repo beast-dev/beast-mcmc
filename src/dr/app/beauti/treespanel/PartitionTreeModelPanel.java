@@ -137,9 +137,10 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         userTreeCombo.setEnabled(enabled);
         userTreeInfo.setEnabled(enabled);
 
-        for (TreeAsDataType treeAsDataType : TreeAsDataType.values()) {
-            treeAsDataModelCombo.addItem(treeAsDataType);
-        }
+//        for (TreeAsDataType treeAsDataType : TreeAsDataType.values()) {
+//            treeAsDataModelCombo.addItem(treeAsDataType);
+//        }
+        treeAsDataModelCombo.addItem(TreeAsDataType.EMPRICAL_TREES);
         PanelUtils.setupComponent(treeAsDataModelCombo);
         treeAsDataModelCombo.addItemListener(ev -> {
             this.partitionTreeModel.setTreeAsDataType((TreeAsDataType)treeAsDataModelCombo.getSelectedItem());

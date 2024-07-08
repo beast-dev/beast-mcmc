@@ -30,12 +30,13 @@ package dr.app.beauti.components.hpm;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.types.PriorType;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * @author Marc A. Suchard
  */
-public class HierarchicalPhylogeneticModel {
+public class HierarchicalPhylogeneticModel implements Serializable {
 
     final private String name;
     final private List<Parameter> argumentParameterList;

@@ -29,6 +29,7 @@ package dr.app.tools.newtreeannotator;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 
 import java.util.HashMap;
@@ -63,7 +64,7 @@ final class CladeSystem {
      */
     public void add(Tree tree) {
         if (taxonList == null) {
-            taxonList = tree;
+            setTaxonList(tree);
         }
 
         if (treeCount == 0) {
@@ -81,6 +82,14 @@ final class CladeSystem {
         treeCount += 1;
     }
 
+    public void setTaxonList(TaxonList taxonList) {
+        this.taxonList = taxonList;
+        taxonNumberMap = new HashMap<>();
+        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+            taxonNumberMap.put(taxonList.getTaxon(i), i);
+        }
+    }
+
     public Clade getRootClade() {
         return rootClade;
     }
@@ -92,10 +101,15 @@ final class CladeSystem {
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             NodeRef tip = tree.getExternalNode(i);
             int index = tip.getNumber();
-            Clade clade = new BiClade(index, tree.getNodeTaxon(tip));
+            Taxon taxon = tree.getNodeTaxon(tip);
+            if (taxonNumberMap != null) {
+                index = taxonNumberMap.get(taxon);
+            }
+            Clade clade = new BiClade(index, taxon);
             tipClades.put(index, clade);
         }
     }
+
     /**
      * recursively add all the clades in a tree
      */
@@ -103,7 +117,11 @@ final class CladeSystem {
         Clade clade;
         if (tree.isExternal(node)) {
             // all tip clades should already be there
-            clade = tipClades.get(node.getNumber());
+            int index = node.getNumber();
+            if (taxonNumberMap != null) {
+                index = taxonNumberMap.get(tree.getNodeTaxon(node));
+            }
+            clade = tipClades.get(index);
 //            assert clade != null && clade.getTaxon().equals(tree.getNodeTaxon(node));
         } else {
             assert tree.getChildCount(node) == 2 : "requires a strictly bifurcating tree";
@@ -157,6 +175,9 @@ final class CladeSystem {
 
         if (tree.isExternal(node)) {
             key = node.getNumber();
+            if (taxonNumberMap != null) {
+                key = taxonNumberMap.get(tree.getNodeTaxon(node));
+            }
         } else {
             assert tree.getChildCount(node) == 2;
 
@@ -209,6 +230,8 @@ final class CladeSystem {
     // Private stuff
     //
     TaxonList taxonList = null;
+    Map<Taxon, Integer> taxonNumberMap = null;
+
     private final Map<Object, Clade> tipClades = new HashMap<>();
    private final Map<Object, Clade> cladeMap = new HashMap<>();
 

@@ -224,6 +224,9 @@ public class TreeAnnotator extends BaseTreeTool {
         Reader reader = new BufferedReader(new FileReader(inputFileName));
         TreeImporter importer = new BEASTTreesImporter(reader);
         totalTrees = importer.countTrees();
+        if (totalTrees == 0) {
+            totalTrees = 10000;
+        }
         reader.close();
         progressStream.println("Total number of trees: " + totalTrees);
         progressStream.println();
@@ -259,11 +262,11 @@ public class TreeAnnotator extends BaseTreeTool {
             totalTrees = 0;
             while (importer.hasTree()) {
                 Tree tree = importer.importNextTree();
-                long state = Long.MAX_VALUE;
+                long state = 0;
 
-//                if (taxa == null) {
-//                    taxa = new Taxa(tree);
-//                }
+                if (taxa == null) {
+                    taxa = new Taxa(tree);
+                }
 
                 if (burninStates > 0) {
                     // if burnin has been specified in states, try to parse it out...
@@ -272,9 +275,10 @@ public class TreeAnnotator extends BaseTreeTool {
                     if (name.startsWith("STATE_")) {
                         state = Long.parseLong(name.split("_")[1]);
                         maxState = state;
+                    } else {
+                        maxState = state;
+                        state += 1;
                     }
-//                        state = Long.parseLong(tree.getId());
-//                        maxState = state;
                 }
 
                 if (totalTrees >= burninTrees && state >= burninStates) {

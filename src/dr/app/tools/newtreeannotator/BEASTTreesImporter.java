@@ -99,7 +99,7 @@ public class BEASTTreesImporter extends Importer implements TreeImporter {
         BufferedReader br = (BufferedReader)getReader();
         do {
             line = br.readLine();
-            if (line != null && line.trim().startsWith("tree STATE")) {
+            if (line != null && line.trim().startsWith("tree ")) {
                 count++;
             }
 

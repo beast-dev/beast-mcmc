@@ -185,7 +185,7 @@ public class TreeAnnotator extends BaseTreeTool {
                         taxa = new Taxa(tree);
                     }
 
-                    long state = Long.MAX_VALUE;
+                    long state = 0;
 
                     if (burninStates > 0) {
                         // if burnin has been specified in states, try to parse it out...
@@ -194,6 +194,9 @@ public class TreeAnnotator extends BaseTreeTool {
                         if (name.startsWith("STATE_")) {
                             state = Long.parseLong(name.split("_")[1]);
                             maxState = state;
+                        } else {
+                            maxState = state;
+                            state += 1;
                         }
                     }
 

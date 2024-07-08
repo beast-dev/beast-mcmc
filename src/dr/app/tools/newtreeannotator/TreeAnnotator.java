@@ -248,7 +248,7 @@ public class TreeAnnotator extends BaseTreeTool {
         startTime = System.currentTimeMillis();
 
         reader = new BufferedReader(new FileReader(inputFileName));
-//        TreeImporter importer = new BEASTTreesImporter(reader);
+//        TreeImporter importer = new BEASTTreesImporter(reader, false);
         NexusImporter importer = new NexusImporter(reader, true);
         try {
             totalTrees = 0;
@@ -324,7 +324,7 @@ public class TreeAnnotator extends BaseTreeTool {
         if (stepSize < 1) stepSize = 1;
 
         Reader reader = new BufferedReader(new FileReader(inputFileName));
-//         TreeImporter importer = new BEASTTreesImporter(reader);
+//         TreeImporter importer = new BEASTTreesImporter(reader, true);
         TreeImporter importer = new NexusImporter(reader, true);
 
         long startTime = System.currentTimeMillis();
@@ -425,7 +425,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
         int counter = 0;
         int bestTreeNumber = 0;
-//        TreeImporter importer = new BEASTTreesImporter(new FileReader(inputFileName));
+//        TreeImporter importer = new BEASTTreesImporter(new FileReader(inputFileName), false);
         TreeImporter importer = new NexusImporter(new FileReader(inputFileName), true);
         try {
             while (importer.hasTree()) {

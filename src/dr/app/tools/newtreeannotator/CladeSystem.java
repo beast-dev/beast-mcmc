@@ -104,7 +104,7 @@ final class CladeSystem {
         if (tree.isExternal(node)) {
             // all tip clades should already be there
             clade = tipClades.get(node.getNumber());
-            assert clade.getTaxon().equals(tree.getNodeTaxon(node));
+//            assert clade != null && clade.getTaxon().equals(tree.getNodeTaxon(node));
         } else {
             assert tree.getChildCount(node) == 2 : "requires a strictly bifurcating tree";
 

@@ -222,6 +222,59 @@ final class CladeSystem {
         return logCladeCredibility[0];
     }
 
+    public double getMinimumCladeCredibility(Tree tree) {
+        final double[] minCladeCredibility = {Double.MAX_VALUE};
+        traverseTree(tree, new CladeAction() {
+            @Override
+            public void actOnClade(Clade clade, Tree tree, NodeRef node) {
+                if (clade.getCredibility() < minCladeCredibility[0]) {
+                    minCladeCredibility[0] = clade.getCredibility();
+                }
+            }
+
+            @Override
+            public boolean expectAllClades() {
+                return true;
+            }
+        });
+        return minCladeCredibility[0];
+    }
+
+    public double getMeanCladeCredibility(Tree tree) {
+        final double[] minCladeCredibility = {0.0};
+        traverseTree(tree, new CladeAction() {
+            @Override
+            public void actOnClade(Clade clade, Tree tree, NodeRef node) {
+                if (clade.getTaxon() == null) {
+                    minCladeCredibility[0] += clade.getCredibility();
+                }
+            }
+
+            @Override
+            public boolean expectAllClades() {
+                return true;
+            }
+        });
+        return minCladeCredibility[0] / tree.getInternalNodeCount();
+    }
+
+    public int getTopCladeCredibility(Tree tree, double threshold) {
+        final int[] minCladeCredibility = {0};
+        traverseTree(tree, new CladeAction() {
+            @Override
+            public void actOnClade(Clade clade, Tree tree, NodeRef node) {
+                if (clade.getTaxon() == null && clade.getCredibility() > threshold) {
+                    minCladeCredibility[0] += 1;
+                }
+            }
+
+            @Override
+            public boolean expectAllClades() {
+                return true;
+            }
+        });
+        return minCladeCredibility[0];
+    }
     public int getCladeCount() {
         return cladeMap.keySet().size();
     }

@@ -61,41 +61,56 @@ public class HIPSTRTreeBuilder {
         double logCredibility = Math.log(clade.getCredibility());
 
         if (clade.getSize() > 1) {
-            double bestLogCredibility = Double.NEGATIVE_INFINITY;
+            // if it is not a tip
+            if (clade.getSize() > 2) {
+                // more than two tips in this clade
+                double bestLogCredibility = Double.NEGATIVE_INFINITY;
+                for (Pair<BiClade, BiClade> subClade : clade.getSubClades()) {
+                    BiClade left = subClade.first;
 
-            for (Pair<BiClade, BiClade> subClade : clade.getSubClades()) {
-                BiClade left = subClade.first;
+                    double leftLogCredibility = 0;
+                    if (left.getSize() > 1) {
+                        leftLogCredibility = credibilityCache.getOrDefault(left, Double.NaN);
+                        if (Double.isNaN(leftLogCredibility)) {
+                            leftLogCredibility = findHIPSTRTree(left);
+                            credibilityCache.put(left, leftLogCredibility);
+                        }
+                    }
 
-                double leftLogCredibility = credibilityCache.getOrDefault(left, Double.NaN);
-                if (Double.isNaN(leftLogCredibility)) {
-                    leftLogCredibility = findHIPSTRTree(left);
-                    credibilityCache.put(left, leftLogCredibility);
-                }
+                    BiClade right = subClade.second;
 
-                BiClade right = subClade.second;
+                    double rightLogCredibility = 0;
+                    if (right.getSize() > 1) {
+                        rightLogCredibility = credibilityCache.getOrDefault(right, Double.NaN);
+                        if (Double.isNaN(rightLogCredibility)) {
+                            rightLogCredibility = findHIPSTRTree(right);
+                            credibilityCache.put(right, rightLogCredibility);
+                        }
+                    }
 
-                double rightLogCredibility = credibilityCache.getOrDefault(right, Double.NaN);
-                if (Double.isNaN(rightLogCredibility)) {
-                    rightLogCredibility = findHIPSTRTree(right);
-                    credibilityCache.put(right, rightLogCredibility);
-                }
-
-                if (leftLogCredibility + rightLogCredibility > bestLogCredibility) {
-                    bestLogCredibility = leftLogCredibility + rightLogCredibility;
-                    if (left.getSize() < right.getSize()) {
-                        // sort by clade size because why not...
-                        clade.bestLeft = left;
-                        clade.bestRight = right;
-                    } else {
-                        clade.bestLeft = right;
-                        clade.bestRight = left;
+                    if (leftLogCredibility + rightLogCredibility > bestLogCredibility) {
+                        bestLogCredibility = leftLogCredibility + rightLogCredibility;
+                        if (left.getSize() < right.getSize()) {
+                            // sort by clade size because why not...
+                            clade.bestLeft = left;
+                            clade.bestRight = right;
+                        } else {
+                            clade.bestLeft = right;
+                            clade.bestRight = left;
+                        }
                     }
                 }
+                logCredibility += bestLogCredibility;
+            } else {
+                // two tips so there will only be one pair and their sum log cred will be 0.0
+                assert clade.getSubClades().size() == 1;
+                Pair<BiClade, BiClade> subClade = clade.getSubClades().stream().findFirst().get();
+                clade.bestLeft = subClade.first;
+                clade.bestRight = subClade.second;
+                // logCredibility += 0.0;
             }
 
-            logCredibility += bestLogCredibility;
             clade.bestSubTreeCredibility = logCredibility;
-
         }
 
         return logCredibility;

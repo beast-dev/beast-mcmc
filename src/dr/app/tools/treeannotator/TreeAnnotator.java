@@ -37,6 +37,7 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.*;
+import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.geo.contouring.ContourMaker;
@@ -144,8 +145,6 @@ public class TreeAnnotator extends BaseTreeTool {
         totalTrees = 10000;
         totalTreesUsed = 0;
 
-        int taxonCount = -1;
-
         if (targetOption != Target.USER_TARGET_TREE) {
             Reader reader;
             TreeImporter importer;
@@ -155,6 +154,7 @@ public class TreeAnnotator extends BaseTreeTool {
             if (COUNT_TREES) {
                 progressStream.println("Counting trees...");
                 reader = new BufferedReader(new FileReader(inputFileName));
+                // BEASTTreesImporter has a very fast tree counter...
                 importer = new BEASTTreesImporter(reader, false);
                 totalTrees = importer.countTrees();
                 reader.close();
@@ -172,7 +172,8 @@ public class TreeAnnotator extends BaseTreeTool {
             progressStream.println("|--------------|--------------|--------------|--------------|");
 
             reader = new BufferedReader(new FileReader(inputFileName));
-//            importer = new BEASTTreesImporter(reader, true);
+            // ignoreMetaComments speeds things up when you don't need annotations (i.e.,
+            // for this initial read to get clade frequencies)...
             importer = new NexusImporter(reader, true);
             startTime = System.currentTimeMillis();
             try {
@@ -180,22 +181,23 @@ public class TreeAnnotator extends BaseTreeTool {
                 while (importer.hasTree()) {
                     Tree tree = importer.importNextTree();
 
-                    if (taxonCount < 0) {
-                        taxonCount = tree.getTaxonCount();
+                    if (taxa == null) {
+                        taxa = new Taxa(tree);
                     }
 
-                    long state = Long.MAX_VALUE;
+                    long state = 0;
 
                     if (burninStates > 0) {
                         // if burnin has been specified in states, try to parse it out...
                         String name = tree.getId().trim();
 
-                        if (name != null && name.startsWith("STATE_")) {
+                        if (name.startsWith("STATE_")) {
                             state = Long.parseLong(name.split("_")[1]);
                             maxState = state;
+                        } else {
+                            maxState = state;
+                            state += 1;
                         }
-//                        state = Long.parseLong(tree.getId());
-//                        maxState = state;
                     }
 
                     if (totalTrees >= burninTrees && state >= burninStates) {
@@ -242,7 +244,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
 
             progressStream.println("Total trees read: " + totalTrees);
-            progressStream.println("Size of trees: " + taxonCount + " tips");
+            progressStream.println("Size of trees: " + taxa.getTaxonCount() + " tips");
             if (burninTrees > 0) {
                 progressStream.println("Ignoring first " + burninTrees + " trees" +
                         (burninStates > 0 ? " (" + burninStates + " states)." : "." ));
@@ -273,6 +275,9 @@ public class TreeAnnotator extends BaseTreeTool {
                             System.exit(1);
                         }
                         targetTree = new FlexibleTree(tree);
+                        if (taxa == null) {
+                            taxa = new Taxa(targetTree);
+                        }
                     } catch (Importer.ImportException e) {
                         System.err.println("Error Parsing Target Tree: " + e.getMessage());
                         System.exit(1);
@@ -290,7 +295,7 @@ public class TreeAnnotator extends BaseTreeTool {
             }
             case HIPSTR: {
                 progressStream.println("Finding highest independent posterior subtree reconstruction (HIPSTR) tree...");
-                targetTree = new FlexibleTree(getHIPSTRTree(cladeSystem));
+                targetTree = getHIPSTRTree(cladeSystem, taxa);
                 break;
             }
             default: throw new IllegalArgumentException("Unknown targetOption");
@@ -442,11 +447,12 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println();
         progressStream.println("Best tree: " + bestTree.getId() + " (tree number " + bestTreeNumber + ")");
         progressStream.println("Highest Log Clade Credibility: " + bestScore);
+        progressStream.println();
 
         return bestTree;
     }
 
-    private Tree getHIPSTRTree(CladeSystem cladeSystem) {
+    private MutableTree getHIPSTRTree(CladeSystem cladeSystem, TaxonList taxonList) {
 
         long startTime = System.currentTimeMillis();
 
@@ -456,7 +462,11 @@ public class TreeAnnotator extends BaseTreeTool {
 
         double score = findHIPSTRTree(cladeSystem, rootClade);
 
-        SimpleTree tree = new SimpleTree(buildHIPSTRTree(cladeSystem, rootClade));
+        Map<Taxon, Integer> taxonNumberMap = new HashMap<>();
+        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+            taxonNumberMap.put(taxonList.getTaxon(i), i);
+        }
+        FlexibleTree tree = new FlexibleTree(buildHIPSTRTree(cladeSystem, rootClade), taxonNumberMap);
 
         long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("[" + timeElapsed + " secs]");
@@ -513,8 +523,8 @@ public class TreeAnnotator extends BaseTreeTool {
         return logCredibility;
     }
 
-    private SimpleNode buildHIPSTRTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
-        SimpleNode newNode = new SimpleNode();
+    private FlexibleNode buildHIPSTRTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
+        FlexibleNode newNode = new FlexibleNode();
         if (clade.size == 1) {
             newNode.setTaxon(clade.taxon);
         } else {

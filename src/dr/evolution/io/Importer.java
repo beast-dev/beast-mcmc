@@ -286,7 +286,7 @@ public abstract class Importer {
 	public String readLineStart(String delimiters) throws IOException {
 
 		StringBuilder line = new StringBuilder();
-		
+
 		try {
 			char ch = read();
 

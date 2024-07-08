@@ -61,6 +61,7 @@ public class AnnotationAction implements CladeAction {
 
     AnnotationAction(TreeAnnotator.HeightsSummary heightsOption,
                             double posteriorLimit, double[] hpd2D,
+                            boolean computeESS,
                             boolean forceIntegerToDiscrete) {
         this.heightsOption = heightsOption;
         this.posteriorLimit = posteriorLimit;

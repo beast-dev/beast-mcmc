@@ -209,11 +209,11 @@ class BiClade implements Clade {
     private final Taxon taxon;
 
     private final Set<Pair<BiClade, BiClade>> subClades = new HashSet<>();
-     BiClade bestLeft = null;
-     BiClade bestRight = null;
+    BiClade bestLeft = null;
+    BiClade bestRight = null;
 
 
-     double bestSubTreeCredibility;
+    double bestSubTreeCredibility;
 
     private List<Object[]> attributeValues = null;
 }

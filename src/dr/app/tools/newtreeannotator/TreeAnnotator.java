@@ -42,13 +42,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
-import dr.geo.contouring.ContourMaker;
-import dr.geo.contouring.ContourPath;
-import dr.geo.contouring.ContourWithSynder;
-import dr.inference.trace.TraceCorrelation;
-import dr.inference.trace.TraceType;
-import dr.stats.DiscreteStatistics;
-import dr.util.HeapSort;
 import dr.util.Version;
 import jam.console.ConsoleApplication;
 
@@ -214,6 +207,10 @@ public class TreeAnnotator extends BaseTreeTool {
 
         annotateTargetTree(targetCladeSystem, heightsOption, targetTree);
 
+        if (heightsOption == HeightsSummary.CA_HEIGHTS) {
+            setNodeHeightsCA(targetCladeSystem, targetTree);
+        }
+
         writeAnnotatedTree(outputFileName, targetTree);
 
         long timeElapsed =  (System.currentTimeMillis() - totalStartTime) / 1000;
@@ -234,7 +231,6 @@ public class TreeAnnotator extends BaseTreeTool {
 
     private int readTrees(String inputFileName, int burninTrees, long burninStates, CladeSystem cladeSystem) throws IOException {
         long timeElapsed;
-        Reader reader;
         long startTime;
 
         int burnin = -1;
@@ -247,18 +243,27 @@ public class TreeAnnotator extends BaseTreeTool {
 
         startTime = System.currentTimeMillis();
 
-        reader = new BufferedReader(new FileReader(inputFileName));
-//        TreeImporter importer = new BEASTTreesImporter(reader, false);
-        NexusImporter importer = new NexusImporter(reader, true);
         try {
+            // read the first tree using NexusImport to get the taxon list and tip number to taxon mapping
+//            Reader reader = new BufferedReader(new FileReader(inputFileName));
+//            NexusImporter nexusImporter = new NexusImporter(reader, true);
+//            taxa = nexusImporter.importTree(null);
+//
+//            reader = new BufferedReader(new FileReader(inputFileName));
+//            BEASTTreesImporter importer = new BEASTTreesImporter(reader, false);
+//            importer.setTaxonList(taxa);
+
+            Reader reader = new BufferedReader(new FileReader(inputFileName));
+            NexusImporter importer = new NexusImporter(reader, true);
+
             totalTrees = 0;
             while (importer.hasTree()) {
                 Tree tree = importer.importNextTree();
                 long state = Long.MAX_VALUE;
 
-                if (taxa == null) {
-                    taxa = new Taxa(tree);
-                }
+//                if (taxa == null) {
+//                    taxa = new Taxa(tree);
+//                }
 
                 if (burninStates > 0) {
                     // if burnin has been specified in states, try to parse it out...
@@ -293,11 +298,11 @@ public class TreeAnnotator extends BaseTreeTool {
                 totalTrees++;
             }
 
+            reader.close();
         } catch (Importer.ImportException e) {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
             System.exit(1);
         }
-        reader.close();
         timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("* [" + timeElapsed + " secs]");
         progressStream.println();
@@ -482,15 +487,30 @@ public class TreeAnnotator extends BaseTreeTool {
 
         try {
             cladeSystem.traverseTree(targetTree, annotationAction);
-
-            if ( heightsOption == HeightsSummary.CA_HEIGHTS ) {
-                assert false : "Implement this";
-//                setTreeHeightsByCA(targetTree, inputFileName, burnin);
-            }
         } catch (Exception e) {
             System.err.println("Error annotating tree: " + e.getMessage() + "\nPlease check the tree log file format.");
             System.exit(1);
         }
+        progressStream.println();
+    }
+
+    private void setNodeHeightsCA(CladeSystem cladeSystem, MutableTree targetTree) {
+        assert false : "Implement this";
+
+        long startTime = System.currentTimeMillis();
+
+        progressStream.println("Setting node heights...");
+        progressStream.println("0              25             50             75            100");
+        progressStream.println("|--------------|--------------|--------------|--------------|");
+
+        int stepSize = totalTrees / 60;
+        if (stepSize < 1) stepSize = 1;
+
+//        CAHeights caHeights = new CAHeights(this);
+//        caHeights.setTreeHeightsByCA(targetTree, inputFileName, burnin);
+
+        long timeElapsed = (System.currentTimeMillis() - startTime) / 1000;
+        progressStream.println("* [" + timeElapsed + " secs]");
         progressStream.println();
     }
 
@@ -511,6 +531,7 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println("Written to file: " + outputFileName);
         progressStream.println();
     }
+
 
     private double scoreTree(Tree tree, CladeSystem cladeSystem) {
         return cladeSystem.getLogCladeCredibility(tree);
@@ -801,97 +822,6 @@ public class TreeAnnotator extends BaseTreeTool {
         System.exit(0);
     }
 
-
-    // very inefficient, but Java wonderful bitset has no subset op
-    // perhaps using bit iterator would be faster, I can't br bothered.
-
-    static boolean isSubSet(BitSet x, BitSet y) {
-        y = (BitSet) y.clone();
-        y.and(x);
-        return y.equals(x);
-    }
-
-//    boolean setTreeHeightsByCA(MutableTree targetTree, final String inputFileName, final int burnin)
-//            throws IOException, Importer.ImportException {
-//
-//        long startTime = System.currentTimeMillis();
-//
-//        progressStream.println("Setting node heights...");
-//        progressStream.println("0              25             50             75            100");
-//        progressStream.println("|--------------|--------------|--------------|--------------|");
-//
-//        int reportStepSize = totalTrees / 60;
-//        if (reportStepSize < 1) reportStepSize = 1;
-//
-//        final FileReader fileReader = new FileReader(inputFileName);
-//        final NexusImporter importer = new NexusImporter(fileReader, true);
-//
-//        // this call increments the clade counts and it shouldn't
-//        // this is remedied with removeClades call after while loop below
-//        CladeSystem cladeSystem = new CladeSystem(this, targetTree);
-//        final int nClades = cladeSystem.getCladeMap().size();
-//
-//        // allocate posterior tree nodes order once
-//        int[] postOrderList = new int[nClades];
-//        BitSet[] ctarget = new BitSet[nClades];
-//        BitSet[] ctree = new BitSet[nClades];
-//
-//        for (int k = 0; k < nClades; ++k) {
-//            ctarget[k] = new BitSet();
-//            ctree[k] = new BitSet();
-//        }
-//
-//        cladeSystem.getTreeCladeCodes(targetTree, ctarget);
-//
-//        // temp collecting heights inside loop allocated once
-//        double[] hs = new double[nClades];
-//
-//        // heights total sum from posterior trees
-//        double[] ths = new double[nClades];
-//
-//        totalTreesUsed = 0;
-//
-//        int counter = 0;
-//        while (importer.hasTree()) {
-//            final Tree tree = importer.importNextTree();
-//
-//            if (counter >= burnin) {
-//                TreeUtils.preOrderTraversalList(tree, postOrderList);
-//                cladeSystem.getTreeCladeCodes(tree, ctree);
-//                for (int k = 0; k < nClades; ++k) {
-//                    int j = postOrderList[k];
-//                    for (int i = 0; i < nClades; ++i) {
-//                        if( isSubSet(ctarget[i], ctree[j]) ) {
-//                            hs[i] = tree.getNodeHeight(tree.getNode(j));
-//                        }
-//                    }
-//                }
-//                for (int k = 0; k < nClades; ++k) {
-//                    ths[k] += hs[k];
-//                }
-//                totalTreesUsed += 1;
-//            }
-//            if (counter > 0 && counter % reportStepSize == 0) {
-//                progressStream.print("*");
-//                progressStream.flush();
-//            }
-//            counter++;
-//
-//        }
-//        cladeSystem.removeClades(targetTree, targetTree.getRoot(), true);
-//        for (int k = 0; k < nClades; ++k) {
-//            ths[k] /= totalTreesUsed;
-//            final NodeRef node = targetTree.getNode(k);
-//            targetTree.setNodeHeight(node, ths[k]);
-//        }
-//        fileReader.close();
-//
-//        long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
-//        progressStream.println("* [" + timeElapsed + " secs]");
-//        progressStream.println();
-//
-//        return true;
-//    }
 
 }
 

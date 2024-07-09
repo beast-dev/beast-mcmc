@@ -755,7 +755,7 @@ public class SubstitutionModelGenerator extends Generator {
         if (options.useNuRelativeRates()) {
             Parameter parameter = model.getParameter("nu");
             String prefix1 = options.getPrefix();
-            if (parameter.getSubParameters().size() > 0) {
+            if (!parameter.getSubParameters().isEmpty()) {
                 writeNuRelativeRateBlock(writer, prefix1, parameter);
             }
         } else {
@@ -806,11 +806,7 @@ public class SubstitutionModelGenerator extends Generator {
 
         if (options.useNuRelativeRates()) {
             Parameter parameter = model.getParameter("nu");
-            String prefix1 = options.getPrefix();
-            if (parameter.getSubParameters().size() > 0) {
-                writeNuRelativeRateBlock(writer, prefix1, parameter);
-            }
-
+            writeNuRelativeRateBlock(writer, prefix, parameter);
         } else {
             writeParameter(SiteModelParser.RELATIVE_RATE, "mu", model, writer);
         }

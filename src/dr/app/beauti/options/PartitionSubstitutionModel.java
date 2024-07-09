@@ -571,7 +571,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
 
     public List<Parameter> getRelativeRateParameters() {
-        List<Parameter> allMus = new ArrayList<Parameter>();
+        List<Parameter> allMus = new ArrayList<>();
         int[] weights = getPartitionCodonWeights();
         if (getCodonPartitionCount() > 1) {
             if (codonHeteroPattern.equals("123")) {

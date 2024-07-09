@@ -49,7 +49,8 @@ public class DolloComponentOptions implements ComponentOptions {
 
 	public void createParameters(ModelOptions modelOptions) {
         for (AbstractPartitionData partition : options.dataPartitions) {
-            if (partition.getPartitionSubstitutionModel().isDolloModel()) {
+            PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
+            if (model != null && model.isDolloModel()) {
                 String prefix = partition.getName() + ".";
                 modelOptions.createParameterExponentialPrior(prefix + DEATH_RATE, "Stochastic Dollo death rate",
                         PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0E-5, 1.0E-4, 0.0);
@@ -61,7 +62,7 @@ public class DolloComponentOptions implements ComponentOptions {
 	public void selectOperators(ModelOptions modelOptions, List<Operator> ops) {
         for (AbstractPartitionData partition : options.dataPartitions) {
             PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
-            if (model.isDolloModel()) {
+            if (model != null && model.isDolloModel()) {
                 String prefix = partition.getName() + ".";
                 ops.add(modelOptions.getOperator(prefix + DEATH_RATE));
             }
@@ -72,7 +73,7 @@ public class DolloComponentOptions implements ComponentOptions {
 			List<Parameter> params) {
         for (AbstractPartitionData partition : options.dataPartitions) {
             PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
-            if (model.isDolloModel()) {
+            if (model != null && model.isDolloModel()) {
                 String prefix = partition.getName() + ".";
                 params.add(modelOptions.getParameter(prefix + DEATH_RATE));
                 break;

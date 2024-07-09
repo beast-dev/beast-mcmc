@@ -175,11 +175,11 @@ public class SampleFromLogFiles {
         if (treeBindings.size() > 0) {
             for (TreeBinding tb : treeBindings) {
 
-                int stateCount = tb.trees.length;
+                int stateCount = tb.trees.size();
 
-                String id0 = tb.trees[0].getId();
-                String id1 = tb.trees[1].getId();
-                String idN = tb.trees[stateCount - 1].getId();
+                String id0 = tb.trees.get(0).getId();
+                String id1 = tb.trees.get(1).getId();
+                String idN = tb.trees.get(stateCount - 1).getId();
 
                 long state0 = Long.parseLong(id0.replace("STATE_", ""));
                 long state1 = Long.parseLong(id1.replace("STATE_", ""));
@@ -297,7 +297,7 @@ public class SampleFromLogFiles {
 
     public static class TreeBinding {
 
-        Tree[] trees;
+        List<Tree> trees;
         EmpiricalTreeDistributionModel treeModel;
 
         public TreeBinding(EmpiricalTreeDistributionModel treeModel) {

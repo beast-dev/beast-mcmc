@@ -25,6 +25,9 @@
 
 package dr.inference.distribution;
 
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evolution.tree.Tree;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider;
 import dr.inference.model.*;
 import dr.math.distributions.RandomFieldDistribution;
@@ -40,6 +43,8 @@ public class RandomField extends AbstractModelLikelihood {
 
     public interface WeightProvider extends Model {
         // TODO returns relative lengths (intercoalescent intervals) between field entries
+
+        double weight(int index1, int index2);
 
         int getDimension();
     }

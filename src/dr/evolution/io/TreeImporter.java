@@ -28,7 +28,10 @@ package dr.evolution.io;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 
+import java.io.EOFException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Interface for importers that do trees
@@ -38,7 +41,15 @@ import java.io.IOException;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public interface TreeImporter { 
+public interface TreeImporter {
+
+	/**
+	 * Counts the number of trees in the file without importing them. The file
+	 * will need to be reset to the beginning to read the trees.
+	 *
+	 * @return the number of trees
+     */
+	int countTrees() throws IOException;
 
 	/**
 	 * return whether another tree is available. 
@@ -59,5 +70,5 @@ public interface TreeImporter {
 	/**
 	 * import an array of all trees. 
 	 */
-	Tree[] importTrees(TaxonList taxonList) throws IOException, Importer.ImportException;
+	List<Tree> importTrees(TaxonList taxonList) throws IOException, Importer.ImportException;
 }

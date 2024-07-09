@@ -10,10 +10,7 @@ import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.*;
 import dr.math.*;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.matrixAlgebra.ReadableVector;
-import dr.math.matrixAlgebra.RobustEigenDecomposition;
-import dr.math.matrixAlgebra.WrappedMatrix;
-import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.*;
 import dr.util.Transform;
 
 import java.util.ArrayList;
@@ -653,6 +650,9 @@ public interface MassPreconditioner {
             this.variance = new AdaptableVector.AdaptableVariance(dim);
             this.options = options;
             this.minimumUpdates = options.preconditioningDelay();
+            if (minimumUpdates < 2) {
+                throw new RuntimeException("Need at least two samples to calculate empirical variance.  Set HMC's option preconditioningDelay > 2 please!");
+            }
             this.gradient = gradient;
             if (guessInitialMass) {
                 setInitialMass();
@@ -720,10 +720,8 @@ public interface MassPreconditioner {
 
             if (variance.getUpdateCount() > minimumUpdates) {
                 double[] newVariance = variance.getVariance();
-//                adaptiveDiagonal.update(new WrappedVector.Raw(newVariance));
-//                return normalizeVector(adaptiveDiagonal.getMean(), dim);
-//                setInverseMassFromArray(normalizeVector(new WrappedVector.Raw(newVariance), dim));
-                setInverseMassFromArray(DiagonalHessianPreconditioning.boundMassInverse(newVariance,
+                adaptiveDiagonal.update(new WrappedVector.Raw(newVariance));
+                setInverseMassFromArray(DiagonalHessianPreconditioning.boundMassInverse(((WrappedVector) adaptiveDiagonal.getMean()).getBuffer(),
                         options.preconditioningEigenLowerBound(), options.preconditioningEigenUpperBound(), dim,
                         DiagonalHessianPreconditioning.VarianceConverter.VARIANCE));
             }

@@ -42,7 +42,7 @@ public class PartitionData extends AbstractPartitionData {
     private static final long serialVersionUID = 1642891822797102561L;
 
     private final Alignment alignment;
-
+    private Patterns patterns = null;
     private int fromSite;
     private int toSite;
     private int every = 1;
@@ -61,11 +61,6 @@ public class PartitionData extends AbstractPartitionData {
         this.every = every;
 
         this.traits = null;
-
-        Patterns patterns = null;
-        if (alignment != null) {
-            patterns = new Patterns(alignment);
-        }
 
         // This is too slow to be done at data loading.
         // calculateMeanDistance(patterns);
@@ -127,6 +122,16 @@ public class PartitionData extends AbstractPartitionData {
         }
     }
 
+    public int getPatternCount() {
+        if (patterns == null && alignment != null) {
+            patterns = new Patterns(alignment);
+        }
+        if (alignment == null) {
+            return traits.size();
+        }
+        return patterns.getPatternCount();
+    }
+
     public DataType getDataType() {
         if (alignment != null) {
             return alignment.getDataType();
@@ -156,7 +161,7 @@ public class PartitionData extends AbstractPartitionData {
         } else {
             // this method provides prefix as long as multi-data-partitions case,
             // because options.dataPartitions may contain traits, use options.getPartitionData()
-            if (options.getPartitionData().size() > 1) { // getPartitionData() already excludes traits and microsatellite
+            if (options.getPartitionData().size() > 1) { // getPartitionData() already excludes traits
                 prefix += getName() + ".";
             }
         }

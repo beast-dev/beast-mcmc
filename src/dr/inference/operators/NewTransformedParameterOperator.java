@@ -83,8 +83,8 @@ public class NewTransformedParameterOperator extends AbstractAdaptableOperator {
         // Compute Jacobians
 
 
-        ratio += transform.getLogJacobian(transform.transform(oldValues, 0, oldValues.length), 0, oldValues.length)
-                - transform.getLogJacobian(transform.transform(newValues, 0, newValues.length), 0, oldValues.length);
+        ratio += transform.logJacobian(transform.transform(oldValues, 0, oldValues.length), 0, oldValues.length)
+                - transform.logJacobian(transform.transform(newValues, 0, newValues.length), 0, oldValues.length);
 
 
         return ratio;

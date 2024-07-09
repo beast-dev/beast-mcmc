@@ -9,6 +9,7 @@ package dr.evolution.datatype;
 
 public class DummyDataType extends DataType {
 
+    public static final DummyDataType INSTANCE = new DummyDataType();
 
     public DummyDataType() {
 
@@ -26,6 +27,6 @@ public class DummyDataType extends DataType {
 
     @Override
     public int getType() {
-        return 9;
+        return DUMMY;
     }
 }

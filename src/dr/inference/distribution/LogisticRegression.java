@@ -74,7 +74,6 @@ public class LogisticRegression extends GeneralizedLinearModel {
 		return logLikelihood;
 	}
 
-
 	public boolean confirmIndependentParameters() {
 		// todo -- check that independent parameters \in {0,1} only
 		return true;

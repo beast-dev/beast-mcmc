@@ -51,9 +51,9 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRA
 
 public class BranchRateGradientParser extends AbstractXMLObjectParser {
 
-    private static final String NAME = "branchRateGradient";
-    private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
-    private static final String USE_HESSIAN = "useHessian";
+    public static final String NAME = "branchRateGradient";
+    public static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
+    public static final String USE_HESSIAN = "useHessian";
 
     @Override
     public String getParserName() {
@@ -122,6 +122,9 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
             } else if (delegate instanceof BeagleDataLikelihoodDelegate) {
 
                 BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) delegate;
+                if (!beagleData.isUsePreOrder()) {
+                    throw new XMLParseException("To use gradients TreeDataLikelihood must have attribute usePreOrder=\"true\"");
+                }
                 return new BranchRateGradientForDiscreteTrait(traitName, treeDataLikelihood, beagleData, branchRates, useHessian);
 
             } else {

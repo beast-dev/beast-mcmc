@@ -207,6 +207,6 @@ public class MTREV extends EmpiricalRateMatrix.AbstractAminoAcid {
                     new Author("M", "Hasegawa")
             },
             "Model of amino acid substitution in proteins encoded by mitochondrial DNA",
-            1996, "J Mol Evol", 42, 459, 468
+            1996, "Journal of Molecular Evolution", 42, 459, 468
     );
 }

@@ -28,6 +28,8 @@ package dr.evolution.datatype;
 import java.io.Serializable;
 import java.util.*;
 
+import dr.inference.model.Bounds.Int;
+
 /**
  * Base class for sequence data types.
  *
@@ -49,8 +51,10 @@ public abstract class DataType implements Serializable {
 
     public static final int P2PTYPE = 7;
     public static final int CONTINUOUS = 8;
+    public static final int INTEGER = 9;
+    public static final int TREE = 10;
 
-    public static final int DUMMY = 9;
+    public static final int DUMMY = 99;
 
     public static final char UNKNOWN_CHARACTER = '?';
     public static final char GAP_CHARACTER = '-';
@@ -110,6 +114,7 @@ public abstract class DataType implements Serializable {
             registerDataType(Microsatellite.DESCRIPTION, Microsatellite.INSTANCE);
             registerDataType(P2P.DESCRIPTION, P2P.INSTANCE);
             registerDataType(ContinuousDataType.DESCRIPTION, ContinuousDataType.INSTANCE);
+            registerDataType(IntegerDataType.DESCRIPTION, IntegerDataType.INSTANCE);
         }
     }
 
@@ -455,6 +460,8 @@ public abstract class DataType implements Serializable {
                 return "Continuous Traits";
             case DataType.MICRO_SAT:
                 return "Microsatellite";
+            case DataType.TREE:
+                return "Tree";
             case DataType.DUMMY:
                 return "Dummy";
             default:

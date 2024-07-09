@@ -499,6 +499,17 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         return repeatedTraits;
     }
 
+    @Override
+    public void updateTipDataGradient(DenseMatrix64F precision, DenseMatrix64F variance, NodeRef node,
+                                      int offset, int dimGradient) {
+        NormalExtensionProvider.extendTipDataGradient(this, precision, variance, node, offset, dimGradient);
+    }
+
+    @Override
+    public boolean needToUpdateTipDataGradient(int offset, int dimGradient) {
+        return true;
+    }
+
     private static final boolean DEBUG = false;
 
 

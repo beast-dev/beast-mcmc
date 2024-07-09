@@ -401,7 +401,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
     //private FileLogger operatorLogger = null;
     protected final boolean isAdapting = true;
     protected boolean stopping = false;
-    protected boolean showOperatorAnalysis = true;
+    protected boolean showOperatorAnalysis = Boolean.parseBoolean(System.getProperty(OperatorSchedule.SHOW_OPERATORS));
     protected File operatorAnalysisFile = null;
     protected final dr.util.Timer timer = new dr.util.Timer();
     protected long currentState = 0;

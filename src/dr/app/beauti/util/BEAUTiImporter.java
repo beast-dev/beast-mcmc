@@ -26,6 +26,7 @@
 package dr.app.beauti.util;
 
 import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.datapanel.BadTraitFormatDialog;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.options.*;
 import dr.app.util.Utils;
@@ -35,7 +36,6 @@ import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.*;
 import dr.evolution.io.FastaImporter;
 import dr.evolution.io.Importer.ImportException;
-import dr.evolution.io.MicroSatImporter;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.NexusImporter.MissingBlockException;
@@ -52,6 +52,7 @@ import org.jdom.JDOMException;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.List;
 
@@ -63,6 +64,7 @@ import java.util.List;
  */
 public class BEAUTiImporter {
 
+    private static final long MAX_FILE_SIZE = 1024 * 1024 * 128; // 0.1GB
     private final String DEFAULT_NAME = "default";
 
     private final BeautiOptions options;
@@ -76,26 +78,35 @@ public class BEAUTiImporter {
     }
 
     public void importFromFile(File file) throws IOException, ImportException, JDOMException {
+        long fileSize = file.length();
+        if (fileSize > MAX_FILE_SIZE) {
+            String size = String.format("%.2f", ((double)fileSize) / (1024 * 1024 * 1024));
+            int result = JOptionPane.showConfirmDialog(this.frame, "This file is " + size +"GB in size.\nAre you sure you want to import it?",
+                    "Importing Data", JOptionPane.OK_CANCEL_OPTION);
+            if (result == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+        }
+
         try {
-            String line = findFirstLine(file);
+            String line = findFirstLine(file).trim();
 
             if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
                 // is a NEXUS file
                 importNexusFile(file);
-            } else if ((line != null && line.trim().startsWith("" + FastaImporter.FASTA_FIRST_CHAR))) {
+            } else if ((line != null && line.startsWith("" + FastaImporter.FASTA_FIRST_CHAR))) {
                 // is a FASTA file
                 importFastaFile(file);
             } else if ((line != null && (line.toUpperCase().contains("<?XML") || line.toUpperCase().contains("<BEAST")))) {
                 // assume it is a BEAST XML file and see if that works...
                 importBEASTFile(file);
-//            } else {
-//                // assume it is a tab-delimited traits file and see if that works...
-//                importTraits(file);
-            } else if ((line != null && line.toUpperCase().contains("#MICROSAT"))) {
-                // MicroSatellite
-                importMicroSatFile(file);
+            } else if ((line != null && line.startsWith("("))) {
+                importNewickFile(file);
             } else {
-                throw new ImportException("Unrecognized format for imported file.");
+                // assume it is a tab-delimited traits file and see if that works...
+                importTraits(file);
+//            } else {
+//                throw new ImportException("Unrecognized format for imported file.");
             }
 
         } catch (IOException e) {
@@ -114,37 +125,6 @@ public class BEAUTiImporter {
 
         bufferedReader.close();
         return line;
-    }
-
-    // micro-sat
-    private void importMicroSatFile(File file) throws IOException, ImportException {
-        try {
-            Reader reader = new FileReader(file);
-            BufferedReader bufferedReader = new BufferedReader(reader);
-
-            MicroSatImporter importer = new MicroSatImporter(bufferedReader);
-
-            List<Patterns> microsatPatList = importer.importPatterns();
-            Taxa unionSetTaxonList = importer.getUnionSetTaxonList();
-            Microsatellite microsatellite = importer.getMicrosatellite();
-//            options.allowDifferentTaxa = importer.isHasDifferentTaxon();
-
-            bufferedReader.close();
-
-            PartitionSubstitutionModel substModel = new PartitionSubstitutionModel(options, microsatPatList.get(0).getId());
-            substModel.setMicrosatellite(microsatellite);
-
-            for (Patterns patterns : microsatPatList) {
-                setData(file.getName(), unionSetTaxonList, patterns, substModel, null);
-            }
-            // has to call after data is imported
-            options.microsatelliteOptions.initModelParametersAndOpererators();
-
-        } catch (ImportException e) {
-            throw new ImportException(e.getMessage());
-        } catch (IOException e) {
-            throw new IOException(e.getMessage());
-        }
     }
 
     // xml
@@ -171,7 +151,7 @@ public class BEAUTiImporter {
                         name += count;
                     }
                 }
-                setData(name, taxa, alignment, null, null, null, null, null);
+                setData(name, taxa, alignment, null, null, null, null, null, 0, false);
 
                 count++;
             }
@@ -212,13 +192,40 @@ public class BEAUTiImporter {
         List<CharSet> charSets = new ArrayList<CharSet>();
         List<NexusApplicationImporter.TaxSet> taxSets = new ArrayList<NexusApplicationImporter.TaxSet>();
 
-        try {
-            FileReader reader = new FileReader(file);
+        int treeCount = 0;
 
-            NexusApplicationImporter importer = new NexusApplicationImporter(reader);
+        try {
+            NexusApplicationImporter importer = new NexusApplicationImporter(new FileReader(file));
 
             boolean done = false;
+            while (!done) {
+                try {
+                    NexusBlock block = importer.findNextBlock();
+                    if (block == NexusImporter.TREES_BLOCK) {
+                        treeCount += importer.countTrees();
+                    }
+                } catch (EOFException ex) {
+                    done = true;
+                }
+            }
 
+            boolean importAllTrees = true;
+            if (treeCount > 10) {
+                int result = JOptionPane.showConfirmDialog(this.frame,
+                        "This file contains " + treeCount + " trees.\n" +
+                                "Do you want to just import the first tree in the file (recommended)?\n" +
+                                "Choose 'No' to import all the trees.",
+                        "Importing Data", JOptionPane.YES_NO_CANCEL_OPTION);
+                if (result == JOptionPane.CANCEL_OPTION) {
+                    return;
+                }
+                importAllTrees = result == JOptionPane.NO_OPTION;
+            }
+
+            // reset file for reading
+            importer = new NexusApplicationImporter(new FileReader(file));
+
+            done = false;
             while (!done) {
                 try {
 
@@ -265,20 +272,16 @@ public class BEAUTiImporter {
                         }
 
                     } else if (block == NexusImporter.TREES_BLOCK) {
-
-                        // I guess there is no reason not to allow multiple trees blocks
-//                        if (trees.size() > 0) {
-//                            throw new MissingBlockException("TREES block already defined");
-//                        }
-
-                        Tree[] treeArray = importer.parseTreesBlock(taxa);
-                        trees.addAll(Arrays.asList(treeArray));
-
-                        if (taxa == null && trees.size() > 0) {
+                        if (!importAllTrees) {
+                            if (trees.isEmpty()) {
+                                trees.addAll(importer.parseTreesBlock(taxa, 1));
+                            }
+                        } else {
+                            trees.addAll(importer.parseTreesBlock(taxa));
+                        }
+                        if (taxa == null && !trees.isEmpty()) {
                             taxa = trees.get(0);
                         }
-
-
                     } else if (block == NexusApplicationImporter.PAUP_BLOCK) {
 
                         model = importer.parsePAUPBlock(options, charSets);
@@ -300,8 +303,6 @@ public class BEAUTiImporter {
                 }
             }
 
-            reader.close();
-
             // Allow the user to load taxa only (perhaps from a tree file) so that they can sample from a prior...
             if (alignment == null && taxa == null) {
                 throw new MissingBlockException("TAXON, DATA or CHARACTERS block is missing");
@@ -315,7 +316,7 @@ public class BEAUTiImporter {
 //            throw new Exception(e.getMessage());
         }
 
-        setData(file.getName(), taxa, alignment, charSets, taxSets, model, null, trees, allowEmpty);
+        setData(file.getName(), taxa, alignment, charSets, taxSets, model, null, trees, treeCount, allowEmpty);
     }
 
     // FASTA
@@ -330,7 +331,7 @@ public class BEAUTiImporter {
 
             reader.close();
 
-            setData(file.getName(), alignment, alignment, null, null, null, null, null);
+            setData(file.getName(), alignment, alignment, null, null, null, null, null, 0, false);
         } catch (ImportException e) {
             throw new ImportException(e.getMessage());
         } catch (IOException e) {
@@ -342,15 +343,18 @@ public class BEAUTiImporter {
         return (value.equals("?") || value.equals("NA") || value.length() == 0);
     }
 
-    public void importTraits(final File file) throws Exception {
+    public void importTraits(final File file) throws IOException {
         List<TraitData> importedTraits = new ArrayList<TraitData>();
+
+        if (options.taxonList == null) {
+            options.taxonList = new Taxa();
+        }
         Taxa taxa = options.taxonList;
 
         DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(file));
 
         String[] traitNames = dataTable.getColumnLabels();
         String[] taxonNames = dataTable.getRowLabels();
-
 
         for (int i = 0; i < dataTable.getColumnCount(); i++) {
             boolean warningGiven = false;
@@ -388,36 +392,40 @@ public class BEAUTiImporter {
                     (c == Integer.class) ? TraitData.TraitType.INTEGER : TraitData.TraitType.CONTINUOUS;
             TraitData newTrait = new TraitData(options, traitName, file.getName(), t);
 
-            if (validateTraitName(traitName)) {
+            if (frame.validateTraitName(traitName)) {
                 importedTraits.add(newTrait);
-            }
 
-            int j = 0;
-            for (final String taxonName : taxonNames) {
-
-                final int index = taxa.getTaxonIndex(taxonName);
-                Taxon taxon;
-                if (index >= 0) {
-                    taxon = taxa.getTaxon(index);
-                } else {
-                    taxon = new Taxon(taxonName);
-                    taxa.addTaxon(taxon);
-                }
-                if (!isMissingValue(values[j])) {
-                    taxon.setAttribute(traitName, Utils.constructFromString(c, values[j]));
-                } else {
-                    // AR - merge rather than replace existing trait values
-                    if (taxon.getAttribute(traitName) == null) {
-                        taxon.setAttribute(traitName, "?");
+                int j = 0;
+                for (final String taxonName : taxonNames) {
+                    final int index = taxa.getTaxonIndex(taxonName);
+                    Taxon taxon;
+                    if (index >= 0) {
+                        taxon = taxa.getTaxon(index);
+                    } else {
+                        taxon = new Taxon(taxonName);
+                        taxa.addTaxon(taxon);
                     }
+                    if (!isMissingValue(values[j])) {
+                        taxon.setAttribute(traitName, Utils.constructFromString(c, values[j]));
+                    } else {
+                        // AR - merge rather than replace existing trait values
+                        if (taxon.getAttribute(traitName) == null) {
+                            taxon.setAttribute(traitName, "?");
+                        }
+                    }
+                    j++;
                 }
-                j++;
             }
         }
-        setData(file.getName(), taxa, null, null, null, null, importedTraits, null, true);
+        try {
+            setData(file.getName(), taxa, null, null, null, null, importedTraits, null, 0, true);
+        } catch (ImportException ie) {
+            BadTraitFormatDialog dialog = new BadTraitFormatDialog(frame);
+            dialog.showDialog();
+        }
     }
 
-    public void importTaxaFromTraits(final File file) throws Exception {
+    public void importTaxaFromTraits(final File file) throws ImportException, IOException {
 
         DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(file));
 
@@ -430,18 +438,44 @@ public class BEAUTiImporter {
 
         addTaxonList(taxa);
 
-        setData(file.getName(), taxa, null, null, null, null, null, null, true);
+        SimpleAlignment dummyAlignment = new SimpleAlignment();
+        dummyAlignment.setDataType(new DummyDataType());
+
+        setData(file.getName(), taxa, dummyAlignment, null, null, null, null, null, 0,true);
     }
 
-    public void importNewickFile(final File file) throws Exception {
-        NewickImporter importer = new NewickImporter(new FileReader(file));
-        Tree[] trees = importer.importTrees(options.taxonList);
-        addTrees(Arrays.asList(trees));
+    public void importNewickFile(final File file) throws ImportException, IOException {
+        FileReader reader = new FileReader(file);
+        NewickImporter importer = new NewickImporter(reader);
+        int treeCount = importer.countTrees();
+
+        boolean importAllTrees = true;
+        if (treeCount > 10) {
+            int result = JOptionPane.showConfirmDialog(this.frame,
+                    "This file contains " + treeCount + " trees.\n" +
+                            "Do you want to just import the first tree in the file (recommended)?\n" +
+                            "Choose 'No' to import all the trees.",
+                    "Importing Data", JOptionPane.YES_NO_CANCEL_OPTION);
+            if (result == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+            importAllTrees = result == JOptionPane.NO_OPTION;
+        }
+
+        // reset file after counting trees
+        importer = new NewickImporter(new FileReader(file));
+
+        List<Tree> trees;
+        if (importAllTrees) {
+            trees = importer.importTrees(options.taxonList);
+        } else {
+            trees = Collections.singletonList(importer.importTree(options.taxonList));
+        }
+        setData(file.getName(), trees.get(0), null, null, null, null, null, trees, treeCount, true);
     }
 
-    public boolean importPredictors(final File file, final TraitData trait) throws Exception {
+    public boolean importPredictors(final File file, final TraitData trait) throws ImportException, IOException {
         List<Predictor> importedPredictors = new ArrayList<Predictor>();
-//        Taxa taxa = options.taxonList;
 
         // This is the order that states will be in...
         Set<String> states = trait.getStatesOfTrait();
@@ -545,68 +579,58 @@ public class BEAUTiImporter {
         return true;
     }
 
-    private boolean validateTraitName(String traitName) {
-        // check that the name is valid
-        if (traitName.trim().length() == 0) {
-            Toolkit.getDefaultToolkit().beep();
-            return false;
-        }
-
-        // disallow a trait called 'date'
-        if (traitName.equalsIgnoreCase("date")) {
-            JOptionPane.showMessageDialog(frame,
-                    "This trait name has a special meaning. Use the 'Tip Date' panel\n" +
-                            " to set dates for taxa.",
-                    "Reserved trait name",
-                    JOptionPane.WARNING_MESSAGE);
-
-            return false;
-        }
-
-        // check that the trait name doesn't exist
-        if (options.traitExists(traitName)) {
-            int option = JOptionPane.showConfirmDialog(frame,
-                    "A trait of this name already exists. Do you wish to replace\n" +
-                            "it with this new trait? This may result in the loss or change\n" +
-                            "in trait values for the taxa.",
-                    "Overwrite trait?",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.WARNING_MESSAGE);
-
-            if (option == JOptionPane.NO_OPTION) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private void setData(String fileName, TaxonList taxonList, Alignment alignment,
-                         List<CharSet> charSets,
-                         List<NexusApplicationImporter.TaxSet> taxSets,
-                         PartitionSubstitutionModel model,
-                         List<TraitData> traits, List<Tree> trees) throws ImportException, IllegalArgumentException {
-        setData(fileName, taxonList, alignment, charSets, taxSets, model, traits, trees, false);
-    }
-
     // for Alignment
     private void setData(String fileName, TaxonList taxonList, Alignment alignment,
                          List<CharSet> charSets,
                          List<NexusApplicationImporter.TaxSet> taxSets,
                          PartitionSubstitutionModel model,
-                         List<TraitData> traits, List<Tree> trees,
+                         List<TraitData> traits, List<Tree> trees, int treeCount,
                          boolean allowEmpty) throws ImportException, IllegalArgumentException {
+
         String fileNameStem = Utils.trimExtensions(fileName,
                 new String[]{"NEX", "NEXUS", "FA", "FAS", "FASTA", "TRE", "TREE", "XML", "TXT"});
         if (options.fileNameStem == null || options.fileNameStem.equals(MCMCPanel.DEFAULT_FILE_NAME_STEM)) {
             options.fileNameStem = fileNameStem;
         }
 
+        // Importing some data - see what it is and ask what to do with it...
+
+        boolean createTreePartition = false;
+        if (alignment == null && traits == null && trees != null) {
+            // If only importing trees then ask if a tree-data partition should be created.
+            // Doing this first in case the cancel button is pressed
+            int result = JOptionPane.showConfirmDialog(this.frame, "File for importing contains trees:\nCreate 'tree-as-data' partition?",
+                    "Importing Trees", JOptionPane.YES_NO_CANCEL_OPTION);
+            if (result == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+            createTreePartition = result == JOptionPane.YES_OPTION;
+        }
+
+        boolean createTraitPartition = false;
+        if (alignment == null && trees == null && traits != null && !traits.isEmpty()) {
+            // If only importing traits then ask if a trait-data partition should be created.
+            // Doing this first in case the cancel button is pressed
+            int result = JOptionPane.showConfirmDialog(this.frame, "File for importing contains traits:\nCreate a traits partition?",
+                    "Importing Traits", JOptionPane.YES_NO_CANCEL_OPTION);
+            if (result == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+            createTraitPartition = result == JOptionPane.YES_OPTION;
+        }
+
         if (alignment != null) {
             // check the alignment before adding it...
-            if (!allowEmpty && alignment.getSiteCount() == 0) {
-                // sequences are different lengths
-                throw new ImportException("This alignment is of zero length");
+            if (alignment.getSiteCount() == 0) {
+                if (allowEmpty) {
+                    int result = JOptionPane.showConfirmDialog(this.frame, "File contains zero length sequences:\nCreate empty partition?",
+                            "Importing zero length sequences", JOptionPane.OK_CANCEL_OPTION);
+                    if (result == JOptionPane.CANCEL_OPTION) {
+                        return;
+                    }
+                } else {
+                    throw new ImportException("This alignment is of zero length");
+                }
             }
 
             for (Sequence seq : alignment.getSequences()) {
@@ -614,6 +638,57 @@ public class BEAUTiImporter {
                     // sequences are different lengths
                     throw new ImportException("The sequences in the alignment file are of different lengths - BEAST requires aligned sequences");
                 }
+            }
+        }
+
+        Set<String> attributeNames = new HashSet<>();
+
+        for (Taxon taxon : taxonList) {
+            if (taxon.getDate() != null) {
+                options.useTipDates = true;
+            }
+            for (Iterator<String> it = taxon.getAttributeNames(); it.hasNext(); ) {
+                String name = it.next();
+                if (!name.equalsIgnoreCase("Date") && !name.equals("_height")) {
+                    // "_height" is a magic value used by BEAUti
+                    attributeNames.add(name);
+                }
+            }
+        }
+
+        // attempt to work out the type of the trait
+        for (String name : attributeNames) {
+            if (!options.traitExists(name)) {
+                TraitData.TraitType type = null;
+                for (Taxon taxon : taxonList) {
+                    if (taxon.getAttribute(name) != null) {
+                        String value = taxon.getAttribute(name).toString();
+                        if (value.equals("NA") || value.equals("?")) { // need to check "?" to avoid 'else' block
+                            taxon.setAttribute(name, "?");
+                        } else {
+                            try {
+                                Integer.parseInt(value);
+                                if (type == null || type == TraitData.TraitType.INTEGER) {
+                                    type = TraitData.TraitType.INTEGER;
+                                }
+                            } catch (NumberFormatException e) {
+                                try {
+                                    Double.parseDouble(value);
+                                    if (type == null || type == TraitData.TraitType.INTEGER || type == TraitData.TraitType.CONTINUOUS) {
+                                        type = TraitData.TraitType.CONTINUOUS;
+                                    }
+                                } catch (NumberFormatException e1) {
+                                    type = TraitData.TraitType.DISCRETE;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (type == null) {
+                    type = TraitData.TraitType.DISCRETE;
+                }
+
+                options.traits.add(new TraitData(options, name, fileName, type));
             }
         }
 
@@ -625,24 +700,15 @@ public class BEAUTiImporter {
 
         addTraits(traits);
 
-        addTrees(trees);
-    }
+        TreeHolder treeHolder = addTrees(fileNameStem, fileName, trees, treeCount);
 
-    // for Patterns
-    private void setData(String fileName, Taxa taxonList, Patterns patterns,
-                         PartitionSubstitutionModel model, List<TraitData> traits
-    ) throws ImportException, IllegalArgumentException {
-        String fileNameStem = Utils.trimExtensions(fileName,
-                new String[]{"NEX", "NEXUS", "FA", "FAS", "FASTA", "TRE", "TREE", "XML", "TXT"});
-        if (options.fileNameStem == null || options.fileNameStem.equals(MCMCPanel.DEFAULT_FILE_NAME_STEM)) {
-            options.fileNameStem = fileNameStem;
+        if (createTreePartition) {
+            options.createPartitionForTree(treeHolder, fileNameStem);
         }
 
-        addTaxonList(taxonList);
-
-        addPatterns(patterns, model, fileName);
-
-        addTraits(traits);
+        if (createTraitPartition) {
+            frame.getDataPanel().createPartitionFromTraits(null, fileNameStem, frame);
+        }
     }
 
     private void addTaxonList(TaxonList taxonList) throws ImportException {
@@ -709,18 +775,19 @@ public class BEAUTiImporter {
                               List<CharSet> charSets,
                               PartitionSubstitutionModel model,
                               String fileName, String fileNameStem) {
-        if (alignment != null) {
-            List<AbstractPartitionData> partitions = new ArrayList<AbstractPartitionData>();
-            if (charSets != null && charSets.size() > 0) {
-                for (CharSet charSet : charSets) {
-                    partitions.add(new PartitionData(options, charSet.name, fileName,
-                            charSet.constructCharSetAlignment(alignment)));
-                }
-            } else {
-                partitions.add(new PartitionData(options, fileNameStem, fileName, alignment));
-            }
-            createPartitionFramework(model, partitions);
+        if (alignment == null) {
+            return;
         }
+        List<AbstractPartitionData> partitions = new ArrayList<AbstractPartitionData>();
+        if (charSets != null && charSets.size() > 0) {
+            for (CharSet charSet : charSets) {
+                partitions.add(new PartitionData(options, charSet.name, fileName,
+                        charSet.constructCharSetAlignment(alignment)));
+            }
+        } else {
+            partitions.add(new PartitionData(options, fileNameStem, fileName, alignment));
+        }
+        createPartitionFramework(model, partitions);
     }
 
     private void addPatterns(Patterns patterns, PartitionSubstitutionModel model, String fileName) {
@@ -770,7 +837,7 @@ public class BEAUTiImporter {
             if (model != null) {
                 setSubstModel(partition, model);
 
-                setClockAndTree(partition);//TODO Cannot load Clock Model and Tree Model from BEAST file yet
+                options.setClockAndTree(partition);//TODO Cannot load Clock Model and Tree Model from BEAST file yet
 
             } else {// only this works
                 if (options.getPartitionSubstitutionModels(partition.getDataType()).isEmpty()) {// use same substitution model in beginning
@@ -783,7 +850,7 @@ public class BEAUTiImporter {
                     setSubstModel(partition, psm);
                 }
 
-                setClockAndTree(partition);
+                options.setClockAndTree(partition);
             }
         }
 
@@ -791,48 +858,36 @@ public class BEAUTiImporter {
 //        options.clockModelOptions.initClockModelGroup();
     }
 
-    private void setClockAndTree(AbstractPartitionData partition) {
-
-        PartitionTreeModel treeModel;
-
-        // use same tree model and same tree prior in beginning
-        if (options.getPartitionTreeModels().isEmpty()) {
-            // PartitionTreeModel based on PartitionData
-            treeModel = new PartitionTreeModel(options, DEFAULT_NAME);
-            partition.setPartitionTreeModel(treeModel);
-
-            // PartitionTreePrior always based on PartitionTreeModel
-            PartitionTreePrior ptp = new PartitionTreePrior(options, treeModel);
-            treeModel.setPartitionTreePrior(ptp);
-        } else { //if (options.getPartitionTreeModels() != null) {
-//                        && options.getPartitionTreeModels().size() == 1) {
-            if (partition.getDataType().getType() == DataType.MICRO_SAT) {
-                treeModel = new PartitionTreeModel(options, partition.getName()); // different tree model,
-                PartitionTreePrior ptp = options.getPartitionTreePriors().get(0); // but same tree prior
-                treeModel.setPartitionTreePrior(ptp);
-            } else {
-                treeModel = options.getPartitionTreeModels().get(0); // same tree model,
-            }
-            partition.setPartitionTreeModel(treeModel); // if same tree model, therefore same prior
-        }
-
-        // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
-        if (options.getPartitionClockModels(partition.getDataType()).isEmpty()) {
-            // PartitionClockModel based on PartitionData
-            PartitionClockModel pcm = new PartitionClockModel(options, DEFAULT_NAME, partition, treeModel);
-            partition.setPartitionClockModel(pcm);
-        } else { //if (options.getPartitionClockModels() != null) {
-//                        && options.getPartitionClockModels().size() == 1) {
-            PartitionClockModel pcm;
-            if (partition.getDataType().getType() == DataType.MICRO_SAT) {
-                pcm = new PartitionClockModel(options, partition.getName(), partition, treeModel);
-            } else {
-                // make sure in the same data type
-                pcm = options.getPartitionClockModels(partition.getDataType()).get(0);
-            }
-            partition.setPartitionClockModel(pcm);
-        }
-    }
+//    private void setClockAndTree(AbstractPartitionData partition) {
+//
+//        PartitionTreeModel treeModel;
+//
+//        // use same tree model and same tree prior in beginning
+//        if (options.getPartitionTreeModels().isEmpty()) {
+//            // PartitionTreeModel based on PartitionData
+//            treeModel = new PartitionTreeModel(options, DEFAULT_NAME);
+//            partition.setPartitionTreeModel(treeModel);
+//
+//            // PartitionTreePrior always based on PartitionTreeModel
+//            PartitionTreePrior ptp = new PartitionTreePrior(options, treeModel);
+//            treeModel.setPartitionTreePrior(ptp);
+//        } else { //if (options.getPartitionTreeModels() != null) {
+////                        && options.getPartitionTreeModels().size() == 1) {
+//            treeModel = options.getPartitionTreeModels().get(0); // same tree model,
+//            partition.setPartitionTreeModel(treeModel); // if same tree model, therefore same prior
+//        }
+//
+//        // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
+//        if (options.getPartitionClockModels(partition.getDataType()).isEmpty()) {
+//            // PartitionClockModel based on PartitionData
+//            PartitionClockModel pcm = new PartitionClockModel(options, DEFAULT_NAME, partition, treeModel);
+//            partition.setPartitionClockModel(pcm);
+//        } else { //if (options.getPartitionClockModels() != null) {
+////                        && options.getPartitionClockModels().size() == 1) {
+//            PartitionClockModel pcm = options.getPartitionClockModels(partition.getDataType()).get(0);
+//            partition.setPartitionClockModel(pcm);
+//        }
+//    }
 
     private void setSubstModel(AbstractPartitionData partition, PartitionSubstitutionModel psm) {
         partition.setPartitionSubstitutionModel(psm);
@@ -853,26 +908,31 @@ public class BEAUTiImporter {
         }
     }
 
-    private void addTrees(List<Tree> trees) {
+    /**
+     * Add a new tree/tree set
+     * @param fileNameStem
+     * @param fileName
+     * @param trees
+     * @param treeCount the number of trees - if > than the size of trees then is a set of trees which haven't
+     *                  all been loaded.
+     * @return the TreeHolder
+     */
+    private TreeHolder addTrees(String fileNameStem, String fileName, List<Tree> trees, int treeCount) {
+        TreeHolder treeHolder = null;
         if (trees != null && !trees.isEmpty()) {
+            int i = 1;
             for (Tree tree : trees) {
                 String id = tree.getId();
                 if (id == null || id.trim().isEmpty()) {
-                    tree.setId("tree_" + (options.userTrees.size() + 1));
-                } else {
-                    String newId = id;
-                    int count = 1;
-                    for (Tree tree1 : options.userTrees) {
-                        if (tree1.getId().equals(newId)) {
-                            newId = id + "_" + count;
-                            count++;
-                        }
-                    }
-                    tree.setId(newId);
+                    tree.setId("tree_" + i);
                 }
-                options.userTrees.add(tree);
+                i++;
             }
+            treeHolder = new TreeHolder(trees, treeCount, fileNameStem, fileName);
+            options.userTrees.put(fileNameStem, treeHolder);
         }
+
+        return treeHolder;
     }
 
 }

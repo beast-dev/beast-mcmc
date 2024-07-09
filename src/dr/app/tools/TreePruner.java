@@ -200,7 +200,7 @@ public class TreePruner extends BaseTreeTool {
         };
 
         if (trees.size() > 0) {
-            exporter.exportTrees(trees.toArray(new Tree[0]), true, getTreeNames(trees));
+            exporter.exportTrees(trees, true, getTreeNames(trees));
         }
 
         if (ps != null) {
@@ -208,12 +208,12 @@ public class TreePruner extends BaseTreeTool {
         }
     }
 
-    private String[] getTreeNames(List<Tree> trees) {
+    private List<String> getTreeNames(List<Tree> trees) {
         List<String> names = new ArrayList<>();
         for (Tree tree : trees) {
             names.add(tree.getId());
         }
-        return names.toArray(new String[0]);
+        return names;
     }
 
     public static void printTitle() {

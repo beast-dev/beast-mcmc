@@ -31,10 +31,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * A class for a general purpose logger.
@@ -45,6 +43,7 @@ import java.util.Set;
  */
 public class MCLogger implements Logger {
 
+    private static final int PERFORMANCE_SAMPLE_SIZE = 100;
     /**
      * Output performance stats in this log
      */
@@ -250,14 +249,25 @@ public class MCLogger implements Logger {
             }
 
             if (performanceReport) {
+                long time = System.currentTimeMillis();
+                rollingTime.add(time);
+                if (rollingTime.size() > PERFORMANCE_SAMPLE_SIZE) {
+                    rollingTime.removeFirst();
+                }
+                rollingState.add(state);
+                if (rollingState.size() > PERFORMANCE_SAMPLE_SIZE) {
+                    rollingState.removeFirst();
+                }
+
                 if (performanceReportStarted) {
+                    double hoursPerMillionStates =
+                            ((double)rollingTime.getLast() - rollingTime.getFirst()) /
+                            (3.6 * (rollingState.getLast() - rollingState.getFirst()));
 
-                    long time = System.currentTimeMillis();
+//                    double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (state - startState));
 
-                    double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (state - startState));
-
-                    String timePerMillion = getTimePerMillion(state, hoursPerMillionStates);
-                    String units = getUnits(hoursPerMillionStates, timePerMillion);
+                    String timePerMillion = getTimePerMillion(hoursPerMillionStates);
+                    String units = getUnits(hoursPerMillionStates);
                     values[columnCount + 1] = timePerMillion + units;
 
                 } else {
@@ -303,8 +313,11 @@ public class MCLogger implements Logger {
     private long startTime;
     private long startState;
 
+    private Deque<Long> rollingTime = new LinkedList<>();
+    private Deque<Long> rollingState = new LinkedList<>();
+
     private final NumberFormat formatter = NumberFormat.getNumberInstance();
-    public String getTimePerMillion(long state, double hoursPerMillionStates) {
+    public String getTimePerMillion(double hoursPerMillionStates) {
 
         String timePerMillion = formatter.format(hoursPerMillionStates);
         if (hoursPerMillionStates < 0.1) {
@@ -318,7 +331,7 @@ public class MCLogger implements Logger {
         return timePerMillion;
     }
 
-    public String getUnits(double hoursPerMillionStates, String timePerMillion) {
+    public String getUnits(double hoursPerMillionStates) {
         String units = " hours/million states";
         if (hoursPerMillionStates < 0.1) {
             double minutesPerMillionStates = hoursPerMillionStates * 60;

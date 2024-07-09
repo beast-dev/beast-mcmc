@@ -334,6 +334,6 @@ public class MTMAM extends EmpiricalRateMatrix.AbstractAminoAcid {
 					new Author("M", "Hasegawa")
 			},
 			"Models of amino acid substitution and applications to mitochondrial protein evolution",
-			1998, "Mol Biol Evol", 15, 1600, 1611
+			1998, "Molecular Biology and Evolution", 15, 1600, 1611
 	);
 }

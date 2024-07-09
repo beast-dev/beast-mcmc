@@ -164,11 +164,12 @@ public class XMLParser {
 
         Element e = document.getDocumentElement();
         if (e.getTagName().equals("beast")) {
-            // If the 'version' is attribute is present then check it is not an more recent version...
+            // If the 'version' is attribute is present then check it is not a more recent version...
             if (e.hasAttribute(VERSION)) {
                 String xmlVersion = e.getAttribute(VERSION);
-                if (version != null && Version.Utils.isMoreRecent(xmlVersion, version.getVersion())) {
-                   throw new XMLParseException("The version of BEAUti that generated this XML (" + xmlVersion + ") is more recent than the version of BEAST running it (" + version.getVersion() + "). This may be incompatible and cause unpredictable errors.");
+                if (version != null && Version.Utils.isMoreRecent(xmlVersion, version.getVersion()) &&
+                        !Boolean.parseBoolean(System.getProperty("ignore.versions"))) {
+                    throw new XMLParseException("The version of BEAUti that generated this XML (" + xmlVersion + ") is more recent than the version of BEAST running it (" + version.getVersion() + "). This may be incompatible and cause unpredictable errors.");
                 }
             }
 
@@ -261,7 +262,6 @@ public class XMLParser {
             }
 
             if (verbose) System.out.println("  Restoring idref=" + idref);
-
 
             return new Reference(restoredXMLObject);
 
@@ -378,6 +378,9 @@ public class XMLParser {
                 } else if (obj instanceof Runnable && !concurrent) {
 
                     executingRunnable();
+
+                    //close citationHandler
+                    CitationLogHandler.closeHandler();
 
                     if (obj instanceof Spawnable && !((Spawnable) obj).getSpawnable()) {
                         ((Spawnable) obj).run();

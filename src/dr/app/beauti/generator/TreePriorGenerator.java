@@ -1,7 +1,8 @@
 /*
  * TreePriorGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
@@ -706,12 +708,14 @@ public class TreePriorGenerator extends Generator {
 
             //writing the gamma prior here so will need to prevent another one from being written in the priors block
             //key use: using HMC on the skygrid parameters
+
+            Parameter parameter = prior.getParameter("skygrid.precision");
             writer.writeOpenTag(PriorParsers.GAMMA_PRIOR,
                     new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, "skygrid.precision.prior"),
-                            new Attribute.Default<Double>(GammaDistributionModelParser.SHAPE, 0.001),
-                            new Attribute.Default<Double>(GammaDistributionModelParser.SCALE, 1000.0),
-                            new Attribute.Default<Double>(GammaDistributionModelParser.OFFSET, 0.0)
+                            new Attribute.Default<>(XMLParser.ID, "skygrid.precision.prior"),
+                            new Attribute.Default<>(GammaDistributionModelParser.SHAPE, parameter.shape),
+                            new Attribute.Default<>(GammaDistributionModelParser.SCALE, parameter.scale),
+                            new Attribute.Default<>(GammaDistributionModelParser.OFFSET, parameter.offset)
                     }
             );
             writer.writeIDref(ParameterParser.PARAMETER, "skygrid.precision");

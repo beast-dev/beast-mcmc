@@ -1,7 +1,8 @@
 /*
  * PartitionTreePrior.java
  *
- * Copyright (c) 2002-2021 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.options;
@@ -158,10 +160,10 @@ public class PartitionTreePrior extends PartitionOptions {
                 PriorScaleType.NONE, 100.0, 0.001, 1000, true);
         createZeroOneParameterUniformPrior("expansion.ancestralProportion", "ancestral population proportion", 0.1);
 
-        createNonNegativeParameterUniformPrior("skyline.popSize", "Bayesian Skyline population sizes",
-                PriorScaleType.TIME_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
-        createParameter("skyline.groupSize", "Bayesian Skyline group sizes");
-        // skyride.logPopSize is log unit unlike other popSize
+//        createNonNegativeParameterUniformPrior("skyline.popSize", "Bayesian Skyline population sizes",
+//                PriorScaleType.TIME_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
+//        createParameter("skyline.groupSize", "Bayesian Skyline group sizes");
+//        // skyride.logPopSize is log unit unlike other popSize
         createParameterUniformPrior("skyride.logPopSize", "GMRF Bayesian skyride population sizes (log unit)",
                 PriorScaleType.LOG_TIME_SCALE, 1.0, -Parameter.UNIFORM_MAX_BOUND, Parameter.UNIFORM_MAX_BOUND);
         createParameter("skyride.groupSize", "GMRF Bayesian skyride group sizes (for backward compatibility)");
@@ -171,19 +173,18 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameterUniformPrior("skygrid.logPopSize", "GMRF Bayesian SkyGrid population sizes (log unit)",
                 PriorScaleType.LOG_TIME_SCALE, 1.0, -Parameter.UNIFORM_MAX_BOUND, Parameter.UNIFORM_MAX_BOUND);
         createParameterGammaPrior("skygrid.precision", "GMRF Bayesian SkyGrid precision",
-                PriorScaleType.NONE, 0.1, 0.001, 1000, true);
+                PriorScaleType.NONE, 0.1, 0.001, 1000, true, false);
         createParameterUniformPrior("skygrid.numGridPoints", "GMRF Bayesian SkyGrid number of grid points)",
                 PriorScaleType.NONE, 1.0, -Parameter.UNIFORM_MAX_BOUND, Parameter.UNIFORM_MAX_BOUND);
         createParameterUniformPrior("skygrid.cutOff", "GMRF Bayesian SkyGrid cut-off time",
                 PriorScaleType.TIME_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
 
-        createNonNegativeParameterUniformPrior("demographic.popSize", "Extended Bayesian Skyline population sizes",
-                PriorScaleType.TIME_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
-        createParameter("demographic.indicators", "Extended Bayesian Skyline population switch", 0.0);
-        createParameterOneOverXPrior("demographic.populationMean", "Extended Bayesian Skyline population prior mean",
-                PriorScaleType.TIME_SCALE, 1);
-
-        createDiscreteStatistic("demographic.populationSizeChanges", "Average number of population change points"); // POISSON_PRIOR
+//        createNonNegativeParameterUniformPrior("demographic.popSize", "Extended Bayesian Skyline population sizes",
+//                PriorScaleType.TIME_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
+//        createParameter("demographic.indicators", "Extended Bayesian Skyline population switch", 0.0);
+//        createParameterOneOverXPrior("demographic.populationMean", "Extended Bayesian Skyline population prior mean",
+//                PriorScaleType.TIME_SCALE, 1);
+//        createDiscreteStatistic("demographic.populationSizeChanges", "Average number of population change points"); // POISSON_PRIOR
 
         /*createNonNegativeParameterUniformPrior("yule.birthRate", "Yule speciation process birth rate",
                 PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);*/
@@ -257,16 +258,17 @@ public class PartitionTreePrior extends PartitionOptions {
         createScaleOperator("expansion.doublingTime", demoTuning, demoWeights);
         //createScaleOperator("expansion.ancestralProportion", demoTuning, demoWeights);
         createOperator("expansion.ancestralProportion", OperatorType.RANDOM_WALK_LOGIT, demoTuning, demoWeights);
-        createScaleOperator("skyline.popSize", demoTuning, demoWeights * 5);
-        createOperator("skyline.groupSize", OperatorType.INTEGER_DELTA_EXCHANGE, 1.0, demoWeights * 2);
-        createOperator("demographic.populationMean", OperatorType.SCALE, 0.9, demoWeights);
-        createOperator("demographic.indicators", OperatorType.BITFLIP, 1, 2 * treeWeights);
+//        createScaleOperator("skyline.popSize", demoTuning, demoWeights * 5);
+//        createOperator("skyline.groupSize", OperatorType.INTEGER_DELTA_EXCHANGE, 1.0, demoWeights * 2);
+//        createOperator("demographic.populationMean", OperatorType.SCALE, 0.9, demoWeights);
+//        createOperator("demographic.indicators", OperatorType.BITFLIP, 1, 2 * treeWeights);
+//
+//        // hack pass distribution in name
+//        createOperatorUsing2Parameters("demographic.popSize", "demographic.populationMeanDist", "", "demographic.popSize",
+//                "demographic.indicators", OperatorType.SAMPLE_NONACTIVE, 1, 5 * demoWeights);
+//        createOperatorUsing2Parameters("demographic.scaleActive", "demographic.scaleActive", "", "demographic.popSize",
+//                "demographic.indicators", OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
 
-        // hack pass distribution in name
-        createOperatorUsing2Parameters("demographic.popSize", "demographic.populationMeanDist", "", "demographic.popSize",
-                "demographic.indicators", OperatorType.SAMPLE_NONACTIVE, 1, 5 * demoWeights);
-        createOperatorUsing2Parameters("demographic.scaleActive", "demographic.scaleActive", "", "demographic.popSize",
-                "demographic.indicators", OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
         createOperatorUsing2Parameters("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF Skyride", "skyride.logPopSize",
                 "skyride.precision", OperatorType.GMRF_GIBBS_OPERATOR, -1, 2);
         createOperatorUsing2Parameters("gmrfSkyGridGibbsOperator", "skygrid.logPopSize", "Gibbs sampler for Bayesian SkyGrid", "skygrid.logPopSize",

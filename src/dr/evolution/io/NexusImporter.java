@@ -1,7 +1,8 @@
 /*
  * NexusImporter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.io;
@@ -54,7 +56,6 @@ import java.util.regex.Pattern;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: NexusImporter.java,v 1.30 2006/04/25 14:39:37 rambaut Exp $
  */
 public class NexusImporter extends Importer implements SequenceImporter, TreeImporter {
 
@@ -628,7 +629,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                         }
                     }
 
-                    StringBuffer buffer = new StringBuffer();
+                    StringBuilder buffer = new StringBuilder();
                     readSequenceLine(buffer, dataType, ";", gapCharacters, missingCharacters,
                             matchCharacters, firstSequence);
                     String seqString = buffer.toString();
@@ -689,7 +690,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
                 sequence.setTaxon(taxon);
 
-                StringBuffer buffer = new StringBuffer();
+                StringBuilder buffer = new StringBuilder();
                 readSequence(buffer, dataType, ";", siteCount, gapCharacters,
                         missingCharacters, matchCharacters, firstSequence);
                 String seqString = buffer.toString();
@@ -734,7 +735,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
         do {
             String name = readToken(";").trim();
-            if (name.length() > 0) {
+            if (!name.isEmpty()) {
                 Taxon taxon = new Taxon(name);
                 taxa.addTaxon(taxon);
             }
@@ -1007,7 +1008,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                     if (scomment != null) {
                         // below is correct only if [&W] appears on it own
                         String c = scomment;
-                        while (c.length() > 0) {
+                        while (!c.isEmpty()) {
                             final char ch = c.charAt(0);
                             if (ch == ';') {
                                 c = c.substring(1);
@@ -1086,7 +1087,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
         if (getLastDelimiter() != ':' && getLastDelimiter() != ',' && getLastDelimiter() != ')') {
             String label = readToken(",():;");
-            if (label.length() > 0) {
+            if (!label.isEmpty()) {
                 branch.setAttribute("label", label);
             }
         }
@@ -1189,7 +1190,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
         Taxon taxon;
 
-        if (translationList.size() > 0) {
+        if (!translationList.isEmpty()) {
             taxon = translationList.get(label);
 
             if (taxon == null) {

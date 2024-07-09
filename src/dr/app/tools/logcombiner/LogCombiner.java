@@ -1,7 +1,8 @@
 /*
  * LogCombiner.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.tools.logcombiner;
@@ -52,7 +54,6 @@ import java.util.regex.Pattern;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id:$
  */
 public class LogCombiner {
 
@@ -478,7 +479,7 @@ public class LogCombiner {
 
     private void writeTree(long state, Tree tree, boolean convertToDecimal, PrintWriter writer) {
 
-        StringBuffer buffer = new StringBuffer("tree STATE_");
+        StringBuilder buffer = new StringBuilder("tree STATE_");
         buffer.append(state);
 //        Double lnP = (Double) tree.getAttribute("lnP");
 //        if (lnP != null) {
@@ -527,7 +528,7 @@ public class LogCombiner {
         return value.toString();
     }
 
-    private void writeTree(Tree tree, NodeRef node, Map taxonMap, boolean convertToDecimal, StringBuffer buffer) {
+    private void writeTree(Tree tree, NodeRef node, Map taxonMap, boolean convertToDecimal, StringBuilder buffer) {
 
         NodeRef parent = tree.getParent(node);
 
@@ -583,7 +584,7 @@ public class LogCombiner {
     private static final DecimalFormat scientificFormatter = new DecimalFormat("#.############E0", new DecimalFormatSymbols(Locale.US));
 
     private String reformatNumbers(String line, boolean convertDecimal, boolean useScale, double scale) {
-        StringBuffer outLine = new StringBuffer();
+        StringBuilder outLine = new StringBuilder();
 
         Pattern pattern = Pattern.compile("\\d+\\.\\d+(E[\\-\\d\\.]+)?");
         Matcher matcher = pattern.matcher(line);

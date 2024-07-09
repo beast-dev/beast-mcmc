@@ -1,7 +1,8 @@
 /*
  * TreeShapeStatistic.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.tree;
@@ -35,7 +37,6 @@ import dr.inference.model.Statistic;
  * A statistic that returns the values of various tree shape statistics.
  *
  * @author Alexei Drummond
- * @version $Id: TreeShapeStatistic.java,v 1.4 2005/07/11 14:06:25 rambaut Exp $
  */
 public class TreeShapeStatistic extends TreeStatistic {
 

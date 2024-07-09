@@ -1,7 +1,8 @@
 /*
  * PartitionClockModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.options;
@@ -39,7 +41,6 @@ import static dr.app.beauti.options.BeautiOptions.DEFAULT_QUANTILE_RELAXED_CLOCK
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Walter Xie
- * @version $Id$
  */
 public class PartitionClockModel extends PartitionOptions {
     private static final long serialVersionUID = -6904595851602060488L;

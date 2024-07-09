@@ -44,13 +44,8 @@ import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.evomodelxml.substmodel.TN93Parser;
 import dr.inference.model.StatisticParser;
-import dr.oldevomodel.substmodel.AsymmetricQuadraticModel;
-import dr.oldevomodel.substmodel.LinearBiasModel;
-import dr.oldevomodel.substmodel.TwoPhaseModel;
 import dr.evoxml.AlignmentParser;
-import dr.evoxml.MicrosatelliteParser;
 import dr.inference.model.ParameterParser;
-import dr.oldevomodelxml.substmodel.*;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -674,7 +669,7 @@ public class SubstitutionModelGenerator extends Generator {
         if (model.isGammaHetero()) {
             writer.writeOpenTag(SiteModelParser.GAMMA_SHAPE,
                     new Attribute[] {
-                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()),
+                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getRateCategories()),
                             new Attribute.Default<>(SiteModelParser.DISCRETIZATION,
                                     (model.isGammaHeteroEqualWeights() ? "equal" : "quadrature")),
                     });
@@ -765,7 +760,7 @@ public class SubstitutionModelGenerator extends Generator {
         if (model.isGammaHetero()) {
             writer.writeOpenTag(SiteModelParser.GAMMA_SHAPE,
                     new Attribute[] {
-                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()),
+                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getRateCategories()),
                             new Attribute.Default<>(SiteModelParser.DISCRETIZATION,
                                     (model.isGammaHeteroEqualWeights() ? "equal" : "quadrature")),
                     });
@@ -814,7 +809,7 @@ public class SubstitutionModelGenerator extends Generator {
         if (model.isGammaHetero()) {
             writer.writeOpenTag(SiteModelParser.GAMMA_SHAPE,
                     new Attribute[] {
-                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()),
+                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getRateCategories()),
                             new Attribute.Default<>(SiteModelParser.DISCRETIZATION,
                                     (model.isGammaHeteroEqualWeights() ? "equal" : "quadrature")),
                     });

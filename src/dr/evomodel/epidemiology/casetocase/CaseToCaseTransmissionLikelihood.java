@@ -281,7 +281,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                                     }
 
                                     if(!previouslyInfectious.contains(infector)){
-                                        throw new RuntimeException("Infector not previously infected");
+                                        throw new BadPartitionException("Infector not previously infected");
                                     }
                                 }
 

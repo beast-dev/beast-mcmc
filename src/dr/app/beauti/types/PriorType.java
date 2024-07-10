@@ -140,7 +140,7 @@ public enum PriorType {
             buffer.append("? ");
         } else if (parameter.isPriorImproper()) {
             buffer.append("! ");
-        } else if (!parameter.isPriorEdited()) {
+        } else if (!parameter.isPriorEdited() && !parameter.isPriorFixed) {
             buffer.append("* ");
         } else {
             buffer.append("  ");

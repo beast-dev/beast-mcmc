@@ -82,6 +82,8 @@ public class RescaledTreeParser extends AbstractXMLObjectParser {
                     if (cxo.hasAttribute(HEIGHT)) {
                         double height = cxo.getDoubleAttribute(HEIGHT);
                         rescaledTree.setNodeHeight(mrca, height);
+                    } else {
+                        throw new XMLParseException("Clade elements should have a height to set the MRCA in the tree");
                     }
                 }
             }
@@ -147,7 +149,7 @@ public class RescaledTreeParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(HEIGHT, true),
             new ElementRule(Tree.class),
             new ElementRule(CLADE, new XMLSyntaxRule[] {
-                    AttributeRule.newDoubleRule(HEIGHT, true),
+                    AttributeRule.newDoubleRule(HEIGHT),
                     new ElementRule(TaxonList.class)
             }, 0, Integer.MAX_VALUE)
     };

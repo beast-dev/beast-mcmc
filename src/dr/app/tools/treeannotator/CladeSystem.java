@@ -64,7 +64,7 @@ class CladeSystem {
      */
     public void add(Tree tree, boolean includeTips) {
         if (taxonList == null) {
-            taxonList = tree;
+            setTaxonList(tree);
         }
 
         // Recurse over the tree and add all the clades (or increment their
@@ -72,6 +72,14 @@ class CladeSystem {
         // annotation purposes).
         BitSet rootBits = addClades(tree, tree.getRoot(), includeTips);
         rootClade = cladeMap.get(rootBits);
+    }
+
+    public void setTaxonList(TaxonList taxonList) {
+        this.taxonList = taxonList;
+        taxonNumberMap = new HashMap<>();
+        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+            taxonNumberMap.put(taxonList.getTaxon(i), i);
+        }
     }
 
     public Clade getRootClade() {
@@ -86,6 +94,9 @@ class CladeSystem {
 
 //                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
             int index = node.getNumber();
+            if (taxonNumberMap != null) {
+                index = taxonNumberMap.get(tree.getNodeTaxon(node));
+            }
             bits.set(index);
 
             if (includeTips) {
@@ -142,6 +153,9 @@ class CladeSystem {
 //                    throw new IllegalArgumentException("Taxon, " + tree.getNodeTaxon(node).getId() + ", not found in target tree");
 //                }
             int index = node.getNumber();
+            if (taxonNumberMap != null) {
+                index = taxonNumberMap.get(tree.getNodeTaxon(node));
+            }
             bits.set(index);
 
         } else {
@@ -229,6 +243,9 @@ class CladeSystem {
 
 //                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
             int index = node.getNumber();
+            if (taxonNumberMap != null) {
+                index = taxonNumberMap.get(tree.getNodeTaxon(node));
+            }
             bits.set(index);
         } else {
 
@@ -266,6 +283,9 @@ class CladeSystem {
 
 //                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
             int index = node.getNumber();
+            if (taxonNumberMap != null) {
+                index = taxonNumberMap.get(tree.getNodeTaxon(node));
+            }
             bits.set(index);
 
             if (includeTips) {
@@ -308,6 +328,9 @@ class CladeSystem {
         if (tree.isExternal(node)) {
 //                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
             int index = node.getNumber();
+            if (taxonNumberMap != null) {
+                index = taxonNumberMap.get(tree.getNodeTaxon(node));
+            }
             codes[inode].set(index);
         } else {
             for (int i = 0; i < tree.getChildCount(node); i++) {
@@ -391,6 +414,7 @@ class CladeSystem {
     // Private stuff
     //
     TaxonList taxonList = null;
+    Map<Taxon, Integer> taxonNumberMap = null;
     Map<BitSet, Clade> cladeMap = new HashMap<>();
 
     Clade rootClade;

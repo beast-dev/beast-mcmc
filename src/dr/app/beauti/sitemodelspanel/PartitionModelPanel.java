@@ -40,7 +40,6 @@ import dr.app.beauti.types.BinaryModelType;
 import dr.app.beauti.types.FrequencyPolicyType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
-import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
 import jam.panels.OptionsPanel;
@@ -75,12 +74,12 @@ public class PartitionModelPanel extends OptionsPanel {
     private JComboBox frequencyCombo = new JComboBox(FrequencyPolicyType
             .values());
 
-    private JComboBox heteroCombo = new JComboBox(new String[]{"None",
+    private JComboBox heteroCombo = new JComboBox(new String[]{"None", "Free Rates",
             /*"Gamma (Felsenstein weights)", */ "Gamma (equal weights)", "Invariant Sites", "Gamma (equal weights) + Invariant Sites"});
 
-    private JComboBox gammaCatCombo = new JComboBox(new String[]{"4", "5",
+    private JComboBox rateCatCombo = new JComboBox(new String[]{"3", "4", "5",
             "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"});
-    private JLabel gammaCatLabel;
+    private JLabel rateCatLabel;
 
     private JComboBox codingCombo = new JComboBox(new String[]{"Off",
             "2 partitions: positions (1 + 2), 3",
@@ -227,11 +226,11 @@ public class PartitionModelPanel extends OptionsPanel {
                 model.setGammaHeteroEqualWeights(heteroCombo.getSelectedItem().toString().contains("equal"));
 
                 if (gammaHetero) {
-                    gammaCatLabel.setEnabled(true);
-                    gammaCatCombo.setEnabled(true);
+                    rateCatLabel.setEnabled(true);
+                    rateCatCombo.setEnabled(true);
                 } else {
-                    gammaCatLabel.setEnabled(false);
-                    gammaCatCombo.setEnabled(false);
+                    rateCatLabel.setEnabled(false);
+                    rateCatCombo.setEnabled(false);
                 }
 
                 if (codingCombo.getSelectedIndex() != 0) {
@@ -243,13 +242,13 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
 
-        PanelUtils.setupComponent(gammaCatCombo);
-        gammaCatCombo
-                .setToolTipText("<html>Select the number of categories to use for<br>the discrete gamma rate heterogeneity model.</html>");
-        gammaCatCombo.addItemListener(new ItemListener() {
+        PanelUtils.setupComponent(rateCatCombo);
+        rateCatCombo
+                .setToolTipText("<html>Select the number of categories to use for<br>the discrete rate heterogeneity model.</html>");
+        rateCatCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
 
-                model.setGammaCategories(gammaCatCombo.getSelectedIndex() + 4);
+                model.setRateCategories(rateCatCombo.getSelectedIndex() + 4);
             }
         });
 
@@ -562,7 +561,7 @@ public class PartitionModelPanel extends OptionsPanel {
             heteroCombo.setSelectedIndex(0);
         }
 
-        gammaCatCombo.setSelectedIndex(model.getGammaCategories() - 4);
+        rateCatCombo.setSelectedIndex(model.getRateCategories() - 4);
 
         if (model.getCodonHeteroPattern() == null) {
             codingCombo.setSelectedIndex(0);
@@ -633,9 +632,9 @@ public class PartitionModelPanel extends OptionsPanel {
                 addComponentWithLabel("Base frequencies:", frequencyCombo);
                 addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
                 heteroCombo.setSelectedIndex(0);
-                gammaCatLabel = addComponentWithLabel(
-                        "Number of Gamma Categories:", gammaCatCombo);
-                gammaCatCombo.setEnabled(false);
+                rateCatLabel = addComponentWithLabel(
+                        "Number of Gamma Categories:", rateCatCombo);
+                rateCatCombo.setEnabled(false);
 
                 addSeparator();
 
@@ -663,9 +662,9 @@ public class PartitionModelPanel extends OptionsPanel {
 
                 addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
                 heteroCombo.setSelectedIndex(0);
-                gammaCatLabel = addComponentWithLabel(
-                        "Number of Gamma Categories:", gammaCatCombo);
-                gammaCatCombo.setEnabled(false);
+                rateCatLabel = addComponentWithLabel(
+                        "Number of Gamma Categories:", rateCatCombo);
+                rateCatCombo.setEnabled(false);
 
                 break;
 
@@ -675,9 +674,9 @@ public class PartitionModelPanel extends OptionsPanel {
                 addComponentWithLabel("Base frequencies:", frequencyCombo);
                 addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
                 heteroCombo.setSelectedIndex(0);
-                gammaCatLabel = addComponentWithLabel(
-                        "Number of Gamma Categories:", gammaCatCombo);
-                gammaCatCombo.setEnabled(false);
+                rateCatLabel = addComponentWithLabel(
+                        "Number of Gamma Categories:", rateCatCombo);
+                rateCatCombo.setEnabled(false);
 
                 addSeparator();
 

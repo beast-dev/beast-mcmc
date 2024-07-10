@@ -44,13 +44,8 @@ import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.evomodelxml.substmodel.TN93Parser;
 import dr.inference.model.StatisticParser;
-import dr.oldevomodel.substmodel.AsymmetricQuadraticModel;
-import dr.oldevomodel.substmodel.LinearBiasModel;
-import dr.oldevomodel.substmodel.TwoPhaseModel;
 import dr.evoxml.AlignmentParser;
-import dr.evoxml.MicrosatelliteParser;
 import dr.inference.model.ParameterParser;
-import dr.oldevomodelxml.substmodel.*;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -674,7 +669,7 @@ public class SubstitutionModelGenerator extends Generator {
         if (model.isGammaHetero()) {
             writer.writeOpenTag(SiteModelParser.GAMMA_SHAPE,
                     new Attribute[] {
-                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()),
+                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getRateCategories()),
                             new Attribute.Default<>(SiteModelParser.DISCRETIZATION,
                                     (model.isGammaHeteroEqualWeights() ? "equal" : "quadrature")),
                     });
@@ -755,7 +750,7 @@ public class SubstitutionModelGenerator extends Generator {
         if (options.useNuRelativeRates()) {
             Parameter parameter = model.getParameter("nu");
             String prefix1 = options.getPrefix();
-            if (parameter.getSubParameters().size() > 0) {
+            if (!parameter.getSubParameters().isEmpty()) {
                 writeNuRelativeRateBlock(writer, prefix1, parameter);
             }
         } else {
@@ -765,7 +760,7 @@ public class SubstitutionModelGenerator extends Generator {
         if (model.isGammaHetero()) {
             writer.writeOpenTag(SiteModelParser.GAMMA_SHAPE,
                     new Attribute[] {
-                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()),
+                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getRateCategories()),
                             new Attribute.Default<>(SiteModelParser.DISCRETIZATION,
                                     (model.isGammaHeteroEqualWeights() ? "equal" : "quadrature")),
                     });
@@ -806,11 +801,7 @@ public class SubstitutionModelGenerator extends Generator {
 
         if (options.useNuRelativeRates()) {
             Parameter parameter = model.getParameter("nu");
-            String prefix1 = options.getPrefix();
-            if (parameter.getSubParameters().size() > 0) {
-                writeNuRelativeRateBlock(writer, prefix1, parameter);
-            }
-
+            writeNuRelativeRateBlock(writer, prefix, parameter);
         } else {
             writeParameter(SiteModelParser.RELATIVE_RATE, "mu", model, writer);
         }
@@ -818,7 +809,7 @@ public class SubstitutionModelGenerator extends Generator {
         if (model.isGammaHetero()) {
             writer.writeOpenTag(SiteModelParser.GAMMA_SHAPE,
                     new Attribute[] {
-                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()),
+                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getRateCategories()),
                             new Attribute.Default<>(SiteModelParser.DISCRETIZATION,
                                     (model.isGammaHeteroEqualWeights() ? "equal" : "quadrature")),
                     });

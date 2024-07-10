@@ -123,6 +123,13 @@ public class NewickParser extends AbstractXMLObjectParser {
 
         tree.setUnits(units);
 
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
+            if  (tree.getBranchLength(node) < 0.0) {
+                throw new XMLParseException("Starting tree has one or more negative branch lengths");
+            }
+        }
+
         for (int i = 0; i < tree.getTaxonCount(); i++) {
 
             FlexibleNode node = (FlexibleNode) tree.getExternalNode(i);

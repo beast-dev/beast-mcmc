@@ -49,10 +49,10 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
     public static final String SUBSTITUTION_RATE = "substitutionRate";
     public static final String RELATIVE_RATE = "relativeRate";
     public static final String WEIGHT = "weight";
+    public static final String SKEW = "skew";
     public static final String GAMMA_SHAPE = "gammaShape";
     public static final String CATEGORIES = "categories";
     public static final String PROPORTION_INVARIANT = "proportionInvariant";
-    public static final String DISCRETIZATION = "discretization";
 
     public String getParserName() {
         return GAMMA_SITE_RATE_MODEL;
@@ -91,14 +91,12 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
         int catCount = 4;
         catCount = xo.getIntegerAttribute(CATEGORIES);
 
-        GammaSiteRateDelegate.DiscretizationType type = GammaSiteRateDelegate.DEFAULT_DISCRETIZATION;
-        if ( xo.hasAttribute(DISCRETIZATION)) {
-            try {
-                type = GammaSiteRateDelegate.DiscretizationType.valueOf(
-                        xo.getStringAttribute(DISCRETIZATION).toUpperCase());
-            } catch (IllegalArgumentException eae) {
-                throw new XMLParseException("Unknown category width type: " + xo.getStringAttribute(DISCRETIZATION));
-            }
+        double skew = 0.0;
+        if ( xo.hasAttribute(SKEW)) {
+            skew = xo.getDoubleAttribute(SKEW);
+        }
+        if (skew < 0.0) {
+            throw new XMLParseException("Gamma weight skew must be >= 0.0");
         }
 
         Parameter shapeParam = null;
@@ -108,10 +106,10 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
             shapeParam = (Parameter) cxo.getChild(Parameter.class);
 
             msg += "\n  " + catCount + " category discrete gamma with initial shape = " + shapeParam.getParameterValue(0);
-            if (type == GammaSiteRateDelegate.DiscretizationType.EQUAL) {
+            if (skew == 0.0) {
                 msg += "\n  using equal weight discretization of gamma distribution";
             } else {
-                msg += "\n  using Gauss-Laguerre quadrature discretization of gamma distribution (Felsenstein, 2001)";
+                msg += "\n  using skewed weight discretization of gamma distribution, skew = " + skew;
             }
         }
 
@@ -127,7 +125,7 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
             Logger.getLogger("dr.evomodel").info("\nCreating site rate model.");
         }
 
-        GammaSiteRateDelegate delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParam, catCount, type, invarParam);
+        GammaSiteRateDelegate delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParam, catCount, skew, invarParam);
 
         DiscretizedSiteRateModel siteRateModel = new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
 
@@ -163,7 +161,7 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
 
             AttributeRule.newIntegerRule(CATEGORIES, false),
-            AttributeRule.newStringRule(DISCRETIZATION, true),
+            AttributeRule.newDoubleRule(SKEW, true),
             new XORRule(
                     new XORRule(
                             new ElementRule(SUBSTITUTION_RATE, new XMLSyntaxRule[]{

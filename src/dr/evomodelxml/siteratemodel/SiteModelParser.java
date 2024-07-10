@@ -57,6 +57,7 @@ public class SiteModelParser extends AbstractXMLObjectParser {
     public static final String SUBSTITUTION_RATE = "substitutionRate";
     public static final String RELATIVE_RATE = "relativeRate";
     public static final String WEIGHT = "weight";
+    public static final String SKEW = "skew";
     public static final String GAMMA_SHAPE = "gammaShape";
     public static final String GAMMA_CATEGORIES = "gammaCategories";
     public static final String PROPORTION_INVARIANT = "proportionInvariant";
@@ -92,29 +93,27 @@ public class SiteModelParser extends AbstractXMLObjectParser {
             }
         }
 
-        GammaSiteRateDelegate.DiscretizationType type = GammaSiteRateDelegate.DEFAULT_DISCRETIZATION;
-
         Parameter shapeParam = null;
         int catCount = 4;
         if (xo.hasChildNamed(GAMMA_SHAPE)) {
             XMLObject cxo = xo.getChild(GAMMA_SHAPE);
             catCount = cxo.getIntegerAttribute(GAMMA_CATEGORIES);
 
-            if ( cxo.hasAttribute(DISCRETIZATION)) {
-                try {
-                    type = GammaSiteRateDelegate.DiscretizationType.valueOf(
-                            cxo.getStringAttribute(DISCRETIZATION).toUpperCase());
-                } catch (IllegalArgumentException eae) {
-                    throw new XMLParseException("Unknown category width type: " + cxo.getStringAttribute(DISCRETIZATION));
-                }
+            double skew = 0.0;
+            if ( xo.hasAttribute(SKEW)) {
+                skew = xo.getDoubleAttribute(SKEW);
             }
+            if (skew < 0.0) {
+                throw new XMLParseException("Gamma weight skew must be >= 0.0");
+            }
+
             shapeParam = (Parameter) cxo.getChild(Parameter.class);
 
             msg += "\n  " + catCount + " category discrete gamma with initial shape = " + shapeParam.getParameterValue(0);
-            if (type == GammaSiteRateDelegate.DiscretizationType.EQUAL) {
+            if (skew == 0.0) {
                 msg += "\n  using equal weight discretization of gamma distribution";
             } else {
-                msg += "\n  using Gauss-Laguerre quadrature discretization of gamma distribution (Felsenstein, 2012)";
+                msg += "\n  using skewed weight discretization of gamma distribution, skew = " + skew;
             }
         }
 
@@ -132,7 +131,7 @@ public class SiteModelParser extends AbstractXMLObjectParser {
 
         SiteRateDelegate delegate;
         if (shapeParam != null || invarParam != null) {
-            delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParam, catCount, type, invarParam);
+            delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParam, catCount, 0.0, invarParam);
         } else {
             delegate = new HomogeneousRateDelegate("HomogeneousRateDelegate");
         }

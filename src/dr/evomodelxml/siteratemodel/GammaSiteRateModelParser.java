@@ -119,7 +119,7 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
             msg += "\n  initial proportion of invariant sites = " + invarParam.getParameterValue(0);
         }
 
-        if (msg.length() > 0) {
+        if (!msg.isEmpty()) {
             Logger.getLogger("dr.evomodel").info("\nCreating site rate model: " + msg);
         } else {
             Logger.getLogger("dr.evomodel").info("\nCreating site rate model.");

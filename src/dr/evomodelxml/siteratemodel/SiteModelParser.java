@@ -92,8 +92,8 @@ public class SiteModelParser extends AbstractXMLObjectParser {
         Parameter invarParam = null;
         Parameter ratesParam = null;
         Parameter weightsParam = null;
-        GammaSiteRateDelegate.DiscretizationType type = GammaSiteRateDelegate.DEFAULT_DISCRETIZATION;
         int catCount = 4;
+        double skew = 0.0;
 
         if (xo.hasChildNamed(FREE_RATES)) {
             catCount = xo.getIntegerAttribute(RATE_CATEGORIES);
@@ -110,7 +110,6 @@ public class SiteModelParser extends AbstractXMLObjectParser {
                 XMLObject cxo = xo.getChild(GAMMA_SHAPE);
                 catCount = cxo.getIntegerAttribute(GAMMA_CATEGORIES);
 
-            double skew = 0.0;
             if ( xo.hasAttribute(SKEW)) {
                 skew = xo.getDoubleAttribute(SKEW);
             }
@@ -134,7 +133,7 @@ public class SiteModelParser extends AbstractXMLObjectParser {
             }
         }
 
-        if (msg.length() > 0) {
+        if (!msg.isEmpty()) {
             Logger.getLogger("dr.evomodel").info("\nCreating site rate model: " + msg);
         } else {
             Logger.getLogger("dr.evomodel").info("\nCreating site rate model.");
@@ -142,7 +141,7 @@ public class SiteModelParser extends AbstractXMLObjectParser {
 
         SiteRateDelegate delegate;
         if (shapeParam != null || invarParam != null) {
-            delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParam, catCount, 0.0, invarParam);
+            delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParam, catCount, skew, invarParam);
         } else {
             delegate = new HomogeneousRateDelegate("HomogeneousRateDelegate");
         }

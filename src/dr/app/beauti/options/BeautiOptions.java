@@ -1117,6 +1117,8 @@ public class BeautiOptions extends ModelOptions {
         dataPartitions.add(partition);
         selRow = dataPartitions.size() - 1;
 
+
+
         if (partition.getPartitionTreeModel() == null) {
             PartitionTreeModel treeModel = new PartitionTreeModel(this, partition);
             PartitionTreePrior partitionTreePrior = new PartitionTreePrior(this, treeModel);
@@ -1124,6 +1126,18 @@ public class BeautiOptions extends ModelOptions {
             partition.setPartitionTreeModel(treeModel);// always use 1st tree
             treeModel.setEmpiricalTreesFilename(trees.getFileName());
         }
+        if(partition.getPartitionClockModel() == null) {
+            PartitionClockModel pcm = new PartitionClockModel(this, DEFAULT_NAME, partition, partition.getPartitionTreeModel());
+            partition.setPartitionClockModel(pcm);
+        }
+        if (partition.getPartitionSubstitutionModel() == null) {
+            PartitionSubstitutionModel substModel = new PartitionSubstitutionModel(this, partition.getName(),
+                    partition);
+            partition.setPartitionSubstitutionModel(substModel);
+        }
+
+        ContinuousComponentOptions comp = (ContinuousComponentOptions) getComponentOptions(ContinuousComponentOptions.class);
+        comp.createParameters(this);
 
         return selRow;
     }

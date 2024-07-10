@@ -42,13 +42,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
-import dr.geo.contouring.ContourMaker;
-import dr.geo.contouring.ContourPath;
-import dr.geo.contouring.ContourWithSynder;
-import dr.inference.trace.TraceCorrelation;
-import dr.inference.trace.TraceType;
-import dr.stats.DiscreteStatistics;
-import dr.util.HeapSort;
 import dr.util.Version;
 import jam.console.ConsoleApplication;
 

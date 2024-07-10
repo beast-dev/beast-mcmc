@@ -635,6 +635,16 @@
         <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Linux_package_dir}"/>
         <copy file="${common_dir}/README.txt" todir="${Linux_package_dir}"/>
 
+	<tar destfile="${release_dir}/${BEAST_package_name_linux}_v${version}.tgz" compression="gzip">
+			<tarfileset dir="${Linux_package_dir}" prefix="${BEAST_name}v${version}" filemode="755">
+				<include name="bin/**"/>
+			</tarfileset>
+			<tarfileset dir="${Linux_package_dir}" prefix="${BEAST_name}v${version}">
+				<exclude name="bin/**"/>
+				<include name="**/**"/>
+			</tarfileset>
+		</tar>
+
         <!-- Only works under Unix or NonStop Kernel (Tandem) -->
         <!-- <chmod dir="${Linux_package_dir}/bin" perm="755" includes="**/**"/>
 
@@ -642,7 +652,7 @@
 			<tarfileset dir="${Linux_package_dir}" prefix="${BEAST_name}v${version}"/>
 		</tar>-->
         <!-- [ANT Bug 550] the tar task change the mode of the executables files, have to tar manaully -->
-        <echo message="Have to tar manaully, because [ANT Bug 550] the tar task change the mode of the executables files."/>
+  <!--       <echo message="Have to tar manaully, because [ANT Bug 550] the tar task change the mode of the executables files."/> -->
         <!-- tar -cvzf BEASTv1.x.x.tgz BEASTv1.x.x/ -->
         <!-- cksum BEASTv1.x.x.tgz -->
         <!-- tar -xvzf BEASTv1.x.x.tgz -->

@@ -79,7 +79,7 @@ class PriorTableModel extends AbstractTableModel {
 
     public boolean isCellEditable(int row, int col) {
         Parameter param = priorsPanel.parameters.get(row);
-        return col == 1 && !param.isPriorFixed;
+        return col == 1 && (!param.isPriorFixed || !param.isPriorParametersFixed);
     }
 
     public String toString() {

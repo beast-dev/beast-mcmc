@@ -289,13 +289,13 @@ public class HierarchicalPriorDialog {
 
     }
 
-    public void getArguments() {
+    public boolean getArguments() {
         for (Parameter parameter : parameterList) {
             parameter.priorType = (PriorType) priorCombo.getSelectedItem();
         }
         // Get hyperpriors
-        optionsPanels.get(PriorType.NORMAL_PRIOR).getArguments(parameter);
-        optionsPanels.get(PriorType.GAMMA_PRIOR).getArguments(parameter);
+        return (optionsPanels.get(PriorType.NORMAL_PRIOR).getArguments(parameter) &&
+                optionsPanels.get(PriorType.GAMMA_PRIOR).getArguments(parameter));
 
     }
 
@@ -422,6 +422,9 @@ public class HierarchicalPriorDialog {
         }
 
         public Distribution getDistribution() {
+            if (getValue(0) == null || getValue(1) == null) {
+                return null;
+            }
             return new NormalDistribution(getValue(0), getValue(1));
         }
 
@@ -431,10 +434,16 @@ public class HierarchicalPriorDialog {
             getField(1).setValue(hpmMeanStDev);
         }
 
-        public void getArguments(Parameter parameter) {
+        public boolean getArguments(Parameter parameter) {
+            if (getInitialField().getValue() == null ||
+                    getValue(0) == null ||
+                    getValue(1) == null ) {
+                return false;
+            }
             hpmMeanInitial = getInitialField().getValue();
             hpmMeanMean = getValue(0);
             hpmMeanStDev = getValue(1);
+            return true;
         }
 
         @Override
@@ -458,6 +467,9 @@ public class HierarchicalPriorDialog {
         }
 
         public Distribution getDistribution() {
+            if (getValue(0) == null || getValue(1) == null) {
+                return null;
+            }
             return new OffsetPositiveDistribution(
                     new GammaDistribution(getValue(0), getValue(1)), 0.0);
         }
@@ -468,10 +480,17 @@ public class HierarchicalPriorDialog {
             getField(1).setValue(hpmPrecScale);
         }
 
-        public void getArguments(Parameter parameter) {
+        public boolean getArguments(Parameter parameter) {
+            if (getInitialField().getValue() == null ||
+                    getValue(0) == null ||
+                    getValue(1) == null) {
+                return false;
+            }
+
             hpmPrecInitial = getInitialField().getValue();
             parameter.shape = hpmPrecShape = getValue(0);
             parameter.scale = hpmPrecScale = getValue(1);
+            return true;
         }
 
         @Override

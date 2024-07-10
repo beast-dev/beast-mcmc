@@ -148,6 +148,10 @@ public class PriorSettingsPanel extends JPanel {
             priorCombo.setSelectedItem(parameter.priorType);
         }
 
+        if (parameter.isPriorFixed && !parameter.isPriorParametersFixed) {
+            priorCombo.setEnabled(false);
+        }
+        
         setupComponents(); // setArguments here
 
 

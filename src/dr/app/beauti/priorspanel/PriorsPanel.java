@@ -523,8 +523,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         while (!done) {
             int result = hierarchicalPriorDialog.showDialog(paramList);
             if (result == JOptionPane.OK_OPTION && hierarchicalPriorDialog.validateModelName()) {
-                hierarchicalPriorDialog.getArguments();
-                done = true;
+                done = hierarchicalPriorDialog.getArguments();
             }
             if (result == JOptionPane.CANCEL_OPTION) {
                 return;

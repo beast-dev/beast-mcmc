@@ -88,7 +88,7 @@ public class PartitionClockModel extends PartitionOptions {
     }
 
     public void initModelParametersAndOpererators() {
-        double rate = 1.0;
+        double rate = options.useTipDates ? 0.001 : 1.0;
 
         new Parameter.Builder("clock.rate", "substitution rate")
                 .prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
@@ -293,9 +293,13 @@ public class PartitionClockModel extends PartitionOptions {
             return params;
         }
 
-        double rate = 1.0;
+        double rate = options.useTipDates ? 0.001 : 1.0;
 
         if (options.hasData()) {
+            Parameter clockParameter = getClockRateParameter();
+            if (!clockParameter.isInitialSet()) {
+                clockParameter.setInitial(rate);
+            }
 
             switch (clockType) {
                 case STRICT_CLOCK:

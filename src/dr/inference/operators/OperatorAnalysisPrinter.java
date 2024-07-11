@@ -110,7 +110,7 @@ public class OperatorAnalysisPrinter {
                 JointOperator jointOp = (JointOperator) op;
                 for (int k = 0; k < jointOp.getNumberOfSubOperators(); k++) {
                     out.println(jointOp.getSubOperatorName(k) + "," +
-                            ((AdaptableMCMCOperator)jointOp.getSubOperator(k)).getRawParameter() + "," +
+                            (op instanceof AdaptableMCMCOperator ? ((AdaptableMCMCOperator)jointOp.getSubOperator(k)).getRawParameter() : "") + "," +
                             op.getCount() + "," +
                             op.getTotalEvaluationTime() + "," +
                             op.getMeanEvaluationTime() + "," +
@@ -120,7 +120,7 @@ public class OperatorAnalysisPrinter {
                 }
             } else {
                 out.println(op.getOperatorName() + "," +
-                        ((AdaptableMCMCOperator)op).getRawParameter() + "," +
+                        (op instanceof AdaptableMCMCOperator ? ((AdaptableMCMCOperator)op).getRawParameter() : "") + "," +
                         op.getCount() + "," +
                         op.getTotalEvaluationTime() + "," +
                         op.getMeanEvaluationTime() + "," +

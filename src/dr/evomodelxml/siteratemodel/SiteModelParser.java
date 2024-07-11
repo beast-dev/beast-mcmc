@@ -96,10 +96,11 @@ public class SiteModelParser extends AbstractXMLObjectParser {
         double skew = 0.0;
 
         if (xo.hasChildNamed(FREE_RATES)) {
-            catCount = xo.getIntegerAttribute(RATE_CATEGORIES);
+            XMLObject cxo = xo.getChild(FREE_RATES);
+            catCount = cxo.getIntegerAttribute(RATE_CATEGORIES);
 
-            ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
-            weightsParameter = (Parameter) xo.getElementFirstChild(WEIGHTS);
+            ratesParameter = (Parameter) cxo.getElementFirstChild(RATES);
+            weightsParameter = (Parameter) cxo.getElementFirstChild(WEIGHTS);
 
             msg += "\n  " + catCount + " category free rate model";
 

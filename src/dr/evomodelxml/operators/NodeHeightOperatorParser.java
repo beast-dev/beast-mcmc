@@ -107,12 +107,12 @@ public class NodeHeightOperatorParser extends AbstractXMLObjectParser {
                     throw new XMLParseException("The UniformNodeHeightOperator scaleFactor attribute must be between 0 and 1.");
                 }
             }
-            if (xo.hasAttribute(MEAN_COUNT)) {
-                tuningParameter = xo.getDoubleAttribute(MEAN_COUNT);
-                if (tuningParameter <= 0.0) {
-                    throw new XMLParseException("The UniformNodeHeightOperator nonshifted mean attribute must be positive and non-zero.");
-                }
-            }
+            // if (xo.hasAttribute(MEAN_COUNT)) {
+            //     tuningParameter = xo.getDoubleAttribute(MEAN_COUNT);
+            //     if (tuningParameter <= 0.0) {
+            //         throw new XMLParseException("The UniformNodeHeightOperator nonshifted mean attribute must be positive and non-zero.");
+            //     }
+            // }
 
             final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
 

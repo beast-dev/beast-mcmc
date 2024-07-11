@@ -73,7 +73,11 @@ public enum OperatorType {
     WILSON_BALDING("wilsonBalding"),
     RELAXED_CLOCK_HMC_OPERATOR("relaxedClockHMCOperator"),
     SHRINKAGE_CLOCK_HMC_OPERATOR("shrinkageClockHMCOperator"),
-    SHRINKAGE_CLOCK_GIBBS_OPERATOR("relaxedClockGibbsOperator");
+    SHRINKAGE_CLOCK_GIBBS_OPERATOR("relaxedClockGibbsOperator"),
+
+    //BFT operators
+    NODE_HEIGHT_OPERATOR_UNIFORM("nodeHeightOperator-uniform"),
+    NODE_HEIGHT_OPERATOR_ROOT("nodeHeightOperator-scaleRoot");
 
     OperatorType(String displayName) {
         this.displayName = displayName;

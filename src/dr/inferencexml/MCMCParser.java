@@ -158,7 +158,11 @@ public class MCMCParser extends AbstractXMLObjectParser {
 
         mcmc.setShowOperatorAnalysis(true);
         if (xo.hasAttribute(OPERATOR_ANALYSIS)) {
-            mcmc.setOperatorAnalysisFile(XMLParser.getLogFile(xo, OPERATOR_ANALYSIS));
+            boolean csvFormat = (xo.hasAttribute(OPERATOR_ANALYSIS_FORMAT) &&
+                    xo.getStringAttribute(OPERATOR_ANALYSIS_FORMAT).trim().equalsIgnoreCase("CSV"))
+                    || xo.getStringAttribute(OPERATOR_ANALYSIS).trim().toLowerCase().endsWith(".csv");
+            ;
+            mcmc.setOperatorAnalysisFile(XMLParser.getLogFile(xo, OPERATOR_ANALYSIS), csvFormat);
         }
 
 
@@ -294,6 +298,8 @@ public class MCMCParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(SPAWN, true),
             AttributeRule.newStringRule(NAME, true),
             AttributeRule.newStringRule(OPERATOR_ANALYSIS, true),
+            AttributeRule.newStringRule(OPERATOR_ANALYSIS_FORMAT, true),
+
             new ElementRule(OperatorSchedule.class),
             new ElementRule(Likelihood.class),
             new ElementRule(Logger.class, 1, Integer.MAX_VALUE),
@@ -315,6 +321,8 @@ public class MCMCParser extends AbstractXMLObjectParser {
     public static final String TEMPERATURE = "temperature";
     public static final String SPAWN = "spawn";
     public static final String OPERATOR_ANALYSIS = "operatorAnalysis";
+    public static final String OPERATOR_ANALYSIS_FORMAT = "format";
+
 
     public static final long DEFAULT_FULL_EVALUATION_COUNT = 1000;
 

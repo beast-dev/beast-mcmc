@@ -95,6 +95,43 @@ public class OperatorAnalysisPrinter {
         out.println();
     }
 
+    /**
+     * Writes ano operator analysis to the provided print stream
+     *
+     * @param out the print stream to write operator analysis to
+     */
+    public static void csvOperatorAnalysis(PrintStream out, OperatorSchedule schedule, boolean useAdaptation) {
+        out.println("Operator,Tuning,Count,Time,Time/Op,Pr(accept),Smoothed_Pr(accept)");
+
+        for (int i = 0; i < schedule.getOperatorCount(); i++) {
+
+            final MCMCOperator op = schedule.getOperator(i);
+            if (op instanceof JointOperator) {
+                JointOperator jointOp = (JointOperator) op;
+                for (int k = 0; k < jointOp.getNumberOfSubOperators(); k++) {
+                    out.println(jointOp.getSubOperatorName(k) + "," +
+                            ((AdaptableMCMCOperator)jointOp.getSubOperator(k)).getRawParameter() + "," +
+                            op.getCount() + "," +
+                            op.getTotalEvaluationTime() + "," +
+                            op.getMeanEvaluationTime() + "," +
+                            op.getAcceptanceProbability() + "," +
+                            op.getSmoothedAcceptanceProbability()
+                    );
+                }
+            } else {
+                out.println(op.getOperatorName() + "," +
+                        ((AdaptableMCMCOperator)op).getRawParameter() + "," +
+                        op.getCount() + "," +
+                        op.getTotalEvaluationTime() + "," +
+                        op.getMeanEvaluationTime() + "," +
+                        op.getAcceptanceProbability() + "," +
+                        op.getSmoothedAcceptanceProbability()
+                );
+            }
+        }
+        out.println();
+    }
+
     private static String formattedOperatorName(String operatorName) {
         return formatter.formatToFieldWidth(operatorName, 50);
     }

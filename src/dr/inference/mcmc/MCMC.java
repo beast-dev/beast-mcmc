@@ -45,6 +45,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
 
 /**
  * An MCMC analysis that estimates parameters of a probabilistic model.
@@ -276,8 +277,12 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
             if (operatorAnalysisFile != null) {
                 try {
-                    PrintStream out = new PrintStream(new FileOutputStream(operatorAnalysisFile));
-                    OperatorAnalysisPrinter.showOperatorAnalysis(out, getOperatorSchedule(), options.useAdaptation());
+                    PrintStream out = new PrintStream(Files.newOutputStream(operatorAnalysisFile.toPath()));
+                    if (operatorAnalysisCSVFormat) {
+                        OperatorAnalysisPrinter.csvOperatorAnalysis(out, getOperatorSchedule(), options.useAdaptation());
+                    } else {
+                        OperatorAnalysisPrinter.showOperatorAnalysis(out, getOperatorSchedule(), options.useAdaptation());
+                    }
                     out.flush();
                     out.close();
                 } catch (IOException e) {
@@ -386,7 +391,11 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
 
     public void setOperatorAnalysisFile(File operatorAnalysisFile) {
+        this.setOperatorAnalysisFile(operatorAnalysisFile, false);
+    }
+    public void setOperatorAnalysisFile(File operatorAnalysisFile, boolean csvFormat) {
         this.operatorAnalysisFile = operatorAnalysisFile;
+        this.operatorAnalysisCSVFormat = csvFormat;
     }
 
     public String getId() {
@@ -404,6 +413,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
     protected boolean stopping = false;
     protected boolean showOperatorAnalysis = Boolean.parseBoolean(System.getProperty(OperatorSchedule.SHOW_OPERATORS));
     protected File operatorAnalysisFile = null;
+    protected boolean operatorAnalysisCSVFormat = false;
     protected final dr.util.Timer timer = new dr.util.Timer();
     protected long currentState = 0;
     //private int stepsPerReport = 1000;

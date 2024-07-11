@@ -31,10 +31,13 @@ import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
+import dr.evomodelxml.bigfasttree.thorney.ConstrainedTreeModelParser;
 import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
 import dr.evomodelxml.tree.*;
+import dr.evoxml.NewickParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.UPGMATreeParser;
 import dr.inference.model.ParameterParser;
@@ -56,13 +59,14 @@ public class TreeModelGenerator extends Generator {
 
     void writeTreeModel(PartitionTreeModel model, XMLWriter writer) {
         if (model.isUsingEmpiricalTrees()) {
-            writeEmpiricalTreeModel(model, writer);
-        } else {
+                writeEmpiricalTreeModel(model, writer);
+        } else if(model.isUsingThorneyBEAST()){
+                writeConstrainedTreeModel(model, writer);
+        }
+        else {
             writeDefaultTreeModel(model, writer);
         }
 
-        //if ThorneyBEAST
-        //writeConstrainedTreeModel(model, writer);
     }
 
     /**
@@ -71,7 +75,34 @@ public class TreeModelGenerator extends Generator {
      * @param model
      * @param writer the writer
      */
+
+
     void writeConstrainedTreeModel(PartitionTreeModel model, XMLWriter writer) {
+        // write newick with dates
+        //simulate tree
+        //write tree model
+
+        String prefix = model.getPrefix();
+
+        final String treeModelName = prefix + DefaultTreeModel.TREE_MODEL; // treemodel.treeModel or treeModel
+        final String STARTING_TREE = InitialTreeGenerator.STARTING_TREE;
+// newick written by starting tree 
+
+        writer.writeComment("A constrained tree model");
+        writer.writeTag(ConstrainedTreeModel.CONSTRAINED_TREE_MODEL,
+                new Attribute[] {
+                        new Attribute.Default<>(XMLParser.ID, treeModelName),
+                }, false);
+                writer.writeTag(ConstrainedTreeModelParser.CONSTRAINTS_TREE,false);
+                        writer.writeIDref(NewickParser.NEWICK, prefix + "constraintsTree" );// TODO magic values!
+                writer.writeCloseTag(ConstrainedTreeModelParser.CONSTRAINTS_TREE);
+
+                writer.writeIDref(OldCoalescentSimulatorParser.COALESCENT_TREE, prefix + STARTING_TREE); 
+
+        writer.writeCloseTag(ConstrainedTreeModel.CONSTRAINED_TREE_MODEL);
+
+
+        writeTreeModelStatistics(model, writer);
 
     }
 

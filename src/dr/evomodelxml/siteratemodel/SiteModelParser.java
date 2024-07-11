@@ -88,18 +88,18 @@ public class SiteModelParser extends AbstractXMLObjectParser {
             }
         }
 
-        Parameter shapeParam = null;
-        Parameter invarParam = null;
-        Parameter ratesParam = null;
-        Parameter weightsParam = null;
+        Parameter shapeParameter = null;
+        Parameter invarParameter = null;
+        Parameter ratesParameter = null;
+        Parameter weightsParameter = null;
         int catCount = 4;
         double skew = 0.0;
 
         if (xo.hasChildNamed(FREE_RATES)) {
             catCount = xo.getIntegerAttribute(RATE_CATEGORIES);
 
-            ratesParam = (Parameter) xo.getElementFirstChild(RATES);
-            weightsParam = (Parameter) xo.getElementFirstChild(WEIGHTS);
+            ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
+            weightsParameter = (Parameter) xo.getElementFirstChild(WEIGHTS);
 
             msg += "\n  " + catCount + " category free rate model";
 
@@ -110,26 +110,26 @@ public class SiteModelParser extends AbstractXMLObjectParser {
                 XMLObject cxo = xo.getChild(GAMMA_SHAPE);
                 catCount = cxo.getIntegerAttribute(GAMMA_CATEGORIES);
 
-            if ( xo.hasAttribute(SKEW)) {
-                skew = xo.getDoubleAttribute(SKEW);
-            }
-            if (skew < 0.0) {
-                throw new XMLParseException("Gamma weight skew must be >= 0.0");
-            }
+                if ( xo.hasAttribute(SKEW)) {
+                    skew = xo.getDoubleAttribute(SKEW);
+                }
+                if (skew < 0.0) {
+                    throw new XMLParseException("Gamma weight skew must be >= 0.0");
+                }
 
-            shapeParam = (Parameter) cxo.getChild(Parameter.class);
+                shapeParameter = (Parameter) cxo.getChild(Parameter.class);
 
-            msg += "\n  " + catCount + " category discrete gamma with initial shape = " + shapeParam.getParameterValue(0);
-            if (skew == 0.0) {
-                msg += "\n  using equal weight discretization of gamma distribution";
-            } else {
-                msg += "\n  using skewed weight discretization of gamma distribution, skew = " + skew;
+                msg += "\n  " + catCount + " category discrete gamma with initial shape = " + shapeParameter.getParameterValue(0);
+                if (skew == 0.0) {
+                    msg += "\n  using equal weight discretization of gamma distribution";
+                } else {
+                    msg += "\n  using skewed weight discretization of gamma distribution, skew = " + skew;
+                }
             }
-        }
 
             if (xo.hasChildNamed(PROPORTION_INVARIANT)) {
-                invarParam = (Parameter) xo.getElementFirstChild(PROPORTION_INVARIANT);
-                msg += "\n  initial proportion of invariant sites = " + invarParam.getParameterValue(0);
+                invarParameter = (Parameter) xo.getElementFirstChild(PROPORTION_INVARIANT);
+                msg += "\n  initial proportion of invariant sites = " + invarParameter.getParameterValue(0);
             }
         }
 
@@ -140,11 +140,14 @@ public class SiteModelParser extends AbstractXMLObjectParser {
         }
 
         SiteRateDelegate delegate;
-        if (shapeParam != null || invarParam != null) {
-            delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParam, catCount, skew, invarParam);
+        if (ratesParameter != null && weightsParameter != null) {
+            delegate = new FreeRateDelegate("FreeRateDelegate", catCount, ratesParameter, weightsParameter, invarParameter);
+        } else if (shapeParameter != null || invarParameter != null) {
+            delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParameter, catCount, skew, invarParameter);
         } else {
             delegate = new HomogeneousRateDelegate("HomogeneousRateDelegate");
         }
+
 
         DiscretizedSiteRateModel siteRateModel = new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
 

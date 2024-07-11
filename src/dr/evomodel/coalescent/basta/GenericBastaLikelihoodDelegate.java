@@ -147,6 +147,17 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             } else if (mode == Mode.GRADIENT) {
 
                 TransitionMatrixOperation Matrixoperation = matrixOperations.get(operation.intervalNumber);
+
+                peelPartials(
+                        storage.partials, operation.outputBuffer,
+                        operation.inputBuffer1, operation.inputBuffer2,
+                        storage.matrices,
+                        operation.inputMatrix1, operation.inputMatrix2,
+                        operation.accBuffer1, operation.accBuffer2,
+                        storage.coalescent, operation.intervalNumber,
+                        storage.sizes, 0,
+                        stateCount);
+
                 peelPartialsGrad(
                         storage.partials, Matrixoperation.time, operation.outputBuffer,
                         operation.inputBuffer1, operation.inputBuffer2,
@@ -296,7 +307,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                     }
                     partialsGrad[a][b][resultOffset + i] = sum;
 
-                    throw new RuntimeException("Function should not depend on `transpose`");
+                    //throw new RuntimeException("Function should not depend on `transpose`");
                 }
             }
         }
@@ -351,7 +362,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                         partialsGrad[a][b][leftAccOffset + i] = leftGrad;
                         partialsGrad[a][b][rightAccOffset + i] = rightGrad;
 
-                        throw new RuntimeException("Function should not depend on `transpose`");
+                        //throw new RuntimeException("Function should not depend on `transpose`");
                     }
                     // second half
                     for (int i = 0; i < stateCount; ++i) {

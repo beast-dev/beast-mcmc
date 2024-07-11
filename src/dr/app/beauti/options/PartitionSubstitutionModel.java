@@ -530,7 +530,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
             case DataType.TREE:
                 //Do nothing
-                System.out.println("Tree data type in selectParameters");
                 break;
             default:
                 throw new IllegalArgumentException("Unknown data type");
@@ -778,7 +777,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 break;
             case DataType.TREE:
                 //Do nothing
-                System.out.println("Tree data type in selectOperators");
+                // System.out.println("Tree data type ParitionSubstutionModel selectOperators");
                 break;
 
             default:

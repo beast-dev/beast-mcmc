@@ -254,7 +254,11 @@ public class BeautiOptions extends ModelOptions {
             Set<PartitionSubstitutionModel> substitutionModels = new LinkedHashSet<PartitionSubstitutionModel>();
             for (AbstractPartitionData partition : getDataPartitions()) {
                 if (partition.getPartitionClockModel() == model) {
-                    substitutionModels.add(partition.getPartitionSubstitutionModel());
+                    PartitionSubstitutionModel substitutionModel = partition.getPartitionSubstitutionModel();
+                    if(substitutionModel!=null){
+                        substitutionModels.add(substitutionModel);
+                    }
+                    // Tree data doesn't have subsitution model at this point
                 }
             }
 
@@ -1130,11 +1134,11 @@ public class BeautiOptions extends ModelOptions {
             PartitionClockModel pcm = new PartitionClockModel(this, DEFAULT_NAME, partition, partition.getPartitionTreeModel());
             partition.setPartitionClockModel(pcm);
         }
-        if (partition.getPartitionSubstitutionModel() == null) {
-            PartitionSubstitutionModel substModel = new PartitionSubstitutionModel(this, partition.getName(),
-                    partition);
-            partition.setPartitionSubstitutionModel(substModel);
-        }
+        // if (partition.getPartitionSubstitutionModel() == null) {
+        //     PartitionSubstitutionModel substModel = new PartitionSubstitutionModel(this, partition.getName(),
+        //             partition);
+        //     partition.setPartitionSubstitutionModel(substModel);
+        // }
 
         ContinuousComponentOptions comp = (ContinuousComponentOptions) getComponentOptions(ContinuousComponentOptions.class);
         comp.createParameters(this);

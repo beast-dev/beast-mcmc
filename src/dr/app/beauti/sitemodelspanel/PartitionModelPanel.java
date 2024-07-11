@@ -548,8 +548,7 @@ public class PartitionModelPanel extends OptionsPanel {
                 break;
 
             case DataType.TREE:
-                //DO all sorts of things I haven't figured out yet
-                System.out.println("Tree data type!!!!");
+            //Do nothing
                 break;
 
             default:
@@ -729,7 +728,7 @@ public class PartitionModelPanel extends OptionsPanel {
 
             case DataType.TREE:
                 //DO all sorts of things I haven't figured out yet
-                System.out.println("Tree data type!!!!");
+                // System.out.println("Tree data type in PartitionModelPanel setupPanel");
                 break;
             default:
                 throw new IllegalArgumentException("Unknown data type");

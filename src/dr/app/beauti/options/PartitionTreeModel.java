@@ -52,7 +52,7 @@ public class PartitionTreeModel extends PartitionOptions {
     private boolean isUsingExternalEmpiricalTreeFile = false;
     private String empiricalTreesFilename = null;
 
-    private int thorneyScaler = 1;
+    private double thorneyScaler = 1.0;
     private boolean isNewick = true;
 
     private boolean hasTipCalibrations = false;
@@ -345,11 +345,11 @@ public class PartitionTreeModel extends PartitionOptions {
         this.empiricalTreesFilename = empiricalTreesFilename;
     }
 
-    public int getThorneyScaler() {
+    public double getThorneyScaler() {
         return thorneyScaler;
     }
-    public void setThorneyScaler(int scaler){
-        this.thorneyScaler = scaler;;
+    public void setThorneyScaler(double scaler){
+        this.thorneyScaler = scaler;
     }
 
     public void setTipCalibrations(boolean hasTipCalibrations) {

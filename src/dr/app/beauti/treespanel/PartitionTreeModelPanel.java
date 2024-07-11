@@ -80,7 +80,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
 
     private JComboBox treeAsDataModelCombo = new JComboBox();
-    private WholeNumberField thorneyGenomeLength = new WholeNumberField(1, Integer.MAX_VALUE);
+    private RealNumberField thorneyGenomeLength = new RealNumberField(1.0, Double.MAX_VALUE);
 
     private final OptionsPanel thorneyBEASTPanel;
     private final JLabel thorneyBEASTInfo = new JLabel("<html>" +

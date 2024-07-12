@@ -147,21 +147,27 @@ public class PartitionTreeModel extends PartitionOptions {
            
             // does STL works on constrained trees?
             createOperator("subtreeLeap", "Tree", "Performs the subtree-leap rearrangement of the tree", "tree",
-                    OperatorType.SUBTREE_LEAP, 1.0, weight);
+                    OperatorType.SUBTREE_LEAP, 1.0, weight);            
+            createOperator("uniformSPG", "Tree", "Performs the subtree prune regraft within a polytomony rearrangement of the tree", "tree",
+                    OperatorType.UNIFORM_SUBTREE_PRUNE_REGRAFT, -1, weight);
+
 
             createOperator("nodeHeight-uniform","Tree", "Draws new internal node heights on constrained tree uniformally","tree",
-            OperatorType.NODE_HEIGHT_OPERATOR_UNIFORM,-1.0, treeWeights);
+            OperatorType.NODE_HEIGHT_OPERATOR_UNIFORM,-1.0, weight);
             
             // In the TB setting this will almost always give the same likelihood since coalescent doesn't change 
             // and if we are in the non mutation zone the treelikelihood will be the same.
-            createOperator("FHSPR", "Tree", "Performs the fixed-height subtree prune/regraft of the tree", "tree",
-                    OperatorType.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT, 1.0, weight);
+            // not compatible with constrained tree right now.
+            // createOperator("FHSPR", "Tree", "Performs the fixed-height subtree prune/regraft of the tree", "tree",
+            //         OperatorType.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT, 1.0, weight);
             createOperator("narrowExchange", "Tree", "Performs local rearrangements of the tree", "tree",
                     OperatorType.NARROW_EXCHANGE, -1, weight);
+
+            weight = Math.max(weight / 100, 3);
+
             createOperator("wideExchange", "Tree", "Performs global rearrangements of the tree", "tree",
                     OperatorType.WIDE_EXCHANGE, -1, weight);
 
-            weight = Math.max(weight / 10, 3);
             
             // these work on bft tree models
             createOperator("nodeHeight-root","Tree", "Draws new root height on constrained tree","tree",
@@ -210,14 +216,18 @@ public class PartitionTreeModel extends PartitionOptions {
         if (isUsingEmpiricalTrees()) {
             operators.add(getOperator("empiricalTreeSwap"));
         } else if(isUsingThorneyBEAST()){
-            operators.add(getOperator("narrowExchange"));
-            operators.add(getOperator("wideExchange"));
-            operators.add(getOperator("wilsonBalding"));
-
-            operators.add(getOperator("FHSPR"));
 
             operators.add(getOperator("nodeHeight-uniform"));
             operators.add(getOperator("nodeHeight-root"));
+            // TODO check if there are polytomies otherwise these will error out
+            operators.add(getOperator("uniformSPG"));
+            operators.add(getOperator("narrowExchange"));
+            operators.add(getOperator("wideExchange"));
+            operators.add(getOperator("wilsonBalding"));
+            //TODO add back in once operators is functional
+            // operators.add(getOperator("FHSPR"));
+
+
 
 
         }else {

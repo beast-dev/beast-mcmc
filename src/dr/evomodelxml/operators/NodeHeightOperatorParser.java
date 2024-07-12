@@ -46,8 +46,8 @@ public class NodeHeightOperatorParser extends AbstractXMLObjectParser {
     public enum OperatorType {
         UNIFORM("uniform"),
         RANDOMWALK("random walk"),
-        SCALEROOT("scale root"),
-        SCALEALL("scale all internal");
+        SCALEROOT("scaleRoot"),
+        SCALEALL("scaleAll");
 //        MULTIMOVEUNIFORM("multiMoveUniform");
         // -JT the order in which nodes are picked matters but there is more than
         // one way to pick the nodes I don't trust the multimove operator

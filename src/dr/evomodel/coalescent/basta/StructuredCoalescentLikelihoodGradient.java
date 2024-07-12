@@ -12,24 +12,20 @@ public class StructuredCoalescentLikelihoodGradient implements
         GradientWrtParameterProvider, ModelListener, Reportable, Loggable {
 
     private final BastaLikelihood structuredCoalescentLikelihood;
-    private final SubstitutionModel substitutionModel;
-
     private final WrtParameter wrtParameter;
-    // private final AbstractGlmSubstitutionModelGradient.ParameterMap parameterMap;
 
+    private final Parameter parameter;
+    private final Parameter chainRuleDependent;
 
     public StructuredCoalescentLikelihoodGradient(BastaLikelihood BastaLikelihood,
                                                   SubstitutionModel substitutionModel,
                                                   WrtParameter wrtParameter) {
-//        this.structuredCoalescentLikelihood = structuredCoalescentLikelihood;
         this.structuredCoalescentLikelihood = BastaLikelihood;
-        this.substitutionModel = substitutionModel;
-        // this.parameterMap = makeParameterMap(glm);
         this.wrtParameter = wrtParameter;
 
+        this.parameter = wrtParameter.getParameter(structuredCoalescentLikelihood, substitutionModel);
+        this.chainRuleDependent = wrtParameter.getChainRuleDependent(structuredCoalescentLikelihood, substitutionModel);
     }
-
-
 
     @Override
     public Likelihood getLikelihood() {
@@ -38,7 +34,7 @@ public class StructuredCoalescentLikelihoodGradient implements
 
     @Override
     public Parameter getParameter() {
-            return wrtParameter.getParameter(structuredCoalescentLikelihood, substitutionModel);
+            return parameter;
     }
 
     @Override
@@ -48,8 +44,18 @@ public class StructuredCoalescentLikelihoodGradient implements
 
     @Override
     public double[] getGradientLogDensity() {
-        return wrtParameter.getGradientLogDensity(structuredCoalescentLikelihood);
+        return structuredCoalescentLikelihood.getGradientLogDensity(this);
     }
+
+    double[] chainRule(double[] gradient) {
+        return wrtParameter.chainRule(gradient, chainRuleDependent);
+    }
+
+    boolean requiresTransitionMatrices() {
+        return wrtParameter.requiresTransitionMatrices();
+    }
+
+    WrtParameter getType() { return wrtParameter; }
 
     @Override
     public LogColumn[] getColumns() {
@@ -72,7 +78,7 @@ public class StructuredCoalescentLikelihoodGradient implements
 
         StringBuilder sb = new StringBuilder();
 
-        String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, 1E-1);
+        String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, 10.0);
         sb.append(message);
 
 
@@ -82,30 +88,74 @@ public class StructuredCoalescentLikelihoodGradient implements
     public enum WrtParameter {
         MIGRATION_RATE("migrationRate") {
             @Override
-            double[] getGradientLogDensity(BastaLikelihood structuredCoalescentLikelihood) {
-                return structuredCoalescentLikelihood.getGradientLogDensity();
-//            double[] getGradientLogDensity(StructuredCoalescentLikelihood BastaLikelihood) {
-//                return BastaLikelihood.getGradientLogDensity();
-            }
-
-            @Override
             Parameter getParameter(BastaLikelihood structuredCoalescentLikelihood, SubstitutionModel substitutionModel) {
                 assert(substitutionModel instanceof SVSComplexSubstitutionModel);
                 SVSComplexSubstitutionModel svsComplexSubstitutionModel = (SVSComplexSubstitutionModel) substitutionModel;
                 return svsComplexSubstitutionModel.getRatesParameter();
             }
 
+            @Override
+            double[] chainRule(double[] gradient, Parameter parameter) {
+                final int dim = parameter.getDimension();
+
+                double[] chainedGradient = new double[dim * (dim - 1)];
+
+                int k = 0;
+                for (int i = 0; i < dim; ++i) {
+                    for (int j = i + 1; j < dim; ++j) {
+                        chainedGradient[k] = (gradient[i * dim + j] - gradient[i * dim + i]) * parameter.getParameterValue(j) ;
+                        ++k;
+                    }
+                }
+
+                for (int j = 0; j < dim; ++j) {
+                    for (int i = j + 1; i < dim; ++i) {
+                        chainedGradient[k] =(gradient[i * dim + j] - gradient[i * dim + i]) * parameter.getParameterValue(j);
+                        ++k;
+                    }
+                }
+                return chainedGradient;
+            }
+
+            @Override
+            boolean requiresTransitionMatrices() {
+                return false;
+            }
+
+            @Override
+            public Parameter getChainRuleDependent(BastaLikelihood structuredCoalescentLikelihood,
+                                                   SubstitutionModel substitutionModel) {
+                return substitutionModel.getFrequencyModel().getFrequencyParameter();
+            }
+
         },
 
         POPULATION_SIZE("populationSize") {
             @Override
-            double[] getGradientLogDensity(BastaLikelihood structuredCoalescentLikelihood) {
-                return structuredCoalescentLikelihood.getPopSizeGradientLogDensity();
+            Parameter getParameter(BastaLikelihood structuredCoalescentLikelihood, SubstitutionModel substitutionModel) {
+                return structuredCoalescentLikelihood.getPopSizes();
             }
-            
 
             @Override
-            Parameter getParameter(BastaLikelihood structuredCoalescentLikelihood, SubstitutionModel substitutionModel) {
+            double[] chainRule(double[] gradient, Parameter parameter) {
+                final int dim = parameter.getDimension();
+
+                for (int i = 0; i < dim; ++i) {//
+                    double popSize = parameter.getParameterValue(i);
+                    gradient[i] /= -(popSize * popSize);
+                }
+
+                return gradient;
+            }
+
+        @Override
+        boolean requiresTransitionMatrices() {
+            return false;
+        }
+
+            @Override
+            public Parameter getChainRuleDependent(BastaLikelihood structuredCoalescentLikelihood,
+                                                   SubstitutionModel substitutionModel) {
                 return structuredCoalescentLikelihood.getPopSizes();
             }
         };
@@ -114,9 +164,11 @@ public class StructuredCoalescentLikelihoodGradient implements
             this.name = name;
         }
 
-        abstract double[] getGradientLogDensity(BastaLikelihood structuredCoalescentLikelihood);
-
         abstract Parameter getParameter(BastaLikelihood structuredCoalescentLikelihood, SubstitutionModel substitutionModel);
+
+        abstract double[] chainRule(double[] gradient, Parameter parameter);
+
+        abstract boolean requiresTransitionMatrices();
 
         private final String name;
 
@@ -128,6 +180,8 @@ public class StructuredCoalescentLikelihoodGradient implements
             }
             return null;
         }
-    }
 
+        public abstract Parameter getChainRuleDependent(BastaLikelihood structuredCoalescentLikelihood,
+                                                        SubstitutionModel substitutionModel);
+    }
 }

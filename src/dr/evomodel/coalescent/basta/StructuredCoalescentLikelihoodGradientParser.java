@@ -1,6 +1,5 @@
 package dr.evomodel.coalescent.basta;
 
-import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.xml.*;
 
@@ -8,17 +7,6 @@ public class StructuredCoalescentLikelihoodGradientParser extends AbstractXMLObj
 
     private static final String NAME = "structuredCoalescentLikelihoodGradient";
     private static final String WRT_PARAMETER = "wrtParameter";
-
-//    @Override
-//    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-//        StructuredCoalescentLikelihood structuredCoalescentLikelihood = (StructuredCoalescentLikelihood) xo.getChild(StructuredCoalescentLikelihood.class);
-//        GlmSubstitutionModel substitutionModel = (GlmSubstitutionModel) xo.getChild(GlmSubstitutionModel.class);
-//        String wrtParamter = (String) xo.getAttribute(WRT_PARAMETER);
-//
-//        StructuredCoalescentLikelihoodGradient.WrtParameter type = StructuredCoalescentLikelihoodGradient.WrtParameter.factory(wrtParamter);
-//
-//        return new StructuredCoalescentLikelihoodGradient(structuredCoalescentLikelihood, substitutionModel, type);
-//    }
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -29,6 +17,7 @@ public class StructuredCoalescentLikelihoodGradientParser extends AbstractXMLObj
         StructuredCoalescentLikelihoodGradient.WrtParameter type = StructuredCoalescentLikelihoodGradient.WrtParameter.factory(wrtParamter);
 
         return new StructuredCoalescentLikelihoodGradient(BastaLikelihood, substitutionModel, type);
+//        return StructuredCoalescentLikelihoodGradient.factory(BastaLikelihood, substitutionModel, type);
     }
 
     @Override

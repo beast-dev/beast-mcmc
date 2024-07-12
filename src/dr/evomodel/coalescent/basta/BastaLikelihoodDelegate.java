@@ -28,6 +28,7 @@ package dr.evomodel.coalescent.basta;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.Tree;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.substmodel.ComplexSubstitutionModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
@@ -77,13 +78,11 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         throw new RuntimeException("Not yet implemented");
     }
 
-    // TODO the next two functions do not belong in BastaLikelihoodDelegate; they compute gradients
-    double[][] calculateGradient(List<BranchIntervalOperation> branchOperations,
-                                 List<TransitionMatrixOperation> matrixOperation,
-                                 List<Integer> intervalStarts,
-                                 int rootNodeNumber);
-
-    double[] calculateGradientPopSize(List<BranchIntervalOperation> branchOperations, List<TransitionMatrixOperation> matrixOperations, List<Integer> intervalStarts, int number);
+    double[] calculateGradientGeneric(List<BranchIntervalOperation> branchOperations,
+                                      List<TransitionMatrixOperation> matrixOperation,
+                                      List<Integer> intervalStarts,
+                                      int rootNodeNumber,
+                                      StructuredCoalescentLikelihoodGradient wrt);
 
     abstract class AbstractBastaLikelihoodDelegate extends AbstractModel implements BastaLikelihoodDelegate, Citable {
 
@@ -168,6 +167,8 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
             abstract int getModeAsInt();
         }
 
+        abstract protected void allocateGradientMemory();
+
         abstract protected void computeBranchIntervalOperations(List<Integer> intervalStarts,
                                                                 List<BranchIntervalOperation> branchIntervalOperations,
                                                                 List<TransitionMatrixOperation> matrixOperations,
@@ -217,50 +218,40 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         abstract protected double[] computeCoalescentIntervalReductionGradPopSize(List<Integer> intervalStarts,
                                                                              List<BranchIntervalOperation> branchIntervalOperations);
 
-        @Override
-        public double[][] calculateGradient(List<BranchIntervalOperation> branchOperations,
-                                            List<TransitionMatrixOperation> matrixOperation,
-                                            List<Integer> intervalStarts,
-                                            int rootNodeNumber) {
-
+        public double[] calculateGradientGeneric(List<BranchIntervalOperation> branchOperations,
+                                                 List<TransitionMatrixOperation> matrixOperations,
+                                                 List<Integer> intervalStarts,
+                                                 int rootNodeNumber,
+                                                 StructuredCoalescentLikelihoodGradient wrt) {
             if (PRINT_COMMANDS) {
                 System.err.println("Tree = " + tree);
             }
 
-            computeTransitionProbabilityOperations(matrixOperation, Mode.GRADIENT);
+            allocateGradientMemory();
 
-            computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperation, Mode.GRADIENT);
-
-            double[][] grad = computeCoalescentIntervalReductionGrad(intervalStarts, branchOperations);
-
-//            if (PRINT_COMMANDS) {
-//                System.err.println("logL = " + logL + " " + getStamp() + "\n");
-//                if (printCount > 1000) {
-//                    System.exit(-1);
-//                }
-//                ++printCount;
-//            }
-
-            return grad;
-        }
-
-        @Override
-        public double[] calculateGradientPopSize(List<BranchIntervalOperation> branchOperations,
-                                            List<TransitionMatrixOperation> matrixOperation,
-                                            List<Integer> intervalStarts,
-                                            int rootNodeNumber) {
-
-            if (PRINT_COMMANDS) {
-                System.err.println("Tree = " + tree);
+            if (wrt.requiresTransitionMatrices()) {
+                computeTransitionProbabilityOperations(matrixOperations, Mode.GRADIENT);
             }
 
-            computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperation, Mode.GRADIENT);
+            computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperations, Mode.GRADIENT);
 
-            double[] grad = computeCoalescentIntervalReductionGradPopSize(intervalStarts, branchOperations);
+            double[] gradient;
 
-            return grad;
+            // TODO Dispatch
+            if (wrt.getType() == StructuredCoalescentLikelihoodGradient.WrtParameter.MIGRATION_RATE) {
+                double[][] tmp = computeCoalescentIntervalReductionGrad(intervalStarts, branchOperations);
+                gradient = new double[stateCount * stateCount];
+                for (int i = 0; i < stateCount; ++i) {
+                    System.arraycopy(tmp[i], 0, gradient, i * stateCount, stateCount);
+                }
+            } else if (wrt.getType() == StructuredCoalescentLikelihoodGradient.WrtParameter.POPULATION_SIZE) {
+                gradient = computeCoalescentIntervalReductionGradPopSize(intervalStarts, branchOperations);
+            } else {
+                throw new RuntimeException("Not yet implemented");
+            }
+
+            return gradient;
         }
-
 
         abstract String getStamp();
 

@@ -57,6 +57,11 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     }
 
     @Override
+    protected void allocateGradientMemory() {
+        // Do nothing
+    }
+
+    @Override
     protected void computeBranchIntervalOperations(List<Integer> intervalStarts,
                                                    List<BranchIntervalOperation> branchIntervalOperations,
                                                    List<TransitionMatrixOperation> matrixOperations,

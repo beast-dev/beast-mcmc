@@ -33,7 +33,6 @@ import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
-import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
@@ -306,45 +305,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         return logL;
     }
 
-    public double[] getGradientLogDensity() {
-
-        assert(substitutionModel instanceof SVSComplexSubstitutionModel);
-
-        final List<BranchIntervalOperation> branchOperations =
-                treeTraversalDelegate.getBranchIntervalOperations();
-        final List<TransitionMatrixOperation> matrixOperations =
-                transitionMatricesKnown ? NO_OPT :
-                        treeTraversalDelegate.getMatrixOperations();
-        final List<Integer> intervalStarts = treeTraversalDelegate.getIntervalStarts();
-
-        final NodeRef root = tree.getRoot();
-
-        calculateLogLikelihood(); // TODO Only execute if necessary
-        // log likelihood
-
-        double[][] full_gradient = likelihoodDelegate.calculateGradient(branchOperations, matrixOperations, intervalStarts, root.getNumber());
-        double[] gradient = new double[stateCount*(stateCount-1)];
-
-        int k = 0;
-        for (int i = 0; i < stateCount; ++i) {
-            for (int j = i + 1; j < stateCount; ++j) {
-                gradient[k] = (full_gradient[i][j] - full_gradient[i][i]) * substitutionModel.getFrequencyModel().getFrequency(j) ;
-                k += 1;
-            }
-        }
-
-        for (int j = 0; j < stateCount; ++j) {
-            for (int i = j + 1; i < stateCount; ++i) {
-                gradient[k] =(full_gradient[i][j] - full_gradient[i][i]) * substitutionModel.getFrequencyModel().getFrequency(j);
-                k += 1;
-            }
-        }
-        return gradient;
-    }
-
-
-
-    public double[] getPopSizeGradientLogDensity() {
+    public double[] getGradientLogDensity(StructuredCoalescentLikelihoodGradient wrt) {
 
         final List<BranchIntervalOperation> branchOperations =
                 treeTraversalDelegate.getBranchIntervalOperations();
@@ -357,12 +318,10 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         calculateLogLikelihood(); // TODO Only execute if necessary
 
-        double[] full_gradient =  likelihoodDelegate.calculateGradientPopSize(branchOperations, matrixOperations, intervalStarts, root.getNumber());
-        double[] gradient = new double[stateCount];
-        for (int i = 0; i < stateCount; ++i) {
-            gradient[i] = -full_gradient[i]*Math.pow(popSizeParameter.getParameterValue(i), -2);
-        }
-        return gradient;
+        double[] gradient = likelihoodDelegate.calculateGradientGeneric(branchOperations, matrixOperations, intervalStarts,
+                root.getNumber(), wrt);
+
+        return wrt.chainRule(gradient);
     }
 
     private void setAllNodesUpdated() {

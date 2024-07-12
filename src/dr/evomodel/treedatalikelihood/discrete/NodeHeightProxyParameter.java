@@ -134,7 +134,7 @@ public class NodeHeightProxyParameter extends Parameter.Proxy implements Bounds<
     }
 
     private static final String NODE_HEIGHT_PARAMETER = "nodeHeightProxyParameter";
-    private static final String INCLUDE_ROOT = "rootNode";
+    public static final String INCLUDE_ROOT = "rootNode";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
         @Override

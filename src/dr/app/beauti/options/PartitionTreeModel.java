@@ -142,7 +142,8 @@ public class PartitionTreeModel extends PartitionOptions {
             createOperator("FHSPR", "Tree", "Performs the fixed-height subtree prune/regraft of the tree", "tree",
                     OperatorType.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT, 1.0, weight);
         } else {
-            //Thorney BEAST operators here?
+            //Thorney BEAST operators
+            // Big weights operators
             double weight = Math.max(options.taxonList.getTaxonCount(), 30);
            
             // does STL works on constrained trees?
@@ -152,26 +153,30 @@ public class PartitionTreeModel extends PartitionOptions {
                     OperatorType.UNIFORM_SUBTREE_PRUNE_REGRAFT, -1, weight);
 
 
-            createOperator("nodeHeight-uniform","Tree", "Draws new internal node heights on constrained tree uniformally","tree",
-            OperatorType.NODE_HEIGHT_OPERATOR_UNIFORM,-1.0, weight);
-            
+            createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree",
+                    OperatorType.TREE_BIT_MOVE, -1.0, treeWeights);
+
+            createOperator("uniformHeights", "Internal node heights", "Draws new internal node heights uniformally",
+                    "treeModel.internalNodeHeights", OperatorType.UNIFORM, -1, weight);
+
+            // This scale operator is used instead of the up/down if the rate is fixed.
+            new Operator.Builder("treeModel.allInternalNodeHeights", "Scales all internal node heights in tree", getParameter("treeModel.allInternalNodeHeights"), OperatorType.SCALE_ALL, 0.75, rateWeights).build(operators);
+
             // In the TB setting this will almost always give the same likelihood since coalescent doesn't change 
             // and if we are in the non mutation zone the treelikelihood will be the same.
             // not compatible with constrained tree right now.
             // createOperator("FHSPR", "Tree", "Performs the fixed-height subtree prune/regraft of the tree", "tree",
             //         OperatorType.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT, 1.0, weight);
+            
             createOperator("narrowExchange", "Tree", "Performs local rearrangements of the tree", "tree",
                     OperatorType.NARROW_EXCHANGE, -1, weight);
 
             weight = Math.max(weight / 100, 3);
+            createScaleOperator("treeModel.rootHeight", demoTuning, weight);
 
             createOperator("wideExchange", "Tree", "Performs global rearrangements of the tree", "tree",
                     OperatorType.WIDE_EXCHANGE, -1, weight);
 
-            
-            // these work on bft tree models
-            createOperator("nodeHeight-root","Tree", "Draws new root height on constrained tree","tree",
-                OperatorType.NODE_HEIGHT_OPERATOR_ROOT,demoTuning, weight);
 
             createOperator("wilsonBalding", "Tree", "Performs the Wilson-Balding rearrangement of the tree", "tree",
                 OperatorType.WILSON_BALDING, -1, weight);
@@ -189,7 +194,7 @@ public class PartitionTreeModel extends PartitionOptions {
         // get parameter so their id prefix can be set.
         
         getParameter("tree");
-        if(isUsingEmpiricalTrees()||isUsingThorneyBEAST()){
+        if(isUsingEmpiricalTrees()){
             return parameters;
         }
         getParameter("treeModel.internalNodeHeights");
@@ -217,8 +222,8 @@ public class PartitionTreeModel extends PartitionOptions {
             operators.add(getOperator("empiricalTreeSwap"));
         } else if(isUsingThorneyBEAST()){
 
-            operators.add(getOperator("nodeHeight-uniform"));
-            operators.add(getOperator("nodeHeight-root"));
+            operators.add(getOperator("treeModel.rootHeight"));
+            operators.add(getOperator("uniformHeights"));
             // TODO check if there are polytomies otherwise these will error out
             operators.add(getOperator("uniformSPG"));
             operators.add(getOperator("narrowExchange"));
@@ -226,9 +231,6 @@ public class PartitionTreeModel extends PartitionOptions {
             operators.add(getOperator("wilsonBalding"));
             //TODO add back in once operators is functional
             // operators.add(getOperator("FHSPR"));
-
-
-
 
         }else {
             if (treePartitionData == null) {

@@ -32,8 +32,10 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.bigfasttree.thorney.ConstrainedTreeModel;
+import dr.evomodel.bigfasttree.thorney.RootHeightProxyParameter;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
+import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.evomodelxml.bigfasttree.thorney.ConstrainedTreeModelParser;
 import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
 import dr.evomodelxml.tree.*;
@@ -100,6 +102,32 @@ public class TreeModelGenerator extends Generator {
                 writer.writeIDref(OldCoalescentSimulatorParser.COALESCENT_TREE, prefix + STARTING_TREE); 
 
         writer.writeCloseTag(ConstrainedTreeModel.CONSTRAINED_TREE_MODEL);
+
+        writer.writeComment("Parameter proxies for node heights");
+
+        
+        writer.writeOpenTag(RootHeightProxyParameter.PARSER.getParserName(),new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + TreeModelParser.ROOT_HEIGHT));
+                writer.writeIDref(ConstrainedTreeModelParser.CONSTRAINTS_TREE, treeModelName);
+        writer.writeCloseTag(RootHeightProxyParameter.PARSER.getParserName());
+
+        writer.writeOpenTag(NodeHeightProxyParameter.PARSER.getParserName(),  
+        new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + "internalNodeHeights"),
+                new Attribute.Default<String>(NodeHeightProxyParameter.INCLUDE_ROOT, "false")
+        });
+        writer.writeIDref(ConstrainedTreeModelParser.CONSTRAINTS_TREE, treeModelName);
+
+        writer.writeCloseTag(NodeHeightProxyParameter.PARSER.getParserName());
+
+
+        writer.writeOpenTag(NodeHeightProxyParameter.PARSER.getParserName(),  
+        new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + "allInternalNodeHeights"),
+                new Attribute.Default<String>(NodeHeightProxyParameter.INCLUDE_ROOT, "true")
+        });
+        writer.writeIDref(ConstrainedTreeModelParser.CONSTRAINTS_TREE, treeModelName);
+
+        writer.writeCloseTag(NodeHeightProxyParameter.PARSER.getParserName());
 
 
         writeTreeModelStatistics(model, writer);

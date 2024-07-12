@@ -123,13 +123,14 @@ public class TreeLikelihoodGenerator extends Generator {
             new Attribute.Default<>(XMLParser.ID,branchMapIdD),
             new Attribute.Default<Double>("scale",treeModel.getThorneyScaler()),
         },false);
-            writer.writeIDref(ConstrainedTreeModel.CONSTRAINED_TREE_MODEL, partition.getPrefix() + DefaultTreeModel.TREE_MODEL);
+            writer.writeIDref(ConstrainedTreeModel.CONSTRAINED_TREE_MODEL,prefix+ DefaultTreeModel.TREE_MODEL);
             writer.writeTag(ConstrainedBranchLengthProviderParser.DATA_TREE, new Attribute[]{}, false);
                 writer.writeOpenTag(
                             NewickParser.NEWICK,
                             new Attribute[]{
                                 new Attribute.Default<>(XMLParser.ID, prefix + "dataTree"),
-                                new Attribute.Default<Boolean>(NewickParser.USING_HEIGHTS, true)
+                                new Attribute.Default<Boolean>(NewickParser.USING_HEIGHTS, true),
+                                new Attribute.Default<Boolean>(NewickParser.USING_DATES, false)
                             }
                     );
                         writer.writeText(TreeUtils.newick(treeModel.getTreePartitionData().getTrees().getTrees().get(0)));
@@ -143,7 +144,7 @@ public class TreeLikelihoodGenerator extends Generator {
             new Attribute.Default<String>(XMLParser.ID, idString)
         });
 
-        writer.writeIDref(ConstrainedTreeModel.CONSTRAINED_TREE_MODEL, partition.getPrefix() + DefaultTreeModel.TREE_MODEL);
+        writer.writeIDref(ConstrainedTreeModel.CONSTRAINED_TREE_MODEL, prefix + DefaultTreeModel.TREE_MODEL);
         writer.writeIDref(ConstrainedBranchLengthProviderParser.MUTATION_BRANCH_MAP, branchMapIdD );
         
 
@@ -364,6 +365,16 @@ public class TreeLikelihoodGenerator extends Generator {
             AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
                     .getComponentOptions(AncestralStatesComponentOptions.class);
 
+            // TODO moving poisson branch length to a substitution model would make this logic simplier
+
+            PartitionTreeModel treeModel = partition.getPartitionTreeModel();
+            if(treeModel.isUsingThorneyBEAST()){
+                PartitionClockModel clockModel = partition.getPartitionClockModel();
+                String prefix = treeModel.getPrefix() + clockModel.getPrefix(); // use the treemodel prefix
+                String idString = prefix + "treeLikelihood"; // Line 117
+                writer.writeIDref(ThorneyTreeLikelihoodParser.THORNEY_DATA_LIKELIHOOD_DELEGATE, idString);
+            
+            }
             PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
             if (model == null) {

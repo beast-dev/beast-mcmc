@@ -134,8 +134,11 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     }
 
     @Override
-    protected double computeCoalescentIntervalReduction(List<Integer> intervalStarts,
-                                                        List<BranchIntervalOperation> branchIntervalOperations) {
+    protected void computeCoalescentIntervalReduction(List<Integer> intervalStarts,
+                                                        List<BranchIntervalOperation> branchIntervalOperations,
+                                                        double[] out,
+                                                        Mode mode,
+                                                        StructuredCoalescentLikelihoodGradient.WrtParameter wrt) {
 
         // TODO vectorize once per likelihood-calculation
         int[] operations = new int[branchIntervalOperations.size() * BASTA_OPERATION_SIZE]; // TODO instantiate once
@@ -146,44 +149,16 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
 
         int populationSizeIndex = populationSizesBufferHelper.getOffsetIndex(0);
 
-        double[] result = new double[1];
-
         beagle.accumulateBastaPartials(operations, branchIntervalOperations.size(),
                 intervals, intervalStarts.size(), lengths,
                 populationSizeIndex, COALESCENT_PROBABILITY_INDEX,
-                result);
-
-        return result[0];
+                out);
     }
 
 //    @Override
-//    protected void computeBranchIntervalOperationsGrad(List<Integer> intervalStarts, List<TransitionMatrixOperation> matrixOperations, List<BranchIntervalOperation> branchIntervalOperations) {
-//        int[] operations = new int[branchIntervalOperations.size() * BASTA_OPERATION_SIZE]; // TODO instantiate once
-//        int[] intervals = new int[intervalStarts.size()]; // TODO instantiate once
-//        double[] lengths = new double[intervalStarts.size() - 1]; // TODO instantiate once
-//
-//        vectorizeBranchIntervalOperations(intervalStarts, branchIntervalOperations, operations, intervals, lengths);
-//
-//        int populationSizeIndex = populationSizesBufferHelper.getOffsetIndex(0);
-//
-//        beagle.updateBastaPartialsGrad(operations, branchIntervalOperations.size(),
-//                intervals, intervalStarts.size(),
-//                populationSizeIndex, COALESCENT_PROBABILITY_INDEX);
-//    }
-//
-//    @Override
-//    protected void computeTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations) {
-//        int[] transitionMatrixIndices = new int[matrixOperations.size()]; // TODO instantiate once
-//        double[] branchLengths = new double[matrixOperations.size()]; // TODO instantiate once
-//
-//        vectorizeTransitionMatrixOperations(matrixOperations, transitionMatrixIndices, branchLengths);
-//
-//        beagle.updateTransitionMatricesGrad(transitionMatrixIndices,
-//                branchLengths, matrixOperations.size());
-//    }
-
-    @Override
-    protected double[][] computeCoalescentIntervalReductionGrad(List<Integer> intervalStarts, List<BranchIntervalOperation> branchIntervalOperations) {
+    protected double[] computeCoalescentIntervalReductionGrad(List<Integer> intervalStarts,
+                                                              List<BranchIntervalOperation> branchIntervalOperations,
+                                                              double[] gradient) {
         int[] operations = new int[branchIntervalOperations.size() * BASTA_OPERATION_SIZE]; // TODO instantiate once
         int[] intervals = new int[intervalStarts.size()]; // TODO instantiate once
         double[] lengths = new double[intervalStarts.size() - 1]; // TODO instantiate once
@@ -193,23 +168,18 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         int populationSizeIndex = populationSizesBufferHelper.getOffsetIndex(0);
 
         double[] out = new double[stateCount*stateCount];
-        double[][] result = new double[stateCount][stateCount];
         beagle.accumulateBastaPartialsGrad(operations, branchIntervalOperations.size(),
                 intervals, intervalStarts.size(), lengths,
                 populationSizeIndex, COALESCENT_PROBABILITY_INDEX,
                 out);
 
-        for (int i = 0; i < stateCount; ++i) {
-            for (int j = 0; j < stateCount; ++j) {
-                result[i][j] = out[i*stateCount+j];
-            }
-        }
-
-        return result;
+        return out;
     }
 
-    @Override
-    protected double[] computeCoalescentIntervalReductionGradPopSize(List<Integer> intervalStarts, List<BranchIntervalOperation> branchIntervalOperations) {
+//    @Override
+    protected double[] computeCoalescentIntervalReductionGradPopSize(List<Integer> intervalStarts,
+                                                                     List<BranchIntervalOperation> branchIntervalOperations,
+                                                                     double[] out) {
         return new double[0];
     }
 

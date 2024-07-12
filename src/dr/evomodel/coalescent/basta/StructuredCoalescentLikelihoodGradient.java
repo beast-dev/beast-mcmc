@@ -17,6 +17,8 @@ public class StructuredCoalescentLikelihoodGradient implements
     private final Parameter parameter;
     private final Parameter chainRuleDependent;
 
+    private final int stateCount;
+
     public StructuredCoalescentLikelihoodGradient(BastaLikelihood BastaLikelihood,
                                                   SubstitutionModel substitutionModel,
                                                   WrtParameter wrtParameter) {
@@ -25,6 +27,8 @@ public class StructuredCoalescentLikelihoodGradient implements
 
         this.parameter = wrtParameter.getParameter(structuredCoalescentLikelihood, substitutionModel);
         this.chainRuleDependent = wrtParameter.getChainRuleDependent(structuredCoalescentLikelihood, substitutionModel);
+
+        this.stateCount = structuredCoalescentLikelihood.getSubstitutionModel().getFrequencyModel().getFrequencyCount();
     }
 
     @Override
@@ -56,6 +60,11 @@ public class StructuredCoalescentLikelihoodGradient implements
     }
 
     WrtParameter getType() { return wrtParameter; }
+
+    public int getIntermediateGradientDimension() {
+//        return structuredCoalescentLikelihood.
+        return wrtParameter.getIntermediateGradientDimension(stateCount);
+    }
 
     @Override
     public LogColumn[] getColumns() {
@@ -118,6 +127,11 @@ public class StructuredCoalescentLikelihoodGradient implements
             }
 
             @Override
+            int getIntermediateGradientDimension(int stateCount) {
+                return stateCount * stateCount;
+            }
+
+            @Override
             boolean requiresTransitionMatrices() {
                 return false;
             }
@@ -148,7 +162,12 @@ public class StructuredCoalescentLikelihoodGradient implements
                 return gradient;
             }
 
-        @Override
+            @Override
+            int getIntermediateGradientDimension(int stateCount) {
+                return stateCount;
+            }
+
+            @Override
         boolean requiresTransitionMatrices() {
             return false;
         }
@@ -167,6 +186,8 @@ public class StructuredCoalescentLikelihoodGradient implements
         abstract Parameter getParameter(BastaLikelihood structuredCoalescentLikelihood, SubstitutionModel substitutionModel);
 
         abstract double[] chainRule(double[] gradient, Parameter parameter);
+
+        abstract int getIntermediateGradientDimension(int stateCount);
 
         abstract boolean requiresTransitionMatrices();
 

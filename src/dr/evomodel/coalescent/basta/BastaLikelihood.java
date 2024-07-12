@@ -318,7 +318,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         calculateLogLikelihood(); // TODO Only execute if necessary
 
-        double[] gradient = likelihoodDelegate.calculateGradientGeneric(branchOperations, matrixOperations, intervalStarts,
+        double[] gradient = likelihoodDelegate.calculateGradient(branchOperations, matrixOperations, intervalStarts,
                 root.getNumber(), wrt);
 
         return wrt.chainRule(gradient);

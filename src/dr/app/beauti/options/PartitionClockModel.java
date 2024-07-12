@@ -550,8 +550,9 @@ public class PartitionClockModel extends PartitionOptions {
         List<Operator> ops = new ArrayList<Operator>();
 
         if (options.hasData()) {
-            if (getDataType().getType() != DataType.TREE) {
+            // if (getDataType().getType() != DataType.TREE) {
                 Operator rateOperator = getOperator("clock.rate");
+
                 switch (clockType) {
                     case STRICT_CLOCK:
                         ops.add(rateOperator);
@@ -667,7 +668,7 @@ public class PartitionClockModel extends PartitionOptions {
                         throw new IllegalArgumentException("Unknown clock model");
                 }
 
-            }
+            // }
         }
 
         Parameter allMuNus = getParameter(options.useNuRelativeRates() ? "allNus" : "allMus");

@@ -660,13 +660,14 @@
     </target>
 
     <!-- this will only work on Andrew's computer -->
+<!-- 
     <property name="AppleSignerApplication" value="Developer ID Application: Andrew Rambaut (9E4WXAQ6SE)" />
     <property name="AppleSignerInstaller" value="Developer ID Installer: Andrew Rambaut (9E4WXAQ6SE)" />
+ -->
 
-<!-- 
     <property name="AppleSignerApplication" value="Developer ID Application: Marc Suchard (LC992Z5R7E)"/>
     <property name="AppleSignerInstaller" value="Developer ID Application: Marc Suchard (LC992Z5R7E)"/>
- -->
+
     
     <!--
     	documentation on how to notarization for Apple: https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow    

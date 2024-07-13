@@ -831,8 +831,8 @@ public class BeastMain {
         if (options && !beagleShowInfo) {
 
             String titleString = "<html>" +
-                    "<div style=\"font: HelveticaNeue, Helvetica, Arial, sans-serif\">" +
-                    "<div style=\"font-weight: 100; font-size: 42px\">BEAST X</div>" +
+                    "<div style=\"font-family: HelveticaNeue-Light, Helvetica, Arial, sans-serif\">" +
+                    "<div style=\"font-family: HelveticaNeue-Thin; font-weight: 80; font-size: 42px\">BEAST X</div>" +
                     "<div style=\"font-weight: 200; font-size: 11px\">Bayesian Evolutionary Analysis Sampling Trees</div>" +
                     "<div style=\"font-weight: 300; font-size: 10px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</div>" +
                     "<div style=\"font-weight: 300; font-size: 10px\"><a href=\"" + version.getBuildString() + "\">" +

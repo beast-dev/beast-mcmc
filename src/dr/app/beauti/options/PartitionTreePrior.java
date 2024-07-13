@@ -115,7 +115,7 @@ public class PartitionTreePrior extends PartitionOptions {
 
         if (options.useGammaPriorPopSize()) {
             createParameterGammaPrior("constant.popSize", "coalescent population size parameter",
-                    PriorScaleType.NONE, 1.0, 0.001, 1000, true);
+                    PriorScaleType.NONE, 1.0, 0.001, 1000, false);
         } else {
             createParameterOneOverXPrior("constant.popSize", "coalescent population size parameter",
                     PriorScaleType.TIME_SCALE, 1.0);
@@ -123,7 +123,7 @@ public class PartitionTreePrior extends PartitionOptions {
 
         if (options.useGammaPriorPopSize()) {
             createParameterGammaPrior("exponential.popSize", "coalescent population size parameter",
-                    PriorScaleType.NONE, 1.0, 0.001, 1000, true);
+                    PriorScaleType.NONE, 1.0, 0.001, 1000, false);
         } else {
             createParameterOneOverXPrior("exponential.popSize", "coalescent population size parameter",
                     PriorScaleType.TIME_SCALE, 1.0);
@@ -131,11 +131,11 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameterLaplacePrior("exponential.growthRate", "coalescent growth rate parameter",
                 PriorScaleType.GROWTH_RATE_SCALE, 0.0, 0.0, 100.0);
         createParameterGammaPrior("exponential.doublingTime", "coalescent doubling time parameter",
-                PriorScaleType.NONE, 100.0, 0.001, 1000, true);
+                PriorScaleType.NONE, 100.0, 0.001, 1000, false);
 
         if (options.useGammaPriorPopSize()) {
             createParameterGammaPrior("logistic.popSize", "coalescent population size parameter",
-                    PriorScaleType.NONE, 1.0, 0.001, 1000, true);
+                    PriorScaleType.NONE, 1.0, 0.001, 1000, false);
         } else {
             createParameterOneOverXPrior("logistic.popSize", "coalescent population size parameter",
                     PriorScaleType.TIME_SCALE, 1.0);
@@ -143,13 +143,13 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameterLaplacePrior("logistic.growthRate", "coalescent logistic growth rate parameter",
                 PriorScaleType.GROWTH_RATE_SCALE, 0.1, 0.0, 1.0);
         createParameterGammaPrior("logistic.doublingTime", "coalescent doubling time parameter",
-                PriorScaleType.NONE, 100.0, 0.001, 1000, true);
+                PriorScaleType.NONE, 100.0, 0.001, 1000, false);
         createParameterGammaPrior("logistic.t50", "logistic shape parameter",
-                PriorScaleType.NONE, 1.0, 0.001, 1000, true);
+                PriorScaleType.NONE, 1.0, 0.001, 1000, false);
 
         if (options.useGammaPriorPopSize()) {
             createParameterGammaPrior("expansion.popSize", "coalescent population size parameter",
-                    PriorScaleType.NONE, 1.0, 0.001, 1000, true);
+                    PriorScaleType.NONE, 1.0, 0.001, 1000, false);
         } else {
             createParameterOneOverXPrior("expansion.popSize", "coalescent population size parameter",
                     PriorScaleType.TIME_SCALE, 1.0);
@@ -157,7 +157,7 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameterLaplacePrior("expansion.growthRate", "coalescent expansion growth rate parameter",
                 PriorScaleType.GROWTH_RATE_SCALE, 0.1, 0.0, 100.0);
         createParameterGammaPrior("expansion.doublingTime", "coalescent doubling time parameter",
-                PriorScaleType.NONE, 100.0, 0.001, 1000, true);
+                PriorScaleType.NONE, 100.0, 0.001, 1000, false);
         createZeroOneParameterUniformPrior("expansion.ancestralProportion", "ancestral population proportion", 0.1);
 
 //        createNonNegativeParameterUniformPrior("skyline.popSize", "Bayesian Skyline population sizes",
@@ -168,7 +168,7 @@ public class PartitionTreePrior extends PartitionOptions {
                 PriorScaleType.LOG_TIME_SCALE, 1.0, -Parameter.UNIFORM_MAX_BOUND, Parameter.UNIFORM_MAX_BOUND);
         createParameter("skyride.groupSize", "GMRF Bayesian skyride group sizes (for backward compatibility)");
         createParameterGammaPrior("skyride.precision", "GMRF Bayesian skyride precision",
-                PriorScaleType.NONE, 1.0, 0.001, 1000, true);
+                PriorScaleType.NONE, 1.0, 0.001, 1000, false);
 
         createParameterUniformPrior("skygrid.logPopSize", "GMRF Bayesian SkyGrid population sizes (log unit)",
                 PriorScaleType.LOG_TIME_SCALE, 1.0, -Parameter.UNIFORM_MAX_BOUND, Parameter.UNIFORM_MAX_BOUND);

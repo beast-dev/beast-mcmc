@@ -930,8 +930,14 @@ public class BeautiOptions extends ModelOptions {
         }
 
         if (partition.getPartitionTreeModel() == null) {
-            partition.setPartitionTreeModel(getPartitionTreeModels().get(0));// always use 1st tree
-//            getPartitionTreeModels().get(0).addPartitionData(newTrait);
+            if (getPartitionTreeModels().isEmpty()) {
+                PartitionTreeModel treeModel = new PartitionTreeModel(this, DEFAULT_NAME);
+                partition.setPartitionTreeModel(treeModel);
+                PartitionTreePrior ptp = new PartitionTreePrior(this, treeModel);
+                treeModel.setPartitionTreePrior(ptp);
+            } else {
+                partition.setPartitionTreeModel(getPartitionTreeModels().get(0));// always use 1st tree
+            }
         }
 
         if (partition.getPartitionClockModel() == null && partition.getDataType().getType() != DataType.CONTINUOUS) {
@@ -939,8 +945,6 @@ public class BeautiOptions extends ModelOptions {
             PartitionClockModel pcm = new PartitionClockModel(this, partition.getName(), partition, partition.getPartitionTreeModel());
             partition.setPartitionClockModel(pcm);
         }
-
-//        setClockAndTree(partition);
 
         updateTraitParameters(partition);
 

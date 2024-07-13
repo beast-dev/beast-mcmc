@@ -60,7 +60,7 @@ public class BeastVersion implements Version, Citable {
     /**
      * Version string: assumed to be in format x.x.x
      */
-    private static final String VERSION = "10.5.0";
+    private static final String VERSION = "10.5.0-beta2";
 
     private static final String DATE_STRING = "2002-2024";
 

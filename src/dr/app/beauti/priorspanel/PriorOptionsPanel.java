@@ -370,7 +370,13 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
     void getArguments(Parameter parameter, PriorType priorType) {
         if (priorType.isInitializable && !parameter.isStatistic && !parameter.isNodeHeight) {
+            double original = parameter.getInitial();
             parameter.setInitial(initialField.getValue());
+            // if the initial value has changed flag it as having changed so
+            // it does get changed else where.
+            if (original != parameter.getInitial()) {
+                parameter.setInitialSet(true);
+            }
         }
         parameter.isTruncated = isTruncatedCheck.isSelected();
         if (parameter.isTruncated) {

@@ -251,7 +251,7 @@ public class BeautiOptions extends ModelOptions {
         }
 
         for (PartitionClockModel model : getPartitionClockModels()) {
-            Set<PartitionSubstitutionModel> substitutionModels = new LinkedHashSet<PartitionSubstitutionModel>();
+            Set<PartitionSubstitutionModel> substitutionModels = new LinkedHashSet<>();
             for (AbstractPartitionData partition : getDataPartitions()) {
                 if (partition.getPartitionClockModel() == model) {
                     substitutionModels.add(partition.getPartitionSubstitutionModel());
@@ -929,18 +929,18 @@ public class BeautiOptions extends ModelOptions {
             partition.setPartitionSubstitutionModel(substModel);
         }
 
-//        if (partition.getPartitionTreeModel() == null) {
-//            partition.setPartitionTreeModel(getPartitionTreeModels().get(0));// always use 1st tree
-////            getPartitionTreeModels().get(0).addPartitionData(newTrait);
-//        }
-//
-//        if (partition.getPartitionClockModel() == null && partition.getDataType().getType() != DataType.CONTINUOUS) {
-//            // PartitionClockModel based on PartitionData
-//            PartitionClockModel pcm = new PartitionClockModel(this, partition.getName(), partition, partition.getPartitionTreeModel());
-//            partition.setPartitionClockModel(pcm);
-//        }
-//
-        setClockAndTree(partition);
+        if (partition.getPartitionTreeModel() == null) {
+            partition.setPartitionTreeModel(getPartitionTreeModels().get(0));// always use 1st tree
+//            getPartitionTreeModels().get(0).addPartitionData(newTrait);
+        }
+
+        if (partition.getPartitionClockModel() == null && partition.getDataType().getType() != DataType.CONTINUOUS) {
+            // PartitionClockModel based on PartitionData
+            PartitionClockModel pcm = new PartitionClockModel(this, partition.getName(), partition, partition.getPartitionTreeModel());
+            partition.setPartitionClockModel(pcm);
+        }
+
+//        setClockAndTree(partition);
 
         updateTraitParameters(partition);
 

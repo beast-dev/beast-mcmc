@@ -97,9 +97,18 @@ public class Parameter implements Serializable {
         this.initial = initial;
     }
 
+    public boolean isInitialSet() {
+        return isInitialSet;
+    }
+
+    public void setInitialSet(boolean isInitialSet) {
+        this.isInitialSet = isInitialSet;
+    }
+
     // Editable fields
     private boolean isFixed;
     private double initial;
+    private boolean isInitialSet = false;
     public double maintainedSum;
     public double dimension;
     public boolean isTruncated;

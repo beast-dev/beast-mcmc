@@ -40,6 +40,7 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.DoubleBinaryOperator;
@@ -658,8 +659,16 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CITATION);
+        if (citations.isEmpty()) {
+            return Collections.singletonList(CITATION);
+        }
+        return citations;
     }
+
+    public void addCitation(Citation citation) {
+        citations.add(citation);
+    }
+    List<Citation> citations = new ArrayList<>();
 
     public static Citation CITATION = new Citation(
             new Author[]{

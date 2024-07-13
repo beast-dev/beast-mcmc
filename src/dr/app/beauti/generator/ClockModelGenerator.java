@@ -257,13 +257,13 @@ public class ClockModelGenerator extends Generator {
                 writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
 
                 writer.writeOpenTag(ArbitraryBranchRatesParser.RATES);
-                writeParameter(clockModel.getParameter("branchRates.rates"), -1, writer);
+                writeParameter(clockModel.getParameter(ClockType.HMC_CLOCK_BRANCH_RATES), -1, writer);
                 writer.writeCloseTag(ArbitraryBranchRatesParser.RATES);
                 writer.writeOpenTag(ArbitraryBranchRatesParser.LOCATION);
-                writeParameter(clockModel.getParameter("branchRates.rate"), -1, writer);
+                writeParameter(clockModel.getParameter(ClockType.HMC_CLOCK_LOCATION), -1, writer);
                 writer.writeCloseTag(ArbitraryBranchRatesParser.LOCATION);
                 writer.writeOpenTag(ArbitraryBranchRatesParser.SCALE);
-                writeParameter(clockModel.getParameter("branchRates.scale"), -1, writer);
+                writeParameter(clockModel.getParameter(ClockType.HMCLN_SCALE), -1, writer);
                 writer.writeCloseTag(ArbitraryBranchRatesParser.SCALE);
                 writer.writeCloseTag(tag);
 

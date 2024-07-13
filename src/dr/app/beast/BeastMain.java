@@ -40,10 +40,7 @@ import dr.inference.mcmcmc.MCMCMC;
 import dr.inference.mcmcmc.MCMCMCOptions;
 import dr.inference.operators.OperatorSchedule;
 import dr.math.MathUtils;
-import dr.util.CitationLogHandler;
-import dr.util.ErrorLogHandler;
-import dr.util.MessageLogHandler;
-import dr.util.Version;
+import dr.util.*;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
 import jam.util.IconUtils;
@@ -140,12 +137,13 @@ public class BeastMain {
             infoLogger.addHandler(errorHandler);
 
             if (Boolean.parseBoolean(System.getProperty("output_citations"))) {
-                FileOutputStream citationStream = null;
+                String citationFileName;
                 if (System.getProperty("citations.filename") != null) {
-                    citationStream = new FileOutputStream(System.getProperty("citations.filename"));
+                    citationFileName = System.getProperty("citations.filename");
                 } else {
-                    citationStream = new FileOutputStream(fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + CITATION_FILE_SUFFIX);
+                    citationFileName = fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + CITATION_FILE_SUFFIX;
                 }
+                FileOutputStream citationStream = new FileOutputStream(FileHelpers.getFile(citationFileName));
                 //Handler citationHandler = new MessageLogHandler(citationStream);
                 Handler citationHandler = CitationLogHandler.getHandler(citationStream);
                 //Logger.getLogger("dr.app.beast").addHandler(citationHandler);

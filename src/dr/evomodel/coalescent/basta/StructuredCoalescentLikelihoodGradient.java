@@ -133,7 +133,7 @@ public class StructuredCoalescentLikelihoodGradient implements
 
             @Override
             boolean requiresTransitionMatrices() {
-                return false;
+                return true;
             }
 
             @Override

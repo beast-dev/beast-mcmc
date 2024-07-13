@@ -59,12 +59,16 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         private final double[][] gGradPopSize;
         private final double[][] hGradPopSize;
 
-        GradientInternalStorage(int maxNumCoalescentIntervals, int treeNodeCount, int stateCount) {
+        GradientInternalStorage(int maxNumCoalescentIntervals, int treeNodeCount, int stateCount, boolean transpose) {
 
             // TODO note this should be split into separate substitutionModel / popSizes contains
 
             this.partials = new double[stateCount][stateCount][maxNumCoalescentIntervals * (treeNodeCount + 1) * stateCount];
-            this.matrices = new double[stateCount][stateCount][maxNumCoalescentIntervals * stateCount * stateCount];
+            if (!transpose) {
+                this.matrices = new double[stateCount][stateCount][maxNumCoalescentIntervals * stateCount * stateCount];
+            } else {
+                this.matrices = null;
+            }
             this.coalescent = new double[stateCount][stateCount][maxNumCoalescentIntervals];
 
             this.e = new double[stateCount][stateCount][maxNumCoalescentIntervals * stateCount];
@@ -105,7 +109,8 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     @Override
     protected void allocateGradientMemory() {
         if (gradientStorage == null) {
-            gradientStorage = new GradientInternalStorage(maxNumCoalescentIntervals, tree.getNodeCount(), stateCount);
+            gradientStorage = new GradientInternalStorage(maxNumCoalescentIntervals, tree.getNodeCount(),
+                    stateCount, transpose);
         }
     }
 

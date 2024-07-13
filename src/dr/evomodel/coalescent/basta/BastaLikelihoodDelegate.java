@@ -222,7 +222,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
 
             allocateGradientMemory();
 
-            if (wrt.requiresTransitionMatrices()) {
+            if (!transpose && wrt.requiresTransitionMatrices()) {
                 computeTransitionProbabilityOperations(matrixOperations, Mode.GRADIENT);
             }
 

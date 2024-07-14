@@ -795,7 +795,8 @@ public class BeastMain {
 
         BeastConsoleApp consoleApp = null;
 
-        String nameString = "BEAST X " + version.getVersionString();
+        // don't include the pre-release commit in the window title bar
+        String nameString = "BEAST X v" + version.getVersion();
 
         if (window) {
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");

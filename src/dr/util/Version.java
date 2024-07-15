@@ -48,6 +48,14 @@ public interface Version {
     String getHTMLCredits();
 
     class Utils {
+        private static String[] splitVersion(String version) {
+            if (version.contains("-")) {
+                // in case it has a -beta or similar suffix
+                version = version.substring(0, version.indexOf("-"));
+            }
+            return version.trim().split("\\.");
+        }
+
         /**
          * Is version1 more recent (higher) than version2?
          * @param version1
@@ -55,15 +63,20 @@ public interface Version {
          * @return
          */
         public static boolean isMoreRecent(String version1, String version2) {
-            String[] v1 = version1.split("\\.");
-            String[] v2 = version2.split("\\.");
+            String[] v1 = splitVersion(version1);
+            String[] v2 = splitVersion(version2);
 
-            for (int i = 0; i < Math.min(v1.length, v2.length); i++) {
-                if (Integer.parseInt(v1[i]) < Integer.parseInt(v2[i])) {
-                    return false;
-                } else if (Integer.parseInt(v1[i]) > Integer.parseInt(v2[i])) {
-                    return true;
+            try {
+                for (int i = 0; i < Math.min(v1.length, v2.length); i++) {
+                    if (Integer.parseInt(v1[i]) < Integer.parseInt(v2[i])) {
+                        return false;
+                    } else if (Integer.parseInt(v1[i]) > Integer.parseInt(v2[i])) {
+                        return true;
+                    }
                 }
+            } catch (NumberFormatException nfe) {
+                // if the numbers can't be parsed just allow the parsing to proceed.
+                return false;
             }
 
             return false;

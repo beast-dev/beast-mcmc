@@ -377,7 +377,8 @@ public class BeastMain {
                         new Arguments.RealOption("adaptation_target", 0.0, 1.0, "Target acceptance rate for adaptive operators (default 0.234)"),
 
                         new Arguments.StringOption("pattern_compression", new String[]{"off", "unique", "ambiguous_constant", "ambiguous_all"},
-                                false, "Site pattern compression mode (default unique)"),
+                                false, "Site pattern compression mode - unique | ambiguous_constant | ambiguous_all (default unique)"),
+                        new Arguments.RealOption("ambiguous_threshold", 0.0, 1.0, "Maximum proportion of ambiguous characters to compress"),
 
                         new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
@@ -531,6 +532,9 @@ public class BeastMain {
 
             if (arguments.hasOption("pattern_compression")) {
                 System.setProperty("patterns.compression", arguments.getStringOption("pattern_compression").toLowerCase());
+            }
+            if (arguments.hasOption("ambiguous_threshold")) {
+                System.setProperty("patterns.threshold", String.valueOf(arguments.getRealOption("ambiguous_threshold")));
             }
 
             // ============= MC^3 settings =============

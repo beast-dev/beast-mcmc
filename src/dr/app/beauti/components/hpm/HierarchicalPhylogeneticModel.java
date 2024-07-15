@@ -1,7 +1,8 @@
 /*
  * HierarchicalPhylogeneticModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.components.hpm;
@@ -28,12 +30,13 @@ package dr.app.beauti.components.hpm;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.types.PriorType;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * @author Marc A. Suchard
  */
-public class HierarchicalPhylogeneticModel {
+public class HierarchicalPhylogeneticModel implements Serializable {
 
     final private String name;
     final private List<Parameter> argumentParameterList;

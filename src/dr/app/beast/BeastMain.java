@@ -1,7 +1,8 @@
 /*
  * BeastMain.java
  *
- * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beast;
@@ -38,10 +40,7 @@ import dr.inference.mcmcmc.MCMCMC;
 import dr.inference.mcmcmc.MCMCMCOptions;
 import dr.inference.operators.OperatorSchedule;
 import dr.math.MathUtils;
-import dr.util.CitationLogHandler;
-import dr.util.ErrorLogHandler;
-import dr.util.MessageLogHandler;
-import dr.util.Version;
+import dr.util.*;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
 import jam.util.IconUtils;
@@ -138,12 +137,13 @@ public class BeastMain {
             infoLogger.addHandler(errorHandler);
 
             if (Boolean.parseBoolean(System.getProperty("output_citations"))) {
-                FileOutputStream citationStream = null;
+                String citationFileName;
                 if (System.getProperty("citations.filename") != null) {
-                    citationStream = new FileOutputStream(System.getProperty("citations.filename"));
+                    citationFileName = System.getProperty("citations.filename");
                 } else {
-                    citationStream = new FileOutputStream(fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + CITATION_FILE_SUFFIX);
+                    citationFileName = fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + CITATION_FILE_SUFFIX;
                 }
+                FileOutputStream citationStream = new FileOutputStream(FileHelpers.getFile(citationFileName));
                 //Handler citationHandler = new MessageLogHandler(citationStream);
                 Handler citationHandler = CitationLogHandler.getHandler(citationStream);
                 //Logger.getLogger("dr.app.beast").addHandler(citationHandler);
@@ -795,7 +795,8 @@ public class BeastMain {
 
         BeastConsoleApp consoleApp = null;
 
-        String nameString = "BEAST X " + version.getVersionString();
+        // don't include the pre-release commit in the window title bar
+        String nameString = "BEAST X v" + version.getVersion();
 
         if (window) {
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");
@@ -831,8 +832,8 @@ public class BeastMain {
         if (options && !beagleShowInfo) {
 
             String titleString = "<html>" +
-                    "<div style=\"font: HelveticaNeue, Helvetica, Arial, sans-serif\">" +
-                    "<div style=\"font-weight: 100; font-size: 42px\">BEAST X</div>" +
+                    "<div style=\"font-family: HelveticaNeue-Light, Helvetica, Arial, sans-serif\">" +
+                    "<div style=\"font-family: HelveticaNeue-Thin; font-weight: 80; font-size: 42px\">BEAST X</div>" +
                     "<div style=\"font-weight: 200; font-size: 11px\">Bayesian Evolutionary Analysis Sampling Trees</div>" +
                     "<div style=\"font-weight: 300; font-size: 10px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</div>" +
                     "<div style=\"font-weight: 300; font-size: 10px\"><a href=\"" + version.getBuildString() + "\">" +

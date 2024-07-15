@@ -1,7 +1,8 @@
 /*
- * SiteModelParser.java
+ * GammaSiteRateModelParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.siteratemodel;
@@ -38,7 +40,6 @@ import java.util.logging.Logger;
  * This is a replacement to GammaSiteModelParser that uses the modular
  * DiscretizedSiteRateModel with a Gamma delegate.
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
 
@@ -51,7 +52,6 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
     public static final String GAMMA_SHAPE = "gammaShape";
     public static final String CATEGORIES = "categories";
     public static final String PROPORTION_INVARIANT = "proportionInvariant";
-    public static final String DISCRETIZATION = "discretization";
 
     public String getParserName() {
         return GAMMA_SITE_RATE_MODEL;
@@ -90,16 +90,6 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
         int catCount = 4;
         catCount = xo.getIntegerAttribute(CATEGORIES);
 
-        GammaSiteRateDelegate.DiscretizationType type = GammaSiteRateDelegate.DEFAULT_DISCRETIZATION;
-        if ( xo.hasAttribute(DISCRETIZATION)) {
-            try {
-                type = GammaSiteRateDelegate.DiscretizationType.valueOf(
-                        xo.getStringAttribute(DISCRETIZATION).toUpperCase());
-            } catch (IllegalArgumentException eae) {
-                throw new XMLParseException("Unknown category width type: " + xo.getStringAttribute(DISCRETIZATION));
-            }
-        }
-
         Parameter shapeParam = null;
         if (xo.hasChildNamed(GAMMA_SHAPE)) {
             XMLObject cxo = xo.getChild(GAMMA_SHAPE);
@@ -107,11 +97,7 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
             shapeParam = (Parameter) cxo.getChild(Parameter.class);
 
             msg += "\n  " + catCount + " category discrete gamma with initial shape = " + shapeParam.getParameterValue(0);
-            if (type == GammaSiteRateDelegate.DiscretizationType.EQUAL) {
-                msg += "\n  using equal weight discretization of gamma distribution";
-            } else {
-                msg += "\n  using Gauss-Laguerre quadrature discretization of gamma distribution (Felsenstein, 2001)";
-            }
+            msg += "\n  using equal weight discretization of gamma distribution";
         }
 
         Parameter invarParam = null;
@@ -126,7 +112,7 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
             Logger.getLogger("dr.evomodel").info("\nCreating site rate model.");
         }
 
-        GammaSiteRateDelegate delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParam, catCount, type, invarParam);
+        GammaSiteRateDelegate delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParam, catCount, invarParam);
 
         DiscretizedSiteRateModel siteRateModel = new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
 
@@ -162,7 +148,6 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
 
             AttributeRule.newIntegerRule(CATEGORIES, false),
-            AttributeRule.newStringRule(DISCRETIZATION, true),
             new XORRule(
                     new XORRule(
                             new ElementRule(SUBSTITUTION_RATE, new XMLSyntaxRule[]{

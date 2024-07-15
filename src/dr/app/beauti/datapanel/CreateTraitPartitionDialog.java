@@ -1,9 +1,28 @@
 /*
- * Copyright (c) 2002-2024. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
- * Morbi non lorem porttitor neque feugiat blandit. Ut vitae ipsum eget quam lacinia accumsan.
- * Etiam sed turpis ac ipsum condimentum fringilla. Maecenas magna.
- * Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus.
- * Vestibulum commodo. Ut rhoncus gravida arcu.
+ * CreateTraitPartitionDialog.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.datapanel;
@@ -24,7 +43,6 @@ import java.util.List;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class CreateTraitPartitionDialog {
 
@@ -102,9 +120,11 @@ public class CreateTraitPartitionDialog {
                 traitModel.addElement(model);
             }
             optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the following trait(s)."));
-            optionPanel.addComponentWithLabel("Trait(s):", scrollPane);
+            optionPanel.addComponentWithLabel("Trait(s):", scrollPane, true);
             optionPanel.addComponents(renameCheck, nameField);
             nameField.setEnabled(renameCheck.isSelected());
+
+            traitList.setSelectionInterval(0, traits.size()-1);
         }
 
         if (traits.size() > 1) {

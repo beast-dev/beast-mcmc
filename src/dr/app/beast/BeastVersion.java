@@ -1,7 +1,8 @@
 /*
  * BeastVersion.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beast;
@@ -58,7 +60,7 @@ public class BeastVersion implements Version, Citable {
     /**
      * Version string: assumed to be in format x.x.x
      */
-    private static final String VERSION = "10.5.0";
+    private static final String VERSION = "10.5.0-beta2";
 
     private static final String DATE_STRING = "2002-2024";
 
@@ -135,9 +137,10 @@ public class BeastVersion implements Version, Citable {
     }
 
     public String getBuildString() {
-        return "https://github.com/beast-dev/beast-mcmc/commit/" + getRevision();
+        // I think having the tag release is more useful than the last commit...
+    //    return "https://github.com/beast-dev/beast-mcmc/commit/" + getRevision();
+        return "https://github.com/beast-dev/beast-mcmc/releases/tag/v" + getVersion();
     }
-
     @Override
     public Citation.Category getCategory() {
         return Citation.Category.FRAMEWORK;
@@ -168,18 +171,6 @@ public class BeastVersion implements Version, Citable {
                     "Virus Evolution",
                     4, "vey016",
                     "10.1093/ve/vey016"),
-//            new Citation(
-//                    new Author[]{
-//                            new Author("AJ", "Drummond"),
-//                            new Author("MA", "Suchard"),
-//                            new Author("Dong", "Xie"),
-//                            new Author("A", "Rambaut")
-//                    },
-//                    "Bayesian phylogenetics with BEAUti and the BEAST 1.7",
-//                    2012,
-//                    "Mol Biol Evol",
-//                    29, 1969, 1973,
-//                    "10.1093/molbev/mss075")
     };
     public static void main(String[] args) {
         System.out.println(getRevision());
@@ -194,7 +185,11 @@ public class BeastVersion implements Version, Citable {
                             new InputStreamReader(in, StandardCharsets.UTF_8))
                             .lines()
                             .collect(Collectors.toList());
-                    return lines.get(1); //"commit-dirty" -dirty is only output if there are uncommited changes
+                    String revision = lines.get(1); //"commit-dirty" -dirty is only output if there are uncommited changes
+                    if (revision.endsWith("-dirty")) {
+                        revision = revision.substring(0, revision.length() - "-dirty".length());
+                    }
+                    return revision;
                 } else {
                     return "unknown";
                 }

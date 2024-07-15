@@ -1,7 +1,8 @@
 /*
  * DataPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.datapanel;
@@ -58,7 +60,6 @@ import java.util.List;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: DataPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class DataPanel extends BeautiPanel implements Exportable {
 
@@ -972,7 +973,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case SUBSTITUTION_COLUMN:
                     return "" + (!isTreePartition ? partition.getPartitionSubstitutionModel().getName() : "-");
                 case CLOCK_COLUMN:
-                    return "" + (!(isTreePartition || isTraitPartition) ? partition.getPartitionClockModel().getName() : "-");
+                    return "" + (!(isTreePartition /*|| isTraitPartition*/) ? partition.getPartitionClockModel().getName() : "-");
                 case TREE_COLUMN:
                     return "" + (!isTreePartition ? partition.getPartitionTreeModel().getName() : "-");
                 default:

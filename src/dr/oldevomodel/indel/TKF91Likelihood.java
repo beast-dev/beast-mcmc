@@ -1,7 +1,8 @@
 /*
  * TKF91Likelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.oldevomodel.indel;
@@ -36,7 +38,6 @@ import dr.inference.model.*;
  * Calculates the likelihood of a set of continuous attributes on a tree.
  *
  * @author Alexei Drummond
- * @version $Id: TKF91Likelihood.java,v 1.17 2005/06/20 07:24:25 rambaut Exp $
  */
 public class TKF91Likelihood extends AbstractModelLikelihood {
 

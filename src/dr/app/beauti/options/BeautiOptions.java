@@ -1,7 +1,8 @@
 /*
  * BeautiOptions.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.options;
@@ -249,7 +251,7 @@ public class BeautiOptions extends ModelOptions {
         }
 
         for (PartitionClockModel model : getPartitionClockModels()) {
-            Set<PartitionSubstitutionModel> substitutionModels = new LinkedHashSet<PartitionSubstitutionModel>();
+            Set<PartitionSubstitutionModel> substitutionModels = new LinkedHashSet<>();
             for (AbstractPartitionData partition : getDataPartitions()) {
                 if (partition.getPartitionClockModel() == model) {
                     substitutionModels.add(partition.getPartitionSubstitutionModel());
@@ -908,18 +910,22 @@ public class BeautiOptions extends ModelOptions {
             partition.setPartitionSubstitutionModel(substModel);
         }
 
-//        if (partition.getPartitionTreeModel() == null) {
-//            partition.setPartitionTreeModel(getPartitionTreeModels().get(0));// always use 1st tree
-////            getPartitionTreeModels().get(0).addPartitionData(newTrait);
-//        }
-//
-//        if (partition.getPartitionClockModel() == null && partition.getDataType().getType() != DataType.CONTINUOUS) {
-//            // PartitionClockModel based on PartitionData
-//            PartitionClockModel pcm = new PartitionClockModel(this, partition.getName(), partition, partition.getPartitionTreeModel());
-//            partition.setPartitionClockModel(pcm);
-//        }
-//
-        setClockAndTree(partition);
+        if (partition.getPartitionTreeModel() == null) {
+            if (getPartitionTreeModels().isEmpty()) {
+                PartitionTreeModel treeModel = new PartitionTreeModel(this, DEFAULT_NAME);
+                partition.setPartitionTreeModel(treeModel);
+                PartitionTreePrior ptp = new PartitionTreePrior(this, treeModel);
+                treeModel.setPartitionTreePrior(ptp);
+            } else {
+                partition.setPartitionTreeModel(getPartitionTreeModels().get(0));// always use 1st tree
+            }
+        }
+
+        if (partition.getPartitionClockModel() == null && partition.getDataType().getType() != DataType.CONTINUOUS) {
+            // PartitionClockModel based on PartitionData
+            PartitionClockModel pcm = new PartitionClockModel(this, partition.getName(), partition, partition.getPartitionTreeModel());
+            partition.setPartitionClockModel(pcm);
+        }
 
         updateTraitParameters(partition);
 

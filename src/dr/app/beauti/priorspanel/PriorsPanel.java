@@ -1,7 +1,8 @@
 /*
  * PriorsPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.priorspanel;
@@ -55,7 +57,6 @@ import java.util.List;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: PriorsPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
  */
 public class PriorsPanel extends BeautiPanel implements Exportable {
     private static final long serialVersionUID = -2936049032365493416L;
@@ -522,8 +523,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         while (!done) {
             int result = hierarchicalPriorDialog.showDialog(paramList);
             if (result == JOptionPane.OK_OPTION && hierarchicalPriorDialog.validateModelName()) {
-                hierarchicalPriorDialog.getArguments();
-                done = true;
+                done = hierarchicalPriorDialog.getArguments();
             }
             if (result == JOptionPane.CANCEL_OPTION) {
                 return;

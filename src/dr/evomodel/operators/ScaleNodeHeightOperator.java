@@ -110,10 +110,11 @@ public class ScaleNodeHeightOperator extends AbstractAdaptableTreeOperator {
             }
         }
 
-        if (!tree.isTreeValid()) {
-            // node heights are no long valid (i.e. may be below tips) so force a move reject
-            return Double.NEGATIVE_INFINITY;
-        }
+        assert tree.isTreeValid();
+//        if (!tree.isTreeValid()) {
+//            // node heights are no long valid (i.e. may be below tips) so force a move reject
+//            return Double.NEGATIVE_INFINITY;
+//        }
 
         tree.pushTreeChangedEvent(TreeChangedEvent.create(false, true));
 

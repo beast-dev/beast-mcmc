@@ -1,7 +1,8 @@
 /*
  * ArbitraryBranchRates.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.branchratemodel;
@@ -38,8 +40,10 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.DoubleBinaryOperator;
 
 /**
  * Allows branch rates to take on any double value
@@ -48,7 +52,7 @@ import java.util.List;
  * @author Marc A. Suchard
  * @author Alexei Drummond
  */
-public class ArbitraryBranchRates extends AbstractBranchRateModel implements Citable {
+public class ArbitraryBranchRates extends AbstractBranchRateModel implements DifferentiableBranchRates, Citable {
 
     // The rates of each branch
     private final TreeParameterModel rates;
@@ -63,8 +67,18 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
     public ArbitraryBranchRates(String name, TreeModel tree, Parameter rateParameter, BranchRateTransform transform,
                                 boolean setRates) {
+        this(name, tree, rateParameter, transform, setRates, TreeParameterModel.Type.WITHOUT_ROOT);
+    }
 
-        super(name);
+    public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter, BranchRateTransform transform,
+                                boolean setRates, TreeParameterModel.Type includeRoot) {
+        this(ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES, tree, rateParameter, transform, setRates, includeRoot);
+    }
+
+    public ArbitraryBranchRates(String name, TreeModel tree, Parameter rateParameter, BranchRateTransform transform,
+        boolean setRates, TreeParameterModel.Type includeRoot) {
+
+            super(name);
 
         this.transform = transform;
         if (transform instanceof Model) {
@@ -84,16 +98,18 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         Parameter.DefaultBounds bounds = new Parameter.DefaultBounds(upper, lower, rateParameter.getDimension());
         rateParameter.addBounds(bounds);
 
-        this.rates = new TreeParameterModel(tree, rateParameter, false);
+        this.rates = new TreeParameterModel(tree, rateParameter, includeRoot);
         this.rateParameter = rateParameter;
 
         addModel(rates);
     }
 
+
     public void setBranchRate(Tree tree, NodeRef node, double value) {
         rates.setNodeValue(tree, node, value);
     }
 
+    @Override
     public double getBranchRateDifferential(Tree tree, NodeRef node) {
         double raw = rates.getNodeValue(tree, node);
         return transform.differential(raw, tree, node);
@@ -101,6 +117,27 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
     public BranchRateTransform getTransform() {
         return transform;
+    }
+
+    @Override
+    public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+        return gradient;
+    }
+
+    @Override
+    public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value,
+                                                    int from, int to) {
+        return diagonalHessian;
+    }
+
+    @Override
+    public void forEachOverRates(NodeRateMap map) {
+        rates.forEach(map);
+    }
+
+    @Override
+    public double mapReduceOverRates(NodeRateMap map, DoubleBinaryOperator reduce, double initial) {
+        return rates.mapReduce(map, reduce, initial);
     }
 
     public double getBranchRate(final Tree tree, final NodeRef node) {
@@ -111,7 +148,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         return transform.transform(getUntransformedBranchRate(tree, node), tree, node);
     }
 
-    double getUntransformedBranchRate(final Tree tree, final NodeRef node) {
+    public double getUntransformedBranchRate(final Tree tree, final NodeRef node) {
         return rates.getNodeValue(tree, node);
     }
 
@@ -203,6 +240,8 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
         double upper();
 
+        double randomize(double raw);
+
         abstract class Base implements BranchRateTransform {
             @Override
             public double center() {
@@ -218,6 +257,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             public double upper() {
                 return Double.POSITIVE_INFINITY;
             }
+
+            @Override
+            public double randomize(double raw) { return Math.exp(raw); }
         }
 
         class None extends Base {
@@ -254,6 +296,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             public double transform(double raw, Tree tree, NodeRef node) {
                 return 1.0 / raw;
             }
+
+            @Override
+            public double randomize(double raw) { return -Math.exp(raw); }
         }
 
         class Exponentiate implements BranchRateTransform {
@@ -272,6 +317,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             public double transform(double raw, Tree tree, NodeRef node) {
                 return Math.exp(raw);
             }
+
+            @Override
+            public double randomize(double raw) { return raw; }
 
             @Override
             public double center() {
@@ -333,6 +381,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             }
 
             @Override
+            public double randomize(double raw) { return Math.exp(raw); }
+
+            @Override
             protected void handleModelChangedEvent(Model model, Object object, int index) {
                 fireModelChanged();
             }
@@ -340,6 +391,73 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             @Override
             protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
                 throw new RuntimeException("Not yet implemented");
+            }
+
+            @Override
+            protected void storeState() { }
+
+            @Override
+            protected void restoreState() { }
+
+            @Override
+            protected void acceptState() { }
+        }
+
+        class LocationShrinkage extends AbstractModel implements BranchRateTransform {
+            private final BranchSpecificFixedEffects location;
+
+            public LocationShrinkage(String name, BranchSpecificFixedEffects location) {
+                super(name);
+                this.location = location;
+
+                if (location instanceof Model) {
+                    addModel((Model) location);
+                }
+            }
+
+            @Override
+            public double differential(double raw, Tree tree, NodeRef node) {
+                return transform(raw, tree, node);
+            }
+
+            @Override
+            public double secondDifferential(double raw, Tree tree, NodeRef node) {
+                return transform(raw, tree, node);
+            }
+
+            @Override
+            public double transform(double raw, Tree tree, NodeRef node) {
+                return location.getEffect(tree, node) * Math.exp(raw);
+            }
+
+            @Override
+            public double center() {
+                return 0;
+            }
+
+            @Override
+            public double lower() {
+                return Double.NEGATIVE_INFINITY;
+            }
+
+            @Override
+            public double upper() {
+                return Double.POSITIVE_INFINITY;
+            }
+
+            @Override
+            public double randomize(double raw) {
+                return raw;
+            }
+
+            @Override
+            protected void handleModelChangedEvent(Model model, Object object, int index) {
+                fireModelChanged();
+            }
+
+            @Override
+            protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+                fireModelChanged();
             }
 
             @Override
@@ -407,6 +525,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 return (location != null) ? location.getEffect(tree, node) : 1.0;
             }
 
+            @SuppressWarnings("unused")
             public double getScale(Tree tree, NodeRef node) {
                 return scale.getParameterValue(0);
             }
@@ -469,6 +588,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             public double upper() {
                 return Double.POSITIVE_INFINITY;
             }
+
+            @Override
+            public double randomize(double raw) { return Math.exp(raw); }
 
             @Override
             protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -537,8 +659,16 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CITATION);
+        if (citations.isEmpty()) {
+            return Collections.singletonList(CITATION);
+        }
+        return citations;
     }
+
+    public void addCitation(Citation citation) {
+        citations.add(citation);
+    }
+    List<Citation> citations = new ArrayList<>();
 
     public static Citation CITATION = new Citation(
             new Author[]{

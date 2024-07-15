@@ -1,7 +1,8 @@
 /*
  * TreeParameterModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.tree;
 
 import dr.evolution.tree.*;
+import dr.evomodel.branchratemodel.NodeRateMap;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -44,6 +47,11 @@ import java.util.Map;
  * @author Alexei Drummond
  */
 public class TreeParameterModel extends AbstractModel implements TreeTrait<Double>, TreeDoubleTraitProvider {
+
+    public enum Type {
+        WITHOUT_ROOT,
+        WITH_ROOT
+    }
 
     protected final MutableTreeModel tree;
 
@@ -75,6 +83,10 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
      */
     public TreeParameterModel(MutableTreeModel tree, Parameter parameter, boolean includeRoot) {
         this(tree, parameter, includeRoot, Intent.NODE);
+    }
+
+    public TreeParameterModel(MutableTreeModel tree, Parameter parameter, Type includeRoot) {
+        this(tree, parameter, includeRoot == Type.WITH_ROOT, Intent.NODE);
     }
 
     /**
@@ -138,9 +150,15 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
-            handleRootMove();
+            if (!inHandleRootMove) {
+                inHandleRootMove = true;
+                handleRootMove();
+                inHandleRootMove = false;
+            }
         }
     }
+
+    private boolean inHandleRootMove = false;
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == parameter) {
@@ -209,10 +227,56 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
 
                 nodeNumberToParameterIndex.setParameterValue(oldRootNodeNumber, nodeNumberToParameterIndex.getParameterValue(newRootNodeNumber));
                 nodeNumberToParameterIndex.setParameterValue(newRootNodeNumber, oldRootParameterIndex);
-                
+
                 rootNodeNumber.setParameterValue(0, newRootNodeNumber);
             }
         }
+    }
+
+    public void forEach(NodeRateMap map) {
+
+        final int len = parameter.getDimension();
+        final int rootNumber = tree.getRoot().getNumber();
+
+        // Assumes that tree.getNode(i).getNumber == i
+
+        for (int i = 0; i < len; ++i) {
+            NodeRef node = tree.getNode(i);
+            assert node.getNumber() == i;
+            map.apply(i, node, parameter.getParameterValue(i));
+        }
+
+        if (len > rootNumber) {
+            for (int i = rootNumber; i < len; ++i) {
+                NodeRef node = tree.getNode(i + 1);
+                assert node.getNumber() == i + 1;
+                map.apply(i, node, parameter.getParameterValue(i));
+            }
+        }
+    }
+
+    public double mapReduce(NodeRateMap map, DoubleBinaryOperator reduce, double initial) {
+
+        final int len = parameter.getDimension();
+        final int rootNumber = tree.getRoot().getNumber();
+
+        // Assumes that tree.getNode(i).getNumber == i
+
+        for (int i = 0; i < len; ++i) {
+            NodeRef node = tree.getNode(i);
+            assert node.getNumber() == i;
+            initial = reduce.applyAsDouble(initial, map.apply(i, node, parameter.getParameterValue(i)));
+        }
+
+        if (includeRoot && len > rootNumber) {
+            for (int i = rootNumber; i < len; ++i) {
+                NodeRef node = tree.getNode(i + 1);
+                assert node.getNumber() == i + 1;
+                initial = reduce.applyAsDouble(initial, map.apply(i, node, parameter.getParameterValue(i)));
+            }
+        }
+
+        return initial;
     }
 
     /**

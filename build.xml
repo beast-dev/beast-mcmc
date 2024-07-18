@@ -344,13 +344,12 @@
                 <path refid="classpath"/>
                 <path location="${build}"/>
             </classpath>
-
+            <jvmarg value="-Djava.library.path=${java.library.path}"/>
             <formatter type="xml"/>
 
             <batchtest fork="yes" todir="${report}">
                 <fileset dir="${src}">
                     <include name="test/dr/**/*Test.java"/>
-
 
                     <!-- Broken JUnits -->
                     <exclude name="test/dr/app/beagle/AncestralStateBeagleTreeLikelihoodTest.java"/> <!-- doesn't always fail-->

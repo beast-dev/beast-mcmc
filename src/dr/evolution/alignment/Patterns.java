@@ -125,8 +125,8 @@ public class Patterns implements PatternList {
         addPatterns(patternList);
     }
 
-    public Patterns(PatternList patternList, boolean unique) {
-        addPatterns(patternList, unique);
+    public Patterns(PatternList patternList, boolean uniqueOnly) {
+        addPatterns(patternList, uniqueOnly);
     }
 
     /**
@@ -195,6 +195,8 @@ public class Patterns implements PatternList {
         if (every <= 0)
             every = 1;
 
+        areUnique = siteList.areUnique();
+
         for (int i = from; i <= to; i += every) {
             int[] pattern = siteList.getSitePattern(i);
 
@@ -204,17 +206,17 @@ public class Patterns implements PatternList {
                             !isAmbiguous(pattern) &&
                             !isUnknown(pattern)))) {
 
-                addPattern(pattern, 1.0);
+                addPattern(pattern, 1.0, areUnique);
             }
         }
-        areUnique = siteList.areUnique();
     }
 
     /**
      * adds patterns to the list from a SiteList
      */
     public void addPatterns(PatternList patternList) {
-        addPatterns(patternList, true);
+        areUnique = patternList.areUnique();
+        addPatterns(patternList, areUnique);
     }
 
     public void trimWeights() {
@@ -223,7 +225,7 @@ public class Patterns implements PatternList {
         weights = trimmed;
     }
 
-    public void addPatterns(PatternList patternList, boolean unique) {
+    public void addPatterns(PatternList patternList, boolean uniqueOnly) {
 
         if (patternList == null) {
             return;
@@ -243,7 +245,7 @@ public class Patterns implements PatternList {
         for (int i = 0; i < patternList.getPatternCount(); i++) {
             int[] pattern = patternList.getPattern(i);
 
-            if (!unique) {
+            if (!uniqueOnly) {
                 addPattern(pattern, 1.0, false);
             } else {
 
@@ -257,7 +259,6 @@ public class Patterns implements PatternList {
                 }
             }
         }
-        areUnique = patternList.areUnique();
     }
 
     /**
@@ -274,7 +275,7 @@ public class Patterns implements PatternList {
         addPattern(pattern, weight, true);
     }
 
-    private void addPattern(int[] pattern, double weight, boolean unique) {
+    private void addPattern(int[] pattern, double weight, boolean uniqueOnly) {
 
         if (patternLength == 0) {
             patternLength = pattern.length;
@@ -284,12 +285,14 @@ public class Patterns implements PatternList {
             throw new IllegalArgumentException("Added pattern's length (" + pattern.length + ") does not match those of existing patterns (" + patternLength + ")");
         }
 
-        for (int i = 0; i < patternCount; i++) {
+        if (uniqueOnly) {
+            for (int i = 0; i < patternCount; i++) {
 
-            if (unique && comparePatterns(patterns[i], pattern)) {
+                if (comparePatterns(patterns[i], pattern)) {
 
-                weights[i] += weight;
-                return;
+                    weights[i] += weight;
+                    return;
+                }
             }
         }
 

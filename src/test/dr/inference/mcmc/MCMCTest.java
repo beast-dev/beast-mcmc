@@ -176,7 +176,7 @@ public class MCMCTest extends TraceCorrelationAssert {
 //		<expectation name="treeModel.rootHeight" value="6.42048E-2"/>
 //		<expectation name="hky.kappa" value="32.8941"/>
 
-        TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihoodParser.TREE_LIKELIHOOD));
+        TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD));
         assertExpectation(TreeLikelihoodParser.TREE_LIKELIHOOD, likelihoodStats, -1815.75);
 
         TraceCorrelation treeHeightStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TREE_HEIGHT));

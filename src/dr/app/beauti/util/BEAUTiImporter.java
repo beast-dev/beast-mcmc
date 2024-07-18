@@ -32,9 +32,7 @@ import dr.app.beauti.datapanel.BadTraitFormatDialog;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.options.*;
 import dr.app.util.Utils;
-import dr.evolution.alignment.Alignment;
-import dr.evolution.alignment.Patterns;
-import dr.evolution.alignment.SimpleAlignment;
+import dr.evolution.alignment.*;
 import dr.evolution.datatype.*;
 import dr.evolution.io.FastaImporter;
 import dr.evolution.io.Importer.ImportException;
@@ -52,9 +50,7 @@ import dr.util.DataTable;
 import org.jdom.JDOMException;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.*;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.List;
 
@@ -620,8 +616,16 @@ public class BEAUTiImporter {
             createTraitPartition = result == JOptionPane.YES_OPTION;
         }
 
+        boolean compressPatterns = true;
         if (alignment != null) {
             // check the alignment before adding it...
+            for (Sequence seq : alignment.getSequences()) {
+                if (seq.getLength() != alignment.getSiteCount()) {
+                    // sequences are different lengths
+                    throw new ImportException("The sequences in the alignment file are of different lengths - BEAST requires aligned sequences");
+                }
+            }
+
             if (alignment.getSiteCount() == 0) {
                 if (allowEmpty) {
                     int result = JOptionPane.showConfirmDialog(this.frame, "File contains zero length sequences:\nCreate empty partition?",
@@ -634,12 +638,19 @@ public class BEAUTiImporter {
                 }
             }
 
-            for (Sequence seq : alignment.getSequences()) {
-                if (seq.getLength() != alignment.getSiteCount()) {
-                    // sequences are different lengths
-                    throw new ImportException("The sequences in the alignment file are of different lengths - BEAST requires aligned sequences");
+            if (charSets == null && alignment.getSiteCount() > 50000) {
+                int result = JOptionPane.showConfirmDialog(this.frame,
+                        "The alignment contains long sequences (" + alignment.getSiteCount() + " sites):\n" +
+                                "Do you want to compress the alignment into site-patterns? This will\n" +
+                                "take some time and will preclude some analyses but will make the\n" +
+                                "BEAST XML file size smaller and faster to load.",
+                        "Importing long sequences", JOptionPane.YES_NO_CANCEL_OPTION);
+                if (result == JOptionPane.CANCEL_OPTION) {
+                    return;
                 }
+                compressPatterns = result == JOptionPane.YES_OPTION;
             }
+
         }
 
         Set<String> attributeNames = new HashSet<>();
@@ -695,11 +706,17 @@ public class BEAUTiImporter {
 
         addTaxonList(taxonList);
 
-        addAlignment(alignment, charSets, model, fileName, fileNameStem);
+        if (alignment != null) {
+            addAlignment(alignment, charSets, compressPatterns, model, fileName, fileNameStem);
+        }
 
-        addTaxonSets(taxonList, taxSets);
+        if (taxSets != null) {
+            addTaxonSets(taxonList, taxSets);
+        }
 
-        addTraits(traits);
+        if (traits != null) {
+            addTraits(traits);
+        }
 
         TreeHolder treeHolder = addTrees(fileNameStem, fileName, trees, treeCount);
 
@@ -755,56 +772,55 @@ public class BEAUTiImporter {
     }
 
     private void addTaxonSets(TaxonList taxonList, List<NexusApplicationImporter.TaxSet> taxSets) throws ImportException {
-        if (taxSets != null) {
-            for (NexusApplicationImporter.TaxSet taxSet : taxSets) {
-                Taxa taxa = new Taxa(taxSet.getName());
-                for (CharSetBlock block : taxSet.getBlocks()) {
-                    for (int i = block.getFromSite(); i <= block.getToSite(); i++) {
-                        taxa.addTaxon(taxonList.getTaxon(i - 1));
-                    }
+        assert taxSets != null;
+        for (NexusApplicationImporter.TaxSet taxSet : taxSets) {
+            Taxa taxa = new Taxa(taxSet.getName());
+            for (CharSetBlock block : taxSet.getBlocks()) {
+                for (int i = block.getFromSite(); i <= block.getToSite(); i++) {
+                    taxa.addTaxon(taxonList.getTaxon(i - 1));
                 }
-                options.taxonSets.add(taxa);
-                options.taxonSetsTreeModel.put(taxa, options.getPartitionTreeModels().get(0));
-                options.taxonSetsMono.put(taxa, false);
-                options.taxonSetsIncludeStem.put(taxa, false);
-                options.taxonSetsHeights.put(taxa, 0.0);
             }
+            options.taxonSets.add(taxa);
+            options.taxonSetsTreeModel.put(taxa, options.getPartitionTreeModels().get(0));
+            options.taxonSetsMono.put(taxa, false);
+            options.taxonSetsIncludeStem.put(taxa, false);
+            options.taxonSetsHeights.put(taxa, 0.0);
         }
     }
 
     private void addAlignment(Alignment alignment,
                               List<CharSet> charSets,
+                              boolean compressPatterns,
                               PartitionSubstitutionModel model,
                               String fileName, String fileNameStem) {
-        if (alignment == null) {
-            return;
-        }
+        assert alignment != null;
+
         List<AbstractPartitionData> partitions = new ArrayList<AbstractPartitionData>();
-        if (charSets != null && charSets.size() > 0) {
+        if (charSets != null && !charSets.isEmpty()) {
             for (CharSet charSet : charSets) {
-                partitions.add(new PartitionData(options, charSet.name, fileName,
-                        charSet.constructCharSetAlignment(alignment)));
+                PartitionData partitionData = new PartitionData(options, charSet.name, fileName,
+                        charSet.constructCharSetAlignment(alignment));
+                if (compressPatterns) {
+                    partitionData.compressPatterns(SitePatterns.CompressionType.UNIQUE_ONLY);
+                }
+                partitions.add(partitionData);
             }
         } else {
-            partitions.add(new PartitionData(options, fileNameStem, fileName, alignment));
+            PartitionData partitionData = new PartitionData(options, fileNameStem, fileName, alignment);
+            if (compressPatterns) {
+                partitionData.compressPatterns(SitePatterns.CompressionType.UNIQUE_ONLY);
+            }
+            partitions.add(partitionData);
         }
         createPartitionFramework(model, partitions);
     }
 
-    private void addPatterns(Patterns patterns, PartitionSubstitutionModel model, String fileName) {
-        if (patterns != null) {
-            List<AbstractPartitionData> partitions = new ArrayList<AbstractPartitionData>();
-            partitions.add(new PartitionPattern(options, patterns.getId(), fileName, patterns));
-
-            createPartitionFramework(model, partitions);
-        }
-    }
 
     private void createPartitionFramework(PartitionSubstitutionModel model, List<AbstractPartitionData> partitions) {
         for (AbstractPartitionData partition : partitions) {
             String name = partition.getName();
 
-            while (name.length() == 0 || options.hasPartitionData(name)) {
+            while (name.isEmpty() || options.hasPartitionData(name)) {
                 String text;
                 if (options.hasPartitionData(name)) {
                     text = "<html>" +
@@ -854,41 +870,7 @@ public class BEAUTiImporter {
                 options.setClockAndTree(partition);
             }
         }
-
-//        options.updatePartitionAllLinks();
-//        options.clockModelOptions.initClockModelGroup();
     }
-
-//    private void setClockAndTree(AbstractPartitionData partition) {
-//
-//        PartitionTreeModel treeModel;
-//
-//        // use same tree model and same tree prior in beginning
-//        if (options.getPartitionTreeModels().isEmpty()) {
-//            // PartitionTreeModel based on PartitionData
-//            treeModel = new PartitionTreeModel(options, DEFAULT_NAME);
-//            partition.setPartitionTreeModel(treeModel);
-//
-//            // PartitionTreePrior always based on PartitionTreeModel
-//            PartitionTreePrior ptp = new PartitionTreePrior(options, treeModel);
-//            treeModel.setPartitionTreePrior(ptp);
-//        } else { //if (options.getPartitionTreeModels() != null) {
-////                        && options.getPartitionTreeModels().size() == 1) {
-//            treeModel = options.getPartitionTreeModels().get(0); // same tree model,
-//            partition.setPartitionTreeModel(treeModel); // if same tree model, therefore same prior
-//        }
-//
-//        // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
-//        if (options.getPartitionClockModels(partition.getDataType()).isEmpty()) {
-//            // PartitionClockModel based on PartitionData
-//            PartitionClockModel pcm = new PartitionClockModel(options, DEFAULT_NAME, partition, treeModel);
-//            partition.setPartitionClockModel(pcm);
-//        } else { //if (options.getPartitionClockModels() != null) {
-////                        && options.getPartitionClockModels().size() == 1) {
-//            PartitionClockModel pcm = options.getPartitionClockModels(partition.getDataType()).get(0);
-//            partition.setPartitionClockModel(pcm);
-//        }
-//    }
 
     private void setSubstModel(AbstractPartitionData partition, PartitionSubstitutionModel psm) {
         partition.setPartitionSubstitutionModel(psm);
@@ -900,12 +882,9 @@ public class BEAUTiImporter {
     }
 
     private void addTraits(List<TraitData> traits) {
-        if (traits != null) {
-            for (TraitData trait : traits) {
-                options.addTrait(trait);
-            }
-
-//            options.updatePartitionAllLinks();
+        assert traits != null;
+        for (TraitData trait : traits) {
+            options.addTrait(trait);
         }
     }
 

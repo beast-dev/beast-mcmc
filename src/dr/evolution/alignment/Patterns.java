@@ -31,10 +31,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A concrete implementation of PatternList. Patterns can be added and
@@ -285,16 +282,7 @@ public class Patterns implements PatternList {
             throw new IllegalArgumentException("Added pattern's length (" + pattern.length + ") does not match those of existing patterns (" + patternLength + ")");
         }
 
-        if (uniqueOnly) {
-            for (int i = 0; i < patternCount; i++) {
-
-                if (comparePatterns(patterns[i], pattern)) {
-
-                    weights[i] += weight;
-                    return;
-                }
-            }
-        }
+        if (uniqueOnly && patternExists(pattern, weight)) return;
 
         if (patternCount == patterns.length) {
             int[][] newPatterns = new int[patternCount + COUNT_INCREMENT][];
@@ -310,6 +298,16 @@ public class Patterns implements PatternList {
         patterns[patternCount] = pattern;
         weights[patternCount] = weight;
         patternCount++;
+    }
+
+    private boolean patternExists(int[] pattern, double weight) {
+        for (int i = 0; i < patternCount; i++) {
+            if ( comparePatterns(patterns[i], pattern)) {
+                weights[i] += weight;
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -411,14 +409,14 @@ public class Patterns implements PatternList {
      */
     protected boolean comparePatterns(int[] pattern1, int[] pattern2) {
 
-        int len = pattern1.length;
-        for (int i = 0; i < len; i++) {
-            if (pattern1[i] != pattern2[i]) {
-                return false;
-            }
-        }
+//        int len = pattern1.length;
+//        for (int i = 0; i < len; i++) {
+//            if (pattern1[i] != pattern2[i]) {
+//                return false;
+//            }
+//        }
 
-        return true;
+        return Arrays.equals(pattern1, pattern2);
     }
 
     // **************************************************************

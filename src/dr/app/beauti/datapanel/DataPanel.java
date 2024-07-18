@@ -197,11 +197,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         toolBar1.addSeparator();
 
-        button = new JButton(compressPatternsAction);
-        //button.setEnabled(false);
-        compressPatternsAction.setEnabled(false);
-        PanelUtils.setupComponent(button);
-        toolBar1.add(button);
+//        button = new JButton(compressPatternsAction);
+//        //button.setEnabled(false);
+//        compressPatternsAction.setEnabled(false);
+//        PanelUtils.setupComponent(button);
+//        toolBar1.add(button);
 
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);

@@ -973,7 +973,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case SUBSTITUTION_COLUMN:
                     return "" + (!isTreePartition ? partition.getPartitionSubstitutionModel().getName() : "-");
                 case CLOCK_COLUMN:
-                    return "" + (!(isTreePartition /*|| isTraitPartition*/) ? partition.getPartitionClockModel().getName() : "-");
+                    return "" + (partition.getPartitionClockModel() != null ? partition.getPartitionClockModel().getName() : "-");
                 case TREE_COLUMN:
                     return "" + (!isTreePartition ? partition.getPartitionTreeModel().getName() : "-");
                 default:

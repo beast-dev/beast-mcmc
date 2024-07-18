@@ -378,7 +378,7 @@ public class BeastMain {
 
                         new Arguments.StringOption("pattern_compression", new String[]{"off", "unique", "ambiguous_constant", "ambiguous_all"},
                                 false, "Site pattern compression mode - unique | ambiguous_constant | ambiguous_all (default unique)"),
-                        new Arguments.RealOption("ambiguous_threshold", 0.0, 1.0, "Maximum proportion of ambiguous characters to compress"),
+                        new Arguments.RealOption("ambiguous_threshold", 0.0, 1.0, "Maximum proportion of ambiguous characters to allow compression (default 0.25)"),
 
                         new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),

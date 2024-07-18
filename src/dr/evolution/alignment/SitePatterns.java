@@ -63,7 +63,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
     public static final CompressionType DEFAULT_COMPRESSION_TYPE = UNIQUE_ONLY;
 
-    public static final double DEFAULT_AMBIGUITY_THRESHOLD = 0.5;
+    public static final double DEFAULT_AMBIGUITY_THRESHOLD = 0.25;
 
     public static final int MINIMUM_UNAMBIGUOUS = 2;
 
@@ -442,7 +442,8 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     }
 
     private void compressAmbiguousPatterns(boolean constantOnly, double ambiguityThreshold) {
-        int minimumUnambiguous = (int)((1.0 - ambiguityThreshold) * patternCount);
+        int minimumUnambiguous = (int)((1.0 - ambiguityThreshold) * getPatternLength());
+        minimumUnambiguous = Math.min(minimumUnambiguous, 2);
 
         // the first stateCount patterns are the constant ones
         for (int i = getStateCount(); i < patternCount; i++) {

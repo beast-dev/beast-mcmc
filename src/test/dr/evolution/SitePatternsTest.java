@@ -92,6 +92,13 @@ public class SitePatternsTest extends TraceCorrelationAssert {
         assertEquals("Wrong number of compressed patterns", patterns.getPatternCount(), 68);
     }
 
+    public void testCodonSitePatterns() {
+        SitePatterns patterns = new SitePatterns(alignment, null, 2, -1, 3);
+        System.out.println("2nd position unique site patterns = " + patterns.getPatternCount());
+
+        assertEquals("Wrong number of compressed patterns", patterns.getPatternCount(), 37);
+    }
+
 
     public static Test suite() {
         return new TestSuite(SitePatternsTest.class);

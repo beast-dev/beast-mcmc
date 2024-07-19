@@ -71,8 +71,8 @@ public class TraceCorrelationAssert extends MathTestCase {
 //        alignment.setDataType(Nucleotides.INSTANCE);
 
         taxa = new Taxon[taxa_sequence[0].length]; // 6, 17
-        System.out.println("Taxon len = " + taxa_sequence[0].length);
-        System.out.println("Alignment len = " + taxa_sequence[1].length);
+        System.out.println("Taxon count = " + taxa_sequence[0].length);
+        System.out.println("Alignment length = " + taxa_sequence[1][0].toString().length());
         if (taxa_sequence.length > 2) System.out.println("Date len = " + taxa_sequence[2].length);                          
 
         for (int i=0; i < taxa_sequence[0].length; i++) {

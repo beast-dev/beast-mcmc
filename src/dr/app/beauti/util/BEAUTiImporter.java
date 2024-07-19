@@ -639,16 +639,20 @@ public class BEAUTiImporter {
             }
 
             if (charSets == null && alignment.getSiteCount() > 50000) {
-                int result = JOptionPane.showConfirmDialog(this.frame,
-                        "The alignment contains long sequences (" + alignment.getSiteCount() + " sites):\n" +
-                                "Do you want to compress the alignment into site-patterns? This will\n" +
-                                "take some time and will preclude some analyses but will make the\n" +
-                                "BEAST XML file size smaller and faster to load.",
-                        "Importing long sequences", JOptionPane.YES_NO_CANCEL_OPTION);
-                if (result == JOptionPane.CANCEL_OPTION) {
-                    return;
-                }
-                compressPatterns = result == JOptionPane.YES_OPTION;
+//                int result = JOptionPane.showConfirmDialog(this.frame,
+//                        "The alignment contains long sequences (" + alignment.getSiteCount() + " sites):\n" +
+//                                "Do you want to compress the alignment into site-patterns? This will\n" +
+//                                "take some time and will preclude some analyses but will make the\n" +
+//                                "BEAST XML file size smaller and faster to load.",
+//                        "Importing long sequences", JOptionPane.YES_NO_CANCEL_OPTION);
+//                if (result == JOptionPane.CANCEL_OPTION) {
+//                    return;
+//                }
+//                compressPatterns = result == JOptionPane.YES_OPTION;
+                // for now, if the sequences are long, we just don't do a pattern compression (this just
+                // means the table doesn't show the pattern count. Future options may be to compress
+                // the data to only variable sites and a count of constant sites.
+                compressPatterns = false;
             }
 
         }

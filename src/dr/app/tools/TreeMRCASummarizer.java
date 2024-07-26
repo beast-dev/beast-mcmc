@@ -33,36 +33,44 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
+import dr.math.MathUtils;
 import dr.util.Pair;
 import dr.util.Version;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
- * @author Philippe Lemey
- * @author Marc Suchard
+ * @author Andrew Rambaut
  */
 public class TreeMRCASummarizer extends BaseTreeTool {
 
     private final static Version version = new BeastVersion();
 
     private static final String BURN_IN = "burnIn";
+    private static final String SEED = "seed";
+    private static final String METRIC = "metric";
+    private static final String TMRCA = "tmrca";
+    private static final String PATH_LENGTH = "path";
+    private static final String NORMALISE = "normalise";
 
     private TreeMRCASummarizer(String inputFileName,
                                String outputFileName,
-                               int pairCount
-    ) throws IOException {
+                               int pairCount,
+                               boolean usePathLength,
+                               boolean normalise) throws IOException {
 
         SequentialTreeReader treeReader = new SequentialTreeReader(inputFileName, 0);
 
         this.ps = openOutputFile(outputFileName);
-        processTrees(treeReader, pairCount);
+        processTrees(treeReader, pairCount, usePathLength, normalise);
         closeOutputFile(ps);
     }
 
-    private void processTrees(SequentialTreeReader treeReader, int pairCount) throws IOException {
+    private void processTrees(SequentialTreeReader treeReader, int pairCount, boolean usePathLength, boolean normalise) throws IOException {
         int burnIn = 0;
 
         Tree tree = treeReader.getTree(0);
@@ -73,28 +81,27 @@ public class TreeMRCASummarizer extends BaseTreeTool {
             Taxon taxon1 = tree.getTaxon(r);
             Taxon taxon2 = taxon1;
             while (taxon2 == taxon1) {
-                r = (int)(Math.random() * tree.getTaxonCount());
+                r = MathUtils.nextInt(tree.getTaxonCount());
                 taxon2 = tree.getTaxon(r);
             }
             pairs.add(new Pair<>(taxon1, taxon2));
         }
 
-        ps.println("state");
+        ps.print("state");
         for (Pair<Taxon, Taxon> pair : pairs) {
-            ps.println("\t" + pair.first + "+" + pair.second);
+            ps.print("\t" + pair.first + "+" + pair.second);
         }
         ps.println();
-
 
         int index = 1;
         while (treeReader.getTree(index) != null) {
             tree = treeReader.getTree(index);
-            processOneTree(tree, pairs);
+            processOneTree(tree, pairs, usePathLength, normalise);
             index++;
         }
     }
 
-    private void processOneTree(Tree tree, Collection<Pair<Taxon, Taxon>> pairs) {
+    private void processOneTree(Tree tree, Collection<Pair<Taxon, Taxon>> pairs, boolean usePathLength, boolean normalise) {
 
         String treeId = tree.getId();
         if (treeId.startsWith("STATE_")) {
@@ -102,13 +109,23 @@ public class TreeMRCASummarizer extends BaseTreeTool {
         }
         long state = Long.parseLong(treeId);
 
-        ps.println(state);
+        ps.print(state);
         for (Pair<Taxon, Taxon> pair : pairs) {
             NodeRef tip1 = tree.getExternalNode(tree.getTaxonIndex(pair.first));
             NodeRef tip2 = tree.getExternalNode(tree.getTaxonIndex(pair.second));
-            NodeRef mrca = TreeUtils.getCommonAncestor(tree, tip1, tip2);
-//            double pathLength = TreeUtils.getPathLength(tree, tip1, tip2);
-            ps.println("\t" + tree.getNodeHeight(mrca));
+            double metric;
+            if (usePathLength) {
+                metric = TreeUtils.getPathLength(tree, tip1, tip2);
+                if (normalise) {
+                    metric = metric / TreeUtils.getTreeLength(tree, tree.getRoot());
+                }
+            } else {
+                metric = tree.getNodeHeight(TreeUtils.getCommonAncestor(tree, tip1, tip2));
+                if (normalise) {
+                    metric = metric / tree.getNodeHeight(tree.getRoot());
+                }
+            }
+            ps.print("\t" + metric);
         }
         ps.println();
 
@@ -145,13 +162,19 @@ public class TreeMRCASummarizer extends BaseTreeTool {
     //Main method
     public static void main(String[] args) throws IOException, Arguments.ArgumentException {
 
-        int pairs = 10;
+        int pairCount = 10;
+        long seed = -1;
+        boolean usePathLength = false;
+        boolean normalise = false;
 
         printTitle();
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.IntegerOption(PAIRS, "the number of pairs of taxa [default = 10]"),
+                        new Arguments.LongOption(SEED, "a random number seed so the pairs are the same"),
+                        new Arguments.StringOption(METRIC, new String[] {TMRCA, PATH_LENGTH}, false, "tmrca or path (path length) [default = tmrca]"),
+                        new Arguments.Option(NORMALISE, "normalise by root height or tree length [default = off]"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 
@@ -159,9 +182,24 @@ public class TreeMRCASummarizer extends BaseTreeTool {
         handleHelp(arguments, args, TreeMRCASummarizer::printUsage);
 
         if (arguments.hasOption(PAIRS)) {
-            pairs = arguments.getIntegerOption(PAIRS);
+            pairCount = arguments.getIntegerOption(PAIRS);
         }
-        System.err.println("Processing " + pairs + " pairs of taxa.");
+        if (arguments.hasOption(SEED)) {
+            seed = arguments.getLongOption(SEED);
+        }
+        if (arguments.hasOption(METRIC)) {
+            usePathLength = arguments.getStringOption(METRIC).equalsIgnoreCase(TMRCA);
+        }
+        normalise = arguments.hasOption(NORMALISE);
+
+        if (seed > 0) {
+            MathUtils.setSeed(seed);
+        } else {
+            seed = MathUtils.getSeed();
+        }
+
+        System.err.println("Processing " + pairCount + " pairs of taxa.");
+        System.err.println("Seed = " + seed);
 
         String[] fileNames = getInputOutputFileNames(arguments, TreeMRCASummarizer::printUsage);
         if (fileNames == null) {
@@ -175,7 +213,7 @@ public class TreeMRCASummarizer extends BaseTreeTool {
             System.exit(1);
         }
 
-        new TreeMRCASummarizer(fileNames[0], fileNames[1], pairs);
+        new TreeMRCASummarizer(fileNames[0], fileNames[1], pairCount, usePathLength, normalise);
         System.exit(0);
     }
 }

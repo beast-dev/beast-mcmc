@@ -33,12 +33,10 @@ import dr.app.util.Utils;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceAnalysis;
 import dr.inference.trace.TraceException;
+import dr.util.DataTable;
 import dr.util.Version;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.Locale;
 
 import static dr.inference.trace.TraceAnalysis.analyzeLogFile;
@@ -64,6 +62,9 @@ public class OperatorAnalyser {
      */
     private void analyze(String opsFileName, String logFileName, long burnin) throws TraceException, IOException {
         LogFileTraces traces = analyzeLogFile(logFileName, burnin);
+        DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(opsFileName), true);
+
+        System.out.println("done");
     }
 
     public static void printTitle() {

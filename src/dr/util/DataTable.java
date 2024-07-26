@@ -247,39 +247,42 @@ public interface DataTable<T> {
             List<String> rowLabels = new ArrayList<String>();
             List<String[]> rows = new ArrayList<String[]>();
             int rowIndex = 1;
+            int lineIndex = 1;
 
             while (line != null) {
-                StringTokenizer tokenizer = new StringTokenizer(line, delim);
+                if (!line.isEmpty() && !line.startsWith("#")) {
+                    StringTokenizer tokenizer = new StringTokenizer(line, delim);
 
-                if (columnCount == -1) {
-                    columnCount = tokenizer.countTokens();
-                    if (hasRowLabels) {
-                        columnCount --;
+                    if (columnCount == -1) {
+                        columnCount = tokenizer.countTokens();
+                        if (hasRowLabels) {
+                            columnCount--;
+                        }
                     }
+
+                    if (hasRowLabels) {
+                        String label = tokenizer.nextToken().trim();
+                        rowLabels.add(label);
+                    }
+
+                    String[] row = new String[columnCount];
+
+                    int columnIndex = 0;
+                    while (tokenizer.hasMoreTokens()) {
+                        row[columnIndex] = tokenizer.nextToken().trim();
+
+                        columnIndex++;
+                    }
+                    if (columnIndex != columnCount - (includeFirstColumnLabel ? 1 : 0)) {
+                        throw new IllegalArgumentException("Wrong number of values on row " + (rowIndex + 1) +
+                                " (line " + lineIndex + "), expecting " + columnCount + " but actually " + columnIndex);
+                    }
+
+                    rows.add(row);
+                    rowIndex++;
                 }
-
-                if (hasRowLabels) {
-                    String label = tokenizer.nextToken().trim();
-                    rowLabels.add(label);
-                }
-
-                String[] row = new String [columnCount];
-
-                int columnIndex = 0;
-                while (tokenizer.hasMoreTokens()) {
-                    row[columnIndex] = tokenizer.nextToken().trim();
-
-                    columnIndex ++;
-                }
-                if (columnIndex != columnCount - (includeFirstColumnLabel ? 1 : 0)) {
-                    throw new IllegalArgumentException("Wrong number of values on row " + (rowIndex + 1) +
-                            ", expecting " + columnCount + " but actually " + columnIndex);
-                }
-
-                rows.add(row);
-
                 line = reader.readLine();
-                rowIndex++;
+                lineIndex++;
             }
 
             if (hasRowLabels) {

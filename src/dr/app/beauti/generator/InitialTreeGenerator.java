@@ -146,9 +146,6 @@ public class InitialTreeGenerator extends Generator {
                 if (!options.hasIdenticalTaxa()) {
                     taxaId = partition.getPartitionTreeModel().getPrefix() + TaxaParser.TAXA;
                 }
-                if (partition instanceof PartitionPattern && ((PartitionPattern) partition).getPatterns().hasMask()) {
-                    taxaId = partition.getPrefix() + TaxaParser.TAXA;
-                }
 
                 writer.writeComment("Generate a random starting tree under the coalescent process");
                 if (options.taxonSets != null && options.taxonSets.size() > 0) {

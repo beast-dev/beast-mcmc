@@ -60,6 +60,7 @@ public enum ClockType {
     final public static String UCGD_SHAPE = "ucgd.shape";
     final public static String SHRINKAGE_CLOCK_LOCATION = "branchRates.rate";
     final public static String HMC_CLOCK_LOCATION = "branchRates.rate";
+    final public static String HMC_CLOCK_BRANCH_RATES = "branchRates.rates";
     final public static String HMCLN_SCALE = "branchRates.scale";
     final public static String ME_CLOCK_LOCATION = "branchRates.rate";
     final public static String ME_CLOCK_SCALE = "branchRates.scale";

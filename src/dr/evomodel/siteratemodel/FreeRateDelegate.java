@@ -130,30 +130,6 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
         }
         assert Math.abs(meanRate - 1.0) < 1E-10;
         assert Math.abs(sumWeights - 1.0) < 1E-10;
-//        } else {
-//            categoryRates[0] = 1.0;
-//            double sumRates = 0.0;
-//            double sumWeights = 0.0;
-//            for (int i = 0; i < categoryCount; i++) {
-//                if (parameterization == Parameterization.RATIOS) {
-//                    if (i > 0) {
-//                        categoryRates[i] = categoryRates[i - 1] * rateParameter.getParameterValue(i);
-//                    }
-//                } else { // Parameterization.DIFFERENCES
-//                    categoryRates[i] = categoryRates[i - 1] + rateParameter.getParameterValue(i);
-//                }
-//                sumRates += categoryRates[i + 1];
-//
-//                categoryProportions[i] = weightParameter.getParameterValue(i);
-//                sumWeights += categoryProportions[i];
-//            }
-//            assert Math.abs(sumWeights - 1.0) < 1E-10;
-//
-//            // scale so their mean is 1
-//            for (int i = 0; i < categoryCount; i++) {
-//                categoryRates[i] = categoryCount * categoryRates[i] / sumRates;
-//            }
-//        }
     }
 
     // *****************************************************************

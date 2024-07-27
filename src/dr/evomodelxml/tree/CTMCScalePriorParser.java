@@ -27,6 +27,7 @@
 
 package dr.evomodelxml.tree;
 
+import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.CTMCScalePrior;
@@ -52,7 +53,7 @@ public class CTMCScalePriorParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-        TaxonList taxa = (TaxonList) xo.getChild(TaxonList.class);
+        TaxonList taxa = (TaxonList) xo.getChild(Taxa.class);
 
         Parameter ctmcScale = (Parameter) xo.getElementFirstChild(SCALEPARAMETER);
         boolean reciprocal = xo.getAttribute(RECIPROCAL, false);

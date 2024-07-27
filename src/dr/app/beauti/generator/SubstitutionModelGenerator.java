@@ -674,9 +674,7 @@ public class SubstitutionModelGenerator extends Generator {
         if (model.isGammaHetero()) {
             writer.writeOpenTag(SiteModelParser.GAMMA_SHAPE,
                     new Attribute[] {
-                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()),
-                            new Attribute.Default<>(SiteModelParser.DISCRETIZATION,
-                                    (model.isGammaHeteroEqualWeights() ? "equal" : "quadrature")),
+                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories())
                     });
 
             if (num == -1 || model.isUnlinkedHeterogeneityModel()) {
@@ -765,9 +763,7 @@ public class SubstitutionModelGenerator extends Generator {
         if (model.isGammaHetero()) {
             writer.writeOpenTag(SiteModelParser.GAMMA_SHAPE,
                     new Attribute[] {
-                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()),
-                            new Attribute.Default<>(SiteModelParser.DISCRETIZATION,
-                                    (model.isGammaHeteroEqualWeights() ? "equal" : "quadrature")),
+                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories())
                     });
             writeParameter(prefix + "alpha", model, writer);
             writer.writeCloseTag(SiteModelParser.GAMMA_SHAPE);
@@ -814,9 +810,7 @@ public class SubstitutionModelGenerator extends Generator {
         if (model.isGammaHetero()) {
             writer.writeOpenTag(SiteModelParser.GAMMA_SHAPE,
                     new Attribute[] {
-                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()),
-                            new Attribute.Default<>(SiteModelParser.DISCRETIZATION,
-                                    (model.isGammaHeteroEqualWeights() ? "equal" : "quadrature")),
+                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories())
                     });
             writeParameter("alpha", model, writer);
             writer.writeCloseTag(SiteModelParser.GAMMA_SHAPE);

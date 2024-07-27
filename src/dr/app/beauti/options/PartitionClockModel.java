@@ -125,35 +125,40 @@ public class PartitionClockModel extends PartitionOptions {
                 .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
 
-        new Parameter.Builder(ClockType.SHRINKAGE_CLOCK_LOCATION, "Shrinkage clock rate").
-                prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
-                .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
-                .isAdaptiveMultivariateCompatible(false).build(parameters);
-
         new Parameter.Builder(ClockType.HMCLN_SCALE, "HMC relaxed clock scale").
                 prior(PriorType.EXPONENTIAL_PRIOR).isNonNegative(true)
                 .initial(1.0).mean(1.0).offset(0.0).partitionOptions(this)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
 
+        new Parameter.Builder(ClockType.HMC_CLOCK_BRANCH_RATES, "HMC relaxed clock branch rates").
+                initial(1.0).isNonNegative(true).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(false).build(parameters);
+
+
         new Parameter.Builder(ClockType.ME_CLOCK_LOCATION, "mixed effects clock rate (fixed prior)").
                 prior(PriorType.LOGNORMAL_HPM_PRIOR).initial(rate)
-                .isCMTCRate(false).isNonNegative(false).partitionOptions(this).isPriorFixed(true)
+                .isCMTCRate(false).isNonNegative(true).partitionOptions(this).isPriorFixed(true)
                 .isAdaptiveMultivariateCompatible(true).build(parameters);
 
-        new Parameter.Builder(ClockType.ME_CLOCK_SCALE, "mixed effects clock scale (fixed prior)").
-                prior(PriorType.EXPONENTIAL_HPM_PRIOR).initial(0.15)
-                .isCMTCRate(false).isNonNegative(false).partitionOptions(this).isPriorFixed(true)
-                .isAdaptiveMultivariateCompatible(true).build(parameters);
 
         // Shrinkage clock
+        new Parameter.Builder(ClockType.SHRINKAGE_CLOCK_LOCATION, "Shrinkage clock rate").
+                prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
+                .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(false).build(parameters);
+        createParameter("substBranchRates.rates", "shrinkage local clock branch rates", 1.0);
+
         createOperator("GIBBS_SHRINKAGE_CLOCK", "shrinkage local clock",
                 "shrinkage local clock Gibbs operator", null, OperatorType.SHRINKAGE_CLOCK_GIBBS_OPERATOR ,-1 , 4.0);
         createOperator("HMC_SHRINKAGE_CLOCK", "shrinkage local clock",
                 "shrinkage local clock Hamiltonian operator", null, OperatorType.SHRINKAGE_CLOCK_HMC_OPERATOR ,-1 , 8.0);
         createScaleOperator(ClockType.SHRINKAGE_CLOCK_LOCATION, demoTuning, rateWeights);
-        createParameter("substBranchRates.rates", "shrinkage local clock branch rates", 1.0);
 
         // Mixed effects clock
+        new Parameter.Builder(ClockType.ME_CLOCK_SCALE, "mixed effects clock scale (fixed prior)").
+                prior(PriorType.EXPONENTIAL_HPM_PRIOR).initial(0.15)
+                .isCMTCRate(false).isNonNegative(true).partitionOptions(this).isPriorFixed(true)
+                .isAdaptiveMultivariateCompatible(true).build(parameters);
         createScaleOperator(ClockType.ME_CLOCK_LOCATION, demoTuning, rateWeights);
         createScaleOperator(ClockType.ME_CLOCK_SCALE, demoTuning, rateWeights);
         new Parameter.Builder(BranchSpecificFixedEffectsParser.INTERCEPT, "intercept (fixed prior)").
@@ -215,7 +220,6 @@ public class PartitionClockModel extends PartitionOptions {
                 "Hamiltonian Monte Carlo relaxed clock operator", null, OperatorType.RELAXED_CLOCK_HMC_OPERATOR ,-1 , 1.0);
         createScaleOperator(ClockType.HMC_CLOCK_LOCATION, demoTuning, rateWeights);
         createScaleOperator(ClockType.HMCLN_SCALE, demoTuning, rateWeights);
-        createParameter("branchRates.rates", "HMC relaxed clock branch rates", 1.0);
 
         // Random local clock
         createOperator(ClockType.LOCAL_CLOCK + ".relativeRates", OperatorType.RANDOM_WALK, demoTuning, treeWeights);

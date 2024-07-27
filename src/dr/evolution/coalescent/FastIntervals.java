@@ -102,7 +102,8 @@ public class FastIntervals implements MutableIntervalList {
 
     @Override
     public void addSampleEvent(double time, int nodeNumber) {
-        throw new UnsupportedOperationException("not supported in FastIntervals");
+        // ignores the node number
+        addSampleEvent(time);
     }
 
     @Override
@@ -118,7 +119,8 @@ public class FastIntervals implements MutableIntervalList {
 
     @Override
     public void addCoalescentEvent(double time, int nodeNumber) {
-        throw new UnsupportedOperationException("not supported in FastIntervals");
+        // ignores the node number
+        addCoalescentEvent(time);
     }
 
     @Override
@@ -220,8 +222,8 @@ public class FastIntervals implements MutableIntervalList {
         int i = 0;
         int lineages = 1;
 
-        while (s < sampleCount && c < coalescentCount) {
-            if (sampleTimes[s] <= coalescentTimes[c]) {
+        while (s < sampleCount || c < coalescentCount) {
+            if (s < sampleCount && sampleTimes[s] <= coalescentTimes[c]) {
                 intervals[i] = sampleTimes[s] - lastTime;
                 eventTimes[i] = sampleTimes[s];
                 intervalTypes[i] = IntervalType.SAMPLE;

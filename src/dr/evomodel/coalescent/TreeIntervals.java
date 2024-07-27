@@ -288,12 +288,10 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
     private void collectTimes(Tree tree, MutableIntervalList intervals) {
 
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            intervals.addSampleEvent(tree.getNodeHeight(tree.getExternalNode(i)));
-//            intervals.addSampleEvent(tree.getNodeHeight(tree.getExternalNode(i)), tree.getExternalNode(i).getNumber());
+            intervals.addSampleEvent(tree.getNodeHeight(tree.getExternalNode(i)), tree.getExternalNode(i).getNumber());
         }
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            intervals.addCoalescentEvent(tree.getNodeHeight(tree.getInternalNode(i)));
-//            intervals.addCoalescentEvent(tree.getNodeHeight(tree.getInternalNode(i)), tree.getInternalNode(i).getNumber());
+            intervals.addCoalescentEvent(tree.getNodeHeight(tree.getInternalNode(i)), tree.getInternalNode(i).getNumber());
         }
     }
 

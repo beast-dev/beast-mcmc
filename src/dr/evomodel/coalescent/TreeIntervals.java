@@ -78,7 +78,12 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
             addModel((TreeModel) tree);
         }
 
-        intervals = new FastIntervals(tree.getExternalNodeCount(), tree.getInternalNodeCount());
+        if (this.buildIntervalNodeMapping) {
+            intervals = new Intervals(tree.getNodeCount());
+        } else {
+            intervals = new FastIntervals(tree.getExternalNodeCount(), tree.getInternalNodeCount());
+        }
+
         storedIntervals = new FastIntervals(tree.getExternalNodeCount(), tree.getInternalNodeCount());
         eventsKnown = false;
         this.intervalNodeMapping = buildIntervalNodeMapping?new IntervalNodeMapping.Default(tree.getNodeCount(),tree):new IntervalNodeMapping.None();
@@ -119,10 +124,10 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
         this(tree, false);
     }
     public void setBuildIntervalNodeMapping(boolean buildIntervalNodeMapping){
-        this.buildIntervalNodeMapping=buildIntervalNodeMapping;
-        this.intervalNodeMapping = buildIntervalNodeMapping?new IntervalNodeMapping.Default(tree.getNodeCount(),tree):new IntervalNodeMapping.None();
+        this.buildIntervalNodeMapping = buildIntervalNodeMapping;
+        this.intervalNodeMapping = buildIntervalNodeMapping ? new IntervalNodeMapping.Default(tree.getNodeCount(),tree):new IntervalNodeMapping.None();
         //Force a recalculation here
-        eventsKnown=false;
+        eventsKnown = false;
     }
     // **************************************************************
     // ModelListener IMPLEMENTATION
@@ -163,7 +168,7 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
      */
     protected void restoreState() {
         // swap the intervals back
-        FastIntervals tmp = storedIntervals;
+        MutableIntervalList tmp = storedIntervals;
         storedIntervals = intervals;
         intervals = tmp;
 
@@ -234,15 +239,14 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
         intervals.getIntervalCount();
 
         if (buildIntervalNodeMapping){
-            throw new UnsupportedOperationException("buildIntervalNodeMapping not implemented at the moment");
-//            this.intervalNodeMapping.initializeMaps();
-//            for(int i=0; i<intervals.getIntervalCount()+1;i++){
-//                intervalNodeMapping.addNode(intervals.getNodeForEvent(i));
-//                if(i>0&& i<intervals.getIntervalCount()){ //If the event is not the first but not the last add it again for the start of the next interval
-//                    intervalNodeMapping.addNode(intervals.getNodeForEvent(i));
-//                }
-//            }
-//            intervalNodeMapping.setIntervalStartIndices(intervals.getIntervalCount());
+            this.intervalNodeMapping.initializeMaps();
+            for(int i=0; i<intervals.getIntervalCount()+1;i++){
+                intervalNodeMapping.addNode(intervals.getNodeForEvent(i));
+                if(i>0&& i<intervals.getIntervalCount()){ //If the event is not the first but not the last add it again for the start of the next interval
+                    intervalNodeMapping.addNode(intervals.getNodeForEvent(i));
+                }
+            }
+            intervalNodeMapping.setIntervalStartIndices(intervals.getIntervalCount());
         }
         eventsKnown = true;
     }
@@ -259,7 +263,7 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
      * @param node      the node to start from
      * @param intervals the intervals object to store the events
      */
-    private void collectTimes(Tree tree, NodeRef node, Set<NodeRef> excludeNodesBelow, FastIntervals intervals) {
+    private void collectTimes(Tree tree, NodeRef node, Set<NodeRef> excludeNodesBelow, MutableIntervalList intervals) {
 
         intervals.addCoalescentEvent(tree.getNodeHeight(node));
 
@@ -289,7 +293,7 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
      * @param tree      the tree
      * @param intervals the intervals object to store the events
      */
-    private void collectTimes(Tree tree, FastIntervals intervals) {
+    private void collectTimes(Tree tree, MutableIntervalList intervals) {
 
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             intervals.addSampleEvent(tree.getNodeHeight(tree.getExternalNode(i)));
@@ -738,17 +742,17 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
     private Tree tree = null;
     private Set<String> includedLeafSet = null;
     private Set[] excludedLeafSets = null;
-    private boolean buildIntervalNodeMapping=false;
+    private boolean buildIntervalNodeMapping = false;
 
     /**
      * The intervals.
      */
-    private FastIntervals intervals = null;
+    private MutableIntervalList intervals = null;
     private IntervalNodeMapping intervalNodeMapping;
     /**
      * The stored values for intervals.
      */
-    private FastIntervals storedIntervals = null;
+    private MutableIntervalList storedIntervals = null;
 
     private boolean eventsKnown = false;
     private boolean storedEventsKnown = false;

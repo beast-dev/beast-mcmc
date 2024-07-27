@@ -35,7 +35,7 @@ import java.util.Arrays;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class FastIntervals implements IntervalList {
+public class FastIntervals implements MutableIntervalList {
 
 
     public FastIntervals(int sampleCount, int coalescentCount) {
@@ -60,7 +60,9 @@ public class FastIntervals implements IntervalList {
 
         intervalsKnown = false;
     }
-    public void copyIntervals(FastIntervals source) {
+    @Override
+    public void copyIntervals(MutableIntervalList intervalList) {
+        FastIntervals source = (FastIntervals)intervalList;
         intervalsKnown = source.intervalsKnown;
 
         assert eventCount == source.eventCount;
@@ -77,6 +79,7 @@ public class FastIntervals implements IntervalList {
         }
     }
 
+    @Override
     public void resetEvents() {
         startTime = Double.POSITIVE_INFINITY;
         finishTime = Double.NEGATIVE_INFINITY;
@@ -86,6 +89,7 @@ public class FastIntervals implements IntervalList {
         cumulativeCoalescentCount = 0;
     }
 
+    @Override
     public void addSampleEvent(double time) {
         if (time < startTime) {
             startTime = time;
@@ -95,6 +99,13 @@ public class FastIntervals implements IntervalList {
         cumulativeSampleCount++;
         intervalsKnown = false;
     }
+
+    @Override
+    public void addSampleEvent(double time, int nodeNumber) {
+        throw new UnsupportedOperationException("not supported in FastIntervals");
+    }
+
+    @Override
     public void addCoalescentEvent(double time) {
         if (time > finishTime) {
             finishTime = time;
@@ -103,6 +114,26 @@ public class FastIntervals implements IntervalList {
         coalescentTimes[cumulativeCoalescentCount] = time;
         cumulativeCoalescentCount++;
         intervalsKnown = false;
+    }
+
+    @Override
+    public void addCoalescentEvent(double time, int nodeNumber) {
+        throw new UnsupportedOperationException("not supported in FastIntervals");
+    }
+
+    @Override
+    public void addMigrationEvent(double time, int destination) {
+        throw new UnsupportedOperationException("not supported in FastIntervals");
+    }
+
+    @Override
+    public void addNothingEvent(double time) {
+        throw new UnsupportedOperationException("not supported in FastIntervals");
+    }
+
+    @Override
+    public int getNodeForEvent(int i) {
+        throw new UnsupportedOperationException("not supported in FastIntervals");
     }
 
     public int getSampleCount() {

@@ -51,6 +51,24 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
 
     // PUBLIC STUFF
 
+
+    public TreeIntervals(Tree tree) {
+            this(tree, false);
+    }
+    public TreeIntervals(Tree tree, boolean buildIntervalNodeMapping) {
+        super("TreeIntervals");
+
+        setup(tree, buildIntervalNodeMapping);
+    }
+
+    public TreeIntervals(
+            Tree tree,
+            TaxonList includeSubtree,
+            List<TaxonList> excludeSubtrees) throws TreeUtils.MissingTaxonException {
+
+        this(tree, includeSubtree, excludeSubtrees, false);
+    }
+
     public TreeIntervals(
             Tree tree,
             TaxonList includeSubtree,
@@ -59,8 +77,6 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
 
         super("TreeIntervals");
 
-        this.tree = tree;
-        this.buildIntervalNodeMapping = buildIntervalNodeMapping;
         if (includeSubtree != null) {
             includedLeafSet = TreeUtils.getLeavesForTaxa(tree, includeSubtree);
         }
@@ -74,55 +90,31 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
             excludedLeafSets = null;
         }
 
+        setup(tree, buildIntervalNodeMapping);
+    }
+
+    private void setup(Tree tree, boolean buildIntervalNodeMapping) {
+        this.tree = tree;
+        this.buildIntervalNodeMapping = buildIntervalNodeMapping;
+
         if (tree instanceof TreeModel) {
             addModel((TreeModel) tree);
         }
 
         if (this.buildIntervalNodeMapping) {
             intervals = new Intervals(tree.getNodeCount());
+            storedIntervals = new Intervals(tree.getNodeCount());
         } else {
             intervals = new FastIntervals(tree.getExternalNodeCount(), tree.getInternalNodeCount());
+            storedIntervals = new FastIntervals(tree.getExternalNodeCount(), tree.getInternalNodeCount());
         }
 
-        storedIntervals = new FastIntervals(tree.getExternalNodeCount(), tree.getInternalNodeCount());
         eventsKnown = false;
-        this.intervalNodeMapping = buildIntervalNodeMapping?new IntervalNodeMapping.Default(tree.getNodeCount(),tree):new IntervalNodeMapping.None();
+        this.intervalNodeMapping = buildIntervalNodeMapping ?new IntervalNodeMapping.Default(tree.getNodeCount(), tree):new IntervalNodeMapping.None();
 
         addStatistic(new DeltaStatistic());
     }
-    public TreeIntervals(
-            Tree tree,
-            TaxonList includeSubtree,
-            List<TaxonList> excludeSubtrees) throws TreeUtils.MissingTaxonException {
 
-        this(tree, includeSubtree, excludeSubtrees, false);
-    }
-
-    public TreeIntervals(Tree tree,boolean buildIntervalNodeMapping) {
-        super("TreeIntervals");
-
-        this.tree = tree;
-        this.buildIntervalNodeMapping = buildIntervalNodeMapping;
-
-
-        includedLeafSet = null;
-        excludedLeafSets = null;
-
-
-        if (tree instanceof TreeModel) {
-            addModel((TreeModel) tree);
-        }
-
-        intervals = new FastIntervals(tree.getExternalNodeCount(), tree.getInternalNodeCount());
-        storedIntervals = new FastIntervals(tree.getExternalNodeCount(), tree.getInternalNodeCount());
-        eventsKnown = false;
-        this.intervalNodeMapping = buildIntervalNodeMapping?new IntervalNodeMapping.Default(tree.getNodeCount(),tree):new IntervalNodeMapping.None();
-
-        addStatistic(new DeltaStatistic());
-    }
-    public TreeIntervals(Tree tree) {
-        this(tree, false);
-    }
     public void setBuildIntervalNodeMapping(boolean buildIntervalNodeMapping){
         this.buildIntervalNodeMapping = buildIntervalNodeMapping;
         this.intervalNodeMapping = buildIntervalNodeMapping ? new IntervalNodeMapping.Default(tree.getNodeCount(),tree):new IntervalNodeMapping.None();

@@ -41,11 +41,14 @@ import java.util.Arrays;
 public class TreeIntervalsTest extends TestCase {
 
     private TreeIntervalList treeIntervals;
+    private TreeIntervalList treeIntervalsWithNodeMapping;
 
     public void setUp() throws Exception {
         NewickImporter importer = new NewickImporter("(((0:0.5,(1:1.0,2:1.0)n6:1.0)n7:1.0,3:1.5)n8:1.0,(4:2.0,5:1.51)n9:1.5)n10;");
         MathUtils.setSeed(7);
         tree = new DefaultTreeModel(importer.importTree(null));
+//        treeIntervalsWithNodeMapping = new TreeIntervals(tree,true);
+//        treeIntervalsWithNodeMapping.calculateIntervals();
         treeIntervals = new TreeIntervals(tree,true);
         treeIntervals.calculateIntervals();
     }
@@ -65,7 +68,7 @@ public class TreeIntervalsTest extends TestCase {
 //          |        1.5                   +----------------------------------------------------- 4 & [0.5]
 //          +-----------------------------|(9) & [2.5]     1.51
 //                                        +-------------------------------------------- 5 & [0.99]
-    public void testsmallTree() {
+    public void testSmallTree() {
 
         double[] intervals = {0, 0.5, 0.49, 0.01, 0.5, 0, 0.5, 0.5, 0.5, 1.0};
         //   node             1-2, 4  , 5  , 6  , 0  , 3, 7  , 9  , 8  , 10

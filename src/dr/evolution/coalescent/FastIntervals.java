@@ -141,6 +141,9 @@ public class FastIntervals implements MutableIntervalList {
     }
 
     public int getIntervalCount() {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         return intervalCount;
     }
 

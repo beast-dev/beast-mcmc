@@ -27,6 +27,8 @@
 
 package dr.evolution.coalescent;
 
+import dr.math.MathUtils;
+
 import java.util.Arrays;
 
 /**
@@ -272,4 +274,105 @@ public class FastIntervals implements MutableIntervalList {
     private final double[] intervals;
     private final int[] lineageCounts;
     private final IntervalType[] intervalTypes;
+
+    /**
+     * Testing speed of sorting using Arrays.sort()
+     *
+     * Take-homes:
+     * 1) sorting doubles is nearly 4 times faster than objects
+     * 2) parallel sort achieves nothing and may be slower for objects
+     * 3) sorting an already sorted array is 15x faster than an unsorted one
+     *
+     * Times in ms for an array of length 1600:
+     * Unsorted doubles, 1000000 reps, time = 12047
+     * Unsorted doubles (parallel sort), 1000000 reps, time = 11982
+     * Pre-sorted doubles, 1000000 reps, time = 878
+     * Unsorted objects, 1000000 reps, time = 45126
+     * Unsorted objects (parallel sort), 1000000 reps, time = 50847
+     *
+     * Test the time taken to do the array copy in each loop:
+     * Array copy doubles, 1000000 reps, time = 185
+     * Array copy objects, 1000000 reps, time = 80
+     * @param args
+     */
+    public static void main(String[] args) {
+        int count = 1600;
+        int reps = 1000000;
+        double[] randomTimes = new double[count];
+        double[] orderedTimes = new double[count];
+        double[] times = new double[count];
+        Test[] randomTests = new Test[count];
+        Test[] tests = new Test[count];
+
+        for (int j = 0; j < count; j++) {
+            randomTimes[j] = MathUtils.nextDouble();
+            orderedTimes[j] = MathUtils.nextDouble();
+            randomTests[j] = new Test(MathUtils.nextDouble());
+        }
+        Arrays.sort(orderedTimes);
+
+        // Check the time of the array copy in each loop
+        long startTime = System.currentTimeMillis();
+        for (int i = 0; i < reps; i++) {
+            System.arraycopy(randomTimes,0, times, 0, count);
+        }
+        System.out.println("Array copy doubles, " + reps + " reps, time = " + (System.currentTimeMillis() - startTime));
+
+        startTime = System.currentTimeMillis();
+        for (int i = 0; i < reps; i++) {
+            System.arraycopy(randomTests,0, tests, 0, count);
+        }
+        System.out.println("Array copy objects, " + reps + " reps, time = " + (System.currentTimeMillis() - startTime));
+
+        startTime = System.currentTimeMillis();
+        for (int i = 0; i < reps; i++) {
+            System.arraycopy(randomTimes,0, times, 0, count);
+            Arrays.sort(times);
+        }
+        System.out.println("Unsorted doubles, " + reps + " reps, time = " + (System.currentTimeMillis() - startTime));
+
+        startTime = System.currentTimeMillis();
+        for (int i = 0; i < reps; i++) {
+            System.arraycopy(randomTimes,0, times, 0, count);
+            Arrays.parallelSort(times);
+        }
+        System.out.println("Unsorted doubles (parallel sort), " + reps + " reps, time = " + (System.currentTimeMillis() - startTime));
+
+        startTime = System.currentTimeMillis();
+        for (int i = 0; i < reps; i++) {
+            System.arraycopy(orderedTimes,0, times, 0, count);
+            Arrays.sort(times);
+        }
+        System.out.println("Pre-sorted doubles, " + reps + " reps, time = " + (System.currentTimeMillis() - startTime));
+
+        startTime = System.currentTimeMillis();
+        for (int i = 0; i < reps; i++) {
+            System.arraycopy(randomTests,0, tests, 0, count);
+            Arrays.sort(tests);
+        }
+        System.out.println("Unsorted objects, " + reps + " reps, time = " + (System.currentTimeMillis() - startTime));
+
+        startTime = System.currentTimeMillis();
+        for (int i = 0; i < reps; i++) {
+            System.arraycopy(randomTests,0, tests, 0, count);
+            Arrays.parallelSort(tests);
+        }
+        System.out.println("Unsorted objects (parallel sort), " + reps + " reps, time = " + (System.currentTimeMillis() - startTime));
+
+
+    }
+
+    static class Test implements Comparable<Test> {
+        double value;
+
+        public Test(double value) {
+            this.value = value;
+        }
+
+
+        @Override
+        public int compareTo(Test o) {
+            return Double.compare(value, o.value);
+        }
+    }
 }

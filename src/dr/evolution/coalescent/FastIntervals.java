@@ -209,8 +209,8 @@ public class FastIntervals implements MutableIntervalList {
             throw new IllegalArgumentException("Too few events to construct intervals");
         }
 
-//        System.arraycopy(sampleTimes, 0, eventTimes, 0, sampleCount);
-//        System.arraycopy(coalescentTimes, 0, eventTimes, sampleCount, coalescentCount);
+        // sampleTimes only changes if there is tipdate sampling but it would be complicated
+        // to check this. The sort function on an already sorted array is very fast.
         Arrays.sort(sampleTimes);
         Arrays.sort(coalescentTimes);
 
@@ -258,10 +258,9 @@ public class FastIntervals implements MutableIntervalList {
 
     private double startTime;
     private double finishTime;
-    private int cumulativeSampleCount = 0;
-    private int cumulativeCoalescentCount = 0;
-    private boolean intervalsKnown = false;
-
+    private int cumulativeSampleCount;
+    private int cumulativeCoalescentCount;
+    private boolean intervalsKnown;
     private final double[] sampleTimes;
     private final double[] coalescentTimes;
     private final double[] eventTimes;

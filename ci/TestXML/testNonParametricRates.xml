@@ -33,6 +33,9 @@
 
 	<nonParametricRates id="dummyRates">
 		<treeModel idref="dummyTreeModel"/>
+		<lastSamplingTime>
+			<parameter id="lastSamplingTime" value="2010"/>
+		</lastSamplingTime>
 		<coefficients>
 			<parameter id="data" value="1 1 1"/>
 		</coefficients>
@@ -94,6 +97,9 @@
 
 	<nonParametricRates id="dummyRates2">
 		<treeModel idref="dummyTreeModel2"/>
+		<lastSamplingTime>
+			<parameter id="lastSamplingTime2" value="2010"/>
+		</lastSamplingTime>
 		<coefficients>
 			<parameter id="data2" value="1 1 1 1 1"/>
 		</coefficients>

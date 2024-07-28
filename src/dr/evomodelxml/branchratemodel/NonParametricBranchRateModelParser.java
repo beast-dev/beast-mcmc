@@ -12,6 +12,7 @@ import dr.xml.*;
 public class NonParametricBranchRateModelParser extends AbstractXMLObjectParser {
 
     public static final String PARSER_NAME = "nonParametricRates";
+    private static final String LASTSAMPLINGTIME = "lastSamplingTime";
     private static final String COEFFICIENTS = "coefficients";
     private static final String BOUNDARY = "boundary";
     private static final String SCALEFACTOR = "scaleFactor";
@@ -21,13 +22,14 @@ public class NonParametricBranchRateModelParser extends AbstractXMLObjectParser 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        Parameter lastSamplingTime = (Parameter) xo.getElementFirstChild(LASTSAMPLINGTIME);
         Parameter coefficients = (Parameter) xo.getElementFirstChild(COEFFICIENTS);
         Parameter boundary = (Parameter) xo.getElementFirstChild(BOUNDARY);
         Parameter scaleFactor = (Parameter) xo.getElementFirstChild(SCALEFACTOR);
         Parameter lengthScale = (Parameter) xo.getElementFirstChild(LENGTHSCALE);
         String id = xo.hasId() ? xo.getId() : PARSER_NAME;
 
-        return new NonParametricBranchRateModel(id, tree, coefficients, boundary, scaleFactor, lengthScale);
+        return new NonParametricBranchRateModel(id, tree, lastSamplingTime, coefficients, boundary, scaleFactor, lengthScale);
     }
 
     @Override
@@ -52,6 +54,8 @@ public class NonParametricBranchRateModelParser extends AbstractXMLObjectParser 
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(TreeModel.class),
+            new ElementRule(LASTSAMPLINGTIME,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(COEFFICIENTS,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(BOUNDARY,

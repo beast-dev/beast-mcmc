@@ -59,6 +59,7 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
 
 
     private final Tree tree;
+    private final Parameter lastSamplingTime;
     private final Parameter coefficients;
     private final Parameter boundary;
     private final Parameter scaleFactor;
@@ -75,6 +76,7 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
 
     public NonParametricBranchRateModel(String name,
                                         Tree tree,
+                                        Parameter lastSamplingTime,
                                         Parameter coefficients,
                                         Parameter boundary,
                                         Parameter scaleFactor,
@@ -82,6 +84,7 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
         super(name);
 
         this.tree = tree;
+        this.lastSamplingTime = lastSamplingTime;
         this.coefficients = coefficients;
         this.boundary = boundary;
         this.scaleFactor = scaleFactor;
@@ -91,6 +94,7 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
             addModel((TreeModel) tree);
         }
 
+        addVariable(lastSamplingTime);
         addVariable(coefficients);
         addVariable(boundary);
         addVariable(scaleFactor);
@@ -130,7 +134,8 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
 
         IntegratedSquaredGPApproximation approximation = new IntegratedSquaredGPApproximation(coefficientValues, boundary.getParameterValue(0),
                                             scaleFactor.getParameterValue(0), lengthScale.getParameterValue(0));
-        nodeRates[childIndex] = approximation.getIntegral(childHeight, currentHeight)/branchLength;
+        nodeRates[childIndex] = approximation.getIntegral(lastSamplingTime.getParameterValue(0) - currentHeight,
+                                            lastSamplingTime.getParameterValue(0) - childHeight)/branchLength;
 
         if (!tree.isExternal(child)) {
             getNodeRateByBranch(childHeight, tree.getChild(child, 0));

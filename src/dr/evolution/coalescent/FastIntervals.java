@@ -35,7 +35,6 @@ import java.util.Arrays;
  * A concrete class for a set of coalescent intervals.
  *
  * @author Andrew Rambaut
- * @author Alexei Drummond
  */
 public class FastIntervals implements MutableIntervalList {
 

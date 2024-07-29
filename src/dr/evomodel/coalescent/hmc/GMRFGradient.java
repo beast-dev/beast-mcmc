@@ -66,7 +66,8 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                         WrtParameter wrtParameter,
                         Double tolerance) {
         this.skygridLikelihood = skygridLikelihood;
-        ((TreeIntervalList) this.skygridLikelihood.getIntervalList()).setBuildIntervalNodeMapping(true);
+        assert ((TreeIntervalList) this.skygridLikelihood.getIntervalList()).isBuildIntervalNodeMapping();
+//        ((TreeIntervalList) this.skygridLikelihood.getIntervalList()).setBuildIntervalNodeMapping(true);
         this.wrtParameter = wrtParameter;
         parameter = wrtParameter.getParameter(skygridLikelihood);
         this.tolerance = tolerance;

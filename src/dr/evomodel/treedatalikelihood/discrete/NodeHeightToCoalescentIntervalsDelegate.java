@@ -55,7 +55,8 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
         this.skyrideLikelihood = skyrideLikelihood;
         //Casting guaranteed by parser
         TreeIntervalList intervalList = (TreeIntervalList)skyrideLikelihood.getIntervalList();
-        intervalList.setBuildIntervalNodeMapping(true);
+        assert intervalList.isBuildIntervalNodeMapping();
+//        intervalList.setBuildIntervalNodeMapping(true);
         this.intervalNodeMapping = intervalList;
         this.coalescentIntervals = createProxyForCoalescentIntervals();
         this.coalescentIntervals.addBounds(new NodeHeightToCoalescentIntervalsDelegate.CoalescentIntervalBounds());

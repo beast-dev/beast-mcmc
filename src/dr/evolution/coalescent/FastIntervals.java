@@ -346,6 +346,17 @@ public class FastIntervals implements MutableIntervalList {
 
         startTime = System.currentTimeMillis();
         for (int i = 0; i < reps; i++) {
+            System.arraycopy(orderedTimes,0, times, 0, count);
+            for (int j = 0; j < 3; j++) {
+                times[MathUtils.nextInt(count)] = MathUtils.nextDouble();
+            }
+            Arrays.sort(times);
+        }
+        System.out.println("Mostly sorted doubles, " + reps + " reps, time = " + (System.currentTimeMillis() - startTime));
+
+
+        startTime = System.currentTimeMillis();
+        for (int i = 0; i < reps; i++) {
             System.arraycopy(randomTests,0, tests, 0, count);
             Arrays.sort(tests);
         }

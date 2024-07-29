@@ -112,10 +112,11 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
                     throw new IllegalArgumentException("Skygrid likelihood does not have intervals which map to "+
                             "the underlying tree. This is needed for gradient calculations");
                 }
-                if(intervalList instanceof TreeIntervals) {
-                    if (!((TreeIntervals) intervalList).getBuildIntervalNodeMapping()) {
-                        ((TreeIntervals) intervalList).setBuildIntervalNodeMapping(true);
-                    }
+                if (intervalList instanceof TreeIntervals) {
+                    assert ((TreeIntervals) intervalList).isBuildIntervalNodeMapping();
+//                    if (!((TreeIntervals) intervalList).getBuildIntervalNodeMapping()) {
+//                        ((TreeIntervals) intervalList).setBuildIntervalNodeMapping(true);
+//                    }
                 }
             }
         }else{

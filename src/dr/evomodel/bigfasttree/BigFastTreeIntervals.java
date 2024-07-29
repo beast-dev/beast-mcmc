@@ -231,9 +231,14 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     }
 
     @Override
-    public void setBuildIntervalNodeMapping(boolean buildIntervalNodeMapping) {
-        // nothing done this is done by default with this tree model
+    public boolean isBuildIntervalNodeMapping() {
+        return true;
     }
+
+//    @Override
+//    public void setBuildIntervalNodeMapping(boolean buildIntervalNodeMapping) {
+//        // nothing done this is done by default with this tree model
+//    }
 
     @Override
     public NodeRef getCoalescentNode(int interval) {

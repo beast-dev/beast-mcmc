@@ -50,6 +50,7 @@ import java.util.logging.Logger;
 public final class TreeDataLikelihood extends AbstractModelLikelihood implements TreeTraitProvider, Citable, Profileable, Reportable {
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
+    private static final boolean COUNT_OPERATIONS_PER_MOVE = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
 
     public TreeDataLikelihood(DataLikelihoodDelegate likelihoodDelegate,
@@ -260,7 +261,6 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         assert (likelihoodKnown) : "the likelihood should always be known at this point in the cycle";
 
         storedLogLikelihood = logLikelihood;
-
     }
 
     @Override
@@ -295,6 +295,11 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             if (COUNT_TOTAL_OPERATIONS) {
                 totalMatrixUpdateCount += branchOperations.size();
                 totalOperationCount += nodeOperations.size();
+            }
+
+            if (COUNT_OPERATIONS_PER_MOVE) {
+                moveMatrixUpdateCount = branchOperations.size();
+                moveOperationCount = nodeOperations.size();
             }
 
             final NodeRef root = treeModel.getRoot();
@@ -508,6 +513,18 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
     private final boolean isTreeRandom;
 
+    // used to get information about the number of updates per tree move
+    public int getMoveOperationCount() {
+        return moveOperationCount;
+    }
+
+    // used to get information about the number of updates per tree move
+    public int getMoveMatrixUpdateCount() {
+        return moveMatrixUpdateCount;
+    }
+
+    private int moveOperationCount = 0;
+    private int moveMatrixUpdateCount = 0;
     private int totalOperationCount = 0;
     private int totalMatrixUpdateCount = 0;
     private int totalGetLogLikelihoodCount = 0;

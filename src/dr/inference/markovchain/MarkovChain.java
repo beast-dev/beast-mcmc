@@ -28,6 +28,9 @@
 package dr.inference.markovchain;
 
 import dr.evomodel.continuous.GibbsIndependentCoalescentOperator;
+import dr.evomodel.operators.AbstractTreeOperator;
+import dr.evomodel.operators.SubtreeLeapOperator;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.*;
 import dr.inference.operators.*;
 
@@ -271,6 +274,30 @@ public final class MarkovChain implements Serializable {
 
                     if (DEBUG) {
                         System.out.println("Time: " + duration);
+                    }
+
+                    // this is a horrible hack to check how many node/matrix updates is done per tree move...
+                    if (mcmcOperator instanceof AbstractTreeOperator) {
+                        int operationCount = 0;
+                        int matrixCount = 0;
+                        for (Likelihood lik : likelihood.getLikelihoodSet()) {
+                            if (lik instanceof CompoundLikelihood) {
+                                for (Likelihood lik2 : ((CompoundLikelihood) lik).getLikelihoodSet()) {
+                                    if (lik2 instanceof TreeDataLikelihood) {
+                                        operationCount = ((TreeDataLikelihood) lik2).getMoveOperationCount();
+                                        matrixCount = ((TreeDataLikelihood) lik2).getMoveMatrixUpdateCount();
+                                    } else if (lik2 instanceof CompoundLikelihood) {
+                                        for (Likelihood lik3 : ((CompoundLikelihood) lik2).getLikelihoodSet()) {
+                                            if (lik3 instanceof TreeDataLikelihood) {
+                                                operationCount = ((TreeDataLikelihood) lik3).getMoveOperationCount();
+                                                matrixCount = ((TreeDataLikelihood) lik3).getMoveMatrixUpdateCount();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+//                        ((AbstractTreeOperator)mcmcOperator).addTreeUpdateCounts(operationCount, matrixCount);
                     }
                 }
 

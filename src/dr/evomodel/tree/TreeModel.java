@@ -291,7 +291,7 @@ public abstract class TreeModel extends AbstractModel implements MutableTreeMode
      */
     public void pushTreeChangedEvent(TreeChangedEvent event) {
 
-        if (!isVariable()) throw new IllegalStateException("Attempting state change in fixed tree");
+        assert isVariable() : "Attempting state change in fixed tree";
 
         if (inEdit) {
             treeChangedEvents.add(event);
@@ -357,7 +357,7 @@ public abstract class TreeModel extends AbstractModel implements MutableTreeMode
     }
 
     public boolean beginTreeEdit() {
-        if (inEdit) throw new RuntimeException("Already in edit transaction mode!");
+        assert !inEdit : "Already in edit transaction mode!";
 
         inEdit = true;
 
@@ -365,7 +365,7 @@ public abstract class TreeModel extends AbstractModel implements MutableTreeMode
     }
 
     public void endTreeEdit() {
-        if (!inEdit) throw new RuntimeException("Not in edit transaction mode!");
+        assert inEdit : "Not in edit transaction mode!";
 
         inEdit = false;
 

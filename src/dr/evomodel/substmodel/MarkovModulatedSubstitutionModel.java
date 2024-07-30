@@ -48,7 +48,7 @@ import java.util.logging.Logger;
 /**
  * @author Marc A. Suchard
  */
-public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel implements Citable, Loggable {
+public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel implements ParameterReplaceableSubstitutionModel, Citable, Loggable {
 
     private List<SubstitutionModel> baseModels;
     private final int numBaseModel;
@@ -65,6 +65,8 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
 
     private boolean birthDeathModel;
     private boolean geometricRates;
+
+    private final Parameter relativeWeights;
 
     private final SiteRateModel gammaRateModel;
 
@@ -100,6 +102,7 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
 
         this.switchingRates = switchingRates;
         addVariable(switchingRates);
+        this.relativeWeights = relativeWeights;
 
         if (switchingRates.getDimension() != 2 * (numBaseModel - 1)
                 && switchingRates.getDimension() != numBaseModel * (numBaseModel - 1)
@@ -396,6 +399,20 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
         }
 
         return columns.toArray(new LogColumn[0]);
+    }
+
+    @Override
+    public ParameterReplaceableSubstitutionModel factory(List<Parameter> oldParameters, List<Parameter> newParameters) {
+        List<SubstitutionModel> newBaseModels = new ArrayList<>();
+        Parameter switchingRatesParameter = oldParameters.contains(switchingRates) ? newParameters.get(oldParameters.indexOf(switchingRates)) : switchingRates;
+        Parameter rateScalarParameter = oldParameters.contains(rateScalar) ? newParameters.get(oldParameters.indexOf(rateScalar)) : rateScalar;
+
+        for (int i = 0; i < baseModels.size(); i++) {
+            ParameterReplaceableSubstitutionModel substitutionModel = (ParameterReplaceableSubstitutionModel) baseModels.get(i);
+            newBaseModels.add(substitutionModel.factory(oldParameters, newParameters));
+        }
+
+        return new MarkovModulatedSubstitutionModel(getModelName(), newBaseModels, switchingRatesParameter, dataType, null, rateScalarParameter, geometricRates, gammaRateModel, relativeWeights);
     }
 
     private class RateColumn extends NumberColumn {

@@ -313,11 +313,13 @@ public class HKY extends BaseSubstitutionModel implements Citable,
                 kappa = newParameter;
             } else if (oldParameter == freqModel.getFrequencyParameter()) {
                 frequencies = new FrequencyModel(freqModel.getDataType(), newParameter);
-            } else {
-                throw new RuntimeException("Parameter not found in HKY SubstitutionModel.");
             }
         }
-        return new HKY(kappa, frequencies);
+        if (kappa == kappaParameter && frequencies == freqModel) {
+            return this;
+        } else {
+            return new HKY(kappa, frequencies);
+        }
     }
 
 

@@ -81,6 +81,13 @@ public class Sequence implements Identifiable, Attributable {
         setSequenceString(sequence);
     }
 
+    public Sequence(Taxon taxon, DataType dataType, int[] states) {
+        sequenceString = new StringBuffer();
+        setTaxon(taxon);
+        this.dataType = dataType;
+        setSequenceStates(states);
+    }
+
     /**
      * @return the DataType of the sequences.
      */
@@ -181,6 +188,13 @@ public class Sequence implements Identifiable, Attributable {
      */
     public void insertSequenceString(int offset, String sequence) {
         sequenceString.insert(offset, sequence);
+    }
+
+    public void setSequenceStates(int[] states) {
+        sequenceString.setLength(0);
+        for (int state : states) {
+            sequenceString.append(dataType.getChar(state));
+        }
     }
 
     /**

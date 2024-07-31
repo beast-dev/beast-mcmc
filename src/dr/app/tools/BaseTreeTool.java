@@ -226,6 +226,8 @@ public class BaseTreeTool {
             case 1:
                 result[0] = args2[0];
                 break;
+            case 0:
+                return null;
             default: {
                 System.err.println("Unknown option: " + args2[2]);
                 System.err.println();

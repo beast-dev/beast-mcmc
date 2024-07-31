@@ -80,7 +80,7 @@ public class CTMCScalePrior extends AbstractModelLikelihood
 
         addVariable(ctmcScale);
 
-        if (taxonList != null) {
+        if (taxonList != null && taxonList.getTaxonCount() < treeModel.getTaxonCount()) {
             this.taxa = new HashSet<>();
             for (Taxon taxon : taxonList) {
                 this.taxa.add(taxon);

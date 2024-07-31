@@ -29,6 +29,7 @@ package dr.evomodel.treedatalikelihood.discrete;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
+import dr.evomodel.substmodel.DifferentialMassProvider;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -36,7 +37,6 @@ import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.BranchParameter;
 import dr.inference.model.Parameter;
-import dr.math.NumericalDerivative;
 import dr.xml.Reportable;
 
 /**
@@ -59,7 +59,7 @@ public abstract class HyperParameterBranchSubstitutionParameterGradient extends 
                                                              Double tolerance,
                                                              boolean useHessian) {
 
-        super(traitName, treeDataLikelihood, likelihoodDelegate,  null, null, tolerance, useHessian, 0);
+        super(traitName, treeDataLikelihood, likelihoodDelegate,  null, null, tolerance, useHessian, 0, DifferentialMassProvider.Mode.EXACT);
 
         throw new RuntimeException("Not yet fixed.");
 //        locationScaleTransform = branchParameter.getTransform();

@@ -40,6 +40,8 @@ public interface OperatorSchedule extends Serializable {
 
     String SHOW_OPERATORS = "show_operators";
     OptimizationTransform DEFAULT_TRANSFORM = OptimizationTransform.POWER;
+    int POWERB = 1000000;
+    double POWERC = 0.5556; // c = 5/9
 
     /**
      * @return Choose the next operator.
@@ -89,7 +91,7 @@ public interface OperatorSchedule extends Serializable {
         },
         POWER("power") {
             @Override public double transform(double d) {
-                return Math.pow(d, 0.55); // c = 5/9
+                return Math.pow(d/((double)POWERB), POWERC);
             }
         };
 

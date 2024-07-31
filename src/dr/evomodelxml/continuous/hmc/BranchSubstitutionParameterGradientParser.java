@@ -83,7 +83,7 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
             DifferentiableBranchRates branchRateModel = (DifferentiableBranchRates) xo.getChild(DifferentiableBranchRates.class);
             CompoundParameter branchParameter = branchModel.getBranchSpecificParameters(branchRateModel);
             return new BranchSubstitutionParameterGradient(traitName, treeDataLikelihood, beagleData,
-                    branchParameter, branchRateModel, tolerance, useHessian, dim);
+                    branchParameter, branchRateModel, tolerance, useHessian, dim, mode);
         }
     }
 

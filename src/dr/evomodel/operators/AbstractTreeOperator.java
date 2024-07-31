@@ -29,20 +29,25 @@ package dr.evomodel.operators;
 
 import dr.evomodel.tree.TreeModel;
 import dr.evolution.tree.*;
+import dr.inference.model.Bounds;
 import dr.inference.operators.SimpleMCMCOperator;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
  */
 public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
 
-	private long transitions = 0;
+    private long transitions = 0;
 
-	/**
+    /**
      * @return the number of transitions since last call to reset().
      */
     public long getTransitions() {
-    	return transitions;
+        return transitions;
     }
 
     /**
@@ -52,7 +57,7 @@ public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
      * @param transitions number of transition
      */
     public void setTransitions(long transitions) {
-    	this.transitions = transitions;
+        this.transitions = transitions;
     }
 
     public double getTransistionProbability() {
@@ -62,30 +67,30 @@ public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
         return (double) transition / (double) (accepted + rejected);
     }
 
-	/* exchange sub-trees whose root are i and j */
-	protected void exchangeNodes(TreeModel tree, NodeRef i, NodeRef j,
-	                             NodeRef iP, NodeRef jP) {
+    /* exchange sub-trees whose root are i and j */
+    protected void exchangeNodes(TreeModel tree, NodeRef i, NodeRef j,
+                                 NodeRef iP, NodeRef jP) {
 
-	    tree.beginTreeEdit();
-	    tree.removeChild(iP, i);
-	    tree.removeChild(jP, j);
-	    tree.addChild(jP, i);
-	    tree.addChild(iP, j);
+        tree.beginTreeEdit();
+        tree.removeChild(iP, i);
+        tree.removeChild(jP, j);
+        tree.addChild(jP, i);
+        tree.addChild(iP, j);
 
         tree.endTreeEdit();
-	}
+    }
 
-	public void reset() {
+    public void reset() {
         super.reset();
         transitions = 0;
     }
 
-	/**
-	 * @param tree   the tree
-	 * @param parent the parent
-	 * @param child  the child that you want the sister of
-	 * @return the other child of the given parent.
-	 */
+    /**
+     * @param tree   the tree
+     * @param parent the parent
+     * @param child  the child that you want the sister of
+     * @return the other child of the given parent.
+     */
     protected NodeRef getOtherChild(Tree tree, NodeRef parent, NodeRef child) {
         if( tree.getChild(parent, 0) == child ) {
             return tree.getChild(parent, 1);
@@ -93,4 +98,40 @@ public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
             return tree.getChild(parent, 0);
         }
     }
+
+    public void addTreeUpdateCounts(int operationCount, int matrixCount) {
+        operationCounts.add(operationCount);
+        matrixCounts.add(matrixCount);
+    }
+
+
+    public void writeOperationCounts() {
+        int sumOpCount = 0;
+        int minOpCount = Integer.MAX_VALUE;
+        int maxOpCount = Integer.MIN_VALUE;
+        int sumMatCount = 0;
+        int minMatCount = Integer.MAX_VALUE;
+        int maxMatCount = Integer.MIN_VALUE;
+        for (int i = 1; i < operationCounts.size(); i++) {
+            int opCount = operationCounts.get(i);
+            int matCount = matrixCounts.get(i);
+            sumOpCount += opCount;
+            if (opCount > maxOpCount) maxOpCount = opCount;
+            if (opCount < minOpCount) minOpCount = opCount;
+            sumMatCount += matCount;
+            if (matCount > maxMatCount) maxMatCount = matCount;
+            if (matCount < minMatCount) minMatCount = matCount;
+        }
+
+        System.out.println("Operator: " + getOperatorName());
+        System.out.println("Operation count: " + operationCounts.size());
+        System.out.println("Op count: " + ((double)sumOpCount) / (operationCounts.size() - 1));
+        System.out.println("Op min,max: " + minOpCount + ", " + maxOpCount);
+        System.out.println("Mat count: " + ((double)sumMatCount) / (matrixCounts.size() - 1));
+        System.out.println("Mat min,max: " + minMatCount + ", " + maxMatCount);
+        System.out.println();
+    }
+
+    List<Integer> operationCounts = new ArrayList<>();
+    List<Integer> matrixCounts = new ArrayList<>();
 }

@@ -292,12 +292,12 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             final List<DataLikelihoodDelegate.BranchOperation> branchOperations = treeTraversalDelegate.getBranchOperations();
             final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = treeTraversalDelegate.getNodeOperations();
 
-            if (COUNT_TOTAL_OPERATIONS) {
+            if (COUNT_TOTAL_OPERATIONS && underflowCount == 0) {
                 totalMatrixUpdateCount += branchOperations.size();
                 totalOperationCount += nodeOperations.size();
             }
 
-            if (COUNT_OPERATIONS_PER_MOVE) {
+            if (COUNT_OPERATIONS_PER_MOVE && underflowCount == 0) {
                 moveMatrixUpdateCount = branchOperations.size();
                 moveOperationCount = nodeOperations.size();
             }

@@ -193,6 +193,9 @@ public final class MarkovChain implements Serializable {
                 break;
             }
 
+            if (currentState == 154) {
+                System.out.println("\n>> Iteration: " + currentState);
+            }
             // Get the operator
             final int op = schedule.getNextOperatorIndex();
             final MCMCOperator mcmcOperator = schedule.getOperator(op);
@@ -297,7 +300,7 @@ public final class MarkovChain implements Serializable {
                                 }
                             }
                         }
-//                        ((AbstractTreeOperator)mcmcOperator).addTreeUpdateCounts(operationCount, matrixCount);
+                        ((AbstractTreeOperator)mcmcOperator).addTreeUpdateCounts(operationCount, matrixCount);
                     }
                 }
 
@@ -495,6 +498,13 @@ public final class MarkovChain implements Serializable {
         }
 
         currentLength = currentState;
+
+        for (int i = 0; i < schedule.getOperatorCount(); i++) {
+            final MCMCOperator mcmcOperator = schedule.getOperator(i);
+            if (mcmcOperator instanceof AbstractTreeOperator) {
+                ((AbstractTreeOperator)mcmcOperator).writeOperationCounts();
+            }
+        }
 
         return currentLength;
     }

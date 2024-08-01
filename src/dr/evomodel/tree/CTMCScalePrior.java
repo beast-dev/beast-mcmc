@@ -195,7 +195,8 @@ public class CTMCScalePrior extends AbstractModelLikelihood
     private double getTreeLength() {
         if (!treeLengthKnown) {
             if (taxa == null) {
-                treeLength = TreeUtils.getTreeLength(treeModel, treeModel.getRoot());
+                treeLength = TreeUtils.getTreeLength(treeModel);
+//                assert Math.abs(treeLength - TreeUtils.getTreeLength(treeModel, treeModel.getRoot())) < 1E-6;
             } else {
                 treeLength = TreeUtils.getSubTreeLength(treeModel, taxa);
             }

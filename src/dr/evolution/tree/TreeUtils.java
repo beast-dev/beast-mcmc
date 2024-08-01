@@ -59,6 +59,14 @@ public class TreeUtils {
         return leafCount;
     }
 
+    public static double getTreeLength(Tree tree) {
+        double length = 0;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            length += tree.getBranchLength(tree.getNode(i));
+        }
+        return length;
+    }
+
     public static double getTreeLength(Tree tree, NodeRef node) {
 
         int childCount = tree.getChildCount(node);

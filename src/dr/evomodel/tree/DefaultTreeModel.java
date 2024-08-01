@@ -72,8 +72,8 @@ public class DefaultTreeModel extends TreeModel {
     }
 
     /* New constructor that copies the attributes of Tree tree into the new TreeModel
-      * Useful for constructing a TreeModel from a NEXUS file entry
-      */
+     * Useful for constructing a TreeModel from a NEXUS file entry
+     */
 
     public DefaultTreeModel(String name, Tree tree, boolean copyAttributes, boolean fixHeights, boolean fixTree) {
 
@@ -623,25 +623,25 @@ public class DefaultTreeModel extends TreeModel {
         //hence perform possible swaps in a separate loop
 
         for (int i = 0; i < edges.length; i++) {
-                if (edges[i] != -1) {
-                    if(i < this.externalNodeCount) {
-                        if (childOrder[i] == 0 && nodes[edges[i]].getChild(0) != nodes[nodeMap[i]]) {
-                            //swap child nodes
-                            Node childOne = nodes[edges[i]].removeChild(0);
-                            Node childTwo = nodes[edges[i]].removeChild(1);
-                            nodes[edges[i]].addChild(childTwo);
-                            nodes[edges[i]].addChild(childOne);
-                        }
-                    }else{
-                        if (childOrder[i] == 0 && nodes[edges[i]].getChild(0) != nodes[i]) {
-                            //swap child nodes
-                            Node childOne = nodes[edges[i]].removeChild(0);
-                            Node childTwo = nodes[edges[i]].removeChild(1);
-                            nodes[edges[i]].addChild(childTwo);
-                            nodes[edges[i]].addChild(childOne);
-                        }
+            if (edges[i] != -1) {
+                if(i < this.externalNodeCount) {
+                    if (childOrder[i] == 0 && nodes[edges[i]].getChild(0) != nodes[nodeMap[i]]) {
+                        //swap child nodes
+                        Node childOne = nodes[edges[i]].removeChild(0);
+                        Node childTwo = nodes[edges[i]].removeChild(1);
+                        nodes[edges[i]].addChild(childTwo);
+                        nodes[edges[i]].addChild(childOne);
+                    }
+                }else{
+                    if (childOrder[i] == 0 && nodes[edges[i]].getChild(0) != nodes[i]) {
+                        //swap child nodes
+                        Node childOne = nodes[edges[i]].removeChild(0);
+                        Node childTwo = nodes[edges[i]].removeChild(1);
+                        nodes[edges[i]].addChild(childTwo);
+                        nodes[edges[i]].addChild(childOne);
                     }
                 }
+            }
 
         }
 
@@ -848,8 +848,8 @@ public class DefaultTreeModel extends TreeModel {
     }
 
     public Parameter createNodeTraitsParameterAsMatrix(String name, int dim, double[] initialValues,
-                                               boolean rootNode, boolean internalNodes,
-                                               boolean leafNodes, boolean firesTreeEvents,
+                                                       boolean rootNode, boolean internalNodes,
+                                                       boolean leafNodes, boolean firesTreeEvents,
                                                        boolean signalComponents) {
 
         checkValidFlags(rootNode, internalNodes, leafNodes);

@@ -38,11 +38,6 @@ import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.*;
-import dr.util.Citable;
-import dr.util.Citation;
-import dr.util.CommonCitations;
-
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -91,7 +86,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private static List<Integer> extraBufferOrder = null;
 
     // Default frequency for complete recomputation of scaling factors under the 'dynamic' scheme
-    private static final int RESCALE_FREQUENCY = 100;
+    private static final int RESCALE_FREQUENCY = 10000;
     private static final int RESCALE_TIMES = 1;
 
     // count the number of partial likelihood and matrix updates

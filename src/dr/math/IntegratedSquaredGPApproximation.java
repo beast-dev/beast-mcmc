@@ -60,23 +60,22 @@ public class IntegratedSquaredGPApproximation {
 
 
     private final double[] coefficients;
+    private final double origin;
     private final double boundary;
     private final double marginalVariance;
     private final double lengthScale;
 
 
-    private double integral;
-    private double storedIntegral;
-    private boolean storedIntegralKnown;
-
 
     public IntegratedSquaredGPApproximation(double[] coefficients,
+                                            double origin,
                                             double boundary,
                                             double marginalVariance,
                                             double lengthScale) {
 
 
         this.coefficients = coefficients;
+        this.origin = origin;
         this.boundary = boundary;
         this.marginalVariance = marginalVariance;
         this.lengthScale = lengthScale;
@@ -98,7 +97,7 @@ public class IntegratedSquaredGPApproximation {
     public double getIntegral(double start, double end) {
 
         double length = end - start;
-        double sum = 0;
+        double sum = origin * origin * (end -start);
         double term1;
         double term2;
 
@@ -110,10 +109,14 @@ public class IntegratedSquaredGPApproximation {
                 sum -= 0.25 * getConstantForIntegral(i) * getConstantForIntegral(i) * (1/Math.sqrt(getSpectralDensityEigenValue(i, boundary)))
                 * (Math.sin(2 * Math.sqrt(getSpectralDensityEigenValue(i, boundary))*(end + boundary)) -
                         Math.sin(2 * Math.sqrt(getSpectralDensityEigenValue(i, boundary))*(start + boundary)));
+                sum -= 2 * origin * getConstantForIntegral(i) * (1/Math.sqrt(getSpectralDensityEigenValue(i, boundary)))
+                        * (Math.cos(Math.sqrt(getSpectralDensityEigenValue(i, boundary)) * (end + boundary))
+                        - Math.cos(Math.sqrt(getSpectralDensityEigenValue(i, boundary)) * (start + boundary)));
             }
 
             for (int i = 0; i < coefficients.length; i++) {
                 for (int j = i + 1; j < coefficients.length; j++) {
+
                     term1 = Math.sin((Math.sqrt(getSpectralDensityEigenValue(j, boundary)) -
                             Math.sqrt(getSpectralDensityEigenValue(i, boundary)))*(end + boundary));
                     term2 = Math.sin((Math.sqrt(getSpectralDensityEigenValue(j, boundary)) -
@@ -132,45 +135,58 @@ public class IntegratedSquaredGPApproximation {
 
         }
 
-
         return sum;
     }
 
+    /*public double[] getGradient(double start, double end) {
+        double[] gradients = new double[coefficients.length];
+        for (int i = 0; i < coefficients.length; i++) {
+            gradients[i] = getGradientWrtCoefficient(start, end, i);
+        }
+        return  gradients;
+    }*/
 
-// TO DO: gradient of the integral with respect to coefficients
-/*
-    public double getGradientWrtCoefficient(double start, double end, int coefficientIndex) {
 
+    /*public double getGradientWrtCoefficient(double start, double end, int j) {
 
-        double length = end - start;
+        double term1;
+        double term2;
         double sum = 0;
+
+        sum += getConstantForGradient(j) * getConstantForGradient(j) * coefficients[j]
+                * ((end - start) - 0.5 * (1/Math.sqrt(getSpectralDensityEigenValue(j, boundary))) *
+                (Math.sin(2 * Math.sqrt(getSpectralDensityEigenValue(j, boundary))*(end + boundary)) -
+                 Math.sin(2 * Math.sqrt(getSpectralDensityEigenValue(j, boundary))*(start + boundary))));
 
         if (end > start) {
 
-            sum += 2 * constantGradient(coefficientIndex) * constantGradient(coefficientIndex) * coefficients[coefficientIndex] * (length/2 -
-                    0.25 * (Math.sin(2 * Math.sqrt(spectralDensityEigenValue(coefficientIndex)) * (end + boundary))
-                            - Math.sin(2 * Math.sqrt(spectralDensityEigenValue(coefficientIndex)) * (start + boundary))));
 
             for (int i = 0; i < coefficients.length; i++) {
 
-                if (i != coefficientIndex) {
-                    sum += (constantGradient(i) * constantGradient(coefficientIndex) * coefficients[i] *
-                            ((Math.sin(Math.sqrt(spectralDensityEigenValue(i)) * (end + boundary)
-                                    - Math.sqrt(spectralDensityEigenValue(coefficientIndex) * (end + boundary)))
-                                    - Math.sin((Math.sqrt(spectralDensityEigenValue(i)) * (start + boundary))
-                                    - (Math.sqrt(spectralDensityEigenValue(coefficientIndex)) * (start + boundary))))
-                                    + ((Math.sin(Math.sqrt(spectralDensityEigenValue(i)) * (end + boundary)
-                                    + Math.sqrt(spectralDensityEigenValue(coefficientIndex)) * (end + boundary)))
-                                    - Math.sin((Math.sqrt(spectralDensityEigenValue(i)) * (start + boundary))
-                                    + (Math.sqrt(spectralDensityEigenValue(coefficientIndex)) * (start + boundary))))));
+                if (i != j) {
+
+                    term1 = Math.sin((Math.sqrt(getSpectralDensityEigenValue(j, boundary)) -
+                            Math.sqrt(getSpectralDensityEigenValue(i, boundary)))*(end + boundary));
+                    term2 = Math.sin((Math.sqrt(getSpectralDensityEigenValue(j, boundary)) -
+                            Math.sqrt(getSpectralDensityEigenValue(i, boundary)))*(start + boundary));
+                    sum += ((getConstantForGradient(i) * getConstantForGradient(j))/(Math.sqrt(getSpectralDensityEigenValue(j, boundary)) -
+                            Math.sqrt(getSpectralDensityEigenValue(i, boundary)))) * (term1 - term2);
+                    term1 = Math.sin((Math.sqrt(getSpectralDensityEigenValue(j, boundary)) +
+                            Math.sqrt(getSpectralDensityEigenValue(i, boundary)))*(end + boundary));
+                    term2 = Math.sin((Math.sqrt(getSpectralDensityEigenValue(j, boundary)) +
+                            Math.sqrt(getSpectralDensityEigenValue(i, boundary)))*(start + boundary));
+                    sum += ((getConstantForGradient(i) * getConstantForGradient(j))/(Math.sqrt(getSpectralDensityEigenValue(j, boundary)) +
+                            Math.sqrt(getSpectralDensityEigenValue(i, boundary)))) * (term2 - term1);
+
                 }
             }
         }
 
         return sum;
 
-    }
-*/
+    }*/
+
+
 public static void main(String[] args) {
 
     double[] coefficients = new double[] {1.2298 , -0.1874792 , 0.4808458 , -0.5665365 , 0.1375066,
@@ -185,14 +201,15 @@ public static void main(String[] args) {
     double boundary = 2.5;
     double marginalVariance = 32.33321;
     double lengthScale = 0.8659804;
+    double origin = 0;
 
-    IntegratedSquaredGPApproximation approx = new IntegratedSquaredGPApproximation(coefficients, boundary,  marginalVariance, lengthScale);
+    IntegratedSquaredGPApproximation approx = new IntegratedSquaredGPApproximation(coefficients, boundary, origin, marginalVariance, lengthScale);
 
 
     System.out.println("Integral 1:" + approx.getIntegral(-1, -0.5));
     System.out.println("Integral 2:" + approx.getIntegral(-0.5, 0));
     System.out.println("Integral 3:" + approx.getIntegral(0, 0.5));
-    System.out.println("Integral 3:" + approx.getIntegral(0.5, 1));
+    System.out.println("Integral 4:" + approx.getIntegral(0.5, 1));
 
 }
 

@@ -36,42 +36,33 @@ public class GaussianProcessBasisApproximationParser extends AbstractXMLObjectPa
     private static final String PARSER_NAME = "gaussianProcessBasisApproximation";
     private static final String DIM = "dim";
     private static final String KNOTS = "knots";
+    private static final String ORIGIN = "origin";
+    private static final String BOUNDARY = "boundary";
+    private static final String TIMES = "times";
     private static final String MARGINALVARIANCE = "marginalVariance";
     private static final String LENGTHSCALE = "lengthScale";
-    private static final String BOUNDARY = "boundary";
     private static final String COEFFICIENT = "coefficient";
-    private static final String TIMES = "times";
     private static final String PRECISION = "precision";
 
     public String getParserName() { return PARSER_NAME; }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+        int dim = xo.getIntegerAttribute(DIM);
+
         int knots = xo.getIntegerAttribute(KNOTS);
 
-        int dim = xo.getIntegerAttribute(DIM);
+        double origin = xo.getDoubleAttribute(ORIGIN);
+
+        double boundary = xo.getDoubleAttribute(BOUNDARY);
+
+        double[] times = xo.getDoubleArrayAttribute(TIMES);
 
         Parameter marginalVariance = (Parameter) xo.getElementFirstChild(MARGINALVARIANCE);
 
-        if (marginalVariance.getParameterValue(0) <= 0.0) {
-            throw new XMLParseException("Marginal variance must be > 0.0");
-        }
-
         Parameter lengthScale = (Parameter) xo.getElementFirstChild(LENGTHSCALE);
 
-        if (lengthScale.getParameterValue(0) <= 0.0) {
-            throw new XMLParseException("Length scale must be > 0.0");
-        }
-
-        Parameter boundary = (Parameter) xo.getElementFirstChild(BOUNDARY);
-
-        if (boundary.getParameterValue(0) <= 0.0) {
-            throw new XMLParseException("Boundary must be > 0.0");
-        }
-
         Parameter coefficient = (Parameter) xo.getElementFirstChild(COEFFICIENT);
-
-        Parameter times = (Parameter) xo.getElementFirstChild(TIMES);
 
         Parameter precision = (Parameter) xo.getElementFirstChild(PRECISION);
 
@@ -85,8 +76,8 @@ public class GaussianProcessBasisApproximationParser extends AbstractXMLObjectPa
 
         String id = xo.hasId() ? xo.getId() : PARSER_NAME;
 
-        return new GaussianProcessBasisApproximation(id, dim, knots, marginalVariance,
-                lengthScale, boundary, coefficient, times, precision);
+        return new GaussianProcessBasisApproximation(id, dim, knots, origin, boundary, times, marginalVariance,
+                lengthScale, coefficient, precision);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
@@ -94,11 +85,12 @@ public class GaussianProcessBasisApproximationParser extends AbstractXMLObjectPa
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(DIM),
             AttributeRule.newIntegerRule(KNOTS),
+            AttributeRule.newDoubleRule(ORIGIN),
+            AttributeRule.newDoubleRule(BOUNDARY),
+            AttributeRule.newDoubleArrayRule(TIMES),
             new ElementRule(MARGINALVARIANCE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(LENGTHSCALE,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
-            new ElementRule(BOUNDARY,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(COEFFICIENT,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),

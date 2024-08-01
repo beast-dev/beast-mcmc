@@ -61,6 +61,7 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
     private final Tree tree;
     private final Parameter lastSamplingTime;
     private final Parameter coefficients;
+    private final Parameter origin;
     private final Parameter boundary;
     private final Parameter scaleFactor;
     private final Parameter lengthScale;
@@ -70,14 +71,14 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
     private boolean storedNodeRatesKnown;
 
     private double[] nodeRates;
-    private double[] gradientwrtCoefficients;
     private double[] storedNodeRates;
-    private double[] y;
+    private double[] nodeIndices;
 
     public NonParametricBranchRateModel(String name,
                                         Tree tree,
                                         Parameter lastSamplingTime,
                                         Parameter coefficients,
+                                        Parameter origin,
                                         Parameter boundary,
                                         Parameter scaleFactor,
                                         Parameter lengthScale) {
@@ -86,6 +87,7 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
         this.tree = tree;
         this.lastSamplingTime = lastSamplingTime;
         this.coefficients = coefficients;
+        this.origin = origin;
         this.boundary = boundary;
         this.scaleFactor = scaleFactor;
         this.lengthScale = lengthScale;
@@ -96,6 +98,7 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
 
         addVariable(lastSamplingTime);
         addVariable(coefficients);
+        addVariable(origin);
         addVariable(boundary);
         addVariable(scaleFactor);
         addVariable(lengthScale);
@@ -107,8 +110,7 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
 
         nodeRatesKnown = false;
         nodeRates = new double[tree.getNodeCount() - 1];
-        gradientwrtCoefficients = new double[coefficients.getDimension()];
-        y = new double[tree.getNodeCount() - 1];
+        nodeIndices = new double[tree.getNodeCount() - 1];
     }
 
 
@@ -132,8 +134,8 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
             coefficientValues[i] = coefficients.getParameterValue(i);
         }
 
-        IntegratedSquaredGPApproximation approximation = new IntegratedSquaredGPApproximation(coefficientValues, boundary.getParameterValue(0),
-                                            scaleFactor.getParameterValue(0), lengthScale.getParameterValue(0));
+        IntegratedSquaredGPApproximation approximation = new IntegratedSquaredGPApproximation(coefficientValues, origin.getParameterValue(0),
+                                            boundary.getParameterValue(0), scaleFactor.getParameterValue(0), lengthScale.getParameterValue(0));
         nodeRates[childIndex] = approximation.getIntegral(lastSamplingTime.getParameterValue(0) - currentHeight,
                                             lastSamplingTime.getParameterValue(0) - childHeight)/branchLength;
 
@@ -158,15 +160,8 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
 
 
 
-//    private double[] getGradientBranchWrtCoefficient(int i) {
-//        NodeRef root = tree.getRoot();
-//        double rootHeight = tree.getNodeHeight(root);
-//
-//        gradientCoefficientByBranch(rootHeight, tree.getChild(root, 0), i);
-//        gradientCoefficientByBranch(rootHeight, tree.getChild(root, 1), i);
-//
-//        return y;
-//    }
+
+
 
 
 
@@ -176,17 +171,14 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
 
         assert from == 0;
         assert to == coefficients.getDimension() - 1;
+        double[] gradientWrtCoefficients = new double[coefficients.getDimension()];
 
-        int m = coefficients.getDimension();
-        NodeRef root = tree.getRoot();
-        NodeRef child1 = tree.getChild(root, 0);
-        NodeRef child2 = tree.getChild(root, 1);
-        double rootHeight = tree.getNodeHeight(root);
-        Arrays.fill(gradientwrtCoefficients, 0);
+
+        Arrays.fill(gradientWrtCoefficients, 0);
 
 
 
-        return gradientwrtCoefficients;
+        return gradientWrtCoefficients;
 
     }
 

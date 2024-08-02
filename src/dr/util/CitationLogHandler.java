@@ -43,12 +43,19 @@ public class CitationLogHandler extends StreamHandler {
     }
 
     public static void closeHandler() {
+        INSTANCE.flush();
         INSTANCE.close();
+    }
+
+    public void publish(LogRecord record) {
+        super.publish(record);
+        flush();
+        //System.err.println("published: " + record.getMessage());
     }
 
     private class MessageLogFormatter extends Formatter {
 
-        // Line separator string.  This is the value of the line.separator
+        // Line separator string. This is the value of the line.separator
         // property at the moment that the SimpleFormatter was created.
         private final String lineSeparator = System.getProperty("line.separator");
 

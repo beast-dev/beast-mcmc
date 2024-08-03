@@ -404,14 +404,15 @@
     <!--
     <property name="version" value="1.9"/>
      -->
-    <property name="version" value="10.5.0-beta4"/>
+    <property name="version" value="10.5.0"/>
+    <property name="extra_release_tag" value="-beta4"/>
     <property name="jvm_version" value="1.8+"/>
 
     <property name="version_number" value="10.5.0"/>
     <property name="copyright" value="Copyright 2002-2024"/>
 
     <property name="release_dir" value="release"/>
-    <property name="BEAST_name" value="BEAST"/>`
+    <property name="BEAST_name" value="BEAST"/>
     <property name="BEAST_package_name" value="BEAST X"/>
     <property name="BEAST_package_name_linux" value="BEAST_X"/>
     <property name="BEAUti_name" value="BEAUti"/>
@@ -515,7 +516,7 @@
                     productVersion="${version}.0"
                     txtProductVersion="${version}"/>	-->
 
-        <zip destfile="${release_dir}/${BEAST_package_name} v${version}.zip">
+        <zip destfile="${release_dir}/${BEAST_package_name} v${version}${extra_release_tag}.zip">
             <zipfileset dir="${Windows_package_dir}" prefix="${BEAST_package_name} v${version}"/>
         </zip>
 
@@ -636,7 +637,7 @@
         <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Linux_package_dir}"/>
         <copy file="${common_dir}/README.txt" todir="${Linux_package_dir}"/>
 
-	<tar destfile="${release_dir}/${BEAST_package_name_linux}_v${version}.tgz" compression="gzip">
+	<tar destfile="${release_dir}/${BEAST_package_name_linux}_v${version}${extra_release_tag}.tgz" compression="gzip">
 			<tarfileset dir="${Linux_package_dir}" prefix="${BEAST_name}v${version}" filemode="755">
 				<include name="bin/**"/>
 			</tarfileset>
@@ -862,14 +863,14 @@
             <arg value="${Mac_package_dir}"/>
             <arg value="-volname"/>
             <arg value="${BEAST_name} v${version}"/>
-            <arg value="${release_dir}/${BEAST_package_name} v${version}.dmg"/>
+            <arg value="${release_dir}/${BEAST_package_name} v${version}${extra_release_tag}.dmg"/>
         </exec>
 
         <exec executable="codesign">
             <arg value="-s"/>
             <arg value="${AppleSignerInstaller}"/>
             <arg value="-v"/>
-            <arg value="${release_dir}/${BEAST_package_name} v${version}.dmg"/>
+            <arg value="${release_dir}/${BEAST_package_name} v${version}${extra_release_tag}.dmg"/>
         </exec>
 
 

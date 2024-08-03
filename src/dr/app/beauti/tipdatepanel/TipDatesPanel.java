@@ -113,6 +113,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     private GuessDatesDialog guessDatesDialog = null;
     private SetValueDialog dateValueDialog = null;
     private SetValueDialog precisionValueDialog = null;
+    private boolean shownTipDateSamplingDialog = false;
 
     public TipDatesPanel(BeautiFrame parent) {
 
@@ -432,8 +433,16 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                     hasVariableUncertainty = true;
                 }
             }
-            if (hasVariableUncertainty && tipDateSamplingCombo.getSelectedItem().equals(TipDateSamplingType.NO_SAMPLING)) {
-                tipDateSamplingCombo.setSelectedItem(TipDateSamplingType.SAMPLE_PRECISION);
+            if (hasVariableUncertainty &&
+                    tipDateSamplingCombo.getSelectedItem().equals(TipDateSamplingType.NO_SAMPLING) &&
+                    !shownTipDateSamplingDialog) {
+                int result = JOptionPane.showConfirmDialog(this.frame, "Some dates have less precision than others:\n" +
+                                "Switch on \"Sampling uniformly from precision\" option for these tips?",
+                        "Tip date precision", JOptionPane.YES_NO_OPTION);
+                if (result == JOptionPane.YES_OPTION) {
+                    tipDateSamplingCombo.setSelectedItem(TipDateSamplingType.SAMPLE_PRECISION);
+                }
+                shownTipDateSamplingDialog = true;
             }
         }
 

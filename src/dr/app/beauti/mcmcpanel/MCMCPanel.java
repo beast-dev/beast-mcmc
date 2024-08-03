@@ -58,6 +58,7 @@ public class MCMCPanel extends BeautiPanel {
 
     private static final long serialVersionUID = -3710586474593827540L;
     private static final Insets FIELD_INSETS = new Insets(3,6,3,6);
+    private static final int MAX_FILENAME_SHOWN = 48;
 
     WholeNumberField chainLengthField = new WholeNumberField(1, Integer.MAX_VALUE);
     WholeNumberField echoEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
@@ -200,11 +201,7 @@ public class MCMCPanel extends BeautiPanel {
         });
 
         optionsPanel.addComponent(addTxt);
-        if (OSType.isWindows()) {
-            addTxt.setSelected(true);
-        } else {
-            addTxt.setSelected(false);
-        }
+        addTxt.setSelected(OSType.isWindows());
         addTxt.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent changeEvent) {
                 setOptions(options);
@@ -509,7 +506,7 @@ public class MCMCPanel extends BeautiPanel {
 
             options.logFileName = options.fileNameStem + ".log";
             if (addTxt.isSelected()) options.logFileName = options.logFileName + ".txt";
-            logFileNameField.setText(options.logFileName);
+            logFileNameField.setText(truncate(options.logFileName));
 
 //            if (options.mapTreeFileName == null) {
 //			    mapTreeFileNameField.setText(options.fileNameStem + ".MAP.tree");
@@ -518,13 +515,13 @@ public class MCMCPanel extends BeautiPanel {
 //            }
 
             updateTreeFileNameList();
-            treeFileNameField.setText(displayTreeList(options.treeFileName));
+            treeFileNameField.setText(truncate(displayTreeList(options.treeFileName)));
 
             options.checkpointFileName = options.fileNameStem + ".chkpt";
-            checkpointFileNameField.setText(options.checkpointFileName);
+            checkpointFileNameField.setText(truncate(options.checkpointFileName));
 
             if (options.substTreeLog) {
-                substTreeFileNameField.setText(displayTreeList(options.substTreeFileName));
+                substTreeFileNameField.setText(truncate(displayTreeList(options.substTreeFileName)));
             } else {
                 substTreeFileNameField.setText("");
             }
@@ -535,7 +532,7 @@ public class MCMCPanel extends BeautiPanel {
             }
             operatorAnalysisFileNameField.setEnabled(options.operatorAnalysis);
             if (options.operatorAnalysis) {
-                operatorAnalysisFileNameField.setText(options.operatorAnalysisFileName);
+                operatorAnalysisFileNameField.setText(truncate(options.operatorAnalysisFileName));
             } else {
                 operatorAnalysisFileNameField.setText("");
             }
@@ -563,6 +560,13 @@ public class MCMCPanel extends BeautiPanel {
             operatorAnalysisCheck.setSelected(false);
             operatorAnalysisFileNameField.setText("");
         }
+    }
+
+    private static String truncate(String text) {
+        if (text.length() > MAX_FILENAME_SHOWN) {
+            text = "..." + text.substring(text.length() - MAX_FILENAME_SHOWN, text.length());
+        }
+        return text;
     }
 
     private void updateMLEFileNameStem() {

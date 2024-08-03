@@ -63,7 +63,8 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
         this.skyrideLikelihood = gmrfSkyrideLikelihood;
         //Casting is guaranteed by the parser
         TreeIntervalList intervalList = (TreeIntervalList) skyrideLikelihood.getIntervalList();
-        intervalList.setBuildIntervalNodeMapping(true);
+        assert intervalList.isBuildIntervalNodeMapping();
+//        intervalList.setBuildIntervalNodeMapping(true);
         this.intervalNodeMapping =intervalList;
         this.wrtParameter = wrtParameter;
         this.nodeHeightTransform = nodeHeightTransform;

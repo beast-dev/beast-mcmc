@@ -257,14 +257,14 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         // Sample states
         logLikelihood = 0;
 
-        //TODO uncomment and implement this
+        //TODO uncomment and implement this for ancestral state logging
         //traverseSample(treeModel, treeModel.getRoot(), null, null);
 
         areStatesRedrawn = true;
     }
 
     //TODO Remove code duplication from class dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood
-    private static String formattedState(int[] state, CodeFormatter formatter) {
+    private String formattedState(int[] state, CodeFormatter formatter) {
         StringBuffer sb = new StringBuffer();
         sb.append("\"");
         formatter.reset();

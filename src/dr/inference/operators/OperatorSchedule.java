@@ -40,7 +40,8 @@ public interface OperatorSchedule extends Serializable {
 
     String SHOW_OPERATORS = "show_operators";
     OptimizationTransform DEFAULT_TRANSFORM = OptimizationTransform.POWER;
-    int POWERB = 1000000;
+    //int POWERB = 1000000; //TODO discuss with Luiz why this value doesn't seem to work
+    int POWERB = 1;
     double POWERC = 0.5556; // c = 5/9
 
     /**

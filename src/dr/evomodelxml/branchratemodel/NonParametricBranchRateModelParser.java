@@ -14,8 +14,9 @@ public class NonParametricBranchRateModelParser extends AbstractXMLObjectParser 
     public static final String PARSER_NAME = "nonParametricRates";
     private static final String LASTSAMPLINGTIME = "lastSamplingTime";
     private static final String COEFFICIENTS = "coefficients";
+    private static final String ORIGIN = "origin";
     private static final String BOUNDARY = "boundary";
-    private static final String SCALEFACTOR = "scaleFactor";
+    private static final String MARGINALVARIANCE = "marginalVariance";
     private static final String LENGTHSCALE = "lengthScale";
 
     @Override
@@ -24,12 +25,13 @@ public class NonParametricBranchRateModelParser extends AbstractXMLObjectParser 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         Parameter lastSamplingTime = (Parameter) xo.getElementFirstChild(LASTSAMPLINGTIME);
         Parameter coefficients = (Parameter) xo.getElementFirstChild(COEFFICIENTS);
+        Parameter origin = (Parameter) xo.getElementFirstChild(ORIGIN);
         Parameter boundary = (Parameter) xo.getElementFirstChild(BOUNDARY);
-        Parameter scaleFactor = (Parameter) xo.getElementFirstChild(SCALEFACTOR);
+        Parameter marginalVariance = (Parameter) xo.getElementFirstChild(MARGINALVARIANCE);
         Parameter lengthScale = (Parameter) xo.getElementFirstChild(LENGTHSCALE);
         String id = xo.hasId() ? xo.getId() : PARSER_NAME;
 
-        return new NonParametricBranchRateModel(id, tree, lastSamplingTime, coefficients, boundary, scaleFactor, lengthScale);
+        return new NonParametricBranchRateModel(id, tree, lastSamplingTime, coefficients, origin, boundary, marginalVariance, lengthScale);
     }
 
     @Override
@@ -58,9 +60,11 @@ public class NonParametricBranchRateModelParser extends AbstractXMLObjectParser 
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(COEFFICIENTS,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+            new ElementRule(ORIGIN,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(BOUNDARY,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
-            new ElementRule(SCALEFACTOR,
+            new ElementRule(MARGINALVARIANCE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(LENGTHSCALE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),

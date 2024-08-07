@@ -1,27 +1,20 @@
 <?xml version="1.0" standalone="yes"?>
 <beast>
 
-	<parameter id="times" value="1 2 3"/>
 	<parameter id="data" value="3 7 10"/>
 
 	<randomField id="GpBasisApproximation">
 		<distribution>
-			<GaussianProcessBasisApproximation knots="2" dim="3">
+			<GaussianProcessBasisApproximation dim="3" knots = "2" origin="2" boundary="2" times="1 2 3">
 				<marginalVariance>
 					<parameter id="marginalVariance" value="1"/>
 				</marginalVariance>
 				<lengthScale>
 					<parameter id="lengthScale" value="0.3"/>
 				</lengthScale>
-				<boundary>
-					<parameter id="boundary" value="10"/>
-				</boundary>
 				<coefficient>
 					<parameter id="coefficient" value="1 1"/>
 				</coefficient>
-				<times>
-					<parameter idref="times"/>
-				</times>
 				<precision>
 					<parameter id="noise" value="1"/>
 				</precision>

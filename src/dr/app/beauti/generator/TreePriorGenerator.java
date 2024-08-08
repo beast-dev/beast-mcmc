@@ -36,10 +36,13 @@ import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeModel;
 import dr.evomodel.coalescent.GMRFSkyrideGradient;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.CSVExporterParser;
+import dr.evomodelxml.bigfasttree.BigFastTreeIntervalsParser;
 import dr.evomodelxml.coalescent.*;
 import dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.ExpansionModelParser;
@@ -577,9 +580,19 @@ public class TreePriorGenerator extends Generator {
                 writeParameter(prior.getParameter("skyride.precision"), 1, writer);
                 writer.writeCloseTag(GMRFSkyrideLikelihoodParser.PRECISION_PARAMETER);
 
-                writer.writeOpenTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
-                writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix + DefaultTreeModel.TREE_MODEL);
-                writer.writeCloseTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
+
+                if(model.isUsingThorneyBEAST()){
+                    writer.writeOpenTag(GMRFSkyrideLikelihoodParser.INTERVALS);
+                        writer.writeOpenTag(BigFastTreeIntervalsParser.TREE_INTERVALS);
+                            writer.writeIDref(ConstrainedTreeModel.CONSTRAINED_TREE_MODEL, prefix + DefaultTreeModel.TREE_MODEL);
+                        writer.writeCloseTag(BigFastTreeIntervalsParser.TREE_INTERVALS);
+                    writer.writeCloseTag(GMRFSkyrideLikelihoodParser.INTERVALS);
+                }else{
+                    writer.writeOpenTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
+                    writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix + DefaultTreeModel.TREE_MODEL);
+                    writer.writeCloseTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
+                }
+
 
                 writer.writeCloseTag(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
 
@@ -599,9 +612,17 @@ public class TreePriorGenerator extends Generator {
                 writer.writeOpenTag(CoalescentLikelihoodParser.MODEL);
                 writeNodeHeightPriorModelRef(prior, writer);
                 writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
-                writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
-                writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix + DefaultTreeModel.TREE_MODEL);
-                writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
+                if(model.isUsingThorneyBEAST()){
+                    writer.writeOpenTag(GMRFSkyrideLikelihoodParser.INTERVALS);
+                        writer.writeOpenTag(BigFastTreeIntervalsParser.TREE_INTERVALS);
+                            writer.writeIDref(ConstrainedTreeModel.CONSTRAINED_TREE_MODEL, prefix + DefaultTreeModel.TREE_MODEL);
+                        writer.writeCloseTag(BigFastTreeIntervalsParser.TREE_INTERVALS);
+                    writer.writeCloseTag(GMRFSkyrideLikelihoodParser.INTERVALS);
+                }else{
+                    writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
+                    writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix + DefaultTreeModel.TREE_MODEL);
+                    writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
+                }
                 writer.writeCloseTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
         }
     }
@@ -692,17 +713,49 @@ public class TreePriorGenerator extends Generator {
             cutOff.setInitial(skyGridInterval);
             writeParameter(cutOff, 1, writer);
             writer.writeCloseTag(GMRFSkyrideLikelihoodParser.CUT_OFF);
-
-            writer.writeOpenTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
+            
             // TODO Add all linked trees
             if (options.isShareSameTreePrior()) {
-                for (PartitionTreeModel thisModel : options.getPartitionTreeModels()) {
-                    writer.writeIDref(DefaultTreeModel.TREE_MODEL, thisModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
+                Boolean usingTB=true;
+                for(PartitionTreeModel treeModel: options.getPartitionTreeModels()){
+                    if(!treeModel.isUsingThorneyBEAST()){
+                        usingTB=false;
+                        break;
+                    }
+                }
+                if(usingTB){
+                    writer.writeOpenTag(GMRFSkyrideLikelihoodParser.INTERVALS);
+                    for (PartitionTreeModel thisModel : options.getPartitionTreeModels()) {
+                        writer.writeOpenTag(BigFastTreeIntervalsParser.TREE_INTERVALS);
+                            writer.writeIDref(ConstrainedTreeModel.CONSTRAINED_TREE_MODEL, thisModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
+                        writer.writeCloseTag(BigFastTreeIntervalsParser.TREE_INTERVALS);
+                    }
+                    writer.writeCloseTag(GMRFSkyrideLikelihoodParser.INTERVALS);
+                }else{
+                    writer.writeOpenTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
+                    for (PartitionTreeModel thisModel : options.getPartitionTreeModels()) {
+                        writer.writeIDref(DefaultTreeModel.TREE_MODEL, thisModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
+                    }
+                    writer.writeCloseTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
                 }
             } else {
-                writer.writeIDref(DefaultTreeModel.TREE_MODEL, options.getPartitionTreeModels(prior).get(0).getPrefix() + DefaultTreeModel.TREE_MODEL);
+
+                Boolean usingTB= options.getPartitionTreeModels(prior).get(0).isUsingThorneyBEAST();
+                if(usingTB){
+                    writer.writeOpenTag(GMRFSkyrideLikelihoodParser.INTERVALS);
+                        writer.writeOpenTag(BigFastTreeIntervalsParser.TREE_INTERVALS);
+                            writer.writeIDref(ConstrainedTreeModel.CONSTRAINED_TREE_MODEL,  options.getPartitionTreeModels(prior).get(0).getPrefix() + DefaultTreeModel.TREE_MODEL);
+                        writer.writeCloseTag(BigFastTreeIntervalsParser.TREE_INTERVALS);
+                    writer.writeCloseTag(GMRFSkyrideLikelihoodParser.INTERVALS);
+
+                }else{
+                    writer.writeOpenTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
+                        writer.writeIDref(DefaultTreeModel.TREE_MODEL, options.getPartitionTreeModels(prior).get(0).getPrefix() + DefaultTreeModel.TREE_MODEL);
+                    writer.writeCloseTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
+                }
             }
-            writer.writeCloseTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
+
+
 
             writer.writeCloseTag(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD);
 

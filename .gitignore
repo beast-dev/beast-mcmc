@@ -20,3 +20,5 @@ src/revision.txt
 *.dmg
 release/Mac
 src/revision.txt
+.vscode/launch.json
+.vscode/settings.json

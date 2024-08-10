@@ -5,7 +5,10 @@
 
 	<randomField id="GpBasisApproximation">
 		<distribution>
-			<GaussianProcessBasisApproximation dim="3" knots = "2" origin="2" boundary="2" times="1 2 3">
+			<GaussianProcessBasisApproximation dim="3" knots = "2" times="1 2 3" degree="1.5">
+				<boundaryFactor>
+					<parameter id="boundaryFactor" value="1.8"/>
+				</boundaryFactor>
 				<marginalVariance>
 					<parameter id="marginalVariance" value="1"/>
 				</marginalVariance>

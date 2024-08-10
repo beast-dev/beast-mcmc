@@ -24,11 +24,19 @@
  */
 
 package dr.math.distributions;
+
+
+
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import dr.inference.distribution.RandomField;
 import dr.inference.model.*;
 import java.util.Arrays;
 import static dr.math.distributions.MultivariateNormalDistribution.gradLogPdf;
 import static dr.math.distributions.MultivariateNormalDistribution.logPdf;
+
 /**
  * @author Marc Suchard
  * @author Pratyusa Data
@@ -40,9 +48,9 @@ public class GaussianProcessBasisApproximation extends RandomFieldDistribution {
 
     protected final int knots;
     protected final int dim;
-    protected final double origin;
-    protected final double boundary;
     protected final double[] times;
+    protected final double degree;
+    private final Parameter boundaryFactorParameter;
     private final Parameter marginalVarianceParameter;
     private final Parameter lengthScaleParameter;
     private final Parameter coefficientParameter;
@@ -53,18 +61,21 @@ public class GaussianProcessBasisApproximation extends RandomFieldDistribution {
 
     final double[][] basisMatrix;
     private final double[] coefficient;
+    private final double[] centeredTimes;
     private boolean coefficientKnown;
     private boolean basisMatrixKnown;
     private boolean meanKnown;
     private boolean precisionKnown;
-
+    private boolean centeredTimesKnown;
+    private boolean boundaryKnown;
+    private double boundary;
 
     public GaussianProcessBasisApproximation(String name,
                                      int dim,
                                      int knots,
-                                     double origin,
-                                     double boundary,
                                      double[] times,
+                                     double degree,
+                                     Parameter boundaryFactor,
                                      Parameter marginalVariance,
                                      Parameter lengthScale,
                                      Parameter coefficient,
@@ -74,32 +85,86 @@ public class GaussianProcessBasisApproximation extends RandomFieldDistribution {
 
         this.dim = dim;
         this.knots = knots;
-        this. origin = origin;
-        this.boundary = boundary;
         this.times = times;
+        this.degree = degree;
+        this.boundaryFactorParameter = boundaryFactor;
         this.marginalVarianceParameter = marginalVariance;
         this.lengthScaleParameter = lengthScale;
-        this.precisionParameter = precision;
         this.coefficientParameter = coefficient;
+        this.precisionParameter = precision;
 
 
-
+        addVariable(boundaryFactorParameter);
         addVariable(marginalVarianceParameter);
         addVariable(lengthScaleParameter);
-        addVariable(precisionParameter);
         addVariable(coefficientParameter);
+        addVariable(precisionParameter);
+
 
 
 
         this.coefficient = new double[knots];
+
         this.basisMatrix = new double[dim][knots];
+        this.centeredTimes = new double[times.length];
         this.mean = new double[dim];
         basisMatrixKnown = false;
         coefficientKnown = false;
         meanKnown = false;
         precisionKnown = false;
+        centeredTimesKnown = false;
+        boundaryKnown = false;
         precisionValue = 0;
+
     }
+
+    private double getBoundary (double[] times) {
+        if (!boundaryKnown) {
+            double halfRange;
+            double max = times[0];
+            double min = times[0];
+
+            for (int i = 1; i < times.length; i++) {
+                if (times[i] > max) {
+                    max = times[i];
+                }
+                if (times[i] < min) {
+                    min = times[i];
+                }
+            }
+            halfRange = 0.5 * (max - min);
+            boundary = halfRange * boundaryFactorParameter.getParameterValue(0);
+        }
+
+        return boundary;
+    }
+
+    private double[] getCenteredTimes (double[] times) {
+
+        if (!centeredTimesKnown) {
+            double max = times[0];
+            double min = times[0];
+
+            for (int i = 1; i < times.length; i++) {
+                if (times[i] > max) {
+                    max = times[i];
+                }
+                if (times[i] < min) {
+                    min = times[i];
+                }
+            }
+
+            double center = 0.5 * (max + min);
+
+            for (int i = 0; i <times.length; i++) {
+                centeredTimes[i] = times[i] - center;
+            }
+            centeredTimesKnown = true;
+        }
+
+        return centeredTimes;
+    }
+
 
     @Override
     public double[] getMean() {
@@ -115,7 +180,7 @@ public class GaussianProcessBasisApproximation extends RandomFieldDistribution {
                     sum += basisMatrix[i][j] * coefficientParameter.getParameterValue(j);
                 //    System.err.println("BasisMat" + basisMatrix[i][j] + " coeff " + coefficientParameter.getParameterValue(j));
                 }
-                mean[i] = sum + origin;
+                mean[i] = sum;
                 //System.err.println("Mean" + i + " at time " + mean[i]);
             }
 
@@ -146,17 +211,26 @@ public class GaussianProcessBasisApproximation extends RandomFieldDistribution {
 
             precisionValue = precisionParameter.getParameterValue(0);
 
-            coefficientKnown = true;
+            precisionKnown = true;
         }
         return precisionValue;
     }
 
 
 
-    public static double getSpectralDensity(double x, double marginalVariance, double lengthScale) {
+    public static double getSpectralDensity(double x, double marginalVariance, double lengthScale, double degree) {
 
-        return marginalVariance * Math.sqrt(2 * Math.PI) * lengthScale *
-                Math.exp(- 0.5 * lengthScale * lengthScale * x * x);
+        double term = 0;
+
+        if (degree == 1.5) {
+            term = (marginalVariance * 12 * Math.sqrt(3) * Math.pow(lengthScale, -3))/(Math.pow((3/(lengthScale * lengthScale)) + (x * x), 2));
+        }
+
+        if (degree == 2.5) {
+            term = (marginalVariance * (400/3) * Math.sqrt(5) * Math.pow(lengthScale, -5))/(Math.pow((5/(lengthScale * lengthScale)) + (x * x), 3));
+        }
+
+        return term;
     }
 
     public static double getSpectralDensityEigenValue(int j, double boundary) {
@@ -172,13 +246,15 @@ public class GaussianProcessBasisApproximation extends RandomFieldDistribution {
 
         double marginalVariance = marginalVarianceParameter.getParameterValue(0);
         double lengthScale = lengthScaleParameter.getParameterValue(0);
+        double boundary = getBoundary(times);
+        double[] centeredTimes = getCenteredTimes(times);
 
         if (!basisMatrixKnown) {
             for (int i = 0; i < times.length; i++) {
                 for (int j = 0; j < knots; j++) {
                     basisMatrix[i][j] = Math.sqrt(getSpectralDensity(Math.sqrt(getSpectralDensityEigenValue(j, boundary)),
-                            marginalVariance, lengthScale)) *
-                            getSpectralDensityEigenFunction(j, times[i], boundary);
+                            marginalVariance, lengthScale, degree)) *
+                            getSpectralDensityEigenFunction(j, centeredTimes[i], boundary);
                     //System.err.println("Sqrt S_theta" + Math.sqrt(getSpectralDensity(Math.sqrt(getSpectralDensityEigenValue(j)))) +
                     //        " phi " + getSpectralDensityEigenFunction(j, times[i]));
                 }
@@ -201,9 +277,9 @@ public class GaussianProcessBasisApproximation extends RandomFieldDistribution {
                 @Override
                 public double[] getGradientLogDensity(Object x) {
                     getBasisMatrix(times);
-                    double[] gradient =  gradLogPdf(dim, knots, (double[]) x, getMean(), precisionParameter.getParameterValue(0),
+                    return   gradLogPdf(dim, knots, (double[]) x, getMean(), precisionParameter.getParameterValue(0),
                             basisMatrix);
-                    return gradient;
+
                 }
             };
         }

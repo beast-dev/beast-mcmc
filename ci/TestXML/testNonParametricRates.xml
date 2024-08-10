@@ -31,20 +31,14 @@
 		</nodeHeights>
 	</treeModel>
 
-	<nonParametricRates id="dummyRates">
+	<nonParametricRates id="dummyRates" degree="1.5">
 		<treeModel idref="dummyTreeModel"/>
-		<lastSamplingTime>
-			<parameter id="lastSamplingTime" value="3"/>
-		</lastSamplingTime>
 		<coefficients>
 			<parameter id="data" value="1 1 1"/>
-		</coefficients>
-		<origin>
-			<parameter id="dummyOrigin" value="2"/>
-		</origin>
-		<boundary>
-			<parameter id="dummyBoundary" value="1.5"/>
-		</boundary>
+		</coefficients>>
+		<boundaryFactor>
+			<parameter id="dummyBoundaryFactor" value="1.8"/>
+		</boundaryFactor>
 		<marginalVariance>
 			<parameter id="dummyMarginalVariance" value="1"/>
 		</marginalVariance>
@@ -98,20 +92,14 @@
 		</nodeHeights>
 	</treeModel>
 
-	<nonParametricRates id="dummyRates2" >
+	<nonParametricRates id="dummyRates2" degree="2.5">
 		<treeModel idref="dummyTreeModel2"/>
-		<lastSamplingTime>
-			<parameter id="lastSamplingTime2" value="10"/>
-		</lastSamplingTime>
 		<coefficients>
 			<parameter id="data2" value="1 1 1 1 1"/>
 		</coefficients>
-		<origin>
-			<parameter id="dummyOrigin2" value="5"/>
-		</origin>
-		<boundary>
-			<parameter id="dummyBoundary2" value="5"/>
-		</boundary>
+		<boundaryFactor>
+			<parameter id="dummyBoundaryFactor2" value="1.8"/>
+		</boundaryFactor>
 		<marginalVariance>
 			<parameter id="dummyMarginalVariance2" value="1"/>
 		</marginalVariance>

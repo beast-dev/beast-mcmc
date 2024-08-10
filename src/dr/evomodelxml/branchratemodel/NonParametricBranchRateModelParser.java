@@ -12,10 +12,9 @@ import dr.xml.*;
 public class NonParametricBranchRateModelParser extends AbstractXMLObjectParser {
 
     public static final String PARSER_NAME = "nonParametricRates";
-    private static final String LASTSAMPLINGTIME = "lastSamplingTime";
+    private static final String DEGREE = "degree";
     private static final String COEFFICIENTS = "coefficients";
-    private static final String ORIGIN = "origin";
-    private static final String BOUNDARY = "boundary";
+    private static final String BOUNDARYFACTOR = "boundaryFactor";
     private static final String MARGINALVARIANCE = "marginalVariance";
     private static final String LENGTHSCALE = "lengthScale";
 
@@ -23,15 +22,14 @@ public class NonParametricBranchRateModelParser extends AbstractXMLObjectParser 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-        Parameter lastSamplingTime = (Parameter) xo.getElementFirstChild(LASTSAMPLINGTIME);
+        double degree = xo.getDoubleAttribute(DEGREE);
         Parameter coefficients = (Parameter) xo.getElementFirstChild(COEFFICIENTS);
-        Parameter origin = (Parameter) xo.getElementFirstChild(ORIGIN);
-        Parameter boundary = (Parameter) xo.getElementFirstChild(BOUNDARY);
+        Parameter boundaryFactor = (Parameter) xo.getElementFirstChild(BOUNDARYFACTOR);
         Parameter marginalVariance = (Parameter) xo.getElementFirstChild(MARGINALVARIANCE);
         Parameter lengthScale = (Parameter) xo.getElementFirstChild(LENGTHSCALE);
         String id = xo.hasId() ? xo.getId() : PARSER_NAME;
 
-        return new NonParametricBranchRateModel(id, tree, lastSamplingTime, coefficients, origin, boundary, marginalVariance, lengthScale);
+        return new NonParametricBranchRateModel(id, tree, degree, coefficients, boundaryFactor, marginalVariance, lengthScale);
     }
 
     @Override
@@ -56,13 +54,10 @@ public class NonParametricBranchRateModelParser extends AbstractXMLObjectParser 
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(TreeModel.class),
-            new ElementRule(LASTSAMPLINGTIME,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+            AttributeRule.newDoubleRule(DEGREE),
             new ElementRule(COEFFICIENTS,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(ORIGIN,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
-            new ElementRule(BOUNDARY,
+            new ElementRule(BOUNDARYFACTOR,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(MARGINALVARIANCE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),

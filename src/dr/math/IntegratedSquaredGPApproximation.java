@@ -60,23 +60,22 @@ public class IntegratedSquaredGPApproximation {
 
 
     private final double[] coefficients;
-    private final double origin;
     private final double boundary;
+    private final double degree;
     private final double marginalVariance;
     private final double lengthScale;
 
 
-
     public IntegratedSquaredGPApproximation(double[] coefficients,
-                                            double origin,
                                             double boundary,
+                                            double degree,
                                             double marginalVariance,
                                             double lengthScale) {
 
 
         this.coefficients = coefficients;
-        this.origin = origin;
         this.boundary = boundary;
+        this.degree = degree;
         this.marginalVariance = marginalVariance;
         this.lengthScale = lengthScale;
 
@@ -84,20 +83,20 @@ public class IntegratedSquaredGPApproximation {
 
     private double getConstantForIntegral(int j) {
         return Math.sqrt(getSpectralDensity(Math.sqrt(getSpectralDensityEigenValue(j, boundary)),
-                marginalVariance, lengthScale)) * coefficients[j] * Math.sqrt(1/boundary);
+                marginalVariance, lengthScale, degree)) * coefficients[j] * Math.sqrt(1/boundary);
     }
 
 
     private double getConstantForGradient(int j) {
         return Math.sqrt(getSpectralDensity(Math.sqrt(getSpectralDensityEigenValue(j, boundary)),
-                marginalVariance, lengthScale)) * Math.sqrt(1/boundary);
+                marginalVariance, lengthScale, degree)) * Math.sqrt(1/boundary);
     }
 
 
     public double getIntegral(double start, double end) {
 
         double length = end - start;
-        double sum = origin * origin * (end -start);
+        double sum = 0;
         double term1;
         double term2;
 
@@ -107,16 +106,12 @@ public class IntegratedSquaredGPApproximation {
             for (int i = 0; i < coefficients.length; i++) {
                 sum += getConstantForIntegral(i) * getConstantForIntegral(i) * (length/2);
                 sum -= 0.25 * getConstantForIntegral(i) * getConstantForIntegral(i) * (1/Math.sqrt(getSpectralDensityEigenValue(i, boundary)))
-                * (Math.sin(2 * Math.sqrt(getSpectralDensityEigenValue(i, boundary))*(end + boundary)) -
+                        * (Math.sin(2 * Math.sqrt(getSpectralDensityEigenValue(i, boundary))*(end + boundary)) -
                         Math.sin(2 * Math.sqrt(getSpectralDensityEigenValue(i, boundary))*(start + boundary)));
-                sum -= 2 * origin * getConstantForIntegral(i) * (1/Math.sqrt(getSpectralDensityEigenValue(i, boundary)))
-                        * (Math.cos(Math.sqrt(getSpectralDensityEigenValue(i, boundary)) * (end + boundary))
-                        - Math.cos(Math.sqrt(getSpectralDensityEigenValue(i, boundary)) * (start + boundary)));
             }
 
             for (int i = 0; i < coefficients.length; i++) {
                 for (int j = i + 1; j < coefficients.length; j++) {
-
                     term1 = Math.sin((Math.sqrt(getSpectralDensityEigenValue(j, boundary)) -
                             Math.sqrt(getSpectralDensityEigenValue(i, boundary)))*(end + boundary));
                     term2 = Math.sin((Math.sqrt(getSpectralDensityEigenValue(j, boundary)) -
@@ -135,19 +130,13 @@ public class IntegratedSquaredGPApproximation {
 
         }
 
+
         return sum;
     }
 
-    /*public double[] getGradient(double start, double end) {
-        double[] gradients = new double[coefficients.length];
-        for (int i = 0; i < coefficients.length; i++) {
-            gradients[i] = getGradientWrtCoefficient(start, end, i);
-        }
-        return  gradients;
-    }*/
 
 
-    /*public double getGradientWrtCoefficient(double start, double end, int j) {
+    public double getGradientWrtCoefficient(double start, double end, int j) {
 
         double term1;
         double term2;
@@ -165,17 +154,19 @@ public class IntegratedSquaredGPApproximation {
 
                 if (i != j) {
 
-                    term1 = Math.sin((Math.sqrt(getSpectralDensityEigenValue(j, boundary)) -
-                            Math.sqrt(getSpectralDensityEigenValue(i, boundary)))*(end + boundary));
-                    term2 = Math.sin((Math.sqrt(getSpectralDensityEigenValue(j, boundary)) -
-                            Math.sqrt(getSpectralDensityEigenValue(i, boundary)))*(start + boundary));
-                    sum += ((getConstantForGradient(i) * getConstantForGradient(j))/(Math.sqrt(getSpectralDensityEigenValue(j, boundary)) -
+                    term1 = Math.sin((Math.sqrt(getSpectralDensityEigenValue(i, boundary)) -
+                            Math.sqrt(getSpectralDensityEigenValue(j, boundary)))*(end + boundary));
+                    term2 = Math.sin((Math.sqrt(getSpectralDensityEigenValue(i, boundary)) -
+                            Math.sqrt(getSpectralDensityEigenValue(j, boundary)))*(start + boundary));
+                    sum += ((getConstantForGradient(i) * getConstantForGradient(j) * coefficients[i])/
+                            (Math.sqrt(getSpectralDensityEigenValue(j, boundary)) -
                             Math.sqrt(getSpectralDensityEigenValue(i, boundary)))) * (term1 - term2);
                     term1 = Math.sin((Math.sqrt(getSpectralDensityEigenValue(j, boundary)) +
                             Math.sqrt(getSpectralDensityEigenValue(i, boundary)))*(end + boundary));
                     term2 = Math.sin((Math.sqrt(getSpectralDensityEigenValue(j, boundary)) +
                             Math.sqrt(getSpectralDensityEigenValue(i, boundary)))*(start + boundary));
-                    sum += ((getConstantForGradient(i) * getConstantForGradient(j))/(Math.sqrt(getSpectralDensityEigenValue(j, boundary)) +
+                    sum += ((getConstantForGradient(i) * getConstantForGradient(j) * coefficients[i])/
+                            (Math.sqrt(getSpectralDensityEigenValue(j, boundary)) +
                             Math.sqrt(getSpectralDensityEigenValue(i, boundary)))) * (term2 - term1);
 
                 }
@@ -184,28 +175,26 @@ public class IntegratedSquaredGPApproximation {
 
         return sum;
 
-    }*/
+    }
 
 
 public static void main(String[] args) {
 
-    double[] coefficients = new double[] {1.2298 , -0.1874792 , 0.4808458 , -0.5665365 , 0.1375066,
-            -1.550998 , -2.228136 , -0.232172 , 0.09171077 , -0.255557,
-            0.2990763 , -0.3796941 , -0.1624707 , 0.2145575 , 0.1348038,
-            0.584445 , -0.2177144 , -0.4694606 , -0.1766076 , -0.02908852,
-            -0.01152857 , -0.1651964 , -0.2445626 , 0.225222 , 0.6756132,
-            0.955706 , 0.1672407 , 0.004148639 , -0.1134777 , 0.4829792,
-            0.03933189 , 0.667913 , 0.1893102 , 0.1800728 , 0.301086,
-            -0.0201327 , 0.1331643 , 0.045907 , 0.09631207 , -0.2902463};
+    double[] coefficients = new double[] {4.733087, 0.0606169, 2.522582, 0.2849899, 1.480262,
+            -0.8283746, -1.722588, -0.005145702, -0.4694572, -0.04439408,
+            0.8339636, 0.08089572, 0.4596932, 0.005134442, -0.4197489,
+            0.07405982, -0.3259365, 0.03295991, -0.05851674, -0.01652072,
+            -0.005839506, -0.04922189, -0.3393885, 0.1320812, -0.006760943
+    };
 
-    double boundary = 2.5;
-    double marginalVariance = 32.33321;
-    double lengthScale = 0.8659804;
-    double origin = 0;
+    double boundary = 1.79;
+    double marginalVariance = 1.963;
+    double lengthScale = 1.085;
+    double degree = 1.5;
 
-    IntegratedSquaredGPApproximation approx = new IntegratedSquaredGPApproximation(coefficients, boundary, origin, marginalVariance, lengthScale);
+    IntegratedSquaredGPApproximation approx = new IntegratedSquaredGPApproximation(coefficients, boundary, degree, marginalVariance, lengthScale);
 
-
+    System.out.println("Integral 1:" + approx.getIntegral(-1, -0.5));
     System.out.println("Integral 1:" + approx.getIntegral(-1, -0.5));
     System.out.println("Integral 2:" + approx.getIntegral(-0.5, 0));
     System.out.println("Integral 3:" + approx.getIntegral(0, 0.5));

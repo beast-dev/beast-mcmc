@@ -52,18 +52,18 @@ import java.util.List;
  * @author Pratyusa Datta
  * @author Marc A. Suchard
  */
-// TO DO: Remove code duplication
+
+// TO DO: Gradients still wrong
+// TO DO: Remove code duplication by using common interface for rates and gradients
+
 public class NonParametricBranchRateModel extends AbstractBranchRateModel
         implements DifferentiableBranchRates, Citable {
 
-
-
     private final Tree tree;
-    private final Parameter lastSamplingTime;
+    protected final double degree;
     private final Parameter coefficients;
-    private final Parameter origin;
-    private final Parameter boundary;
-    private final Parameter scaleFactor;
+    private final Parameter boundaryFactor;
+    private final Parameter marginalVariance;
     private final Parameter lengthScale;
 
     private final BigFastTreeIntervals intervals;
@@ -72,35 +72,35 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
 
     private double[] nodeRates;
     private double[] storedNodeRates;
-    private double[] nodeIndices;
+    private double[] temp;
+    private final double rootHeight;
+    private double boundary;
+
+
 
     public NonParametricBranchRateModel(String name,
                                         Tree tree,
-                                        Parameter lastSamplingTime,
+                                        double degree,
                                         Parameter coefficients,
-                                        Parameter origin,
-                                        Parameter boundary,
-                                        Parameter scaleFactor,
+                                        Parameter boundaryFactor,
+                                        Parameter marginalVariance,
                                         Parameter lengthScale) {
         super(name);
 
         this.tree = tree;
-        this.lastSamplingTime = lastSamplingTime;
+        this.degree = degree;
         this.coefficients = coefficients;
-        this.origin = origin;
-        this.boundary = boundary;
-        this.scaleFactor = scaleFactor;
+        this.boundaryFactor = boundaryFactor;
+        this.marginalVariance = marginalVariance;
         this.lengthScale = lengthScale;
 
         if (tree instanceof TreeModel) {
             addModel((TreeModel) tree);
         }
 
-        addVariable(lastSamplingTime);
         addVariable(coefficients);
-        addVariable(origin);
-        addVariable(boundary);
-        addVariable(scaleFactor);
+        addVariable(boundaryFactor);
+        addVariable(marginalVariance);
         addVariable(lengthScale);
 
         intervals = new BigFastTreeIntervals((TreeModel) tree);
@@ -110,7 +110,9 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
 
         nodeRatesKnown = false;
         nodeRates = new double[tree.getNodeCount() - 1];
-        nodeIndices = new double[tree.getNodeCount() - 1];
+        rootHeight = tree.getNodeHeight(tree.getRoot());
+        temp = new double[tree.getNodeCount() - 1];
+        boundary = (rootHeight/2) * boundaryFactor.getParameterValue(0);
     }
 
 
@@ -134,10 +136,12 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
             coefficientValues[i] = coefficients.getParameterValue(i);
         }
 
-        IntegratedSquaredGPApproximation approximation = new IntegratedSquaredGPApproximation(coefficientValues, origin.getParameterValue(0),
-                                            boundary.getParameterValue(0), scaleFactor.getParameterValue(0), lengthScale.getParameterValue(0));
-        nodeRates[childIndex] = approximation.getIntegral(lastSamplingTime.getParameterValue(0) - currentHeight,
-                                            lastSamplingTime.getParameterValue(0) - childHeight)/branchLength;
+        double start = rootHeight/2 - currentHeight;
+        double end = rootHeight/2 - childHeight;
+
+        IntegratedSquaredGPApproximation approximation = new IntegratedSquaredGPApproximation(coefficientValues,
+                                            boundary, degree, marginalVariance.getParameterValue(0), lengthScale.getParameterValue(0));
+        nodeRates[childIndex] = approximation.getIntegral(start, end)/branchLength;
 
         if (!tree.isExternal(child)) {
             getNodeRateByBranch(childHeight, tree.getChild(child, 0));
@@ -159,8 +163,30 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
     }
 
 
+    /*private void getBranchGradientwrtCoeff (double currentHeight, NodeRef child, int j) {
+
+        final double childHeight = tree.getNodeHeight(child);
+        final int childIndex = getParameterIndexFromNode(child);
+        final double branchLength = currentHeight - childHeight;
+        double[] coefficientValues = new double[coefficients.getDimension()];
+        for (int i = 0; i < coefficients.getDimension(); ++i) {
+            coefficientValues[i] = coefficients.getParameterValue(i);
+        }
+
+        double start = rootHeight/2 - currentHeight;
+        double end = rootHeight/2 - childHeight;
+
+        IntegratedSquaredGPApproximation approximation = new IntegratedSquaredGPApproximation(coefficientValues,
+                boundary, degree, marginalVariance.getParameterValue(0), lengthScale.getParameterValue(0));
+        temp[childIndex] = approximation.getGradientWrtCoefficient(start, end, j);
 
 
+        if (!tree.isExternal(child)) {
+            getBranchGradientwrtCoeff(childHeight, tree.getChild(child, 0), j);
+            getBranchGradientwrtCoeff(childHeight, tree.getChild(child, 1), j);
+        }
+    }
+*/
 
 
 
@@ -172,10 +198,19 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
         assert from == 0;
         assert to == coefficients.getDimension() - 1;
         double[] gradientWrtCoefficients = new double[coefficients.getDimension()];
-
-
         Arrays.fill(gradientWrtCoefficients, 0);
 
+        /*NodeRef root = tree.getRoot();
+        double rootHeight = tree.getNodeHeight(root);
+
+        for (int j = 0; j < coefficients.getDimension(); j++) {
+            getBranchGradientwrtCoeff(rootHeight, tree.getChild(root, 0), j);
+            getBranchGradientwrtCoeff(rootHeight, tree.getChild(root, 1), j);
+
+            for (int i = 0; i < tree.getNodeCount() - 1; i++) {
+                gradientWrtCoefficients[j] += temp[i] * gradientWrtBranches[i];
+            }
+        }*/
 
 
         return gradientWrtCoefficients;
@@ -265,7 +300,7 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
 
     @Override
     public String getDescription() {
-        return "Time-varying branch rate model";
+        return "Non parametric branch rate model";
     }
 
     @Override

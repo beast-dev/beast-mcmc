@@ -1,0 +1,1372 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "BeastMain",
+            "request": "launch",
+            "mainClass": "dr.app.beast.BeastMain",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "BeastRemote",
+            "request": "launch",
+            "mainClass": "dr.app.beast.BeastRemote",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "BeastVersion",
+            "request": "launch",
+            "mainClass": "dr.app.beast.BeastVersion",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "RBeastMain",
+            "request": "launch",
+            "mainClass": "dr.app.beast.RBeastMain",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "BEASTGen",
+            "request": "launch",
+            "mainClass": "dr.app.beastgen.BEASTGen",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "BeautiApp",
+            "request": "launch",
+            "mainClass": "dr.app.beauti.BeautiApp",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "BFEMain",
+            "request": "launch",
+            "mainClass": "dr.app.bfe.BFEMain",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "XMLMerger",
+            "request": "launch",
+            "mainClass": "dr.app.bfe.XMLMerger",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "XMLViewer",
+            "request": "launch",
+            "mainClass": "dr.app.bfe.XMLViewer",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "BeagleSequenceSimulatorApp",
+            "request": "launch",
+            "mainClass": "dr.app.bss.BeagleSequenceSimulatorApp",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "BeagleSeqSimTest",
+            "request": "launch",
+            "mainClass": "dr.app.bss.test.BeagleSeqSimTest",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "DebugTreeImporter",
+            "request": "launch",
+            "mainClass": "dr.app.checkpoint.DebugTreeImporter",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "CoalGenApp",
+            "request": "launch",
+            "mainClass": "dr.app.coalgen.CoalGenApp",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "MapperApp",
+            "request": "launch",
+            "mainClass": "dr.app.mapper.application.MapperApp",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "Coevolve",
+            "request": "launch",
+            "mainClass": "dr.app.misc.Coevolve",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "AuspiceGenerator",
+            "request": "launch",
+            "mainClass": "dr.app.phylogeography.tools.AuspiceGenerator",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "ContinuousTreeToKML",
+            "request": "launch",
+            "mainClass": "dr.app.phylogeography.tools.ContinuousTreeToKML",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "DiscreteRatePriorGenerator",
+            "request": "launch",
+            "mainClass": "dr.app.phylogeography.tools.DiscreteRatePriorGenerator",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "DiscreteTreeToKML",
+            "request": "launch",
+            "mainClass": "dr.app.phylogeography.tools.DiscreteTreeToKML",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "RateIndicatorBF",
+            "request": "launch",
+            "mainClass": "dr.app.phylogeography.tools.RateIndicatorBF",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreeDensityKML",
+            "request": "launch",
+            "mainClass": "dr.app.phylogeography.tools.TreeDensityKML",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreeGeoJSONGenerator",
+            "request": "launch",
+            "mainClass": "dr.app.phylogeography.tools.TreeGeoJSONGenerator",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreeKMLGenerator",
+            "request": "launch",
+            "mainClass": "dr.app.phylogeography.tools.TreeKMLGenerator",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "CheckPointUpdaterApp",
+            "request": "launch",
+            "mainClass": "dr.app.realtime.CheckPointUpdaterApp",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "DistanceMatrixInsertionTest",
+            "request": "launch",
+            "mainClass": "dr.app.realtime.DistanceMatrixInsertionTest",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "RecomboGen",
+            "request": "launch",
+            "mainClass": "dr.app.seqgen.RecomboGen",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "SeqGen",
+            "request": "launch",
+            "mainClass": "dr.app.seqgen.SeqGen",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "SequenceSimulator",
+            "request": "launch",
+            "mainClass": "dr.app.seqgen.SequenceSimulator",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "RootToTip",
+            "request": "launch",
+            "mainClass": "dr.app.tempest.RootToTip",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TempEstApp",
+            "request": "launch",
+            "mainClass": "dr.app.tempest.TempEstApp",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "AncestralSequenceAnnotator",
+            "request": "launch",
+            "mainClass": "dr.app.tools.AncestralSequenceAnnotator",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "AntigenicPlotter",
+            "request": "launch",
+            "mainClass": "dr.app.tools.AntigenicPlotter",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "BeastParserDoc",
+            "request": "launch",
+            "mainClass": "dr.app.tools.BeastParserDoc",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "Branch2dRateToGrid",
+            "request": "launch",
+            "mainClass": "dr.app.tools.Branch2dRateToGrid",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "BranchJumpPlotter",
+            "request": "launch",
+            "mainClass": "dr.app.tools.BranchJumpPlotter",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "BranchRatePlotter",
+            "request": "launch",
+            "mainClass": "dr.app.tools.BranchRatePlotter",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "CoalescentEventSummarizer",
+            "request": "launch",
+            "mainClass": "dr.app.tools.CoalescentEventSummarizer",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "DensityPlotter",
+            "request": "launch",
+            "mainClass": "dr.app.tools.DensityPlotter",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "GenerateRelaxedClockXMLByData",
+            "request": "launch",
+            "mainClass": "dr.app.tools.GenerateRelaxedClockXMLByData",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "GetAncestralSequenceFromSplitTrait",
+            "request": "launch",
+            "mainClass": "dr.app.tools.GetAncestralSequenceFromSplitTrait",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "GetDateFromTree",
+            "request": "launch",
+            "mainClass": "dr.app.tools.GetDateFromTree",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "GetNSCountsFromTrees",
+            "request": "launch",
+            "mainClass": "dr.app.tools.GetNSCountsFromTrees",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "JumpHistoryAnalyser",
+            "request": "launch",
+            "mainClass": "dr.app.tools.JumpHistoryAnalyser",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "LogAnalyser",
+            "request": "launch",
+            "mainClass": "dr.app.tools.LogAnalyser",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "MakeAncestralSequenceAnnotatedTree",
+            "request": "launch",
+            "mainClass": "dr.app.tools.MakeAncestralSequenceAnnotatedTree",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "MixtureModelLogAnalyser",
+            "request": "launch",
+            "mainClass": "dr.app.tools.MixtureModelLogAnalyser",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "NStoAAannotator",
+            "request": "launch",
+            "mainClass": "dr.app.tools.NStoAAannotator",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "NodeStateAnalyser",
+            "request": "launch",
+            "mainClass": "dr.app.tools.NodeStateAnalyser",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "NormaliseMeanTreeRate",
+            "request": "launch",
+            "mainClass": "dr.app.tools.NormaliseMeanTreeRate",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "OrderNexusTranslationTable",
+            "request": "launch",
+            "mainClass": "dr.app.tools.OrderNexusTranslationTable",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "PersistenceSummarizer",
+            "request": "launch",
+            "mainClass": "dr.app.tools.PersistenceSummarizer",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "SkylineReconstructor",
+            "request": "launch",
+            "mainClass": "dr.app.tools.SkylineReconstructor",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "SpeciesDelimitationAnalyser",
+            "request": "launch",
+            "mainClass": "dr.app.tools.SpeciesDelimitationAnalyser",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "SpliceBeastFiles",
+            "request": "launch",
+            "mainClass": "dr.app.tools.SpliceBeastFiles",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TaxaMarkovJumpHistoryAnalyzer",
+            "request": "launch",
+            "mainClass": "dr.app.tools.TaxaMarkovJumpHistoryAnalyzer",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TaxaOriginTrait",
+            "request": "launch",
+            "mainClass": "dr.app.tools.TaxaOriginTrait",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TaxaPicker",
+            "request": "launch",
+            "mainClass": "dr.app.tools.TaxaPicker",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TimeSlicer",
+            "request": "launch",
+            "mainClass": "dr.app.tools.TimeSlicer",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TopologyTracer",
+            "request": "launch",
+            "mainClass": "dr.app.tools.TopologyTracer",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TransmissionTreeToVirusTree",
+            "request": "launch",
+            "mainClass": "dr.app.tools.TransmissionTreeToVirusTree",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreeLengthFinder",
+            "request": "launch",
+            "mainClass": "dr.app.tools.TreeLengthFinder",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreeLogAnalyser",
+            "request": "launch",
+            "mainClass": "dr.app.tools.TreeLogAnalyser",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreeLogToEmpiricalDistributionConverter",
+            "request": "launch",
+            "mainClass": "dr.app.tools.TreeLogToEmpiricalDistributionConverter",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreeMRCASummarizer",
+            "request": "launch",
+            "mainClass": "dr.app.tools.TreeMRCASummarizer",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreeMarkovJumpHistoryAnalyzer",
+            "request": "launch",
+            "mainClass": "dr.app.tools.TreeMarkovJumpHistoryAnalyzer",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreePruner",
+            "request": "launch",
+            "mainClass": "dr.app.tools.TreePruner",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreeStateTimeSummarizer",
+            "request": "launch",
+            "mainClass": "dr.app.tools.TreeStateTimeSummarizer",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreeSummary",
+            "request": "launch",
+            "mainClass": "dr.app.tools.TreeSummary",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "UniqueTopologyCounter",
+            "request": "launch",
+            "mainClass": "dr.app.tools.UniqueTopologyCounter",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "LogCombiner",
+            "request": "launch",
+            "mainClass": "dr.app.tools.logcombiner.LogCombiner",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "RunLengthBitSet",
+            "request": "launch",
+            "mainClass": "dr.app.tools.newtreeannotator.RunLengthBitSet",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreeAnnotator",
+            "request": "launch",
+            "mainClass": "dr.app.tools.newtreeannotator.TreeAnnotator",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreeAnnotator(1)",
+            "request": "launch",
+            "mainClass": "dr.app.tools.treeannotator.TreeAnnotator",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreeSpaceApp",
+            "request": "launch",
+            "mainClass": "dr.app.treespace.TreeSpaceApp",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreeStatApp",
+            "request": "launch",
+            "mainClass": "dr.app.treestat.TreeStatApp",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "BetaTreeDiversityStatistic",
+            "request": "launch",
+            "mainClass": "dr.app.treestat.statistics.BetaTreeDiversityStatistic",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "VariableCoalescentSimulator",
+            "request": "launch",
+            "mainClass": "dr.app.vcs.VariableCoalescentSimulator",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "Defects",
+            "request": "launch",
+            "mainClass": "dr.evolution.alignment.Defects",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "CoalescentSimulator",
+            "request": "launch",
+            "mainClass": "dr.evolution.coalescent.CoalescentSimulator",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "ExponentialSawtooth",
+            "request": "launch",
+            "mainClass": "dr.evolution.coalescent.ExponentialSawtooth",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "PLCoalescentSimulator",
+            "request": "launch",
+            "mainClass": "dr.evolution.coalescent.PLCoalescentSimulator",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "ColourChangeMatrix",
+            "request": "launch",
+            "mainClass": "dr.evolution.colouring.ColourChangeMatrix",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "StructuredColourSampler",
+            "request": "launch",
+            "mainClass": "dr.evolution.colouring.StructuredColourSampler",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "ContinuousTraitLikelihood",
+            "request": "launch",
+            "mainClass": "dr.evolution.continuous.ContinuousTraitLikelihood",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "PatristicDistanceMatrix",
+            "request": "launch",
+            "mainClass": "dr.evolution.distance.PatristicDistanceMatrix",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "NexusImporter",
+            "request": "launch",
+            "mainClass": "dr.evolution.io.NexusImporter",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "FitchParsimony",
+            "request": "launch",
+            "mainClass": "dr.evolution.parsimony.FitchParsimony",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "SankoffParsimony",
+            "request": "launch",
+            "mainClass": "dr.evolution.parsimony.SankoffParsimony",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TestParsimony",
+            "request": "launch",
+            "mainClass": "dr.evolution.parsimony.TestParsimony",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "CountConstrainedRankedHistories",
+            "request": "launch",
+            "mainClass": "dr.evolution.tree.CountConstrainedRankedHistories",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "RankedNode",
+            "request": "launch",
+            "mainClass": "dr.evolution.tree.RankedNode",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TestTreeUtils",
+            "request": "launch",
+            "mainClass": "dr.evolution.tree.TestTreeUtils",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreeMetrics",
+            "request": "launch",
+            "mainClass": "dr.evolution.tree.TreeMetrics",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreeShape",
+            "request": "launch",
+            "mainClass": "dr.evolution.tree.TreeShape",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "KendallColijnPathDifferenceMetric",
+            "request": "launch",
+            "mainClass": "dr.evolution.tree.treemetrics.KendallColijnPathDifferenceMetric",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TestTreeMetrics",
+            "request": "launch",
+            "mainClass": "dr.evolution.tree.treemetrics.TestTreeMetrics",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TimeScale",
+            "request": "launch",
+            "mainClass": "dr.evolution.util.TimeScale",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "SelectionMapping",
+            "request": "launch",
+            "mainClass": "dr.evolution.wrightfisher.SelectionMapping",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "AntigenicLikelihood",
+            "request": "launch",
+            "mainClass": "dr.evomodel.antigenic.AntigenicLikelihood",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "mergeAdjacencyMatrixPlots",
+            "request": "launch",
+            "mainClass": "dr.evomodel.antigenic.phyloclustering.misc.mergeAdjacencyMatrixPlots",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "ARGModel",
+            "request": "launch",
+            "mainClass": "dr.evomodel.arg.ARGModel",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "DirichletProcessPrior",
+            "request": "launch",
+            "mainClass": "dr.evomodel.branchmodel.lineagespecific.DirichletProcessPrior",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "LineageSpecificBranchModel",
+            "request": "launch",
+            "mainClass": "dr.evomodel.branchmodel.lineagespecific.LineageSpecificBranchModel",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "DecayingRateModel",
+            "request": "launch",
+            "mainClass": "dr.evomodel.branchratemodel.DecayingRateModel",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "LatentStateBranchRateModel",
+            "request": "launch",
+            "mainClass": "dr.evomodel.branchratemodel.LatentStateBranchRateModel",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "SericolaLatentStateBranchRateModel",
+            "request": "launch",
+            "mainClass": "dr.evomodel.branchratemodel.SericolaLatentStateBranchRateModel",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "BNPRSamplingLikelihood",
+            "request": "launch",
+            "mainClass": "dr.evomodel.coalescent.BNPRSamplingLikelihood",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "GMRFFixedGridLikelihood",
+            "request": "launch",
+            "mainClass": "dr.evomodel.coalescent.GMRFFixedGridLikelihood",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "GaussianProcessSkytrackParser",
+            "request": "launch",
+            "mainClass": "dr.evomodel.coalescent.GaussianProcessSkytrackParser",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "BASTADensityTester",
+            "request": "launch",
+            "mainClass": "dr.evomodel.coalescent.basta.BASTADensityTester",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "BASTATreeMoveTester",
+            "request": "launch",
+            "mainClass": "dr.evomodel.coalescent.basta.BASTATreeMoveTester",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "MultivariateDiffusionModel",
+            "request": "launch",
+            "mainClass": "dr.evomodel.continuous.MultivariateDiffusionModel",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TopographicalMap",
+            "request": "launch",
+            "mainClass": "dr.evomodel.continuous.TopographicalMap",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "VonMisesFisherDiffusionModel",
+            "request": "launch",
+            "mainClass": "dr.evomodel.continuous.VonMisesFisherDiffusionModel",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "DynamicalSystem",
+            "request": "launch",
+            "mainClass": "dr.evomodel.epidemiology.DynamicalSystem",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "GammaSiteRateDelegate",
+            "request": "launch",
+            "mainClass": "dr.evomodel.siteratemodel.GammaSiteRateDelegate",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "GammaSiteRateModel",
+            "request": "launch",
+            "mainClass": "dr.evomodel.siteratemodel.GammaSiteRateModel",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "BirthDeathSerialSkylineModel",
+            "request": "launch",
+            "mainClass": "dr.evomodel.speciation.BirthDeathSerialSkylineModel",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "MarkovModulatedGY94CodonModel",
+            "request": "launch",
+            "mainClass": "dr.evomodel.substmodel.codon.MarkovModulatedGY94CodonModel",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "HKY",
+            "request": "launch",
+            "mainClass": "dr.evomodel.substmodel.nucleotide.HKY",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "ProgressiveScalarTreeTransform",
+            "request": "launch",
+            "mainClass": "dr.evomodel.tree.ProgressiveScalarTreeTransform",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreeSpaceLogger",
+            "request": "launch",
+            "mainClass": "dr.evomodel.tree.TreeSpaceLogger",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "RLTVAnalyzer",
+            "request": "launch",
+            "mainClass": "dr.evomodel.tree.randomlocalmodel.RLTVAnalyzer",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "DataLikelihoodTester",
+            "request": "launch",
+            "mainClass": "dr.evomodel.treedatalikelihood.DataLikelihoodTester",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "DataLikelihoodTester2",
+            "request": "launch",
+            "mainClass": "dr.evomodel.treedatalikelihood.DataLikelihoodTester2",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "BrownianBridge1D",
+            "request": "launch",
+            "mainClass": "dr.geo.BrownianBridge1D",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "GTOPO30Browser",
+            "request": "launch",
+            "mainClass": "dr.geo.GTOPO30Browser",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "GTOPO30RandomWalk",
+            "request": "launch",
+            "mainClass": "dr.geo.GTOPO30RandomWalk",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "GeoSpatialDistribution",
+            "request": "launch",
+            "mainClass": "dr.geo.GeoSpatialDistribution",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "GreatCircleDistances",
+            "request": "launch",
+            "mainClass": "dr.geo.GreatCircleDistances",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "InhomogeneousRandomWalk",
+            "request": "launch",
+            "mainClass": "dr.geo.InhomogeneousRandomWalk",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "IslandLattice",
+            "request": "launch",
+            "mainClass": "dr.geo.IslandLattice",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "KMLViewer",
+            "request": "launch",
+            "mainClass": "dr.geo.KMLViewer",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "KernelDensityEstimator2D",
+            "request": "launch",
+            "mainClass": "dr.geo.KernelDensityEstimator2D",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "NewPolygon2D",
+            "request": "launch",
+            "mainClass": "dr.geo.NewPolygon2D",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "NumericalSpaceTimeProbs2D",
+            "request": "launch",
+            "mainClass": "dr.geo.NumericalSpaceTimeProbs2D",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "Polygon2D",
+            "request": "launch",
+            "mainClass": "dr.geo.Polygon2D",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "Polygon2DSampling",
+            "request": "launch",
+            "mainClass": "dr.geo.Polygon2DSampling",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "VisualizeBrownianBridge2D",
+            "request": "launch",
+            "mainClass": "dr.geo.VisualizeBrownianBridge2D",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "VisualizeKMLBrownianBridge",
+            "request": "launch",
+            "mainClass": "dr.geo.VisualizeKMLBrownianBridge",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "VisualizeKMLJointProb",
+            "request": "launch",
+            "mainClass": "dr.geo.VisualizeKMLJointProb",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "VisualizeKMLNumericalProbs",
+            "request": "launch",
+            "mainClass": "dr.geo.VisualizeKMLNumericalProbs",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "VisualizeSpaceTimeSim2D",
+            "request": "launch",
+            "mainClass": "dr.geo.VisualizeSpaceTimeSim2D",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "CartogramMapping",
+            "request": "launch",
+            "mainClass": "dr.geo.cartogram.CartogramMapping",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "VonMisesDistribution",
+            "request": "launch",
+            "mainClass": "dr.geo.distributions.VonMisesDistribution",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "VonMisesFisherDistribution",
+            "request": "launch",
+            "mainClass": "dr.geo.distributions.VonMisesFisherDistribution",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "SphericalPolarCoordinates",
+            "request": "launch",
+            "mainClass": "dr.geo.math.SphericalPolarCoordinates",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "GWishartLikelihood",
+            "request": "launch",
+            "mainClass": "dr.inference.distribution.GWishartLikelihood",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "LogNormalDistributionModel",
+            "request": "launch",
+            "mainClass": "dr.inference.distribution.LogNormalDistributionModel",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "RandomWalkGenerator",
+            "request": "launch",
+            "mainClass": "dr.inference.distribution.RandomWalkGenerator",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "StateHistory",
+            "request": "launch",
+            "mainClass": "dr.inference.markovjumps.StateHistory",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "CompoundParameter",
+            "request": "launch",
+            "mainClass": "dr.inference.model.CompoundParameter",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "WeightedMixtureModel",
+            "request": "launch",
+            "mainClass": "dr.inference.model.WeightedMixtureModel",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "EllipticalSliceOperator",
+            "request": "launch",
+            "mainClass": "dr.inference.operators.EllipticalSliceOperator",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "RandomWalkGammaPrecisionGibbsOperator",
+            "request": "launch",
+            "mainClass": "dr.inference.operators.RandomWalkGammaPrecisionGibbsOperator",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "SliceOperator",
+            "request": "launch",
+            "mainClass": "dr.inference.operators.SliceOperator",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "DensityRectangle",
+            "request": "launch",
+            "mainClass": "dr.inference.trace.DensityRectangle",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "KernelDensityEstimate",
+            "request": "launch",
+            "mainClass": "dr.inference.trace.KernelDensityEstimate",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "Tutorial1",
+            "request": "launch",
+            "mainClass": "dr.inference.tutorial.Tutorial1",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "MittagLefflerFunction",
+            "request": "launch",
+            "mainClass": "dr.math.MittagLefflerFunction",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "RiemannApproximation",
+            "request": "launch",
+            "mainClass": "dr.math.RiemannApproximation",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "BifractionalDiffusionDensity",
+            "request": "launch",
+            "mainClass": "dr.math.distributions.BifractionalDiffusionDensity",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "DirichletDistribution",
+            "request": "launch",
+            "mainClass": "dr.math.distributions.DirichletDistribution",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "GammaDistribution",
+            "request": "launch",
+            "mainClass": "dr.math.distributions.GammaDistribution",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "GammaKDEDistribution",
+            "request": "launch",
+            "mainClass": "dr.math.distributions.GammaKDEDistribution",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "Gumbel2Distribution",
+            "request": "launch",
+            "mainClass": "dr.math.distributions.Gumbel2Distribution",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "LogTransformedNormalKDEDistribution",
+            "request": "launch",
+            "mainClass": "dr.math.distributions.LogTransformedNormalKDEDistribution",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "LogitTransformedNormalKDEDistribution",
+            "request": "launch",
+            "mainClass": "dr.math.distributions.LogitTransformedNormalKDEDistribution",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "MultivariateNormalDistribution",
+            "request": "launch",
+            "mainClass": "dr.math.distributions.MultivariateNormalDistribution",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "NegativeBinomialDistribution",
+            "request": "launch",
+            "mainClass": "dr.math.distributions.NegativeBinomialDistribution",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "NormalDistribution",
+            "request": "launch",
+            "mainClass": "dr.math.distributions.NormalDistribution",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "NormalKDEDistribution",
+            "request": "launch",
+            "mainClass": "dr.math.distributions.NormalKDEDistribution",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "ReflectedNormalDistribution",
+            "request": "launch",
+            "mainClass": "dr.math.distributions.ReflectedNormalDistribution",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TransformedNormalKDEDistribution",
+            "request": "launch",
+            "mainClass": "dr.math.distributions.TransformedNormalKDEDistribution",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "WishartDistribution",
+            "request": "launch",
+            "mainClass": "dr.math.distributions.WishartDistribution",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "AlignmentScore",
+            "request": "launch",
+            "mainClass": "dr.oldevomodel.sitemodel.AlignmentScore",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "ComplexSubstitutionModel",
+            "request": "launch",
+            "mainClass": "dr.oldevomodel.substmodel.ComplexSubstitutionModel",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "GeneralF81Model",
+            "request": "launch",
+            "mainClass": "dr.oldevomodel.substmodel.GeneralF81Model",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "NewMicrosatelliteModel",
+            "request": "launch",
+            "mainClass": "dr.oldevomodel.substmodel.NewMicrosatelliteModel",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "SVSComplexSubstitutionModel",
+            "request": "launch",
+            "mainClass": "dr.oldevomodel.substmodel.SVSComplexSubstitutionModel",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "HeapSort",
+            "request": "launch",
+            "mainClass": "dr.util.HeapSort",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "Permutator",
+            "request": "launch",
+            "mainClass": "dr.util.Permutator",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "Transform$LogConstrainedSumTransform",
+            "request": "launch",
+            "mainClass": "dr.util.Transform$LogConstrainedSumTransform",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "XMLModelFile",
+            "request": "launch",
+            "mainClass": "dr.xml.XMLModelFile",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "BeautiTester",
+            "request": "launch",
+            "mainClass": "test.dr.app.beauti.BeautiTester",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TestCalibratedYuleModel",
+            "request": "launch",
+            "mainClass": "test.dr.calibration.TestCalibratedYuleModel",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "TreeMetricsTest",
+            "request": "launch",
+            "mainClass": "test.dr.evolution.TreeMetricsTest",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "EigendecompositionTest",
+            "request": "launch",
+            "mainClass": "test.dr.evomodel.substmodel.EigendecompositionTest",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "PathSampling",
+            "request": "launch",
+            "mainClass": "test.dr.integration.PathSampling",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "KDEDistributionTest",
+            "request": "launch",
+            "mainClass": "test.dr.math.KDEDistributionTest",
+            "projectName": "beast-mcmc"
+        },
+        {
+            "type": "java",
+            "name": "Main",
+            "request": "launch",
+            "mainClass": "net.sf.launch4j.Main",
+            "projectName": "launch4j (2)"
+        },
+        {
+            "type": "java",
+            "name": "ConsoleApp",
+            "request": "launch",
+            "mainClass": "net.sf.launch4j.example.ConsoleApp",
+            "projectName": "launch4j (2)"
+        },
+        {
+            "type": "java",
+            "name": "ExitCodeApp",
+            "request": "launch",
+            "mainClass": "net.sf.launch4j.example.ExitCodeApp",
+            "projectName": "launch4j (2)"
+        },
+        {
+            "type": "java",
+            "name": "SimpleApp",
+            "request": "launch",
+            "mainClass": "net.sf.launch4j.example.SimpleApp",
+            "projectName": "launch4j (2)"
+        }
+    ]
+}

@@ -96,13 +96,41 @@ public class TestStatisticParser extends AbstractXMLObjectParser {
         if (attr2 instanceof BranchParameter) {
             class MultivariateTestStatistic extends TestStatistic {
                 BranchParameter branchParameter;
+                Attribute attribute;
                 public MultivariateTestStatistic(String name, Attribute attr, BranchParameter attr2, int mode) {
                     super(name, attr, attr2, mode);
                     this.branchParameter = attr2;
+                    this.attribute = attr;
                 }
 
                 public int getDimension() {
                     return branchParameter.getDimension();
+                }
+
+                public boolean getBoolean(int i) {
+
+                    double num;
+                    if (attribute instanceof Statistic) {
+                        num = ((Statistic) attribute).getStatisticValue(0);
+                    } else {
+                        num = ((Number) attribute.getAttributeValue()).doubleValue();
+                    }
+
+                    double testValue1 = branchParameter.getParameterValue(i);
+
+
+                    switch (mode) {
+                        case EQUALS:
+                            if (num == testValue1) return true;
+                            break;
+                        case GREATER_THAN:
+                            if (num > testValue1) return true;
+                            break;
+                        case LESS_THAN:
+                            if (num < testValue1) return true;
+                            break;
+                    }
+                    return false;
                 }
             }
             return new MultivariateTestStatistic(name, attr, (BranchParameter) attr2, mode);

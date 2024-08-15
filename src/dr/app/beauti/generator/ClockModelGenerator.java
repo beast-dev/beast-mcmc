@@ -1,7 +1,8 @@
 /*
- * BranchRatesModelGenerator.java
+ * ClockModelGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
@@ -255,13 +257,13 @@ public class ClockModelGenerator extends Generator {
                 writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
 
                 writer.writeOpenTag(ArbitraryBranchRatesParser.RATES);
-                writeParameter(clockModel.getParameter("branchRates.rates"), -1, writer);
+                writeParameter(clockModel.getParameter(ClockType.HMC_CLOCK_BRANCH_RATES), -1, writer);
                 writer.writeCloseTag(ArbitraryBranchRatesParser.RATES);
                 writer.writeOpenTag(ArbitraryBranchRatesParser.LOCATION);
-                writeParameter(clockModel.getParameter("branchRates.rate"), -1, writer);
+                writeParameter(clockModel.getParameter(ClockType.HMC_CLOCK_LOCATION), -1, writer);
                 writer.writeCloseTag(ArbitraryBranchRatesParser.LOCATION);
                 writer.writeOpenTag(ArbitraryBranchRatesParser.SCALE);
-                writeParameter(clockModel.getParameter("branchRates.scale"), -1, writer);
+                writeParameter(clockModel.getParameter(ClockType.HMCLN_SCALE), -1, writer);
                 writer.writeCloseTag(ArbitraryBranchRatesParser.SCALE);
                 writer.writeCloseTag(tag);
 

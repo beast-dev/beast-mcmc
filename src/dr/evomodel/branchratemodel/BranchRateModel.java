@@ -1,7 +1,8 @@
 /*
  * BranchRateModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.branchratemodel;
@@ -33,7 +35,6 @@ import dr.inference.model.Model;
  * Time: 1:59:24 PM
  *
  * @author Alexei Drummond
- * @version $Id: BranchRateModel.java,v 1.4 2005/05/24 20:25:57 rambaut Exp $
  */
 public interface BranchRateModel extends Model, BranchRates, TreeTraitProvider, TreeTrait<Double> {
     String BRANCH_RATES = "branchRates";

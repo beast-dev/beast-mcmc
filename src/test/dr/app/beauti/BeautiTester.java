@@ -1,7 +1,8 @@
 /*
  * BeautiTester.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package test.dr.app.beauti;
@@ -30,7 +32,6 @@ import dr.app.beauti.options.BeautiOptions;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: BeautiTester.java,v 1.2 2005/07/11 14:07:25 rambaut Exp $
  */
 public class BeautiTester {     
 

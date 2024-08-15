@@ -1,7 +1,8 @@
 /*
  * BeastGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
@@ -41,13 +43,10 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
-import dr.evomodelxml.speciation.MultiSpeciesCoalescentParser;
-import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.DateParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
-import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.inferencexml.operators.SimpleOperatorScheduleParser;
 import dr.util.Attribute;
@@ -68,7 +67,6 @@ import java.util.*;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Walter Xie
- * @version $Id: BeastGenerator.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class BeastGenerator extends Generator {
 
@@ -338,21 +336,6 @@ public class BeastGenerator extends Generator {
 
             writer.writeText("");
 
-            if (!options.hasIdenticalTaxa()) {
-                // write all taxa in each gene tree regarding each data partition,
-                for (AbstractPartitionData partition : options.dataPartitions) {
-                    if (partition.getTaxonList() != null) {
-                        writeDifferentTaxa(partition, writer);
-                    }
-                }
-            } else {
-                // microsat
-                for (PartitionPattern partitionPattern : options.getPartitionPattern()) {
-                    if (partitionPattern.getTaxonList() != null && partitionPattern.getPatterns().hasMask()) {
-                        writeDifferentTaxa(partitionPattern, writer);
-                    }
-                }
-            }
         } catch (Exception e) {
             e.printStackTrace(System.err);
             throw new GeneratorException("Taxon list generation has failed:\n" + e.getMessage());
@@ -361,7 +344,7 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ Taxon Sets ++++++++++++++++++
         List<Taxa> taxonSets = options.taxonSets;
         try {
-            if (taxonSets != null && taxonSets.size() > 0) {
+            if (taxonSets != null && !taxonSets.isEmpty()) {
                 tmrcaStatisticsGenerator.writeTaxonSets(writer, taxonSets);
             }
         } catch (Exception e) {
@@ -413,6 +396,7 @@ public class BeastGenerator extends Generator {
                                 // attribute patterns which is generated next bit of this method.
                                 break;
 
+                            case DataType.TREE:
                             case DataType.DUMMY:
                                 //Do nothing
                                 break;
@@ -722,24 +706,6 @@ public class BeastGenerator extends Generator {
 
         if (hasDate || hasAttr) writer.writeCloseTag(TaxonParser.TAXON);
 
-    }
-
-    public void writeDifferentTaxa(AbstractPartitionData dataPartition, XMLWriter writer) {
-        TaxonList taxonList = dataPartition.getTaxonList();
-
-        String name = dataPartition.getPartitionTreeModel().getName();
-
-        writer.writeComment("gene name = " + name + ", ntax= " + taxonList.getTaxonCount());
-        writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, name + "." + TaxaParser.TAXA)});
-
-        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-            if ( !(dataPartition instanceof PartitionPattern && ((PartitionPattern) dataPartition).getPatterns().isMasked(i) ) ) {
-                final Taxon taxon = taxonList.getTaxon(i);
-                writer.writeIDref(TaxonParser.TAXON, taxon.getId());
-            }
-        }
-
-        writer.writeCloseTag(TaxaParser.TAXA);
     }
 
     /**

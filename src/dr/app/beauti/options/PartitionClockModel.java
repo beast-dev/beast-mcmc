@@ -1,7 +1,8 @@
 /*
  * PartitionClockModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.options;
@@ -39,7 +41,6 @@ import static dr.app.beauti.options.BeautiOptions.DEFAULT_QUANTILE_RELAXED_CLOCK
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Walter Xie
- * @version $Id$
  */
 public class PartitionClockModel extends PartitionOptions {
     private static final long serialVersionUID = -6904595851602060488L;
@@ -87,7 +88,7 @@ public class PartitionClockModel extends PartitionOptions {
     }
 
     public void initModelParametersAndOpererators() {
-        double rate = 1.0;
+        double rate = options.useTipDates ? 0.001 : 1.0;
 
         new Parameter.Builder("clock.rate", "substitution rate")
                 .prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
@@ -124,35 +125,40 @@ public class PartitionClockModel extends PartitionOptions {
                 .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
 
-        new Parameter.Builder(ClockType.SHRINKAGE_CLOCK_LOCATION, "Shrinkage clock rate").
-                prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
-                .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
-                .isAdaptiveMultivariateCompatible(false).build(parameters);
-
         new Parameter.Builder(ClockType.HMCLN_SCALE, "HMC relaxed clock scale").
                 prior(PriorType.EXPONENTIAL_PRIOR).isNonNegative(true)
                 .initial(1.0).mean(1.0).offset(0.0).partitionOptions(this)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
 
+        new Parameter.Builder(ClockType.HMC_CLOCK_BRANCH_RATES, "HMC relaxed clock branch rates").
+                initial(1.0).isNonNegative(true).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(false).build(parameters);
+
+
         new Parameter.Builder(ClockType.ME_CLOCK_LOCATION, "mixed effects clock rate (fixed prior)").
                 prior(PriorType.LOGNORMAL_HPM_PRIOR).initial(rate)
-                .isCMTCRate(false).isNonNegative(false).partitionOptions(this).isPriorFixed(true)
+                .isCMTCRate(false).isNonNegative(true).partitionOptions(this).isPriorFixed(true)
                 .isAdaptiveMultivariateCompatible(true).build(parameters);
 
-        new Parameter.Builder(ClockType.ME_CLOCK_SCALE, "mixed effects clock scale (fixed prior)").
-                prior(PriorType.EXPONENTIAL_HPM_PRIOR).initial(0.15)
-                .isCMTCRate(false).isNonNegative(false).partitionOptions(this).isPriorFixed(true)
-                .isAdaptiveMultivariateCompatible(true).build(parameters);
 
         // Shrinkage clock
+        new Parameter.Builder(ClockType.SHRINKAGE_CLOCK_LOCATION, "Shrinkage clock rate").
+                prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
+                .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(false).build(parameters);
+        createParameter("substBranchRates.rates", "shrinkage local clock branch rates", 1.0);
+
         createOperator("GIBBS_SHRINKAGE_CLOCK", "shrinkage local clock",
                 "shrinkage local clock Gibbs operator", null, OperatorType.SHRINKAGE_CLOCK_GIBBS_OPERATOR ,-1 , 4.0);
         createOperator("HMC_SHRINKAGE_CLOCK", "shrinkage local clock",
                 "shrinkage local clock Hamiltonian operator", null, OperatorType.SHRINKAGE_CLOCK_HMC_OPERATOR ,-1 , 8.0);
         createScaleOperator(ClockType.SHRINKAGE_CLOCK_LOCATION, demoTuning, rateWeights);
-        createParameter("substBranchRates.rates", "shrinkage local clock branch rates", 1.0);
 
         // Mixed effects clock
+        new Parameter.Builder(ClockType.ME_CLOCK_SCALE, "mixed effects clock scale (fixed prior)").
+                prior(PriorType.EXPONENTIAL_HPM_PRIOR).initial(0.15)
+                .isCMTCRate(false).isNonNegative(true).partitionOptions(this).isPriorFixed(true)
+                .isAdaptiveMultivariateCompatible(true).build(parameters);
         createScaleOperator(ClockType.ME_CLOCK_LOCATION, demoTuning, rateWeights);
         createScaleOperator(ClockType.ME_CLOCK_SCALE, demoTuning, rateWeights);
         new Parameter.Builder(BranchSpecificFixedEffectsParser.INTERCEPT, "intercept (fixed prior)").
@@ -214,7 +220,6 @@ public class PartitionClockModel extends PartitionOptions {
                 "Hamiltonian Monte Carlo relaxed clock operator", null, OperatorType.RELAXED_CLOCK_HMC_OPERATOR ,-1 , 1.0);
         createScaleOperator(ClockType.HMC_CLOCK_LOCATION, demoTuning, rateWeights);
         createScaleOperator(ClockType.HMCLN_SCALE, demoTuning, rateWeights);
-        createParameter("branchRates.rates", "HMC relaxed clock branch rates", 1.0);
 
         // Random local clock
         createOperator(ClockType.LOCAL_CLOCK + ".relativeRates", OperatorType.RANDOM_WALK, demoTuning, treeWeights);
@@ -285,39 +290,20 @@ public class PartitionClockModel extends PartitionOptions {
                 getParameter(ClockType.ME_CLOCK_LOCATION), OperatorType.UP_DOWN, demoTuning, rateWeights);
     }
 
-    // From PartitionClockModelTreeModelLink
-//    public List<Parameter> selectParameters(List<Parameter> params) {
-//        setAvgRootAndRate();
-//        getParameter("branchRates.categories");
-//        getParameter("treeModel.rootRate");
-//        getParameter("treeModel.nodeRates");
-//        getParameter("treeModel.allRates");
-//
-//        if (options.hasData()) {
-//            // if not fixed then do mutation rate move and up/down move
-//            boolean fixed = !model.isEstimatedRate();
-//
-//            Parameter rateParam;
-//
-//            switch (model.getClockType()) {
-//                case AUTOCORRELATED:
-//                    rateParam = getParameter("treeModel.rootRate");
-//                    rateParam.isFixed = fixed;
-//                    if (!fixed) params.add(rateParam);
-//
-//                    params.add(getParameter("branchRates.var"));
-//                    break;
-//            }
-//        }
-//        return params;
-//    }
-
     @Override
     public List<Parameter> selectParameters(List<Parameter> params) {
-//        setAvgRootAndRate();
-        double rate = 1.0;
+        if (getPartitionTreeModel().isUsingEmpiricalTrees()) {
+            // empirical trees has no clock model
+            return params;
+        }
+
+        double rate = options.useTipDates ? 0.001 : 1.0;
 
         if (options.hasData()) {
+            Parameter clockParameter = getClockRateParameter();
+            if (!clockParameter.isInitialSet()) {
+                clockParameter.setInitial(rate);
+            }
 
             switch (clockType) {
                 case STRICT_CLOCK:
@@ -560,20 +546,15 @@ public class PartitionClockModel extends PartitionOptions {
 
     @Override
     public List<Operator> selectOperators(List<Operator> operators) {
+        if (getPartitionTreeModel().isUsingEmpiricalTrees()) {
+            // empirical trees has no clock model
+            return operators;
+        }
+
         List<Operator> ops = new ArrayList<Operator>();
 
         if (options.hasData()) {
-            Operator op;
-            if (getDataType().getType() == DataType.TREE) {
-                if (getClockType() == ClockType.STRICT_CLOCK) {
-                    op = getOperator("upDownRateHeights");
-                    ops.add(op);
-                } else {
-                    throw new UnsupportedOperationException("Tree data only supports strict clock model");
-                }
-
-            } else {
-
+            if (getDataType().getType() != DataType.TREE) {
                 Operator rateOperator = getOperator("clock.rate");
                 switch (clockType) {
                     case STRICT_CLOCK:

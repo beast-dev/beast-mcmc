@@ -12,36 +12,6 @@ import java.util.List;
  */
 public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.AbstractBastaLikelihoodDelegate {
 
-    final static class InternalStorage {
-
-        final double[] partials;
-        final double[] matrices;
-        final double[] sizes;
-        final double[] coalescent;
-
-        final double[] e;
-        final double[] f;
-        final double[] g;
-        final double[] h;
-
-        final EigenDecomposition[] decompositions; // TODO flatten?
-
-        public InternalStorage(int maxNumCoalescentIntervals, int treeNodeCount, int stateCount) {
-
-            this.partials = new double[maxNumCoalescentIntervals * (treeNodeCount + 1) * stateCount]; // TODO much too large
-            this.matrices = new double[maxNumCoalescentIntervals * stateCount * stateCount]; // TODO much too small (except for strict-clock)
-            this.coalescent = new double[maxNumCoalescentIntervals];
-            this.sizes = new double[2 * stateCount];
-
-            this.e = new double[maxNumCoalescentIntervals * stateCount];
-            this.f = new double[maxNumCoalescentIntervals * stateCount];
-            this.g = new double[maxNumCoalescentIntervals * stateCount];
-            this.h = new double[maxNumCoalescentIntervals * stateCount];
-
-            this.decompositions = new EigenDecomposition[1];
-        }
-    }
-
     static class GradientInternalStorage {
 
         // TODO greatly simplify
@@ -86,7 +56,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         }
     }
 
-    private final InternalStorage storage;
+    private final BastaInternalStorage storage;
     private GradientInternalStorage gradientStorage;
     private final double[] temp;
 
@@ -96,13 +66,13 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                                           boolean transpose) {
         super(name, tree, stateCount, transpose);
 
-        this.storage = new InternalStorage(maxNumCoalescentIntervals, tree.getNodeCount(), stateCount);
+        this.storage = new BastaInternalStorage(maxNumCoalescentIntervals, tree.getNodeCount(), stateCount);
         this.gradientStorage = null; //new GradientInternalStorage(maxNumCoalescentIntervals, tree.getNodeCount(), stateCount);
 
         this.temp = new double[stateCount * stateCount];
     }
 
-    public InternalStorage getInternalStorage() {
+    public BastaInternalStorage getInternalStorage() {
         return storage;
     }
 

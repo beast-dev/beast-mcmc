@@ -36,8 +36,11 @@ public class BastaInternalStorage {
         this.sizes = new double[2 * stateCount];
         this.decompositions = new EigenDecomposition[1];
 
-        // TODO first argument is much too large
-        resize(maxNumCoalescentIntervals * (treeNodeCount + 1), maxNumCoalescentIntervals);
+        resize(getStartingPartialsCount(maxNumCoalescentIntervals, treeNodeCount), maxNumCoalescentIntervals);
+    }
+
+    static private int getStartingPartialsCount(int maxNumCoalescentIntervals, int treeNodeCount) {
+        return maxNumCoalescentIntervals * (treeNodeCount + 1); // TODO much too large
     }
 
     public void resize(int newNumPartials, int newNumCoalescentIntervals) {

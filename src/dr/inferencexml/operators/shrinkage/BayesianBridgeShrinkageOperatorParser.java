@@ -27,7 +27,6 @@
 
 package dr.inferencexml.operators.shrinkage;
 
-import dr.evomodel.branchratemodel.AutoCorrelatedBranchRatesDistribution;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider;
 import dr.inference.model.Parameter;
@@ -35,12 +34,11 @@ import dr.inference.operators.shrinkage.BayesianBridgeShrinkageOperator;
 import dr.math.distributions.GammaDistribution;
 import dr.xml.*;
 
-import static dr.evoxml.MaskedPatternsParser.MASK;
-import static dr.inference.operators.MCMCOperator.WEIGHT;
-
 public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectParser {
 
     public final static String BAYESIAN_BRIDGE_PARSER = "bayesianBridgeGibbsOperator";
+    public final static String MASK = "mask";
+    public final static String WEIGHT = "weight";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

@@ -29,7 +29,9 @@ package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.inference.model.DuplicatedParameter;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,12 +64,27 @@ public class CompositeSubstitutionModel extends BaseSubstitutionModel {
         super(name, dataType, substitutionModel1.getFrequencyModel(), null);
 
         this.substitutionModel1 = substitutionModel1;
+        int rateCount1 = substitutionModel1.rateCount;
         this.substitutionModel2 = substitutionModel2;
+        int rateCount2 = substitutionModel2.rateCount;
         this.weightParameter = weightParameter;
 
+        this.rateCount = Math.max(rateCount1, rateCount2);
         addModel(substitutionModel1);
         addModel(substitutionModel2);
         addVariable(weightParameter);
+
+        setStateCount(dataType.getStateCount());
+    }
+
+    @Override
+    protected int getRateCount(int stateCount) {
+        if (substitutionModel1 == null) {
+            return super.getRateCount(stateCount);
+        }
+        int rateCount1 = substitutionModel1.rateCount;
+        int rateCount2 = substitutionModel2.rateCount;
+        return Math.max(rateCount1, rateCount2);
     }
 
     protected void frequenciesChanged() {
@@ -80,36 +97,51 @@ public class CompositeSubstitutionModel extends BaseSubstitutionModel {
 
     @Override
     protected void setupRelativeRates(double[] rates) {
-        // do nothing
-    }
-
-    protected void setupQMatrix(double[] rates, double[] pi, double[][] matrix) {
         double weight = weightParameter.getParameterValue(0);
-        double[][] rates1 = substitutionModel1.getQCopy();
-        double[][] rates2 = substitutionModel2.getQCopy();
-        for (int i = 0; i < stateCount; i++) {
-            for (int j = 0; j < stateCount; j++) {
-                matrix[i][j] = rates1[i][j] + (rates2[i][j] * weight);
+        double[] rates1 = substitutionModel1.relativeRates;
+        double[] rates2 = substitutionModel2.relativeRates;
+        if (substitutionModel1.rateCount == substitutionModel2.rateCount) {
+            for (int i = 0; i < rateCount; i++) {
+                rates[i] = rates1[i] + (rates2[i] * weight);
+            }
+        } else if (substitutionModel1.rateCount < substitutionModel2.rateCount) {
+            int k = 0;
+            for (int i = 0; i < substitutionModel1.rateCount; i++) {
+                rates[k] = rates1[i] + (rates2[k] * weight);
+                k++;
+            }
+            for (int i = 0; i < substitutionModel1.rateCount; i++) {
+                rates[k] = rates1[i] + (rates2[k] * weight);
+                k++;
+            }
+        } else {
+            int k = 0;
+            for (int i = 0; i < substitutionModel2.rateCount; i++) {
+                rates[k] = rates1[k] + (rates2[i] * weight);
+                k++;
+            }
+            for (int i = 0; i < substitutionModel2.rateCount; i++) {
+                rates[k] = rates1[k] + (rates2[i] * weight);
+                k++;
             }
         }
     }
 
-    public void setNormalization(boolean doNormalization) {
-        this.doNormalization = doNormalization;
-    }
-
-    protected double getNormalizationValue(double[][] matrix, double[] pi) {
-        double norm = 1.0;
-        if (doNormalization) {
-            norm = super.getNormalizationValue(matrix, pi);
-        }
-        return norm;
-    }
-
-
     // *****************************************************************
     // Interface Model
     // *****************************************************************
+
+    @Override
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        updateMatrix = true;
+        fireModelChanged();
+    }
+
+    @Override
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        updateMatrix = true;
+        fireModelChanged();
+    }
 
     protected void storeState() {
     } // nothing to do

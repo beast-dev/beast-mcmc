@@ -112,7 +112,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         return new DefaultEigenSystem(stateCount);
     }
 
-    private void setStateCount(int stateCount) {
+    protected void setStateCount(int stateCount) {
         this.stateCount = stateCount;
         rateCount = getRateCount(stateCount);
 

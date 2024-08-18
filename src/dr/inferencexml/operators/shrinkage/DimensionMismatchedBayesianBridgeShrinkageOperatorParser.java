@@ -35,12 +35,11 @@ import dr.inference.operators.shrinkage.DimensionMismatchedBayesianBridgeShrinka
 import dr.math.distributions.GammaDistribution;
 import dr.xml.*;
 
-import static dr.evoxml.MaskedPatternsParser.MASK;
-import static dr.inference.operators.MCMCOperator.WEIGHT;
-
 public class DimensionMismatchedBayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectParser {
 
     public final static String BAYESIAN_BRIDGE_PARSER = "dimensionMismatchedBayesianBridgeGibbsOperator";
+    public final static String MASK = "mask";
+    public final static String WEIGHT = "weight";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

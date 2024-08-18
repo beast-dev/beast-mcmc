@@ -28,7 +28,9 @@
 package dr.evomodelxml.substmodel;
 
 import dr.evomodel.substmodel.CompositeSubstitutionModel;
+import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.List;
@@ -49,11 +51,12 @@ public class CompositeSubstitutionModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        List<SubstitutionModel> substitutionModels = xo.getAllChildren(SubstitutionModel.class);
+        List<GeneralSubstitutionModel> substitutionModels = xo.getAllChildren(GeneralSubstitutionModel.class);
+        Parameter weightParameter = (Parameter)xo.getChild(Parameter.class);
 
         if (substitutionModels.size() != 2 ||
                 !substitutionModels.get(0).getDataType().equals(substitutionModels.get(1).getDataType())) {
-            throw new XMLParseException("CompositeSubstitutionModel should take 2 substitution models of the same DataType");
+            throw new XMLParseException("CompositeSubstitutionModel should take 2 GeneralSubstitutionModel of the same DataType");
         }
         int stateCount = substitutionModels.get(0).getDataType().getStateCount();
         Logger.getLogger("dr.evomodel").info("  Composite Substitution Model (" +
@@ -63,7 +66,8 @@ public class CompositeSubstitutionModelParser extends AbstractXMLObjectParser {
         CompositeSubstitutionModel model = new CompositeSubstitutionModel(getParserName(),
                 substitutionModels.get(0).getDataType(),
                 substitutionModels.get(0),
-                substitutionModels.get(1)
+                substitutionModels.get(1),
+                weightParameter
         );
 
 //        if (!xo.getAttribute(NORMALIZED, true)) {
@@ -91,8 +95,8 @@ public class CompositeSubstitutionModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(SubstitutionModel.class),
-            new ElementRule(SubstitutionModel.class),
+            new ElementRule(GeneralSubstitutionModel.class, 2, 2),
+            new ElementRule(Parameter.class),
             AttributeRule.newBooleanRule(NORMALIZED, true),
     };
 }

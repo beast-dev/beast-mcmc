@@ -46,16 +46,28 @@ public class CompositeSubstitutionModel extends BaseSubstitutionModel {
      */
     protected int ratesRelativeTo;
 
+    /**
+     *
+     * @param name
+     * @param dataType
+     * @param substitutionModel1
+     * @param substitutionModel2
+     * @param weightParameter the weight of the second substitution model relative to the first
+     */
     public CompositeSubstitutionModel(String name, DataType dataType,
-                                      SubstitutionModel substitutionModel1,
-                                      SubstitutionModel substitutionModel2) {
+                                      GeneralSubstitutionModel substitutionModel1,
+                                      GeneralSubstitutionModel substitutionModel2,
+                                      Parameter weightParameter
+    ) {
         super(name, dataType, substitutionModel1.getFrequencyModel(), null);
 
         this.substitutionModel1 = substitutionModel1;
         this.substitutionModel2 = substitutionModel2;
+        this.weightParameter = weightParameter;
 
         addModel(substitutionModel1);
         addModel(substitutionModel2);
+        addVariable(weightParameter);
     }
 
     protected void frequenciesChanged() {
@@ -66,14 +78,18 @@ public class CompositeSubstitutionModel extends BaseSubstitutionModel {
         // Nothing to precalculate
     }
 
+    @Override
     protected void setupRelativeRates(double[] rates) {
-        for (int i = 0; i < rates.length; i++) {
-            if (i == ratesRelativeTo) {
-                rates[i] = 1.0;
-            } else if (ratesRelativeTo < 0 || i < ratesRelativeTo) {
-                rates[i] = ratesParameter.getParameterValue(i);
-            } else {
-                rates[i] = ratesParameter.getParameterValue(i - 1);
+        // do nothing
+    }
+
+    protected void setupQMatrix(double[] rates, double[] pi, double[][] matrix) {
+        double weight = weightParameter.getParameterValue(0);
+        double[][] rates1 = substitutionModel1.getQCopy();
+        double[][] rates2 = substitutionModel2.getQCopy();
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) {
+                matrix[i][j] = rates1[i][j] + (rates2[i][j] * weight);
             }
         }
     }
@@ -108,10 +124,10 @@ public class CompositeSubstitutionModel extends BaseSubstitutionModel {
     protected void acceptState() {
     } // nothing to do
 
-    private final SubstitutionModel substitutionModel1;
-    private final SubstitutionModel substitutionModel2;
+    private final GeneralSubstitutionModel substitutionModel1;
+    private final GeneralSubstitutionModel substitutionModel2;
 
 
-    protected Parameter ratesParameter = null;
+    protected final Parameter weightParameter;
     private boolean doNormalization = true;
 }

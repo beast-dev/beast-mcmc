@@ -46,7 +46,7 @@ public class BastaInternalStorage {
     public void resize(int newNumPartials, int newNumCoalescentIntervals) {
 
         if (newNumPartials > currentNumPartials) {
-            this.partials = new double[newNumCoalescentIntervals * stateCount];
+            this.partials = new double[newNumPartials * stateCount];
             this.currentNumPartials =  newNumPartials;
         }
 

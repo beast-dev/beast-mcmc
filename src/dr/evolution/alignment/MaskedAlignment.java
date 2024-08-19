@@ -1,5 +1,5 @@
 /*
- * BeagleDataLikelihoodInterface.java
+ * MaskedAlignment.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -25,21 +25,23 @@
  *
  */
 
-package dr.evomodel.treedatalikelihood;
+package dr.evolution.alignment;
 
-import dr.inference.model.Model;
-import dr.inference.model.Profileable;
-import dr.xml.Reportable;
+public class MaskedAlignment extends WrappedAlignment {
+    public MaskedAlignment(Alignment alignment, boolean[] mask) {
+        super(alignment);
 
-import java.util.List;
+        this.mask = mask;
+    }
 
-/**
- * DataLikelihoodDelegate - interface for a plugin delegate for the data likelihood.
- *
- * @author Andrew Rambaut
- * @author Marc Suchard
- */
-@Deprecated // seems not to be used
-public interface BeagleDataLikelihoodInterface extends DataLikelihoodDelegate {
+    @Override
+    public int getState(int taxonIndex, int siteIndex) {
+        if (mask[siteIndex]) {
+            return alignment.getState(taxonIndex, siteIndex);
+        } else {
+            return alignment.getDataType().getUnknownState();
+        }
+    }
 
+    private final boolean[] mask;
 }

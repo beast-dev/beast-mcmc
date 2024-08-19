@@ -523,6 +523,10 @@ public class HiddenLinkageModel extends TipStatesModel implements PatternList
 		return data.getAlignment().getPatternWeights();
 	}
 
+	public int getPatternIndex(int siteIndex){
+		// Not implemented yet
+		return -1;
+	}
 	public int getStateCount() {
 		return data.getAlignment().getStateCount();
 	}

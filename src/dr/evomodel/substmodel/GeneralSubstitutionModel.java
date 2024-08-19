@@ -30,6 +30,7 @@ package dr.evomodel.substmodel;
 import dr.evolution.datatype.DataType;
 import dr.inference.model.Parameter;
 import dr.inference.model.DuplicatedParameter;
+import dr.inference.model.Variable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +83,7 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
     }
 
     protected void ratesChanged() {
-        // Nothing to precalculate
+        setupRelativeRates(relativeRates);
     }
 
     protected void setupRelativeRates(double[] rates) {
@@ -145,17 +146,24 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
         this.ratesRelativeTo = ratesRelativeTo;
     }
 
+    public double[] getRelativeRates() {
+        setupRelativeRates(relativeRates);
+        return relativeRates;
+    }
+
     // *****************************************************************
     // Interface Model
     // *****************************************************************
 
 
+    @Override
     protected void storeState() {
     } // nothing to do
 
     /**
      * Restore the additional stored state
      */
+    @Override
     protected void restoreState() {
         updateMatrix = true;
     }

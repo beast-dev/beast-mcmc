@@ -98,8 +98,8 @@ public class CompositeSubstitutionModel extends BaseSubstitutionModel {
     @Override
     protected void setupRelativeRates(double[] rates) {
         double weight = weightParameter.getParameterValue(0);
-        double[] rates1 = substitutionModel1.relativeRates;
-        double[] rates2 = substitutionModel2.relativeRates;
+        double[] rates1 = substitutionModel1.getRelativeRates();
+        double[] rates2 = substitutionModel2.getRelativeRates();
         if (substitutionModel1.rateCount == substitutionModel2.rateCount) {
             for (int i = 0; i < rateCount; i++) {
                 rates[i] = rates1[i] + (rates2[i] * weight);
@@ -122,6 +122,29 @@ public class CompositeSubstitutionModel extends BaseSubstitutionModel {
             }
             for (int i = 0; i < substitutionModel2.rateCount; i++) {
                 rates[k] = rates1[k] + (rates2[i] * weight);
+                k++;
+            }
+        }
+    }
+
+    protected void setupQMatrix(double[] rates, double[] pi, double[][] matrix) {
+
+        int i, j, k = 0;
+        for (i = 0; i < stateCount; i++) {
+            for (j = i + 1; j < stateCount; j++) {
+                matrix[i][j] = rates[k] * pi[j];
+                k++;
+            }
+        }
+
+        if (k == rates.length) {
+            // symmetrical matrix so start the rates again
+            k = 0;
+        }
+        // Copy lower triangle in column-order form (transposed)
+        for (j = 0; j < stateCount; j++) {
+            for (i = j + 1; i < stateCount; i++) {
+                matrix[i][j] = rates[k] * pi[j];
                 k++;
             }
         }

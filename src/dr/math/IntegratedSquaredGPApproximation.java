@@ -159,8 +159,8 @@ public class IntegratedSquaredGPApproximation {
                     term2 = Math.sin((Math.sqrt(getSpectralDensityEigenValue(i, boundary)) -
                             Math.sqrt(getSpectralDensityEigenValue(j, boundary)))*(start + boundary));
                     sum += ((getConstantForGradient(i) * getConstantForGradient(j) * coefficients[i])/
-                            (Math.sqrt(getSpectralDensityEigenValue(j, boundary)) -
-                            Math.sqrt(getSpectralDensityEigenValue(i, boundary)))) * (term1 - term2);
+                            (Math.sqrt(getSpectralDensityEigenValue(i, boundary)) -
+                            Math.sqrt(getSpectralDensityEigenValue(j, boundary)))) * (term1 - term2);
                     term1 = Math.sin((Math.sqrt(getSpectralDensityEigenValue(j, boundary)) +
                             Math.sqrt(getSpectralDensityEigenValue(i, boundary)))*(end + boundary));
                     term2 = Math.sin((Math.sqrt(getSpectralDensityEigenValue(j, boundary)) +

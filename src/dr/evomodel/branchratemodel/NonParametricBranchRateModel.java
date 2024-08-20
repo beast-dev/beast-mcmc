@@ -53,8 +53,7 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
-// TO DO: Gradients still wrong
-// TO DO: Remove code duplication by using common interface for rates and gradients
+
 
 public class NonParametricBranchRateModel extends AbstractBranchRateModel
         implements DifferentiableBranchRates, Citable {
@@ -73,6 +72,7 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
     private double[] nodeRates;
     private double[] storedNodeRates;
     private double[] temp;
+    private double[][] tempMatrix;
     private final double rootHeight;
     private double boundary;
 
@@ -112,42 +112,10 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
         nodeRates = new double[tree.getNodeCount() - 1];
         rootHeight = tree.getNodeHeight(tree.getRoot());
         temp = new double[tree.getNodeCount() - 1];
+        tempMatrix = new double[coefficients.getDimension()][tree.getNodeCount() - 1];
         boundary = (rootHeight/2) * boundaryFactor.getParameterValue(0);
     }
 
-
-    private void calculateNodeRates() {
-
-        NodeRef root = tree.getRoot();
-        double rootHeight = tree.getNodeHeight(root);
-
-        getNodeRateByBranch(rootHeight, tree.getChild(root, 0));
-        getNodeRateByBranch(rootHeight, tree.getChild(root, 1));
-    }
-
-    private void getNodeRateByBranch(double currentHeight, NodeRef child) {
-
-        final double childHeight = tree.getNodeHeight(child);
-        final double branchLength = currentHeight - childHeight;
-        final int childIndex = getParameterIndexFromNode(child);
-        double[] coefficientValues = new double[coefficients.getDimension()];
-
-        for (int i = 0; i < coefficients.getDimension(); ++i) {
-            coefficientValues[i] = coefficients.getParameterValue(i);
-        }
-
-        double start = rootHeight/2 - currentHeight;
-        double end = rootHeight/2 - childHeight;
-
-        IntegratedSquaredGPApproximation approximation = new IntegratedSquaredGPApproximation(coefficientValues,
-                                            boundary, degree, marginalVariance.getParameterValue(0), lengthScale.getParameterValue(0));
-        nodeRates[childIndex] = approximation.getIntegral(start, end)/branchLength;
-
-        if (!tree.isExternal(child)) {
-            getNodeRateByBranch(childHeight, tree.getChild(child, 0));
-            getNodeRateByBranch(childHeight, tree.getChild(child, 1));
-        }
-    }
 
     @Override
     public double getBranchRate(final Tree tree, final NodeRef node) {
@@ -155,7 +123,8 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
         assert tree == this.tree;
 
         if (!nodeRatesKnown) {
-            calculateNodeRates();
+            NonParametricBranchRateModel.TreeTraversal func = new NonParametricBranchRateModel.TreeTraversal.Rate(nodeRates);
+            calculateNodeGeneric(func);
             nodeRatesKnown = true;
         }
 
@@ -163,61 +132,116 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
     }
 
 
-    /*private void getBranchGradientwrtCoeff (double currentHeight, NodeRef child, int j) {
 
-        final double childHeight = tree.getNodeHeight(child);
-        final int childIndex = getParameterIndexFromNode(child);
-        final double branchLength = currentHeight - childHeight;
-        double[] coefficientValues = new double[coefficients.getDimension()];
-        for (int i = 0; i < coefficients.getDimension(); ++i) {
-            coefficientValues[i] = coefficients.getParameterValue(i);
-        }
-
-        double start = rootHeight/2 - currentHeight;
-        double end = rootHeight/2 - childHeight;
-
-        IntegratedSquaredGPApproximation approximation = new IntegratedSquaredGPApproximation(coefficientValues,
-                boundary, degree, marginalVariance.getParameterValue(0), lengthScale.getParameterValue(0));
-        temp[childIndex] = approximation.getGradientWrtCoefficient(start, end, j);
-
-
-        if (!tree.isExternal(child)) {
-            getBranchGradientwrtCoeff(childHeight, tree.getChild(child, 0), j);
-            getBranchGradientwrtCoeff(childHeight, tree.getChild(child, 1), j);
-        }
-    }
-*/
-
-
-
-
-// TO DO: gradient with respect to rates
     @Override
     public double[] updateGradientLogDensity(double[] gradientWrtBranches, double[] value, int from, int to) {
 
         assert from == 0;
         assert to == coefficients.getDimension() - 1;
         double[] gradientWrtCoefficients = new double[coefficients.getDimension()];
+
         Arrays.fill(gradientWrtCoefficients, 0);
 
-        /*NodeRef root = tree.getRoot();
-        double rootHeight = tree.getNodeHeight(root);
-
-        for (int j = 0; j < coefficients.getDimension(); j++) {
-            getBranchGradientwrtCoeff(rootHeight, tree.getChild(root, 0), j);
-            getBranchGradientwrtCoeff(rootHeight, tree.getChild(root, 1), j);
-
-            for (int i = 0; i < tree.getNodeCount() - 1; i++) {
-                gradientWrtCoefficients[j] += temp[i] * gradientWrtBranches[i];
-            }
-        }*/
+        NonParametricBranchRateModel.TreeTraversal func = new NonParametricBranchRateModel.TreeTraversal.Gradient(gradientWrtCoefficients,
+                                                            gradientWrtBranches, temp);
+        calculateNodeGeneric(func);
 
 
         return gradientWrtCoefficients;
 
     }
 
+    interface TreeTraversal {
 
+        void calculate(int childIndex, double start, double end, IntegratedSquaredGPApproximation approximation);
+
+        class Gradient implements TreeTraversal {
+
+            final private double[] gradientCoefficients;
+            final private double[] gradientNodes;
+            final private double[] temp;
+
+
+            Gradient(double[] gradientCoefficients, double[] gradientNodes, double[] temp) {
+
+                this.gradientCoefficients = gradientCoefficients;
+                this.gradientNodes = gradientNodes;
+                this.temp = temp;
+            }
+            @Override
+            public void calculate(int childIndex, double start, double end,
+                                  IntegratedSquaredGPApproximation approximation) {
+
+
+                double branchLength = end - start;
+
+
+                for (int i = 0; i < gradientCoefficients.length; i++) {
+                    temp[i] = approximation.getGradientWrtCoefficient(start, end, i)/branchLength;
+                    gradientCoefficients[i] += temp[i] * gradientNodes[childIndex];
+                }
+            }
+        }
+
+        class Rate implements TreeTraversal {
+
+            final private double[] nodeRates;
+
+
+            Rate(double[] nodeRates) {
+                this.nodeRates = nodeRates;
+            }
+            @Override
+            public void calculate(int childIndex, double start, double end,
+                                  IntegratedSquaredGPApproximation approximation) {
+
+
+                double branchLength = end - start;
+
+                nodeRates[childIndex] = approximation.getIntegral(start, end)/branchLength;
+
+            }
+        }
+
+    }
+
+
+    private void calculateNodeGeneric(NonParametricBranchRateModel.TreeTraversal generic) {
+
+        NodeRef root = tree.getRoot();
+        double rootHeight = tree.getNodeHeight(root);
+
+        traverseTreeByBranchGeneric(rootHeight, tree.getChild(root, 0), generic);
+        traverseTreeByBranchGeneric(rootHeight, tree.getChild(root, 1), generic);
+    }
+
+    private void traverseTreeByBranchGeneric(double currentHeight, NodeRef child,
+                                             NonParametricBranchRateModel.TreeTraversal generic) {
+
+        final double childHeight = tree.getNodeHeight(child);
+        final int childIndex = getParameterIndexFromNode(child);
+        double[] coefficientValues = new double[coefficients.getDimension()];
+        double start = rootHeight/2 - currentHeight;
+        double end = rootHeight/2 - childHeight;
+
+        for (int i = 0; i < coefficients.getDimension(); ++i) {
+            coefficientValues[i] = coefficients.getParameterValue(i);
+        }
+
+        IntegratedSquaredGPApproximation approximation = new IntegratedSquaredGPApproximation(coefficientValues,
+                boundary, degree, marginalVariance.getParameterValue(0), lengthScale.getParameterValue(0));
+
+        if (end > start) {
+
+            generic.calculate(childIndex, start, end, approximation);
+        }
+
+
+        if (!tree.isExternal(child)) {
+            traverseTreeByBranchGeneric(childHeight, tree.getChild(child, 0), generic);
+            traverseTreeByBranchGeneric(childHeight, tree.getChild(child, 1), generic);
+        }
+    }
 
     @Override
     public double getBranchRateDifferential(final Tree tree, final NodeRef node) {

@@ -33,6 +33,7 @@ import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -455,6 +456,11 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         return logLikelihood;
     }
 
+    protected void restoreState() {
+        super.restoreState();
+        tmpSumsKnown = false;
+    }
+
     private double[] getGradientWrtNodeHeightNew() {
         if (!likelihoodKnown) {
             calculateLogLikelihood();
@@ -640,7 +646,12 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         tmpSumsKnown = false;
     }
 
-        private double getLineageCountEffect(Tree tree, int node) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        tmpSumsKnown = false;
+        likelihoodKnown = false;
+    }
+
+    private double getLineageCountEffect(Tree tree, int node) {
         if (tree.isExternal(tree.getNode(node))) {
             return 1;
         } else {

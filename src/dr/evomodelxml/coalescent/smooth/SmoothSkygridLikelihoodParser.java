@@ -113,9 +113,6 @@ public class SmoothSkygridLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
-            new ElementRule(PRECISION_PARAMETER, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
-            }),
             new XORRule(
                     new ElementRule(GRID_POINTS, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)

@@ -35,7 +35,6 @@ import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -646,11 +645,6 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         super.handleModelChangedEvent(model, object, index);
         tmpSumsKnown = false;
-    }
-
-    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        tmpSumsKnown = false;
-        likelihoodKnown = false;
     }
 
     private double getLineageCountEffect(Tree tree, int node) {

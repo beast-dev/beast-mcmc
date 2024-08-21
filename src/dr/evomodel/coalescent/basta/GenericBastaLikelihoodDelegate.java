@@ -353,29 +353,26 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         leftMatrixOffset *= stateCount * stateCount;
         leftAccOffset *= stateCount;
 
+        if (!transpose) {
+            throw new RuntimeException("Should we ever be getting here?");
+        }
+
+        // TODO Should be a bit cleaner now
+        // TODO outer dimension should be resultOffset / leftPartialOffset (since this does not change)
+        // TODO unsure if optimal order is offset:(ab):(ij) vs offset:(ij):(ab) [the latter is GPU-best]
         for (int a = 0; a < stateCount; ++a) {
             for (int b = 0; b < stateCount; ++b) {
                 for (int i = 0; i < stateCount; ++i) {
                     double sum = 0.0;
-                    if (transpose && i == b) {
-                        sum += partials[leftAccOffset + a] * distance;
-                    }
-                    if (!transpose) {
-                        for (int j = 0; j < stateCount; ++j) {
-                            sum += gradientStorage.matrices[a][b][leftMatrixOffset + i * stateCount + j] * partials[leftPartialOffset + j];
-                        }
-                        throw new RuntimeException("Should we ever be getting here?");
-                    }
                     for (int j = 0; j < stateCount; ++j) {
                         sum += matrices[leftMatrixOffset + i * stateCount + j] * gradientStorage.partials[a][b][leftPartialOffset + j];
                     }
                     gradientStorage.partials[a][b][resultOffset + i] = sum;
-
-                    //throw new RuntimeException("Function should not depend on `transpose`");
                 }
+                gradientStorage.partials[a][b][resultOffset + b] += partials[leftAccOffset + a] * distance;
             }
         }
-        
+
         if (rightPartialOffset >= 0) {
             // Handle right
             rightPartialOffset *= stateCount;

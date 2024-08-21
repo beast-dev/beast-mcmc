@@ -147,6 +147,16 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                         storage.coalescent, operation.intervalNumber,
                         storage.sizes, 0,
                         stateCount);
+
+                peelPopSizeSGrad(
+                        storage.partials, matrixOperation.time, operation.outputBuffer,
+                        operation.inputBuffer1, operation.inputBuffer2,
+                        storage.matrices,
+                        operation.inputMatrix1, operation.inputMatrix2,
+                        operation.accBuffer1, operation.accBuffer2,
+                        storage.coalescent, operation.intervalNumber,
+                        storage.sizes, 0,
+                        stateCount);
             }
 
             if (PRINT_COMMANDS) {
@@ -354,6 +364,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                         for (int j = 0; j < stateCount; ++j) {
                             sum += gradientStorage.matrices[a][b][leftMatrixOffset + i * stateCount + j] * partials[leftPartialOffset + j];
                         }
+                        throw new RuntimeException("Should we ever be getting here?");
                     }
                     for (int j = 0; j < stateCount; ++j) {
                         sum += matrices[leftMatrixOffset + i * stateCount + j] * gradientStorage.partials[a][b][leftPartialOffset + j];
@@ -364,17 +375,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                 }
             }
         }
-
-        for (int a = 0; a < stateCount; ++a) {
-            for (int i = 0; i < stateCount; ++i) {
-                double sum = 0.0;
-                for (int j = 0; j < stateCount; ++j) {
-                    sum += matrices[leftMatrixOffset + i * stateCount + j] * gradientStorage.partialsGradPopSize[a][leftPartialOffset + j];
-                }
-                gradientStorage.partialsGradPopSize[a][resultOffset + i] = sum;
-            }
-        }
-
+        
         if (rightPartialOffset >= 0) {
             // Handle right
             rightPartialOffset *= stateCount;
@@ -425,6 +426,44 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                     gradientStorage.coalescent[a][b][probabilityOffset] = partial_J_ab;
                 }
             }
+        }
+    }
+
+    private void peelPopSizeSGrad(double[] partials,
+                                  double distance, int resultOffset,
+                                  int leftPartialOffset, int rightPartialOffset,
+                                  double[] matrices,
+                                  int leftMatrixOffset, int rightMatrixOffset,
+                                  int leftAccOffset, int rightAccOffset,
+                                  double[] probability, int probabilityOffset,
+                                  double[] sizes, int sizesOffset,
+                                  int stateCount) {
+
+        resultOffset *= stateCount;
+
+        // Handle left
+        leftPartialOffset *= stateCount;
+        leftMatrixOffset *= stateCount * stateCount;
+        leftAccOffset *= stateCount;
+
+        for (int a = 0; a < stateCount; ++a) {
+            for (int i = 0; i < stateCount; ++i) {
+                double sum = 0.0;
+                for (int j = 0; j < stateCount; ++j) {
+                    sum += matrices[leftMatrixOffset + i * stateCount + j] * gradientStorage.partialsGradPopSize[a][leftPartialOffset + j];
+                }
+                gradientStorage.partialsGradPopSize[a][resultOffset + i] = sum;
+            }
+        }
+
+        if (rightPartialOffset >= 0) {
+            // Handle right
+            rightPartialOffset *= stateCount;
+            rightMatrixOffset *= stateCount * stateCount;
+
+            rightAccOffset *= stateCount;
+            // TODO: check bug?
+            sizesOffset *= sizesOffset * stateCount;
 
             for (int a = 0; a < stateCount; ++a) {
                 double J = probability[probabilityOffset];

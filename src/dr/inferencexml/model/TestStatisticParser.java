@@ -36,7 +36,8 @@ import dr.xml.*;
  */
 public class TestStatisticParser extends AbstractXMLObjectParser {
 
-    public static String TEST_STATISTIC = "test";
+    public static String TEST_STATISTIC = "testStatistic";
+    public static String TEST = "test";
 
     private static final String SEQUALS = "equals";
     private static final String SGREATER_THAN = "greaterThan";
@@ -100,6 +101,11 @@ public class TestStatisticParser extends AbstractXMLObjectParser {
 
     public Class getReturnType() {
         return TestStatistic.class;
+    }
+
+    @Override
+    public String[] getParserNames() {
+        return new String[]{getParserName(), TEST};
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

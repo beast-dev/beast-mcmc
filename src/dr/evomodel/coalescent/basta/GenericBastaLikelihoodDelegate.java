@@ -336,6 +336,12 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         }
     }
 
+
+    // TODO example offset function to make moving things in memory easier
+    private static int getOffset(final int u, final int v, final int buffer, final int dim) {
+        return (u * dim + v) * dim * dim * buffer;
+    }
+
     private void peelPartialsGrad(double[] partials,
                                   double distance, int resultOffset,
                                   int leftPartialOffset, int rightPartialOffset,
@@ -360,6 +366,9 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         // TODO Should be a bit cleaner now
         // TODO outer dimension should be resultOffset / leftPartialOffset (since this does not change)
         // TODO unsure if optimal order is offset:(ab):(ij) vs offset:(ij):(ab) [the latter is GPU-best]
+        // TODO but a CPU-parallelized version over (ab) should have order (ab):offset:(ij) to avoid as
+        // TODO much false (cache-line) sharing as possible; we will make our indexing more generic to
+        // TODO try out different layouts ...
         for (int a = 0; a < stateCount; ++a) {
             for (int b = 0; b < stateCount; ++b) {
                 for (int i = 0; i < stateCount; ++i) {

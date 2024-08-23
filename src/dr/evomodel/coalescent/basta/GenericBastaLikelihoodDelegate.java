@@ -336,10 +336,49 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         }
     }
 
+    abstract class Tensor3DIndexer {
 
-    // TODO example offset function to make moving things in memory easier
-    private static int getOffset(final int u, final int v, final int buffer, final int dim) {
-        return (u * dim + v) * dim * dim * buffer;
+        final private int stride1;
+        final private int stride2;
+
+        @SuppressWarnings("unused")
+        Tensor3DIndexer(int dim1, int dim2, int dim3) {
+            this.stride1 = dim2 * dim3;
+            this.stride2 = dim3;
+        }
+
+        final int getOffset1(int index1) {
+            return index1 * stride1;
+        }
+
+        final int getOffset2(int index2) {
+            return index2 * stride2;
+        }
+
+        abstract int getOffsetByNodeDifferential(int node, int differential);
+    }
+
+    class DifferentialNodeStateIndexer extends Tensor3DIndexer {
+
+        DifferentialNodeStateIndexer(int numNodes, int stateCount) {
+            super(stateCount * stateCount, numNodes, stateCount);
+        }
+
+        final int getOffsetByNodeDifferential(int node, int differential) {
+            return getOffset1(differential) + getOffset2(node);
+        }
+    }
+
+
+    class NodeDifferentialStateIndexer extends Tensor3DIndexer {
+
+        NodeDifferentialStateIndexer(int numNodes, int stateCount) {
+            super(numNodes, stateCount * stateCount, stateCount);
+        }
+
+        final int getOffsetByNodeDifferential(int node, int differential) {
+            return getOffset1(node) + getOffset2(differential);
+        }
     }
 
     private void peelPartialsGrad(double[] partials,

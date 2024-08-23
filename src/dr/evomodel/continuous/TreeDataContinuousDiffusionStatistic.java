@@ -53,7 +53,8 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
                                                  TreeDataLikelihood likelihood,
                                                  WeightingScheme weightingScheme,
                                                  DisplacementScheme displacementScheme,
-                                                 ScalingScheme branchRateScheme) {
+                                                 ScalingScheme branchRateScheme,
+                                                 EstimationScheme estimationScheme) {
         super(statisticName);
         this.trait = trait;
         this.tree = likelihood.getTree();
@@ -62,6 +63,7 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
         this.weightingScheme = weightingScheme;
         this.displacementScheme = displacementScheme;
         this.scalingScheme = branchRateScheme;
+        this.estimationScheme = estimationScheme;
     }
 
     @Override
@@ -84,6 +86,8 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
 
         Statistic total = new Statistic();
 
+        estimationScheme.initRootStatistic(total, tree.getRoot());
+
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             NodeRef node = tree.getNode(i);
             if (node != tree.getRoot()) {
@@ -96,13 +100,12 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
 
     private void addBranchStatistic(Statistic lhs, NodeRef child) {
 
-        NodeRef parent = tree.getParent(child);
-
-        double[] parentTrait = trait.getTrait(tree, parent);
-        double[] childTrait = trait.getTrait(tree, child);
+        double[] parentTrait = estimationScheme.getParentTrait(trait, tree, child);
+        double[] childTrait = estimationScheme.getChildTrait(trait, tree, child);
 
         double displacement = displacementScheme.displace(parentTrait, childTrait);
 
+        NodeRef parent = tree.getParent(child);
         double branchLength = tree.getNodeHeight(parent) - tree.getNodeHeight(child);
 
         double time = branchLength * scalingScheme.scale(branchRates, tree, child);
@@ -126,10 +129,12 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
     private final WeightingScheme weightingScheme;
     private final DisplacementScheme displacementScheme;
     private final ScalingScheme scalingScheme;
+    private final EstimationScheme estimationScheme;
 
     private static final String WEIGHTING_SCHEME = "weightingScheme";
     private static final String BRANCH_RATE_SCHEME = "scalingScheme";
     private static final String DISPLACEMENT_SCHEME = "displacementScheme";
+    private static final String ESTIMATION_SCHEME = "estimationScheme";
 
     private enum DisplacementScheme {
         LINEAR {
@@ -250,6 +255,62 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
         }
     }
 
+    private enum EstimationScheme {
+        NODE_DIFFERENCES { // difference between traits at nodes
+
+            @Override
+            void initRootStatistic(Statistic lhs, NodeRef node) {
+                // do nothing
+            }
+
+            @Override
+            double[] getParentTrait(TreeTrait.DA trait, Tree tree, NodeRef child) {
+                NodeRef parent = tree.getParent(child);
+                return trait.getTrait(tree, parent);
+            }
+
+            @Override
+            double[] getChildTrait(TreeTrait.DA trait, Tree tree, NodeRef child) {
+                return trait.getTrait(tree, child);
+            }
+
+            @Override
+            String getName() {
+                return "branchStatistic";
+            }
+        },
+        NODE_ESTIMATES { // trait at nodes
+            @Override
+            void initRootStatistic(Statistic lhs, NodeRef node) {
+                throw new RuntimeException("estimationScheme=nodeStatistic not implemented yet");
+            }
+
+            @Override
+            double[] getParentTrait(TreeTrait.DA trait, Tree tree, NodeRef child) {
+                throw new RuntimeException("estimationScheme=nodeStatistic not implemented yet");
+            }
+
+            @Override
+            double[] getChildTrait(TreeTrait.DA trait, Tree tree, NodeRef child) {
+                throw new RuntimeException("estimationScheme=nodeStatistic not implemented yet");
+            }
+
+            @Override
+            String getName() {
+                return "nodeStatistic";
+            }
+        };
+
+        abstract void initRootStatistic(Statistic lhs, NodeRef node);
+        abstract double[] getParentTrait(TreeTrait.DA trait, Tree tree, NodeRef child);
+        abstract double[] getChildTrait(TreeTrait.DA trait, Tree tree, NodeRef child);
+
+        EstimationScheme() {
+        }
+
+        abstract String getName();
+    }
+
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         @Override
@@ -277,6 +338,7 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
             WeightingScheme weightingScheme = parseWeightingScheme(xo);
             DisplacementScheme displacementScheme = parseDisplacementScheme(xo);
             ScalingScheme scalingScheme = parseScalingScheme(xo);
+            EstimationScheme estimationScheme = parseEstimationScheme(xo);
 
             return new TreeDataContinuousDiffusionStatistic(
                     name,
@@ -284,7 +346,8 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
                     likelihood,
                     weightingScheme,
                     displacementScheme,
-                    scalingScheme);
+                    scalingScheme,
+                    estimationScheme);
         }
 
         //************************************************************************
@@ -345,6 +408,17 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
                 }
             }
             throw new XMLParseException("Unknown scaling scheme '" + name + "'");
+        }
+
+        EstimationScheme parseEstimationScheme(XMLObject xo) throws XMLParseException {
+            String name = xo.getAttribute(ESTIMATION_SCHEME, EstimationScheme.NODE_DIFFERENCES.getName());
+
+            for (EstimationScheme scheme : EstimationScheme.values()) {
+                if (name.compareToIgnoreCase(scheme.getName()) == 0) {
+                    return scheme;
+                }
+            }
+            throw new XMLParseException("Unknown estimation scheme '" + name + "'");
         }
     };
 }

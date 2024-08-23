@@ -404,20 +404,21 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
         // TODO Should be a bit cleaner now
         // TODO outer dimension should be resultOffset / leftPartialOffset (since this does not change)
-        // TODO unsure if optimal order is offset:(ab):(ij) vs offset:(ij):(ab) [the latter is GPU-best]
+        // TODO unsure if optimal order is node:(ab):(ij) vs node:(ij):(ab) [the latter is GPU-best]
         // TODO but a CPU-parallelized version over (ab) should have order (ab):offset:(ij) to avoid as
         // TODO much false (cache-line) sharing as possible; we will make our indexing more generic to
         // TODO try out different layouts ...
         for (int a = 0; a < stateCount; ++a) {
             for (int b = 0; b < stateCount; ++b) {
+                final double[] gradPartials = gradientStorage.partials[a][b];
                 for (int i = 0; i < stateCount; ++i) {
                     double sum = 0.0;
                     for (int j = 0; j < stateCount; ++j) {
-                        sum += matrices[leftMatrixOffset + i * stateCount + j] * gradientStorage.partials[a][b][leftPartialOffset + j];
+                        sum += matrices[leftMatrixOffset + i * stateCount + j] * gradPartials[leftPartialOffset + j];
                     }
-                    gradientStorage.partials[a][b][resultOffset + i] = sum;
+                    gradPartials[resultOffset + i] = sum;
                 }
-                gradientStorage.partials[a][b][resultOffset + b] += partials[leftAccOffset + a] * distance;
+                gradPartials[resultOffset + b] += partials[leftAccOffset + a] * distance;
             }
         }
 
@@ -425,42 +426,43 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             // Handle right
             rightPartialOffset *= stateCount;
             rightMatrixOffset *= stateCount * stateCount;
-
             rightAccOffset *= stateCount;
-            // TODO: check bug?
+
             sizesOffset *= sizesOffset * stateCount;
 
             for (int a = 0; a < stateCount; ++a) {
                 for (int b = 0; b < stateCount; ++b) {
+                    final double[] gradPartials = gradientStorage.partials[a][b];
+                    final double[] gradCoalescent = gradientStorage.coalescent[a][b];
                     double J = probability[probabilityOffset];
 
                     // first half
                     double partial_J_ab = 0.0;
                     for (int i = 0; i < stateCount; ++i) {
                         for (int j = 0; j < stateCount; ++j) {
-                            gradientStorage.partials[a][b][rightAccOffset + i] += matrices[rightMatrixOffset + i * stateCount + j] * gradientStorage.partials[a][b][rightPartialOffset + j];
+                            gradPartials[rightAccOffset + i] += matrices[rightMatrixOffset + i * stateCount + j] * gradientStorage.partials[a][b][rightPartialOffset + j];
                         }
                         if (i == b) {
-                            gradientStorage.partials[a][b][rightAccOffset + i] += partials[rightAccOffset + a] * distance;
+                            gradPartials[rightAccOffset + i] += partials[rightAccOffset + a] * distance;
                         }
 
-                        double rightGrad =  gradientStorage.partials[a][b][rightAccOffset + i];
-                        double leftGrad = gradientStorage.partials[a][b][resultOffset + i];
+                        double rightGrad =  gradPartials[rightAccOffset + i];
+                        double leftGrad = gradPartials[resultOffset + i];
                         double left = partials[leftAccOffset + i];
                         double right = partials[rightAccOffset + i];
 
                         double entry = (leftGrad * right + rightGrad * left) / sizes[sizesOffset + i];
                         partial_J_ab += entry;
 
-                        gradientStorage.partials[a][b][resultOffset + i] = entry / J;
-                        gradientStorage.partials[a][b][leftAccOffset + i] = leftGrad;
+                        gradPartials[resultOffset + i] = entry / J;
+                        gradPartials[leftAccOffset + i] = leftGrad;
                     }
                     // second half
                     for (int i = 0; i < stateCount; ++i) {
                         double entry = partials[resultOffset + i];
-                        gradientStorage.partials[a][b][resultOffset + i] -= partial_J_ab * entry / J;
+                        gradPartials[resultOffset + i] -= partial_J_ab * entry / J;
                     }
-                    gradientStorage.coalescent[a][b][probabilityOffset] = partial_J_ab;
+                    gradCoalescent[probabilityOffset] = partial_J_ab;
                 }
             }
         }

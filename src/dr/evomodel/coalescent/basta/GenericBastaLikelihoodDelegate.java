@@ -398,19 +398,14 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                     // first half
                     double partial_J_ab = 0.0;
                     for (int i = 0; i < stateCount; ++i) {
-                        double rightGrad = 0.0;
-                        if (transpose && i == b) {
-                            rightGrad += partials[rightAccOffset + a] * distance;
+                        for (int j = 0; j < stateCount; ++j) {
+                            gradientStorage.partials[a][b][rightAccOffset + i] += matrices[rightMatrixOffset + i * stateCount + j] * gradientStorage.partials[a][b][rightPartialOffset + j];
+                        }
+                        if (i == b) {
+                            gradientStorage.partials[a][b][rightAccOffset + i] += partials[rightAccOffset + a] * distance;
                         }
 
-                        if (!transpose) {
-                            for (int j = 0; j < stateCount; ++j) {
-                                rightGrad += gradientStorage.matrices[a][b][rightMatrixOffset + i * stateCount + j] * partials[rightPartialOffset + j];
-                            }
-                        }
-                        for (int j = 0; j < stateCount; ++j) {
-                            rightGrad += matrices[rightMatrixOffset + i * stateCount + j] * gradientStorage.partials[a][b][rightPartialOffset + j];
-                        }
+                        double rightGrad =  gradientStorage.partials[a][b][rightAccOffset + i];
                         double leftGrad = gradientStorage.partials[a][b][resultOffset + i];
                         double left = partials[leftAccOffset + i];
                         double right = partials[rightAccOffset + i];
@@ -420,9 +415,6 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
                         gradientStorage.partials[a][b][resultOffset + i] = entry / J;
                         gradientStorage.partials[a][b][leftAccOffset + i] = leftGrad;
-                        gradientStorage.partials[a][b][rightAccOffset + i] = rightGrad;
-
-                        //throw new RuntimeException("Function should not depend on `transpose`");
                     }
                     // second half
                     for (int i = 0; i < stateCount; ++i) {

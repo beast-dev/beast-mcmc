@@ -26,6 +26,11 @@ public class TimeVaryingFrequenciesModel extends AbstractModelLikelihood impleme
     private final List<TipStateAccessor> accessors;
     private final Tree tree;
     private final Taxon taxon;
+    private final Parameter tipHeight;
+
+    private boolean likelihoodKnown = false;
+    private double storedLogLikelihood;
+    private double logLikelihood;
 
     private static final boolean DEBUG = false;
 
@@ -66,18 +71,26 @@ public class TimeVaryingFrequenciesModel extends AbstractModelLikelihood impleme
                                        List<TipStateAccessor> accessors,
                                        List<Epoch> epochs,
                                        Taxon taxon,
-                                       Tree tree) {
+                                       Tree tree,
+                                       Parameter tipHeight) {
         super(name);
 
         this.accessors = accessors;
         this.epochs = epochs;
         this.tree = tree;
         this.taxon = taxon;
+        this.tipHeight = tipHeight;
+
+        if (tipHeight != null) {
+            tipHeight.addVariableListener(this);
+        }
 
         epochs.sort(Comparator.comparingDouble(lhs -> lhs.cutOff));
 
         getTipNode(taxon);
     }
+
+    public List<TipStateAccessor> getAccessors() { return accessors; }
 
     public Tree getTree() { return tree; }
 
@@ -103,16 +116,36 @@ public class TimeVaryingFrequenciesModel extends AbstractModelLikelihood impleme
     }
 
     private double calculateLogLikelihood() {
-        return 0; // TODO Currently only valid for MH via TipStateOperator
+
+        if (DEBUG) {
+            System.err.println("recompute prior");
+        }
+
+        int patternCount = accessors.get(0).getPatternCount();
+        int[] currentStates = new int[patternCount];
+        accessors.get(0).getTipStates(getTipIndex(taxon), currentStates);
+
+        double[] probabilities = getProbabilities(taxon);
+        int stateCount = probabilities.length;
+
+        double logLikelihood = 0;
+        for (int i = 0; i < patternCount; ++i) {
+            int state = currentStates[i];
+            if (state < stateCount) {
+                logLikelihood += Math.log(probabilities[state]);
+            }
+        }
+
+        return logLikelihood;
     }
 
     public double[] getProbabilities(Taxon taxon) {
 
         double height = tree.getNodeHeight(getTipNode(taxon));
 
-        if (DEBUG) {
-            System.err.println("height = " + height);
-        }
+//        if (DEBUG) {
+//            System.err.println("height = " + height);
+//        }
 
         int epochIndex = 0;
         while (height > epochs.get(epochIndex).cutOff) {
@@ -128,17 +161,29 @@ public class TimeVaryingFrequenciesModel extends AbstractModelLikelihood impleme
     }
 
     @Override
-    protected void storeState() { }
+    protected void storeState() {
+        storedLogLikelihood = logLikelihood;
+    }
 
     @Override
-    protected void restoreState() { }
+    protected void restoreState() {
+        logLikelihood = storedLogLikelihood;
+    }
 
     @Override
     protected void acceptState() { }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        throw new IllegalArgumentException("Unknown variable");
+        if (variable == tipHeight) {
+            likelihoodKnown = false;
+
+            if (DEBUG) {
+                System.err.println("height hit");
+            }
+        } else {
+            throw new IllegalArgumentException("Unknown variable");
+        }
     }
 
     @Override
@@ -146,9 +191,23 @@ public class TimeVaryingFrequenciesModel extends AbstractModelLikelihood impleme
 
     @Override
     public double getLogLikelihood() {
-        return calculateLogLikelihood();
+
+        if (!likelihoodKnown) {
+            logLikelihood = calculateLogLikelihood();
+            likelihoodKnown = true;
+        }
+        else if (DEBUG) {
+            System.err.println("cached");
+        }
+        return logLikelihood;
     }
 
     @Override
-    public void makeDirty() { }
+    public void makeDirty() {
+        likelihoodKnown = false;
+
+//        if (DEBUG) {
+//            System.err.println("make dirty");
+//        }
+    }
 }

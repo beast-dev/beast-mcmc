@@ -46,17 +46,16 @@ public class TipStateOperator extends SimpleMCMCOperator {
     private final TimeVaryingFrequenciesModel frequencies;
     private final int patternCount;
 
-    private final static boolean ONLy_USE_WITH_TIME_VARYING_MODEL = true;
+    private final static boolean ONLy_USE_WITH_TIME_VARYING_MODEL = false;
 
     private int[] previousStates;
 
     private static final boolean DEBUG = false;
 
-    public TipStateOperator(List<TipStateAccessor> treeLikelihoods,
-                            TimeVaryingFrequenciesModel frequencies,
+    public TipStateOperator(TimeVaryingFrequenciesModel frequencies,
                             double weight) {
 
-        this.treeLikelihoods = treeLikelihoods;
+        this.treeLikelihoods = frequencies.getAccessors();
         this.taxon = frequencies.getTaxon();
         this.frequencies = frequencies;
         this.patternCount = treeLikelihoods.get(0).getPatternCount();
@@ -78,7 +77,7 @@ public class TipStateOperator extends SimpleMCMCOperator {
             int[] test = new int[patternCount];
             for (int i = 1; i < treeLikelihoods.size(); ++i) {
                 treeLikelihoods.get(i).getTipStates(tipNum, test);
-                if (!equal(currentStates, test)) {
+                if (notEqual(currentStates, test)) {
                    throw new RuntimeException("Inconsistent states");
                 }
             }
@@ -87,16 +86,16 @@ public class TipStateOperator extends SimpleMCMCOperator {
         return currentStates;
     }
 
-    private static boolean equal(int[] lhs, int[] rhs) {
+    private static boolean notEqual(int[] lhs, int[] rhs) {
         if (lhs.length != rhs.length) {
-            return false;
+            return true;
         }
         for (int i = 0; i < lhs.length; ++i) {
             if (lhs[i] != rhs[i]) {
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
     }
 
     private int[] sample(double[] probabilities) {
@@ -115,6 +114,14 @@ public class TipStateOperator extends SimpleMCMCOperator {
         previousStates = getCurrentStates(taxonIndex);
         int[] newStates = sample(probabilities);
         setCurrentStates(taxonIndex, newStates);
+
+        if (notEqual(previousStates, newStates)) {
+            frequencies.makeDirty();
+
+            if (DEBUG) {
+                System.err.println("state change");
+            }
+        }
 
         double logRatio = 0;
         for (int i = 0; i < patternCount; ++i) {

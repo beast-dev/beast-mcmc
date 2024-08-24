@@ -45,6 +45,7 @@ public class TimeVaryingFrequenciesModelParser extends AbstractXMLObjectParser {
     public static final String FREQUENCIES_MODEL = "timeVaryingFrequencies";
     public static final String CUT_OFF = "cutOff";
     public static final String TIME = "time";
+    public static final String TIP_HEIGHT = "tipHeight";
 
     public String getParserName() {
         return FREQUENCIES_MODEL;
@@ -76,8 +77,12 @@ public class TimeVaryingFrequenciesModelParser extends AbstractXMLObjectParser {
         Taxon taxon = (Taxon) xo.getChild(Taxon.class);
         Tree tree = (Tree) xo.getChild(Tree.class);
 
+        Parameter tipHeight = null;
+        if (xo.hasChildNamed(TIP_HEIGHT)) {
+            tipHeight = (Parameter) xo.getElementFirstChild(TIP_HEIGHT);
+        }
 
-        return new TimeVaryingFrequenciesModel(xo.getId(), accessors, epochs, taxon, tree);
+        return new TimeVaryingFrequenciesModel(xo.getId(), accessors, epochs, taxon, tree, tipHeight);
     }
 
     //************************************************************************
@@ -85,7 +90,7 @@ public class TimeVaryingFrequenciesModelParser extends AbstractXMLObjectParser {
     //************************************************************************
 
     public String getParserDescription() {
-        return "This element returns a model that allows for post-mortem DNA damage.";
+        return "This element returns a model for time-varying uncertain tip states.";
     }
 
     public Class getReturnType() {
@@ -105,6 +110,9 @@ public class TimeVaryingFrequenciesModelParser extends AbstractXMLObjectParser {
             new ElementRule(Tree.class),
             new ElementRule(Taxon.class),
             new ElementRule(DataType.class),
-            // TODO Add data-type to check dimensions
+            new ElementRule(TIP_HEIGHT, new XMLSyntaxRule[] {
+                    new ElementRule(Parameter.class),
+            }),
+            new ElementRule(TipStateAccessor.class, 1, Integer.MAX_VALUE),
     };
 }

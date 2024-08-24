@@ -28,10 +28,7 @@ package dr.evomodelxml.operators;
 
 import dr.evomodel.operators.TipStateOperator;
 import dr.evomodel.tipstatesmodel.TimeVaryingFrequenciesModel;
-import dr.evomodel.treedatalikelihood.TipStateAccessor;
 import dr.xml.*;
-
-import java.util.List;
 
 import static dr.inference.operators.MCMCOperator.WEIGHT;
 
@@ -47,12 +44,11 @@ public class TipStateOperatorParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        List<TipStateAccessor> accessors = xo.getAllChildren(TipStateAccessor.class);
         TimeVaryingFrequenciesModel frequencies = (TimeVaryingFrequenciesModel)
                 xo.getChild(TimeVaryingFrequenciesModel.class);
         double weight = xo.getDoubleAttribute(WEIGHT);
 
-        return new TipStateOperator(accessors, frequencies, weight);
+        return new TipStateOperator(frequencies, weight);
     }
 
     //************************************************************************
@@ -73,7 +69,6 @@ public class TipStateOperatorParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(WEIGHT),
-            new ElementRule(TipStateAccessor.class, 1, Integer.MAX_VALUE),
             new ElementRule(TimeVaryingFrequenciesModel.class),
     };
 }

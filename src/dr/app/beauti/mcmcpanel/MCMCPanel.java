@@ -1,7 +1,8 @@
 /*
  * MCMCPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.mcmcpanel;
@@ -37,11 +39,10 @@ import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
-import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Microsatellite;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
@@ -52,11 +53,12 @@ import java.util.List;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: MCMCPanel.java,v 1.16 2006/09/05 13:29:34 rambaut Exp $
  */
 public class MCMCPanel extends BeautiPanel {
 
     private static final long serialVersionUID = -3710586474593827540L;
+    private static final Insets FIELD_INSETS = new Insets(3,6,3,6);
+    private static final int MAX_FILENAME_SHOWN = 48;
 
     WholeNumberField chainLengthField = new WholeNumberField(1, Integer.MAX_VALUE);
     WholeNumberField echoEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
@@ -110,6 +112,7 @@ public class MCMCPanel extends BeautiPanel {
 
         chainLengthField.setValue(100000);
         chainLengthField.setColumns(10);
+        chainLengthField.setBorder(new EmptyBorder(FIELD_INSETS));
         optionsPanel.addComponentWithLabel("Length of chain:", chainLengthField);
         chainLengthField.addKeyListener(new java.awt.event.KeyListener() {
             public void keyTyped(KeyEvent e) {
@@ -128,6 +131,7 @@ public class MCMCPanel extends BeautiPanel {
 
         echoEveryField.setValue(1000);
         echoEveryField.setColumns(10);
+        echoEveryField.setBorder(new EmptyBorder(FIELD_INSETS));
         optionsPanel.addComponentWithLabel("Echo state to screen every:", echoEveryField);
         echoEveryField.addKeyListener(new java.awt.event.KeyListener() {
             public void keyTyped(KeyEvent e) {
@@ -144,6 +148,7 @@ public class MCMCPanel extends BeautiPanel {
 
         logEveryField.setValue(100);
         logEveryField.setColumns(10);
+        logEveryField.setBorder(new EmptyBorder(FIELD_INSETS));
         optionsPanel.addComponentWithLabel("Log parameters every:", logEveryField);
         logEveryField.addKeyListener(new java.awt.event.KeyListener() {
             public void keyTyped(KeyEvent e) {
@@ -160,6 +165,7 @@ public class MCMCPanel extends BeautiPanel {
 
         checkpointEveryField.setValue(1000000);
         checkpointEveryField.setColumns(10);
+        checkpointEveryField.setBorder(new EmptyBorder(FIELD_INSETS));
         optionsPanel.addComponentWithLabel("Checkpoint every:", checkpointEveryField);
         checkpointEveryField.addKeyListener(new java.awt.event.KeyListener() {
             public void keyTyped(KeyEvent e) {
@@ -177,6 +183,7 @@ public class MCMCPanel extends BeautiPanel {
         optionsPanel.addSeparator();
 
         fileNameStemField.setColumns(32);
+        fileNameStemField.setBorder(new EmptyBorder(FIELD_INSETS));
         optionsPanel.addComponentWithLabel("File name stem:", fileNameStemField);
         fileNameStemField.setEditable(true);
         fileNameStemField.addKeyListener(new java.awt.event.KeyListener() {
@@ -194,11 +201,7 @@ public class MCMCPanel extends BeautiPanel {
         });
 
         optionsPanel.addComponent(addTxt);
-        if (OSType.isWindows()) {
-            addTxt.setSelected(true);
-        } else {
-            addTxt.setSelected(false);
-        }
+        addTxt.setSelected(OSType.isWindows());
         addTxt.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent changeEvent) {
                 setOptions(options);
@@ -209,37 +212,21 @@ public class MCMCPanel extends BeautiPanel {
         optionsPanel.addSeparator();
 
         logFileNameField.setColumns(32);
+        logFileNameField.setBorder(new EmptyBorder(FIELD_INSETS));
         optionsPanel.addComponentWithLabel("Log file name:", logFileNameField);
         logFileNameField.setEditable(false);
 
-//        optionsPanel.addComponent(allowOverwriteLogCheck);
-//        allowOverwriteLogCheck.setSelected(false);
-//        allowOverwriteLogCheck.addChangeListener(new ChangeListener() {
-//            public void stateChanged(ChangeEvent changeEvent) {
-//            	options.allowOverwriteLog = allowOverwriteLogCheck.isSelected();
-//            }
-//        });
-
         treeFileNameField.setColumns(32);
+        treeFileNameField.setBorder(new EmptyBorder(FIELD_INSETS));
         optionsPanel.addComponentWithLabel("Trees file name:", treeFileNameField);
         treeFileNameField.setEditable(false);
 
         checkpointFileNameField.setColumns(32);
+        checkpointFileNameField.setBorder(new EmptyBorder(FIELD_INSETS));
         optionsPanel.addComponentWithLabel("Checkpoint file name:", checkpointFileNameField);
         checkpointFileNameField.setEditable(false);
         checkpointFileNameField.setToolTipText("<html>Checkpointing enables continuing your BEAST analysis should<br>" +
                 "the ESS values prove insufficient upon inspecting the log file(s).</html>");
-
-//        addComponent(mapTreeLogCheck);
-//        mapTreeLogCheck.setOpaque(false);
-//        mapTreeLogCheck.addActionListener(new java.awt.event.ActionListener() {
-//            public void actionPerformed(ActionEvent e) {
-//                mapTreeFileNameField.setEnabled(mapTreeLogCheck.isSelected());
-//            }
-//        });
-//
-//        mapTreeFileNameField.setColumns(32);
-//        addComponentWithLabel("MAP tree file name:", mapTreeFileNameField);
 
         optionsPanel.addComponent(substTreeLogCheck);
         substTreeLogCheck.setOpaque(false);
@@ -259,6 +246,7 @@ public class MCMCPanel extends BeautiPanel {
         });
 
         substTreeFileNameField.setColumns(32);
+        substTreeFileNameField.setBorder(new EmptyBorder(FIELD_INSETS));
         substTreeFileNameField.setEditable(false);
         substTreeFileNameField.setEnabled(false);
         optionsPanel.addComponentWithLabel("Substitutions trees file name:", substTreeFileNameField);
@@ -275,6 +263,7 @@ public class MCMCPanel extends BeautiPanel {
         });
 
         operatorAnalysisFileNameField.setColumns(32);
+        operatorAnalysisFileNameField.setBorder(new EmptyBorder(FIELD_INSETS));
         operatorAnalysisFileNameField.setEditable(false);
         operatorAnalysisFileNameField.setEnabled(false);
         optionsPanel.addComponentWithLabel("Operator analysis file name:", operatorAnalysisFileNameField);
@@ -504,13 +493,8 @@ public class MCMCPanel extends BeautiPanel {
 
         updateOtherFileNames(options);
 
-        if (options.contains(Microsatellite.INSTANCE)) {
-            samplePriorCheckBox.setSelected(false);
-            samplePriorCheckBox.setVisible(false);
-        } else {
-            samplePriorCheckBox.setVisible(true);
-            samplePriorCheckBox.setSelected(options.samplePriorOnly);
-        }
+        samplePriorCheckBox.setVisible(true);
+        samplePriorCheckBox.setSelected(options.samplePriorOnly);
 
         optionsPanel.validate();
         optionsPanel.repaint();
@@ -522,7 +506,7 @@ public class MCMCPanel extends BeautiPanel {
 
             options.logFileName = options.fileNameStem + ".log";
             if (addTxt.isSelected()) options.logFileName = options.logFileName + ".txt";
-            logFileNameField.setText(options.logFileName);
+            logFileNameField.setText(truncate(options.logFileName));
 
 //            if (options.mapTreeFileName == null) {
 //			    mapTreeFileNameField.setText(options.fileNameStem + ".MAP.tree");
@@ -531,13 +515,13 @@ public class MCMCPanel extends BeautiPanel {
 //            }
 
             updateTreeFileNameList();
-            treeFileNameField.setText(displayTreeList(options.treeFileName));
+            treeFileNameField.setText(truncate(displayTreeList(options.treeFileName)));
 
             options.checkpointFileName = options.fileNameStem + ".chkpt";
-            checkpointFileNameField.setText(options.checkpointFileName);
+            checkpointFileNameField.setText(truncate(options.checkpointFileName));
 
             if (options.substTreeLog) {
-                substTreeFileNameField.setText(displayTreeList(options.substTreeFileName));
+                substTreeFileNameField.setText(truncate(displayTreeList(options.substTreeFileName)));
             } else {
                 substTreeFileNameField.setText("");
             }
@@ -548,7 +532,7 @@ public class MCMCPanel extends BeautiPanel {
             }
             operatorAnalysisFileNameField.setEnabled(options.operatorAnalysis);
             if (options.operatorAnalysis) {
-                operatorAnalysisFileNameField.setText(options.operatorAnalysisFileName);
+                operatorAnalysisFileNameField.setText(truncate(options.operatorAnalysisFileName));
             } else {
                 operatorAnalysisFileNameField.setText("");
             }
@@ -576,6 +560,13 @@ public class MCMCPanel extends BeautiPanel {
             operatorAnalysisCheck.setSelected(false);
             operatorAnalysisFileNameField.setText("");
         }
+    }
+
+    private static String truncate(String text) {
+        if (text.length() > MAX_FILENAME_SHOWN) {
+            text = "..." + text.substring(text.length() - MAX_FILENAME_SHOWN, text.length());
+        }
+        return text;
     }
 
     private void updateMLEFileNameStem() {

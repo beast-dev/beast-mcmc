@@ -13,6 +13,7 @@ import dr.util.Citable;
 import dr.util.Citation;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static dr.util.Citation.Category.PRIOR_MODELS;
@@ -25,6 +26,8 @@ public class TimeVaryingFrequenciesModel extends AbstractModelLikelihood impleme
     private final List<TipStateAccessor> accessors;
     private final Tree tree;
     private final Taxon taxon;
+
+    private static final boolean DEBUG = false;
 
     @Override
     public Citation.Category getCategory() {
@@ -71,6 +74,8 @@ public class TimeVaryingFrequenciesModel extends AbstractModelLikelihood impleme
         this.tree = tree;
         this.taxon = taxon;
 
+        epochs.sort(Comparator.comparingDouble(lhs -> lhs.cutOff));
+
         getTipNode(taxon);
     }
 
@@ -104,6 +109,10 @@ public class TimeVaryingFrequenciesModel extends AbstractModelLikelihood impleme
     public double[] getProbabilities(Taxon taxon) {
 
         double height = tree.getNodeHeight(getTipNode(taxon));
+
+        if (DEBUG) {
+            System.err.println("height = " + height);
+        }
 
         int epochIndex = 0;
         while (height > epochs.get(epochIndex).cutOff) {

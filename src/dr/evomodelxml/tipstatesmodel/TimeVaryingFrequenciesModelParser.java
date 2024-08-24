@@ -1,7 +1,8 @@
 /*
- * SequenceErrorModelParser.java
+ * TimeVaryingFrequenciesModelParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,12 +26,12 @@
 
 package dr.evomodelxml.tipstatesmodel;
 
+import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tipstatesmodel.TimeVaryingFrequenciesModel;
 import dr.evomodel.treedatalikelihood.TipStateAccessor;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterParser;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -41,8 +42,9 @@ import java.util.List;
  */
 public class TimeVaryingFrequenciesModelParser extends AbstractXMLObjectParser {
 
-    public static final String FREQUENCIES_MODEL = "sequenceErrorModel";
+    public static final String FREQUENCIES_MODEL = "timeVaryingFrequencies";
     public static final String CUT_OFF = "cutOff";
+    public static final String TIME = "time";
 
     public String getParserName() {
         return FREQUENCIES_MODEL;
@@ -50,13 +52,20 @@ public class TimeVaryingFrequenciesModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+        DataType dataType = (DataType) xo.getChild(DataType.class);
+
         List<TipStateAccessor> accessors = xo.getAllChildren(TipStateAccessor.class);
 
         List<TimeVaryingFrequenciesModel.Epoch> epochs = new ArrayList<>();
 
         for (XMLObject cxo : xo.getAllChildren(CUT_OFF)) {
-            double cutOff = cxo.getDoubleAttribute(ParameterParser.VALUE);
+            double cutOff = cxo.getDoubleAttribute(TIME);
             Parameter freq = (Parameter) cxo.getChild(Parameter.class);
+
+            if (freq.getDimension() != dataType.getStateCount()) {
+                throw new XMLParseException("All time-varying frequencies must have dimension " +
+                        dataType.getStateCount());
+            }
 
             epochs.add(new TimeVaryingFrequenciesModel.Epoch(cutOff, freq));
         }
@@ -89,10 +98,13 @@ public class TimeVaryingFrequenciesModelParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(CUT_OFF, new XMLSyntaxRule[] {
-                    AttributeRule.newDoubleRule(ParameterParser.VALUE),
+                    AttributeRule.newDoubleRule(TIME),
                     new ElementRule(Parameter.class),
             }, 0, Integer.MAX_VALUE),
             new ElementRule(Parameter.class),
+            new ElementRule(Tree.class),
+            new ElementRule(Taxon.class),
+            new ElementRule(DataType.class),
             // TODO Add data-type to check dimensions
     };
 }

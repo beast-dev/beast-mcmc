@@ -1,7 +1,8 @@
 /*
  * BastaLikelihood.java
  *
- * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,16 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent.basta;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.GeneralDataType;
+import dr.evolution.datatype.HiddenCodons;
+import dr.evolution.datatype.HiddenDataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
@@ -36,6 +42,7 @@ import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -43,6 +50,7 @@ import dr.xml.Reportable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.logging.Logger;
 
 import static dr.evomodel.coalescent.basta.ProcessOnCoalescentIntervalDelegate.*;
@@ -80,6 +88,15 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     private boolean treeIntervalsKnown;
     private boolean transitionMatricesKnown;
 
+    private int[][] reconstructedStates;
+    private int[][] storedReconstructedStates;
+
+    protected boolean areStatesRedrawn = false;
+    protected boolean storedAreStatesRedrawn = false;
+
+    private final CodeFormatter formatter;
+    private final DataType dataType;
+
     public BastaLikelihood(String name,
                            Tree treeModel,
                            PatternList patternList,
@@ -87,6 +104,9 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
                            Parameter popSizeParameter,
                            BranchRateModel branchRateModel,
                            BastaLikelihoodDelegate likelihoodDelegate,
+                           final DataType dataType,
+                           final String tag,
+                           boolean useMAP,
                            int numberSubIntervals,
                            boolean useAmbiguities) {
 
@@ -105,6 +125,8 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         final Logger logger = Logger.getLogger("dr.evomodel");
 
         logger.info("\nUsing BastaLikelihood");
+
+        this.dataType = dataType;
 
         this.patternList = patternList;
 
@@ -134,6 +156,31 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, treeIntervals, branchRateModel, numberSubIntervals);
 
         setTipData();
+
+        boolean stripHiddenState = false; // TODO Pass as option
+        this.formatter = new CodeFormatter(dataType, stripHiddenState);
+
+        treeTraits.addTrait(new TreeTrait.IA() {
+            public String getTraitName() {
+                return tag;
+            }
+
+            public Intent getIntent() {
+                return Intent.NODE;
+            }
+
+            public Class getTraitClass() {
+                return int[].class;
+            }
+
+            public int[] getTrait(Tree tree, NodeRef node) {
+                return getStatesForNode(tree, node);
+            }
+
+            public String getTraitString(Tree tree, NodeRef node) {
+                return formattedState(getStatesForNode(tree, node), formatter);
+            }
+        });
 
         likelihoodKnown = false;
         populationSizesKnown = false;
@@ -200,8 +247,32 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         populationSizesKnown = false;
         transitionMatricesKnown = false;
 
+        areStatesRedrawn = false;
+
         likelihoodDelegate.makeDirty();
         updateAllNodes();
+    }
+
+    private void redrawAncestralStates() {
+        // Sample states
+        logLikelihood = 0;
+
+        //TODO uncomment and implement this for ancestral state logging
+        //traverseSample(treeModel, treeModel.getRoot(), null, null);
+
+        areStatesRedrawn = true;
+    }
+
+    //TODO Remove code duplication from class dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood
+    private String formattedState(int[] state, CodeFormatter formatter) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("\"");
+        formatter.reset();
+        for (int i : state) {
+            sb.append(formatter.getCodeString(i));
+        }
+        sb.append("\"");
+        return sb.toString();
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -215,7 +286,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
     @Override
     protected final void handleModelChangedEvent(Model model, Object object, int index) {
-
         if (model == treeIntervals) {
             treeIntervalsKnown = false;
             transitionMatricesKnown = false;
@@ -241,6 +311,13 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         assert (treeIntervalsKnown);
         assert (transitionMatricesKnown);
 
+        if (areStatesRedrawn) {
+            for (int i = 0; i < reconstructedStates.length; i++) {
+                System.arraycopy(reconstructedStates[i], 0, storedReconstructedStates[i], 0, reconstructedStates[i].length);
+            }
+        }
+
+        storedAreStatesRedrawn = areStatesRedrawn;
         storedLogLikelihood = logLikelihood;
     }
 
@@ -252,12 +329,19 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         populationSizesKnown = true;
         treeIntervalsKnown = true;
         transitionMatricesKnown = true;
+
+        int[][] temp = reconstructedStates;
+        reconstructedStates = storedReconstructedStates;
+        storedReconstructedStates = temp;
+
+        areStatesRedrawn = storedAreStatesRedrawn;
     }
 
     @Override
     protected void acceptState() { } // nothing to do
 
     private double calculateLogLikelihood() {
+        areStatesRedrawn = false;
 
         if (!transitionMatricesKnown) {
             // update eigen-decomposition
@@ -299,6 +383,8 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         populationSizesKnown = true;
         transitionMatricesKnown = true;
 
+        redrawAncestralStates();
+
         return logL;
     }
 
@@ -307,7 +393,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         assert(substitutionModel instanceof SVSComplexSubstitutionModel);
         SVSComplexSubstitutionModel svsComplexSubstitutionModel = (SVSComplexSubstitutionModel) substitutionModel;
         Parameter parameters = svsComplexSubstitutionModel.getRatesParameter();
-
 
         final List<BranchIntervalOperation> branchOperations =
                 treeTraversalDelegate.getBranchIntervalOperations();
@@ -341,12 +426,9 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         return gradient;
     }
 
-
-
     public double[] getPopSizeGradientLogDensity() {
 
         Parameter parameters = popSizeParameter;
-
 
         final List<BranchIntervalOperation> branchOperations =
                 treeTraversalDelegate.getBranchIntervalOperations();
@@ -386,6 +468,18 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         treeTraversalDelegate.updateAllNodes();
         likelihoodKnown = false;
+    }
+
+    private int[] getStatesForNode(Tree tree, NodeRef node) {
+        if (!likelihoodKnown) {
+            calculateLogLikelihood();
+            likelihoodKnown = true;
+        }
+
+        if (!areStatesRedrawn) {
+            redrawAncestralStates();
+        }
+        return reconstructedStates[node.getNumber()];
     }
 
     @Override
@@ -448,6 +542,44 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     }
 
     public BastaLikelihoodDelegate getLikelihoodDelegate() {  return likelihoodDelegate; }
+
+    //TODO Remove code duplication from class dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood
+    private class CodeFormatter {
+
+        private final DataType dataType;
+        private final Function<String, String> appender;
+        private final Function<Integer, String> getter;
+        private boolean first = true;
+
+        CodeFormatter(DataType dataType, boolean stripHiddenState) {
+            this.dataType = dataType;
+
+            this.appender = (dataType instanceof GeneralDataType) ?
+                    (codeString) -> codeString + " " : Function.identity();
+
+            if (dataType instanceof HiddenCodons) {
+                this.getter = (stripHiddenState) ?
+                        ((HiddenCodons) dataType)::getTripletWithoutHiddenCode :
+                        dataType::getTriplet;
+            } else if (dataType instanceof HiddenDataType && stripHiddenState) {
+                this.getter = ((HiddenDataType) dataType)::getCodeWithoutHiddenState;
+            } else {
+                this.getter = dataType::getCode;
+            }
+        }
+
+        String getCodeString(int state) {
+            String code = getter.apply(state);
+            if (first) {
+                first = false;
+            } else {
+                code = appender.apply(code);
+            }
+            return code;
+        }
+
+        void reset() { first = true; }
+    }
 
     @Override
     public List<Citation> getCitations() {

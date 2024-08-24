@@ -1,7 +1,8 @@
 /*
  * BeagleTreeLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treelikelihood;
@@ -79,12 +81,11 @@ import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Marc Suchard
- * @version $Id$
  */
 
 @SuppressWarnings("serial")
 @Deprecated // Switching to TreeDataLikelihood
-public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood implements ThreadAwareLikelihood, Citable {
+public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood implements ThreadAwareLikelihood {
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -1532,20 +1533,6 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         double[] siteLogLikelihoods = new double[patternCount];
         beagle.getSiteLogLikelihoods(siteLogLikelihoods);
         return siteLogLikelihoods;
-    }
-
-    @Override
-    public Citation.Category getCategory() {
-        return Citation.Category.FRAMEWORK;
-    }
-
-    @Override
-    public String getDescription() {
-        return "Using BEAGLE likelihood calculation library";
-    }
-
-    public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.AYRES_2019_BEAGLE);
     }
 
 }//END: class

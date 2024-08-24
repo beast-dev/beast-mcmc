@@ -1,7 +1,8 @@
 /*
  * PartitionClockModelPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.clockmodelspanel;
@@ -28,6 +30,7 @@ package dr.app.beauti.clockmodelspanel;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.types.ClockDistributionType;
 import dr.app.beauti.types.ClockType;
+import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.util.OSType;
 import jam.panels.OptionsPanel;
@@ -45,8 +48,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
     // Components
     private static final long serialVersionUID = -1645661616353099424L;
 
-    private JComboBox clockTypeCombo = new JComboBox(EnumSet.range(
-            ClockType.STRICT_CLOCK, ClockType.MIXED_EFFECTS_CLOCK).toArray());
+    private JComboBox clockTypeCombo = new JComboBox();
     private JComboBox clockDistributionCombo = new JComboBox (new ClockDistributionType[] {
             ClockDistributionType.LOGNORMAL,
             ClockDistributionType.GAMMA,
@@ -71,6 +73,13 @@ public class PartitionClockModelPanel extends OptionsPanel {
         super(12, (OSType.isMac() ? 6 : 24));
 
         this.model = partitionModel;
+
+        for (ClockType clockType : EnumSet.range(ClockType.STRICT_CLOCK, ClockType.MIXED_EFFECTS_CLOCK)) {
+            clockTypeCombo.addItem(clockType);
+            if (clockType == ClockType.STRICT_CLOCK || clockType == ClockType.HMC_CLOCK) {
+                clockTypeCombo.addItem(new JSeparator(JSeparator.HORIZONTAL));
+            }
+        }
 
         PanelUtils.setupComponent(clockTypeCombo);
         clockTypeCombo.addItemListener(new ItemListener() {
@@ -143,7 +152,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
                 addComponent(continuousQuantileCheck);
                 break;
 
-            case HMC:
+            case HMC_CLOCK:
                 addComponent(new JLabel(
                         "<html>" +
                                 "Using the Hamiltonian Monte Carlo relaxed clock model of Ji, Zhang, Holbrook,<br>" +
@@ -155,8 +164,10 @@ public class PartitionClockModelPanel extends OptionsPanel {
                 addComponentWithLabel("Relaxed Distribution:", clockDistributionCombo);
                 break;
 
+            case SHRINKAGE_LOCAL_CLOCK:
             case RANDOM_LOCAL_CLOCK:
             case FIXED_LOCAL_CLOCK:
+            case MIXED_EFFECTS_CLOCK:
                 break;
 
             default:

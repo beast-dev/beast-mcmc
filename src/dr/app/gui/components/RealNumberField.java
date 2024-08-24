@@ -1,7 +1,8 @@
 /*
  * RealNumberField.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.gui.components;
@@ -122,6 +124,9 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
         }
         if (range_check) {
             try {
+                if (getValue() == null) {
+                    return false;
+                }
                 double value = getValue();
                 if (value < min || value > max) {
                     return false;
@@ -240,7 +245,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
                 return Double.NaN;
             } else {
 //                System.out.println("=" + getText() + "=");
-                return new Double(getText());
+                return Double.parseDouble(getText());
             }
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(null, "Unable to parse number correctly",

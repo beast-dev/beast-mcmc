@@ -1,7 +1,8 @@
 /*
  * TipStateOperator.java
  *
- * Copyright (c) 2002-2024 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -48,6 +49,8 @@ public class TipStateOperator extends SimpleMCMCOperator {
     private final static boolean ONLy_USE_WITH_TIME_VARYING_MODEL = true;
 
     private int[] previousStates;
+
+    private static final boolean DEBUG = false;
 
     public TipStateOperator(List<TipStateAccessor> treeLikelihoods,
                             TimeVaryingFrequenciesModel frequencies,
@@ -115,8 +118,14 @@ public class TipStateOperator extends SimpleMCMCOperator {
 
         double logRatio = 0;
         for (int i = 0; i < patternCount; ++i) {
-            logRatio += Math.log(probabilities[previousStates[i]]) -
-                    Math.log(probabilities[newStates[i]]);
+            if (DEBUG) {
+                System.err.println("\t " + previousStates[i] + " -> " + newStates[i]);
+            }
+
+            if (previousStates[i] < probabilities.length) {
+                logRatio += Math.log(probabilities[previousStates[i]]);
+            }
+            logRatio -= Math.log(probabilities[newStates[i]]);
         }
 
         return ONLy_USE_WITH_TIME_VARYING_MODEL ? 0.0 : logRatio;
@@ -127,8 +136,20 @@ public class TipStateOperator extends SimpleMCMCOperator {
         return TIP_STATE_OPERATOR;
     }
 
+    public void accept(double deviation) {
+        super.accept(deviation);
+
+        if (DEBUG) {
+            System.err.println("accept");
+        }
+    }
+
     public void reject() {
         super.reject();
+
+        if (DEBUG) {
+            System.err.println("reject");
+        }
 
         int taxonIndex = frequencies.getTipIndex(taxon);
         setCurrentStates(taxonIndex, previousStates);

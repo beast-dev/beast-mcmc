@@ -1,7 +1,8 @@
 /*
  * SitePatterns.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.alignment;
@@ -44,7 +46,6 @@ import static dr.evolution.alignment.SitePatterns.CompressionType.*;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: SitePatterns.java,v 1.47 2005/06/22 16:44:17 rambaut Exp $
  */
 public class SitePatterns implements SiteList, dr.util.XHTMLable {
     private final boolean DEBUG = false;
@@ -61,6 +62,10 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     }
 
     public static final CompressionType DEFAULT_COMPRESSION_TYPE = UNIQUE_ONLY;
+
+    public static final double DEFAULT_AMBIGUITY_THRESHOLD = 0.25;
+
+    public static final int MINIMUM_UNAMBIGUOUS = 2;
 
     private final boolean isCompressed;
 
@@ -107,14 +112,18 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
      * Constructor
      */
     public SitePatterns(Alignment alignment) {
-        this(alignment, null, 0, 0, 1);
+        this(alignment, null, -1, -1, 1);
     }
 
     /**
      * Constructor
      */
     public SitePatterns(Alignment alignment, TaxonList taxa) {
-        this(alignment, taxa, 0, 0, 1, true);
+        this(alignment, taxa, -1, -1, 1, true);
+    }
+
+    public SitePatterns(Alignment alignment, TaxonList taxa, CompressionType compressionType) {
+        this(alignment, taxa, -1, -1, 1, true, compressionType);
     }
 
     /**
@@ -136,7 +145,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     }
 
     public SitePatterns(Alignment alignment, TaxonList taxa, int from, int to, int every, boolean strip, CompressionType compressionType) {
-        this(alignment, taxa, from, to, every, strip, null, compressionType);
+        this(alignment, taxa, from, to, every, strip, null, compressionType, DEFAULT_AMBIGUITY_THRESHOLD);
     }
 
     /**
@@ -151,7 +160,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
      * @param compression Type of pattern/weight compression to use
      */
     public SitePatterns(Alignment alignment, TaxonList taxa, int from, int to, int every, boolean strip,
-                        int[] constantSiteCounts, CompressionType compression ) {
+                        int[] constantSiteCounts, CompressionType compression, double ambiguityThreshold ) {
 
         this.siteList = alignment;
         isCompressed = compression != UNCOMPRESSED;
@@ -174,7 +183,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
             }
         }
 
-        addPatterns(alignment, from, to, every, strip, constantSiteCounts, compression);
+        addPatterns(alignment, from, to, every, strip, constantSiteCounts, compression, ambiguityThreshold);
     }
 
     /**
@@ -188,23 +197,23 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
      * Constructor
      */
     public SitePatterns(SiteList siteList, int from, int to, int every) {
-        this(siteList, from, to, every, true, DEFAULT_COMPRESSION_TYPE);
+        this(siteList, from, to, every, true, DEFAULT_COMPRESSION_TYPE, DEFAULT_AMBIGUITY_THRESHOLD);
     }
 
     /**
      * Constructor
      */
     public SitePatterns(SiteList siteList, int from, int to, int every, boolean strip) {
-        this(siteList, from, to, every, strip, DEFAULT_COMPRESSION_TYPE);
+        this(siteList, from, to, every, strip, DEFAULT_COMPRESSION_TYPE, DEFAULT_AMBIGUITY_THRESHOLD);
     }
 
     /**
      * Constructor
      */
-    public SitePatterns(SiteList siteList, int from, int to, int every, boolean strip, CompressionType compression) {
+    public SitePatterns(SiteList siteList, int from, int to, int every, boolean strip, CompressionType compression, double ambiguityThreshold) {
         this.siteList = siteList;
         isCompressed = compression != UNCOMPRESSED;
-        addPatterns(siteList, from, to, every, strip, null, compression);
+        addPatterns(siteList, from, to, every, strip, null, compression, ambiguityThreshold);
     }
 
     public SiteList getSiteList() {
@@ -214,7 +223,8 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     /**
      * adds a set of patterns to the patternlist
      */
-    private void addPatterns(SiteList siteList, int from, int to, int every, boolean strip, int[] constantSiteCounts, CompressionType compression) {
+    private void addPatterns(SiteList siteList, int from, int to, int every, boolean strip, int[] constantSiteCounts,
+                             CompressionType compression, double ambiguityThreshold) {
         if (siteList == null) {
             return;
         }
@@ -316,7 +326,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
         if (compression != UNCOMPRESSED && compression != UNIQUE_ONLY) {
 //            sortPatternsByWeight();
-            compressAmbiguousPatterns(compression == AMBIGUOUS_CONSTANT);
+            compressAmbiguousPatterns(compression == AMBIGUOUS_CONSTANT, ambiguityThreshold);
 
             // these are no longer valid...
             sitePatternIndices = null;
@@ -431,13 +441,18 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         }
     }
 
-    private void compressAmbiguousPatterns(boolean constantOnly) {
+    private void compressAmbiguousPatterns(boolean constantOnly, double ambiguityThreshold) {
+        int minimumUnambiguous = (int)((1.0 - ambiguityThreshold) * getPatternLength());
+        minimumUnambiguous = Math.min(minimumUnambiguous, 2);
+
         // the first stateCount patterns are the constant ones
         for (int i = getStateCount(); i < patternCount; i++) {
             int count = constantOnly ? getStateCount() : i;
             for (int j = 0; j < count; j++) {
                 if (patterns[j] != null) {
-                    if (comparePatterns(patterns[i], patterns[j], true)) {
+                    // the pattern should have at least 2 non-ambiguous characters
+                    if (getCanonicalStateCount(patterns[i]) >= minimumUnambiguous &&
+                            comparePatterns(patterns[i], patterns[j], true)) {
                         if (!constantOnly && getCanonicalStateCount(patterns[i]) > getCanonicalStateCount(patterns[j])) {
                             // if this is a less ambiguous pattern then this becomes the 'type' pattern
                             patterns[j] = patterns[i];
@@ -563,15 +578,16 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
      */
     protected boolean comparePatterns(int[] pattern1, int[] pattern2, boolean allowAmbiguities) {
 
-        int len = pattern1.length;
         if (!allowAmbiguities) {
-            for (int i = 0; i < len; i++) {
-                if (pattern1[i] != pattern2[i]) {
-                    return false;
-                }
-            }
+            return Arrays.equals(pattern1, pattern2);
+
+//            for (int i = 0; i < len; i++) {
+//                if (pattern1[i] != pattern2[i]) {
+//                    return false;
+//                }
+//            }
         } else {
-            for (int i = 0; i < len; i++) {
+            for (int i = 0; i < pattern1.length; i++) {
                 if (getDataType().areUnambiguouslyDifferent(pattern1[i], pattern2[i])) {
                     return false;
                 }

@@ -1,7 +1,8 @@
 /*
- * BeagleDataLikelihoodDelegate.java
+ * BeagleMatrixExponentiationDelegate.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent.basta;
@@ -32,7 +34,6 @@ package dr.evomodel.coalescent.basta;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 
 import beagle.*;
@@ -56,7 +57,7 @@ import java.util.logging.Logger;
 import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
 
 @Deprecated
-public class BeagleMatrixExponentiationDelegate extends AbstractModel implements Citable {
+public class BeagleMatrixExponentiationDelegate extends AbstractModel {
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -337,25 +338,6 @@ public class BeagleMatrixExponentiationDelegate extends AbstractModel implements
 
     @Override
     protected void acceptState() {
-    }
-
-    // **************************************************************
-    // INSTANCE CITABLE
-    // **************************************************************
-
-    @Override
-    public Citation.Category getCategory() {
-        return Citation.Category.FRAMEWORK;
-    }
-
-    @Override
-    public String getDescription() {
-        return "Using BEAGLE likelihood calculation library";
-    }
-
-    @Override
-    public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.AYRES_2019_BEAGLE);
     }
 
     // **************************************************************

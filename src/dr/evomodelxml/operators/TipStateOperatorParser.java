@@ -1,7 +1,8 @@
 /*
  * TipStateOperatorParser.java
  *
- * Copyright (c) 2002-2024 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional

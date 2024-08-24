@@ -57,7 +57,8 @@ import static dr.evomodel.treedatalikelihood.SubstitutionModelDelegate.BUFFER_PO
  * @version $Id$
  */
 
-public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
+public class BeagleDataLikelihoodDelegate extends AbstractModel implements
+        DataLikelihoodDelegate, TipStateAccessor, Citable {
 
     private static final boolean COUNT_CALCULATIONS = true; // keep a cumulative total of number of computations
 
@@ -1283,4 +1284,24 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     private static boolean USE_CACHED_EXCEPTION = true;
     private LikelihoodUnderflowException cachedException = null; // new LikelihoodUnderflowException();
+
+    @Override
+    public void setTipStates(int tipNum, int[] states) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public void getTipStates(int tipNum, int[] states) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public int getPatternCount() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public int getTipCount() {
+        return tipCount;
+    }
 }

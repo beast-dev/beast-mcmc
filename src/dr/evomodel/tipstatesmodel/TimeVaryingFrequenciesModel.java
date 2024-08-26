@@ -21,8 +21,6 @@ import static dr.util.Citation.Category.PRIOR_MODELS;
 public class TimeVaryingFrequenciesModel extends AbstractModelLikelihood implements Citable {
 
     private final List<Epoch> epochs;
-
-    @SuppressWarnings("unused")
     private final List<TipStateAccessor> accessors;
     private final Tree tree;
     private final Taxon taxon;
@@ -52,7 +50,7 @@ public class TimeVaryingFrequenciesModel extends AbstractModelLikelihood impleme
     public static Citation CITATION = new Citation(
             new Author[]{
                     new Author("MA", "Suchard"),
-                    new Author("J", "Pekar"),
+                    new Author("JE", "Pekar"),
             },
             Citation.Status.IN_PREPARATION
     );
@@ -143,10 +141,6 @@ public class TimeVaryingFrequenciesModel extends AbstractModelLikelihood impleme
 
         double height = tree.getNodeHeight(getTipNode(taxon));
 
-//        if (DEBUG) {
-//            System.err.println("height = " + height);
-//        }
-
         int epochIndex = 0;
         while (height > epochs.get(epochIndex).cutOff) {
             ++epochIndex;
@@ -168,6 +162,7 @@ public class TimeVaryingFrequenciesModel extends AbstractModelLikelihood impleme
     @Override
     protected void restoreState() {
         logLikelihood = storedLogLikelihood;
+        likelihoodKnown = true;
     }
 
     @Override
@@ -176,6 +171,7 @@ public class TimeVaryingFrequenciesModel extends AbstractModelLikelihood impleme
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == tipHeight) {
+            // TODO only need to recompute if height falls in new epoch
             likelihoodKnown = false;
 
             if (DEBUG) {
@@ -205,9 +201,5 @@ public class TimeVaryingFrequenciesModel extends AbstractModelLikelihood impleme
     @Override
     public void makeDirty() {
         likelihoodKnown = false;
-
-//        if (DEBUG) {
-//            System.err.println("make dirty");
-//        }
     }
 }

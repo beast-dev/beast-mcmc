@@ -32,12 +32,15 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
+import dr.evomodel.arg.ARGModel.Node;
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeModel;
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.evomodel.operators.EmpiricalTreeDistributionOperator;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
+import dr.evomodelxml.bigfasttree.thorney.UniformSubtreePruneRegraftParser;
 import dr.evomodelxml.branchratemodel.AutoCorrelatedBranchRatesDistributionParser;
 import dr.evomodelxml.branchratemodel.AutoCorrelatedGradientWrtIncrementsParser;
 import dr.evomodelxml.branchratemodel.BranchRateGradientWrtIncrementsParser;
@@ -255,6 +258,15 @@ public class OperatorsGenerator extends Generator {
                 break;
             case SHRINKAGE_CLOCK_GIBBS_OPERATOR:
                 writeShrinkageClockGibbsOperator(operator, prefix, writer);
+                break;
+            case NODE_HEIGHT_OPERATOR_UNIFORM :
+                writeBFTUniformNodeHeightOperator(operator, prefix, writer);
+                break;
+            case NODE_HEIGHT_OPERATOR_ROOT:
+                writeBFTRootScaleOperator(operator, prefix, writer);
+                break;
+            case UNIFORM_SUBTREE_PRUNE_REGRAFT:
+                writeUniformSPROperator(operator, prefix, writer);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown operator type");
@@ -716,6 +728,40 @@ public class OperatorsGenerator extends Generator {
         writer.writeIDref(EmpiricalTreeDistributionModel.EMPIRICAL_TREE_DISTRIBUTION_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(EmpiricalTreeDistributionOperator.EMPIRICAL_TREE_DISTRIBUTION_OPERATOR);
     }
+
+    private void writeBFTUniformNodeHeightOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
+        writer.writeOpenTag(NodeHeightOperatorParser.NODE_HEIGHT_OPERATOR, // should this be in the class and not the parser?
+                new Attribute[]{
+                    new Attribute.Default<String>("type",NodeHeightOperatorParser.OperatorType.UNIFORM.toString()),
+                        getWeightAttribute(operator.getWeight())
+                }
+        );
+        writer.writeIDref(ConstrainedTreeModel.CONSTRAINED_TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
+        writer.writeCloseTag(NodeHeightOperatorParser.NODE_HEIGHT_OPERATOR);
+    }
+
+    private void writeBFTRootScaleOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
+        writer.writeOpenTag(NodeHeightOperatorParser.NODE_HEIGHT_OPERATOR, // should this be in the class and not the parser?
+                new Attribute[]{
+                    new Attribute.Default<String>("type",NodeHeightOperatorParser.OperatorType.SCALEROOT.toString()),
+                    // todo scale factor here
+                    new Attribute.Default<Double>(NodeHeightOperatorParser.SCALE_FACTOR, operator.getTuning()),
+                        getWeightAttribute(operator.getWeight())
+                }
+        );
+        writer.writeIDref(ConstrainedTreeModel.CONSTRAINED_TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
+        writer.writeCloseTag(NodeHeightOperatorParser.NODE_HEIGHT_OPERATOR);
+    }
+
+    private void writeUniformSPROperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
+        writer.writeOpenTag(UniformSubtreePruneRegraftParser.UNIFORM_SUBTREE_PRUNE_REGRAFT, // should this be in the class and not the parser?
+            new Attribute[]{
+                getWeightAttribute(operator.getWeight())
+            });
+        writer.writeIDref(ConstrainedTreeModel.CONSTRAINED_TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
+        writer.writeCloseTag(UniformSubtreePruneRegraftParser.UNIFORM_SUBTREE_PRUNE_REGRAFT);
+    }
+
 
     // tuneable version of FHSPR but not currently being used
     private void writeSubtreeJumpOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {

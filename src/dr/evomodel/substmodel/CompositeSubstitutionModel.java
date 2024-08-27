@@ -101,10 +101,12 @@ public class CompositeSubstitutionModel extends BaseSubstitutionModel {
         double[] rates1 = substitutionModel1.getRelativeRates();
         double[] rates2 = substitutionModel2.getRelativeRates();
         if (substitutionModel1.rateCount == substitutionModel2.rateCount) {
+            // both 6 or 12 rate
             for (int i = 0; i < rateCount; i++) {
                 rates[i] = rates1[i] + (rates2[i] * weight);
             }
         } else if (substitutionModel1.rateCount < substitutionModel2.rateCount) {
+            // substitutionModel1 is 6 rate, substitutionModel2 12 rate
             int k = 0;
             for (int i = 0; i < substitutionModel1.rateCount; i++) {
                 rates[k] = rates1[i] + (rates2[k] * weight);
@@ -115,6 +117,7 @@ public class CompositeSubstitutionModel extends BaseSubstitutionModel {
                 k++;
             }
         } else {
+            // substitutionModel1 is 12 rate, substitutionModel2 is 6 rate
             int k = 0;
             for (int i = 0; i < substitutionModel2.rateCount; i++) {
                 rates[k] = rates1[k] + (rates2[i] * weight);

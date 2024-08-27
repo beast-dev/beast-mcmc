@@ -345,11 +345,8 @@
             <varianceProportionStatistic idref="varianceLog"/>
         </actual>
         <expected>
-<!--			XJ: old expected values with power scheduler at 0.55 power-->
-<!--			0.9966896    0.04666217-->
-<!--			0.04666217   0.02887752-->
-			0.9988314416228967  0.051480960446850035
-			0.051480960446850035  0.039396946095094636
+			0.9966896    0.04666217
+			0.04666217   0.02887752
         </expected>
     </assertEqual>
 

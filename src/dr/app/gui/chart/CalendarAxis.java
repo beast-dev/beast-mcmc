@@ -35,7 +35,7 @@ import java.time.format.DateTimeFormatter;
 
 public class CalendarAxis extends Axis.AbstractAxis {
 
-	private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yy-MM-dd");
+	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yy-MM-dd");
 
 	/**
 	 * Empty constructor

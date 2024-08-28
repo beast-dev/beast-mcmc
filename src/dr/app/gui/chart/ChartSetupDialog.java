@@ -82,8 +82,8 @@ public class ChartSetupDialog {
         this.defaultMaxYAxisFlag = defaultMaxYAxisFlag;
 
         logXAxis = new JCheckBox("Log axis");
-        manualXAxis = new JCheckBox("Manual range");
         calendarXAxis = new JCheckBox("Calendar date transform");
+        manualXAxis = new JCheckBox("Manual range");
         minXValue = new RealNumberField();
         minXValue.setColumns(12);
         maxXValue = new RealNumberField();
@@ -103,8 +103,8 @@ public class ChartSetupDialog {
             if (canLogXAxis) {
                 optionPanel.addComponent(logXAxis);
             }
-            optionPanel.addComponent(manualXAxis);
             optionPanel.addComponent(calendarXAxis);
+            optionPanel.addComponent(manualXAxis);
             final JLabel minXLabel = new JLabel("Minimum Value:");
             optionPanel.addComponents(minXLabel, minXValue);
             final JLabel maxXLabel = new JLabel("Maximum Value:");
@@ -153,6 +153,11 @@ public class ChartSetupDialog {
             maxYValue.setEnabled(false);
         }
     }
+
+    public boolean displayCalendarDates() {
+        return calendarXAxis.isSelected();
+    }
+
 
     public int showDialog(JChart chart) {
 

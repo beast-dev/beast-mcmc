@@ -44,6 +44,7 @@ public class ChartSetupDialog {
 
     private final JCheckBox manualXAxis;
     private final JCheckBox manualYAxis;
+    private final JCheckBox calendarXAxis;
     private final RealNumberField minXValue;
     private final RealNumberField maxXValue;
     private final RealNumberField minYValue;
@@ -53,6 +54,7 @@ public class ChartSetupDialog {
     private final boolean canLogYAxis;
     private final boolean canManualXAxis;
     private final boolean canManualYAxis;
+    private final boolean canCalendarXAxis;
     private final int defaultMinXAxisFlag;
     private final int defaultMaxXAxisFlag;
     private final int defaultMinYAxisFlag;
@@ -72,6 +74,8 @@ public class ChartSetupDialog {
         this.canManualXAxis = canManualXAxis;
         this.canManualYAxis = canManualYAxis;
 
+        this.canCalendarXAxis = true; // TODO pass as parameter
+
         this.defaultMinXAxisFlag = defaultMinXAxisFlag;
         this.defaultMaxXAxisFlag = defaultMaxXAxisFlag;
         this.defaultMinYAxisFlag = defaultMinYAxisFlag;
@@ -79,6 +83,7 @@ public class ChartSetupDialog {
 
         logXAxis = new JCheckBox("Log axis");
         manualXAxis = new JCheckBox("Manual range");
+        calendarXAxis = new JCheckBox("Calendar date transform");
         minXValue = new RealNumberField();
         minXValue.setColumns(12);
         maxXValue = new RealNumberField();
@@ -99,6 +104,7 @@ public class ChartSetupDialog {
                 optionPanel.addComponent(logXAxis);
             }
             optionPanel.addComponent(manualXAxis);
+            optionPanel.addComponent(calendarXAxis);
             final JLabel minXLabel = new JLabel("Minimum Value:");
             optionPanel.addComponents(minXLabel, minXValue);
             final JLabel maxXLabel = new JLabel("Maximum Value:");
@@ -113,6 +119,7 @@ public class ChartSetupDialog {
                 }
             });
             manualXAxis.setSelected(false);
+            calendarXAxis.setSelected(false);
             minXLabel.setEnabled(false);
             minXValue.setEnabled(false);
             maxXLabel.setEnabled(false);
@@ -208,6 +215,14 @@ public class ChartSetupDialog {
         }
 
         if (canManualXAxis) {
+
+            if (calendarXAxis.isSelected()) {
+                xAxis = new CalendarAxis();
+                chart.setXAxis(xAxis);
+            } else {
+                chart.setXAxis(new LinearAxis());
+            }
+
             if (manualXAxis.isSelected()) {
                 xAxis.setManualRange(minXValue.getValue(), maxXValue.getValue());
                 xAxis.setAxisFlags(Axis.AT_VALUE, Axis.AT_VALUE);

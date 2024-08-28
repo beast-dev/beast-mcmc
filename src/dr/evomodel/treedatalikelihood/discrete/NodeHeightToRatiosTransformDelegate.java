@@ -179,11 +179,14 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
 
                 NodeRef node = tree.getNode(nodeNumber);
 
-                final int ratioNum = getRatiosIndex(node);
+                if (node != tree.getRoot()) {
 
-                final double distance = getNodePartial(node);
+                    final int ratioNum = getRatiosIndex(node);
 
-                tooSmall[ratioNum] = distance < threshold ? 0.0 : 1.0;
+                    final double distance = getNodePartial(node);
+
+                    tooSmall[ratioNum] = distance < threshold ? 0.0 : 1.0;
+                }
 
             }
         }

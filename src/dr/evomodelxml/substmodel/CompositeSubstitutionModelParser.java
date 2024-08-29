@@ -43,6 +43,7 @@ public class CompositeSubstitutionModelParser extends AbstractXMLObjectParser {
 
     public static final String COMPOSITE_SUBSTITUTION_MODEL = "compositeSubstitutionModel";
     public static final String DATA_TYPE = "dataType";
+    public static final String MODEL = "model";
     public static final String NORMALIZED = "normalized";
 
     public String getParserName() {
@@ -51,23 +52,31 @@ public class CompositeSubstitutionModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        List<GeneralSubstitutionModel> substitutionModels = xo.getAllChildren(GeneralSubstitutionModel.class);
-        Parameter weightParameter = (Parameter)xo.getChild(Parameter.class);
-
-        if (substitutionModels.size() != 2 ||
-                !substitutionModels.get(0).getDataType().equals(substitutionModels.get(1).getDataType())) {
+        List<XMLObject> cxos = xo.getAllChildren(MODEL);
+        if (cxos.size() != 2) {
             throw new XMLParseException("CompositeSubstitutionModel should take 2 GeneralSubstitutionModel of the same DataType");
         }
-        int stateCount = substitutionModels.get(0).getDataType().getStateCount();
+
+        GeneralSubstitutionModel substitutionModel1 = (GeneralSubstitutionModel)cxos.get(0).getChild(GeneralSubstitutionModel.class);
+        Parameter weightParameter1 = (Parameter)cxos.get(0).getChild(Parameter.class);
+
+        GeneralSubstitutionModel substitutionModel2 = (GeneralSubstitutionModel)cxos.get(1).getChild(GeneralSubstitutionModel.class);
+        Parameter weightParameter2 = (Parameter)cxos.get(1).getChild(Parameter.class);
+        if (!substitutionModel1.getDataType().equals(substitutionModel2.getDataType())) {
+            throw new XMLParseException("GeneralSubstitutionModels are not of the same DataType");
+        }
+
+        int stateCount = substitutionModel1.getDataType().getStateCount();
         Logger.getLogger("dr.evomodel").info("  Composite Substitution Model (" +
-                substitutionModels.get(0).getId() + " + " +
-                substitutionModels.get(1).getId() + ")");
+                substitutionModel1.getId() + " + " +
+                substitutionModel2.getId() + ")");
 
         CompositeSubstitutionModel model = new CompositeSubstitutionModel(getParserName(),
-                substitutionModels.get(0).getDataType(),
-                substitutionModels.get(0),
-                substitutionModels.get(1),
-                weightParameter
+                substitutionModel1.getDataType(),
+                substitutionModel1,
+                weightParameter1,
+                substitutionModel2,
+                weightParameter2
         );
 
 //        if (!xo.getAttribute(NORMALIZED, true)) {
@@ -95,8 +104,10 @@ public class CompositeSubstitutionModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(GeneralSubstitutionModel.class, 2, 2),
-            new ElementRule(Parameter.class),
             AttributeRule.newBooleanRule(NORMALIZED, true),
+            new ElementRule(MODEL, new XMLSyntaxRule[] {
+                    new ElementRule(GeneralSubstitutionModel.class),
+                    new ElementRule(Parameter.class)
+            }, 2, 2)
     };
 }

@@ -193,13 +193,19 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
                 System.err.println("Tree = " + tree);
             }
 
-            computeTransitionProbabilityOperations(matrixOperation, Mode.LIKELIHOOD);
-            computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperation, Mode.LIKELIHOOD);
-
             double[] logL = new double[1];
-            computeCoalescentIntervalReduction(intervalStarts, branchOperations, logL,
-                    Mode.LIKELIHOOD, null);
+            boolean done = false;
 
+            while (!done) {
+
+                computeTransitionProbabilityOperations(matrixOperation, Mode.LIKELIHOOD);
+                computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperation, Mode.LIKELIHOOD);
+
+                computeCoalescentIntervalReduction(intervalStarts, branchOperations, logL,
+                        Mode.LIKELIHOOD, null);
+
+                done = true;
+            }
             if (PRINT_COMMANDS) {
                 System.err.println("logL = " + logL[0] + " " + getStamp() + "\n");
                 if (printCount > 1000) {

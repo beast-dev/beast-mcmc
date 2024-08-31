@@ -6,10 +6,7 @@ import beagle.basta.BeagleBasta;
 import beagle.basta.BastaFactory;
 import dr.evolution.tree.Tree;
 import dr.evomodel.substmodel.EigenDecomposition;
-import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.BufferIndexHelper;
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.math.matrixAlgebra.WrappedVector;
@@ -302,14 +299,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
 
             k += BASTA_OPERATION_SIZE;
         }
-
-//        int i = 0;
-//        for (int start : intervalStarts) {
-//            intervals[i] = start;
-//            lengths[i] = branchIntervalOperations.get(start).intervalLength;
-//            ++i;
-//        }
-
+        
         int i = 0;
         for (int end = intervalStarts.size() - 1; i < end; ++i) {
             int start = intervalStarts.get(i);

@@ -27,11 +27,12 @@
 
 package dr.app.gui.chart;
 
-
-import tracer.traces.ContinuousDensityPanel;
-
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
+
+import static dr.evolution.util.TimeScale.DAYS_PER_YEAR;
 
 public class CalendarAxis extends Axis.AbstractAxis {
 
@@ -46,7 +47,6 @@ public class CalendarAxis extends Axis.AbstractAxis {
 	 * Axis flag constructor
 	 */
 	public CalendarAxis(int minAxisFlag, int maxAxisFlag) {
-
 		setAxisFlags(minAxisFlag, maxAxisFlag);
 	}
 
@@ -66,12 +66,23 @@ public class CalendarAxis extends Axis.AbstractAxis {
 
 	@Override
 	public String format(double value) {
-
-
-		LocalDateTime dataTime = ContinuousDensityPanel.convertToDate(value);
-//		dataTime.format()
-//		return dataTime.getYear() + "-" + dataTime.getMonth() + "-" + dataTime.getDayOfMonth();
+		LocalDateTime dataTime = convertToDate(value);
 		return dataTime.format(formatter);
 	}
-}
 
+	public static LocalDateTime convertToDate(double decimalYear) {
+		return LocalDateTime.ofEpochSecond(convertToEpochSeconds(decimalYear), 0, ZoneOffset.UTC);
+	}
+
+	private static long convertToEpochSeconds(double decimalYear) {
+		return convertToEpochMilliseconds(decimalYear) / 1000;
+	}
+
+	private static long convertToEpochMilliseconds(double decimalYear) {
+		int year = (int)Math.floor(decimalYear);
+		long ms = (long)((decimalYear - Math.floor(decimalYear)) * DAYS_PER_YEAR * 24 * 3600 * 1000);
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(year, 0, 0, 0, 0, 0);
+		return (calendar.getTimeInMillis()) + ms;
+	}
+}

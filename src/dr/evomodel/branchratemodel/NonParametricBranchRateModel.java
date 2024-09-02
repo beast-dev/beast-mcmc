@@ -53,6 +53,7 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
+//TO DO: MAKE THIS A FUNCTIONAL FORM
 
 
 public class NonParametricBranchRateModel extends AbstractBranchRateModel

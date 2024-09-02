@@ -42,6 +42,8 @@ import static dr.math.distributions.MultivariateNormalDistribution.logPdf;
  * @author Pratyusa Data
  */
 
+//TO DO: Make degree more flexible
+
 public class GaussianProcessBasisApproximation extends RandomFieldDistribution {
 
     public static final String TYPE = "GaussianProcessBasisApproximation";
@@ -230,6 +232,10 @@ public class GaussianProcessBasisApproximation extends RandomFieldDistribution {
             term = (marginalVariance * (400/3) * Math.sqrt(5) * Math.pow(lengthScale, -5))/(Math.pow((5/(lengthScale * lengthScale)) + (x * x), 3));
         }
 
+        if(degree == -1.0) {
+            term = marginalVariance * Math.sqrt(2 * Math.PI) * lengthScale * Math.exp(-0.5 * x * x * lengthScale
+                    * lengthScale);
+        }
         return term;
     }
 

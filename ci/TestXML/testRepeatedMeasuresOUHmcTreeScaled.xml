@@ -345,8 +345,8 @@
             <varianceProportionStatistic idref="varianceLog"/>
         </actual>
         <expected>
-			0.9966896    0.04666217
-			0.04666217   0.02887752
+			0.9988077	0.05096995
+			0.05096995	0.03857181
         </expected>
     </assertEqual>
 
@@ -449,7 +449,7 @@ file_results <- file.path(results_folder, "testRepeatedMeasuresOUHmcTreeScaled.l
 dimTrait <- 2
 sampleSizeRoot <- Inf
 traitName <- "simTrait"
-tree_scaled = FALSE
+tree_scaled = TRUE
 
 ###############################################################################
 ## Heritability
@@ -464,6 +464,18 @@ colnames(herr) <- paste0(traitName, ".h", outer(1:dimTrait, 1:dimTrait, paste0))
 herr <- data.frame(herr)
 herr$state <- dat_log$state
 herr
+#   simTrait.h11 simTrait.h21 simTrait.h12 simTrait.h22 state
+#1     0.3635417   0.00000000   0.00000000   0.98279406     0
+#2     0.7218887  -0.44027089  -0.44027089   0.96552872    10
+#3     0.6112709   0.03012648   0.03012648   0.65239617    20
+#4     0.7336569   0.26379133   0.26379133   0.36670647    30
+#5     0.7451407   0.10401459   0.10401459   0.36131385    40
+#6     0.6765093  -0.17238417  -0.17238417   0.62297770    50
+#7     0.7643856   0.24687399   0.24687399   0.47298783    60
+#8     0.6263686   0.43352802   0.43352802   0.38028245    70
+#9     0.5954988   0.27128804   0.27128804   0.58957694    80
+#10    0.9937062   0.09446770   0.09446770   0.22391897    90
+#11    0.9988077   0.05096995   0.05096995   0.03857181   100
 -->
 
 <!--

@@ -28,25 +28,16 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
-import dr.inference.model.DuplicatedParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A substitution model that is a composite of two other models.
  *
  * @author Andrew Rambaut
  */
-public class CompositeSubstitutionModel extends BaseSubstitutionModel {
-
-    /**
-     * the rate which the others are set relative to
-     */
-    protected int ratesRelativeTo;
+public class CompositeSubstitutionModel extends ComplexSubstitutionModel {
 
     /**
      *

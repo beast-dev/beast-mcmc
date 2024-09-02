@@ -50,6 +50,7 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
 
     private TreeDataContinuousDiffusionStatistic(String statisticName,
                                                  TreeTrait.DA trait,
+                                                 TreeTrait.DA velocity,
                                                  TreeDataLikelihood likelihood,
                                                  WeightingScheme weightingScheme,
                                                  DisplacementScheme displacementScheme,
@@ -57,6 +58,7 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
                                                  EstimationScheme estimationScheme) {
         super(statisticName);
         this.trait = trait;
+        this.velocity = velocity;
         this.tree = likelihood.getTree();
         this.branchRates = likelihood.getBranchRateModel();
 
@@ -86,7 +88,9 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
 
         Statistic total = new Statistic();
 
-        estimationScheme.initRootStatistic(total, tree.getRoot());
+        if (estimationScheme.initRootStatistic()) {
+            addBranchStatistic(total, tree.getRoot());
+        }
 
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             NodeRef node = tree.getNode(i);
@@ -100,13 +104,12 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
 
     private void addBranchStatistic(Statistic lhs, NodeRef child) {
 
-        double[] parentTrait = estimationScheme.getParentTrait(trait, tree, child);
-        double[] childTrait = estimationScheme.getChildTrait(trait, tree, child);
+        double[] parentTrait = estimationScheme.getParentTrait(trait, velocity, tree, child);
+        double[] childTrait = estimationScheme.getChildTrait(trait, velocity, tree, child);
 
         double displacement = displacementScheme.displace(parentTrait, childTrait);
 
-        NodeRef parent = tree.getParent(child);
-        double branchLength = tree.getNodeHeight(parent) - tree.getNodeHeight(child);
+        double branchLength = estimationScheme.getBranchLength(tree, child);
 
         double time = branchLength * scalingScheme.scale(branchRates, tree, child);
 
@@ -124,6 +127,7 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
     }
 
     private final TreeTrait.DA trait;
+    private final TreeTrait.DA velocity;
     private final Tree tree;
     private final BranchRates branchRates;
     private final WeightingScheme weightingScheme;
@@ -259,19 +263,25 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
         NODE_DIFFERENCES { // difference between traits at nodes
 
             @Override
-            void initRootStatistic(Statistic lhs, NodeRef node) {
-                // do nothing
+            boolean initRootStatistic() {
+                return false;
             }
 
             @Override
-            double[] getParentTrait(TreeTrait.DA trait, Tree tree, NodeRef child) {
+            double[] getParentTrait(TreeTrait.DA trait, TreeTrait.DA velocity, Tree tree, NodeRef child) {
                 NodeRef parent = tree.getParent(child);
                 return trait.getTrait(tree, parent);
             }
 
             @Override
-            double[] getChildTrait(TreeTrait.DA trait, Tree tree, NodeRef child) {
+            double[] getChildTrait(TreeTrait.DA trait, TreeTrait.DA velocity, Tree tree, NodeRef child) {
                 return trait.getTrait(tree, child);
+            }
+
+            @Override
+            double getBranchLength(Tree tree, NodeRef child) {
+                NodeRef parent = tree.getParent(child);
+                return tree.getNodeHeight(parent) - tree.getNodeHeight(child);
             }
 
             @Override
@@ -280,19 +290,30 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
             }
         },
         NODE_ESTIMATES { // trait at nodes
+
             @Override
-            void initRootStatistic(Statistic lhs, NodeRef node) {
-                throw new RuntimeException("estimationScheme=nodeStatistic not implemented yet");
+            boolean initRootStatistic() {
+                return true;
             }
 
             @Override
-            double[] getParentTrait(TreeTrait.DA trait, Tree tree, NodeRef child) {
-                throw new RuntimeException("estimationScheme=nodeStatistic not implemented yet");
+            double[] getParentTrait(TreeTrait.DA trait, TreeTrait.DA velocity, Tree tree, NodeRef child) {
+                return trait.getTrait(tree, child);
             }
 
             @Override
-            double[] getChildTrait(TreeTrait.DA trait, Tree tree, NodeRef child) {
-                throw new RuntimeException("estimationScheme=nodeStatistic not implemented yet");
+            double[] getChildTrait(TreeTrait.DA trait, TreeTrait.DA velocity, Tree tree, NodeRef child) {
+                double[] childTrait = trait.getTrait(tree, child);
+                double[] veloc = velocity.getTrait(tree, child);
+                for (int i = 0; i < childTrait.length; i++) {
+                    childTrait[i] += veloc[i];
+                }
+                return childTrait;
+            }
+
+            @Override
+            double getBranchLength(Tree tree, NodeRef child) {
+                return 1.0;
             }
 
             @Override
@@ -301,9 +322,13 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
             }
         };
 
-        abstract void initRootStatistic(Statistic lhs, NodeRef node);
-        abstract double[] getParentTrait(TreeTrait.DA trait, Tree tree, NodeRef child);
-        abstract double[] getChildTrait(TreeTrait.DA trait, Tree tree, NodeRef child);
+        abstract boolean initRootStatistic();
+
+        abstract double[] getParentTrait(TreeTrait.DA trait, TreeTrait.DA velocity, Tree tree, NodeRef child);
+
+        abstract double[] getChildTrait(TreeTrait.DA trait, TreeTrait.DA velocity, Tree tree, NodeRef child);
+
+        abstract double getBranchLength(Tree tree, NodeRef child);
 
         EstimationScheme() {
         }
@@ -330,7 +355,53 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
             String name = xo.getAttribute(NAME, xo.getId());
             String traitName = xo.getStringAttribute(TRAIT_NAME);
 
-            TreeTrait.DA trait = (TreeTrait.DA) likelihood.getTreeTrait(traitName);
+            TreeTrait.DA trait;
+            TreeTrait.DA velocity;
+            if (!((ContinuousDataLikelihoodDelegate) likelihood.getDataLikelihoodDelegate()).getDiffusionProcessDelegate().isIntegratedProcess()) {
+                trait = (TreeTrait.DA) likelihood.getTreeTrait(traitName);
+                velocity = null;
+            } else {
+                trait = new TreeTrait.DA() {
+
+                    TreeTrait.DA fullTrait = (TreeTrait.DA) likelihood.getTreeTrait(traitName);
+                    int dimProcess = ((ContinuousDataLikelihoodDelegate) likelihood.getDataLikelihoodDelegate()).getDimProcess();
+
+                    public String getTraitName() {
+                        return fullTrait.getTraitName();
+                    }
+
+                    public Intent getIntent() {
+                        return fullTrait.getIntent();
+                    }
+
+                    public double[] getTrait(Tree t, NodeRef node) {
+                        double[] trait = fullTrait.getTrait(t, node);
+                        double[] position = new double[dimProcess];
+                        System.arraycopy(trait, dimProcess, position, 0, dimProcess);
+                        return position;
+                    }
+                };
+                velocity = new TreeTrait.DA() {
+
+                    TreeTrait.DA fullTrait = (TreeTrait.DA) likelihood.getTreeTrait(traitName);
+                    int dimProcess = ((ContinuousDataLikelihoodDelegate) likelihood.getDataLikelihoodDelegate()).getDimProcess();
+
+                    public String getTraitName() {
+                        return fullTrait.getTraitName();
+                    }
+
+                    public Intent getIntent() {
+                        return fullTrait.getIntent();
+                    }
+
+                    public double[] getTrait(Tree t, NodeRef node) {
+                        double[] trait = fullTrait.getTrait(t, node);
+                        double[] velocity = new double[dimProcess];
+                        System.arraycopy(trait, 0, velocity, 0, dimProcess);
+                        return velocity;
+                    }
+                };
+            }
             if (trait == null) {
                 throw new XMLParseException("Not trait `" + traitName + "' in likelihood `" + likelihood.getId() + "`");
             }
@@ -339,10 +410,18 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
             DisplacementScheme displacementScheme = parseDisplacementScheme(xo);
             ScalingScheme scalingScheme = parseScalingScheme(xo);
             EstimationScheme estimationScheme = parseEstimationScheme(xo);
+            if (!((ContinuousDataLikelihoodDelegate) likelihood.getDataLikelihoodDelegate()).getDiffusionProcessDelegate().isIntegratedProcess() && estimationScheme == EstimationScheme.NODE_ESTIMATES) {
+                throw new XMLParseException("Option `estimationScheme=\"nodeStatistic\"` can only be used for integrated processes.");
+            }
+            if (((ContinuousDataLikelihoodDelegate) likelihood.getDataLikelihoodDelegate()).getDiffusionProcessDelegate().isIntegratedProcess()) {
+                if (scalingScheme == ScalingScheme.RATE_INDEPENDENT) throw new XMLParseException("Option `scalingScheme=\"independent\"` cannot be used for integrated processes.");
+                if (weightingScheme == WeightingScheme.WEIGHTED) throw new XMLParseException("Option `weightingScheme=\"weighted\"` cannot be used for integrated processes.");
+            }
 
             return new TreeDataContinuousDiffusionStatistic(
                     name,
                     trait,
+                    velocity,
                     likelihood,
                     weightingScheme,
                     displacementScheme,

@@ -65,6 +65,13 @@
         </conjugateRootPrior>
     </traitDataLikelihood>
 
+    <traitDataContinuousDiffusionStatistic id="velocityStatistic" traitName="X" displacementScheme="greatCircleDistance" scalingScheme="dependent" weightingScheme="unweighted" estimationScheme="nodeStatistic">
+        <traitDataLikelihood idref="ibmLikelihood"/>
+    </traitDataContinuousDiffusionStatistic>
+    <traitDataContinuousDiffusionStatistic id="branchSpeedStatistic" traitName="X" displacementScheme="greatCircleDistance" scalingScheme="dependent" weightingScheme="unweighted" estimationScheme="branchStatistic">
+        <traitDataLikelihood idref="ibmLikelihood"/>
+    </traitDataContinuousDiffusionStatistic>
+
     <report>
         With BM likelihood =
         <traitDataLikelihood idref="ibmLikelihood"/>
@@ -114,6 +121,15 @@
             -23.57097
         </expected>
     </assertEqual>
+
+    <report>
+        Node velocity statistic =
+        <traitDataContinuousDiffusionStatistic idref="velocityStatistic"/>
+    </report>
+    <report>
+        Branch velocity statistic =
+        <traitDataContinuousDiffusionStatistic idref="branchSpeedStatistic"/>
+    </report>
 
     <!--
     ## R Code to reproduce and check the result

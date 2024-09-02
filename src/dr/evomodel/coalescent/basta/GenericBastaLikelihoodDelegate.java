@@ -408,6 +408,12 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         // TODO but a CPU-parallelized version over (ab) should have order (ab):offset:(ij) to avoid as
         // TODO much false (cache-line) sharing as possible; we will make our indexing more generic to
         // TODO try out different layouts ...
+
+        // TODO
+        // Notes to consider: gradient here is O(N^2 S^4) that is the _same_ as computing
+        // a numerical (central-difference) but requires more memory.  Maybe numerical is
+        // better here?   What about for the gradient wrt the O(N) intercoalescent times?
+
         for (int a = 0; a < stateCount; ++a) {
             for (int b = 0; b < stateCount; ++b) {
                 final double[] gradPartials = gradientStorage.partials[a][b];

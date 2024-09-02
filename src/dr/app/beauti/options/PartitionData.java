@@ -1,7 +1,8 @@
 /*
  * PartitionData.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,15 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.options;
 
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
+import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.TaxonList;
 
@@ -42,14 +46,26 @@ public class PartitionData extends AbstractPartitionData {
     private static final long serialVersionUID = 1642891822797102561L;
 
     private final Alignment alignment;
-    private Patterns patterns = null;
-    private int fromSite;
-    private int toSite;
-    private int every = 1;
+    private PatternList patterns;
+    private final int fromSite;
+    private final int toSite;
+    private final int every;
 
 
-    public PartitionData(BeautiOptions options, String name, String fileName, Alignment alignment) {
-        this(options, name, fileName, alignment, -1, -1, 1);
+    public PartitionData(BeautiOptions options, String name, String fileName, PatternList patterns) {
+        super(options, name, fileName);
+        this.alignment = null;
+        this.patterns = patterns;
+
+        this.fromSite = -1;
+        this.toSite = -1;
+        this.every = 1;
+
+        this.traits = null;
+
+        // This is too slow to be done at data loading.
+        // calculateMeanDistance(patterns);
+        calculateMeanDistance(null);
     }
 
     public PartitionData(BeautiOptions options, String name, String fileName, Alignment alignment, int fromSite, int toSite, int every) {
@@ -79,6 +95,11 @@ public class PartitionData extends AbstractPartitionData {
 
         calculateMeanDistance(null);
     }
+
+    public PartitionData(BeautiOptions options, String name, String fileName, Alignment alignment) {
+        this(options, name, fileName, alignment, -1, -1, 1);
+    }
+
 
     public Alignment getAlignment() {
         return alignment;
@@ -122,12 +143,20 @@ public class PartitionData extends AbstractPartitionData {
         }
     }
 
+    public void compressPatterns(SitePatterns.CompressionType compressionType) {
+        assert alignment != null;
+
+        patterns = new SitePatterns(alignment, alignment, compressionType);
+    }
+
+
     public int getPatternCount() {
-        if (patterns == null && alignment != null) {
-            patterns = new Patterns(alignment);
-        }
         if (alignment == null) {
             return traits.size();
+        }
+        if (patterns == null) {
+            return -1;
+//            patterns = new SitePatterns(alignment);
         }
         return patterns.getPatternCount();
     }

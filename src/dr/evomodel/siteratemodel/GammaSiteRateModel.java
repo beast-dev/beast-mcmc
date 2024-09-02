@@ -1,7 +1,8 @@
 /*
- * GammaSiteRateModelParser.java
+ * GammaSiteRateModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.siteratemodel;
@@ -41,24 +43,16 @@ import java.util.List;
  * GammaSiteModel - A SiteModel that has a gamma distributed rates across sites.
  *
  * @author Andrew Rambaut
- * @version $Id: GammaSiteModel.java,v 1.31 2005/09/26 14:27:38 rambaut Exp $
  */
 
 public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, Citable {
-
-    public static final DiscretizationType DEFAULT_DISCRETIZATION = DiscretizationType.EQUAL;
-
-    public enum DiscretizationType {
-        EQUAL,
-        QUADRATURE
-    };
 
     public GammaSiteRateModel(String name) {
         this(name,
                 null,
                 1.0,
                 null,
-                0, DiscretizationType.EQUAL,
+                0,
                 null);
     }
 
@@ -68,7 +62,6 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
                 1.0,
                 new Parameter.Default(alpha),
                 categoryCount,
-                DEFAULT_DISCRETIZATION,
                 null);
     }
 
@@ -78,7 +71,6 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
                 1.0,
                 new Parameter.Default(alpha),
                 categoryCount,
-                DEFAULT_DISCRETIZATION,
                 new Parameter.Default(pInvar));
     }
 
@@ -88,7 +80,6 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
                 1.0,
                 null,
                 -1,
-                null,
                 null);
     }
 
@@ -101,7 +92,6 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
             Parameter nuParameter,
             double muWeight,
             Parameter shapeParameter, int gammaCategoryCount,
-            DiscretizationType discretizationType,
             Parameter invarParameter) {
 
         super(name);
@@ -133,8 +123,6 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
             addVariable(invarParameter);
             invarParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
         }
-
-        this.discretizationType = discretizationType;
 
         categoryRates = new double[this.categoryCount];
         categoryProportions = new double[this.categoryCount];
@@ -249,11 +237,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
             double alpha = shapeParameter.getParameterValue(0);
             final int gammaCatCount = categoryCount - offset;
 
-            if (discretizationType == DiscretizationType.QUADRATURE) {
-                setQuadratureRates(categoryRates, categoryProportions, alpha, gammaCatCount, offset);
-            } else {
-                setEqualRates(categoryRates, categoryProportions, alpha, gammaCatCount, offset);
-            }
+            setEqualRates(categoryRates, categoryProportions, alpha, gammaCatCount, offset);
         } else if (offset > 0) {
             // just the invariant rate and variant rate
             categoryRates[offset] = 2.0;
@@ -343,8 +327,6 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
      */
     private Parameter invarParameter;
 
-    private DiscretizationType discretizationType;
-
     private boolean ratesKnown;
 
     private int categoryCount;
@@ -380,9 +362,6 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
         List<Citation> citations = new ArrayList<>();
         if (shapeParameter != null) {
             citations.add(CITATION_YANG94);
-            if (discretizationType == DiscretizationType.QUADRATURE) {
-                citations.add(CITATION_FELSENSTEIN01);
-            }
         }
         return citations;
     }
@@ -399,45 +378,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
             Citation.Status.PUBLISHED
     );
 
-    public final static Citation CITATION_FELSENSTEIN01 = new Citation(
-            new Author[]{
-                    new Author("J", "Felsenstein")
-            },
-            "Taking Variation of Evolutionary Rates Between Sites into Account in Inferring Phylogenies",
-            2001,
-            "J. Mol. Evol.",
-            53,
-            447, 455,
-            Citation.Status.PUBLISHED
-    );
-
     private SubstitutionModel substitutionModel;
-
-    private static GeneralisedGaussLaguerreQuadrature quadrature = null;
-
-    /**
-     * Set the rates and proportions using a Gauss-Laguerre Quadrature, as proposed by Felsenstein 2001, JME
-     *
-     * @param categoryRates
-     * @param categoryProportions
-     * @param alpha
-     * @param catCount
-     * @param offset
-     */
-    public static void setQuadratureRates(double[] categoryRates, double[] categoryProportions, double alpha, int catCount, int offset) {
-        if (quadrature == null) {
-            quadrature = new GeneralisedGaussLaguerreQuadrature(catCount);
-        }
-        quadrature.setAlpha(alpha-1);
-
-        double[] abscissae = quadrature.getAbscissae();
-        double[] coefficients = quadrature.getCoefficients();
-
-        for (int i = 0; i < catCount; i++) {
-            categoryRates[i + offset] = abscissae[i] / alpha;
-            categoryProportions[i + offset] = coefficients[i]/GammaFunction.gamma(alpha);
-        }
-    }
 
     /**
      * set the rates as equally spaced quantiles represented by the mean as proposed by Yang 1994
@@ -490,65 +431,5 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
             System.out.println(i + "\t"+ categoryRates[i] +"\t" + categoryProportions[i]);
         }
 
-        setQuadratureRates(categoryRates, categoryProportions, 1.0, catCount, 0);
-        System.out.println();
-        System.out.println("Quadrature, alpha = 1.0");
-        System.out.println("cat\trate\tproportion");
-        for (int i = 0; i < catCount; i++) {
-            System.out.println(i + "\t"+ categoryRates[i] +"\t" + categoryProportions[i]);
-        }
-
-        // Table 3 from Felsenstein 2001, JME
-        // Rates and probabilities chosen by the quadrature method for six rates and coefficient of
-        // variation of rates among sites 1 (a 4 1)
-        // Rate     Probability
-        // 0.264    0.278
-        // 0.898    0.494
-        // 1.938    0.203
-        // 3.459    0.025
-        // 5.617    0.00076
-        // 8.823    0.000003
-
-        // Output
-        // Quadrature, alpha = 1.0
-        // cat	rate	proportion
-        // 0	0.26383406085556455	0.27765014202987454
-        // 1	0.8981499048217043	0.49391058305035496
-        // 2	1.938320760238456	0.20300429674372977
-        // 3	3.459408283352361	0.02466882036918974
-        // 4	5.617305214541558	7.6304276746353E-4
-        // 5	8.822981776190357	3.1150393875275343E-6
-
-        setEqualRates(categoryRates, categoryProportions, 0.1, catCount, 0);
-        System.out.println();
-        System.out.println("Equal, alpha = 0.1");
-        System.out.println("cat\trate\tproportion");
-        for (int i = 0; i < catCount; i++) {
-            System.out.println(i + "\t"+ categoryRates[i] +"\t" + categoryProportions[i]);
-        }
-
-        setQuadratureRates(categoryRates, categoryProportions, 0.1, catCount, 0);
-        System.out.println();
-        System.out.println("Quadrature, alpha = 0.1");
-        System.out.println("cat\trate\tproportion");
-        for (int i = 0; i < catCount; i++) {
-            System.out.println(i + "\t"+ categoryRates[i] +"\t" + categoryProportions[i]);
-        }
-
-        setEqualRates(categoryRates, categoryProportions, 10.0, catCount, 0);
-        System.out.println();
-        System.out.println("Equal, alpha = 10.0");
-        System.out.println("cat\trate\tproportion");
-        for (int i = 0; i < catCount; i++) {
-            System.out.println(i + "\t"+ categoryRates[i] +"\t" + categoryProportions[i]);
-        }
-
-        setQuadratureRates(categoryRates, categoryProportions, 10.0, catCount, 0);
-        System.out.println();
-        System.out.println("Quadrature, alpha = 10.0");
-        System.out.println("cat\trate\tproportion");
-        for (int i = 0; i < catCount; i++) {
-            System.out.println(i + "\t"+ categoryRates[i] +"\t" + categoryProportions[i]);
-        }
     }
 }

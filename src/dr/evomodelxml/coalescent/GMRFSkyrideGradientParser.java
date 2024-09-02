@@ -1,7 +1,8 @@
 /*
- * GMRFSkyrideLikelihoodParser.java
+ * GMRFSkyrideGradientParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.coalescent;
@@ -110,10 +112,11 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
                     throw new IllegalArgumentException("Skygrid likelihood does not have intervals which map to "+
                             "the underlying tree. This is needed for gradient calculations");
                 }
-                if(intervalList instanceof TreeIntervals) {
-                    if (!((TreeIntervals) intervalList).getBuildIntervalNodeMapping()) {
-                        ((TreeIntervals) intervalList).setBuildIntervalNodeMapping(true);
-                    }
+                if (intervalList instanceof TreeIntervals) {
+                    assert ((TreeIntervals) intervalList).isBuildIntervalNodeMapping();
+//                    if (!((TreeIntervals) intervalList).getBuildIntervalNodeMapping()) {
+//                        ((TreeIntervals) intervalList).setBuildIntervalNodeMapping(true);
+//                    }
                 }
             }
         }else{

@@ -1,7 +1,8 @@
 /*
  * BeastParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,11 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beast;
 
-import beagle.BeagleInfo;
 import dr.util.Citation;
 import dr.util.Pair;
 import dr.util.Version;
@@ -46,7 +47,6 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Walter Xie
- * @version $Id: BeastParser.java,v 1.76 2006/08/30 16:01:59 rambaut Exp $
  */
 public class BeastParser extends XMLParser {
 
@@ -209,7 +209,8 @@ public class BeastParser extends XMLParser {
 
     @Override
     protected void executingRunnable() {
-        Logger.getLogger("dr.app.beast").info("\nCitations for this analysis: ");
+        //Logger.getLogger("dr.app.beast").info("\nCitations for this analysis: ");
+        Logger.getLogger("dr.util").info("\nCitations for this analysis: ");
 
         Map<String, Set<Pair<String, String>>> categoryMap = new LinkedHashMap<String, Set<Pair<String, String>>>();
 
@@ -226,14 +227,14 @@ public class BeastParser extends XMLParser {
         }
 
         for (String category : categoryMap.keySet()) {
-            Logger.getLogger("dr.app.beast").info("\n"+category.toUpperCase());
+            Logger.getLogger("dr.util").info("\n"+category.toUpperCase());
             Set<Pair<String, String>> pairSet = categoryMap.get(category);
 
             for (Pair<String, String>keyPair : pairSet) {
-                Logger.getLogger("dr.app.beast").info(keyPair.second + ":");
+                Logger.getLogger("dr.util").info(keyPair.second + ":");
 
                 for (Citation citation : getCitationStore().get(keyPair)) {
-                    Logger.getLogger("dr.app.beast").info("\t" + citation.toString());
+                    Logger.getLogger("dr.util").info("\t" + citation.toString());
                 }
             }
         }
@@ -241,7 +242,7 @@ public class BeastParser extends XMLParser {
         // clear the citation store so all the same citations don't get cited again
         getCitationStore().clear();
 
-        Logger.getLogger("dr.app.beast").info("\n");
+        Logger.getLogger("dr.util").info("\n");
 
     }
 

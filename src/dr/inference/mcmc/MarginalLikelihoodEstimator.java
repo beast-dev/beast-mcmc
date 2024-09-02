@@ -1,7 +1,8 @@
 /*
  * MarginalLikelihoodEstimator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.mcmc;
@@ -124,8 +126,8 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
                     long time = System.currentTimeMillis();
                     double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (currentState - startState));
                     MCLogger mcLogger = (MCLogger) logger;
-                    String timePerMillion = mcLogger.getTimePerMillion(currentState, hoursPerMillionStates);
-                    String units = mcLogger.getUnits(hoursPerMillionStates, timePerMillion);
+                    String timePerMillion = mcLogger.getTimePerMillion(hoursPerMillionStates);
+                    String units = mcLogger.getUnits(hoursPerMillionStates);
                     System.out.println("Time per million: " + timePerMillion + units);
                 }
             }

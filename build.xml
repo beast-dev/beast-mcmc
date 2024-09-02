@@ -1,7 +1,8 @@
 <!--
   ~ build.xml
   ~
-  ~ Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+  ~ Copyright © 2002-2024 the BEAST Development Team
+  ~ http://beast.community/about
   ~
   ~ This file is part of BEAST.
   ~ See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
   ~ License along with BEAST; if not, write to the
   ~ Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
   ~ Boston, MA  02110-1301  USA
+  ~
   -->
 
 <!-- Build BEAST MCMC. It is also used by Hudson BEAST_MCMC project. JUnit test is available for this build. -->
@@ -42,8 +44,8 @@
     <property name="main_class_BEAST" value="dr.app.beast.BeastMain"/>
     <property name="main_class_BEAUTI" value="dr.app.beauti.BeautiApp"/>
     <property name="main_class_TRACER" value="dr.app.tracer.application.TracerApp"/>
-    <property name="main_class_Annotator" value="dr.app.tools.TreeAnnotator"/>
-    <property name="main_class_LogCombiner" value="dr.app.tools.LogCombiner"/>
+    <property name="main_class_Annotator" value="dr.app.tools.treeannotator.TreeAnnotator"/>
+    <property name="main_class_LogCombiner" value="dr.app.tools.logcombiner.LogCombiner"/>
     <property name="report" value="${build}/junitreport"/>
 
     <path id="classpath">
@@ -199,7 +201,6 @@
             <zipgroupfileset dir="${lib}" includes="JRI.jar"/>
             <zipgroupfileset dir="${lib}" includes="colt.jar"/>
             <zipgroupfileset dir="${lib}" includes="beagle.jar"/>
-            <zipgroupfileset dir="${lib}" includes="beagle.jar"/>
             <zipgroupfileset dir="${lib}" includes="EJML-core-0.30.jar"/>
             <zipgroupfileset dir="${lib}" includes="lbfgs4j-0.2.1.jar"/>
             <zipgroupfileset dir="${lib}" includes="EJML-dense64-0.30.jar"/>
@@ -295,14 +296,21 @@
                 <include name="dr/app/beauti/util/**/*.class"/>
                 <include name="dr/app/beauti/options/**/*.class"/>
                 <include name="dr/app/gui/**/*.class"/>
+                <include name="dr/app/gui/**/*.png"/>
                 <include name="dr/app/tools/*.class"/>
                 <include name="dr/app/util/*.class"/>
                 <include name="dr/evolution/tree/**/*.class"/>
+                <include name="dr/evolution/datatype/*.class"/>
+                <include name="dr/evolution/sequence/*.class"/>
+                <include name="dr/evolution/alignment/*.class"/>
                 <include name="dr/evolution/io/*.class"/>
                 <include name="dr/evolution/util/*.class"/>
                 <include name="dr/math/**/*.class"/>
                 <include name="dr/stats/**/*.class"/>
                 <include name="dr/util/**/*.class"/>
+            </fileset>
+            <fileset dir="${src}">
+                <include name="dr/app/gui/**/*.png"/>
             </fileset>
         </jar>
     </target>
@@ -345,13 +353,12 @@
                 <path refid="classpath"/>
                 <path location="${build}"/>
             </classpath>
-
+            <jvmarg value="-Djava.library.path=${java.library.path}"/>
             <formatter type="xml"/>
 
             <batchtest fork="yes" todir="${report}">
                 <fileset dir="${src}">
                     <include name="test/dr/**/*Test.java"/>
-
 
                     <!-- Broken JUnits -->
                     <exclude name="test/dr/app/beagle/AncestralStateBeagleTreeLikelihoodTest.java"/> <!-- doesn't always fail-->
@@ -405,6 +412,7 @@
     <property name="version" value="1.9"/>
      -->
     <property name="version" value="10.5.0"/>
+    <property name="extra_release_tag" value="-beta4"/>
     <property name="jvm_version" value="1.8+"/>
 
     <property name="version_number" value="10.5.0"/>
@@ -429,7 +437,7 @@
     <property name="Packaging_dir" value="packaging_tools/windows"/>
 
     <property name="Mac_package_dir" value="${Mac_dir}/${BEAST_package_name} v${version}"/>
-    <property name="Linux_package_dir" value="${Linux_dir}/${BEAST_package_name_linux}v${version}"/>
+    <property name="Linux_package_dir" value="${Linux_dir}/${BEAST_package_name_linux}_v${version}"/>
     <property name="Windows_package_dir" value="${Windows_dir}/${BEAST_package_name} v${version}"/>
     <property name="Windows_launchers_package_dir" value="${Windows_launchers_dir}/${BEAST_package_name} v${version}"/>
 
@@ -515,7 +523,7 @@
                     productVersion="${version}.0"
                     txtProductVersion="${version}"/>	-->
 
-        <zip destfile="${release_dir}/${BEAST_package_name} v${version}.zip">
+        <zip destfile="${release_dir}/${BEAST_package_name} v${version}${extra_release_tag}.zip">
             <zipfileset dir="${Windows_package_dir}" prefix="${BEAST_package_name} v${version}"/>
         </zip>
 
@@ -636,6 +644,16 @@
         <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Linux_package_dir}"/>
         <copy file="${common_dir}/README.txt" todir="${Linux_package_dir}"/>
 
+	<tar destfile="${release_dir}/${BEAST_package_name_linux}_v${version}${extra_release_tag}.tgz" compression="gzip">
+			<tarfileset dir="${Linux_package_dir}" prefix="${BEAST_name}v${version}" filemode="755">
+				<include name="bin/**"/>
+			</tarfileset>
+			<tarfileset dir="${Linux_package_dir}" prefix="${BEAST_name}v${version}">
+				<exclude name="bin/**"/>
+				<include name="**/**"/>
+			</tarfileset>
+		</tar>
+
         <!-- Only works under Unix or NonStop Kernel (Tandem) -->
         <!-- <chmod dir="${Linux_package_dir}/bin" perm="755" includes="**/**"/>
 
@@ -643,7 +661,7 @@
 			<tarfileset dir="${Linux_package_dir}" prefix="${BEAST_name}v${version}"/>
 		</tar>-->
         <!-- [ANT Bug 550] the tar task change the mode of the executables files, have to tar manaully -->
-        <echo message="Have to tar manaully, because [ANT Bug 550] the tar task change the mode of the executables files."/>
+  <!--       <echo message="Have to tar manaully, because [ANT Bug 550] the tar task change the mode of the executables files."/> -->
         <!-- tar -cvzf BEASTv1.x.x.tgz BEASTv1.x.x/ -->
         <!-- cksum BEASTv1.x.x.tgz -->
         <!-- tar -xvzf BEASTv1.x.x.tgz -->
@@ -651,13 +669,14 @@
     </target>
 
     <!-- this will only work on Andrew's computer -->
+<!-- 
     <property name="AppleSignerApplication" value="Developer ID Application: Andrew Rambaut (9E4WXAQ6SE)" />
     <property name="AppleSignerInstaller" value="Developer ID Installer: Andrew Rambaut (9E4WXAQ6SE)" />
+ -->
 
-<!-- 
     <property name="AppleSignerApplication" value="Developer ID Application: Marc Suchard (LC992Z5R7E)"/>
     <property name="AppleSignerInstaller" value="Developer ID Application: Marc Suchard (LC992Z5R7E)"/>
- -->
+
     
     <!--
     	documentation on how to notarization for Apple: https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow    
@@ -785,7 +804,7 @@
 
         <jarbundler dir="${Mac_package_dir}"
                     name="${LogCombiner_name} v${version}"
-                    mainclass="dr.app.tools.LogCombiner"
+                    mainclass="dr.app.tools.logcombiner.LogCombiner"
                     stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/utility.icns"
@@ -814,7 +833,7 @@
 
         <jarbundler dir="${Mac_package_dir}"
                     name="${TreeAnnotator_name} v${version}"
-                    mainclass="dr.app.tools.TreeAnnotator"
+                    mainclass="dr.app.tools.treeannotator.TreeAnnotator"
                     stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/utility.icns"
@@ -851,14 +870,14 @@
             <arg value="${Mac_package_dir}"/>
             <arg value="-volname"/>
             <arg value="${BEAST_name} v${version}"/>
-            <arg value="${release_dir}/${BEAST_package_name} v${version}.dmg"/>
+            <arg value="${release_dir}/${BEAST_package_name} v${version}${extra_release_tag}.dmg"/>
         </exec>
 
         <exec executable="codesign">
             <arg value="-s"/>
             <arg value="${AppleSignerInstaller}"/>
             <arg value="-v"/>
-            <arg value="${release_dir}/${BEAST_package_name} v${version}.dmg"/>
+            <arg value="${release_dir}/${BEAST_package_name} v${version}${extra_release_tag}.dmg"/>
         </exec>
 
 

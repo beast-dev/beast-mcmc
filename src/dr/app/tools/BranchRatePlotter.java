@@ -1,7 +1,8 @@
 /*
  * BranchRatePlotter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.tools;
@@ -50,7 +52,6 @@ import java.util.StringTokenizer;
  *
  * @author Alexei Drummond
  *
- * @version $Id: BranchRatePlotter.java,v 1.6 2005/12/08 13:52:46 rambaut Exp $
  */
 public class BranchRatePlotter {
 
@@ -215,7 +216,7 @@ public class BranchRatePlotter {
             }
         }
 
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         writeTree(targetTree, targetTree.getRoot(), buffer, true, false);
         buffer.append(";\n");
         writeTree(targetTree, targetTree.getRoot(), buffer, false, true);
@@ -249,7 +250,7 @@ public class BranchRatePlotter {
         }
     }
 
-    private static void writeTree(Tree tree, NodeRef node, StringBuffer buffer, boolean rates, boolean labels) {
+    private static void writeTree(Tree tree, NodeRef node, StringBuilder buffer, boolean rates, boolean labels) {
 
         if (tree.isExternal(node)) {
 		    buffer.append(tree.getTaxonId(node.getNumber()));

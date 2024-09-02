@@ -1,7 +1,8 @@
 /*
  * MCLogger.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.loggers;
@@ -39,11 +41,10 @@ import java.util.stream.Collectors;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: MCLogger.java,v 1.18 2005/05/24 20:25:59 rambaut Exp $
  */
 public class MCLogger implements Logger {
 
-    private static final int PERFORMANCE_SAMPLE_SIZE = 50;
+    private static final int PERFORMANCE_SAMPLE_SIZE = 100;
     /**
      * Output performance stats in this log
      */
@@ -262,12 +263,12 @@ public class MCLogger implements Logger {
                 if (performanceReportStarted) {
                     double hoursPerMillionStates =
                             ((double)rollingTime.getLast() - rollingTime.getFirst()) /
-                            (3.6 * rollingState.getLast() - rollingState.getFirst());
+                            (3.6 * (rollingState.getLast() - rollingState.getFirst()));
 
 //                    double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (state - startState));
 
-                    String timePerMillion = getTimePerMillion(state, hoursPerMillionStates);
-                    String units = getUnits(hoursPerMillionStates, timePerMillion);
+                    String timePerMillion = getTimePerMillion(hoursPerMillionStates);
+                    String units = getUnits(hoursPerMillionStates);
                     values[columnCount + 1] = timePerMillion + units;
 
                 } else {
@@ -317,7 +318,7 @@ public class MCLogger implements Logger {
     private Deque<Long> rollingState = new LinkedList<>();
 
     private final NumberFormat formatter = NumberFormat.getNumberInstance();
-    public String getTimePerMillion(long state, double hoursPerMillionStates) {
+    public String getTimePerMillion(double hoursPerMillionStates) {
 
         String timePerMillion = formatter.format(hoursPerMillionStates);
         if (hoursPerMillionStates < 0.1) {
@@ -331,7 +332,7 @@ public class MCLogger implements Logger {
         return timePerMillion;
     }
 
-    public String getUnits(double hoursPerMillionStates, String timePerMillion) {
+    public String getUnits(double hoursPerMillionStates) {
         String units = " hours/million states";
         if (hoursPerMillionStates < 0.1) {
             double minutesPerMillionStates = hoursPerMillionStates * 60;

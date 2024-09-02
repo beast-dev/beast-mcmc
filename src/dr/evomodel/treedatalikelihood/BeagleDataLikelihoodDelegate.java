@@ -1,7 +1,8 @@
 /*
  * BeagleDataLikelihoodDelegate.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood;
@@ -36,11 +38,6 @@ import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.*;
-import dr.util.Citable;
-import dr.util.Citation;
-import dr.util.CommonCitations;
-
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -54,10 +51,9 @@ import static dr.evomodel.treedatalikelihood.SubstitutionModelDelegate.BUFFER_PO
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 
-public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
+public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate {
 
     private static final boolean COUNT_CALCULATIONS = true; // keep a cumulative total of number of computations
 
@@ -90,7 +86,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private static List<Integer> extraBufferOrder = null;
 
     // Default frequency for complete recomputation of scaling factors under the 'dynamic' scheme
-    private static final int RESCALE_FREQUENCY = 100;
+    private static final int RESCALE_FREQUENCY = 10000;
     private static final int RESCALE_TIMES = 1;
 
     // count the number of partial likelihood and matrix updates
@@ -910,7 +906,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                         if (rescalingMessageCount > 0) {
                             Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood (" + rescalingMessageCount + " messages not shown; " + getId() + ").");
                         } else {
-                            Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling... (" + getId() + ")");
+                            if (getId() != null) {
+                                Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling... (" + getId() + ")");
+                            } else {
+                                Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling...");
+                            }
                         }
                     }
                     rescalingMessageCount += 1;
@@ -1095,25 +1095,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     public long getTotalCalculationCount() {
         // Can only return one count at the moment so return the number of partials updated
         return totalPartialsUpdateCount;
-    }
-
-    // **************************************************************
-    // INSTANCE CITABLE
-    // **************************************************************
-
-    @Override
-    public Citation.Category getCategory() {
-        return Citation.Category.FRAMEWORK;
-    }
-
-    @Override
-    public String getDescription() {
-        return "BEAGLE likelihood calculation library";
-    }
-
-    @Override
-    public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.AYRES_2019_BEAGLE);
     }
 
     private void releaseBeagle() throws Throwable {

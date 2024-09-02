@@ -1,7 +1,8 @@
 /*
- * BeastVersion.java
+ * BeagleVersion.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beast;
@@ -29,8 +31,10 @@ import beagle.BeagleInfo;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
+import dr.util.CommonCitations;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -62,28 +66,7 @@ public class BeagleVersion implements Citable {
 
     @Override
     public List<Citation> getCitations() {
-        return Arrays.asList(CITATIONS);
+        return Collections.singletonList(CommonCitations.AYRES_2019_BEAGLE);
     }
-
-    public static Citation[] CITATIONS = new Citation[] {
-            new Citation(
-                    new Author[]{
-                            new Author("DL", "Ayres"),
-                            new Author("MP", "Cummings"),
-                            new Author("G", "Baele"),
-                            new Author("AE", "Darling"),
-                            new Author("PO", "Lewis"),
-                            new Author("DL", "Swofford"),
-                            new Author("JP", "Huelsenbeck"),
-                            new Author("P", "Lemey"),
-                            new Author("A", "Rambaut"),
-                            new Author("MA", "Suchard")
-                    },
-                    "BEAGLE 3: Improved performance, scaling, and usability for a high-performance computing library for statistical phylogenetics",
-                    2019,
-                    "Systematic Biology",
-                    68, 1052, 1061,
-                    "10.1093/sysbio/syz020")
-    };
 
 }

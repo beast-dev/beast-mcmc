@@ -1,7 +1,8 @@
 /*
  * PartitionTreeModelPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.treespanel;
@@ -30,7 +32,8 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.TreeHolder;
 import dr.app.beauti.types.StartingTreeType;
-import dr.app.beauti.types.TreePriorParameterizationType;
+import dr.app.beauti.types.TreeAsDataType;
+import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
@@ -41,44 +44,63 @@ import dr.evolution.tree.Tree;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.*;
+import java.awt.event.*;
 import java.io.*;
+import java.util.EnumSet;
 
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Walter Xie
- * @version $Id: PriorsPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
  */
 public class PartitionTreeModelPanel extends OptionsPanel {
 
     private static final long serialVersionUID = 8096349200725353543L;
 
+    private static final Insets FIELD_INSETS = new Insets(3,6,3,6);
+
     private final String NO_TREE = "no tree loaded";
 
-    private ButtonGroup startingTreeGroup = new ButtonGroup();
-    private JRadioButton randomTreeRadio = new JRadioButton("Random starting tree");
-    private JRadioButton upgmaTreeRadio = new JRadioButton("UPGMA starting tree");
-    private JRadioButton userTreeRadio = new JRadioButton("User-specified starting tree");
-    private ImportTreeAction importTreeAction = new ImportTreeAction();
-    private JButton importTreeButton = new JButton(importTreeAction);
-    private JLabel userTreeLabel = new JLabel("Select user-specified tree:");
-    private JComboBox userTreeCombo = new JComboBox();
 
-    private JLabel treeFormatLabel = new JLabel("Export format for tree:");
-    private JComboBox treeFormatCombo = new JComboBox(new String[]{"Newick", "XML"});
+    private final ButtonGroup startingTreeGroup = new ButtonGroup();
+    private final JRadioButton randomTreeRadio = new JRadioButton("Random starting tree");
+    private final JRadioButton upgmaTreeRadio = new JRadioButton("UPGMA starting tree");
+    private final JRadioButton userTreeRadio = new JRadioButton("User-specified starting tree");
+    private final JLabel userTreeLabel = new JLabel("User-specified tree:");
+    private final JComboBox userTreeCombo = new JComboBox();
+    private final JLabel userTreeInfo = new JLabel("<html>" +
+            "Use a tree imported using the 'Import Data' menu option.<br>" +
+            "Starting trees that are not rooted and strictly bifurcating (binary) will be randomly resolved.</html>");
 
-    private JLabel userTreeInfo = new JLabel("<html>" +
-            "Import user-specified starting trees from <b>NEXUS</b><br>" +
-            "format  data files using the 'Import Data' menu option.<br>" +
-            "Starting trees that are not rooted and strictly bifurcating <br>" +
-            " (binary) will be randomly resolved.</html>");
 
-    private RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY, "Init root height");
+    private JComboBox treeAsDataModelCombo = new JComboBox();
+
+    private final OptionsPanel thorneyBEASTPanel;
+    private final JLabel thorneyBEASTInfo = new JLabel("<html>" +
+            "Use the tree and branch lengths in substitutions per site as data, integrating over unresolved<br> " +
+            "polytomies and sampling branch lengths.<br><br>" +
+            "Citation: du Plessis L, McCrone JT, <i>et al.</i> (2021) Establishment and lineage dynamics of the SARS-CoV-2 epidemic<br>" +
+            "in the UK. <i>Science</i> <b>371</b>, 708-712. DOI:10.1126/science.abf2946</html>");
+
+    private final OptionsPanel empiricalTreePanel;
+    private final JLabel empiricalTreeLabel = new JLabel("Trees filename:");
+    private final JCheckBox empiricalExternalFileCheck = new JCheckBox("Read empirical trees from an external file:");
+    private final JTextArea empiricalFilenameField = new JTextArea("empirical.trees");
+
+    private final JLabel empiricalTreeInfo = new JLabel(
+            "<html>" +
+                    "Specify a file from which to load the empirical trees when BEAST is run. The trees should<br>" +
+                    "have the same taxa as the loaded tree partition.<br>" +
+                    "BEAST will look for the file in the same folder as the XML file or in the current working<br>" +
+                    "directory. The file can also be specified with a relative or absolute path." +
+                    "</html>");
+
+    private final RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY, "Init root height");
 
     private BeautiOptions options = null;
     private final BeautiFrame parent;
@@ -86,10 +108,10 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
     PartitionTreeModel partitionTreeModel;
 
-    public PartitionTreeModelPanel(final BeautiFrame parent, PartitionTreeModel parTreeModel, final BeautiOptions options) {
+    public PartitionTreeModelPanel(final BeautiFrame parent, PartitionTreeModel partitionTreeModel, final BeautiOptions options) {
         super(12, (OSType.isMac() ? 6 : 24));
 
-        this.partitionTreeModel = parTreeModel;
+        this.partitionTreeModel = partitionTreeModel;
         this.options = options;
         this.parent = parent;
 
@@ -105,52 +127,74 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         startingTreeGroup.add(upgmaTreeRadio);
         startingTreeGroup.add(userTreeRadio);
 
-        randomTreeRadio.setSelected(partitionTreeModel.getStartingTreeType() == StartingTreeType.RANDOM);
-        upgmaTreeRadio.setSelected(partitionTreeModel.getStartingTreeType() == StartingTreeType.UPGMA);
-        userTreeRadio.setSelected(partitionTreeModel.getStartingTreeType() == StartingTreeType.USER);
-        userTreeRadio.setEnabled(options.userTrees.size() > 0);
+        randomTreeRadio.setSelected(this.partitionTreeModel.getStartingTreeType() == StartingTreeType.RANDOM);
+        upgmaTreeRadio.setSelected(this.partitionTreeModel.getStartingTreeType() == StartingTreeType.UPGMA);
+        userTreeRadio.setSelected(this.partitionTreeModel.getStartingTreeType() == StartingTreeType.USER);
+        userTreeRadio.setEnabled(!options.userTrees.isEmpty());
 
-        boolean enabled = partitionTreeModel.getStartingTreeType() == StartingTreeType.USER;
+        boolean enabled = this.partitionTreeModel.getStartingTreeType() == StartingTreeType.USER;
         userTreeLabel.setEnabled(enabled);
         userTreeCombo.setEnabled(enabled);
-        treeFormatLabel.setEnabled(enabled);
-        treeFormatCombo.setEnabled(enabled);
         userTreeInfo.setEnabled(enabled);
 
-        PanelUtils.setupComponent(treeFormatCombo);
+//        for (TreeAsDataType treeAsDataType : TreeAsDataType.values()) {
+//            treeAsDataModelCombo.addItem(treeAsDataType);
+//        }
+        treeAsDataModelCombo.addItem(TreeAsDataType.EMPRICAL_TREES);
+        PanelUtils.setupComponent(treeAsDataModelCombo);
+        treeAsDataModelCombo.addItemListener(ev -> {
+            this.partitionTreeModel.setTreeAsDataType((TreeAsDataType)treeAsDataModelCombo.getSelectedItem());
+            setupPanel();
+        });
 
-        ActionListener listener = new ActionListener() {
-            public void actionPerformed(ActionEvent actionEvent) {
-                if (randomTreeRadio.isSelected()) {
-                    partitionTreeModel.setStartingTreeType(StartingTreeType.RANDOM);
-                } else if (upgmaTreeRadio.isSelected()) {
-                    partitionTreeModel.setStartingTreeType(StartingTreeType.UPGMA);
-                } else if (userTreeRadio.isSelected()) {
-                    partitionTreeModel.setStartingTreeType(StartingTreeType.USER);
-                }
-                boolean enabled = partitionTreeModel.getStartingTreeType() == StartingTreeType.USER;
-                userTreeLabel.setEnabled(enabled);
-                userTreeCombo.setEnabled(enabled);
-                treeFormatLabel.setEnabled(enabled);
-                treeFormatCombo.setEnabled(enabled);
-                userTreeInfo.setEnabled(enabled);
+        ActionListener listener = actionEvent -> {
+            if (randomTreeRadio.isSelected()) {
+                this.partitionTreeModel.setStartingTreeType(StartingTreeType.RANDOM);
+            } else if (upgmaTreeRadio.isSelected()) {
+                this.partitionTreeModel.setStartingTreeType(StartingTreeType.UPGMA);
+            } else if (userTreeRadio.isSelected()) {
+                this.partitionTreeModel.setStartingTreeType(StartingTreeType.USER);
             }
+            boolean enabled1 = this.partitionTreeModel.getStartingTreeType() == StartingTreeType.USER;
+            userTreeLabel.setEnabled(enabled1);
+            userTreeCombo.setEnabled(enabled1);
+            userTreeInfo.setEnabled(enabled1);
+
+            parent.setDirty();
         };
         randomTreeRadio.addActionListener(listener);
         upgmaTreeRadio.addActionListener(listener);
         userTreeRadio.addActionListener(listener);
 
-        treeFormatCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent itemEvent) {
-                partitionTreeModel.setNewick(treeFormatCombo.getSelectedItem().equals("Newick"));
-            }
-        });
-
         PanelUtils.setupComponent(userTreeCombo);
 
-        userTreeCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                setUserSpecifiedStartingTree();
+        userTreeCombo.addItemListener(ev -> setUserSpecifiedStartingTree());
+
+        thorneyBEASTPanel = new OptionsPanel();
+        thorneyBEASTPanel.setOpaque(false);
+
+        PanelUtils.setupComponent(empiricalExternalFileCheck);
+        empiricalExternalFileCheck.addActionListener(ev -> {
+            empiricalTreeInfo.setEnabled(empiricalExternalFileCheck.isSelected());
+            empiricalTreeLabel.setEnabled(empiricalExternalFileCheck.isSelected());
+            empiricalFilenameField.setEnabled(empiricalExternalFileCheck.isSelected());
+            this.partitionTreeModel.setUsingExternalEmpiricalTreeFile(empiricalExternalFileCheck.isSelected());
+            parent.setDirty();
+        });
+
+        empiricalFilenameField.setBorder(new EmptyBorder(FIELD_INSETS));
+        empiricalTreePanel = new OptionsPanel();
+        empiricalTreePanel.setOpaque(false);
+        empiricalFilenameField.addKeyListener(new java.awt.event.KeyListener() {
+            public void keyTyped(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
+
+            public void keyReleased(KeyEvent e) {
+                PartitionTreeModelPanel.this.partitionTreeModel.setEmpiricalTreesFilename(empiricalFilenameField.getText().trim());
+                parent.setDirty();
             }
         });
 
@@ -160,9 +204,9 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
     private void setUserSpecifiedStartingTree() {
         if (userTreeCombo.getSelectedItem() != null && (!userTreeCombo.getSelectedItem().toString().equalsIgnoreCase(NO_TREE))) {
-            Tree seleTree = getSelectedUserTree();
-            if (seleTree != null) {
-                partitionTreeModel.setUserStartingTree(seleTree);
+            Tree selectedTree = getSelectedUserTree();
+            if (selectedTree != null) {
+                partitionTreeModel.setUserStartingTree(selectedTree);
             } else {
                 JOptionPane.showMessageDialog(parent, "The selected user-specified starting tree " +
                                 "is not fully bifurcating.\nBEAST requires rooted, bifurcating (binary) trees.",
@@ -172,15 +216,6 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                 userTreeCombo.setSelectedItem(NO_TREE);
                 partitionTreeModel.setUserStartingTree(null);
             }
-//            else {
-//                JOptionPane.showMessageDialog(parent, "The selected user-specified starting tree " +
-//                        "is not fully bifurcating.\nBEAST requires rooted, bifurcating (binary) trees.",
-//                        "Illegal user-specified starting tree",
-//                        JOptionPane.ERROR_MESSAGE);
-//
-//                userTreeCombo.setSelectedItem(NO_TREE);
-//                partitionTreeModel.setUserStartingTree(null);
-//            }
         }
     }
 
@@ -195,7 +230,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
             addComponents(userTreeLabel, userTreeCombo);
             userTreeCombo.removeAllItems();
-            if (options.userTrees.size() < 1) {
+            if (options.userTrees.isEmpty()) {
                 userTreeCombo.addItem(NO_TREE);
             } else {
                 Object selectedItem = userTreeCombo.getSelectedItem();
@@ -209,23 +244,45 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                 }
             }
 
-            addComponents(treeFormatLabel, treeFormatCombo);
             addComponent(userTreeInfo);
-            addComponent(importTreeButton);
 
         } else {
-            JTextArea citationText = new JTextArea(1, 40);
-            citationText.setLineWrap(true);
-            citationText.setWrapStyleWord(true);
-            citationText.setEditable(false);
-            citationText.setFont(this.getFont());
-            citationText.setOpaque(false);
 
-            addComponentWithLabel("Tree as data model:", new JLabel("ThorneyBEAST"));
-            String citation = //citationCoalescent +  "\n" +
-                    "McCrone et al.";
-            addComponentWithLabel("Citation:", citationText);
-            citationText.setText(citation);
+            addComponentWithLabel("Tree as data model:", treeAsDataModelCombo);
+
+            thorneyBEASTPanel.removeAll();
+            thorneyBEASTPanel.addComponent(thorneyBEASTInfo);
+
+            empiricalTreePanel.removeAll();
+            empiricalTreePanel.addComponent(new JLabel( "Use the loaded trees as an empirical set to sample over."));
+            TreeHolder trees = partitionTreeModel.getTreePartitionData().getTrees();
+            empiricalTreePanel.addComponent(new JLabel(""));
+            empiricalTreePanel.addComponent(new JLabel("<html>" +
+                    "This tree partition, " + partitionTreeModel.getName() + ", is a set of " + trees.getTreeCount() + " trees.<br>" +
+                    "<br>" +
+                    (trees.getTrees().size() == 1 ? "Only one tree loaded - specify file to read full tree set from:": "") +
+                    "</html>"));
+
+            empiricalTreePanel.addComponent(empiricalExternalFileCheck);
+            empiricalExternalFileCheck.setSelected(trees.getTrees().size() == 1);
+
+            empiricalTreeInfo.setEnabled(empiricalExternalFileCheck.isSelected());
+            empiricalTreeLabel.setEnabled(empiricalExternalFileCheck.isSelected());
+            empiricalFilenameField.setEnabled(empiricalExternalFileCheck.isSelected());
+
+            empiricalTreePanel.addComponent(empiricalTreeInfo);
+            empiricalTreePanel.addComponents(empiricalTreeLabel, empiricalFilenameField);
+            empiricalFilenameField.setColumns(32);
+            empiricalFilenameField.setEditable(true);
+
+            switch ((TreeAsDataType)treeAsDataModelCombo.getSelectedItem()) {
+                case EMPRICAL_TREES:
+                    addSpanningComponent(empiricalTreePanel);
+                    break;
+                case THORNEY_BEAST:
+                    addSpanningComponent(thorneyBEASTPanel);
+                    break;
+            }
         }
 
         validate();
@@ -241,10 +298,13 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         settingOptions = true;
         initRootHeightField.setValue(partitionTreeModel.getInitialRootHeight());
 
-        userTreeRadio.setEnabled(options.userTrees.size() > 0);
+        userTreeRadio.setEnabled(!options.userTrees.isEmpty());
 
         settingOptions = false;
 
+        treeAsDataModelCombo.setSelectedItem(partitionTreeModel.getTreeAsDataType());
+        empiricalExternalFileCheck.setSelected(partitionTreeModel.isUsingExternalEmpiricalTreeFile());
+        empiricalFilenameField.setText(partitionTreeModel.getEmpiricalTreesFilename());
     }
 
     public void getOptions(BeautiOptions options) {
@@ -262,76 +322,6 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private Tree getSelectedUserTree() {
         TreeHolder treeHolder = (TreeHolder) userTreeCombo.getSelectedItem();
         return treeHolder.getTrees().get(0);
-    }
-
-    private class ImportTreeAction extends AbstractAction {
-        public ImportTreeAction() {
-            super("Import additional tree(s) from file ...");
-            setToolTipText("Import newick-formatted trees from a file. These trees can be used as a starting tree.");
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            doImportTrees();
-        }
-    }
-
-    private final boolean doImportTrees() {
-        File[] files = parent.selectImportFiles("Import Trees File...", false, new FileNameExtensionFilter[]{
-                new FileNameExtensionFilter("Nexus files or text files containing newick trees", "txt", "nex", "nexus", "nwk")});
-
-        BEAUTiImporter beautiImporter = new BEAUTiImporter(parent, options);
-
-        if (files != null && files.length != 0) {
-
-            File file = files[0];
-            int nTreesBefore = options.userTrees.size();
-
-            try {
-
-                String line = beautiImporter.findFirstLine(file);
-
-                if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
-                    // is a NEXUS file
-                    beautiImporter.importNexusFile(file, true);
-                } else {
-                    beautiImporter.importNewickFile(files[0]);
-                }
-
-            } catch (FileNotFoundException fnfe) {
-                JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
-                        "Unable to open file",
-                        JOptionPane.ERROR_MESSAGE);
-                return false;
-            } catch (IOException ioe) {
-                JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
-                        "Unable to read file",
-                        JOptionPane.ERROR_MESSAGE);
-                return false;
-            } catch (Exception ex) {
-                ex.printStackTrace(System.err);
-                JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
-                        "Error reading file",
-                        JOptionPane.ERROR_MESSAGE);
-                ex.printStackTrace();
-                return false;
-            }
-
-            int nTreesAfter = options.userTrees.size();
-            if (nTreesAfter == nTreesBefore) {
-                JOptionPane.showMessageDialog(this,
-                        "Did not find any trees in file '" + file.getName() + "'",
-                        "No trees found",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        } else {
-            return false;
-        }
-
-        setupPanel();
-        setOptions();
-
-        return true;
     }
 
 }

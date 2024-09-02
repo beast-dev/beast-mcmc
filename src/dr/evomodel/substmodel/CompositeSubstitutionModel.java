@@ -44,26 +44,30 @@ public class CompositeSubstitutionModel extends ComplexSubstitutionModel {
      * @param name
      * @param dataType
      * @param substitutionModel1
+     * @param weightParameter1 the weight (rate) of the first substitution model
      * @param substitutionModel2
-     * @param weightParameter the weight of the second substitution model relative to the first
+     * @param weightParameter2 the weight (rate) of the second substitution model
      */
     public CompositeSubstitutionModel(String name, DataType dataType,
                                       GeneralSubstitutionModel substitutionModel1,
+                                      Parameter weightParameter1,
                                       GeneralSubstitutionModel substitutionModel2,
-                                      Parameter weightParameter
+                                      Parameter weightParameter2
     ) {
         super(name, dataType, substitutionModel1.getFrequencyModel(), null);
 
         this.substitutionModel1 = substitutionModel1;
         int rateCount1 = substitutionModel1.rateCount;
         this.substitutionModel2 = substitutionModel2;
+        this.weightParameter1 = weightParameter1;
         int rateCount2 = substitutionModel2.rateCount;
-        this.weightParameter = weightParameter;
+        this.weightParameter2 = weightParameter2;
 
         this.rateCount = Math.max(rateCount1, rateCount2);
         addModel(substitutionModel1);
         addModel(substitutionModel2);
-        addVariable(weightParameter);
+        addVariable(weightParameter1);
+        addVariable(weightParameter2);
 
         setStateCount(dataType.getStateCount());
     }
@@ -88,34 +92,35 @@ public class CompositeSubstitutionModel extends ComplexSubstitutionModel {
 
     @Override
     protected void setupRelativeRates(double[] rates) {
-        double weight = weightParameter.getParameterValue(0);
+        double weight1 = weightParameter1.getParameterValue(0);
+        double weight2 = weightParameter2.getParameterValue(0);
         double[] rates1 = substitutionModel1.getRelativeRates();
         double[] rates2 = substitutionModel2.getRelativeRates();
         if (substitutionModel1.rateCount == substitutionModel2.rateCount) {
             // both 6 or 12 rate
             for (int i = 0; i < rateCount; i++) {
-                rates[i] = rates1[i] + (rates2[i] * weight);
+                rates[i] = (rates1[i] * weight1) + (rates2[i] * weight2);
             }
         } else if (substitutionModel1.rateCount < substitutionModel2.rateCount) {
             // substitutionModel1 is 6 rate, substitutionModel2 12 rate
             int k = 0;
             for (int i = 0; i < substitutionModel1.rateCount; i++) {
-                rates[k] = rates1[i] + (rates2[k] * weight);
+                rates[k] = (rates1[i] * weight1) + (rates2[k] * weight2);
                 k++;
             }
             for (int i = 0; i < substitutionModel1.rateCount; i++) {
-                rates[k] = rates1[i] + (rates2[k] * weight);
+                rates[k] = (rates1[i] * weight1) + (rates2[k] * weight2);
                 k++;
             }
         } else {
             // substitutionModel1 is 12 rate, substitutionModel2 is 6 rate
             int k = 0;
             for (int i = 0; i < substitutionModel2.rateCount; i++) {
-                rates[k] = rates1[k] + (rates2[i] * weight);
+                rates[k] = (rates1[k] * weight1) + (rates2[i] * weight2);
                 k++;
             }
             for (int i = 0; i < substitutionModel2.rateCount; i++) {
-                rates[k] = rates1[k] + (rates2[i] * weight);
+                rates[k] = (rates1[k] * weight1) + (rates2[i] * weight2);
                 k++;
             }
         }
@@ -132,7 +137,7 @@ public class CompositeSubstitutionModel extends ComplexSubstitutionModel {
         }
 
         if (k == rates.length) {
-            // symmetrical matrix so start the rates again
+            // this is a symmetrical matrix (6 rates) so restart the rate indexing
             k = 0;
         }
         // Copy lower triangle in column-order form (transposed)
@@ -177,6 +182,7 @@ public class CompositeSubstitutionModel extends ComplexSubstitutionModel {
     private final GeneralSubstitutionModel substitutionModel2;
 
 
-    protected final Parameter weightParameter;
+    protected final Parameter weightParameter1;
+    protected final Parameter weightParameter2;
     private boolean doNormalization = true;
 }

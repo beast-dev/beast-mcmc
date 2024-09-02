@@ -252,6 +252,11 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         leftMatrixOffset *= stateCount * stateCount;
         leftAccOffset *= stateCount;
 
+        // TODO
+        // Notes to consider: gradient here is O(N^2 S^4) that is the _same_ as computing
+        // a numerical (central-difference) but requires more memory.  Maybe numerical is
+        // better here?   What about for the gradient wrt the O(N) intercoalescent times?
+
         for (int a = 0; a < stateCount; ++a) {
             for (int b = 0; b < stateCount; ++b) {
                 for (int i = 0; i < stateCount; ++i) {

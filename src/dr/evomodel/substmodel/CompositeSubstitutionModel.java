@@ -28,6 +28,7 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
+import dr.inference.model.DuplicatedParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;

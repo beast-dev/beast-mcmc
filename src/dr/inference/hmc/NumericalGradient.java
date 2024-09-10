@@ -2,12 +2,13 @@ package dr.inference.hmc;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.math.MachineAccuracy;
+import dr.math.matrixAlgebra.WrappedVector;
+import dr.xml.Reportable;
 
 /**
  * @author Andy Magee
  */
-    public class NumericalGradient implements GradientWrtParameterProvider {
+    public class NumericalGradient implements GradientWrtParameterProvider, Reportable {
 
     public NumericalGradient(Likelihood likelihood, Parameter parameter) {
         this.parameter = parameter;
@@ -38,6 +39,15 @@ import dr.math.MachineAccuracy;
                 0.0).getNumericalGradient();
     }
 
-    private Likelihood likelihood = null;
-    private Parameter parameter = null;
+    private final Likelihood likelihood;
+    private final Parameter parameter;
+
+    @Override
+    public String getReport() {
+        long start = System.currentTimeMillis();
+        double[] result = getGradientLogDensity();
+        long duration = System.currentTimeMillis() - start;
+
+        return "Numeric gradient = " + new WrappedVector.Raw(result) + " (in " + duration + "ms)";
+    }
 }

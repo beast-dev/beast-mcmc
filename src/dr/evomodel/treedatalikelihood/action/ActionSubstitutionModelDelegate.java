@@ -3,11 +3,11 @@ package dr.evomodel.treedatalikelihood.action;
 import beagle.Beagle;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.substmodel.ActionEnabledSubstitution;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.EvolutionaryProcessDelegate;
 import dr.evomodel.treedatalikelihood.PreOrderSettings;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDelegate {
@@ -144,35 +144,15 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
     @Override
     public void updateSubstitutionModels(Beagle beagle, boolean flipBuffers) {
 
-        double[] tmpQ = new double[stateCount * stateCount];
         for (int i = 0; i < getSubstitutionModelCount(); i++) {
-            SubstitutionModel substitutionModel = getSubstitutionModel(i);
-            substitutionModel.getInfinitesimalMatrix(tmpQ);
+            ActionEnabledSubstitution substitutionModel = (ActionEnabledSubstitution) getSubstitutionModel(i);
 
-            ArrayList rowIndices = new ArrayList<Integer>();
-            ArrayList colIndices = new ArrayList<Integer>();
-            ArrayList values = new ArrayList<Double>();
-            int nonZeros = 0;
-            for (int row = 0; row < stateCount; row++) {
-                for (int col = 0; col < stateCount; col++) {
-                    if (tmpQ[row * stateCount + col] != 0) {
-                        rowIndices.add(row);
-                        colIndices.add(col);
-                        values.add(tmpQ[row * stateCount + col]);
-                        nonZeros++;
-                    }
-                }
-            }
-            int[] inRowIndices = new int[rowIndices.size()];
-            int[] inColIndices = new int[colIndices.size()];
-            double[] inValues = new double[values.size()];
-            for (int j = 0; j < nonZeros; j++) {
-                inRowIndices[j] = (int) rowIndices.get(j);
-                inColIndices[j] = (int) colIndices.get(j);
-                inValues[j] = (double) values.get(j);
-            }
+            int[] rowIndices = new int[substitutionModel.getNonZeroEntryCount()];
+            int[] colIndices = new int[substitutionModel.getNonZeroEntryCount()];
+            double[] values = new double[substitutionModel.getNonZeroEntryCount()];
 
-            beagle.setSparseMatrix(i, inRowIndices, inColIndices, inValues, nonZeros);
+            substitutionModel.getNonZeroEntries(rowIndices, colIndices, values);
+            beagle.setSparseMatrix(i, rowIndices, colIndices, values, substitutionModel.getNonZeroEntryCount());
         }
 
     }

@@ -40,10 +40,7 @@ import dr.inference.model.Variable;
 import dr.util.ComparableDouble;
 import dr.util.HeapSort;
 
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Smart intervals that don't need a full recalculation. 
@@ -310,7 +307,11 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
 
             NodeRef[] nodes = new NodeRef[tree.getNodeCount()];
             System.arraycopy(tree.getNodes(), 0, nodes, 0, tree.getNodeCount());
-            Arrays.parallelSort(nodes, (a, b) -> Double.compare(tree.getNodeHeight(a), tree.getNodeHeight(b)));
+            Arrays.parallelSort(nodes, (a, b) -> {
+                if (tree.getNodeHeight(a) == tree.getNodeHeight(b)) return Boolean.compare(tree.isRoot(a), tree.isRoot(b));
+                else
+                    return Double.compare(tree.getNodeHeight(a), tree.getNodeHeight(b));
+            });
 
             intervalCount = nodes.length - 1;
 
@@ -384,6 +385,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
                         NodeRef node = ((TreeChangedEvent) object).getNode();
                         updatedNodes.add(node.getNumber());
                         intervalsKnown = false;
+                        onlyUpdateTimes = false;
                     }
 
                 } else if (treeChangedEvent.isTreeChanged()) {

@@ -83,7 +83,8 @@ public class BranchSubstitutionParameterGradient
                                                DifferentiableBranchRates branchRateModel,
                                                Double tolerance,
                                                boolean useHessian,
-                                               int dim) {
+                                               int dim,
+                                               DifferentialMassProvider.Mode mode) {
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.branchParameter = branchParameter;
@@ -97,8 +98,6 @@ public class BranchSubstitutionParameterGradient
         if (test == null) {
 
             BranchSpecificSubstitutionParameterBranchModel branchModel = (BranchSpecificSubstitutionParameterBranchModel) likelihoodDelegate.getBranchModel();
-
-            DifferentialMassProvider.Mode mode = DifferentialMassProvider.Mode.EXACT;
 
             List<DifferentialMassProvider> differentialMassProviderList = new ArrayList<>();
             for (int i = 0; i < tree.getNodeCount(); ++i) {

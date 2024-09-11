@@ -1,0 +1,121 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+	<parameter id="data" value="3 7 10"/>
+
+	<randomField id="GpBasisApproximation">
+		<distribution>
+			<GaussianProcessBasisApproximation dim="3" knots = "2" times="1 2 3" degree="1.5">
+				<boundaryFactor>
+					<parameter id="boundaryFactor" value="1.8"/>
+				</boundaryFactor>
+				<marginalVariance>
+					<parameter id="marginalVariance" value="1"/>
+				</marginalVariance>
+				<lengthScale>
+					<parameter id="lengthScale" value="0.3"/>
+				</lengthScale>
+				<coefficient>
+					<parameter id="coefficient" value="1 1"/>
+				</coefficient>
+				<precision>
+					<parameter id="noise" value="1"/>
+				</precision>
+			</GaussianProcessBasisApproximation>
+		</distribution>
+		<data>
+			<parameter idref="data"/>
+		</data>
+	</randomField>
+
+
+
+	<report>
+		<randomField idref="GpBasisApproximation"/>
+	</report>
+
+	<normalPrior id="coefficientPrior" mean="0" stdev="1">
+		<parameter idref="coefficient"/>
+	</normalPrior>
+
+	<randomFieldGradient id="coefficientGradient">
+		<randomField idref="GpBasisApproximation"/>
+		<parameter idref="coefficient"/>
+	</randomFieldGradient>
+
+	<report>
+		<randomFieldGradient idref="coefficientGradient"/>
+	</report>
+
+	<gradient id="coefficientPriorGradient">
+		<normalPrior idref="coefficientPrior"/>
+		<parameter idref="coefficient"/>
+	</gradient>
+
+	<report>
+		<gradient idref="coefficientPriorGradient"/>
+	</report>
+
+	<jointGradient id="jointCoefficientGradient">
+		<randomFieldGradient idref="coefficientGradient"/>
+		<gradient idref="coefficientPriorGradient"/>
+	</jointGradient>
+
+	<report>
+		<jointGradient idref="jointCoefficientGradient"/>
+	</report>
+
+	<!--
+        <randomField id="gmrfProper">
+            <distribution>
+                <GaussianMarkovRandomField dim="4" matchPseudoDeterminant="true">
+                    <precision>
+                        <parameter id="precisionProper" value="1.5"/>
+                    </precision>
+                    <mean>
+                        <parameter id="meanProper" value="0.0"/>
+                    </mean>
+                    <lambda>
+                        <parameter id="lambda" value="0.9"/>
+                    </lambda>
+                </GaussianMarkovRandomField>
+            </distribution>
+            <data>
+                <parameter idref="data"/>
+            </data>
+        </randomField>
+
+
+        <report>
+            <randomField idref="gmrfProper"/>
+        </report>
+
+        <randomFieldGradient id="gradientProper">
+            <randomField idref="gmrfProper"/>
+            <parameter idref="data"/>
+        </randomFieldGradient>
+
+        <report>
+            <randomFieldGradient idref="gradientProper"/>
+        </report>
+
+        <randomFieldGradient id="gradientPrecisionProper">
+            <randomField idref="gmrfProper"/>
+            <parameter idref="precisionProper"/>
+        </randomFieldGradient>
+
+        <report>
+            <randomFieldGradient idref="gradientPrecisionProper"/>
+        </report>
+
+        <randomFieldGradient id="gradientMeanProper">
+            <randomField idref="gmrfProper"/>
+            <parameter idref="meanProper"/>
+        </randomFieldGradient>
+
+        <report>
+            <randomFieldGradient idref="gradientMeanProper"/>
+        </report>
+    -->
+
+</beast>

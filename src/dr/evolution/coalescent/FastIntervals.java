@@ -229,10 +229,12 @@ public class FastIntervals implements MutableIntervalList {
         int i = 0;
         int lineages = 1;
 
+        eventTimes[0] = sampleTimes[0];
+
         while (s < sampleCount || c < coalescentCount) {
             if (s < sampleCount && sampleTimes[s] <= coalescentTimes[c]) {
                 intervals[i] = sampleTimes[s] - lastTime;
-                eventTimes[i] = sampleTimes[s];
+                eventTimes[i + 1] = sampleTimes[s];
                 intervalTypes[i] = IntervalType.SAMPLE;
                 lineageCounts[i] = lineages;
                 lastTime = sampleTimes[s];
@@ -240,7 +242,7 @@ public class FastIntervals implements MutableIntervalList {
                 s++;
             } else {
                 intervals[i] = coalescentTimes[c] - lastTime;
-                eventTimes[i] = coalescentTimes[c];
+                eventTimes[i + 1] = coalescentTimes[c];
                 intervalTypes[i] = IntervalType.COALESCENT;
                 lineageCounts[i] = lineages;
                 lastTime = coalescentTimes[c];

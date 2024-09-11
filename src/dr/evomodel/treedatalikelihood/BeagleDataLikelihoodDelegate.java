@@ -38,6 +38,11 @@ import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.*;
+import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.CommonCitations;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -53,7 +58,8 @@ import static dr.evomodel.treedatalikelihood.SubstitutionModelDelegate.BUFFER_PO
  * @author Marc Suchard
  */
 
-public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate {
+public class BeagleDataLikelihoodDelegate extends AbstractModel implements
+        DataLikelihoodDelegate, TipStateAccessor, Citable {
 
     private static final boolean COUNT_CALCULATIONS = true; // keep a cumulative total of number of computations
 
@@ -1097,6 +1103,25 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         return totalPartialsUpdateCount;
     }
 
+    // **************************************************************
+    // INSTANCE CITABLE
+    // **************************************************************
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.FRAMEWORK;
+    }
+
+    @Override
+    public String getDescription() {
+        return "BEAGLE likelihood calculation library";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CommonCitations.AYRES_2019_BEAGLE);
+    }
+
     private void releaseBeagle() throws Throwable {
         if (beagle != null && releaseSingleton) {
             beagle.finalize();
@@ -1264,4 +1289,24 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     private static boolean USE_CACHED_EXCEPTION = true;
     private LikelihoodUnderflowException cachedException = null; // new LikelihoodUnderflowException();
+
+    @Override
+    public void setTipStates(int tipNum, int[] states) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public void getTipStates(int tipNum, int[] states) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public int getPatternCount() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public int getTipCount() {
+        return tipCount;
+    }
 }

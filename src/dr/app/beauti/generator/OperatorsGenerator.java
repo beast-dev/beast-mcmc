@@ -1,7 +1,8 @@
 /*
  * OperatorsGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
@@ -31,7 +33,9 @@ import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
+import dr.evomodel.operators.EmpiricalTreeDistributionOperator;
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
 import dr.evomodelxml.branchratemodel.AutoCorrelatedBranchRatesDistributionParser;
@@ -208,6 +212,9 @@ public class OperatorsGenerator extends Generator {
                 break;
             case FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT:
                 writeFHSPROperator(operator, prefix, writer);
+                break;
+            case EMPIRICAL_TREE_SWAP:
+                writeEmpiricalTreeSwapOperator(operator, prefix, writer);
                 break;
             case SUBTREE_SLIDE:
                 writeSubtreeSlideOperator(operator, prefix, writer);
@@ -516,8 +523,9 @@ public class OperatorsGenerator extends Generator {
     private void writeSkyGridGibbsOperator(Operator operator, String treePriorPrefix, XMLWriter writer) {
         writer.writeOpenTag(
                 GMRFSkyrideBlockUpdateOperatorParser.GRID_BLOCK_UPDATE_OPERATOR,
-                new Attribute[]{
-                        new Attribute.Default<Double>(GMRFSkyrideBlockUpdateOperatorParser.SCALE_FACTOR, operator.getTuning()),
+                new Attribute[] {
+// This is a Gibbs operator so shouldn't have a tuning parameter?
+//                        new Attribute.Default<Double>(GMRFSkyrideBlockUpdateOperatorParser.SCALE_FACTOR, operator.getTuning()),
                         getWeightAttribute(operator.getWeight())
                 }
         );
@@ -697,6 +705,16 @@ public class OperatorsGenerator extends Generator {
         );
         writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(FixedHeightSubtreePruneRegraftOperatorParser.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT);
+    }
+
+    private void writeEmpiricalTreeSwapOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
+        writer.writeOpenTag(EmpiricalTreeDistributionOperator.EMPIRICAL_TREE_DISTRIBUTION_OPERATOR,
+                new Attribute[]{
+                        getWeightAttribute(operator.getWeight())
+                }
+        );
+        writer.writeIDref(EmpiricalTreeDistributionModel.EMPIRICAL_TREE_DISTRIBUTION_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
+        writer.writeCloseTag(EmpiricalTreeDistributionOperator.EMPIRICAL_TREE_DISTRIBUTION_OPERATOR);
     }
 
     // tuneable version of FHSPR but not currently being used

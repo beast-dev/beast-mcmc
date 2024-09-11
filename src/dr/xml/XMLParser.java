@@ -1,7 +1,8 @@
 /*
  * XMLParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.xml;
@@ -164,11 +166,12 @@ public class XMLParser {
 
         Element e = document.getDocumentElement();
         if (e.getTagName().equals("beast")) {
-            // If the 'version' is attribute is present then check it is not an more recent version...
+            // If the 'version' is attribute is present then check it is not a more recent version...
             if (e.hasAttribute(VERSION)) {
                 String xmlVersion = e.getAttribute(VERSION);
-                if (version != null && Version.Utils.isMoreRecent(xmlVersion, version.getVersion())) {
-                   throw new XMLParseException("The version of BEAUti that generated this XML (" + xmlVersion + ") is more recent than the version of BEAST running it (" + version.getVersion() + "). This may be incompatible and cause unpredictable errors.");
+                if (version != null && Version.Utils.isMoreRecent(xmlVersion, version.getVersion()) &&
+                        !Boolean.parseBoolean(System.getProperty("ignore.versions"))) {
+                    throw new XMLParseException("The version of BEAUti that generated this XML (" + xmlVersion + ") is more recent than the version of BEAST running it (" + version.getVersion() + "). This may be incompatible and cause unpredictable errors.");
                 }
             }
 

@@ -1,7 +1,8 @@
 /*
  * TipHeightLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.tree;
@@ -35,7 +37,6 @@ import org.w3c.dom.Element;
  * A class that returns the log likelihood of a set of data (statistics)
  * being distributed according to the given parametric distribution.
  * @author Alexei Drummond
- * @version $Id: TipHeightLikelihood.java,v 1.2 2005/05/17 16:54:41 rambaut Exp $
  */
 
 public class TipHeightLikelihood extends Likelihood.Abstract {

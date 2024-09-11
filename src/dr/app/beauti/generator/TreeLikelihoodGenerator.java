@@ -1,7 +1,8 @@
 /*
  * TreeLikelihoodGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
@@ -53,8 +55,6 @@ import java.util.List;
  */
 public class TreeLikelihoodGenerator extends Generator {
 
-    private static final boolean GENERATE_TREE_LIKELIHOOD = false;
-
     public TreeLikelihoodGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
     }
@@ -71,8 +71,11 @@ public class TreeLikelihoodGenerator extends Generator {
                 if (partition instanceof PartitionData) {
                     writeTreeLikelihood((PartitionData) partition, writer);
                     writer.writeText("");
-                } else {
-                    throw new GeneratorException("Find unrecognized partition:\n" + partition.getName());
+
+                    // if the partition isn't an instanceof PartitionData then it doesn't
+                    // need a TreeLikelihood (it is probably a Tree Partition)
+//                } else {
+//                    throw new GeneratorException("Unrecognized partition:\n" + partition.getName());
                 }
             }
         }
@@ -286,6 +289,10 @@ public class TreeLikelihoodGenerator extends Generator {
 
             PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
+            if (model == null) {
+                return; // some partitions don't have evolutionary models (i.e., empirical trees)
+            }
+
             if (model.isDolloModel()) {
                 return; // DolloComponent will add tree likelihood
             }
@@ -343,7 +350,7 @@ public class TreeLikelihoodGenerator extends Generator {
 
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
-        if (model.isDolloModel()) {
+        if (model == null || model.isDolloModel()) {
             return false;
         }
 

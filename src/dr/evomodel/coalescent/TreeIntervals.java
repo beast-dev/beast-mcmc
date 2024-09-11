@@ -1,7 +1,8 @@
 /*
- * AbstractCoalescentLikelihood.java
+ * TreeIntervals.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,14 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.IntervalList;
-import dr.evolution.coalescent.IntervalType;
-import dr.evolution.coalescent.Intervals;
-import dr.evolution.coalescent.TreeIntervalList;
+import dr.evolution.coalescent.*;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
@@ -47,11 +46,30 @@ import java.util.*;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: CoalescentLikelihood.java,v 1.43 2006/07/28 11:27:32 rambaut Exp $
  */
 public class TreeIntervals extends AbstractModel implements Units, TreeIntervalList {
 
     // PUBLIC STUFF
+
+
+    public TreeIntervals(Tree tree) {
+            this(tree, true);
+    }
+    public TreeIntervals(Tree tree, boolean buildIntervalNodeMapping) {
+        super("TreeIntervals");
+
+        this.buildIntervalNodeMapping = buildIntervalNodeMapping;
+
+        setup(tree);
+    }
+
+    public TreeIntervals(
+            Tree tree,
+            TaxonList includeSubtree,
+            List<TaxonList> excludeSubtrees) throws TreeUtils.MissingTaxonException {
+
+        this(tree, includeSubtree, excludeSubtrees, false);
+    }
 
     public TreeIntervals(
             Tree tree,
@@ -61,8 +79,8 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
 
         super("TreeIntervals");
 
-        this.tree = tree;
         this.buildIntervalNodeMapping = buildIntervalNodeMapping;
+
         if (includeSubtree != null) {
             includedLeafSet = TreeUtils.getLeavesForTaxa(tree, includeSubtree);
         }
@@ -76,56 +94,37 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
             excludedLeafSets = null;
         }
 
-        if (tree instanceof TreeModel) {
-            addModel((TreeModel) tree);
-        }
-
-        intervals = new Intervals(tree.getNodeCount());
-        storedIntervals = new Intervals(tree.getNodeCount());
-        eventsKnown = false;
-        this.intervalNodeMapping = buildIntervalNodeMapping?new IntervalNodeMapping.Default(tree.getNodeCount(),tree):new IntervalNodeMapping.None();
-
-        addStatistic(new DeltaStatistic());
-    }
-    public TreeIntervals(
-            Tree tree,
-            TaxonList includeSubtree,
-            List<TaxonList> excludeSubtrees) throws TreeUtils.MissingTaxonException {
-
-        this(tree, includeSubtree, excludeSubtrees, false);
+        setup(tree);
     }
 
-    public TreeIntervals(Tree tree,boolean buildIntervalNodeMapping) {
-        super("TreeIntervals");
-
+    private void setup(Tree tree) {
         this.tree = tree;
-        this.buildIntervalNodeMapping = buildIntervalNodeMapping;
-
-
-        includedLeafSet = null;
-        excludedLeafSets = null;
-
 
         if (tree instanceof TreeModel) {
             addModel((TreeModel) tree);
         }
 
-        intervals = new Intervals(tree.getNodeCount());
-        storedIntervals = new Intervals(tree.getNodeCount());
+        if (this.buildIntervalNodeMapping) {
+            intervals = new Intervals(tree.getNodeCount());
+            storedIntervals = new Intervals(tree.getNodeCount());
+        } else {
+            intervals = new FastIntervals(tree.getExternalNodeCount(), tree.getInternalNodeCount());
+            storedIntervals = new FastIntervals(tree.getExternalNodeCount(), tree.getInternalNodeCount());
+        }
+
         eventsKnown = false;
-        this.intervalNodeMapping = buildIntervalNodeMapping?new IntervalNodeMapping.Default(tree.getNodeCount(),tree):new IntervalNodeMapping.None();
+        this.intervalNodeMapping = buildIntervalNodeMapping ?new IntervalNodeMapping.Default(tree.getNodeCount(), tree):new IntervalNodeMapping.None();
 
         addStatistic(new DeltaStatistic());
     }
-    public TreeIntervals(Tree tree) {
-        this(tree, false);
-    }
-    public void setBuildIntervalNodeMapping(boolean buildIntervalNodeMapping){
-        this.buildIntervalNodeMapping=buildIntervalNodeMapping;
-        this.intervalNodeMapping = buildIntervalNodeMapping?new IntervalNodeMapping.Default(tree.getNodeCount(),tree):new IntervalNodeMapping.None();
-        //Force a recalculation here
-        eventsKnown=false;
-    }
+
+    // This option is set in the constructor as final
+//    public void setBuildIntervalNodeMapping(boolean buildIntervalNodeMapping){
+//        this.buildIntervalNodeMapping = buildIntervalNodeMapping;
+//        this.intervalNodeMapping = buildIntervalNodeMapping ? new IntervalNodeMapping.Default(tree.getNodeCount(),tree):new IntervalNodeMapping.None();
+//        //Force a recalculation here
+//        eventsKnown = false;
+//    }
     // **************************************************************
     // ModelListener IMPLEMENTATION
     // **************************************************************
@@ -165,7 +164,7 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
      */
     protected void restoreState() {
         // swap the intervals back
-        Intervals tmp = storedIntervals;
+        MutableIntervalList tmp = storedIntervals;
         storedIntervals = intervals;
         intervals = tmp;
 
@@ -235,7 +234,7 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
         // force a calculation of the intervals...
         intervals.getIntervalCount();
 
-        if(buildIntervalNodeMapping){
+        if (buildIntervalNodeMapping){
             this.intervalNodeMapping.initializeMaps();
             for(int i=0; i<intervals.getIntervalCount()+1;i++){
                 intervalNodeMapping.addNode(intervals.getNodeForEvent(i));
@@ -244,15 +243,9 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
                 }
             }
             intervalNodeMapping.setIntervalStartIndices(intervals.getIntervalCount());
-
         }
         eventsKnown = true;
     }
-
-    public boolean getBuildIntervalNodeMapping() {
-        return buildIntervalNodeMapping;
-    }
-
 
     /**
      * extract coalescent times and tip information into ArrayList times from tree.
@@ -261,7 +254,7 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
      * @param node      the node to start from
      * @param intervals the intervals object to store the events
      */
-    private void collectTimes(Tree tree, NodeRef node, Set<NodeRef> excludeNodesBelow, Intervals intervals) {
+    private void collectTimes(Tree tree, NodeRef node, Set<NodeRef> excludeNodesBelow, MutableIntervalList intervals) {
 
         intervals.addCoalescentEvent(tree.getNodeHeight(node));
 
@@ -291,13 +284,13 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
      * @param tree      the tree
      * @param intervals the intervals object to store the events
      */
-    private void collectTimes(Tree tree, Intervals intervals) {
+    private void collectTimes(Tree tree, MutableIntervalList intervals) {
 
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            intervals.addSampleEvent(tree.getNodeHeight(tree.getExternalNode(i)),tree.getExternalNode(i).getNumber());
+            intervals.addSampleEvent(tree.getNodeHeight(tree.getExternalNode(i)), tree.getExternalNode(i).getNumber());
         }
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            intervals.addCoalescentEvent(tree.getNodeHeight(tree.getInternalNode(i)),tree.getInternalNode(i).getNumber());
+            intervals.addCoalescentEvent(tree.getNodeHeight(tree.getInternalNode(i)), tree.getInternalNode(i).getNumber());
         }
     }
 
@@ -414,6 +407,11 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
             calculateIntervals();
         }
         return this.intervalNodeMapping.getNodeNumbersForInterval(interval);
+    }
+
+    @Override
+    public boolean isBuildIntervalNodeMapping() {
+        return buildIntervalNodeMapping;
     }
 
     @Override
@@ -738,17 +736,17 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
     private Tree tree = null;
     private Set<String> includedLeafSet = null;
     private Set[] excludedLeafSets = null;
-    private boolean buildIntervalNodeMapping=false;
+    private final boolean buildIntervalNodeMapping;
 
     /**
      * The intervals.
      */
-    private Intervals intervals = null;
+    private MutableIntervalList intervals = null;
     private IntervalNodeMapping intervalNodeMapping;
     /**
      * The stored values for intervals.
      */
-    private Intervals storedIntervals = null;
+    private MutableIntervalList storedIntervals = null;
 
     private boolean eventsKnown = false;
     private boolean storedEventsKnown = false;

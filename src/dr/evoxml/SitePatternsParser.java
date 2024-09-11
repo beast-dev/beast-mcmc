@@ -1,7 +1,8 @@
 /*
  * SitePatternsParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evoxml;
@@ -38,7 +40,6 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Marc A. Suchard
- * @version $Id: SitePatternsParser.java,v 1.3 2005/07/11 14:06:25 rambaut Exp $
  */
 public class SitePatternsParser extends AbstractXMLObjectParser {
 
@@ -55,6 +56,7 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
     public static final String AMBIGUOUS_UNIQUE = "ambiguousUnique";
     // Specifies whether constant sites that differ only in the pattern of ambiguities are treated as unique
     public static final String AMBIGUOUS_CONSTANT = "ambiguousConstant";
+    public static final String AMBIGUITY_THRESHOLD = "ambiguityThreshold";
 
     public static final String CONSTANT_PATTERNS = "constantPatterns";
 
@@ -79,6 +81,7 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
                 compression = SitePatterns.CompressionType.AMBIGUOUS_UNIQUE;
             }
         }
+        double ambiguityThreshold = xo.getDoubleAttribute(AMBIGUITY_THRESHOLD, 0.5);
 
         // allow a system property to override - possibly set by command line option '-pattern_compression'
         if (System.getProperty("patterns.compression") != null) {
@@ -94,7 +97,11 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
             } else {
                 throw new IllegalArgumentException("Unknown `patterns.compression` system property value: " + System.getProperty("patterns.compression"));
             }
+            if (System.getProperty("patterns.threshold") != null) {
+                ambiguityThreshold = Double.parseDouble(System.getProperty("patterns.threshold"));
+            }
         }
+
         int from = 0;
         int to = -1;
         int every = xo.getAttribute(EVERY, 1);
@@ -142,7 +149,7 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
             throw new XMLParseException("illegal 'to' attribute in patterns element (selected attribute = " + to + " vs. actual site count = " + alignment.getSiteCount() + ")");
         }
 
-        SitePatterns patterns = new SitePatterns(alignment, taxa, from, to, every, strip, constantPatternCounts, compression);
+        SitePatterns patterns = new SitePatterns(alignment, taxa, from, to, every, strip, constantPatternCounts, compression, ambiguityThreshold);
 
         int f = from + 1;
         int t = to + 1; // fixed a *display* error by adding + 1 for consistency with f = from + 1
@@ -197,7 +204,8 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(STRIP, true, "Strip out completely ambiguous sites"),
             AttributeRule.newBooleanRule(UNIQUE, true, "Return a weight list of unique patterns"),
             AttributeRule.newBooleanRule(AMBIGUOUS_UNIQUE, true, "Ignore ambiguity when determining unique patterns"),
-            AttributeRule.newBooleanRule(AMBIGUOUS_CONSTANT, true, "Ignore ambiguity when determining unique constant patterns")
+            AttributeRule.newBooleanRule(AMBIGUOUS_CONSTANT, true, "Ignore ambiguity when determining unique constant patterns"),
+            AttributeRule.newDoubleRule(AMBIGUITY_THRESHOLD, true, "Threshold max proportion of ambiguous characters to allow compression")
     };
 
     public String getParserDescription() {

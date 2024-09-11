@@ -1,7 +1,8 @@
 /*
  * PatternListGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
@@ -30,12 +32,10 @@ import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
-import dr.app.beauti.options.PartitionPattern;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.types.BinaryModelType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
-import dr.evolution.alignment.Patterns;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
 import dr.evoxml.*;

@@ -1,7 +1,8 @@
 /*
  * MarginalLikelihoodEstimationGenerator.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.components.marginalLikelihoodEstimation;
@@ -71,7 +73,6 @@ import static dr.app.beauti.types.PriorType.NONE_FIXED;
 /**
  * @author Andrew Rambaut
  * @author Guy Baele
- * @version $Id$
  */
 public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerator {
 
@@ -116,7 +117,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                 PartitionTreePrior prior = model.getPartitionTreePrior();
                 if (!allowedTypes.contains(prior.getNodeHeightPrior())) {
                     throw new GeneratorException("Generalized stepping stone sampling can only be performed\n" +
-                            "on standard parameteric coalescent tree priors and the Skyride and Skygrid models. " +
+                            "on standard parametric coalescent tree priors and the Skyride and Skygrid models. " +
                             "\nPlease check the Trees panel.", BeautiFrame.TREES);
                 }
                 if (mleOptions.choiceTreeWorkingPrior.equals("Matching coalescent model") && !allowedMCMTypes.contains(prior.getNodeHeightPrior())) {

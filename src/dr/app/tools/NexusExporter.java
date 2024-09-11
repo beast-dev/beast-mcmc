@@ -1,7 +1,8 @@
 /*
  * NexusExporter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.tools;
@@ -46,7 +48,6 @@ import dr.evolution.util.Taxon;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: NexusExporter.java,v 1.5 2006/09/08 11:34:53 rambaut Exp $
  */
 public class NexusExporter implements TreeExporter {
 
@@ -110,29 +111,29 @@ public class NexusExporter implements TreeExporter {
      * @param attributes true if the nodes should be annotated with their attributes
      * @param treeNames  Names of the trees
      */
-    public void exportTrees(Tree[] trees, boolean attributes, String[] treeNames) {
-        if(!(treeNames==null) && trees.length != treeNames.length) {
+    public void exportTrees(List<Tree> trees, boolean attributes, List<String> treeNames) {
+        if(!(treeNames==null) && trees.size() != treeNames.size()) {
             throw new RuntimeException("Number of trees and number of tree names is not the same");
         }
-        Map<String, Integer> idMap = writeNexusHeader(trees[0]);
+        Map<String, Integer> idMap = writeNexusHeader(trees.get(0));
         out.println("\t\t;");
-        for (int i = 0; i < trees.length; i++) {
+        for (int i = 0; i < trees.size(); i++) {
             if(treeNames==null) {
-                writeNexusTree(trees[i], treePrefix + i, attributes, idMap);
+                writeNexusTree(trees.get(i), treePrefix + i, attributes, idMap);
             }
             else {
-                writeNexusTree(trees[i], treeNames[i], attributes, idMap);
+                writeNexusTree(trees.get(i), treeNames.get(i), attributes, idMap);
             }
         }
         out.println("End;");
     }
 
-    public void exportTrees(Tree[] trees, boolean attributes) {
+    public void exportTrees(List<Tree> trees, boolean attributes) {
         exportTrees(trees, attributes, null);
     }
 
 
-    public void exportTrees(Tree[] trees) {
+    public void exportTrees(List<Tree> trees) {
         exportTrees(trees, true, null);
     }
 
@@ -144,7 +145,11 @@ public class NexusExporter implements TreeExporter {
     public void exportTree(Tree tree) {
         Map<String, Integer> idMap = writeNexusHeader(tree);
         out.println("\t\t;");
-        writeNexusTree(tree, treePrefix + 1, true, idMap);
+        String name = treePrefix + 1;
+        if (tree.getId() != null) {
+            name = tree.getId();
+        }
+        writeNexusTree(tree, name, true, idMap);
         out.println("End;");
     }
 
@@ -317,7 +322,7 @@ public class NexusExporter implements TreeExporter {
 
 	public String exportAlignment(Alignment alignment) throws IOException, IllegalArgumentException {
 
-		StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 		
 		DataType dataType = null;
 		int seqLength = 0;

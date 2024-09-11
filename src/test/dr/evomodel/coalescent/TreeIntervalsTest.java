@@ -1,3 +1,30 @@
+/*
+ * TreeIntervalsTest.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package test.dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.TreeIntervalList;
@@ -19,8 +46,6 @@ public class TreeIntervalsTest extends TestCase {
         NewickImporter importer = new NewickImporter("(((0:0.5,(1:1.0,2:1.0)n6:1.0)n7:1.0,3:1.5)n8:1.0,(4:2.0,5:1.51)n9:1.5)n10;");
         MathUtils.setSeed(7);
         tree = new DefaultTreeModel(importer.importTree(null));
-        treeIntervals = new TreeIntervals(tree,true);
-        treeIntervals.calculateIntervals();
     }
 
 
@@ -38,7 +63,9 @@ public class TreeIntervalsTest extends TestCase {
 //          |        1.5                   +----------------------------------------------------- 4 & [0.5]
 //          +-----------------------------|(9) & [2.5]     1.51
 //                                        +-------------------------------------------- 5 & [0.99]
-    public void testsmallTree() {
+    public void testSmallTree() {
+        treeIntervals = new TreeIntervals(tree,false);
+        treeIntervals.calculateIntervals();
 
         double[] intervals = {0, 0.5, 0.49, 0.01, 0.5, 0, 0.5, 0.5, 0.5, 1.0};
         //   node             1-2, 4  , 5  , 6  , 0  , 3, 7  , 9  , 8  , 10
@@ -54,6 +81,9 @@ public class TreeIntervalsTest extends TestCase {
         assertTrue(pass);
     }
     public void testCoalescentNode(){
+        treeIntervals = new TreeIntervals(tree,true);
+        treeIntervals.calculateIntervals();
+
         int[] coalIntervals = {3,6,7,8,9};
         int[] nodeNumbers  ={6,7,9,8,10};
         boolean pass = true;
@@ -70,6 +100,9 @@ public class TreeIntervalsTest extends TestCase {
     }
 
     public void testCoalscentIntervals(){
+        treeIntervals = new TreeIntervals(tree,true);
+        treeIntervals.calculateIntervals();
+
         double[] trueIntervals = {0.01,0.5,0.5,0.5,1.0};
         double[] calcIntervals = treeIntervals.getCoalescentIntervals();
         boolean pass = true;
@@ -87,6 +120,9 @@ public class TreeIntervalsTest extends TestCase {
         assertTrue(pass);
     }
     public void testNodeNumbersForInterval() {
+        treeIntervals = new TreeIntervals(tree,true);
+        treeIntervals.calculateIntervals();
+
         int[][] intervalNodes= {{1,2},{2, 4} ,{4 , 5},{5, 6},{6  , 0}  ,{0, 3},{3, 7} ,{7 , 9},{9  , 8},{8 , 10}};
         boolean pass = true;
         for (int j = 0; j < treeIntervals.getIntervalCount(); j++) {
@@ -102,6 +138,8 @@ public class TreeIntervalsTest extends TestCase {
     }
 
     public void testIntervalsForNode(){
+        treeIntervals = new TreeIntervals(tree,true);
+        treeIntervals.calculateIntervals();
 
         int[][] intervalNodeIntervals= {{4,5},{0} ,{0 , 1},{5, 6},{1 , 2} ,{2, 3},{3, 4} ,{6 , 7},{8, 9},{7, 8},{9}};
         boolean pass =true;
@@ -125,6 +163,9 @@ public class TreeIntervalsTest extends TestCase {
      * interval.
      */
     public void testSortByNodeNumber(){
+        treeIntervals = new TreeIntervals(tree,true);
+        treeIntervals.calculateIntervals();
+
         //                    these are also the node indices for internal nodes
         double[] intervalOrder = {6, 7, 9, 8, 10};
         double[] nodeOrder = {6,7,8,9,10};
@@ -142,7 +183,10 @@ public class TreeIntervalsTest extends TestCase {
         }
         assertTrue(pass);
     }
-    public void testHandelHeightChange(){
+    public void testHandleHeightChange(){
+        treeIntervals = new TreeIntervals(tree,true);
+        treeIntervals.calculateIntervals();
+
         // index              0  1     2    3    4     5   6    7   8    9
         double[] intervals = {0, 0.5, 0.49, 0.01, 0.5, 0, 0.5, 0.5, 0.5, 1.5};
         //   node             1-2, 4  , 5  , 6  , 0  , 3, 7  , 9  , 8  , 10

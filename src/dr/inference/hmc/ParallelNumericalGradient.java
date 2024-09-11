@@ -16,10 +16,8 @@ import java.util.concurrent.*;
  */
 public class ParallelNumericalGradient implements GradientWrtParameterProvider, Reportable {
 
-    public interface ParallelizableLikelihood extends Likelihood { }
-
-    public ParallelNumericalGradient(List<ParallelizableLikelihood> likelihoods,
-                                    List<Parameter> parameters) {
+    public ParallelNumericalGradient(List<Likelihood> likelihoods,
+                                     List<Parameter> parameters) {
         this.likelihoods = likelihoods;
         this.parameters = parameters;
         this.threadCount = likelihoods.size();
@@ -125,7 +123,7 @@ public class ParallelNumericalGradient implements GradientWrtParameterProvider, 
 
     private static class SubsetCaller implements Callable<Integer> {
 
-        public SubsetCaller(ParallelizableLikelihood likelihood,
+        public SubsetCaller(Likelihood likelihood,
                             Parameter parameter,
                             double[] gradient,
                             int index,
@@ -184,7 +182,7 @@ public class ParallelNumericalGradient implements GradientWrtParameterProvider, 
             return 0;
         }
 
-        private final ParallelizableLikelihood likelihood;
+        private final Likelihood likelihood;
         private final Parameter parameter;
         private final double[] gradient;
         private final int index;
@@ -192,9 +190,9 @@ public class ParallelNumericalGradient implements GradientWrtParameterProvider, 
         private final int end;
     }
 
-    public static final boolean DEBUG_PARALLEL_EVALUATION = true;
+    public static final boolean DEBUG_PARALLEL_EVALUATION = false;
 
-    private final List<ParallelizableLikelihood> likelihoods;
+    private final List<Likelihood> likelihoods;
     private final List<Parameter> parameters;
 
     private final ExecutorService pool;

@@ -48,7 +48,7 @@ import java.util.logging.Logger;
  */
 
 public final class TreeDataLikelihood extends AbstractModelLikelihood implements
-        TreeTraitProvider, Citable, Profileable, Reportable, ParallelNumericalGradient.ParallelizableLikelihood {
+        TreeTraitProvider, Citable, Profileable, Reportable {
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;

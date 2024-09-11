@@ -27,6 +27,7 @@ package dr.inferencexml.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.ParallelNumericalGradient;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -46,17 +47,17 @@ public class ParallelNumericGradientParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        List<ParallelNumericalGradient.ParallelizableLikelihood> likelihoods = new ArrayList<>();
+        List<Likelihood> likelihoods = new ArrayList<>();
         List<Parameter> parameters = new ArrayList<>();
 
         XMLObject main = xo.getChild(MAIN);
-        likelihoods.add((ParallelNumericalGradient.ParallelizableLikelihood)
-                main.getChild(ParallelNumericalGradient.ParallelizableLikelihood.class));
+        likelihoods.add((Likelihood)
+                main.getChild(Likelihood.class));
         parameters.add((Parameter) main.getChild(Parameter.class));
 
         for (XMLObject worker : xo.getAllChildren(WORKER)) {
-            likelihoods.add((ParallelNumericalGradient.ParallelizableLikelihood)
-                    worker.getChild(ParallelNumericalGradient.ParallelizableLikelihood.class));
+            likelihoods.add((Likelihood)
+                    worker.getChild(Likelihood.class));
             parameters.add((Parameter) worker.getChild(Parameter.class));
         }
 
@@ -66,11 +67,11 @@ public class ParallelNumericGradientParser extends AbstractXMLObjectParser {
 
     private static final XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
             new ElementRule(MAIN, new XMLSyntaxRule[]{
-                    new ElementRule(ParallelNumericalGradient.ParallelizableLikelihood.class),
+                    new ElementRule(Likelihood.class),
                     new ElementRule(Parameter.class),
             }),
             new ElementRule(WORKER, new XMLSyntaxRule[]{
-                    new ElementRule(ParallelNumericalGradient.ParallelizableLikelihood.class),
+                    new ElementRule(Likelihood.class),
                     new ElementRule(Parameter.class),
             }, 0, Integer.MAX_VALUE),
     };

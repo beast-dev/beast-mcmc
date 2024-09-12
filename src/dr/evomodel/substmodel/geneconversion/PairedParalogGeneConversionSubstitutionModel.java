@@ -85,7 +85,7 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
         this.substitutionKnown = false;
 
         addVariable(relativeGeneConversionRateParameter);
-        addModel(baseSubstitutionModel);
+        addModel(this.baseSubstitutionModel);
     }
 
 
@@ -148,6 +148,10 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
     }
 
     private void prepareSubstitutionModel() {
+        Arrays.fill(rowIndices, 0);
+        Arrays.fill(colIndices, 0);
+        Arrays.fill(values, 0);
+
         numNonZeros = numberParalog.processSubstitutionModel(baseSubstitutionModel, igcRateParameter, dataType, rowIndices, colIndices, values);
         substitutionKnown = true;
     }
@@ -173,11 +177,13 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         substitutionKnown = false;
+        fireModelChanged();
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         substitutionKnown = false;
+        fireModelChanged();
     }
 
     @Override
@@ -198,6 +204,7 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
     private class ActionEnabledSubstitutionWrap extends AbstractModel implements ActionEnabledSubstitution {
 
         private SubstitutionModel substitutionModel;
+
         private boolean substitutionModelKnown;
 
         private int[] rowIndices;
@@ -302,12 +309,14 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
 
         @Override
         protected void handleModelChangedEvent(Model model, Object object, int index) {
-
+            substitutionModelKnown = false;
+            fireModelChanged();
         }
 
         @Override
         protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-
+            substitutionModelKnown = false;
+            fireModelChanged();
         }
 
         @Override
@@ -317,7 +326,7 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
 
         @Override
         protected void restoreState() {
-
+            substitutionModelKnown = false;
         }
 
         @Override
@@ -465,6 +474,7 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
                                          int[] rowIndices, int[] colIndices, double[] values) {
 
                 final int stateCount = baseSubstitution.getFrequencyModel().getFrequencyCount();
+                final double[] diagonal = new double[stateCount * stateCount];
 
                 int[] baseRowIndices = new int[baseSubstitution.getNonZeroEntryCount()];
                 int[] baseColIndices = new int[baseSubstitution.getNonZeroEntryCount()];
@@ -472,31 +482,43 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
 
                 baseSubstitution.getNonZeroEntries(baseRowIndices, baseColIndices, baseValues);
 
-                final int numUniqueTransitions = baseRowIndices.length - Collections.singleton(baseRowIndices).size();
+
+                int numNonZeros = 0;
+                int numNonZeroDiagonal = 0;
+
+                for (int i = 0; i < baseRowIndices.length; i++) {
+                    final int fromState = baseRowIndices[i];
+                    final int toState = baseColIndices[i];
+                    final double rate = baseValues[i];
+
+                    if (rate > 0) {
+                        for (int j = 0; j < stateCount; j++) {
+                            if (j != toState) {
+                                rowIndices[numNonZeros] = dataType.getState(fromState, j);
+                                colIndices[numNonZeros] = dataType.getState(toState, j);
+                                values[numNonZeros] = rate;
+                                diagonal[rowIndices[numNonZeros]] -= rate;
+                                numNonZeros++;
+
+
+                                rowIndices[numNonZeros] = dataType.getState(j, fromState);
+                                colIndices[numNonZeros] = dataType.getState(j, toState);
+                                values[numNonZeros] = rate;
+                                diagonal[rowIndices[numNonZeros]] -= rate;
+                                numNonZeros++;
+                            }
+                        }
+                    } else {
+                        numNonZeroDiagonal++;
+                    }
+
+                }
+
+                final int numUniqueTransitions = baseRowIndices.length - numNonZeroDiagonal;
 
                 final int numNoIGCTransitions = numUniqueTransitions * 2 * (stateCount - 1);
                 final int numIGCTransitions = stateCount * (stateCount - 1) * 2;
 
-                int numNonZeros = 0;
-
-                for (int i = 0; i < numUniqueTransitions; i++) {
-                    final int fromState = baseRowIndices[i];
-                    final int toState = baseColIndices[i];
-                    final double rate = baseValues[i];
-                    for (int j = 0; j < stateCount; j++) {
-                        if (j != toState) {
-                            rowIndices[numNonZeros] = dataType.getState(fromState, j);
-                            colIndices[numNonZeros] = dataType.getState(toState, j);
-                            values[numNonZeros] = rate;
-                            numNonZeros++;
-
-                            rowIndices[numNonZeros] = dataType.getState(j, fromState);
-                            colIndices[numNonZeros] = dataType.getState(j, toState);
-                            values[numNonZeros] = rate;
-                            numNonZeros++;
-                        }
-                    }
-                }
 
                 for (int i = 0; i < stateCount; i++) {
                     for (int j = 0; j < stateCount; j++) {
@@ -504,10 +526,13 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
                             final int toState = dataType.getState(j, j);
                             rowIndices[numNonZeros] = dataType.getState(i, j);
                             colIndices[numNonZeros] = toState;
+                            diagonal[rowIndices[numNonZeros]] -= igcRateParameter.getParameterValue(0);
+
                             numNonZeros++;
 
                             rowIndices[numNonZeros] = dataType.getState(j, i);
                             colIndices[numNonZeros] = toState;
+                            diagonal[rowIndices[numNonZeros]] -= igcRateParameter.getParameterValue(0);
                             numNonZeros++;
                         }
                     }
@@ -515,18 +540,40 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
 
                 Arrays.fill(values, numNoIGCTransitions, numNonZeros, igcRateParameter.getParameterValue(0));
 
-                for (int i = 0; i < numUniqueTransitions; i++) {
+                for (int i = 0; i < baseRowIndices.length; i++) {
                     final int fromState = baseRowIndices[i];
                     final int toState = baseColIndices[i];
                     final double rate = baseValues[i];
 
-                    final int transitionIndex = numNoIGCTransitions + (fromState * (stateCount - 1) + toState) * 2;
+                    if (rate > 0) {
+                        final int transitionIndex = fromState < toState ?
+                                numNoIGCTransitions + (fromState * (stateCount - 1) + toState - 1) * 2 :
+                                numNoIGCTransitions + (fromState * (stateCount - 1) + toState) * 2;
 
-                    values[transitionIndex] += rate;
-                    values[transitionIndex + 1] += rate;
+                        diagonal[rowIndices[transitionIndex]] -= rate;
+
+                        assert(rowIndices[transitionIndex] == dataType.getState(fromState, toState) && colIndices[transitionIndex] == dataType.getState(toState, toState));
+
+                        diagonal[rowIndices[transitionIndex + 1]] -= rate;
+
+                        assert(rowIndices[transitionIndex + 1] == dataType.getState(toState, fromState) && colIndices[transitionIndex + 1] == dataType.getState(toState, toState));
+
+                        values[transitionIndex] += rate;
+                        values[transitionIndex + 1] += rate;
+                    }
                 }
 
-                return numNoIGCTransitions + numIGCTransitions;
+                for (int i = 0; i < diagonal.length; i++) {
+                    final double diagonalValue = diagonal[i];
+                    if (diagonalValue != 0) {
+                        rowIndices[numNonZeros] = i;
+                        colIndices[numNonZeros] = i;
+                        values[numNonZeros] = diagonalValue;
+                        numNonZeros++;
+                    }
+                }
+
+                return numNonZeros;
             }
 
             @Override

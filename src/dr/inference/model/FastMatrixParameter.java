@@ -1,7 +1,8 @@
 /*
  * FastMatrixParameter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -76,6 +78,14 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
     }
 
+    @Override
+    public String getDimensionName(int dim) {
+        int pNum = dim / getRowDimension();
+        int index = dim % getRowDimension();
+        String name = getParameter(pNum).getParameterName() + (index + 1);
+        return name;
+    }
+
     private void checkParameterLengths(List<Parameter> parameters) {
         final int length = parameters.get(0).getDimension();
         for (Parameter p : parameters) {
@@ -91,6 +101,17 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         for (Parameter p : original) {
             proxyParameterNames.add(p.getParameterName());
         }
+    }
+
+    private void setProxyParameterName(String name, int column) {
+        if (proxyParameterNames == null) {
+            proxyParameterNames = new ArrayList<>();
+            for (int i = 0; i < getColumnDimension(); ++i) {
+                proxyParameterNames.add(null);
+            }
+        }
+
+        proxyParameterNames.set(column, name);
     }
 
     private List<String> proxyParameterNames;
@@ -167,6 +188,11 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         @Override
         public void setParameterValueNotifyChangedAll(int dim, double value) {
             throw new RuntimeException("Do not call");
+        }
+
+        @Override
+        public void setId(String name) {
+            matrix.setProxyParameterName(name, column);
         }
 
         @Override

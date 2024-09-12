@@ -1,7 +1,8 @@
 /*
  * LogLinearModel.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.distribution;
@@ -34,7 +36,7 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
-public class LogLinearModel extends GeneralizedLinearModel implements LogAdditiveCtmcRateProvider {
+public class LogLinearModel extends GeneralizedLinearModel implements LogAdditiveCtmcRateProvider.Integrated {
 
     public LogLinearModel(Parameter dependentParam) {
         super(dependentParam);
@@ -51,6 +53,10 @@ public class LogLinearModel extends GeneralizedLinearModel implements LogAdditiv
             xBeta[i] = Math.exp(xBeta[i]);
         }
         return xBeta;
+    }
+
+    public Parameter getLogRateParameter() {
+        throw new RuntimeException("Not yet implemented.");
     }
 
     protected double calculateLogLikelihood(double[] beta) {

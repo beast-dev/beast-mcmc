@@ -1,7 +1,8 @@
 /*
  * ExchangeOperatorParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,15 +22,18 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.operators;
 
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeModel;
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeOperator;
+import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainedTreeModel;
-import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainedTreeOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
 
@@ -39,6 +43,8 @@ public class ExchangeOperatorParser {
 
     public static final String NARROW_EXCHANGE = "narrowExchange";
     public static final String WIDE_EXCHANGE = "wideExchange";
+
+
 
     public static XMLObjectParser NARROW_EXCHANGE_OPERATOR_PARSER = new AbstractXMLObjectParser() {
         public String getParserName() {
@@ -52,7 +58,7 @@ public class ExchangeOperatorParser {
 
             ExchangeOperator op = new ExchangeOperator(ExchangeOperator.NARROW,treeModel,weight);
             if(treeModel instanceof ConstrainedTreeModel){
-                return new ConstrainedTreeOperator((ConstrainedTreeModel) treeModel, weight, op);
+                return ConstrainedTreeOperator.parse((ConstrainedTreeModel) treeModel, weight, op, xo);
             }else{
                 return op;
             }
@@ -96,7 +102,7 @@ public class ExchangeOperatorParser {
 
             ExchangeOperator op = new ExchangeOperator(ExchangeOperator.WIDE,treeModel,weight);
             if(treeModel instanceof ConstrainedTreeModel){
-                return new ConstrainedTreeOperator((ConstrainedTreeModel) treeModel, weight, op);
+                return ConstrainedTreeOperator.parse((ConstrainedTreeModel) treeModel, weight, op, xo);
             }else{
                 return op;
             }
@@ -112,7 +118,7 @@ public class ExchangeOperatorParser {
         }
 
         public Class getReturnType() {
-            return ExchangeOperator.class;
+            return AbstractTreeOperator.class;
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {

@@ -1,7 +1,8 @@
 /*
  * NodeHeightGradientForDiscreteTrait.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.discrete;
@@ -31,7 +33,9 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
@@ -44,7 +48,7 @@ import java.util.Arrays;
  */
 
 public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateGradient
-        implements GradientWrtParameterProvider, Reportable, Loggable {
+        implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
 
     private final TreeModel treeModel;
     protected TreeParameterModel indexHelper;
@@ -67,15 +71,15 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
         this.nodeHeightProxyParameter = new NodeHeightProxyParameter("internalNodeHeights", treeModel, true);
     }
 
-//    protected String getTraitName(String traitName) {
-//        return DiscreteTraitNodeHeightDelegate.GRADIENT_TRAIT_NAME;
-//    }
-//
-//    protected ProcessSimulationDelegate makeGradientDelegate(String traitName, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate) {
-//        return new DiscreteTraitNodeHeightDelegate(traitName,
-//                tree,
-//                likelihoodDelegate, branchRateModel);
-//    }
+    protected String getTraitName(String traitName) {
+        return DiscreteTraitNodeHeightDelegate.GRADIENT_TRAIT_NAME;
+    }
+
+    protected ProcessSimulationDelegate makeGradientDelegate(String traitName, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate) {
+        return new DiscreteTraitNodeHeightDelegate(traitName,
+                tree,
+                likelihoodDelegate, branchRateModel);
+    }
     @Override
     public Parameter getParameter() {
         return nodeHeightProxyParameter;
@@ -117,6 +121,17 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
         return Arrays.copyOf(gradient, tree.getInternalNodeCount());
     }
 
+    public double[] getDiagonalHessianLogDensity() {
+
+        //Do single call to traitProvider with node == null (get full tree)
+        double[] gradient = new double[tree.getInternalNodeCount()];
+
+        double[] diagonalHessian = (double[]) treeDataLikelihood.getTreeTrait(DiscreteTraitNodeHeightDelegate.HESSIAN_TRAIT_NAME).getTrait(tree, null);
+
+
+        return diagonalHessian;
+    }
+
     protected int getParameterIndexFromNode(NodeRef node) {
         return indexHelper.getParameterIndexFromNodeNumber(node.getNumber());
     }
@@ -125,7 +140,8 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
     public String getReport() {
 
         String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY,
-                tolerance, smallValueThreshold);
+                tolerance, smallValueThreshold)
+                + HessianWrtParameterProvider.getReportAndCheckForError(this, tolerance);
 
         return message;
     }

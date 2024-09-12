@@ -1,7 +1,8 @@
 /*
  * MaskedParameterParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.model;
@@ -82,8 +84,7 @@ public class MaskedParameterParser extends AbstractXMLObjectParser {
                 }
             }
             Logger.getLogger("dr.inferencexml.model").info("Found in total " + total + " missing values\n");
-        }
-        else {
+        } else {
             int from = xo.getAttribute(FROM, 1) - 1;
             int to = xo.getAttribute(TO, parameter.getDimension()) - 1;
             int every = xo.getAttribute(EVERY, 1);

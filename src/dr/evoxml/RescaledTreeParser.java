@@ -1,7 +1,8 @@
 /*
  * RescaledTreeParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evoxml;
@@ -37,7 +39,6 @@ import java.util.Set;
  * Parser takes a tree and rescales the node heights to match a set of clade heights defined by taxon sets.
  * @author Andrew Rambaut
  *
- * @version $Id$
  */
 public class RescaledTreeParser extends AbstractXMLObjectParser {
 
@@ -81,6 +82,8 @@ public class RescaledTreeParser extends AbstractXMLObjectParser {
                     if (cxo.hasAttribute(HEIGHT)) {
                         double height = cxo.getDoubleAttribute(HEIGHT);
                         rescaledTree.setNodeHeight(mrca, height);
+                    } else {
+                        throw new XMLParseException("Clade elements should have a height to set the MRCA in the tree");
                     }
                 }
             }
@@ -146,7 +149,7 @@ public class RescaledTreeParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(HEIGHT, true),
             new ElementRule(Tree.class),
             new ElementRule(CLADE, new XMLSyntaxRule[] {
-                    AttributeRule.newDoubleRule(HEIGHT, true),
+                    AttributeRule.newDoubleRule(HEIGHT),
                     new ElementRule(TaxonList.class)
             }, 0, Integer.MAX_VALUE)
     };

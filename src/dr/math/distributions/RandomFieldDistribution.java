@@ -1,7 +1,8 @@
 /*
  * RandomFieldDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.distributions;
@@ -42,5 +44,8 @@ public abstract class RandomFieldDistribution extends AbstractModel implements
 
     public abstract GradientProvider getGradientWrt(Parameter parameter);
 
-    public abstract double getIncrement(int i, Parameter field);
+    public double getIncrement(int i, Parameter field) {
+        double[] mean = getMean();
+        return (field.getParameterValue(i) - mean[i]) - (field.getParameterValue(i + 1) - mean[i + 1]);
+    }
 }

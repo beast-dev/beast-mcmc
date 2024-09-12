@@ -1,7 +1,8 @@
 /*
  * RandomWalkOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -39,7 +41,6 @@ import java.util.List;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: RandomWalkOperator.java,v 1.16 2005/06/14 10:40:34 rambaut Exp $
  */
 public class RandomWalkOperator extends AbstractAdaptableOperator {
 
@@ -142,7 +143,7 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
             parameter.setParameterValue(dim, (x2 * (upper - lower)) + lower);
             
             // HR is the ratio of Jacobians for the before and after values in interval [0,1]
-            return Transform.LOGIT.getLogJacobian(x1) - Transform.LOGIT.getLogJacobian(x2);
+            return Transform.LOGIT.logJacobian(x1) - Transform.LOGIT.logJacobian(x2);
 
         } else if (boundaryCondition == BoundaryCondition.log) {
             // offset oldValue to [0,+Inf]
@@ -154,7 +155,7 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
             parameter.setParameterValue(dim, x2 + lower);
 
             // HR is the ratio of Jacobians for the before and after values
-            return Transform.LOG.getLogJacobian(x1) - Transform.LOG.getLogJacobian(x2);
+            return Transform.LOG.logJacobian(x1) - Transform.LOG.logJacobian(x2);
 
         } else {
             double newValue = oldValue + draw;

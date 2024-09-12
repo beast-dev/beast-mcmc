@@ -1,7 +1,8 @@
 /*
  * TreeTipGradient.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.continuous;
@@ -51,13 +53,15 @@ public class TreeTipGradient implements GradientWrtParameterProvider, Reportable
     private final int dimTrait;
 
     private final Parameter maskParameter;
+    private final int gradientOffset;
 
     public TreeTipGradient(String traitName,
+                           Parameter specifiedParameter,
                            TreeDataLikelihood treeDataLikelihood,
                            ContinuousDataLikelihoodDelegate likelihoodDelegate,
                            Parameter maskParameter) {
 
-        assert(treeDataLikelihood != null);
+        assert (treeDataLikelihood != null);
 
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
@@ -65,12 +69,6 @@ public class TreeTipGradient implements GradientWrtParameterProvider, Reportable
 
         String name =
                 TipGradientViaFullConditionalDelegate.getName(traitName);
-
-        TreeTrait test = treeDataLikelihood.getTreeTrait(name);
-
-        if (test == null) {
-            likelihoodDelegate.addFullConditionalGradientTrait(traitName);
-        }
 
         // TODO Move into different constructor / parser
         String fcdName = TipFullConditionalDistributionDelegate.getName(traitName);
@@ -82,28 +80,68 @@ public class TreeTipGradient implements GradientWrtParameterProvider, Reportable
         if (treeDataLikelihood.getTreeTrait(nFcdName) == null) {
             likelihoodDelegate.addNewFullConditionalDensityTrait(traitName);
         }
-        
-        treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
 
-        assert (treeTraitProvider != null);
 
         nTaxa = treeDataLikelihood.getTree().getExternalNodeCount();
-        nTraits = treeDataLikelihood.getDataLikelihoodDelegate().getTraitCount();
-        dimTrait = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
+//        nTraits = treeDataLikelihood.getDataLikelihoodDelegate().getTraitCount();
+//        dimTrait = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
 
 //        PrecisionType precisionType = likelihoodDelegate.getPrecisionType();
 //        int dimPartial = precisionType.getMatrixLength(dimTrait);
-        
+
+
+        int offset = 0;
+        ContinuousTraitPartialsProvider dataModel = likelihoodDelegate.getDataModel();
+
+        if (specifiedParameter == null) {
+            specifiedParameter = dataModel.getParameter();
+            if (dataModel.getDataDimension() != dataModel.getTraitDimension()) {
+                throw new RuntimeException("Not currently implemented with unspecified parameter and dimension " +
+                        "reduction.");
+            }
+        } else {
+            if (specifiedParameter != dataModel.getParameter()) {
+                ContinuousTraitPartialsProvider[] childModels = dataModel.getChildModels();
+                // TODO: recurse child models
+                for (int i = 0; i < childModels.length; i++) {
+                    dataModel = childModels[i];
+                    if (dataModel.getParameter() == specifiedParameter) {
+                        break;
+                    }
+                    offset += dataModel.getTraitDimension();
+                }
+            }
+        }
+
+        if (specifiedParameter != dataModel.getParameter()) {
+            throw new RuntimeException("Supplied parameter does not match the parameter in the data model" +
+                    " or any of its submodels.");
+        }
+
+        this.traitParameter = dataModel.getParameter();
+        this.dimTrait = dataModel.getTraitDimension();
+        this.nTraits = dataModel.getTraitCount();
+        this.gradientOffset = offset;
+
         if (nTraits != 1) {
             throw new RuntimeException("Not yet implemented for >1 traits");
         }
-
-        this.traitParameter = likelihoodDelegate.getDataModel().getParameter();
 
         if (maskParameter != null &&
                 (maskParameter.getDimension() != traitParameter.getDimension())) {
             throw new RuntimeException("Trait and mask parameters must be the same size");
         }
+
+        TreeTrait test = treeDataLikelihood.getTreeTrait(name);
+
+        if (test == null) {
+            likelihoodDelegate.addFullConditionalGradientTrait(traitName, gradientOffset, dimTrait);
+        }
+
+        treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
+
+        assert (treeTraitProvider != null);
+
     }
 
     @Override
@@ -120,17 +158,17 @@ public class TreeTipGradient implements GradientWrtParameterProvider, Reportable
     public int getDimension() {
         return getParameter().getDimension();
     }
-    
+
     @Override
     public double[] getGradientLogDensity() {
 
-        double[] gradient = new double[nTaxa  * dimTrait * nTraits];
+        double[] gradient = new double[nTaxa * dimTrait * nTraits];
 
         int offsetOutput = 0;
         for (int taxon = 0; taxon < nTaxa; ++taxon) {
             double[] taxonGradient = (double[]) treeTraitProvider.getTrait(tree, tree.getExternalNode(taxon));
-            System.arraycopy(taxonGradient, 0, gradient, offsetOutput, taxonGradient.length);
-            offsetOutput += taxonGradient.length;
+            System.arraycopy(taxonGradient, 0, gradient, offsetOutput, dimTrait);
+            offsetOutput += dimTrait;
         }
 
         if (maskParameter != null) {

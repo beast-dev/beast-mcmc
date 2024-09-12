@@ -1,7 +1,8 @@
 /*
  * GMRFSkyrideBlockUpdateOperatorParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.coalescent.operators;
 
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
-import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator;
 import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
 import dr.inference.operators.AdaptableMCMCOperator;
@@ -94,15 +96,21 @@ public class GMRFSkyrideBlockUpdateOperatorParser extends AbstractXMLObjectParse
         if (mode == AdaptationMode.DEFAULT) mode = AdaptationMode.ADAPTATION_ON;
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-        double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
-        if (scaleFactor == 1.0) {
-            mode = AdaptationMode.ADAPTATION_OFF;
-        }
+
+        double scaleFactor = 1.0;
+        if (xo.hasAttribute(SCALE_FACTOR)) {
+            scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
+            if (scaleFactor == 1.0) {
+                mode = AdaptationMode.ADAPTATION_OFF;
+            }
 
 //            if (scaleFactor <= 0.0) {
 //                throw new XMLParseException("scaleFactor must be greater than 0.0");
-        if (scaleFactor < 1.0) {
-            throw new XMLParseException("scaleFactor must be greater than or equal to 1.0");
+            if (scaleFactor < 1.0) {
+                throw new XMLParseException("scaleFactor must be greater than or equal to 1.0");
+            }
+        } else {
+            mode = AdaptationMode.ADAPTATION_OFF;
         }
 
         int maxIterations = xo.getAttribute(MAX_ITERATIONS, 200);
@@ -112,8 +120,8 @@ public class GMRFSkyrideBlockUpdateOperatorParser extends AbstractXMLObjectParse
 
         if (xo.getAttribute(OLD_SKYRIDE, true)
                 && !(xo.getName().compareTo(GRID_BLOCK_UPDATE_OPERATOR) == 0)
-                ) {
-            OldGMRFSkyrideLikelihood gmrfLikelihood = (OldGMRFSkyrideLikelihood) xo.getChild(OldGMRFSkyrideLikelihood.class);
+        ) {
+            GMRFSkyrideLikelihood gmrfLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
             return new GMRFSkyrideBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
                     maxIterations, stopValue);
         } else {
@@ -141,13 +149,13 @@ public class GMRFSkyrideBlockUpdateOperatorParser extends AbstractXMLObjectParse
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            AttributeRule.newDoubleRule(SCALE_FACTOR),
+            AttributeRule.newDoubleRule(SCALE_FACTOR, true),
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newDoubleRule(STOP_VALUE, true),
             AttributeRule.newIntegerRule(MAX_ITERATIONS, true),
             AttributeRule.newBooleanRule(OLD_SKYRIDE, true),
-            new ElementRule(OldGMRFSkyrideLikelihood.class)
+            new ElementRule(GMRFSkyrideLikelihood.class)
     };
 
 }

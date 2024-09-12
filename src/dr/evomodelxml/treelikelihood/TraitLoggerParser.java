@@ -1,7 +1,8 @@
 /*
- * StratifiedTraitLoggerParser.java
+ * TraitLoggerParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,13 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.treelikelihood;
 
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
+import dr.evolution.tree.*;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.treelikelihood.utilities.TreeTraitLogger;
 import dr.xml.*;
 
@@ -41,6 +42,7 @@ public class TraitLoggerParser extends AbstractXMLObjectParser {
     public static final String TRAIT_NAME = "traitName";
     private static final String TAXON_NAME_EXPLICIT = "taxonNameExplicit";
     private static final String NODES = "nodes";
+    private static final String COLUMN_NAME = "columnName";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -50,7 +52,18 @@ public class TraitLoggerParser extends AbstractXMLObjectParser {
                 xo.getAttribute(NODES, "all"));
         boolean taxonNameExplicit = xo.getAttribute(TAXON_NAME_EXPLICIT, false);
 
-        return new TreeTraitLogger(treeModel, new TreeTrait[] { trait }, nodes, taxonNameExplicit);
+        TaxonList taxonList = (TaxonList) xo.getChild(TaxonList.class);
+        if (taxonList != null) {
+            TreeTraitLogger logger;
+            try {
+                logger = new TreeTraitLogger(treeModel, new TreeTrait[] { trait }, taxonList);
+            } catch (TreeUtils.MissingTaxonException e) {
+                throw new XMLParseException(e.getMessage());
+            }
+            return logger;
+        } else {
+            return new TreeTraitLogger(treeModel, new TreeTrait[]{trait}, nodes, taxonNameExplicit);
+        }
     }
 
     static TreeTrait parseTreeTrait(XMLObject xo, boolean wholeTreeOnly) throws XMLParseException {
@@ -85,6 +98,45 @@ public class TraitLoggerParser extends AbstractXMLObjectParser {
             throw new XMLParseException(sb.toString());
         }
 
+        if (xo.hasAttribute(COLUMN_NAME)) {
+            
+            final String columnName = xo.getStringAttribute(COLUMN_NAME);
+            final TreeTrait original = trait;
+
+            trait = new TreeTrait() {
+
+                @Override
+                public String getTraitName() {
+                    return columnName;
+                }
+
+                @Override
+                public Intent getIntent() {
+                    return original.getIntent();
+                }
+
+                @Override
+                public Class getTraitClass() {
+                    return original.getTraitClass();
+                }
+
+                @Override
+                public Object getTrait(Tree tree, NodeRef node) {
+                    return original.getTrait(tree, node);
+                }
+
+                @Override
+                public String getTraitString(Tree tree, NodeRef node) {
+                    return original.getTraitString(tree, node);
+                }
+
+                @Override
+                public boolean getLoggable() {
+                    return original.getLoggable();
+                }
+            };
+        }
+
         return trait;
     }
 
@@ -93,6 +145,8 @@ public class TraitLoggerParser extends AbstractXMLObjectParser {
           AttributeRule.newStringRule(NODES, true),
           new ElementRule(Tree.class),
           new ElementRule(TreeTraitProvider.class),
+          new ElementRule(TaxonList.class, true),
+          AttributeRule.newStringRule(COLUMN_NAME, true),
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

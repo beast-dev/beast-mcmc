@@ -1,7 +1,8 @@
 /*
  * CompoundLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -37,7 +39,6 @@ import java.util.concurrent.*;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: CompoundLikelihood.java,v 1.19 2005/05/25 09:14:36 rambaut Exp $
  */
 public class CompoundLikelihood implements Likelihood, Profileable, Reportable, Keywordable {
 
@@ -450,6 +451,8 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
 
             final NumberFormatter nf = new NumberFormatter(6);
 
+            double logLikelihood = this.getLogLikelihood();
+
             int index = 0;
             for( Likelihood lik : likelihoods ) {
 
@@ -492,7 +495,7 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
             for (int i = 0; i < indent; i++) {
                 message += " ";
             }
-            message += this.getId() + " log-likelihood = " + this.getLogLikelihood();
+            message += this.getId() + " log-likelihood = " + logLikelihood;
 
             if (indent == 0) message += "\n\n";
 

@@ -1,7 +1,8 @@
 /*
  * AdaptableVarianceMultivariateNormalOperator.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -432,10 +434,10 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptab
                     for (int k = 0; k < temp.length; k++) {
                         parameter.setParameterValueQuietly(currentIndex + k, temp[k]);
                     }
-                    logJacobian += transformations[i].getLogJacobian(x, currentIndex, currentIndex + transformationSizes[i] - 1) - transformations[i].getLogJacobian(temp, 0, transformationSizes[i] - 1);
+                    logJacobian += transformations[i].logJacobian(x, currentIndex, currentIndex + transformationSizes[i] - 1) - transformations[i].logJacobian(temp, 0, transformationSizes[i] - 1);
                 } else {
                     parameter.setParameterValueQuietly(currentIndex, transformations[i].inverse(transformedX[currentIndex]));
-                    logJacobian += transformations[i].getLogJacobian(x[currentIndex]) - transformations[i].getLogJacobian(parameter.getParameterValue(currentIndex));
+                    logJacobian += transformations[i].logJacobian(x[currentIndex]) - transformations[i].logJacobian(parameter.getParameterValue(currentIndex));
                 }
                 if (DEBUG) {
                     System.err.println("Current logJacobian = " + logJacobian);
@@ -446,7 +448,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptab
                     throw new RuntimeException("Transformations on more than 1 parameter value should be set quietly");
                 } else {
                     parameter.setParameterValue(currentIndex, transformations[i].inverse(transformedX[currentIndex]));
-                    logJacobian += transformations[i].getLogJacobian(x[currentIndex]) - transformations[i].getLogJacobian(parameter.getParameterValue(currentIndex));
+                    logJacobian += transformations[i].logJacobian(x[currentIndex]) - transformations[i].logJacobian(parameter.getParameterValue(currentIndex));
                 }
                 if (DEBUG) {
                     System.err.println("Current logJacobian = " + logJacobian);
@@ -886,7 +888,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptab
 
     @Override
     public Citation.Category getCategory() {
-        return Citation.Category.FRAMEWORK;
+        return Citation.Category.ADVANCED_ESTIMATION_METHODS;
     }
 
     @Override

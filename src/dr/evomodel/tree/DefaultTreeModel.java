@@ -1,7 +1,8 @@
 /*
  * DefaultTreeModel.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.tree;
@@ -39,7 +41,6 @@ import java.util.Map;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id$
  */
 public class DefaultTreeModel extends TreeModel {
 
@@ -71,8 +72,8 @@ public class DefaultTreeModel extends TreeModel {
     }
 
     /* New constructor that copies the attributes of Tree tree into the new TreeModel
-      * Useful for constructing a TreeModel from a NEXUS file entry
-      */
+     * Useful for constructing a TreeModel from a NEXUS file entry
+     */
 
     public DefaultTreeModel(String name, Tree tree, boolean copyAttributes, boolean fixHeights, boolean fixTree) {
 
@@ -145,20 +146,6 @@ public class DefaultTreeModel extends TreeModel {
         }
 
         heightBoundsSetup = true;
-    }
-
-    /**
-     * Push a tree changed event into the event stack.
-     */
-    public void pushTreeChangedEvent() {
-        pushTreeChangedEvent(TreeChangedEvent.create());
-    }
-
-    /**
-     * Push a tree changed event into the event stack.
-     */
-    public void pushTreeChangedEvent(NodeRef nodeRef) {
-        pushTreeChangedEvent(TreeChangedEvent.create(nodeRef, false));
     }
 
     /**
@@ -493,6 +480,23 @@ public class DefaultTreeModel extends TreeModel {
         nodes = tmp;
 
         root = nodes[storedRootNumber];
+
+        remapParameterNodes();
+
+    }
+
+    private void remapParameterNodes() {
+        for (Node node : nodes) {
+            parameterNodeMap.put(node.heightParameter, node);
+            if (hasRates) {
+                parameterNodeMap.put(node.rateParameter, node);
+            }
+            if (hasTraits) {
+                for (Parameter trait : node.traitParameters.values()) {
+                    parameterNodeMap.put(trait, node);
+                }
+            }
+        }
     }
 
     /**
@@ -550,12 +554,6 @@ public class DefaultTreeModel extends TreeModel {
      */
     public void adoptTreeStructure(Tree donor) {
 
-        /*System.err.println("internalNodeCount: " + this.internalNodeCount);
-          System.err.println("externalNodeCount: " + this.externalNodeCount);
-          for (int i = 0; i < this.nodeCount; i++) {
-              System.err.println(nodes[i]);
-          }*/
-
         //first remove all the child nodes of the internal nodes
         for (int i = this.externalNodeCount; i < this.nodeCount; i++) {
             int childCount = nodes[i].getChildCount();
@@ -567,8 +565,7 @@ public class DefaultTreeModel extends TreeModel {
         // set-up nodes in this.nodes[] to mirror connectedness in donor via a simple recursion on donor.getRoot()
         addNodeStructure(donor, donor.getRoot());
 
-        //Tree donor has no rates nor traits, only heights
-
+        remapParameterNodes();
     }
 
     /**
@@ -626,28 +623,29 @@ public class DefaultTreeModel extends TreeModel {
         //hence perform possible swaps in a separate loop
 
         for (int i = 0; i < edges.length; i++) {
-                if (edges[i] != -1) {
-                    if(i < this.externalNodeCount) {
-                        if (childOrder[i] == 0 && nodes[edges[i]].getChild(0) != nodes[nodeMap[i]]) {
-                            //swap child nodes
-                            Node childOne = nodes[edges[i]].removeChild(0);
-                            Node childTwo = nodes[edges[i]].removeChild(1);
-                            nodes[edges[i]].addChild(childTwo);
-                            nodes[edges[i]].addChild(childOne);
-                        }
-                    }else{
-                        if (childOrder[i] == 0 && nodes[edges[i]].getChild(0) != nodes[i]) {
-                            //swap child nodes
-                            Node childOne = nodes[edges[i]].removeChild(0);
-                            Node childTwo = nodes[edges[i]].removeChild(1);
-                            nodes[edges[i]].addChild(childTwo);
-                            nodes[edges[i]].addChild(childOne);
-                        }
+            if (edges[i] != -1) {
+                if(i < this.externalNodeCount) {
+                    if (childOrder[i] == 0 && nodes[edges[i]].getChild(0) != nodes[nodeMap[i]]) {
+                        //swap child nodes
+                        Node childOne = nodes[edges[i]].removeChild(0);
+                        Node childTwo = nodes[edges[i]].removeChild(1);
+                        nodes[edges[i]].addChild(childTwo);
+                        nodes[edges[i]].addChild(childOne);
+                    }
+                }else{
+                    if (childOrder[i] == 0 && nodes[edges[i]].getChild(0) != nodes[i]) {
+                        //swap child nodes
+                        Node childOne = nodes[edges[i]].removeChild(0);
+                        Node childTwo = nodes[edges[i]].removeChild(1);
+                        nodes[edges[i]].addChild(childTwo);
+                        nodes[edges[i]].addChild(childOne);
                     }
                 }
+            }
 
         }
 
+        remapParameterNodes();
         this.setRoot(nodes[newRootIndex]);
     }
 
@@ -666,14 +664,6 @@ public class DefaultTreeModel extends TreeModel {
         }
 
         setNodeHeight(acceptorNode, donorTree.getNodeHeight(donorNode));
-
-        //removing all child nodes up front currently works
-        //((Node)acceptorNode).leftChild = null;
-        //((Node)acceptorNode).rightChild = null;
-        /*int nrChildren = getChildCount(acceptorNode);
-          for (int i = 0; i < nrChildren; i++) {
-              this.removeChild(acceptorNode, this.getChild(acceptorNode, i));
-          }*/
 
         for (int i = 0; i < donorTree.getChildCount(donorNode); i++) {
             //add a check when the added child is an external node
@@ -708,10 +698,6 @@ public class DefaultTreeModel extends TreeModel {
         if (i == super.getStatisticCount()) return root.heightParameter;
         return super.getStatistic(i);
     }
-
-//    public String getModelComponentName() {
-//        return TREE_MODEL;
-//    }
 
     // **************************************************************
     // TaxonList IMPLEMENTATION
@@ -748,32 +734,7 @@ public class DefaultTreeModel extends TreeModel {
      * @return the node that this parameter is a member of
      */
     public Node getNodeOfParameter(Parameter parameter) {
-
-        if (parameter == null) throw new IllegalArgumentException("Parameter is null!");
-
-        for (Node node : nodes) {
-            if (node.heightParameter == parameter) {
-                return node;
-            }
-        }
-
-        if (hasRates) {
-            for (Node node : nodes) {
-                if (node.rateParameter == parameter) {
-                    return node;
-                }
-            }
-        }
-        if (hasTraits) {
-            for (Node node : nodes) {
-                if (node.traitParameters.containsValue(parameter)) {
-                    return node;
-                }
-            }
-        }
-        throw new RuntimeException("Parameter not found in any nodes:" + parameter.getId() + " " + parameter.hashCode());
-        // assume it is a trait parameter and return null
-//		return null;
+        return parameterNodeMap.get(parameter);
     }
 
     /**
@@ -887,8 +848,8 @@ public class DefaultTreeModel extends TreeModel {
     }
 
     public Parameter createNodeTraitsParameterAsMatrix(String name, int dim, double[] initialValues,
-                                               boolean rootNode, boolean internalNodes,
-                                               boolean leafNodes, boolean firesTreeEvents,
+                                                       boolean rootNode, boolean internalNodes,
+                                                       boolean leafNodes, boolean firesTreeEvents,
                                                        boolean signalComponents) {
 
         checkValidFlags(rootNode, internalNodes, leafNodes);
@@ -939,7 +900,8 @@ public class DefaultTreeModel extends TreeModel {
                 p1.setParameterValue(i, p2.getParameterValue(i));
                 p2.setParameterValue(i, transfer);
             }
-
+            parameterNodeMap.put(p1, n1);
+            parameterNodeMap.put(p2, n2);
         }
 
     }
@@ -975,6 +937,13 @@ public class DefaultTreeModel extends TreeModel {
             n1.traitParameters = n2.traitParameters;
             n2.traitParameters = temp;
 
+            for (Parameter trait : n1.traitParameters.values()) {
+                parameterNodeMap.put(trait, n1);
+            }
+            for (Parameter trait : n2.traitParameters.values()) {
+                parameterNodeMap.put(trait, n2);
+            }
+
             for (Map.Entry<String, Parameter> entry : traits1.entrySet()) {
                 n1.traitParameters.get(entry.getKey()).setParameterValueQuietly(0, entry.getValue().getParameterValue(0));
             }
@@ -986,11 +955,15 @@ public class DefaultTreeModel extends TreeModel {
         Parameter temp = n1.heightParameter;
         n1.heightParameter = n2.heightParameter;
         n2.heightParameter = temp;
+        parameterNodeMap.put(n1.heightParameter, n1);
+        parameterNodeMap.put(n2.heightParameter, n2);
 
         if (hasRates) {
             temp = n1.rateParameter;
             n1.rateParameter = n2.rateParameter;
             n2.rateParameter = temp;
+            parameterNodeMap.put(n1.rateParameter, n1);
+            parameterNodeMap.put(n2.rateParameter, n2);
         }
 
         n1.heightParameter.setParameterValueQuietly(0, height1);
@@ -1035,6 +1008,7 @@ public class DefaultTreeModel extends TreeModel {
 
             heightParameter = new Parameter.Default(tree.getNodeHeight(node));
             addVariable(heightParameter);
+            parameterNodeMap.put(heightParameter, this);
 
             number = node.getNumber();
             taxon = tree.getNodeTaxon(node);
@@ -1057,12 +1031,9 @@ public class DefaultTreeModel extends TreeModel {
                 }
                 setParameterId("rate", rateParameter);
                 rateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+                parameterNodeMap.put(rateParameter, this);
                 addVariable(rateParameter);
             }
-        }
-
-        public final void createTraitParameter(String name, double[] initialValues, boolean firesTreeEvents) {
-            createTraitParameter(name, initialValues.length, initialValues, firesTreeEvents);
         }
 
         public final void addTraitParameter(String name, Parameter trait, double[] initialValues, boolean firesTreeEvents) {
@@ -1101,6 +1072,7 @@ public class DefaultTreeModel extends TreeModel {
                 setParameterValues(trait, dim, initialValues);
 
                 traitParameters.put(name, trait);
+                parameterNodeMap.put(trait, this);
 
                 if (firesTreeEvents) {
                     addVariable(trait);
@@ -1343,5 +1315,7 @@ public class DefaultTreeModel extends TreeModel {
     private boolean hasRates = false;
     private boolean hasTraits = false;
     private boolean isTipDateSampled = false;
+
+    private final Map<Parameter, Node> parameterNodeMap = new HashMap<>();
 
 }

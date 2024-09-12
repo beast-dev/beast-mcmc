@@ -1,7 +1,8 @@
 /*
  * FullyConjugateTreeTipsPotentialDerivativeParser.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.continuous.hmc;
@@ -49,6 +51,7 @@ public class FullyConjugateTreeTipsPotentialDerivativeParser extends AbstractXML
     private final static String FULLY_CONJUGATE_TREE_TIPS_POTENTIAL_DERIVATIVE2 = "traitGradientOnTree";
     public static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
     private static final String MASKING = MaskedParameterParser.MASKING;
+    private static final String TRAITS = "treeTraitInds";
 
     @Override
     public String getParserName() {
@@ -57,7 +60,7 @@ public class FullyConjugateTreeTipsPotentialDerivativeParser extends AbstractXML
 
     @Override
     public String[] getParserNames() {
-        return new String[] { FULLY_CONJUGATE_TREE_TIPS_POTENTIAL_DERIVATIVE, FULLY_CONJUGATE_TREE_TIPS_POTENTIAL_DERIVATIVE2 };
+        return new String[]{FULLY_CONJUGATE_TREE_TIPS_POTENTIAL_DERIVATIVE, FULLY_CONJUGATE_TREE_TIPS_POTENTIAL_DERIVATIVE2};
     }
 
     @Override
@@ -75,11 +78,18 @@ public class FullyConjugateTreeTipsPotentialDerivativeParser extends AbstractXML
             mask = (Parameter) xo.getElementFirstChild(MASKING);
         }
 
+        Parameter specifiedParameter = (Parameter) xo.getChild(Parameter.class);
+
         if (fcTreeLikelihood != null) {
+
+            if (specifiedParameter != fcTreeLikelihood.getTraitParameter()) {
+                System.err.println("Warning: specified parameter and assumed parameter for '" + xo.getName() +
+                        "' do not match."); //TODO: better warning
+            }
 
             return new FullyConjugateTreeTipsPotentialDerivative(fcTreeLikelihood, mask);
 
-        } else if (treeDataLikelihood != null){
+        } else if (treeDataLikelihood != null) {
 
             DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
 
@@ -89,7 +99,7 @@ public class FullyConjugateTreeTipsPotentialDerivativeParser extends AbstractXML
 
             final ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
 
-            return new TreeTipGradient(traitName, treeDataLikelihood, continuousData, mask);
+            return new TreeTipGradient(traitName, specifiedParameter, treeDataLikelihood, continuousData, mask);
         } else {
             throw new XMLParseException("Must provide a tree likelihood");
         }
@@ -110,6 +120,7 @@ public class FullyConjugateTreeTipsPotentialDerivativeParser extends AbstractXML
                             new ElementRule(Parameter.class)
                     }, true),
             new ElementRule(Parameter.class, true),
+            AttributeRule.newIntegerArrayRule(TRAITS, true)
     };
 
     @Override

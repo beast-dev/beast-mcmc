@@ -1,7 +1,8 @@
 /*
- * SubtreeLeapOperator.java
+ * RandomWalkNodeHeightOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.RandomWalkOperator;
@@ -40,7 +41,6 @@ import dr.util.Transform;
  * reasons such as BigFastTreeModel.
  *
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class RandomWalkNodeHeightOperator extends AbstractAdaptableTreeOperator {
 
@@ -110,7 +110,7 @@ public class RandomWalkNodeHeightOperator extends AbstractAdaptableTreeOperator 
             newValue =  (x2 * (upper - lower)) + lower;
 
             // HR is the ratio of Jacobians for the before and after values in interval [0,1]
-            logHR = Transform.LOGIT.getLogJacobian(x1) - Transform.LOGIT.getLogJacobian(x2);
+            logHR = Transform.LOGIT.logJacobian(x1) - Transform.LOGIT.logJacobian(x2);
 
         } else if (boundaryCondition == RandomWalkOperator.BoundaryCondition.log) {
             // offset oldValue to [0,+Inf]
@@ -122,7 +122,7 @@ public class RandomWalkNodeHeightOperator extends AbstractAdaptableTreeOperator 
             newValue = x2 + lower;
 
             // HR is the ratio of Jacobians for the before and after values
-            logHR = Transform.LOG.getLogJacobian(x1) - Transform.LOG.getLogJacobian(x2);
+            logHR = Transform.LOG.logJacobian(x1) - Transform.LOG.logJacobian(x2);
 
         } else {
             newValue = oldValue + draw;

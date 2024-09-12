@@ -1,7 +1,8 @@
 /*
- * DataSimulationDelegate.java
+ * AbstractBeagleGradientDelegate.java
  *
- * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.preorder;
@@ -50,6 +52,7 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
                                              Tree tree,
                                              BeagleDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree);
+        this.tree = tree;
         this.likelihoodDelegate = likelihoodDelegate;
         this.beagle = likelihoodDelegate.getBeagleInstance();
 
@@ -163,7 +166,7 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
         //update all preOrder partials first
         simulationProcess.cacheSimulatedTraits(node);
 
-        double[] second = new double[tree.getNodeCount() - 1];
+        double[] second = new double[getGradientLength()];
         getNodeDerivatives(tree, null, second);
 
         return second;
@@ -259,6 +262,7 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
     protected double[] gradient;
 
     protected boolean substitutionProcessKnown;
+    protected Tree tree;
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     final boolean DEBUG = false;

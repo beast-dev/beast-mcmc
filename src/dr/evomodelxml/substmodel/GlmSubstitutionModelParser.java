@@ -1,7 +1,8 @@
 /*
- * OldGLMSubstitutionModelParser.java
+ * GlmSubstitutionModelParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.substmodel;
@@ -31,6 +33,7 @@ import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.distribution.GeneralizedLinearModel;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 /**
@@ -40,7 +43,7 @@ public class GlmSubstitutionModelParser extends AbstractXMLObjectParser {
 
     public static final String GLM_SUBSTITUTION_MODEL = "glmSubstitutionModel";
     private static final String NORMALIZE = "normalize";
-
+    private static final String LOG_RATES = "logRates";
 
     public String getParserName() {
         return GLM_SUBSTITUTION_MODEL;
@@ -55,6 +58,11 @@ public class GlmSubstitutionModelParser extends AbstractXMLObjectParser {
         int rateCount = (dataType.getStateCount() - 1) * dataType.getStateCount();
 
         LogAdditiveCtmcRateProvider glm = (LogAdditiveCtmcRateProvider) xo.getChild(LogAdditiveCtmcRateProvider.class);
+
+        if (glm == null) {
+            Parameter logRates = (Parameter) xo.getElementFirstChild(LOG_RATES);
+            glm = new LogAdditiveCtmcRateProvider.DataAugmented.Basic(logRates.getId(), logRates);
+        }
 
         int length = glm.getXBeta().length;
 
@@ -93,15 +101,16 @@ public class GlmSubstitutionModelParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new XORRule(
                     new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data",
                             DataType.getRegisteredDataTypeNames(), false),
                     new ElementRule(DataType.class)
             ),
             new ElementRule(ComplexSubstitutionModelParser.ROOT_FREQUENCIES, FrequencyModel.class),
-            new ElementRule(GeneralizedLinearModel.class),
+            new XORRule(
+                    new ElementRule(GeneralizedLinearModel.class),
+                    new ElementRule(LOG_RATES, Parameter.class)),
             AttributeRule.newBooleanRule(NORMALIZE, true),
     };
-
 }

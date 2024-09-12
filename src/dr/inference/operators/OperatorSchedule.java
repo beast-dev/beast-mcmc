@@ -1,7 +1,8 @@
 /*
  * OperatorSchedule.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -33,10 +35,14 @@ import java.util.List;
  * choosing the next operator during an MCMC run.
  *
  * @author Alexei Drummond
- * @version $Id: OperatorSchedule.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
 public interface OperatorSchedule extends Serializable {
-    OptimizationTransform DEFAULT_TRANSFORM = OptimizationTransform.POWER;
+
+    String SHOW_OPERATORS = "show_operators";
+    OptimizationTransform DEFAULT_TRANSFORM = OptimizationTransform.LOG;
+    //int POWERB = 1000000; //TODO discuss with Luiz why this value doesn't seem to work
+    int POWERB = 1;
+    double POWERC = 0.5556; // c = 5/9
 
     /**
      * @return Choose the next operator.
@@ -86,7 +92,7 @@ public interface OperatorSchedule extends Serializable {
         },
         POWER("power") {
             @Override public double transform(double d) {
-                return Math.pow(d, 0.55); // c = 5/9
+                return Math.pow(d/((double)POWERB), POWERC);
             }
         };
 
@@ -102,5 +108,5 @@ public interface OperatorSchedule extends Serializable {
         }
 
         private final String name;
-    };
+    }
 }

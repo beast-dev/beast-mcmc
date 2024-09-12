@@ -1,7 +1,8 @@
 /*
  * BeastMain.java
  *
- * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beast;
 
 import beagle.BeagleFlag;
 import beagle.BeagleInfo;
+import dr.app.beauti.BeautiMenuBarFactory;
 import dr.app.checkpoint.BeastCheckpointer;
 import dr.app.plugin.Plugin;
 import dr.app.plugin.PluginLoader;
@@ -35,20 +38,21 @@ import dr.app.util.Utils;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmcmc.MCMCMC;
 import dr.inference.mcmcmc.MCMCMCOptions;
+import dr.inference.operators.OperatorSchedule;
 import dr.math.MathUtils;
-import dr.util.ErrorLogHandler;
-import dr.util.MessageLogHandler;
-import dr.util.Version;
+import dr.util.*;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
 import jam.util.IconUtils;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 import java.util.logging.*;
 
 public class BeastMain {
@@ -58,11 +62,15 @@ public class BeastMain {
     public static final double DEFAULT_DELTA = 1.0;
     public static final int DEFAULT_SWAP_CHAIN_EVERY = 100;
 
+    private static final String CITATION_FILE_SUFFIX = ".citations.txt";
+
     static class BeastConsoleApp extends jam.console.ConsoleApplication {
         XMLParser parser = null;
+        public final static String backgroundColor =  "#35484F";
+        public final static String foregroundColor = "#CBB944";
 
         public BeastConsoleApp(String nameString, String titleString, String aboutString, javax.swing.Icon icon) throws IOException {
-            super(nameString, titleString, aboutString, icon, false);
+            super(nameString, titleString, aboutString, Color.decode(backgroundColor), Color.decode(foregroundColor), icon, false);
             getDefaultFrame().setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         }
 
@@ -70,6 +78,7 @@ public class BeastMain {
             Iterator iter = parser.getThreads();
             while (iter.hasNext()) {
                 Thread thread = (Thread) iter.next();
+                //noinspection removal
                 thread.stop(); // http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
             }
         }
@@ -83,13 +92,14 @@ public class BeastMain {
                      boolean parserWarning, boolean strictXML, List<String> additionalParsers,
                      MCMCMCOptions mc3Options) {
 
+
         if (inputFile == null) {
             throw new RuntimeException("Error: no input file specified");
         }
 
         String fileName = inputFile.getName();
 
-        final Logger infoLogger = Logger.getLogger("dr.app.beast");
+        final Logger infoLogger = Logger.getLogger("dr.apps.beast");
         try {
 
             FileReader fileReader = new FileReader(inputFile);
@@ -126,10 +136,18 @@ public class BeastMain {
             });
             infoLogger.addHandler(errorHandler);
 
-            if (System.getProperty("citations.filename") != null) {
-                FileOutputStream citationStream = new FileOutputStream(System.getProperty("citations.filename"));
-                Handler citationHandler = new MessageLogHandler(citationStream);
-                Logger.getLogger("dr.apps.beast").addHandler(citationHandler);
+            if (Boolean.parseBoolean(System.getProperty("output_citations"))) {
+                String citationFileName;
+                if (System.getProperty("citations.filename") != null) {
+                    citationFileName = System.getProperty("citations.filename");
+                } else {
+                    citationFileName = fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + CITATION_FILE_SUFFIX;
+                }
+                FileOutputStream citationStream = new FileOutputStream(FileHelpers.getFile(citationFileName));
+                //Handler citationHandler = new MessageLogHandler(citationStream);
+                Handler citationHandler = CitationLogHandler.getHandler(citationStream);
+                //Logger.getLogger("dr.app.beast").addHandler(citationHandler);
+                Logger.getLogger("dr.util").addHandler(citationHandler);
             }
 
             logger.setUseParentHandlers(false);
@@ -145,15 +163,7 @@ public class BeastMain {
             messageHandler.setLevel(Level.WARNING);
             errorLogger.addHandler(messageHandler);
 
-            for (String pluginName : PluginLoader.getAvailablePlugins()) {
-                Plugin plugin = PluginLoader.loadPlugin(pluginName);
-                if (plugin != null) {
-                    Set<XMLObjectParser> parserSet = plugin.getParsers();
-                    for (XMLObjectParser pluginParser : parserSet) {
-                        parser.addXMLObjectParser(pluginParser);
-                    }
-                }
-            }
+            PluginLoader.loadPlugins(parser);
 
             // Install the checkpointer. This creates a factory that returns
             // appropriate savers and loaders according to the user's options.
@@ -164,8 +174,8 @@ public class BeastMain {
             }
 
             if (mc3Options == null) {
-                // just parse the file running all threads...
 
+                // just parse the file running all threads...
                 parser.parse(fileReader, true);
 
             } else {
@@ -202,17 +212,8 @@ public class BeastMain {
 
                     parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML, version);
 
-                    // DM: Hot chains also need to add plugin parsers
-                    for (String pluginName : PluginLoader.getAvailablePlugins()) {
-                        Plugin plugin = PluginLoader.loadPlugin(pluginName);
-                        if (plugin != null) {
-                            Set<XMLObjectParser> parserSet = plugin.getParsers();
-                            for (XMLObjectParser pluginParser : parserSet) {
-                                parser.addXMLObjectParser(pluginParser);
-                            }
-                        }
-                    }
-
+                    PluginLoader.loadPlugins(parser);
+                    
                     chains[i] = (MCMC) parser.parse(fileReader, MCMC.class);
                     if (chains[i] == null) {
                         throw new dr.xml.XMLParseException("BEAST XML file is missing an MCMC element");
@@ -260,8 +261,11 @@ public class BeastMain {
                                 "the button at the bottom right of the window.");
 
             } else {
-                infoLogger.severe("Parsing error - poorly formed BEAST file, " + fileName + ":\n" +
-                        pxe.getMessage() + "\n\nError thrown at: " + pxe.getStackTrace()[0] + "\n");
+                infoLogger.severe(
+                        "\n******\nError in input BEAST XML file, " + fileName + ":\n" +
+                        pxe.getMessage() +
+                        "\n******\n"
+                );
             }
             throw new RuntimeException("Terminate");
         } catch (RuntimeException rex) {
@@ -301,6 +305,7 @@ public class BeastMain {
 
         try {
             dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.releaseAllBeagleInstances();
+            dr.evomodel.coalescent.basta.BeagleBastaLikelihoodDelegate.releaseAllBeagleBastaInstances();
         } catch (Throwable e) {
            throw new RuntimeException("Terminate");
         }
@@ -317,7 +322,7 @@ public class BeastMain {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("BEAST " + version.getVersionString() + ", " + version.getDateString(), 60);
+        centreLine("BEAST X " + version.getVersionString() + ", " + version.getDateString(), 60);
         centreLine("Bayesian Evolutionary Analysis Sampling Trees", 60);
         for (String creditLine : version.getCredits()) {
             centreLine(creditLine, 60);
@@ -361,16 +366,23 @@ public class BeastMain {
                         new Arguments.Option("overwrite", "Allow overwriting of log files"),
                         new Arguments.IntegerOption("errors", "Specify maximum number of numerical errors before stopping"),
                         new Arguments.IntegerOption("threads", "The maximum number of computational threads to use (default auto)"),
-                        new Arguments.Option("fail_threads", "Exit with error on uncaught exception in thread."),
+                        new Arguments.Option("fail_threads", "Exit with error on uncaught exception in thread"),
+                        new Arguments.Option("ignore_versions", "Ignore mismatches between XML and BEAST versions"),
                         new Arguments.Option("java", "Use Java only, no native implementations"),
                         new Arguments.LongOption("tests", "The number of full evaluation tests to perform (default 1000)"),
                         new Arguments.RealOption("threshold", 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 0.1)"),
+                        new Arguments.Option(OperatorSchedule.SHOW_OPERATORS, "Print transition kernel performance to file"),
 
                         new Arguments.Option("adaptation_off", "Don't adapt operator sizes"),
                         new Arguments.RealOption("adaptation_target", 0.0, 1.0, "Target acceptance rate for adaptive operators (default 0.234)"),
 
+                        new Arguments.StringOption("pattern_compression", new String[]{"off", "unique", "ambiguous_constant", "ambiguous_all"},
+                                false, "Site pattern compression mode - unique | ambiguous_constant | ambiguous_all (default unique)"),
+                        new Arguments.RealOption("ambiguous_threshold", 0.0, 1.0, "Maximum proportion of ambiguous characters to allow compression (default 0.25)"),
+
                         new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
+                        new Arguments.Option("beagle_auto", "BEAGLE: automatically select fastest resource for analysis"),
                         new Arguments.StringOption("beagle_order", "order", "BEAGLE: set order of resource use"),
                         new Arguments.IntegerOption("beagle_instances", "BEAGLE: divide site patterns amongst instances"),
                         new Arguments.StringOption("beagle_multipartition", new String[]{"auto", "on", "off"},
@@ -412,17 +424,12 @@ public class BeastMain {
                         new Arguments.Option("force_resume", "Force resuming from a saved state"),
 
                         new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
+                        new Arguments.Option("citations_off", "Turn off writing citations to file"),
+                        new Arguments.StringOption("plugins_dir", "FILENAME", "Specify a directory to load plugins from, multiple can be separated with ':' "),
 
                         new Arguments.Option("version", "Print the version and credits and stop"),
                         new Arguments.Option("help", "Print this information and stop"),
                 });
-
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        if (versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1) {
-            arguments.addOption("beagle_auto",
-                    "BEAGLE: automatically select fastest resource for analysis",
-                    "beagle_info");
-        };
 
         int argumentCount = 0;
 
@@ -467,6 +474,10 @@ public class BeastMain {
         final boolean warnings = arguments.hasOption("warnings"); // if dev, then auto turn on, otherwise default to turn off
         if (warnings) {
             System.setProperty("show_warnings", Boolean.toString(true));
+        }
+
+        if (arguments.hasOption("ignore_versions")) {
+            System.setProperty("ignore.versions", Boolean.toString(true));
         }
 
         final boolean strictXML = arguments.hasOption("strict");
@@ -515,6 +526,15 @@ public class BeastMain {
 
             if (arguments.hasOption("prefix")) {
                 fileNamePrefix = arguments.getStringOption("prefix");
+            }
+
+            // ============= Evaluation approximations =============
+
+            if (arguments.hasOption("pattern_compression")) {
+                System.setProperty("patterns.compression", arguments.getStringOption("pattern_compression").toLowerCase());
+            }
+            if (arguments.hasOption("ambiguous_threshold")) {
+                System.setProperty("patterns.threshold", String.valueOf(arguments.getRealOption("ambiguous_threshold")));
             }
 
             // ============= MC^3 settings =============
@@ -689,6 +709,20 @@ public class BeastMain {
             System.setProperty("adaptation_target",
                     Double.toString(arguments.getRealOption("mcmc.adaptation_target")));
         }
+        if (arguments.hasOption("plugins_dir")) {
+            System.setProperty("beast.plugins.dir",
+                     arguments.getStringOption("plugins_dir")+":"+System.getProperty("beast.plugins.dir"));
+        }
+
+        if (arguments.hasOption("citations_off")) {
+            System.setProperty("output_citations", Boolean.FALSE.toString());
+        } else {
+            System.setProperty("output_citations", Boolean.TRUE.toString());
+        }
+
+        if (arguments.hasOption(OperatorSchedule.SHOW_OPERATORS)) {
+            System.setProperty(OperatorSchedule.SHOW_OPERATORS, Boolean.TRUE.toString());
+        }
 
         if (!usingSMC) {
             // ignore these other options
@@ -732,8 +766,8 @@ public class BeastMain {
             }
 
             if (arguments.hasOption("citations_file")) {
-                String debugStateFile = arguments.getStringOption("citations_file");
-                System.setProperty("citations.filename", debugStateFile);
+                String citationsFile = arguments.getStringOption("citations_file");
+                System.setProperty("citations.filename", citationsFile);
             }
 
             if (useMPI) {
@@ -765,29 +799,32 @@ public class BeastMain {
 
         BeastConsoleApp consoleApp = null;
 
-        String nameString = "BEAST " + version.getVersionString();
+        // don't include the pre-release commit in the window title bar
+        String nameString = "BEAST X v" + version.getVersion();
 
         if (window) {
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");
             System.setProperty("apple.laf.useScreenMenuBar", "true");
             System.setProperty("apple.awt.showGrowBox", "true");
 
-            javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
+            javax.swing.Icon icon = IconUtils.resize(IconUtils.getIcon(BeastMain.class, "images/beast.png"), 128, 128);
 
             String titleString = "<html>" +
                     "<div style=\"font: HelveticaNeue, Helvetica, Arial, sans-serif\">" +
-                    "<p style=\"font-weight: 100; font-size: 42px\">BEAST</p>" +
+                    "<p style=\"font-weight: 100; font-size: 42px\">BEAST X</p>" +
                     "<p style=\"font-weight: 200; font-size: 12px\">Bayesian Evolutionary Analysis Sampling Trees</p>" +
                     "<p style=\"font-weight: 300; font-size: 11px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
                     "</div></html>";
 
             String aboutString = "<html>" +
-                    "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; font-weight: 100\">" +
+                    "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; " +
+                    "font-weight: 100;" +
+                    "background: #35484F; color: #CBB944\">" +
                     "<center>" +
                     version.getHTMLCredits() +
                     "</div></center></div></html>";
 
-            consoleApp = new BeastConsoleApp(nameString, titleString, aboutString, icon);
+            consoleApp = new BeastConsoleApp(nameString, titleString, aboutString,  icon);
             consoleApp.initialize();
 
         }
@@ -799,14 +836,14 @@ public class BeastMain {
         if (options && !beagleShowInfo) {
 
             String titleString = "<html>" +
-                    "<div style=\"font: HelveticaNeue, Helvetica, Arial, sans-serif\">" +
-                    "<div style=\"font-weight: 100; font-size: 42px\">BEAST</div>" +
+                    "<div style=\"font-family: HelveticaNeue-Light, Helvetica, Arial, sans-serif\">" +
+                    "<div style=\"font-family: HelveticaNeue-Thin; font-weight: 80; font-size: 42px\">BEAST X</div>" +
                     "<div style=\"font-weight: 200; font-size: 11px\">Bayesian Evolutionary Analysis Sampling Trees</div>" +
                     "<div style=\"font-weight: 300; font-size: 10px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</div>" +
                     "<div style=\"font-weight: 300; font-size: 10px\"><a href=\"" + version.getBuildString() + "\">" +
                     version.getBuildString() + "</a></div>" +
                     "</div></html>";
-            javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
+            javax.swing.Icon icon = IconUtils.resize(IconUtils.getIcon(BeastMain.class, "images/beast.png"), 128, 128);
 
             BeastDialog dialog = new BeastDialog(new JFrame(), titleString, icon);
 
@@ -866,12 +903,11 @@ public class BeastMain {
 
         BeagleInfo.printVersionInformation();
 
-        if (BeagleInfo.getVersion().startsWith("1.")) {
-            System.err.println("WARNING: You are currenly using BEAGLE v1.x. For best performance and compatibility\n" +
-                    "with models in BEAST, please upgrade to BEAGLE v3.x at http://github.com/beagle-dev/beagle-lib/\n");
-        } else if (BeagleInfo.getVersion().startsWith("2.")) {
-            System.err.println("WARNING: You are currenly using BEAGLE v2.x. For best performance and compatibility\n" +
-                    "with models in BEAST, please upgrade to BEAGLE v3.x at http://github.com/beagle-dev/beagle-lib/\n");
+        int[] versionNumbers = BeagleInfo.getVersionNumbers();
+        if (versionNumbers.length != 0 && versionNumbers[0] < 4) {
+            System.err.println("BEAST v" + BeastVersion.INSTANCE.getVersion() + " requires BEAGLE v4.0 or later.\n" +
+                    "Please install or upgrade to the latest BEAGLE from https://beagle-dev.github.io/");
+            throw new RuntimeException("Terminate");
         }
 
         if (beagleShowInfo) {
@@ -899,7 +935,7 @@ public class BeastMain {
 
             if (inputFileName == null) {
                 // No input file name was given so throw up a dialog box...
-                inputFile = Utils.getLoadFile("BEAST " + version.getVersionString() + " - Select XML input file");
+                inputFile = Utils.getLoadFile("BEAST X " + version.getVersionString() + " - Select XML input file");
             }
         }
 

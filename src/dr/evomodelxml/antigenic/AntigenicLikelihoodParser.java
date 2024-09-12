@@ -1,9 +1,34 @@
+/*
+ * AntigenicLikelihoodParser.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.evomodelxml.antigenic;
 
 import dr.evomodel.antigenic.NewAntigenicLikelihood;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.DataTable;
 import dr.xml.*;
@@ -34,6 +59,8 @@ public class AntigenicLikelihoodParser extends AbstractXMLObjectParser {
     public static final String SERUM_BREADTHS = "serumBreadths";
     public static final String VIRUS_OFFSETS = "virusOffsets";
     public static final String SERUM_OFFSETS = "serumOffsets";
+
+    private static final String START_DIMENSION = "tipStartDim";
 
     public String getParserName() {
         return ANTIGENIC_LIKELIHOOD;
@@ -75,9 +102,9 @@ public class AntigenicLikelihoodParser extends AbstractXMLObjectParser {
             // TOD Remove
         }
 
-        MatrixParameter serumLocationsParameter = null;
+        MatrixParameterInterface serumLocationsParameter = null;
         if (xo.hasChildNamed(SERUM_LOCATIONS)) {
-            serumLocationsParameter = (MatrixParameter) xo.getElementFirstChild(SERUM_LOCATIONS);
+            serumLocationsParameter = (MatrixParameterInterface) xo.getElementFirstChild(SERUM_LOCATIONS);
         }
 
         Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
@@ -122,6 +149,8 @@ public class AntigenicLikelihoodParser extends AbstractXMLObjectParser {
             virusAviditiesParameter = (Parameter) xo.getElementFirstChild(VIRUS_AVIDITIES);
         }
 
+        int startDim = xo.getAttribute(START_DIMENSION, 1) - 1;
+
         NewAntigenicLikelihood AGL = new NewAntigenicLikelihood(
                 mdsDimension,
                 mdsPrecision,
@@ -139,7 +168,8 @@ public class AntigenicLikelihoodParser extends AbstractXMLObjectParser {
                 assayTable,
                 mergeSerumIsolates,
                 intervalWidth,
-                driftInitialLocations);
+                driftInitialLocations,
+                startDim);
 
         Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Citable.Utils.getCitationString(AGL));
 
@@ -167,7 +197,7 @@ public class AntigenicLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(DRIFT_INITIAL_LOCATIONS, true, "The degree to drift initial virus and serum locations, defaults to 0.0"),
             new ElementRule(TIP_TRAIT, CompoundParameter.class, "Optional parameter of tip locations from the tree", true),
 //                new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class, "Parameter of locations of all virus"),
-            new ElementRule(SERUM_LOCATIONS, MatrixParameter.class, "Parameter of locations of all sera"),
+            new ElementRule(SERUM_LOCATIONS, MatrixParameterInterface.class, "Parameter of locations of all sera"),
             new ElementRule(VIRUS_OFFSETS, Parameter.class, "Optional parameter for virus dates to be stored", true),
             new ElementRule(SERUM_OFFSETS, Parameter.class, "Optional parameter for serum dates to be stored", true),
             new ElementRule(SERUM_POTENCIES, Parameter.class, "Optional parameter for serum potencies", true),
@@ -176,7 +206,8 @@ public class AntigenicLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(MDS_PRECISION, Parameter.class, "Parameter for precision of MDS embedding"),
             new ElementRule(LOCATION_DRIFT, Parameter.class, "Optional parameter for drifting locations with time", true),
             new ElementRule(VIRUS_DRIFT, Parameter.class, "Optional parameter for drifting only virus locations, overrides locationDrift", true),
-            new ElementRule(SERUM_DRIFT, Parameter.class, "Optional parameter for drifting only serum locations, overrides locationDrift", true)
+            new ElementRule(SERUM_DRIFT, Parameter.class, "Optional parameter for drifting only serum locations, overrides locationDrift", true),
+            AttributeRule.newIntegerRule(START_DIMENSION, true),
     };
 
     public Class getReturnType() {

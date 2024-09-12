@@ -1,7 +1,8 @@
 /*
  * BeastGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
@@ -34,20 +36,17 @@ import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.util.Arguments;
 import dr.evolution.alignment.Alignment;
-import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Microsatellite;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
-import dr.evomodelxml.speciation.MultiSpeciesCoalescentParser;
-import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.DateParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
-import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.inferencexml.operators.SimpleOperatorScheduleParser;
 import dr.util.Attribute;
@@ -68,7 +67,6 @@ import java.util.*;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Walter Xie
- * @version $Id: BeastGenerator.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class BeastGenerator extends Generator {
 
@@ -117,36 +115,7 @@ public class BeastGenerator extends Generator {
      * @throws IllegalArgumentException if there is a problem with the current settings
      */
     public void checkOptions() throws GeneratorException {
-        //++++++++++++++ Microsatellite +++++++++++++++
-        // this has to execute before all checking below
-        // mask all ? from microsatellite data for whose tree only has 1 data partition
-
         try{
-            if (options.contains(Microsatellite.INSTANCE)) {
-                // clear all masks
-                for (PartitionPattern partitionPattern : options.getPartitionPattern()) {
-                    partitionPattern.getPatterns().clearMask();
-                }
-
-                // set mask
-                for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-                    // if a tree only has 1 data partition, which mostly mean unlinked trees
-                    if (options.getDataPartitions(model).size() == 1) {
-                        PartitionPattern partition = (PartitionPattern) options.getDataPartitions(model).get(0);
-                        Patterns patterns = partition.getPatterns();
-
-                        for (int i = 0; i < patterns.getTaxonCount(); i++) {
-                            int state = patterns.getPatternState(i, 0);
-                            // mask ? from data
-                            if (state < 0) {
-                                patterns.addMask(i);
-                            }
-                        }
-
-//                        System.out.println("mask set = " + patterns.getMaskSet() + " in partition " + partition.getName());
-                    }
-                }
-            }
 
             //++++++++++++++++ Taxon List ++++++++++++++++++
             TaxonList taxonList = options.taxonList;
@@ -224,7 +193,8 @@ public class BeastGenerator extends Generator {
             }
 
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-                if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID && Double.isNaN(prior.getSkyGridInterval())) {
+                if ((prior.getNodeHeightPrior() == TreePriorType.SKYGRID || prior.getNodeHeightPrior() == TreePriorType.SKYGRID_HMC)
+                        && Double.isNaN(prior.getSkyGridInterval())) {
                     throw new GeneratorException("The Skygrid cut-off time must be set and greater than 0.0.", BeautiFrame.TREES);
                 }
             }
@@ -306,6 +276,23 @@ public class BeastGenerator extends Generator {
 
 
     }
+    public boolean checkUserTreeIsBifurcating(){
+        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+            if(model.getStartingTreeType()==StartingTreeType.USER){
+                if(!(isBifurcatingTree(model.getUserStartingTree(),model.getUserStartingTree().getRoot()))){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    public boolean isBifurcatingTree(Tree tree, NodeRef node) {
+        if (tree.getChildCount(node) > 2) return false;
+        for (int i = 0; i < tree.getChildCount(node); i++) {
+            if (!isBifurcatingTree(tree, tree.getChild(node, i))) return false;
+        }
+        return true;
+    }
 
     /**
      * Generate a beast xml file from these beast options
@@ -349,21 +336,6 @@ public class BeastGenerator extends Generator {
 
             writer.writeText("");
 
-            if (!options.hasIdenticalTaxa()) {
-                // write all taxa in each gene tree regarding each data partition,
-                for (AbstractPartitionData partition : options.dataPartitions) {
-                    if (partition.getTaxonList() != null) {
-                        writeDifferentTaxa(partition, writer);
-                    }
-                }
-            } else {
-                // microsat
-                for (PartitionPattern partitionPattern : options.getPartitionPattern()) {
-                    if (partitionPattern.getTaxonList() != null && partitionPattern.getPatterns().hasMask()) {
-                        writeDifferentTaxa(partitionPattern, writer);
-                    }
-                }
-            }
         } catch (Exception e) {
             e.printStackTrace(System.err);
             throw new GeneratorException("Taxon list generation has failed:\n" + e.getMessage());
@@ -372,7 +344,7 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ Taxon Sets ++++++++++++++++++
         List<Taxa> taxonSets = options.taxonSets;
         try {
-            if (taxonSets != null && taxonSets.size() > 0) {
+            if (taxonSets != null && !taxonSets.isEmpty()) {
                 tmrcaStatisticsGenerator.writeTaxonSets(writer, taxonSets);
             }
         } catch (Exception e) {
@@ -387,7 +359,7 @@ public class BeastGenerator extends Generator {
         try {
             for (AbstractPartitionData partition : options.dataPartitions) {
                 Alignment alignment = null;
-                if (partition instanceof PartitionData) { // microsat has no alignment
+                if (partition instanceof PartitionData) {
                     alignment = ((PartitionData) partition).getAlignment();
                 }
                 if (alignment != null && !alignments.contains(alignment)) {
@@ -407,7 +379,6 @@ public class BeastGenerator extends Generator {
         try {
             // Construct pattern lists even if sampling from a null alignment
             //if (!options.samplePriorOnly) {
-                List<Microsatellite> microsatList = new ArrayList<Microsatellite>();
                 for (AbstractPartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
                     if (partition.getTaxonList() != null) {
                         switch (partition.getDataType().getType()) {
@@ -425,11 +396,7 @@ public class BeastGenerator extends Generator {
                                 // attribute patterns which is generated next bit of this method.
                                 break;
 
-                            case DataType.MICRO_SAT:
-                                // microsat does not have alignment
-                                patternListGenerator.writePatternList((PartitionPattern) partition, microsatList, writer);
-                                break;
-
+                            case DataType.TREE:
                             case DataType.DUMMY:
                                 //Do nothing
                                 break;
@@ -629,11 +596,6 @@ public class BeastGenerator extends Generator {
             if (options.performTraceAnalysis) {
                 writeTraceAnalysis(writer);
             }
-            if (options.generateCSV) {
-                for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-                    treePriorGenerator.writeEBSPAnalysisToCSVfile(prior, writer);
-                }
-            }
         } catch (Exception e) {
             e.printStackTrace();
             throw new GeneratorException("The last part of XML generation has failed:\n" + e.getMessage());
@@ -744,24 +706,6 @@ public class BeastGenerator extends Generator {
 
         if (hasDate || hasAttr) writer.writeCloseTag(TaxonParser.TAXON);
 
-    }
-
-    public void writeDifferentTaxa(AbstractPartitionData dataPartition, XMLWriter writer) {
-        TaxonList taxonList = dataPartition.getTaxonList();
-
-        String name = dataPartition.getPartitionTreeModel().getName();
-
-        writer.writeComment("gene name = " + name + ", ntax= " + taxonList.getTaxonCount());
-        writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, name + "." + TaxaParser.TAXA)});
-
-        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-            if ( !(dataPartition instanceof PartitionPattern && ((PartitionPattern) dataPartition).getPatterns().isMasked(i) ) ) {
-                final Taxon taxon = taxonList.getTaxon(i);
-                writer.writeIDref(TaxonParser.TAXON, taxon.getId());
-            }
-        }
-
-        writer.writeCloseTag(TaxaParser.TAXA);
     }
 
     /**

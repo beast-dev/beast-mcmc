@@ -1,7 +1,8 @@
 /*
  * BeautiFrame.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 /*
@@ -45,7 +47,6 @@ import dr.app.beauti.components.linkedparameters.LinkedParameterComponentFactory
 import dr.app.beauti.components.marginalLikelihoodEstimation.MarginalLikelihoodEstimationComponentFactory;
 import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentFactory;
 import dr.app.beauti.components.tipdatesampling.TipDateSamplingComponentFactory;
-import dr.app.beauti.datapanel.CreateBadTraitFormatDialog;
 import dr.app.beauti.datapanel.DataPanel;
 import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.generator.Generator;
@@ -88,7 +89,6 @@ import java.util.Map;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: BeautiFrame.java,v 1.22 2006/09/09 16:07:06 rambaut Exp $
  */
 public class BeautiFrame extends DocumentFrame {
 
@@ -174,9 +174,13 @@ public class BeautiFrame extends DocumentFrame {
         });
     }
 
+    public DataPanel getDataPanel() {
+        return dataPanel;
+    }
+
     public void initializeComponents() {
 
-        dataPanel = new DataPanel(this, getImportAction(), getDeleteAction()/*, getImportTraitsAction()*/);
+        dataPanel = new DataPanel(this, getImportAction(), getRemoveAction()/*, getImportTraitsAction()*/);
         tipDatesPanel = new TipDatesPanel(this);
         traitsPanel = new TraitsPanel(this, dataPanel, getImportTraitsAction());
         taxonSetPanel = new TaxonSetPanel(this);
@@ -484,11 +488,9 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public final void doImport() {
-        File[] files = selectImportFiles("Import Aligment...", true, new FileNameExtensionFilter[]{
-                new FileNameExtensionFilter("Microsatellite (tab-delimited *.txt) Files", "txt"),
+        File[] files = selectImportFiles("Import Alignment...", true, new FileNameExtensionFilter[]{
                 new FileNameExtensionFilter(
                         "NEXUS, BEAST or FASTA Files", "nex", "nexus", "nx", "xml", "beast", "fa", "fasta", "afa")});
-        // new FileNameExtensionFilter( "Microsatellite (tab-delimited *.txt) Files", "txt");
         if (files != null && files.length != 0) {
             importFiles(files);
             tabbedPane.setSelectedComponent(dataPanel);
@@ -513,8 +515,6 @@ public class BeautiFrame extends DocumentFrame {
                     JOptionPane.showMessageDialog(this, "File I/O Error unable to read file:\n    " + ioe.getMessage(),
                             "Unable to read file", JOptionPane.ERROR_MESSAGE);
                     ioe.printStackTrace();
-                    // there may be other files in the list so don't return
-//                    return;
 
                 } catch (MissingBlockException ex) {
                     JOptionPane.showMessageDialog(this, "TAXON, DATA or CHARACTERS block is missing in Nexus file:\n    " + ex.getMessage(),
@@ -568,13 +568,8 @@ public class BeautiFrame extends DocumentFrame {
                         "Unable to read file",
                         JOptionPane.ERROR_MESSAGE);
                 return false;
-            } catch (Exception ex) {
+            } catch (ImportException ex) {
                 ex.printStackTrace(System.err);
-
-                CreateBadTraitFormatDialog dialog = new CreateBadTraitFormatDialog(this);
-                dialog.showDialog();
-
-                ex.printStackTrace();
                 return false;
             }
         } else {
@@ -630,14 +625,6 @@ public class BeautiFrame extends DocumentFrame {
         setStatusMessage();
     }
 
-    public void setupEBSP() {
-        dataPanel.selectAll();
-
-        dataPanel.unlinkAll();
-
-        setAllOptions();
-    }
-
     public PartitionTreePrior getCurrentPartitionTreePrior() {
         treesPanel.setOptions(options); // need this to refresh the currentTreeModel
         return treesPanel.currentTreeModel.getPartitionTreePrior();
@@ -669,6 +656,14 @@ public class BeautiFrame extends DocumentFrame {
         if (!defaultPriorDialog.showDialog(options)) {
             return false;
         }
+        //TODO make remove this or put warnings in check above? Seems more appropriate here for now
+        if(!generator.checkUserTreeIsBifurcating()){
+            JOptionPane.showMessageDialog(this, "At least one  user-specified starting tree " +
+                        "is not fully bifurcating.\nBEAST will randomly resolve it into a bifurcating (binary) tree.",
+                        "Unresolved user-specified starting tree",
+                        JOptionPane.WARNING_MESSAGE);
+        }
+
 
         File file = selectExportFile("Generate BEAST XML File...", new FileNameExtensionFilter("BEAST XML File", "xml", "beast"));
 
@@ -830,14 +825,26 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public Action getImportAction() {
-        return importAlignmentAction;
+        return importDataAction;
     }
 
-    protected AbstractAction importAlignmentAction = new AbstractAction("Import Data...") {
+    protected AbstractAction importDataAction = new AbstractAction("Import Data...") {
         private static final long serialVersionUID = 3217702096314745005L;
 
         public void actionPerformed(java.awt.event.ActionEvent ae) {
             doImport();
+        }
+    };
+
+    public Action getRemoveAction() {
+        return removeDataAction;
+    }
+
+    protected AbstractAction removeDataAction = new AbstractAction("Remove Partition") {
+        private static final long serialVersionUID = 3217702096314745005L;
+
+        public void actionPerformed(java.awt.event.ActionEvent ae) {
+            doDelete();
         }
     };
 

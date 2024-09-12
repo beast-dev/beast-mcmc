@@ -1,7 +1,8 @@
 /*
  * CoalescentGradient.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.coalescent;
@@ -34,6 +36,7 @@ import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
+import dr.inference.model.GradientProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.Binomial;
@@ -50,13 +53,37 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
     private final CoalescentLikelihood likelihood;
     private final Parameter parameter;
     private final Tree tree;
+    private final GradientProvider provider;
+
+    public enum Wrt {
+        NODE_HEIGHTS,
+        PARAMETER
+    }
 
     public CoalescentGradient(CoalescentLikelihood likelihood,
                               TreeModel tree,
+                              Parameter wrtParameter,
+                              Wrt wrt,
                               double tolerance) {
         this.likelihood = likelihood;
         this.tree = tree;
-        this.parameter = new NodeHeightProxyParameter("NodeHeights", tree, true);
+        if (wrt == Wrt.NODE_HEIGHTS) {
+            this.parameter = new NodeHeightProxyParameter("NodeHeights", tree, true);
+            this.provider = new GradientProvider() {
+                @Override
+                public int getDimension() {
+                    return parameter.getDimension();
+                }
+
+                @Override
+                public double[] getGradientLogDensity(Object x) {
+                    return getGradientLogDensityWrtNodeHeights();
+                }
+            };
+        } else {
+            this.parameter = wrtParameter;
+            this.provider = null; // TODO return gradient wrt parameter
+        }
         this.tolerance = tolerance;
     }
 
@@ -77,6 +104,16 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
 
     @Override
     public double[] getGradientLogDensity() {
+
+        if (likelihood.getPopulationSizeModel() != null) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        return provider.getGradientLogDensity(null);
+    }
+
+    private double[] getGradientLogDensityWrtNodeHeights() {
+
         final double logLikelihood = likelihood.getLogLikelihood();
         double[] gradient = new double[tree.getInternalNodeCount()];
 
@@ -135,7 +172,6 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
 
         return gradient;
     }
-
 
     private final double tolerance;
 

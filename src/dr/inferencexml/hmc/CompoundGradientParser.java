@@ -1,7 +1,8 @@
 /*
  * CompoundGradientParser.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.hmc;
@@ -41,7 +43,7 @@ import java.util.List;
 public class CompoundGradientParser extends AbstractXMLObjectParser {
 
     public final static String SUM_DERIVATIVE = "appendedPotentialDerivative";
-    public static final String SUM_DERIVATIVE2 = "compoundGradient";
+    public static final String COMPOUND_GRADIENT = "compoundGradient";
 
     @Override
     public String getParserName() {
@@ -50,7 +52,7 @@ public class CompoundGradientParser extends AbstractXMLObjectParser {
 
     @Override
     public String[] getParserNames() {
-        return new String[]{SUM_DERIVATIVE, SUM_DERIVATIVE2};
+        return new String[]{SUM_DERIVATIVE, COMPOUND_GRADIENT};
     }
 
     @Override

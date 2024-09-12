@@ -1,3 +1,30 @@
+/*
+ * MassPreconditioner.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.inference.operators.hmc;
 
 import cern.colt.matrix.DoubleFactory2D;
@@ -10,10 +37,7 @@ import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.*;
 import dr.math.*;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.matrixAlgebra.ReadableVector;
-import dr.math.matrixAlgebra.RobustEigenDecomposition;
-import dr.math.matrixAlgebra.WrappedMatrix;
-import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.*;
 import dr.util.Transform;
 
 import java.util.ArrayList;
@@ -653,6 +677,9 @@ public interface MassPreconditioner {
             this.variance = new AdaptableVector.AdaptableVariance(dim);
             this.options = options;
             this.minimumUpdates = options.preconditioningDelay();
+            if (minimumUpdates < 2) {
+                throw new RuntimeException("Need at least two samples to calculate empirical variance.  Set HMC's option preconditioningDelay > 2 please!");
+            }
             this.gradient = gradient;
             if (guessInitialMass) {
                 setInitialMass();
@@ -720,10 +747,8 @@ public interface MassPreconditioner {
 
             if (variance.getUpdateCount() > minimumUpdates) {
                 double[] newVariance = variance.getVariance();
-//                adaptiveDiagonal.update(new WrappedVector.Raw(newVariance));
-//                return normalizeVector(adaptiveDiagonal.getMean(), dim);
-//                setInverseMassFromArray(normalizeVector(new WrappedVector.Raw(newVariance), dim));
-                setInverseMassFromArray(DiagonalHessianPreconditioning.boundMassInverse(newVariance,
+                adaptiveDiagonal.update(new WrappedVector.Raw(newVariance));
+                setInverseMassFromArray(DiagonalHessianPreconditioning.boundMassInverse(((WrappedVector) adaptiveDiagonal.getMean()).getBuffer(),
                         options.preconditioningEigenLowerBound(), options.preconditioningEigenUpperBound(), dim,
                         DiagonalHessianPreconditioning.VarianceConverter.VARIANCE));
             }

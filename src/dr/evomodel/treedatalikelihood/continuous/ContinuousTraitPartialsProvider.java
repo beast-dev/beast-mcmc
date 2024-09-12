@@ -1,7 +1,8 @@
 /*
  * ContinuousTraitPartialsProvider.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,14 +22,18 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
 import dr.inference.model.CompoundParameter;
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -112,6 +117,15 @@ public interface ContinuousTraitPartialsProvider {
             return this;
         }
         throw new RuntimeException("Partials provider does not have trait '" + trait + "'");
+    }
+
+    default void updateTipDataGradient(DenseMatrix64F precision, DenseMatrix64F variance, NodeRef node,
+                                       int offset, int dimGradient) {
+        throw new RuntimeException("not yet implemented");
+    }
+
+    default boolean needToUpdateTipDataGradient(int offset, int dimGradient) {
+        throw new RuntimeException("not yet implemented");
     }
 
     static boolean[] indicesToIndicator(List<Integer> indices, int n) {

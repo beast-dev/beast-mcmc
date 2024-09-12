@@ -1,7 +1,8 @@
 /*
  * DataPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.datapanel;
@@ -36,12 +38,11 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.DummyDataType;
-import dr.evolution.datatype.Microsatellite;
 import dr.evolution.util.Taxa;
 import jam.framework.Exportable;
-import jam.panels.ActionPanel;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -53,17 +54,24 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: DataPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class DataPanel extends BeautiPanel implements Exportable {
+
+    private static final int NAME_COLUMN = 0;
+    private static final int FILENAME_COLUMN = 1;
+    private static final int TAXA_COLUMN = 2;
+    private static final int SITE_COLUMN = 3;
+    private static final int PATTERN_COLUMN = 4;
+    private static final int DATATYPE_COLUMN = 5;
+    private static final int SUBSTITUTION_COLUMN = 6;
+    private static final int CLOCK_COLUMN = 7;
+    private static final int TREE_COLUMN = 8;
 
     JScrollPane scrollPane = new JScrollPane();
     JTable dataTable = null;
@@ -79,24 +87,32 @@ public class DataPanel extends BeautiPanel implements Exportable {
     LinkTreesAction linkTreesAction = new LinkTreesAction();
 
     CreateTraitPartitionAction createTraitPartitionAction = new CreateTraitPartitionAction();
+    CreateTreePartitionAction createTreePartitionAction = new CreateTreePartitionAction();
+    CompressPatternsAction compressPatternsAction = new CompressPatternsAction();
+
+
+    private final Action removePartitionAction;
 
     ViewPartitionAction viewPartitionAction = new ViewPartitionAction();
 
 //    ShowAction showAction = new ShowAction();
 
-    SelectModelDialog selectModelDialog = null;
-    SelectClockDialog selectClockDialog = null;
-    SelectTreeDialog selectTreeDialog = null;
+    LinkSubstitutionModelDialog selectModelDialog = null;
+    LinkClockModelDialog selectClockDialog = null;
+    LinkTreeModelDialog selectTreeDialog = null;
 
-    SelectTraitDialog selectTraitDialog = null;
-
+    CreateTraitPartitionDialog selectTraitDialog = null;
+    CreateTreePartitionDialog createTreeDialog = null;
+    CompressPatternsDialog compressPatternsDialog = null;
     BeautiFrame frame = null;
 
     BeautiOptions options = null;
 
-    public DataPanel(BeautiFrame parent, Action importDataAction, Action removeDataAction/*, Action importTraitsAction*/) {
+    public DataPanel(BeautiFrame parent, Action importDataAction, Action removePartitionAction) {
 
         this.frame = parent;
+
+        this.removePartitionAction = removePartitionAction;
 
         dataTableModel = new DataTableModel();
         dataTable = new JTable(dataTableModel);
@@ -105,15 +121,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
 //        dataTable.getTableHeader().setDefaultRenderer(
 //                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-        TableColumn col = dataTable.getColumnModel().getColumn(5);
+        TableColumn col = dataTable.getColumnModel().getColumn(SUBSTITUTION_COLUMN);
         ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
         col.setCellRenderer(comboBoxRenderer);
 
-        col = dataTable.getColumnModel().getColumn(6);
+        col = dataTable.getColumnModel().getColumn(CLOCK_COLUMN);
         comboBoxRenderer = new ComboBoxRenderer();
         col.setCellRenderer(comboBoxRenderer);
 
-        col = dataTable.getColumnModel().getColumn(7);
+        col = dataTable.getColumnModel().getColumn(TREE_COLUMN);
         comboBoxRenderer = new ComboBoxRenderer();
         col.setCellRenderer(comboBoxRenderer);
 
@@ -179,18 +195,28 @@ public class DataPanel extends BeautiPanel implements Exportable {
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
 
-        ActionPanel actionPanel1 = new ActionPanel(false);
-        actionPanel1.setAddAction(importDataAction);
-        actionPanel1.setRemoveAction(removeDataAction);
-        removeDataAction.setEnabled(false);
+        toolBar1.addSeparator();
+
+//        button = new JButton(compressPatternsAction);
+//        //button.setEnabled(false);
+//        compressPatternsAction.setEnabled(false);
+//        PanelUtils.setupComponent(button);
+//        toolBar1.add(button);
 
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
-        controlPanel1.add(actionPanel1);
+//        controlPanel1.add(actionPanel1);
 
-        button = new JButton(viewPartitionAction);
+        button = new JButton(importDataAction);
+        button.setToolTipText("Import data from a file - sequences, trees or traits");
         controlPanel1.add(new JLabel("   "));
-        viewPartitionAction.setEnabled(false);
+        PanelUtils.setupComponent(button);
+        controlPanel1.add(button);
+
+        button = new JButton(removePartitionAction);
+        removePartitionAction.setEnabled(false);
+        button.setToolTipText("Remove selected data partition");
+        controlPanel1.add(new JLabel("   "));
         PanelUtils.setupComponent(button);
         controlPanel1.add(button);
 
@@ -199,10 +225,18 @@ public class DataPanel extends BeautiPanel implements Exportable {
         PanelUtils.setupComponent(button);
         controlPanel1.add(button);
 
-        //JPanel panel1 = new JPanel(new BorderLayout());
-        //panel1.setOpaque(false);
-        //panel1.add(useStarBEASTCheck, BorderLayout.NORTH);
-        //panel1.add(toolBar1, BorderLayout.SOUTH);
+        button = new JButton(createTreePartitionAction);
+        //button.setEnabled(false);
+        controlPanel1.add(new JLabel("   "));
+        PanelUtils.setupComponent(button);
+        controlPanel1.add(button);
+
+
+        button = new JButton(viewPartitionAction);
+        controlPanel1.add(new JLabel("   "));
+        viewPartitionAction.setEnabled(false);
+        PanelUtils.setupComponent(button);
+        controlPanel1.add(button);
 
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
@@ -222,9 +256,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             if (partition instanceof PartitionData) alignment = ((PartitionData) partition).getAlignment();
 
-            // alignment == null if partition is trait or microsat http://code.google.com/p/beast-mcmc/issues/detail?id=343
             if (alignment == null) {
-                JOptionPane.showMessageDialog(this, "Cannot display traits or microsatellite data currently.\nUse the traits panel to view and edit traits.",
+                JOptionPane.showMessageDialog(this, "Cannot display traits or trees data currently.\nUse the traits panel to view and edit traits.",
                         "Illegal Argument Exception",
                         JOptionPane.ERROR_MESSAGE);
                 return;
@@ -263,13 +296,13 @@ public class DataPanel extends BeautiPanel implements Exportable {
     }
 
     private void modelsChanged() {
-        TableColumn col = dataTable.getColumnModel().getColumn(5);
+        TableColumn col = dataTable.getColumnModel().getColumn(SUBSTITUTION_COLUMN);
         col.setCellEditor(new ComboBoxCellEditor());
 
-        col = dataTable.getColumnModel().getColumn(6);
+        col = dataTable.getColumnModel().getColumn(CLOCK_COLUMN);
         col.setCellEditor(new ComboBoxCellEditor());
 
-        col = dataTable.getColumnModel().getColumn(7);
+        col = dataTable.getColumnModel().getColumn(TREE_COLUMN);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(options.getPartitionTreeModels().toArray())));
     }
 
@@ -284,11 +317,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             ((JComboBox) editorComponent).removeAllItems();
 
-            if (column == 5) {
+            if (column == SUBSTITUTION_COLUMN) {
                 for (Object ob : options.getPartitionSubstitutionModels()) {
                     ((JComboBox) editorComponent).addItem(ob);
                 }
-            } else if (column == 6) {
+            } else if (column == CLOCK_COLUMN) {
                 for (Object ob : options.getPartitionClockModels()) {
                     ((JComboBox) editorComponent).addItem(ob);
                 }
@@ -308,8 +341,26 @@ public class DataPanel extends BeautiPanel implements Exportable {
         boolean hasSelection = (selRows != null && selRows.length != 0);
         frame.dataSelectionChanged(hasSelection);
 
+        boolean canCompress = hasSelection;
+
         boolean canUnlink = options.dataPartitions.size() > 1 && hasSelection;
         boolean canLink = options.dataPartitions.size() > 1 && hasSelection && selRows.length > 1;
+
+        if (hasSelection) {
+            for (int selRow : selRows) {
+                if (options.dataPartitions.get(selRow) instanceof TreePartitionData) {
+                    canUnlink = false;
+                    canLink = false;
+                    break;
+                }
+            }
+            for (int selRow : selRows) {
+                if (!(options.dataPartitions.get(selRow) instanceof PartitionData)) {
+                    canCompress = false;
+                    break;
+                }
+            }
+        }
 
         unlinkModelsAction.setEnabled(canUnlink);
         linkModelsAction.setEnabled(canLink);
@@ -319,8 +370,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         unlinkTreesAction.setEnabled(canUnlink);
         linkTreesAction.setEnabled(canLink);
+        compressPatternsAction.setEnabled(canCompress);
 
-        viewPartitionAction.setEnabled(options.dataPartitions.size() > 0 && hasSelection);
+        removePartitionAction.setEnabled(!options.dataPartitions.isEmpty() && hasSelection);
+        viewPartitionAction.setEnabled(!options.dataPartitions.isEmpty() && hasSelection);
     }
 
     public void setOptions(BeautiOptions options) {
@@ -329,11 +382,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         modelsChanged();
 
-        boolean taxaAvailable = options.taxonList != null && options.taxonList.getTaxonCount() > 0;
         boolean traitAvailable = options.traits != null && options.traits.size() > 0;
+        boolean treePartition = !options.userTrees.isEmpty();
 
-//        createTraitPartitionAction.setEnabled(traitAvailable);
-        createTraitPartitionAction.setEnabled(true);
+        createTraitPartitionAction.setEnabled(traitAvailable);
+        createTreePartitionAction.setEnabled(treePartition);
 
         dataTableModel.fireTableDataChanged();
     }
@@ -381,72 +434,75 @@ public class DataPanel extends BeautiPanel implements Exportable {
         dataTable.selectAll();
     }
 
-    public boolean createFromTraits(List<TraitData> traits, Component parent) {
-
-        if (options.traits.size() == 0) {
-            Boolean result = frame.doImportTraits();
-
-            if (result == false) {
-                return false;
-            }
-        }
-
+    public boolean createPartitionFromTraits(List<TraitData> selectedTraits, String partitionName, Component parent) {
 
         if (selectTraitDialog == null) {
-            selectTraitDialog = new SelectTraitDialog(frame);
+            selectTraitDialog = new CreateTraitPartitionDialog(frame);
         }
 
-        boolean alreadySelected = false;
-        if (traits == null || traits.size() == 0) {
-            int result = selectTraitDialog.showDialog(options.traits, null, this, true);
-            alreadySelected = true;
-            if (result != JOptionPane.CANCEL_OPTION) {
-                traits = selectTraitDialog.getTraits();
+        List<TraitData> traits = (selectedTraits == null ? options.traits : selectedTraits);
+        boolean selectTraits = selectedTraits == null;
 
-            } else {
+        String name = partitionName;
+
+        boolean done = false;
+        while (!done) {
+            int result = selectTraitDialog.showDialog(traits, name, this, selectTraits);
+            if (result == JOptionPane.CANCEL_OPTION) {
                 return false;
             }
-        }
 
-        String name;
+            if (!checkSelectedTraits(selectTraitDialog.getTraits())) {
+                JOptionPane.showMessageDialog(parent, "You can't mix discrete and continuous traits when creating partition(s).", "Mixed Trait Types", JOptionPane.ERROR_MESSAGE);
+                continue;
+            }
 
-        if (traits.size() > 1 && !selectTraitDialog.getForceIndependent()) {
-            // a set of traits have been passed to the function
-            int result;
-            if (alreadySelected && selectTraitDialog.getMakeCopy()) { //selectTraitDialog should not allow an empty name
+            if (selectTraitDialog.getRenamePartition()) {
                 name = selectTraitDialog.getName();
-            } else {
-                result = selectTraitDialog.showDialog(traits, null, this, false);
-                name = selectTraitDialog.getName();
-
-                if (result == JOptionPane.CANCEL_OPTION) {
-                    return false;
+                if (name.trim().isEmpty()) {
+                    continue;
                 }
             }
-
-        } else {
-            name = traits.get(0).getName();
-            if (selectTraitDialog.getMakeCopy()) {
-                name = selectTraitDialog.getName();
+            if (options.hasPartitionData(name)) {
+                JOptionPane.showMessageDialog(this, "A partition with this name already exists.\nProvide a new name.",
+                        "Duplicate partition name",
+                        JOptionPane.ERROR_MESSAGE);
+                continue;
             }
+
+            selectedTraits = selectTraitDialog.getTraits();
+            done = true;
         }
 
-
-        boolean validSelection = checkSelectedTraits(traits);
-
-        if (!validSelection) {
-            JOptionPane.showMessageDialog(parent, "Don't mix discrete and continuous traits when creating partition(s).", "Mixed Trait Types", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
+//        if (selectedTraits.size() > 1 && !selectTraitDialog.getForceIndependent()) {
+//            // a set of traits have been passed to the function
+//            int result;
+//            if (alreadySelected && selectTraitDialog.getMakeCopy()) { //selectTraitDialog should not allow an empty name
+//                name = selectTraitDialog.getName();
+//            } else {
+//                result = selectTraitDialog.showDialog(selectedTraits, partitionName, this, false);
+//                name = selectTraitDialog.getName();
+//
+//                if (result == JOptionPane.CANCEL_OPTION) {
+//                    return false;
+//                }
+//            }
+//
+//        } else {
+//            name = selectedTraits.get(0).getName();
+//            if (selectTraitDialog.getMakeCopy()) {
+//                name = selectTraitDialog.getName();
+//            }
+//        }
 
         int minRow = -1;
         int maxRow;
 
-        if (traits.get(0).getTraitType() == TraitData.TraitType.DISCRETE || selectTraitDialog.getForceIndependent()) {
+        if (selectedTraits.get(0).getTraitType() == TraitData.TraitType.DISCRETE || selectTraitDialog.getForceIndependent()) {
 
-            for (int i = 0; i < traits.size(); i++) {
+            for (int i = 0; i < selectedTraits.size(); i++) {
 
-                TraitData trait = traits.get(i);
+                TraitData trait = selectedTraits.get(i);
 
                 int selRow = options.createPartitionForTraits(trait.getName(), trait);
 
@@ -455,13 +511,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 }
             }
 
-            maxRow = minRow + traits.size() - 1;
+            maxRow = minRow + selectedTraits.size() - 1;
         } else {
-            minRow = options.createPartitionForTraits(name, traits);
+            minRow = options.createPartitionForTraits(name, selectedTraits);
             maxRow = minRow;
 
         }
-
 
         modelsChanged();
         dataTableModel.fireTableDataChanged();
@@ -496,6 +551,152 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         return true;
+    }
+
+    public void createPartitionFromTrees() {
+
+        if (options.userTrees.isEmpty()) {
+            throw new UnsupportedOperationException("No trees loaded - this button should be disabled");
+        }
+
+        if (createTreeDialog == null) {
+            createTreeDialog = new CreateTreePartitionDialog(frame);
+        }
+
+        int selRow = -1;
+
+        boolean done = false;
+        while (!done) {
+            int result = createTreeDialog.showDialog(options.userTrees, null, this);
+            if (result != JOptionPane.CANCEL_OPTION) {
+                TreeHolder tree = createTreeDialog.getTree();
+                String name = tree.getName();
+                if (createTreeDialog.getRenamePartition()) {
+                    name = createTreeDialog.getName();
+                    if (name.trim().isEmpty()) {
+                        continue;
+                    }
+                }
+                if (options.hasPartitionData(name)) {
+                    JOptionPane.showMessageDialog(this, "A partition with this name already exists.\nProvide a new name.",
+                            "Duplicate partition name",
+                            JOptionPane.ERROR_MESSAGE);
+                    continue;
+                }
+
+                selRow = options.createPartitionForTree(tree, name);
+                done = true;
+            } else {
+                return;
+            }
+        }
+
+        modelsChanged();
+        dataTableModel.fireTableDataChanged();
+
+        if (selRow != -1) {
+            dataTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+        }
+
+        frame.setAllOptions();
+
+        fireDataChanged();
+        repaint();
+
+    }
+
+    public void compressSitePatterns() {
+        int[] selRows = dataTable.getSelectedRows();
+
+        if (compressPatternsDialog == null) {
+            compressPatternsDialog = new CompressPatternsDialog(frame);
+        }
+
+        int result = compressPatternsDialog.showDialog(this);
+        if (result == JOptionPane.CANCEL_OPTION) {
+            return;
+        }
+        SitePatterns.CompressionType compressionType = compressPatternsDialog.getCompressionType();
+
+//        compressPatternsAction.setEnabled(false);
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+        for (int row : selRows) {
+            PartitionData partition = (PartitionData)options.dataPartitions.get(row);
+            partition.compressPatterns(compressionType);
+        }
+        setCursor(null);
+
+//        SwingWorker task = new SwingWorker() {
+//            @Override
+//            protected Object doInBackground() throws Exception {
+////                for (int row : selRows) {
+////                    PartitionData partition = (PartitionData)options.dataPartitions.get(row);
+////                    partition.compressPatterns();
+////                }
+//                Random random = new Random();
+//                int progress = 0;
+//                //Initialize progress property.
+//                setProgress(0);
+//                while (progress < 100) {
+//                    //Sleep for up to one second.
+//                    try {
+//                        Thread.sleep(random.nextInt(1000));
+//                    } catch (InterruptedException ignore) {}
+//                    //Make random progress.
+//                    progress += random.nextInt(10);
+//                    setProgress(Math.min(progress, 100));
+//                }
+//                return null;
+//            }
+//
+//            @Override
+//            protected void done() {
+//                setCursor(null);
+//            }
+//
+//        };
+
+//        ProgressMonitor progressMonitor = new ProgressMonitor(frame,
+//                "Running a Long Task",
+//                "", 0, 100);
+//        int progress = task.getProgress();
+//        String message = String.format("Completed %d%%.\n", progress);
+//        progressMonitor.setNote(message);
+//        progressMonitor.setProgress(progress);
+//        taskOutput.append(message);
+
+        //task.addPropertyChangeListener(this);
+//        task.execute();
+
+//        if (progressMonitor.isCanceled() || task.isDone()) {
+//            progressMonitor.close();
+//            Toolkit.getDefaultToolkit().beep();
+//            if (progressMonitor.isCanceled()) {
+//                task.cancel(true);
+////                taskOutput.append("Task canceled.\n");
+//            } else {
+////                taskOutput.append("Task completed.\n");
+//            }
+////            startButton.setEnabled(true);
+//        }
+//
+//        compressPatternsAction.setEnabled(true);
+
+
+        modelsChanged();
+
+        fireDataChanged();
+        repaint();
+
+        modelsChanged();
+        dataTableModel.fireTableDataChanged();
+
+        frame.setAllOptions();
+
+        fireDataChanged();
+        repaint();
+
     }
 
     public void unlinkSubstitutionModels() {
@@ -541,7 +742,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         Object[] modelArray = options.getPartitionSubstitutionModels(selectedPartitionData).toArray();
 
         if (selectModelDialog == null) {
-            selectModelDialog = new SelectModelDialog(frame);
+            selectModelDialog = new LinkSubstitutionModelDialog(frame);
         }
 
         int result = selectModelDialog.showDialog(modelArray);
@@ -554,10 +755,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
             for (AbstractPartitionData partition : selectedPartitionData) {
                 partition.setPartitionSubstitutionModel(model);
             }
-        }
-
-        if (options.getPartitionSubstitutionModels(Microsatellite.INSTANCE).size() <= 1) {
-            options.shareMicroSat = true;
         }
 
         modelsChanged();
@@ -611,7 +808,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         Object[] modelArray = options.getPartitionClockModels(selectedPartitionData).toArray();
 
         if (selectClockDialog == null) {
-            selectClockDialog = new SelectClockDialog(frame);
+            selectClockDialog = new LinkClockModelDialog(frame);
         }
 
         int result = selectClockDialog.showDialog(modelArray);
@@ -650,12 +847,14 @@ public class DataPanel extends BeautiPanel implements Exportable {
             // When unlinking trees, the clocks must also be unlinked. Perhaps a dialog is need
             // to say this? The parameters of the clocks could be linked in the priors panel.
             PartitionClockModel clockModel = partition.getPartitionClockModel();
-            if (!clockModel.getName().equals(partition.getName())) {
-                clockModel = new PartitionClockModel(options, partition.getName(), clockModel);
-                partition.setPartitionClockModel(clockModel);
-            }
+            if (clockModel != null) {
+                if (!clockModel.getName().equals(partition.getName())) {
+                    clockModel = new PartitionClockModel(options, partition.getName(), clockModel);
+                    partition.setPartitionClockModel(clockModel);
+                }
 
-            clockModel.setPartitionTreeModel(treeModel);
+                clockModel.setPartitionTreeModel(treeModel);
+            }
         }
 
 
@@ -681,8 +880,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (selectedPartitionData.size() > 1) {
             if (!options.hasIdenticalTaxa(selectedPartitionData)) {
                 String errMsg = "To share a tree, partitions need to have identical taxa.";
-                if (selectedPartitionData.get(0).getDataType().getType() == DataType.MICRO_SAT)
-                    errMsg += "\nThe data must be all diploid or all haploid when you want to link the tree.";
                 JOptionPane.showMessageDialog(this, errMsg, "Unsuppoted Configuration", JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -691,7 +888,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         Object[] treeArray = options.getPartitionTreeModels(selectedPartitionData).toArray();
 
         if (selectTreeDialog == null) {
-            selectTreeDialog = new SelectTreeDialog(frame);
+            selectTreeDialog = new LinkTreeModelDialog(frame);
         }
 
         int result = selectTreeDialog.showDialog(treeArray);
@@ -734,7 +931,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     class DataTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Partition Name", "File Name", "Taxa", "Sites", "Data Type", "Site Model", "Clock Model", "Partition Tree"};
+        String[] columnNames = {"Partition Name", "File Name", "Taxa", "Sites", "Patterns", "Data Type", "Site Model", "Clock Model", "Partition Tree"};
 
         public DataTableModel() {
         }
@@ -752,25 +949,33 @@ public class DataPanel extends BeautiPanel implements Exportable {
         public Object getValueAt(int row, int col) {
 //            PartitionData partition = options.getPartitionDataNoSpecies().get(row);
             AbstractPartitionData partition = options.dataPartitions.get(row);
+            boolean isTreePartition = partition.getDataType().getType() == DataType.TREE;
+            boolean isTraitPartition = partition.getTraits() != null;
             switch (col) {
-                case 0:
+                case NAME_COLUMN:
                     return partition.getName();
-                case 1:
+                case FILENAME_COLUMN:
                     return partition.getFileName();
-                case 2:
-                    return "" + (partition.getTaxonCount() >= 0 ? partition.getTaxonCount() : "-");
-                case 3:
+                case TAXA_COLUMN:
+                    final String nTaxa;
+                    if (!isTraitPartition) {
+                        nTaxa = partition.getTaxonCount() >= 0 ? String.valueOf(partition.getTaxonCount()) : "-";
+                    } else {
+                        nTaxa = String.valueOf(options.taxonList.getTaxonCount());
+                    }
+                    return nTaxa;
+                case SITE_COLUMN:
                     return "" + (partition.getSiteCount() >= 0 ? partition.getSiteCount() : "-");
-                case 4:
+                case PATTERN_COLUMN:
+                    return "" + (partition.getPatternCount() >= 0 ? partition.getPatternCount() : "-");
+                case DATATYPE_COLUMN:
                     return partition.getDataDescription();
-                case 5:
-//                    return partition.getPloidyType();
-//                case 6:
-                    return partition.getPartitionSubstitutionModel().getName();
-                case 6:
+                case SUBSTITUTION_COLUMN:
+                    return "" + (!isTreePartition ? partition.getPartitionSubstitutionModel().getName() : "-");
+                case CLOCK_COLUMN:
                     return "" + (partition.getPartitionClockModel() != null ? partition.getPartitionClockModel().getName() : "-");
-                case 7:
-                    return partition.getPartitionTreeModel().getName();
+                case TREE_COLUMN:
+                    return "" + (!isTreePartition ? partition.getPartitionTreeModel().getName() : "-");
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }
@@ -779,7 +984,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         public void setValueAt(Object aValue, int row, int col) {
             AbstractPartitionData partition = options.dataPartitions.get(row);
             switch (col) {
-                case 0:
+                case NAME_COLUMN:
                     String name = ((String) aValue).trim();
                     if (options.hasPartitionData(name)) {
                         JOptionPane.showMessageDialog(frame, "Duplicate partition name.",
@@ -790,18 +995,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
                         options.renamePartition(partition, name);
                     }
                     break;
-                case 5:
-//                    partition.setPloidyType((PloidyType) aValue);
-//                    break;
-//                case 6:
+                case SUBSTITUTION_COLUMN:
                     if (((PartitionSubstitutionModel) aValue).getDataType().equals(partition.getDataType())) {
                         partition.setPartitionSubstitutionModel((PartitionSubstitutionModel) aValue);
                     }
                     break;
-                case 6:
+                case CLOCK_COLUMN:
                     partition.setPartitionClockModel((PartitionClockModel) aValue);
                     break;
-                case 7:
+                case TREE_COLUMN:
                     partition.setPartitionTreeModel((PartitionTreeModel) aValue);
                     break;
             }
@@ -814,20 +1016,17 @@ public class DataPanel extends BeautiPanel implements Exportable {
             AbstractPartitionData partition = options.dataPartitions.get(row);
 
             switch (col) {
-                case 0:// name
+                case NAME_COLUMN:// name
                     editable = true;
                     break;
-//                case 5:// ploidy type selection menu
-//                    editable = true;
-//                    break;
-                case 5:// substitution model selection menu
-                    editable = partition.getDataType().getType() != DataType.CONTINUOUS;
+                case SUBSTITUTION_COLUMN:// substitution model selection menu
+                    editable = partition.getDataType().getType() != DataType.CONTINUOUS && partition.getDataType().getType() != DataType.TREE;
                     break;
-                case 6:// clock model selection menu
-                    editable = partition.getDataType().getType() != DataType.CONTINUOUS;
+                case CLOCK_COLUMN:// clock model selection menu
+                    editable = partition.getDataType().getType() != DataType.CONTINUOUS && partition.getDataType().getType() != DataType.TREE;
                     break;
-                case 7:// tree selection menu
-                    editable = true;
+                case TREE_COLUMN:// tree selection menu
+                    editable = partition.getDataType().getType() != DataType.TREE;
                     break;
                 default:
                     editable = false;
@@ -958,7 +1157,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            createFromTraits(null, DataPanel.this);
+            createPartitionFromTraits(null, null, DataPanel.this);
 
             for (AbstractPartitionData partition : options.dataPartitions) {
 
@@ -980,6 +1179,34 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         }
 
+
+    }
+
+    public class CreateTreePartitionAction extends AbstractAction {
+        public CreateTreePartitionAction() {
+            super("Create partition from a tree ...");
+            setToolTipText("Create a data partition from a tree. The tree should be imported first.");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            createPartitionFromTrees();
+
+            selectDataPanel();
+        }
+
+    }
+
+    public class CompressPatternsAction extends AbstractAction {
+        public CompressPatternsAction() {
+            super("Compress patterns...");
+            setToolTipText("Compress an alignment into a weighted set of unique site patterns.");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            compressSitePatterns();
+
+            selectDataPanel();
+        }
 
     }
 

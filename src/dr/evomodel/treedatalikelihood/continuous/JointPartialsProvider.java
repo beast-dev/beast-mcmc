@@ -1,5 +1,33 @@
+/*
+ * JointPartialsProvider.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
@@ -197,6 +225,15 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
 
     @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
+        if (precisionType != PrecisionType.FULL) {
+            throw new RuntimeException("Currently only implemented for full precision");
+        }
+        if (fullyObserved) {
+            throw new RuntimeException("Wishart statistics currently not implemented for joint partials provider");
+            // TODO: need to implement scalar precision type then go from there
+        }
+
+
         double[] partial = new double[precisionType.getPartialsDimension(traitDim)];
 
         int meanOffset = precisionType.getMeanOffset(traitDim);
@@ -396,6 +433,38 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
             }
         }
         throw new RuntimeException("Partials provider does not have trait '" + trait + "', nor did any of its sub-models");
+    }
+
+    @Override
+    public void updateTipDataGradient(DenseMatrix64F precision, DenseMatrix64F variance,
+                                      NodeRef node, int offset, int dimGradient) {
+
+
+        ContinuousTraitPartialsProvider provider = getProviderOffset(offset, dimGradient);
+        provider.updateTipDataGradient(precision, variance, node, 0, dimGradient);
+    }
+
+    private ContinuousTraitPartialsProvider getProviderOffset(int offset, int dimTrait) {
+        int thisOffset = 0;
+        int i = 0;
+        while (thisOffset < offset) {
+            thisOffset += providers[i].getTraitDimension();
+            i++;
+        }
+
+        ContinuousTraitPartialsProvider provider = providers[i];
+
+        if (thisOffset != offset || provider.getTraitDimension() != dimTrait) {
+            throw new RuntimeException("Offset and dimension must perfectly align with a child model (for now)");
+        }
+
+        return provider;
+    }
+
+    @Override
+    public boolean needToUpdateTipDataGradient(int offset, int dimGradient) {
+        ContinuousTraitPartialsProvider provider = getProviderOffset(offset, dimGradient);
+        return provider.needToUpdateTipDataGradient(offset, dimGradient);
     }
 
 

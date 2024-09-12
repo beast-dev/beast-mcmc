@@ -1,7 +1,8 @@
 /*
  * MultivariateNormalDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.distributions;
@@ -91,7 +93,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
 
     public double getLogDet() {
         if (logDet == null) {
-            logDet = Math.log(calculatePrecisionMatrixDeterminate(precision));
+            logDet = calculatePrecisionMatrixLogDeterminate(precision);
         }
         if (Double.isInfinite(logDet)) {
             if (isDiagonal(precision)) {
@@ -147,10 +149,9 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         nextMultivariateNormalCholesky(mean, getCholeskyDecomposition(), Math.sqrt(scale), result);
     }
 
-
-    public static double calculatePrecisionMatrixDeterminate(double[][] precision) {
+    public static double calculatePrecisionMatrixLogDeterminate(double[][] precision) {
         try {
-            return new Matrix(precision).determinant();
+            return new Matrix(precision).logDeterminant();
         } catch (IllegalDimension e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -197,6 +198,26 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
             double sum = 0;
             for (int j = 0; j <dim; ++j) {
                 sum += precision[i][j] * delta[j];
+            }
+            gradient[i] = sum;
+        }
+
+        return gradient;
+    }
+
+    public static double[] gradLogPdf(double[] x, double[] mean, double[] precision) {
+        final int dim = x.length;
+        final double[] gradient = new double[dim];
+        final double[] delta = new double[dim];
+
+        for (int i = 0; i < dim; ++i) {
+            delta[i] = mean[i] - x[i];
+        }
+
+        for (int i = 0; i < dim; ++i) {
+            double sum = 0;
+            for (int j = 0; j <dim; ++j) {
+                sum += precision[i * dim + j] * delta[j];
             }
             gradient[i] = sum;
         }
@@ -449,7 +470,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         double[] stop = {0, 0};
         double[][] precision = {{2, 0.5}, {0.5, 1}};
         double scale = 0.2;
-        System.err.println("logPDF = " + logPdf(start, stop, precision, Math.log(calculatePrecisionMatrixDeterminate(precision)), scale));
+        System.err.println("logPDF = " + logPdf(start, stop, precision, calculatePrecisionMatrixLogDeterminate(precision), scale));
         System.err.println("Should = -19.94863\n");
 
         System.err.println("logPDF = " + logPdf(start, stop, 2, 0.2));

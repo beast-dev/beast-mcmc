@@ -47,7 +47,7 @@ import java.util.List;
  */
 public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel implements Citable, ActionEnabledSubstitution {
 
-    private final ActionEnabledSubstitutionWrap baseSubstitutionModel;
+    private final ActionEnabledSubstitution baseSubstitutionModel;
     private final Parameter igcRateParameter;
     protected PairedDataType dataType;
 
@@ -73,7 +73,11 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
 
         super(name);
         this.frequencyModel = new PairedParalogFrequencyModel(dataType, baseSubstitutionModel.getFrequencyModel().getFrequencyParameter());
-        this.baseSubstitutionModel = new ActionEnabledSubstitutionWrap(baseSubstitutionModel.getModelName() + ".action.wrap", baseSubstitutionModel);
+        if (baseSubstitutionModel instanceof  ActionEnabledSubstitution) {
+            this.baseSubstitutionModel = (ActionEnabledSubstitution) baseSubstitutionModel;
+        } else {
+            this.baseSubstitutionModel = new ActionEnabledSubstitutionWrap(baseSubstitutionModel.getModelName() + ".action.wrap", baseSubstitutionModel);
+        }
         this.igcRateParameter = relativeGeneConversionRateParameter;
         this.dataType = dataType;
         this.rateCase = rateCase;

@@ -33,6 +33,8 @@ import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -42,15 +44,16 @@ import java.util.Set;
 public class RecombinationHeightBoundStatistic extends TreeStatistic {
 
     public RecombinationHeightBoundStatistic(String name, Tree tree,
-                                             TaxonList taxa0,
-                                             TaxonList taxa1,
+                                             List<TaxonList> taxa,
                                              boolean absoluteTime) throws TreeUtils.MissingTaxonException {
 
         super(name);
         this.tree = tree;
 
-        this.leafSet0 = TreeUtils.getLeavesForTaxa(tree, taxa0);
-        this.leafSet1 = TreeUtils.getLeavesForTaxa(tree, taxa1);
+        this.leafSets = new ArrayList<>();
+        for (TaxonList taxon : taxa) {
+            leafSets.add(TreeUtils.getLeavesForTaxa(tree, taxon));
+        }
 
         if (absoluteTime && Taxon.getMostRecentDate() != null) {
             isBackwards = Taxon.getMostRecentDate().isBackwards();
@@ -89,27 +92,32 @@ public class RecombinationHeightBoundStatistic extends TreeStatistic {
     }
 
     private double getMaxHeight() {
-        NodeRef recombinant0 = TreeUtils.getCommonAncestorNode(tree, leafSet0);
-        NodeRef recombinant1 = TreeUtils.getCommonAncestorNode(tree, leafSet1);
 
-        if (tree.isRoot(recombinant0) || tree.isRoot(recombinant1)) {
-            return tree.getNodeHeight(tree.getRoot());
+        double max = Double.NEGATIVE_INFINITY;
+
+        for (Set<String> leafSet : leafSets) {
+            NodeRef recombinant = TreeUtils.getCommonAncestorNode(tree, leafSet);
+            if (tree.isRoot(recombinant)) {
+                return tree.getNodeHeight(tree.getRoot());
+            }
+
+            max = Math.max(max, tree.getNodeHeight(tree.getParent(recombinant)));
         }
 
-        double height0 = tree.getNodeHeight(tree.getParent(recombinant0));
-        double height1 = tree.getNodeHeight(tree.getParent(recombinant1));
-
-        return Math.max(height0, height1);
+        return max;
     }
 
     private double getMinHeight() {
-        NodeRef recombinant0 = TreeUtils.getCommonAncestorNode(tree, leafSet0);
-        NodeRef recombinant1 = TreeUtils.getCommonAncestorNode(tree, leafSet1);
 
-        double height0 = tree.getNodeHeight(recombinant0);
-        double height1 = tree.getNodeHeight(recombinant1);
+        double min = Double.POSITIVE_INFINITY;
 
-        return Math.min(height0, height1);
+        for (Set<String> leafSet : leafSets) {
+            NodeRef recombinant = TreeUtils.getCommonAncestorNode(tree, leafSet);
+
+            min = Math.min(min, tree.getNodeHeight(recombinant));
+        }
+
+        return min;
     }
 
     private double transformHeight(double height) {
@@ -126,9 +134,7 @@ public class RecombinationHeightBoundStatistic extends TreeStatistic {
 
     private Tree tree;
 
-    private final Set<String> leafSet0;
-    private final Set<String> leafSet1;
-
+    private final List<Set<String>> leafSets;
     private final double mostRecentTipTime;
     private final boolean isBackwards;
 }

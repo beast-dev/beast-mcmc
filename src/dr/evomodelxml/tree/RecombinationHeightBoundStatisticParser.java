@@ -35,6 +35,9 @@ import dr.evomodel.tree.RecombinationHeightBoundStatistic;
 import dr.inference.model.Statistic;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Marc A Suchard
  * @author Philippe Lemey
@@ -42,8 +45,8 @@ import dr.xml.*;
 public class RecombinationHeightBoundStatisticParser extends AbstractXMLObjectParser {
 
     public static final String RECOMBINATION_HEIGHT_STATISTIC = "recombinationHeightBoundStatistic";
-    public static final String RECOMBINANT1 = "recombinant1";
-    public static final String RECOMBINANT2 = "recombinant2";
+    public static final String RECOMBINANT = "recombinant";
+//    public static final String RECOMBINANT2 = "recombinant2";
     public static final String ABSOLUTE = TMRCAStatisticParser.ABSOLUTE;
 
     public String getParserName() {
@@ -56,13 +59,15 @@ public class RecombinationHeightBoundStatisticParser extends AbstractXMLObjectPa
 
         Tree tree = (Tree) xo.getChild(Tree.class);
 
-        TaxonList recombinant1 = (TaxonList) xo.getElementFirstChild(RECOMBINANT1); // TODO might break with list of taxa
-        TaxonList recombinant2 = (TaxonList) xo.getElementFirstChild(RECOMBINANT2); // TODO might break with list of taxa
+        List<TaxonList> recombinants = new ArrayList<>();
+        for (XMLObject cxo : xo.getAllChildren(RECOMBINANT)) {
+            recombinants.add((TaxonList) cxo.getChild(TaxonList.class));
+        }
 
         boolean isAbsolute = xo.getAttribute(ABSOLUTE, false);
 
         try {
-            return new RecombinationHeightBoundStatistic(name, tree, recombinant1, recombinant2, isAbsolute);
+            return new RecombinationHeightBoundStatistic(name, tree, recombinants, isAbsolute);
         } catch (TreeUtils.MissingTaxonException mte) {
             throw new XMLParseException(
                     "Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
@@ -87,13 +92,9 @@ public class RecombinationHeightBoundStatisticParser extends AbstractXMLObjectPa
             new StringAttributeRule("name",
                     "A name for this statistic primarily for the purposes of logging", true),
             AttributeRule.newBooleanRule(ABSOLUTE, true),
-            new ElementRule(RECOMBINANT1,
+            new ElementRule(RECOMBINANT,
                     new XMLSyntaxRule[]{
                             new ElementRule(Taxa.class, 1, Integer.MAX_VALUE)
-            }),
-            new ElementRule(RECOMBINANT2,
-                    new XMLSyntaxRule[]{
-                            new ElementRule(Taxa.class, 1, Integer.MAX_VALUE)
-            }),
+            }, 2, Integer.MAX_VALUE),
     };
 }

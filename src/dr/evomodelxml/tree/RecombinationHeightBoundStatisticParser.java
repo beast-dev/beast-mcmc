@@ -41,7 +41,7 @@ import dr.xml.*;
  */
 public class RecombinationHeightBoundStatisticParser extends AbstractXMLObjectParser {
 
-    public static final String RECOMBINATION_HEIGHT_STATISTIC = "recombinationHeightStatistic";
+    public static final String RECOMBINATION_HEIGHT_STATISTIC = "recombinationHeightBoundStatistic";
     public static final String RECOMBINANT1 = "recombinant1";
     public static final String RECOMBINANT2 = "recombinant2";
     public static final String ABSOLUTE = TMRCAStatisticParser.ABSOLUTE;

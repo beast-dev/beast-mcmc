@@ -430,9 +430,9 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
         public abstract void getTypeWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException;
 
         private void getIntervalWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException {
-            if (!(likelihood.getIntervalList() instanceof TreeIntervalList)) {
+            if (!(likelihood.getIntervalList(0) instanceof TreeIntervalList)) {
                 throw new XMLParseException("Cannot use GMRF skygrid with " +
-                        likelihood.getIntervalList().toString() +
+                        likelihood.getIntervalList(0).toString() +
                         " since it does not know about the tree. Please use a TreeIntervalList");
             }
         }

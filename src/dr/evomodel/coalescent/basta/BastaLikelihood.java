@@ -26,11 +26,13 @@
 package dr.evomodel.coalescent.basta;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -39,6 +41,7 @@ import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.Reportable;
+import jebl.evolution.align.SystemOut;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +59,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         TreeTraitProvider, Citable, Profileable, Reportable {
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
+    private static final boolean PROFILE_MEMORY = true;
 
     private final BastaLikelihoodDelegate likelihoodDelegate;
 
@@ -78,6 +82,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     private boolean populationSizesKnown;
     private boolean treeIntervalsKnown;
     private boolean transitionMatricesKnown;
+    private int currentNumBuffers;
 
     public BastaLikelihood(String name,
                            Tree treeModel,
@@ -132,19 +137,20 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, treeIntervals, branchRateModel, numberSubIntervals);
 
-        setTipData();
 
         likelihoodKnown = false;
         populationSizesKnown = false;
         treeIntervalsKnown = false;
         transitionMatricesKnown = false;
+
+
     }
 
     public CoalescentIntervalTraversal getTraversalDelegate() { return treeTraversalDelegate; }
 
     public SubstitutionModel getSubstitutionModel() { return substitutionModel; } // TODO generify for multiple models (e.g. epochs)
 
-    private void setTipData() {
+    public void setTipData() {
 
         int[] data = patternList.getPattern(0);
 
@@ -276,7 +282,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
             // update operations on tree
             treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
         }
-
         final List<BranchIntervalOperation> branchOperations =
                 treeTraversalDelegate.getBranchIntervalOperations();
         final List<TransitionMatrixOperation> matrixOperations =
@@ -289,6 +294,11 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
             totalMatrixUpdateCount += matrixOperations.size();
             totalIntervalReductionCount += treeTraversalDelegate.getCoalescentIntervalCount();
         }
+
+        //TODO: Is it better to use maxNumCoalescentIntervals here?
+        currentNumBuffers = treeTraversalDelegate.determineMaxBuffer();
+        int maxNumCoalescentIntervals = likelihoodDelegate.getMaxNumberOfCoalescentIntervals();
+        likelihoodDelegate.updateStorage(currentNumBuffers, maxNumCoalescentIntervals, this);
 
         final NodeRef root = tree.getRoot();
         double logL = likelihoodDelegate.calculateLikelihood(branchOperations, matrixOperations,
@@ -370,6 +380,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
                     "\n  all rate updates = ").append(totalRateUpdateAllCount).append(
                     "\n  partial rate updates = ").append(totalRateUpdateSingleCount).append(
                     "\n  average likelihood time = ").append(totalLikelihoodTime / totalCalculateLikelihoodCount);
+
 
         return sb.toString();
     }

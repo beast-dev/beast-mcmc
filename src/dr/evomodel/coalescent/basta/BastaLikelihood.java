@@ -32,7 +32,6 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -41,7 +40,6 @@ import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.Reportable;
-import jebl.evolution.align.SystemOut;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +57,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         TreeTraitProvider, Citable, Profileable, Reportable {
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
-    private static final boolean PROFILE_MEMORY = true;
 
     private final BastaLikelihoodDelegate likelihoodDelegate;
 

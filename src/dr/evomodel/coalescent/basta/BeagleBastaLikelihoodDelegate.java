@@ -1,6 +1,7 @@
 package dr.evomodel.coalescent.basta;
 
-import beagle.*;
+import beagle.Beagle;
+import beagle.BeagleFlag;
 import beagle.basta.BeagleBasta;
 import beagle.basta.BastaFactory;
 import dr.evolution.tree.Tree;
@@ -12,11 +13,8 @@ import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
 import static beagle.basta.BeagleBasta.BASTA_OPERATION_SIZE;
-import static dr.evomodel.treedatalikelihood.BeagleFunctionality.IS_ODD_STATE_SSE_FIXED;
-import static dr.evomodel.treedatalikelihood.BeagleFunctionality.parseSystemPropertyIntegerArray;
 
 /**
  * @author Marc A. Suchard
@@ -29,16 +27,6 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
 
     private final BufferIndexHelper eigenBufferHelper;
     private final OffsetBufferIndexHelper populationSizesBufferHelper;
-    private static final String RESOURCE_ORDER_PROPERTY = "beagle.resource.order";
-    private static final String PREFERRED_FLAGS_PROPERTY = "beagle.preferred.flags";
-    private static final String REQUIRED_FLAGS_PROPERTY = "beagle.required.flags";
-    int currentPartialsCount;
-    int currentMatricesCount;
-    private static int instanceCount = 0;
-    private static List<Integer> resourceOrder = null;
-    private static List<Integer> preferredOrder = null;
-    private static List<Integer> requiredOrder = null;
-
 
     public BeagleBastaLikelihoodDelegate(String name,
                                          Tree tree,
@@ -46,112 +34,23 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
                                          boolean transpose) {
         super(name, tree, stateCount, transpose);
 
-        this.currentPartialsCount = 0;
-        this.currentMatricesCount = 0;
+        int partialsCount = maxNumCoalescentIntervals * (tree.getNodeCount() + 1); // TODO much too large
+        int matricesCount = maxNumCoalescentIntervals; // TODO much too small (except for strict-clock)
 
         int coalescentBufferCount = 5; // E, F, G, H, probabilities
-        if (resourceOrder == null) {
-            resourceOrder = parseSystemPropertyIntegerArray(RESOURCE_ORDER_PROPERTY);
-        }
-        if (preferredOrder == null) {
-            preferredOrder = parseSystemPropertyIntegerArray(PREFERRED_FLAGS_PROPERTY);
-        }
-        if (requiredOrder == null) {
-            requiredOrder = parseSystemPropertyIntegerArray(REQUIRED_FLAGS_PROPERTY);
-        }
 
         long requirementFlags = 0L;
         requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
 
-        int[] resourceList = null;
-        long preferenceFlags = 0;
-
-        if (resourceOrder.size() > 0) {
-            // added the zero on the end so that a CPU is selected if requested resource fails
-            resourceList = new int[]{resourceOrder.get(instanceCount % resourceOrder.size()), 0};
-            if (resourceList[0] > 0) {
-                preferenceFlags |= BeagleFlag.PROCESSOR_GPU.getMask(); // Add preference weight against CPU
-            }
-        }
-
-        if (preferredOrder.size() > 0) {
-            preferenceFlags = preferredOrder.get(instanceCount % preferredOrder.size());
-        }
-
-        if (requiredOrder.size() > 0) {
-            requirementFlags = requiredOrder.get(instanceCount % requiredOrder.size());
-        }
-
-
-        if (!BeagleFlag.PRECISION_SINGLE.isSet(preferenceFlags)) {
-            // if single precision not explicitly set then prefer double
-            preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
-        }
-
-        if ((resourceList == null &&
-                (BeagleFlag.PROCESSOR_GPU.isSet(preferenceFlags) ||
-                        BeagleFlag.FRAMEWORK_CUDA.isSet(preferenceFlags) ||
-                        BeagleFlag.FRAMEWORK_OPENCL.isSet(preferenceFlags)))
-                ||
-                (resourceList != null && resourceList[0] > 0)) {
-            // non-CPU implementations don't have SSE so remove default preference for SSE
-            // when using non-CPU preferences or prioritising non-CPU resource
-            preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
-            preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
-        }
-
-        resize(getStartingPartialsCount(maxNumCoalescentIntervals, tree.getNodeCount()), maxNumCoalescentIntervals);
-
         beagle = BastaFactory.loadBastaInstance(0, coalescentBufferCount, maxNumCoalescentIntervals,
-                currentPartialsCount, 0, stateCount,
-                1, 2, currentMatricesCount, 1,
-                1, resourceList, preferenceFlags, requirementFlags);
+                partialsCount, 0, stateCount,
+                1, 2, matricesCount, 1,
+                1, null, 0L, requirementFlags);
 
         eigenBufferHelper = new BufferIndexHelper(1, 0);
         populationSizesBufferHelper = new OffsetBufferIndexHelper(1, 0, 0);
 
         beagle.setCategoryRates(new double[] { 1.0 });
-
-        final Logger logger = Logger.getLogger("dr.evomodel");
-        InstanceDetails instanceDetails = beagle.getDetails();
-        ResourceDetails resourceDetails = null;
-
-        if (instanceDetails != null) {
-            resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());
-            if (resourceDetails != null) {
-                StringBuilder sb = new StringBuilder("  Using BEAGLE BASTA resource ");
-                sb.append(resourceDetails.getNumber()).append(": ");
-                sb.append(resourceDetails.getName()).append("\n");
-                if (resourceDetails.getDescription() != null) {
-                    String[] description = resourceDetails.getDescription().split("\\|");
-                    for (String desc : description) {
-                        if (desc.trim().length() > 0) {
-                            sb.append("    ").append(desc.trim()).append("\n");
-                        }
-                    }
-                }
-                sb.append("    with instance flags: ").append(instanceDetails.toString());
-                logger.info(sb.toString());
-            } else {
-                logger.info("  Error retrieving BEAGLE resource for instance: " + instanceDetails.toString());
-            }
-        } else {
-            logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
-        }
-    }
-
-    static private int getStartingPartialsCount(int maxNumCoalescentIntervals, int treeNodeCount) {
-        return maxNumCoalescentIntervals * (treeNodeCount + 1); // TODO much too large
-    }
-
-    public void resize(int newNumPartials, int newNumCoalescentIntervals) {
-        if (newNumPartials > currentPartialsCount) {
-            this.currentPartialsCount = newNumPartials;
-        }
-
-        if (newNumCoalescentIntervals > currentMatricesCount) {
-            this.currentMatricesCount = newNumCoalescentIntervals;
-        }
     }
 
     @Override
@@ -327,18 +226,6 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         }
 
         beagle.setStateFrequencies(populationSizesBufferHelper.getOffsetIndex(0), sizes);
-    }
-
-    @Override
-    public void updateStorage(int maxBufferCount, int treeNodeCount, BastaLikelihood likelihood) {
-        if (likelihood != null) {
-            likelihood.setTipData();
-        }
-        int newNumPartials = maxBufferCount + 1;
-        if (newNumPartials > currentPartialsCount) {
-            this.currentPartialsCount =  newNumPartials;
-            resize(newNumPartials, maxNumCoalescentIntervals);
-        }
     }
 
     private void vectorizeTransitionMatrixOperations(List<TransitionMatrixOperation> matrixOperations,

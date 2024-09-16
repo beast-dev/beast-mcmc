@@ -36,21 +36,18 @@ public class BastaInternalStorage {
         this.sizes = new double[2 * stateCount];
         this.decompositions = new EigenDecomposition[1];
 
-        resize(0, 0, null);
+        resize(getStartingPartialsCount(maxNumCoalescentIntervals, treeNodeCount), maxNumCoalescentIntervals);
     }
 
     static private int getStartingPartialsCount(int maxNumCoalescentIntervals, int treeNodeCount) {
         return maxNumCoalescentIntervals * (treeNodeCount + 1); // TODO much too large
     }
 
-    public void resize(int newNumPartials, int newNumCoalescentIntervals, BastaLikelihood likelihood) {
+    public void resize(int newNumPartials, int newNumCoalescentIntervals) {
 
         if (newNumPartials > currentNumPartials) {
             this.partials = new double[newNumPartials * stateCount];
             this.currentNumPartials =  newNumPartials;
-            if (likelihood != null) {
-                likelihood.setTipData();
-            }
         }
 
         if (newNumCoalescentIntervals > this.currentNumCoalescentIntervals) {

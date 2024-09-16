@@ -56,7 +56,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         }
     }
 
-    private BastaInternalStorage storage;
+    private final BastaInternalStorage storage;
     private GradientInternalStorage gradientStorage;
     private final double[] temp;
 
@@ -82,11 +82,6 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             gradientStorage = new GradientInternalStorage(maxNumCoalescentIntervals, tree.getNodeCount(),
                     stateCount, transpose);
         }
-    }
-
-    public void updateStorage(int maxBufferCount,
-                              int treeNodeCount, BastaLikelihood likelihood) {
-        this.storage.resize(maxBufferCount + 1, treeNodeCount, likelihood);
     }
 
     @Override

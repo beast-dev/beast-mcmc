@@ -48,8 +48,6 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
 
     private int currentMatrixNumber;
     private int currentLikelihoodInterval;
-    private int currentOutputBuffer;
-    private int maxOutputBuffer;
 
     protected CoalescentIntervalTraversal(final Tree tree,
                                           final BigFastTreeIntervals treeIntervals,
@@ -61,8 +59,6 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
 
         this.treeIntervals = treeIntervals;
         this.numberSubIntervals = numberSubIntervals;
-        this.currentOutputBuffer = 0;
-        this.maxOutputBuffer = 0;
     }
 
     @Override
@@ -274,9 +270,6 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         return startingInterval;
     }
 
-    public int determineMaxBuffer() {
-        return(maxOutputBuffer);
-    }
     private void traverseReverseCoalescentLevelOrder() {
 
         currentLikelihoodInterval = 0;
@@ -339,12 +332,6 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         activeNodesForInterval.incrementActiveBuffer(node);
         final int outputBuffer = activeNodesForInterval.getActiveBuffer(node);
         final int executionOrder = activeNodesForInterval.getExecutionOrder(node) + 1;
-
-        currentOutputBuffer = outputBuffer;
-
-        if (currentOutputBuffer > maxOutputBuffer) {
-            maxOutputBuffer = currentOutputBuffer;
-        }
 
         final int inputMatrix1 = computeTransmissionProbabilities(subInterval, node, length);
 

@@ -83,12 +83,6 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
                                int rootNodeNumber,
                                StructuredCoalescentLikelihoodGradient wrt);
 
-    void updateStorage(int maxBufferCount,
-                       int treeNodeCount,
-                       BastaLikelihood likelihood);
-
-    int getMaxNumberOfCoalescentIntervals();
-
     abstract class AbstractBastaLikelihoodDelegate extends AbstractModel implements BastaLikelihoodDelegate, Citable {
 
         protected static final boolean PRINT_COMMANDS = false;
@@ -115,11 +109,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
             this.parallelizationScheme = ParallelizationScheme.NONE;
         }
 
-        public int getMaxNumberOfCoalescentIntervals() {
-            return maxNumCoalescentIntervals;
-        }
-
-        public int getMaxNumberOfCoalescentIntervals(Tree tree) {
+        private int getMaxNumberOfCoalescentIntervals(Tree tree) {
             BigFastTreeIntervals intervals = new BigFastTreeIntervals((TreeModel) tree); // TODO fix BFTI to take a Tree
             int zeroLengthSampling = 0;
             for (int i = 0; i < intervals.getIntervalCount(); ++i) {

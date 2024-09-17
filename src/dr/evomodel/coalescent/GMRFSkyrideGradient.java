@@ -30,7 +30,6 @@ package dr.evomodel.coalescent;
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervalList;
-import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
@@ -96,7 +95,7 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
         return wrtParameter.getGradientLogDensity(skyrideLikelihood, intervalNodeMapping);
     }
 
-    private MultivariateFunction numeric1 = new MultivariateFunction() {
+    private final MultivariateFunction numeric1 = new MultivariateFunction() {
         @Override
         public double evaluate(double[] argument) {
 

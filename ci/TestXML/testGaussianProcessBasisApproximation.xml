@@ -1,14 +1,15 @@
 <?xml version="1.0" standalone="yes"?>
 <beast>
 
+	<parameter id="times" value="1 2 3"/>
 	<parameter id="data" value="3 7 10"/>
 
 	<randomField id="GpBasisApproximation">
 		<distribution>
-			<GaussianProcessBasisApproximation dim="3" knots = "2" times="1 2 3" degree="1.5">
-				<boundaryFactor>
-					<parameter id="boundaryFactor" value="1.8"/>
-				</boundaryFactor>
+			<GaussianProcessBasisApproximation knots="2" dim="3" degree="0.5" times="1 2 5" boundary="1.2">
+				<mean>
+					<parameter id="mean" value="1"/>
+				</mean>
 				<marginalVariance>
 					<parameter id="marginalVariance" value="1"/>
 				</marginalVariance>
@@ -18,6 +19,9 @@
 				<coefficient>
 					<parameter id="coefficient" value="1 1"/>
 				</coefficient>
+				<times>
+					<parameter idref="times"/>
+				</times>
 				<precision>
 					<parameter id="noise" value="1"/>
 				</precision>
@@ -84,35 +88,27 @@
                 <parameter idref="data"/>
             </data>
         </randomField>
-
-
         <report>
             <randomField idref="gmrfProper"/>
         </report>
-
         <randomFieldGradient id="gradientProper">
             <randomField idref="gmrfProper"/>
             <parameter idref="data"/>
         </randomFieldGradient>
-
         <report>
             <randomFieldGradient idref="gradientProper"/>
         </report>
-
         <randomFieldGradient id="gradientPrecisionProper">
             <randomField idref="gmrfProper"/>
             <parameter idref="precisionProper"/>
         </randomFieldGradient>
-
         <report>
             <randomFieldGradient idref="gradientPrecisionProper"/>
         </report>
-
         <randomFieldGradient id="gradientMeanProper">
             <randomField idref="gmrfProper"/>
             <parameter idref="meanProper"/>
         </randomFieldGradient>
-
         <report>
             <randomFieldGradient idref="gradientMeanProper"/>
         </report>

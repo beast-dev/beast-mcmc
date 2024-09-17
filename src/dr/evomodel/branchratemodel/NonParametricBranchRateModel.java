@@ -52,17 +52,18 @@ import java.util.List;
  * @author Pratyusa Datta
  * @author Marc A. Suchard
  */
-
-//TO DO: MAKE THIS A FUNCTIONAL FORM
-
-
+// TO DO: Remove code duplication
+// TO DO: Add correct gradients
 public class NonParametricBranchRateModel extends AbstractBranchRateModel
         implements DifferentiableBranchRates, Citable {
 
+
+
     private final Tree tree;
-    protected final double degree;
     private final Parameter coefficients;
-    private final Parameter boundaryFactor;
+    private final double degree;
+    private final double boundary;
+    private final Parameter mean;
     private final Parameter marginalVariance;
     private final Parameter lengthScale;
 
@@ -73,25 +74,24 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
     private double[] nodeRates;
     private double[] storedNodeRates;
     private double[] temp;
-    private double[][] tempMatrix;
     private final double rootHeight;
-    private double boundary;
-
 
 
     public NonParametricBranchRateModel(String name,
                                         Tree tree,
-                                        double degree,
                                         Parameter coefficients,
-                                        Parameter boundaryFactor,
+                                        double degree,
+                                        double boundary,
+                                        Parameter mean,
                                         Parameter marginalVariance,
                                         Parameter lengthScale) {
         super(name);
 
         this.tree = tree;
-        this.degree = degree;
         this.coefficients = coefficients;
-        this.boundaryFactor = boundaryFactor;
+        this.degree = degree;
+        this.boundary = boundary;
+        this.mean = mean;
         this.marginalVariance = marginalVariance;
         this.lengthScale = lengthScale;
 
@@ -100,7 +100,7 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
         }
 
         addVariable(coefficients);
-        addVariable(boundaryFactor);
+        addVariable(mean);
         addVariable(marginalVariance);
         addVariable(lengthScale);
 
@@ -111,10 +111,8 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
 
         nodeRatesKnown = false;
         nodeRates = new double[tree.getNodeCount() - 1];
-        rootHeight = tree.getNodeHeight(tree.getRoot());
         temp = new double[tree.getNodeCount() - 1];
-        tempMatrix = new double[coefficients.getDimension()][tree.getNodeCount() - 1];
-        boundary = (rootHeight/2) * boundaryFactor.getParameterValue(0);
+        rootHeight = tree.getNodeHeight(tree.getRoot());
     }
 
 
@@ -129,7 +127,7 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
             nodeRatesKnown = true;
         }
 
-        return nodeRates[getParameterIndexFromNode(node)];
+        return nodeRates[getParameterIndexFromNode(node)] * (rootHeight/2);
     }
 
 
@@ -144,14 +142,13 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
         Arrays.fill(gradientWrtCoefficients, 0);
 
         NonParametricBranchRateModel.TreeTraversal func = new NonParametricBranchRateModel.TreeTraversal.Gradient(gradientWrtCoefficients,
-                                                            gradientWrtBranches, temp);
+                gradientWrtBranches, temp);
         calculateNodeGeneric(func);
 
 
         return gradientWrtCoefficients;
 
     }
-
     interface TreeTraversal {
 
         void calculate(int childIndex, double start, double end, IntegratedSquaredGPApproximation approximation);
@@ -211,26 +208,28 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
 
         NodeRef root = tree.getRoot();
         double rootHeight = tree.getNodeHeight(root);
+        double halfRange = rootHeight/2;
 
-        traverseTreeByBranchGeneric(rootHeight, tree.getChild(root, 0), generic);
-        traverseTreeByBranchGeneric(rootHeight, tree.getChild(root, 1), generic);
+        traverseTreeByBranchGeneric(rootHeight, tree.getChild(root, 0), generic, halfRange);
+        traverseTreeByBranchGeneric(rootHeight, tree.getChild(root, 1), generic, halfRange);
     }
 
     private void traverseTreeByBranchGeneric(double currentHeight, NodeRef child,
-                                             NonParametricBranchRateModel.TreeTraversal generic) {
+                                             NonParametricBranchRateModel.TreeTraversal generic, double halfRange) {
 
         final double childHeight = tree.getNodeHeight(child);
         final int childIndex = getParameterIndexFromNode(child);
         double[] coefficientValues = new double[coefficients.getDimension()];
-        double start = rootHeight/2 - currentHeight;
-        double end = rootHeight/2 - childHeight;
+        double start = (rootHeight/2 - currentHeight)/halfRange;
+        double end = (rootHeight/2 - childHeight)/halfRange;
 
         for (int i = 0; i < coefficients.getDimension(); ++i) {
             coefficientValues[i] = coefficients.getParameterValue(i);
         }
 
-        IntegratedSquaredGPApproximation approximation = new IntegratedSquaredGPApproximation(coefficientValues,
-                boundary, degree, marginalVariance.getParameterValue(0), lengthScale.getParameterValue(0));
+        IntegratedSquaredGPApproximation approximation = new IntegratedSquaredGPApproximation(coefficientValues, degree,
+                boundary, mean.getParameterUntransformedValue(0), marginalVariance.getParameterValue(0),
+                lengthScale.getParameterValue(0));
 
         if (end > start) {
 
@@ -239,10 +238,11 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
 
 
         if (!tree.isExternal(child)) {
-            traverseTreeByBranchGeneric(childHeight, tree.getChild(child, 0), generic);
-            traverseTreeByBranchGeneric(childHeight, tree.getChild(child, 1), generic);
+            traverseTreeByBranchGeneric(childHeight, tree.getChild(child, 0), generic, halfRange);
+            traverseTreeByBranchGeneric(childHeight, tree.getChild(child, 1), generic, halfRange);
         }
     }
+
 
     @Override
     public double getBranchRateDifferential(final Tree tree, final NodeRef node) {
@@ -325,7 +325,7 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
 
     @Override
     public String getDescription() {
-        return "Non parametric branch rate model";
+        return "Time-varying branch rate model";
     }
 
     @Override

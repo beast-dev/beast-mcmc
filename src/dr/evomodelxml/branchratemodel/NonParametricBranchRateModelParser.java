@@ -12,9 +12,10 @@ import dr.xml.*;
 public class NonParametricBranchRateModelParser extends AbstractXMLObjectParser {
 
     public static final String PARSER_NAME = "nonParametricRates";
-    private static final String DEGREE = "degree";
     private static final String COEFFICIENTS = "coefficients";
-    private static final String BOUNDARYFACTOR = "boundaryFactor";
+    private static final String DEGREE = "degree";
+    private static final String BOUNDARY = "boundary";
+    private static final String MEAN = "mean";
     private static final String MARGINALVARIANCE = "marginalVariance";
     private static final String LENGTHSCALE = "lengthScale";
 
@@ -22,14 +23,15 @@ public class NonParametricBranchRateModelParser extends AbstractXMLObjectParser 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-        double degree = xo.getDoubleAttribute(DEGREE);
         Parameter coefficients = (Parameter) xo.getElementFirstChild(COEFFICIENTS);
-        Parameter boundaryFactor = (Parameter) xo.getElementFirstChild(BOUNDARYFACTOR);
+        double degree = xo.getDoubleAttribute(DEGREE);
+        double boundary = xo.getDoubleAttribute(BOUNDARY);
+        Parameter mean = (Parameter) xo.getElementFirstChild(MEAN);
         Parameter marginalVariance = (Parameter) xo.getElementFirstChild(MARGINALVARIANCE);
         Parameter lengthScale = (Parameter) xo.getElementFirstChild(LENGTHSCALE);
         String id = xo.hasId() ? xo.getId() : PARSER_NAME;
 
-        return new NonParametricBranchRateModel(id, tree, degree, coefficients, boundaryFactor, marginalVariance, lengthScale);
+        return new NonParametricBranchRateModel(id, tree, coefficients, degree, boundary, mean, marginalVariance, lengthScale);
     }
 
     @Override
@@ -54,11 +56,10 @@ public class NonParametricBranchRateModelParser extends AbstractXMLObjectParser 
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(TreeModel.class),
-            AttributeRule.newDoubleRule(DEGREE),
             new ElementRule(COEFFICIENTS,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(BOUNDARYFACTOR,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            AttributeRule.newDoubleRule(DEGREE),
+            AttributeRule.newDoubleRule(BOUNDARY),
             new ElementRule(MARGINALVARIANCE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(LENGTHSCALE,

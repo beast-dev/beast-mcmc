@@ -915,8 +915,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         return intervalsList.get(nt);
     }
 
-    public IntervalList getIntervalList(){
-        if(intervalsList.size()>1){
+    public IntervalList getIntervalList() {
+        if (intervalsList.size() > 1) {
             throw new IllegalArgumentException("There are multiple interval lists to choose from,"+
                     "you are using a method that assumes there is just one underlying interval please specify an index");
         }

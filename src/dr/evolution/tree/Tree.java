@@ -32,10 +32,7 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.util.Attributable;
 import dr.util.Identifiable;
-import jebl.evolution.graphs.Node;
-import jebl.evolution.trees.SimpleRootedTree;
 
-import java.text.NumberFormat;
 import java.util.*;
 
 /**
@@ -170,7 +167,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
     /**
      * @return a clone of this tree
      */
-    public Tree getCopy();
+    Tree getCopy();
 
     static double getTreeLength(Tree tree) {
         double treeLength = 0;

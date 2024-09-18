@@ -64,6 +64,7 @@ public class TransformedMultivariateParameter extends TransformedParameter {
     protected void restoreValues() {
         super.restoreValues();
         valuesKnown = false;
+        parameter.fireParameterChangedEvent();
     }
 
 //    public void variableChangedEvent(Variable variable, int index, ChangeType type) {

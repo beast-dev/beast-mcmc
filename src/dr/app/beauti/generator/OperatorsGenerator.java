@@ -36,8 +36,6 @@ import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.evomodel.operators.EmpiricalTreeDistributionOperator;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
 import dr.evomodelxml.branchratemodel.AutoCorrelatedBranchRatesDistributionParser;
 import dr.evomodelxml.branchratemodel.AutoCorrelatedGradientWrtIncrementsParser;
 import dr.evomodelxml.branchratemodel.BranchRateGradientWrtIncrementsParser;
@@ -48,16 +46,11 @@ import dr.evomodelxml.continuous.hmc.BranchRateGradientParser;
 import dr.evomodelxml.operators.*;
 import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.inference.distribution.DistributionLikelihood;
-import dr.inference.hmc.GradientWrtIncrement;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.HessianProvider;
 import dr.inference.model.ParameterParser;
 import dr.inference.operators.*;
 import dr.inferencexml.SignTransformParser;
-import dr.inferencexml.distribution.DistributionLikelihoodParser;
 import dr.inferencexml.distribution.shrinkage.BayesianBridgeDistributionModelParser;
 import dr.inferencexml.hmc.CompoundGradientParser;
-import dr.inferencexml.hmc.GradientWrtIncrementParser;
 import dr.inferencexml.hmc.HessianWrapperParser;
 import dr.inferencexml.hmc.JointGradientParser;
 import dr.inferencexml.model.CompoundParameterParser;
@@ -619,7 +612,25 @@ public class OperatorsGenerator extends Generator {
         int preconditioningDelay = 0;
         double drawVariance = 1.0;
 
-
+        writer.writeOpenTag(
+                HamiltonianMonteCarloOperatorParser.HMC_OPERATOR,
+                new Attribute[]{
+                        getWeightAttribute(operator.getWeight()),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.N_STEPS, nSteps),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.STEP_SIZE, stepSize),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.MODE, "vanilla"),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.DRAW_VARIANCE, drawVariance),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING, preconditioning),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING_DELAY, preconditioningDelay),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING_UPDATE_FREQUENCY, preconditioningUpdateFrequency)
+                }
+        );
+        writer.writeIDref(JointGradientParser.JOINT_GRADIENT, prefix + "locationScaleJointGradient");
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + "locationScale");
+        writer.writeOpenTag(SignTransformParser.NAME);
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + "locationScale");
+        writer.writeCloseTag(SignTransformParser.NAME);
+        writer.writeCloseTag(HamiltonianMonteCarloOperatorParser.HMC_OPERATOR);
     }
 
     private void writeShrinkageClockGibbsOperator(Operator operator, String prefix, XMLWriter writer) {
@@ -634,8 +645,9 @@ public class OperatorsGenerator extends Generator {
     private void writeShrinkageClockHMCOperator(Operator operator, String prefix, XMLWriter writer) {
         int nSteps = 5;
         double stepSize = 1E-2;
-        int gradientCheckCount = 0;
         int preconditioningUpdateFrequency = 1;
+        double drawVariance = 1.0;
+        int preconditioningDelay = 0;
 
         writer.writeOpenTag(
                 HamiltonianMonteCarloOperatorParser.HMC_OPERATOR,
@@ -644,9 +656,9 @@ public class OperatorsGenerator extends Generator {
                         new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.N_STEPS, nSteps),
                         new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.STEP_SIZE, stepSize),
                         new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.MODE, "vanilla"),
-                        new Attribute.Default<>("drawVariance", "1.0"),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.DRAW_VARIANCE, drawVariance),
                         new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING_UPDATE_FREQUENCY, preconditioningUpdateFrequency),
-                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_COUNT, gradientCheckCount),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING_DELAY, preconditioningDelay)
                 }
         );
         writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT);

@@ -1,0 +1,239 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+	<taxa id="taxa">
+        <taxon id="t2"> <attr name="X"> 1.27886087 -0.89489828 </attr> </taxon>
+        <taxon id="t7"> <attr name="X"> 0.79704654  0.60095970 </attr> </taxon>
+        <taxon id="t6"> <attr name="X">-0.09726915 -1.51709121 </attr> </taxon>
+        <taxon id="t5"> <attr name="X"> 1.26208467  0.10363748 </attr> </taxon>
+        <taxon id="t4"> <attr name="X"> 1.84580448  2.27099836 </attr> </taxon>
+        <taxon id="t1"> <attr name="X"> 2.16410606  0.98739050 </attr> </taxon>
+        <taxon id="t10"> <attr name="X">0.71656575  1.69471517 </attr> </taxon>
+        <taxon id="t8"> <attr name="X"> 0.03570950  2.15714592 </attr> </taxon>
+        <taxon id="t3"> <attr name="X"> 0.59215087  0.05502388 </attr> </taxon>
+        <taxon id="t9"> <attr name="X"> 0.23721299 -1.19731825 </attr> </taxon>
+	</taxa>
+
+	<newick id="tree" usingHeights="true" usingDates="false">
+        ((((t7:0.3986083996,(t4:0.2718849295,t1:0.2718849295):0.1267234701):0.3290298194,((t10:0.11519601,t8:0.11519601):0.4657010935,(t6:0.3741970882,t5:0.3741970882):0.2067000153):0.1467411155):0.09195480534,t2:0.8195930243):0.1804069757,(t3:0.1894355484,t9:0.1894355484):0.8105644516):0;
+	</newick>
+
+	<treeModel id="treeModel" fixHeights="true">
+		<newick idref="tree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+		<nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="2">
+			<parameter id="leafTraits"/>
+		</nodeTraits>
+	</treeModel>
+
+    <multivariateDiffusionModel id="X.diffusionModel">
+        <precisionMatrix>
+            <compoundSymmetricMatrix id="X.precisionMatrix" asCorrelation="true" isCholesky="true">
+                <diagonal>
+                    <parameter id="X.precision.diagonal" value="1 1" lower="0 0"/>
+                </diagonal>
+                <offDiagonal>
+                    <parameter id="X.precision.offDiagonal" value="0"/>
+                </offDiagonal>
+            </compoundSymmetricMatrix>
+        </precisionMatrix>
+	</multivariateDiffusionModel>
+	
+
+    <traitDataLikelihood id="X.traitLikelihood" traitName="X" forceFullPrecision="true" allowSingular="true">
+		<multivariateDiffusionModel idref="X.diffusionModel"/>
+        <treeModel idref="treeModel"/>
+		<traitParameter>
+			<parameter idref="leafTraits"/>
+		</traitParameter>
+		<conjugateRootPrior>
+            <meanParameter>
+                <parameter id="X.meanParameter" value="0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="10"/> 
+            </priorSampleSize>
+		</conjugateRootPrior>
+	</traitDataLikelihood>
+
+    <!-- ************************************************** -->
+    <!-- Priors  -->
+
+    <LKJCorrelationPrior id="X.precision.offDiagonal.prior" shapeParameter="0.5" dimension="2">
+		<data>
+            <parameter idref="X.precision.offDiagonal"/>
+		</data>
+	</LKJCorrelationPrior>
+
+	<halfTPrior id="X.precision.diagonal.prior" df="1" scale="2.5">
+		<parameter idref="X.precision.diagonal"/>
+	</halfTPrior>
+	
+	<normalPrior id="X.meanParameter.prior" mean="0" stdev="5">
+		<parameter idref="X.meanParameter"/>
+	</normalPrior>
+
+    <!-- ************************************************** -->
+    <!-- HMC  -->
+
+
+	<diffusionGradient id="gradient.likelihood">
+        <precisionGradient id="gradient.likelihood.precision" parameter="both" traitName="X">
+            <traitDataLikelihood idref="X.traitLikelihood"/>
+            <compoundSymmetricMatrix idref="X.precisionMatrix"/>
+        </precisionGradient>
+		<meanGradient id="gradient.likelihood.meanParameter" parameter="root" traitName="X">
+            <traitDataLikelihood idref="X.traitLikelihood"/>
+            <parameter idref="X.meanParameter"/>
+        </meanGradient>
+    </diffusionGradient>
+
+    <compoundGradient id="gradient.prior">
+        <gradient>
+            <halfTPrior idref="X.precision.diagonal.prior"/>
+            <parameter idref="X.precision.diagonal"/>
+        </gradient>
+        <gradient>
+            <LKJCorrelationPrior idref="X.precision.offDiagonal.prior"/>
+        </gradient>
+        <gradient>
+            <distributionLikelihood idref="X.meanParameter.prior"/>
+            <parameter idref="X.meanParameter"/>
+        </gradient>
+    </compoundGradient>
+    
+    <jointGradient id="gradient.posterior">
+        <diffusionGradient idref="gradient.likelihood"/>
+        <compoundGradient idref="gradient.prior"/>
+    </jointGradient>
+
+	<!-- Tests (report throws an error if analytic and numeric gradients are different)  -->
+    <report>
+    	Initial likelihood gradient:
+        <jointGradient idref="gradient.likelihood"/>
+    </report>
+    <report>
+    	Initial prior gradient:
+        <jointGradient idref="gradient.prior"/>
+    </report>
+    <report>
+    	Initial posterior gradient:
+        <jointGradient idref="gradient.posterior"/>
+    </report>
+
+	<operators id="operators.hmc">
+	    <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
+                                       drawVariance="1.0" gradientCheckCount="10" gradientCheckTolerance="0.1">
+            <pathGradient>
+                <source>
+                    <gradient idref="gradient.posterior"/>
+                </source>
+                <destination>
+                    <gradient idref="gradient.prior"/>
+                </destination>
+            </pathGradient>
+            <compoundParameter id="compound.variance.parameter">
+                <parameter idref="X.precision.diagonal"/>
+                <parameter idref="X.precision.offDiagonal"/>
+                <parameter idref="X.meanParameter"/>
+            </compoundParameter>
+            <multivariateCompoundTransform>
+                <transform type="log" dim="2"/>
+                <LKJTransform dimension="2"/>
+                <transform type="none" dim="2"/>
+            </multivariateCompoundTransform>
+        </hamiltonianMonteCarloOperator>
+	</operators>
+
+	<mcmc id="mcmc.hmc" chainLength="500" autoOptimize="true">
+		<posterior id="posterior.hmc">
+			<prior id="prior.hmc">
+                <LKJCorrelationPrior idref="X.precision.offDiagonal.prior"/>
+                <halfTPrior idref="X.precision.diagonal.prior"/>
+                <normalPrior idref="X.meanParameter.prior"/>
+			</prior>
+			<likelihood id="likelihood.hmc">
+				<traitDataLikelihood idref="X.traitLikelihood"/> 
+			</likelihood>
+		</posterior>
+		<operators idref="operators.hmc"/>
+
+		<log id="screenLog.hmc" logEvery="100">
+			<column label="Posterior" dp="4" width="12">
+				<posterior idref="posterior.hmc"/>
+			</column>
+			<column label="Prior" dp="4" width="12">
+				<prior idref="prior.hmc"/>
+			</column>
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood.hmc"/>
+			</column>
+			<column label="Precision" dp="4" width="12">
+                <matrixParameter idref="X.precisionMatrix"/>
+			</column>
+		</log>
+
+		<log id="fileLog.hmc" logEvery="1" fileName="testGradientWorkingPrior.log" overwrite="false">
+			<posterior idref="posterior.hmc"/>
+			<prior idref="prior.hmc"/>
+			<likelihood idref="likelihood.hmc"/>
+			<matrixParameter idref="X.precisionMatrix"/>
+            <parameter idref="X.precision.diagonal"/>
+            <parameter idref="X.precision.offDiagonal"/>
+            <parameter idref="X.meanParameter"/>
+		</log>
+	</mcmc>
+
+    <!-- ************************************************** -->
+    <!-- Working Priors  -->
+
+    <logTransformedNormalReferencePrior id="X.precision.diagonal.workingPrior" fileName="testGradientWorkingPrior.log" parameterColumn="X.precision.diagonal" dimension="2" burnin="10">
+        <parameter idref="X.precision.diagonal"/>
+    </logTransformedNormalReferencePrior>
+    <normalReferencePrior id="X.precision.offDiagonal.workingPrior" fileName="testGradientWorkingPrior.log" parameterColumn="X.precision.offDiagonal" dimension="1" burnin="10">
+        <parameter idref="X.precision.offDiagonal"/>
+    </normalReferencePrior>
+    <normalReferencePrior id="X.meanParameter.workingPrior" fileName="testGradientWorkingPrior.log" parameterColumn="X.meanParameter" dimension="2" burnin="10">
+        <parameter idref="X.meanParameter"/>
+    </normalReferencePrior>
+    
+    <compoundGradient id="gradient.workingPrior">
+    	<gradient id="gradient.workingPrior.diagonal">
+        	<distributionLikelihood idref="X.precision.diagonal.workingPrior"/>
+        	<parameter idref="X.precision.diagonal"/>
+    	</gradient>
+   	 	<gradient id="gradient.workingPrior.offDiagonal">
+    	    <distributionLikelihood idref="X.precision.offDiagonal.workingPrior"/>
+        	<parameter idref="X.precision.offDiagonal"/>
+    	</gradient>
+		<gradient id="gradient.workingPrior.meanParameter">
+    	    <distributionLikelihood idref="X.meanParameter.workingPrior"/>
+        	<parameter idref="X.meanParameter"/>
+    	</gradient>
+    </compoundGradient>
+    
+    <jointGradient id="gradient.workingPosterior">
+        <diffusionGradient idref="gradient.likelihood"/>
+        <compoundGradient idref="gradient.workingPrior"/>
+    </jointGradient>
+    
+    <!-- Tests (report throws an error if analytic and numeric gradients are different)  --> 
+    <report>
+    	Full posterior gradient:
+        <jointGradient idref="gradient.posterior"/>
+    </report>
+    <report>
+    	Full working posterior gradient:
+        <jointGradient idref="gradient.workingPosterior"/>
+    </report>
+    
+
+</beast>

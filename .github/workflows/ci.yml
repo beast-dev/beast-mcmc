@@ -30,8 +30,8 @@ jobs:
             - name: Build BEAGLE
               if: steps.cache.outputs.cache-hit != 'true'
               run: |
-                  chmod +x ci/build_beagle.sh
-                  ci/build_beagle.sh
+                  chmod +x ./.github/scripts/build_beagle.sh
+                  ./.github/scripts/build_beagle.sh
             - name: Build BEAST
               if: steps.cache.outputs.cache-hit != 'true'
               run: ant dist
@@ -42,8 +42,8 @@ jobs:
             - name: Set up test matrices
               id: set-matrices
               run: |
-                  echo "xml-matrix=$(ls ci/TestXML/*.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
-                  echo "xml-load-state-matrix=$(ls ci/TestXMLwithLoadState/*.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+                  echo "xml-matrix=$(ls tests/TestXML/*.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+                  echo "xml-load-state-matrix=$(ls tests/TestXMLwithLoadState/*.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
         outputs:
             xml-matrix: ${{ steps.set-matrices.outputs.xml-matrix }}
             xml-load-state-matrix: ${{ steps.set-matrices.outputs.xml-load-state-matrix }}
@@ -52,6 +52,7 @@ jobs:
         needs: setup
         runs-on: ubuntu-latest
         strategy:
+            fail-fast: false
             matrix:
                 file: ${{fromJson(needs.setup.outputs.xml-matrix)}}
         steps:
@@ -69,6 +70,7 @@ jobs:
         needs: setup
         runs-on: ubuntu-latest
         strategy:
+            fail-fast: false
             matrix:
                 file: ${{fromJson(needs.setup.outputs.xml-load-state-matrix)}}
         steps:
@@ -81,7 +83,7 @@ jobs:
                   key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
             - name: Run test with load state for ${{ matrix.file }}
               run: |
-                  checkpoint=ci/TestXMLwithLoadState/$(basename ${{ matrix.file }} .xml).chkpt
+                  checkpoint=tests/TestXMLwithLoadState/$(basename ${{ matrix.file }} .xml).chkpt
                   java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state $checkpoint -overwrite ${{ matrix.file }}
 
     run-junit:

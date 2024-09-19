@@ -267,6 +267,7 @@ public class ClockModelGenerator extends Generator {
                 writer.writeCloseTag(ArbitraryBranchRatesParser.SCALE);
                 writer.writeCloseTag(tag);
 
+                //rates prior
                 writer.writeOpenTag(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD,
                         new Attribute.Default<>(XMLParser.ID,
                                 prefix  + "ratesPrior"));
@@ -301,6 +302,41 @@ public class ClockModelGenerator extends Generator {
                 writeCoefficientOfVariationStatistic(writer, tag, prefix, treePrefix);
 
                 writeCovarianceStatistic(writer, tag, prefix, treePrefix);
+
+                //scale prior
+                writer.writeOpenTag(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD,
+                        new Attribute.Default<>(XMLParser.ID,
+                                prefix  + "scalePrior"));
+                writeParameterRef(MixedDistributionLikelihoodParser.DATA, prefix + "branchRates.scale", writer);
+                writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
+                writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
+                writer.writeOpenTag(ExponentialDistributionModelParser.MEAN);
+                writeParameter(null, 1, 1.0, 0.0, Double.NaN, writer);
+                writer.writeCloseTag(ExponentialDistributionModelParser.MEAN);
+                writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
+                writer.writeCloseTag(DistributionLikelihoodParser.DISTRIBUTION);
+                writer.writeCloseTag(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
+
+                //compound parameter
+
+
+                //CTMC scale prior
+
+
+                //location gradient
+
+
+                //scale gradient
+
+
+                //location scale gradient
+
+
+                //location scale prior gradient
+
+
+                //location scale joint gradient
+
 
 
                 break;

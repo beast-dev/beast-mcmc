@@ -140,7 +140,6 @@ public class PartitionClockModel extends PartitionOptions {
                 .isCMTCRate(false).isNonNegative(true).partitionOptions(this).isPriorFixed(true)
                 .isAdaptiveMultivariateCompatible(true).build(parameters);
 
-
         // Shrinkage clock
         new Parameter.Builder(ClockType.SHRINKAGE_CLOCK_LOCATION, "Shrinkage clock rate").
                 prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
@@ -230,7 +229,6 @@ public class PartitionClockModel extends PartitionOptions {
         createDiscreteStatistic("rateChanges", "number of random local clocks"); // POISSON_PRIOR
 
         // A vector of relative rates across all partitions...
-
         createNonNegativeParameterDirichletPrior("allNus", "relative rates amongst partitions parameter", this, 0, 1.0, true, true);
         createOperator("deltaNus", "allNus",
                 "Change partition rates relative to each other maintaining mean", "allNus",
@@ -240,7 +238,6 @@ public class PartitionClockModel extends PartitionOptions {
         createOperator("deltaMus", "allMus",
                 "Change partition rates relative to each other maintaining mean", "allMus",
                 OperatorType.WEIGHTED_DELTA_EXCHANGE, 0.01, 3.0);
-
 
         createOperator("swapBranchRateCategories", "branchRates.categories", "Performs a swap of branch rate categories",
                 "branchRates.categories", OperatorType.SWAP, 1, branchWeights / 3);
@@ -657,9 +654,10 @@ public class PartitionClockModel extends PartitionOptions {
                         switch (clockDistributionType) {
                             case LOGNORMAL:
                                 ops.add(rateOperator = getOperator(ClockType.HMC_CLOCK_LOCATION));
+                                ops.add(getOperator("HMCRCR"));
+                                ops.add(getOperator("HMCRCS"));
                                 ops.add(getOperator(ClockType.HMCLN_SCALE));
                                 addUpDownOperator(ops, rateOperator);
-                                ops.add(getOperator("HMCLN"));
                                 break;
                             default:
                                 throw new UnsupportedOperationException("Only lognormal supported for HMC relaxed clock");

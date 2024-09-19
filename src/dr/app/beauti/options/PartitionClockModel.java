@@ -216,8 +216,11 @@ public class PartitionClockModel extends PartitionOptions {
         createScaleOperator(ClockType.UCGD_MEAN, demoTuning, rateWeights);
         createScaleOperator(ClockType.UCGD_SHAPE, demoTuning, rateWeights);
 
-        createOperator("HMCLN", "HMC relaxed clock",
-                "Hamiltonian Monte Carlo relaxed clock operator", null, OperatorType.RELAXED_CLOCK_HMC_OPERATOR ,-1 , 1.0);
+        //HMC relaxed clock
+        createOperator("HMCRCR", "HMC relaxed clock rate",
+                "Hamiltonian Monte Carlo relaxed clock rate operator", null, OperatorType.RELAXED_CLOCK_HMC_RATE_OPERATOR,-1 , 1.0);
+        createOperator("HMCRCS", "HMC relaxed clock scale",
+                "Hamiltonian Monte Carlo relaxed clock scale operator", null, OperatorType.RELAXED_CLOCK_HMC_SCALE_OPERATOR,-1 , 0.5);
         createScaleOperator(ClockType.HMC_CLOCK_LOCATION, demoTuning, rateWeights);
         createScaleOperator(ClockType.HMCLN_SCALE, demoTuning, rateWeights);
 

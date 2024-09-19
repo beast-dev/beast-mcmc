@@ -247,8 +247,11 @@ public class OperatorsGenerator extends Generator {
             case ADAPTIVE_MULTIVARIATE:
                 writeAdaptiveMultivariateOperator(operator, writer);
                 break;
-            case RELAXED_CLOCK_HMC_OPERATOR:
-                writeRelaxedClockHMCOperator(operator, prefix,writer);
+            case RELAXED_CLOCK_HMC_RATE_OPERATOR:
+                writeRelaxedClockHMCRateOperator(operator, prefix,writer);
+                break;
+            case RELAXED_CLOCK_HMC_SCALE_OPERATOR:
+                writeRelaxedClockHMCScaleOperator(operator, prefix,writer);
                 break;
             case SHRINKAGE_CLOCK_HMC_OPERATOR:
                 writeShrinkageClockHMCOperator(operator, prefix, writer);
@@ -569,7 +572,7 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(HamiltonianMonteCarloOperatorParser.HMC_OPERATOR);
     }
 
-    private void writeRelaxedClockHMCOperator(Operator operator, String prefix, XMLWriter writer) {
+    private void writeRelaxedClockHMCRateOperator(Operator operator, String prefix, XMLWriter writer) {
         int nSteps = 4;
         double stepSize = 1E-2;
         String preconditioning = "diagonal";
@@ -606,6 +609,17 @@ public class OperatorsGenerator extends Generator {
         writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rates");
         writer.writeCloseTag(SignTransformParser.NAME);
         writer.writeCloseTag(HamiltonianMonteCarloOperatorParser.HMC_OPERATOR);
+    }
+
+    private void writeRelaxedClockHMCScaleOperator(Operator operator, String prefix, XMLWriter writer) {
+        int nSteps = 4;
+        double stepSize = 1E-2;
+        String preconditioning = "diagonal";
+        int preconditioningUpdateFrequency = 10;
+        int preconditioningDelay = 0;
+        double drawVariance = 1.0;
+
+
     }
 
     private void writeShrinkageClockGibbsOperator(Operator operator, String prefix, XMLWriter writer) {

@@ -58,9 +58,8 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
     public static final String NAME = "locationScaleGradient";
     public static final String USE_HESSIAN = "useHessian";
     public static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
-
-    private static final String LOCATION = "location";
-    private static final String SCALE = "scale";
+    public static final String LOCATION = "location";
+    public static final String SCALE = "scale";
 
     public String getParserName(){ return NAME; }
 

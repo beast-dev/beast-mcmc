@@ -54,7 +54,6 @@ jobs:
         strategy:
             matrix:
                 file: ${{fromJson(needs.setup.outputs.xml-matrix)}}
-            fail-fast: false
         steps:
             - uses: actions/checkout@v2
             - uses: actions/cache@v2
@@ -72,7 +71,6 @@ jobs:
         strategy:
             matrix:
                 file: ${{fromJson(needs.setup.outputs.xml-load-state-matrix)}}
-            fail-fast: false
         steps:
             - uses: actions/checkout@v2
             - uses: actions/cache@v2

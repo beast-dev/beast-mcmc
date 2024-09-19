@@ -1,41 +1,101 @@
 name: BEAST CI
+on: [push, pull_request]
 
-on: [push]
+env:
+    BEAGLE_DIR: beagle-lib
+    BEAGLE_LIB: beagle-lib/usr/local/lib
+    LD_LIBRARY_PATH: beagle-lib/usr/local/lib
+    BEAGLE_BRANCH: v4_release
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    env:
-      BEAGLE_DIR: beagle-lib
-      BEAGLE_LIB: beagle-lib/usr/local/lib
-      LD_LIBRARY_PATH: beagle-lib/usr/local/lib
-      BEAGLE_BRANCH: v4_release
+    setup:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - name: Set up JDK 8
+              uses: actions/setup-java@v2
+              with:
+                  java-version: "8"
+                  distribution: "adopt"
+            - name: Setup cmake
+              uses: lukka/get-cmake@latest
+            - name: Cache BEAGLE and BEAST
+              id: cache
+              uses: actions/cache@v2
+              with:
+                  path: |
+                      ${{ env.BEAGLE_DIR }}
+                      build/dist
+                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
+            - name: Build BEAGLE
+              if: steps.cache.outputs.cache-hit != 'true'
+              run: |
+                  chmod +x ci/build_beagle.sh
+                  ci/build_beagle.sh
+            - name: Build BEAST
+              if: steps.cache.outputs.cache-hit != 'true'
+              run: ant dist
+            - name: Check BEAGLE
+              run: |
+                  ls ${BEAGLE_LIB}
+                  java -jar -Djava.library.path=${BEAGLE_LIB} build/dist/beast.jar -beagle_info
+            - name: Set up test matrices
+              id: set-matrices
+              run: |
+                  echo "xml-matrix=$(ls ci/TestXML/*.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+                  echo "xml-load-state-matrix=$(ls ci/TestXMLwithLoadState/*.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+        outputs:
+            xml-matrix: ${{ steps.set-matrices.outputs.xml-matrix }}
+            xml-load-state-matrix: ${{ steps.set-matrices.outputs.xml-load-state-matrix }}
 
+    test-xml:
+        needs: setup
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                file: ${{fromJson(needs.setup.outputs.xml-matrix)}}
+            fail-fast: false
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/cache@v2
+              with:
+                  path: |
+                      ${{ env.BEAGLE_DIR }}
+                      build/dist
+                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
+            - name: Run test for ${{ matrix.file }}
+              run: java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -overwrite ${{ matrix.file }}
 
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up JDK 8
-        uses: actions/setup-java@v2
-        with:
-          java-version: '8'
-          distribution: 'adopt'
-      - name: Setup cmake
-        uses: lukka/get-cmake@latest
-      #      - name: Build BEAGLE
-#      - run: git clone -b $BEAGLE_BRANCH --depth 1 https://github.com/beagle-dev/beagle-lib.git $BEAGLE_DIR
-#      - run: cd $BEAGLE_DIR
-#      - run: mkdir build
-#      - run: cd build
-#      - run: echo $PWD
-#      - run: cmake -DBUILD_CUDA=OFF -DBUILD_OPENCL=OFF ..
-#      - run: make DESTDIR=BEAGLE_DIR
-      - run: chmod +x ci/build_beagle.sh
-      - run: ci/build_beagle.sh
-      - run: ant dist
-      - run: ls ${BEAGLE_LIB}
-      - run: java -jar -Djava.library.path=${BEAGLE_LIB} build/dist/beast.jar -beagle_info
-      - run: chmod +x ci/test.sh
-      - run: ci/test.sh
-#      - run: chmod +x ci/test_with_load_state.sh
-#      - run: ci/test_with_load_state.sh
-      - run: ant -Djava.library.path=${BEAGLE_LIB} junit
+    test-xml-load-state:
+        needs: setup
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                file: ${{fromJson(needs.setup.outputs.xml-load-state-matrix)}}
+            fail-fast: false
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/cache@v2
+              with:
+                  path: |
+                      ${{ env.BEAGLE_DIR }}
+                      build/dist
+                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
+            - name: Run test with load state for ${{ matrix.file }}
+              run: |
+                  checkpoint=ci/TestXMLwithLoadState/$(basename ${{ matrix.file }} .xml).chkpt
+                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state $checkpoint -overwrite ${{ matrix.file }}
+
+    run-junit:
+        needs: setup
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/cache@v2
+              with:
+                  path: |
+                      ${{ env.BEAGLE_DIR }}
+                      build/dist
+                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
+            - name: Run JUnit tests
+              run: ant -Djava.library.path=${BEAGLE_LIB} junit

@@ -56,11 +56,11 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRA
 public class LocationScaleGradientParser extends AbstractXMLObjectParser {
 
     public static final String NAME = "locationScaleGradient";
+    public static final String USE_HESSIAN = "useHessian";
+    public static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
 
     private static final String LOCATION = "location";
     private static final String SCALE = "scale";
-    private static final String USE_HESSIAN = "useHessian";
-    private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
 
     public String getParserName(){ return NAME; }
 

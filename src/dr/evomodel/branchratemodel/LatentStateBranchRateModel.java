@@ -484,7 +484,10 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
             density= joint/ marg;
         }
 
-        // density *= branchLength;  // random variable is latentProportion = reward / branchLength, so include Jacobian //AHHHHHH!!!! need to be very sure it is ok to comment this out.
+        if(proportion>0){
+            density *= branchLength;  // random variable is latentProportion = reward / branchLength, so include Jacobian when not 0
+        }
+       
 
         if (DEBUG) {
             if (Double.isInfinite(Math.log(density))) {

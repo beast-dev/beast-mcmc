@@ -36,9 +36,11 @@ import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodelxml.branchmodel.BranchSpecificBranchModelParser;
 import dr.evomodelxml.continuous.hmc.BranchRateGradientParser;
-import dr.evomodelxml.tree.TransformedTreeTraitParser;
+import dr.evomodelxml.continuous.hmc.LocationScaleGradientParser;
+import dr.evomodelxml.tree.*;
 import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.RandomField;
@@ -50,14 +52,14 @@ import dr.inference.model.StatisticParser;
 import dr.inferencexml.SignTransformParser;
 import dr.inferencexml.distribution.*;
 import dr.inferencexml.distribution.shrinkage.BayesianBridgeDistributionModelParser;
+import dr.inferencexml.hmc.CompoundGradientParser;
 import dr.inferencexml.hmc.GradientWrtIncrementParser;
+import dr.inferencexml.hmc.HessianWrapperParser;
+import dr.inferencexml.hmc.JointGradientParser;
 import dr.inferencexml.operators.shrinkage.BayesianBridgeShrinkageOperatorParser;
 import dr.oldevomodel.clock.RateEvolutionLikelihood;
 import dr.evomodelxml.branchratemodel.*;
 import dr.oldevomodelxml.clock.ACLikelihoodParser;
-import dr.evomodelxml.tree.RateCovarianceStatisticParser;
-import dr.evomodelxml.tree.RateStatisticParser;
-import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.TaxaParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.GammaDistributionModel;
@@ -318,26 +320,63 @@ public class ClockModelGenerator extends Generator {
                 writer.writeCloseTag(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
 
                 //compound parameter
-
+                writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER, new Attribute.Default<>(XMLParser.ID, prefix + "locationScale"));
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rate");
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.scale");
+                writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
 
                 //CTMC scale prior
-
+                writer.writeOpenTag(CTMCScalePriorParser.MODEL_NAME,  new Attribute.Default<>(XMLParser.ID, prefix + "locationPrior"));
+                writer.writeOpenTag(CTMCScalePriorParser.SCALEPARAMETER);
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rate");
+                writer.writeCloseTag(CTMCScalePriorParser.SCALEPARAMETER);
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
+                writer.writeCloseTag(CTMCScalePriorParser.MODEL_NAME);
 
                 //location gradient
-
+                writer.writeOpenTag(LocationScaleGradientParser.NAME, new Attribute[] {
+                        new Attribute.Default<>(XMLParser.ID, prefix + "locationGradient"),
+                        new Attribute.Default<>("traitName", "Sequence"),
+                        new Attribute.Default<>(LocationScaleGradientParser.USE_HESSIAN, "false")
+                });
+                writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, treePrefix + "treeLikelihood");
+                writer.writeOpenTag(LocationScaleGradientParser.LOCATION);
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rate");
+                writer.writeCloseTag(LocationScaleGradientParser.LOCATION);
+                writer.writeCloseTag(LocationScaleGradientParser.NAME);
 
                 //scale gradient
+                writer.writeOpenTag(LocationScaleGradientParser.NAME, new Attribute[] {
+                        new Attribute.Default<>(XMLParser.ID, prefix + "scaleGradient"),
+                        new Attribute.Default<>("traitName", "Sequence"),
+                        new Attribute.Default<>(LocationScaleGradientParser.USE_HESSIAN, "false")
+                });
+                writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, treePrefix + "treeLikelihood");
+                writer.writeOpenTag(LocationScaleGradientParser.SCALE);
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.scale");
+                writer.writeCloseTag(LocationScaleGradientParser.SCALE);
+                writer.writeCloseTag(LocationScaleGradientParser.NAME);
 
+                //location scale (compound) gradient
+                writer.writeOpenTag(CompoundGradientParser.COMPOUND_GRADIENT, new Attribute.Default<>(XMLParser.ID, prefix + "locationScaleGradient"));
+                writer.writeIDref(LocationScaleGradientParser.NAME, prefix + "locationGradient");
+                writer.writeIDref(LocationScaleGradientParser.NAME, prefix + "scaleGradient");
+                writer.writeCloseTag(CompoundGradientParser.COMPOUND_GRADIENT);
 
-                //location scale gradient
-
-
-                //location scale prior gradient
-
+                //location scale (compound) prior gradient
+                writer.writeOpenTag(CompoundGradientParser.COMPOUND_GRADIENT, new Attribute.Default<>(XMLParser.ID, prefix + "locationScalePriorGradient"));
+                writer.writeIDref(CTMCScalePriorParser.MODEL_NAME, prefix + "locationPrior");
+                writer.writeOpenTag(HessianWrapperParser.NAME);
+                writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, "scalePrior");
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.scale");
+                writer.writeCloseTag(HessianWrapperParser.NAME);
+                writer.writeCloseTag(CompoundGradientParser.COMPOUND_GRADIENT);
 
                 //location scale joint gradient
-
-
+                writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT, new Attribute.Default<>(XMLParser.ID, prefix + "locationScaleJointGradient"));
+                writer.writeIDref(CompoundGradientParser.COMPOUND_GRADIENT, prefix + "locationScalePriorGradient");
+                writer.writeIDref(CompoundGradientParser.COMPOUND_GRADIENT, prefix + "locationScaleGradient");
+                writer.writeCloseTag(JointGradientParser.JOINT_GRADIENT);
 
                 break;
 

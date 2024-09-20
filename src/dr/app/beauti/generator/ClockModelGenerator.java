@@ -28,7 +28,10 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.Parameter;
+import dr.app.beauti.options.PartitionClockModel;
+import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.types.ClockType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
@@ -36,42 +39,33 @@ import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodelxml.branchmodel.BranchSpecificBranchModelParser;
-import dr.evomodelxml.continuous.hmc.BranchRateGradientParser;
+import dr.evomodelxml.branchratemodel.*;
 import dr.evomodelxml.continuous.hmc.LocationScaleGradientParser;
-import dr.evomodelxml.tree.*;
+import dr.evomodelxml.tree.CTMCScalePriorParser;
+import dr.evomodelxml.tree.RateCovarianceStatisticParser;
+import dr.evomodelxml.tree.RateStatisticParser;
+import dr.evomodelxml.tree.TreeModelParser;
 import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
+import dr.evoxml.TaxaParser;
 import dr.inference.distribution.DistributionLikelihood;
-import dr.inference.distribution.RandomField;
-import dr.inference.hmc.GradientWrtIncrement;
-import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.Likelihood;
+import dr.inference.distribution.ExponentialDistributionModel;
+import dr.inference.distribution.GammaDistributionModel;
+import dr.inference.model.ParameterParser;
 import dr.inference.model.StatisticParser;
 import dr.inferencexml.SignTransformParser;
 import dr.inferencexml.distribution.*;
 import dr.inferencexml.distribution.shrinkage.BayesianBridgeDistributionModelParser;
 import dr.inferencexml.hmc.CompoundGradientParser;
-import dr.inferencexml.hmc.GradientWrtIncrementParser;
 import dr.inferencexml.hmc.HessianWrapperParser;
 import dr.inferencexml.hmc.JointGradientParser;
-import dr.inferencexml.operators.shrinkage.BayesianBridgeShrinkageOperatorParser;
-import dr.oldevomodel.clock.RateEvolutionLikelihood;
-import dr.evomodelxml.branchratemodel.*;
-import dr.oldevomodelxml.clock.ACLikelihoodParser;
-import dr.evoxml.TaxaParser;
-import dr.inference.distribution.ExponentialDistributionModel;
-import dr.inference.distribution.GammaDistributionModel;
-import dr.inference.model.ParameterParser;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.model.SumStatisticParser;
+import dr.oldevomodel.clock.RateEvolutionLikelihood;
+import dr.oldevomodelxml.clock.ACLikelihoodParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
-import java.util.Map;
-
-import static dr.inference.model.ParameterParser.DIMENSION;
 import static dr.inference.model.ParameterParser.PARAMETER;
 import static dr.inferencexml.distribution.PriorParsers.*;
 import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.*;
@@ -136,26 +130,26 @@ public class ClockModelGenerator extends Generator {
                     // tree
                     writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
 
-                    writer.writeOpenTag("distribution");
+                    writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
                     writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
                             new Attribute.Default<String>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, "true"));
                     writeParameter("mean", ClockType.UCLD_MEAN, clockModel, writer);
                     writeParameter("stdev", ClockType.UCLD_STDEV, clockModel, writer);
                     writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
-                    writer.writeCloseTag("distribution");
+                    writer.writeCloseTag(DistributionLikelihoodParser.DISTRIBUTION);
 
-                    writer.writeOpenTag("distribution");
+                    writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
                     writer.writeOpenTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
                     writeParameter("mean", ClockType.UCGD_MEAN, clockModel, writer);
                     writeParameter("shape", ClockType.UCGD_SHAPE, clockModel, writer);
                     writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
-                    writer.writeCloseTag("distribution");
+                    writer.writeCloseTag(DistributionLikelihoodParser.DISTRIBUTION);
 
-                    writer.writeOpenTag("distribution");
+                    writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
                     writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
                     writeParameter("mean", ClockType.UCED_MEAN, clockModel, writer);
                     writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
-                    writer.writeCloseTag("distribution");
+                    writer.writeCloseTag(DistributionLikelihoodParser.DISTRIBUTION);
 
                     writer.writeOpenTag(MixtureModelBranchRatesParser.DISTRIBUTION_INDEX);
                     writeParameter(clockModel.getParameter("branchRates.distributionIndex"), -1, writer);
@@ -189,7 +183,7 @@ public class ClockModelGenerator extends Generator {
                     // tree
                     writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
 
-                    writer.writeOpenTag("distribution");
+                    writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
 
                     switch (clockModel.getClockDistributionType()) {
 
@@ -222,7 +216,7 @@ public class ClockModelGenerator extends Generator {
                             break;
                     }
 
-                    writer.writeCloseTag("distribution");
+                    writer.writeCloseTag(DistributionLikelihoodParser.DISTRIBUTION);
 
                     if (clockModel.isContinuousQuantile()) {
                         writer.writeOpenTag(ContinuousBranchRatesParser.RATE_QUANTILES);
@@ -274,7 +268,7 @@ public class ClockModelGenerator extends Generator {
                         new Attribute.Default<>(XMLParser.ID,
                                 prefix  + "ratesPrior"));
 
-                writeParameterRef(MixedDistributionLikelihoodParser.DATA, prefix + "branchRates.rates", writer);
+                writeParameterRef(MixedDistributionLikelihoodParser.DATA, prefix + ClockType.HMC_CLOCK_BRANCH_RATES, writer);
 
                 writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
 
@@ -309,7 +303,7 @@ public class ClockModelGenerator extends Generator {
                 writer.writeOpenTag(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD,
                         new Attribute.Default<>(XMLParser.ID,
                                 prefix  + "scalePrior"));
-                writeParameterRef(MixedDistributionLikelihoodParser.DATA, prefix + "branchRates.scale", writer);
+                writeParameterRef(MixedDistributionLikelihoodParser.DATA, prefix + ClockType.HMCLN_SCALE, writer);
                 writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
                 writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
                 writer.writeOpenTag(ExponentialDistributionModelParser.MEAN);
@@ -321,14 +315,14 @@ public class ClockModelGenerator extends Generator {
 
                 //compound parameter
                 writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER, new Attribute.Default<>(XMLParser.ID, prefix + "locationScale"));
-                writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rate");
-                writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.scale");
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMC_CLOCK_LOCATION);
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMCLN_SCALE);
                 writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
 
                 //CTMC scale prior
                 writer.writeOpenTag(CTMCScalePriorParser.MODEL_NAME,  new Attribute.Default<>(XMLParser.ID, prefix + "locationPrior"));
                 writer.writeOpenTag(CTMCScalePriorParser.SCALEPARAMETER);
-                writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rate");
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMC_CLOCK_LOCATION);
                 writer.writeCloseTag(CTMCScalePriorParser.SCALEPARAMETER);
                 writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
                 writer.writeCloseTag(CTMCScalePriorParser.MODEL_NAME);
@@ -341,7 +335,7 @@ public class ClockModelGenerator extends Generator {
                 });
                 writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, treePrefix + "treeLikelihood");
                 writer.writeOpenTag(LocationScaleGradientParser.LOCATION);
-                writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rate");
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMC_CLOCK_LOCATION);
                 writer.writeCloseTag(LocationScaleGradientParser.LOCATION);
                 writer.writeCloseTag(LocationScaleGradientParser.NAME);
 
@@ -353,7 +347,7 @@ public class ClockModelGenerator extends Generator {
                 });
                 writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, treePrefix + "treeLikelihood");
                 writer.writeOpenTag(LocationScaleGradientParser.SCALE);
-                writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.scale");
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMCLN_SCALE);
                 writer.writeCloseTag(LocationScaleGradientParser.SCALE);
                 writer.writeCloseTag(LocationScaleGradientParser.NAME);
 
@@ -368,7 +362,7 @@ public class ClockModelGenerator extends Generator {
                 writer.writeIDref(CTMCScalePriorParser.MODEL_NAME, prefix + "locationPrior");
                 writer.writeOpenTag(HessianWrapperParser.NAME);
                 writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, "scalePrior");
-                writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.scale");
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMCLN_SCALE);
                 writer.writeCloseTag(HessianWrapperParser.NAME);
                 writer.writeCloseTag(CompoundGradientParser.COMPOUND_GRADIENT);
 
@@ -445,8 +439,8 @@ public class ClockModelGenerator extends Generator {
                 writer.writeOpenTag(ScaledByTreeTimeBranchRateModelParser.TREE_TIME_BRANCH_RATES,
                         new Attribute.Default<>(XMLParser.ID, prefix  + BranchRateModel.BRANCH_RATES));
                 writer.writeIDref(ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES, prefix  + "substBranchRates");
-                writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix  + "treeModel");
-                writeParameter(clockModel.getParameter("branchRates.rate"), -1, writer);
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix  + DefaultTreeModel.TREE_MODEL);
+                writeParameter(clockModel.getParameter(ClockType.SHRINKAGE_CLOCK_LOCATION), -1, writer);
                 writer.writeCloseTag(ScaledByTreeTimeBranchRateModelParser.TREE_TIME_BRANCH_RATES);
 
 //                writeMeanRateStatistic(writer, tag, prefix, treePrefix);

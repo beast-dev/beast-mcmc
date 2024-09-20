@@ -103,6 +103,13 @@ public class CompositeSubstitutionModel extends ComplexSubstitutionModel {
         double weight2 = weightParameter2.getParameterValue(0);
         double[] rates1 = substitutionModel1.getRelativeRates();
         double[] rates2 = substitutionModel2.getRelativeRates();
+
+        double norm1 = substitutionModel1.setupMatrix();
+        double norm2 = substitutionModel2.setupMatrix();
+
+        weight1 /= norm1;
+        weight2 /= norm2;
+
         if (substitutionModel1.rateCount == substitutionModel2.rateCount) {
             // both 6 or 12 rate
             for (int i = 0; i < rateCount; i++) {
@@ -131,6 +138,10 @@ public class CompositeSubstitutionModel extends ComplexSubstitutionModel {
                 k++;
             }
         }
+
+        // TODO: code seems a little backwards; this class should pull the infinitesimal generators from
+        // TODO: its components (already post-multiplied by their own pi) and then _not_ post-multiple by
+        // TODO: this.pi in this.setupQMatrix()
     }
 
     protected void setupQMatrix(double[] rates, double[] pi, double[][] matrix) {

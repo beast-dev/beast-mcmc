@@ -79,10 +79,10 @@ public class CompositeSubstitutionModelParser extends AbstractXMLObjectParser {
                 weightParameter2
         );
 
-//        if (!xo.getAttribute(NORMALIZED, true)) {
-//            model.setNormalization(false);
-//            Logger.getLogger("dr.app.beagle.evomodel").info("\tNormalization: false");
-//        }
+        if (!xo.getAttribute(NORMALIZED, true)) {
+            model.setNormalization(false);
+            Logger.getLogger("dr.app.beagle.evomodel").info("\tNormalization: false");
+        }
 
         return model;
     }

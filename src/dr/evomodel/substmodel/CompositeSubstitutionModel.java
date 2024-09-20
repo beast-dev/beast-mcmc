@@ -92,6 +92,12 @@ public class CompositeSubstitutionModel extends ComplexSubstitutionModel {
     }
 
     @Override
+    protected double getNormalizationValue(double[][] matrix, double[] pi) {
+        double norm = super.getNormalizationValue(matrix, pi);
+        return norm;
+    }
+
+    @Override
     protected void setupRelativeRates(double[] rates) {
         double weight1 = weightParameter1.getParameterValue(0);
         double weight2 = weightParameter2.getParameterValue(0);

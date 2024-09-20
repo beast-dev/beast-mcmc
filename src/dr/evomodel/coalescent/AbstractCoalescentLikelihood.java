@@ -77,7 +77,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
     } // No parameters to respond to
-        // Currently GMRF likelihoods have parameters but they override this method. In the future the GMRF bit may
+        // Currently, GMRF likelihoods have parameters, but they override this method. In the future the GMRF bit may
         // be extracted out and then such classes would not have to override this method. -JT
 
     // **************************************************************
@@ -149,7 +149,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     // Inner classes
     // ****************************************************************
 
-    public class DeltaStatistic extends Statistic.Abstract {
+    public static class DeltaStatistic extends Statistic.Abstract {
 
         public DeltaStatistic() {
             super("delta");

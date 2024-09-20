@@ -52,6 +52,7 @@ public enum ClockType {
 
     private final String displayName;
 
+    //maintain unique parameter IDs to enable correct prior and transition kernel retrieval
     final public static String LOCAL_CLOCK = "localClock";
     final public static String UCED_MEAN = "uced.mean";
     final public static String UCLD_MEAN = "ucld.mean";

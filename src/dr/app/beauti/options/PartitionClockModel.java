@@ -120,20 +120,25 @@ public class PartitionClockModel extends PartitionOptions {
                 .initial(1.0 / 3.0).mean(1.0 / 3.0).offset(0.0).partitionOptions(this)
                 .isAdaptiveMultivariateCompatible(true).build(parameters);
 
-        new Parameter.Builder(ClockType.HMC_CLOCK_LOCATION, "HMC relaxed clock rate").
+        /*new Parameter.Builder(ClockType.HMC_CLOCK_LOCATION, "HMC relaxed clock rate").
                 prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
                 .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(false).build(parameters);*/
+        new Parameter.Builder(ClockType.HMC_CLOCK_LOCATION, "HMC relaxed clock rate").
+                initial(rate).isNonNegative(true).partitionOptions(this).isPriorFixed(true)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
 
-        new Parameter.Builder(ClockType.HMCLN_SCALE, "HMC relaxed clock scale").
+        /*new Parameter.Builder(ClockType.HMCLN_SCALE, "HMC relaxed clock scale").
                 prior(PriorType.EXPONENTIAL_PRIOR).isNonNegative(true)
                 .initial(1.0).mean(1.0).offset(0.0).partitionOptions(this)
+                .isAdaptiveMultivariateCompatible(false).build(parameters);*/
+        new Parameter.Builder(ClockType.HMCLN_SCALE, "HMC relaxed clock scale").isNonNegative(true)
+                .initial(1.0).mean(1.0).offset(0.0).partitionOptions(this).isPriorFixed(true)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
 
         new Parameter.Builder(ClockType.HMC_CLOCK_BRANCH_RATES, "HMC relaxed clock branch rates").
-                initial(1.0).isNonNegative(true).partitionOptions(this)
+                initial(1.0).isNonNegative(true).partitionOptions(this).isPriorFixed(true)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
-
 
         new Parameter.Builder(ClockType.ME_CLOCK_LOCATION, "mixed effects clock rate (fixed prior)").
                 prior(PriorType.LOGNORMAL_HPM_PRIOR).initial(rate)
@@ -654,8 +659,13 @@ public class PartitionClockModel extends PartitionOptions {
                         switch (clockDistributionType) {
                             case LOGNORMAL:
                                 ops.add(rateOperator = getOperator(ClockType.HMC_CLOCK_LOCATION));
+                                //for the time being turn off the HMC relaxed clock location kernel
+                                rateOperator.setUsed(false);
                                 ops.add(getOperator("HMCRCR"));
-                                ops.add(getOperator("HMCRCS"));
+                                //for the time being turn off the HMC relaxed clock scale kernel
+                                Operator scaleOperator = getOperator("HMCRCS");
+                                scaleOperator.setUsed(false);
+                                ops.add(scaleOperator);
                                 ops.add(getOperator(ClockType.HMCLN_SCALE));
                                 addUpDownOperator(ops, rateOperator);
                                 break;

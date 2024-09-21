@@ -124,20 +124,23 @@ public class PartitionClockModel extends PartitionOptions {
                 prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
                 .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);*/
-        new Parameter.Builder(ClockType.HMC_CLOCK_LOCATION, "HMC relaxed clock rate").
-                initial(rate).isNonNegative(true).partitionOptions(this).isPriorFixed(true)
+        new Parameter.Builder(ClockType.HMC_CLOCK_LOCATION, "HMC relaxed clock rate")
+                .prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
+                .isNonNegative(true).partitionOptions(this).isPriorFixed(true)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
 
         /*new Parameter.Builder(ClockType.HMCLN_SCALE, "HMC relaxed clock scale").
                 prior(PriorType.EXPONENTIAL_PRIOR).isNonNegative(true)
                 .initial(1.0).mean(1.0).offset(0.0).partitionOptions(this)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);*/
-        new Parameter.Builder(ClockType.HMCLN_SCALE, "HMC relaxed clock scale").isNonNegative(true)
+        new Parameter.Builder(ClockType.HMCLN_SCALE, "HMC relaxed clock scale")
+                .prior(PriorType.EXPONENTIAL_HPM_PRIOR).isNonNegative(true)
                 .initial(1.0).mean(1.0).offset(0.0).partitionOptions(this).isPriorFixed(true)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
 
-        new Parameter.Builder(ClockType.HMC_CLOCK_BRANCH_RATES, "HMC relaxed clock branch rates").
-                initial(1.0).isNonNegative(true).partitionOptions(this).isPriorFixed(true)
+        new Parameter.Builder(ClockType.HMC_CLOCK_BRANCH_RATES, "HMC relaxed clock branch rates")
+                .prior(PriorType.LOGNORMAL_HPM_PRIOR).initial(1.0).isNonNegative(true)
+                .partitionOptions(this).isPriorFixed(true)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
 
         new Parameter.Builder(ClockType.ME_CLOCK_LOCATION, "mixed effects clock rate (fixed prior)").

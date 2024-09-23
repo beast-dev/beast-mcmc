@@ -46,6 +46,8 @@ public class LogRateSubstitutionModelParser extends AbstractXMLObjectParser {
     public static final String LOG_RATE_SUBSTITUTION_MODEL = "logRateSubstitutionModel";
     private static final String NORMALIZE = "normalize";
     private static final String LOG_RATES = "logRates";
+    public static final String SCALE_RATES_BY_FREQUENCIES = "scaleRatesByFrequencies";
+
 
     public String getParserName() {
         return LOG_RATE_SUBSTITUTION_MODEL;
@@ -76,9 +78,11 @@ public class LogRateSubstitutionModelParser extends AbstractXMLObjectParser {
         }
 
         boolean normalize = xo.getAttribute(NORMALIZE, true);
+        boolean scaleRatesByFrequencies = xo.getAttribute(SCALE_RATES_BY_FREQUENCIES, true);
 
         LogRateSubstitutionModel model = new LogRateSubstitutionModel(xo.getId(), dataType, rootFreq, lrm);
         model.setNormalization(normalize);
+        model.setScaleRatesByFrequencies(scaleRatesByFrequencies);
 
         return model;
     }
@@ -108,5 +112,6 @@ public class LogRateSubstitutionModelParser extends AbstractXMLObjectParser {
             new ElementRule(ComplexSubstitutionModelParser.ROOT_FREQUENCIES, FrequencyModel.class),
             new ElementRule(LOG_RATES, Parameter.class),
             AttributeRule.newBooleanRule(NORMALIZE, true),
+            AttributeRule.newBooleanRule(SCALE_RATES_BY_FREQUENCIES, true),
     };
 }

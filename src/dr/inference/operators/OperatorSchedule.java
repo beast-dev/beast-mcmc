@@ -39,7 +39,7 @@ import java.util.List;
 public interface OperatorSchedule extends Serializable {
 
     String SHOW_OPERATORS = "show_operators";
-    OptimizationTransform DEFAULT_TRANSFORM = OptimizationTransform.POWER;
+    OptimizationTransform DEFAULT_TRANSFORM = OptimizationTransform.LOG;
     //int POWERB = 1000000; //TODO discuss with Luiz why this value doesn't seem to work
     int POWERB = 1;
     double POWERC = 0.55; // c = 5/9
@@ -108,5 +108,5 @@ public interface OperatorSchedule extends Serializable {
         }
 
         private final String name;
-    };
+    }
 }

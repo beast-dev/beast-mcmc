@@ -1,8 +1,7 @@
 /*
- * GMRFSkyrideGradientParser.java
+ * GMRFSkyrideLikelihoodParser.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
- * http://beast.community/about
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -22,18 +21,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
  */
 
 package dr.evomodelxml.coalescent;
 
 
-import dr.evolution.coalescent.IntervalList;
-import dr.evolution.coalescent.TreeIntervalList;
-import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.evomodel.coalescent.GMRFSkyrideGradient;
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
-import dr.evomodel.coalescent.TreeIntervals;
+import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
+import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.hmc.GMRFGradient;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
@@ -61,9 +56,7 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
 
 //        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-        GMRFSkyrideLikelihood skyrideLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
-
-        checkIntervals(skyrideLikelihood);
+        OldGMRFSkyrideLikelihood skyrideLikelihood = (OldGMRFSkyrideLikelihood) xo.getChild(OldGMRFSkyrideLikelihood.class);
 
         String wrtParameterCase = (String) xo.getAttribute(WRT_PARAMETER);
 
@@ -99,36 +92,6 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
         }
     }
 
-    /**
-     * Check the intervals in the likelihood are tree intervals and have an interval-node mapping
-     * @param likelihood the skygrid likelihood
-     */
-    private void checkIntervals(GMRFSkyrideLikelihood likelihood){
-
-        if(likelihood instanceof GMRFMultilocusSkyrideLikelihood){
-            for (int i = 0; i < ((GMRFMultilocusSkyrideLikelihood)likelihood).getNumTrees(); i++) {
-                IntervalList intervalList= ((GMRFMultilocusSkyrideLikelihood)likelihood).getIntervalList(i);
-                if(!(intervalList instanceof TreeIntervalList)){
-                    throw new IllegalArgumentException("Skygrid likelihood does not have intervals which map to "+
-                            "the underlying tree. This is needed for gradient calculations");
-                }
-                if (intervalList instanceof TreeIntervals) {
-                    assert ((TreeIntervals) intervalList).isBuildIntervalNodeMapping();
-//                    if (!((TreeIntervals) intervalList).getBuildIntervalNodeMapping()) {
-//                        ((TreeIntervals) intervalList).setBuildIntervalNodeMapping(true);
-//                    }
-                }
-            }
-        }else{
-            IntervalList intervalList= likelihood.getIntervalList();
-            if(!(intervalList instanceof TreeIntervalList)){
-                throw new IllegalArgumentException("Skyride likelihood does not have intervals which map to "+
-                        "the underlying tree. This is needed for gradient calculations");
-            }
-        }
-
-    }
-
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return rules;
@@ -137,7 +100,7 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(WRT_PARAMETER),
             new ElementRule(TreeModel.class, true),
-            new ElementRule(GMRFSkyrideLikelihood.class),
+            new ElementRule(OldGMRFSkyrideLikelihood.class),
             new ElementRule(NodeHeightTransform.class, true),
             AttributeRule.newDoubleRule(TOLERANCE, true),
             AttributeRule.newBooleanRule(IGNORE_WARNING, true),

@@ -67,7 +67,7 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
     private final Parameter marginalVariance;
     private final Parameter lengthScale;
 
-    private final BigFastTreeIntervals intervals;
+//    private final BigFastTreeIntervals intervals;
     private boolean nodeRatesKnown;
     private boolean storedNodeRatesKnown;
 
@@ -104,8 +104,8 @@ public class NonParametricBranchRateModel extends AbstractBranchRateModel
         addVariable(marginalVariance);
         addVariable(lengthScale);
 
-        intervals = new BigFastTreeIntervals((TreeModel) tree);
-        addModel(intervals);
+/*        intervals = new BigFastTreeIntervals((TreeModel) tree);
+        addModel(intervals);*/
 
 
 

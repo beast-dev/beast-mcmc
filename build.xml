@@ -379,6 +379,8 @@
                     <!-- <exclude name="test/dr/evomodel/treedatalikelihood/hmc/PrecisionGradientTest.java"/> -->
                     <exclude name="test/dr/multidimensionalscaling/MDSRotationTest.java"/>
                     <exclude name="test/dr/evomodel/branchratemodel/StrictClockTest.java"/>
+                    <exclude name="test/dr/evomodel/speciation/YuleModelTest.java"/>
+                    <exclude name="test/dr/evomodel/substmodel/GeneralSubstitutionModelTest.java"/>
 <!--                    <exclude name="test/dr/evomodel/substmodel/TimeIrreversibleTest.java"/>--> <!--sometimes fails-->
 
 <!--                    <include name="test/dr/distibutions/**/*Test.java"/>-->

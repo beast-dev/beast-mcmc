@@ -18,5 +18,13 @@ out/
 zig_zag
 src/revision.txt
 *.dmg
+*.zip
+*.tgz
 release/Mac
+release/Linux
+release/Windows
 src/revision.txt
+
+*.citations.txt
+*.ops
+*.MLE

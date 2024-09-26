@@ -117,7 +117,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                 PartitionTreePrior prior = model.getPartitionTreePrior();
                 if (!allowedTypes.contains(prior.getNodeHeightPrior())) {
                     throw new GeneratorException("Generalized stepping stone sampling can only be performed\n" +
-                            "on standard parameteric coalescent tree priors and the Skyride and Skygrid models. " +
+                            "on standard parametric coalescent tree priors and the Skyride and Skygrid models. " +
                             "\nPlease check the Trees panel.", BeautiFrame.TREES);
                 }
                 if (mleOptions.choiceTreeWorkingPrior.equals("Matching coalescent model") && !allowedMCMTypes.contains(prior.getNodeHeightPrior())) {

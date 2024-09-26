@@ -302,7 +302,7 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
                 }
             }
             for (int j = 0; j < bigFastTreeIntervals.getIntervalCount(); j++) {
-                if (intervals.getIntervalTime(j) != bigFastTreeIntervals.getIntervalTime(j)) {
+                if (intervals.getIntervalTime(j) != bigFastTreeIntervals.getIntervalTime(j + 1)) {
                     System.out.println(i);
                     System.out.println("times wrong");
                     pass = false;

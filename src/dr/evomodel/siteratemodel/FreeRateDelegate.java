@@ -83,11 +83,11 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
         this.weightParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, categoryCount));
 
         if (invarParameter != null) {
-            throw new RuntimeException("FreeRates + Invariant not implemented yet");
-//            this.invarParameter = invarParameter;
-//            this.categoryCount += 1;
-//            addVariable(invarParameter);
-//            invarParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+//            throw new RuntimeException("FreeRates + Invariant not implemented yet");
+            this.invarParameter = invarParameter;
+            this.categoryCount += 1;
+            addVariable(invarParameter);
+            invarParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
         }
 
     }

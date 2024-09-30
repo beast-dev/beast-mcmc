@@ -1,7 +1,8 @@
 /*
  * SiteModelParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,32 +22,23 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.siteratemodel;
 
 import java.util.logging.Logger;
 
-import dr.evomodel.siteratemodel.DiscretizedSiteRateModel;
-import dr.evomodel.siteratemodel.GammaSiteRateDelegate;
-import dr.evomodel.siteratemodel.HomogeneousRateDelegate;
-import dr.evomodel.siteratemodel.SiteRateDelegate;
+import dr.evomodel.siteratemodel.*;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.inference.model.Parameter;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
-import dr.xml.XORRule;
+import dr.xml.*;
 
 /**
  * This is a replacement to GammaSiteModelParser to keep old XML that used
  * the <siteModel></siteModel> element working.
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class SiteModelParser extends AbstractXMLObjectParser {
 
@@ -56,7 +48,12 @@ public class SiteModelParser extends AbstractXMLObjectParser {
     public static final String SUBSTITUTION_RATE = "substitutionRate";
     public static final String RELATIVE_RATE = "relativeRate";
     public static final String WEIGHT = "weight";
+    public static final String SKEW = "skew";
+    public static final String FREE_RATES = "freeRates";
+    public static final String RATES = "rates";
+    public static final String WEIGHTS = "weights";
     public static final String GAMMA_SHAPE = "gammaShape";
+    public static final String RATE_CATEGORIES = "rateCategories";
     public static final String GAMMA_CATEGORIES = "gammaCategories";
     public static final String PROPORTION_INVARIANT = "proportionInvariant";
     public static final String DISCRETIZATION = "discretization";
@@ -91,50 +88,67 @@ public class SiteModelParser extends AbstractXMLObjectParser {
             }
         }
 
-        GammaSiteRateDelegate.DiscretizationType type = GammaSiteRateDelegate.DEFAULT_DISCRETIZATION;
-
-        Parameter shapeParam = null;
+        Parameter shapeParameter = null;
+        Parameter invarParameter = null;
+        Parameter ratesParameter = null;
+        Parameter weightsParameter = null;
         int catCount = 4;
-        if (xo.hasChildNamed(GAMMA_SHAPE)) {
-            XMLObject cxo = xo.getChild(GAMMA_SHAPE);
-            catCount = cxo.getIntegerAttribute(GAMMA_CATEGORIES);
+        double skew = 0.0;
 
-            if ( cxo.hasAttribute(DISCRETIZATION)) {
-                try {
-                    type = GammaSiteRateDelegate.DiscretizationType.valueOf(
-                            cxo.getStringAttribute(DISCRETIZATION).toUpperCase());
-                } catch (IllegalArgumentException eae) {
-                    throw new XMLParseException("Unknown category width type: " + cxo.getStringAttribute(DISCRETIZATION));
+        if (xo.hasChildNamed(FREE_RATES)) {
+            XMLObject cxo = xo.getChild(FREE_RATES);
+            catCount = cxo.getIntegerAttribute(RATE_CATEGORIES);
+
+            ratesParameter = (Parameter) cxo.getElementFirstChild(RATES);
+            weightsParameter = (Parameter) cxo.getElementFirstChild(WEIGHTS);
+
+            msg += "\n  " + catCount + " category free rate model";
+
+        } else if (xo.hasChildNamed(GAMMA_SHAPE)) {
+
+
+            if (xo.hasChildNamed(GAMMA_SHAPE)) {
+                XMLObject cxo = xo.getChild(GAMMA_SHAPE);
+                catCount = cxo.getIntegerAttribute(GAMMA_CATEGORIES);
+
+                if ( xo.hasAttribute(SKEW)) {
+                    skew = xo.getDoubleAttribute(SKEW);
+                }
+                if (skew < 0.0) {
+                    throw new XMLParseException("Gamma weight skew must be >= 0.0");
+                }
+
+                shapeParameter = (Parameter) cxo.getChild(Parameter.class);
+
+                msg += "\n  " + catCount + " category discrete gamma with initial shape = " + shapeParameter.getParameterValue(0);
+                if (skew == 0.0) {
+                    msg += "\n  using equal weight discretization of gamma distribution";
+                } else {
+                    msg += "\n  using skewed weight discretization of gamma distribution, skew = " + skew;
                 }
             }
-            shapeParam = (Parameter) cxo.getChild(Parameter.class);
 
-            msg += "\n  " + catCount + " category discrete gamma with initial shape = " + shapeParam.getParameterValue(0);
-            if (type == GammaSiteRateDelegate.DiscretizationType.EQUAL) {
-                msg += "\n  using equal weight discretization of gamma distribution";
-            } else {
-                msg += "\n  using Gauss-Laguerre quadrature discretization of gamma distribution (Felsenstein, 2012)";
+            if (xo.hasChildNamed(PROPORTION_INVARIANT)) {
+                invarParameter = (Parameter) xo.getElementFirstChild(PROPORTION_INVARIANT);
+                msg += "\n  initial proportion of invariant sites = " + invarParameter.getParameterValue(0);
             }
         }
 
-        Parameter invarParam = null;
-        if (xo.hasChildNamed(PROPORTION_INVARIANT)) {
-            invarParam = (Parameter) xo.getElementFirstChild(PROPORTION_INVARIANT);
-            msg += "\n  initial proportion of invariant sites = " + invarParam.getParameterValue(0);
-        }
-
-        if (msg.length() > 0) {
+        if (!msg.isEmpty()) {
             Logger.getLogger("dr.evomodel").info("\nCreating site rate model: " + msg);
         } else {
             Logger.getLogger("dr.evomodel").info("\nCreating site rate model.");
         }
 
         SiteRateDelegate delegate;
-        if (shapeParam != null || invarParam != null) {
-            delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParam, catCount, type, invarParam);
+        if (ratesParameter != null && weightsParameter != null) {
+            delegate = new FreeRateDelegate("FreeRateDelegate", catCount, ratesParameter, weightsParameter, invarParameter);
+        } else if (shapeParameter != null || invarParameter != null) {
+            delegate = new GammaSiteRateDelegate("GammaSiteRateDelegate", shapeParameter, catCount, skew, invarParameter);
         } else {
             delegate = new HomogeneousRateDelegate("HomogeneousRateDelegate");
         }
+
 
         DiscretizedSiteRateModel siteRateModel = new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
 
@@ -193,15 +207,24 @@ public class SiteModelParser extends AbstractXMLObjectParser {
                     }), true
             ),
 
-            new ElementRule(GAMMA_SHAPE, new XMLSyntaxRule[]{
-                    AttributeRule.newIntegerRule(GAMMA_CATEGORIES, true),
-                    AttributeRule.newStringRule(DISCRETIZATION, true),
-                    new ElementRule(Parameter.class)
-            }, true),
-
-            new ElementRule(PROPORTION_INVARIANT, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
-            }, true)
+            new XORRule(
+                    new AndRule(new XMLSyntaxRule[]{
+                            new ElementRule(GAMMA_SHAPE, new XMLSyntaxRule[]{
+                                    AttributeRule.newIntegerRule(GAMMA_CATEGORIES, true),
+                                    AttributeRule.newIntegerRule(RATE_CATEGORIES, true),
+                                    AttributeRule.newStringRule(DISCRETIZATION, true),
+                                    new ElementRule(Parameter.class)
+                            }, true),
+                            new ElementRule(PROPORTION_INVARIANT, new XMLSyntaxRule[]{
+                                    new ElementRule(Parameter.class)
+                            }, true)
+                    }),
+                    new ElementRule(FREE_RATES, new XMLSyntaxRule[]{
+                            AttributeRule.newIntegerRule(RATE_CATEGORIES, true),
+                            AttributeRule.newStringRule(DISCRETIZATION, true),
+                            new ElementRule(Parameter.class)
+                    }, true)
+            )
     };
 
 }//END: class

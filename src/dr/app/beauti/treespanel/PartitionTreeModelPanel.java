@@ -1,7 +1,8 @@
 /*
  * PartitionTreeModelPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.treespanel;
@@ -55,7 +57,6 @@ import java.util.EnumSet;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Walter Xie
- * @version $Id: PriorsPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
  */
 public class PartitionTreeModelPanel extends OptionsPanel {
 
@@ -136,9 +137,10 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         userTreeCombo.setEnabled(enabled);
         userTreeInfo.setEnabled(enabled);
 
-        for (TreeAsDataType treeAsDataType : TreeAsDataType.values()) {
-            treeAsDataModelCombo.addItem(treeAsDataType);
-        }
+//        for (TreeAsDataType treeAsDataType : TreeAsDataType.values()) {
+//            treeAsDataModelCombo.addItem(treeAsDataType);
+//        }
+        treeAsDataModelCombo.addItem(TreeAsDataType.EMPRICAL_TREES);
         PanelUtils.setupComponent(treeAsDataModelCombo);
         treeAsDataModelCombo.addItemListener(ev -> {
             this.partitionTreeModel.setTreeAsDataType((TreeAsDataType)treeAsDataModelCombo.getSelectedItem());

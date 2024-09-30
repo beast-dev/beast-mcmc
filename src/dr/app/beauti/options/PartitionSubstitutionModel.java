@@ -1,7 +1,8 @@
 /*
  * PartitionSubstitutionModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.options;
@@ -70,8 +72,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public boolean useAmbiguitiesTreeLikelihood = false;
 
     private FrequencyPolicyType frequencyPolicy = FrequencyPolicyType.ESTIMATED;
+    private boolean freeRatesHetero = false;
     private boolean gammaHetero = false;
-    private int gammaCategories = 4;
+    private int rateCategories = 4;
     private boolean invarHetero = false;
     private boolean equalWeights = false;
     private String codonHeteroPattern = null;
@@ -136,8 +139,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         useAmbiguitiesTreeLikelihood = source.useAmbiguitiesTreeLikelihood;
 
         frequencyPolicy = source.frequencyPolicy;
+        freeRatesHetero = source.freeRatesHetero;
         gammaHetero = source.gammaHetero;
-        gammaCategories = source.gammaCategories;
+        rateCategories = source.rateCategories;
         equalWeights = source.equalWeights;
         invarHetero = source.invarHetero;
         codonHeteroPattern = source.codonHeteroPattern;
@@ -531,45 +535,49 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 throw new IllegalArgumentException("Unknown data type");
         }
 
-        // if gamma do shape move
-        if (gammaHetero) {
-            if (includeRelativeRates && unlinkedHeterogeneityModel) {
-                if (codonHeteroPattern.equals("123")) {
-                    params.add(getParameter("CP1.alpha"));
-                    params.add(getParameter("CP2.alpha"));
-                    params.add(getParameter("CP3.alpha"));
-                } else if (codonHeteroPattern.equals("112")) {
-                    params.add(getParameter("CP1+2.alpha"));
-                    params.add(getParameter("CP3.alpha"));
+        if (freeRatesHetero) {
+            assert false : "Implement";
+        } else {
+            // if gamma do shape move
+            if (gammaHetero) {
+                if (includeRelativeRates && unlinkedHeterogeneityModel) {
+                    if (codonHeteroPattern.equals("123")) {
+                        params.add(getParameter("CP1.alpha"));
+                        params.add(getParameter("CP2.alpha"));
+                        params.add(getParameter("CP3.alpha"));
+                    } else if (codonHeteroPattern.equals("112")) {
+                        params.add(getParameter("CP1+2.alpha"));
+                        params.add(getParameter("CP3.alpha"));
+                    } else {
+                        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    }
                 } else {
-                    throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    params.add(getParameter("alpha"));
                 }
-            } else {
-                params.add(getParameter("alpha"));
             }
-        }
-        // if pinv do pinv move
-        if (invarHetero) {
-            if (includeRelativeRates && unlinkedHeterogeneityModel) {
-                if (codonHeteroPattern.equals("123")) {
-                    params.add(getParameter("CP1.pInv"));
-                    params.add(getParameter("CP2.pInv"));
-                    params.add(getParameter("CP3.pInv"));
-                } else if (codonHeteroPattern.equals("112")) {
-                    params.add(getParameter("CP1+2.pInv"));
-                    params.add(getParameter("CP3.pInv"));
+            // if pinv do pinv move
+            if (invarHetero) {
+                if (includeRelativeRates && unlinkedHeterogeneityModel) {
+                    if (codonHeteroPattern.equals("123")) {
+                        params.add(getParameter("CP1.pInv"));
+                        params.add(getParameter("CP2.pInv"));
+                        params.add(getParameter("CP3.pInv"));
+                    } else if (codonHeteroPattern.equals("112")) {
+                        params.add(getParameter("CP1+2.pInv"));
+                        params.add(getParameter("CP3.pInv"));
+                    } else {
+                        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    }
                 } else {
-                    throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    params.add(getParameter("pInv"));
                 }
-            } else {
-                params.add(getParameter("pInv"));
             }
         }
         return params;
     }
 
     public List<Parameter> getRelativeRateParameters() {
-        List<Parameter> allMus = new ArrayList<Parameter>();
+        List<Parameter> allMus = new ArrayList<>();
         int[] weights = getPartitionCodonWeights();
         if (getCodonPartitionCount() > 1) {
             if (codonHeteroPattern.equals("123")) {
@@ -777,39 +785,43 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 throw new IllegalArgumentException("Unknown data type");
         }
 
-        // if gamma do shape move
-        if (gammaHetero) {
-            if (hasCodonPartitions() && unlinkedHeterogeneityModel) {
-                if (codonHeteroPattern.equals("123")) {
-                    ops.add(getOperator("CP1.alpha"));
-                    ops.add(getOperator("CP2.alpha"));
-                    ops.add(getOperator("CP3.alpha"));
-                } else if (codonHeteroPattern.equals("112")) {
-                    ops.add(getOperator("CP1+2.alpha"));
-                    ops.add(getOperator("CP3.alpha"));
+        if (freeRatesHetero) {
+            assert false : "Implement";
+        } else {
+            // if gamma do shape move
+            if (gammaHetero) {
+                if (hasCodonPartitions() && unlinkedHeterogeneityModel) {
+                    if (codonHeteroPattern.equals("123")) {
+                        ops.add(getOperator("CP1.alpha"));
+                        ops.add(getOperator("CP2.alpha"));
+                        ops.add(getOperator("CP3.alpha"));
+                    } else if (codonHeteroPattern.equals("112")) {
+                        ops.add(getOperator("CP1+2.alpha"));
+                        ops.add(getOperator("CP3.alpha"));
+                    } else {
+                        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    }
                 } else {
-                    throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    ops.add(getOperator("alpha"));
                 }
-            } else {
-                ops.add(getOperator("alpha"));
             }
-        }
-        // if pinv do pinv move
-        if (invarHetero) {
-            String name = (options.usePInvRandomWalk() ? "rwPInv" : "uniformPInv");
-            if (hasCodonPartitions() && unlinkedHeterogeneityModel) {
-                if (codonHeteroPattern.equals("123")) {
-                    ops.add(getOperator("CP1." + name));
-                    ops.add(getOperator("CP2." + name));
-                    ops.add(getOperator("CP3." + name));
-                } else if (codonHeteroPattern.equals("112")) {
-                    ops.add(getOperator("CP1+2." + name));
-                    ops.add(getOperator("CP3." + name));
+            // if pinv do pinv move
+            if (invarHetero) {
+                String name = (options.usePInvRandomWalk() ? "rwPInv" : "uniformPInv");
+                if (hasCodonPartitions() && unlinkedHeterogeneityModel) {
+                    if (codonHeteroPattern.equals("123")) {
+                        ops.add(getOperator("CP1." + name));
+                        ops.add(getOperator("CP2." + name));
+                        ops.add(getOperator("CP3." + name));
+                    } else if (codonHeteroPattern.equals("112")) {
+                        ops.add(getOperator("CP1+2." + name));
+                        ops.add(getOperator("CP3." + name));
+                    } else {
+                        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    }
                 } else {
-                    throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    ops.add(getOperator(name));
                 }
-            } else {
-                ops.add(getOperator(name));
             }
         }
 
@@ -1021,6 +1033,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         this.frequencyPolicy = frequencyPolicy;
     }
 
+    public boolean isFreeRatesHetero() {
+        return freeRatesHetero;
+    }
+
+    public void setFreeRatesHetero(boolean freeRatesHetero) {
+        this.freeRatesHetero = freeRatesHetero;
+    }
+
     public boolean isGammaHetero() {
         return gammaHetero;
     }
@@ -1029,12 +1049,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         this.gammaHetero = gammaHetero;
     }
 
-    public int getGammaCategories() {
-        return gammaCategories;
+    public int getRateCategories() {
+        return rateCategories;
     }
 
-    public void setGammaCategories(int gammaCategories) {
-        this.gammaCategories = gammaCategories;
+    public void setRateCategories(int rateCategories) {
+        this.rateCategories = rateCategories;
     }
 
     public boolean isInvarHetero() {
@@ -1175,8 +1195,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         useAmbiguitiesTreeLikelihood = source.useAmbiguitiesTreeLikelihood;
 
         frequencyPolicy = source.frequencyPolicy;
+        freeRatesHetero = source.freeRatesHetero;
         gammaHetero = source.gammaHetero;
-        gammaCategories = source.gammaCategories;
+        rateCategories = source.rateCategories;
         equalWeights = source.equalWeights;
         invarHetero = source.invarHetero;
         codonHeteroPattern = source.codonHeteroPattern;

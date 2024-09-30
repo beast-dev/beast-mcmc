@@ -1,7 +1,8 @@
 /*
  * FreeRateDelegate.java
  *
- * Copyright (c) 2002-2023 BEAST Developer Team
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.siteratemodel;
@@ -44,29 +46,16 @@ import java.util.List;
  * FreeRateDelegate - A SiteModel delegate that implements the 'FreeRate' model.
  *
  * @author Andrew Rambaut
- * @version $Id: GammaSiteModel.java,v 1.31 2005/09/26 14:27:38 rambaut Exp $
  */
 
 public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate, Citable {
 
-/*    public static final Parameterization DEFAULT_PARAMETERIZATION = Parameterization.ABSOLUTE;
-
-    public enum Parameterization {
-        ABSOLUTE,
-        RATIOS,
-        DIFFERENCES
-    };*/
-
-
-
     /**
-     * Constructor for gamma+invar distributed sites. Either shapeParameter or
-     * invarParameter (or both) can be null to turn off that feature.
+     * Constructor for free distributed sites.
      */
     public FreeRateDelegate(
             String name,
             int categoryCount,
-            /*  Parameterization parameterization,*/
             Parameter rateParameter,
             Parameter weightParameter,
             Parameter invarParameter) {
@@ -74,24 +63,13 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
         super(name);
 
         this.categoryCount = categoryCount;
-//        this.parameterization = parameterization;
 
         this.rateParameter = rateParameter;
-//        if (parameterization == Parameterization.ABSOLUTE) {
-//            if (this.rateParameter.getDimension() == 1) {
-//                this.rateParameter.setDimension(categoryCount);
-//            } else if (this.rateParameter.getDimension() != categoryCount) {
-//                throw new IllegalArgumentException("Rate parameter should have have an initial dimension of one or category count");
-//            }
-//            this.rateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, categoryCount));
-//        } else {
-//            if (this.rateParameter.getDimension() == 1) {
-//                this.rateParameter.setDimension(categoryCount - 1);
-//            } else if (this.rateParameter.getDimension() != categoryCount - 1) {
-//                throw new IllegalArgumentException("Rate parameter should have have an initial dimension of one or category count - 1");
-//            }
-//            this.rateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, categoryCount - 1));
-//        }
+        if (this.rateParameter.getDimension() == 1) {
+            this.rateParameter.setDimension(categoryCount - 1);
+        } else if (this.rateParameter.getDimension() != categoryCount) {
+            throw new IllegalArgumentException("Rates parameter should have have an initial dimension of one or category count minus one");
+        }
         addVariable(this.rateParameter);
 
         this.weightParameter = weightParameter;
@@ -100,17 +78,18 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
         } else if (this.weightParameter.getDimension() != categoryCount) {
             throw new IllegalArgumentException("Weight parameter should have have an initial dimension of one or category count");
         }
-
-        if (invarParameter != null) {
-            this.invarParameter = invarParameter;
-            this.categoryCount += 1;
-            addVariable(invarParameter);
-            invarParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
-        }
-
         addVariable(this.weightParameter);
 
         this.weightParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, categoryCount));
+
+        if (invarParameter != null) {
+            throw new RuntimeException("FreeRates + Invariant not implemented yet");
+//            this.invarParameter = invarParameter;
+//            this.categoryCount += 1;
+//            addVariable(invarParameter);
+//            invarParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+        }
+
     }
 
     // *****************************************************************
@@ -133,7 +112,6 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
             offset = 1;
         }
 
-//        if (parameterization == Parameterization.ABSOLUTE) {
         double meanRate = 0.0;
         double sumWeights = 0.0;
         for (int i = 0; i < categoryCount - offset; i++) {
@@ -151,32 +129,6 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
                 categoryProportions[i + offset] = (categoryProportions[i + offset])*(1 - invarParameter.getParameterValue(0));
             }
         }
-
-
-//        } else {
-//            categoryRates[0] = 1.0;
-//            double sumRates = 0.0;
-//            double sumWeights = 0.0;
-//            for (int i = 0; i < categoryCount; i++) {
-//                if (parameterization == Parameterization.RATIOS) {
-//                    if (i > 0) {
-//                        categoryRates[i] = categoryRates[i - 1] * rateParameter.getParameterValue(i);
-//                    }
-//                } else { // Parameterization.DIFFERENCES
-//                    categoryRates[i] = categoryRates[i - 1] + rateParameter.getParameterValue(i);
-//                }
-//                sumRates += categoryRates[i + 1];
-//
-//                categoryProportions[i] = weightParameter.getParameterValue(i);
-//                sumWeights += categoryProportions[i];
-//            }
-//            assert Math.abs(sumWeights - 1.0) < 1E-10;
-//
-//            // scale so their mean is 1
-//            for (int i = 0; i < categoryCount; i++) {
-//                categoryRates[i] = categoryCount * categoryRates[i] / sumRates;
-//            }
-//        }
     }
 
     // *****************************************************************

@@ -1,7 +1,8 @@
 /*
  * VeryOldCoalescentLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.arg.coalescent;
@@ -47,7 +49,6 @@ import java.util.ArrayList;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: VeryOldCoalescentLikelihood.java,v 1.43 2006/07/28 11:27:32 rambaut Exp $
  */
 public class VeryOldCoalescentLikelihood extends AbstractModelLikelihood implements Units {
 

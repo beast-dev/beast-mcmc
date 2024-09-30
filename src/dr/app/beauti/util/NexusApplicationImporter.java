@@ -1,7 +1,8 @@
 /*
  * NexusApplicationImporter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.util;
@@ -45,7 +47,6 @@ import java.util.List;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: NexusApplicationImporter.java,v 1.4 2005/07/11 14:07:25 rambaut Exp $
  */
 public class NexusApplicationImporter extends NexusImporter {
 
@@ -326,7 +327,7 @@ public class NexusApplicationImporter extends NexusImporter {
                 }
             } else if (match("NGAMMACAT", subcommand, 2)) {
 
-                model.setGammaCategories(readInteger(";"));
+                model.setRateCategories(readInteger(";"));
             } else {
 
                 System.err.println("The option, '" + subcommand + "', in the LSET command is not used by BEAST and has been ignored");

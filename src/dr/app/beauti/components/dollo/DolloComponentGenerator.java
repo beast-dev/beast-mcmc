@@ -1,7 +1,8 @@
 /*
  * DolloComponentGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.components.dollo;
@@ -33,7 +35,6 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.oldevomodel.sitemodel.SiteModel;
-import dr.evomodel.tree.TreeModel;
 import dr.oldevomodelxml.MSSD.ALSSiteModelParser;
 import dr.oldevomodelxml.MSSD.ALSTreeLikelihoodParser;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
@@ -51,7 +52,6 @@ import dr.xml.XMLParser;
 
 /**
  * @author Marc Suchard
- * @version $Id$
  */
 
 public class DolloComponentGenerator extends BaseComponentGenerator {
@@ -229,7 +229,7 @@ public class DolloComponentGenerator extends BaseComponentGenerator {
 
         if (model.isGammaHetero()) {
             writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE,
-                    new Attribute.Default<String>(GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
+                    new Attribute.Default<String>(GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getRateCategories()));
             writeParameter(prefix + "alpha", model, writer);
             writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
         }

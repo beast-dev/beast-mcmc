@@ -189,7 +189,7 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 //        if (variable == nuParameter) {
-            ratesKnown = false; // MAS: I changed this because the rate parameter can affect the categories if the parameter is in siteModel and not clockModel
+        ratesKnown = false; // MAS: I changed this because the rate parameter can affect the categories if the parameter is in siteModel and not clockModel
 //        } else {
 //            throw new RuntimeException("Unknown variable in DiscretizedSiteRateModel.handleVariableChangedEvent");
 //        }
@@ -238,9 +238,11 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
         }
 
         public double getStatisticValue(int dim) {
-            if (!orderedRatesKnown) {
-                calculateOrderedCategories();
+            if(!ratesKnown){
+                calculateCategoryRates();
             }
+            calculateOrderedCategories();
+
             return orderedRates[dim][0];
         }
     };
@@ -256,9 +258,11 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
         }
 
         public double getStatisticValue(int dim) {
-            if (!orderedRatesKnown) {
-                calculateOrderedCategories();
+            if(!ratesKnown){
+                calculateCategoryRates();
             }
+            calculateOrderedCategories();
+
             return orderedRates[dim][1];
         }
 
@@ -275,9 +279,11 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
         }
 
         public double getStatisticValue(int dim) {
-            if (!orderedRatesKnown) {
-                calculateOrderedCategories();
+            if(!ratesKnown){
+                calculateCategoryRates();
             }
+            calculateOrderedCategories();
+
             return orderedRates[dim][1]* orderedRates[dim][0];
         }
 

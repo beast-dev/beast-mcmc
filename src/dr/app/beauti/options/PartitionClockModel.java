@@ -120,26 +120,18 @@ public class PartitionClockModel extends PartitionOptions {
                 .initial(1.0 / 3.0).mean(1.0 / 3.0).offset(0.0).partitionOptions(this)
                 .isAdaptiveMultivariateCompatible(true).build(parameters);
 
-        /*new Parameter.Builder(ClockType.HMC_CLOCK_LOCATION, "HMC relaxed clock rate").
-                prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
-                .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
-                .isAdaptiveMultivariateCompatible(false).build(parameters);*/
         new Parameter.Builder(ClockType.HMC_CLOCK_LOCATION, "HMC relaxed clock rate")
                 .prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
                 .isNonNegative(true).partitionOptions(this).isPriorFixed(true)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
 
-        /*new Parameter.Builder(ClockType.HMCLN_SCALE, "HMC relaxed clock scale").
-                prior(PriorType.EXPONENTIAL_PRIOR).isNonNegative(true)
-                .initial(1.0).mean(1.0).offset(0.0).partitionOptions(this)
-                .isAdaptiveMultivariateCompatible(false).build(parameters);*/
         new Parameter.Builder(ClockType.HMCLN_SCALE, "HMC relaxed clock scale")
                 .prior(PriorType.EXPONENTIAL_HPM_PRIOR).isNonNegative(true)
                 .initial(1.0).mean(1.0).offset(0.0).partitionOptions(this).isPriorFixed(true)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
 
         new Parameter.Builder(ClockType.HMC_CLOCK_BRANCH_RATES, "HMC relaxed clock branch rates")
-                .prior(PriorType.LOGNORMAL_HPM_PRIOR).initial(1.0).isNonNegative(true)
+                .prior(PriorType.LOGNORMAL_HPM_PRIOR).initial(0.001).isNonNegative(true)
                 .partitionOptions(this).isPriorFixed(true)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
 
@@ -224,9 +216,9 @@ public class PartitionClockModel extends PartitionOptions {
         createScaleOperator(ClockType.UCGD_SHAPE, demoTuning, rateWeights);
 
         //HMC relaxed clock
-        createOperator("HMCRCR", "HMC relaxed clock rate",
-                "Hamiltonian Monte Carlo relaxed clock rate operator", null, OperatorType.RELAXED_CLOCK_HMC_RATE_OPERATOR,-1 , 1.0);
-        createOperator("HMCRCS", "HMC relaxed clock scale",
+        createOperator("HMCRCR", "HMC relaxed clock branch rates",
+                "Hamiltonian Monte Carlo relaxed clock branch rates operator", null, OperatorType.RELAXED_CLOCK_HMC_RATE_OPERATOR,-1 , 1.0);
+        createOperator("HMCRCS", "HMC relaxed clock location and scale",
                 "Hamiltonian Monte Carlo relaxed clock scale operator", null, OperatorType.RELAXED_CLOCK_HMC_SCALE_OPERATOR,-1 , 0.5);
         createScaleOperator(ClockType.HMC_CLOCK_LOCATION, demoTuning, rateWeights);
         createScaleOperator(ClockType.HMCLN_SCALE, demoTuning, rateWeights);
@@ -412,6 +404,7 @@ public class PartitionClockModel extends PartitionOptions {
                     switch (clockDistributionType) {
                         case LOGNORMAL:
                             params.add(getClockRateParameter());
+                            params.add(getParameter(ClockType.HMC_CLOCK_BRANCH_RATES));
                             params.add(getParameter(ClockType.HMCLN_SCALE));
                             break;
                         default:
@@ -662,8 +655,6 @@ public class PartitionClockModel extends PartitionOptions {
                         switch (clockDistributionType) {
                             case LOGNORMAL:
                                 ops.add(rateOperator = getOperator(ClockType.HMC_CLOCK_LOCATION));
-                                //for the time being turn off the HMC relaxed clock location kernel
-                                rateOperator.setUsed(false);
                                 ops.add(getOperator("HMCRCR"));
                                 //for the time being turn off the HMC relaxed clock scale kernel
                                 Operator scaleOperator = getOperator("HMCRCS");

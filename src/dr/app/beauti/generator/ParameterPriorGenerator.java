@@ -33,11 +33,16 @@ import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
+import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.tree.CTMCScalePriorParser;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
+import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.ParameterParser;
-import dr.inferencexml.distribution.*;
+import dr.inferencexml.distribution.CachedDistributionLikelihoodParser;
+import dr.inferencexml.distribution.DistributionLikelihoodParser;
+import dr.inferencexml.distribution.PriorParsers;
 import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.inferencexml.model.OneOnXPriorParser;
 import dr.util.Attribute;
@@ -61,11 +66,11 @@ public class ParameterPriorGenerator extends Generator {
         //TODO don't like this being here, but will see how things pan out as more HMC approaches are added
         mapParameterToPrior = new HashMap<String, String>();
         //HMC skygrid
-        mapParameterToPrior.put("skygrid.precision", "skygrid.precision.prior");
+        mapParameterToPrior.put(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION_PRIOR);
         //HMC relaxed clock
-        mapParameterToPrior.put("branchRates.rate", "locationPrior");
-        mapParameterToPrior.put("branchRates.rates", "ratesPrior");
-        mapParameterToPrior.put("branchRates.scale", "scalePrior");
+        mapParameterToPrior.put(ClockType.HMC_CLOCK_LOCATION, BranchSpecificFixedEffects.LOCATION_PRIOR);
+        mapParameterToPrior.put(ClockType.HMC_CLOCK_BRANCH_RATES, BranchSpecificFixedEffects.RATES_PRIOR);
+        mapParameterToPrior.put(ClockType.HMCLN_SCALE, BranchSpecificFixedEffects.SCALE_PRIOR);
     }
 
     /**
@@ -387,8 +392,16 @@ public class ParameterPriorGenerator extends Generator {
             case INVERSE_GAMMA_PRIOR:
                 writer.writeIDref(PriorParsers.INVGAMMA_PRIOR_CORRECT, priorID);
                 break;
+            case CTMC_RATE_REFERENCE_PRIOR:
+                writer.writeIDref(CTMCScalePriorParser.MODEL_NAME, priorID);
+                break;
+            case LOGNORMAL_HPM_PRIOR:
+            case EXPONENTIAL_HPM_PRIOR:
+            case NORMAL_HPM_PRIOR:
+                writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, priorID);
+                break;
             default:
-                throw new IllegalArgumentException("Unknown or invalid prior defined on " + parameter.getName());
+                throw new IllegalArgumentException("Unknown or invalid prior defined on " + parameter.getName() + ": " + parameter.priorType);
         }
     }
 

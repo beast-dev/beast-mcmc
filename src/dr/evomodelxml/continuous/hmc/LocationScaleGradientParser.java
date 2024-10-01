@@ -61,6 +61,11 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
     public static final String LOCATION = "location";
     public static final String SCALE = "scale";
 
+    //declaring String constants for use in BEAUti
+    public static final String LOCATION_SCALE = "locationScale";
+    public static final String LOCATION_SCALE_JOINT_GRADIENT = "locationScaleJointGradient";
+    public static final String LOCATION_SCALE_PRIOR_GRADIENT = "locationScalePriorGradient";
+
     public String getParserName(){ return NAME; }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

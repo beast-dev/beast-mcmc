@@ -29,9 +29,11 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
+import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
+import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.evomodel.operators.EmpiricalTreeDistributionOperator;
 import dr.evomodel.tree.DefaultTreeModel;
@@ -43,6 +45,7 @@ import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser;
 import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
 import dr.evomodelxml.continuous.hmc.BranchRateGradientParser;
+import dr.evomodelxml.continuous.hmc.LocationScaleGradientParser;
 import dr.evomodelxml.operators.*;
 import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.inference.distribution.DistributionLikelihood;
@@ -472,7 +475,6 @@ public class OperatorsGenerator extends Generator {
         writer.writeOpenTag(UniformIntegerOperatorParser.UNIFORM_INTEGER_OPERATOR,
                 getWeightAttribute(operator.getWeight()));
         writeParameter1Ref(writer, operator);
-//        writeOperatorRef(writer, operator);
         writer.writeCloseTag(UniformIntegerOperatorParser.UNIFORM_INTEGER_OPERATOR);
     }
 
@@ -587,8 +589,8 @@ public class OperatorsGenerator extends Generator {
         );
         writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT);
         writer.writeOpenTag(HessianWrapperParser.NAME);
-        writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, prefix + "ratesPrior");
-        writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rates");
+        writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, prefix + BranchSpecificFixedEffects.RATES_PRIOR);
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMC_CLOCK_BRANCH_RATES);
         writer.writeCloseTag(HessianWrapperParser.NAME);
 
         writer.writeOpenTag(BranchRateGradientParser.NAME, new Attribute.Default<>("traitName", "Sequence"));
@@ -597,10 +599,10 @@ public class OperatorsGenerator extends Generator {
 
         writer.writeCloseTag(JointGradientParser.JOINT_GRADIENT);
 
-        writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rates");
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMC_CLOCK_BRANCH_RATES);
 
         writer.writeOpenTag(SignTransformParser.NAME);
-        writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.rates");
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMC_CLOCK_BRANCH_RATES);
         writer.writeCloseTag(SignTransformParser.NAME);
         writer.writeCloseTag(HamiltonianMonteCarloOperatorParser.HMC_OPERATOR);
     }
@@ -627,10 +629,10 @@ public class OperatorsGenerator extends Generator {
                         new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING_UPDATE_FREQUENCY, preconditioningUpdateFrequency)
                 }
         );
-        writer.writeIDref(JointGradientParser.JOINT_GRADIENT, prefix + "locationScaleJointGradient");
-        writer.writeIDref(ParameterParser.PARAMETER, prefix + "locationScale");
+        writer.writeIDref(JointGradientParser.JOINT_GRADIENT, prefix + LocationScaleGradientParser.LOCATION_SCALE_JOINT_GRADIENT);
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + LocationScaleGradientParser.LOCATION_SCALE);
         writer.writeOpenTag(SignTransformParser.NAME);
-        writer.writeIDref(ParameterParser.PARAMETER, prefix + "locationScale");
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + LocationScaleGradientParser.LOCATION_SCALE);
         writer.writeCloseTag(SignTransformParser.NAME);
         writer.writeCloseTag(HamiltonianMonteCarloOperatorParser.HMC_OPERATOR);
     }

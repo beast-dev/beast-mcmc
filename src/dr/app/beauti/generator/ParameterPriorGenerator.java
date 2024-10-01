@@ -60,7 +60,12 @@ public class ParameterPriorGenerator extends Generator {
         super(options, components);
         //TODO don't like this being here, but will see how things pan out as more HMC approaches are added
         mapParameterToPrior = new HashMap<String, String>();
+        //HMC skygrid
         mapParameterToPrior.put("skygrid.precision", "skygrid.precision.prior");
+        //HMC relaxed clock
+        mapParameterToPrior.put("branchRates.rate", "locationPrior");
+        mapParameterToPrior.put("branchRates.rates", "ratesPrior");
+        mapParameterToPrior.put("branchRates.scale", "scalePrior");
     }
 
     /**

@@ -13,7 +13,7 @@ out/
 *.tree
 *.xml
 !examples/**/*.xml
-!ci/**/*.xml
+!tests/**/*.xml
 
 zig_zag
 src/revision.txt

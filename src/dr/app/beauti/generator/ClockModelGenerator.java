@@ -39,6 +39,8 @@ import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodel.treedatalikelihood.discrete.LocationGradient;
+import dr.evomodel.treedatalikelihood.discrete.ScaleGradient;
 import dr.evomodelxml.branchmodel.BranchSpecificBranchModelParser;
 import dr.evomodelxml.branchratemodel.*;
 import dr.evomodelxml.continuous.hmc.LocationScaleGradientParser;
@@ -246,7 +248,7 @@ public class ClockModelGenerator extends Generator {
                 attributes = new Attribute[] {
                         new Attribute.Default<>(XMLParser.ID,
                                 prefix  + BranchRateModel.BRANCH_RATES),
-                        new Attribute.Default<>("centerAtOne", false)
+                        new Attribute.Default<>(ArbitraryBranchRatesParser.CENTER_AT_ONE, false)
                 };
                 writer.writeOpenTag(tag, attributes);
                 // tree
@@ -266,7 +268,7 @@ public class ClockModelGenerator extends Generator {
                 //rates prior
                 writer.writeOpenTag(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD,
                         new Attribute.Default<>(XMLParser.ID,
-                                prefix  + "ratesPrior"));
+                                prefix + BranchSpecificFixedEffects.RATES_PRIOR));
 
                 writeParameterRef(MixedDistributionLikelihoodParser.DATA, prefix + ClockType.HMC_CLOCK_BRANCH_RATES, writer);
 
@@ -302,7 +304,7 @@ public class ClockModelGenerator extends Generator {
                 //scale prior
                 writer.writeOpenTag(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD,
                         new Attribute.Default<>(XMLParser.ID,
-                                prefix  + "scalePrior"));
+                                prefix  + BranchSpecificFixedEffects.SCALE_PRIOR));
                 writeParameterRef(MixedDistributionLikelihoodParser.DATA, prefix + ClockType.HMCLN_SCALE, writer);
                 writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
                 writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
@@ -314,13 +316,13 @@ public class ClockModelGenerator extends Generator {
                 writer.writeCloseTag(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
 
                 //compound parameter
-                writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER, new Attribute.Default<>(XMLParser.ID, prefix + "locationScale"));
+                writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER, new Attribute.Default<>(XMLParser.ID, prefix + LocationScaleGradientParser.LOCATION_SCALE));
                 writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMC_CLOCK_LOCATION);
                 writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMCLN_SCALE);
                 writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
 
                 //CTMC scale prior
-                writer.writeOpenTag(CTMCScalePriorParser.MODEL_NAME,  new Attribute.Default<>(XMLParser.ID, prefix + "locationPrior"));
+                writer.writeOpenTag(CTMCScalePriorParser.MODEL_NAME,  new Attribute.Default<>(XMLParser.ID, prefix + BranchSpecificFixedEffects.LOCATION_PRIOR));
                 writer.writeOpenTag(CTMCScalePriorParser.SCALEPARAMETER);
                 writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMC_CLOCK_LOCATION);
                 writer.writeCloseTag(CTMCScalePriorParser.SCALEPARAMETER);
@@ -329,7 +331,7 @@ public class ClockModelGenerator extends Generator {
 
                 //location gradient
                 writer.writeOpenTag(LocationScaleGradientParser.NAME, new Attribute[] {
-                        new Attribute.Default<>(XMLParser.ID, prefix + "locationGradient"),
+                        new Attribute.Default<>(XMLParser.ID, prefix + LocationGradient.LOCATION_GRADIENT),
                         new Attribute.Default<>("traitName", "Sequence"),
                         new Attribute.Default<>(LocationScaleGradientParser.USE_HESSIAN, "false")
                 });
@@ -341,7 +343,7 @@ public class ClockModelGenerator extends Generator {
 
                 //scale gradient
                 writer.writeOpenTag(LocationScaleGradientParser.NAME, new Attribute[] {
-                        new Attribute.Default<>(XMLParser.ID, prefix + "scaleGradient"),
+                        new Attribute.Default<>(XMLParser.ID, prefix + ScaleGradient.SCALE_GRADIENT),
                         new Attribute.Default<>("traitName", "Sequence"),
                         new Attribute.Default<>(LocationScaleGradientParser.USE_HESSIAN, "false")
                 });
@@ -352,24 +354,24 @@ public class ClockModelGenerator extends Generator {
                 writer.writeCloseTag(LocationScaleGradientParser.NAME);
 
                 //location scale (compound) gradient
-                writer.writeOpenTag(CompoundGradientParser.COMPOUND_GRADIENT, new Attribute.Default<>(XMLParser.ID, prefix + "locationScaleGradient"));
-                writer.writeIDref(LocationScaleGradientParser.NAME, prefix + "locationGradient");
-                writer.writeIDref(LocationScaleGradientParser.NAME, prefix + "scaleGradient");
+                writer.writeOpenTag(CompoundGradientParser.COMPOUND_GRADIENT, new Attribute.Default<>(XMLParser.ID, prefix + LocationScaleGradientParser.NAME));
+                writer.writeIDref(LocationScaleGradientParser.NAME, prefix + LocationGradient.LOCATION_GRADIENT);
+                writer.writeIDref(LocationScaleGradientParser.NAME, prefix + ScaleGradient.SCALE_GRADIENT);
                 writer.writeCloseTag(CompoundGradientParser.COMPOUND_GRADIENT);
 
                 //location scale (compound) prior gradient
-                writer.writeOpenTag(CompoundGradientParser.COMPOUND_GRADIENT, new Attribute.Default<>(XMLParser.ID, prefix + "locationScalePriorGradient"));
-                writer.writeIDref(CTMCScalePriorParser.MODEL_NAME, prefix + "locationPrior");
+                writer.writeOpenTag(CompoundGradientParser.COMPOUND_GRADIENT, new Attribute.Default<>(XMLParser.ID, prefix + LocationScaleGradientParser.LOCATION_SCALE_PRIOR_GRADIENT));
+                writer.writeIDref(CTMCScalePriorParser.MODEL_NAME, prefix + BranchSpecificFixedEffects.LOCATION_PRIOR);
                 writer.writeOpenTag(HessianWrapperParser.NAME);
-                writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, "scalePrior");
+                writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffects.SCALE_PRIOR);
                 writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMCLN_SCALE);
                 writer.writeCloseTag(HessianWrapperParser.NAME);
                 writer.writeCloseTag(CompoundGradientParser.COMPOUND_GRADIENT);
 
                 //location scale joint gradient
-                writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT, new Attribute.Default<>(XMLParser.ID, prefix + "locationScaleJointGradient"));
-                writer.writeIDref(CompoundGradientParser.COMPOUND_GRADIENT, prefix + "locationScalePriorGradient");
-                writer.writeIDref(CompoundGradientParser.COMPOUND_GRADIENT, prefix + "locationScaleGradient");
+                writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT, new Attribute.Default<>(XMLParser.ID, prefix + LocationScaleGradientParser.LOCATION_SCALE_JOINT_GRADIENT));
+                writer.writeIDref(CompoundGradientParser.COMPOUND_GRADIENT, prefix + LocationScaleGradientParser.LOCATION_SCALE_PRIOR_GRADIENT);
+                writer.writeIDref(CompoundGradientParser.COMPOUND_GRADIENT, prefix + LocationScaleGradientParser.NAME);
                 writer.writeCloseTag(JointGradientParser.JOINT_GRADIENT);
 
                 break;
@@ -381,10 +383,10 @@ public class ClockModelGenerator extends Generator {
 
                 attributes = new Attribute[] {
                         new Attribute.Default<>(XMLParser.ID,
-                                prefix  + "substBranchRates"),
-                        new Attribute.Default<>("centerAtOne", false),
-                        new Attribute.Default<>("randomizeRates", true),
-                        new Attribute.Default<>("randomScale", "0.1")
+                                prefix + "substBranchRates"),
+                        new Attribute.Default<>(ArbitraryBranchRatesParser.CENTER_AT_ONE, false),
+                        new Attribute.Default<>(ArbitraryBranchRatesParser.RANDOMIZE_RATES, true),
+                        new Attribute.Default<>(ArbitraryBranchRatesParser.RANDOM_SCALE, "0.1")
                 };
                 writer.writeOpenTag(tag, attributes);
                 // tree
@@ -995,11 +997,9 @@ public class ClockModelGenerator extends Generator {
         }
     }
 
-
     public void writeAllClockRateRefs(PartitionClockModel model, XMLWriter writer) {
         writer.writeIDref(PARAMETER, getClockRateString(model));
     }
-
 
     public String getClockRateString(PartitionClockModel model) {
         String prefix = model.getPrefix();
@@ -1138,7 +1138,7 @@ public class ClockModelGenerator extends Generator {
                 break;
 
             case AUTOCORRELATED:
-// TODO
+                // TODO
                 break;
 
             default:

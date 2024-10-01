@@ -29,6 +29,7 @@ package dr.evomodel.substmodel;
 
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.*;
+import dr.util.Transform;
 
 public interface LogAdditiveCtmcRateProvider extends Model, Likelihood {
 
@@ -54,27 +55,20 @@ public interface LogAdditiveCtmcRateProvider extends Model, Likelihood {
 
         class Basic extends AbstractModelLikelihood implements DataAugmented {
 
-            private final Parameter logRateParameter;
+            final Parameter transformedRateParameter;
 
-            public Basic(String name, Parameter logRateParameter) {
+            public Basic(String name, Parameter transformedRateParameter) {
                 super(name);
-                this.logRateParameter = logRateParameter;
+                this.transformedRateParameter = transformedRateParameter;
 
-                addVariable(logRateParameter);
+                addVariable(transformedRateParameter);
             }
 
-            public Parameter getLogRateParameter() { return logRateParameter; }
+            public Parameter getLogRateParameter() { return transformedRateParameter; }
 
             @Override
             public double[] getXBeta() { // TODO this function should _not_ exponentiate
-
-                final int fieldDim = logRateParameter.getDimension();
-                double[] rates = new double[fieldDim];
-
-                for (int i = 0; i < fieldDim; ++i) {
-                    rates[i] = Math.exp(logRateParameter.getParameterValue(i));
-                }
-                return rates;
+                return transformedRateParameter.getParameterValues();
             }
 
             @Override
@@ -101,6 +95,32 @@ public interface LogAdditiveCtmcRateProvider extends Model, Likelihood {
 
             @Override
             public void makeDirty() { }
+        }
+
+        class ArbitraryTransform extends Basic {
+
+            private final Transform transform;
+
+            public ArbitraryTransform(String name,
+                                      Parameter transformedRateParameter,
+                                      Transform transform) {
+                super(name, transformedRateParameter);
+                this.transform = transform;
+            }
+
+            @Override
+            public double[] getRates() {
+                double[] rates = transformedRateParameter.getParameterValues();
+                for (int i = 0; i < rates.length; ++i) {
+                    rates[i] = transform.transform(rates[i]);
+                }
+                return rates;
+            }
+
+            @Override @Deprecated
+            public double[] getXBeta() { // TODO this function should NOT transform
+                throw new RuntimeException("Deprecated function");
+            }
         }
     }
 }

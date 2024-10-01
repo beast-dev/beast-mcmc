@@ -696,6 +696,57 @@ public interface Transform {
         public double logJacobian(double x) { return x; }
     }
 
+    // y = x^2
+    class SquaredTransform extends UnivariableTransform {
+        @Override
+        public Transform inverseTransform() {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        public double transform(double x) {
+            return x * x;
+        }
+
+        public double inverse(double y) {
+            return Math.sqrt(y);
+        }
+
+        public boolean isInInteriorDomain(double x) {
+            return !Double.isInfinite(x);
+        }
+
+        public double gradientInverse(double y) { return 0.5 / y; }
+
+        public double updateGradientLogDensity(double gradientWrtX, double x) {
+            double y = transform(x);
+            double dXdY = gradientInverse(y);
+            return gradientWrtX * dXdY + gradientLogJacobianInverse(y);
+        }
+
+        public double gradientLogJacobianInverse(double y) {
+            throw new RuntimeException("Mot yet implemented");
+        }
+
+        @Override
+        public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transfomationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double gradient(double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        public String getTransformName() { return "squared"; }
+
+        public double logJacobian(double x) { return Math.log(2 * x); }
+    }
+
     // y = log(x)
     class LogTransform extends UnivariableTransform {
 
@@ -2610,6 +2661,7 @@ public interface Transform {
     LogTransform LOG = new LogTransform();
     ExpTransform EXP = new ExpTransform();
     NegateTransform NEGATE = new NegateTransform();
+    SquaredTransform SQUARED = new SquaredTransform();
     Compose LOG_NEGATE = new Compose(new LogTransform(), new NegateTransform());
     LogConstrainedSumTransform LOG_CONSTRAINED_SUM = new LogConstrainedSumTransform();
     LogitTransform LOGIT = new LogitTransform();
@@ -2625,6 +2677,7 @@ public interface Transform {
         LOGIT("logit", new LogitTransform()),
         FISHER_Z("fisherZ",new FisherZTransform()),
         INVERSE_SUM("inverseSum", new InverseSumTransform()),
+        SQUARED("squared", new SquaredTransform()),
         POWER("power", new PowerTransform());
 
         Type(String name, Transform transform) {

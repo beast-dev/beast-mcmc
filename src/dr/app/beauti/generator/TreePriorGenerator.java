@@ -28,37 +28,36 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.*;
-import dr.app.beauti.types.OperatorSetType;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.Parameter;
+import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.types.TreePriorParameterizationType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.GMRFSkyrideGradient;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.CSVExporterParser;
-import dr.evomodelxml.coalescent.*;
+import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
+import dr.evomodelxml.coalescent.GMRFSkyrideGradientParser;
+import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.ExpansionModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.ExponentialGrowthModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.LogisticGrowthModelParser;
-import dr.evomodelxml.speciation.*;
+import dr.evomodelxml.speciation.BirthDeathModelParser;
+import dr.evomodelxml.speciation.BirthDeathSerialSamplingModelParser;
+import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
+import dr.evomodelxml.speciation.YuleModelParser;
 import dr.evoxml.TaxaParser;
-import dr.inference.distribution.ExponentialDistributionModel;
-import dr.inference.distribution.ExponentialMarkovModel;
-import dr.inference.distribution.GammaDistributionModel;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.ParameterParser;
-import dr.inferencexml.distribution.*;
+import dr.inferencexml.distribution.GammaDistributionModelParser;
+import dr.inferencexml.distribution.PriorParsers;
 import dr.inferencexml.hmc.CompoundGradientParser;
 import dr.inferencexml.hmc.GradientWrapperParser;
 import dr.inferencexml.hmc.JointGradientParser;
 import dr.inferencexml.model.CompoundParameterParser;
-import dr.inferencexml.model.SumStatisticParser;
-import dr.math.distributions.GammaDistribution;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -67,8 +66,6 @@ import dr.xml.XMLParser;
  * @author Andrew Rambaut
  */
 public class TreePriorGenerator extends Generator {
-
-    public static final String SKYGRID_PRECISION_PRIOR = "skygrid.precision.prior";
 
     public TreePriorGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
@@ -714,7 +711,7 @@ public class TreePriorGenerator extends Generator {
             Parameter parameter = prior.getParameter(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION);
             writer.writeOpenTag(PriorParsers.GAMMA_PRIOR,
                     new Attribute[]{
-                            new Attribute.Default<>(XMLParser.ID, SKYGRID_PRECISION_PRIOR),
+                            new Attribute.Default<>(XMLParser.ID, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION_PRIOR),
                             new Attribute.Default<>(GammaDistributionModelParser.SHAPE, parameter.shape),
                             new Attribute.Default<>(GammaDistributionModelParser.SCALE, parameter.scale),
                             new Attribute.Default<>(GammaDistributionModelParser.OFFSET, parameter.offset)
@@ -760,7 +757,7 @@ public class TreePriorGenerator extends Generator {
                 );
                 writer.writeIDref(GMRFSkyrideGradientParser.NAME, "gmrfGradientPrec");
                 writer.writeOpenTag(GradientWrapperParser.NAME);
-                writer.writeIDref(PriorParsers.GAMMA_PRIOR, SKYGRID_PRECISION_PRIOR);
+                writer.writeIDref(PriorParsers.GAMMA_PRIOR, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION_PRIOR);
                 writer.writeIDref(ParameterParser.PARAMETER, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION);
                 writer.writeCloseTag(GradientWrapperParser.NAME);
                 writer.writeCloseTag(JointGradientParser.JOINT_GRADIENT);

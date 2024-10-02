@@ -36,6 +36,7 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.model.Parameter;
 import dr.util.Citation;
 import dr.util.CommonCitations;
+import dr.util.Transform;
 
 import java.util.Collections;
 import java.util.List;
@@ -104,7 +105,8 @@ public class GamGpSubstitutionModelGradient extends AbstractLogAdditiveSubstitut
 
     @Override
     double processSingleGradientDimension(int k, double[] differentials, double[] generator, double[] pi,
-                                          boolean normalize, double normalizationConstant) {
+                                          boolean normalize, double normalizationConstant,
+                                          double rateScalar, Transform transform, boolean scaleByFrequencies) {
 
         final int i = mapEffectToIndices[k][0], j = mapEffectToIndices[k][1];
         final int ii = i * stateCount + i;

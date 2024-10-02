@@ -37,6 +37,7 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.model.Parameter;
 import dr.util.Citation;
 import dr.util.CommonCitations;
+import dr.util.Transform;
 
 import java.util.Collections;
 import java.util.List;
@@ -81,7 +82,9 @@ public class LogCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGra
 
      @Override
     protected double preProcessNormalization(double[] differentials, double[] generator,
-                                             boolean normalize) {
+                                             boolean normalize
+//                                             , Transform transform, boolean scaleByFrequencies
+     ) {
         double total = 0.0;
         if (normalize) {
             for (int i = 0; i < stateCount; ++i) {
@@ -115,13 +118,27 @@ public class LogCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGra
 
     @Override
     double processSingleGradientDimension(int k, double[] differentials, double[] generator, double[] pi,
-                                          boolean normalize, double normalizationConstant) {
+                                          boolean normalize, double normalizationConstant, double rateScalar,
+                                          Transform transform, boolean scaleByFrequencies) {
 
         final int i = mapEffectToIndices[k][0], j = mapEffectToIndices[k][1];
         final int ii = i * stateCount + i;
         final int ij = i * stateCount + j;
+        final Parameter transformedParameter = rateProvider.getLogRateParameter();
 
-        double element = generator[ij];
+        double element;
+        if (transform == null) {
+            element = generator[ij]; // Default is exp()
+        } else {
+            element = transform.gradient(transformedParameter.getParameterValue(k))
+            if (normalize) {
+                element *= rateScalar;
+            }
+            if (scaleByFrequencies) {
+                element *= pi[i];
+            }
+        }
+
         double total = (differentials[ij]  - differentials[ii]) * element;
 
         if (normalize) {

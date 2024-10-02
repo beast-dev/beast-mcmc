@@ -34,6 +34,7 @@ import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.model.DesignMatrix;
 import dr.inference.model.MaskedParameter;
 import dr.inference.model.Parameter;
+import dr.util.Transform;
 
 /**
  * @author Marc A. Suchard
@@ -113,7 +114,8 @@ public class DesignMatrixSubstitutionModelGradient extends AbstractGlmSubstituti
     @Override
     double processSingleGradientDimension(int k,
                                           double[] differentials, double[] generator, double[] pi,
-                                          boolean normalize, double normalizationConstant) {
+                                          boolean normalize, double normalizationConstant,
+                                          double rateScalar, Transform transform, boolean scaleByFrequencies) {
 
         int whichCoefficient = indexK(k);
 

@@ -34,6 +34,7 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.util.Citation;
 import dr.util.CommonCitations;
+import dr.util.Transform;
 
 import java.util.*;
 
@@ -112,4 +113,8 @@ public class LogRateSubstitutionModel extends ComplexSubstitutionModel { // impl
 
     private final LogAdditiveCtmcRateProvider lrm;
     private final double[] testProbabilities;
+
+    public Transform getTransform() {
+        return lrm.getTransform();
+    }
 }

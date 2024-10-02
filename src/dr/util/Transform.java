@@ -688,7 +688,7 @@ public interface Transform {
 
         @Override
         public double gradient(double value) {
-            throw new RuntimeException("Not yet implemented");
+            return Math.exp(value);
         }
 
         public String getTransformName() { return "exp"; }
@@ -739,7 +739,7 @@ public interface Transform {
 
         @Override
         public double gradient(double value) {
-            throw new RuntimeException("Not yet implemented");
+            return 2 * value;
         }
 
         public String getTransformName() { return "squared"; }

@@ -32,6 +32,7 @@ import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.model.Parameter;
+import dr.util.Transform;
 
 /**
  * @author Marc A. Suchard
@@ -88,7 +89,8 @@ public class RandomEffectsSubstitutionModelGradient extends AbstractGlmSubstitut
     @Override
     double processSingleGradientDimension(int k,
                                           double[] differentials, double[] generator, double[] pi,
-                                          boolean normalize, double normalizationConstant) {
+                                          boolean normalize, double normalizationConstant,
+                                          double rateScalar, Transform transform, boolean scaleByFrequencies) {
 
         double elementUpper = generator[indexIJ(k)];
         double total = (differentials[indexIJ(k)]  - differentials[indexII(k)]) * elementUpper;

@@ -35,6 +35,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.Parameter;
 import dr.util.Citation;
+import dr.util.Transform;
 
 import java.util.List;
 
@@ -80,7 +81,8 @@ public class CtmcFrequencyModelGradient extends AbstractLogAdditiveSubstitutionM
 
     @Override
     double processSingleGradientDimension(int j, double[] differentials, double[] generator, double[] pi,
-                                          boolean normalize, double normalizationConstant) {
+                                          boolean normalize, double normalizationConstant,
+                                          double rateScalar, Transform transform, boolean scaleByFrequencies) {
         // derivative wrt pi[j]
         double total = 0.0;
 

@@ -47,6 +47,10 @@ public interface LogAdditiveCtmcRateProvider extends Model, Likelihood {
         return rates;
     }
 
+    default Transform getTransform() {
+        return null;
+    }
+
     interface Integrated extends LogAdditiveCtmcRateProvider { }
 
     interface DataAugmented extends LogAdditiveCtmcRateProvider {
@@ -107,6 +111,9 @@ public interface LogAdditiveCtmcRateProvider extends Model, Likelihood {
                 super(name, transformedRateParameter);
                 this.transform = transform;
             }
+
+            @Override
+            public Transform getTransform() { return transform; }
 
             @Override
             public double[] getRates() {

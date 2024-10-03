@@ -130,7 +130,7 @@ public class LogCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGra
         if (transform == null) {
             element = generator[ij]; // Default is exp()
         } else {
-            element = transform.gradient(transformedParameter.getParameterValue(k))
+            element = transform.gradient(transformedParameter.getParameterValue(k));
             if (normalize) {
                 element *= rateScalar;
             }

@@ -1,9 +1,11 @@
 name: BEAST CI
-on:
-    push:
-        branches:
-            - main
-    pull_request:
+#on:
+#    push:
+#        branches:
+#            - main
+#    pull_request:
+
+on: [push]
 
 # Cancel if a newer run is started
 concurrency:

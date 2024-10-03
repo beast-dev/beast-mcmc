@@ -39,12 +39,12 @@ jobs:
                       build/dist
                   key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
             - name: Build BEAGLE
-              if: steps.cache.outputs.cache-hit != 'true'
+#              if: steps.cache.outputs.cache-hit != 'true'
               run: |
                   chmod +x ./.github/scripts/build_beagle.sh
                   ./.github/scripts/build_beagle.sh
             - name: Build BEAST
-              if: steps.cache.outputs.cache-hit != 'true'
+#              if: steps.cache.outputs.cache-hit != 'true'
               run: ant dist
             - name: Check BEAGLE
               run: |

@@ -82,9 +82,7 @@ public class LogCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGra
 
      @Override
     protected double preProcessNormalization(double[] differentials, double[] generator,
-                                             boolean normalize
-//                                             , Transform transform, boolean scaleByFrequencies
-     ) {
+                                             boolean normalize) {
         double total = 0.0;
         if (normalize) {
             for (int i = 0; i < stateCount; ++i) {
@@ -118,21 +116,22 @@ public class LogCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGra
 
     @Override
     double processSingleGradientDimension(int k, double[] differentials, double[] generator, double[] pi,
-                                          boolean normalize, double normalizationConstant, double rateScalar,
+                                          boolean normalize, double normalizationGradientContribution,
+                                          double normalizationScalar,
                                           Transform transform, boolean scaleByFrequencies) {
 
         final int i = mapEffectToIndices[k][0], j = mapEffectToIndices[k][1];
         final int ii = i * stateCount + i;
         final int ij = i * stateCount + j;
-        final Parameter transformedParameter = rateProvider.getLogRateParameter();
 
         double element;
         if (transform == null) {
             element = generator[ij]; // Default is exp()
         } else {
+            final Parameter transformedParameter = rateProvider.getLogRateParameter();
             element = transform.gradient(transformedParameter.getParameterValue(k));
             if (normalize) {
-                element *= rateScalar;
+                element *= normalizationScalar;
             }
             if (scaleByFrequencies) {
                 element *= pi[i];
@@ -142,7 +141,7 @@ public class LogCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGra
         double total = (differentials[ij]  - differentials[ii]) * element;
 
         if (normalize) {
-            total -= element * pi[i] * normalizationConstant;
+            total -= element * pi[i] * normalizationGradientContribution;
         }
 
         return total;

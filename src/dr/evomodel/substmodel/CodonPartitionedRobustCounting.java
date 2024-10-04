@@ -533,7 +533,8 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
     }
 
     public TreeTrait getTreeTrait(String key) {
-        return treeTraits.getTreeTrait(key);
+
+        return treeTraits.getTreeTrait(this.prefix+key);
     }
 
     private int getCanonicalState(int i, int j, int k) {

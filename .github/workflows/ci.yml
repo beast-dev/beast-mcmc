@@ -116,11 +116,6 @@ jobs:
                   key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
                   restore-keys: |
                       beagle-beast
-            - name: Set up environment
-              run: |
-                  echo "BEAGLE_DIR=${{ github.workspace }}/beagle-lib" >> $GITHUB_ENV
-                  echo "BEAGLE_LIB=${{ github.workspace }}/beagle-lib/usr/local/lib" >> $GITHUB_ENV
-                  echo "LD_LIBRARY_PATH=${{ github.workspace }}/beagle-lib/usr/local/lib" >> $GITHUB_ENV
             - name: Rebuild project
               run: ant dist
             - name: Run JUnit tests

@@ -1191,20 +1191,20 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         writer.writeOpenTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR,
                                 new Attribute[]{
                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                        new Attribute.Default<String>("parameterColumn", "skygrid.logPopSize"),
+                                        new Attribute.Default<String>("parameterColumn", GMRFSkyrideLikelihoodParser.SKYGRID_LOGPOPSIZE),
                                         new Attribute.Default<Integer>("dimension", model.getSkyGridCount()),
                                         new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
                                 });
-                        writer.writeIDref(ParameterParser.PARAMETER, "skygrid.logPopSize");
+                        writer.writeIDref(ParameterParser.PARAMETER, GMRFSkyrideLikelihoodParser.SKYGRID_LOGPOPSIZE);
                         writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
 
                         writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
                                 new Attribute[]{
                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                        new Attribute.Default<String>("parameterColumn", "skygrid.precision"),
+                                        new Attribute.Default<String>("parameterColumn", GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION),
                                         new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
                                 });
-                        writer.writeIDref(ParameterParser.PARAMETER, "skygrid.precision");
+                        writer.writeIDref(ParameterParser.PARAMETER, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION);
                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
 
                         break;

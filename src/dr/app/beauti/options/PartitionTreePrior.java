@@ -30,6 +30,7 @@ package dr.app.beauti.options;
 import dr.app.beauti.types.*;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodel.speciation.CalibrationPoints;
+import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.speciation.BirthDeathEpidemiologyModelParser;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.BirthDeathSerialSamplingModelParser;
@@ -170,9 +171,9 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameterGammaPrior("skyride.precision", "GMRF Bayesian skyride precision",
                 PriorScaleType.NONE, 1.0, 0.001, 1000, false);
 
-        createParameterUniformPrior("skygrid.logPopSize", "GMRF Bayesian SkyGrid population sizes (log unit)",
+        createParameterUniformPrior(GMRFSkyrideLikelihoodParser.SKYGRID_LOGPOPSIZE, "GMRF Bayesian SkyGrid population sizes (log unit)",
                 PriorScaleType.LOG_TIME_SCALE, 1.0, -Parameter.UNIFORM_MAX_BOUND, Parameter.UNIFORM_MAX_BOUND);
-        createParameterGammaPrior("skygrid.precision", "GMRF Bayesian SkyGrid precision",
+        createParameterGammaPrior(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, "GMRF Bayesian SkyGrid precision",
                 PriorScaleType.NONE, 0.1, 0.001, 1000, true, false);
         createParameterUniformPrior("skygrid.numGridPoints", "GMRF Bayesian SkyGrid number of grid points)",
                 PriorScaleType.NONE, 1.0, -Parameter.UNIFORM_MAX_BOUND, Parameter.UNIFORM_MAX_BOUND);
@@ -272,10 +273,10 @@ public class PartitionTreePrior extends PartitionOptions {
         createOperatorUsing2Parameters("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF Skyride", "skyride.logPopSize",
                 "skyride.precision", OperatorType.GMRF_GIBBS_OPERATOR, -1, 2);
         createOperatorUsing2Parameters("gmrfSkyGridGibbsOperator", "skygrid.logPopSize", "Gibbs sampler for Bayesian SkyGrid", "skygrid.logPopSize",
-                "skygrid.precision", OperatorType.SKY_GRID_GIBBS_OPERATOR, -1, 2);
-        createScaleOperator("skygrid.precision", "skygrid precision", 0.75, 1.0);
+                GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, OperatorType.SKY_GRID_GIBBS_OPERATOR, -1, 2);
+        createScaleOperator(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, "skygrid precision", 0.75, 1.0);
         createOperatorUsing2Parameters("gmrfSkyGridHMCOperator", "Multiple", "HMC transition kernel for Bayesian SkyGrid", "skygrid.logPopSize",
-                "skygrid.precision", OperatorType.SKY_GRID_HMC_OPERATOR, -1, 2);
+                GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, OperatorType.SKY_GRID_HMC_OPERATOR, -1, 2);
 
         createScaleOperator("yule.birthRate", demoTuning, demoWeights);
 
@@ -347,7 +348,7 @@ public class PartitionTreePrior extends PartitionOptions {
             params.add(getParameter("skyride.precision"));
         } else if (nodeHeightPrior == TreePriorType.SKYGRID || nodeHeightPrior == TreePriorType.SKYGRID_HMC) {
             // params.add(getParameter("skygrid.logPopSize")); // force user to use GMRF prior, not allowed to change
-            params.add(getParameter("skygrid.precision"));
+            params.add(getParameter(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION));
         } else if (nodeHeightPrior == TreePriorType.YULE || nodeHeightPrior == TreePriorType.YULE_CALIBRATION) {
             params.add(getParameter("yule.birthRate"));
         } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH || nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING) {
@@ -419,7 +420,7 @@ public class PartitionTreePrior extends PartitionOptions {
             ops.add(getOperator("gmrfGibbsOperator"));
         } else if (nodeHeightPrior == TreePriorType.SKYGRID) {
             ops.add(getOperator("gmrfSkyGridGibbsOperator"));
-            ops.add(getOperator("skygrid.precision"));
+            ops.add(getOperator(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION));
         } else if (nodeHeightPrior == TreePriorType.SKYGRID_HMC) {
             ops.add(getOperator("gmrfSkyGridHMCOperator"));
         } else if (nodeHeightPrior == TreePriorType.YULE || nodeHeightPrior == TreePriorType.YULE_CALIBRATION) {

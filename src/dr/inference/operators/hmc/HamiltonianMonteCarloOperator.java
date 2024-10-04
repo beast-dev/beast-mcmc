@@ -336,7 +336,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         meanDiff /= n;
 
         StringBuilder sb = new StringBuilder();
-        sb.append("\tMaximum aboslute difference: " + maxDiff + " (at index " + (maxInd) + ")\n");
+        sb.append("\tMaximum absolute difference: " + maxDiff + " (at index " + (maxInd) + ")\n");
         sb.append("\tAverage absolute difference: " + meanDiff + "\n");
         sb.append("\tList of all values exceeding the tolerance:\n");
         sb.append("\t\tindex    analytic    numeric    absolute difference\n");

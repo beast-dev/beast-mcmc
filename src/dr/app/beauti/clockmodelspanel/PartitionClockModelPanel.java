@@ -36,9 +36,12 @@ import dr.app.util.OSType;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
+import javax.swing.border.MatteBorder;
+import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.EnumSet;
+import java.util.Vector;
 
 /**
  * @author Andrew Rambaut
@@ -48,7 +51,8 @@ public class PartitionClockModelPanel extends OptionsPanel {
     // Components
     private static final long serialVersionUID = -1645661616353099424L;
 
-    private JComboBox clockTypeCombo = new JComboBox();
+    private JComboBox<ClockType> clockTypeCombo = new JComboBox<>();
+
     private JComboBox clockDistributionCombo = new JComboBox (new ClockDistributionType[] {
             ClockDistributionType.LOGNORMAL,
             ClockDistributionType.GAMMA,
@@ -76,12 +80,15 @@ public class PartitionClockModelPanel extends OptionsPanel {
 
         for (ClockType clockType : EnumSet.range(ClockType.STRICT_CLOCK, ClockType.MIXED_EFFECTS_CLOCK)) {
             clockTypeCombo.addItem(clockType);
-            if (clockType == ClockType.STRICT_CLOCK || clockType == ClockType.HMC_CLOCK) {
+            /*if (clockType == ClockType.STRICT_CLOCK || clockType == ClockType.HMC_CLOCK) {
                 clockTypeCombo.addItem(new JSeparator(JSeparator.HORIZONTAL));
-            }
+            }*/
         }
 
-        PanelUtils.setupComponent(clockTypeCombo);
+        //PanelUtils.setupComponent(clockTypeCombo);
+        clockTypeCombo.putClientProperty("JButton.buttonType", "textured");
+        clockTypeCombo.setRenderer(new ClockComboBoxRenderer());
+
         clockTypeCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 model.setClockType((ClockType) clockTypeCombo.getSelectedItem());
@@ -130,7 +137,6 @@ public class PartitionClockModelPanel extends OptionsPanel {
         setOpaque(false);
 
     }
-
 
     /**
      * Lays out the appropriate components in the panel for this partition model.
@@ -192,6 +198,27 @@ public class PartitionClockModelPanel extends OptionsPanel {
         setupPanel();
         setOpaque(false);
 
+    }
+
+    /**
+     *
+     */
+    static class ClockComboBoxRenderer extends JLabel implements ListCellRenderer<Object> {
+
+        public Component getListCellRendererComponent(JList<? extends Object> list,
+                                                      Object value, int index, boolean isSelected, boolean cellHasFocus) {
+
+            if (value == ClockType.UNCORRELATED || value == ClockType.HMC_CLOCK){
+                setBackground(new Color(0, 100, 255, 30));
+                setOpaque(true);
+            } else {
+                setOpaque(false);
+            }
+
+            setText("  " + value.toString() + " ");
+
+            return this;
+        }
     }
 
 }

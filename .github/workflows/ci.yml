@@ -104,6 +104,10 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
+            - uses: actions/setup-java@v4
+              with:
+                  java-version: "8"
+                  distribution: "adopt"
             - uses: actions/cache@v4
               with:
                   path: |
@@ -112,5 +116,14 @@ jobs:
                   key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
                   restore-keys: |
                       beagle-beast
+            - name: Set up environment
+              run: |
+                  echo "BEAGLE_DIR=${{ github.workspace }}/beagle-lib" >> $GITHUB_ENV
+                  echo "BEAGLE_LIB=${{ github.workspace }}/beagle-lib/usr/local/lib" >> $GITHUB_ENV
+                  echo "LD_LIBRARY_PATH=${{ github.workspace }}/beagle-lib/usr/local/lib" >> $GITHUB_ENV
+            - name: Rebuild project
+              run: ant clean build
             - name: Run JUnit tests
-              run: ant -Djava.library.path=${BEAGLE_LIB} junit
+              run: |
+                  ant -Djava.library.path=${BEAGLE_LIB} -verbose junit
+                  cat build/reports/junit*.txt

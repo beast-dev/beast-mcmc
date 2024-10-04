@@ -39,6 +39,9 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
  */
 public class LocationGradient extends HyperParameterBranchRateGradient {
 
+    //declaring String constants for use in BEAUti
+    public static final String LOCATION_GRADIENT = "locationGradient";
+
     private final BranchSpecificFixedEffects fixedEffects;
 
     public LocationGradient(String traitName, TreeDataLikelihood treeDataLikelihood,

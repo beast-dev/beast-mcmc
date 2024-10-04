@@ -1,7 +1,7 @@
 /*
  * GMRFSkyrideLikelihoodParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2024 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -80,6 +80,11 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
     public static final String DIST_INDICES = "covIndicesMissingDistant";
     public static final String GLM_MODEL = "glmModel";
     public static final String USE_GLM_MODEL = "useGlmModel";
+
+    //declaring String constants for use in BEAUti
+    public static final String SKYGRID_PRECISION = "skygrid.precision";
+    public static final String SKYGRID_LOGPOPSIZE = "skygrid.logPopSize";
+    public static final String SKYGRID_PRECISION_PRIOR = "skygrid.precision.prior";
 
     public String getParserName() {
         return SKYLINE_LIKELIHOOD;

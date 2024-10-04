@@ -70,7 +70,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                file: ${{fromJson(needs.setup.outputs.xml-matrix)}}
+                file: ${{fromJson(needs.build-and-junit-tests.outputs.xml-matrix)}}
         steps:
             - uses: actions/checkout@v2
             - uses: actions/cache@v2
@@ -88,7 +88,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                file: ${{fromJson(needs.setup.outputs.xml-load-state-matrix)}}
+                file: ${{fromJson(needs.build-and-junit-tests.outputs.xml-load-state-matrix)}}
         steps:
             - uses: actions/checkout@v2
             - uses: actions/cache@v2

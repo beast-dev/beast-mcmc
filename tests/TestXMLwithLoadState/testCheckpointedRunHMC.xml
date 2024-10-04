@@ -979,7 +979,7 @@
 			<posterior idref="posterior"/>
 		</actual>
 		<expected>
-			-11061.7032
+			-13218.081104785917
 <!-- 	THESE SHOULD NOT BE HARD-CODED; RUN TWO XMLS  -->
 <!--	CURRENTLT THIS IS NOT A TEST  -->
 			

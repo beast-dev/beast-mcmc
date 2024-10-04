@@ -122,7 +122,7 @@ jobs:
                   echo "BEAGLE_LIB=${{ github.workspace }}/beagle-lib/usr/local/lib" >> $GITHUB_ENV
                   echo "LD_LIBRARY_PATH=${{ github.workspace }}/beagle-lib/usr/local/lib" >> $GITHUB_ENV
             - name: Rebuild project
-              run: ant clean build
+              run: ant dist
             - name: Run JUnit tests
               run: |
                   ant -Djava.library.path=${BEAGLE_LIB} -verbose junit

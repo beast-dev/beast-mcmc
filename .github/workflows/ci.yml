@@ -125,5 +125,4 @@ jobs:
               run: ant dist
             - name: Run JUnit tests
               run: |
-                  ant -Djava.library.path=${BEAGLE_LIB} -verbose junit
-                  cat build/reports/junit*.txt
+                  ant -Djava.library.path=${BEAGLE_LIB} junit

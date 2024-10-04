@@ -19,12 +19,12 @@ env:
     BEAGLE_BRANCH: v4_release
 
 jobs:
-    setup:
+    build:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v4
             - name: Set up JDK 8
-              uses: actions/setup-java@v2
+              uses: actions/setup-java@v4
               with:
                   java-version: "8"
                   distribution: "adopt"
@@ -32,19 +32,17 @@ jobs:
               uses: lukka/get-cmake@latest
             - name: Cache BEAGLE and BEAST
               id: cache
-              uses: actions/cache@v2
+              uses: actions/cache@v4
               with:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
                   key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
             - name: Build BEAGLE
-#              if: steps.cache.outputs.cache-hit != 'true'
               run: |
                   chmod +x ./.github/scripts/build_beagle.sh
                   ./.github/scripts/build_beagle.sh
             - name: Build BEAST
-#              if: steps.cache.outputs.cache-hit != 'true'
               run: ant dist
             - name: Check BEAGLE
               run: |
@@ -60,53 +58,66 @@ jobs:
             xml-load-state-matrix: ${{ steps.set-matrices.outputs.xml-load-state-matrix }}
 
     test-xml:
-        needs: setup
+        needs: build
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
             matrix:
-                file: ${{fromJson(needs.setup.outputs.xml-matrix)}}
+                file: ${{fromJson(needs.build.outputs.xml-matrix)}}
         steps:
-            - uses: actions/checkout@v2
-            - uses: actions/cache@v2
+            - uses: actions/checkout@v4
+            - uses: actions/cache@v4
               with:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
                   key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
+                  restore-keys: |
+                      beagle-beast
             - name: Run test for ${{ matrix.file }}
               run: java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -overwrite ${{ matrix.file }}
 
     test-xml-load-state:
-        needs: setup
+        needs: build
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
             matrix:
-                file: ${{fromJson(needs.setup.outputs.xml-load-state-matrix)}}
+                file: ${{fromJson(needs.build.outputs.xml-load-state-matrix)}}
         steps:
-            - uses: actions/checkout@v2
-            - uses: actions/cache@v2
+            - uses: actions/checkout@v4
+            - uses: actions/cache@v4
               with:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
                   key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
+                  restore-keys: |
+                      beagle-beast
             - name: Run test with load state for ${{ matrix.file }}
               run: |
                   checkpoint=tests/TestXMLwithLoadState/$(basename ${{ matrix.file }} .xml).chkpt
                   java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state $checkpoint -overwrite ${{ matrix.file }}
 
     test-junit:
-        needs: setup
+        needs: build
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v2
-            - uses: actions/cache@v2
+            - uses: actions/checkout@v4
+            - uses: actions/setup-java@v4
+              with:
+                  java-version: "8"
+                  distribution: "adopt"
+            - uses: actions/cache@v4
               with:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
                   key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
+                  restore-keys: |
+                      beagle-beast
+            - name: Rebuild project
+              run: ant dist
             - name: Run JUnit tests
-              run: ant -Djava.library.path=${BEAGLE_LIB} junit
+              run: |
+                  ant -Djava.library.path=${BEAGLE_LIB} junit

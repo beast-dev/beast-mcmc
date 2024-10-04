@@ -19,7 +19,7 @@ env:
     BEAGLE_BRANCH: v4_release
 
 jobs:
-    setup:
+    build-and-junit-tests:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v2
@@ -39,17 +39,22 @@ jobs:
                       build/dist
                   key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
             - name: Build BEAGLE
-#              if: steps.cache.outputs.cache-hit != 'true'
+              #              if: steps.cache.outputs.cache-hit != 'true'
               run: |
                   chmod +x ./.github/scripts/build_beagle.sh
                   ./.github/scripts/build_beagle.sh
             - name: Build BEAST
-#              if: steps.cache.outputs.cache-hit != 'true'
+              #              if: steps.cache.outputs.cache-hit != 'true'
               run: ant dist
             - name: Check BEAGLE
               run: |
                   ls ${BEAGLE_LIB}
                   java -jar -Djava.library.path=${BEAGLE_LIB} build/dist/beast.jar -beagle_info
+            - name: Run JUnit tests
+              id: junit
+              run: |
+                  ls ${BEAGLE_LIB}
+                  ant -Djava.library.path=${BEAGLE_LIB} junit
             - name: Set up test matrices
               id: set-matrices
               run: |
@@ -60,7 +65,7 @@ jobs:
             xml-load-state-matrix: ${{ steps.set-matrices.outputs.xml-load-state-matrix }}
 
     test-xml:
-        needs: setup
+        needs: build-and-junit-tests
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
@@ -78,7 +83,7 @@ jobs:
               run: java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -overwrite ${{ matrix.file }}
 
     test-xml-load-state:
-        needs: setup
+        needs: build-and-junit-tests
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
@@ -97,16 +102,16 @@ jobs:
                   checkpoint=tests/TestXMLwithLoadState/$(basename ${{ matrix.file }} .xml).chkpt
                   java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state $checkpoint -overwrite ${{ matrix.file }}
 
-    test-junit:
-        needs: setup
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v2
-            - uses: actions/cache@v2
-              with:
-                  path: |
-                      ${{ env.BEAGLE_DIR }}
-                      build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
-            - name: Run JUnit tests
-              run: ant -Djava.library.path=${BEAGLE_LIB} junit
+    # test-junit:
+    #     needs: setup
+    #     runs-on: ubuntu-latest
+    #     steps:
+    #         - uses: actions/checkout@v2
+    #         - uses: actions/cache@v2
+    #           with:
+    #               path: |
+    #                   ${{ env.BEAGLE_DIR }}
+    #                   build/dist
+    #               key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
+    #         - name: Run JUnit tests
+    #           run: ant -Djava.library.path=${BEAGLE_LIB} junit

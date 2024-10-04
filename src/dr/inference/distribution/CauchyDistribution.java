@@ -27,18 +27,15 @@
 
 package dr.inference.distribution;
 
-
-
+import dr.inference.model.GradientProvider;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.Distribution;
-import org.apache.commons.math.MathException;
-import org.apache.commons.math.distribution.AbstractContinuousDistribution;
 import org.apache.commons.math.distribution.CauchyDistributionImpl;
 
-public class CauchyDistribution extends AbstractContinuousDistribution implements Distribution {
-    CauchyDistributionImpl distribution;
-    double median;
-    double scale;
+public class CauchyDistribution implements Distribution, GradientProvider {
+    private final CauchyDistributionImpl distribution;
+    private final double median;
+    private final double scale;
 
     public CauchyDistribution(double median, double scale){
         distribution = new CauchyDistributionImpl(median, scale);
@@ -83,36 +80,30 @@ public class CauchyDistribution extends AbstractContinuousDistribution implement
     }
 
     private final UnivariateFunction pdfFunction = new UnivariateFunction() {
-        public final double evaluate(double x) {
+        public double evaluate(double x) {
             return pdf(x);
         }
 
-        public final double getLowerBound() {
+        public double getLowerBound() {
             return Double.NEGATIVE_INFINITY;
         }
 
-        public final double getUpperBound() {
+        public double getUpperBound() {
             return Double.POSITIVE_INFINITY;
         }
     };
 
     @Override
-    protected double getInitialDomain(double v) {
-        return Double.POSITIVE_INFINITY;
+    public int getDimension() {
+        return 1;
     }
 
     @Override
-    protected double getDomainLowerBound(double v) {
-        return Double.NEGATIVE_INFINITY;
-    }
+    public double[] getGradientLogDensity(Object input) {
+        double x = (double) input;
 
-    @Override
-    protected double getDomainUpperBound(double v) {
-        return Double.POSITIVE_INFINITY;
-    }
-
-    @Override
-    public double cumulativeProbability(double v) throws MathException {
-        return 0;
+        double dev = x - median;
+        double dx = 2 * dev / (dev * dev  + scale * scale);
+        return new double[] { dx };
     }
 }

@@ -30,7 +30,7 @@ jobs:
                   distribution: "adopt"
             - name: Setup cmake
               uses: lukka/get-cmake@latest
-            - name: Cache BEAGLE and BEAST
+            - name: Cache BEAGLE
               id: cache
               uses: actions/cache@v4
               with:
@@ -74,6 +74,8 @@ jobs:
                   key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
                   restore-keys: |
                       beagle-beast
+            - name: Rebuild project
+              run: ant dist                      
             - name: Run test for ${{ matrix.file }}
               run: java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -overwrite ${{ matrix.file }}
 
@@ -94,6 +96,8 @@ jobs:
                   key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
                   restore-keys: |
                       beagle-beast
+            - name: Rebuild project
+              run: ant dist                      
             - name: Run test with load state for ${{ matrix.file }}
               run: |
                   checkpoint=tests/TestXMLwithLoadState/$(basename ${{ matrix.file }} .xml).chkpt

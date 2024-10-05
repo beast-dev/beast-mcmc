@@ -43,7 +43,7 @@ public class CauchyDistribution implements Distribution, GradientProvider {
 
     public static double pdf(double x, double median, double scale) {
         double dev = x - median;
-        return  scale / (dev * dev + scale * scale) / Math.PI;
+        return scale / (dev * dev + scale * scale) / Math.PI;
     }
 
     public static double cdf(double x, double median, double scale) {
@@ -69,7 +69,7 @@ public class CauchyDistribution implements Distribution, GradientProvider {
 
     public static double gradLogPdf(double x, double median, double scale) {
         double dev = x - median;
-        return 2 * dev / (dev * dev  + scale * scale);
+        return -2 * dev / (dev * dev  + scale * scale);
     }
 
     public static double logPdf(double x, double median, double scale) {

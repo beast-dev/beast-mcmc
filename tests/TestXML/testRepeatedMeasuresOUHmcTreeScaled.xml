@@ -7,63 +7,63 @@
 <beast>
 
     <taxa id="taxa">
-		<taxon id="t1" > <attr name="simTrait"> 0.5187928 -0.9953032 </attr> </taxon>
-		<taxon id="t2" > <attr name="simTrait"> 1.4236142 -0.8579857 </attr> </taxon>
-		<taxon id="t3" > <attr name="simTrait"> 0.9708200 -0.6088057 </attr> </taxon>
-		<taxon id="t4" > <attr name="simTrait"> 0.7058376 -1.0471825 </attr> </taxon>
-		<taxon id="t5" > <attr name="simTrait"> 0.9452878 -1.0680218 </attr> </taxon>
-		<taxon id="t6" > <attr name="simTrait"> 0.3892721 -0.5553641 </attr> </taxon>
-		<taxon id="t7" > <attr name="simTrait"> 0.9363306 -1.1778173 </attr> </taxon>
-		<taxon id="t8" > <attr name="simTrait"> 0.5273544 -0.6415779 </attr> </taxon>
-		<taxon id="t9" > <attr name="simTrait"> 0.8227259 -1.0835770 </attr> </taxon>
-		<taxon id="t10"> <attr name="simTrait"> 0.6198324 -1.1840022 </attr> </taxon>
-		<taxon id="t11"> <attr name="simTrait"> 0.5953019 -1.2327299 </attr> </taxon>
-		<taxon id="t12"> <attr name="simTrait"> 0.4812645 -0.7599126 </attr> </taxon>
-		<taxon id="t13"> <attr name="simTrait"> 0.8791917 -1.0553573 </attr> </taxon>
-		<taxon id="t14"> <attr name="simTrait"> 0.8661834 -1.1159879 </attr> </taxon>
-		<taxon id="t15"> <attr name="simTrait"> 1.3419551 -0.7192452 </attr> </taxon>
-		<taxon id="t16"> <attr name="simTrait"> 0.2770225 -1.0053403 </attr> </taxon>
-		<taxon id="t17"> <attr name="simTrait"> 0.9171756 -0.9647458 </attr> </taxon>
-		<taxon id="t18"> <attr name="simTrait"> 0.6636737 -1.1761627 </attr> </taxon>
-		<taxon id="t19"> <attr name="simTrait"> 0.7675867 -1.2997873 </attr> </taxon>
-		<taxon id="t20"> <attr name="simTrait"> 0.7163961 -1.1276810 </attr> </taxon>
-		<taxon id="t21"> <attr name="simTrait"> 1.0037851 -1.0487661 </attr> </taxon>
-		<taxon id="t22"> <attr name="simTrait"> 0.5608472 -1.3538073 </attr> </taxon>
-		<taxon id="t23"> <attr name="simTrait"> 1.1235197 -1.2338775 </attr> </taxon>
-		<taxon id="t24"> <attr name="simTrait"> 1.0428614 -0.5620567 </attr> </taxon>
-		<taxon id="t25"> <attr name="simTrait"> 0.9471007 -1.1146408 </attr> </taxon>
-		<taxon id="t26"> <attr name="simTrait"> 1.2191037 -0.8717289 </attr> </taxon>
-		<taxon id="t27"> <attr name="simTrait"> 0.9457645 -0.8398526 </attr> </taxon>
-		<taxon id="t28"> <attr name="simTrait"> 1.1232702 -1.2303039 </attr> </taxon>
-		<taxon id="t29"> <attr name="simTrait"> 1.4837278 -0.9829630 </attr> </taxon>
-		<taxon id="t30"> <attr name="simTrait"> 0.5414352 -0.6237185 </attr> </taxon>
-		<taxon id="t31"> <attr name="simTrait"> 0.7700067 -0.9566955 </attr> </taxon>
-		<taxon id="t32"> <attr name="simTrait"> 0.8577741 -0.7556166 </attr> </taxon>
-		<taxon id="t33"> <attr name="simTrait"> 0.9175704 -1.1709501 </attr> </taxon>
-		<taxon id="t34"> <attr name="simTrait"> 0.4690982 -1.0675392 </attr> </taxon>
-		<taxon id="t35"> <attr name="simTrait"> 0.8253025 -1.1093743 </attr> </taxon>
-		<taxon id="t36"> <attr name="simTrait"> 0.8282605 -1.0339389 </attr> </taxon>
-		<taxon id="t37"> <attr name="simTrait"> 0.5911439 -1.1359221 </attr> </taxon>
-		<taxon id="t38"> <attr name="simTrait"> 1.0163024 -1.2480107 </attr> </taxon>
-		<taxon id="t39"> <attr name="simTrait"> 0.9745489 -1.2176536 </attr> </taxon>
-		<taxon id="t40"> <attr name="simTrait"> 0.6260692 -1.0073364 </attr> </taxon>
-		<taxon id="t41"> <attr name="simTrait"> 0.7079400 -1.2162314 </attr> </taxon>
-		<taxon id="t42"> <attr name="simTrait"> 0.9542626 -0.6337450 </attr> </taxon>
-		<taxon id="t43"> <attr name="simTrait"> 0.6871348 -1.1331718 </attr> </taxon>
-		<taxon id="t44"> <attr name="simTrait"> 1.4544156 -0.8886152 </attr> </taxon>
-		<taxon id="t45"> <attr name="simTrait"> 0.3562828 -1.1743511 </attr> </taxon>
-		<taxon id="t46"> <attr name="simTrait"> 1.0272279 -1.1336090 </attr> </taxon>
-		<taxon id="t47"> <attr name="simTrait"> 0.6396380 -0.8450697 </attr> </taxon>
-		<taxon id="t48"> <attr name="simTrait"> 0.8329018 -1.0146780 </attr> </taxon>
-		<taxon id="t49"> <attr name="simTrait"> 0.7294590 -1.0835114 </attr> </taxon>
-		<taxon id="t50"> <attr name="simTrait"> 1.0541616 -1.1611085 </attr> </taxon>
+		<taxon id="t1" > <attr name="simTrait"> 1.2227698 -0.7261957 </attr> </taxon>
+		<taxon id="t2" > <attr name="simTrait"> 1.0726631 -1.1369201 </attr> </taxon>
+		<taxon id="t3" > <attr name="simTrait"> 0.8685743 -0.8065505 </attr> </taxon>
+		<taxon id="t4" > <attr name="simTrait"> 0.9582315 -0.7899381 </attr> </taxon>
+		<taxon id="t5" > <attr name="simTrait"> 0.9664143 -1.0377868 </attr> </taxon>
+		<taxon id="t6" > <attr name="simTrait"> 1.5149374 -0.9898526 </attr> </taxon>
+		<taxon id="t7" > <attr name="simTrait"> 1.2724726 -0.8107164 </attr> </taxon>
+		<taxon id="t8" > <attr name="simTrait"> 1.3025280 -0.9590552 </attr> </taxon>
+		<taxon id="t9" > <attr name="simTrait"> 1.4751707 -1.1880609 </attr> </taxon>
+		<taxon id="t10"> <attr name="simTrait"> 1.3420694 -0.8699952 </attr> </taxon>
+		<taxon id="t11"> <attr name="simTrait"> 1.5151535 -0.7966167 </attr> </taxon>
+		<taxon id="t12"> <attr name="simTrait"> 0.9171716 -0.8819785 </attr> </taxon>
+		<taxon id="t13"> <attr name="simTrait"> 0.9799436 -0.9611270 </attr> </taxon>
+		<taxon id="t14"> <attr name="simTrait"> 0.3851789 -1.2277910 </attr> </taxon>
+		<taxon id="t15"> <attr name="simTrait"> 1.5222183 -0.6244652 </attr> </taxon>
+		<taxon id="t16"> <attr name="simTrait"> 1.1566202 -0.6727409 </attr> </taxon>
+		<taxon id="t17"> <attr name="simTrait"> 0.9124125 -1.2366007 </attr> </taxon>
+		<taxon id="t18"> <attr name="simTrait"> 1.3730203 -1.1229712 </attr> </taxon>
+		<taxon id="t19"> <attr name="simTrait"> 1.0718368 -0.9707872 </attr> </taxon>
+		<taxon id="t20"> <attr name="simTrait"> 0.9723936 -0.8821143 </attr> </taxon>
+		<taxon id="t21"> <attr name="simTrait"> 1.1912527 -0.6944902 </attr> </taxon>
+		<taxon id="t22"> <attr name="simTrait"> 1.2858180 -0.9908703 </attr> </taxon>
+		<taxon id="t23"> <attr name="simTrait"> 1.3320367 -0.8418475 </attr> </taxon>
+		<taxon id="t24"> <attr name="simTrait"> 1.3114575 -0.9656843 </attr> </taxon>
+		<taxon id="t25"> <attr name="simTrait"> 1.1545573 -0.8212603 </attr> </taxon>
+		<taxon id="t26"> <attr name="simTrait"> 1.3242366 -0.5425224 </attr> </taxon>
+		<taxon id="t27"> <attr name="simTrait"> 1.1145173 -0.4718487 </attr> </taxon>
+		<taxon id="t28"> <attr name="simTrait"> 1.0365679 -0.4296769 </attr> </taxon>
+		<taxon id="t29"> <attr name="simTrait"> 1.1061782 -0.7987673 </attr> </taxon>
+		<taxon id="t30"> <attr name="simTrait"> 1.2553598 -1.0625064 </attr> </taxon>
+		<taxon id="t31"> <attr name="simTrait"> 1.1247775 -1.2381615 </attr> </taxon>
+		<taxon id="t32"> <attr name="simTrait"> 1.0577332 -1.4936417 </attr> </taxon>
+		<taxon id="t33"> <attr name="simTrait"> 0.8478792 -1.3852466 </attr> </taxon>
+		<taxon id="t34"> <attr name="simTrait"> 0.9911017 -0.9879372 </attr> </taxon>
+		<taxon id="t35"> <attr name="simTrait"> 1.1434221 -0.7471522 </attr> </taxon>
+		<taxon id="t36"> <attr name="simTrait"> 1.3191237 -1.0514836 </attr> </taxon>
+		<taxon id="t37"> <attr name="simTrait"> 1.5565759 -0.5811532 </attr> </taxon>
+		<taxon id="t38"> <attr name="simTrait"> 0.9010859 -0.9003954 </attr> </taxon>
+		<taxon id="t39"> <attr name="simTrait"> 1.0843646 -1.1860191 </attr> </taxon>
+		<taxon id="t40"> <attr name="simTrait"> 0.9845304 -1.4541528 </attr> </taxon>
+		<taxon id="t41"> <attr name="simTrait"> 0.9410548 -0.5552954 </attr> </taxon>
+		<taxon id="t42"> <attr name="simTrait"> 0.8923562 -0.8678634 </attr> </taxon>
+		<taxon id="t43"> <attr name="simTrait"> 1.2866564 -1.3646126 </attr> </taxon>
+		<taxon id="t44"> <attr name="simTrait"> 0.8813059 -1.0467843 </attr> </taxon>
+		<taxon id="t45"> <attr name="simTrait"> 1.0320613 -1.4904015 </attr> </taxon>
+		<taxon id="t46"> <attr name="simTrait"> 1.4612321 -0.9067284 </attr> </taxon>
+		<taxon id="t47"> <attr name="simTrait"> 1.4511963 -1.2133063 </attr> </taxon>
+		<taxon id="t48"> <attr name="simTrait"> 0.9326738 -1.0730522 </attr> </taxon>
+		<taxon id="t49"> <attr name="simTrait"> 0.7432413 -0.8770150 </attr> </taxon>
+		<taxon id="t50"> <attr name="simTrait"> 1.4776469 -0.9618090 </attr> </taxon>
     </taxa>
 
     <!-- ************************************************** -->
     <!-- Tree -->
     
-	<newick id="tree" usingHeights="true" usingDates="false">
-		((t21:0.9170744128,((t26:0.04925968301,t15:0.04925968301):0.4807036865,t49:0.5299633695):0.3871110433):0.08292558717,(((((((t24:0.04476422283,t27:0.04476422283):0.0004519817023,t3:0.04521620453):0.1896137708,((t35:0.137577555,(t5:0.09945647134,(t28:0.001685786138,t23:0.001685786138):0.0977706852):0.03812108364):0.01159666826,t38:0.1491742232):0.08565575207):0.006367518279,((t31:0.06289510188,t7:0.06289510188):0.1522877354,(t19:0.1624687102,(t14:0.1135995209,t18:0.1135995209):0.04886918922):0.05271412712):0.0260146563):0.389748176,((((t13:0.1607239139,((t20:0.01692863409,t10:0.01692863409):0.1378092834,(t41:0.04565731458,t36:0.04565731458):0.1090806029):0.005985996464):0.03311320151,(t17:0.174974114,(t25:0.113976468,t32:0.113976468):0.06099764597):0.01886300141):0.2690037908,((((t47:0.14155974,(t37:0.1389101761,(t45:0.04413059476,t34:0.04413059476):0.09477958134):0.002649563931):0.04321437858,(t16:0.177670741,(t12:0.02962759412,(t6:0.01736721441,(t8:0.004809705073,t30:0.004809705073):0.01255750934):0.01226037971):0.1480431469):0.00710337759):0.0001428595688,(t22:0.02133775733,t11:0.02133775733):0.1635792209):0.2660133416,(t50:0.3920081501,t9:0.3920081501):0.05892216971):0.01191058649):0.03028606119,((t4:0.1812050471,(t40:0.139070643,t1:0.139070643):0.04213440411):0.01156150834,(t48:0.10693596,t43:0.10693596):0.08583059551):0.300360412):0.1378187022):0.01536229655,((t33:0.07923165804,(t39:0.01145958107,t46:0.01145958107):0.06777207697):0.3114653894,t42:0.3906970475):0.2556109187):0.1989454968,(t2:0.1040938055,(t44:0.08319498022,t29:0.08319498022):0.02089882524):0.7411596576):0.154746537);
+	<newick id="tree" usingHeights="true" usingDates="false" fixTree="true">
+		((((((t43:0.1059719885,(t19:0.7892120031,t42:0.5760727846):0.627427045):0.9010247793,((((t12:0.2962531799,t41:0.03283611336):0.3841669196,t3:0.7637298508):0.08311443194,t48:0.6461560612):0.312846381,t21:0.9670215896):0.4960991098):0.5085192155,(((t8:0.4643487416,(t39:0.576090174,t26:0.9888359865):0.6963298502):0.1537927554,((t22:0.3375365338,t16:0.3881768216):0.1472413938,t9:0.3247638217):0.07172067603):0.1763129232,(t4:0.3532753531,(((t38:0.6340263484,t5:0.4965861121):0.7677134287,(t35:0.5900521646,t10:0.6285774689):0.7469333387):0.539595041,((t46:0.50487571,t40:0.2551776231):0.3044675237,(t47:0.4236122216,t2:0.9680537551):0.2796133966):0.3034142121):0.6073732751):0.528183833):0.7723978807):0.1726390077,((t31:0.9427424332,t14:0.8554894007):0.4136597032,((t28:0.04564328585,t1:0.2902032661):0.08475172403,t36:0.9538093871):0.7300552914):0.312896345):0.8349318774,((((t45:0.3802617362,t17:0.6793206674):0.2582668434,(((t37:0.7290884678,t25:0.813383182):0.3374806445,t24:0.6569529849):0.5949012097,t7:0.9984837351):0.02440502984):0.5524269666,((t29:0.09238044708,t27:0.220983973):0.001528105699,((t32:0.1853108162,t34:0.1168490963):0.925590555,t23:0.3429273376):0.5273454699):0.7159924016):0.1236002895,(t49:0.6397151044,(t33:0.9471332778,t13:0.8779754001):0.3399083342):0.2235862296):0.09371120855):0.4415345152,((t44:0.8831378852,t20:0.306412051):0.9900759817,((t18:0.3211695279,t11:0.4039712814):0.6031016102,(((t6:0.06351449154,t30:0.8787636801):0.1044729555,t50:0.01605698559):0.07613758487,t15:0.9829165593):0.3911359902):0.8190868769):0.5864570588);
     </newick>
 
     <treeModel id="treeModel">
@@ -104,7 +104,7 @@
 		<parameter id="simTrait.attenuation.values" value="1 1" lower="0 0"/>
 	</diagonalMatrix>
 
-	<repeatedMeasuresModel id="simTrait.repeatedMeasures" traitName="simTrait" >
+	<repeatedMeasuresModel id="simTrait.repeatedMeasures" traitName="simTrait" scaleByTipHeight="true">
 		<treeModel idref="treeModel"/>
 		<traitParameter>
 			<parameter idref="simTrait.leafTraits"/>
@@ -174,8 +174,8 @@
             <varianceProportionStatistic idref="varianceLog"/>
         </actual>
         <expected>
-            0.3018380  0.0000000
-            0.0000000  0.9773926
+            0.3635417    0.00000000
+            0.00000000   0.98279406 
         </expected>
     </assertEqual>
 	
@@ -253,7 +253,7 @@
         <compoundGradient idref="simTrait.prior.gradient"/>
     </jointGradient>
     
-    <operators id="operators">
+    <operators id="operators" optimizationSchedule="log">
         <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
                                        drawVariance="1.0" gradientCheckCount="1" gradientCheckTolerance="0.5">
             <pathGradient>
@@ -315,7 +315,7 @@
 			</column>
 		</log>
 				
-		<log id="fileLog" logEvery="10" fileName="testRepeatedMeasuresOUHMC.log">
+		<log id="fileLog" logEvery="10" fileName="testRepeatedMeasuresOUHmcTreeScaled.log">
 			<traitDataLikelihood idref="simTrait.traitLikelihood"/>
 			<matrixParameter idref="simTrait.variance.matrix"/>
 			<parameter idref="simTrait.meanParameter"/>
@@ -324,7 +324,7 @@
 			<variancePorportionStatistic idref="varianceLog"/>
 		</log>
 		
-		<logTree id="treeFileLog" logEvery="10" nexusFormat="true" fileName="testRepeatedMeasuresOUHMC.trees">
+		<logTree id="treeFileLog" logEvery="10" nexusFormat="true" fileName="testRepeatedMeasuresOUHmcTreeScaled.trees">
 			<treeModel idref="treeModel"/>
 		</logTree>
 						
@@ -345,8 +345,12 @@
             <varianceProportionStatistic idref="varianceLog"/>
         </actual>
         <expected>
-			0.9994180   0.022429281  
-			0.022429281 0.8911881
+			0.9881278234958323		0.027051233440815354}
+			0.027051233440815354 	0.011934240128512253       
+<!-- 
+			0.9966896    0.04666217
+			0.04666217   0.02887752
+ -->
         </expected>
     </assertEqual>
 
@@ -386,10 +390,10 @@ cor_extended <- function(A, B) {
   return(C)
 }
 
-get_sampling_variance <- function(vv, dimTrait, times_shared, treeScaled){
+get_sampling_variance <- function(vv, dimTrait, ntaxa, times_shared, treeScaled){
   # samplingVar <- as.vector(solve(matrix(as.numeric(vv[grep("sampling.precision.matrix", names(vv))]), ncol = dimTrait)))
   samplingVar <- as.vector(matrix(as.numeric(vv[grep("sampling.variance.matrix", names(vv))]), ncol = dimTrait))
-  if (treeScaled) samplingVar <- mean(diag(times_shared)) * samplingVar
+  if (treeScaled) samplingVar <- mean(diag(times_shared)[1:ntaxa]) * samplingVar
   return(samplingVar)
 }
 
@@ -426,7 +430,7 @@ compute_heritability_multi_ou_varying_trees <- function(dat_log, dat_tree, trait
     ntaxa <- length(tree$tip.label)
     tree$edge.length <- tree$edge.length / max(ape::node.depth.edgelength(dat_tree[[i]])[1:ntaxa]) # Normalize tree
     times_shared <- PhylogeneticEM::compute_times_ca(tree)
-    samplingVar <- matrix(get_sampling_variance(dat_log[i, ], dimTrait, times_shared = times_shared, treeScaled = treeScaled), dimTrait, dimTrait)
+    samplingVar <- matrix(get_sampling_variance(dat_log[i, ], dimTrait, ntaxa, times_shared = times_shared, treeScaled = treeScaled), dimTrait, dimTrait)
     compute_heritability_multi_ou_model(dimTrait, var, att, sampleSizeRoot, samplingVar, times_shared, ntaxa)
   }
   ## Trait tree variance
@@ -443,7 +447,7 @@ compute_heritability_multi_ou_varying_trees <- function(dat_log, dat_tree, trait
 ## Directory
 directory <- "."
 results_folder <- ""
-file_results <- file.path(results_folder, "testRepeatedMeasuresOUHMC.log")
+file_results <- file.path(results_folder, "testRepeatedMeasuresOUHmcTreeScaled.log")
 
 ## Parameters
 dimTrait <- 2
@@ -494,5 +498,34 @@ trait <- mvSIM(tree = tree,
                param = list(theta = theta, sigma = sigma2, alpha = alpha))
 
 trait
+write.tree(tree)
+-->
+
+<!--
+# R script for simulations
+library(mvMORPH)
+
+set.seed(20200611)
+
+## Simluate a tree
+n <- 50
+tree <- rtree(n)
+
+## Simulate trait
+p <- 2
+sigma2 <- matrix(c(0.1, 0.01, 0.01, 0.2), p, p)
+theta <- c(1.0, -1.0)
+alpha <- matrix(c(1, 0, 0, 2), p, p)
+sigma2_err <- c(0.01, 0.2)
+errors <- matrix(rep(sigma2_err, each = n), n, p)
+rownames(errors) <- tree$tip.label
+
+trait <- mvSIM(tree = tree,
+               nsim = 1,
+               error = matrix(),
+               model = "OU1",
+               param = list(theta = theta, sigma = sigma2, alpha = alpha))
+
+trait[paste0("t", 1:n), ]
 write.tree(tree)
 -->

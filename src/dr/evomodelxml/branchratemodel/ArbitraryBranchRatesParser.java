@@ -52,7 +52,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
     public static final String MULTIPLIER = "multiplier";
     public static final String CENTER_AT_ONE = "centerAtOne";
     public static final String RANDOMIZE_RATES = "randomizeRates";
-    public  static final String RANDOM_SCALE = "randomScale";
+    public static final String RANDOM_SCALE = "randomScale";
 
     public static final String INCLUDE_ROOT = "includeRoot";
     public static final String RANDOM_INDICATOR = "randomIndicator"; // keep some rates fixed but randomize others

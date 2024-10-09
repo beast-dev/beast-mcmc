@@ -117,7 +117,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                 PartitionTreePrior prior = model.getPartitionTreePrior();
                 if (!allowedTypes.contains(prior.getNodeHeightPrior())) {
                     throw new GeneratorException("Generalized stepping stone sampling can only be performed\n" +
-                            "on standard parameteric coalescent tree priors and the Skyride and Skygrid models. " +
+                            "on standard parametric coalescent tree priors and the Skyride and Skygrid models. " +
                             "\nPlease check the Trees panel.", BeautiFrame.TREES);
                 }
                 if (mleOptions.choiceTreeWorkingPrior.equals("Matching coalescent model") && !allowedMCMTypes.contains(prior.getNodeHeightPrior())) {
@@ -1191,20 +1191,20 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         writer.writeOpenTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR,
                                 new Attribute[]{
                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                        new Attribute.Default<String>("parameterColumn", "skygrid.logPopSize"),
+                                        new Attribute.Default<String>("parameterColumn", GMRFSkyrideLikelihoodParser.SKYGRID_LOGPOPSIZE),
                                         new Attribute.Default<Integer>("dimension", model.getSkyGridCount()),
                                         new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
                                 });
-                        writer.writeIDref(ParameterParser.PARAMETER, "skygrid.logPopSize");
+                        writer.writeIDref(ParameterParser.PARAMETER, GMRFSkyrideLikelihoodParser.SKYGRID_LOGPOPSIZE);
                         writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
 
                         writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
                                 new Attribute[]{
                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                        new Attribute.Default<String>("parameterColumn", "skygrid.precision"),
+                                        new Attribute.Default<String>("parameterColumn", GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION),
                                         new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
                                 });
-                        writer.writeIDref(ParameterParser.PARAMETER, "skygrid.precision");
+                        writer.writeIDref(ParameterParser.PARAMETER, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION);
                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
 
                         break;

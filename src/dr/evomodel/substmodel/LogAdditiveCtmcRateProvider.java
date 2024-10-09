@@ -35,8 +35,6 @@ public interface LogAdditiveCtmcRateProvider extends Model, Likelihood {
 
     double[] getXBeta();
 
-    Parameter getLogRateParameter();
-
     LogColumn[] getColumns();
 
     default double[] getRates() {

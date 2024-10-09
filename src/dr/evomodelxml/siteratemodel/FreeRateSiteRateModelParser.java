@@ -88,10 +88,6 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
             substitutionModel = (SubstitutionModel)xo.getElementFirstChild(SUBSTITUTION_MODEL);
         }
 
-        if(xo.hasChildNamed(BRANCH_SUBSTITUTION_MODEL)){
-            substitutionModel = (SubstitutionModel)xo.getElementFirstChild(BRANCH_SUBSTITUTION_MODEL);
-        }
-
         int catCount = 4;
         catCount = xo.getIntegerAttribute(CATEGORIES);
 
@@ -122,8 +118,11 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
 
         DiscretizedSiteRateModel siteRateModel =  new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
 
-        siteRateModel.setSubstitutionModel(substitutionModel);
-        siteRateModel.addModel(substitutionModel);
+        if(substitutionModel!=null){
+            siteRateModel.setSubstitutionModel(substitutionModel);
+            siteRateModel.addModel(substitutionModel);
+        }
+
 
         return siteRateModel;
     }

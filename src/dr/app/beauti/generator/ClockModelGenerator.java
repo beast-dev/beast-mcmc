@@ -66,6 +66,8 @@ import dr.oldevomodelxml.clock.ACLikelihoodParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
+import java.util.Map;
+
 import static dr.inference.model.ParameterParser.PARAMETER;
 import static dr.inferencexml.distribution.PriorParsers.*;
 import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.*;
@@ -299,10 +301,13 @@ public class ClockModelGenerator extends Generator {
 
                 writeCovarianceStatistic(writer, tag, prefix, treePrefix);
 
-                //TODO put this in an IF statement depending on choice in BEAUti
+                //TODO add more String constants for this type of code
                 boolean generateScaleGradient = false;
-                if (options.getOperator("HMCRCS").isUsed()) {
-                    generateScaleGradient = true;
+
+                for (Operator operator : options.selectOperators()) {
+                    if (operator.getName().equals("HMC relaxed clock location and scale") && operator.isUsed()) {
+                        generateScaleGradient = true;
+                    }
                 }
 
                 if (generateScaleGradient) {

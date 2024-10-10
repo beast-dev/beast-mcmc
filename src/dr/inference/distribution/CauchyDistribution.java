@@ -136,3 +136,21 @@ public class CauchyDistribution implements Distribution, GradientProvider {
         return new double[] { gradLogPdf(x, median, scale) };
     }
 }
+
+/*
+log-Cauchy: y = e^x, such that x ~ Cauchy.  Then
+    p(y) = s / pi / ((log y - m)^2 + s^2)) / y
+
+    \frac{d p(y)}{d y} = -1 *
+    \frac{
+      (log y - m)^2 - 2m + s^2 + 2log y
+    }{
+      y^2 [(log y - m)^2 + s^2]^2
+    }
+
+    this is decreasing when f(y) = (log y -m)^2 - 2m + s^2 +2log y > 0
+    f(y) has roots at x = log(y) = (m - 1) +/- sqrt(1 - s^2)
+
+    these are only real for s < 1, in which case
+    x = log(y) > m - 1 - sqrt(1 - s^2) is decreasing.
+ */

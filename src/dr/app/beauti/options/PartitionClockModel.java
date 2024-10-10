@@ -220,6 +220,8 @@ public class PartitionClockModel extends PartitionOptions {
                 "Hamiltonian Monte Carlo relaxed clock branch rates operator", null, OperatorType.RELAXED_CLOCK_HMC_RATE_OPERATOR,-1 , 1.0);
         createOperator("HMCRCS", "HMC relaxed clock location and scale",
                 "Hamiltonian Monte Carlo relaxed clock scale operator", null, OperatorType.RELAXED_CLOCK_HMC_SCALE_OPERATOR,-1 , 0.5);
+        //for the time being turn off the HMC relaxed clock scale kernel
+        getOperator("HMCRCS").setUsed(false);
         createScaleOperator(ClockType.HMC_CLOCK_LOCATION, demoTuning, rateWeights);
         createScaleOperator(ClockType.HMCLN_SCALE, demoTuning, rateWeights);
 
@@ -656,10 +658,7 @@ public class PartitionClockModel extends PartitionOptions {
                             case LOGNORMAL:
                                 ops.add(rateOperator = getOperator(ClockType.HMC_CLOCK_LOCATION));
                                 ops.add(getOperator("HMCRCR"));
-                                //for the time being turn off the HMC relaxed clock scale kernel
-                                Operator scaleOperator = getOperator("HMCRCS");
-                                scaleOperator.setUsed(false);
-                                ops.add(scaleOperator);
+                                ops.add(getOperator("HMCRCS"));
                                 ops.add(getOperator(ClockType.HMCLN_SCALE));
                                 addUpDownOperator(ops, rateOperator);
                                 break;

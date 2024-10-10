@@ -283,7 +283,7 @@ public class ClockModelGenerator extends Generator {
                         writeParameter(null, 1, 1.0, 0.0, Double.NaN, writer);
                         writer.writeCloseTag("mean");
                         writer.writeOpenTag("stdev");
-                        writeParameter(null, 1, 1.0, 0.0, Double.NaN, writer);
+                        writeParameter(null, 1, 0.1, 0.0, Double.NaN, writer);
                         writer.writeCloseTag("stdev");
 
                         writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);

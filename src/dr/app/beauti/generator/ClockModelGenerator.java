@@ -301,7 +301,7 @@ public class ClockModelGenerator extends Generator {
 
                 //TODO put this in an IF statement depending on choice in BEAUti
                 boolean generateScaleGradient = false;
-                if (options.getOperator("HMC relaxed clock location and scale").isUsed()) {
+                if (options.getOperator("HMCRCS").isUsed()) {
                     generateScaleGradient = true;
                 }
 

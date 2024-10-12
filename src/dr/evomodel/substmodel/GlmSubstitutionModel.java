@@ -71,7 +71,7 @@ public class GlmSubstitutionModel extends ComplexSubstitutionModel
     }
 
     protected void setupRelativeRates(double[] rates) {
-        System.arraycopy(glm.getXBeta(),0,rates,0,rates.length);
+        System.arraycopy(glm.getRates(),0,rates,0,rates.length);
     }
 
     @Override

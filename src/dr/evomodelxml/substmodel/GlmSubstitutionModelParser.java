@@ -65,7 +65,7 @@ public class GlmSubstitutionModelParser extends AbstractXMLObjectParser {
             glm = new LogAdditiveCtmcRateProvider.DataAugmented.Basic(logRates.getId(), logRates);
         }
 
-        int length = glm.getXBeta().length;
+        int length = glm.getRates().length;
 
         if (length != rateCount) {
             throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount) + " dimensions.  However GLM dimension is " + length);

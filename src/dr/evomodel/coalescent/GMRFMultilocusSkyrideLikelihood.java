@@ -66,20 +66,12 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
     private double[] storedNumCoalEvents;
     private double[] gridPoints;
 
-    // sortedPoints[i][0] is the time of the i-th grid point or sampling or coalescent event
-    // sortedPoints[i][1] is 0 if the i-th point is a grid point, 1 if it's a sampling point, and 2 if it's a coalescent point
-    // sortedPoints[i][2] is the number of lineages present in the interval starting at time sortedPoints[i][0]
-
     private final Parameter phiParameter;
     private final Parameter ploidyFactors;
     private double[] ploidySums;
     private double[] storedPloidySums;
 
-//    protected SymmTridiagMatrix precMatrix;
-//    protected SymmTridiagMatrix storedPrecMatrix;
-
     private final SkygridHelper skygridHelper;
-    //    protected List<Parameter> missingCov;
     private final List<MatrixParameter> covariates;
     private final List<Parameter> beta;
     private final List<Parameter> delta;
@@ -96,7 +88,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
     private double[] coalescentEventStatisticValues;
 
-    //    private List<Tree> treeList;
     private final List<IntervalList> intervalsList;
 
     public GMRFMultilocusSkyrideLikelihood(List<IntervalList> intervalsList,
@@ -104,123 +95,18 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                                            Parameter groupParameter,
                                            Parameter precParameter,
                                            Parameter lambda,
-                                           Parameter beta,
+                                           Parameter betaParameter,
                                            MatrixParameter dMatrix,
                                            boolean timeAwareSmoothing,
                                            double cutOff,
                                            int numGridPoints,
                                            Parameter phi,
                                            Parameter ploidyFactorsParameter) {
-        super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
-
-        // adding the key word to the the model means the keyword will be logged in the
-        // header of the logfile.
-        this.addKeyword("skygrid");
-        //if (treeList.size() > 1) {
-        //    this.addKeyword("multilocus");
-        // }
-        if (intervalsList.size() > 1) {
-            this.addKeyword("multilocus");
-        }
-
-        this.popSizeParameter = popParameter;
-        this.groupSizeParameter = groupParameter;
-        this.precisionParameter = precParameter;
-        this.lambdaParameter = lambda;
-        this.betaParameter = beta;
-        this.dMatrix = dMatrix;
-        if (dMatrix != null) {
-            addVariable(dMatrix);
-        }
-        this.timeAwareSmoothing = timeAwareSmoothing;
-
-        this.cutOff = cutOff;
-        this.numGridPoints = numGridPoints;
-        this.phiParameter = phi;
-        this.ploidyFactors = ploidyFactorsParameter;
-
-        setupGridPoints();
-
-        addVariable(popSizeParameter);
-        addVariable(precisionParameter);
-        addVariable(lambdaParameter);
-        if (betaParameter != null) {
-            addVariable(betaParameter);
-            skygridHelper = new SkygridCovariateHelper();
-        } else {
-            skygridHelper = new SkygridHelper();
-        }
-        if (phiParameter != null) {
-            addVariable(phiParameter);
-        }
-        addVariable(ploidyFactors);
-
-        this.intervalsList = intervalsList;
-        //this.numTrees = setTree(treeList);
-
-        for (IntervalList intervals : intervalsList) {
-            addModel((Model) intervals);
-        }
-
-        this.numTrees = intervalsList.size();
-
-        int correctFieldLength = getCorrectFieldLength();
-
-        if (popSizeParameter.getDimension() <= 1) {
-            // popSize dimension hasn't been set yet, set it here:
-            popSizeParameter.setDimension(correctFieldLength);
-        }
-
-        fieldLength = popSizeParameter.getDimension();
-        if (correctFieldLength != fieldLength) {
-            throw new IllegalArgumentException("Population size parameter should have length " + correctFieldLength);
-        }
-
-        oldFieldLength = getCorrectOldFieldLength();
-
-
-        if (ploidyFactors.getDimension() != intervalsList.size()) {
-            throw new IllegalArgumentException("Ploidy factors parameter should have length " + intervalsList.size());
-        }
-
-
-        // Field length must be set by this point
-        wrapSetupIntervals();
-
-        coalescentIntervals = new double[oldFieldLength];
-        storedCoalescentIntervals = new double[oldFieldLength];
-        sufficientStatistics = new double[fieldLength];
-        storedSufficientStatistics = new double[fieldLength];
-
-        numCoalEvents = new double[fieldLength];
-        storedNumCoalEvents = new double[fieldLength];
-        ploidySums = new double[fieldLength];
-        storedPloidySums = new double[fieldLength];
-
-        setupGMRFWeights();
-        setupSufficientStatistics();
-
-        addStatistic(new DeltaStatistic());
-
-        initializationReport();
-
-        //  Force all entries in groupSizeParameter = 1 for compatibility with Tracer
-        if (groupSizeParameter != null) {
-            for (int i = 0; i < groupSizeParameter.getDimension(); i++)
-                groupSizeParameter.setParameterValue(i, 1.0);
-        }
-
-        this.coalescentEventStatisticValues = new double[getNumberOfCoalescentEvents()];
-
-        this.covariates = null;
-        this.beta = null;
-        this.delta = null;
-        this.covPrecParametersRecent = null;
-        this.covPrecParametersDistant = null;
+        this(intervalsList, popParameter, groupParameter, precParameter, lambda, betaParameter,
+                dMatrix, timeAwareSmoothing, null, null, ploidyFactorsParameter, null, null,
+                null, null, null, null, null, null, cutOff, numGridPoints, phi);
     }
 
-
-    //rewrite this constructor without duplicating so much code
     public GMRFMultilocusSkyrideLikelihood(List<IntervalList> intervalsList,
                                            Parameter popParameter,
                                            Parameter groupParameter,
@@ -240,153 +126,98 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                                            Parameter distantIndices,
                                            List<Parameter> betaList,
                                            List<Parameter> deltaList) {
+        this(intervalsList, popParameter, groupParameter, precParameter, lambda, betaParameter,
+                dMatrix, timeAwareSmoothing, specGridPoints, covariates, ploidyFactorsParameter,
+                firstObservedIndexParameter, lastObservedIndexParameter, covPrecParametersRecent,
+                covPrecParametersDistant, recentIndices, distantIndices, betaList, deltaList,
+                specGridPoints != null ? specGridPoints.getParameterValue(specGridPoints.getDimension() - 1) : 0,
+                specGridPoints != null ? specGridPoints.getDimension() : 0,
+                null);
 
+    }
+
+    private GMRFMultilocusSkyrideLikelihood(List<IntervalList> intervalsList,
+                                            Parameter popParameter,
+                                            Parameter groupParameter,
+                                            Parameter precParameter,
+                                            Parameter lambda,
+                                            Parameter betaParameter,
+                                            MatrixParameter dMatrix,
+                                            boolean timeAwareSmoothing,
+                                            Parameter specGridPoints,
+                                            List<MatrixParameter> covariates,
+                                            Parameter ploidyFactorsParameter,
+                                            List<Parameter> firstObservedIndexParameter,
+                                            List<Parameter> lastObservedIndexParameter,
+                                            List<Parameter> covPrecParametersRecent,
+                                            List<Parameter> covPrecParametersDistant,
+                                            Parameter recentIndices,
+                                            Parameter distantIndices,
+                                            List<Parameter> betaList,
+                                            List<Parameter> deltaList,
+                                            double cutOff,
+                                            int numGridPoints,
+                                            Parameter phi) {
         super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
 
-        // adding the key word to the the model means the keyword will be logged in the
-        // header of the logfile.
         this.addKeyword("skygrid");
         if (intervalsList.size() > 1) {
             this.addKeyword("multilocus");
         }
+        this.phiParameter = phi;
+        this.cutOff = cutOff;
+        this.numGridPoints = numGridPoints;
 
-        this.gridPoints = specGridPoints.getParameterValues();
-        this.numGridPoints = gridPoints.length;
-        this.cutOff = gridPoints[numGridPoints - 1];
-
-        if (firstObservedIndexParameter != null) {
-            this.firstObservedIndex = new int[firstObservedIndexParameter.size()];
-            for (int i = 0; i < firstObservedIndexParameter.size(); i++) {
-                this.firstObservedIndex[i] = (int) firstObservedIndexParameter.get(i).getParameterValue(0);
+        if (specGridPoints != null) {
+            this.gridPoints = specGridPoints.getParameterValues();
+            if (specGridPoints.getDimension() != numGridPoints) {
+                throw new IllegalArgumentException("Number of grid points not compatible with" + specGridPoints);
             }
-
-            if (recentIndices != null) {
-                // indices specify which covariates require default unobserved covariate data prior
-                this.recIndices = new int[firstObservedIndexParameter.size()];
-                for (int i = 0; i < firstObservedIndexParameter.size(); i++) {
-                    this.recIndices[i] = (int) recentIndices.getParameterValue(i);
-                }
-            } else {
-                // If specific covariates not specified by indices, need default unobserved covariate data prior for all covariates
-                this.recIndices = new int[firstObservedIndexParameter.size()];
-                for (int i = 0; i < firstObservedIndexParameter.size(); i++) {
-                    this.recIndices[i] = i + 1;
-                }
+            if (cutOff != gridPoints[numGridPoints - 1]) {
+                throw new IllegalArgumentException("Cut-off not compatible with grid points");
             }
-
-        }
-
-        if (lastObservedIndexParameter != null) {
-            this.lastObservedIndex = new int[lastObservedIndexParameter.size()];
-            for (int i = 0; i < lastObservedIndexParameter.size(); i++) {
-                this.lastObservedIndex[i] = (int) lastObservedIndexParameter.get(i).getParameterValue(0);
-            }
-
-            if (distantIndices != null) {
-                // indices specify which covariates require default unobserved covariate data prior
-                this.distIndices = new int[lastObservedIndexParameter.size()];
-                for (int i = 0; i < lastObservedIndexParameter.size(); i++) {
-                    this.distIndices[i] = (int) distantIndices.getParameterValue(i);
-                }
-            } else {
-                // If specific covariates not specified by indices, need default unobserved covariate data prior for all covariates
-                this.distIndices = new int[lastObservedIndexParameter.size()];
-                for (int i = 0; i < lastObservedIndexParameter.size(); i++) {
-                    this.distIndices[i] = i + 1;
-                }
-            }
-
-        }
-
-        /*else{
-            for(int i=0; i < beta.getDimension(); i++) {
-                this.lastObservedIndex[i] = popParameter.getDimension();
-            }
-        }*/
-
-        this.betaParameter = betaParameter;
-        if (betaParameter != null) {
-            addVariable(betaParameter);
-        }
-
-        this.popSizeParameter = popParameter;
-        this.groupSizeParameter = groupParameter;
-        this.precisionParameter = precParameter;
-        this.lambdaParameter = lambda;
-        this.beta = betaList;
-
-        if (deltaList != null) {
-            this.delta = deltaList;
         } else {
-            this.delta = new ArrayList<Parameter>();
-            if (betaList != null) {
-                for (int i = 0; i < betaList.size(); i++) {
-                    Parameter deltaParam = new Parameter.Default(1.0);
-                    deltaParam.setParameterValue(0, 1.0);
-                    this.delta.add(deltaParam);
-                }
-            }
+            setupGridPoints();
         }
 
-        this.dMatrix = dMatrix;
-        if (dMatrix != null) {
-            addVariable(dMatrix);
-        }
-        this.timeAwareSmoothing = timeAwareSmoothing;
-        this.ploidyFactors = ploidyFactorsParameter;
-        this.covariates = covariates;
-        if (covariates != null) {
-            for (MatrixParameter cov : covariates) {
-                addVariable(cov);
-            }
-        }
-        this.covPrecParametersRecent = covPrecParametersRecent;
-        if (covPrecParametersRecent != null) {
-            for (Parameter covPrecRecent : covPrecParametersRecent) {
-                addVariable(covPrecRecent);
-            }
-        }
-        this.covPrecParametersDistant = covPrecParametersDistant;
-        if (covPrecParametersDistant != null) {
-            for (Parameter covPrecDistant : covPrecParametersDistant) {
-                addVariable(covPrecDistant);
-            }
-        }
+        initializeIndices(firstObservedIndexParameter, lastObservedIndexParameter, recentIndices, distantIndices);
+        initializeBasicParameters(popParameter, groupParameter, precParameter, lambda,
+                betaParameter, dMatrix, timeAwareSmoothing);
 
-        addVariable(popSizeParameter);
-        addVariable(precisionParameter);
-        addVariable(lambdaParameter);
-
-        addVariable(ploidyFactors);
-
+        this.beta = betaList;
+        this.delta = initializeDelta(deltaList, betaList);
         this.intervalsList = intervalsList;
-
         for (IntervalList intervalList : intervalsList) {
             addModel((Model) intervalList);
         }
 
-        //this.numTrees = setTree(treeList);
         this.numTrees = intervalsList.size();
+        this.ploidyFactors = ploidyFactorsParameter; // # of chromosomes per individual
+        validatePloidyFactors(); //based on intervalsList.size() TODO: What does this check mean?
 
+//     TODO   can I put these this.cov* inside setupCovariates() ? (only for second constructor, ok when null for first)
+        this.covariates = covariates;
+        this.covPrecParametersRecent = covPrecParametersRecent;
+        this.covPrecParametersDistant = covPrecParametersDistant;
+        setupCovariates();
+//  TODO end  covariates
+
+//      TODO  I would like to put all these lengths within a common method. But it does not work
+//        also this look rather redundant.
         int correctFieldLength = getCorrectFieldLength();
-
         if (popSizeParameter.getDimension() <= 1) {
-            // popSize dimension hasn't been set yet, set it here:
             popSizeParameter.setDimension(correctFieldLength);
         }
-
-        fieldLength = popSizeParameter.getDimension();
-        if (correctFieldLength != fieldLength) {
-            throw new IllegalArgumentException("Population size parameter should have length " + correctFieldLength);
-        }
+        fieldLength = popSizeParameter.getDimension(); //  TODO move before if??
+        validateFieldLength(correctFieldLength);
 
         oldFieldLength = getCorrectOldFieldLength();
+//  TODO end lengths
 
-        if (ploidyFactors.getDimension() != intervalsList.size()) {
-            throw new IllegalArgumentException("Ploidy factor parameter should have length " + intervalsList.size());
-        }
 
         // Field length must be set by this point
+//        TODO the following method does not work: (so I silenced it and copied the code here)
+//         initializeSkygridHelper(betaList, betaParameter, deltaList, lastObservedIndexParameter, firstObservedIndexParameter);
 
         if (betaList != null || betaParameter != null) {
             if (betaList != null) {
@@ -394,7 +225,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                     addVariable(betaParam);
                 }
             }
-
             if (deltaList != null) {
                 for (Parameter dParam : deltaList) {
                     addVariable(dParam);
@@ -410,36 +240,220 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
             skygridHelper = new SkygridHelper();
         }
 
-        wrapSetupIntervals();
+        wrapSetupIntervals(); // this does nothing!
+        initializeArrays();
+
+        setupGMRFWeights();
+//        setupSufficientStatistics(); // TODO this is only in first constructor???; check in the Old version if it is called also in the second constructor indirectly
+        addStatistic(new DeltaStatistic());
+
+        addVariables();
+        initializationReport(); //
+
+        this.coalescentEventStatisticValues = new double[getNumberOfCoalescentEvents()];
+
+        // TODO the following appears only in the first constructor
+        //        //  Force all entries in groupSizeParameter = 1 for compatibility with Tracer
+//        if (groupSizeParameter != null) {
+//            for (int i = 0; i < groupSizeParameter.getDimension(); i++)
+//                groupSizeParameter.setParameterValue(i, 1.0);
+//        }
+    }
+
+    private void initializeBasicParameters(Parameter popParameter,
+                                           Parameter groupParameter, Parameter precParameter,
+                                           Parameter lambda, Parameter betaParameter,
+                                           MatrixParameter dMatrix, boolean timeAwareSmoothing) {
+        this.popSizeParameter = popParameter;
+        this.groupSizeParameter = groupParameter;
+        this.precisionParameter = precParameter;
+        this.lambdaParameter = lambda;
+        this.betaParameter = betaParameter; ///TODO CHECK THIS BTW THE TWO CONSTRUCTORS
+        this.dMatrix = dMatrix;
+        this.timeAwareSmoothing = timeAwareSmoothing;
+    }
+
+//    private void addKeywords() {
+//        this.addKeyword("skygrid");
+//        if (intervalsList.size() > 1) {
+//            this.addKeyword("multilocus");
+//        }
+//    }
+
+    private void addVariables() {
+        if (phiParameter != null) {
+            addVariable(phiParameter);
+        }
+        addVariable(popSizeParameter);
+        addVariable(precisionParameter);
+        addVariable(lambdaParameter);
+        if (betaParameter != null) {
+            addVariable(betaParameter);
+        }
+        addVariable(ploidyFactors);
+        if (dMatrix != null) {
+            addVariable(dMatrix);
+        }
+    }
+
+
+    private void validateFieldLength(int correctFieldLength) {
+        if (correctFieldLength != fieldLength) {
+            throw new IllegalArgumentException("Population size parameter should have length " + correctFieldLength);
+        }
+    }
+
+    private void validatePloidyFactors() {
+        if (ploidyFactors.getDimension() != intervalsList.size()) {
+            throw new IllegalArgumentException("Ploidy factors parameter should have length " + intervalsList.size());
+        }
+    }
+
+    private List<Parameter> initializeDelta(List<Parameter> deltaList, List<Parameter> betaList) {
+        if (deltaList != null) {
+            return deltaList;
+        }
+        if (betaList != null) { // only for the second constructor
+            List<Parameter> newDelta = new ArrayList<>();
+            for (int i = 0; i < betaList.size(); i++) {
+                Parameter deltaParam = new Parameter.Default(1.0);
+                deltaParam.setParameterValue(0, 1.0);
+                newDelta.add(deltaParam);
+            }
+            return newDelta;  // Return initialized newDelta here
+        } else {
+            return null;  // Return null if both deltaList and betaList are null (first constructor)
+        }
+    }
+
+
+
+    private void initializeIndices(List<Parameter> firstObservedIndexParameter,
+                                   List<Parameter> lastObservedIndexParameter,
+                                   Parameter recentIndices,
+                                   Parameter distantIndices) {
+        if (firstObservedIndexParameter != null) {
+            initializeFirstObservedIndex(firstObservedIndexParameter, recentIndices);
+        }
+        if (lastObservedIndexParameter != null) {
+            initializeLastObservedIndex(lastObservedIndexParameter, distantIndices);
+        }
+    }
+
+    private void initializeFirstObservedIndex(List<Parameter> firstObservedIndexParameter, Parameter recentIndices) {
+        this.firstObservedIndex = new int[firstObservedIndexParameter.size()];
+        for (int i = 0; i < firstObservedIndexParameter.size(); i++) {
+            this.firstObservedIndex[i] = (int) firstObservedIndexParameter.get(i).getParameterValue(0);
+        }
+        initializeRecIndices(recentIndices, firstObservedIndexParameter.size());
+    }
+
+    private void initializeRecIndices(Parameter recentIndices, int size) {
+        this.recIndices = new int[size];
+        if (recentIndices != null) {
+            for (int i = 0; i < size; i++) {
+                this.recIndices[i] = (int) recentIndices.getParameterValue(i);
+            }
+        } else {
+            for (int i = 0; i < size; i++) {
+                this.recIndices[i] = i + 1;
+            }
+        }
+    }
+
+    private void initializeLastObservedIndex(List<Parameter> lastObservedIndexParameter, Parameter distantIndices) {
+        this.lastObservedIndex = new int[lastObservedIndexParameter.size()];
+        for (int i = 0; i < lastObservedIndexParameter.size(); i++) {
+            this.lastObservedIndex[i] = (int) lastObservedIndexParameter.get(i).getParameterValue(0);
+        }
+        initializeDistIndices(distantIndices, lastObservedIndexParameter.size());
+    }
+
+    private void initializeDistIndices(Parameter distantIndices, int size) {
+        this.distIndices = new int[size];
+        if (distantIndices != null) {
+            for (int i = 0; i < size; i++) {
+                this.distIndices[i] = (int) distantIndices.getParameterValue(i);
+            }
+        } else {
+            for (int i = 0; i < size; i++) {
+                this.distIndices[i] = i + 1;
+            }
+        }
+    }
+
+//    private void initializeSkygridHelper(List<Parameter> betaList, Parameter betaParameter,
+//                                         List<Parameter> deltaList,
+//                                         List<Parameter> lastObservedIndexParameter,
+//                                         List<Parameter> firstObservedIndexParameter) {
+//        if (betaList != null || betaParameter != null) {
+//            if (betaList != null) {
+//                for (Parameter betaParam : betaList) {
+//                    addVariable(betaParam);
+//                }
+//            }
+//            if (deltaList != null) {
+//                for (Parameter dParam : deltaList) {
+//                    addVariable(dParam);
+//                }
+//            }
+//            if (lastObservedIndexParameter != null || firstObservedIndexParameter != null) {
+//                setupGMRFWeightsForMissingCov();
+//                skygridHelper = new SkygridMissingCovariateHelper();
+//            } else {
+//                skygridHelper = new SkygridCovariateHelper();
+//            }
+//        } else {
+//            skygridHelper = new SkygridHelper();
+//        }
+//    }
+
+    private void addBetaAndDeltaVariables(List<Parameter> betaList) {
+        if (betaList != null) {
+            for (Parameter betaParam : betaList) {
+                addVariable(betaParam);
+            }
+        }
+        if (delta != null) {
+            for (Parameter dParam : delta) {
+                addVariable(dParam);
+            }
+        }
+    }
+
+
+    private void setupCovariates() {
+        if (covariates != null) {
+            for (MatrixParameter cov : covariates) {
+                addVariable(cov);
+            }
+        }
+        if (covPrecParametersRecent != null) {
+            for (Parameter covPrecRecent : covPrecParametersRecent) {
+                addVariable(covPrecRecent);
+            }
+        }
+        if (covPrecParametersDistant != null) {
+            for (Parameter covPrecDistant : covPrecParametersDistant) {
+                addVariable(covPrecDistant);
+            }
+        }
+    }
+
+
+    private void initializeArrays() {
         coalescentIntervals = new double[oldFieldLength];
         storedCoalescentIntervals = new double[oldFieldLength];
+
         sufficientStatistics = new double[fieldLength];
         storedSufficientStatistics = new double[fieldLength];
-
         numCoalEvents = new double[fieldLength];
         storedNumCoalEvents = new double[fieldLength];
         ploidySums = new double[fieldLength];
         storedPloidySums = new double[fieldLength];
-
-        setupGMRFWeights();
-
-        addStatistic(new DeltaStatistic());
-
-        initializationReport();
-
-        phiParameter = null;
-
-        this.coalescentEventStatisticValues = new double[getNumberOfCoalescentEvents()];
     }
 
-//    protected int setTree(List<Tree> treeList) {
-////        treesSet = this;
-//        this.treeList = treeList;
-//        makeTreeIntervalList(treeList, true);
-//        return treeList.size();
-//    }
-
-
+// TODO this should be @Override !! there is also in the superclass
     protected int getCorrectFieldLength() {
 
         return numGridPoints + 1;
@@ -481,6 +495,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         }
     }
 
+    // TODO @Override ????
     public void initializationReport() {
         System.out.println("Creating a GMRF smoothed skyride model for multiple loci (SkyGrid)");
         System.out.println("\tPopulation sizes: " + popSizeParameter.getDimension());
@@ -541,6 +556,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 //        }
 //    }
 
+// TODO @Override ???
     protected void setupSufficientStatistics() {
 
         Arrays.fill(numCoalEvents, 0);

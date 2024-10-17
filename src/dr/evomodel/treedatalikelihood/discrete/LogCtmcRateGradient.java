@@ -170,6 +170,6 @@ public class LogCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGra
     @Override
     public List<Citation> getCitations() {
         // TODO Update
-        return Collections.singletonList(CommonCitations.LEMEY_2014_UNIFYING);
+        return Collections.singletonList(CommonCitations.MONTI_GENERIC_RATES_2024);
     }
 }

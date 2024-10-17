@@ -159,8 +159,6 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         }
     }
 
-    private static final ApproximationMode DEFAULT_MODE = ApproximationMode.FIRST_ORDER;
-    
     public AbstractLogAdditiveSubstitutionModelGradient(String traitName,
                                                         TreeDataLikelihood treeDataLikelihood,
                                                         BeagleDataLikelihoodDelegate likelihoodDelegate,

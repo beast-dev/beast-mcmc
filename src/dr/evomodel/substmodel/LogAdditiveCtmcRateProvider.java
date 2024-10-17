@@ -69,8 +69,8 @@ public interface LogAdditiveCtmcRateProvider extends Model, Likelihood {
             public Parameter getLogRateParameter() { return transformedRateParameter; }
 
             @Override
-            public double[] getXBeta() { // TODO this function should _not_ exponentiate
-                return transformedRateParameter.getParameterValues();
+            public double[] getXBeta() {
+                return getLogRateParameter().getParameterValues();
             }
 
             @Override

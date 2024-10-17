@@ -48,11 +48,12 @@ public class LogLinearModel extends GeneralizedLinearModel implements LogAdditiv
     
     @Override
     public double[] getXBeta() {
-        double[] xBeta = super.getXBeta();
-        for(int i = 0; i < xBeta.length; i++) {
-            xBeta[i] = Math.exp(xBeta[i]);
-        }
-        return xBeta;
+//        double[] xBeta = super.getXBeta();
+//        for(int i = 0; i < xBeta.length; i++) {
+//            xBeta[i] = Math.exp(xBeta[i]);
+//        }
+//        return xBeta;
+        return super.getXBeta();
     }
 
     public Parameter getLogRateParameter() {

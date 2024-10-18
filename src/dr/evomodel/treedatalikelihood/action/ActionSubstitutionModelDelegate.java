@@ -8,13 +8,17 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.EvolutionaryProcessDelegate;
 import dr.evomodel.treedatalikelihood.PreOrderSettings;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDelegate {
 
     private final Tree tree;
     private final BranchModel branchModel;
     private final int nodeCount;
+
+    private final List<ActionEnabledSubstitution> substitutionModels;
 
     private final int stateCount;
 
@@ -25,12 +29,25 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
                                             int nodeCount) {
         this.tree = tree;
         this.branchModel = branchModel;
+        this.substitutionModels = getSubstitutionModels(branchModel);
         this.nodeCount = nodeCount;
         this.stateCount = branchModel.getRootFrequencyModel().getFrequencyCount();
         this.eigenIndexMap = new HashMap<>();
         for (int i = 0; i < getSubstitutionModelCount(); i++) {
-            eigenIndexMap.put(branchModel.getSubstitutionModels().get(i), i);
+            eigenIndexMap.put(substitutionModels.get(i), i);
         }
+    }
+
+    private List<ActionEnabledSubstitution> getSubstitutionModels(BranchModel branchModel) {
+        List<ActionEnabledSubstitution> substitutionModels = new ArrayList<>();
+        for (SubstitutionModel substitutionModel : branchModel.getSubstitutionModels()) {
+            if (substitutionModel instanceof ActionEnabledSubstitution) {
+                substitutionModels.add((ActionEnabledSubstitution) substitutionModel);
+            } else {
+                substitutionModels.add(new ActionEnabledSubstitution.ActionEnabledSubstitutionWrap("original.substitution.model", substitutionModel));
+            }
+        }
+        return substitutionModels;
     }
 
     @Override
@@ -40,7 +57,7 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public int getEigenBufferCount() {
-        return branchModel.getSubstitutionModels().size();
+        return substitutionModels.size();
     }
 
     @Override
@@ -106,12 +123,12 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
     }
     @Override
     public int getSubstitutionModelCount() {
-        return branchModel.getSubstitutionModels().size();
+        return substitutionModels.size();
     }
 
     @Override
     public SubstitutionModel getSubstitutionModel(int index) {
-        return branchModel.getSubstitutionModels().get(index);
+        return substitutionModels.get(index);
     }
 
     @Override

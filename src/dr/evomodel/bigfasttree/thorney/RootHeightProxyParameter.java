@@ -84,7 +84,7 @@ public class RootHeightProxyParameter extends Parameter.Proxy implements Bounds<
         setParameterValue(dim, value);
     }
 
-    private static final String ROOT_HEIGHT_PARAMETER = "RootHeightProxyParameter";
+    private static final String ROOT_HEIGHT_PARAMETER = "rootHeightProxyParameter";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
         @Override

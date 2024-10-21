@@ -44,6 +44,7 @@ public class TwoStateSericolaSeriesMarkovReward implements MarkovReward {
     // Following Bladt, Meini, Neuts and Sericola (2002).
     // Assuming each state has a distinct reward, i.e. \phi + 1 = stateCount,
     // and states are sorted in increasing reward order
+    
 
     private static final boolean DEBUG = true;
     private static final boolean DEBUG2 = false;

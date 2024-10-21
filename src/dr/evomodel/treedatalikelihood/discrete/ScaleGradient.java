@@ -38,6 +38,9 @@ import dr.inference.model.Parameter;
  */
 public class ScaleGradient extends HyperParameterBranchRateGradient {
 
+    //declaring String constants for use in BEAUti
+    public static final String SCALE_GRADIENT = "scaleGradient";
+
     public ScaleGradient(String traitName, TreeDataLikelihood treeDataLikelihood,
                          BeagleDataLikelihoodDelegate likelihoodDelegate,
                          Parameter locationScaleParameter, boolean useHessian) {

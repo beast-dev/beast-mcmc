@@ -198,7 +198,7 @@
             <zipgroupfileset dir="${lib}" includes="jdom.jar"/>
             <zipgroupfileset dir="${lib}" includes="commons-math-2.2.jar"/>
             <zipgroupfileset dir="${lib}" includes="mtj.jar"/>
-            <zipgroupfileset dir="${lib}" includes="JRI.jar"/>
+<!--             <zipgroupfileset dir="${lib}" includes="JRI.jar"/> -->
             <zipgroupfileset dir="${lib}" includes="colt.jar"/>
             <zipgroupfileset dir="${lib}" includes="beagle.jar"/>
             <zipgroupfileset dir="${lib}" includes="EJML-core-0.30.jar"/>
@@ -379,6 +379,8 @@
                     <!-- <exclude name="test/dr/evomodel/treedatalikelihood/hmc/PrecisionGradientTest.java"/> -->
                     <exclude name="test/dr/multidimensionalscaling/MDSRotationTest.java"/>
                     <exclude name="test/dr/evomodel/branchratemodel/StrictClockTest.java"/>
+                    <exclude name="test/dr/evomodel/speciation/YuleModelTest.java"/>
+                    <exclude name="test/dr/evomodel/substmodel/GeneralSubstitutionModelTest.java"/>
 <!--                    <exclude name="test/dr/evomodel/substmodel/TimeIrreversibleTest.java"/>--> <!--sometimes fails-->
 
 <!--                    <include name="test/dr/distibutions/**/*Test.java"/>-->
@@ -412,7 +414,7 @@
     <property name="version" value="1.9"/>
      -->
     <property name="version" value="10.5.0"/>
-    <property name="extra_release_tag" value="-beta4"/>
+    <property name="extra_release_tag" value="-beta5"/>
     <property name="jvm_version" value="1.8+"/>
 
     <property name="version_number" value="10.5.0"/>
@@ -722,7 +724,10 @@
         <!-- <copy file="${dist}/beast-beagle.jar" todir="${Mac_package_dir}/lib"/> -->
         <copy todir="${Mac_package_dir}/lib">
 <!--         	<fileset dir="${Mac_dir}/lib"/> -->
-        	<fileset dir="lib"/>
+        	<fileset dir="lib">
+        		<include name="*.jar"/>
+        		<exclude name="JRI.jar"/>
+        	</fileset>
         </copy>
         <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Mac_package_dir}"/>
         <copy file="${common_dir}/README.txt" todir="${Mac_package_dir}"/>

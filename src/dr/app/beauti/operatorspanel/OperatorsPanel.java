@@ -35,7 +35,6 @@ import dr.app.beauti.types.OperatorSetType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.RealNumberCellEditor;
 import jam.framework.Exportable;
-import jam.table.HeaderRenderer;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
@@ -43,7 +42,7 @@ import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -152,7 +151,6 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
         add(toolBar1, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
 
-
         operatorSetCombo.addItemListener(
                 new java.awt.event.ItemListener() {
                     public void itemStateChanged(java.awt.event.ItemEvent ev) {
@@ -260,7 +258,7 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
             switch (col) {
                 case 0:// Check box
-                    // if the paramter is fixed then 'in use' can't be turned on
+                    // if the parameter is fixed then 'in use' can't be turned on
                     editable = !op.isParameterFixed();
                     break;
                 case 3:

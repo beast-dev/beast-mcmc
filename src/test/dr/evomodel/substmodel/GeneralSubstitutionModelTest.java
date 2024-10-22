@@ -99,6 +99,8 @@ public class GeneralSubstitutionModelTest extends TraceCorrelationAssert {
 
     public void testGeneralSubstitutionModel() {
 
+        MathUtils.setSeed(666);
+
         // Sub model
         FrequencyModel freqModel = new FrequencyModel(dataType, alignment.getStateFrequencies());
         Parameter ratesPara = new Parameter.Default(GeneralSubstitutionModelParser.RATES, 5, 1.0); // dimension="5" value="1.0"

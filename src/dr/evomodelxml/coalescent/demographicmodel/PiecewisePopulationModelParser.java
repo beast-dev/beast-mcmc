@@ -69,8 +69,13 @@ public class PiecewisePopulationModelParser extends AbstractXMLObjectParser {
             return new PiecewisePopulationModel(PIECEWISE_POPULATION, epochSizes, epochWidths, isLinear, units);
         } else {
             Parameter populationSize = (Parameter) xo.getElementFirstChild(POPULATION_SIZE);
-            Parameter growthRates = (Parameter) xo.getElementFirstChild(GROWTH_RATES);
-            return new PiecewisePopulationModel(PIECEWISE_POPULATION, populationSize, growthRates, epochWidths, units);
+            if (xo.hasChildNamed(GROWTH_RATES)) {
+                Parameter growthRates = (Parameter) xo.getElementFirstChild(GROWTH_RATES);
+                return new PiecewisePopulationModel(PIECEWISE_POPULATION, populationSize, growthRates, epochWidths, units);
+            } else {
+                return new PiecewisePopulationModel(PIECEWISE_POPULATION, populationSize, epochWidths, false, units);
+
+            }
         }
     }
 
@@ -99,7 +104,7 @@ public class PiecewisePopulationModelParser extends AbstractXMLObjectParser {
                             new ElementRule(POPULATION_SIZE,
                                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                             new ElementRule(GROWTH_RATES,
-                                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
+                                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true)
                     )
             ),
             new ElementRule(EPOCH_WIDTHS,

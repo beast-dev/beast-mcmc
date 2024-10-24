@@ -73,7 +73,7 @@ public class PiecewisePopulationModel extends DemographicModel {
         if (isLinear) {
             piecewiseFunction = new PiecewiseLinearPopulation(epochLengths, new double[N0Parameter.getDimension()], units);
         } else {
-            piecewiseFunction = new PiecewiseConstantPopulation(epochLengths, new double[N0Parameter.getDimension()], units);
+            piecewiseFunction = new PiecewiseConstantPopulation(epochLengths, N0Parameter.getParameterValues(), units);
         }
     }
 

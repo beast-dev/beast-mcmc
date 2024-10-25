@@ -102,7 +102,7 @@ public class TreeDataLikelihoodTest extends TraceCorrelationAssert {
                 false,
                 PartialsRescalingScheme.DEFAULT,
                 false,
-                new PreOrderSettings(false, false, false, true)
+                new PreOrderSettings(false, false, false, true, false)
         );
 
         TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(

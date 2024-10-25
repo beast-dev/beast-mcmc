@@ -84,7 +84,7 @@ public class SecondOrderMarkovSubstitutionModel extends BaseSubstitutionModel im
     }
 
     @Override
-    protected double setupMatrix() {
+    public double setupMatrix() {
         if (!matrixKnown) {
             setupQMatrix(relativeRates, null, q);
         }

@@ -514,7 +514,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                     throw new TaxonList.MissingTaxonException("Taxon, " + id + ", in tree, " + tree.getId() +
                             ", is not found in patternList, " + patternList.getId());
                 } else {
-                    if (useAmbiguities) {
+                    if (useAmbiguities || settings.useAction) {
                         setPartials(beagle, patternList, index, i);
                     } else {
                         setStates(beagle, patternList, index, i);

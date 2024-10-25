@@ -1,7 +1,8 @@
 /*
- * MultivariateNormalDistributionModel.java
+ * BayesianBridgeLikelihood.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.distribution.shrinkage;
@@ -28,6 +30,7 @@ package dr.inference.distribution.shrinkage;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.*;
+import dr.xml.Reportable;
 
 import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.BAYESIAN_BRIDGE;
 
@@ -41,7 +44,7 @@ import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodPar
 
 public class BayesianBridgeLikelihood extends AbstractModelLikelihood implements
         BayesianBridgeStatisticsProvider, PriorPreconditioningProvider,
-        GradientWrtParameterProvider, HessianWrtParameterProvider {
+        GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable {
 
     public BayesianBridgeLikelihood(Parameter coefficients,
                                     BayesianBridgeDistributionModel distribution) {
@@ -147,4 +150,9 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood implements
     private final Parameter coefficients;
     private final BayesianBridgeDistributionModel distribution;
     private final int dim;
+
+    @Override
+    public String getReport() {
+        return prettyName() + " = " + getLogLikelihood();
+    }
 }

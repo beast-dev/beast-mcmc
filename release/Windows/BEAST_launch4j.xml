@@ -3,15 +3,15 @@
   <icon>../common/icons/beast.ico</icon>
   <cmdLine>-window -working -options</cmdLine>
   <jre>
-    <minVersion>1.6.0</minVersion>
+    <minVersion>1.8.0</minVersion>
     <initialHeapSize>256</initialHeapSize>
-    <maxHeapSize>2048</maxHeapSize>
+    <maxHeapSize>8000</maxHeapSize>
   </jre>    
   <versionInfo>
     <fileDescription>BEAST</fileDescription>    
-        <copyright>2002-2018</copyright>
-    <productName>BEAST</productName>
-    <internalName>BEAST</internalName>
+        <copyright>2002-2024</copyright>
+    <productName>BEAST X</productName>
+    <internalName>BEAST X</internalName>
     <originalFilename>BEAST.exe</originalFilename>    
   </versionInfo>
 </launch4jConfig>

@@ -1,7 +1,8 @@
 /*
  * AncestralStateBeagleTreeLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treelikelihood;
@@ -34,6 +36,7 @@ import dr.evolution.alignment.UncertainSiteList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.TipStateAccessor;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
@@ -47,7 +50,8 @@ import java.util.function.Function;
  * @author Andrew Rambaut
  */
 
-public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood implements TreeTraitProvider, AncestralStateTraitProvider {
+public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood implements
+        TreeTraitProvider, AncestralStateTraitProvider, TipStateAccessor {
 //    public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
 //                                              BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,
 //                                              BranchRateModel branchRateModel, boolean useAmbiguities,
@@ -341,6 +345,11 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
     public void getTipStates(int tipNum, int[] states) {
         // Saved locally to reduce BEAGLE library access
         System.arraycopy(tipStates[tipNum], 0, states, 0, states.length);
+    }
+
+    @Override
+    public int getTipCount() {
+        return tipCount;
     }
 
 //    public int traverseCollectScaleBuffers(TreeModel tree, NodeRef node) {

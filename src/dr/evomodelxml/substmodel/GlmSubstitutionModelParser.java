@@ -1,7 +1,8 @@
 /*
- * OldGLMSubstitutionModelParser.java
+ * GlmSubstitutionModelParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.substmodel;
@@ -42,6 +44,7 @@ public class GlmSubstitutionModelParser extends AbstractXMLObjectParser {
     public static final String GLM_SUBSTITUTION_MODEL = "glmSubstitutionModel";
     private static final String NORMALIZE = "normalize";
     private static final String LOG_RATES = "logRates";
+    public static final String SCALE_RATES_BY_FREQUENCIES = "scaleRatesByFrequencies";
 
     public String getParserName() {
         return GLM_SUBSTITUTION_MODEL;
@@ -62,7 +65,7 @@ public class GlmSubstitutionModelParser extends AbstractXMLObjectParser {
             glm = new LogAdditiveCtmcRateProvider.DataAugmented.Basic(logRates.getId(), logRates);
         }
 
-        int length = glm.getXBeta().length;
+        int length = glm.getRates().length;
 
         if (length != rateCount) {
             throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount) + " dimensions.  However GLM dimension is " + length);
@@ -76,9 +79,11 @@ public class GlmSubstitutionModelParser extends AbstractXMLObjectParser {
         }
 
         boolean normalize = xo.getAttribute(NORMALIZE, true);
+        boolean scaleRatesByFrequencies = xo.getAttribute(SCALE_RATES_BY_FREQUENCIES, true);
 
         GlmSubstitutionModel model = new GlmSubstitutionModel(xo.getId(), dataType, rootFreq, glm);
         model.setNormalization(normalize);
+        model.setScaleRatesByFrequencies(scaleRatesByFrequencies);
 
         return model;
     }
@@ -110,5 +115,6 @@ public class GlmSubstitutionModelParser extends AbstractXMLObjectParser {
                     new ElementRule(GeneralizedLinearModel.class),
                     new ElementRule(LOG_RATES, Parameter.class)),
             AttributeRule.newBooleanRule(NORMALIZE, true),
+            AttributeRule.newBooleanRule(SCALE_RATES_BY_FREQUENCIES, true),
     };
 }

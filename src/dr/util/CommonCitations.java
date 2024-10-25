@@ -1,7 +1,8 @@
 /*
  * CommonCitations.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.util;
@@ -238,17 +240,13 @@ public class CommonCitations {
             Citation.Status.PUBLISHED
     );
 
-//    Minin VN, Suchard MA (2008) . Philos Trans R Soc Lond B Biol Sci 363(1512):3985-3995.
-
-//    public static Citation LEMEY_2012 = new Citation(
-//            new Author[]{
-//                    new Author("P", "Lemey"),
-//                    new Author("T", "Bedford"),
-//                    new Author("A", "Rambaut"),
-//                    new Author("MA", "Suchard"),
-//            },
-//            Citation.Status.IN_PREPARATION
-//    );
+    public static Citation MONTI_GENERIC_RATES_2024 = new Citation(
+            new Author[]{
+                    new Author("F", "Monti"),
+                    new Author("MA", "Suchard"),
+            },
+            Citation.Status.IN_PREPARATION
+    );
 
     public static Citation LEMEY_MIXTURE_2012 = new Citation(
             new Author[]{
@@ -269,17 +267,6 @@ public class CommonCitations {
             "eLife",
             2,
             "e00631"
-    );
-
-
-//    Gong LI, Suchard MA, Bloom JD. Stability-mediated epistasis constrains the evolution of an influenza protein. eLife, 2, e00631, 2013.
-
-    public static Citation SUCHARD_2012_LATENT = new Citation(
-            new Author[]{
-                    new Author("MA", "Suchard"),
-                    new Author("J", "Felsenstein"),
-            },
-            Citation.Status.IN_PREPARATION
     );
 
     public static Citation SUCHARD_GENERIC = new Citation(

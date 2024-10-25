@@ -1,7 +1,8 @@
 /*
  * TreePriorType.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.types;
@@ -34,16 +36,16 @@ public enum TreePriorType {
     EXPONENTIAL("Coalescent: Exponential Growth"),
     LOGISTIC("Coalescent: Logistic Growth"),
     EXPANSION("Coalescent: Expansion Growth"),
+    SKYGRID_HMC("Coalescent: Hamiltonian Monte Carlo SkyGrid"),
     SKYGRID("Coalescent: Bayesian SkyGrid"),
     GMRF_SKYRIDE("Coalescent: GMRF Bayesian Skyride"),
-    SKYLINE("Coalescent: Bayesian Skyline"),
-    EXTENDED_SKYLINE("Coalescent: Extended Bayesian Skyline Plot"),
+//    SKYLINE("Coalescent: Bayesian Skyline"),
     YULE("Speciation: Yule Process"),
     YULE_CALIBRATION("Speciation: Calibrated Yule"),
     BIRTH_DEATH("Speciation: Birth-Death Process"),
     BIRTH_DEATH_INCOMPLETE_SAMPLING("Speciation: Birth-Death Incomplete Sampling"),
-    BIRTH_DEATH_SERIAL_SAMPLING("Speciation: Birth-Death Serially Sampled"),
-    BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER("Epidemiology: Birth-Death Basic Reproductive Number");
+    BIRTH_DEATH_SERIAL_SAMPLING("Speciation: Birth-Death Serially Sampled");
+//    BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER("Epidemiology: Birth-Death Basic Reproductive Number");
 
     TreePriorType(String name) {
         this.name = name;

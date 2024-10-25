@@ -1,3 +1,30 @@
+/*
+ * BaseTreeTool.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.app.tools;
 
 import dr.app.util.Arguments;
@@ -13,7 +40,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
-class BaseTreeTool {
+public class BaseTreeTool {
 
     static final String NAME_CONTENT = "nameContent";
 
@@ -173,7 +200,7 @@ class BaseTreeTool {
         return nameContentString != null && nameContentString.compareToIgnoreCase("true") == 0;
     }
 
-    protected static void centreLine(String line, int pageWidth) {
+    public static void centreLine(String line, int pageWidth) {
         centreLine(line, pageWidth, progressStream);
     }
 
@@ -199,6 +226,8 @@ class BaseTreeTool {
             case 1:
                 result[0] = args2[0];
                 break;
+            case 0:
+                return null;
             default: {
                 System.err.println("Unknown option: " + args2[2]);
                 System.err.println();

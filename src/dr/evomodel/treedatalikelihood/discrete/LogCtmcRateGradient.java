@@ -1,7 +1,8 @@
 /*
  * LogCtmcRateGradient.java
  *
- * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.discrete;
@@ -35,6 +37,7 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.model.Parameter;
 import dr.util.Citation;
 import dr.util.CommonCitations;
+import dr.util.Transform;
 
 import java.util.Collections;
 import java.util.List;
@@ -113,17 +116,32 @@ public class LogCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGra
 
     @Override
     double processSingleGradientDimension(int k, double[] differentials, double[] generator, double[] pi,
-                                          boolean normalize, double normalizationConstant) {
+                                          boolean normalize, double normalizationGradientContribution,
+                                          double normalizationScalar,
+                                          Transform transform, boolean scaleByFrequencies) {
 
         final int i = mapEffectToIndices[k][0], j = mapEffectToIndices[k][1];
         final int ii = i * stateCount + i;
         final int ij = i * stateCount + j;
 
-        double element = generator[ij];
+        double element;
+        if (transform == null) {
+            element = generator[ij]; // Default is exp()
+        } else {
+            final Parameter transformedParameter = rateProvider.getLogRateParameter();
+            element = transform.gradient(transformedParameter.getParameterValue(k));
+            if (normalize) {
+                element *= normalizationScalar;
+            }
+            if (scaleByFrequencies) {
+                element *= pi[i];
+            }
+        }
+
         double total = (differentials[ij]  - differentials[ii]) * element;
 
         if (normalize) {
-            total -= element * pi[i] * normalizationConstant;
+            total -= element * pi[i] * normalizationGradientContribution;
         }
 
         return total;
@@ -152,6 +170,6 @@ public class LogCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGra
     @Override
     public List<Citation> getCitations() {
         // TODO Update
-        return Collections.singletonList(CommonCitations.LEMEY_2014_UNIFYING);
+        return Collections.singletonList(CommonCitations.MONTI_GENERIC_RATES_2024);
     }
 }

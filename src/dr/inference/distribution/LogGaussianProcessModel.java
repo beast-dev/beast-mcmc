@@ -1,7 +1,8 @@
 /*
- * LogLinearModel.java
+ * LogGaussianProcessModel.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.distribution;
@@ -220,14 +222,15 @@ public class LogGaussianProcessModel extends LogLinearModel
     @Override
     public double[] getXBeta() {
         // compute the mean and then exponentiate
-        final int fieldDim = dependentParam.getDimension();
-        double[] rates = new double[fieldDim];
-
-        // here we just exponentiate the log-mean rate into the actual mean rates
-        for (int i = 0; i < fieldDim; i++) {
-            rates[i] = Math.exp(dependentParam.getParameterValue(i));
-        }
-        return rates;
+//        final int fieldDim = dependentParam.getDimension();
+//        double[] rates = new double[fieldDim];
+//
+//        // here we just exponentiate the log-mean rate into the actual mean rates
+//        for (int i = 0; i < fieldDim; i++) {
+//            rates[i] = Math.exp(dependentParam.getParameterValue(i));
+//        }
+//        return rates;
+        return dependentParam.getParameterValues();
     }
 
 }

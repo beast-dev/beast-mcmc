@@ -1,7 +1,8 @@
 /*
- * MultivariateNormalDistributionModelParser.java
+ * BayesianBridgeDistributionModelParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.distribution.shrinkage;
@@ -36,7 +38,7 @@ import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodPar
 public class BayesianBridgeDistributionModelParser extends AbstractXMLObjectParser {
 
     public static final String BAYESIAN_BRIDGE_DISTRIBUTION = "bayesianBridgeDistribution";
-    private static final String DIMENSION = "dim";
+    public static final String DIMENSION = "dimension";
 
     public String getParserName() {
         return BAYESIAN_BRIDGE_DISTRIBUTION;
@@ -44,20 +46,30 @@ public class BayesianBridgeDistributionModelParser extends AbstractXMLObjectPars
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+        int dim = -1;
+
+        if (xo.hasChildNamed(DIMENSION)) {
+            Parameter dimParameter = (Parameter)xo.getElementFirstChild(DIMENSION);
+            dim = dimParameter.getDimension();
+        } else if (xo.hasAttribute(DIMENSION)) {
+            dim = xo.getIntegerAttribute(DIMENSION);
+        }
+
         XMLObject globalXo = xo.getChild(GLOBAL_SCALE);
         Parameter globalScale = (Parameter) globalXo.getChild(Parameter.class);
 
         Parameter localScale = null;
-        int dim;
         if (xo.hasChildNamed(LOCAL_SCALE)) {
             XMLObject localXo = xo.getChild(LOCAL_SCALE);
             localScale = (Parameter) localXo.getChild(Parameter.class);
-            if(localScale instanceof DuplicatedParameter) {
-              throw new XMLParseException("Local scale cannot be a duplicated parameter");
+            if (localScale instanceof DuplicatedParameter) {
+                throw new XMLParseException("Local scale cannot be a duplicated parameter");
             }
-            dim = localScale.getDimension();
-
-            if (xo.hasAttribute(DIMENSION) && (xo.getIntegerAttribute(DIMENSION) != dim)) {
+            if (dim < 0) {
+                dim = localScale.getDimension();
+            } else if (localScale.getDimension() == 1) {
+                localScale.setDimension(dim);
+            } else if (localScale.getDimension() != dim) {
                 throw new XMLParseException("Invalid dimensions");
             }
         } else {
@@ -100,7 +112,7 @@ public class BayesianBridgeDistributionModelParser extends AbstractXMLObjectPars
             new ElementRule(LOCAL_SCALE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(SLAB_WIDTH,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),               
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             AttributeRule.newIntegerRule(DIMENSION, true),
     };
 

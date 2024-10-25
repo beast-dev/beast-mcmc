@@ -13,11 +13,18 @@ out/
 *.tree
 *.xml
 !examples/**/*.xml
-!ci/**/*.xml
+!tests/**/*.xml
 
 zig_zag
-
-*.dmg
-release/Mac
-
 src/revision.txt
+*.dmg
+*.zip
+*.tgz
+release/Mac
+release/Linux
+release/Windows
+src/revision.txt
+
+*.citations.txt
+*.ops
+*.MLE

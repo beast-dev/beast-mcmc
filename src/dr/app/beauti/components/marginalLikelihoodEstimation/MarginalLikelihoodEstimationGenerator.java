@@ -1,7 +1,8 @@
 /*
  * MarginalLikelihoodEstimationGenerator.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.components.marginalLikelihoodEstimation;
@@ -36,7 +38,6 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.TreeWorkingPriorParsers;
 import dr.evomodelxml.branchratemodel.*;
 import dr.evomodelxml.coalescent.*;
@@ -48,6 +49,7 @@ import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.speciation.YuleModelParser;
 import dr.evomodelxml.substmodel.GTRParser;
+import dr.evomodelxml.tree.MonophylyStatisticParser;
 import dr.inference.mcmc.MarginalLikelihoodEstimator;
 import dr.inference.model.ParameterParser;
 import dr.inference.model.PathLikelihood;
@@ -56,6 +58,7 @@ import dr.inference.trace.PathSamplingAnalysis;
 import dr.inference.trace.SteppingStoneSamplingAnalysis;
 import dr.inferencexml.distribution.PriorParsers;
 import dr.inferencexml.distribution.WorkingPriorParsers;
+import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
@@ -63,13 +66,13 @@ import dr.xml.XMLParser;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 
 import static dr.app.beauti.types.PriorType.NONE_FIXED;
 
 /**
  * @author Andrew Rambaut
  * @author Guy Baele
- * @version $Id$
  */
 public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerator {
 
@@ -114,7 +117,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                 PartitionTreePrior prior = model.getPartitionTreePrior();
                 if (!allowedTypes.contains(prior.getNodeHeightPrior())) {
                     throw new GeneratorException("Generalized stepping stone sampling can only be performed\n" +
-                            "on standard parameteric coalescent tree priors and the Skyride and Skygrid models. " +
+                            "on standard parametric coalescent tree priors and the Skyride and Skygrid models. " +
                             "\nPlease check the Trees panel.", BeautiFrame.TREES);
                 }
                 if (mleOptions.choiceTreeWorkingPrior.equals("Matching coalescent model") && !allowedMCMTypes.contains(prior.getNodeHeightPrior())) {
@@ -513,14 +516,14 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         break;
 
 
-                    case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
-
-
-
-
-                        //TODO complete
-
-                        break;
+//                    case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
+//
+//
+//
+//
+//                        //TODO complete
+//
+//                        break;
 
                 }
 
@@ -553,6 +556,22 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             writer.writeCloseTag(PathLikelihood.SOURCE);
             writer.writeOpenTag(PathLikelihood.DESTINATION);
             writer.writeOpenTag(CompoundLikelihoodParser.WORKING_PRIOR);
+
+            //copy all monophyletic constraints for GSS
+            boolean first = true;
+            for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : beautiOptions.taxonSetsMono.entrySet()) {
+                if (taxaBooleanEntry.getValue()) {
+                    if (first) {
+                        writer.writeOpenTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
+                        first = false;
+                    }
+                    final String taxaRef = "monophyly(" + taxaBooleanEntry.getKey().getId() + ")";
+                    writer.writeIDref(MonophylyStatisticParser.MONOPHYLY_STATISTIC, taxaRef);
+                }
+            }
+            if (!first) {
+                writer.writeCloseTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
+            }
 
             //Start with providing working priors for the substitution model(s)
             for (PartitionSubstitutionModel model : beautiOptions.getPartitionSubstitutionModels()) {
@@ -782,8 +801,6 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                     case DataType.GENERAL:
 
                     case DataType.CONTINUOUS:
-
-                    case DataType.MICRO_SAT:
 
                     default:
                         throw new IllegalArgumentException("Unknown data type");
@@ -1174,20 +1191,20 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         writer.writeOpenTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR,
                                 new Attribute[]{
                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                        new Attribute.Default<String>("parameterColumn", "skygrid.logPopSize"),
+                                        new Attribute.Default<String>("parameterColumn", GMRFSkyrideLikelihoodParser.SKYGRID_LOGPOPSIZE),
                                         new Attribute.Default<Integer>("dimension", model.getSkyGridCount()),
                                         new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
                                 });
-                        writer.writeIDref(ParameterParser.PARAMETER, "skygrid.logPopSize");
+                        writer.writeIDref(ParameterParser.PARAMETER, GMRFSkyrideLikelihoodParser.SKYGRID_LOGPOPSIZE);
                         writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
 
                         writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
                                 new Attribute[]{
                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                        new Attribute.Default<String>("parameterColumn", "skygrid.precision"),
+                                        new Attribute.Default<String>("parameterColumn", GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION),
                                         new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
                                 });
-                        writer.writeIDref(ParameterParser.PARAMETER, "skygrid.precision");
+                        writer.writeIDref(ParameterParser.PARAMETER, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION);
                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
 
                         break;

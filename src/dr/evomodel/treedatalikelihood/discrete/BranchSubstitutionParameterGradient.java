@@ -1,7 +1,8 @@
 /*
- * DiscreteTraitBranchSubstitutionParameterGradient.java
+ * BranchSubstitutionParameterGradient.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 
@@ -81,7 +83,8 @@ public class BranchSubstitutionParameterGradient
                                                DifferentiableBranchRates branchRateModel,
                                                Double tolerance,
                                                boolean useHessian,
-                                               int dim) {
+                                               int dim,
+                                               DifferentialMassProvider.Mode mode) {
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.branchParameter = branchParameter;
@@ -95,8 +98,6 @@ public class BranchSubstitutionParameterGradient
         if (test == null) {
 
             BranchSpecificSubstitutionParameterBranchModel branchModel = (BranchSpecificSubstitutionParameterBranchModel) likelihoodDelegate.getBranchModel();
-
-            DifferentialMassProvider.Mode mode = DifferentialMassProvider.Mode.EXACT;
 
             List<DifferentialMassProvider> differentialMassProviderList = new ArrayList<>();
             for (int i = 0; i < tree.getNodeCount(); ++i) {

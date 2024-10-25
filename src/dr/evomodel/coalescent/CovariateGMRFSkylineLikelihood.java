@@ -1,7 +1,8 @@
 /*
  * CovariateGMRFSkylineLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.IntervalList;
+import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.MatrixParameter;
@@ -48,9 +51,9 @@ public class CovariateGMRFSkylineLikelihood extends GMRFSkyrideLikelihood {
 	//private ArrayList<CoalescentIntervalWithData> storedIntervals;
 
 
-	public CovariateGMRFSkylineLikelihood(IntervalList intervalList, Parameter popParameter, Parameter precParameter,
-	                                      Parameter lambda, Parameter beta, MatrixParameter dMatrix,
-	                                      Parameter data, Parameter times) {
+	public CovariateGMRFSkylineLikelihood(TreeIntervalList intervalList, Parameter popParameter, Parameter precParameter,
+										  Parameter lambda, Parameter beta, MatrixParameter dMatrix,
+										  Parameter data, Parameter times) {
 		super(intervalList, popParameter, null, precParameter, lambda, beta, dMatrix, false, true);
 
 		covariateData = data;

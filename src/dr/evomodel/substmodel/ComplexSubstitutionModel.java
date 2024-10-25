@@ -1,7 +1,8 @@
 /*
  * ComplexSubstitutionModel.java
  *
- * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.substmodel;
@@ -50,6 +52,9 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     public ComplexSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, Parameter parameter) {
         super(name, dataType, freqModel, parameter, -1);
         probability = new double[stateCount * stateCount];
+
+        flat = new double[stateCount];
+        Arrays.fill(flat, 1.0);
     }
 
     @Override
@@ -202,7 +207,9 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
         return mat;
     }
 
-    protected void setupQMatrix(double[] rates, double[] pi, double[][] matrix) {
+    protected void setupQMatrix(double[] rates, double[] inPi, double[][] matrix) {
+
+        double[] pi = frequencyScaling ? inPi : flat;
         int i, j, k = 0;
         for (i = 0; i < stateCount; i++) {
             for (j = i + 1; j < stateCount; j++) {
@@ -260,6 +267,14 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
 
     public void setNormalization(boolean doNormalization) {
         this.doNormalization = doNormalization;
+    }
+
+    public void setScaleRatesByFrequencies(boolean frequencyScaling) {
+        this.frequencyScaling = frequencyScaling;
+    }
+
+    public boolean getScaleRatesByFrequencies() {
+        return frequencyScaling;
     }
 
     public boolean getNormalization() {
@@ -350,4 +365,6 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     }
 
     private boolean doNormalization = true;
+    private boolean frequencyScaling = true;
+    private final double[] flat;
 }

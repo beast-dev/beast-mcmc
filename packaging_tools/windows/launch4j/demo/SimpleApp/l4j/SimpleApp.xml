@@ -8,7 +8,8 @@
   <icon>SimpleApp.ico</icon>
   <restartOnCrash>true</restartOnCrash>
   <jre>
-    <minVersion>1.6.0</minVersion>
+  	<path>%JAVA_HOME%;%PATH%</path>
+    <minVersion>1.8.0</minVersion>
   </jre>
   <splash>
     <file>splash.bmp</file>

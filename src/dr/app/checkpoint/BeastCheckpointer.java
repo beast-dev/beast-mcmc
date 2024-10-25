@@ -1,7 +1,8 @@
 /*
  * BeastCheckpointer.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.checkpoint;
@@ -238,7 +240,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
                     //currently use the general BEAST -threshold argument
                     //TODO Evaluate whether a checkpoint-specific threshold option is required or useful
-                    double threshold = 0.0;
+                    double threshold = 1E-10;
                     if (System.getProperty("mcmc.evaluation.threshold") != null) {
                         threshold = Double.parseDouble(System.getProperty("mcmc.evaluation.threshold"));
                     }

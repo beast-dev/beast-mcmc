@@ -1,7 +1,8 @@
 /*
- * CtmcFrequencyDistributionGradient.java
+ * CtmcFrequencyModelGradient.java
  *
- * Copyright (c) 2002-2024 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.discrete;
@@ -33,6 +35,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.Parameter;
 import dr.util.Citation;
+import dr.util.Transform;
 
 import java.util.List;
 
@@ -78,7 +81,8 @@ public class CtmcFrequencyModelGradient extends AbstractLogAdditiveSubstitutionM
 
     @Override
     double processSingleGradientDimension(int j, double[] differentials, double[] generator, double[] pi,
-                                          boolean normalize, double normalizationConstant) {
+                                          boolean normalize, double normalizationConstant,
+                                          double rateScalar, Transform transform, boolean scaleByFrequencies) {
         // derivative wrt pi[j]
         double total = 0.0;
 

@@ -1,7 +1,8 @@
 /*
  * MarginalLikelihoodEstimator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.mcmc;
@@ -97,6 +99,8 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
         mc.setCurrentLength(burnin);
         scheme.init();
         ((CombinedOperatorSchedule) schedule).reset();
+        long startTime = System.currentTimeMillis();
+        long startState = currentState;
         for (pathParameter = scheme.nextPathParameter(); pathParameter >= 0; pathParameter = scheme.nextPathParameter()) {
             pathLikelihood.setPathParameter(pathParameter);
             reportIteration(pathParameter, chainLength, burnin, scheme.pathSteps, scheme.step);
@@ -113,6 +117,20 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
             mc.runChain(burnin, false/*, 0*/);
             mc.setCurrentLength(cl);
             mc.runChain(chainLength, false);
+
+            for (MCLogger logger : loggers) {
+                logger.log(currentState);
+
+                // Print timePerMillion and units from MCLogger
+                if (logger instanceof MCLogger) {
+                    long time = System.currentTimeMillis();
+                    double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (currentState - startState));
+                    MCLogger mcLogger = (MCLogger) logger;
+                    String timePerMillion = mcLogger.getTimePerMillion(hoursPerMillionStates);
+                    String units = mcLogger.getUnits(hoursPerMillionStates);
+                    System.out.println("Time per million: " + timePerMillion + units);
+                }
+            }
 
             if (SHOW_OPERATOR_ANALYSIS) {
             	OperatorAnalysisPrinter.showOperatorAnalysis(System.out, schedule, false);
@@ -748,6 +766,6 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
     public static final String BETA = "beta";
     public static final String PRERUN = "prerun";
     public static final String PRINT_OPERATOR_ANALYSIS = "printOperatorAnalysis";
-    
+
     private static boolean SHOW_OPERATOR_ANALYSIS = false;
 }

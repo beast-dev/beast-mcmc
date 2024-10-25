@@ -1,7 +1,8 @@
 /*
  * ComplexSubstitutionModelParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.substmodel;
@@ -52,6 +54,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
     public static final String CHECK_CONDITIONING = "checkConditioning";
     public static final String NORMALIZED = "normalized";
     public static final String COMPUTE_STATIONARY = "computeStationary";
+    public static final String SCALE_RATES_BY_FREQUENCIES = "scaleRatesByFrequencies";
 
     public static final int maxRandomizationTries = 100;
 
@@ -93,10 +96,8 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
         int rateCount = (dataType.getStateCount() - 1) * dataType.getStateCount();
 
         if (ratesParameter == null) {
-
-            if (rateCount == 1) {
+            if (rateCount != 1) {
                 // simplest model for binary traits...
-            } else {
                 throw new XMLParseException("No rates parameter found in " + getParserName());
             }
         } else if (ratesParameter.getDimension() != rateCount) {
@@ -144,7 +145,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
                 double tolerance = xo.getAttribute(BSSVS_TOLERANCE,
                         BayesianStochasticSearchVariableSelection.Utils.getTolerance());
                 if (tolerance > BayesianStochasticSearchVariableSelection.Utils.getTolerance()) {
-                    // Only increase smallest allowed tolerance
+                    // Only increase the smallest allowed tolerance
                     BayesianStochasticSearchVariableSelection.Utils.setTolerance(tolerance);
                     Logger.getLogger("dr.app.beagle.evomodel").info("\tIncreasing BSSVS tolerance to " + tolerance);
                 }
@@ -187,6 +188,11 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
         if (!xo.getAttribute(NORMALIZED, true)) {
             model.setNormalization(false);
             Logger.getLogger("dr.app.beagle.evomodel").info("\tNormalization: false");
+        }
+
+        if (!xo.getAttribute(SCALE_RATES_BY_FREQUENCIES, true)) {
+            model.setScaleRatesByFrequencies(false);
+            Logger.getLogger("dr.app.beagle.evomodel").info("\tScale rates by frequencies: false");
         }
         Logger.getLogger("dr.app.beagle.evomodel").info("\t\tPlease cite: Edwards, Suchard et al. (2011)\n");
         return model;
@@ -232,5 +238,6 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(CHECK_CONDITIONING, true),
             AttributeRule.newBooleanRule(NORMALIZED, true),
             AttributeRule.newBooleanRule(COMPUTE_STATIONARY, true),
+            AttributeRule.newBooleanRule(SCALE_RATES_BY_FREQUENCIES, true),
     };
 }

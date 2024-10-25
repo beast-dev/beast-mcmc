@@ -1,7 +1,8 @@
 /*
  * SmoothSkygridLikelihood.java
  *
- * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent.smooth;
@@ -33,6 +35,7 @@ import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -455,6 +458,11 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         return logLikelihood;
     }
 
+    protected void restoreState() {
+        super.restoreState();
+        tmpSumsKnown = false;
+    }
+
     private double[] getGradientWrtNodeHeightNew() {
         if (!likelihoodKnown) {
             calculateLogLikelihood();
@@ -640,7 +648,12 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         tmpSumsKnown = false;
     }
 
-        private double getLineageCountEffect(Tree tree, int node) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        tmpSumsKnown = false;
+        likelihoodKnown = false;
+    }
+
+    private double getLineageCountEffect(Tree tree, int node) {
         if (tree.isExternal(tree.getNode(node))) {
             return 1;
         } else {

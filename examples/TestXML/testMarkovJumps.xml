@@ -105,7 +105,7 @@
 
 <!--
 
-java -cp build/dist/beast.jar dr.app.tools.TreeAnnotator -heights mean testMarkovJumps.trees markov.tree
+java -cp build/dist/beast.jar dr.app.tools.treeannotator.TreeAnnotator -heights mean testMarkovJumps.trees markov.tree
 
 # R script using 'markovjumps'
 

@@ -1,7 +1,8 @@
 /*
  * TipStateSwapOperator.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.operators;
 
-import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
+import dr.evomodel.treedatalikelihood.TipStateAccessor;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 
@@ -36,7 +38,7 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
 
     public static final String TIP_STATE_OPERATOR = "tipStateSwapOperator";
 
-    public TipStateSwapOperator(AncestralStateBeagleTreeLikelihood treeLikelihood,
+    public TipStateSwapOperator(TipStateAccessor treeLikelihood,
                                 double weight, boolean uniformRandomization) {
         this.treeLikelihood = treeLikelihood;
         setWeight(weight);
@@ -54,7 +56,7 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
 
     public double doOperation() {
 
-        int tipCount = treeLikelihood.getTreeModel().getExternalNodeCount();
+        int tipCount = treeLikelihood.getTipCount();
 
         // Choose two tips to swap
         index1 = MathUtils.nextInt(tipCount);
@@ -64,7 +66,7 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
 
         swap(index1, index2);
 
-        treeLikelihood.makeDirty();
+        treeLikelihood.makeDirty(); // TODO Should be handled by setTipStates()
 
         return uniformRandomization ? Double.POSITIVE_INFINITY : 0.0;
     }
@@ -88,7 +90,7 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
         return TIP_STATE_OPERATOR;
     }
 
-    private final AncestralStateBeagleTreeLikelihood treeLikelihood;
+    private final TipStateAccessor treeLikelihood;
 
     private final boolean uniformRandomization;
 }

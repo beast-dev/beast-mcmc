@@ -1,7 +1,8 @@
 /*
  * FreeRateDelegate.java
  *
- * Copyright (c) 2002-2023 BEAST Developer Team
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.siteratemodel;
@@ -44,7 +46,6 @@ import java.util.List;
  * FreeRateDelegate - A SiteModel delegate that implements the 'FreeRate' model.
  *
  * @author Andrew Rambaut
- * @version $Id: GammaSiteModel.java,v 1.31 2005/09/26 14:27:38 rambaut Exp $
  */
 
 public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate, Citable {
@@ -129,30 +130,6 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
         }
         assert Math.abs(meanRate - 1.0) < 1E-10;
         assert Math.abs(sumWeights - 1.0) < 1E-10;
-//        } else {
-//            categoryRates[0] = 1.0;
-//            double sumRates = 0.0;
-//            double sumWeights = 0.0;
-//            for (int i = 0; i < categoryCount; i++) {
-//                if (parameterization == Parameterization.RATIOS) {
-//                    if (i > 0) {
-//                        categoryRates[i] = categoryRates[i - 1] * rateParameter.getParameterValue(i);
-//                    }
-//                } else { // Parameterization.DIFFERENCES
-//                    categoryRates[i] = categoryRates[i - 1] + rateParameter.getParameterValue(i);
-//                }
-//                sumRates += categoryRates[i + 1];
-//
-//                categoryProportions[i] = weightParameter.getParameterValue(i);
-//                sumWeights += categoryProportions[i];
-//            }
-//            assert Math.abs(sumWeights - 1.0) < 1E-10;
-//
-//            // scale so their mean is 1
-//            for (int i = 0; i < categoryCount; i++) {
-//                categoryRates[i] = categoryCount * categoryRates[i] / sumRates;
-//            }
-//        }
     }
 
     // *****************************************************************

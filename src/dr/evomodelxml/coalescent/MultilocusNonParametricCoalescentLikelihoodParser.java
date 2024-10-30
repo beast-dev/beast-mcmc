@@ -144,7 +144,7 @@ public class MultilocusNonParametricCoalescentLikelihoodParser extends AbstractX
 
     @Override
     public Class getReturnType() {
-        return SkyGlideLikelihood.class;
+        return MultilocusNonparametricCoalescentLikelihood.class;
     }
 
     @Override

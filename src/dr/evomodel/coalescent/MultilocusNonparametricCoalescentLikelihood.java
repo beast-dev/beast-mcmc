@@ -74,7 +74,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
 
         super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
 
-        // adding the key word to the the model means the keyword will be logged in the
+        // adding the key word to the model means the keyword will be logged in the
         // header of the logfile.
         this.addKeyword("skygrid");
         if (intervalLists.size() > 1) {
@@ -122,7 +122,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-
+        likelihoodKnown = false;
     }
 
     private int moveToNextTimeIndex(int treeIndex, int lastTimeIndex, double[] times) {

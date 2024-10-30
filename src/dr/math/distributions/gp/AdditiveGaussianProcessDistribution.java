@@ -304,13 +304,6 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
           throw new IllegalArgumentException("Unknown model");
         }
     }
-//
-//        if (model == bases){
-//            precisionAndDeterminantKnown = false;
-//        } else {
-//            throw new IllegalArgumentException("Unknown model");
-//        }
-
 
     private boolean containsKernel(Model model) {
         for (BasisDimension basis : bases) {

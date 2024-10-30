@@ -103,6 +103,16 @@ public class PiecewiseConstantPopulation extends DemographicFunction.Abstract {
         return getDemographic(epoch, t1);
     }
 
+    public double getNextEpochBoundary(double t) {
+        int epoch = 0; // TODO: XJ - really bad code duplication, but how do I return two values without making another structure...
+        double accumulatedTime = getEpochDuration(epoch);
+        while (accumulatedTime < t) {
+            accumulatedTime += getEpochDuration(epoch);
+            epoch += 1;
+        }
+        return accumulatedTime;
+    }
+
     /**
      * Gets the integral of intensity function from time 0 to time t.
      */

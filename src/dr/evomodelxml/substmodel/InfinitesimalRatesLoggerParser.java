@@ -34,15 +34,32 @@ import dr.xml.*;
 public class InfinitesimalRatesLoggerParser extends AbstractXMLObjectParser {
 
     private static final String NAME = "infinitesimalRatesLogger";
+    private static final String DIAGONAL_ELEMENTS = "diagonalElements";
+    private static final String LOGTRANSFORM = "logTransform";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        boolean diagonalElements = true;
+        if (xo.hasAttribute(DIAGONAL_ELEMENTS)) {
+            diagonalElements = xo.getAttribute(DIAGONAL_ELEMENTS, true);
+        }
+
+        boolean logTransform = false;
+        if (xo.hasAttribute(LOGTRANSFORM)) {
+            logTransform = xo.getAttribute(LOGTRANSFORM, true);
+            if (diagonalElements && logTransform) {
+                throw new XMLParseException("Cannot log-transform (negative) diagonal elements of the infinitesimal matrix");
+            }
+        }
+
         SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
-        return new InfinitesimalRatesLogger(substitutionModel);
+        return new InfinitesimalRatesLogger(substitutionModel, diagonalElements, logTransform);
     }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
+        AttributeRule.newBooleanRule(DIAGONAL_ELEMENTS, true);
+        AttributeRule.newBooleanRule(LOGTRANSFORM, true);
         return new XMLSyntaxRule[] {
                 new ElementRule(SubstitutionModel.class),
         };

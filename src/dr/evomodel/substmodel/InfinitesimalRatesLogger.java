@@ -33,8 +33,10 @@ import dr.inference.loggers.NumberColumn;
 
 public class InfinitesimalRatesLogger implements Loggable {
 
-    public InfinitesimalRatesLogger(SubstitutionModel substitutionModel) {
+    public InfinitesimalRatesLogger(SubstitutionModel substitutionModel, Boolean diagonalElements, Boolean logTransform) {
         this.substitutionModel = substitutionModel;
+        this.diagonalElements = diagonalElements;
+        this.logTransform = logTransform;
     }
 
     @Override
@@ -44,27 +46,55 @@ public class InfinitesimalRatesLogger implements Loggable {
         if (generator == null) {
             generator = new double[stateCount * stateCount];
         }
+        int nOutputs = stateCount * stateCount;
+        if (!diagonalElements) nOutputs -= stateCount;
+        LogColumn[] columns = new LogColumn[nOutputs];
 
-        LogColumn[] columns = new LogColumn[stateCount * stateCount];
-
+        int index = 0;
         for (int i = 0; i < stateCount; ++i) {
             for (int j = 0; j < stateCount; ++j) {
-                final int k = i * stateCount + j;
+                if (!diagonalElements && i == j) {
+                    continue;
+                }
+                final int row = i;
+                final int col = j;
+                final int k = index++;  // Use index to store column number
                 columns[k] = new NumberColumn(substitutionModel.getId() + "." + (i + 1) + "." + (j + 1)) {
                     @Override
                     public double getDoubleValue() {
                         if (k == 0) { // Refresh at first-element read
                             substitutionModel.getInfinitesimalMatrix(generator);
                         }
-                        return generator[k];
+                        if (logTransform) {
+                            return Math.log(generator[row * stateCount + col]);
+                        } else {
+                            return generator[row * stateCount + col];
+                        }
                     }
                 };
             }
         }
 
+//        for (int i = 0; i < stateCount; ++i) {
+//            for (int j = 0; j < stateCount; ++j) {
+//                final int k = i * stateCount + j;
+//                columns[k] = new NumberColumn(substitutionModel.getId() + "." + (i + 1) + "." + (j + 1)) {
+//                    @Override
+//                    public double getDoubleValue() {
+//                        if (k == 0) { // Refresh at first-element read
+//                            substitutionModel.getInfinitesimalMatrix(generator);
+//                        }
+//                        return generator[k];
+//                    }
+//                };
+//            }
+//        }
+
         return columns;
     }
 
     private final SubstitutionModel substitutionModel;
+    private final Boolean diagonalElements;
+    private final Boolean logTransform;
     private double[] generator;
 }

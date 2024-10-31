@@ -30,14 +30,17 @@ package dr.evomodel.substmodel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
+import dr.util.Transform;
 
 public class InfinitesimalRatesLogger implements Loggable {
 
-    public InfinitesimalRatesLogger(SubstitutionModel substitutionModel, Boolean diagonalElements, Boolean logTransform) {
+    public InfinitesimalRatesLogger(SubstitutionModel substitutionModel, boolean diagonalElements, Transform transform) {
         this.substitutionModel = substitutionModel;
         this.diagonalElements = diagonalElements;
-        this.logTransform = logTransform;
+        this.transform = transform;
     }
+
+
 
     @Override
     public LogColumn[] getColumns() {
@@ -46,6 +49,7 @@ public class InfinitesimalRatesLogger implements Loggable {
         if (generator == null) {
             generator = new double[stateCount * stateCount];
         }
+
         int nOutputs = stateCount * stateCount;
         if (!diagonalElements) nOutputs -= stateCount;
         LogColumn[] columns = new LogColumn[nOutputs];
@@ -65,8 +69,8 @@ public class InfinitesimalRatesLogger implements Loggable {
                         if (k == 0) { // Refresh at first-element read
                             substitutionModel.getInfinitesimalMatrix(generator);
                         }
-                        if (logTransform) {
-                            return Math.log(generator[row * stateCount + col]);
+                        if (transform != null) {
+                            return transform.transform(generator[row * stateCount + col]);
                         } else {
                             return generator[row * stateCount + col];
                         }
@@ -92,9 +96,8 @@ public class InfinitesimalRatesLogger implements Loggable {
 
         return columns;
     }
-
+    private final Transform transform;
     private final SubstitutionModel substitutionModel;
     private final Boolean diagonalElements;
-    private final Boolean logTransform;
     private double[] generator;
 }

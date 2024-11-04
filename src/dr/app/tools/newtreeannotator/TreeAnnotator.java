@@ -717,7 +717,8 @@ public class TreeAnnotator extends BaseTreeTool {
                 new Arguments.Option[]{
                         new Arguments.StringOption("type", new String[]{"mcc", "hipstr"}, false, "an option of 'mcc' or 'hipstr'"),
                         new Arguments.StringOption("heights", new String[]{"keep", "median", "mean", "ca"}, false,
-                                "an option of 'keep', 'median', 'mean' or 'ca' (default)"),
+                                "an option of 'keep', 'median' or 'mean' (default)"),
+                        //"an option of 'keep', 'median', 'mean' or 'ca' (default)"),
                         new Arguments.LongOption("burnin", "the number of states to be considered as 'burn-in'"),
                         new Arguments.IntegerOption("burninTrees", "the number of trees to be considered as 'burn-in'"),
                         new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annotated"),
@@ -754,7 +755,10 @@ public class TreeAnnotator extends BaseTreeTool {
             } else if (value.equalsIgnoreCase("median")) {
                 heights = HeightsSummary.MEDIAN_HEIGHTS;
             } else if (value.equalsIgnoreCase("ca")) {
-                heights = HeightsSummary.CA_HEIGHTS;
+                progressStream.println("CA heights are not supported - to avoid negative branch lengths, construct a HIPSTR tree");
+                printUsage(arguments);
+                System.exit(1);
+//                heights = HeightsSummary.CA_HEIGHTS;
             }
         }
 

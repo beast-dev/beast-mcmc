@@ -169,7 +169,8 @@ public class TreeAnnotator extends BaseTreeTool {
                 progressStream.println("Ignoring first " + burninStates + " states (" + burnin + " trees).");
             }
 
-            progressStream.println("Total unique clades: " + cladeSystem.getCladeCount());
+            // clade system includes tips as clades (to annotate them) so don't report those as unique clades
+            progressStream.println("Total unique clades: " + (cladeSystem.getCladeCount() - taxa.getTaxonCount()));
             progressStream.println();
         }
 

@@ -196,11 +196,30 @@ public class Arguments {
      */
     public Arguments(Option[] options) {
         this.options = options;
+        assert checkOptions();
     }
 
     public Arguments(Option[] options, boolean caseSensitive) {
         this.options = options;
         this.caseSensitive = caseSensitive;
+        assert checkOptions();
+    }
+
+    private boolean checkOptions() {
+        for (int i = 0; i < options.length - 1; i++) {
+            Option option1 = options[i];
+            assert option1.label != null && !option1.label.isEmpty();
+            for (int j = i + 1; j < options.length; j++) {
+                Option option2 = options[j];
+                assert option2.label != null && !option2.label.isEmpty();
+                assert !option1.label.equalsIgnoreCase(option2.label) : "option label, " + option1.label + ", is used twice";
+                assert option1.shortLabel == null || option1.shortLabel.isEmpty() ||
+                        option2.shortLabel == null || option2.shortLabel.isEmpty() ||
+                        !option1.shortLabel.equalsIgnoreCase(option2.shortLabel) : "option short label, " + option1.shortLabel +
+                        ", is used twice for options " + option1.label + " and " + option2.label;
+            }
+        }
+        return true;
     }
 
     public void addOption(String label, String shortLabel, String description, String positionLabel) {
@@ -230,7 +249,13 @@ public class Arguments {
                 }
 
                 // the first value may be appended to the option label (e.g., '-t1.0'):
-                String arg = arguments[index].substring(option.label.length() + 1);
+                String arg = "";
+                if (arguments[index].charAt(1) != ARGUMENT_CHARACTER.charAt(0) &&
+                        !arguments[index].startsWith(option.label) &&
+                        arguments[index].length() > option.shortLabel.length() + 1) {
+                    arg = arguments[index].substring(option.label.length() + 1);
+                }
+
                 optionIndex[index] = i;
                 option.isAvailable = true;
 
@@ -523,7 +548,7 @@ public class Arguments {
     /**
      * Does an argument with label exist?
      */
-    public boolean hasOption(String label, String shortLabel) {
+    public boolean hasOption(String label) {
         int n = findOption(label);
         if (n == -1) {
             return false;
@@ -591,8 +616,10 @@ public class Arguments {
 
         System.out.print("  Usage: " + name);
         for (Option option : options) {
-            System.out.print(" [-" + option.label);
-
+            System.out.print(" [--" + option.label);
+            if (option.shortLabel != null && !option.shortLabel.isEmpty()) {
+                System.out.print("|-" + option.shortLabel);
+            }
             if (option instanceof IntegerArrayOption) {
 
                 IntegerArrayOption o = (IntegerArrayOption) option;
@@ -632,7 +659,11 @@ public class Arguments {
         System.out.println(" " + commandLine);
 
         for (Option option : options) {
-            System.out.println("    -" + option.label + " " + option.description);
+            System.out.print("    --" + option.label);
+            if (option.shortLabel != null && !option.shortLabel.isEmpty()) {
+                System.out.print(" | -" + option.shortLabel);
+            }
+            System.out.println(": " + option.description);
         }
     }
 

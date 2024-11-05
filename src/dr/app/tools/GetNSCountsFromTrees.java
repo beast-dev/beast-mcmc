@@ -513,22 +513,22 @@ public class GetNSCountsFromTrees {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption(BURNIN, "the number of states to be considered as 'burn-in' [default = 0]"),
-                        new Arguments.StringOption(BRANCHINFO, falseTrue, false, "include a summary for the root [default=off]"),
-                        new Arguments.StringOption(BRANCHSET, TimeSlicer.enumNamesToStringArray(BranchSet.values()), false,
+                        new Arguments.IntegerOption(BURNIN, "b", "the number of states to be considered as 'burn-in' [default = 0]"),
+                        new Arguments.StringOption(BRANCHINFO,null,  falseTrue, false, "include a summary for the root [default=off]"),
+                        new Arguments.StringOption(BRANCHSET,null,  TimeSlicer.enumNamesToStringArray(BranchSet.values()), false,
                                 "branch set [default = all]"),
-//                        new Arguments.StringOption(CLADETAXA, "clade taxa file", "specifies a file with taxa that define the clade"),
-                        new Arguments.StringOption(INCLUDECLADES, "clade exclusion files", "specifies files with taxa that define clades to be excluded"),
-                        new Arguments.StringOption(CLADESTEM, falseTrue, false, "include clade stem [default=false]"),
-                        new Arguments.StringOption(EXCLUDECLADESTEM, falseTrue, true, "include clade stem in the exclusion [default=true]"),
-                        new Arguments.StringOption(BACKBONETAXA, "Backbone taxa file", "specifies a file with taxa that define the backbone"),
-                        new Arguments.StringOption(ZEROBRANCHES, falseTrue, true, "include branches with 0 N and S subtitutions [default=included]"),
-                        new Arguments.StringOption(SUMMARY, falseTrue, true, "provide a summary of the N and S counts per tree [default=detailed output]"),
-                        new Arguments.RealOption(MRSD, "specifies the most recent sampling data in fractional years to rescale time [default=0]"),
-                        new Arguments.StringOption(EXCLUDECLADES, "clade exclusion files", "specifies files with taxa that define clades to be excluded"),
-                        new Arguments.IntegerOption(SITESUM, "the number of nucleotide sites to summarize rates in per site per time unit [default = 1]"),
-                        new Arguments.StringOption(CODONSITELIST, "list of sites", "sites for which the summary is restricted to"),
-                        new Arguments.Option("help", "option to print this message")
+//                        new Arguments.StringOption(CLADETAXA, null, "clade taxa file", "specifies a file with taxa that define the clade"),
+                        new Arguments.StringOption(INCLUDECLADES,null,  "clade exclusion files", "specifies files with taxa that define clades to be excluded"),
+                        new Arguments.StringOption(CLADESTEM, null, falseTrue, false, "include clade stem [default=false]"),
+                        new Arguments.StringOption(EXCLUDECLADESTEM, null, falseTrue, true, "include clade stem in the exclusion [default=true]"),
+                        new Arguments.StringOption(BACKBONETAXA,null,  "Backbone taxa file", "specifies a file with taxa that define the backbone"),
+                        new Arguments.StringOption(ZEROBRANCHES,null,  falseTrue, true, "include branches with 0 N and S subtitutions [default=included]"),
+                        new Arguments.StringOption(SUMMARY,null,  falseTrue, true, "provide a summary of the N and S counts per tree [default=detailed output]"),
+                        new Arguments.RealOption(MRSD, null, "specifies the most recent sampling data in fractional years to rescale time [default=0]"),
+                        new Arguments.StringOption(EXCLUDECLADES,null,  "clade exclusion files", "specifies files with taxa that define clades to be excluded"),
+                        new Arguments.IntegerOption(SITESUM, null, "the number of nucleotide sites to summarize rates in per site per time unit [default = 1]"),
+                        new Arguments.StringOption(CODONSITELIST, null, "list of sites", "sites for which the summary is restricted to"),
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {

@@ -144,7 +144,8 @@ public class TreeAnnotator extends BaseTreeTool {
 
         CladeSystem cladeSystem = new CladeSystem(targetOption == Target.HIPSTR);
 
-        if (targetOption != Target.USER_TARGET_TREE) {
+        // read the clades in even if a target tree so it can have its stats reported
+//        if (targetOption != Target.USER_TARGET_TREE) {
             // if we are not just annotating a specific target tree
             // then we need to read all the trees into a CladeSystem
             // to get Clade and SubTree frequencies.
@@ -171,14 +172,14 @@ public class TreeAnnotator extends BaseTreeTool {
 
             progressStream.println("Total unique clades: " + cladeSystem.getCladeCount());
             progressStream.println();
-        }
+//        }
 
         MutableTree targetTree = null;
 
         switch (targetOption) {
             case USER_TARGET_TREE: {
                 if (targetTreeFileName != null) {
-                    targetTree = readUserTargetTree(targetTreeFileName, targetTree);
+                    targetTree = readUserTargetTree(targetTreeFileName, targetTree, cladeSystem);
                 } else {
                     System.err.println("No user target tree specified.");
                     System.exit(1);
@@ -393,7 +394,7 @@ public class TreeAnnotator extends BaseTreeTool {
         annotationAction.addAttributeNames(attributeNames);
     }
 
-    private MutableTree readUserTargetTree(String targetTreeFileName, MutableTree targetTree) throws IOException {
+    private MutableTree readUserTargetTree(String targetTreeFileName, MutableTree targetTree, CladeSystem cladeSystem) throws IOException {
         progressStream.println("Reading user specified target tree, " + targetTreeFileName + ", ...");
 
         NexusImporter importer = new NexusImporter(new FileReader(targetTreeFileName));
@@ -412,6 +413,11 @@ public class TreeAnnotator extends BaseTreeTool {
             System.err.println("Error Parsing Target Tree: " + e.getMessage());
             System.exit(1);
         }
+
+        progressStream.println();
+        double score = scoreTree(targetTree, cladeSystem);
+        progressStream.println("Target tree's log clade credibility: " + String.format("%.4f", score));
+        reportStatistics(cladeSystem, targetTree);
 
         progressStream.println();
         return targetTree;

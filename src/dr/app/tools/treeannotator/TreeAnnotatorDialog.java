@@ -25,7 +25,7 @@
  *
  */
 
-package dr.app.tools.newtreeannotator;
+package dr.app.tools.treeannotator;
 
 import dr.app.gui.FileDrop;
 import dr.app.gui.components.RealNumberField;

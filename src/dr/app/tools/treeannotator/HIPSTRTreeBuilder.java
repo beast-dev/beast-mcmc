@@ -25,7 +25,7 @@
  *
  */
 
-package dr.app.tools.newtreeannotator;
+package dr.app.tools.treeannotator;
 
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;

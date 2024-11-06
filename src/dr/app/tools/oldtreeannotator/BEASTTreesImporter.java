@@ -1,5 +1,5 @@
 /*
- * NewickImporter.java
+ * BEASTTreesImporter.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -25,7 +25,7 @@
  *
  */
 
-package dr.app.tools.treeannotator;
+package dr.app.tools.oldtreeannotator;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.TreeImporter;

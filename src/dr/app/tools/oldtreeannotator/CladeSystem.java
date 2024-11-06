@@ -25,7 +25,7 @@
  *
  */
 
-package dr.app.tools.treeannotator;
+package dr.app.tools.oldtreeannotator;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;

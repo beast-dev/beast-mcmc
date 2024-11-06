@@ -25,14 +25,13 @@
  *
  */
 
-package dr.app.tools.newtreeannotator;
+package dr.app.tools.treeannotator;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 class CollectionAction implements CladeAction {

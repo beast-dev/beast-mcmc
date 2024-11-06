@@ -258,13 +258,19 @@ final class CladeSystem {
         return minCladeCredibility[0] / tree.getInternalNodeCount();
     }
 
+    /**
+     * Returns the number of clades in the tree with threshold credibility or higher
+     * @param tree
+     * @param threshold
+     * @return
+     */
     public int getTopCladeCredibility(Tree tree, double threshold) {
-        final int[] minCladeCredibility = {0};
+        final int[] count = {0};
         traverseTree(tree, new CladeAction() {
             @Override
             public void actOnClade(Clade clade, Tree tree, NodeRef node) {
                 if (clade.getTaxon() == null && clade.getCredibility() >= threshold) {
-                    minCladeCredibility[0] += 1;
+                    count[0] += 1;
                 }
             }
 
@@ -273,8 +279,24 @@ final class CladeSystem {
                 return true;
             }
         });
-        return minCladeCredibility[0];
+        return count[0];
     }
+
+    /**
+     * Returns the number of clades in the clade system with threshold credibility or higher
+     * @param threshold
+     * @return
+     */
+    public int getTopCladeCredibility(double threshold) {
+        int count = 0;
+        for (Clade clade : cladeMap.values()) {
+            if (clade.getCredibility() >= threshold) {
+                count += 1;
+            }
+        }
+        return count;
+    }
+
     public int getCladeCount() {
         return cladeMap.keySet().size();
     }

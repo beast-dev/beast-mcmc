@@ -521,23 +521,21 @@ public class TreeAnnotator extends BaseTreeTool {
     }
 
     private void setNodeHeightsCA(CladeSystem cladeSystem, MutableTree targetTree) {
-        assert false : "Implement this";
-
-        long startTime = System.currentTimeMillis();
-
-        progressStream.println("Setting node heights...");
-        progressStream.println("0              25             50             75            100");
-        progressStream.println("|--------------|--------------|--------------|--------------|");
-
-        int stepSize = totalTrees / 60;
-        if (stepSize < 1) stepSize = 1;
-
+        throw new UnsupportedOperationException("CA node heights is not supported in treeannotator X");
+//        long startTime = System.currentTimeMillis();
+//        progressStream.println("Setting node heights...");
+//        progressStream.println("0              25             50             75            100");
+//        progressStream.println("|--------------|--------------|--------------|--------------|");
+//
+//        int stepSize = totalTrees / 60;
+//        if (stepSize < 1) stepSize = 1;
+//
 //        CAHeights caHeights = new CAHeights(this);
 //        caHeights.setTreeHeightsByCA(targetTree, inputFileName, burnin);
-
-        long timeElapsed = (System.currentTimeMillis() - startTime) / 1000;
-        progressStream.println("* [" + timeElapsed + " secs]");
-        progressStream.println();
+//
+//        long timeElapsed = (System.currentTimeMillis() - startTime) / 1000;
+//        progressStream.println("* [" + timeElapsed + " secs]");
+//        progressStream.println();
     }
 
     private void writeAnnotatedTree(String outputFileName, MutableTree targetTree) {
@@ -589,9 +587,10 @@ public class TreeAnnotator extends BaseTreeTool {
 
         arguments.printUsage("treeannotator", "<input-file-name> [<output-file-name>]");
         progressStream.println();
-        progressStream.println("  Example: treeannotator test.trees out.txt");
-        progressStream.println("  Example: treeannotator --burnin 100 --heights mean test.trees out.txt");
-        progressStream.println("  Example: treeannotator -b 100 --target map.tree test.trees out.txt");
+        progressStream.println("  Example: treeannotator test.trees out.tree");
+        progressStream.println("  Example: treeannotator --burnin 100 --heights mean test.trees out.tree");
+        progressStream.println("  Example: treeannotator --type hipstr --burnin 100 --heights mean test.trees out.tree");
+        progressStream.println("  Example: treeannotator -b 100 -tf map.tree test.trees out.tree");
         progressStream.println();
     }
 
@@ -644,7 +643,7 @@ public class TreeAnnotator extends BaseTreeTool {
             }
 
             final String versionString = VERSION.getVersionString();
-            String nameString = "TreeAnnotator " + versionString;
+            String nameString = "TreeAnnotatorX " + versionString;
             String aboutString = "<html><center><p>" + versionString + ", " + VERSION.getDateString() + "</p>" +
                     "<p>by<br>" +
                     "Andrew Rambaut and Alexei J. Drummond</p>" +
@@ -666,7 +665,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
             TreeAnnotatorDialog dialog = new TreeAnnotatorDialog(new JFrame());
 
-            if (!dialog.showDialog("TreeAnnotator " + versionString)) {
+            if (!dialog.showDialog("TreeAnnotatorX " + versionString)) {
                 return;
             }
 
@@ -766,10 +765,9 @@ public class TreeAnnotator extends BaseTreeTool {
             } else if (value.equalsIgnoreCase("median")) {
                 heights = HeightsSummary.MEDIAN_HEIGHTS;
             } else if (value.equalsIgnoreCase("ca")) {
-                progressStream.println("CA heights are not supported - to avoid negative branch lengths, construct a HIPSTR tree");
+                progressStream.println("CA heights are not supported - this has been superseded by the HIPSTR tree (--type hipstr)");
                 printUsage(arguments);
                 System.exit(1);
-//                heights = HeightsSummary.CA_HEIGHTS;
             }
         }
 

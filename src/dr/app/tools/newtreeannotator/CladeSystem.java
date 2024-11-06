@@ -31,10 +31,10 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.stats.DiscreteStatistics;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Andrew Rambaut
@@ -256,6 +256,28 @@ final class CladeSystem {
             }
         });
         return minCladeCredibility[0] / tree.getInternalNodeCount();
+    }
+
+    public double getMedianCladeCredibility(Tree tree) {
+        final double[] cladeCredibility = new double[tree.getInternalNodeCount()];
+        final int[] i = { 0 };
+        traverseTree(tree, new CladeAction() {
+            @Override
+            public void actOnClade(Clade clade, Tree tree, NodeRef node) {
+                if (clade.getTaxon() == null) {
+                    cladeCredibility[i[0]] = clade.getCredibility();
+                    i[0] += 1;
+                }
+            }
+
+            @Override
+            public boolean expectAllClades() {
+                return true;
+            }
+        });
+
+
+        return DiscreteStatistics.median(cladeCredibility);
     }
 
     /**

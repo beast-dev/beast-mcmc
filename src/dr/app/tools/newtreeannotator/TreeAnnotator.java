@@ -492,6 +492,7 @@ public class TreeAnnotator extends BaseTreeTool {
     private static void reportStatistics(CladeSystem cladeSystem, Tree tree) {
         progressStream.println("Lowest individual clade credibility: " + String.format("%.4f", cladeSystem.getMinimumCladeCredibility(tree)));
         progressStream.println("Mean individual clade credibility: " + String.format("%.4f", cladeSystem.getMeanCladeCredibility(tree)));
+        progressStream.println("Median individual clade credibility: " + String.format("%.4f", cladeSystem.getMedianCladeCredibility(tree)));
         progressStream.println("Number of clades with credibility 1.0: " + cladeSystem.getTopCladeCredibility(tree, 1.0));
         progressStream.println("Number of clades with credibility > 0.99: " + cladeSystem.getTopCladeCredibility(tree, 0.99) +
                 " (out of " + cladeSystem.getTopCladeCredibility(0.99) + " in all trees)");

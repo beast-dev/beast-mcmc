@@ -77,12 +77,14 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public int getFirstOrderDifferentialMatrixBufferIndex(int branchIndex) {
-        throw new RuntimeException("Not yet implemented!");
+        final int offset = getMatrixBufferCount();
+        int bufferIndex = offset + branchIndex;
+        return bufferIndex;
     }
 
     @Override
     public int getSecondOrderDifferentialMatrixBufferIndex(int branchIndex) {
-        throw new RuntimeException("Not yet implemented!");
+        return getFirstOrderDifferentialMatrixBufferIndex(branchIndex) + nodeCount - 1;
     }
 
     @Override
@@ -97,7 +99,7 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public void cacheFirstOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[] differentialMassMatrix) {
-        throw new RuntimeException("Not yet implemented!");
+        beagle.setDifferentialMatrix(getFirstOrderDifferentialMatrixBufferIndex(branchIndex), differentialMassMatrix);
     }
 
     @Override

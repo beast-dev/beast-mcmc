@@ -197,41 +197,6 @@ public class CoalescentSimulator {
 		} else return Double.POSITIVE_INFINITY;
 	}
 
-	private DemographicBoundary getDemographicFunction(DemographicFunction demographic) {
-		if (demographic instanceof PiecewiseConstantPopulation) {
-			return DemographicBoundary.PIECEWISE_CONSTANT;
-		} else {
-			return DemographicBoundary.PIECEWISE_CONSTANT;
-		}
-	}
-
-	enum DemographicBoundary{
-		NONE {
-			@Override
-			double getNextBoundary(int currentActiveNodeCount, ArrayList<SimpleNode> sortedNodeList,
-								   DemographicFunction demographic) {
-				return getMinimumInactiveNode(currentActiveNodeCount, sortedNodeList);
-			}
-		},
-		PIECEWISE_CONSTANT {
-			@Override
-			double getNextBoundary(int currentActiveNodeCount, ArrayList<SimpleNode> sortedNodeList, DemographicFunction demographic) {
-				PiecewiseConstantPopulation piecewisePopulationModel = (PiecewiseConstantPopulation) demographic;
-				final double currentActiveNodeHeight = sortedNodeList.get(currentActiveNodeCount - 1).getHeight();
-				final double nextEpochBoundary = piecewisePopulationModel.getNextEpochBoundary(currentActiveNodeHeight);
-				final double minInactiveNode = getMinimumInactiveNode(currentActiveNodeCount, sortedNodeList);
-				return nextEpochBoundary < minInactiveNode ? nextEpochBoundary : minInactiveNode;
-			}
-		};
-		abstract double getNextBoundary(int currentActiveNodeCount, ArrayList<SimpleNode> sortedNodeList,
-										DemographicFunction demographic);
-		double getMinimumInactiveNode(int currentActiveNodeCount, ArrayList<SimpleNode> sortedNodeList) {
-			if (currentActiveNodeCount < sortedNodeList.size()) {
-				return (sortedNodeList.get(currentActiveNodeCount)).getHeight();
-			} else return Double.POSITIVE_INFINITY;
-		}
-	}
-
 	/**
 	 * Set the current height.
 	 */

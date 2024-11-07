@@ -49,15 +49,8 @@ import java.util.*;
  */
 public class CoalescentSimulator {
     
-    public CoalescentSimulator() {
-		demographicBoundary = DemographicBoundary.NONE;
-	}
+    public CoalescentSimulator() {}
 
-	private final DemographicBoundary demographicBoundary;
-
-	public CoalescentSimulator(DemographicFunction demographicFunction) {
-		demographicBoundary = getDemographicBoundary(demographicFunction);
-	}
 
 	/**
 	 * Simulates a coalescent tree, given a taxon list.
@@ -144,7 +137,7 @@ public class CoalescentSimulator {
 
 		// get at least two tips
 		while (getActiveNodeCount() < 2) {
-			currentHeight = demographicBoundary.getMinimumInactiveNode(activeNodeCount, nodeList);
+			currentHeight = getMinimumInactiveHeight();
 			setCurrentHeight(currentHeight);
 		}
 
@@ -161,9 +154,8 @@ public class CoalescentSimulator {
 
 		while (nextCoalescentHeight < maxHeight && (getNodeCount() > 1)) {
 
-			final double nextBoundary = demographicBoundary.getNextBoundary(activeNodeCount, nodeList, demographic);
-			if (nextCoalescentHeight >= nextBoundary) {
-				currentHeight = nextBoundary;
+			if (nextCoalescentHeight >= getMinimumInactiveHeight()) {
+				currentHeight = getMinimumInactiveHeight();
 				setCurrentHeight(currentHeight);
 			} else {
 				currentHeight = nextCoalescentHeight;
@@ -173,7 +165,7 @@ public class CoalescentSimulator {
 			if (getNodeCount() > 1) {
 				// get at least two tips
 				while (getActiveNodeCount() < 2) {
-					currentHeight = demographicBoundary.getMinimumInactiveNode(activeNodeCount, nodeList);
+					currentHeight = getMinimumInactiveHeight();
 					setCurrentHeight(currentHeight);
 				}
 // TODO should it enforce this?
@@ -199,13 +191,13 @@ public class CoalescentSimulator {
 	/**
 	 * @return the height of youngest inactive node.
 	 */
-//	private double getMinimumInactiveHeight() {
-//		if (activeNodeCount < nodeList.size()) {
-//			return (nodeList.get(activeNodeCount)).getHeight();
-//		} else return Double.POSITIVE_INFINITY;
-//	}
+	private double getMinimumInactiveHeight() {
+		if (activeNodeCount < nodeList.size()) {
+			return (nodeList.get(activeNodeCount)).getHeight();
+		} else return Double.POSITIVE_INFINITY;
+	}
 
-	private DemographicBoundary getDemographicBoundary(DemographicFunction demographic) {
+	private DemographicBoundary getDemographicFunction(DemographicFunction demographic) {
 		if (demographic instanceof PiecewiseConstantPopulation) {
 			return DemographicBoundary.PIECEWISE_CONSTANT;
 		} else {
@@ -213,11 +205,11 @@ public class CoalescentSimulator {
 		}
 	}
 
-	private enum DemographicBoundary{
+	enum DemographicBoundary{
 		NONE {
 			@Override
 			double getNextBoundary(int currentActiveNodeCount, ArrayList<SimpleNode> sortedNodeList,
-										  DemographicFunction demographic) {
+								   DemographicFunction demographic) {
 				return getMinimumInactiveNode(currentActiveNodeCount, sortedNodeList);
 			}
 		},
@@ -233,7 +225,6 @@ public class CoalescentSimulator {
 		};
 		abstract double getNextBoundary(int currentActiveNodeCount, ArrayList<SimpleNode> sortedNodeList,
 										DemographicFunction demographic);
-
 		double getMinimumInactiveNode(int currentActiveNodeCount, ArrayList<SimpleNode> sortedNodeList) {
 			if (currentActiveNodeCount < sortedNodeList.size()) {
 				return (sortedNodeList.get(currentActiveNodeCount)).getHeight();
@@ -245,7 +236,7 @@ public class CoalescentSimulator {
 	 * Set the current height.
 	 */
 	private void setCurrentHeight(double height) {
-		while (demographicBoundary.getMinimumInactiveNode(activeNodeCount, nodeList) <= height) {
+		while (getMinimumInactiveHeight() <= height) {
 			activeNodeCount += 1;
 		}
 	}
@@ -292,7 +283,7 @@ public class CoalescentSimulator {
 
 		activeNodeCount += 1;
 
-		if (demographicBoundary.getMinimumInactiveNode(activeNodeCount, nodeList) < height) {
+		if (getMinimumInactiveHeight() < height) {
 			throw new RuntimeException("This should never happen! Somehow the current active node is older than the next inactive node!");
 		}
 	}

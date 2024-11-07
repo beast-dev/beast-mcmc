@@ -40,16 +40,11 @@ import dr.math.UnivariateFunction;
  */
 public class CoalescentSimulator {
 
-    dr.evolution.coalescent.CoalescentSimulator simulator;
+    dr.evolution.coalescent.CoalescentSimulator simulator = new dr.evolution.coalescent.CoalescentSimulator();
     /**
      * Simulates a coalescent tree from a set of subtrees.
      */
     public CoalescentSimulator() {
-        simulator = new dr.evolution.coalescent.CoalescentSimulator();
-    }
-
-    public CoalescentSimulator(DemographicModel demographicModel) {
-        simulator = new dr.evolution.coalescent.CoalescentSimulator(demographicModel.getDemographicFunction());
     }
 
     /**

@@ -244,6 +244,7 @@ public class Arguments {
             int index = findArgument(arguments, option.label, option.shortLabel);
             if (index != -1) {
 
+                boolean hasShortLabel = option.shortLabel != null && !option.shortLabel.isEmpty();
                 if (optionIndex[index] != -1) {
                     throw new ArgumentException("Argument, " + arguments[index] + " overlaps with another argument");
                 }
@@ -252,7 +253,8 @@ public class Arguments {
                 String arg = "";
                 if (arguments[index].charAt(1) != ARGUMENT_CHARACTER.charAt(0) &&
                         !arguments[index].startsWith(option.label) &&
-                        arguments[index].length() > option.shortLabel.length() + 1) {
+                        (hasShortLabel &&
+                        arguments[index].length() > option.shortLabel.length() + 1)) {
                     arg = arguments[index].substring(option.label.length() + 1);
                 }
 

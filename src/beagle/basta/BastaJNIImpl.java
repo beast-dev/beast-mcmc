@@ -22,10 +22,15 @@ public class BastaJNIImpl extends BeagleJNIImpl implements BeagleBasta {
         super(tipCount, partialsBufferCount, compactBufferCount, stateCount, patternCount, eigenBufferCount,
                 matrixBufferCount, categoryCount, scaleBufferCount, resourceList, preferenceFlags, requirementFlags);
 
+        allocateCoalescentBuffers(coalescentBufferCount, maxCoalescentIntervalCount, partialsBufferCount,1);
+    }
+
+    @Override
+    public void allocateCoalescentBuffers(int coalescentBufferCount, int maxCoalescentIntervalCount, int partialsBufferCount, int initial) {
         int errCode = BastaJNIWrapper.INSTANCE.allocateCoalescentBuffers(instance, coalescentBufferCount,
-                maxCoalescentIntervalCount);
+                maxCoalescentIntervalCount, partialsBufferCount, initial);
         if (errCode != 0) {
-            throw new BeagleException("constructor", errCode);
+            throw new BeagleException("allocateCoalescentBuffers", errCode);
         }
     }
 
@@ -85,4 +90,9 @@ public class BastaJNIImpl extends BeagleJNIImpl implements BeagleBasta {
             throw new BeagleException("accumulateBastaPartials", errCode);
         }
     }
+
+    public int getInstance() {
+        return this.instance;
+    }
+
 }

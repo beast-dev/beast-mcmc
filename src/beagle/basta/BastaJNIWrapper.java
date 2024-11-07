@@ -8,7 +8,9 @@ public class BastaJNIWrapper {
 
     public native int allocateCoalescentBuffers(int instance,
                                                 int bufferCount,
-                                                int maxCoalescentIntervalCount); // TODO buffers have different sizes
+                                                int maxCoalescentIntervalCount,
+                                                int partialsBufferCount,
+                                                int initial); // TODO buffers have different sizes
 
     public native int getBastaBuffer(int instance,
                                      int index,

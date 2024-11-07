@@ -7,6 +7,8 @@ import dr.math.matrixAlgebra.WrappedVector;
 import java.util.Arrays;
 import java.util.List;
 
+import static beagle.basta.BeagleBasta.BASTA_OPERATION_SIZE;
+
 /**
  * @author Marc A. Suchard
  */
@@ -56,10 +58,11 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         }
     }
 
-    private final BastaInternalStorage storage;
+    private BastaInternalStorage storage;
     private GradientInternalStorage gradientStorage;
     private final double[] temp;
-
+    private int currentOutputBuffer;
+    private int maxOutputBuffer;
     public GenericBastaLikelihoodDelegate(String name,
                                           Tree tree,
                                           int stateCount,
@@ -84,14 +87,20 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         }
     }
 
+    public void updateStorage(int maxBufferCount,
+                              int treeNodeCount, BastaLikelihood likelihood) {
+        this.storage.resize(maxBufferCount + 1, treeNodeCount, likelihood);
+    }
+
     @Override
     protected void computeBranchIntervalOperations(List<Integer> intervalStarts,
                                                    List<BranchIntervalOperation> branchIntervalOperations,
                                                    List<TransitionMatrixOperation> matrixOperations,
-                                                   Mode mode) {
+                                                   Mode mode, BastaLikelihood likelihood) {
 
         Arrays.fill(storage.coalescent, 0.0);
-
+        vectorizeBranchIntervalOperations(branchIntervalOperations);
+        updateStorage(maxOutputBuffer, maxNumCoalescentIntervals, likelihood);
         for (int interval = 0; interval < intervalStarts.size() - 1; ++interval) { // execute in series by intervalNumber
             // TODO try grouping by executionOrder (unclear if more efficient, same total #)
             int start = intervalStarts.get(interval);
@@ -367,6 +376,32 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         final int getOffsetByNodeDifferential(int node, int differential) {
             return getOffset1(differential) + getOffset2(node);
         }
+    }
+
+
+    // private static final boolean CACHE_FRIENDLY = true;
+
+    private void vectorizeBranchIntervalOperations(List<BranchIntervalOperation> branchIntervalOperations) {
+
+        // if (CACHE_FRIENDLY)
+
+        BranchIntervalOperation.initializeMap(tree, maxNumCoalescentIntervals);
+
+        // TODO double-buffer
+        int k = 0;
+        for (BranchIntervalOperation op : branchIntervalOperations) {
+
+            op.transform();
+
+            currentOutputBuffer = op.accBuffer2;
+
+            if (currentOutputBuffer > maxOutputBuffer) {
+                maxOutputBuffer = currentOutputBuffer;
+            }
+
+            k += BASTA_OPERATION_SIZE;
+        }
+
     }
 
 

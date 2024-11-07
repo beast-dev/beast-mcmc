@@ -144,7 +144,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
     public SubstitutionModel getSubstitutionModel() { return substitutionModel; } // TODO generify for multiple models (e.g. epochs)
 
-    private void setTipData() {
+    public void setTipData() {
 
         int[] data = patternList.getPattern(0);
 
@@ -292,7 +292,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         final NodeRef root = tree.getRoot();
         double logL = likelihoodDelegate.calculateLikelihood(branchOperations, matrixOperations,
-                intervalStarts, root.getNumber());
+                intervalStarts, root.getNumber(), this);
 
         // after traverse all nodes and patterns have been updated --
         //so change flags to reflect this.
@@ -319,7 +319,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         calculateLogLikelihood(); // TODO Only execute if necessary
 
         double[] gradient = likelihoodDelegate.calculateGradient(branchOperations, matrixOperations, intervalStarts,
-                root.getNumber(), wrt);
+                root.getNumber(), wrt, this);
 
         return wrt.chainRule(gradient);
     }
@@ -370,6 +370,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
                     "\n  all rate updates = ").append(totalRateUpdateAllCount).append(
                     "\n  partial rate updates = ").append(totalRateUpdateSingleCount).append(
                     "\n  average likelihood time = ").append(totalLikelihoodTime / totalCalculateLikelihoodCount);
+
 
         return sb.toString();
     }

@@ -56,7 +56,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
     double calculateLikelihood(List<BranchIntervalOperation> branchOperations,
                                List<TransitionMatrixOperation> matrixOperations,
                                List<Integer> intervalStarts,
-                               int rootNodeNumber);
+                               int rootNodeNumber, BastaLikelihood likelihood);
 
     default void setPartials(int index, double[] partials) {
         throw new RuntimeException("Not yet implemented");
@@ -81,7 +81,14 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
                                List<TransitionMatrixOperation> matrixOperation,
                                List<Integer> intervalStarts,
                                int rootNodeNumber,
-                               StructuredCoalescentLikelihoodGradient wrt);
+                               StructuredCoalescentLikelihoodGradient wrt, BastaLikelihood likelihood);
+
+    void updateStorage(int maxBufferCount,
+                       int treeNodeCount,
+                       BastaLikelihood likelihood);
+
+    int getMaxNumberOfCoalescentIntervals();
+
 
     abstract class AbstractBastaLikelihoodDelegate extends AbstractModel implements BastaLikelihoodDelegate, Citable {
 
@@ -109,7 +116,11 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
             this.parallelizationScheme = ParallelizationScheme.NONE;
         }
 
-        private int getMaxNumberOfCoalescentIntervals(Tree tree) {
+        public int getMaxNumberOfCoalescentIntervals() {
+            return maxNumCoalescentIntervals;
+        }
+
+        public int getMaxNumberOfCoalescentIntervals(Tree tree) {
             BigFastTreeIntervals intervals = new BigFastTreeIntervals((TreeModel) tree); // TODO fix BFTI to take a Tree
             int zeroLengthSampling = 0;
             for (int i = 0; i < intervals.getIntervalCount(); ++i) {
@@ -172,7 +183,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         abstract protected void computeBranchIntervalOperations(List<Integer> intervalStarts,
                                                                 List<BranchIntervalOperation> branchIntervalOperations,
                                                                 List<TransitionMatrixOperation> matrixOperations,
-                                                                Mode mode);
+                                                                Mode mode, BastaLikelihood likelihood);
 
         abstract protected void computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations,
                                                                        Mode mode);
@@ -187,7 +198,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         public double calculateLikelihood(List<BranchIntervalOperation> branchOperations,
                                           List<TransitionMatrixOperation> matrixOperation,
                                           List<Integer> intervalStarts,
-                                          int rootNodeNumber) {
+                                          int rootNodeNumber, BastaLikelihood likelihood) {
 
             if (PRINT_COMMANDS) {
                 System.err.println("Tree = " + tree);
@@ -199,7 +210,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
             while (!done) {
 
                 computeTransitionProbabilityOperations(matrixOperation, Mode.LIKELIHOOD);
-                computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperation, Mode.LIKELIHOOD);
+                computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperation, Mode.LIKELIHOOD, likelihood);
 
                 computeCoalescentIntervalReduction(intervalStarts, branchOperations, logL,
                         Mode.LIKELIHOOD, null);
@@ -221,7 +232,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
                                           List<TransitionMatrixOperation> matrixOperations,
                                           List<Integer> intervalStarts,
                                           int rootNodeNumber,
-                                          StructuredCoalescentLikelihoodGradient wrt) {
+                                          StructuredCoalescentLikelihoodGradient wrt, BastaLikelihood likelihood) {
             if (PRINT_COMMANDS) {
                 System.err.println("Tree = " + tree);
             }
@@ -232,7 +243,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
                 computeTransitionProbabilityOperations(matrixOperations, Mode.GRADIENT);
             }
 
-            computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperations, Mode.GRADIENT);
+            computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperations, Mode.GRADIENT, likelihood);
 
             double[] gradient = new double[wrt.getIntermediateGradientDimension()];
 

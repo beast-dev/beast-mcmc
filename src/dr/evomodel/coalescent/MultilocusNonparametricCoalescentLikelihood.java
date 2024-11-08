@@ -123,7 +123,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-
+        likelihoodKnown = false;
     }
 
     private int moveToNextTimeIndex(int treeIndex, int lastTimeIndex, double[] times) {

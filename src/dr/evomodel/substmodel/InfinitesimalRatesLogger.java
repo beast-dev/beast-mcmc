@@ -30,12 +30,17 @@ package dr.evomodel.substmodel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
+import dr.util.Transform;
 
 public class InfinitesimalRatesLogger implements Loggable {
 
-    public InfinitesimalRatesLogger(SubstitutionModel substitutionModel) {
+    public InfinitesimalRatesLogger(SubstitutionModel substitutionModel, boolean diagonalElements, Transform transform) {
         this.substitutionModel = substitutionModel;
+        this.diagonalElements = diagonalElements;
+        this.transform = transform;
     }
+
+
 
     @Override
     public LogColumn[] getColumns() {
@@ -45,26 +50,54 @@ public class InfinitesimalRatesLogger implements Loggable {
             generator = new double[stateCount * stateCount];
         }
 
-        LogColumn[] columns = new LogColumn[stateCount * stateCount];
+        int nOutputs = stateCount * stateCount;
+        if (!diagonalElements) nOutputs -= stateCount;
+        LogColumn[] columns = new LogColumn[nOutputs];
 
+        int index = 0;
         for (int i = 0; i < stateCount; ++i) {
             for (int j = 0; j < stateCount; ++j) {
-                final int k = i * stateCount + j;
+                if (!diagonalElements && i == j) {
+                    continue;
+                }
+                final int row = i;
+                final int col = j;
+                final int k = index++;  // Use index to store column number
                 columns[k] = new NumberColumn(substitutionModel.getId() + "." + (i + 1) + "." + (j + 1)) {
                     @Override
                     public double getDoubleValue() {
                         if (k == 0) { // Refresh at first-element read
                             substitutionModel.getInfinitesimalMatrix(generator);
                         }
-                        return generator[k];
+                        if (transform != null) {
+                            return transform.transform(generator[row * stateCount + col]);
+                        } else {
+                            return generator[row * stateCount + col];
+                        }
                     }
                 };
             }
         }
 
+//        for (int i = 0; i < stateCount; ++i) {
+//            for (int j = 0; j < stateCount; ++j) {
+//                final int k = i * stateCount + j;
+//                columns[k] = new NumberColumn(substitutionModel.getId() + "." + (i + 1) + "." + (j + 1)) {
+//                    @Override
+//                    public double getDoubleValue() {
+//                        if (k == 0) { // Refresh at first-element read
+//                            substitutionModel.getInfinitesimalMatrix(generator);
+//                        }
+//                        return generator[k];
+//                    }
+//                };
+//            }
+//        }
+
         return columns;
     }
-
+    private final Transform transform;
     private final SubstitutionModel substitutionModel;
+    private final Boolean diagonalElements;
     private double[] generator;
 }

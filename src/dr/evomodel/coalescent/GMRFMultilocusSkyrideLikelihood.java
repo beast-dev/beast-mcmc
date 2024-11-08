@@ -25,9 +25,12 @@
 
 package dr.evomodel.coalescent;
 
+import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
+import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.inference.model.Likelihood;
@@ -37,6 +40,7 @@ import dr.inference.model.Parameter;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
+import dr.xml.Reportable;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.SymmTridiagMatrix;
 
@@ -50,7 +54,7 @@ import java.util.List;
  */
 
 public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
-        implements MultiLociTreeSet, CoalescentIntervalProvider, Citable {
+        implements MultiLociTreeSet, CoalescentIntervalProvider, Citable, Reportable {
 
     public static final boolean DEBUG = false;
 
@@ -1181,6 +1185,21 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
 
             return currentLike;
         }
+    }
+
+    public String getReport() {
+
+        MultilocusNonparametricCoalescentLikelihood lik =
+                new MultilocusNonparametricCoalescentLikelihood(
+                        intervalsList,
+                        popSizeParameter,
+                        new Parameter.Default(gridPoints),
+                        ploidyFactors);
+
+        double logLik = lik.getLogLikelihood();
+
+        double total = getLogLikelihood();
+        return logLik + " " + total + " " + logLikelihood + " " + logFieldLikelihood;
     }
 
     class SkygridCovariateHelper extends SkygridHelper {

@@ -323,6 +323,16 @@ final class CladeSystem {
         return cladeMap.keySet().size();
     }
 
+    public int getCommonCladeCount(CladeSystem referenceCladeSystem) {
+        int count = 0;
+        for (Object key : cladeMap.keySet()) {
+            if (referenceCladeSystem.cladeMap.keySet().contains(key)) {
+                count ++;
+            }
+        }
+        return count;
+    }
+
     //
     // Private stuff
     //
@@ -333,4 +343,5 @@ final class CladeSystem {
    private final Map<Object, Clade> cladeMap = new HashMap<>();
 
     Clade rootClade;
+
 }

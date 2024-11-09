@@ -28,7 +28,6 @@
 
 package dr.inference.operators.hmc;
 
-import dr.app.bss.Utils;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 import dr.inference.operators.AdaptationMode;
@@ -340,7 +339,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
             if (DEBUG) {
                 System.out.println("time: " + eventTime);
                 System.out.print("start: ");
-                Utils.printArray(position);
+                System.out.println(new WrappedVector.Raw(position));
                 System.out.println(momentum);
             }
 
@@ -348,7 +347,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
 
             if (DEBUG) {
                 System.out.print("end: ");
-                Utils.printArray(position);
+                System.out.println(new WrappedVector.Raw(position));
                 System.out.println(momentum);
             }
 

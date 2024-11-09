@@ -490,7 +490,7 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println("Best tree: " + bestTree.getId() + " (tree number " + bestTreeNumber + ")");
         progressStream.println("Best tree's log clade credibility: " + String.format("%.4f", bestScore));
         reportStatistics(cladeSystem, bestTree);
-        reportStatisticTables(cladeSystem, bestTree);
+//        reportStatisticTables(cladeSystem, bestTree);
         progressStream.println();
 
         return bestTree;

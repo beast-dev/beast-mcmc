@@ -1025,8 +1025,11 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
                         break;
 
+                    case MIXED_EFFECTS_CLOCK:
+                        break;
+
                     default:
-                        throw new IllegalArgumentException("Unknown clock model");
+                        throw new IllegalArgumentException("Unknown clock model: " + model.getClockType());
                 }
             }
 

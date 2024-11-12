@@ -1,5 +1,5 @@
 /*
- * RealDifferencesToSimplexTransform.java
+ * FreeRateSimplexTransform.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about

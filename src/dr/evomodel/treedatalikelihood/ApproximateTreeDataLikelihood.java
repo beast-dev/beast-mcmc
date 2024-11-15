@@ -36,7 +36,7 @@ import dr.xml.*;
 import dr.math.NumericalDerivative;
 
 /**
- *  @author Alexander Fisher
+ * @author Alexander Fisher
  */
 
 public class ApproximateTreeDataLikelihood {
@@ -49,13 +49,14 @@ public class ApproximateTreeDataLikelihood {
 
     // begin parser stuff
     public static final String APPROXIMATE_LIKELIHOOD = "approximateTreeDataLikelihood";
-    // end parser stuff
-public ApproximateTreeDataLikelihood(MaximizerWrtParameter maximizer) {
 
-    this.maximizer = maximizer;
-    this.parameter = maximizer.getGradient().getParameter();
-    this.numericalHessian = new double[parameter.getDimension()];
-    // todo: get Numerical Hessian.
+    // end parser stuff
+    public ApproximateTreeDataLikelihood(MaximizerWrtParameter maximizer) {
+
+        this.maximizer = maximizer;
+        this.parameter = maximizer.getGradient().getParameter();
+        this.numericalHessian = new double[parameter.getDimension()];
+        // todo: get Numerical Hessian.
 //    NumericalDerivative.getNumericalHessian();
         updateParameterMAP();
         updateMarginalLikelihood();
@@ -63,14 +64,14 @@ public ApproximateTreeDataLikelihood(MaximizerWrtParameter maximizer) {
     }
 
     private void updateMarginalLikelihood() {
-     double diagonalDeterminant = 1;
-             for(int i = 0; i < parameter.getDimension(); i++) {
-                 diagonalDeterminant *= numericalHessian[i];
-             }
+        double diagonalDeterminant = 1;
+        for (int i = 0; i < parameter.getDimension(); i++) {
+            diagonalDeterminant *= numericalHessian[i];
+        }
         // 2pi^{-k/2} * det(Sigma)^{-1/2} * likelihood(map) * prior(map)
         // todo: eval posterior(map)
         // todo: log likelihood
-      this.marginalLikelihood = 2 / (Math.pow(Math.PI, -1 * parameter.getDimension() / 2) * Math.sqrt(diagonalDeterminant));
+        this.marginalLikelihood = 2 / (Math.pow(Math.PI, -1 * parameter.getDimension() / 2) * Math.sqrt(diagonalDeterminant));
     }
 
     private void updateParameterMAP() {
@@ -80,6 +81,7 @@ public ApproximateTreeDataLikelihood(MaximizerWrtParameter maximizer) {
     public double getMarginalLikelihood() {
         return marginalLikelihood;
     }
+
     public double[] getParameterMAP() {
         return parameterMAP;
     }

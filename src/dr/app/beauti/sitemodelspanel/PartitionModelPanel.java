@@ -40,7 +40,6 @@ import dr.app.beauti.types.BinaryModelType;
 import dr.app.beauti.types.FrequencyPolicyType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
-import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
 import jam.panels.OptionsPanel;

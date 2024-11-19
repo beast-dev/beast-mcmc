@@ -27,7 +27,6 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.types.*;
 import dr.evolution.tree.Tree;
 
@@ -194,9 +193,6 @@ public class PartitionTreeModel extends PartitionOptions {
         // get parameter so their id prefix can be set.
         
         getParameter("tree");
-        if(isUsingEmpiricalTrees()){
-            return parameters;
-        }
         getParameter("treeModel.internalNodeHeights");
         getParameter("treeModel.allInternalNodeHeights");
 

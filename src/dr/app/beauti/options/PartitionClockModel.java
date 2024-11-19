@@ -557,7 +557,7 @@ public class PartitionClockModel extends PartitionOptions {
         List<Operator> ops = new ArrayList<Operator>();
 
         if (options.hasData()) {
-            // if (getDataType().getType() != DataType.TREE) {
+            if (getDataType().getType() != DataType.TREE || getPartitionTreeModel().isUsingThorneyBEAST()) {
                 Operator rateOperator = getOperator("clock.rate");
 
                 switch (clockType) {
@@ -670,13 +670,11 @@ public class PartitionClockModel extends PartitionOptions {
 
                     case AUTOCORRELATED:
                         throw new UnsupportedOperationException("Autocorrelated clock not implemented yet");
-//                        break;
-
                     default:
                         throw new IllegalArgumentException("Unknown clock model");
                 }
 
-            // }
+            }
         }
 
         Parameter allMuNus = getParameter(options.useNuRelativeRates() ? "allNus" : "allMus");

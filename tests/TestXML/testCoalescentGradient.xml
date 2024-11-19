@@ -3025,13 +3025,18 @@
         <constraintsTree>
             <tree idref="dataTree"/>
         </constraintsTree>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
     </constrainedTreeModel>
 
 
-    <!--  Statistic for root height of the tree        -->
-    <treeHeightStatistic id="treeModel.rootHeight">
-        <treeModel idref="treeModel"/>
-    </treeHeightStatistic>
     <!--  Statistic for sum of the branch lengths of the tree (tree length)        -->
     <treeLengthStatistic id="treeLength">
         <treeModel idref="treeModel"/>

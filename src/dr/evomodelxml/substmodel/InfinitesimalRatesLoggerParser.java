@@ -36,15 +36,13 @@ public class InfinitesimalRatesLoggerParser extends AbstractXMLObjectParser {
 
     private static final String NAME = "infinitesimalRatesLogger";
     private static final String DIAGONAL_ELEMENTS = "diagonalElements";
-
+    private static final String ORDER = "order";
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 
-        boolean diagonalElements = true;
-        if (xo.hasAttribute(DIAGONAL_ELEMENTS)) {
-            diagonalElements = xo.getAttribute(DIAGONAL_ELEMENTS, true);
-        }
+        boolean diagonalElements = xo.getAttribute(DIAGONAL_ELEMENTS, true);
+        String order = xo.getAttribute(ORDER, "rowCol");
 
         Transform.ParsedTransform pt = (Transform.ParsedTransform) xo.getChild(Transform.ParsedTransform.class);
         Transform transform = null;
@@ -52,7 +50,7 @@ public class InfinitesimalRatesLoggerParser extends AbstractXMLObjectParser {
             transform = pt.transform;
         }
 
-        return new InfinitesimalRatesLogger(substitutionModel, diagonalElements, transform);
+        return new InfinitesimalRatesLogger(substitutionModel, transform, diagonalElements, order);
     }
 
     @Override
@@ -62,6 +60,7 @@ public class InfinitesimalRatesLoggerParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newBooleanRule(DIAGONAL_ELEMENTS, true),
+            AttributeRule.newStringRule(ORDER, true),
             new ElementRule(SubstitutionModel.class),
             new ElementRule(Transform.ParsedTransform.class, true)
     };

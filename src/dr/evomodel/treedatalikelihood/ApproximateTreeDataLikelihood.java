@@ -31,6 +31,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.discrete.MaximizerWrtParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
+import dr.inference.hmc.JointGradient;
 import dr.inference.model.*;
 import dr.inference.operators.hmc.NumericalHessianFromGradient;
 import dr.math.MultivariateFunction;
@@ -38,6 +39,8 @@ import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
 import dr.xml.*;
 import dr.math.NumericalDerivative;
+
+import java.util.List;
 
 import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
 
@@ -67,7 +70,7 @@ public class ApproximateTreeDataLikelihood extends AbstractModelLikelihood {
         this.parameter = gradient.getParameter();
         this.marginalLikelihoodConst = Math.log(2) - parameter.getDimension() / 2 *Math.log(Math.PI);
         // todo: get Numerical Hessian.
-        if (gradient instanceof HessianWrtParameterProvider) {
+        if (isGradientProvidingHessian(gradient)) {
             this.hessianWrtParameterProvider = (HessianWrtParameterProvider) gradient;
         } else {
             this.hessianWrtParameterProvider = new NumericalHessianFromGradient(gradient);
@@ -75,6 +78,25 @@ public class ApproximateTreeDataLikelihood extends AbstractModelLikelihood {
         updateParameterMAP();
         updateMarginalLikelihood();
         addVariable(parameter);
+    }
+
+    private boolean isGradientProvidingHessian(GradientWrtParameterProvider gradient) {
+        boolean isHessianProvider = false;
+        if (gradient instanceof HessianWrtParameterProvider) {
+            if (gradient instanceof JointGradient) {
+                JointGradient jointGradient = (JointGradient) gradient;
+                boolean isNotHessianProvider = false;
+                for (GradientWrtParameterProvider gradientWrtParameterProvider : jointGradient.getDerivativeList()) {
+                    if (!(gradientWrtParameterProvider instanceof HessianWrtParameterProvider)) {
+                        isNotHessianProvider = true;
+                    }
+                }
+                isHessianProvider = !isNotHessianProvider;
+            } else {
+                isHessianProvider = true;
+            }
+        }
+        return isHessianProvider;
     }
 
     private HessianWrtParameterProvider constructHessian() {

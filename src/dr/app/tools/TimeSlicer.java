@@ -55,6 +55,8 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static dr.evolution.util.TimeScale.DAYS_PER_YEAR;
+
 /**
  * @author Marc A. Suchard
  * @author Philippe Lemey
@@ -1074,7 +1076,7 @@ public class TimeSlicer {
 
                 if (!ancient) {
                     calendar.set(Calendar.YEAR, (int) Math.floor(date));
-                    calendar.set(Calendar.DAY_OF_YEAR, (int) (365 * (date - Math.floor(date))));
+                    calendar.set(Calendar.DAY_OF_YEAR, (int) (DAYS_PER_YEAR * (date - Math.floor(date))));
 
                     begin.addContent(dateFormat.format(calendar.getTime()));
                 } else {
@@ -1289,7 +1291,7 @@ public class TimeSlicer {
 
             if (!ancient) {
                 calendar.set(Calendar.YEAR, (int) Math.floor(date));
-                calendar.set(Calendar.DAY_OF_YEAR, (int) (365 * (date - Math.floor(date))));
+                calendar.set(Calendar.DAY_OF_YEAR, (int) (DAYS_PER_YEAR * (date - Math.floor(date))));
 
                 begin.addContent(dateFormat.format(calendar.getTime()));
             } else {
@@ -1368,7 +1370,7 @@ public class TimeSlicer {
 
                 if (!ancient) {
                     calendar.set(Calendar.YEAR, (int) Math.floor(date));
-                    calendar.set(Calendar.DAY_OF_YEAR, (int) (365 * (date - Math.floor(date))));
+                    calendar.set(Calendar.DAY_OF_YEAR, (int) (DAYS_PER_YEAR * (date - Math.floor(date))));
 
                     begin.addContent(dateFormat.format(calendar.getTime()));
                 } else {

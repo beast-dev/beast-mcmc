@@ -240,7 +240,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
                     //currently use the general BEAST -threshold argument
                     //TODO Evaluate whether a checkpoint-specific threshold option is required or useful
-                    double threshold = 0.0;
+                    double threshold = 1E-10;
                     if (System.getProperty("mcmc.evaluation.threshold") != null) {
                         threshold = Double.parseDouble(System.getProperty("mcmc.evaluation.threshold"));
                     }

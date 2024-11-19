@@ -379,6 +379,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
     }
 
     public void setSize(double size) {
+        assert Double.isFinite(size);
         this.size = size;
     }
 

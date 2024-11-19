@@ -53,12 +53,14 @@ public interface TreeIntervalList extends IntervalList{
      */
     int[] getNodeNumbersForInterval(int interval);
 
-    /**
-     * Set the flag that determines whether or not the interval node mapping should be built.
-     * In some cases building the mapping comes with overhead that is best to pass up if the mapping is not needed.
-     * @param buildIntervalNodeMapping boolean
-     */
-    void setBuildIntervalNodeMapping(boolean buildIntervalNodeMapping);
+    // This option is set in the constructor as final
+//    /**
+//     * Set the flag that determines whether or not the interval node mapping should be built.
+//     * In some cases building the mapping comes with overhead that is best to pass up if the mapping is not needed.
+//     * @param buildIntervalNodeMapping boolean
+//     */
+//    void setBuildIntervalNodeMapping(boolean buildIntervalNodeMapping);
+    boolean isBuildIntervalNodeMapping();
 
     /**
      * Return the node that ends a coalescent interval. Throws error if the interval is not a coalescent interval

@@ -557,7 +557,6 @@ public class FlexibleTree implements MutableTree {
         parent.setLength(l2);
 
         heightsKnown = false;
-        String t = toString();
 
         endTreeEdit();
     }

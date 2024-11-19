@@ -128,6 +128,10 @@ public class TaxaFilteredSitePatterns implements PatternList {
 
     }
 
+    public int getPatternIndex(int siteIndex){
+        // Not implemented yet
+        return -1;
+    }
     @Override
     public DataType getDataType() {
         return original.getDataType();

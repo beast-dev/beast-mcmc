@@ -28,6 +28,7 @@
 package dr.evolution.coalescent;
 
 import dr.evolution.util.Units;
+import dr.inference.model.Variable;
 
 import java.util.Arrays;
 
@@ -37,7 +38,7 @@ import java.util.Arrays;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class Intervals implements IntervalList {
+public class Intervals implements MutableIntervalList {
 
 
     public Intervals(int maxEventCount,boolean eventsNeedSorting) {
@@ -61,19 +62,14 @@ public class Intervals implements IntervalList {
         this(maxEventCount, true);
     }
 
-    public void copyIntervals(Intervals source) {
+    @Override
+    public void copyIntervals(MutableIntervalList intervalList) {
+        Intervals source = (Intervals)intervalList;
         intervalsKnown = source.intervalsKnown;
         eventCount = source.eventCount;
         sampleCount = source.sampleCount;
         intervalCount = source.intervalCount;
         startTime = source.startTime;
-
-        //don't copy the actual events..
-        /*
-          for (int i = 0; i < events.length; i++) {
-              events[i].time = source.events[i].time;
-              events[i].type = source.events[i].type;
-          }*/
 
         if (intervalsKnown) {
             System.arraycopy(source.intervals, 0, intervals, 0, intervals.length);

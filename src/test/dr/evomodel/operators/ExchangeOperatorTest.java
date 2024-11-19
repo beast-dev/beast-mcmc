@@ -84,9 +84,12 @@ public class ExchangeOperatorTest extends OperatorAssert {
         int count = 0;
         int reps = 1000000;
 
-        for (int i = 0; i < reps; i++) {
+        DefaultTreeModel treeModel = new DefaultTreeModel("treeModel", tree5);
 
-            DefaultTreeModel treeModel = new DefaultTreeModel("treeModel", tree5);
+        for (int i = 0; i < reps; i++) {
+            treeModel.beginTreeEdit();
+            treeModel.adoptTreeStructure(tree5);
+            treeModel.endTreeEdit();
             ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 1.0);
             operator.doOperation();
 
@@ -141,9 +144,12 @@ public class ExchangeOperatorTest extends OperatorAssert {
 
         count = 0;
 
+        treeModel = new DefaultTreeModel("treeModel", tree5_2);
         for (int i = 0; i < reps; i++) {
+            treeModel.beginTreeEdit();
+            treeModel.adoptTreeStructure(tree5_2);
+            treeModel.endTreeEdit();
 
-            DefaultTreeModel treeModel = new DefaultTreeModel("treeModel", tree5_2);
             ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 1.0);
             operator.doOperation();
 

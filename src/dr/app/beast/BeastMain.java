@@ -174,8 +174,8 @@ public class BeastMain {
             }
 
             if (mc3Options == null) {
-                // just parse the file running all threads...
 
+                // just parse the file running all threads...
                 parser.parse(fileReader, true);
 
             } else {
@@ -766,8 +766,8 @@ public class BeastMain {
             }
 
             if (arguments.hasOption("citations_file")) {
-                String debugStateFile = arguments.getStringOption("citations_file");
-                System.setProperty("citations.filename", debugStateFile);
+                String citationsFile = arguments.getStringOption("citations_file");
+                System.setProperty("citations.filename", citationsFile);
             }
 
             if (useMPI) {

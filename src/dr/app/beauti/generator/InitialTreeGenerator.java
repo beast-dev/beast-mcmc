@@ -282,7 +282,7 @@ public class InitialTreeGenerator extends Generator {
 
         for (Taxa taxa2 : options.taxonSets) {
             boolean sameTree = model.equals(options.taxonSetsTreeModel.get(taxa2));
-            boolean isMono = options.taxonSetsMono.get(taxa2);
+            boolean isMono = options.taxonSetsMono.get(taxa2) != null;
             boolean hasHeight = options.taxonSetsHeights.get(taxa2) != null;
             boolean isSubset = taxa.containsAll(taxa2);
             if (sameTree && (isMono || hasHeight) && taxa2 != taxa && isSubset) {

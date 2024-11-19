@@ -29,9 +29,6 @@ package dr.app.gui.chart;
 
 public class LogAxis extends Axis.AbstractAxis {
 
-//	private int extraMinorTickCount;
-
-
 	/**
 	 * Empty constructor
 	 */

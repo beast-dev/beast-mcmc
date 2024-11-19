@@ -13,12 +13,20 @@ out/
 *.tree
 *.xml
 !examples/**/*.xml
-!ci/**/*.xml
+!tests/**/*.xml
 
 zig_zag
 src/revision.txt
 *.dmg
+*.zip
+*.tgz
 release/Mac
+release/Linux
+release/Windows
 src/revision.txt
 .vscode/launch.json
 .vscode/settings.json
+
+*.citations.txt
+*.ops
+*.MLE

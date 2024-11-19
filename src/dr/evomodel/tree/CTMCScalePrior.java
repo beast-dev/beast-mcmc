@@ -80,7 +80,7 @@ public class CTMCScalePrior extends AbstractModelLikelihood
 
         addVariable(ctmcScale);
 
-        if (taxonList != null) {
+        if (taxonList != null && taxonList.getTaxonCount() < treeModel.getTaxonCount()) {
             this.taxa = new HashSet<>();
             for (Taxon taxon : taxonList) {
                 this.taxa.add(taxon);
@@ -195,7 +195,8 @@ public class CTMCScalePrior extends AbstractModelLikelihood
     private double getTreeLength() {
         if (!treeLengthKnown) {
             if (taxa == null) {
-                treeLength = TreeUtils.getTreeLength(treeModel, treeModel.getRoot());
+                treeLength = TreeUtils.getTreeLength(treeModel);
+//                assert Math.abs(treeLength - TreeUtils.getTreeLength(treeModel, treeModel.getRoot())) < 1E-6;
             } else {
                 treeLength = TreeUtils.getSubTreeLength(treeModel, taxa);
             }

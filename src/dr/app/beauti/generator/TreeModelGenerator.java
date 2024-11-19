@@ -95,39 +95,37 @@ public class TreeModelGenerator extends Generator {
                 new Attribute[] {
                         new Attribute.Default<>(XMLParser.ID, treeModelName),
                 }, false);
+                writer.writeIDref(OldCoalescentSimulatorParser.COALESCENT_TREE, prefix + STARTING_TREE); 
+
                 writer.writeTag(ConstrainedTreeModelParser.CONSTRAINTS_TREE,false);
                         writer.writeIDref(NewickParser.NEWICK, prefix + "constraintsTree" );// TODO magic values!
                 writer.writeCloseTag(ConstrainedTreeModelParser.CONSTRAINTS_TREE);
 
-                writer.writeIDref(OldCoalescentSimulatorParser.COALESCENT_TREE, prefix + STARTING_TREE); 
+                writer.writeComment("Parameter proxies for node heights");
+                
+                writer.writeOpenTag(TreeModelParser.ROOT_HEIGHT);
+                        writer.writeTag(ParameterParser.PARAMETER,
+                                new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + TreeModelParser.ROOT_HEIGHT), true);
+                writer.writeCloseTag(TreeModelParser.ROOT_HEIGHT);
+                
+                writer.writeOpenTag(TreeModelParser.NODE_HEIGHTS, new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"));
+                        writer.writeTag(ParameterParser.PARAMETER,
+                                new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + "internalNodeHeights"), true);
+                writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
+        
+                writer.writeOpenTag(TreeModelParser.NODE_HEIGHTS,
+                        new Attribute[]{
+                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
+                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "true")
+                        });
+                        writer.writeTag(ParameterParser.PARAMETER,
+                                new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + "allInternalNodeHeights"), true);
+                writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
+
+        // Insertion point for leaf sampling (not currently implemented - parser will throw an error)
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_MODEL, model, writer);
 
         writer.writeCloseTag(ConstrainedTreeModel.CONSTRAINED_TREE_MODEL);
-
-        writer.writeComment("Parameter proxies for node heights");
-
-        
-        writer.writeOpenTag(RootHeightProxyParameter.PARSER.getParserName(),new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + TreeModelParser.ROOT_HEIGHT));
-                writer.writeIDref(ConstrainedTreeModelParser.CONSTRAINTS_TREE, treeModelName);
-        writer.writeCloseTag(RootHeightProxyParameter.PARSER.getParserName());
-
-        writer.writeOpenTag(NodeHeightProxyParameter.PARSER.getParserName(),  
-        new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + "internalNodeHeights"),
-                new Attribute.Default<String>(NodeHeightProxyParameter.INCLUDE_ROOT, "false")
-        });
-        writer.writeIDref(ConstrainedTreeModelParser.CONSTRAINTS_TREE, treeModelName);
-
-        writer.writeCloseTag(NodeHeightProxyParameter.PARSER.getParserName());
-
-
-        writer.writeOpenTag(NodeHeightProxyParameter.PARSER.getParserName(),  
-        new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + "allInternalNodeHeights"),
-                new Attribute.Default<String>(NodeHeightProxyParameter.INCLUDE_ROOT, "true")
-        });
-        writer.writeIDref(ConstrainedTreeModelParser.CONSTRAINTS_TREE, treeModelName);
-
-        writer.writeCloseTag(NodeHeightProxyParameter.PARSER.getParserName());
 
 
         writeTreeModelStatistics(model, writer);

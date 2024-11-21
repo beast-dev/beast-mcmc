@@ -269,6 +269,7 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
 
         IntervalList intervals = new TreeIntervals(tree, null, null);
         BigFastTreeIntervals bigFastTreeIntervals = new BigFastTreeIntervals(tree);
+        IntervalList normalIntervalList = new TreeIntervals(tree, true);
 
         SubtreeLeapOperator op = new SubtreeLeapOperator (tree,1,0.0001,SubtreeLeapOperator.DistanceKernelType.NORMAL,AdaptationMode.ADAPTATION_OFF,0.2);
         UniformNodeHeightOperator nh = new UniformNodeHeightOperator(tree,1);
@@ -283,7 +284,7 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
 //            bigFastIntervals.makeDirty();
             bigFastTreeIntervals.calculateIntervals();
             for (int j = 0; j < bigFastTreeIntervals.getIntervalCount(); j++) {
-                if (intervals.getInterval(j) != bigFastTreeIntervals.getInterval(j)) {
+                if (intervals.getInterval(j) != bigFastTreeIntervals.getInterval(j)|| normalIntervalList.getInterval(j) != bigFastTreeIntervals.getInterval(j)) {
                     System.out.println(i);
                     System.out.println("interval wrong");
                     pass = false;
@@ -291,10 +292,10 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
                 }
             }
             for (int j = 0; j < bigFastTreeIntervals.getIntervalCount(); j++) {
-                if (intervals.getLineageCount(j) != bigFastTreeIntervals.getLineageCount(j)) {
+                if (intervals.getLineageCount(j) != bigFastTreeIntervals.getLineageCount(j) || normalIntervalList.getLineageCount(j) != bigFastTreeIntervals.getLineageCount(j)) {
                     System.out.println(i);
                     System.out.println("lineage Counts wrong: " + j);
-                    System.out.println("expected: " + intervals.getLineageCount(j));
+                    System.out.println("expected: " + normalIntervalList.getLineageCount(j));
                     System.out.println("got " + bigFastTreeIntervals.getLineageCount(j));
 
                     pass = false;
@@ -302,7 +303,7 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
                 }
             }
             for (int j = 0; j < bigFastTreeIntervals.getIntervalCount(); j++) {
-                if (intervals.getIntervalTime(j) != bigFastTreeIntervals.getIntervalTime(j + 1)) {
+                if (intervals.getIntervalTime(j) != bigFastTreeIntervals.getIntervalTime(j) || normalIntervalList.getIntervalTime(j) != bigFastTreeIntervals.getIntervalTime(j)) {
                     System.out.println(i);
                     System.out.println("times wrong");
                     pass = false;

@@ -70,7 +70,9 @@ public class ApproximateTreeDataLikelihood extends AbstractModelLikelihood {
         this.parameter = gradient.getParameter();
         this.marginalLikelihoodConst = (parameter.getDimension() - 1) * Math.log(2 * Math.PI);
         // todo: get Numerical Hessian.
-        if (isGradientProvidingHessian(gradient)) {
+        if (maximizer.getTransform() != null) {
+            this.hessianWrtParameterProvider = constructHessian();
+        } else if (isGradientProvidingHessian(gradient)) {
             this.hessianWrtParameterProvider = (HessianWrtParameterProvider) gradient;
         } else {
             this.hessianWrtParameterProvider = new NumericalHessianFromGradient(gradient);
@@ -100,63 +102,33 @@ public class ApproximateTreeDataLikelihood extends AbstractModelLikelihood {
     }
 
     private HessianWrtParameterProvider constructHessian() {
+        GradientWrtParameterProvider gradientWrtParameterProvider = new GradientWrtParameterProvider() {
 
-        final MultivariateFunction function = new MultivariateFunction() {
-            @Override
-            public double evaluate(double[] argument) {
-
-                setParameter(new WrappedVector.Raw(argument), parameter);
-                return getLogLikelihood();
-            }
-
-            @Override
-            public int getNumArguments() {
-                return parameter.getDimension();
-            }
-
-            @Override
-            public double getLowerBound(int n) {
-                return Double.NEGATIVE_INFINITY;
-            }
-
-            @Override
-            public double getUpperBound(int n) {
-                return Double.POSITIVE_INFINITY;
-            }
-        };
-
-        return new HessianWrtParameterProvider() {
+            private TransformedMultivariateParameter transformedParameter = new TransformedMultivariateParameter(parameter, (Transform.MultivariableTransform) maximizer.getTransform());
 
             @Override
             public Likelihood getLikelihood() {
-                return likelihood;
+                throw new RuntimeException("should not be called");
             }
 
             @Override
             public Parameter getParameter() {
-                return parameter;
+                return transformedParameter;
             }
 
             @Override
             public int getDimension() {
-                return parameter.getDimension();
+                return transformedParameter.getDimension();
             }
 
             @Override
             public double[] getGradientLogDensity() {
-                return getGradientLogDensity();
-            }
-
-            @Override
-            public double[] getDiagonalHessianLogDensity() {
-                return NumericalDerivative.diagonalHessian(function, parameter.getParameterValues());
-            }
-
-            @Override
-            public double[][] getHessianLogDensity() {
-                return NumericalDerivative.getNumericalHessian(function, parameter.getParameterValues());
+                double[] untransformedGradient = maximizer.getGradient().getGradientLogDensity();
+                return maximizer.getTransform().updateGradientLogDensity(untransformedGradient, parameter.getParameterValues(), 0, parameter.getDimension());
             }
         };
+
+        return new NumericalHessianFromGradient(gradientWrtParameterProvider);
     }
 
     private void updateMarginalLikelihood() {

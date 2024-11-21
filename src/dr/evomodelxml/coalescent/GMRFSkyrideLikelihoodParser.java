@@ -26,6 +26,7 @@
 package dr.evomodelxml.coalescent;
 
 import dr.evolution.coalescent.IntervalList;
+import dr.evolution.coalescent.TreeIntervalList;
 import dr.evomodel.coalescent.*;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
@@ -104,7 +105,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
 
         boolean buildIntervalNodeMapping = xo.getAttribute(BUILD_MAPPING, false);
 
-        List<IntervalList> intervalsList = new ArrayList<IntervalList>();
+        List<TreeIntervalList> intervalsList = new ArrayList<TreeIntervalList>();
 
         List<Tree> treeList = new ArrayList<Tree>();
         if(xo.getChild(POPULATION_TREE) != null) {
@@ -136,11 +137,11 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
 
         if (xo.getChild(INTERVALS) != null) {
             cxo = xo.getChild(INTERVALS);
-            intervalsList = new ArrayList<IntervalList>();
+            intervalsList = new ArrayList<TreeIntervalList>();
             for (int i = 0; i < cxo.getChildCount(); i++) {
                 Object testObject = cxo.getChild(i);
-                if (testObject instanceof IntervalList) {
-                    intervalsList.add((IntervalList) testObject);
+                if (testObject instanceof TreeIntervalList) {
+                    intervalsList.add((TreeIntervalList) testObject);
                 }
             }
         }

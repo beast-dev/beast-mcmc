@@ -29,6 +29,8 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
+import dr.evolution.coalescent.TreeIntervalList;
+import dr.evolution.tree.Tree;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
@@ -96,9 +98,9 @@ public class GMRFSkygridLikelihood extends GMRFSkyrideLikelihood
 
     // private List<Tree> treeList;
     // private List<TreeIntervals> intervalsList;
-    private List<IntervalList> intervalsList;
+    private List<TreeIntervalList> intervalsList;
 
-    public GMRFSkygridLikelihood(List<IntervalList> intervalsList,
+    public GMRFSkygridLikelihood(List<TreeIntervalList> intervalsList,
                                  Parameter popParameter,
                                  Parameter groupParameter,
                                  Parameter precParameter,
@@ -156,7 +158,8 @@ public class GMRFSkygridLikelihood extends GMRFSkyrideLikelihood
         addVariable(ploidyFactors);
 
         this.intervalsList = intervalsList;
-        //this.numTrees = setTree(treeList);
+        //this.numTrees = setTree(treeList); 
+        //TODO are we accounting for what setTree does?
 
         for (IntervalList intervalList : intervalsList) {
             addModel((Model) intervalList);
@@ -219,7 +222,7 @@ public class GMRFSkygridLikelihood extends GMRFSkyrideLikelihood
 
 
     //rewrite this constructor without duplicating so much code
-    public GMRFSkygridLikelihood(List<IntervalList> intervalsList,
+    public GMRFSkygridLikelihood(List<TreeIntervalList> intervalsList,
                                  Parameter popParameter,
                                  Parameter groupParameter,
                                  Parameter precParameter,
@@ -921,13 +924,13 @@ public class GMRFSkygridLikelihood extends GMRFSkyrideLikelihood
         return intervalsList.size();
     }
 
-   /* public Tree getTree(int nt) {
-        return treeList.get(nt);
+   public Tree getTree(int nt) {
+        return intervalsList.get(nt).getTree();
     }
 
-    public TreeIntervals getTreeIntervals(int nt) {
+    public TreeIntervalList getTreeIntervals(int nt) {
         return intervalsList.get(nt);
-    } */
+    } 
 
     public double getPopulationFactor(int nt) {
         return ploidyFactors.getParameterValue(nt);

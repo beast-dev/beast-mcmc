@@ -32,6 +32,7 @@ import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
+import dr.evomodel.coalescent.IntervalNodeMapProvider;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
@@ -49,7 +50,7 @@ import java.util.List;
  * Smart intervals that don't need a full recalculation. 
  * author: JT
  */
-public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIntervalList {
+public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIntervalList, IntervalNodeMapProvider {
     public BigFastTreeIntervals(TreeModel tree) {
         this("bigFastIntervals",tree);
     }
@@ -168,6 +169,14 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     public boolean isCoalescentOnly() {
         return true;
     }
+
+    public void setBuildIntervalNodeMapping(boolean buildIntervalNodeMapping) {
+        // nothing done this is done by default with this tree model
+    }
+    public IntervalNodeMapProvider getIntervalNodeMap() {
+        return this;
+    }
+
 
     // Interval Node mapping
 
@@ -698,6 +707,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     private final TreeModel tree;
     protected boolean dirty;
     private int intervalCount = 0;
+
 
 
 }

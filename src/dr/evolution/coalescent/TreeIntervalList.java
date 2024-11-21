@@ -29,6 +29,7 @@ package dr.evolution.coalescent;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.coalescent.IntervalNodeMapProvider;
 
 /**
  * This is interface for an Interval list that wraps a tree and provides
@@ -88,4 +89,11 @@ public interface TreeIntervalList extends IntervalList{
      * @return the tree
      */
     Tree getTree();
+
+    /** gets the intervalNodeMap
+     * @return the intervalNodeMap
+     */
+    IntervalNodeMapProvider getIntervalNodeMap();
+
+    void setBuildIntervalNodeMapping(boolean buildIntervalNodeMapping);
 }

@@ -138,7 +138,8 @@ public class ApproximateTreeDataLikelihood extends AbstractModelLikelihood {
             logDiagonalDeterminant += Math.log(Math.abs(diagonalHessian[i]));
         }
         // 2pi^{-k/2} * det(Sigma)^{-1/2} * likelihood(map) * prior(map)
-        this.marginalLikelihood = marginalLikelihoodConst + 0.5 * logDiagonalDeterminant + likelihood.getLogLikelihood();
+        this.marginalLikelihood = marginalLikelihoodConst + 0.5 * logDiagonalDeterminant + likelihood.getLogLikelihood()
+         + (maximizer.getTransform() == null ? 0 : maximizer.getTransform().logJacobian(parameter.getParameterValues(), 0, parameter.getDimension()));
         likelihoodKnown = true;
     }
 

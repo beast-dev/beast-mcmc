@@ -258,7 +258,7 @@ public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood im
         return logLikelihood + logFieldLikelihood;
     }
 
-    protected double peakLogCoalescentLikelihood() {
+    public double peakLogCoalescentLikelihood() {
         return logLikelihood;
     }
 

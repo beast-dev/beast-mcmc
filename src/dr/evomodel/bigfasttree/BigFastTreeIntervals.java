@@ -166,8 +166,13 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     }
 
     @Override
+       /**
+     * Checks whether this set of coalescent intervals coalescent only
+     * (i.e. whether is has exactly one or more coalescent event in each
+     * subsequent interval)
+     */
     public boolean isCoalescentOnly() {
-        return true;
+        return false;
     }
 
     public void setBuildIntervalNodeMapping(boolean buildIntervalNodeMapping) {

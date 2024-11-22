@@ -205,10 +205,21 @@ public class FastIntervals implements MutableIntervalList {
     public boolean isBinaryCoalescent() {
         return true;
     }
-
+    /**
+     * Checks whether this set of coalescent intervals coalescent only
+     * (i.e. whether is has exactly one or more coalescent event in each
+     * subsequent interval)
+     */
     public boolean isCoalescentOnly() {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        for (int i = 0; i < intervalCount; i++) {
+            if (getCoalescentEvents(i) < 1) return false;
+        }
+
         return true;
-    }
+        }
 
     public void calculateIntervals() {
 

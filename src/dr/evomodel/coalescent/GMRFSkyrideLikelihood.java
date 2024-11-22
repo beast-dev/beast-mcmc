@@ -55,7 +55,7 @@ import java.util.List;
  * @author Vladimir Minin
  * @author Marc Suchard
  */
-public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implements  UnifiedGMRFSkyrideLikelihood,Citable {
+public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implements  UnifiedGMRFLikelihood.Skyride,Citable {
 
     // PUBLIC STUFF
 
@@ -433,7 +433,6 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
         return a;
     }
 
-    @Override
     public int getIntervalCount() {
         // TODO Auto-generated method stub
        return this.intervalList.getIntervalCount();
@@ -444,7 +443,6 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
         return this.intervalList.getIntervalType(interval) == IntervalType.COALESCENT;
     }
 
-    @Override
     public int getLineageCount(int interval) {
         return this.intervalList.getLineageCount(interval);
     }

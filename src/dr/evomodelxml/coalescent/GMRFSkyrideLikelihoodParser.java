@@ -413,7 +413,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
                 if (xo.getChild(GRID_POINTS) != null) {
                     return new GMRFSkygridLikelihood(intervalsList, popParameter, groupParameter, precParameter,
                             lambda, betaParameter, dMatrix, timeAwareSmoothing, gridPoints, covariates, ploidyFactors,
-                            firstObservedIndex, lastObservedIndex, covPrecParamRecent, covPrecParamDistant, recentIndices, distantIndices, betaList);
+                            firstObservedIndex, lastObservedIndex, covPrecParamRecent, covPrecParamDistant, recentIndices, distantIndices, betaList,deltaList);
                 } else {
                     return new GMRFSkygridLikelihood(intervalsList, popParameter, groupParameter, precParameter,
                             lambda, betaParameter, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors);

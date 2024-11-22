@@ -29,7 +29,7 @@ package dr.evomodelxml.coalescent.operators;
 
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
-import dr.evomodel.coalescent.UnifiedGMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.UnifiedGMRFLikelihood;
 import dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator;
 import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
 import dr.inference.operators.AdaptableMCMCOperator;
@@ -122,11 +122,11 @@ public class GMRFSkyrideBlockUpdateOperatorParser extends AbstractXMLObjectParse
         if (xo.getAttribute(OLD_SKYRIDE, true)
                 && !(xo.getName().compareTo(GRID_BLOCK_UPDATE_OPERATOR) == 0)
                 ) {
-            UnifiedGMRFSkyrideLikelihood gmrfLikelihood = (UnifiedGMRFSkyrideLikelihood) xo.getChild(UnifiedGMRFSkyrideLikelihood.class);
+            UnifiedGMRFLikelihood.Skyride gmrfLikelihood = (UnifiedGMRFLikelihood.Skyride) xo.getChild(UnifiedGMRFLikelihood.Skyride.class);
             return new GMRFSkyrideBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
                     maxIterations, stopValue);
         } else {
-            GMRFMultilocusSkyrideLikelihood gmrfMultilocusLikelihood = (GMRFMultilocusSkyrideLikelihood) xo.getChild(GMRFMultilocusSkyrideLikelihood.class);
+            UnifiedGMRFLikelihood.SkyGrid gmrfMultilocusLikelihood = (UnifiedGMRFLikelihood.SkyGrid) xo.getChild(UnifiedGMRFLikelihood.SkyGrid.class);
             return new GMRFMultilocusSkyrideBlockUpdateOperator(gmrfMultilocusLikelihood, weight, mode, scaleFactor,
                     maxIterations, stopValue);
         }
@@ -156,7 +156,7 @@ public class GMRFSkyrideBlockUpdateOperatorParser extends AbstractXMLObjectParse
             AttributeRule.newDoubleRule(STOP_VALUE, true),
             AttributeRule.newIntegerRule(MAX_ITERATIONS, true),
             AttributeRule.newBooleanRule(OLD_SKYRIDE, true),
-            new ElementRule(OldGMRFSkyrideLikelihood.class)
+            new ElementRule(UnifiedGMRFLikelihood.Skyride.class)
     };
 
 }

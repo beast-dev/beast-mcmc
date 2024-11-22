@@ -25,6 +25,7 @@
 
 package dr.evomodel.coalescent;
 
+import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
@@ -50,7 +51,7 @@ import java.util.List;
  */
 
 public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
-        implements MultiLociTreeSet, CoalescentIntervalProvider, Citable {
+        implements MultiLociTreeSet, CoalescentIntervalProvider, Citable , UnifiedGMRFLikelihood.SkyGrid {
 
     public static final boolean DEBUG = false;
 
@@ -876,7 +877,7 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
         return treeList.get(nt);
     }
 
-    public TreeIntervals getTreeIntervals(int nt) {
+    public IntervalList getTreeIntervals(int nt) {
         return intervalsList.get(nt);
     }
 
@@ -929,7 +930,7 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
     // Implementation of GradientWrtParameterProvider
     // Need to update to include beta and log-transformed precision parameter
 
-    public Parameter getParameter() {
+        public Parameter getParameter() {
         return popSizeParameter;
     }
 

@@ -56,7 +56,7 @@ import java.util.List;
  * @author Marc Suchard
  */
 @Deprecated
-public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood implements CoalescentIntervalProvider, Citable,UnifiedGMRFSkyrideLikelihood {
+public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood implements CoalescentIntervalProvider, Citable, UnifiedGMRFLikelihood.Skyride {
 
     // PUBLIC STUFF
 
@@ -213,7 +213,6 @@ public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood im
         return coalescentIntervals;
     }
     
-    @Override
     public boolean isCoalescentInterval(int interval) {
         return getIntervalType(interval) == CoalescentEventType.COALESCENT;
     }
@@ -375,6 +374,7 @@ public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood im
         return a;
     }
 
+    @Override
     public SymmTridiagMatrix getScaledWeightMatrix(double precision, double lambda) {
         if (lambda == 1)
             return getScaledWeightMatrix(precision);

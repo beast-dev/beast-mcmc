@@ -152,6 +152,7 @@ public class Intervals implements MutableIntervalList {
         if (!intervalsKnown){
             calculateIntervals();
         }
+        if (i >= intervalCount) throw new IllegalArgumentException();
         return events[i].time;
     }
 
@@ -307,4 +308,5 @@ public class Intervals implements MutableIntervalList {
     private int[] lineageCounts;
     private IntervalType[] intervalTypes;
     private int intervalCount = 0;
+
 }

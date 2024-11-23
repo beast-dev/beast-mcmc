@@ -490,12 +490,12 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
 
     private int moveToNextTimeIndex(int treeIndex, int lastTimeIndex, double[] times) {
         int currentTimeIndex = lastTimeIndex;
-        double currentTime = intervalsList.get(treeIndex).getIntervalTime(currentTimeIndex);
-        double nextTime = intervalsList.get(treeIndex).getIntervalTime(currentTimeIndex + 1);
-        while (nextTime <= currentTime && currentTimeIndex + 2 < intervalsList.get(treeIndex).getIntervalCount()) {
+        double currentTime = intervalsList.get(treeIndex).getEventTime(currentTimeIndex);
+        double nextTime = intervalsList.get(treeIndex).getEventTime(currentTimeIndex + 1);
+        while (nextTime <= currentTime && currentTimeIndex + 2 < intervalsList.get(treeIndex).getEventCount()) {
             currentTimeIndex++;
-            currentTime = intervalsList.get(treeIndex).getIntervalTime(currentTimeIndex);
-            nextTime = intervalsList.get(treeIndex).getIntervalTime(currentTimeIndex + 1);
+            currentTime = intervalsList.get(treeIndex).getEventTime(currentTimeIndex);
+            nextTime = intervalsList.get(treeIndex).getEventTime(currentTimeIndex + 1);
         }
         times[0] = currentTime;
         times[1] = nextTime;
@@ -554,7 +554,9 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
             ploidyFactor = 1 / getPopulationFactor(i);
             currentTimeIndex = moveToNextTimeIndex(i, 0, currentAndNextTime);
 
-            numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
+            // Lineage counts are colescent events are stored by interval with lags behind event indices by 1. 
+            // It takes two events to make an interval
+            numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex);
             minGridIndex = 0;
             while (minGridIndex < numGridPoints - 1 && gridPoints[minGridIndex] <= currentAndNextTime[0]) { // MAS: Unclear about need for -1
                 minGridIndex++;
@@ -578,7 +580,7 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
                 while (currentAndNextTime[1] < gridPoints[currentGridIndex]) {
 
                     //check to see if interval ends with coalescent event
-                    if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
+                    if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex) > 0) {
 
                         numCoalEvents[currentGridIndex]++;
                     }
@@ -586,7 +588,7 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
                     currentTimeIndex++;
                     currentTimeIndex = moveToNextTimeIndex(i, currentTimeIndex, currentAndNextTime);
 
-                    numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
+                    numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex);
 
                 }
 
@@ -609,17 +611,17 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
                         sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (currentAndNextTime[1] - gridPoints[currentGridIndex - 1]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
 
                         //check to see if interval ends with coalescent event
-                        if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
+                        if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex) > 0) {
                             numCoalEvents[currentGridIndex]++;
                         }
                         currentTimeIndex++;
                         currentTimeIndex = moveToNextTimeIndex(i, currentTimeIndex, currentAndNextTime);
 
-                        numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
+                        numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex);
 
                         while (currentAndNextTime[1] < gridPoints[currentGridIndex]) {
                             //check to see if interval is coalescent interval or sampling interval
-                            if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
+                            if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex) > 0) {
                                 numCoalEvents[currentGridIndex]++;
                             }
                             sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (currentAndNextTime[1] - currentAndNextTime[0]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
@@ -627,7 +629,7 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
                             currentTimeIndex++;
                             currentTimeIndex = moveToNextTimeIndex(i, currentTimeIndex, currentAndNextTime);
 
-                            numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
+                            numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex);
 
                         }
                         sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (gridPoints[currentGridIndex] - currentAndNextTime[0]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
@@ -642,21 +644,21 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
                 sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (currentAndNextTime[1] - gridPoints[currentGridIndex - 1]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
 
                 //check to see if interval ends with coalescent event
-                if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
+                if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex) > 0) {
                     numCoalEvents[currentGridIndex]++;
                 }
 
                 currentTimeIndex++;
 
-                while ((currentTimeIndex + 1) < intervalsList.get(i).getIntervalCount()) {
+                while ((currentTimeIndex + 1) < intervalsList.get(i).getEventCount()) {
 
                     currentTimeIndex = moveToNextTimeIndex(i, currentTimeIndex, currentAndNextTime);
 
-                    numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
+                    numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex);
 
                     //check to see if interval is coalescent interval or sampling interval
 
-                    if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
+                    if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex) > 0) {
                         numCoalEvents[currentGridIndex]++;
                     }
                     sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (currentAndNextTime[1] - currentAndNextTime[0]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
@@ -668,18 +670,18 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
                 // if tree does not overlap with any gridpoints/change-points, in which case logpopsize is constant
 
             } else {
-                while ((currentTimeIndex + 1) < intervalsList.get(i).getIntervalCount()) {
+                while ((currentTimeIndex + 1) < intervalsList.get(i).getEventCount()) {
                     //check to see if interval is coalescent interval or sampling interval
-                    if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
+                    if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex) > 0) {
                         numCoalEvents[currentGridIndex]++;
                     }
                     sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (currentAndNextTime[1] - currentAndNextTime[0]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
 
                     currentTimeIndex++;
-                    if ((currentTimeIndex + 1) < intervalsList.get(i).getIntervalCount()) {
+                    if ((currentTimeIndex + 1) < intervalsList.get(i).getEventCount()) {
                         currentTimeIndex = moveToNextTimeIndex(i, currentTimeIndex, currentAndNextTime);
 
-                        numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
+                        numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex);
 
                     }
 
@@ -707,7 +709,7 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
                 System.err.println("getNumberOfCoalescentEvents(): " + getNumberOfCoalescentEvents());
                 System.err.println("getIntervalCount(): " + getIntervalCount());
                 System.err.println("intervalsList.size(): " + intervalsList.size());
-                System.err.println("intervalsList.get(0).getIntervalCount(): " + intervalsList.get(0).getIntervalCount());
+                System.err.println("intervalsList.get(0).getEventCount(): " + intervalsList.get(0).getEventCount());
             }
 
             if (numTrees > 1) {

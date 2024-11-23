@@ -44,7 +44,7 @@ import java.util.*;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class TreeIntervals extends AbstractModel implements Units, TreeIntervalList {
+public class TreeIntervals extends AbstractModel implements Units, TreeIntervalList,IntervalEventList {
 
     // PUBLIC STUFF
 
@@ -494,5 +494,15 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
 
     private boolean eventsKnown = false;
     private boolean storedEventsKnown = false;
+    @Override
+    public int getEventCount() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getEventCount'");
+    }
+    @Override
+    public double getEventTime(int i) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getEventTime'");
+    }
 
 }

@@ -43,7 +43,7 @@ import java.util.List;
  */
 //Deprecated as we should be using the model version in coalescent likelihoods
 @Deprecated
-public class TreeIntervals implements IntervalList {
+public class TreeIntervals implements IntervalEventList {
 
     /**
      * Parameterless constructor.
@@ -160,6 +160,21 @@ public class TreeIntervals implements IntervalList {
         }
     }
 
+    //These are just to make clear we are dealing with events 
+    // that start and end intervals as opposed to interval times 
+    // which only start intervals.
+    // The root ends an interval but does not start one.
+    public int getEventCount() {
+        return getIntervalCount() + 1;
+    }
+
+    public double getEventTime(int i) {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        if (i >= getEventCount()) throw new IllegalArgumentException();
+        return eventTimes[i];    
+    }
     /**
      * Returns the type of interval observed.
      */
@@ -245,6 +260,7 @@ public class TreeIntervals implements IntervalList {
         int nodeCount = tree.getNodeCount();
 
         times = new double[nodeCount];
+        eventTimes = new double[nodeCount];
         int[] childCounts = new int[nodeCount];
 
         collectTimes(tree, times, childCounts);
@@ -309,9 +325,11 @@ public class TreeIntervals implements IntervalList {
 
             if (lineagesAdded > 0) {
 
-                if (intervalCount > 0 || ((finish - start) > multifurcationLimit)) {
+                if (intervalCount > 0 || ((finish - start) > multifurcationLimit && numLines>0)) { 
+                    //numLines == 0 on first pass don't want an empty interval
                     intervals[intervalCount] = finish - start;
                     lineageCounts[intervalCount] = numLines;
+                    eventTimes[intervalCount] = start; // note sampling event
                     intervalCount += 1;
                 }
 
@@ -322,11 +340,13 @@ public class TreeIntervals implements IntervalList {
             numLines += lineagesAdded;
 
             if (lineagesRemoved > 0) {
-
+                eventTimes[intervalCount] = start; // note start of interval in case missed only 1 intervale 
                 intervals[intervalCount] = finish - start;
                 lineageCounts[intervalCount] = numLines;
                 intervalCount += 1;
                 start = finish;
+                eventTimes[intervalCount] = finish; // note ending event
+
             }
             // coalescent event
             numLines -= lineagesRemoved;
@@ -345,7 +365,8 @@ public class TreeIntervals implements IntervalList {
         if (!intervalsKnown) {
             calculateIntervals();
         }
-        return times[indices[i]];
+        if (i >= intervalCount) throw new IllegalArgumentException();
+        return eventTimes[i];
     }
 
     private void addLineage(int interval, NodeRef node) {
@@ -413,12 +434,16 @@ public class TreeIntervals implements IntervalList {
             if (storedTimes == null) {
                 storedTimes = new double[times.length];
             }
+            if (storedEventTimes == null) {
+                storedEventTimes = new double[times.length];
+            }
             }
             System.arraycopy(intervals, 0, storedIntervals, 0, intervals.length);
             System.arraycopy(lineageCounts, 0, storedLineageCounts, 0, lineageCounts.length);
             if (superStore) {
             System.arraycopy(indices, 0, storedIndices, 0, indices.length);
             System.arraycopy(times, 0, storedTimes, 0, times.length);
+            System.arraycopy(eventTimes, 0, storedEventTimes, 0, eventTimes.length);
             }
         }
 
@@ -445,6 +470,10 @@ public class TreeIntervals implements IntervalList {
             tmp2 = storedIndices;
             storedIndices = indices;
             indices = tmp2;
+
+            tmp1 = storedEventTimes;
+            storedEventTimes = eventTimes;
+            storedEventTimes = tmp1;
             }
         }
     }
@@ -468,6 +497,9 @@ public class TreeIntervals implements IntervalList {
 
     private double[] times;
     private double[] storedTimes;
+
+    private double[] eventTimes;
+    private double[] storedEventTimes;
 
     /**
      * The tree.

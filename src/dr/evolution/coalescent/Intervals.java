@@ -141,6 +141,9 @@ public class Intervals implements MutableIntervalList {
         return intervalCount;
     }
 
+    public int getEventCount() {
+        return eventCount;
+    }
     public double getInterval(int i) {
         if (!intervalsKnown) {
             calculateIntervals();
@@ -152,6 +155,12 @@ public class Intervals implements MutableIntervalList {
         if (!intervalsKnown){
             calculateIntervals();
         }
+        if (i >= intervalCount) throw new IllegalArgumentException();
+        return events[i].time;
+    }
+
+    public double getEventTime(int i ){
+        if (i >= eventCount) throw new IllegalArgumentException();
         return events[i].time;
     }
 
@@ -204,10 +213,21 @@ public class Intervals implements MutableIntervalList {
     public boolean isBinaryCoalescent() {
         return true;
     }
-
+    /**
+     * Checks whether this set of coalescent intervals coalescent only
+     * (i.e. whether is has exactly one or more coalescent event in each
+     * subsequent interval)
+     */
     public boolean isCoalescentOnly() {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        for (int i = 0; i < intervalCount; i++) {
+            if (getCoalescentEvents(i) < 1) return false;
+        }
+
         return true;
-    }
+        }
 
     public void calculateIntervals() {
 
@@ -296,4 +316,5 @@ public class Intervals implements MutableIntervalList {
     private int[] lineageCounts;
     private IntervalType[] intervalTypes;
     private int intervalCount = 0;
+
 }

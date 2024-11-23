@@ -149,18 +149,30 @@ public class FastIntervals implements MutableIntervalList {
         }
         return intervalCount;
     }
+    public int getEventCount() {
+        return eventCount;
+    }
 
     public double getInterval(int i) {
         if (!intervalsKnown) {
             calculateIntervals();
         }
+        if(i >= intervalCount) throw new IllegalArgumentException();
         return intervals[i];
+    }
+    public double getEventTime(int i ){
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        if(i >= eventCount) throw new IllegalArgumentException();
+        return eventTimes[i];
     }
 
     public double getIntervalTime(int i){
         if (!intervalsKnown){
             calculateIntervals();
         }
+        if(i >= intervalCount) throw new IllegalArgumentException();
         return eventTimes[i];
     }
 
@@ -205,10 +217,21 @@ public class FastIntervals implements MutableIntervalList {
     public boolean isBinaryCoalescent() {
         return true;
     }
-
+    /**
+     * Checks whether this set of coalescent intervals coalescent only
+     * (i.e. whether is has exactly one or more coalescent event in each
+     * subsequent interval)
+     */
     public boolean isCoalescentOnly() {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        for (int i = 0; i < intervalCount; i++) {
+            if (getCoalescentEvents(i) < 1) return false;
+        }
+
         return true;
-    }
+        }
 
     public void calculateIntervals() {
 
@@ -223,16 +246,16 @@ public class FastIntervals implements MutableIntervalList {
 
         // sample should come first
         double lastTime = sampleTimes[0];
+        eventTimes[0] = sampleTimes[0];
 
-        int s = 1;
+        int s = 1; // This misses the first sample time as an event so we add it above
         int c = 0;
         int i = 0;
         int lineages = 1;
-
         while (s < sampleCount || c < coalescentCount) {
             if (s < sampleCount && sampleTimes[s] <= coalescentTimes[c]) {
                 intervals[i] = sampleTimes[s] - lastTime;
-                eventTimes[i] = sampleTimes[s];
+                eventTimes[i+1] = sampleTimes[s]; 
                 intervalTypes[i] = IntervalType.SAMPLE;
                 lineageCounts[i] = lineages;
                 lastTime = sampleTimes[s];
@@ -240,7 +263,7 @@ public class FastIntervals implements MutableIntervalList {
                 s++;
             } else {
                 intervals[i] = coalescentTimes[c] - lastTime;
-                eventTimes[i] = coalescentTimes[c];
+                eventTimes[i+1] = coalescentTimes[c];
                 intervalTypes[i] = IntervalType.COALESCENT;
                 lineageCounts[i] = lineages;
                 lastTime = coalescentTimes[c];

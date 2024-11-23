@@ -123,19 +123,19 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
         }
 
         IntervalList intervals = likelihood.getIntervalList();
-        BigFastTreeIntervals bigFastTreeIntervals = (BigFastTreeIntervals) intervals;
+        TreeIntervalList bigFastTreeIntervals = (TreeIntervalList) intervals; // TODO should not be BFT specific
 
         DemographicFunction demographicFunction = likelihood.getDemoModel().getDemographicFunction();
 
         int numSameHeightNodes = 1;
         double thisGradient = 0;
-        for (int i = 0; i < bigFastTreeIntervals.getIntervalCount(); i++) {
-            if (bigFastTreeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
-                final double time = bigFastTreeIntervals.getIntervalTime(i + 1);
+        for (int i = 0; i < bigFastTreeIntervals.getIntervalCount(); i++) { 
+            if (bigFastTreeIntervals.getIntervalType(i) == IntervalType.COALESCENT) { 
+                final double endTime = bigFastTreeIntervals.getEventTime(i + 1);
                 final int lineageCount = bigFastTreeIntervals.getLineageCount(i);
                 final double kChoose2 = Binomial.choose2(lineageCount);
-                final double intensityGradient = demographicFunction.getIntensityGradient(time);
-                thisGradient += demographicFunction.getLogDemographicGradient(time);
+                final double intensityGradient = demographicFunction.getIntensityGradient(endTime);
+                thisGradient += demographicFunction.getLogDemographicGradient(endTime);
 
                 if (bigFastTreeIntervals.getInterval(i) != 0) {
                     thisGradient -= kChoose2 * intensityGradient;

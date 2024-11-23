@@ -56,7 +56,7 @@ import java.util.List;
  * @author Marc Suchard
  */
 @Deprecated
-public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood implements CoalescentIntervalProvider, Citable {
+public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood implements CoalescentIntervalProvider, Citable, UnifiedGMRFLikelihood.Skyride {
 
     // PUBLIC STUFF
 
@@ -166,9 +166,9 @@ public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood im
 
 //        coalescentIntervals = new Parameter.Default(fieldLength);
         if (buildIntervalNodeMapping) {
-            coalesentIntervalNodeMapping = new IntervalNodeMapping.Default(tree.getNodeCount(), tree);
+            coalesentIntervalNodeMapping = new IntervalNodeMapProvider.IntervalNodeMapping.Default(tree.getNodeCount(), tree);
         } else {
-            coalesentIntervalNodeMapping = new IntervalNodeMapping.None();
+            coalesentIntervalNodeMapping = new IntervalNodeMapProvider.IntervalNodeMapping.None();
         }
 
 
@@ -212,6 +212,10 @@ public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood im
     public double[] getCoalescentIntervals() {
         return coalescentIntervals;
     }
+    
+    public boolean isCoalescentInterval(int interval) {
+        return getIntervalType(interval) == CoalescentEventType.COALESCENT;
+    }
 
     public void initializationReport() {
         System.out.println("Creating a GMRF smoothed skyride model:");
@@ -254,7 +258,7 @@ public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood im
         return logLikelihood + logFieldLikelihood;
     }
 
-    protected double peakLogCoalescentLikelihood() {
+    public double peakLogCoalescentLikelihood() {
         return logLikelihood;
     }
 
@@ -270,7 +274,7 @@ public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood im
         return getId() + "(" + Double.toString(getLogLikelihood()) + ")";
     }
 
-    IntervalNodeMapping coalesentIntervalNodeMapping;
+    IntervalNodeMapProvider.IntervalNodeMapping coalesentIntervalNodeMapping;
 
     protected void setupSufficientStatistics() {
         int index = 0;
@@ -302,7 +306,7 @@ public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood im
         coalesentIntervalNodeMapping.setIntervalStartIndices(index);
     }
 
-    public IntervalNodeMapping getIntervalNodeMapping() {
+    public IntervalNodeMapProvider getIntervalNodeMapping() {
         return coalesentIntervalNodeMapping;
     }
 
@@ -370,6 +374,7 @@ public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood im
         return a;
     }
 
+    @Override
     public SymmTridiagMatrix getScaledWeightMatrix(double precision, double lambda) {
         if (lambda == 1)
             return getScaledWeightMatrix(precision);
@@ -622,6 +627,7 @@ public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood im
             25, 1459, 1471,
             "10.1093/molbev/msn090"
     );
+
 }
 
 /*

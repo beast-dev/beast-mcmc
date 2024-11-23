@@ -275,7 +275,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
                 for (int i = 0; i < interval.getIntervalCount(); i++) {
                     if (interval.getIntervalType(i) == IntervalType.COALESCENT) {
-                        final double time = interval.getIntervalTime(i + 1);
+                        final double time = interval.getEventTime(i + 1); // end time of ith interval
                         final int nodeIndex = interval.getNodeNumbersForInterval(i)[1];
                         currentGridIndex = likelihood.getGridIndex(time, currentGridIndex);
                         final double slope = likelihood.getGridSlope(currentGridIndex);
@@ -422,7 +422,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
         for (int i = 0; i < interval.getIntervalCount(); i++) {
             if (interval.getIntervalType(i) == IntervalType.COALESCENT) {
-                final double time = interval.getIntervalTime(i + 1);
+                final double time = interval.getEventTime(i + 1); // end time of ith interval
                 currentGridIndex = getGridIndex(time, currentGridIndex);
                 lnL -= getLogPopulationSize(time, currentGridIndex);
             }
@@ -437,7 +437,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
         for (int i = 0; i < interval.getIntervalCount(); i++) {
             if (interval.getIntervalType(i) == IntervalType.COALESCENT) {
-                final double time = interval.getIntervalTime(i + 1);
+                final double time = interval.getEventTime(i + 1); // end time of ith interval
                 currentGridIndex = getGridIndex(time, currentGridIndex);
                 updateLogPopSizeDerivative(time, currentGridIndex, gradient);
             }

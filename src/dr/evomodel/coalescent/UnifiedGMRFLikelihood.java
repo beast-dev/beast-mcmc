@@ -2,6 +2,7 @@ package dr.evomodel.coalescent;
 
 import java.util.List;
 
+import dr.evolution.coalescent.IntervalEventList;
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.tree.Tree;
@@ -76,7 +77,7 @@ public interface UnifiedGMRFLikelihood extends CoalescentIntervalProvider, Likel
         double[] getNumCoalEvents();
         Tree getTree(int nt);
     
-        IntervalList getTreeIntervals(int nt);
+        IntervalEventList getTreeIntervals(int nt);
     
         double getPopulationFactor(int nt);
     

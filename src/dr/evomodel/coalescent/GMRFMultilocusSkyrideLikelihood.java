@@ -25,6 +25,7 @@
 
 package dr.evomodel.coalescent;
 
+import dr.evolution.coalescent.IntervalEventList;
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervals;
@@ -879,7 +880,7 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
         return treeList.get(nt);
     }
 
-    public IntervalList getTreeIntervals(int nt) {
+    public IntervalEventList getTreeIntervals(int nt) {
         return intervalsList.get(nt);
     }
 

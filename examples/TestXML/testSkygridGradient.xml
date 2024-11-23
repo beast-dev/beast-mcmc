@@ -438,9 +438,17 @@
 		<cutOff>
 			<parameter id="skygrid.cutOff" value="40.0"/>
 		</cutOff>
+
 		<populationTree>
 			<treeModel idref="treeModel"/>
 		</populationTree>
+
+		<!-- <intervals>
+			<bigFastTreeIntervals>
+				<treeModel idref="treeModel"/>
+			</bigFastTreeIntervals>
+		</intervals> -->
+
 	</gmrfSkyGridLikelihood>
 
 	<compoundParameter id="skygrid.parameters">

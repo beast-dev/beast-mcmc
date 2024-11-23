@@ -149,18 +149,30 @@ public class FastIntervals implements MutableIntervalList {
         }
         return intervalCount;
     }
+    public int getEventCount() {
+        return eventCount;
+    }
 
     public double getInterval(int i) {
         if (!intervalsKnown) {
             calculateIntervals();
         }
+        if(i >= intervalCount) throw new IllegalArgumentException();
         return intervals[i];
+    }
+    public double getEventTime(int i ){
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        if(i >= eventCount) throw new IllegalArgumentException();
+        return eventTimes[i];
     }
 
     public double getIntervalTime(int i){
         if (!intervalsKnown){
             calculateIntervals();
         }
+        if(i >= intervalCount) throw new IllegalArgumentException();
         return eventTimes[i];
     }
 

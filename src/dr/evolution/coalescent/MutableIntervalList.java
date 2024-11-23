@@ -27,7 +27,7 @@
 
 package dr.evolution.coalescent;
 
-public interface MutableIntervalList extends IntervalList {
+public interface MutableIntervalList extends IntervalEventList {
     void resetEvents();
 
     void addSampleEvent(double time);

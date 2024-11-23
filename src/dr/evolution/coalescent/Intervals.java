@@ -141,6 +141,9 @@ public class Intervals implements MutableIntervalList {
         return intervalCount;
     }
 
+    public int getEventCount() {
+        return eventCount;
+    }
     public double getInterval(int i) {
         if (!intervalsKnown) {
             calculateIntervals();
@@ -153,6 +156,11 @@ public class Intervals implements MutableIntervalList {
             calculateIntervals();
         }
         if (i >= intervalCount) throw new IllegalArgumentException();
+        return events[i].time;
+    }
+
+    public double getEventTime(int i ){
+        if (i >= eventCount) throw new IllegalArgumentException();
         return events[i].time;
     }
 

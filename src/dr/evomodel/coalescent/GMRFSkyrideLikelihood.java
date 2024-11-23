@@ -81,6 +81,7 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
     //changed from private to protected
     protected double logFieldLikelihood;
     protected double storedLogFieldLikelihood;
+    protected double coalescentLogLikelihood;
 
     protected SymmTridiagMatrix weightMatrix;
     protected SymmTridiagMatrix storedWeightMatrix;
@@ -88,6 +89,7 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
     protected boolean timeAwareSmoothing = TIME_AWARE_IS_ON_BY_DEFAULT;
     protected boolean rescaleByRootHeight;
     private boolean buildIntervalNodeMapping;
+
     public GMRFSkyrideLikelihood() {
         super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
     }
@@ -256,13 +258,13 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
 
     //public double getLogLikelihood() {
     protected double calculateLogLikelihood(){
-        logLikelihood = calculateLogCoalescentLikelihood();
+        coalescentLogLikelihood = calculateLogCoalescentLikelihood();
         logFieldLikelihood = calculateLogFieldLikelihood();
-        return logLikelihood + logFieldLikelihood;
+        return coalescentLogLikelihood + logFieldLikelihood;
     }
 
-    protected double peakLogCoalescentLikelihood() {
-        return logLikelihood;
+    public double peakLogCoalescentLikelihood() {
+        return coalescentLogLikelihood;
     }
 
     protected double peakLogFieldLikelihood() {

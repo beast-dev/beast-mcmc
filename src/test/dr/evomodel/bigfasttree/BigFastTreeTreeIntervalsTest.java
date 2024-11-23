@@ -84,7 +84,7 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
         //   node             1-2, 4  , 5  , 6  , 0  , 3, 7  , 9  , 8  , 10
         boolean pass = true;
         for (int j = 0; j < treeIntervals.getIntervalCount(); j++) {
-            if (Math.abs(treeIntervals.getInterval(j) - intervals[j]) > 1E-3) {
+            if (Math.abs(treeIntervals.getInterval(j) - intervals[j]) > 1E-9) {
                 System.out.println(treeIntervals.getInterval(j) - intervals[j]);
                 System.out.println("expected: " + intervals[j] + " got: " + treeIntervals.getInterval(j));
                 pass = false;
@@ -94,6 +94,20 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
         assertTrue(pass);
     }
 
+    public void testEventTimes(){
+        double[] eventTimes = {0,0,0.5,0.99,1.0,1.5,1.5,2.0,2.5,3.0,4.0};
+        boolean pass = true;
+        for (int i=0;i<treeIntervals.getEventCount();i++) {
+            if(Math.abs(treeIntervals.getEventTime(i)-eventTimes[i])>1E-9){
+                System.out.print(treeIntervals.getEventTime(i));
+                System.out.print("!=");
+                System.out.println(eventTimes[i]);
+                pass=false;
+                break;
+            }
+        }
+        assertTrue(pass);
+    }
     public void testCoalescentNode(){
         int[] coalIntervals = {3,6,7,8,9};
         int[] nodeNumbers  ={6,7,9,8,10};
@@ -203,7 +217,7 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
         assertTrue(pass);
     }
 
-    //                                                                    0.5
+//                                                                    0.5
 //                                              1.0           +------ 0 * [1.5]
 //                                   +----------------------- |(7) *  [2]
 //                     1.0           |                        |                                             +-- 1 * [0]

@@ -36,7 +36,7 @@ import dr.evomodel.coalescent.IntervalNodeMapProvider;
  * a mapping between nodes in the tree and intervals
  * @author jtmccrone
  */
-public interface TreeIntervalList extends IntervalList{
+public interface TreeIntervalList extends IntervalEventList{
 //	void setIntervalStartIndices(int intervalCount);
 //	void initializeMaps();
 

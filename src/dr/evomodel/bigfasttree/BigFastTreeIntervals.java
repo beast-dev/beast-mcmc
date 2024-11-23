@@ -107,6 +107,9 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
         if (!intervalsKnown) {
             calculateIntervals();
         }
+        if(i>=intervalCount){
+            throw new IllegalArgumentException("Interval index out of bounds");
+        }
         return events.getInterval(i + 1);
     }
 
@@ -122,6 +125,9 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
         if (!intervalsKnown) {
             calculateIntervals();
         }
+        if(i>=intervalCount){
+            throw new IllegalArgumentException("Interval index out of bounds");
+        }
         return events.getTime(i);
     }
 
@@ -129,6 +135,9 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     public int getLineageCount(int i) {
         if (!intervalsKnown) {
             calculateIntervals();
+        }
+        if(i>=intervalCount){
+            throw new IllegalArgumentException("Interval index out of bounds");
         }
         return events.getLineageCount(i + 1);
     }
@@ -485,7 +494,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
         }
 
         /**
-         * Returns the start time of the ith interval
+         * Returns the time of the ith event
          * @param i
          * @return
          */
@@ -716,13 +725,11 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
 
     @Override
     public int getEventCount() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getEventCount'");
+        return events.size();
     }
     @Override
     public double getEventTime(int i) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getEventTime'");
+        return events.getTime(i);
     }
 
 

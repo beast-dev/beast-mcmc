@@ -195,12 +195,12 @@ public class ApproximateTreeDataLikelihood extends AbstractModelLikelihood {
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-
+        likelihoodKnown = false;
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-
+        likelihoodKnown = false;
     }
 
     @Override
@@ -210,7 +210,7 @@ public class ApproximateTreeDataLikelihood extends AbstractModelLikelihood {
 
     @Override
     protected void restoreState() {
-
+        likelihoodKnown = false;
     }
 
     @Override

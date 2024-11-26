@@ -80,6 +80,7 @@ public class ApproximateTreeDataLikelihood extends AbstractModelLikelihood {
         updateParameterMAP();
         updateMarginalLikelihood();
         addVariable(parameter);
+        addModel(maximizer.getLikelihood().getModel());
     }
 
     private boolean isGradientProvidingHessian(GradientWrtParameterProvider gradient) {

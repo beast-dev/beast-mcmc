@@ -68,7 +68,7 @@ public class ApproximateTreeDataLikelihood extends AbstractModelLikelihood {
         this.likelihood = maximizer.getLikelihood();
         final GradientWrtParameterProvider gradient = maximizer.getGradient();
         this.parameter = gradient.getParameter();
-        this.marginalLikelihoodConst = - (parameter.getDimension() / 2.) * Math.log(2 * Math.PI);
+        this.marginalLikelihoodConst = (parameter.getDimension() / 2.) * Math.log(2 * Math.PI);
         // todo: get Numerical Hessian.
         if (maximizer.getTransform() != null) {
             this.hessianWrtParameterProvider = constructHessian();
@@ -138,8 +138,8 @@ public class ApproximateTreeDataLikelihood extends AbstractModelLikelihood {
         for (int i = 0; i < parameter.getDimension(); i++) {
             logDiagonalDeterminant += Math.log(Math.abs(diagonalHessian[i]));
         }
-        // 2pi^{-k/2} * det(Sigma)^{-1/2} * likelihood(map) * prior(map)
-        this.marginalLikelihood = marginalLikelihoodConst - 0.5 * logDiagonalDeterminant + likelihood.getLogLikelihood()
+        // 2pi^{+k/2} * det(Sigma)^{+1/2} * likelihood(map) * prior(map)
+        this.marginalLikelihood = marginalLikelihoodConst + 0.5 * logDiagonalDeterminant + likelihood.getLogLikelihood()
          + (maximizer.getTransform() == null ? 0 : maximizer.getTransform().logJacobian(parameter.getParameterValues(), 0, parameter.getDimension()));
         likelihoodKnown = true;
     }

@@ -42,6 +42,7 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
 import dr.util.Citable;
+import dr.util.Transform;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
@@ -65,6 +66,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
     protected final ComplexSubstitutionModel substitutionModel;
     protected final int stateCount;
     protected final List<Integer> crossProductAccumulationMap;
+    protected final boolean scaleRatesByFrequencies;
 
     private final ApproximationMode mode;
 
@@ -157,8 +159,6 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         }
     }
 
-    private static final ApproximationMode DEFAULT_MODE = ApproximationMode.FIRST_ORDER;
-    
     public AbstractLogAdditiveSubstitutionModelGradient(String traitName,
                                                         TreeDataLikelihood treeDataLikelihood,
                                                         BeagleDataLikelihoodDelegate likelihoodDelegate,
@@ -168,6 +168,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         this.tree = treeDataLikelihood.getTree();
         this.branchModel = likelihoodDelegate.getBranchModel();
         this.substitutionModel = substitutionModel;
+        this.scaleRatesByFrequencies = substitutionModel.getScaleRatesByFrequencies();
         this.stateCount = substitutionModel.getDataType().getStateCount();
         this.crossProductAccumulationMap = createCrossProductAccumulationMap(likelihoodDelegate.getBranchModel(),
                 substitutionModel);
@@ -200,7 +201,8 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
 
     abstract double processSingleGradientDimension(int dim,
                                                    double[] differentials, double[] generator, double[] pi,
-                                                   boolean normalize, double normalizationConstant);
+                                                   boolean normalize, double normalizationConstant, double rateScalar,
+                                                   Transform transform, boolean scaleByFrequencies);
 
     @Override
     public double[] getGradientLogDensity() {
@@ -218,15 +220,20 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         substitutionModel.getInfinitesimalMatrix(generator);
 
         double[] pi = substitutionModel.getFrequencyModel().getFrequencies();
+        boolean normalize = substitutionModel.getNormalization();
+
+        double rateScalar = normalize ? 1 / substitutionModel.setupMatrix() : 0.0;
 
         double normalizationConstant = preProcessNormalization(crossProducts, generator,
                 substitutionModel.getNormalization());
 
+        Transform transform = (substitutionModel instanceof LogRateSubstitutionModel) ?
+                ((LogRateSubstitutionModel) substitutionModel).getTransform() : null;
+
         final double[] gradient = new double[getParameter().getDimension()];
         for (int i = 0; i < getParameter().getDimension(); ++i) {
             gradient[i] = processSingleGradientDimension(i, crossProducts, generator, pi,
-                    substitutionModel.getNormalization(),
-                    normalizationConstant);
+                    normalize, normalizationConstant, rateScalar, transform, scaleRatesByFrequencies);
         }
 
         if (COUNT_TOTAL_OPERATIONS) {

@@ -37,6 +37,7 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.model.Parameter;
 import dr.util.Citation;
 import dr.util.CommonCitations;
+import dr.util.Transform;
 
 import java.util.Collections;
 import java.util.List;
@@ -115,17 +116,32 @@ public class LogCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGra
 
     @Override
     double processSingleGradientDimension(int k, double[] differentials, double[] generator, double[] pi,
-                                          boolean normalize, double normalizationConstant) {
+                                          boolean normalize, double normalizationGradientContribution,
+                                          double normalizationScalar,
+                                          Transform transform, boolean scaleByFrequencies) {
 
         final int i = mapEffectToIndices[k][0], j = mapEffectToIndices[k][1];
         final int ii = i * stateCount + i;
         final int ij = i * stateCount + j;
 
-        double element = generator[ij];
+        double element;
+        if (transform == null) {
+            element = generator[ij]; // Default is exp()
+        } else {
+            final Parameter transformedParameter = rateProvider.getLogRateParameter();
+            element = transform.gradient(transformedParameter.getParameterValue(k));
+            if (normalize) {
+                element *= normalizationScalar;
+            }
+            if (scaleByFrequencies) {
+                element *= pi[i];
+            }
+        }
+
         double total = (differentials[ij]  - differentials[ii]) * element;
 
         if (normalize) {
-            total -= element * pi[i] * normalizationConstant;
+            total -= element * pi[i] * normalizationGradientContribution;
         }
 
         return total;
@@ -154,6 +170,6 @@ public class LogCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGra
     @Override
     public List<Citation> getCitations() {
         // TODO Update
-        return Collections.singletonList(CommonCitations.LEMEY_2014_UNIFYING);
+        return Collections.singletonList(CommonCitations.MONTI_GENERIC_RATES_2024);
     }
 }

@@ -273,6 +273,10 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
         this.frequencyScaling = frequencyScaling;
     }
 
+    public boolean getScaleRatesByFrequencies() {
+        return frequencyScaling;
+    }
+
     public boolean getNormalization() {
         return doNormalization;
     }

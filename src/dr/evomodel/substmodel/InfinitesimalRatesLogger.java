@@ -30,41 +30,85 @@ package dr.evomodel.substmodel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
+import dr.util.Transform;
 
 public class InfinitesimalRatesLogger implements Loggable {
 
-    public InfinitesimalRatesLogger(SubstitutionModel substitutionModel) {
+    public InfinitesimalRatesLogger(SubstitutionModel substitutionModel,  Transform transform,
+                                    boolean diagonalElements, String order) {
         this.substitutionModel = substitutionModel;
+        this.diagonalElements = diagonalElements;
+        this.transform = transform;
+        this.order = order;
+        this.stateCount = substitutionModel.getDataType().getStateCount();
     }
 
     @Override
     public LogColumn[] getColumns() {
-        int stateCount = substitutionModel.getDataType().getStateCount();
+        int nOutputs = stateCount * stateCount;
+        if (!diagonalElements) nOutputs -= stateCount;
+        LogColumn[] columns = new LogColumn[nOutputs];
 
         if (generator == null) {
             generator = new double[stateCount * stateCount];
         }
 
-        LogColumn[] columns = new LogColumn[stateCount * stateCount];
-
+        int index = 0;
         for (int i = 0; i < stateCount; ++i) {
             for (int j = 0; j < stateCount; ++j) {
-                final int k = i * stateCount + j;
+                if (!diagonalElements && i == j) continue;
+                final int row = i;
+                final int col = j;
+                int indexK = 0;
+                if ("byrow".equals(order)) {
+                    indexK = index++;
+                } else if ("bycol".equals(order)) {
+                    throw new IllegalArgumentException("Order " + order + " not implemented");
+                } else if ("rowCol".equals(order)) {
+                    indexK = rowColIndexCreator(i, j);
+                } else {
+                    throw new IllegalArgumentException("Invalid order: " + order);
+                }
+                final int k = indexK;
                 columns[k] = new NumberColumn(substitutionModel.getId() + "." + (i + 1) + "." + (j + 1)) {
                     @Override
                     public double getDoubleValue() {
                         if (k == 0) { // Refresh at first-element read
                             substitutionModel.getInfinitesimalMatrix(generator);
                         }
-                        return generator[k];
+                        if (transform != null) {
+                            return transform.transform(generator[row * stateCount + col]);
+                        } else {
+                            return generator[row * stateCount + col];
+                        }
                     }
                 };
             }
+
         }
 
         return columns;
     }
 
+    private int rowColIndexCreator(int i, int j) {
+        int nUpperTri = stateCount * (stateCount + 1 ) / 2;
+        if (!diagonalElements) nUpperTri -= stateCount + 1;
+        int k = 0;
+        if (i <= j) {
+            k = (stateCount - 1) * i - i * (i - 1) / 2 + j - i - 1;
+            if (diagonalElements) k += i + 1;
+            return k;
+        } else {
+            k = nUpperTri;
+            k += (stateCount - 1) * j - j * (j - 1) / 2 + i - j;
+            return k;
+        }
+    }
+
+    private final int stateCount;
+    private final Transform transform;
     private final SubstitutionModel substitutionModel;
+    private final boolean diagonalElements;
+    private final String order;
     private double[] generator;
 }

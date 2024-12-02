@@ -37,6 +37,7 @@ import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.util.Author;
 import dr.util.Citation;
+import dr.util.Transform;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -113,7 +114,8 @@ public abstract class AbstractGlmSubstitutionModelGradient extends AbstractLogAd
 
     double processSingleGradientDimension(int i,
                                           double[] differentials, double[] generator, double[] pi,
-                                          boolean normalize, double normalizationConstant) {
+                                          boolean normalize, double normalizationConstant,
+                                          double rateScalar, Transform transform, boolean scaleByFrequencies) {
 
         double[] covariate = parameterMap.getCovariateColumn(i);
         return calculateCovariateDifferential(generator, differentials, covariate, pi, normalize);

@@ -50,8 +50,8 @@ public interface Transform {
     // Transform: y = f(x)
 
     /**
-     * @param value evaluation point
-     * @return the transformed value
+     * @param x evaluation point
+     * @return y transformed value
      */
     double transform(double x);
 
@@ -309,7 +309,7 @@ public interface Transform {
         @Deprecated
         public double logGradientInverse(double value) {
             throw new RuntimeException("Not yet implemented.");
-        };
+        }
 
         @Deprecated
         public double[] logGradientInverse(double[] values, int from, int to) {
@@ -323,7 +323,7 @@ public interface Transform {
         @Deprecated
         public double derivativeOfTransformWrtValue(double value) {
             throw new RuntimeException("Not yet implemented.");
-        };
+        }
 
         @Deprecated
         public double[] derivativeOfTransformWrtValue(double[] values, int from, int to) {
@@ -337,7 +337,7 @@ public interface Transform {
         @Deprecated
         public double secondDerivativeOfTransformWrtValue(double value) {
             throw new RuntimeException("Not yet implemented.");
-        };
+        }
 
         @Deprecated
         public double[] secondDerivativeOfTransformWrtValue(double[] values, int from, int to) {
@@ -446,7 +446,7 @@ public interface Transform {
         @Deprecated
         public double derivativeOfTransformWrtValue(double value) {
             throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
-        };
+        }
 
         @Deprecated
         public double[] derivativeOfTransformWrtValue(double[] values, int from, int to) {
@@ -456,7 +456,7 @@ public interface Transform {
         @Deprecated
         public double secondDerivativeOfTransformWrtValue(double value) {
             throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
-        };
+        }
 
         @Deprecated
         public double[] secondDerivativeOfTransformWrtValue(double[] values, int from, int to) {
@@ -688,12 +688,69 @@ public interface Transform {
 
         @Override
         public double gradient(double value) {
-            throw new RuntimeException("Not yet implemented");
+            return Math.exp(value);
         }
 
         public String getTransformName() { return "exp"; }
 
         public double logJacobian(double x) { return x; }
+    }
+
+    // y = x^2
+    class SquaredTransform extends UnivariableTransform {
+
+        Transform inverse;
+
+        @Override
+        public Transform inverseTransform() {
+            if (inverse == null) {
+                inverse = new PowerTransform(1/2);
+            }
+            return inverse;
+        }
+
+        public double transform(double x) {
+            return x * x;
+        }
+
+        public double inverse(double y) {
+            return Math.sqrt(y);
+        }
+
+        public boolean isInInteriorDomain(double x) {
+            return !Double.isInfinite(x);
+        }
+
+        public double gradientInverse(double y) { return 0.5 / y; }
+
+        public double updateGradientLogDensity(double gradientWrtX, double x) {
+            double y = transform(x);
+            double dXdY = gradientInverse(y);
+            return gradientWrtX * dXdY + gradientLogJacobianInverse(y);
+        }
+
+        public double gradientLogJacobianInverse(double y) {
+            throw new RuntimeException("Mot yet implemented");
+        }
+
+        @Override
+        public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transfomationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double gradient(double value) {
+            return 2 * value;
+        }
+
+        public String getTransformName() { return "squared"; }
+
+        public double logJacobian(double x) { return Math.log(2 * x); }
     }
 
     // y = log(x)
@@ -951,11 +1008,72 @@ public interface Transform {
 
     }
 
+    class SigmoidTransform extends UnivariableTransform {
+
+        public SigmoidTransform() { }
+
+        @Override
+        public Transform inverseTransform() {
+            return LOGIT;
+        }
+
+        public double transform(double value) { return 1.0 / (1.0 + Math.exp(-value)); }
+
+        public double inverse(double value) { return Math.log(value / (1.0 - value)); }
+
+        public boolean isInInteriorDomain(double value) {
+            return true;
+        }
+
+        public double gradientInverse(double value) {
+            return gradient(inverse(value));
+        }
+
+        public double updateGradientLogDensity(double gradient, double value) {
+            throw new RuntimeException("Not yet implemented");
+//            return gradient * value * (1.0 - value) - (2.0 * value - 1.0);
+        }
+
+        public double gradientLogJacobianInverse(double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double gradient(double value) {
+            throw new RuntimeException("Not yet implemented"); // TODO appears to be dx / dy evaluated with x (which is gradientInverse, no?)
+//            return value * (1.0 - value);
+        }
+
+        public String getTransformName() {
+            return "sigmoid";
+        }
+
+        public double logJacobian(double value) {
+            throw new RuntimeException("Not yet implemented");
+//            return -Math.log(1.0 - value) - Math.log(value);
+        }
+    }
+
     class LogitTransform extends UnivariableTransform {
 
         public LogitTransform() {
             range = 1.0;
             lower = 0.0;
+        }
+
+        @Override
+        public Transform inverseTransform() {
+            return SIGMOID;
         }
 
         public double transform(double value) {
@@ -1130,6 +1248,11 @@ public interface Transform {
 
     class NegateTransform extends UnivariableTransform {
 
+        @Override
+        public Transform inverseTransform() {
+            return NEGATE;
+        }
+
         public double transform(double value) {
             return -value;
         }
@@ -1179,7 +1302,7 @@ public interface Transform {
     }
 
     class PowerTransform extends UnivariableTransform{
-        private double power;
+        private final double power;
 
         PowerTransform(){
             this.power = 2;
@@ -1308,7 +1431,7 @@ public interface Transform {
     }
 
     class InverseSumTransform extends UnivariableTransform {
-        private double sum;
+        private final double sum;
 
         InverseSumTransform() {
             this.sum = 1;
@@ -1372,6 +1495,11 @@ public interface Transform {
     }
 
     class NoTransform extends UnivariableTransform {
+
+        @Override
+        public Transform inverseTransform() {
+            return NONE;
+        }
 
         public double transform(double value) {
             return value;
@@ -2610,9 +2738,11 @@ public interface Transform {
     LogTransform LOG = new LogTransform();
     ExpTransform EXP = new ExpTransform();
     NegateTransform NEGATE = new NegateTransform();
+    SquaredTransform SQUARED = new SquaredTransform();
     Compose LOG_NEGATE = new Compose(new LogTransform(), new NegateTransform());
     LogConstrainedSumTransform LOG_CONSTRAINED_SUM = new LogConstrainedSumTransform();
     LogitTransform LOGIT = new LogitTransform();
+    SigmoidTransform SIGMOID = new SigmoidTransform();
     FisherZTransform FISHER_Z = new FisherZTransform();
 
     enum Type {
@@ -2623,8 +2753,10 @@ public interface Transform {
         LOG_NEGATE("log-negate", new Compose(new LogTransform(), new NegateTransform())),
         LOG_CONSTRAINED_SUM("logConstrainedSum", new LogConstrainedSumTransform()),
         LOGIT("logit", new LogitTransform()),
+        SIGMOID("sigmoid", new SigmoidTransform()),
         FISHER_Z("fisherZ",new FisherZTransform()),
         INVERSE_SUM("inverseSum", new InverseSumTransform()),
+        SQUARED("squared", new SquaredTransform()),
         POWER("power", new PowerTransform());
 
         Type(String name, Transform transform) {
@@ -2643,11 +2775,4 @@ public interface Transform {
         private Transform transform;
         private String name;
     }
-//    String TRANSFORM = "transform";
-//    String TYPE = "type";
-//    String START = "start";
-//    String END = "end";
-//    String EVERY = "every";
-//    String INVERSE = "inverse";
-
 }

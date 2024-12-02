@@ -29,24 +29,41 @@ package dr.evomodelxml.substmodel;
 
 import dr.evomodel.substmodel.InfinitesimalRatesLogger;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.util.Transform;
 import dr.xml.*;
 
 public class InfinitesimalRatesLoggerParser extends AbstractXMLObjectParser {
 
     private static final String NAME = "infinitesimalRatesLogger";
-
+    private static final String DIAGONAL_ELEMENTS = "diagonalElements";
+    private static final String ORDER = "order";
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
-        return new InfinitesimalRatesLogger(substitutionModel);
+
+        boolean diagonalElements = xo.getAttribute(DIAGONAL_ELEMENTS, true);
+        String order = xo.getAttribute(ORDER, "rowCol");
+
+        Transform.ParsedTransform pt = (Transform.ParsedTransform) xo.getChild(Transform.ParsedTransform.class);
+        Transform transform = null;
+        if (pt != null) {
+            transform = pt.transform;
+        }
+
+        return new InfinitesimalRatesLogger(substitutionModel, transform, diagonalElements, order);
     }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
-        return new XMLSyntaxRule[] {
-                new ElementRule(SubstitutionModel.class),
-        };
+        return rules;
     }
+
+    private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            AttributeRule.newBooleanRule(DIAGONAL_ELEMENTS, true),
+            AttributeRule.newStringRule(ORDER, true),
+            new ElementRule(SubstitutionModel.class),
+            new ElementRule(Transform.ParsedTransform.class, true)
+    };
 
     @Override
     public String getParserDescription() {

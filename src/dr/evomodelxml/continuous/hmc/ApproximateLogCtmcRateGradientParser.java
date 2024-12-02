@@ -47,9 +47,14 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRA
 public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParser {
 
     private static final String PARSER_NAME = "approximateLogCtmcRateGradient";
+    private static final String TRANSFORMED_PARSER_NAME = "approximateTransformedCtmcRateGradient";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
 
     public String getParserName(){ return PARSER_NAME; }
+
+    public String[] getParserNames() {
+        return new String[] { PARSER_NAME, TRANSFORMED_PARSER_NAME };
+    }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 

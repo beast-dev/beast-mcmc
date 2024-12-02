@@ -282,7 +282,7 @@ public class MCMCPanel extends BeautiPanel {
 
         JTextArea mleInfo = new JTextArea("Select the option below to perform marginal likelihood " +
                 "estimation (MLE) using path sampling (PS) / stepping-stone sampling (SS) " +
-                "or generalized stepping-stone sampling (GSS) which performs an additional" +
+                "or generalized stepping-stone sampling (GSS) which performs an additional " +
                 "analysis after the standard MCMC chain has finished.");
         mleInfo.setColumns(50);
         PanelUtils.setupComponent(mleInfo);

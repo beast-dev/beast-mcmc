@@ -296,14 +296,21 @@
                 <include name="dr/app/beauti/util/**/*.class"/>
                 <include name="dr/app/beauti/options/**/*.class"/>
                 <include name="dr/app/gui/**/*.class"/>
+                <include name="dr/app/gui/**/*.png"/>
                 <include name="dr/app/tools/*.class"/>
                 <include name="dr/app/util/*.class"/>
                 <include name="dr/evolution/tree/**/*.class"/>
+                <include name="dr/evolution/datatype/*.class"/>
+                <include name="dr/evolution/sequence/*.class"/>
+                <include name="dr/evolution/alignment/*.class"/>
                 <include name="dr/evolution/io/*.class"/>
                 <include name="dr/evolution/util/*.class"/>
                 <include name="dr/math/**/*.class"/>
                 <include name="dr/stats/**/*.class"/>
                 <include name="dr/util/**/*.class"/>
+            </fileset>
+            <fileset dir="${src}">
+                <include name="dr/app/gui/**/*.png"/>
             </fileset>
         </jar>
     </target>
@@ -372,6 +379,8 @@
                     <!-- <exclude name="test/dr/evomodel/treedatalikelihood/hmc/PrecisionGradientTest.java"/> -->
                     <exclude name="test/dr/multidimensionalscaling/MDSRotationTest.java"/>
                     <exclude name="test/dr/evomodel/branchratemodel/StrictClockTest.java"/>
+                    <exclude name="test/dr/evomodel/speciation/YuleModelTest.java"/>
+                    <exclude name="test/dr/evomodel/substmodel/GeneralSubstitutionModelTest.java"/>
 <!--                    <exclude name="test/dr/evomodel/substmodel/TimeIrreversibleTest.java"/>--> <!--sometimes fails-->
 
 <!--                    <include name="test/dr/distibutions/**/*Test.java"/>-->

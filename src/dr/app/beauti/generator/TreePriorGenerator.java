@@ -28,37 +28,36 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.*;
-import dr.app.beauti.types.OperatorSetType;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.Parameter;
+import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.types.TreePriorParameterizationType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.GMRFSkyrideGradient;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.CSVExporterParser;
-import dr.evomodelxml.coalescent.*;
+import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
+import dr.evomodelxml.coalescent.GMRFSkyrideGradientParser;
+import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.ExpansionModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.ExponentialGrowthModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.LogisticGrowthModelParser;
-import dr.evomodelxml.speciation.*;
+import dr.evomodelxml.speciation.BirthDeathModelParser;
+import dr.evomodelxml.speciation.BirthDeathSerialSamplingModelParser;
+import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
+import dr.evomodelxml.speciation.YuleModelParser;
 import dr.evoxml.TaxaParser;
-import dr.inference.distribution.ExponentialDistributionModel;
-import dr.inference.distribution.ExponentialMarkovModel;
-import dr.inference.distribution.GammaDistributionModel;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.ParameterParser;
-import dr.inferencexml.distribution.*;
+import dr.inferencexml.distribution.GammaDistributionModelParser;
+import dr.inferencexml.distribution.PriorParsers;
 import dr.inferencexml.hmc.CompoundGradientParser;
 import dr.inferencexml.hmc.GradientWrapperParser;
 import dr.inferencexml.hmc.JointGradientParser;
 import dr.inferencexml.model.CompoundParameterParser;
-import dr.inferencexml.model.SumStatisticParser;
-import dr.math.distributions.GammaDistribution;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -674,11 +673,11 @@ public class TreePriorGenerator extends Generator {
 
             writer.writeOpenTag(GMRFSkyrideLikelihoodParser.POPULATION_PARAMETER);
             writer.writeComment("skygrid.logPopSize is in log units unlike other popSize");
-            writeParameter(prior.getParameter("skygrid.logPopSize"), skyGridIntervalCount, writer);
+            writeParameter(prior.getParameter(GMRFSkyrideLikelihoodParser.SKYGRID_LOGPOPSIZE), skyGridIntervalCount, writer);
             writer.writeCloseTag(GMRFSkyrideLikelihoodParser.POPULATION_PARAMETER);
 
             writer.writeOpenTag(GMRFSkyrideLikelihoodParser.PRECISION_PARAMETER);
-            writeParameter(prior.getParameter("skygrid.precision"), 1, writer);
+            writeParameter(prior.getParameter(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION), 1, writer);
             writer.writeCloseTag(GMRFSkyrideLikelihoodParser.PRECISION_PARAMETER);
 
             writer.writeOpenTag(GMRFSkyrideLikelihoodParser.NUM_GRID_POINTS);
@@ -709,16 +708,16 @@ public class TreePriorGenerator extends Generator {
             //writing the gamma prior here so will need to prevent another one from being written in the priors block
             //key use: using HMC on the skygrid parameters
 
-            Parameter parameter = prior.getParameter("skygrid.precision");
+            Parameter parameter = prior.getParameter(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION);
             writer.writeOpenTag(PriorParsers.GAMMA_PRIOR,
                     new Attribute[]{
-                            new Attribute.Default<>(XMLParser.ID, "skygrid.precision.prior"),
+                            new Attribute.Default<>(XMLParser.ID, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION_PRIOR),
                             new Attribute.Default<>(GammaDistributionModelParser.SHAPE, parameter.shape),
                             new Attribute.Default<>(GammaDistributionModelParser.SCALE, parameter.scale),
                             new Attribute.Default<>(GammaDistributionModelParser.OFFSET, parameter.offset)
                     }
             );
-            writer.writeIDref(ParameterParser.PARAMETER, "skygrid.precision");
+            writer.writeIDref(ParameterParser.PARAMETER, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION);
             writer.writeCloseTag(PriorParsers.GAMMA_PRIOR);
 
             //add gradient information to XML file in case of an HMC transition kernel mix
@@ -738,8 +737,8 @@ public class TreePriorGenerator extends Generator {
                                 new Attribute.Default<String>(XMLParser.ID, "skygrid.parameters")
                         }
                 );
-                writer.writeIDref(ParameterParser.PARAMETER, "skygrid.precision");
-                writer.writeIDref(ParameterParser.PARAMETER, "skygrid.logPopSize");
+                writer.writeIDref(ParameterParser.PARAMETER, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION);
+                writer.writeIDref(ParameterParser.PARAMETER, GMRFSkyrideLikelihoodParser.SKYGRID_LOGPOPSIZE);
                 writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
 
                 writer.writeOpenTag(GMRFSkyrideGradientParser.NAME,
@@ -758,8 +757,8 @@ public class TreePriorGenerator extends Generator {
                 );
                 writer.writeIDref(GMRFSkyrideGradientParser.NAME, "gmrfGradientPrec");
                 writer.writeOpenTag(GradientWrapperParser.NAME);
-                writer.writeIDref(PriorParsers.GAMMA_PRIOR, "skygrid.precision.prior");
-                writer.writeIDref(ParameterParser.PARAMETER, "skygrid.precision");
+                writer.writeIDref(PriorParsers.GAMMA_PRIOR, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION_PRIOR);
+                writer.writeIDref(ParameterParser.PARAMETER, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION);
                 writer.writeCloseTag(GradientWrapperParser.NAME);
                 writer.writeCloseTag(JointGradientParser.JOINT_GRADIENT);
 
@@ -817,8 +816,8 @@ public class TreePriorGenerator extends Generator {
 //                break;
             case SKYGRID:
             case SKYGRID_HMC:
-                writeParameterRef(priorPrefix + "skygrid.precision", writer);
-                writeParameterRef(priorPrefix + "skygrid.logPopSize", writer);
+                writeParameterRef(priorPrefix + GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, writer);
+                writeParameterRef(priorPrefix + GMRFSkyrideLikelihoodParser.SKYGRID_LOGPOPSIZE, writer);
                 writeParameterRef(priorPrefix + "skygrid.cutOff", writer);
 //                writeParameterRef(priorPrefix + "skygrid.groupSize", writer);
                 break;

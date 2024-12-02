@@ -148,8 +148,47 @@ public class PiecewiseConstantPopulation extends DemographicFunction.Abstract {
     }
 
     public double getInverseIntensity(double x) {
-        throw new RuntimeException("Not implemented!");
+// TODO write down error cases
+//        if (cif != null) {
+//            if (!intensitiesKnown) {
+//                setIntervals(intervals, thetas);
+//            }
+//
+//            int epoch = Collections.binarySearch(cif, x);
+//
+//            if (epoch < 0) {
+//                epoch = -epoch - 1;
+//
+//                if (epoch > 0) {
+//                    return endTime.get(epoch - 1) + getInverseIntensity(epoch, x - cif.get(epoch - 1));
+//                } else {
+//                    assert epoch == 0;
+//                    return getInverseIntensity(0, x);
+//                }
+//            } else {
+//                return endTime.get(epoch);
+//            }
+//        } else {
+
+            double inverseIntensity = 0.0;
+            int epoch = 0;
+            double x1 = x;
+
+            while (x1 > getIntensity(epoch)) {
+                x1 -= getIntensity(epoch);
+                epoch += 1;
+                if (epoch == intervals.length) {
+                    break;
+                }
+            }
+
+            inverseIntensity += getEpochDuration(epoch) + x1 * getEpochDemographic(epoch + 1);
+//            inverseIntensity += getInverseIntensity(epoch, x1);
+
+            return inverseIntensity;
+//        }
     }
+
 
     public double getUpperBound(int i) {
         return 1e9;

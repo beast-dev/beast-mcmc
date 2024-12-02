@@ -39,7 +39,7 @@ import dr.inference.model.Statistic;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class PiecewisePopulationModel extends DemographicModel {
+public class PiecewisePopulationModel extends DemographicModel implements RescaleAwareDemographic {
 
     //
     // Public stuff
@@ -73,7 +73,7 @@ public class PiecewisePopulationModel extends DemographicModel {
         if (isLinear) {
             piecewiseFunction = new PiecewiseLinearPopulation(epochLengths, new double[N0Parameter.getDimension()], units);
         } else {
-            piecewiseFunction = new PiecewiseConstantPopulation(epochLengths, new double[N0Parameter.getDimension()], units);
+            piecewiseFunction = new PiecewiseConstantPopulation(epochLengths, N0Parameter.getParameterValues(), units);
         }
     }
 
@@ -165,6 +165,38 @@ public class PiecewisePopulationModel extends DemographicModel {
 
     protected void acceptState() {
     } // no additional state needs accepting
+
+    @Override
+    public double[] rescaleInterval(double[] intervals, double[] targetIntensityIntervalProducts) {
+
+        if (!(piecewiseFunction instanceof PiecewiseConstantPopulation)) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        PiecewiseConstantPopulation piecewiseConstantPopulation = (PiecewiseConstantPopulation) piecewiseFunction;
+
+        double[] scaledIntervals = new double[intervals.length];
+
+        int currentEpochIndex = 0;
+        for (int i = 0; i < intervals.length; i++) {
+            if (intervals[i] == 0) {
+                scaledIntervals[i] = 0;
+            } else {
+                double accumulatedProduct = 0;
+                double accumulatedIntervalLength = 0;
+                while(accumulatedProduct + piecewiseConstantPopulation.getEpochDuration(currentEpochIndex) / piecewiseConstantPopulation.getEpochDemographic(currentEpochIndex) < targetIntensityIntervalProducts[i]) {
+                    accumulatedProduct += piecewiseConstantPopulation.getEpochDuration(currentEpochIndex) / piecewiseConstantPopulation.getEpochDemographic(currentEpochIndex);
+                    accumulatedIntervalLength += piecewiseConstantPopulation.getEpochDuration(currentEpochIndex);
+                    currentEpochIndex++;
+                }
+                final double remainingProduct = targetIntensityIntervalProducts[i] - accumulatedProduct;
+                accumulatedIntervalLength += remainingProduct * piecewiseConstantPopulation.getEpochDemographic(currentEpochIndex);
+                scaledIntervals[i] = accumulatedIntervalLength;
+            }
+        }
+
+        return scaledIntervals;
+    }
 
     public class GrowthRateStatistic extends Statistic.Abstract {
 

@@ -35,13 +35,13 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodelxml.branchratemodel.BranchSpecificFixedEffectsParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.tree.CTMCScalePriorParser;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.CachedDistributionLikelihoodParser;
-import dr.inferencexml.distribution.DistributionLikelihoodParser;
 import dr.inferencexml.distribution.PriorParsers;
 import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.inferencexml.model.OneOnXPriorParser;
@@ -58,19 +58,41 @@ import java.util.Map;
  */
 public class ParameterPriorGenerator extends Generator {
 
-    //map parameters to prior IDs, for use with HMC
-    private HashMap<String, String> mapParameterToPrior;
+    //map parameters to prior IDs, for use with HMC or other approaches that define their prior befor the <mcmc> XML block
+    private final HashMap<String, String> mapParameterToPrior;
 
     public ParameterPriorGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
         //TODO don't like this being here, but will see how things pan out as more HMC approaches are added
+        int totalModels = options.getPartitionClockModels().size();
+        List<PartitionClockModel> partitionClockModels = options.getPartitionClockModels();
         mapParameterToPrior = new HashMap<String, String>();
         //HMC skygrid
         mapParameterToPrior.put(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION_PRIOR);
         //HMC relaxed clock
-        mapParameterToPrior.put(ClockType.HMC_CLOCK_LOCATION, BranchSpecificFixedEffects.LOCATION_PRIOR);
-        mapParameterToPrior.put(ClockType.HMC_CLOCK_BRANCH_RATES, BranchSpecificFixedEffects.RATES_PRIOR);
-        mapParameterToPrior.put(ClockType.HMCLN_SCALE, BranchSpecificFixedEffects.SCALE_PRIOR);
+        for (int i = 0; i < totalModels; i++) {
+            String prefix = partitionClockModels.get(i).getPrefix();
+            mapParameterToPrior.put(ClockType.HMC_CLOCK_LOCATION, prefix + BranchSpecificFixedEffects.LOCATION_PRIOR);
+            mapParameterToPrior.put(ClockType.HMC_CLOCK_BRANCH_RATES, prefix + BranchSpecificFixedEffects.RATES_PRIOR);
+            mapParameterToPrior.put(ClockType.HMCLN_SCALE, prefix + BranchSpecificFixedEffects.SCALE_PRIOR);
+        }
+        //mixed effects clock
+        //always write distribution likelihoods for rate, scale and intercept
+        for (int i = 0; i < totalModels; i++) {
+            String prefix = partitionClockModels.get(i).getPrefix();
+            mapParameterToPrior.put(ClockType.ME_CLOCK_LOCATION, prefix + BranchSpecificFixedEffects.RATES_PRIOR);
+            mapParameterToPrior.put(ClockType.ME_CLOCK_SCALE, prefix + BranchSpecificFixedEffects.SCALE_PRIOR);
+            mapParameterToPrior.put(BranchSpecificFixedEffectsParser.INTERCEPT, prefix + BranchSpecificFixedEffects.INTERCEPT_PRIOR);
+            //check for coefficients
+            String coeff = BranchSpecificFixedEffectsParser.COEFFICIENT;
+            int number = 1;
+            String concat = coeff + number;
+            while (partitionClockModels.get(i).hasParameter(concat)) {
+                mapParameterToPrior.put(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, prefix + BranchSpecificFixedEffectsParser.FIXED_EFFECTS_LIKELIHOOD + number);
+                number++;
+                concat = coeff + number;
+            }
+        }
     }
 
     /**

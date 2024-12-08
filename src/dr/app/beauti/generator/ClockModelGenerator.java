@@ -30,7 +30,6 @@ package dr.app.beauti.generator;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.ClockType;
-import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
@@ -65,8 +64,6 @@ import dr.oldevomodel.clock.RateEvolutionLikelihood;
 import dr.oldevomodelxml.clock.ACLikelihoodParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
-
-import java.util.Map;
 
 import static dr.inference.model.ParameterParser.PARAMETER;
 import static dr.inferencexml.distribution.PriorParsers.*;
@@ -958,18 +955,18 @@ public class ClockModelGenerator extends Generator {
 
             case MIXED_EFFECTS_CLOCK:
                 //always write distribution likelihoods for rate, scale and intercept
-                writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffects.RATES_PRIOR);
-                writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffects.SCALE_PRIOR);
-                writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffects.INTERCEPT_PRIOR);
+                //writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffects.RATES_PRIOR);
+                //writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffects.SCALE_PRIOR);
+                //writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffects.INTERCEPT_PRIOR);
                 //check for coefficients
-                String coeff = BranchSpecificFixedEffectsParser.COEFFICIENT;
+                /*String coeff = BranchSpecificFixedEffectsParser.COEFFICIENT;
                 int number = 1;
                 String concat = coeff + number;
                 while (model.hasParameter(concat)) {
                     writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffectsParser.FIXED_EFFECTS_LIKELIHOOD + number);
                     number++;
                     concat = coeff + number;
-                }
+                }*/
                 tag = ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES;
                 id = model.getPrefix() + ArbitraryBranchRates.BRANCH_RATES;
                 break;

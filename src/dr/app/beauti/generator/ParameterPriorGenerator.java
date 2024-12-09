@@ -64,9 +64,16 @@ public class ParameterPriorGenerator extends Generator {
     public ParameterPriorGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
         //TODO don't like this being here, but will see how things pan out as more HMC approaches are added
+        mapParameterToPrior = new HashMap<String, String>();
+    }
+
+    /**
+     * Add all possibly previously defined priors to a HashMap
+     * Cannot be done in constructor as the models have not been defined by the user at that point
+     */
+    public void addParametersToPrior() {
         int totalModels = options.getPartitionClockModels().size();
         List<PartitionClockModel> partitionClockModels = options.getPartitionClockModels();
-        mapParameterToPrior = new HashMap<String, String>();
         //HMC skygrid
         mapParameterToPrior.put(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION_PRIOR);
         //HMC relaxed clock
@@ -88,7 +95,7 @@ public class ParameterPriorGenerator extends Generator {
             int number = 1;
             String concat = coeff + number;
             while (partitionClockModels.get(i).hasParameter(concat)) {
-                mapParameterToPrior.put(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, prefix + BranchSpecificFixedEffectsParser.FIXED_EFFECTS_LIKELIHOOD + number);
+                mapParameterToPrior.put(concat, prefix + BranchSpecificFixedEffectsParser.FIXED_EFFECTS_LIKELIHOOD + number);
                 number++;
                 concat = coeff + number;
             }
@@ -101,6 +108,10 @@ public class ParameterPriorGenerator extends Generator {
      * @param writer       the writer
      */
     public void writeParameterPriors(XMLWriter writer) {
+
+        //first make sure that all possibly previously defined priors are part of the HashMap
+        addParametersToPrior();
+
         boolean first = true;
 
         for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : options.taxonSetsMono.entrySet()) {

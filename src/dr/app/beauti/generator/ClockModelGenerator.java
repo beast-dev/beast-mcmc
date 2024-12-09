@@ -298,16 +298,19 @@ public class ClockModelGenerator extends Generator {
 
                 writeCovarianceStatistic(writer, tag, prefix, treePrefix);
 
-                //TODO add more String constants for this type of code
+                boolean generateRatesGradient = false;
                 boolean generateScaleGradient = false;
 
                 for (Operator operator : options.selectOperators()) {
-                    if (operator.getName().equals("HMC relaxed clock location and scale") && operator.isUsed()) {
+                    if (operator.getName().equals(ClockType.HMC_CLOCK_RATES_DESCRIPTION) && operator.isUsed()) {
+                        generateRatesGradient = true;
+                    }
+                    if (operator.getName().equals(ClockType.HMC_CLOCK_LOCATION_SCALE_DESCRIPTION) && operator.isUsed()) {
                         generateScaleGradient = true;
                     }
                 }
 
-                if (generateScaleGradient) {
+                if (generateRatesGradient) {
 
                     //scale prior
                     writer.writeOpenTag(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD,
@@ -349,6 +352,9 @@ public class ClockModelGenerator extends Generator {
                     writer.writeCloseTag(LocationScaleGradientParser.LOCATION);
                     writer.writeCloseTag(LocationScaleGradientParser.NAME);
 
+                }
+
+                if (generateScaleGradient){
                     //scale gradient
                     writer.writeOpenTag(LocationScaleGradientParser.NAME, new Attribute[]{
                             new Attribute.Default<>(XMLParser.ID, prefix + ScaleGradient.SCALE_GRADIENT),

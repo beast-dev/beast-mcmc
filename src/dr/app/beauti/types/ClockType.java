@@ -68,4 +68,7 @@ public enum ClockType {
 
     final public static String ACLD_MEAN = "acld.mean";
     final public static String ACLD_STDEV = "acld.stdev";
+
+    final public static String HMC_CLOCK_RATES_DESCRIPTION = "HMC relaxed clock branch rates";
+    final public static String HMC_CLOCK_LOCATION_SCALE_DESCRIPTION = "HMC relaxed clock location and scale";
 }

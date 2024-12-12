@@ -7,6 +7,7 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 public abstract class ManifoldProvider {
@@ -206,6 +207,46 @@ public abstract class ManifoldProvider {
             unwrapSubMatrix(src, block, dest, 0);
         }
 
+    }
+
+    public static class BasicManifoldProvider extends ManifoldProvider {
+
+        private final Manifold manifold;
+        private final double[] momentumBuffer;
+
+        protected BasicManifoldProvider(Manifold manifold, int dim) {
+            super(new ArrayList(Arrays.asList(manifold)));
+            this.manifold = manifold;
+            this.momentumBuffer = new double[dim];
+
+        }
+
+        @Override
+        public double[] extractManifoldData(int i, double[] data) {
+            throw new RuntimeException("not yet implemented");
+        }
+
+        @Override
+        public void injectManifoldData(int i, double[] manifoldData, double[] sinkData) {
+            throw new RuntimeException("not yet implemented");
+        }
+
+        @Override
+        public void projectTangent(double[] momentum, double[] position) {
+            manifold.projectTangent(momentum, position);
+        }
+
+        @Override
+        public void updatePositionAndMomentum(double[] position, WrappedVector momentum, double functionalStepSize) {
+            int dim = position.length;
+            for (int i = 0; i < position.length; i++) { //TODO: don't jump back and forth between WrappedVector and double[]
+                momentumBuffer[i] = momentum.get(i);
+            }
+            manifold.geodesic(position, momentumBuffer, functionalStepSize);
+            for (int i = 0; i < dim; i++) {
+                momentum.set(i, momentumBuffer[i]);
+            }
+        }
     }
 
 

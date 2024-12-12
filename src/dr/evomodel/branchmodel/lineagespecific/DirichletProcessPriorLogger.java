@@ -30,13 +30,12 @@ package dr.evomodel.branchmodel.lineagespecific;
 import java.util.ArrayList;
 import java.util.List;
 
-import dr.app.bss.Utils;
-import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 
 public class DirichletProcessPriorLogger implements Loggable {
@@ -112,7 +111,7 @@ public class DirichletProcessPriorLogger implements Loggable {
 
 		this.categoryProbabilities = getCategoryProbs();
 
-		this.newCategoryIndex = Utils.sample(categoryProbabilities);
+		this.newCategoryIndex = MathUtils.randomChoicePDF(categoryProbabilities);
 		this.meanForCategory = uniquelyRealizedParameters
 				.getParameterValue(newCategoryIndex);
 

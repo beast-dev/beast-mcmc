@@ -200,6 +200,7 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
     public double[] nextRandom() {
         return new double[0];
     }
+    public int getDimension(){return mean.getSize();}
 
     @Override
     public double logPdf(Object x) {

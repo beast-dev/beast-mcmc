@@ -52,19 +52,23 @@ public enum ClockType {
 
     private final String displayName;
 
+    //maintain unique parameter IDs to enable correct prior and transition kernel retrieval
     final public static String LOCAL_CLOCK = "localClock";
     final public static String UCED_MEAN = "uced.mean";
     final public static String UCLD_MEAN = "ucld.mean";
     final public static String UCLD_STDEV = "ucld.stdev";
     final public static String UCGD_MEAN = "ucgd.mean";
     final public static String UCGD_SHAPE = "ucgd.shape";
-    final public static String SHRINKAGE_CLOCK_LOCATION = "branchRates.rate";
-    final public static String HMC_CLOCK_LOCATION = "branchRates.rate";
-    final public static String HMC_CLOCK_BRANCH_RATES = "branchRates.rates";
-    final public static String HMCLN_SCALE = "branchRates.scale";
-    final public static String ME_CLOCK_LOCATION = "branchRates.rate";
-    final public static String ME_CLOCK_SCALE = "branchRates.scale";
+    final public static String SHRINKAGE_CLOCK_LOCATION = "branchRatesShrinkage.rate";
+    final public static String HMC_CLOCK_LOCATION = "branchRatesHMC.rate";
+    final public static String HMC_CLOCK_BRANCH_RATES = "branchRatesHMC.rates";
+    final public static String HMCLN_SCALE = "branchRatesHMC.scale";
+    final public static String ME_CLOCK_LOCATION = "branchRatesME.rate";
+    final public static String ME_CLOCK_SCALE = "branchRatesME.scale";
 
     final public static String ACLD_MEAN = "acld.mean";
     final public static String ACLD_STDEV = "acld.stdev";
+
+    final public static String HMC_CLOCK_RATES_DESCRIPTION = "HMC relaxed clock branch rates";
+    final public static String HMC_CLOCK_LOCATION_SCALE_DESCRIPTION = "HMC relaxed clock location and scale";
 }

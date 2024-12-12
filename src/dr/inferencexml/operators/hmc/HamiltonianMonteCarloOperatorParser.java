@@ -49,19 +49,22 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     public final static String HMC_OPERATOR = "hamiltonianMonteCarloOperator";
     public final static String N_STEPS = "nSteps";
     public final static String STEP_SIZE = "stepSize";
-    private final static String RANDOM_STEP_FRACTION = "randomStepCountFraction";
     public final static String PRECONDITIONING = "preconditioning";
-    private final static String PRECONDITIONER = "preconditioner";
     public final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
     public final static String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
+    public final static String DRAW_VARIANCE = "drawVariance";
+    public final static String MODE = "mode";
+    public final static String PRECONDITIONING_UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
+    public final static String PRECONDITIONING_DELAY = "preconditioningDelay";
+
+    private final static String RANDOM_STEP_FRACTION = "randomStepCountFraction";
+    private final static String PRECONDITIONER = "preconditioner";
     private final static String MAX_ITERATIONS = "checkStepSizeMaxIterations";
     private final static String REDUCTION_FACTOR = "checkStepSizeReductionFactor";
     private final static String TARGET_ACCEPTANCE_PROBABILITY = "targetAcceptanceProbability";
     private final static String INSTABILITY_HANDLER = "instabilityHandler";
     protected final static String MASK = "mask";
     //these are in the Skygrid+HMC XML files but were not (yet) defined here
-    public final static String MODE = "mode";
-    public final static String PRECONDITIONING_UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
 
     @Override
     public String getParserName() {

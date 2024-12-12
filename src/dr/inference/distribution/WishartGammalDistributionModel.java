@@ -197,4 +197,7 @@ public class WishartGammalDistributionModel extends AbstractModel implements Par
 		// TODO Auto-generated method stub
 		return null;
 	}
+    public int getDimension() {
+        return dim;
+    }
 }

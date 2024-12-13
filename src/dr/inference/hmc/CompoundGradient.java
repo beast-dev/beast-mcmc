@@ -50,11 +50,11 @@ public class CompoundGradient implements GradientWrtParameterProvider, Derivativ
     private final DerivativeOrder highestOrder;
     private final ParallelGradientExecutor parallelExecutor;
 
-    CompoundGradient(List<GradientWrtParameterProvider> derivativeList) {
+    public CompoundGradient(List<GradientWrtParameterProvider> derivativeList) {
         this(derivativeList, 0);
     }
 
-    CompoundGradient(List<GradientWrtParameterProvider> derivativeList, int threadCount) {
+    public CompoundGradient(List<GradientWrtParameterProvider> derivativeList, int threadCount) {
 
         this.derivativeList = derivativeList;
 

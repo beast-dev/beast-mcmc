@@ -84,6 +84,7 @@
                 <distributionLikelihood idref="X.prior"/>
                 <matrixParameter idref="X"/>
             </gradient>
+            <blockStiefelManifold/>
 
             <matrixParameter idref="X"/>
             <graphicalParameterBounds>
@@ -100,6 +101,8 @@
                 <distributionLikelihood idref="X2.prior"/>
                 <matrixParameter idref="X2"/>
             </gradient>
+
+            <blockStiefelManifold/>
 
             <matrixParameter idref="X2"/>
             <graphicalParameterBounds>
@@ -125,9 +128,12 @@
             <graphicalParameterBounds>
                 <parameter value="0"/>
             </graphicalParameterBounds>
-            <orthogonalityStructure>
-                <x rows="1 2"/>
-            </orthogonalityStructure>
+            <blockStiefelManifold>
+                <orthogonalityStructure>
+                    <block rows="1 2"/>
+                </orthogonalityStructure>
+            </blockStiefelManifold>
+
 
         </geodesicHamiltonianMonteCarloOperator>
     </operators>

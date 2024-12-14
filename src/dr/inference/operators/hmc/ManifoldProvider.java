@@ -8,7 +8,6 @@ import org.ejml.ops.CommonOps;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 
 public abstract class ManifoldProvider {
 
@@ -214,7 +213,7 @@ public abstract class ManifoldProvider {
         private final Manifold manifold;
         private final double[] momentumBuffer;
 
-        protected BasicManifoldProvider(Manifold manifold, int dim) {
+        public BasicManifoldProvider(Manifold manifold, int dim) {
             super(new ArrayList(Arrays.asList(manifold)));
             this.manifold = manifold;
             this.momentumBuffer = new double[dim];

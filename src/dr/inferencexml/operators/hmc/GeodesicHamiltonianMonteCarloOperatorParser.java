@@ -28,16 +28,15 @@
 package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.MatrixParameter;
+import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.hmc.*;
 import dr.math.geodesics.Manifold;
+import dr.math.geodesics.Sphere;
 import dr.math.geodesics.StiefelManifold;
 import dr.util.Transform;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,21 +49,46 @@ import java.util.Collections;
 public class GeodesicHamiltonianMonteCarloOperatorParser extends HamiltonianMonteCarloOperatorParser {
     public final static String OPERATOR_NAME = "geodesicHamiltonianMonteCarloOperator";
     public final static String ORTHOGONALITY_STRUCTURE = "orthogonalityStructure";
+    public final static String BLOCK_STIEFEL = "blockStiefelManifold";
+    public final static String SPHERE = "sphere";
     public final static String ROWS = "rows";
+    public final static String BLOCK = "block";
+    public final static String RADIUS = "radius";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         GeodesicHamiltonianMonteCarloOperator hmc = (GeodesicHamiltonianMonteCarloOperator) super.parseXMLObject(xo);
 
-        //TODO: everything below needs its own parser, just putting here to break up big refactor
-        MatrixParameter parameter = (MatrixParameter) hmc.getParameter();
+        Parameter parameter = hmc.getParameter();
+        double[] mask = hmc.getMask();
 
+        final ManifoldProvider provider;
+
+        if (xo.hasChildNamed(BLOCK_STIEFEL)) {
+            provider = parseBlockStiefel(xo, (MatrixParameterInterface) parameter, mask);
+        } else if (xo.hasChildNamed(SPHERE)) {
+            provider = parseSphere(xo, parameter);
+        } else {
+            throw new XMLParseException("No manifold recognized.");
+        }
+
+        hmc.addManifolds(provider);
+
+        return hmc;
+    }
+
+    private ManifoldProvider parseSphere(XMLObject xo, Parameter parameter) throws XMLParseException {
+        double radius = xo.getChild(SPHERE).getDoubleAttribute(RADIUS); //TODO
+        Sphere sphere = new Sphere();
+        return new ManifoldProvider.BasicManifoldProvider(sphere, parameter.getDimension());
+    }
+
+    private ManifoldProvider parseBlockStiefel(XMLObject xo, MatrixParameterInterface parameter, double[] mask) throws XMLParseException {
+
+        XMLObject cxo = xo.getChild(BLOCK_STIEFEL);
 
         ArrayList<ArrayList<Integer>> orthogonalityStructure = new ArrayList<>();
         ArrayList<ArrayList<Integer>> orthogonalityBlockRows = new ArrayList<>();
-
-
-        double mask[] = hmc.getMask();
 
         if (mask == null) {
             ArrayList<Integer> rows = new ArrayList<>();
@@ -85,13 +109,13 @@ public class GeodesicHamiltonianMonteCarloOperatorParser extends HamiltonianMont
                     orthogonalityBlockRows);
         }
 
-        if (xo.hasChildNamed(ORTHOGONALITY_STRUCTURE)) {
+        if (cxo.hasChildNamed(ORTHOGONALITY_STRUCTURE)) {
 
             ArrayList<ArrayList<Integer>> newOrthogonalityStructure = new ArrayList<>();
 
-            XMLObject cxo = xo.getChild(ORTHOGONALITY_STRUCTURE);
-            for (int i = 0; i < cxo.getChildCount(); i++) {
-                XMLObject group = (XMLObject) cxo.getChild(i);
+            XMLObject ccxo = cxo.getChild(ORTHOGONALITY_STRUCTURE);
+            for (int i = 0; i < ccxo.getChildCount(); i++) {
+                XMLObject group = (XMLObject) ccxo.getChild(i);
                 int[] rows = group.getIntegerArrayAttribute(ROWS);
                 ArrayList<Integer> rowList = new ArrayList<>();
 
@@ -125,10 +149,7 @@ public class GeodesicHamiltonianMonteCarloOperatorParser extends HamiltonianMont
                 orthogonalityStructure,
                 orthogonalityBlockRows
         );
-
-        hmc.addManifolds(provider);
-
-        return hmc;
+        return provider;
     }
 
     private void parseStructureFromMask(
@@ -252,10 +273,28 @@ public class GeodesicHamiltonianMonteCarloOperatorParser extends HamiltonianMont
                 runtimeOptions, preconditioner, null);
     }
 
+    private static final XMLSyntaxRule[] newRules = {
+            new XORRule(
+                    new ElementRule(BLOCK_STIEFEL, new XMLSyntaxRule[]{
+                            new ElementRule(ORTHOGONALITY_STRUCTURE, new XMLSyntaxRule[]{
+                                    new ElementRule(BLOCK, new XMLSyntaxRule[]{
+                                            AttributeRule.newIntegerArrayRule(ROWS, false)
+                                    })
+                            }, true)
+                    }),
+                    new ElementRule(SPHERE, new XMLSyntaxRule[]{
+                            AttributeRule.newDoubleRule(RADIUS, false)
+                    })
+            )
+    };
+
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
-        return rules;
-    } //TODO: add orthogonality structure rules
+        XMLSyntaxRule[] geodesicRules = new XMLSyntaxRule[rules.length + newRules.length];
+        System.arraycopy(rules, 0, geodesicRules, 0, rules.length);
+        System.arraycopy(newRules, 0, geodesicRules, rules.length, newRules.length);
+        return geodesicRules;
+    }
 
 
     @Override

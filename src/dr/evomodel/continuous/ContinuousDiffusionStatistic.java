@@ -74,6 +74,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
     public static final String SPEARMAN = "spearman";
     public static final String CORRELATION_COEFFICIENT = "correlationCoefficient";
     public static final String DISTANCE_TIME_CORRELATION = "distanceTimeCorrelation";
+    public static final String SQUAREDDISTANCE_TIME4_CORRELATION = "squaredDistanceTimeFourCorrelation";
     public static final String R_SQUARED = "Rsquared";
     public static final String STATISTIC = "statistic";
     public static final String TRAIT = "trait";
@@ -458,6 +459,18 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                 Regression r = new Regression(convertDoubles(times),convertDoubles(distances));
                 return r.getCorrelationCoefficient();
             }
+        }  else if (summaryStat == summaryStatistic.SQUAREDDISTANCE_TIME4_CORRELATION)  {
+            List<Double> squareddistances = squareElements(distances);
+            List<Double> timesFour = elementsTimesFour(times);
+            if (summaryMode == Mode.SPEARMAN) {
+                return getSpearmanRho(convertDoubles(timesFour),convertDoubles(squareddistances));
+            } else if (summaryMode == Mode.R_SQUARED) {
+                Regression r = new Regression(convertDoubles(timesFour), convertDoubles(squareddistances));
+                return r.getRSquared();
+            } else {
+                Regression r = new Regression(convertDoubles(timesFour),convertDoubles(squareddistances));
+                return r.getCorrelationCoefficient();
+            }
          }  else {
             return treeLength;
         }
@@ -488,6 +501,22 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
             returnArray[i] = Double.valueOf(list.get(i).toString());
         }
         return returnArray;
+    }
+
+    private static List<Double> squareElements(List<Double> inputList) {
+        List<Double> squaredList = new ArrayList<>();
+        for (Double number : inputList) {
+            squaredList.add(number * number);
+        }
+        return squaredList;
+    }
+
+    private static List<Double> elementsTimesFour (List<Double> inputList) {
+        List<Double> returnList = new ArrayList<>();
+        for (Double number : inputList) {
+            returnList.add(number * 4);
+        }
+        return returnList;
     }
 
     private double[] imputeValue(double[] nodeValue, double[] parentValue, double time, double nodeHeight, double parentHeight, double[] precisionArray, double rate, boolean trueNoise) {
@@ -932,7 +961,8 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         WAVEFRONT_DISTANCE,
         WAVEFRONT_DISTANCE_PHYLO,
         WAVEFRONT_RATE,
-        DISTANCE_TIME_CORRELATION
+        DISTANCE_TIME_CORRELATION,
+        SQUAREDDISTANCE_TIME4_CORRELATION
     }
 
     enum BranchSet {
@@ -1023,6 +1053,12 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                     System.err.println(name+": mode = "+mode+" ignored for "+DISTANCE_TIME_CORRELATION+", reverting to correlation coefficient mode");
                     statMode = Mode.CORRELATION_COEFFICIENT;
                 }
+            } else if (statistic.equals(SQUAREDDISTANCE_TIME4_CORRELATION)) {
+                summaryStat = summaryStatistic.SQUAREDDISTANCE_TIME4_CORRELATION;
+                if (mode.equals(AVERAGE) || mode.equals(WEIGHTED_AVERAGE) || mode.equals(COEFFICIENT_OF_VARIATION) || mode.equals(MEDIAN)){
+                    System.err.println(name+": mode = "+mode+" ignored for "+SQUAREDDISTANCE_TIME4_CORRELATION+", reverting to correlation coefficient mode");
+                    statMode = Mode.CORRELATION_COEFFICIENT;
+                }
             } else if (statistic.equals(WAVEFRONT_DISTANCE)) {
                 summaryStat = summaryStatistic.WAVEFRONT_DISTANCE;
                 if (!mode.equals(WEIGHTED_AVERAGE)) {
@@ -1065,6 +1101,8 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                 summaryStat = summaryStatistic.DIFFUSION_COEFFICIENT;
             } else if (statistic.equals(DISTANCE_TIME_CORRELATION)) {
                 summaryStat = summaryStatistic.DISTANCE_TIME_CORRELATION;
+            } else if (statistic.equals(SQUAREDDISTANCE_TIME4_CORRELATION)) {
+                summaryStat = summaryStatistic.SQUAREDDISTANCE_TIME4_CORRELATION;
             } else {
                 System.err.println(name+": unknown statistic: "+statistic+". Reverting to diffusion rate.");
                 summaryStat = summaryStatistic.DIFFUSION_RATE;

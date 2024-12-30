@@ -461,14 +461,13 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
             }
         }  else if (summaryStat == summaryStatistic.SQUAREDDISTANCE_TIME4_CORRELATION)  {
             List<Double> squareddistances = squareElements(distances);
-            List<Double> timesFour = elementsTimesFour(times);
             if (summaryMode == Mode.SPEARMAN) {
-                return getSpearmanRho(convertDoubles(timesFour),convertDoubles(squareddistances));
+                return getSpearmanRho(convertDoubles(times),convertDoubles(squareddistances));
             } else if (summaryMode == Mode.R_SQUARED) {
-                Regression r = new Regression(convertDoubles(timesFour), convertDoubles(squareddistances));
+                Regression r = new Regression(convertDoubles(times), convertDoubles(squareddistances));
                 return r.getRSquared();
             } else {
-                Regression r = new Regression(convertDoubles(timesFour),convertDoubles(squareddistances));
+                Regression r = new Regression(convertDoubles(times),convertDoubles(squareddistances));
                 return r.getCorrelationCoefficient();
             }
          }  else {
@@ -509,14 +508,6 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
             squaredList.add(number * number);
         }
         return squaredList;
-    }
-
-    private static List<Double> elementsTimesFour (List<Double> inputList) {
-        List<Double> returnList = new ArrayList<>();
-        for (Double number : inputList) {
-            returnList.add(number * 4);
-        }
-        return returnList;
     }
 
     private double[] imputeValue(double[] nodeValue, double[] parentValue, double time, double nodeHeight, double parentHeight, double[] precisionArray, double rate, boolean trueNoise) {

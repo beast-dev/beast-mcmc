@@ -78,8 +78,8 @@ public class GeodesicHamiltonianMonteCarloOperatorParser extends HamiltonianMont
     }
 
     private ManifoldProvider parseSphere(XMLObject xo, Parameter parameter) throws XMLParseException {
-        double radius = xo.getChild(SPHERE).getDoubleAttribute(RADIUS); //TODO
-        Sphere sphere = new Sphere();
+        double radius = xo.getChild(SPHERE).getDoubleAttribute(RADIUS, 1); //TODO
+        Sphere sphere = new Sphere(radius);
         return new ManifoldProvider.BasicManifoldProvider(sphere, parameter.getDimension());
     }
 
@@ -283,7 +283,7 @@ public class GeodesicHamiltonianMonteCarloOperatorParser extends HamiltonianMont
                             }, true)
                     }),
                     new ElementRule(SPHERE, new XMLSyntaxRule[]{
-                            AttributeRule.newDoubleRule(RADIUS, false)
+                            AttributeRule.newDoubleRule(RADIUS, true)
                     })
             )
     };

@@ -1,26 +1,41 @@
 package dr.math.geodesics;
 
+import dr.math.MathUtils;
+
 public class Sphere implements Manifold {
 
+    private final double radius;
+    public Sphere(double radius) {
+        this.radius = radius;
+    }
 
     public Sphere() {
-
+        this(1);
     }
 
     @Override
     public void projectTangent(double[] tangent, double[] point) {
         int dim = point.length;
+        double[] originalTangent = new double[dim];
+        System.arraycopy(tangent, 0, originalTangent, 0, dim);
 
-        double radiusSquared = 0;
-        for (int i = 0; i < dim; i++) {
-            radiusSquared += point[i] * point[i];
-        }
+        double radiusSquared = radius * radius;
 
 
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j < dim; j++) {
-                tangent[i] -= point[j] * point[i] * tangent[j] / radiusSquared;
+                tangent[i] -= point[j] * point[i] * originalTangent[j] / radiusSquared;
             }
+        }
+    }
+
+    @Override
+    public void projectPoint(double[] point) {
+        double currentRadius = MathUtils.getL2Norm(point);
+        double ratio = radius / currentRadius;
+
+        for (int i = 0; i < point.length; i++) {
+            point[i] = point[i] * ratio;
         }
     }
 
@@ -29,11 +44,7 @@ public class Sphere implements Manifold {
         // assumes velocity is already orthogonal to point
 
         int dim = point.length;
-        double alpha = 0;
-        for (int i = 0; i < dim; i++) {
-            alpha += velocity[i] * velocity[i];
-        }
-        alpha = Math.sqrt(alpha);
+        double alpha = MathUtils.getL2Norm(velocity);
 
         double cat = Math.cos(alpha * t);
         double sat = Math.sin(alpha * t);

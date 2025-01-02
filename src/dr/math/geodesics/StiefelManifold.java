@@ -31,6 +31,11 @@ public class StiefelManifold implements Manifold {
     }
 
     @Override
+    public void projectPoint(double[] point) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
     public void geodesic(double[] point, double[] velocity, double t) {
         DenseMatrix64F positionMatrix = DenseMatrix64F.wrap(colDim, rowDim, point);
         DenseMatrix64F velocityMatrix = DenseMatrix64F.wrap(colDim, rowDim, velocity);

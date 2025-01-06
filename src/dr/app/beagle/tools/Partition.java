@@ -329,7 +329,7 @@ public class Partition {
 
 				// TODO Add matrix permute here to debug
 
-				private static boolean doSomethingStupid = false;
+				boolean doSomethingStupid = false;
 
 				if (doSomethingStupid) {
 					double[] prob = probabilities[category[i]];

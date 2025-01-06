@@ -327,6 +327,21 @@ public class Partition {
                     System.out.println("destination length: " + cProb.length);
                 }
 
+				// TODO Add matrix permute here to debug
+
+				private static boolean doSomethingStupid = false;
+
+				if (doSomethingStupid) {
+					double[] prob = probabilities[category[i]];
+					for (int i = 0; i < stateCount; ++i) {
+						for (int j = i + 1; j < stateCount; ++j) {
+							double p = prob[i * stateCount + j];
+							prob[i * stateCount + j] = prob[j * stateCount + i];
+							prob[j * stateCount + i] = p;
+						}
+					}
+				}
+				
 				System.arraycopy(probabilities[category[i]], parentSequence[i] * stateCount, cProb, 0, stateCount);
 
 				if (DEBUG) {

@@ -334,7 +334,7 @@ public class Partition {
 				if (doSomethingStupid) {
 					double[] prob = probabilities[category[i]];
 					for (int k = 0; k < stateCount; ++k) {
-						for (int j = i + 1; j < stateCount; ++j) {
+						for (int j = k + 1; j < stateCount; ++j) {
 							double p = prob[k * stateCount + j];
 							prob[k * stateCount + j] = prob[j * stateCount + k];
 							prob[j * stateCount + k] = p;

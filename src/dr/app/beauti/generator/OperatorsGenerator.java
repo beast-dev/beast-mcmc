@@ -233,11 +233,11 @@ public class OperatorsGenerator extends Generator {
             case SCALE_WITH_INDICATORS:
                 writeScaleWithIndicatorsOperator(operator, writer);
                 break;
-            case GMRF_GIBBS_OPERATOR:
-                writeGMRFGibbsOperator(operator, prefix, writer);
+            case GMRF_BLOCKUPDATE_OPERATOR:
+                writeGMRFBlockUpdateOperator(operator, prefix, writer);
                 break;
-            case SKY_GRID_GIBBS_OPERATOR:
-                writeSkyGridGibbsOperator(operator, prefix, writer);
+            case SKY_GRID_BLOCKUPDATE_OPERATOR:
+                writeSkyGridBlockUpdateOperator(operator, prefix, writer);
                 break;
             case SKY_GRID_HMC_OPERATOR:
                 writeSkyGridHMCOperator(operator, prefix, writer);
@@ -529,12 +529,11 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(SampleNonActiveGibbsOperatorParser.SAMPLE_NONACTIVE_GIBBS_OPERATOR);
     }
 
-    private void writeSkyGridGibbsOperator(Operator operator, String treePriorPrefix, XMLWriter writer) {
+    private void writeSkyGridBlockUpdateOperator(Operator operator, String treePriorPrefix, XMLWriter writer) {
         writer.writeOpenTag(
                 GMRFSkyrideBlockUpdateOperatorParser.GRID_BLOCK_UPDATE_OPERATOR,
                 new Attribute[] {
-// This is a Gibbs operator so shouldn't have a tuning parameter?
-//                        new Attribute.Default<Double>(GMRFSkyrideBlockUpdateOperatorParser.SCALE_FACTOR, operator.getTuning()),
+                        new Attribute.Default<Double>(GMRFSkyrideBlockUpdateOperatorParser.SCALE_FACTOR, operator.getTuning()),
                         getWeightAttribute(operator.getWeight())
                 }
         );
@@ -699,7 +698,7 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(HamiltonianMonteCarloOperatorParser.HMC_OPERATOR);
     }
 
-    private void writeGMRFGibbsOperator(Operator operator, String treePriorPrefix, XMLWriter writer) {
+    private void writeGMRFBlockUpdateOperator(Operator operator, String treePriorPrefix, XMLWriter writer) {
         writer.writeOpenTag(
                 GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR,
                 new Attribute[]{

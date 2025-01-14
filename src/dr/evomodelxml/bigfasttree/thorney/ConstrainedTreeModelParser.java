@@ -30,7 +30,6 @@ package dr.evomodelxml.bigfasttree.thorney;
 import dr.evolution.tree.Tree;
 import dr.evomodel.bigfasttree.thorney.ConstrainedTreeModel;
 import dr.evomodel.bigfasttree.thorney.RootHeightProxyParameter;
-import dr.evomodel.operators.RandomWalkIntegerNodeHeightWeightedOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.evomodelxml.tree.TreeModelParser;
@@ -60,12 +59,12 @@ public class ConstrainedTreeModelParser extends AbstractXMLObjectParser {
         Logger.getLogger("dr.evomodel").info("  tree height = " + treeModel.getNodeHeight(treeModel.getRoot()));
 
         // Make proxy parameters
-        RootHeightProxyParameter rootHeightProxyParameter = new RootHeightProxyParameter("Placeholder_Root_Proxy",
+        RootHeightProxyParameter rootHeightProxyParameter = new RootHeightProxyParameter(xo.getId() + ".rootHeight",
                 treeModel); // id overwritten below
-        NodeHeightProxyParameter nodeHeightProxyParameter = new NodeHeightProxyParameter("Placeholder_nodeHeight_Proxy",
+        NodeHeightProxyParameter nodeHeightProxyParameter = new NodeHeightProxyParameter(xo.getId() +".internalNodeHeights",
                 treeModel, false);
         NodeHeightProxyParameter allNodeHeightProxyParameter = new NodeHeightProxyParameter(
-                "Placeholder_allNodeHeight_Proxy", treeModel, true);
+            xo.getId() +".allInternalNodeHeights", treeModel, true);
         // parse proxy parameters
         for (int i = 0; i < xo.getChildCount(); i++) {
             if (xo.getChild(i) instanceof XMLObject) {

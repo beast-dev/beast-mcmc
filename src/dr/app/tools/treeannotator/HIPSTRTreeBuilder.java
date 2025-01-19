@@ -36,7 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HIPSTRTreeBuilder {
-    private Map<Clade, Double> credibilityCache = new HashMap<>();
+    private final Map<Clade, Double> credibilityCache = new HashMap<>();
 
     public MutableTree getHIPSTRTree(CladeSystem cladeSystem, TaxonList taxonList) {
         BiClade rootClade = (BiClade)cladeSystem.getRootClade();
@@ -99,6 +99,12 @@ public class HIPSTRTreeBuilder {
                             clade.bestRight = left;
                         }
                     }
+//                    else if (leftLogCredibility + rightLogCredibility == bestLogCredibility) {
+//                        if ((left.getSize() > 1 && left.getCredibility() >= 0.5) ||
+//                                (right.getSize() > 1 && right.getCredibility() >= 0.5)) {
+//                            System.err.println("eek");
+//                        }
+//                    }
                 }
                 logCredibility += bestLogCredibility;
             } else {

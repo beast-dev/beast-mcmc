@@ -67,7 +67,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
     // Messages to stderr, output to stdout
     private static PrintStream progressStream = System.err;
-    private static final boolean extendedMetrics = false;
+    private static final boolean extendedMetrics = true;
 
     private final CollectionAction collectionAction;
     private final AnnotationAction annotationAction;
@@ -507,10 +507,10 @@ public class TreeAnnotator extends BaseTreeTool {
 
         // Test whether score returned by HIPSTRTreeBuilder is the same as that calculated de novo
         // Generally seems to have very small (precision related) differences
-//        double score2 = scoreTree(tree, cladeSystem);
-//        if (score != score2) {
-//            System.err.println("HIPSTR Score: " + score + " vs recalculation: " + score2);
-//        }
+        double score2 = scoreTree(tree, cladeSystem);
+        if (Math.abs(score - score2) > 1.0E-8) {
+            System.err.println("HIPSTR Score: " + score + " vs recalculation: " + score2);
+        }
 
         long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("[" + timeElapsed + " secs]");
@@ -531,26 +531,26 @@ public class TreeAnnotator extends BaseTreeTool {
         reportCladeCredibilityCount(cladeSystem, tree, 0.99);
         reportCladeCredibilityCount(cladeSystem, tree, 0.95);
         if (extendedMetrics) {
-            progressStream.println("Number of clades with credibility > 0.75: " + cladeSystem.getTopCladeCount(tree, 0.75) +
-                    " (out of " + cladeSystem.getTopCladeCount(0.75) + " in all trees)");
+            reportCladeCredibilityCount(cladeSystem, tree, 0.9);
+            reportCladeCredibilityCount(cladeSystem, tree, 0.8);
+            reportCladeCredibilityCount(cladeSystem, tree, 0.7);
+            reportCladeCredibilityCount(cladeSystem, tree, 0.6);
         }
         reportCladeCredibilityCount(cladeSystem, tree, 0.5);
         if (extendedMetrics) {
-            progressStream.println("Number of clades with credibility > 0.25: " + cladeSystem.getTopCladeCount(tree, 0.25) +
-                    " (out of " + cladeSystem.getTopCladeCount(0.25) + " in all trees)");
-            progressStream.println("Number of clades with credibility > 0.10: " + cladeSystem.getTopCladeCount(tree, 0.1) +
-                    " (out of " + cladeSystem.getTopCladeCount(0.1) + " in all trees)");
-            progressStream.println("Number of clades with credibility > 0.05: " + cladeSystem.getTopCladeCount(tree, 0.05) +
-                    " (out of " + cladeSystem.getTopCladeCount(0.05) + " in all trees)");
+            reportCladeCredibilityCount(cladeSystem, tree, 0.25);
+            reportCladeCredibilityCount(cladeSystem, tree, 0.1);
+            reportCladeCredibilityCount(cladeSystem, tree, 0.05);
         }
     }
 
     private static void reportCladeCredibilityCount(CladeSystem cladeSystem, Tree tree, double threshold) {
         int treeCladeCount = cladeSystem.getTopCladeCount(tree, threshold);
         int allCladeCount = cladeSystem.getTopCladeCount(threshold);
-        progressStream.println("Number of clades with credibility > " + threshold + ": " +
-                treeCladeCount +
-                " (out of " + allCladeCount + " in all trees)");
+        progressStream.print("Number of clades with credibility > " + threshold + ": " +
+                treeCladeCount);
+        progressStream.println(treeCladeCount < allCladeCount ?
+                " (out of " + allCladeCount + " in all trees)" : "");
         Set<Clade> treeClades = cladeSystem.getTopClades(tree, threshold);
         Set<Clade> allClades = cladeSystem.getTopClades(threshold);
 

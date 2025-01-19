@@ -67,6 +67,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
     // Messages to stderr, output to stdout
     private static PrintStream progressStream = System.err;
+    private static final boolean extendedMetrics = false;
 
     private final CollectionAction collectionAction;
     private final AnnotationAction annotationAction;
@@ -115,15 +116,15 @@ public class TreeAnnotator extends BaseTreeTool {
      */
     public TreeAnnotator(final int burninTrees,
                          final long burninStates,
-                         HeightsSummary heightsOption,
-                         double posteriorLimit,
-                         double[] hpd2D,
-                         boolean computeESS,
-                         Target targetOption,
-                         String targetTreeFileName,
-                         String referenceTreeFileName,
-                         String inputFileName,
-                         String outputFileName
+                         final HeightsSummary heightsOption,
+                         final double posteriorLimit,
+                         final double[] hpd2D,
+                         final boolean computeESS,
+                         final Target targetOption,
+                         final String targetTreeFileName,
+                         final String referenceTreeFileName,
+                         final String inputFileName,
+                         final String outputFileName
     ) throws IOException {
 
         long totalStartTime = System.currentTimeMillis();
@@ -414,7 +415,7 @@ public class TreeAnnotator extends BaseTreeTool {
         double score = scoreTree(targetTree, cladeSystem);
         progressStream.println("Target tree's log clade credibility: " + String.format("%.4f", score));
         reportStatistics(cladeSystem, targetTree);
-        reportStatisticTables(cladeSystem, targetTree);
+//        reportStatisticTables(cladeSystem, targetTree);
 
         progressStream.println();
         return targetTree;
@@ -504,6 +505,13 @@ public class TreeAnnotator extends BaseTreeTool {
         MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa);
         double score = treeBuilder.getScore();
 
+        // Test whether score returned by HIPSTRTreeBuilder is the same as that calculated de novo
+        // Generally seems to have very small (precision related) differences
+//        double score2 = scoreTree(tree, cladeSystem);
+//        if (score != score2) {
+//            System.err.println("HIPSTR Score: " + score + " vs recalculation: " + score2);
+//        }
+
         long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("[" + timeElapsed + " secs]");
         progressStream.println();
@@ -519,14 +527,37 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println("Lowest individual clade credibility: " + String.format("%.4f", cladeSystem.getMinimumCladeCredibility(tree)));
         progressStream.println("Mean individual clade credibility: " + String.format("%.4f", cladeSystem.getMeanCladeCredibility(tree)));
         progressStream.println("Median individual clade credibility: " + String.format("%.4f", cladeSystem.getMedianCladeCredibility(tree)));
-        progressStream.println("Number of clades with credibility 1.0: " + cladeSystem.getTopCladeCredibility(tree, 1.0));
-        progressStream.println("Number of clades with credibility > 0.99: " + cladeSystem.getTopCladeCredibility(tree, 0.99) +
-                " (out of " + cladeSystem.getTopCladeCredibility(0.99) + " in all trees)");
-        progressStream.println("Number of clades with credibility > 0.95: " + cladeSystem.getTopCladeCredibility(tree, 0.95) +
-                " (out of " + cladeSystem.getTopCladeCredibility(0.95) + " in all trees)");
-        progressStream.println("Number of clades with credibility > 0.5: " + cladeSystem.getTopCladeCredibility(tree, 0.5) +
-                " (out of " + cladeSystem.getTopCladeCredibility(0.5) + " in all trees)");
+        progressStream.println("Number of clades with credibility 1.0: " + cladeSystem.getTopCladeCount(tree, 1.0));
+        reportCladeCredibilityCount(cladeSystem, tree, 0.99);
+        reportCladeCredibilityCount(cladeSystem, tree, 0.95);
+        if (extendedMetrics) {
+            progressStream.println("Number of clades with credibility > 0.75: " + cladeSystem.getTopCladeCount(tree, 0.75) +
+                    " (out of " + cladeSystem.getTopCladeCount(0.75) + " in all trees)");
+        }
+        reportCladeCredibilityCount(cladeSystem, tree, 0.5);
+        if (extendedMetrics) {
+            progressStream.println("Number of clades with credibility > 0.25: " + cladeSystem.getTopCladeCount(tree, 0.25) +
+                    " (out of " + cladeSystem.getTopCladeCount(0.25) + " in all trees)");
+            progressStream.println("Number of clades with credibility > 0.10: " + cladeSystem.getTopCladeCount(tree, 0.1) +
+                    " (out of " + cladeSystem.getTopCladeCount(0.1) + " in all trees)");
+            progressStream.println("Number of clades with credibility > 0.05: " + cladeSystem.getTopCladeCount(tree, 0.05) +
+                    " (out of " + cladeSystem.getTopCladeCount(0.05) + " in all trees)");
+        }
     }
+
+    private static void reportCladeCredibilityCount(CladeSystem cladeSystem, Tree tree, double threshold) {
+        int treeCladeCount = cladeSystem.getTopCladeCount(tree, threshold);
+        int allCladeCount = cladeSystem.getTopCladeCount(threshold);
+        progressStream.println("Number of clades with credibility > " + threshold + ": " +
+                treeCladeCount +
+                " (out of " + allCladeCount + " in all trees)");
+        Set<Clade> treeClades = cladeSystem.getTopClades(tree, threshold);
+        Set<Clade> allClades = cladeSystem.getTopClades(threshold);
+
+        Set<Clade> diff = new HashSet<>(allClades);
+        diff.removeAll(treeClades);
+    }
+
     private static void reportStatisticTables(CladeSystem cladeSystem, Tree tree) {
         int count = 100;
 //        double[] table = new double[count + 1];
@@ -540,9 +571,9 @@ public class TreeAnnotator extends BaseTreeTool {
             double threshold = ((double) (i)) / count;
             progressStream.print(threshold);
             progressStream.print(",");
-            progressStream.print(cladeSystem.getTopCladeCredibility(tree, threshold));
+            progressStream.print(cladeSystem.getTopCladeCount(tree, threshold));
             progressStream.print(",");
-            progressStream.println(cladeSystem.getTopCladeCredibility(threshold));
+            progressStream.println(cladeSystem.getTopCladeCount(threshold));
         }
 
     }

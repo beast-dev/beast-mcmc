@@ -195,7 +195,7 @@ public class TreeAnnotator extends BaseTreeTool {
             }
             case HIPSTR: {
                 progressStream.println("Finding highest independent posterior subtree reconstruction (HIPSTR) tree...");
-                targetTree = getHIPSTRTree(cladeSystem);
+                targetTree = getHIPSTRTree(cladeSystem, 0.5);
                 break;
             }
             default: throw new IllegalArgumentException("Unknown targetOption");
@@ -497,22 +497,16 @@ public class TreeAnnotator extends BaseTreeTool {
         return bestTree;
     }
 
-    private MutableTree getHIPSTRTree(CladeSystem cladeSystem) {
+    private MutableTree getHIPSTRTree(CladeSystem cladeSystem, double penaltyThreshold) {
 
         long startTime = System.currentTimeMillis();
 
         HIPSTRTreeBuilder treeBuilder = new HIPSTRTreeBuilder();
-        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa);
-        double score = treeBuilder.getScore();
+        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa, penaltyThreshold);
 
-        // Test whether score returned by HIPSTRTreeBuilder is the same as that calculated de novo
-        // Generally seems to have very small (precision related) differences
-        double score2 = scoreTree(tree, cladeSystem);
-        if (Math.abs(score - score2) > 1.0E-8) {
-            System.err.println("HIPSTR Score: " + score + " vs recalculation: " + score2);
-        }
+        double score = scoreTree(tree, cladeSystem);
 
-        long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
+        double timeElapsed =  (double)(System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("[" + timeElapsed + " secs]");
         progressStream.println();
         progressStream.println("HIPSTR tree's log clade credibility: " + String.format("%.4f", score));
@@ -528,34 +522,51 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println("Mean individual clade credibility: " + String.format("%.4f", cladeSystem.getMeanCladeCredibility(tree)));
         progressStream.println("Median individual clade credibility: " + String.format("%.4f", cladeSystem.getMedianCladeCredibility(tree)));
         progressStream.println("Number of clades with credibility 1.0: " + cladeSystem.getTopCladeCount(tree, 1.0));
-        reportCladeCredibilityCount(cladeSystem, tree, 0.99);
-        reportCladeCredibilityCount(cladeSystem, tree, 0.95);
+        reportCladeCredibilityCount(cladeSystem, tree, 0.99, extendedMetrics);
+        reportCladeCredibilityCount(cladeSystem, tree, 0.95, extendedMetrics);
         if (extendedMetrics) {
-            reportCladeCredibilityCount(cladeSystem, tree, 0.9);
-            reportCladeCredibilityCount(cladeSystem, tree, 0.8);
-            reportCladeCredibilityCount(cladeSystem, tree, 0.7);
-            reportCladeCredibilityCount(cladeSystem, tree, 0.6);
+            reportCladeCredibilityCount(cladeSystem, tree, 0.9, extendedMetrics);
+            reportCladeCredibilityCount(cladeSystem, tree, 0.8, extendedMetrics);
+            reportCladeCredibilityCount(cladeSystem, tree, 0.7, extendedMetrics);
+            reportCladeCredibilityCount(cladeSystem, tree, 0.6, extendedMetrics);
         }
-        reportCladeCredibilityCount(cladeSystem, tree, 0.5);
+        reportCladeCredibilityCount(cladeSystem, tree, 0.5, extendedMetrics);
         if (extendedMetrics) {
-            reportCladeCredibilityCount(cladeSystem, tree, 0.25);
-            reportCladeCredibilityCount(cladeSystem, tree, 0.1);
-            reportCladeCredibilityCount(cladeSystem, tree, 0.05);
+            reportCladeCredibilityCount(cladeSystem, tree, 0.25, extendedMetrics);
+            reportCladeCredibilityCount(cladeSystem, tree, 0.1, extendedMetrics);
+            reportCladeCredibilityCount(cladeSystem, tree, 0.05, extendedMetrics);
         }
     }
 
-    private static void reportCladeCredibilityCount(CladeSystem cladeSystem, Tree tree, double threshold) {
+    private static void reportCladeCredibilityCount(CladeSystem cladeSystem, Tree tree, double threshold, boolean extendedMetrics) {
         int treeCladeCount = cladeSystem.getTopCladeCount(tree, threshold);
         int allCladeCount = cladeSystem.getTopCladeCount(threshold);
         progressStream.print("Number of clades with credibility > " + threshold + ": " +
                 treeCladeCount);
-        progressStream.println(treeCladeCount < allCladeCount ?
-                " (out of " + allCladeCount + " in all trees)" : "");
-        Set<Clade> treeClades = cladeSystem.getTopClades(tree, threshold);
-        Set<Clade> allClades = cladeSystem.getTopClades(threshold);
+        if (treeCladeCount < allCladeCount) {
+            if (extendedMetrics) {
+                Set<Clade> treeClades = cladeSystem.getTopClades(tree, threshold);
+                Set<Clade> allClades = cladeSystem.getTopClades(threshold);
 
-        Set<Clade> diff = new HashSet<>(allClades);
-        diff.removeAll(treeClades);
+                Set<Clade> missingClades = new HashSet<>(allClades);
+                missingClades.removeAll(treeClades);
+                double sum = 0;
+                int max = 0;
+                for (Clade missing : missingClades) {
+                    sum += missing.getSize();
+                    if (missing.getSize() > max) {
+                        max = missing.getSize();
+                    }
+                }
+                progressStream.print(" / " + allCladeCount + " | missing: " + missingClades.size());
+                progressStream.printf(",  mean size: %.2f", (sum / missingClades.size()));
+                progressStream.printf(",  max size: %d", max);
+
+            } else {
+                progressStream.print(" / " + allCladeCount + " (in all trees)");
+            }
+        }
+        progressStream.println();
     }
 
     private static void reportStatisticTables(CladeSystem cladeSystem, Tree tree) {

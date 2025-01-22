@@ -62,10 +62,13 @@ public class HIPSTRTreeBuilder {
 
         assert clade.getSize() > 1;
 
-//        double cladeScore = Math.log(clade.getCredibility() + penaltyThreshold);
-        double cladeScore = Math.log(clade.getCredibility() + penaltyThreshold) + clade.getCredibility() >= 0.5 ? 1.0E10 : 0.0;
+        double cladeScore = Math.log(clade.getCredibility() + penaltyThreshold);
+//        double cladeScore = Math.log(clade.getCredibility() + penaltyThreshold) + clade.getCredibility() >= 0.5 ? 1.0E10 : 0.0;
 
-        Map<Pair<BiClade, BiClade>, Double> ties = new HashMap<>();
+        Map<Pair<BiClade, BiClade>, Double> ties;
+        if (breakTies) {
+            ties = new HashMap<>();
+        }
 
         // if it is not a tip
         if (clade.getSize() > 2) {
@@ -75,7 +78,7 @@ public class HIPSTRTreeBuilder {
             for (Pair<BiClade, BiClade> subClade : clade.getSubClades()) {
                 BiClade left = subClade.first;
 
-                double leftScore = Math.log(1.5);
+                double leftScore = Math.log(1.0 + penaltyThreshold);
 //                double leftScore = 0.0);
                 if (left.getSize() > 1) {
                     leftScore = credibilityCache.getOrDefault(left, Double.NaN);
@@ -87,7 +90,7 @@ public class HIPSTRTreeBuilder {
 
                 BiClade right = subClade.second;
 
-                double rightScore = Math.log(1.5);
+                double rightScore = Math.log(1.0 + penaltyThreshold);
 //                double rightScore = 0.0;
                 if (right.getSize() > 1) {
                     rightScore = credibilityCache.getOrDefault(right, Double.NaN);
@@ -110,8 +113,7 @@ public class HIPSTRTreeBuilder {
                                 clade.bestLeft = right;
                                 clade.bestRight = left;
                             }
-//                            ties.put(new Pair<>(left, right), Math.max(left.getCredibility(), right.getCredibility()));
-                            ties.put(new Pair<>(left, right), left.getCredibility() * right.getCredibility());
+                            ties.put(new Pair<>(left, right), (left.getCredibility() + penaltyThreshold) * (right.getCredibility() + penaltyThreshold));
                         }
                     }
                 } else {
@@ -148,11 +150,7 @@ public class HIPSTRTreeBuilder {
             Pair<BiClade, BiClade> subClade = clade.getSubClades().stream().findFirst().get();
             clade.bestLeft = subClade.first;
             clade.bestRight = subClade.second;
-
-            if (clade.bestLeft.getTaxon().getId().contains("EPI_ISL_477006")) {
-                System.out.println("EPI_ISL_477006");
-            }
-             cladeScore += 2 * Math.log(1.5);
+            cladeScore += 2 * Math.log(1.0 + penaltyThreshold);
         }
 
         clade.bestSubTreeScore = cladeScore;

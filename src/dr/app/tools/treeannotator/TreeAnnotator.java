@@ -67,7 +67,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
     // Messages to stderr, output to stdout
     private static PrintStream progressStream = System.err;
-    private static final boolean extendedMetrics = true;
+    private static final boolean extendedMetrics = false;
 
     private final CollectionAction collectionAction;
     private final AnnotationAction annotationAction;
@@ -75,11 +75,10 @@ public class TreeAnnotator extends BaseTreeTool {
     private TaxonList taxa = null;
     private int totalTrees;
     private int totalTreesUsed;
-    private long maxState;
 
     enum Target {
-        MAX_CLADE_CREDIBILITY("Maximum clade credibility tree"),
         HIPSTR("Highest independent posterior subtree reconstruction (HIPSTR)"),
+        MAX_CLADE_CREDIBILITY("Maximum clade credibility tree"),
         USER_TARGET_TREE("User target tree");
 
         String desc;
@@ -94,10 +93,9 @@ public class TreeAnnotator extends BaseTreeTool {
     }
 
     enum HeightsSummary {
-        MEDIAN_HEIGHTS("Median heights"),
         MEAN_HEIGHTS("Mean heights"),
-        KEEP_HEIGHTS("Keep target heights"),
-        CA_HEIGHTS("Common Ancestor heights");
+        MEDIAN_HEIGHTS("Median heights"),
+        KEEP_HEIGHTS("Keep target heights");
 
         String desc;
 
@@ -118,6 +116,7 @@ public class TreeAnnotator extends BaseTreeTool {
                          final long burninStates,
                          final HeightsSummary heightsOption,
                          final double posteriorLimit,
+                         final double hipstrPenalty,
                          final double[] hpd2D,
                          final boolean computeESS,
                          final Target targetOption,
@@ -195,7 +194,7 @@ public class TreeAnnotator extends BaseTreeTool {
             }
             case HIPSTR: {
                 progressStream.println("Finding highest independent posterior subtree reconstruction (HIPSTR) tree...");
-                targetTree = getHIPSTRTree(cladeSystem, 0.5);
+                targetTree = getHIPSTRTree(cladeSystem, hipstrPenalty);
                 break;
             }
             default: throw new IllegalArgumentException("Unknown targetOption");
@@ -219,10 +218,6 @@ public class TreeAnnotator extends BaseTreeTool {
         collectNodeAttributes(targetCladeSystem, inputFileName, burnin);
 
         annotateTargetTree(targetCladeSystem, heightsOption, targetTree);
-
-        if (heightsOption == HeightsSummary.CA_HEIGHTS) {
-            setNodeHeightsCA(targetCladeSystem, targetTree);
-        }
 
         writeAnnotatedTree(outputFileName, targetTree);
 
@@ -285,6 +280,7 @@ public class TreeAnnotator extends BaseTreeTool {
                     // if burnin has been specified in states, try to parse it out...
                     String name = tree.getId().trim();
 
+                    long maxState;
                     if (name.startsWith("STATE_")) {
                         state = Long.parseLong(name.split("_")[1]);
                         maxState = state;
@@ -601,24 +597,6 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println();
     }
 
-    private void setNodeHeightsCA(CladeSystem cladeSystem, MutableTree targetTree) {
-        throw new UnsupportedOperationException("CA node heights is not supported in treeannotator X");
-//        long startTime = System.currentTimeMillis();
-//        progressStream.println("Setting node heights...");
-//        progressStream.println("0              25             50             75            100");
-//        progressStream.println("|--------------|--------------|--------------|--------------|");
-//
-//        int stepSize = totalTrees / 60;
-//        if (stepSize < 1) stepSize = 1;
-//
-//        CAHeights caHeights = new CAHeights(this);
-//        caHeights.setTreeHeightsByCA(targetTree, inputFileName, burnin);
-//
-//        long timeElapsed = (System.currentTimeMillis() - startTime) / 1000;
-//        progressStream.println("* [" + timeElapsed + " secs]");
-//        progressStream.println();
-    }
-
     private void writeAnnotatedTree(String outputFileName, MutableTree targetTree) {
         progressStream.println("Writing annotated tree...");
 
@@ -782,6 +760,7 @@ public class TreeAnnotator extends BaseTreeTool {
                         burninStates,
                         heightsOption,
                         posteriorLimit,
+                        0.0,
                         hpd2D,
                         computeESS,
                         targetOption,
@@ -808,10 +787,10 @@ public class TreeAnnotator extends BaseTreeTool {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption("type", new String[]{"mcc", "hipstr"}, false, "an option of 'mcc' or 'hipstr'"),
-                        new Arguments.StringOption("heights", new String[]{"keep", "median", "mean", "ca"}, false,
+                        new Arguments.StringOption("type", new String[] {"hipstr", "mcc"}, false, "an option of 'hipstr' (default) or 'mcc'"),
+                        new Arguments.RealOption("penalty", "the hipstr clade credibility penalty (default 0.0)"),
+                        new Arguments.StringOption("heights", new String[] {"keep", "median", "mean", "ca"}, false,
                                 "an option of 'keep', 'median' or 'mean' (default)"),
-                        //"an option of 'keep', 'median', 'mean' or 'ca' (default)"),
                         new Arguments.LongOption("burnin", "the number of states to be considered as 'burn-in'"),
                         new Arguments.IntegerOption("burninTrees", "the number of trees to be considered as 'burn-in'"),
                         new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annotated"),
@@ -887,9 +866,13 @@ public class TreeAnnotator extends BaseTreeTool {
             }
         }
 
-        Target target = Target.MAX_CLADE_CREDIBILITY;
-        if (arguments.hasOption("type") && arguments.getStringOption("type").equalsIgnoreCase("HIPSTR")) {
-            target = Target.HIPSTR;
+        Target target = Target.HIPSTR;
+        if (arguments.hasOption("type") && arguments.getStringOption("type").equalsIgnoreCase("MCC")) {
+            target = Target.MAX_CLADE_CREDIBILITY;
+        }
+        double hipstrPenalty = 0.0;
+        if (arguments.hasOption("penalty")) {
+            hipstrPenalty = arguments.getRealOption("penalty");
         }
 
         if (arguments.hasOption("target")) {
@@ -923,6 +906,7 @@ public class TreeAnnotator extends BaseTreeTool {
                 burninStates,
                 heights,
                 posteriorLimit,
+                hipstrPenalty,
                 hpd2D,
                 computeESS,
                 target,
@@ -938,12 +922,6 @@ public class TreeAnnotator extends BaseTreeTool {
             progressStream.println("Constructed Highest Independent Posterior Sub-Tree Reconstruction (HIPSTR) tree - citation: In prep.");
         } else if (target == Target.USER_TARGET_TREE) {
 //            progressStream.println("Loaded user target tree.");
-        }
-
-        if (heights == HeightsSummary.CA_HEIGHTS) {
-            progressStream.println("\nUsed Clade Height option - citation: " +
-                    "Heled and Bouckaert: 'Looking for trees in the forest: " +
-                    "summary tree from posterior samples'. BMC Evolutionary Biology 2013 13:221.");
         }
 
         System.exit(0);

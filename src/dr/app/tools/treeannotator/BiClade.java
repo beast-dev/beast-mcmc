@@ -213,8 +213,7 @@ class BiClade implements Clade {
     BiClade bestRight = null;
 
 
-    double bestSubTreeCredibility = Double.NaN;
-//    double bestSubCladeCredibility = Double.NEGATIVE_INFINITY;
+    double bestSubTreeScore = Double.NaN;
 
     private List<Object[]> attributeValues = null;
 }

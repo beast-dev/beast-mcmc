@@ -381,7 +381,7 @@ final class CladeSystem {
         Arrays.sort(clades, (o1, o2) -> o2.getCount() - o1.getCount());
         int n = 0;
         // find the point at which the count drops below minCount
-        while (clades[n].getCount() > minCladeCount - 1 && n < clades.length) {
+        while (n < clades.length && clades[n].getCount() > minCladeCount - 1) {
             n++;
         }
 

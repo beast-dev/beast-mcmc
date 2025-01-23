@@ -33,10 +33,7 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.stats.DiscreteStatistics;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Andrew Rambaut
@@ -202,7 +199,7 @@ final class CladeSystem {
     public void calculateCladeCredibilities(int totalTreesUsed) {
         for (Clade clade : cladeMap.values()) {
             assert clade.getCount() <= totalTreesUsed : "clade.getCount=(" + clade.getCount() +
-                        ") should be <= totalTreesUsed = (" + totalTreesUsed + ")";
+                    ") should be <= totalTreesUsed = (" + totalTreesUsed + ")";
 
             clade.setCredibility(((double) clade.getCount()) / (double) totalTreesUsed);
         }
@@ -374,6 +371,86 @@ final class CladeSystem {
         return count;
     }
 
+    public void embiggenBiClades() {
+        List<Clade> allClades = new ArrayList<>(cladeMap.values());
+        allClades.addAll(tipClades.values());
+        Clade[] clades = new Clade[allClades.size()];
+        clades = (Clade[])allClades.toArray(clades);
+
+        // sort by number of trees containing clade
+        Arrays.sort(clades, (o1, o2) -> o2.getCount() - o1.getCount());
+        int minCount = 3;
+        int n = 0;
+        // find the point at which the count drops below minCount
+        while (clades[n].getCount() > minCount - 1 && n < clades.length) {
+            n++;
+        }
+
+        // truncate the array at this pont
+        clades = Arrays.copyOf(clades, n);
+
+        // sort by descending size
+        Arrays.sort(clades, (o1, o2) -> o2.getSize() - o1.getSize());
+
+        int maxSize = clades[0].getSize();
+
+        int[] sizeIndices = new int[maxSize];
+        n = 0;
+        int currentSize = maxSize;
+        while (n < clades.length) {
+            if (clades[n].getSize() < currentSize) {
+                currentSize -= 1;
+                sizeIndices[currentSize] = n;
+            }
+            n++;
+        }
+        sizeIndices[0] = clades.length;
+
+        int minSize = 1;
+
+        n = sizeIndices[minSize - 1];
+
+        long x = (((((long)n) - 1) * n) / 2);
+
+        System.err.println("Expanding with " + x + " clade pairs");
+        System.err.println("0              25             50             75            100");
+        System.err.println("|--------------|--------------|--------------|--------------|");
+
+        long stepSize = Math.max(x / 60, 1);
+
+        long k = 0;
+        for (int i = sizeIndices[maxSize - 1]; i < n - 1; i++) {
+            BiClade clade1 = (BiClade)clades[i];
+            for (int j = Math.max(i+1, sizeIndices[maxSize - clade1.getSize()]); j < n; j++) {
+                BiClade clade2 = (BiClade) clades[j];
+
+                BitSet bits1 = ((BitSet)clade1.getKey());
+
+                BitSet bits2 = new BitSet();
+                Object key2 = clade2.getKey();
+                if (key2 instanceof Integer) {
+                    bits2.set((Integer) key2);
+                } else {
+                    bits2.or((BitSet) key2);
+                }
+
+                if (!bits2.intersects(bits1)) {
+                    bits2.or(bits1);
+                    BiClade clade = (BiClade) cladeMap.get(bits2);
+                    if (clade != null) {
+                        clade.addSubClades(clade1, clade2);
+                    }
+                }
+                if (k > 0 && k % stepSize == 0) {
+                    System.err.print("*");
+                    System.err.flush();
+                }
+                k++;
+            }
+        }
+        System.err.println();
+    }
+
     //
     // Private stuff
     //
@@ -381,7 +458,7 @@ final class CladeSystem {
     Map<Taxon, Integer> taxonNumberMap = null;
 
     private final Map<Object, Clade> tipClades = new HashMap<>();
-   private final Map<Object, Clade> cladeMap = new HashMap<>();
+    private final Map<Object, Clade> cladeMap = new HashMap<>();
 
     Clade rootClade;
 

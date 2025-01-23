@@ -419,33 +419,36 @@ final class CladeSystem {
         long stepSize = Math.max(x / 60, 1);
 
         long k = 0;
+        // go from one smaller than maxSize to the n (which is the position of the minSize - 1)
         for (int i = sizeIndices[maxSize - 1]; i < n - 1; i++) {
             BiClade clade1 = (BiClade)clades[i];
-            for (int j = Math.max(i+1, sizeIndices[maxSize - clade1.getSize()]); j < n; j++) {
-                BiClade clade2 = (BiClade) clades[j];
+            if (clade1.getSize() >= 2) {
+                for (int j = Math.max(i + 1, sizeIndices[maxSize - clade1.getSize()]); j < n; j++) {
+                    BiClade clade2 = (BiClade) clades[j];
 
-                BitSet bits1 = ((BitSet)clade1.getKey());
+                    BitSet bits1 = ((BitSet) clade1.getKey());
 
-                BitSet bits2 = new BitSet();
-                Object key2 = clade2.getKey();
-                if (key2 instanceof Integer) {
-                    bits2.set((Integer) key2);
-                } else {
-                    bits2.or((BitSet) key2);
-                }
-
-                if (!bits2.intersects(bits1)) {
-                    bits2.or(bits1);
-                    BiClade clade = (BiClade) cladeMap.get(bits2);
-                    if (clade != null) {
-                        clade.addSubClades(clade1, clade2);
+                    BitSet bits2 = new BitSet();
+                    Object key2 = clade2.getKey();
+                    if (key2 instanceof Integer) {
+                        bits2.set((Integer) key2);
+                    } else {
+                        bits2.or((BitSet) key2);
                     }
+
+                    if (!bits2.intersects(bits1)) {
+                        bits2.or(bits1);
+                        BiClade clade = (BiClade) cladeMap.get(bits2);
+                        if (clade != null) {
+                            clade.addSubClades(clade1, clade2);
+                        }
+                    }
+                    if (k > 0 && k % stepSize == 0) {
+                        System.err.print("*");
+                        System.err.flush();
+                    }
+                    k++;
                 }
-                if (k > 0 && k % stepSize == 0) {
-                    System.err.print("*");
-                    System.err.flush();
-                }
-                k++;
             }
         }
         System.err.println();

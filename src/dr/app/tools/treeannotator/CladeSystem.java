@@ -31,9 +31,12 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.Likelihood;
 import dr.stats.DiscreteStatistics;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * @author Andrew Rambaut
@@ -375,7 +378,7 @@ final class CladeSystem {
         List<Clade> allClades = new ArrayList<>(cladeMap.values());
         allClades.addAll(tipClades.values());
         Clade[] clades = new Clade[allClades.size()];
-        clades = (Clade[])allClades.toArray(clades);
+        clades = allClades.toArray(clades);
 
         // sort by number of trees containing clade
         Arrays.sort(clades, (o1, o2) -> o2.getCount() - o1.getCount());
@@ -416,7 +419,7 @@ final class CladeSystem {
         long stepSize = Math.max(x / 60, 1);
 
         long k = 0;
-        // go from one smaller than maxSize to the n (which is the position of the minSize - 1)
+
         for (int i = sizeIndices[maxSize - 1]; i < n - 1; i++) {
             BiClade clade1 = (BiClade)clades[i];
             if (clade1.getSize() >= 2) {
@@ -450,6 +453,115 @@ final class CladeSystem {
         }
         System.err.println();
     }
+
+    public void embiggenBiCladesThreaded(final int minCladeSize, final int minCladeCount) {
+        List<Clade> allClades = new ArrayList<>(cladeMap.values());
+        allClades.addAll(tipClades.values());
+        Clade[] cladeArray = new Clade[allClades.size()];
+        cladeArray = allClades.toArray(cladeArray);
+
+        // sort by number of trees containing clade
+        Arrays.sort(cladeArray, (o1, o2) -> o2.getCount() - o1.getCount());
+        int n = 0;
+        // find the point at which the count drops below minCount
+        while (n < cladeArray.length && cladeArray[n].getCount() > minCladeCount - 1) {
+            n++;
+        }
+
+        // truncate the array at this pont
+        cladeArray = Arrays.copyOf(cladeArray, n);
+
+        // sort by descending size
+        Arrays.sort(cladeArray, (o1, o2) -> o2.getSize() - o1.getSize());
+
+        int maxSize = cladeArray[0].getSize();
+
+        int[] sizeIndices = new int[maxSize];
+        n = 0;
+        int currentSize = maxSize;
+        while (n < cladeArray.length) {
+            if (cladeArray[n].getSize() < currentSize) {
+                currentSize -= 1;
+                sizeIndices[currentSize] = n;
+            }
+            n++;
+        }
+        sizeIndices[0] = cladeArray.length;
+
+        n = sizeIndices[minCladeSize - 1];
+
+//      ExecutorService pool = Executors.newFixedThreadPool(threadCount);
+        ExecutorService pool = Executors.newCachedThreadPool();
+        List<Future<?>> futures = new ArrayList<>();
+
+        final Clade[] clades = cladeArray;
+
+        int x = n - sizeIndices[maxSize - 1];
+        int stepSize = Math.max(x / 60, 1);
+
+        System.err.println("Embiggening clade pairs");
+        System.err.println("0              25             50             75            100");
+        System.err.println("|--------------|--------------|--------------|--------------|");
+
+        final int[] k = { 0 };
+        for (int i = sizeIndices[maxSize - 1]; i < n - 1; i++) {
+            BiClade clade1 = (BiClade)clades[i];
+            if (clade1.getSize() >= 2) {
+                final int from = Math.max(i + 1, sizeIndices[maxSize - clade1.getSize()]);
+                final int to = n;
+                futures.add(pool.submit(() -> {
+                    for (int j = from; j < to; j++) {
+                        BiClade clade2 = (BiClade) clades[j];
+
+                        BitSet bits1 = ((BitSet) clade1.getKey());
+
+                        BitSet bits2 = new BitSet();
+                        Object key2 = clade2.getKey();
+                        if (key2 instanceof Integer) {
+                            bits2.set((Integer) key2);
+                        } else {
+                            bits2.or((BitSet) key2);
+                        }
+
+                        if (!bits2.intersects(bits1)) {
+                            bits2.or(bits1);
+                            BiClade clade = (BiClade) cladeMap.get(bits2);
+                            if (clade != null) {
+                                clade.addSubClades(clade1, clade2);
+                            }
+                        }
+                    }
+                    synchronized (k) {
+                        if (k[0] > 0 && k[0] % stepSize == 0) {
+                            System.err.print("*");
+                            System.err.flush();
+                        }
+                        k[0]++;
+                    }
+
+                }));
+            }
+        }
+
+
+        try {
+            for (Future<?> f: futures) {
+                f.get();
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+
+//        pool.shutdown();
+//        try {
+//            pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+//        } catch (InterruptedException e) {
+//        }
+
+        System.err.println();
+    }
+
 
     //
     // Private stuff

@@ -420,29 +420,33 @@ final class CladeSystem {
 
         long k = 0;
 
+        BitSet bits = new BitSet();
+
         for (int i = sizeIndices[maxSize - 1]; i < n - 1; i++) {
             BiClade clade1 = (BiClade)clades[i];
             if (clade1.getSize() >= 2) {
+                BitSet bits1 = ((BitSet) clade1.getKey());
                 for (int j = Math.max(i + 1, sizeIndices[maxSize - clade1.getSize()]); j < n; j++) {
                     BiClade clade2 = (BiClade) clades[j];
+                    BiClade clade = null;
 
-                    BitSet bits1 = ((BitSet) clade1.getKey());
+                    bits.clear();
+                    bits.or(bits1);
 
-                    BitSet bits2 = new BitSet();
                     Object key2 = clade2.getKey();
                     if (key2 instanceof Integer) {
-                        bits2.set((Integer) key2);
+                        bits.set((Integer) key2);
                     } else {
-                        bits2.or((BitSet) key2);
+                        bits.or((BitSet) key2);
                     }
 
-                    if (!bits2.intersects(bits1)) {
-                        bits2.or(bits1);
-                        BiClade clade = (BiClade) cladeMap.get(bits2);
+                    if (bits.cardinality() == clade1.getSize() + clade2.getSize()) {
+                        clade = (BiClade) cladeMap.get(bits);
                         if (clade != null) {
                             clade.addSubClades(clade1, clade2);
                         }
                     }
+
                     if (k > 0 && k % stepSize == 0) {
                         System.err.print("*");
                         System.err.flush();
@@ -503,29 +507,32 @@ final class CladeSystem {
         System.err.println("0              25             50             75            100");
         System.err.println("|--------------|--------------|--------------|--------------|");
 
+
         final int[] k = { 0 };
         for (int i = sizeIndices[maxSize - 1]; i < n - 1; i++) {
             BiClade clade1 = (BiClade)clades[i];
             if (clade1.getSize() >= 2) {
+                final BitSet bits1 = ((BitSet) clade1.getKey());
                 final int from = Math.max(i + 1, sizeIndices[maxSize - clade1.getSize()]);
                 final int to = n;
                 futures.add(pool.submit(() -> {
+                    BitSet bits = new BitSet();
                     for (int j = from; j < to; j++) {
                         BiClade clade2 = (BiClade) clades[j];
+                        BiClade clade = null;
 
-                        BitSet bits1 = ((BitSet) clade1.getKey());
+                        bits.clear();
+                        bits.or(bits1);
 
-                        BitSet bits2 = new BitSet();
                         Object key2 = clade2.getKey();
                         if (key2 instanceof Integer) {
-                            bits2.set((Integer) key2);
+                            bits.set((Integer) key2);
                         } else {
-                            bits2.or((BitSet) key2);
+                            bits.or((BitSet) key2);
                         }
 
-                        if (!bits2.intersects(bits1)) {
-                            bits2.or(bits1);
-                            BiClade clade = (BiClade) cladeMap.get(bits2);
+                        if (bits.cardinality() == clade1.getSize() + clade2.getSize()) {
+                            clade = (BiClade) cladeMap.get(bits);
                             if (clade != null) {
                                 clade.addSubClades(clade1, clade2);
                             }

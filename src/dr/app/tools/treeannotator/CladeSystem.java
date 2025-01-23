@@ -371,7 +371,7 @@ final class CladeSystem {
         return count;
     }
 
-    public void embiggenBiClades() {
+    public void embiggenBiClades(final int minCladeSize, final int minCladeCount) {
         List<Clade> allClades = new ArrayList<>(cladeMap.values());
         allClades.addAll(tipClades.values());
         Clade[] clades = new Clade[allClades.size()];
@@ -379,10 +379,9 @@ final class CladeSystem {
 
         // sort by number of trees containing clade
         Arrays.sort(clades, (o1, o2) -> o2.getCount() - o1.getCount());
-        int minCount = 3;
         int n = 0;
         // find the point at which the count drops below minCount
-        while (clades[n].getCount() > minCount - 1 && n < clades.length) {
+        while (clades[n].getCount() > minCladeCount - 1 && n < clades.length) {
             n++;
         }
 
@@ -406,9 +405,7 @@ final class CladeSystem {
         }
         sizeIndices[0] = clades.length;
 
-        int minSize = 1;
-
-        n = sizeIndices[minSize - 1];
+        n = sizeIndices[minCladeSize - 1];
 
         long x = (((((long)n) - 1) * n) / 2);
 

@@ -45,7 +45,7 @@ public class HIPSTRTreeBuilder {
 
         credibilityCache.clear();
 
-        cladeSystem.embiggenBiClades();
+        cladeSystem.embiggenBiClades(1, 1);
 
         score = findHIPSTRTree(rootClade, penaltyThreshold);
 

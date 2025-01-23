@@ -198,7 +198,6 @@
             <zipgroupfileset dir="${lib}" includes="jdom.jar"/>
             <zipgroupfileset dir="${lib}" includes="commons-math-2.2.jar"/>
             <zipgroupfileset dir="${lib}" includes="mtj.jar"/>
-<!--             <zipgroupfileset dir="${lib}" includes="JRI.jar"/> -->
             <zipgroupfileset dir="${lib}" includes="colt.jar"/>
             <zipgroupfileset dir="${lib}" includes="beagle.jar"/>
             <zipgroupfileset dir="${lib}" includes="EJML-core-0.30.jar"/>
@@ -726,7 +725,6 @@
 <!--         	<fileset dir="${Mac_dir}/lib"/> -->
         	<fileset dir="lib">
         		<include name="*.jar"/>
-        		<exclude name="JRI.jar"/>
         	</fileset>
         </copy>
         <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Mac_package_dir}"/>

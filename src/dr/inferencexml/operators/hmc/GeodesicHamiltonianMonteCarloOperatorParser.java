@@ -32,6 +32,7 @@ import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.hmc.*;
+import dr.math.MathUtils;
 import dr.math.geodesics.Manifold;
 import dr.math.geodesics.Sphere;
 import dr.math.geodesics.StiefelManifold;
@@ -78,7 +79,22 @@ public class GeodesicHamiltonianMonteCarloOperatorParser extends HamiltonianMont
     }
 
     private ManifoldProvider parseSphere(XMLObject xo, Parameter parameter) throws XMLParseException {
-        double radius = xo.getChild(SPHERE).getDoubleAttribute(RADIUS, 1); //TODO
+        final double radius;
+
+        double parameterRadius = MathUtils.getL2Norm(parameter.getParameterValues());
+
+        XMLObject cxo = xo.getChild(SPHERE);
+
+        if (cxo.hasAttribute(RADIUS)) {
+            radius = cxo.getDoubleAttribute(RADIUS);
+            double multiplier = radius / parameterRadius;
+            for (int i = 0; i < parameter.getDimension(); i++) {
+                parameter.setParameterValueQuietly(i, parameter.getParameterValue(i) * multiplier);
+            }
+            parameter.fireParameterChangedEvent();
+        } else {
+            radius = parameterRadius;
+        }
         Sphere sphere = new Sphere(radius);
         return new ManifoldProvider.BasicManifoldProvider(sphere, parameter.getDimension());
     }

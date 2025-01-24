@@ -493,20 +493,18 @@ final class CladeSystem {
         sizeIndices[0] = cladeArray.length;
 
         n = sizeIndices[minCladeSize - 1];
-
-//      ExecutorService pool = Executors.newFixedThreadPool(threadCount);
-        ExecutorService pool = Executors.newCachedThreadPool();
-        List<Future<?>> futures = new ArrayList<>();
-
         final Clade[] clades = cladeArray;
 
-        int x = n - sizeIndices[maxSize - 1];
-        int stepSize = Math.max(x / 60, 1);
-
-        System.err.println("Embiggening clade pairs");
+        long x = (((((long)n) - 1) * n) / 2);
+        System.err.printf("Embiggening with up to %,d clade pairs...", x);
+        System.err.println();
         System.err.println("0              25             50             75            100");
         System.err.println("|--------------|--------------|--------------|--------------|");
+        final int stepSize = Math.max((n - sizeIndices[maxSize - 1]) / 60, 1);
 
+        //      ExecutorService pool = Executors.newFixedThreadPool(12);
+        ExecutorService pool = Executors.newCachedThreadPool();
+        List<Future<?>> futures = new ArrayList<>();
 
         final int[] k = { 0 };
         for (int i = sizeIndices[maxSize - 1]; i < n - 1; i++) {
@@ -550,7 +548,6 @@ final class CladeSystem {
             }
         }
 
-
         try {
             for (Future<?> f: futures) {
                 f.get();
@@ -559,14 +556,7 @@ final class CladeSystem {
             throw new RuntimeException(e);
         }
 
-
-//        pool.shutdown();
-//        try {
-//            pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-//        } catch (InterruptedException e) {
-//        }
-
-        System.err.println();
+        System.err.print("  ");
     }
 
 

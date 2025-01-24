@@ -5,6 +5,7 @@ import dr.math.MathUtils;
 public class Sphere implements Manifold {
 
     private final double radius;
+
     public Sphere(double radius) {
         this.radius = radius;
     }
@@ -44,7 +45,7 @@ public class Sphere implements Manifold {
         // assumes velocity is already orthogonal to point
 
         int dim = point.length;
-        double alpha = MathUtils.getL2Norm(velocity);
+        double alpha = MathUtils.getL2Norm(velocity) / radius;
 
         double cat = Math.cos(alpha * t);
         double sat = Math.sin(alpha * t);

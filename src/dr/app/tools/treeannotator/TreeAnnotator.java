@@ -171,8 +171,7 @@ public class TreeAnnotator extends BaseTreeTool {
             progressStream.println("Ignoring first " + burninStates + " states (" + burnin + " trees).");
         }
 
-        progressStream.println("Total unique clades: " + cladeSystem.getCladeCount());
-        progressStream.println();
+        printCladeInformation(cladeSystem);
 //        }
 
         MutableTree targetTree = null;
@@ -225,6 +224,13 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println("Total time: " + timeElapsed + " secs");
         progressStream.println();
 
+    }
+
+    private static void printCladeInformation(CladeSystem cladeSystem) {
+        int n = cladeSystem.getCladeCount();
+        progressStream.println("Total unique clades: " + n);
+        progressStream.println("Total clades in more than one tree: " + (n - cladeSystem.getCladeFrequencyCount(1)));
+        progressStream.println();
     }
 
     private void countTrees(String inputFileName) throws IOException {

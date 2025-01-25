@@ -199,12 +199,12 @@ class BiClade implements Clade {
         return "clade " + hashCode();
     }
 
-    private int count;
-    private double credibility;
-    private final int size;
+     int count;
+     double credibility;
+     final int size;
     private final int index;
 
-    private final Object key;
+     final Object key;
 
     private final Taxon taxon;
 

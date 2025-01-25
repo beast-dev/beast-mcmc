@@ -48,6 +48,7 @@ final class CladeSystem {
 
     /**
      * Constructor starting with an empty clade system
+     *
      * @param keepSubClades whether to keep all subtrees in each clade
      */
     public CladeSystem(boolean keepSubClades) {
@@ -61,6 +62,7 @@ final class CladeSystem {
         this.keepSubClades = false;
         add(targetTree);
     }
+
     /**
      * adds all the clades in the tree
      */
@@ -78,7 +80,6 @@ final class CladeSystem {
         // frequency if already present). The root clade is added too (for
         // annotation purposes).
         rootClade = addClades(tree, tree.getRoot());
-
         assert rootClade.getSize() == tree.getExternalNodeCount();
 
         treeCount += 1;
@@ -134,7 +135,9 @@ final class CladeSystem {
         }
         assert clade != null;
 
-        clade.setCount(clade.getCount() + 1);
+        synchronized (clade) {
+            clade.setCount(clade.getCount() + 1);
+        }
 
         return clade;
     }
@@ -144,14 +147,16 @@ final class CladeSystem {
      */
     private Clade getOrAddClade(Clade child1, Clade child2) {
         Object key = BiClade.makeKey(child1.getKey(), child2.getKey());
-        BiClade clade = (BiClade)cladeMap.get(key);
+        BiClade clade = (BiClade) cladeMap.get(key);
         if (clade == null) {
             if (keepSubClades) {
                 clade = new BiClade(child1, child2);
             } else {
                 clade = new BiClade(key, child1.getSize() + child2.getSize());
             }
-            cladeMap.put(clade.getKey(), clade);
+            synchronized (cladeMap) {
+                cladeMap.put(clade.getKey(), clade);
+            }
         } else {
             if (keepSubClades) {
                 clade.addSubClades(child1, child2);
@@ -262,7 +267,7 @@ final class CladeSystem {
 
     public double getMedianCladeCredibility(Tree tree) {
         final double[] cladeCredibility = new double[tree.getInternalNodeCount()];
-        final int[] i = { 0 };
+        final int[] i = {0};
         traverseTree(tree, new CladeAction() {
             @Override
             public void actOnClade(Clade clade, Tree tree, NodeRef node) {
@@ -284,6 +289,7 @@ final class CladeSystem {
 
     /**
      * Returns the number of clades in the tree with threshold credibility or higher
+     *
      * @param tree
      * @param threshold
      * @return
@@ -308,6 +314,7 @@ final class CladeSystem {
 
     /**
      * Returns the set of clades in the tree with threshold credibility or higher
+     *
      * @param tree
      * @param threshold
      * @return
@@ -332,6 +339,7 @@ final class CladeSystem {
 
     /**
      * Returns the number of clades in the clade system with threshold credibility or higher
+     *
      * @param threshold
      * @return
      */
@@ -357,6 +365,7 @@ final class CladeSystem {
 
     /**
      * Returns the set of clades in the clade system with threshold credibility or higher
+     *
      * @param threshold
      * @return
      */
@@ -378,30 +387,35 @@ final class CladeSystem {
         int count = 0;
         for (Object key : cladeMap.keySet()) {
             if (referenceCladeSystem.cladeMap.containsKey(key)) {
-                count ++;
+                count++;
             }
         }
         return count;
     }
 
-    final int binCount = 100;
-    final Map<Object, Clade>[] cladeMapBySize = new Map[binCount];
+    Map<Object, BiClade>[] cladeMapBySize = null;
     int binWidth;
 
     private void binCladesBySize() {
-        int n = taxonList.getTaxonCount();
-        binWidth = (n / binCount) + 1;
+//        int binCount = 805;
+//        binWidth = taxonList.getTaxonCount() / binCount;
+        binWidth = 2;
+        int binCount = taxonList.getTaxonCount() / binWidth;
+        cladeMapBySize = new Map[binCount + 2];
         for (Map.Entry<Object, Clade> entry : cladeMap.entrySet()) {
             int bin = entry.getValue().getSize() / binWidth;
             if (cladeMapBySize[bin] == null) {
                 cladeMapBySize[bin] = new HashMap<>();
             }
-            cladeMapBySize[bin].put(entry.getKey(), entry.getValue());
+            cladeMapBySize[bin].put(entry.getKey(), (BiClade) entry.getValue());
         }
     }
 
-    private Clade getCladeBySize(Object key, int size) {
+    private BiClade getCladeBySize(Object key, int size) {
         int bin = size / binWidth;
+        if (cladeMapBySize[bin] == null) {
+            return null;
+        }
         return cladeMapBySize[bin].get(key);
     }
 
@@ -410,7 +424,7 @@ final class CladeSystem {
 
         List<Clade> allClades = new ArrayList<>(cladeMap.values());
         allClades.addAll(tipClades.values());
-        Clade[] clades = new Clade[allClades.size()];
+        BiClade[] clades = new BiClade[allClades.size()];
         clades = allClades.toArray(clades);
 
         // sort by number of trees containing clade
@@ -421,7 +435,7 @@ final class CladeSystem {
             n++;
         }
 
-        // truncate the array at this pont
+        // truncate the array at this point
         clades = Arrays.copyOf(clades, n);
 
         // sort by descending size
@@ -441,44 +455,77 @@ final class CladeSystem {
         }
         sizeIndices[0] = clades.length;
 
+
+//        n = sizeIndices[Math.max(1, minCladeSize - 1)];
+//        int y = 0;
+//        boolean[] notSubset = new boolean[clades.length];
+//        for (int i = n - 1; i > 0; i--) {
+//            Clade clade1 = clades[i];
+//            notSubset[i] = true;
+//            for (int j = i - 1; j > 0; j--) {
+//                Clade clade2 = clades[j];
+//                if (isSubset((BitSet) clade1.getKey(), (BitSet) clade2.getKey())) {
+//                    notSubset[i] = false;
+//                    y ++;
+//                    break;
+//                }
+//            }
+//        }
+//        System.err.println(n + " clades tested, " + y + " are subsets of larger clades");
+
         n = sizeIndices[minCladeSize - 1];
 
-        long x = (((((long)n) - 1) * n) / 2);
+        // count the exact number of clade pairs (for reporting purposes)
+        long count = 0;
+        for (int u = sizeIndices[maxSize - 1]; u < n - 1; u++) {
+            BiClade clade1 = clades[u];
+            count += n - Math.max(u + 1, sizeIndices[maxSize - clade1.getSize()]);
+        }
 
-        System.err.println("Expanding with " + x + " clade pairs");
+        System.err.printf("Embiggening with up to %,d clade pairs...", count);
+        System.err.println();
         System.err.println("0              25             50             75            100");
         System.err.println("|--------------|--------------|--------------|--------------|");
 
-        long stepSize = Math.max(x / 60, 1);
+        long stepSize = Math.max(count / 60, 1);
+
 
         long k = 0;
+        long embiggulationCount = 0;
 
         BitSet bits = new BitSet();
 
+        int rejectCount = 0;
+
         for (int i = sizeIndices[maxSize - 1]; i < n - 1; i++) {
-            BiClade clade1 = (BiClade)clades[i];
+//            if (notSubset[i]) {
+//                rejectCount += 1;
+//                continue;
+//            }
+            BiClade clade1 = clades[i];
             if (clade1.getSize() >= 2) {
                 BitSet bits1 = ((BitSet) clade1.getKey());
+
                 for (int j = Math.max(i + 1, sizeIndices[maxSize - clade1.getSize()]); j < n; j++) {
-                    BiClade clade2 = (BiClade) clades[j];
-                    BiClade clade = null;
+                    BiClade clade2 = clades[j];
 
                     bits.clear();
                     bits.or(bits1);
 
-                    Object key2 = clade2.getKey();
-                    if (key2 instanceof Integer) {
-                        bits.set((Integer) key2);
+//                    Object key2 = clade2.getKey();
+                    if (clade2.key instanceof Integer) {
+                        bits.set((Integer) clade2.key);
                     } else {
-                        bits.or((BitSet) key2);
+                        bits.or((BitSet) clade2.key);
                     }
 
-                    int size = clade1.getSize() + clade2.getSize();
+                    int size = clade1.size + clade2.size;
                     if (bits.cardinality() == size) {
-//                        clade = (BiClade) cladeMap.get(bits);
-                        clade = (BiClade) getCladeBySize(bits, size);
+//                        BiClade clade = (BiClade) cladeMap.get(bits);
+                        BiClade clade = getCladeBySize(bits, size);
                         if (clade != null) {
                             clade.addSubClades(clade1, clade2);
+                            embiggulationCount++;
                         }
                     }
 
@@ -491,13 +538,27 @@ final class CladeSystem {
             }
         }
         System.err.println();
-        System.err.println("" + k + " additional clade pairs examined");
+        System.err.println(k + " additional clade pairs examined");
+        System.err.println(embiggulationCount+" additional clade pairs added");
+        System.err.println(rejectCount + " rejected");
+    }
+
+    private boolean isSubset(BitSet bits1, BitSet bits2) {
+        for (int i = bits1.nextSetBit(0); i >= 0; i = bits1.nextSetBit(i+1)) {
+            if (!bits2.get(i)) {
+                return false;
+            }
+            // if (i == Integer.MAX_VALUE) {          break; // or (i+1) would overflow      }
+        }
+        return true;
     }
 
     public void embiggenBiClades(final int minCladeSize, final int minCladeCount, final int threadCount) {
+        binCladesBySize();
+
         List<Clade> allClades = new ArrayList<>(cladeMap.values());
         allClades.addAll(tipClades.values());
-        Clade[] cladeArray = new Clade[allClades.size()];
+        BiClade[] cladeArray = new BiClade[allClades.size()];
         cladeArray = allClades.toArray(cladeArray);
 
         // sort by number of trees containing clade
@@ -508,7 +569,7 @@ final class CladeSystem {
             n++;
         }
 
-        // truncate the array at this pont
+        // truncate the array at this point
         cladeArray = Arrays.copyOf(cladeArray, n);
 
         // sort by descending size
@@ -533,7 +594,7 @@ final class CladeSystem {
         n = sizeIndices[minCladeSize - 1];
 
         // make the clade array final so it can be accessed in an anonymous class
-        final Clade[] clades = cladeArray;
+        final BiClade[] clades = cladeArray;
 
         // count the exact number of clade pairs (for reporting purposes)
         long count = 0;
@@ -557,8 +618,9 @@ final class CladeSystem {
         List<Future<?>> futures = new ArrayList<>();
 
         final int[] k = { 0 };
+        final int[] embiggulationCount = { 0 };
         for (int i = sizeIndices[maxSize - 1]; i < n - 1; i++) {
-            BiClade clade1 = (BiClade)clades[i];
+            BiClade clade1 = clades[i];
             // clade1 must be more than just a tip...
             if (clade1.getSize() >= 2) {
                 // get the bitset for clade1 that acts as its hash key
@@ -571,7 +633,7 @@ final class CladeSystem {
                     // create and reuse a bitset to avoid reallocating it
                     BitSet bits = new BitSet();
                     for (int j = from; j < to; j++) {
-                        BiClade clade2 = (BiClade) clades[j];
+                        BiClade clade2 = clades[j];
 
                         BiClade clade = null;
 
@@ -580,20 +642,22 @@ final class CladeSystem {
                         bits.or(bits1);
 
                         // get clade2's bits and add them to the bitset
-                        Object key2 = clade2.getKey();
-                        if (key2 instanceof Integer) {
-                            bits.set((Integer) key2);
+                        if (clade2.key instanceof Integer) {
+                            bits.set((Integer) clade2.key);
                         } else {
-                            bits.or((BitSet) key2);
+                            bits.or((BitSet) clade2.key);
                         }
 
                         // if the cardinality of the bitset is not the same as the sum
                         // of the sizes of the two clades then they must have had some
                         // tips in common.
-                        if (bits.cardinality() == clade1.getSize() + clade2.getSize()) {
-                            clade = (BiClade) cladeMap.get(bits);
+                        int size = clade1.size + clade2.size;
+                        if (bits.cardinality() == size) {
+//                            clade = cladeMap.get(bits);
+                            clade = getCladeBySize(bits, size);
                             if (clade != null) {
                                 clade.addSubClades(clade1, clade2);
+                                embiggulationCount[0] ++;
                             }
                         }
                     }
@@ -617,8 +681,9 @@ final class CladeSystem {
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
+        System.err.println(embiggulationCount[0] + " additional clade pairs added");
 
-        System.err.println("  ");
+        System.err.print("  ");
 
     }
 

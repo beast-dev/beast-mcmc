@@ -28,7 +28,6 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.types.*;
-import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodel.speciation.CalibrationPoints;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.speciation.BirthDeathEpidemiologyModelParser;
@@ -271,9 +270,9 @@ public class PartitionTreePrior extends PartitionOptions {
 //                "demographic.indicators", OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
 
         createOperatorUsing2Parameters("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF Skyride", "skyride.logPopSize",
-                "skyride.precision", OperatorType.GMRF_GIBBS_OPERATOR, -1, 2);
+                "skyride.precision", OperatorType.GMRF_BLOCKUPDATE_OPERATOR, 1, 2);
         createOperatorUsing2Parameters("gmrfSkyGridGibbsOperator", "skygrid.logPopSize", "Gibbs sampler for Bayesian SkyGrid", "skygrid.logPopSize",
-                GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, OperatorType.SKY_GRID_GIBBS_OPERATOR, -1, 2);
+                GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, OperatorType.SKY_GRID_BLOCKUPDATE_OPERATOR, 1, 2);
         createScaleOperator(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, "skygrid precision", 0.75, 1.0);
         createOperatorUsing2Parameters("gmrfSkyGridHMCOperator", "Multiple", "HMC transition kernel for Bayesian SkyGrid", "skygrid.logPopSize",
                 GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, OperatorType.SKY_GRID_HMC_OPERATOR, -1, 2);
@@ -292,7 +291,7 @@ public class PartitionTreePrior extends PartitionOptions {
         createOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.RELATIVE_MU, OperatorType.RANDOM_WALK_LOGIT, demoTuning, 1);
         createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
-                + BirthDeathSerialSamplingModelParser.PSI, demoTuning, 1);   // todo random worl op ?
+                + BirthDeathSerialSamplingModelParser.PSI, demoTuning, 1);   // todo random walk op ?
         createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.ORIGIN, demoTuning, 1);
 //        createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."

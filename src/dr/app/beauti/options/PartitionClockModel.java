@@ -130,7 +130,7 @@ public class PartitionClockModel extends PartitionOptions {
                 .initial(1.0).mean(1.0).offset(0.0).partitionOptions(this).isPriorFixed(true)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
 
-        new Parameter.Builder(ClockType.HMC_CLOCK_BRANCH_RATES, "HMC relaxed clock branch rates")
+        new Parameter.Builder(ClockType.HMC_CLOCK_BRANCH_RATES, ClockType.HMC_CLOCK_RATES_DESCRIPTION)
                 .prior(PriorType.LOGNORMAL_HPM_PRIOR).initial(0.001).isNonNegative(true)
                 .partitionOptions(this).isPriorFixed(true)
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
@@ -216,11 +216,11 @@ public class PartitionClockModel extends PartitionOptions {
         createScaleOperator(ClockType.UCGD_SHAPE, demoTuning, rateWeights);
 
         //HMC relaxed clock
-        createOperator("HMCRCR", "HMC relaxed clock branch rates",
+        createOperator("HMCRCR", ClockType.HMC_CLOCK_RATES_DESCRIPTION,
                 "Hamiltonian Monte Carlo relaxed clock branch rates operator", null, OperatorType.RELAXED_CLOCK_HMC_RATE_OPERATOR,-1 , 1.0);
-        createOperator("HMCRCS", "HMC relaxed clock location and scale",
+        createOperator("HMCRCS", ClockType.HMC_CLOCK_LOCATION_SCALE_DESCRIPTION,
                 "Hamiltonian Monte Carlo relaxed clock scale operator", null, OperatorType.RELAXED_CLOCK_HMC_SCALE_OPERATOR,-1 , 0.5);
-        //for the time being turn off the HMC relaxed clock scale kernel
+        //turn off the HMC relaxed clock scale kernel by default
         getOperator("HMCRCS").setUsed(false);
         createScaleOperator(ClockType.HMC_CLOCK_LOCATION, demoTuning, rateWeights);
         createScaleOperator(ClockType.HMCLN_SCALE, demoTuning, rateWeights);

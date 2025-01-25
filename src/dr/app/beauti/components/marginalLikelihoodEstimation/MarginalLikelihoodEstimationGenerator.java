@@ -37,6 +37,8 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
+import dr.inference.distribution.DistributionLikelihood;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.TreeWorkingPriorParsers;
 import dr.evomodelxml.branchratemodel.*;
@@ -1025,8 +1027,25 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
                         break;
 
+                    case MIXED_EFFECTS_CLOCK:
+
+                        writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, model.getPrefix() + BranchSpecificFixedEffects.RATES_PRIOR);
+                        writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, model.getPrefix() + BranchSpecificFixedEffects.SCALE_PRIOR);
+                        writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, model.getPrefix() + BranchSpecificFixedEffects.INTERCEPT_PRIOR);
+
+                        String coeff = BranchSpecificFixedEffectsParser.COEFFICIENT;
+                        int number = 1;
+                        String concat = coeff + number;
+                        while (model.hasParameter(concat)) {
+                            writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, model.getPrefix() + BranchSpecificFixedEffectsParser.FIXED_EFFECTS_LIKELIHOOD + number);
+                            number++;
+                            concat = coeff + number;
+                        }
+
+                        break;
+
                     default:
-                        throw new IllegalArgumentException("Unknown clock model");
+                        throw new IllegalArgumentException("Unknown clock model: " + model.getClockType());
                 }
             }
 

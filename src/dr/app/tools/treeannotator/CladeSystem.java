@@ -34,7 +34,9 @@ import dr.evolution.util.TaxonList;
 import dr.stats.DiscreteStatistics;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Andrew Rambaut
@@ -286,7 +288,7 @@ final class CladeSystem {
      * @param threshold
      * @return
      */
-    public int getTopCladeCredibility(Tree tree, double threshold) {
+    public int getTopCladeCount(Tree tree, double threshold) {
         final int[] count = {0};
         traverseTree(tree, new CladeAction() {
             @Override
@@ -305,11 +307,35 @@ final class CladeSystem {
     }
 
     /**
+     * Returns the set of clades in the tree with threshold credibility or higher
+     * @param tree
+     * @param threshold
+     * @return
+     */
+    public Set<Clade> getTopClades(Tree tree, double threshold) {
+        Set<Clade> clades = new HashSet<>();
+        traverseTree(tree, new CladeAction() {
+            @Override
+            public void actOnClade(Clade clade, Tree tree, NodeRef node) {
+                if (clade.getTaxon() == null && clade.getCredibility() >= threshold) {
+                    clades.add(clade);
+                }
+            }
+
+            @Override
+            public boolean expectAllClades() {
+                return true;
+            }
+        });
+        return clades;
+    }
+
+    /**
      * Returns the number of clades in the clade system with threshold credibility or higher
      * @param threshold
      * @return
      */
-    public int getTopCladeCredibility(double threshold) {
+    public int getTopCladeCount(double threshold) {
         int count = 0;
         for (Clade clade : cladeMap.values()) {
             if (clade.getCredibility() >= threshold) {
@@ -319,8 +345,33 @@ final class CladeSystem {
         return count;
     }
 
+    /**
+     * Returns the set of clades in the clade system with threshold credibility or higher
+     * @param threshold
+     * @return
+     */
+    public Set<Clade> getTopClades(double threshold) {
+        Set<Clade> clades = new HashSet<>();
+        for (Clade clade : cladeMap.values()) {
+            if (clade.getCredibility() >= threshold) {
+                clades.add(clade);
+            }
+        }
+        return clades;
+    }
+
     public int getCladeCount() {
         return cladeMap.keySet().size();
+    }
+
+    public int getCommonCladeCount(CladeSystem referenceCladeSystem) {
+        int count = 0;
+        for (Object key : cladeMap.keySet()) {
+            if (referenceCladeSystem.cladeMap.keySet().contains(key)) {
+                count ++;
+            }
+        }
+        return count;
     }
 
     //
@@ -333,4 +384,5 @@ final class CladeSystem {
    private final Map<Object, Clade> cladeMap = new HashMap<>();
 
     Clade rootClade;
+
 }

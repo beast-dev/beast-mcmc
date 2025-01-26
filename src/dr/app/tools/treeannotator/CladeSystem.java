@@ -506,7 +506,7 @@ final class CladeSystem {
 
     /**
      * Version of embiggening that is single threaded and used
-     * for testing optimisation.
+     * for testing optimisation.   
      * @param minCladeSize
      * @param minCladeCount
      */

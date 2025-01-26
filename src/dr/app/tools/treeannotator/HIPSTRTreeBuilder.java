@@ -36,7 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HIPSTRTreeBuilder {
-    static final boolean breakTies = false;
+    static final boolean breakTies = true;
 
     private final Map<Clade, Double> credibilityCache = new HashMap<>();
 

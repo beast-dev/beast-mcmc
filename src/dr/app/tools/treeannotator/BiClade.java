@@ -202,7 +202,7 @@ class BiClade implements Clade {
      int count;
      double credibility;
      final int size;
-    private final int index;
+     final int index;
 
      final Object key;
 

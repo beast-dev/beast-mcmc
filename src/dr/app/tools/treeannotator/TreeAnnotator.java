@@ -291,8 +291,9 @@ public class TreeAnnotator extends BaseTreeTool {
             List<Future<?>> futures = new ArrayList<>();
 
             totalTrees = 0;
+            boolean firstTree = true;
             while (importer.hasTree()) {
-                Tree tree = importer.importNextTree();
+                final Tree tree = importer.importNextTree();
                 long state = 0;
 
                 if (taxa == null) {
@@ -322,9 +323,15 @@ public class TreeAnnotator extends BaseTreeTool {
                         burnin = totalTrees;
                     }
 
-                    futures.add(pool.submit(() -> {
-                                cladeSystem.add(tree);
-                            }));
+                    if (firstTree) {
+                        // for the first tree do it outside a thread
+                        cladeSystem.add(tree);
+                        firstTree = false;
+                    } else {
+                        futures.add(pool.submit(() -> {
+                            cladeSystem.add(tree);
+                        }));
+                    }
                     totalTreesUsed += 1;
                 }
 
@@ -393,7 +400,7 @@ public class TreeAnnotator extends BaseTreeTool {
             boolean firstTree = true;
             int counter = 0;
             while (importer.hasTree()) {
-                Tree tree = importer.importNextTree();
+                final Tree tree = importer.importNextTree();
 
                 if (counter >= burnin) {
                     if (firstTree) {

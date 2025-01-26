@@ -45,7 +45,6 @@ public class HIPSTRTreeBuilder {
 
         credibilityCache.clear();
 
-//        score = findHIPSTRTree(rootClade, 0.5);
         score = findHIPSTRTree(rootClade, penaltyThreshold);
 
         // create a map so that tip numbers are in the same order as the taxon list

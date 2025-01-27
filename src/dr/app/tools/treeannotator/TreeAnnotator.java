@@ -399,6 +399,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
             boolean firstTree = true;
             int counter = 0;
+
             while (importer.hasTree()) {
                 final Tree tree = importer.importNextTree();
 
@@ -558,8 +559,9 @@ public class TreeAnnotator extends BaseTreeTool {
         long startTime = System.currentTimeMillis();
 
         if (minCladeCount > 0) {
-            cladeSystem.embiggenBiClades(1, minCladeCount, threadCount);
-//            cladeSystem.embiggenBiClades(1, minCladeCount);
+            Embiggulator embiggulator = new Embiggulator(cladeSystem);
+            embiggulator.embiggenBiClades(1, minCladeCount, threadCount);
+//            embiggulator.embiggenBiClades(1, minCladeCount);
         }
 
         HIPSTRTreeBuilder treeBuilder = new HIPSTRTreeBuilder();

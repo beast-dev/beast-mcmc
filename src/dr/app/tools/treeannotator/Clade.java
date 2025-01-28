@@ -53,7 +53,7 @@ public interface Clade {
 
     Clade getBestRight();
 
-    Object getKey();
+    CladeKey getKey();
 
     void addAttributeValues(Object[] values);
 

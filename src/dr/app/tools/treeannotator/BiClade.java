@@ -49,12 +49,12 @@ class BiClade implements Clade {
         credibility = 1.0;
         size = 1;
 
-        key = index;
+        key = new CladeKey(index);
 
         this.taxon = taxon;
     }
 
-    public BiClade(Object key, int size) {
+    public BiClade(CladeKey key, int size) {
         this.index = -1;
         count = 0;
         credibility = 1.0;
@@ -160,24 +160,13 @@ class BiClade implements Clade {
     }
 
     @Override
-    public Object getKey() {
+    public CladeKey getKey() {
         return key;
     }
 
-    public static Object makeKey(Object key1, Object key2) {
-        FastBitSet bits = new FastBitSet();
-        if (key1 instanceof Integer) {
-            bits.set((Integer) key1);
-        } else {
-            assert key1 instanceof FastBitSet;
-            bits.or((FastBitSet) key1);
-        }
-        if (key2 instanceof Integer) {
-            bits.set((Integer) key2);
-        } else {
-            assert key2 instanceof FastBitSet;
-            bits.or((FastBitSet) key2);
-        }
+    public static CladeKey makeKey(CladeKey key1, CladeKey key2) {
+        CladeKey bits = new CladeKey();
+        bits.or(key1, key2);
         return bits;
     }
 
@@ -204,7 +193,7 @@ class BiClade implements Clade {
      final int size;
      final int index;
 
-     final Object key;
+     final CladeKey key;
 
     private final Taxon taxon;
 

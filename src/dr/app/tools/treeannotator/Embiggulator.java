@@ -35,7 +35,7 @@ import java.util.concurrent.Future;
 
 public class Embiggulator {
     private final CladeSystem cladeSystem;
-    Map<Object, BiClade>[] cladeMapBySize = null;//    Map<Integer, Set<BiClade>>[] cladeSetByTipBySize = null;
+    Map<CladeKey, BiClade>[] cladeMapBySize = null;//    Map<Integer, Set<BiClade>>[] cladeSetByTipBySize = null;
     int binWidth;
 
     public Embiggulator(CladeSystem cladeSystem) {
@@ -142,7 +142,7 @@ public class Embiggulator {
         long embiggulationCount = 0;
 
         // create and reuse a bitset to avoid reallocating it
-        final BitSet bits = new BitSet();
+        final CladeKey bits = new CladeKey();
 
         int rejectCount = 0;
 
@@ -157,7 +157,7 @@ public class Embiggulator {
 //                if (superClades1 == null) {
 //                    continue;
 //                }
-                BitSet bits1 = ((BitSet) clade1.getKey());
+                CladeKey bits1 = clade1.getKey();
 
                 for (int j = Math.max(i + 1, sizeIndices[maxSize - clade1.getSize()]); j < n; j++) {
                     BiClade clade2 = clades[j];
@@ -173,14 +173,10 @@ public class Embiggulator {
 //                        }
 //                    }
 
-                    bits.clear();
-                    bits.or(bits1);
+//                    bits.clear();
+//                    bits.or(bits1);
 
-                    if (clade2.key instanceof Integer) {
-                        bits.set((Integer) clade2.key);
-                    } else {
-                        bits.or((BitSet) clade2.key);
-                    }
+                    bits.or(bits1, clade2.key);
 
                     int size = clade1.size + clade2.size;
                     if (bits.cardinality() == size) {
@@ -288,38 +284,28 @@ public class Embiggulator {
             BiClade clade1 = clades[i];
             // clade1 must be more than just a tip...
             if (clade1.getSize() >= 2) {
-                // get the bitset for clade1 that acts as its hash key
-                final BitSet bits1 = ((BitSet) clade1.getKey());
                 // get final versions of the start and end of the iteration
                 final int from = Math.max(i + 1, sizeIndices[maxSize - clade1.getSize()]);
                 final int to = n;
                 // submit the thread to the pool and store the future in the list
                 futures.add(pool.submit(() -> {
                     // create and reuse a bitset to avoid reallocating it
-                    final BitSet bits = new BitSet();
+                    final CladeKey key = new CladeKey();
                     for (int j = from; j < to; j++) {
                         BiClade clade2 = clades[j];
 
                         BiClade clade = null;
 
                         // clear the bitset and make a copy of clade1's bits
-                        bits.clear();
-                        bits.or(bits1);
-
-                        // get clade2's bits and add them to the bitset
-                        if (clade2.key instanceof Integer) {
-                            bits.set((Integer) clade2.key);
-                        } else {
-                            bits.or((BitSet) clade2.key);
-                        }
+                        key.or(clade1.key, clade2.key);
 
                         // if the cardinality of the bitset is not the same as the sum
                         // of the sizes of the two clades then they must have had some
                         // tips in common.
                         int size = clade1.size + clade2.size;
-                        if (bits.cardinality() == size) {
+                        if (key.cardinality() == size) {
 //                            clade = (BiClade)cladeMap.get(bits);
-                            clade = getCladeBySize(bits, size);
+                            clade = getCladeBySize(key, size);
                             if (clade != null) {
                                 clade.addSubClades(clade1, clade2);
                                 synchronized (embiggulationCount) {
@@ -418,12 +404,12 @@ public class Embiggulator {
 //            cladeSetByTipBySize[i] = new HashMap<>();
 //        }
 
-        for (Map.Entry<Object, Clade> entry : cladeSystem.getCladeMap().entrySet()) {
+        for (Map.Entry<CladeKey, Clade> entry : cladeSystem.getCladeMap().entrySet()) {
             BiClade clade = (BiClade) entry.getValue();
             if (clade.size > 1) {
                 int bin = clade.size / binWidth;
                 if (cladeMapBySize[bin] == null) {
-                    cladeMapBySize[bin] = new HashMap<Object, BiClade>();
+                    cladeMapBySize[bin] = new HashMap<CladeKey, BiClade>();
                 }
                 cladeMapBySize[bin].put(entry.getKey(), clade);
 
@@ -443,7 +429,7 @@ public class Embiggulator {
         }
     }
 
-    private BiClade getCladeBySize(Object key, int size) {
+    private BiClade getCladeBySize(CladeKey key, int size) {
         int bin = size / binWidth;
         if (cladeMapBySize[bin] == null) {
             return null;

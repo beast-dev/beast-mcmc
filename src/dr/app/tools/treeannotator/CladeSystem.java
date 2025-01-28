@@ -113,8 +113,8 @@ final class CladeSystem {
             if (taxonNumberMap != null) {
                 index = taxonNumberMap.get(taxon);
             }
-            Clade clade = new BiClade(index, taxon);
-            tipClades.put(index, clade);
+            BiClade clade = new BiClade(index, taxon);
+            tipClades.put(clade.key, clade);
         }
     }
 
@@ -153,7 +153,7 @@ final class CladeSystem {
      * see if a clade exists otherwise create it
      */
     private Clade getOrAddClade(Clade child1, Clade child2) {
-        Object key = BiClade.makeKey(child1.getKey(), child2.getKey());
+        CladeKey key = BiClade.makeKey(child1.getKey(), child2.getKey());
         BiClade clade = (BiClade) cladeMap.get(key);
         if (clade == null) {
             if (keepSubClades) {
@@ -184,20 +184,21 @@ final class CladeSystem {
         traverseTree(tree, tree.getRoot(), action);
     }
 
-    private Object traverseTree(Tree tree, NodeRef node, CladeAction action) {
+    private CladeKey traverseTree(Tree tree, NodeRef node, CladeAction action) {
 
-        Object key;
+        CladeKey key;
 
         if (tree.isExternal(node)) {
-            key = node.getNumber();
-            if (taxonNumberMap != null) {
-                key = taxonNumberMap.get(tree.getNodeTaxon(node));
-            }
+//            key = node.getNumber();
+//            if (taxonNumberMap != null) {
+            int index = taxonNumberMap.get(tree.getNodeTaxon(node));
+            key = new CladeKey(index);
+//            }
         } else {
             assert tree.getChildCount(node) == 2;
 
-            Object key1 = traverseTree(tree, tree.getChild(node, 0), action);
-            Object key2 = traverseTree(tree, tree.getChild(node, 1), action);
+            CladeKey key1 = traverseTree(tree, tree.getChild(node, 0), action);
+            CladeKey key2 = traverseTree(tree, tree.getChild(node, 1), action);
 
             key = BiClade.makeKey(key1, key2);
         }
@@ -401,11 +402,11 @@ final class CladeSystem {
         return count;
     }
 
-    public Map<Object, Clade> getTipClades() {
+    public Map<CladeKey, Clade> getTipClades() {
         return tipClades;
     }
 
-    public Map<Object, Clade> getCladeMap() {
+    public Map<CladeKey, Clade> getCladeMap() {
         return cladeMap;
     }
 
@@ -419,8 +420,8 @@ final class CladeSystem {
     private TaxonList taxonList = null;
     private final Map<Taxon, Integer> taxonNumberMap = new HashMap<>();
 
-    private final Map<Object, Clade> tipClades = new HashMap<>();
-    private final Map<Object, Clade> cladeMap = new HashMap<>();
+    private final Map<CladeKey, Clade> tipClades = new HashMap<>();
+    private final Map<CladeKey, Clade> cladeMap = new HashMap<>();
 
     Clade rootClade;
 

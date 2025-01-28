@@ -69,7 +69,7 @@ public class TreeAnnotator extends BaseTreeTool {
     private static final HeightsSummary DEFAULT_HEIGHTS_SUMMARY = HeightsSummary.MEAN_HEIGHTS;
     private static final boolean COUNT_TREES = true;
 
-    private static final boolean THREADED_READING = false;
+    private static final boolean THREADED_READING = true;
 
     // Messages to stderr, output to stdout
     private static PrintStream progressStream = System.err;
@@ -225,9 +225,9 @@ public class TreeAnnotator extends BaseTreeTool {
             progressStream.println();
         }
 
-        collectNodeAttributes(targetCladeSystem, inputFileName, burnin);
+        collectNodeAttributes(cladeSystem, inputFileName, burnin);
 
-        annotateTargetTree(targetCladeSystem, heightsOption, targetTree);
+        annotateTargetTree(cladeSystem, heightsOption, targetTree);
 
         writeAnnotatedTree(outputFileName, targetTree);
 
@@ -582,7 +582,6 @@ public class TreeAnnotator extends BaseTreeTool {
         if (minCladeCount > 0) {
             Embiggulator embiggulator = new Embiggulator(cladeSystem);
             embiggulator.embiggenBiClades(1, minCladeCount, threadCount);
-//            embiggulator.embiggenBiClades(1, minCladeCount);
         }
 
         HIPSTRTreeBuilder treeBuilder = new HIPSTRTreeBuilder();

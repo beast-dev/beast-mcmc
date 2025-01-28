@@ -232,6 +232,8 @@ public class Embiggulator {
      * @param minCladeCount
      */
     public void embiggenBiClades(final int minCladeSize, final int minCladeCount) {
+        binCladesBySize();
+
         List<Clade> allClades = new ArrayList<Clade>(cladeSystem.getCladeMap().values());
         allClades.addAll(cladeSystem.getTipClades().values());
         BiClade[] clades = new BiClade[allClades.size()];

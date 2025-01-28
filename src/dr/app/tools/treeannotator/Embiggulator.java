@@ -452,5 +452,127 @@ public class Embiggulator {
         return cladeMapBySize[bin].get(key);
     }
 
+    public void embiggenBiClades2(final int minCladeSize, final int minCladeCount) {
+        List<Clade> allClades = new ArrayList<Clade>(cladeSystem.getCladeMap().values());
+        allClades.addAll(cladeSystem.getTipClades().values());
+        BiClade[] clades = new BiClade[allClades.size()];
+        clades = allClades.toArray(clades);
+
+        // sort by number of trees containing clade
+        Arrays.sort(clades, (o1, o2) -> o2.getCount() - o1.getCount());
+        int n = 0;
+        // find the point at which the count drops below minCount
+        while (n < clades.length && clades[n].getCount() > minCladeCount - 1) {
+            n++;
+        }
+
+        // truncate the array at this point
+        clades = Arrays.copyOf(clades, n);
+
+        // sort by descending size
+        Arrays.sort(clades, (o1, o2) -> o2.getSize() - o1.getSize());
+
+        int maxSize = clades[0].getSize();
+
+        int[] sizeIndices = new int[maxSize];
+        n = 0;
+        int currentSize = maxSize;
+        while (n < clades.length) {
+            if (clades[n].getSize() < currentSize) {
+                currentSize -= 1;
+                sizeIndices[currentSize] = n;
+            }
+            n++;
+        }
+        sizeIndices[0] = clades.length;
+
+
+        n = sizeIndices[minCladeSize - 1];
+
+        // count the exact number of clade pairs (for reporting purposes)
+        long count = 0;
+        for (int i = 0; i < Math.min(sizeIndices[3], n - 1); i++) {
+            BiClade parentClade = clades[i];
+            count += Math.min(sizeIndices[2], n - 1) - sizeIndices[parentClade.size - 1];
+
+//            for (int u = sizeIndices[parentClade.size - 1]; u < Math.min(sizeIndices[2], n - 1); u++) {
+//                BiClade leftClade = clades[u];
+//                int rightSize = parentClade.size - leftClade.size;
+//                count += Math.min(sizeIndices[rightSize - 1], n - 1) - Math.max(u + 1, sizeIndices[rightSize]);
+//            }
+        }
+
+        System.err.printf("Embiggening (non-threaded) with up to %,d clade pairs...", count);
+        System.err.println();
+        System.err.println("0              25             50             75            100");
+        System.err.println("|--------------|--------------|--------------|--------------|");
+
+        long stepSize = Math.max(count / 60, 1);
+        long k = 0;
+        long embiggulationCount = 0;
+
+        // create and reuse a bitset to avoid reallocating it
+        final BitSet bits = new BitSet();
+
+        for (int i = 0; i < Math.min(sizeIndices[3], n - 1); i++) {
+
+            BiClade parentClade = clades[i];
+            assert parentClade.size >= 3;
+
+
+            BitSet parentBits = ((BitSet) parentClade.getKey());
+
+            int f1 = sizeIndices[parentClade.size - 1];
+            int t1 = Math.min(sizeIndices[2], n - 1);
+            for (int u = f1; u < t1; u++) {
+//            for (int u = sizeIndices[parentClade.size - 1]; u < Math.min(sizeIndices[2], n - 1); u++) {
+                BiClade leftClade = clades[u];
+                assert leftClade.size >= 2;
+
+                BitSet leftBits = (BitSet)leftClade.key;
+
+                int rightSize = parentClade.size - leftClade.size;
+//                if (rightSize >= leftClade.size) {
+
+                // start at the next clade from the left clade (if left clade and right clade are the same size)
+                // or the next clade of rightSize. Iterate through the remaining clades of size == rightSize.
+                int f2 = Math.max(u + 1, sizeIndices[rightSize]);
+                int t2 = Math.min(sizeIndices[rightSize - 1], n);
+                for (int v = f2; v < t2; v++) {
+//                    for (int v = Math.max(u + 1, sizeIndices[rightSize]); v < Math.min(sizeIndices[rightSize - 1], n); v++) {
+                    BiClade rightClade = clades[v];
+
+                    if (rightClade.size == rightSize) { // it is possible there are no clades of this size
+                        assert rightClade.size <= leftClade.size;
+
+                        bits.clear();
+                        bits.or(leftBits);
+
+                        if (rightClade.key instanceof Integer) {
+                            bits.set((Integer) rightClade.key);
+                        } else {
+                            bits.or((BitSet) rightClade.key);
+                        }
+
+                        if (bits.cardinality() == parentClade.size && bits.equals(parentBits)) {
+                            parentClade.addSubClades(leftClade, rightClade);
+                            embiggulationCount++;
+                            break;
+                        }
+                    }
+                }
+
+                if (k > 0 && k % stepSize == 0) {
+                    System.err.print("*");
+                    System.err.flush();
+                }
+                k++;
+            }
+        }
+        System.err.println();
+        System.err.println(k + " additional clade pairs examined");
+        System.err.println(embiggulationCount + " additional clade pairs added");
+//        System.err.println(rejectCount + " rejected");
+    }
 
 }

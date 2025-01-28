@@ -165,18 +165,18 @@ class BiClade implements Clade {
     }
 
     public static Object makeKey(Object key1, Object key2) {
-        BitSet bits = new BitSet();
+        FastBitSet bits = new FastBitSet();
         if (key1 instanceof Integer) {
             bits.set((Integer) key1);
         } else {
-            assert key1 instanceof BitSet;
-            bits.or((BitSet) key1);
+            assert key1 instanceof FastBitSet;
+            bits.or((FastBitSet) key1);
         }
         if (key2 instanceof Integer) {
             bits.set((Integer) key2);
         } else {
-            assert key2 instanceof BitSet;
-            bits.or((BitSet) key2);
+            assert key2 instanceof FastBitSet;
+            bits.or((FastBitSet) key2);
         }
         return bits;
     }

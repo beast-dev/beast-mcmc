@@ -560,8 +560,8 @@ public class TreeAnnotator extends BaseTreeTool {
 
         if (minCladeCount > 0) {
             Embiggulator embiggulator = new Embiggulator(cladeSystem);
-            embiggulator.embiggenBiClades(1, minCladeCount, threadCount);
-//            embiggulator.embiggenBiClades(1, minCladeCount);
+//            embiggulator.embiggenBiClades(1, minCladeCount, threadCount);
+            embiggulator.embiggenBiClades(1, minCladeCount);
         }
 
         HIPSTRTreeBuilder treeBuilder = new HIPSTRTreeBuilder();

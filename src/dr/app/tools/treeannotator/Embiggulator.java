@@ -142,7 +142,7 @@ public class Embiggulator {
         long embiggulationCount = 0;
 
         // create and reuse a bitset to avoid reallocating it
-        final BitSet bits = new BitSet();
+        final FastBitSet bits = new FastBitSet();
 
         int rejectCount = 0;
 
@@ -157,7 +157,7 @@ public class Embiggulator {
 //                if (superClades1 == null) {
 //                    continue;
 //                }
-                BitSet bits1 = ((BitSet) clade1.getKey());
+                FastBitSet bits1 = ((FastBitSet) clade1.getKey());
 
                 for (int j = Math.max(i + 1, sizeIndices[maxSize - clade1.getSize()]); j < n; j++) {
                     BiClade clade2 = clades[j];
@@ -173,13 +173,14 @@ public class Embiggulator {
 //                        }
 //                    }
 
-                    bits.clear();
-                    bits.or(bits1);
+//                    bits.clear();
+//                    bits.or(bits1);
+                    bits.set(bits1);
 
                     if (clade2.key instanceof Integer) {
                         bits.set((Integer) clade2.key);
                     } else {
-                        bits.or((BitSet) clade2.key);
+                        bits.or((FastBitSet) clade2.key);
                     }
 
                     int size = clade1.size + clade2.size;
@@ -206,15 +207,15 @@ public class Embiggulator {
 //        System.err.println(rejectCount + " rejected");
     }
 
-    boolean isSubset(BitSet bits1, BitSet bits2) {
-        for (int i = bits1.nextSetBit(0); i >= 0; i = bits1.nextSetBit(i + 1)) {
-            if (!bits2.get(i)) {
-                return false;
-            }
-            // if (i == Integer.MAX_VALUE) {          break; // or (i+1) would overflow      }
-        }
-        return true;
-    }
+//    boolean isSubset(BitSet bits1, BitSet bits2) {
+//        for (int i = bits1.nextSetBit(0); i >= 0; i = bits1.nextSetBit(i + 1)) {
+//            if (!bits2.get(i)) {
+//                return false;
+//            }
+//            // if (i == Integer.MAX_VALUE) {          break; // or (i+1) would overflow      }
+//        }
+//        return true;
+//    }
 
     public void embiggenBiClades(final int minCladeSize, final int minCladeCount, final int threadCount) {
         binCladesBySize();

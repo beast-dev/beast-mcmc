@@ -151,13 +151,13 @@ public class CladeKey {
         if (key1.wordsInUse >= key2.wordsInUse) {
             wordsInUse = key1.wordsInUse;
             words = Arrays.copyOf(key1.words, wordsInUse);
-            for (int i = 0; i < wordsInUse; i++) {
+            for (int i = 0; i < key2.wordsInUse; i++) {
                 words[i] |= key2.words[i];
             }
         } else {
             wordsInUse = key2.wordsInUse;
             words = Arrays.copyOf(key2.words, wordsInUse);
-            for (int i = 0; i < wordsInUse; i++) {
+            for (int i = 0; i < key1.wordsInUse; i++) {
                 words[i] |= key1.words[i];
             }
         }
@@ -192,18 +192,23 @@ public class CladeKey {
 
 
     public boolean equals(Object obj) {
-        if (!(obj instanceof CladeKey set))
+        if (!(obj instanceof CladeKey key)) {
             return false;
-        if (this == obj)
+        }
+        if (this == obj) {
             return true;
+        }
 
-        if (wordsInUse != set.wordsInUse)
+        if (wordsInUse != key.wordsInUse) {
             return false;
+        }
 
         // Check words in use by both BitSets
-        for (int i = 0; i < wordsInUse; i++)
-            if (words[i] != set.words[i])
+        for (int i = 0; i < wordsInUse; i++) {
+            if (words[i] != key.words[i]) {
                 return false;
+            }
+        }
 
         return true;
     }

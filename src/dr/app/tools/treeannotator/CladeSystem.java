@@ -27,7 +27,6 @@
 
 package dr.app.tools.treeannotator;
 
-import dr.app.beauti.options.AbstractPartitionData;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
@@ -65,7 +64,7 @@ final class CladeSystem {
      * adds all the clades in the tree
      */
     public void add(Tree tree) {
-        synchronized (taxonNumberMap) {
+        synchronized (taxonKeyMap) {
             if (taxonList == null) {
                 setTaxonList(tree);
             }
@@ -73,7 +72,7 @@ final class CladeSystem {
 
         if (treeCount == 0) {
             // these will always be the same so create them once
-            synchronized (tipClades) {
+            synchronized (tipCladeMap) {
                 addTipClades(tree);
             }
         }
@@ -95,6 +94,7 @@ final class CladeSystem {
         this.taxonList = taxonList;
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
             taxonNumberMap.put(taxonList.getTaxon(i), i);
+            taxonKeyMap.put(taxonList.getTaxon(i), new CladeKey(i));
         }
     }
 
@@ -108,13 +108,11 @@ final class CladeSystem {
     private void addTipClades(Tree tree) {
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             NodeRef tip = tree.getExternalNode(i);
-            int index = tip.getNumber();
             Taxon taxon = tree.getNodeTaxon(tip);
-            if (taxonNumberMap != null) {
-                index = taxonNumberMap.get(taxon);
-            }
+            int index = taxonNumberMap.get(taxon);
+            CladeKey key = taxonKeyMap.get(taxon);
             BiClade clade = new BiClade(index, taxon);
-            tipClades.put(clade.key, clade);
+            tipCladeMap.put(key, clade);
         }
     }
 
@@ -125,11 +123,7 @@ final class CladeSystem {
         Clade clade;
         if (tree.isExternal(node)) {
             // all tip clades should already be there
-            int index = node.getNumber();
-            if (taxonNumberMap != null) {
-                index = taxonNumberMap.get(tree.getNodeTaxon(node));
-            }
-            clade = tipClades.get(index);
+            clade = tipCladeMap.get(taxonKeyMap.get(tree.getNodeTaxon(node)));
 //            assert clade != null && clade.getTaxon().equals(tree.getNodeTaxon(node));
         } else {
             assert tree.getChildCount(node) == 2 : "requires a strictly bifurcating tree";
@@ -163,8 +157,8 @@ final class CladeSystem {
             }
             cladeMap.put(clade.getKey(), clade);
         } else {
-            synchronized (clade) {
-                if (keepSubClades) {
+            if (keepSubClades) {
+                synchronized (clade) {
                     clade.addSubClades(child1, child2);
                 }
             }
@@ -173,9 +167,9 @@ final class CladeSystem {
         return clade;
     }
 
-    public Clade getClade(Object key) {
-        if (key instanceof Integer) {
-            return tipClades.get(key);
+    public Clade getClade(CladeKey key) {
+        if (tipCladeMap.containsKey(key)) {
+            return tipCladeMap.get(key);
         }
         return cladeMap.get(key);
     }
@@ -189,11 +183,7 @@ final class CladeSystem {
         CladeKey key;
 
         if (tree.isExternal(node)) {
-//            key = node.getNumber();
-//            if (taxonNumberMap != null) {
-            int index = taxonNumberMap.get(tree.getNodeTaxon(node));
-            key = new CladeKey(index);
-//            }
+            key = taxonKeyMap.get(tree.getNodeTaxon(node));
         } else {
             assert tree.getChildCount(node) == 2;
 
@@ -402,8 +392,8 @@ final class CladeSystem {
         return count;
     }
 
-    public Map<CladeKey, Clade> getTipClades() {
-        return tipClades;
+    public Map<CladeKey, Clade> getTipCladeMap() {
+        return tipCladeMap;
     }
 
     public Map<CladeKey, Clade> getCladeMap() {
@@ -419,8 +409,9 @@ final class CladeSystem {
     //
     private TaxonList taxonList = null;
     private final Map<Taxon, Integer> taxonNumberMap = new HashMap<>();
+    private final Map<Taxon, CladeKey> taxonKeyMap = new HashMap<>();
 
-    private final Map<CladeKey, Clade> tipClades = new HashMap<>();
+    private final Map<CladeKey, Clade> tipCladeMap = new HashMap<>();
     private final Map<CladeKey, Clade> cladeMap = new HashMap<>();
 
     Clade rootClade;

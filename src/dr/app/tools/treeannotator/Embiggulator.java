@@ -52,8 +52,8 @@ public class Embiggulator {
     public void embiggenBiClades(final int minCladeSize, final int minCladeCount) {
         binCladesBySize();
 
-        List<Clade> allClades = new ArrayList<Clade>(cladeSystem.getCladeMap().values());
-        allClades.addAll(cladeSystem.getTipClades().values());
+        List<Clade> allClades = new ArrayList<>(cladeSystem.getCladeMap().values());
+        allClades.addAll(cladeSystem.getTipCladeMap().values());
         BiClade[] clades = new BiClade[allClades.size()];
         clades = allClades.toArray(clades);
 
@@ -216,8 +216,8 @@ public class Embiggulator {
         binCladesBySize();
 
         // pull down the clades and tip clades into an array to iterate over easily
-        List<Clade> allClades = new ArrayList<Clade>(cladeSystem.getCladeMap().values());
-        allClades.addAll(cladeSystem.getTipClades().values());
+        List<Clade> allClades = new ArrayList<>(cladeSystem.getCladeMap().values());
+        allClades.addAll(cladeSystem.getTipCladeMap().values());
         BiClade[] cladeArray = new BiClade[allClades.size()];
         cladeArray = allClades.toArray(cladeArray);
 
@@ -438,8 +438,8 @@ public class Embiggulator {
     }
 
     public void embiggenBiClades2(final int minCladeSize, final int minCladeCount) {
-        List<Clade> allClades = new ArrayList<Clade>(cladeSystem.getCladeMap().values());
-        allClades.addAll(cladeSystem.getTipClades().values());
+        List<Clade> allClades = new ArrayList<>(cladeSystem.getCladeMap().values());
+        allClades.addAll(cladeSystem.getTipCladeMap().values());
         BiClade[] clades = new BiClade[allClades.size()];
         clades = allClades.toArray(clades);
 
@@ -497,15 +497,14 @@ public class Embiggulator {
         long embiggulationCount = 0;
 
         // create and reuse a bitset to avoid reallocating it
-        final BitSet bits = new BitSet();
+        final CladeKey key = new CladeKey();
 
         for (int i = 0; i < Math.min(sizeIndices[3], n - 1); i++) {
 
             BiClade parentClade = clades[i];
             assert parentClade.size >= 3;
 
-
-            BitSet parentBits = ((BitSet) parentClade.getKey());
+            CladeKey parentKey = parentClade.key;
 
             int f1 = sizeIndices[parentClade.size - 1];
             int t1 = Math.min(sizeIndices[2], n - 1);
@@ -514,7 +513,7 @@ public class Embiggulator {
                 BiClade leftClade = clades[u];
                 assert leftClade.size >= 2;
 
-                BitSet leftBits = (BitSet)leftClade.key;
+                CladeKey leftBits = leftClade.key;
 
                 int rightSize = parentClade.size - leftClade.size;
 //                if (rightSize >= leftClade.size) {
@@ -530,16 +529,9 @@ public class Embiggulator {
                     if (rightClade.size == rightSize) { // it is possible there are no clades of this size
                         assert rightClade.size <= leftClade.size;
 
-                        bits.clear();
-                        bits.or(leftBits);
+                        key.or(leftBits, rightClade.key);
 
-                        if (rightClade.key instanceof Integer) {
-                            bits.set((Integer) rightClade.key);
-                        } else {
-                            bits.or((BitSet) rightClade.key);
-                        }
-
-                        if (bits.cardinality() == parentClade.size && bits.equals(parentBits)) {
+                        if (key.cardinality() == parentClade.size && key.equals(parentKey)) {
                             parentClade.addSubClades(leftClade, rightClade);
                             embiggulationCount++;
                             break;

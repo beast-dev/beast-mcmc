@@ -142,7 +142,7 @@ public class Embiggulator {
         long embiggulationCount = 0;
 
         // create and reuse a bitset to avoid reallocating it
-        final FastBitSet bits = new FastBitSet();
+        final BitSet bits = new BitSet();
 
         int rejectCount = 0;
 
@@ -157,7 +157,7 @@ public class Embiggulator {
 //                if (superClades1 == null) {
 //                    continue;
 //                }
-                FastBitSet bits1 = ((FastBitSet) clade1.getKey());
+                BitSet bits1 = ((BitSet) clade1.getKey());
 
                 for (int j = Math.max(i + 1, sizeIndices[maxSize - clade1.getSize()]); j < n; j++) {
                     BiClade clade2 = clades[j];
@@ -173,14 +173,13 @@ public class Embiggulator {
 //                        }
 //                    }
 
-//                    bits.clear();
-//                    bits.or(bits1);
-                    bits.set(bits1);
+                    bits.clear();
+                    bits.or(bits1);
 
                     if (clade2.key instanceof Integer) {
                         bits.set((Integer) clade2.key);
                     } else {
-                        bits.or((FastBitSet) clade2.key);
+                        bits.or((BitSet) clade2.key);
                     }
 
                     int size = clade1.size + clade2.size;

@@ -370,28 +370,17 @@ public class FastBitSet {
      * @param set a bit set
      */
     public void or(FastBitSet set) {
-        if (this == set)
-            return;
-
-        int wordsInCommon = Math.min(wordsInUse, set.wordsInUse);
+//        int wordsInCommon = Math.min(wordsInUse, set.wordsInUse);
 
         if (wordsInUse < set.wordsInUse) {
             ensureCapacity(set.wordsInUse);
             wordsInUse = set.wordsInUse;
+            for (int i = 0; i < wordsInUse; i++)
+                words[i] |= set.words[i];
+        } else {
+            for (int i = 0; i < set.wordsInUse; i++)
+                words[i] |= set.words[i];
         }
-
-        // Perform logical OR on words in common
-        for (int i = 0; i < wordsInCommon; i++)
-            words[i] |= set.words[i];
-
-        // Copy any remaining words
-        if (wordsInCommon < set.wordsInUse)
-            System.arraycopy(set.words, wordsInCommon,
-                    words, wordsInCommon,
-                    wordsInUse - wordsInCommon);
-
-        // recalculateWordsInUse() is unnecessary
-        checkInvariants();
     }
 
     /**

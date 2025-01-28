@@ -69,6 +69,8 @@ public class TreeAnnotator extends BaseTreeTool {
     private static final HeightsSummary DEFAULT_HEIGHTS_SUMMARY = HeightsSummary.MEAN_HEIGHTS;
     private static final boolean COUNT_TREES = true;
 
+    private static final boolean THREADED_READING = false;
+
     // Messages to stderr, output to stdout
     private static PrintStream progressStream = System.err;
     private static final boolean extendedMetrics = false;
@@ -282,13 +284,15 @@ public class TreeAnnotator extends BaseTreeTool {
             NexusImporter importer = new NexusImporter(reader, true);
 
             ExecutorService pool;
-            if (threadCount <= 0) {
-                pool = Executors.newCachedThreadPool();
-            } else {
-                pool = Executors.newFixedThreadPool(threadCount);
+            List<Future<?>> futures;
+            if (THREADED_READING) {
+                if (threadCount <= 0) {
+                    pool = Executors.newCachedThreadPool();
+                } else {
+                    pool = Executors.newFixedThreadPool(threadCount);
+                }
+                futures = new ArrayList<>();
             }
-            List<Future<?>> futures = new ArrayList<>();
-
             totalTrees = 0;
             boolean firstTree = true;
             while (importer.hasTree()) {
@@ -327,9 +331,13 @@ public class TreeAnnotator extends BaseTreeTool {
                         cladeSystem.add(tree);
                         firstTree = false;
                     } else {
-                        futures.add(pool.submit(() -> {
+                        if (THREADED_READING) {
+                            futures.add(pool.submit(() -> {
+                                cladeSystem.add(tree);
+                            }));
+                        } else {
                             cladeSystem.add(tree);
-                        }));
+                        }
                     }
                     totalTreesUsed += 1;
                 }
@@ -341,13 +349,15 @@ public class TreeAnnotator extends BaseTreeTool {
                 totalTrees++;
             }
 
-            try {
-                // wait for all the threads to run to completion
-                for (Future<?> f: futures) {
-                    f.get();
+            if (THREADED_READING) {
+                try {
+                    // wait for all the threads to run to completion
+                    for (Future<?> f : futures) {
+                        f.get();
+                    }
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
             }
 
             reader.close();
@@ -389,15 +399,20 @@ public class TreeAnnotator extends BaseTreeTool {
         totalTreesUsed = 0;
         try {
             ExecutorService pool;
-            if (threadCount <= 0) {
-                pool = Executors.newCachedThreadPool();
-            } else {
-                pool = Executors.newFixedThreadPool(threadCount);
-            }
-            List<Future<?>> futures = new ArrayList<>();
+            List<Future<?>> futures;
+            if (THREADED_READING) {
+                if (threadCount <= 0) {
+                    pool = Executors.newCachedThreadPool();
+                } else {
+                    pool = Executors.newFixedThreadPool(threadCount);
+                }
+
+                    futures = new ArrayList<>();
+                }
 
             boolean firstTree = true;
             int counter = 0;
+
             while (importer.hasTree()) {
                 final Tree tree = importer.importNextTree();
 
@@ -407,9 +422,13 @@ public class TreeAnnotator extends BaseTreeTool {
                         firstTree = false;
                     }
 
-                    futures.add(pool.submit(() -> {
+                    if (THREADED_READING) {
+                        futures.add(pool.submit(() -> {
+                            cladeSystem.traverseTree(tree, collectionAction);
+                        }));
+                    } else {
                         cladeSystem.traverseTree(tree, collectionAction);
-                    }));
+                    }
                     totalTreesUsed += 1;
                 }
                 if (counter > 0 && counter % stepSize == 0) {
@@ -420,13 +439,15 @@ public class TreeAnnotator extends BaseTreeTool {
 
             }
 
-            try {
-                // wait for all the threads to run to completion
-                for (Future<?> f: futures) {
-                    f.get();
+            if (THREADED_READING) {
+                try {
+                    // wait for all the threads to run to completion
+                    for (Future<?> f : futures) {
+                        f.get();
+                    }
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
             }
 
             cladeSystem.calculateCladeCredibilities(totalTreesUsed);

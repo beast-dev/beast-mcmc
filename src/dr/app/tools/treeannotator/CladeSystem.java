@@ -27,7 +27,6 @@
 
 package dr.app.tools.treeannotator;
 
-import dr.app.beauti.options.AbstractPartitionData;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
@@ -40,7 +39,7 @@ import java.util.*;
  * @author Andrew Rambaut
  * @version $
  */
-final class CladeSystem {
+public final class CladeSystem {
     private final boolean keepSubClades;
     private double treeCount = 0;
 

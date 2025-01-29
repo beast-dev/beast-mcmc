@@ -33,6 +33,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+/**
+ * A tool to find pairs of clades with unobserved sibling relationships but with an observed parent. This is then
+ * used by the HIPSTR algorithm to construct a consensus tree potentially including these additional sibling pairs.
+ *
+ * This is attempts to replicate the CCD0 expansion method of Berling et al. bioRxiv, 2024. doi: 10.1101/2024.02.20.581316
+ * but it is unclear at present if is optimising to the same end point.
+ */
 public class Embiggulator {
     private final CladeSystem cladeSystem;
     Map<Object, BiClade>[] cladeMapBySize = null;//    Map<Integer, Set<BiClade>>[] cladeSetByTipBySize = null;

@@ -99,14 +99,14 @@ public class TMRCAStatisticsGenerator extends Generator {
         for (Taxa taxa : taxonSets) {
             PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
             String id = "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")";
-            writeTMRCAStatistic(writer, id, taxa, treeModel, false, options.taxonSetsIncludeStem.get(taxa));
+            writeTMRCAStatistic(writer, id, taxa, treeModel, false, options.taxonSetsIncludeStem.get(taxa) != null);
 
             if (treeModel.hasTipCalibrations()) {
                 id = "age(" + treeModel.getPrefix() + taxa.getId() + ")";
-                writeTMRCAStatistic(writer, id, taxa, treeModel, true, options.taxonSetsIncludeStem.get(taxa));
+                writeTMRCAStatistic(writer, id, taxa, treeModel, true, options.taxonSetsIncludeStem.get(taxa) != null);
             }
 
-            if (taxonSetsMono.get(taxa)) {
+            if (taxonSetsMono.get(taxa) != null) {
 //                    && treeModel.getPartitionTreePrior().getNodeHeightPrior() != TreePriorType.YULE
 //                    && options.getKeysFromValue(options.taxonSetsTreeModel, treeModel).size() > 1) {
                 writer.writeOpenTag(

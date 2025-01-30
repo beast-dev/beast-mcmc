@@ -39,6 +39,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Marc Suchard
  */
+@Deprecated // seems not to be used
 public interface BeagleDataLikelihoodInterface extends DataLikelihoodDelegate {
 
 }

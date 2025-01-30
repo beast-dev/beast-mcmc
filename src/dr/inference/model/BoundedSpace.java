@@ -27,13 +27,9 @@
 
 package dr.inference.model;
 
-import dr.app.bss.Utils;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.math.MathUtils;
-import dr.math.matrixAlgebra.EJMLUtils;
-import dr.math.matrixAlgebra.IllegalDimension;
-import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.math.matrixAlgebra.*;
 import org.ejml.data.Complex64F;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
@@ -192,7 +188,7 @@ public interface BoundedSpace extends GeneralBoundsProvider {
                 System.out.println("Raw matrix to decompose: ");
                 System.out.println(CinvV);
                 System.out.print("Raw eigenvalues: ");
-                Utils.printArray(values);
+                System.out.println(new WrappedVector.Raw(values));
             }
             for (int i = 0; i < values.length; i++) {
                 values[i] = 1 / values[i];
@@ -282,7 +278,7 @@ public interface BoundedSpace extends GeneralBoundsProvider {
                 SymmetricMatrix Y = compoundCorrelationSymmetricMatrix(origin, dim);
                 SymmetricMatrix X = compoundSymmetricMatrix(0.0, direction, dim);
                 System.out.print("Eigenvalues: ");
-                Utils.printArray(values);
+                System.out.println(new WrappedVector.Raw(values));
 
                 Matrix S = new SymmetricMatrix(dim, dim);
                 Matrix T = new SymmetricMatrix(dim, dim);

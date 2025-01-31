@@ -34,6 +34,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovjumps.MarkovReward;
 import dr.inference.markovjumps.TwoStateOccupancyMarkovReward;
+import dr.inference.markovjumps.TwoStateSericolaSeriesMarkovReward;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -172,7 +173,8 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     private MarkovReward createSeries() {
 //        MarkovReward series = new SericolaSeriesMarkovReward(createLatentInfinitesimalMatrix(),
 //                createReward(), 2);
-        MarkovReward series = new TwoStateOccupancyMarkovReward(createLatentInfinitesimalMatrix());
+        // MarkovReward series = new TwoStateOccupancyMarkovReward(createLatentInfinitesimalMatrix());
+        MarkovReward series = new TwoStateSericolaSeriesMarkovReward(createLatentInfinitesimalMatrix(),createReward(),2);
         return series;
     }
 
@@ -359,6 +361,9 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
                     double reward = branchLength * latentProportion;
                     double density = getBranchRewardDensity(reward, branchLength);
+                    if(latentProportion>0){
+                        density *=branchLength;// jacobian for sampling on 0,1
+                    }
                     branchLikelihoods[node.getNumber()] = Math.log(density);
                 }
                 logLike += branchLikelihoods[node.getNumber()];
@@ -390,7 +395,15 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         // Reward is [0,1], and we want to track time in latent state (= 1).
         // Therefore all nodes are in state 0
 //        double joint = series.computePdf(reward, branchLength)[state];
-        double joint = series.computePdf(reward, branchLength, 0, 0);
+
+        double joint;
+
+        if(reward==0){
+            joint = series.computeCdf(reward, branchLength, 0, 0);
+        }else{
+            joint = series.computePdf(reward, branchLength, 0, 0);
+        }
+        
         double marg = series.computeConditionalProbability(branchLength, 0, 0);
         // TODO Overhead in creating double[] could be saved by changing signature to computePdf
 

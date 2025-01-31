@@ -225,7 +225,7 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Hessian
                 final double intensityGradient = demographicFunction.getIntensityGradient(time);
                 thisGradient += demographicFunction.getLogDemographicGradient(time);
 
-                if (bigFastTreeIntervals.getInterval(i) != 0) {
+                if (i + 1 == bigFastTreeIntervals.getIntervalCount() || bigFastTreeIntervals.getInterval(i + 1) != 0) {
                     thisGradient -= kChoose2 * intensityGradient;
                 } else {
                     numSameHeightNodes++;

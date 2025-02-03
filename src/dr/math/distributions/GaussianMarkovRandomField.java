@@ -48,9 +48,9 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     protected final int dim;
     private final Parameter meanParameter;
-    private final Parameter precisionParameter;
-    private final Parameter lambdaParameter;
-    private final RandomField.WeightProvider weightProvider;
+    protected final Parameter precisionParameter;
+    protected final Parameter lambdaParameter;
+    protected final RandomField.WeightProvider weightProvider;
 
 
     private final double[] mean;
@@ -60,7 +60,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
 
     private boolean meanKnown;
-    boolean qKnown;
+    protected boolean qKnown;
     private boolean savedQKnown;
 
     private final double logMatchTerm;
@@ -180,7 +180,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return precision;
     }
 
-    private boolean isImproper() {
+    protected boolean isImproper() {
         return lambdaParameter == null || lambdaParameter.getParameterValue(0) == 1.0;
     }
 
@@ -251,7 +251,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return term;
     }
 
-    private double getLogDeterminant() {
+    protected double getLogDeterminant() {
 
         int effectiveDim = isImproper() ? dim - 1 : dim;
         double logDet = effectiveDim * Math.log(precisionParameter.getParameterValue(0)) + logMatchTerm;
@@ -365,101 +365,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return hessian;
     }
 
-    // TODO Below is the relevant code from GMRFMultilocusSkyrideLikelihood for building a `SymmTridiagMatrix`
-    // TODO `getFieldScalar` rescaling should be handled by `WeightsProvider`
-
-//    protected double getFieldScalar() {
-//        final double rootHeight;
-//        if (rescaleByRootHeight) {
-//            rootHeight = tree.getNodeHeight(tree.getRoot());
-//        } else {
-//            rootHeight = 1.0;
-//        }
-//        return rootHeight;
-//    }
-//
-//    protected void setupGMRFWeights() {
-//
-//        setupSufficientStatistics();
-//
-//        //Set up the weight Matrix
-//        double[] offdiag = new double[fieldLength - 1];
-//        double[] diag = new double[fieldLength];
-//
-//        //First set up the offdiagonal entries;
-//
-//        if (!timeAwareSmoothing) {
-//            for (int i = 0; i < fieldLength - 1; i++) {
-//                offdiag[i] = -1.0;
-//            }
-//        } else {
-//            for (int i = 0; i < fieldLength - 1; i++) {
-//                offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]) * getFieldScalar();
-//            }
-//        }
-//
-//        //Then set up the diagonal entries;
-//        for (int i = 1; i < fieldLength - 1; i++)
-//            diag[i] = -(offdiag[i] + offdiag[i - 1]);
-//
-//        //Take care of the endpoints
-//        diag[0] = -offdiag[0];
-//        diag[fieldLength - 1] = -offdiag[fieldLength - 2];
-//
-//        weightMatrix = new SymmTridiagMatrix(diag, offdiag);
-//    }
-//
-//    public SymmTridiagMatrix getScaledWeightMatrix(double precision) {
-//        SymmTridiagMatrix a = weightMatrix.copy();
-//        for (int i = 0; i < a.numRows() - 1; i++) {
-//            a.set(i, i, a.get(i, i) * precision);
-//            a.set(i + 1, i, a.get(i + 1, i) * precision);
-//        }
-//        a.set(fieldLength - 1, fieldLength - 1, a.get(fieldLength - 1, fieldLength - 1) * precision);
-//        return a;
-//    }
-//
-//    public SymmTridiagMatrix getScaledWeightMatrix(double precision, double lambda) {
-//        if (lambda == 1)
-//            return getScaledWeightMatrix(precision);
-//
-//        SymmTridiagMatrix a = weightMatrix.copy();
-//        for (int i = 0; i < a.numRows() - 1; i++) {
-//            a.set(i, i, precision * (1 - lambda + lambda * a.get(i, i)));
-//            a.set(i + 1, i, a.get(i + 1, i) * precision * lambda);
-//        }
-//
-//        a.set(fieldLength - 1, fieldLength - 1, precision * (1 - lambda + lambda * a.get(fieldLength - 1, fieldLength - 1)));
-//        return a;
-//    }
-//
-//    private DenseVector getMeanAdjustedGamma() {
-//        DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
-//        updateGammaWithCovariates(currentGamma);
-//        return currentGamma;
-//    }
-//
-//    double getLogFieldLikelihood() {
-//
-//        DenseVector diagonal1 = new DenseVector(fieldLength);
-//        DenseVector currentGamma = getMeanAdjustedGamma();
-//
-//        double currentLike = handleMissingValues();
-//
-//        SymmTridiagMatrix currentQ = getScaledWeightMatrix(precisionParameter.getParameterValue(0), lambdaParameter.getParameterValue(0));
-//        currentQ.mult(currentGamma, diagonal1);
-//
-//        currentLike += 0.5 * (fieldLength - 1) * Math.log(precisionParameter.getParameterValue(0)) - 0.5 * currentGamma.dot(diagonal1);
-//        if (lambdaParameter.getParameterValue(0) == 1) {
-//            currentLike -= (fieldLength - 1) / 2.0 * LOG_TWO_TIMES_PI;
-//        } else {
-//            currentLike -= fieldLength / 2.0 * LOG_TWO_TIMES_PI;
-//        }
-//
-//        return currentLike;
-//    }
-
-    private static double logPdf(double[] x, double[] mean, double precision, SymmetricTriDiagonalMatrix Q,
+    protected static double logPdf(double[] x, double[] mean, double precision, SymmetricTriDiagonalMatrix Q,
                                  boolean isImproper, double logDeterminant) {
         return getLogNormalization(x.length, isImproper, logDeterminant) - 0.5 * getSSE(x, mean, precision, Q);
     }
@@ -482,10 +388,10 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return SSE * precision;
     }
 
-    static class SymmetricTriDiagonalMatrix {
+    protected static class SymmetricTriDiagonalMatrix {
 
-        double[] diagonal;
-        double[] offDiagonal;
+        public double[] diagonal;
+        public double[] offDiagonal;
 
         SymmetricTriDiagonalMatrix(int dim) {
             this(new double[dim], new double[dim - 1]);
@@ -512,7 +418,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         }
     }
 
-    private static double getLogNormalization(int dim, boolean isImproper, double logDeterminant) {
+    protected static double getLogNormalization(int dim, boolean isImproper, double logDeterminant) {
         final int effectiveDim = isImproper ? dim - 1 : dim;
         return -effectiveDim * HALF_LOG_TWO_PI + 0.5 * logDeterminant;
     }

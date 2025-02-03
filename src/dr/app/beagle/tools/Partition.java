@@ -326,7 +326,7 @@ public class Partition {
                     System.out.println("source length: " + probabilities[category[i]].length);
                     System.out.println("destination length: " + cProb.length);
                 }
-				
+
 				System.arraycopy(probabilities[category[i]], parentSequence[i] * stateCount, cProb, 0, stateCount);
 
 				if (DEBUG) {

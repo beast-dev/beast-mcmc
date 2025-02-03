@@ -49,6 +49,7 @@ public class LogRateSubstitutionModelParser extends AbstractXMLObjectParser {
     private static final String NORMALIZE = "normalize";
     private static final String LOG_RATES = "logRates";
     private static final String TRANSFORMED_RATES = "transformedRates";
+    private static final String RATE_PROVIDER = "rateProvider";
     public static final String SCALE_RATES_BY_FREQUENCIES = "scaleRatesByFrequencies";
 
     public String getParserName() {
@@ -77,7 +78,7 @@ public class LogRateSubstitutionModelParser extends AbstractXMLObjectParser {
             }
 
             lrm = new LogAdditiveCtmcRateProvider.DataAugmented.Basic(logRates.getId(), logRates);
-        } else {
+        } else if (xo.hasChildNamed(TRANSFORMED_RATES)){
             XMLObject cxo = xo.getChild(TRANSFORMED_RATES);
             Parameter transformedRates = (Parameter) cxo.getChild(Parameter.class);
             Transform.ParsedTransform parsedTransform = (Transform.ParsedTransform) cxo.getChild(Transform.ParsedTransform.class);
@@ -89,6 +90,12 @@ public class LogRateSubstitutionModelParser extends AbstractXMLObjectParser {
 
             lrm = new LogAdditiveCtmcRateProvider.DataAugmented.ArbitraryTransform(
                     transformedRates.getId(), transformedRates, parsedTransform.transform);
+        } else if (xo.hasChildNamed(RATE_PROVIDER)) {
+            XMLObject cxo = xo.getChild(RATE_PROVIDER);
+            lrm = (LogAdditiveCtmcRateProvider)
+                    cxo.getChild(LogAdditiveCtmcRateProvider.class);
+        } else {
+            throw new XMLParseException("Unable to parse '" + xo.getId() + "'");
         }
 
         XMLObject cxo = xo.getChild(ComplexSubstitutionModelParser.ROOT_FREQUENCIES);
@@ -132,11 +139,14 @@ public class LogRateSubstitutionModelParser extends AbstractXMLObjectParser {
             ),
             new ElementRule(ComplexSubstitutionModelParser.ROOT_FREQUENCIES, FrequencyModel.class),
             new XORRule(
-                    new ElementRule(LOG_RATES, Parameter.class),
-                    new ElementRule(TRANSFORMED_RATES, new XMLSyntaxRule[] {
-                            new ElementRule(Parameter.class),
-                            new ElementRule(Transform.ParsedTransform.class),
-                    })
+                    new XMLSyntaxRule[]{
+                            new ElementRule(LOG_RATES, Parameter.class),
+                            new ElementRule(TRANSFORMED_RATES, new XMLSyntaxRule[] {
+                                    new ElementRule(Parameter.class),
+                                    new ElementRule(Transform.ParsedTransform.class),
+                            }),
+                            new ElementRule(RATE_PROVIDER, LogAdditiveCtmcRateProvider.class),
+                    }
             ),
             AttributeRule.newBooleanRule(NORMALIZE, true),
             AttributeRule.newBooleanRule(SCALE_RATES_BY_FREQUENCIES, true),

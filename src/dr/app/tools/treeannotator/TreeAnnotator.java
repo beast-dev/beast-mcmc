@@ -393,17 +393,16 @@ public class TreeAnnotator extends BaseTreeTool {
         totalTreesUsed = 0;
         try {
             ExecutorService pool;
+            List<Future<?>> futures;
             if (THREADED_READING) {
                 if (threadCount <= 0) {
                     pool = Executors.newCachedThreadPool();
                 } else {
                     pool = Executors.newFixedThreadPool(threadCount);
                 }
+
+                futures = new ArrayList<>();
             }
-            List<Future<?>> futures;
-                if (THREADED_READING) {
-                    futures = new ArrayList<>();
-                }
 
             boolean firstTree = true;
             int counter = 0;
@@ -722,9 +721,8 @@ public class TreeAnnotator extends BaseTreeTool {
         arguments.printUsage("treeannotator", "<input-file-name> [<output-file-name>]");
         progressStream.println();
         progressStream.println("  Example: treeannotator test.trees out.tree");
-        progressStream.println("  Example: treeannotator --burnin 100 --heights mean test.trees out.tree");
-        progressStream.println("  Example: treeannotator --type hipstr --burnin 100 --heights mean test.trees out.tree");
-        progressStream.println("  Example: treeannotator -b 100 -tf map.tree test.trees out.tree");
+        progressStream.println("  Example: treeannotator -burnin 100 -heights mean test.trees out.tree");
+        progressStream.println("  Example: treeannotator -type hipstr -burnin 100 -heights mean test.trees out.tree");
         progressStream.println();
     }
 

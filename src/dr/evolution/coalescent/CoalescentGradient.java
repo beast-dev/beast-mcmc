@@ -217,6 +217,7 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Hessian
 
         int numSameHeightNodes = 1;
         double thisGradient = 0;
+        boolean first = true;
         for (int i = 0; i < bigFastTreeIntervals.getIntervalCount(); i++) {
             if (bigFastTreeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
                 final double time = bigFastTreeIntervals.getIntervalTime(i + 1);
@@ -225,8 +226,9 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Hessian
                 final double intensityGradient = demographicFunction.getIntensityGradient(time);
                 thisGradient += demographicFunction.getLogDemographicGradient(time);
 
-                if (i + 1 == bigFastTreeIntervals.getIntervalCount() || bigFastTreeIntervals.getInterval(i + 1) != 0) {
+                if (bigFastTreeIntervals.getInterval(i) != 0 || first) {
                     thisGradient -= kChoose2 * intensityGradient;
+                    first = false;
                 } else {
                     numSameHeightNodes++;
                 }
@@ -244,6 +246,7 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Hessian
 
                     thisGradient = 0;
                     numSameHeightNodes = 1;
+                    first = true;
                 }
             }
         }

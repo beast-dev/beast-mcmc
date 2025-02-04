@@ -42,24 +42,22 @@ import java.util.concurrent.Future;
  */
 public class Embiggulator {
     private final CladeSystem cladeSystem;
-    Map<Object, BiClade>[] cladeMapBySize = null;//    Map<Integer, Set<BiClade>>[] cladeSetByTipBySize = null;
-    int binWidth;
+    private Map<Object, BiClade>[] cladeMapBySize = null;
+    private int binWidth;
 
     public Embiggulator(CladeSystem cladeSystem) {
         this.cladeSystem = cladeSystem;
     }
 
-
-    boolean isSubset(BitSet bits1, BitSet bits2) {
-        for (int i = bits1.nextSetBit(0); i >= 0; i = bits1.nextSetBit(i + 1)) {
-            if (!bits2.get(i)) {
-                return false;
-            }
-            // if (i == Integer.MAX_VALUE) {          break; // or (i+1) would overflow      }
-        }
-        return true;
-    }
-
+    /**
+     * A multithreaded version of the Embiggulation algorithm.
+     * @param minCladeSize The minimum size of clade to use in the embiggulation.
+     * @param minCladeCount The minimum times the clade is observed in the tree set for
+     *                      it to be included in the embiggulation. Setting this >1
+     *                      improves runtime at a relatively small cost to MCC.
+     * @param threadCount a value < 0 will use the non-threaded version, 0 will use
+     *                    a thread pool and a number > 0 will limit to that many threads.
+     */
     public void embiggenBiClades(final int minCladeSize, final int minCladeCount, final int threadCount) {
         binCladesBySize();
 
@@ -203,41 +201,16 @@ public class Embiggulator {
 
     }
 
-    private void binCladesBySize() {
-        int maxSize = cladeSystem.getTaxonList().getTaxonCount();
-//        int binCount = 805;
-//        binWidth = maxSize / binCount;
-        binWidth = 1;
-        int binCount = maxSize / binWidth;
-        cladeMapBySize = new Map[binCount + 2];
-
-        for (Map.Entry<Object, Clade> entry : cladeSystem.getCladeMap().entrySet()) {
-            BiClade clade = (BiClade) entry.getValue();
-            if (clade.size > 1) {
-                int bin = clade.size / binWidth;
-                if (cladeMapBySize[bin] == null) {
-                    cladeMapBySize[bin] = new HashMap<Object, BiClade>();
-                }
-                cladeMapBySize[bin].put(entry.getKey(), clade);
-            }
-        }
-    }
-
-    private BiClade getCladeBySize(Object key, int size) {
-        int bin = size / binWidth;
-        if (cladeMapBySize[bin] == null) {
-            return null;
-        }
-        return cladeMapBySize[bin].get(key);
-    }
-
     /**
      * Version of embiggening that is single threaded and used
      * for testing optimisation.
      *
-     * @param minCladeSize
-     * @param minCladeCount
+     * @param minCladeSize The minimum size of clade to use in the embiggulation.
+     * @param minCladeCount The minimum times the clade is observed in the tree set for
+     *                      it to be included in the embiggulation. Setting this >1
+     *                      improves runtime at a relatively small cost to MCC.
      */
+
     public void embiggenBiClades(final int minCladeSize, final int minCladeCount) {
         binCladesBySize();
 
@@ -337,5 +310,40 @@ public class Embiggulator {
         System.err.println(k + " additional clade pairs examined");
         System.err.println(embiggulationCount + " additional clade pairs added");
     }
-    
+
+    /**
+     * Create a set of clade maps for different sizes of clades to reduce the
+     * size of the search by key. Currently one for each clade size but could
+     * a set number of bins for multiple sizes. Or do this dynamically depending
+     * on the max clade size
+     */
+    private void binCladesBySize() {
+        int maxSize = cladeSystem.getTaxonList().getTaxonCount();
+//        int binCount = 805;
+//        binWidth = maxSize / binCount;
+        binWidth = 1;
+        int binCount = maxSize / binWidth;
+        cladeMapBySize = new Map[binCount + 2];
+
+        for (Map.Entry<Object, Clade> entry : cladeSystem.getCladeMap().entrySet()) {
+            BiClade clade = (BiClade) entry.getValue();
+            if (clade.size > 1) {
+                int bin = clade.size / binWidth;
+                if (cladeMapBySize[bin] == null) {
+                    cladeMapBySize[bin] = new HashMap<Object, BiClade>();
+                }
+                cladeMapBySize[bin].put(entry.getKey(), clade);
+            }
+        }
+    }
+
+    private BiClade getCladeBySize(Object key, int size) {
+        int bin = size / binWidth;
+        if (cladeMapBySize[bin] == null) {
+            return null;
+        }
+        return cladeMapBySize[bin].get(key);
+    }
+
+
 }

@@ -156,11 +156,6 @@ public class TreeAnnotator extends BaseTreeTool {
 
         CladeSystem cladeSystem = new CladeSystem(targetOption == Target.HIPSTR);
 
-        // read the clades in even if a target tree so it can have its stats reported
-//        if (targetOption != Target.USER_TARGET_TREE) {
-        // if we are not just annotating a specific target tree
-        // then we need to read all the trees into a CladeSystem
-        // to get Clade and SubTree frequencies.
         if (COUNT_TREES) {
             countTrees(inputFileName);
             progressStream.println("Reading trees...");
@@ -272,15 +267,6 @@ public class TreeAnnotator extends BaseTreeTool {
         startTime = System.currentTimeMillis();
 
         try {
-            // read the first tree using NexusImport to get the taxon list and tip number to taxon mapping
-//            Reader reader = new BufferedReader(new FileReader(inputFileName));
-//            NexusImporter nexusImporter = new NexusImporter(reader, true);
-//            taxa = nexusImporter.importTree(null);
-//
-//            reader = new BufferedReader(new FileReader(inputFileName));
-//            BEASTTreesImporter importer = new BEASTTreesImporter(reader, false);
-//            importer.setTaxonList(taxa);
-
             Reader reader = new BufferedReader(new FileReader(inputFileName));
             NexusImporter importer = new NexusImporter(reader, true);
 
@@ -392,7 +378,6 @@ public class TreeAnnotator extends BaseTreeTool {
         if (stepSize < 1) stepSize = 1;
 
         Reader reader = new BufferedReader(new FileReader(inputFileName));
-//         TreeImporter importer = new BEASTTreesImporter(reader, true);
         TreeImporter importer = new NexusImporter(reader, true);
 
         long startTime = System.currentTimeMillis();
@@ -979,7 +964,7 @@ public class TreeAnnotator extends BaseTreeTool {
             referenceTreeFileName = arguments.getStringOption("reference");
         }
 
-        int threadCount = -1;
+        int threadCount = 0;
         if (arguments.hasOption("threads")) {
             threadCount = arguments.getIntegerOption("threads");
         }

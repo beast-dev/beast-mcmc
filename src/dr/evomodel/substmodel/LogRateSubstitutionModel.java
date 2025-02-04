@@ -67,7 +67,7 @@ public class LogRateSubstitutionModel extends ComplexSubstitutionModel { // impl
 
     @Override
     public Set<Likelihood> getLikelihoodSet() {
-        return new HashSet<>(Arrays.asList(this, lrm));
+        return new HashSet<>(Collections.singletonList(this));
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {

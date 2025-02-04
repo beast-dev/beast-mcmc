@@ -290,7 +290,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
         }
     }
 
-    private double calculateLogCoalescentLikelihood() {
+    protected double calculateLogCoalescentLikelihood() {
 
         computeSufficientStatistics();
 
@@ -324,9 +324,15 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
         likelihoodKnown = false;
     }
 
-    private double getPopulationFactor(int nt) {
-        return ploidyFactors.getParameterValue(nt);
-    }
+    private double getPopulationFactor(int nt) {return ploidyFactors.getParameterValue(nt);}
+
+    protected int getNGridPoints() { return gridPoints.getDimension();}
+
+    protected double getPopulationSize(int i) { return Math.exp(logPopSizes.getParameterValue(i)); }
+
+    protected double getLogPopulationSize(int i) { return logPopSizes.getParameterValue(i); }
+
+    protected Parameter getLogPopSizes() { return logPopSizes; }
 
     protected void storeState() {
         System.arraycopy(numCoalEvents, 0, storedNumCoalEvents, 0, numCoalEvents.length);
@@ -365,15 +371,19 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
 
     @SuppressWarnings("unused")
     private double[] getGradientLogDensity() {
+        return getGradientLogDensity(logPopSizes);
+    }
 
+    public double[] getGradientLogDensity(Object x) {
+        Parameter field = (Parameter) x;
         computeSufficientStatistics();
 
-        final int dim = logPopSizes.getSize();
+        final int dim = field.getSize();
         double[] gradLogDens = new double[dim];
 
         for (int i = 0; i < dim; ++i) {
             gradLogDens[i] = -numCoalEvents[i] + sufficientStatistics[i]
-                    * Math.exp(-logPopSizes.getParameterValue(i));
+                    * Math.exp(-field.getParameterValue(i));
         }
 
         return gradLogDens;

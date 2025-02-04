@@ -42,7 +42,7 @@ import java.util.concurrent.*;
  * @author Andrew Rambaut
  * @version $
  */
-final class CladeSystem {
+public final class CladeSystem {
     private final boolean keepSubClades;
     private double treeCount = 0;
 

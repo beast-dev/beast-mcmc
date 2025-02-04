@@ -40,12 +40,12 @@ public class HIPSTRTreeBuilder {
 
     private final Map<Clade, Double> credibilityCache = new HashMap<>();
 
-    public MutableTree getHIPSTRTree(CladeSystem cladeSystem, TaxonList taxonList, double penaltyThreshold) {
+    public MutableTree getHIPSTRTree(CladeSystem cladeSystem, TaxonList taxonList) {
         BiClade rootClade = (BiClade)cladeSystem.getRootClade();
 
         credibilityCache.clear();
 
-        score = findHIPSTRTree(rootClade, penaltyThreshold);
+        score = findHIPSTRTree(rootClade);
 
         // create a map so that tip numbers are in the same order as the taxon list
         Map<Taxon, Integer> taxonNumberMap = new HashMap<>();
@@ -58,12 +58,11 @@ public class HIPSTRTreeBuilder {
         return tree;
     }
 
-    private double findHIPSTRTree(BiClade clade, double penaltyThreshold) {
+    private double findHIPSTRTree(BiClade clade) {
 
         assert clade.getSize() > 1;
 
-        double cladeScore = Math.log(clade.getCredibility() + penaltyThreshold);
-//        double cladeScore = Math.log(clade.getCredibility() + penaltyThreshold) + clade.getCredibility() >= 0.5 ? 1.0E10 : 0.0;
+        double cladeScore = Math.log(clade.getCredibility());
 
         Map<Pair<BiClade, BiClade>, Double> ties;
         if (breakTies) {
@@ -78,24 +77,24 @@ public class HIPSTRTreeBuilder {
             for (Pair<BiClade, BiClade> subClade : clade.getSubClades()) {
                 BiClade left = subClade.first;
 
-                double leftScore = Math.log(1.0 + penaltyThreshold);
+                double leftScore = Math.log(1.0);
 //                double leftScore = 0.0);
                 if (left.getSize() > 1) {
                     leftScore = credibilityCache.getOrDefault(left, Double.NaN);
                     if (Double.isNaN(leftScore)) {
-                        leftScore = findHIPSTRTree(left, penaltyThreshold);
+                        leftScore = findHIPSTRTree(left);
                         credibilityCache.put(left, leftScore);
                     }
                 }
 
                 BiClade right = subClade.second;
 
-                double rightScore = Math.log(1.0 + penaltyThreshold);
+                double rightScore = Math.log(1.0);
 //                double rightScore = 0.0;
                 if (right.getSize() > 1) {
                     rightScore = credibilityCache.getOrDefault(right, Double.NaN);
                     if (Double.isNaN(rightScore)) {
-                        rightScore = findHIPSTRTree(right, penaltyThreshold);
+                        rightScore = findHIPSTRTree(right);
                         credibilityCache.put(right, rightScore);
                     }
                 }
@@ -113,7 +112,7 @@ public class HIPSTRTreeBuilder {
                                 clade.bestLeft = right;
                                 clade.bestRight = left;
                             }
-                            ties.put(new Pair<>(left, right), (left.getCredibility() + penaltyThreshold) * (right.getCredibility() + penaltyThreshold));
+                            ties.put(new Pair<>(left, right), left.getCredibility() + right.getCredibility());
                         }
                     }
                 } else {
@@ -150,7 +149,7 @@ public class HIPSTRTreeBuilder {
             Pair<BiClade, BiClade> subClade = clade.getSubClades().stream().findFirst().get();
             clade.bestLeft = subClade.first;
             clade.bestRight = subClade.second;
-            cladeScore += 2 * Math.log(1.0 + penaltyThreshold);
+            cladeScore += 2 * Math.log(1.0);  // yes, I know this is zero - just spelling out why
         }
 
         clade.bestSubTreeScore = cladeScore;

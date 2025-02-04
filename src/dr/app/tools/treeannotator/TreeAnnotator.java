@@ -69,7 +69,7 @@ public class TreeAnnotator extends BaseTreeTool {
     private static final HeightsSummary DEFAULT_HEIGHTS_SUMMARY = HeightsSummary.MEAN_HEIGHTS;
     private static final boolean COUNT_TREES = true;
 
-    private static final boolean THREADED_READING = false;
+    private static final boolean THREADED_READING = true;
 
     // Messages to stderr, output to stdout
     private static PrintStream progressStream = System.err;
@@ -123,7 +123,6 @@ public class TreeAnnotator extends BaseTreeTool {
                          final long burninStates,
                          final HeightsSummary heightsOption,
                          final double posteriorLimit,
-                         final double hipstrPenalty,
                          final double[] hpd2D,
                          final boolean computeESS,
                          final int threadCount,
@@ -155,11 +154,6 @@ public class TreeAnnotator extends BaseTreeTool {
 
         CladeSystem cladeSystem = new CladeSystem(targetOption == Target.HIPSTR);
 
-        // read the clades in even if a target tree so it can have its stats reported
-//        if (targetOption != Target.USER_TARGET_TREE) {
-        // if we are not just annotating a specific target tree
-        // then we need to read all the trees into a CladeSystem
-        // to get Clade and SubTree frequencies.
         if (COUNT_TREES) {
             countTrees(inputFileName);
             progressStream.println("Reading trees...");
@@ -203,7 +197,7 @@ public class TreeAnnotator extends BaseTreeTool {
             }
             case HIPSTR: {
                 progressStream.println("Finding highest independent posterior subtree reconstruction (HIPSTR) tree...");
-                targetTree = getHIPSTRTree(cladeSystem, hipstrPenalty);
+                targetTree = getHIPSTRTree(cladeSystem);
                 break;
             }
             default: throw new IllegalArgumentException("Unknown targetOption");
@@ -224,9 +218,9 @@ public class TreeAnnotator extends BaseTreeTool {
             progressStream.println();
         }
 
-        collectNodeAttributes(targetCladeSystem, inputFileName, burnin);
+        collectNodeAttributes(cladeSystem, inputFileName, burnin);
 
-        annotateTargetTree(targetCladeSystem, heightsOption, targetTree);
+        annotateTargetTree(cladeSystem, heightsOption, targetTree);
 
         writeAnnotatedTree(outputFileName, targetTree);
 
@@ -407,8 +401,8 @@ public class TreeAnnotator extends BaseTreeTool {
                     pool = Executors.newFixedThreadPool(threadCount);
                 }
 
-                    futures = new ArrayList<>();
-                }
+                futures = new ArrayList<>();
+            }
 
             boolean firstTree = true;
             int counter = 0;
@@ -573,12 +567,12 @@ public class TreeAnnotator extends BaseTreeTool {
         return bestTree;
     }
 
-    private MutableTree getHIPSTRTree(CladeSystem cladeSystem, double penaltyThreshold) {
+    private MutableTree getHIPSTRTree(CladeSystem cladeSystem) {
 
         long startTime = System.currentTimeMillis();
 
         HIPSTRTreeBuilder treeBuilder = new HIPSTRTreeBuilder();
-        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa, penaltyThreshold);
+        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa);
 
         double score = scoreTree(tree, cladeSystem);
 
@@ -838,7 +832,6 @@ public class TreeAnnotator extends BaseTreeTool {
                         burninTrees,
                         burninStates,
                         heightsOption,
-                        posteriorLimit,
                         0.0,
                         hpd2D,
                         computeESS,
@@ -996,7 +989,6 @@ public class TreeAnnotator extends BaseTreeTool {
                 burninStates,
                 heights,
                 posteriorLimit,
-                hipstrPenalty,
                 hpd2D,
                 computeESS,
                 threadCount,

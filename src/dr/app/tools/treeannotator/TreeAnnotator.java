@@ -123,8 +123,6 @@ public class TreeAnnotator extends BaseTreeTool {
                          final long burninStates,
                          final HeightsSummary heightsOption,
                          final double posteriorLimit,
-                         final double hipstrPenalty,
-                         final int minCladeCount,
                          final double[] hpd2D,
                          final boolean computeESS,
                          final int threadCount,
@@ -156,11 +154,6 @@ public class TreeAnnotator extends BaseTreeTool {
 
         CladeSystem cladeSystem = new CladeSystem(targetOption == Target.HIPSTR);
 
-        // read the clades in even if a target tree so it can have its stats reported
-//        if (targetOption != Target.USER_TARGET_TREE) {
-        // if we are not just annotating a specific target tree
-        // then we need to read all the trees into a CladeSystem
-        // to get Clade and SubTree frequencies.
         if (COUNT_TREES) {
             countTrees(inputFileName);
             progressStream.println("Reading trees...");
@@ -204,7 +197,7 @@ public class TreeAnnotator extends BaseTreeTool {
             }
             case HIPSTR: {
                 progressStream.println("Finding highest independent posterior subtree reconstruction (HIPSTR) tree...");
-                targetTree = getHIPSTRTree(cladeSystem, hipstrPenalty, minCladeCount);
+                targetTree = getHIPSTRTree(cladeSystem);
                 break;
             }
             default: throw new IllegalArgumentException("Unknown targetOption");
@@ -575,17 +568,12 @@ public class TreeAnnotator extends BaseTreeTool {
         return bestTree;
     }
 
-    private MutableTree getHIPSTRTree(CladeSystem cladeSystem, double penaltyThreshold, int minCladeCount) {
+    private MutableTree getHIPSTRTree(CladeSystem cladeSystem) {
 
         long startTime = System.currentTimeMillis();
 
-        if (minCladeCount > 0) {
-            Embiggulator embiggulator = new Embiggulator(cladeSystem);
-            embiggulator.embiggenBiClades(1, minCladeCount, threadCount);
-        }
-
         HIPSTRTreeBuilder treeBuilder = new HIPSTRTreeBuilder();
-        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa, penaltyThreshold);
+        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa);
 
         double score = scoreTree(tree, cladeSystem);
 
@@ -846,9 +834,7 @@ public class TreeAnnotator extends BaseTreeTool {
                         burninTrees,
                         burninStates,
                         heightsOption,
-                        posteriorLimit,
                         0.0,
-                        0,
                         hpd2D,
                         computeESS,
                         -1,
@@ -878,7 +864,6 @@ public class TreeAnnotator extends BaseTreeTool {
                 new Arguments.Option[]{
                         new Arguments.StringOption("type", new String[] {"hipstr", "mcc"}, false, "an option of 'hipstr' (default) or 'mcc'"),
                         new Arguments.RealOption("penalty", "the hipstr clade credibility penalty (default 0.0)"),
-                        new Arguments.IntegerOption("minCount", "the minimum clade count for inclusion in embiggulation (0 = off, default 0)"),
                         new Arguments.StringOption("heights", new String[] {"keep", "median", "mean", "ca"}, false,
                                 "an option of 'keep', 'median' or 'mean' (default)"),
                         new Arguments.LongOption("burnin", "the number of states to be considered as 'burn-in'"),
@@ -1006,8 +991,6 @@ public class TreeAnnotator extends BaseTreeTool {
                 burninStates,
                 heights,
                 posteriorLimit,
-                hipstrPenalty,
-                minCladeCount,
                 hpd2D,
                 computeESS,
                 threadCount,

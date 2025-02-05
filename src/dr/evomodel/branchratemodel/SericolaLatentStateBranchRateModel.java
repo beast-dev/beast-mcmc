@@ -350,7 +350,7 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
         double logLike = 0.0;
 
-        for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
+        for (int i = 0; i < tree.getNodeCount(); ++i) {
             NodeRef node = tree.getNode(i);
             if (node != tree.getRoot()) {
                 if (updateNeededForNode(tree, node)) {

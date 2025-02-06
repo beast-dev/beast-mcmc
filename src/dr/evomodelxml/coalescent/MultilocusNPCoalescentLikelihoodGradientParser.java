@@ -30,7 +30,7 @@ public class MultilocusNPCoalescentLikelihoodGradientParser extends AbstractXMLO
 
     @Override
     public Class getReturnType() {
-        return null;
+        return MultilocusNPCoalescentLikelihoodGradient.class;
     }
 
     @Override

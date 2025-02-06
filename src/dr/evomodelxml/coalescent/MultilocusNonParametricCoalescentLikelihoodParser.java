@@ -139,7 +139,7 @@ public class MultilocusNonParametricCoalescentLikelihoodParser extends AbstractX
 
     @Override
     public String getParserDescription() {
-        return null;
+        return "A likelihood for the multilocus nonparametric coalescent model";
     }
 
     @Override

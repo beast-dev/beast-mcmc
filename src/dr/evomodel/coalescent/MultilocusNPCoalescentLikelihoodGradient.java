@@ -1,9 +1,7 @@
 package dr.evomodel.coalescent;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.GradientProvider;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.Reportable;
 
 /**
@@ -12,17 +10,24 @@ import dr.xml.Reportable;
  * @author Xiang Ji
  */
 
-public class MultilocusNPCoalescentLikelihoodGradient implements GradientWrtParameterProvider, Reportable {
+public class MultilocusNPCoalescentLikelihoodGradient extends AbstractModel implements
+        GradientWrtParameterProvider, Reportable {
 
     private final MultilocusNonparametricCoalescentLikelihood likelihood;
     private final Parameter parameter;
     private final GradientProvider provider;
+    private boolean gradientKnown;
+    private double[] gradient;
 
     public MultilocusNPCoalescentLikelihoodGradient(MultilocusNonparametricCoalescentLikelihood likelihood,
-                               Parameter parameter) {
+                                                    Parameter parameter) {
+        super("MultilocusNPCoalescentLikelihoodGradient");
 
         this.likelihood = likelihood;
         this.parameter = parameter;
+
+        addVariable(parameter);
+        addModel(likelihood);
 
         if (parameter == likelihood.getLogPopSizes()) {
             provider = new GradientProvider() {
@@ -41,7 +46,9 @@ public class MultilocusNPCoalescentLikelihoodGradient implements GradientWrtPara
             throw new IllegalArgumentException("Not yet implemented");
 //            provider = likelihood.getGradientWrt(parameter);
         }
+        this.gradientKnown = false;
     }
+
     @Override
     public String getReport() {
         return GradientWrtParameterProvider.getReportAndCheckForError(this, Double.NEGATIVE_INFINITY,
@@ -65,8 +72,39 @@ public class MultilocusNPCoalescentLikelihoodGradient implements GradientWrtPara
 
     @Override
     public double[] getGradientLogDensity() {
+        if(!gradientKnown) {
+            gradient = provider.getGradientLogDensity(likelihood.getLogPopSizes().getParameterValues());
+            gradientKnown = true;
+        }
+        return gradient;
+    }
 
-        // TODO Can cache here
-        return provider.getGradientLogDensity(likelihood.getLogPopSizes().getParameterValues());
+    @Override
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if (model instanceof MultilocusNonparametricCoalescentLikelihood) {
+            gradientKnown = false;
+        } else {
+            throw new RuntimeException("Unknown object");
+        }
+    }
+
+    @Override
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        gradientKnown = false;
+    }
+
+    @Override
+    protected void storeState() {
+
+    }
+
+    @Override
+    protected void restoreState() {
+
+    }
+
+    @Override
+    protected void acceptState() {
+
     }
 }

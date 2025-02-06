@@ -122,17 +122,17 @@
      		<proportions>
      			<state code="B"/>
      			<stateSet idref="S1"/>
-     			<parameter id="B.L1.proportions"> <!-- not necessary; 1-dim -->
+     			<parameter id="B.L1.proportions"/> <!-- not necessary; 1-dim -->
      		</proportions>
      		<proportions>
      			<state code="C"/>
      			<stateSet idref="S1"/>
-     			<parameter id="C.L1.proportions"> <!-- not necessary; 1-dim -->
+     			<parameter id="C.L1.proportions"/> <!-- not necessary; 1-dim -->
      		</proportions>     		
      	</lump>
      	<rates>     	
 	     	<parameter id="lump.across.rates"/>     	
-	    <rates>
+	    </rates>
      </stronglyLumpableCtmcRates>   
  
 

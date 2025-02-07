@@ -24,10 +24,7 @@
  */
 
 package dr.evomodel.coalescent;
-
-import dr.evolution.coalescent.TreeIntervalList;
-import dr.evolution.coalescent.TreeIntervals;
-import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.inference.model.*;
 import dr.util.Author;
 import dr.util.Citable;
@@ -57,7 +54,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     private double[] ploidySums;
     private double[] storedPloidySums;
 
-    private final List<TreeIntervals> intervalsList;
+    private final List<BigFastTreeIntervals> intervalsList;
 
     private final Parameter logPopSizes;
     private final Parameter gridPoints;
@@ -73,12 +70,12 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     int[] gridIndices;
     int[] numLineages;
 
-    public MultilocusNonparametricCoalescentLikelihood(List<TreeIntervals> intervalLists,
+    public MultilocusNonparametricCoalescentLikelihood(List<BigFastTreeIntervals> intervalLists,
                                                        Parameter logPopSizes,
                                                        Parameter gridPoints,
                                                        Parameter ploidyFactors) {
 
-        super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
+        super("Multilocus Nonparametric Coalescent Likelihood");
 
         // adding the key word to the model means the keyword will be logged in the
         // header of the logfile.
@@ -97,6 +94,10 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
         addVariable(gridPoints);
         addVariable(ploidyFactors);
 
+        for (BigFastTreeIntervals intervals : intervalLists) {
+            addModel(intervals);
+        }
+
         if (ploidyFactors.getDimension() != intervalLists.size()) {
             throw new IllegalArgumentException("Ploidy factors parameter should have length " + intervalLists.size());
         }
@@ -104,6 +105,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
         int fieldLength = logPopSizes.getDimension();
 
         this.sufficientStatistics = new double[fieldLength];
+        this.storedSufficientStatistics = new double[fieldLength];
         this.numCoalEvents = new int[fieldLength];
         this.storedNumCoalEvents = new int[fieldLength];
         this.ploidySums = new double[fieldLength];
@@ -111,12 +113,11 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-
-        if (model instanceof TreeIntervalList) {
-            TreeIntervalList treeModel = (TreeIntervalList) model;
+        if (model instanceof BigFastTreeIntervals) {
+            BigFastTreeIntervals treeModel = (BigFastTreeIntervals) model;
             int tn = intervalsList.indexOf(treeModel);
             if (tn >= 0) {
-                intervalsKnown = false;
+                intervalsKnown = false; // TODO This should only fire the change for one tree model
                 likelihoodKnown = false;
             } else {
                 throw new RuntimeException("Unknown tree");
@@ -134,12 +135,13 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     private void setupSufficientStatistics() {
         Arrays.fill(sufficientStatistics, 0);
         Arrays.fill(ploidySums, 0.0);
+        Arrays.fill(numCoalEvents, 0);
 
         for (int treeIndex = 0; treeIndex < intervalsList.size(); treeIndex++) {
             double ploidyFactor = 1 / getPopulationFactor(treeIndex);
 
             SingleTreeNodesTimeline singleTreeNodesTimeLine = new
-                    SingleTreeNodesTimeline(intervalsList.get(treeIndex), treeIndex, gridPoints);
+                    SingleTreeNodesTimeline(intervalsList.get(treeIndex), gridPoints);
             fullTimeLine = singleTreeNodesTimeLine.getMergedTimeLine();
             numLineages = singleTreeNodesTimeLine.getMergedNumLineages();
             gridIndices = singleTreeNodesTimeLine.gridIndices;
@@ -184,7 +186,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     // this builds a timeline with coalescent and sampling events for a single tree
     private class SingleTreeNodesTimeline {
         final int nNodes;
-        final TreeIntervals treeIntervals;
+        final BigFastTreeIntervals treeIntervals;
 
         final double[] timeLine;
         double[] mergedTimeLine;
@@ -197,18 +199,18 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
         final Parameter gridPoints;
         int[] gridIndices;
 
-        private SingleTreeNodesTimeline(TreeIntervals treeIntervals, int treeIndex) {
-            this(treeIntervals, treeIndex, null);
+        private SingleTreeNodesTimeline(BigFastTreeIntervals treeIntervals) {
+            this(treeIntervals, null);
         }
 
-        private SingleTreeNodesTimeline(TreeIntervals treeIntervals, int treeIndex, Parameter gridPoints) {
+        private SingleTreeNodesTimeline(BigFastTreeIntervals treeIntervals, Parameter gridPoints) {
             this.treeIntervals = treeIntervals;
-            this.nNodes = treeIntervals.getIntervalCount();
+            this.nNodes = treeIntervals.getIntervalCount() + 1;
             this.timeLine = new double[nNodes];
             this.flagCoalescentEvent = new boolean[nNodes];
             this.gridPoints = gridPoints;
 
-            makeLine(treeIndex);
+            makeLine();
 
             if (gridPoints != null) { // "merged" =  nodes' times and grid points
                 this.mergedTimeLine = new double[nNodes + gridPoints.getDimension()];
@@ -220,14 +222,14 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
             }
         }
 
-        private void makeLine(int treeIndex) {
-            timeLine[0] = 0.0;
+        private void makeLine() {
+            timeLine[0] = treeIntervals.getStartTime();
             flagCoalescentEvent[0] = false;
             for (int nodeIndex = 1; nodeIndex < nNodes; nodeIndex++) {
-                timeLine[nodeIndex] = intervalsList.get(treeIndex).getInterval(nodeIndex) +
-                        intervalsList.get(treeIndex).getIntervalTime(nodeIndex - 1);
+                timeLine[nodeIndex] = treeIntervals.getIntervalTime(nodeIndex);
+//                       timeLine[nodeIndex - 1];
                 flagCoalescentEvent[nodeIndex] =
-                        String.valueOf(intervalsList.get(treeIndex).getIntervalType(nodeIndex)).equals("coalescent"); //TODO this is hard coded ...
+                        String.valueOf(treeIntervals.getIntervalType(nodeIndex - 1)).equals("coalescent"); //TODO this is hard coded ...
             }
         }
 
@@ -342,7 +344,6 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
         storedIntervalsKnown = intervalsKnown;
         storedLogLikelihood = logLikelihood;
     }
-
 
     protected void restoreState() {
         // Swap pointers

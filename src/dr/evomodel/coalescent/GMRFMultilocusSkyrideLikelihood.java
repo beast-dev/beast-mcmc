@@ -1188,10 +1188,15 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
     }
 
     public String getReport() {
+        // TODO this code is temporary
+        List<BigFastTreeIntervals> bigFastTreeIntervals = new ArrayList<>();
+        for (Tree tree : treeList) {
+            bigFastTreeIntervals.add(new BigFastTreeIntervals((TreeModel) tree));
+        }
 
         MultilocusNonparametricCoalescentLikelihood lik =
                 new MultilocusNonparametricCoalescentLikelihood(
-                        intervalsList,
+                        bigFastTreeIntervals,
                         popSizeParameter,
                         new Parameter.Default(gridPoints),
                         ploidyFactors);

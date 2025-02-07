@@ -27,32 +27,39 @@
 
 package dr.inferencexml.distribution;
 
+import dr.inference.distribution.RandomField;
 import dr.inference.distribution.Weights;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 import dr.evomodel.tree.TreeModel;
+
+import static dr.inferencexml.distribution.RandomFieldParser.WEIGHTS_RULE;
 
 public class WeightsParser extends AbstractXMLObjectParser {
 
     private static final String PARSER_NAME = "weightProvider";
-    private static final String TREE = "tree";
+    private static final String RESCALE_BY_ROOT_HEIGHT = "rescaleByRootHeight";
 
     public String getParserName() {
         return PARSER_NAME;
     }
 
-
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        boolean rescaleByRootHeight = xo.getAttribute(RESCALE_BY_ROOT_HEIGHT, false);
 
-        return new Weights(tree);
+        return new Weights(tree, rescaleByRootHeight);
     }
 
     @Override
-    public XMLSyntaxRule[] getSyntaxRules() {
-        return new XMLSyntaxRule[0];
-    }
+    public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+
+    private final XMLSyntaxRule[] rules = {
+            AttributeRule.newBooleanRule(RESCALE_BY_ROOT_HEIGHT, true),
+            new ElementRule(TreeModel.class)
+    };
 
     @Override
     public String getParserDescription() {

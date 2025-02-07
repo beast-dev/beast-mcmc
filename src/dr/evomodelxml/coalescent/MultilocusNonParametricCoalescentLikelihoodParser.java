@@ -26,11 +26,13 @@
 package dr.evomodelxml.coalescent;
 
 import dr.evolution.coalescent.TreeIntervals;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.coalescent.MultilocusNonparametricCoalescentLikelihood;
 import dr.evomodel.coalescent.smooth.SkyGlideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.smooth.SmoothSkygridLikelihoodParser;
 import dr.inference.model.Parameter;
+import dr.util.Transform;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -51,8 +53,14 @@ public class MultilocusNonParametricCoalescentLikelihoodParser extends AbstractX
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-        Parameter logPopSizes = (Parameter) xo.getElementFirstChild(POPULATION_PARAMETER);
+        XMLObject xoPopParameter = xo.getChild(POPULATION_PARAMETER);
+        Parameter logPopSizes = (Parameter) xoPopParameter.getChild(Parameter.class);
+        Transform.ParsedTransform pt = (Transform.ParsedTransform) xoPopParameter.getChild(Transform.ParsedTransform.class);
+        if (pt != null) {
+            for (int i = 0; i < logPopSizes.getDimension(); i++) {
+                logPopSizes.setParameterValue(i, pt.transform.transform(logPopSizes.getParameterValue(i)));
+            }
+        }
         Parameter gridPoints = SmoothSkygridLikelihoodParser.getGridPoints(xo); //TODO should I call this parser?
         int nGridPoints = gridPoints.getDimension();
 
@@ -65,9 +73,9 @@ public class MultilocusNonParametricCoalescentLikelihoodParser extends AbstractX
             trees.add((TreeModel) cxo.getChild(i));
         }
 
-        List<TreeIntervals> intervalLists = new ArrayList<>();
+        List<BigFastTreeIntervals> intervalLists = new ArrayList<>();
         for (int i = 0; i < trees.size(); i++) {
-            TreeIntervals treeIntervals = new TreeIntervals(trees.get(i));
+            BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals(trees.get(i));
             intervalLists.add(treeIntervals);
         }
         //        List<BigFastTreeIntervals> intervalLists = new ArrayList<>();
@@ -118,7 +126,8 @@ public class MultilocusNonParametricCoalescentLikelihoodParser extends AbstractX
             }),
 
             new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
+                    new ElementRule(Parameter.class),
+                    new ElementRule(Transform.ParsedTransform.class, true)
             }),
 
             new XORRule(

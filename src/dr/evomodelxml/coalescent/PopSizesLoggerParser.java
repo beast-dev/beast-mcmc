@@ -1,7 +1,10 @@
 package dr.evomodelxml.coalescent;
 
+import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
+import dr.evomodel.coalescent.GMRFSkygridLikelihood;
 import dr.evomodel.coalescent.MultilocusNonparametricCoalescentLikelihood;
 import dr.evomodel.coalescent.PopSizesLogger;
+import dr.inference.model.Parameter;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -17,8 +20,18 @@ public class PopSizesLoggerParser extends AbstractXMLObjectParser {
         if (pt != null) {
             transform = pt.transform;
         }
-        MultilocusNonparametricCoalescentLikelihood likelihood = (MultilocusNonparametricCoalescentLikelihood) xo.getChild(MultilocusNonparametricCoalescentLikelihood.class);
-        return new PopSizesLogger(likelihood, transform, order);
+        if (xo.getChild(MultilocusNonparametricCoalescentLikelihood.class) != null) {
+            MultilocusNonparametricCoalescentLikelihood likelihood = (MultilocusNonparametricCoalescentLikelihood) xo.getChild(MultilocusNonparametricCoalescentLikelihood.class);
+            return new PopSizesLogger(likelihood, transform, order);
+        } else if (xo.getChild(GMRFSkygridLikelihood.class) != null) {
+            GMRFSkygridLikelihood likelihood = (GMRFSkygridLikelihood) xo.getChild(GMRFSkygridLikelihood.class);
+            return new PopSizesLogger(likelihood, transform, order);
+        } else if (xo.getChild(GMRFMultilocusSkyrideLikelihood.class) != null) {
+            GMRFMultilocusSkyrideLikelihood likelihood = (GMRFMultilocusSkyrideLikelihood) xo.getChild(GMRFMultilocusSkyrideLikelihood.class);
+            return new PopSizesLogger(likelihood, transform, order);
+        } else {
+            throw new XMLParseException("Likelihood type not yet implemented.");
+        }
     }
 
     @Override
@@ -28,7 +41,13 @@ public class PopSizesLoggerParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newStringRule(ORDER, true),
-            new ElementRule(MultilocusNonparametricCoalescentLikelihood.class),
+            new XORRule(
+                    new ElementRule(MultilocusNonparametricCoalescentLikelihood.class),
+                    new XORRule(
+                            new ElementRule(GMRFSkygridLikelihood.class),
+                            new ElementRule(GMRFMultilocusSkyrideLikelihood.class))
+            ),
+
             new ElementRule(Transform.ParsedTransform.class, true)
     };
 

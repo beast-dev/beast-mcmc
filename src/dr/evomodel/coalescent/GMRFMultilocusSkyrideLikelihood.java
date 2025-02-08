@@ -1188,7 +1188,6 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
     }
 
     public String getReport() {
-        // TODO this code is temporary
         List<BigFastTreeIntervals> bigFastTreeIntervals = new ArrayList<>();
         for (Tree tree : treeList) {
             bigFastTreeIntervals.add(new BigFastTreeIntervals((TreeModel) tree));
@@ -1204,7 +1203,12 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
         double logLik = lik.getLogLikelihood();
 
         double total = getLogLikelihood();
-        return logLik + " " + total + " " + logLikelihood + " " + logFieldLikelihood;
+
+        return "Coalescent LogLikelihood (local): " + logLikelihood + "\n" +
+                "Coalescent LogLikelihood (MultiLocusNP): " + logLik + "\n" +
+                "Field logLikelihood: " + logFieldLikelihood + "\n" +
+                "Total: " + total;
+//        return logLik + " " + total + " " + logLikelihood + " " + logFieldLikelihood;
     }
 
     class SkygridCovariateHelper extends SkygridHelper {

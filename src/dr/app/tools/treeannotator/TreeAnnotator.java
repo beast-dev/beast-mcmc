@@ -583,7 +583,7 @@ public class TreeAnnotator extends BaseTreeTool {
         }
 
         HIPSTRTreeBuilder treeBuilder = new HIPSTRTreeBuilder();
-        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa, penaltyThreshold);
+        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa /*, penaltyThreshold*/);
 
         double score = scoreTree(tree, cladeSystem);
 

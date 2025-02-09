@@ -124,6 +124,8 @@ public class TreeAnnotator extends BaseTreeTool {
                          final long burninStates,
                          final HeightsSummary heightsOption,
                          final double posteriorLimit,
+                         final double hipstrPenalty,
+                         final int minCladeCount,
                          final double[] hpd2D,
                          final boolean computeESS,
                          final int threadCount,
@@ -199,7 +201,7 @@ public class TreeAnnotator extends BaseTreeTool {
             }
             case HIPSTR: {
                 progressStream.println("Finding highest independent posterior subtree reconstruction (HIPSTR) tree...");
-                targetTree = getHIPSTRTree(cladeSystem);
+                targetTree = getHIPSTRTree(cladeSystem, hipstrPenalty, minCladeCount);
                 break;
             }
             default: throw new IllegalArgumentException("Unknown targetOption");
@@ -390,7 +392,6 @@ public class TreeAnnotator extends BaseTreeTool {
         if (stepSize < 1) stepSize = 1;
 
         Reader reader = new BufferedReader(new FileReader(inputFileName));
-//         TreeImporter importer = new BEASTTreesImporter(reader, true);
         TreeImporter importer = new NexusImporter(reader, true);
 
         long startTime = System.currentTimeMillis();
@@ -572,12 +573,17 @@ public class TreeAnnotator extends BaseTreeTool {
         return bestTree;
     }
 
-    private MutableTree getHIPSTRTree(CladeSystem cladeSystem) {
+    private MutableTree getHIPSTRTree(CladeSystem cladeSystem, double penaltyThreshold, int minCladeCount) {
 
         long startTime = System.currentTimeMillis();
 
+        if (minCladeCount > 0) {
+            Embiggulator embiggulator = new Embiggulator(cladeSystem);
+            embiggulator.embiggenBiClades(1, minCladeCount, threadCount);
+        }
+
         HIPSTRTreeBuilder treeBuilder = new HIPSTRTreeBuilder();
-        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa);
+        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa, penaltyThreshold);
 
         double score = scoreTree(tree, cladeSystem);
 
@@ -802,8 +808,9 @@ public class TreeAnnotator extends BaseTreeTool {
         arguments.printUsage("treeannotator", "<input-file-name> [<output-file-name>]");
         progressStream.println();
         progressStream.println("  Example: treeannotator test.trees out.tree");
-        progressStream.println("  Example: treeannotator -burnin 100 -heights mean test.trees out.tree");
-        progressStream.println("  Example: treeannotator -type hipstr -burnin 100 -heights mean test.trees out.tree");
+        progressStream.println("  Example: treeannotator --burnin 100 --heights mean test.trees out.tree");
+        progressStream.println("  Example: treeannotator --type hipstr --burnin 100 --heights mean test.trees out.tree");
+        progressStream.println("  Example: treeannotator -b 100 -tf map.tree test.trees out.tree");
         progressStream.println();
     }
 
@@ -914,7 +921,9 @@ public class TreeAnnotator extends BaseTreeTool {
                         burninTrees,
                         burninStates,
                         heightsOption,
+                        posteriorLimit,
                         0.0,
+                        0,
                         hpd2D,
                         computeESS,
                         -1,
@@ -944,6 +953,8 @@ public class TreeAnnotator extends BaseTreeTool {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.StringOption("type", new String[] {"hipstr", "mcc"}, false, "an option of 'hipstr' (default) or 'mcc'"),
+                        new Arguments.RealOption("penalty", "the hipstr clade credibility penalty (default 0.0)"),
+                        new Arguments.IntegerOption("minCount", "the minimum clade count for inclusion in embiggulation (0 = off, default 0)"),
                         new Arguments.StringOption("heights", new String[] {"keep", "median", "mean", "ca"}, false,
                                 "an option of 'keep', 'median' or 'mean' (default)"),
                         new Arguments.LongOption("burnin", "the number of states to be considered as 'burn-in'"),
@@ -1027,6 +1038,14 @@ public class TreeAnnotator extends BaseTreeTool {
         if (arguments.hasOption("type") && arguments.getStringOption("type").equalsIgnoreCase("MCC")) {
             target = Target.MAX_CLADE_CREDIBILITY;
         }
+        double hipstrPenalty = 0.0;
+        if (arguments.hasOption("penalty")) {
+            hipstrPenalty = arguments.getRealOption("penalty");
+        }
+        int minCladeCount = 0;
+        if (arguments.hasOption("minCount")) {
+            minCladeCount = arguments.getIntegerOption("minCount");
+        }
 
         if (arguments.hasOption("target")) {
             target = Target.USER_TARGET_TREE;
@@ -1068,6 +1087,8 @@ public class TreeAnnotator extends BaseTreeTool {
                 burninStates,
                 heights,
                 posteriorLimit,
+                hipstrPenalty,
+                minCladeCount,
                 hpd2D,
                 computeESS,
                 threadCount,

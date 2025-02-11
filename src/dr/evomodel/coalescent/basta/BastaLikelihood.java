@@ -147,19 +147,41 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     public void setTipData() {
 
         int[] data = patternList.getPattern(0);
-
+        int totalNumStates = patternList.getDataType().getStateCount() + patternList.getDataType().getAmbiguousStateCount();
         for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
             NodeRef node = tree.getExternalNode(i);
-
             int index = patternList.getTaxonIndex(tree.getNodeTaxon(node).getId());
             int datum = data[index];
-
-            if (datum >= stateCount) {
-                throw new RuntimeException("Not yet implemented");
-            }
-
             double[] partials = new double[stateCount];
-            partials[datum] = 1.0;
+            if (datum >= stateCount) {
+                if (datum >= totalNumStates) {
+                    for (int j = 0; j < stateCount; j++) {
+                        partials[j] = 1.0 / stateCount;
+                    }
+                } else {
+                    int[] state = patternList.getDataType().getStates(datum);
+                    double[] ambiguousValues = patternList.getDataType().getAmbiguityValues(datum);
+                    if (ambiguousValues != null) {
+                        int idx = 0;
+                        double sum = 0;
+                        for (int k : state) {
+                            partials[k] = ambiguousValues[idx++];
+                            sum += partials[k];
+                        }
+                        if (sum != 1) {
+                            throw new RuntimeException("Sum of the probabilities of the input ambiguous states does not equal to one." );
+                        }
+                    } else {
+                        int validStateCount = state.length;
+                        double normalizedValue = 1.0 / validStateCount;
+                        for (int k : state) {
+                            partials[k] = normalizedValue;
+                        }
+                    }
+                }
+            } else {
+                partials[datum] = 1.0;
+            }
 
             likelihoodDelegate.setPartials(node.getNumber(), partials);
         }
@@ -243,18 +265,20 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         assert (populationSizesKnown);
         assert (treeIntervalsKnown);
         assert (transitionMatricesKnown);
-
+//        likelihoodDelegate.storeState();
+//        storedTreeIntervals = this.treeIntervals;
         storedLogLikelihood = logLikelihood;
     }
 
     @Override
     protected final void restoreState() {
+//        likelihoodDelegate.restoreState();
         logLikelihood = storedLogLikelihood;
-
+//        this.treeIntervals = storedTreeIntervals;
         likelihoodKnown = true;
-        populationSizesKnown = true;
-        treeIntervalsKnown = true;
-        transitionMatricesKnown = true;
+        populationSizesKnown = false;
+        treeIntervalsKnown = false;
+        transitionMatricesKnown = false;
     }
 
     @Override

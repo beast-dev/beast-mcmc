@@ -307,6 +307,11 @@ public abstract class DataType implements Serializable {
         return states;
     }
 
+    public double[] getAmbiguityValues(int state) {
+
+        return null;
+    }
+
     /**
      * returns an array containing the non-ambiguous states that this state represents.
      */

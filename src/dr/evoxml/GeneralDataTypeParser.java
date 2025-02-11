@@ -64,6 +64,7 @@ public class GeneralDataTypeParser extends AbstractXMLObjectParser {
     public static final String ALIAS = "alias";
     public static final String AMBIGUITY = "ambiguity";
     public static final String CODE = "code";
+    public static final String VALUE = "value";
 
     public String getParserName() { return GENERAL_DATA_TYPE; }
 
@@ -139,8 +140,20 @@ public class GeneralDataTypeParser extends AbstractXMLObjectParser {
                         }
                     }
 
+                    double [] ambiguityValues;
+
                     try {
-                        dataType.addAmbiguity(code, ambiguities);
+                        ambiguityValues = cxo.getDoubleArrayAttribute(VALUE);
+                    } catch (XMLParseException e) {
+                        ambiguityValues = null;
+                    }
+
+                    try {
+                        if (ambiguityValues != null) {
+                            dataType.addAmbiguityWithValue(code, ambiguities, ambiguityValues);
+                        } else {
+                            dataType.addAmbiguity(code, ambiguities);
+                        }
                     } catch (IllegalArgumentException iae) {
                         throw new XMLParseException(iae.getMessage() + "in " + getParserName() + " element");
                     }

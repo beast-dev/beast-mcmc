@@ -125,6 +125,27 @@ public class GeneralDataType extends DataType implements Identifiable {
         stateMap.put(code, state);
     }
 
+    public void addAmbiguityWithValue(String code, String[] ambiguousStates, double[] ambiguousValues) {
+
+        int n = ambiguousStateCount + stateCount;
+
+        int[] indices = new int[ambiguousStates.length];
+        int i = 0;
+        for (String stateCode : ambiguousStates) {
+            State state =stateMap.get(stateCode);
+            if (state == null) {
+                throw new IllegalArgumentException("DataType doesn't contain the state, " + stateCode);
+            }
+            indices[i] = state.number;
+            i++;
+        }
+        State state = new State(n, code, indices, ambiguousValues);
+        states.add(state);
+        ambiguousStateCount++;
+
+        stateMap.put(code, state);
+    }
+
     @Override
     public char[] getValidChars() {
         if (validChars == null) {
@@ -209,6 +230,11 @@ public class GeneralDataType extends DataType implements Identifiable {
         return states.get(state).ambiguities;
     }
 
+    public double[] getAmbiguityValues(int state) {
+
+        return states.get(state).ambiguityValues;
+    }
+
     /**
      * returns an array containing the non-ambiguous states that this state represents.
      */
@@ -286,18 +312,28 @@ public class GeneralDataType extends DataType implements Identifiable {
         String code;
 
         int[] ambiguities;
+        double[] ambiguityValues;
 
         State(int number, String code) {
             this.number = number;
             this.code = code;
             this.ambiguities = new int[]{number};
+            this.ambiguityValues = null;
         }
 
         State(int number, String code, int[] ambiguities) {
             this.number = number;
 			this.code = code;
 			this.ambiguities = ambiguities;
+            this.ambiguityValues = null;
 		}
+
+        State(int number, String code, int[] ambiguities, double[] ambiguityValues) {
+            this.number = number;
+            this.code = code;
+            this.ambiguities = ambiguities;
+            this.ambiguityValues = ambiguityValues;
+        }
 	}
 
 }

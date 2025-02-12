@@ -114,7 +114,8 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model instanceof BigFastTreeIntervals treeModel) {
+        if (model instanceof BigFastTreeIntervals) {
+            BigFastTreeIntervals treeModel = (BigFastTreeIntervals) model;
             int tn = intervalsList.indexOf(treeModel);
             if (tn >= 0) {
                 intervalsKnown = false; // TODO This should only fire the change for one tree model

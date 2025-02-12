@@ -25,6 +25,7 @@
 
 package dr.evomodel.coalescent;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodelxml.coalescent.SingleTreeGriddedNodesTimeline;
 import dr.inference.model.*;
 import dr.util.Author;
 import dr.util.Citable;
@@ -113,8 +114,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model instanceof BigFastTreeIntervals) {
-            BigFastTreeIntervals treeModel = (BigFastTreeIntervals) model;
+        if (model instanceof BigFastTreeIntervals treeModel) {
             int tn = intervalsList.indexOf(treeModel);
             if (tn >= 0) {
                 intervalsKnown = false; // TODO This should only fire the change for one tree model
@@ -140,11 +140,11 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
         for (int treeIndex = 0; treeIndex < intervalsList.size(); treeIndex++) {
             double ploidyFactor = 1 / getPopulationFactor(treeIndex);
 
-            SingleTreeNodesTimeline singleTreeNodesTimeLine = new
-                    SingleTreeNodesTimeline(intervalsList.get(treeIndex), gridPoints);
+            SingleTreeGriddedNodesTimeline singleTreeNodesTimeLine = new
+                    SingleTreeGriddedNodesTimeline(intervalsList.get(treeIndex), gridPoints);
             fullTimeLine = singleTreeNodesTimeLine.getMergedTimeLine();
             numLineages = singleTreeNodesTimeLine.getMergedNumLineages();
-            gridIndices = singleTreeNodesTimeLine.gridIndices;
+            gridIndices = singleTreeNodesTimeLine.getGridIndices();
 
             int[] tempNumCoalEvents = singleTreeNodesTimeLine.getNumCoalEvents();
             for (int j = 0; j < numCoalEvents.length; j++)  numCoalEvents[j] += tempNumCoalEvents[j];
@@ -154,7 +154,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
 
             boolean skipFirstSamplingTime = true; // necessary since "i" cannot be incremented here
 
-            double interval = 0.0;
+            double interval;
             for (int gridIndex = i; gridIndex < numGridPoints; gridIndex++) {
                 while (i <= gridIndices[gridIndex]) {
                     if (!skipFirstSamplingTime) {
@@ -181,111 +181,6 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
         }
     }
 
-
-
-    // this builds a timeline with coalescent and sampling events for a single tree
-    private class SingleTreeNodesTimeline {
-        final int nNodes;
-        final BigFastTreeIntervals treeIntervals;
-
-        final double[] timeLine;
-        double[] mergedTimeLine;
-
-        final boolean[] flagCoalescentEvent;
-//        boolean[] mergedFlagCoalescentEvent;
-
-        int[] mergedNumLineages;
-        int[] numCoalEvents;
-        final Parameter gridPoints;
-        int[] gridIndices;
-
-        private SingleTreeNodesTimeline(BigFastTreeIntervals treeIntervals) {
-            this(treeIntervals, null);
-        }
-
-        private SingleTreeNodesTimeline(BigFastTreeIntervals treeIntervals, Parameter gridPoints) {
-            this.treeIntervals = treeIntervals;
-            this.nNodes = treeIntervals.getIntervalCount() + 1;
-            this.timeLine = new double[nNodes];
-            this.flagCoalescentEvent = new boolean[nNodes];
-            this.gridPoints = gridPoints;
-
-            makeLine();
-
-            if (gridPoints != null) { // "merged" =  nodes' times and grid points
-                this.mergedTimeLine = new double[nNodes + gridPoints.getDimension()];
-//                this.mergedFlagCoalescentEvent = new boolean[nNodes + gridPoints.getDimension()];
-                this.gridIndices = new int[gridPoints.getDimension()];
-                numCoalEvents = new int[gridPoints.getDimension() + 1]; // "+1" to account for the events after the last grid point
-                mergedNumLineages = new int[nNodes + gridPoints.getDimension() + 1];
-                integrateGridPoints(gridPoints.getParameterValues());
-            }
-        }
-
-        private void makeLine() {
-            timeLine[0] = treeIntervals.getStartTime();
-            flagCoalescentEvent[0] = false;
-            for (int nodeIndex = 1; nodeIndex < nNodes; nodeIndex++) {
-                timeLine[nodeIndex] = treeIntervals.getIntervalTime(nodeIndex);
-//                       timeLine[nodeIndex - 1];
-                flagCoalescentEvent[nodeIndex] =
-                        String.valueOf(treeIntervals.getIntervalType(nodeIndex - 1)).equals("coalescent"); //TODO this is hard coded ...
-            }
-        }
-
-        private void computeNumLineages(int index, boolean isCoalescentEvent) {
-            if (isCoalescentEvent) {
-                mergedNumLineages[index] = mergedNumLineages[index - 1] - 1;
-            } else {
-                if (index == 0) { // the first node is a tip node
-                    mergedNumLineages[index] = 1;
-                } else {
-                    mergedNumLineages[index] = mergedNumLineages[index - 1] + 1;
-                }
-            }
-        }
-
-        private void integrateGridPoints(double[] gridPointsVector) {
-            int nGridPoints = gridPointsVector.length;
-            Arrays.fill(mergedNumLineages, 0);
-            Arrays.fill(numCoalEvents, 0);
-
-            int i = 0, j = 0;
-            while (i < nNodes && j < nGridPoints) {
-                if (timeLine[i] <= gridPointsVector[j]) { // grid points are set after node times if equal
-                    mergedTimeLine[i + j] = timeLine[i];
-                    computeNumLineages(i + j, flagCoalescentEvent[i]);
-                    if (flagCoalescentEvent[i]) numCoalEvents[j] += 1;
-                    i++;
-                } else {
-                    mergedTimeLine[i + j] = gridPointsVector[j];
-                    gridIndices[j] = i + j;
-                    mergedNumLineages[i + j] = mergedNumLineages[i + j - 1];
-                    j++;
-                }
-            }
-
-            // Add remaining elements
-            while (i < nNodes) {
-                mergedTimeLine[i + j] = timeLine[i];
-                computeNumLineages(i + j, flagCoalescentEvent[i]);
-                if (flagCoalescentEvent[i]) numCoalEvents[j] += 1;
-                i++;
-            }
-            while (j < nGridPoints) {
-                mergedTimeLine[i + j] = gridPointsVector[j];
-                gridIndices[j] = i + j;
-                mergedNumLineages[i + j] = mergedNumLineages[i + j - 1];
-                j++;
-            }
-        }
-//        private boolean[] getFlagCoalescentEvent() { return flagCoalescentEvent; }
-//        private double[] getTimeLine() { return timeLine; }
-//        private boolean[] getmergedFlagCoalescentEvent() { return mergedFlagCoalescentEvent; }
-        private double[] getMergedTimeLine() { return mergedTimeLine; }
-        private int[] getMergedNumLineages() {return mergedNumLineages;}
-        private int[] getNumCoalEvents() {return numCoalEvents;}
-    }
 
     protected double calculateLogCoalescentLikelihood() {
 
@@ -322,8 +217,6 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
         intervalsKnown = false;
         likelihoodKnown = false;
     }
-
-    private double[] getFullTimeLine() {return fullTimeLine;}
 
     private double getPopulationFactor(int nt) {return ploidyFactors.getParameterValue(nt);}
 

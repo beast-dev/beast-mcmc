@@ -27,6 +27,8 @@
 
 package dr.app.tools.treeannotator;
 
+import dr.util.Pair;
+
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -49,27 +51,16 @@ public class Embiggulator {
         this.cladeSystem = cladeSystem;
     }
 
-
-    boolean isSubset(BitSet bits1, BitSet bits2) {
-        for (int i = bits1.nextSetBit(0); i >= 0; i = bits1.nextSetBit(i + 1)) {
-            if (!bits2.get(i)) {
-                return false;
-            }
-            // if (i == Integer.MAX_VALUE) {          break; // or (i+1) would overflow      }
-        }
-        return true;
-    }
-
     public void embiggenBiClades(final int minCladeSize, final int minCladeCount, final int threadCount) {
         binCladesBySize();
 
         if (threadCount < 0) {
-            embiggenBiClades(minCladeSize, minCladeCount);
+            embiggenBiClades2(minCladeSize, minCladeCount);
             return;
         }
 
         // pull down the clades and tip clades into an array to iterate over easily
-        List<Clade> allClades = new ArrayList<Clade>(cladeSystem.getCladeMap().values());
+        List<Clade> allClades = new ArrayList<>(cladeSystem.getCladeMap().values());
         allClades.addAll(cladeSystem.getTipClades().values());
         BiClade[] cladeArray = new BiClade[allClades.size()];
         cladeArray = allClades.toArray(cladeArray);
@@ -78,7 +69,7 @@ public class Embiggulator {
         Arrays.sort(cladeArray, (o1, o2) -> o2.getCount() - o1.getCount());
         int n = 0;
         // find the point at which the count drops below minCount
-        while (n < cladeArray.length && cladeArray[n].getCount() > minCladeCount - 1) {
+        while (n < cladeArray.length && cladeArray[n].getCount() >= minCladeCount) {
             n++;
         }
 
@@ -138,14 +129,14 @@ public class Embiggulator {
             // clade1 must be more than just a tip...
             if (clade1.getSize() >= 2) {
                 // get the bitset for clade1 that acts as its hash key
-                final BitSet bits1 = ((BitSet) clade1.getKey());
+                final CladeKey bits1 = ((CladeKey) clade1.getKey());
                 // get final versions of the start and end of the iteration
                 final int from = Math.max(i + 1, sizeIndices[maxSize - clade1.getSize()]);
                 final int to = n;
                 // submit the thread to the pool and store the future in the list
                 futures.add(pool.submit(() -> {
                     // create and reuse a bitset to avoid reallocating it
-                    final BitSet bits = new BitSet();
+                    final CladeKey bits = new CladeKey();
                     for (int j = from; j < to; j++) {
                         BiClade clade2 = clades[j];
 
@@ -159,7 +150,7 @@ public class Embiggulator {
                         if (clade2.key instanceof Integer) {
                             bits.set((Integer) clade2.key);
                         } else {
-                            bits.or((BitSet) clade2.key);
+                            bits.or((CladeKey) clade2.key);
                         }
 
                         // if the cardinality of the bitset is not the same as the sum
@@ -250,7 +241,7 @@ public class Embiggulator {
         Arrays.sort(clades, (o1, o2) -> o2.getCount() - o1.getCount());
         int n = 0;
         // find the point at which the count drops below minCount
-        while (n < clades.length && clades[n].getCount() > minCladeCount - 1) {
+        while (n < clades.length && clades[n].getCount() >= minCladeCount) {
             n++;
         }
 
@@ -293,12 +284,12 @@ public class Embiggulator {
         long embiggulationCount = 0;
 
         // create and reuse a bitset to avoid reallocating it
-        final BitSet bits = new BitSet();
+        final CladeKey bits = new CladeKey();
 
         for (int i = sizeIndices[maxSize - 1]; i < n - 1; i++) {
             BiClade clade1 = clades[i];
             if (clade1.getSize() >= 2) {
-                BitSet bits1 = ((BitSet) clade1.getKey());
+                CladeKey bits1 = ((CladeKey) clade1.getKey());
 
                 for (int j = Math.max(i + 1, sizeIndices[maxSize - clade1.getSize()]); j < n; j++) {
                     BiClade clade2 = clades[j];
@@ -307,12 +298,12 @@ public class Embiggulator {
                     }
 
                     bits.clear();
-                    bits.or(bits1);
+                    bits.set(bits1);
 
                     if (clade2.key instanceof Integer) {
                         bits.set((Integer) clade2.key);
                     } else {
-                        bits.or((BitSet) clade2.key);
+                        bits.or((CladeKey) clade2.key);
                     }
 
                     int size = clade1.size + clade2.size;
@@ -336,6 +327,127 @@ public class Embiggulator {
         System.err.println();
         System.err.println(k + " additional clade pairs examined");
         System.err.println(embiggulationCount + " additional clade pairs added");
+    }
+
+
+    public void embiggenBiClades2(final int minCladeSize, final int minCladeCount) {
+        List<Clade> allClades = new ArrayList<>(cladeSystem.getCladeMap().values());
+        allClades.addAll(cladeSystem.getTipClades().values());
+        BiClade[] clades = new BiClade[allClades.size()];
+        clades = allClades.toArray(clades);
+
+        // sort by number of trees containing clade
+        Arrays.sort(clades, (o1, o2) -> o2.getCount() - o1.getCount());
+        int n = 0;
+        // find the point at which the count drops below minCount
+        while (n < clades.length && clades[n].getCount() >= minCladeCount) {
+            n++;
+        }
+
+        // truncate the array at this point
+        clades = Arrays.copyOf(clades, n);
+
+        // sort by descending size
+        Arrays.sort(clades, (o1, o2) -> o2.getSize() - o1.getSize());
+
+        int maxSize = clades[0].getSize();
+
+        int[] sizeIndices = new int[maxSize];
+        n = 0;
+        int currentSize = maxSize;
+        while (n < clades.length) {
+            if (clades[n].getSize() < currentSize) {
+                currentSize -= 1;
+                sizeIndices[currentSize] = n;
+            }
+            n++;
+        }
+        sizeIndices[0] = clades.length;
+
+
+        n = sizeIndices[minCladeSize - 1];
+
+        // count the exact number of clade pairs (for reporting purposes)
+        long count = 0;
+        for (int i = 0; i < Math.min(sizeIndices[3], n - 1); i++) {
+            BiClade parentClade = clades[i];
+            count += Math.min(sizeIndices[2], n - 1) - sizeIndices[parentClade.size - 1];
+
+//            for (int u = sizeIndices[parentClade.size - 1]; u < Math.min(sizeIndices[2], n - 1); u++) {
+//                BiClade leftClade = clades[u];
+//                int rightSize = parentClade.size - leftClade.size;
+//                count += Math.min(sizeIndices[rightSize - 1], n - 1) - Math.max(u + 1, sizeIndices[rightSize]);
+//            }
+        }
+
+        System.err.printf("Embiggening v2 (non-threaded) with up to %,d clade pairs...", count);
+        System.err.println();
+        System.err.println("0              25             50             75            100");
+        System.err.println("|--------------|--------------|--------------|--------------|");
+
+        long stepSize = Math.max(count / 60, 1);
+        long k = 0;
+        long embiggulationCount = 0;
+
+        // create and reuse a bitset to avoid reallocating it
+        final CladeKey key = new CladeKey();
+
+        for (int i = 0; i < Math.min(sizeIndices[3], n - 1); i++) {
+
+            BiClade parentClade = clades[i];
+            assert parentClade.size >= 3;
+
+            CladeKey parentKey = (CladeKey)parentClade.key;
+
+            int f1 = sizeIndices[parentClade.size - 1];
+            int t1 = Math.min(sizeIndices[2], n - 1);
+            for (int u = f1; u < t1; u++) {
+                BiClade leftClade = clades[u];
+                assert leftClade.size >= 2;
+
+                key.and(parentKey, (CladeKey) leftClade.key);
+
+                // is leftClade a subset of parent?
+                if (key.cardinality() == leftClade.size) {
+                    int rightSize = parentClade.size - leftClade.size;
+
+                    // start at the next clade on from the left clade (if left clade and right clade are the same size)
+                    // or the next clade of rightSize. Iterate through the remaining clades of size == rightSize.
+                    int f2 = Math.max(u + 1, sizeIndices[rightSize]);
+                    int t2 = Math.min(sizeIndices[rightSize - 1], n);
+                    for (int v = f2; v < t2; v++) {
+                            BiClade rightClade = clades[v];
+
+                            if (rightClade.size == rightSize) { // it is possible there are no clades of this size
+                                // assert rightClade.size <= leftClade.size;
+
+                                if (rightClade.key instanceof Integer) {
+                                    key.set((CladeKey) leftClade.key);
+                                    key.set((Integer) rightClade.key);
+                                } else {
+                                    key.or((CladeKey) leftClade.key, (CladeKey) rightClade.key);
+                                }
+
+                                if (key.equals(parentKey)) {
+                                    parentClade.addSubClades(leftClade, rightClade);
+                                    embiggulationCount++;
+                                    break;
+                                }
+                            }
+                    }
+                }
+
+                if (k > 0 && k % stepSize == 0) {
+                    System.err.print("*");
+                    System.err.flush();
+                }
+                k++;
+            }
+        }
+        System.err.println();
+        System.err.println(k + " additional clade pairs examined");
+        System.err.println(embiggulationCount + " additional clade pairs added");
+//        System.err.println(rejectCount + " rejected");
     }
 
 }

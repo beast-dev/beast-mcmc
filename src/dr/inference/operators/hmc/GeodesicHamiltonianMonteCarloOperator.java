@@ -114,7 +114,6 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
 
     public static class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFrogEngine.Default {
 
-        private final MatrixParameterInterface matrixParameter;
         //        private final DenseMatrix64F positionMatrix;
 //        private final DenseMatrix64F innerProduct;
 //        private final DenseMatrix64F innerProduct2;
@@ -133,7 +132,6 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
                                MassPreconditioner preconditioning, double[] mask,
                                ManifoldProvider manifoldProvider) {
             super(parameter, instabilityHandler, preconditioning, mask);
-            this.matrixParameter = (MatrixParameterInterface) parameter;
             this.manifoldProvider = manifoldProvider;
 
 
@@ -271,8 +269,8 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
                                    double functionalStepSize) throws HamiltonianMonteCarloOperator.NumericInstabilityException {
 
             manifoldProvider.updatePositionAndMomentum(position, momentum, functionalStepSize);
-            matrixParameter.setAllParameterValuesQuietly(position, 0);
-            matrixParameter.fireParameterChangedEvent();
+            parameter.setAllParameterValuesQuietly(position);
+            parameter.fireParameterChangedEvent();
         }
 
         @Override

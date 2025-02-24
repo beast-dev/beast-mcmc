@@ -5,4 +5,7 @@ public interface Manifold {
 
     void projectPoint(double[] point);
     void geodesic(double[] point, double[] velocity, double t);
+
+    void initialize(double[] values);
+
 }

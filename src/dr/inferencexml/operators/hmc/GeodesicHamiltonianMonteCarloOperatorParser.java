@@ -28,11 +28,14 @@
 package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.ComplementParameter;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.hmc.*;
 import dr.math.MathUtils;
+import dr.math.geodesics.Euclidean;
 import dr.math.geodesics.Manifold;
 import dr.math.geodesics.Sphere;
 import dr.math.geodesics.StiefelManifold;
@@ -52,121 +55,153 @@ public class GeodesicHamiltonianMonteCarloOperatorParser extends HamiltonianMont
     public final static String ORTHOGONALITY_STRUCTURE = "orthogonalityStructure";
     public final static String BLOCK_STIEFEL = "blockStiefelManifold";
     public final static String SPHERE = "sphere";
+    public final static String EUCLIDEAN = "none";
     public final static String ROWS = "rows";
     public final static String BLOCK = "block";
     public final static String RADIUS = "radius";
+//    public final static String MANIFOLDS = "manifolds";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         GeodesicHamiltonianMonteCarloOperator hmc = (GeodesicHamiltonianMonteCarloOperator) super.parseXMLObject(xo);
+        ManifoldProvider provider = (ManifoldProvider) xo.getChild(ManifoldProvider.class);
 
-        Parameter parameter = hmc.getParameter();
-        double[] mask = hmc.getMask();
+//        Parameter parameter = hmc.getParameter();
+//        double[] mask = hmc.getMask();
+//
+//
+//        XMLObject mxo = xo.getChild(MANIFOLDS);
+//        ArrayList<Manifold> manifolds = new ArrayList<>();
+//
+//        for (XMLObject cxo : mxo.getAllChildren(XMLObject.class)) {
+//            Manifold manifold;
+//            if (cxo.getName() == BLOCK_STIEFEL) {
+//                throw new RuntimeException("This is all messed up right now."); //TODO: FIX
+////                provider = parseBlockStiefel(xo, (MatrixParameterInterface) parameter, mask);
+//            } else if (cxo.getName() == SPHERE) {
+//                manifold = parseSphere(mxo, ((CompoundParameter) parameter).getParameter(0)); //TODO: DO NOT COMMIT THIS!!!!!!
+//            } else if (cxo.getName() == EUCLIDEAN) {
+//                manifold = new Euclidean();
+//            } else {
+//                throw new XMLParseException("No manifold recognized.");
+//            }
+//            manifolds.add(manifold);
+//        }
+//
+//        final ManifoldProvider provider;
+//        if (manifolds.size() == 1) {
+//            provider = new ManifoldProvider.BasicManifoldProvider(manifolds.get(0), parameter.getDimension());
+//        } else {
+//            int n = manifolds.size();
+//            if (parameter instanceof CompoundParameter) {
+//                CompoundParameter cparameter = (CompoundParameter) parameter;
+//                if (cparameter.getParameterCount() != n) throw new RuntimeException("Bad");
+//                int[] starts = new int[n];
+//                for (int i = 1; i < n; i++) {
+//                    starts[i] = starts[i - 1] + cparameter.getParameter(i - 1).getDimension();
+//                }
+//                provider = new ManifoldProvider.BlockManifoldProvider(manifolds, starts, parameter.getDimension());
+//            } else {
+//                throw new RuntimeException("Don't know what to do here");
+//            }
+//        }
 
-        final ManifoldProvider provider;
-
-        if (xo.hasChildNamed(BLOCK_STIEFEL)) {
-            provider = parseBlockStiefel(xo, (MatrixParameterInterface) parameter, mask);
-        } else if (xo.hasChildNamed(SPHERE)) {
-            provider = parseSphere(xo, parameter);
-        } else {
-            throw new XMLParseException("No manifold recognized.");
-        }
 
         hmc.addManifolds(provider);
 
         return hmc;
     }
 
-    private ManifoldProvider parseSphere(XMLObject xo, Parameter parameter) throws XMLParseException {
-        final double radius;
+//    private Manifold parseSphere(XMLObject xo, Parameter parameter) throws XMLParseException {
+//        final double radius;
+//
+//        double parameterRadius = MathUtils.getL2Norm(parameter.getParameterValues());
+//
+//        XMLObject cxo = xo.getChild(SPHERE);
+//
+//        if (cxo.hasAttribute(RADIUS)) {
+//            radius = cxo.getDoubleAttribute(RADIUS);
+//            double multiplier = radius / parameterRadius;
+//            for (int i = 0; i < parameter.getDimension(); i++) {
+//                parameter.setParameterValueQuietly(i, parameter.getParameterValue(i) * multiplier);
+//            }
+//            parameter.fireParameterChangedEvent();
+//        } else {
+//            radius = parameterRadius;
+//        }
+//        Sphere sphere = new Sphere(radius);
+////        return new ManifoldProvider.BasicManifoldProvider(sphere, parameter.getDimension());
+//        return sphere;
+//    }
 
-        double parameterRadius = MathUtils.getL2Norm(parameter.getParameterValues());
-
-        XMLObject cxo = xo.getChild(SPHERE);
-
-        if (cxo.hasAttribute(RADIUS)) {
-            radius = cxo.getDoubleAttribute(RADIUS);
-            double multiplier = radius / parameterRadius;
-            for (int i = 0; i < parameter.getDimension(); i++) {
-                parameter.setParameterValueQuietly(i, parameter.getParameterValue(i) * multiplier);
-            }
-            parameter.fireParameterChangedEvent();
-        } else {
-            radius = parameterRadius;
-        }
-        Sphere sphere = new Sphere(radius);
-        return new ManifoldProvider.BasicManifoldProvider(sphere, parameter.getDimension());
-    }
-
-    private ManifoldProvider parseBlockStiefel(XMLObject xo, MatrixParameterInterface parameter, double[] mask) throws XMLParseException {
-
-        XMLObject cxo = xo.getChild(BLOCK_STIEFEL);
-
-        ArrayList<ArrayList<Integer>> orthogonalityStructure = new ArrayList<>();
-        ArrayList<ArrayList<Integer>> orthogonalityBlockRows = new ArrayList<>();
-
-        if (mask == null) {
-            ArrayList<Integer> rows = new ArrayList<>();
-            for (int i = 0; i < parameter.getRowDimension(); i++) {
-                rows.add(i);
-            }
-            ArrayList<Integer> cols = new ArrayList<>();
-            for (int i = 0; i < parameter.getColumnDimension(); i++) {
-                cols.add(i);
-            }
-            orthogonalityStructure.add(cols);
-            orthogonalityBlockRows.add(rows);
-        } else {
-            parseStructureFromMask(mask,
-                    parameter.getColumnDimension(),
-                    parameter.getRowDimension(),
-                    orthogonalityStructure,
-                    orthogonalityBlockRows);
-        }
-
-        if (cxo.hasChildNamed(ORTHOGONALITY_STRUCTURE)) {
-
-            ArrayList<ArrayList<Integer>> newOrthogonalityStructure = new ArrayList<>();
-
-            XMLObject ccxo = cxo.getChild(ORTHOGONALITY_STRUCTURE);
-            for (int i = 0; i < ccxo.getChildCount(); i++) {
-                XMLObject group = (XMLObject) ccxo.getChild(i);
-                int[] rows = group.getIntegerArrayAttribute(ROWS);
-                ArrayList<Integer> rowList = new ArrayList<>();
-
-                for (int j = 0; j < rows.length; j++) {
-                    rowList.add(rows[j] - 1);
-                }
-
-                newOrthogonalityStructure.add(rowList);
-            }
-
-            setOrthogonalityStructure(
-                    newOrthogonalityStructure,
-                    orthogonalityStructure,
-                    orthogonalityBlockRows);
-        }
-
-        int n = orthogonalityStructure.size();
-        assert n == orthogonalityBlockRows.size();
-        ArrayList<Manifold> manifolds = new ArrayList<>();
-        for (int i = 0; i < n; i++) {
-            int rowDimi = orthogonalityBlockRows.get(i).size();
-            int colDimi = orthogonalityStructure.get(i).size();
-            StiefelManifold manifold = new StiefelManifold(rowDimi, colDimi);
-            manifolds.add(manifold);
-        }
-
-        ManifoldProvider.BlockStiefelManifoldProvider provider = new ManifoldProvider.BlockStiefelManifoldProvider(
-                manifolds,
-                parameter.getRowDimension(),
-                parameter.getColumnDimension(),
-                orthogonalityStructure,
-                orthogonalityBlockRows
-        );
-        return provider;
-    }
+//    private ManifoldProvider parseBlockStiefel(XMLObject xo, MatrixParameterInterface parameter, double[] mask) throws XMLParseException {
+//
+//        XMLObject cxo = xo.getChild(BLOCK_STIEFEL);
+//
+//        ArrayList<ArrayList<Integer>> orthogonalityStructure = new ArrayList<>();
+//        ArrayList<ArrayList<Integer>> orthogonalityBlockRows = new ArrayList<>();
+//
+//        if (mask == null) {
+//            ArrayList<Integer> rows = new ArrayList<>();
+//            for (int i = 0; i < parameter.getRowDimension(); i++) {
+//                rows.add(i);
+//            }
+//            ArrayList<Integer> cols = new ArrayList<>();
+//            for (int i = 0; i < parameter.getColumnDimension(); i++) {
+//                cols.add(i);
+//            }
+//            orthogonalityStructure.add(cols);
+//            orthogonalityBlockRows.add(rows);
+//        } else {
+//            parseStructureFromMask(mask,
+//                    parameter.getColumnDimension(),
+//                    parameter.getRowDimension(),
+//                    orthogonalityStructure,
+//                    orthogonalityBlockRows);
+//        }
+//
+//        if (cxo.hasChildNamed(ORTHOGONALITY_STRUCTURE)) {
+//
+//            ArrayList<ArrayList<Integer>> newOrthogonalityStructure = new ArrayList<>();
+//
+//            XMLObject ccxo = cxo.getChild(ORTHOGONALITY_STRUCTURE);
+//            for (int i = 0; i < ccxo.getChildCount(); i++) {
+//                XMLObject group = (XMLObject) ccxo.getChild(i);
+//                int[] rows = group.getIntegerArrayAttribute(ROWS);
+//                ArrayList<Integer> rowList = new ArrayList<>();
+//
+//                for (int j = 0; j < rows.length; j++) {
+//                    rowList.add(rows[j] - 1);
+//                }
+//
+//                newOrthogonalityStructure.add(rowList);
+//            }
+//
+//            setOrthogonalityStructure(
+//                    newOrthogonalityStructure,
+//                    orthogonalityStructure,
+//                    orthogonalityBlockRows);
+//        }
+//
+//        int n = orthogonalityStructure.size();
+//        assert n == orthogonalityBlockRows.size();
+//        ArrayList<Manifold> manifolds = new ArrayList<>();
+//        for (int i = 0; i < n; i++) {
+//            int rowDimi = orthogonalityBlockRows.get(i).size();
+//            int colDimi = orthogonalityStructure.get(i).size();
+//            StiefelManifold manifold = new StiefelManifold(rowDimi, colDimi);
+//            manifolds.add(manifold);
+//        }
+//
+//        ManifoldProvider.BlockStiefelManifoldProvider provider = new ManifoldProvider.BlockStiefelManifoldProvider(
+//                manifolds,
+//                parameter.getRowDimension(),
+//                parameter.getColumnDimension(),
+//                orthogonalityStructure,
+//                orthogonalityBlockRows
+//        );
+//        return provider;
+//    }
 
     private void parseStructureFromMask(
             double[] mask, int colDim, int rowDim,
@@ -290,18 +325,7 @@ public class GeodesicHamiltonianMonteCarloOperatorParser extends HamiltonianMont
     }
 
     private static final XMLSyntaxRule[] newRules = {
-            new XORRule(
-                    new ElementRule(BLOCK_STIEFEL, new XMLSyntaxRule[]{
-                            new ElementRule(ORTHOGONALITY_STRUCTURE, new XMLSyntaxRule[]{
-                                    new ElementRule(BLOCK, new XMLSyntaxRule[]{
-                                            AttributeRule.newIntegerArrayRule(ROWS, false)
-                                    })
-                            }, true)
-                    }),
-                    new ElementRule(SPHERE, new XMLSyntaxRule[]{
-                            AttributeRule.newDoubleRule(RADIUS, true)
-                    })
-            )
+            new ElementRule(ManifoldProvider.class, 1, 1)
     };
 
     @Override

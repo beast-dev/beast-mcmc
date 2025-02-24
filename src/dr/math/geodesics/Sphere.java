@@ -4,7 +4,7 @@ import dr.math.MathUtils;
 
 public class Sphere implements Manifold {
 
-    private final double radius;
+    private double radius;
 
     public Sphere(double radius) {
         this.radius = radius;
@@ -54,6 +54,11 @@ public class Sphere implements Manifold {
             point[i] = point[i] * cat + velocity[i] * sat / alpha;
             velocity[i] = velocity[i] * cat - point[i] * sat * alpha;
         }
+    }
+
+    @Override
+    public void initialize(double[] values) {
+        radius = MathUtils.getL2Norm(values);
     }
 
 

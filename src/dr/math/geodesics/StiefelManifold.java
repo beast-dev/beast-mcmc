@@ -125,4 +125,9 @@ public class StiefelManifold implements Manifold {
         System.arraycopy(velocityMatrix.data, 0, velocity, 0, velocity.length);
         
     }
+
+    @Override
+    public void initialize(double[] values) {
+        throw new RuntimeException("Not yet implemented");
+    }
 }

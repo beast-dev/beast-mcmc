@@ -26,21 +26,90 @@ public abstract class ManifoldProvider {
         return manifolds.get(i);
     }
 
-    public abstract double[] extractManifoldData(int i, double[] data);
-
-    public double[] extractManifoldData(int i, WrappedVector data) {
-        throw new RuntimeException("Not yet implemented");
-    }
-
-    public abstract void injectManifoldData(int i, double[] manifoldData, double[] sinkData);
-
-    public void injectManifoldData(int i, double[] manifoldData, WrappedVector sinkData) {
-        throw new RuntimeException("Not yet implemented");
-    }
+//    public abstract double[] extractManifoldData(int i, double[] data);
+//
+//    public double[] extractManifoldData(int i, WrappedVector data) {
+//        throw new RuntimeException("Not yet implemented");
+//    }
+//
+//    public abstract void injectManifoldData(int i, double[] manifoldData, double[] sinkData);
+//
+//    public void injectManifoldData(int i, double[] manifoldData, WrappedVector sinkData) {
+//        throw new RuntimeException("Not yet implemented");
+//    }
 
     public abstract void projectTangent(double[] momentum, double[] position);
 
     public abstract void updatePositionAndMomentum(double[] position, WrappedVector momentum, double functionalStepSize);
+
+
+    public static class BlockManifoldProvider extends ManifoldProvider {
+
+        private final ArrayList<Manifold> manifolds;
+        private final double[][] positionBuffers;
+        private final double[][] momentumBuffers;
+
+        private final int[] starts;
+        private final int dim;
+
+        public BlockManifoldProvider(ArrayList<Manifold> manifolds,
+                                     int[] starts,
+                                     int dim) {
+            super(manifolds);
+            this.manifolds = manifolds;
+            this.starts = starts;
+            this.dim = dim;
+            int n = starts.length;
+            if (n != manifolds.size()) {
+                throw new RuntimeException("Bad structure");
+            }
+
+            positionBuffers = new double[n][];
+            momentumBuffers = new double[n][];
+            for (int i = 0; i < n; i++) {
+                int end = i == n - 1 ? dim : starts[i + 1];
+                positionBuffers[i] = new double[end - starts[i]];
+                momentumBuffers[i] = new double[end - starts[i]];
+            }
+
+        }
+
+
+        @Override
+        public void projectTangent(double[] momentum, double[] position) {
+            for (int i = 0; i < manifolds.size(); i++) {
+
+                System.arraycopy(momentum, starts[i], momentumBuffers[i], 0, momentumBuffers[i].length);
+                System.arraycopy(position, starts[i], positionBuffers[i], 0, positionBuffers[i].length);
+
+                manifolds.get(i).projectTangent(momentumBuffers[i], positionBuffers[i]);
+
+                System.arraycopy(momentumBuffers[i], 0, momentum, starts[i], momentumBuffers[i].length);
+                System.arraycopy(positionBuffers[i], 0, position, starts[i], positionBuffers[i].length);
+            }
+
+        }
+
+        @Override
+        public void updatePositionAndMomentum(double[] position, WrappedVector momentum, double functionalStepSize) {
+            for (int i = 0; i < manifolds.size(); i++) {
+
+                for (int j = 0; j < momentumBuffers[i].length; j++) {
+                    momentumBuffers[i][j] = momentum.get(j + starts[i]);
+                }
+
+                System.arraycopy(position, starts[i], positionBuffers[i], 0, positionBuffers[i].length);
+
+                manifolds.get(i).geodesic(positionBuffers[i], momentumBuffers[i], functionalStepSize);
+
+                for (int j = 0; j < momentumBuffers[i].length; j++) {
+                    momentum.set(starts[i] + j, momentumBuffers[i][j]);
+                }
+                System.arraycopy(positionBuffers[i], 0, position, starts[i], positionBuffers[i].length);
+            }
+
+        }
+    }
 
 
     public static class BlockStiefelManifoldProvider extends ManifoldProvider { //TODO: make this just a block manifold provider, all the Stiefel manifold code should be in a separate class
@@ -67,16 +136,16 @@ public abstract class ManifoldProvider {
         }
 
 
-        @Override
-        public double[] extractManifoldData(int i, double[] data) {
-            throw new RuntimeException("Not yet implemented");
-//            return new double[0];
-        }
-
-        @Override
-        public void injectManifoldData(int i, double[] manifoldData, double[] sinkData) {
-            throw new RuntimeException("Not yet implemented");
-        }
+//        @Override
+//        public double[] extractManifoldData(int i, double[] data) {
+//            throw new RuntimeException("Not yet implemented");
+////            return new double[0];
+//        }
+//
+//        @Override
+//        public void injectManifoldData(int i, double[] manifoldData, double[] sinkData) {
+//            throw new RuntimeException("Not yet implemented");
+//        }
 
         @Override
         public void projectTangent(double[] momentum, double[] position) {
@@ -220,15 +289,15 @@ public abstract class ManifoldProvider {
 
         }
 
-        @Override
-        public double[] extractManifoldData(int i, double[] data) {
-            throw new RuntimeException("not yet implemented");
-        }
-
-        @Override
-        public void injectManifoldData(int i, double[] manifoldData, double[] sinkData) {
-            throw new RuntimeException("not yet implemented");
-        }
+//        @Override
+//        public double[] extractManifoldData(int i, double[] data) {
+//            throw new RuntimeException("not yet implemented");
+//        }
+//
+//        @Override
+//        public void injectManifoldData(int i, double[] manifoldData, double[] sinkData) {
+//            throw new RuntimeException("not yet implemented");
+//        }
 
         @Override
         public void projectTangent(double[] momentum, double[] position) {

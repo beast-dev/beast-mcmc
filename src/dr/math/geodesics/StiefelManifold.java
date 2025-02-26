@@ -1,6 +1,9 @@
 package dr.math.geodesics;
 
+import dr.math.matrixAlgebra.EJMLUtils;
+import dr.math.matrixAlgebra.GramSchmidtProjection;
 import dr.math.matrixAlgebra.SkewSymmetricMatrixExponential;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import org.ejml.alg.dense.decomposition.TriangularSolver;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
@@ -8,31 +11,46 @@ import org.ejml.interfaces.decomposition.CholeskyDecomposition;
 import org.ejml.ops.CommonOps;
 
 
-public class StiefelManifold implements Manifold {
+public class StiefelManifold implements Manifold.MatrixManifold {
 
-    private final int rowDim;
-    private final int colDim;
-    
-    private final DenseMatrix64F innerProduct1;
-    private final DenseMatrix64F innerProduct2;
+    private int rowDim;
+    private int colDim;
+
+    private DenseMatrix64F innerProduct1;
+    private DenseMatrix64F innerProduct2;
+
     public StiefelManifold(int rowDim, int colDim) {
-        this.rowDim = rowDim;
-        this.colDim = colDim;
-        
-        this.innerProduct1 = new DenseMatrix64F(colDim, colDim);
-        this.innerProduct2 = new DenseMatrix64F(colDim, colDim);
+        initialize(rowDim, colDim);
+    }
 
-
+    public StiefelManifold() {
+        // need to initialize later
     }
 
     @Override
     public void projectTangent(double[] tangent, double[] point) {
-        throw new RuntimeException("Not yet implemented");
+
+        DenseMatrix64F positionMatrix = DenseMatrix64F.wrap(colDim, rowDim, point);
+        DenseMatrix64F momentumMatrix = DenseMatrix64F.wrap(colDim, rowDim, tangent);
+
+        DenseMatrix64F innerProduct = new DenseMatrix64F(colDim, colDim);
+
+        CommonOps.multTransB(positionMatrix, momentumMatrix, innerProduct);
+        EJMLUtils.addWithTransposed(innerProduct);
+
+        DenseMatrix64F projection = new DenseMatrix64F(colDim, rowDim);
+
+        CommonOps.mult(0.5, innerProduct, positionMatrix, projection);
+        CommonOps.subtractEquals(momentumMatrix, projection);
     }
+
 
     @Override
     public void projectPoint(double[] point) {
-        throw new RuntimeException("Not yet implemented");
+
+        WrappedMatrix matrix = new WrappedMatrix.Raw(point, 0, rowDim, colDim);
+        GramSchmidtProjection.projectOrthonormal(matrix);
+
     }
 
     @Override
@@ -123,11 +141,21 @@ public class StiefelManifold implements Manifold {
 
         System.arraycopy(projection.data, 0, point, 0, point.length);
         System.arraycopy(velocityMatrix.data, 0, velocity, 0, velocity.length);
-        
+
     }
 
+
     @Override
-    public void initialize(double[] values) {
-        throw new RuntimeException("Not yet implemented");
+    public void initialize(WrappedMatrix matrix) {
+        initialize(matrix.getMajorDim(), matrix.getMinorDim());
     }
+
+    private void initialize(int rowDim, int colDim) {
+        this.rowDim = rowDim;
+        this.colDim = colDim;
+
+        innerProduct1 = new DenseMatrix64F(colDim, colDim);
+        innerProduct2 = new DenseMatrix64F(colDim, colDim);
+    }
+
 }

@@ -1,8 +1,10 @@
 package dr.inferencexml.operators.hmc;
 
+import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.operators.hmc.ManifoldProvider;
 import dr.math.geodesics.Manifold;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.xml.*;
 
 public class BasicManifoldProviderParser extends AbstractXMLObjectParser {
@@ -13,7 +15,17 @@ public class BasicManifoldProviderParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         Manifold manifold = (Manifold) xo.getChild(Manifold.class);
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-        manifold.initialize(parameter.getParameterValues());
+        if (manifold.isMatrix()) {
+            if (!(parameter instanceof MatrixParameterInterface)) {
+                throw new XMLParseException("Matrix manifold requires matrix parameters");
+            }
+
+            MatrixParameterInterface matrixParameter = (MatrixParameterInterface) parameter;
+
+            manifold.initialize(new WrappedMatrix.MatrixParameter(matrixParameter));
+        } else {
+            manifold.initialize(parameter.getParameterValues());
+        }
 
         return new ManifoldProvider.BasicManifoldProvider(manifold, parameter.getDimension());
     }

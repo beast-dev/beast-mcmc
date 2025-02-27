@@ -392,7 +392,7 @@ public class TreeAnnotator extends BaseTreeTool {
         if (stepSize < 1) stepSize = 1;
 
         Reader reader = new BufferedReader(new FileReader(inputFileName));
-        TreeImporter importer = new NexusImporter(reader, true);
+        TreeImporter importer = new NexusImporter(reader, false);
 
         long startTime = System.currentTimeMillis();
 

@@ -1,4 +1,4 @@
-package dr.evomodelxml.coalescent;
+package dr.evomodel.coalescent;
 
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.inference.model.Parameter;
@@ -6,7 +6,7 @@ import dr.inference.model.Parameter;
 import java.util.Arrays;
 
 // this builds a timeline with coalescent and sampling events for a single tree with grid points
-public class SingleTreeGriddedNodesTimeline extends SingleTreeNodesTimeline{
+public class SingleTreeGriddedNodesTimeline extends SingleTreeTimeline {
     private final int nNodes;
     private final double[] timeLine;
     private final boolean[] flagCoalescentEvent;
@@ -18,13 +18,13 @@ public class SingleTreeGriddedNodesTimeline extends SingleTreeNodesTimeline{
     private int[] mergedNumLineages;
     private int[] numCoalEvents;
 
-
     public SingleTreeGriddedNodesTimeline(BigFastTreeIntervals treeIntervals, Parameter gridPoints) {
         super(treeIntervals);
         this.nNodes = getnNodes();
-        this.timeLine = getTimeLine();
-        this.flagCoalescentEvent = getFlagCoalescentEvent();
         this.gridPoints = gridPoints;
+        this.timeLine = new double[nNodes];
+        this.flagCoalescentEvent = new boolean[nNodes];
+        makeNodesLine();
 
         if (gridPoints != null) { // "merged" =  nodes' times and grid points
             this.mergedTimeLine = new double[nNodes + gridPoints.getDimension()];
@@ -32,6 +32,17 @@ public class SingleTreeGriddedNodesTimeline extends SingleTreeNodesTimeline{
             numCoalEvents = new int[gridPoints.getDimension() + 1]; // "+1" to account for the events after the last grid point
             mergedNumLineages = new int[nNodes + gridPoints.getDimension() + 1];
             integrateGridPoints(gridPoints.getParameterValues());
+        }
+
+    }
+
+    protected void makeNodesLine() {
+        timeLine[0] = treeIntervals.getStartTime();
+        flagCoalescentEvent[0] = false;
+        for (int nodeIndex = 1; nodeIndex < nNodes; nodeIndex++) {
+            timeLine[nodeIndex] = treeIntervals.getIntervalTime(nodeIndex);
+            flagCoalescentEvent[nodeIndex] =
+                    String.valueOf(treeIntervals.getIntervalType(nodeIndex - 1)).equals("coalescent"); //TODO this is hard coded ...
         }
     }
 

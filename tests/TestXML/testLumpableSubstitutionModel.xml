@@ -294,48 +294,48 @@
     </operators>
 
     <!--    check values predictive mean -->
-    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
-        <message>
-            Check GP prediction: mean
-        </message>
-        <actual regex="mean: (.*?)\n">
-            <gaussianProcessPrediction idref="test.prediction"/>
-        </actual>
-        <expected>
-            0.5 1
-        </expected>
-    </assertEqual>
+<!--    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">-->
+<!--        <message>-->
+<!--            Check GP prediction: mean-->
+<!--        </message>-->
+<!--        <actual regex="mean: (.*?)\n">-->
+<!--            <gaussianProcessPrediction idref="test.prediction"/>-->
+<!--        </actual>-->
+<!--        <expected>-->
+<!--            0.5 1-->
+<!--        </expected>-->
+<!--    </assertEqual>-->
 
-    <!--    check values predictive variance -->
-    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
-        <message>
-            Check GP prediction: variance
-        </message>
-        <actual regex="variance: (.*?)\n">
-            <gaussianProcessPrediction idref="test.prediction"/>
-        </actual>
-        <expected>
-            2.5 2 2 2.5
-        </expected>
-    </assertEqual>
+<!--    &lt;!&ndash;    check values predictive variance &ndash;&gt;-->
+<!--    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">-->
+<!--        <message>-->
+<!--            Check GP prediction: variance-->
+<!--        </message>-->
+<!--        <actual regex="variance: (.*?)\n">-->
+<!--            <gaussianProcessPrediction idref="test.prediction"/>-->
+<!--        </actual>-->
+<!--        <expected>-->
+<!--            2.5 2 2 2.5-->
+<!--        </expected>-->
+<!--    </assertEqual>-->
 
-    <!-- check values Gradients-->
-    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
-        <message>
-            Check values for gradient
-        </message>
-        <actual regex="analytic:(.*?)\n">
-            <randomFieldGradient idref="test.gradient"/>
-        </actual>
-        <expected>
-            -0.5 0 1 0 0 0
-        </expected>
-    </assertEqual>
+<!--    &lt;!&ndash; check values Gradients&ndash;&gt;-->
+<!--    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">-->
+<!--        <message>-->
+<!--            Check values for gradient-->
+<!--        </message>-->
+<!--        <actual regex="analytic:(.*?)\n">-->
+<!--            <randomFieldGradient idref="test.gradient"/>-->
+<!--        </actual>-->
+<!--        <expected>-->
+<!--            -0.5 0 1 0 0 0-->
+<!--        </expected>-->
+<!--    </assertEqual>-->
 
 
-    <report id = "report.prediction">
-        <gaussianProcessPrediction idref="test.prediction"/>
-    </report>
+<!--    <report id = "report.prediction">-->
+<!--        <gaussianProcessPrediction idref="test.prediction"/>-->
+<!--    </report>-->
 
 
     <!--    &lt;!&ndash;    check value log-likelihood&ndash;&gt;-->

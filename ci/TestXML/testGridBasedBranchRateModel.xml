@@ -1,0 +1,79 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <taxa id="taxa">
+        <taxon id="Tarsius_syrichta"/>
+        <taxon id="Lemur_catta"/>
+        <taxon id="Homo_sapiens"/>
+        <!--        <taxon id="Pan"/>-->
+        <!--        <taxon id="Gorilla"/>-->
+        <!--        <taxon id="Pongo"/>-->
+        <!--        <taxon id="Hylobates"/>-->
+        <!--        <taxon id="Macaca_fuscata"/>-->
+        <!--        <taxon id="M_mulatta"/>-->
+        <!--        <taxon id="M_fascicularis"/>-->
+        <!--        <taxon id="M_sylvanus"/>-->
+        <!--        <taxon id="Saimiri_sciureus"/>-->
+    </taxa>
+
+    <newick id="startingTree" usingDates="false" usingHeights="true">
+        (Tarsius_syrichta:2.5,(Homo_sapiens:2,Lemur_catta:3):2)
+        <!--        (((Macaca_fuscata:0.20934831365385195,Saimiri_sciureus:0.20934831365385195):3.699998223992463,(M_mulatta:2.864001911470406,M_sylvanus:2.864001911470406):1.0453446261759094):47.869927095738085,(((Gorilla:3.7885436528693903,(M_fascicularis:2.327302602043325,Pan:2.327302602043325):1.4612410508260654):7.2735111979861236,(Hylobates:1.1876438325068404,Tarsius_syrichta:1.1876438325068404):9.874411018348674):14.005116670009485,(Homo_sapiens:4.335985284504221,(Lemur_catta:1.2838719570698733,Pongo:1.2838719570698733):3.0521133274343475):20.731186236360777):26.7121021125194);-->
+    </newick>
+
+    <treeModel id="treeModel">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel1.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel1.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel1.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <gridBasedBranchRateModel id="branchRates">
+        <treeModel idref="treeModel"/>
+        <levelSpecificRates>
+            <parameter id="branchRates.rates" value="1 2 3 4"/>
+        </levelSpecificRates>
+        <gridPoints>
+            <parameter id="branchRates.gridPoints" value="1.5 2 4"/>
+        </gridPoints>
+    </gridBasedBranchRateModel>
+
+    <report>
+        <gridBasedBranchRateModel idref="branchRates"/>
+    </report>
+
+    <assertEqual tolerance="1e-5" verbose="true" charactersToStrip="\[\],">
+        <message>
+            branches intersections matrix
+        </message>
+        <actual regex="Branches intersections matrix: (.*?)\n">
+            <report>
+                <gridBasedBranchRateModel idref="branchRates"/>
+            </report>
+        </actual>
+        <expected>
+            [0.0, 0.0, 1.5, 1.0, 0.5, 0.5, 1.0, 0.0, 1.5, 0.5, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0]
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
+        <message>
+            check branch rates
+        </message>
+        <actual regex="Branch rates: (.*?)\n">
+            <report>
+                <gridBasedBranchRateModel idref="branchRates"/>
+            </report>
+        </actual>
+        <expected>
+            [8.5, 4.5, 5.5, 7.0]
+        </expected>
+    </assertEqual>
+
+</beast>

@@ -25,12 +25,9 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
-import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.inference.model.Likelihood;
@@ -1188,24 +1185,24 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
     }
 
     public String getReport() {
-        List<BigFastTreeIntervals> bigFastTreeIntervals = new ArrayList<>();
-        for (Tree tree : treeList) {
-            bigFastTreeIntervals.add(new BigFastTreeIntervals((TreeModel) tree));
-        }
+//        List<BigFastTreeIntervals> bigFastTreeIntervals = new ArrayList<>();
+//        for (Tree tree : treeList) {
+//            bigFastTreeIntervals.add(new BigFastTreeIntervals((TreeModel) tree));
+//        }
+//
+//        MultilocusNonparametricCoalescentLikelihood lik =
+//                new MultilocusNonparametricCoalescentLikelihood(
+//                        bigFastTreeIntervals,
+//                        popSizeParameter,
+//                        new Parameter.Default(gridPoints),
+//                        ploidyFactors);
 
-        MultilocusNonparametricCoalescentLikelihood lik =
-                new MultilocusNonparametricCoalescentLikelihood(
-                        bigFastTreeIntervals,
-                        popSizeParameter,
-                        new Parameter.Default(gridPoints),
-                        ploidyFactors);
-
-        double logLik = lik.getLogLikelihood();
+//        double logLik = lik.getLogLikelihood();
 
         double total = getLogLikelihood();
 
         return "Coalescent LogLikelihood (local): " + logLikelihood + "\n" +
-                "Coalescent LogLikelihood (MultiLocusNP): " + logLik + "\n" +
+//                "Coalescent LogLikelihood (MultiLocusNP): " + logLik + "\n" +
                 "Field logLikelihood: " + logFieldLikelihood + "\n" +
                 "Total: " + total;
 //        return logLik + " " + total + " " + logLikelihood + " " + logFieldLikelihood;

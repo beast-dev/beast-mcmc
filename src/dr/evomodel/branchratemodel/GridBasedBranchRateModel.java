@@ -2,7 +2,6 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.Model;
@@ -16,32 +15,34 @@ import java.util.Comparator;
 public class GridBasedBranchRateModel extends AbstractBranchRateModel implements Reportable, Loggable {
     private final TreeModel tree;
     private final Parameter gridPoints;
-    private final Parameter levelSpecificRates;
+    private final Parameter rateFunction;
     private double[] branchesIntersections; // TODO make this a vector
     private double[] branchRates;
     private boolean ratesKnown;
     private boolean nodesOrderKnown;
+    private boolean sufficientStatisticKnown;
     private Integer[] orderedNodesIndexes;
 
-    public GridBasedBranchRateModel(TreeModel tree, Parameter gridPoints, Parameter levelSpecificRates) {
+    public GridBasedBranchRateModel(TreeModel tree, Parameter gridPoints, Parameter rateFunction) {
         super("gridBasedBranchRateModel");
         this.tree = tree;
         this.gridPoints = gridPoints;
-        this.levelSpecificRates = levelSpecificRates;
+        this.rateFunction = rateFunction;
         this.ratesKnown = false;
         this.nodesOrderKnown = false;
+        this.sufficientStatisticKnown = false;
         this.branchRates = new double[tree.getNodeCount()]; // including the root
         this.branchesIntersections = new double[(gridPoints.getDimension() + 1) * (tree.getNodeCount())]; // including the root since cols are the nodes indexes
         this.orderedNodesIndexes = new Integer[tree.getNodeCount()];
 
         addModel(tree);
         addVariable(gridPoints);
-        addVariable(levelSpecificRates);
+        addVariable(rateFunction);
 
-        buildBranchRates();
+        getBranchRates();
     }
 
-    private void buildBranchRates() {
+    private void getBranchRates() {
         if (!ratesKnown) {
             computeBranchRates();
             ratesKnown = true;
@@ -49,26 +50,23 @@ public class GridBasedBranchRateModel extends AbstractBranchRateModel implements
     }
 
     private void computeBranchRates() {
-        computeIntersectionsMatrix();
+        getIntersectionsMatrix();
 
         for (int nodeIndex = 0; nodeIndex < tree.getNodeCount(); nodeIndex++) {
             if (!tree.isRoot(tree.getNode(nodeIndex))) {
                 double branchRate = 0;
                 for (int gridIndex = 0; gridIndex < gridPoints.getDimension() + 1; gridIndex++) {
-                    branchRate += branchesIntersections[gridIndex + (gridPoints.getDimension() + 1) * nodeIndex] * levelSpecificRates.getParameterValue(gridIndex);
+                    branchRate += branchesIntersections[gridIndex + (gridPoints.getDimension() + 1) * nodeIndex] * rateFunction.getParameterValue(gridIndex);
                 }
                 branchRates[nodeIndex] = branchRate;
             }
         }
     }
 
-    private void orderNodesByHeight() {
-        if (!nodesOrderKnown) {
-            for (int i = 0; i < tree.getNodeCount(); i++) {
-                orderedNodesIndexes[i] = i;
-            }
-            Arrays.sort(orderedNodesIndexes, Comparator.comparingDouble( i -> tree.getNodeHeight(tree.getNode((i)))));
-            nodesOrderKnown = true;
+    private void getIntersectionsMatrix() {
+        if (!sufficientStatisticKnown) {
+            computeIntersectionsMatrix();
+            sufficientStatisticKnown = true;
         }
     }
 
@@ -101,18 +99,30 @@ public class GridBasedBranchRateModel extends AbstractBranchRateModel implements
         }
     }
 
+    private void orderNodesByHeight() {
+        if (!nodesOrderKnown) {
+            for (int i = 0; i < tree.getNodeCount(); i++) {
+                orderedNodesIndexes[i] = i;
+            }
+            Arrays.sort(orderedNodesIndexes, Comparator.comparingDouble( i -> tree.getNodeHeight(tree.getNode((i)))));
+            nodesOrderKnown = true;
+        }
+    }
+
     @Override
     public double getBranchRate(Tree tree, NodeRef node) { // TODO I am not really using the "tree" but I should I guess
-        buildBranchRates();
+        getBranchRates();
         return branchRates[node.getNumber()];
     }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
+            sufficientStatisticKnown = false;
             ratesKnown = false;
             nodesOrderKnown = false;
         }
+        fireModelChanged();
     }
 
     @Override
@@ -132,6 +142,7 @@ public class GridBasedBranchRateModel extends AbstractBranchRateModel implements
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        sufficientStatisticKnown = false;
         ratesKnown = false;
     }
 
@@ -142,8 +153,11 @@ public class GridBasedBranchRateModel extends AbstractBranchRateModel implements
     }
 
     protected Parameter getGridPoints() { return gridPoints;}
-    protected Parameter getLevelSpecificRates() { return levelSpecificRates;}
-    protected double[] getBranchRates() { return branchRates;}
-    protected double getSufficientStatistics(int i) { return branchesIntersections[i];}
-
+    protected double getGridPoint(int i) { return gridPoints.getParameterValue(i);}
+    protected TreeModel getTree() { return tree;}
+    protected int getOrderedNodesIndexes(int i) { return orderedNodesIndexes[i];}
+    protected double getSufficientStatistic(int i) {
+        getIntersectionsMatrix();
+        return branchesIntersections[i];
+    }
 }

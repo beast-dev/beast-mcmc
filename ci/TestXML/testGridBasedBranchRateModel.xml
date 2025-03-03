@@ -34,6 +34,25 @@
         </nodeHeights>
     </treeModel>
 
+    <hkyModel id="subModel">
+        <frequencies>
+            <frequencyModel id="frequencyModel" dataType="nucleotide" normalize="true">
+                <frequencies>
+                    <parameter id="frequencies" dimension="4"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <kappa>
+            <parameter id="hky.kappa" value="1.0" lower="0.0" upper="100.0"/>
+        </kappa>
+    </hkyModel>
+
+    <siteModel id="siteModel">
+        <substitutionModel>
+            <hkyModel idref="subModel"/>
+        </substitutionModel>
+    </siteModel>
+
     <gridBasedBranchRateModel id="branchRates">
         <treeModel idref="treeModel"/>
         <levelSpecificRates>
@@ -44,8 +63,41 @@
         </gridPoints>
     </gridBasedBranchRateModel>
 
+    <beagleSequenceSimulator id="simulator" parallel="false" output="XML">
+        <partition from="1" to="1" every="1">
+            <treeModel idref="treeModel"/>
+            <hkyModel idref="subModel"/>
+            <siteModel idref="siteModel"/>
+            <gridBasedBranchRateModel idref="branchRates"/>
+            <frequencyModel idref="frequencyModel"/>
+        </partition>
+    </beagleSequenceSimulator>
+
+    <patterns id="pattern" from="1" strip="false">
+        <alignment idref="simulator"/>
+    </patterns>
+
+    <treeDataLikelihood id="treeLikelihood" useAmbiguities="false"
+                        scalingScheme="always" usePreOrder="true">
+        <patterns idref="pattern"/>
+        <siteModel idref="siteModel"/>
+        <treeModel idref="treeModel"/>
+        <gridBasedBranchRateModel idref="branchRates"/>
+    </treeDataLikelihood>
+
+
     <report>
         <gridBasedBranchRateModel idref="branchRates"/>
+    </report>
+
+    <gridBasedBranchRateModelGradient id="branchModelGradient">
+        <gridBasedBranchRateModel idref="branchRates"/>
+        <treeDataLikelihood idref="treeLikelihood"/>
+        <parameter idref="branchRates.rates"/>
+    </gridBasedBranchRateModelGradient>
+
+    <report>
+        <gridBasedBranchRateModelGradient idref="branchModelGradient"/>
     </report>
 
     <assertEqual tolerance="1e-5" verbose="true" charactersToStrip="\[\],">
@@ -58,7 +110,7 @@
             </report>
         </actual>
         <expected>
-            [0.0, 0.0, 1.5, 1.0, 0.5, 0.5, 1.0, 0.0, 1.5, 0.5, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0]
+            [0.0, 0.0, 1.5, 1.0, 0.5, 0.5, 1.0, 0.0, 1.5, 0.5, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0]
         </expected>
     </assertEqual>
 
@@ -72,7 +124,7 @@
             </report>
         </actual>
         <expected>
-            [8.5, 4.5, 5.5, 7.0]
+            [8.5, 4.5, 5.5, 7.0, 0.0]
         </expected>
     </assertEqual>
 

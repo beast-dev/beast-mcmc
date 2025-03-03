@@ -10,7 +10,8 @@ import java.util.Arrays;
 
 public class GridBasedBranchRateModelGradient extends DiscreteTraitBranchRateGradient {
 
-    private GridBasedBranchRateModel branchRateModel;
+    private final GridBasedBranchRateModel branchRateModel;
+    private final int nRates;
 
     public GridBasedBranchRateModelGradient(String traitName,
                                             TreeDataLikelihood treeDataLikelihood,
@@ -20,6 +21,7 @@ public class GridBasedBranchRateModelGradient extends DiscreteTraitBranchRateGra
                                             boolean useHessian) {
         super(traitName, treeDataLikelihood, likelihoodDelegate, rateParameter, useHessian);
         this.branchRateModel = gridBasedBranchRateModel;
+        this.nRates = branchRateModel.getGridPoints().getDimension() + 1;
     }
 
     @Override
@@ -30,23 +32,35 @@ public class GridBasedBranchRateModelGradient extends DiscreteTraitBranchRateGra
             startTime = System.nanoTime();
         }
 
-        double[] result = new double[branchRateModel.getGridPoints().getDimension() + 1];
+        double[] result = new double[nRates];
         Arrays.fill(result, 0.0);
 
         double[] gradient = super.getGradientLogDensity();
 //        int v = 0;
+        int minGridIndex = 0;
         for (int i = 0; i < tree.getNodeCount(); ++i) {
+            int nodeIndex = branchRateModel.getOrderedNodesIndexes(i);
             final NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
-                final int destinationIndex = getParameterIndexFromNode(node); //TODO  check this
+                final int destinationIndex = getParameterIndexFromNode(node); // TODO  check this
                 final double branchlengthDerivative = gradient[destinationIndex];
-                for (int gridIndex = 0; gridIndex < branchRateModel.getGridPoints().getDimension() + 1; ++gridIndex) {
-                    double suffStat = branchRateModel.getSufficientStatistics(gridIndex + (branchRateModel.getGridPoints().getDimension() + 1) * node.getNumber());
-                    if (suffStat != 0) {
+                double tChild = tree.getNodeHeight(tree.getNode(nodeIndex));
+                double tParent = tree.getNodeHeight(tree.getParent(tree.getNode(nodeIndex)));
+
+                while (minGridIndex < nRates - 1 && branchRateModel.getGridPoint(minGridIndex) < tChild) {
+                    minGridIndex++;
+                }
+                int gridIndex = minGridIndex;
+
+                if (gridIndex < nRates - 1 && branchRateModel.getGridPoint(gridIndex) < tParent) {
+                    while (gridIndex < nRates - 1 && branchRateModel.getGridPoint(gridIndex) < tParent) {
+                        double suffStat = branchRateModel.getSufficientStatistic(gridIndex + (nRates) * node.getNumber());
                         result[gridIndex] += branchlengthDerivative * suffStat;
+                        gridIndex++;
                     }
                 }
-//                v++;
+                double suffStat = branchRateModel.getSufficientStatistic(gridIndex + (nRates) * node.getNumber());
+                result[gridIndex] += branchlengthDerivative * suffStat;
             }
         }
         if (COUNT_TOTAL_OPERATIONS) {

@@ -30,8 +30,8 @@ public class GridBasedBranchRateModel extends AbstractBranchRateModel implements
         this.levelSpecificRates = levelSpecificRates;
         this.ratesKnown = false;
         this.nodesOrderKnown = false;
-        this.branchRates = new double[tree.getNodeCount() - 1];
-        this.branchesIntersections = new double[(gridPoints.getDimension() + 1) * (tree.getNodeCount() - 1)];
+        this.branchRates = new double[tree.getNodeCount()]; // including the root
+        this.branchesIntersections = new double[(gridPoints.getDimension() + 1) * (tree.getNodeCount())]; // including the root since cols are the nodes indexes
         this.orderedNodesIndexes = new Integer[tree.getNodeCount()];
 
         addModel(tree);
@@ -51,15 +51,15 @@ public class GridBasedBranchRateModel extends AbstractBranchRateModel implements
     private void computeBranchRates() {
         computeIntersectionsMatrix();
 
-        for (int nodeIndex = 0; nodeIndex < tree.getNodeCount() - 1; nodeIndex++) {
-            double branchRate = 0;
-            for (int gridIndex = 0; gridIndex < gridPoints.getDimension() + 1; gridIndex++) {
-//                branchRate1 +=  branchesIntersectionsMatrix[gridIndex][nodeIndex];
-                branchRate += branchesIntersections[gridIndex + (gridPoints.getDimension() + 1) * nodeIndex] * levelSpecificRates.getParameterValue(gridIndex);
+        for (int nodeIndex = 0; nodeIndex < tree.getNodeCount(); nodeIndex++) {
+            if (!tree.isRoot(tree.getNode(nodeIndex))) {
+                double branchRate = 0;
+                for (int gridIndex = 0; gridIndex < gridPoints.getDimension() + 1; gridIndex++) {
+                    branchRate += branchesIntersections[gridIndex + (gridPoints.getDimension() + 1) * nodeIndex] * levelSpecificRates.getParameterValue(gridIndex);
+                }
+                branchRates[nodeIndex] = branchRate;
             }
-            branchRates[nodeIndex] = branchRate;
         }
-
     }
 
     private void orderNodesByHeight() {
@@ -77,24 +77,26 @@ public class GridBasedBranchRateModel extends AbstractBranchRateModel implements
         orderNodesByHeight();
         for (int i = 0; i < tree.getNodeCount() - 1; i++) {
             int nodeIndex = orderedNodesIndexes[i];
-            double tChild = tree.getNodeHeight(tree.getNode(nodeIndex));
-            double tParent = tree.getNodeHeight(tree.getParent(tree.getNode(nodeIndex)));
-            double tLower = tChild;
+            if (!tree.isRoot(tree.getNode(nodeIndex))) {
+                double tChild = tree.getNodeHeight(tree.getNode(nodeIndex));
+                double tParent = tree.getNodeHeight(tree.getParent(tree.getNode(nodeIndex)));
+                double tLower = tChild;
 
-            while (minGridIndex < gridPoints.getDimension() && gridPoints.getParameterValue(minGridIndex) < tChild) {
-                minGridIndex ++;
-            }
-            int gridIndex = minGridIndex;
-
-            if (gridIndex < gridPoints.getDimension() && gridPoints.getParameterValue(gridIndex) < tParent) {
-                while (gridIndex < gridPoints.getDimension() && gridPoints.getParameterValue(gridIndex) < tParent) {
-                    branchesIntersections[gridIndex + (gridPoints.getDimension() + 1) * nodeIndex] = gridPoints.getParameterValue(gridIndex) - tLower;
-                    tLower = gridPoints.getParameterValue(gridIndex);
-                    gridIndex++;
+                while (minGridIndex < gridPoints.getDimension() && gridPoints.getParameterValue(minGridIndex) < tChild) {
+                    minGridIndex++;
                 }
-                branchesIntersections[gridIndex + (gridPoints.getDimension() + 1) * nodeIndex] = tParent - tLower;
-            } else {
-                branchesIntersections[gridIndex + (gridPoints.getDimension() + 1) * nodeIndex] = tParent - tChild;
+                int gridIndex = minGridIndex;
+
+                if (gridIndex < gridPoints.getDimension() && gridPoints.getParameterValue(gridIndex) < tParent) {
+                    while (gridIndex < gridPoints.getDimension() && gridPoints.getParameterValue(gridIndex) < tParent) {
+                        branchesIntersections[gridIndex + (gridPoints.getDimension() + 1) * nodeIndex] = gridPoints.getParameterValue(gridIndex) - tLower;
+                        tLower = gridPoints.getParameterValue(gridIndex);
+                        gridIndex++;
+                    }
+                    branchesIntersections[gridIndex + (gridPoints.getDimension() + 1) * nodeIndex] = tParent - tLower;
+                } else {
+                    branchesIntersections[gridIndex + (gridPoints.getDimension() + 1) * nodeIndex] = tParent - tChild;
+                }
             }
         }
     }
@@ -138,4 +140,10 @@ public class GridBasedBranchRateModel extends AbstractBranchRateModel implements
         return "Branches intersections matrix: " + Arrays.toString(branchesIntersections) + "\n"
                 + "Branch rates: " + Arrays.toString(branchRates);
     }
+
+    protected Parameter getGridPoints() { return gridPoints;}
+    protected Parameter getLevelSpecificRates() { return levelSpecificRates;}
+    protected double[] getBranchRates() { return branchRates;}
+    protected double getSufficientStatistics(int i) { return branchesIntersections[i];}
+
 }

@@ -40,7 +40,7 @@ public class GridBasedBranchRateModelGradient extends DiscreteTraitBranchRateGra
         int minGridIndex = 0;
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             int nodeIndex = branchRateModel.getOrderedNodesIndexes(i);
-            final NodeRef node = tree.getNode(i);
+            final NodeRef node = tree.getNode(nodeIndex);
             if (!tree.isRoot(node)) {
                 final int destinationIndex = getParameterIndexFromNode(node); // TODO  check this
                 final double branchlengthDerivative = gradient[destinationIndex];

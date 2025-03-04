@@ -57,8 +57,24 @@ public class MaskedMatrixParameterParser extends AbstractXMLObjectParser {
         Parameter mask;
 
         XMLObject cxo = xo.getChild(MASKING);
+
+        boolean ones = !xo.getAttribute(COMPLEMENT, false);
+
+
+        boolean maskByRow;
         if (cxo != null) {
             mask = (Parameter) cxo.getChild(Parameter.class);
+            if (mask.getDimension() == matrix.getRowDimension()) {
+                maskByRow = true;
+            } else if (mask.getDimension() == matrix.getDimension()) {
+                maskByRow = false;
+                if (!ones) {
+                    throw new XMLParseException("complement currently not implemented when masking is not by row.");
+                }
+
+            } else {
+                throw new XMLParseException("The mask must match either the number of rows or the matrix dimension");
+            }
         } else {
             int from = xo.getAttribute(FROM, 1) - 1;
             int to = xo.getAttribute(TO, matrix.getRowDimension()) - 1;
@@ -75,17 +91,23 @@ public class MaskedMatrixParameterParser extends AbstractXMLObjectParser {
             for (int i = from; i <= to; i += every) {
                 mask.setParameterValue(i, 1.0);
             }
+            maskByRow = true;
         }
 
         if (mask.getDimension() != matrix.getRowDimension())
             throw new XMLParseException("rowDim(" + matrix.getId() + ") != dim(" + mask.getId() + ")");
 
-        boolean ones = !xo.getAttribute(COMPLEMENT, false);
 
-        MaskedParameter[] maskedParameters = new MaskedParameter[matrix.getColumnDimension()];
-        for (int col = 0; col < matrix.getColumnDimension(); ++col) {
-            maskedParameters[col] = new MaskedParameter(matrix.getParameter(col));
-            maskedParameters[col].addMask(mask, ones);
+        if (maskByRow) {
+
+            MaskedParameter[] maskedParameters = new MaskedParameter[matrix.getColumnDimension()];
+            for (int col = 0; col < matrix.getColumnDimension(); ++col) {
+                maskedParameters[col] = new MaskedParameter(matrix.getParameter(col));
+                maskedParameters[col].addMask(mask, ones);
+            }
+
+
+            return new MatrixParameter(matrix.getId() + ".masked", maskedParameters);
         }
 
         MaskedMatrixParameter maskedMatrix = new MaskedMatrixParameter(matrix, mask);

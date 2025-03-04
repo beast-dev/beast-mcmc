@@ -33,7 +33,9 @@ public class MaskedMatrixParameter extends CompoundParameter implements MatrixPa
 
     private final MatrixParameterInterface matrix;
     private final Parameter mask;
-    private ArrayList<Integer> rows = new ArrayList<>();
+    //    private ArrayList<Integer> rows = new ArrayList<>();
+    private int[] rows;
+    private int[] cols;
 
 
     public MaskedMatrixParameter(MatrixParameterInterface matrix, Parameter mask) {
@@ -42,75 +44,132 @@ public class MaskedMatrixParameter extends CompoundParameter implements MatrixPa
         this.mask = mask;
         addParameter(matrix);
         addParameter(mask);
-        this.rows = makeRowsFromMask();
+        RowsAndCols rowsAndCols = makeRowsFromMask();
+        this.rows = rowsAndCols.rows;
+        this.cols = rowsAndCols.cols;
+
     }
 
     @Override
     public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == mask) {
-            ArrayList<Integer> oldRows = rows;
-            this.rows = makeRowsFromMask();
-            int ni = rows.size();
-            int oi = oldRows.size();
-            if (ni == oi) {
-                type = ChangeType.ALL_VALUES_CHANGED;
-            } else if (ni < oi) {
-                type = ChangeType.REMOVED;
-            } else {
-                type = ChangeType.ADDED;
-            }
+//            int[] oldRows = rows;
+//            int[] oldCols = cols;
+            RowsAndCols rowsAndCols = makeRowsFromMask();
+            this.rows = rowsAndCols.rows;
+            this.cols = rowsAndCols.cols;
+
+            type = ChangeType.ALL_VALUES_CHANGED;
+
+//            int ni = rows.length;
+//            int oi = oldRows.length;
+//            if (ni == oi) {
+//                type = ChangeType.ALL_VALUES_CHANGED;
+//            } else if (ni < oi) {
+//                type = ChangeType.REMOVED;
+//            } else {
+//                type = ChangeType.ADDED;
+//            }
             index = -1;
         }
         super.variableChangedEvent(variable, index, type);
     }
 
-    private ArrayList<Integer> makeRowsFromMask() {
-        ArrayList<Integer> newRows = new ArrayList<>();
-        for (int i = 0; i < mask.getDimension(); i++) {
-            if (mask.getParameterValue(i) == 1) {
-                newRows.add(i);
+    private RowsAndCols makeRowsFromMask() {
+        ArrayList<ArrayList<Integer>> allRows = new ArrayList<>();
+        ArrayList<Integer> newCols = new ArrayList<>();
+        for (int i = 0; i < matrix.getColumnDimension(); i++) {
+            ArrayList<Integer> colRows = new ArrayList<>();
+            for (int j = 0; j < matrix.getRowDimension(); j++) {
+                if (mask.getParameterValue(i * matrix.getRowDimension() + j) == 1) {
+                    colRows.add(j);
+                }
+            }
+            if (colRows.size() > 0) {
+                newCols.add(i);
+//                int[] rowsArray = new int[colrows.length];
+//                for (int j = 0; j < colrows.length; i++) {
+//                    rowsArray[j] = colRows.get(j);
+//                }
+                allRows.add(colRows);
+            }
+
+        }
+
+        if (newCols.size() > 1) {
+            for (int i = 1; i < newCols.size(); i++) {
+                if (allRows.get(0).size() != allRows.get(i).size()) {
+                    throw new RuntimeException("Invalid mask structure");
+                }
+                for (int j = 0; j < allRows.get(0).size(); j++) {
+                    if (allRows.get(0).get(j) != allRows.get(i).get(j)) {
+                        throw new RuntimeException("Invalid mask structure");
+                    }
+                }
             }
         }
-        return newRows;
+
+        int[] rows = new int[allRows.get(0).size()];
+        for (int i = 0; i < rows.length; i++) {
+            rows[i] = allRows.get(0).get(i);
+        }
+
+        int[] cols = new int[newCols.size()];
+        for (int i = 0; i < cols.length; i++) {
+            cols[i] = newCols.get(i);
+        }
+
+        return new RowsAndCols(rows, cols);
+    }
+
+    private class RowsAndCols {
+
+        public final int[] rows;
+        public final int[] cols;
+
+        RowsAndCols(int[] rows, int[] cols) {
+            this.rows = rows;
+            this.cols = cols;
+        }
     }
 
 
     @Override
     public double getParameterValue(int row, int col) {
-        return matrix.getParameterValue(rows.get(row), col);
+        return matrix.getParameterValue(rows[row], cols[col]);
     }
 
 
     @Override
     public void setParameterValue(int row, int col, double value) {
-        matrix.setParameterValue(rows.get(row), col, value);
+        matrix.setParameterValue(rows[row], cols[col], value);
     }
 
     @Override
     public void setParameterValueQuietly(int row, int col, double value) {
-        matrix.setParameterValueQuietly(rows.get(row), col, value);
+        matrix.setParameterValueQuietly(rows[row], cols[col], value);
     }
 
     @Override
     public void setParameterValueNotifyChangedAll(int row, int col, double value) {
-        matrix.setParameterValueNotifyChangedAll(rows.get(row), col, value);
+        matrix.setParameterValueNotifyChangedAll(rows[row], cols[col], value);
     }
 
     @Override
     public double[] getColumnValues(int col) {
-        double[] maskedValues = new double[rows.size()];
-        for (int i = 0; i < rows.size(); i++) {
-            maskedValues[i] = matrix.getParameterValue(rows.get(i), col);
+        double[] maskedValues = new double[rows.length];
+        for (int i = 0; i < rows.length; i++) {
+            maskedValues[i] = matrix.getParameterValue(rows[i], cols[col]);
         }
         return maskedValues;
     }
 
     @Override
     public double[][] getParameterAsMatrix() {
-        double[][] values = new double[matrix.getColumnDimension()][rows.size()];
-        for (int i = 0; i < matrix.getColumnDimension(); i++) {
-            for (int j = 0; j < rows.size(); j++) {
-                values[i][j] = getParameterValue(i, j);
+        double[][] values = new double[matrix.getColumnDimension()][rows.length];
+        for (int col : cols) {
+            for (int row : rows) {
+                values[col][row] = getParameterValue(col, row);
             }
         }
         return values;
@@ -118,12 +177,17 @@ public class MaskedMatrixParameter extends CompoundParameter implements MatrixPa
 
     @Override
     public int getColumnDimension() {
-        return matrix.getColumnDimension();
+        return cols.length;
     }
 
     @Override
     public int getRowDimension() {
-        return rows.size();
+        return rows.length;
+    }
+
+    @Override
+    public int getDimension() {
+        return getColumnDimension() * getRowDimension();
     }
 
     @Override

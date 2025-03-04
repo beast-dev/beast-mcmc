@@ -19,7 +19,7 @@ public class EuclideanParser extends AbstractXMLObjectParser {
 
     @Override
     public String getParserDescription() {
-        return "Spherical manifold";
+        return "Manifold over Euclidean space. Mostly as a placeholder for when you don't want to do geodesic HMC";
     }
 
     @Override

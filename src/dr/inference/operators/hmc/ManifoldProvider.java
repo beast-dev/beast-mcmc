@@ -1,8 +1,11 @@
 package dr.inference.operators.hmc;
 
+import dr.inference.model.Parameter;
 import dr.math.geodesics.Manifold;
 import dr.math.matrixAlgebra.EJMLUtils;
+import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.WritableVector;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -118,6 +121,7 @@ public interface ManifoldProvider {
 //                    momentum.set(start + j, momentumBuffers[i][j]);
 //                }
                 System.arraycopy(positionBuffers[i], 0, position, start, positionBuffers[i].length);
+                start = start + dim;
             }
 
         }
@@ -302,10 +306,14 @@ public interface ManifoldProvider {
 
         private final Manifold manifold;
         private final double[] momentumBuffer;
+        private final double[] positionBuffer;
+        private final Parameter mask;
 
-        public BasicManifoldProvider(Manifold manifold, int dim) {
+        public BasicManifoldProvider(Manifold manifold, int dim, Parameter mask) {
             this.manifold = manifold;
             this.momentumBuffer = new double[dim];
+            this.positionBuffer = new double[dim];
+            this.mask = mask;
 
         }
 
@@ -319,21 +327,84 @@ public interface ManifoldProvider {
 //            throw new RuntimeException("not yet implemented");
 //        }
 
+        private void copyMask(double[] src, double[] dest) {
+            int destPos = 0;
+            for (int srcPos = 0; srcPos < src.length; srcPos++) {
+                double val = mask.getParameterValue(srcPos);
+                if (val == 1) {
+                    dest[destPos] = src[srcPos];
+                    destPos++;
+                }
+            }
+        }
+
+        private void copyMask(ReadableVector src, double[] dest) {
+            int destPos = 0;
+            for (int srcPos = 0; srcPos < src.getDim(); srcPos++) {
+                double val = mask.getParameterValue(srcPos);
+                if (val == 1) {
+                    dest[destPos] = src.get(srcPos);
+                    destPos++;
+                }
+            }
+        }
+
+        private void copyMaskReverse(double[] src, double[] dest) {
+            int srcPos = 0;
+            for (int destPos = 0; destPos < dest.length; destPos++) {
+                double val = mask.getParameterValue(destPos);
+                if (val == 1) {
+                    dest[destPos] = src[srcPos];
+                    srcPos++;
+                }
+            }
+        }
+
+        private void copyMaskReverse(double[] src, WritableVector dest) {
+            int srcPos = 0;
+            for (int destPos = 0; destPos < dest.getDim(); destPos++) {
+                double val = mask.getParameterValue(destPos);
+                if (val == 1) {
+                    dest.set(destPos, src[srcPos]);
+                    srcPos++;
+                }
+            }
+        }
+
         @Override
         public void projectTangent(double[] momentum, double[] position) {
-            manifold.projectTangent(momentum, position);
+            if (mask == null) {
+                manifold.projectTangent(momentum, position);
+            } else {
+                copyMask(momentum, momentumBuffer);
+                copyMask(position, positionBuffer);
+                manifold.projectTangent(momentumBuffer, positionBuffer);
+                copyMaskReverse(momentumBuffer, momentum);
+                copyMaskReverse(positionBuffer, position);
+            }
         }
 
         @Override
         public void updatePositionAndMomentum(double[] position, WrappedVector momentum, double functionalStepSize) {
-            int dim = position.length;
-            for (int i = 0; i < position.length; i++) { //TODO: don't jump back and forth between WrappedVector and double[]
-                momentumBuffer[i] = momentum.get(i);
+            if (mask != null) { //TODO: don't to this if else stuff
+                copyMask(position, positionBuffer);
+                copyMask(momentum, momentumBuffer);
+                manifold.geodesic(positionBuffer, momentumBuffer, functionalStepSize);
+                copyMaskReverse(positionBuffer, position);
+                copyMaskReverse(momentumBuffer, momentum);
+            } else {
+
+
+                int dim = position.length;
+                for (int i = 0; i < momentumBuffer.length; i++) { //TODO: don't jump back and forth between WrappedVector and double[]
+                    momentumBuffer[i] = momentum.get(i);
+                }
+                manifold.geodesic(position, momentumBuffer, functionalStepSize);
+                for (int i = 0; i < dim; i++) {
+                    momentum.set(i, momentumBuffer[i]);
+                }
             }
-            manifold.geodesic(position, momentumBuffer, functionalStepSize);
-            for (int i = 0; i < dim; i++) {
-                momentum.set(i, momentumBuffer[i]);
-            }
+
         }
 
         @Override

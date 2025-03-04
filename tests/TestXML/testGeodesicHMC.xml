@@ -51,11 +51,11 @@
     </distributionLikelihood>
 
     <matrixParameter id="X3">
-        <parameter
+        <parameter id="X3.1"
                 value="0.5170523005299762 0.23732366357993848 0.3453201355115805 0.04915517940112536 -0.265357459849146 0.3877319257922349 -0.16575576503762185 -0.24572329021078543 0.0192436747046259 0.495677630907889"/>
-        <parameter
+        <parameter id="X3.2"
                 value="-0.18131376369077135 0.6806906099816249 -0.1319248395701776 0.26777361095477786 0.271192411212245 0.20281371743479965 -0.061698345415977233 0.36758362239123293 0.3966321606011005 0.06130692114673059"/>
-        <parameter
+        <parameter id="X3.3"
                 value="-0.4669411561978223 -0.11974189388470466 -0.44089423727448873 -0.20295731229198558 -0.5076572274011091 0.2137837737714987 -0.20977566438445855 -0.15805216851859444 0.29187498169914133 0.27285848287912046"/>
     </matrixParameter>
 
@@ -84,12 +84,16 @@
                 <distributionLikelihood idref="X.prior"/>
                 <matrixParameter idref="X"/>
             </gradient>
-            <blockStiefelManifold/>
 
             <matrixParameter idref="X"/>
             <graphicalParameterBounds>
                 <parameter value="0"/>
             </graphicalParameterBounds>
+            <manifoldProvider>
+                <stiefelManifold/>
+                <matrixParameter idref="X"/>
+            </manifoldProvider>
+
 
         </geodesicHamiltonianMonteCarloOperator>
 
@@ -109,10 +113,19 @@
                 <parameter value="0"/>
             </graphicalParameterBounds>
             <mask>
-                <parameter value="0 0 0 0 0 0 0 0 0 0
+                <parameter id="constrainedGeodesicHMC.mask"
+                           value="0 0 0 0 0 0 0 0 0 0
                                   0 1 1 1 1 1 1 1 1 1
                                   0 1 1 1 1 1 1 1 1 1"/>
             </mask>
+            <manifoldProvider>
+                <stiefelManifold/>
+                <matrixParameter idref="X2"/>
+                <mask>
+                    <parameter idref="constrainedGeodesicHMC.mask"/>
+                </mask>
+
+            </manifoldProvider>
         </geodesicHamiltonianMonteCarloOperator>
 
         <geodesicHamiltonianMonteCarloOperator id="structuredGeodesicHMC" weight="1.0" nSteps="5" stepSize="0.05"
@@ -128,11 +141,24 @@
             <graphicalParameterBounds>
                 <parameter value="0"/>
             </graphicalParameterBounds>
-            <blockStiefelManifold>
-                <orthogonalityStructure>
-                    <block rows="1 2"/>
-                </orthogonalityStructure>
-            </blockStiefelManifold>
+            <blockManifoldProvider>
+                <manifoldProvider>
+                    <stiefelManifold/>
+                    <matrixParameter>
+                        <parameter idref="X3.1"/>
+                        <parameter idref="X3.2"/>
+                    </matrixParameter>
+                </manifoldProvider>
+                <manifoldProvider>
+                    <stiefelManifold/>
+                    <matrixParameter>
+<!--                        <parameter idref="X3.2"/>-->
+                        <parameter idref="X3.3"/>
+                    </matrixParameter>
+                </manifoldProvider>
+
+            </blockManifoldProvider>
+
 
 
         </geodesicHamiltonianMonteCarloOperator>

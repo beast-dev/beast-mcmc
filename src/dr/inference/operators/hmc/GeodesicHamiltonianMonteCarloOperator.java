@@ -107,23 +107,8 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
         return sb.toString();
     }
 
-//    public void setOrthogonalityStructure(ArrayList<ArrayList<Integer>> oldOrthogonalityStructure) {
-//        ((GeodesicLeapFrogEngine) leapFrogEngine).setOrthogonalityStructure(oldOrthogonalityStructure);
-//    }
-
 
     public static class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFrogEngine.Default {
-
-        //        private final DenseMatrix64F positionMatrix;
-//        private final DenseMatrix64F innerProduct;
-//        private final DenseMatrix64F innerProduct2;
-//        private final DenseMatrix64F projection;
-//        private final DenseMatrix64F momentumMatrix;
-//        private final int nRows;
-//        private final int nCols;
-
-        //        private final int[] subRows;
-//        private final int[] subColumns;
 
 
         private ManifoldProvider manifoldProvider;
@@ -134,122 +119,9 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
             super(parameter, instabilityHandler, preconditioning, mask);
             this.manifoldProvider = manifoldProvider;
 
-
-//            this.subRows = parseSubRowsFromMask();
-//            this.subColumns = parseSubColumnsFromMask();
-
-
-//            orthogonalityStructure.add(subColumns);
-
-//            this.nRows = subRows.length;
-
-//            if (mask != null) checkMask(subRows, subColumns);
-//            this.nCols = subColumns.length;
-//            this.positionMatrix = new DenseMatrix64F(nCols, nRows);
-//            this.innerProduct = new DenseMatrix64F(nCols, nCols);
-//            this.innerProduct2 = new DenseMatrix64F(nCols, nCols);
-//            this.projection = new DenseMatrix64F(nCols, nRows);
-//            this.momentumMatrix = new DenseMatrix64F(nCols, nRows);
         }
 
 
-//        private int[] parseSubColumnsFromMask() {
-//
-//            int originalRows = matrixParameter.getRowDimension();
-//            int originalColumns = matrixParameter.getColumnDimension();
-//
-//            ArrayList<Integer> subArray = new ArrayList<Integer>();
-//
-//            for (int col = 0; col < originalColumns; col++) {
-//                int offset = col * originalRows;
-//                for (int row = 0; row < originalRows; row++) {
-//                    int ind = offset + row;
-//                    if (mask == null || mask[ind] == 1.0) {
-//                        subArray.add(col);
-//                        break;
-//                    }
-//                }
-//            }
-//
-//            int[] subColumns = new int[subArray.size()];
-//            for (int i = 0; i < subColumns.length; i++) {
-//                subColumns[i] = subArray.get(i);
-//            }
-//
-//            return subColumns;
-//        }
-//
-//        private int[] parseSubRowsFromMask() {
-//            int originalRows = matrixParameter.getRowDimension();
-//            int originalColumns = matrixParameter.getColumnDimension();
-//
-//            ArrayList<Integer> subArray = new ArrayList<Integer>();
-//
-//            for (int row = 0; row < originalRows; row++) {
-//                for (int col = 0; col < originalColumns; col++) {
-//                    int ind = col * originalRows + row;
-//                    if (mask == null || mask[ind] == 1.0) {
-//                        subArray.add(row);
-//                        break;
-//                    }
-//                }
-//            }
-//
-//            int[] subRows = new int[subArray.size()];
-//            for (int i = 0; i < subRows.length; i++) {
-//                subRows[i] = subArray.get(i);
-//            }
-//
-//            return subRows;
-//        }
-
-//        private void checkMask(int[] rows, int[] cols) {
-//            int originalRows = matrixParameter.getRowDimension();
-//            int originalColumns = matrixParameter.getColumnDimension();
-//
-//            int subRowInd = 0;
-//            int subColInd = 0;
-//
-//            Boolean isSubRow;
-//            Boolean isSubCol;
-//
-//            for (int row = 0; row < originalRows; row++) {
-//                if (subRowInd < rows.length && row == rows[subRowInd]) {
-//                    isSubRow = true;
-//                    subRowInd++;
-//                } else {
-//                    isSubRow = false;
-//                }
-//
-//                subColInd = 0;
-//
-//                for (int col = 0; col < originalColumns; col++) {
-//                    if (subColInd < cols.length && col == cols[subColInd]) {
-//                        isSubCol = true;
-//                        subColInd++;
-//                    } else {
-//                        isSubCol = false;
-//                    }
-//
-//                    int ind = originalRows * col + row;
-//
-//                    if (isSubCol && isSubRow) {
-//                        if (mask[ind] != 1.0) {
-//                            throw new RuntimeException("mask is incompatible with " +
-//                                    GeodesicHamiltonianMonteCarloOperatorParser.OPERATOR_NAME +
-//                                    ". All elements in sub-matrix must be set to 1.");
-//                        }
-//                    } else {
-//                        if (mask[ind] != 0.0) {
-//                            throw new RuntimeException("mask is incompatible with " +
-//                                    GeodesicHamiltonianMonteCarloOperatorParser.OPERATOR_NAME +
-//                                    ". All elements outside of sub-matrix must be set to 0.");
-//                        }
-//                    }
-//
-//                }
-//            }
-//        }
 
         public void addManifolds(ManifoldProvider manifoldProvider) {
             this.manifoldProvider = manifoldProvider;

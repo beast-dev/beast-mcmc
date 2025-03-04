@@ -33,7 +33,6 @@ public class MaskedMatrixParameter extends CompoundParameter implements MatrixPa
 
     private final MatrixParameterInterface matrix;
     private final Parameter mask;
-    //    private ArrayList<Integer> rows = new ArrayList<>();
     private int[] rows;
     private int[] cols;
 
@@ -53,23 +52,13 @@ public class MaskedMatrixParameter extends CompoundParameter implements MatrixPa
     @Override
     public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == mask) {
-//            int[] oldRows = rows;
-//            int[] oldCols = cols;
+
             RowsAndCols rowsAndCols = makeRowsFromMask();
             this.rows = rowsAndCols.rows;
             this.cols = rowsAndCols.cols;
 
             type = ChangeType.ALL_VALUES_CHANGED;
 
-//            int ni = rows.length;
-//            int oi = oldRows.length;
-//            if (ni == oi) {
-//                type = ChangeType.ALL_VALUES_CHANGED;
-//            } else if (ni < oi) {
-//                type = ChangeType.REMOVED;
-//            } else {
-//                type = ChangeType.ADDED;
-//            }
             index = -1;
         }
         super.variableChangedEvent(variable, index, type);
@@ -87,10 +76,7 @@ public class MaskedMatrixParameter extends CompoundParameter implements MatrixPa
             }
             if (colRows.size() > 0) {
                 newCols.add(i);
-//                int[] rowsArray = new int[colrows.length];
-//                for (int j = 0; j < colrows.length; i++) {
-//                    rowsArray[j] = colRows.get(j);
-//                }
+
                 allRows.add(colRows);
             }
 

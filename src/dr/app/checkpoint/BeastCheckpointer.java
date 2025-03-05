@@ -181,8 +181,10 @@ public class BeastCheckpointer implements StateLoaderSaver {
     @Override
     public boolean saveState(MarkovChain markovChain, long state, double lnL) {
         String fileName = "";
-        if (stemFileName != null) {
+        if (stemFileName != null && this.saveStateFileName == null) {
             fileName = stemFileName + "_" + state;
+        } else if (stemFileName != null) {
+            fileName = stemFileName + "_" + this.saveStateFileName;
         } else {
             String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(Calendar.getInstance().getTime());
             fileName = (this.saveStateFileName != null ? this.saveStateFileName : "beast_state_" + timeStamp);

@@ -111,10 +111,10 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
         } else {
 
-            loadStateFileName = null;
+            loadStateFileName = System.getProperty(LOAD_STATE_FILE, null);
             saveStateFileName = checkpointFileName;
 
-            stemFileName = null;
+            stemFileName = System.getProperty(SAVE_STEM, null);
 
             listeners.add(new StateSaverChainListener(BeastCheckpointer.this, checkpointFinal,false));
             listeners.add(new StateSaverChainListener(BeastCheckpointer.this, checkpointEvery,true));

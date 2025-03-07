@@ -132,7 +132,7 @@ public class GridBasedBranchRateModel extends AbstractBranchRateModel implements
 
     @Override
     protected void restoreState() {
-
+        ratesKnown = false;
     }
 
     @Override
@@ -144,6 +144,7 @@ public class GridBasedBranchRateModel extends AbstractBranchRateModel implements
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         sufficientStatisticKnown = false;
         ratesKnown = false;
+        fireModelChanged();
     }
 
     @Override

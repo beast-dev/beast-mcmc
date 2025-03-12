@@ -200,10 +200,6 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     }
 
     public double getLatentProportion(Tree tree, NodeRef node) {
-        //if excluderoot is true it's children don't have latency.
-        if(excludeRoot&&tree.isRoot(tree.getParent(node))){
-            return 0;
-        }
 
         if (latentStateProportions != null) {
             return latentStateProportions.getNodeValue(tree, node);
@@ -368,15 +364,16 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             NodeRef node = tree.getNode(i);
-            if(excludeRoot && tree.isRoot(tree.getParent(node))){ // don't include these nodes if excludeRoot is true
-                continue;
-            }
             if (node != tree.getRoot()) {
                 if (updateNeededForNode(tree, node)) {
                     double branchLength = tree.getBranchLength(node);
                     double latentProportion = getLatentProportion(tree, node);
 
                     assert(latentProportion < 1.0);
+
+                    if(excludeRoot && tree.isRoot(tree.getParent(node)) && latentProportion>0){
+                        return Double.NEGATIVE_INFINITY;
+                    }
 
                     double reward = branchLength * latentProportion;
                     double density = getBranchRewardDensity(reward, branchLength);

@@ -971,11 +971,14 @@
 			</trait>
 			<posterior idref="posterior"/>
 		</logTree>
+
+		<!-- write state of Markov chain to checkpoint file                          -->
+		<logCheckpoint id="checkpointFileLog" checkpointEvery="1000" checkpointFinal="5000" fileName="testCheckpointedAdaptiveMCMC.chkpt" overwrite="false"/>
 	</mcmc>
 
 	<assertEqual tolerance="1e-6" toleranceType="absolute" verbose="true">
 		<message>
-			Check log joint density after 5000 iterations, having resumed from testAdaptiveMCMC.chkpt
+			Check log joint density after 5000 iterations, having resumed from testCheckpointedAdaptiveMCMC.chkpt
 		</message>
 		<actual regex="posterior log-likelihood\s*=\s*(.*)\n">
 			<posterior idref="posterior"/>

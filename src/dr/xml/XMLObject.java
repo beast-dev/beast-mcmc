@@ -695,7 +695,6 @@ public class XMLObject {
         return defaultValue;
     }
 
-
     public XMLObject getParent() {
         return parent;
     }
@@ -711,5 +710,5 @@ public class XMLObject {
     private Object nativeObject;
 
     // The objectStore representing the local scope of this element.
-    //	private ObjectStore store;
+    // private ObjectStore store;
 }

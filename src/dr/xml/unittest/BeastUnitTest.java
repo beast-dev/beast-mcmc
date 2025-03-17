@@ -211,7 +211,10 @@ public class BeastUnitTest implements Reportable {
             }
 
             //first check if there is an attribute for EXPECTED
-            String fileName = xo.getChild(EXPECTED).getStringAttribute(CHECKPOINT_FILENAME);
+            String fileName = null;
+            if (xo.getChild(EXPECTED).hasAttribute(CHECKPOINT_FILENAME)) {
+                fileName = xo.getChild(EXPECTED).getStringAttribute(CHECKPOINT_FILENAME);
+            }
             String expected = null;
             if (fileName != null) {
                 //if there is an attribute, go look for the checkpointed log joint density

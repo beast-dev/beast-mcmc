@@ -973,7 +973,7 @@
 		</logTree>
 
 		<!-- write state of Markov chain to checkpoint file                          -->
-		<logCheckpoint id="checkpointFileLog" checkpointEvery="1000" checkpointFinal="5000" fileName="testCheckpointedAdaptiveMCMC.chkpt" overwrite="false"/>
+		<logCheckpoint id="checkpointFileLog" checkpointEvery="5000" checkpointFinal="5000" fileName="testCheckpointedAdaptiveMCMC.chkpt" overwrite="false"/>
 	</mcmc>
 
 	<assertEqual tolerance="1e-6" toleranceType="absolute" verbose="true">
@@ -983,9 +983,7 @@
 		<actual regex="posterior log-likelihood\s*=\s*(.*)\n">
 			<posterior idref="posterior"/>
 		</actual>
-		<expected>
-			-33651.65509228375
-		</expected>
+		<expected checkpointFileName="testCheckpointedAdaptiveMCMC.chkpt"/>
 	</assertEqual>
 	
 </beast>

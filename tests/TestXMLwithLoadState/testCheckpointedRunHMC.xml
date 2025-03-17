@@ -981,13 +981,7 @@
 		<actual regex="posterior log-likelihood = (.*)\n">
 			<posterior idref="posterior"/>
 		</actual>
-		<expected>
-			-13218.081104785917
-<!-- 	THESE SHOULD NOT BE HARD-CODED; RUN TWO XMLS  -->
-<!--	CURRENTLT THIS IS NOT A TEST  -->
-			
-<!-- 			-12951.78928007183 -->
-		</expected>
+		<expected checkpointFileName="testCheckpointedRunHMC.chkpt"/>
 	</assertEqual>
 
 </beast>

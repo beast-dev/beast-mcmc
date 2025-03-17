@@ -52,10 +52,12 @@ jobs:
               id: set-matrices
               run: |
                   echo "xml-matrix=$(ls tests/TestXML/*.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
-                  echo "xml-load-state-matrix=$(ls tests/TestXMLwithLoadState/*.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+                  echo "xml-short-load-state-matrix=$(ls tests/TestXMLwithLoadState/*.xml | grep short | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+                  echo "xml-long-load-state-matrix=$(ls tests/TestXMLwithLoadState/*.xml | grep long | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
         outputs:
             xml-matrix: ${{ steps.set-matrices.outputs.xml-matrix }}
-            xml-load-state-matrix: ${{ steps.set-matrices.outputs.xml-load-state-matrix }}
+            xml-short-load-state-matrix: ${{ steps.set-matrices.outputs.xml-short-load-state-matrix }}
+            xml-long-load-state-matrix: ${{ steps.set-matrices.outputs.xml-long-load-state-matrix }}
 
     test-xml:
         needs: build
@@ -79,13 +81,14 @@ jobs:
             - name: Run test for ${{ matrix.file }}
               run: java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -overwrite ${{ matrix.file }}
 
-    test-xml-load-state:
+    # Test checkpointing by running 2 shorter analyses and one longer analysis, and compare the final log joint density
+    test-xml-short-load-state:
         needs: build
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
             matrix:
-                file: ${{fromJson(needs.build.outputs.xml-load-state-matrix)}}
+                file: ${{fromJson(needs.build.outputs.xml-short-load-state-matrix)}}
         steps:
             - uses: actions/checkout@v4
             - uses: actions/cache@v4
@@ -97,11 +100,33 @@ jobs:
                   restore-keys: |
                       beagle-beast
             - name: Rebuild project
-              run: ant dist                      
+              run: ant dist
             - name: Run test with load state for ${{ matrix.file }}
               run: |
-                  checkpoint=tests/TestXMLwithLoadState/$(basename ${{ matrix.file }} .xml).chkpt
-                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state $checkpoint -overwrite ${{ matrix.file }}
+                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 ${{ matrix.file }}
+                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 ${{ matrix.file }}
+
+    test-xml-long-load-state:
+        needs: build
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                file: ${{fromJson(needs.build.outputs.xml-long-load-state-matrix)}}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/cache@v4
+              with:
+                  path: |
+                      ${{ env.BEAGLE_DIR }}
+                      build/dist
+                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
+                  restore-keys: |
+                      beagle-beast
+            - name: Rebuild project
+              run: ant dist
+            - name: Run test with load state for ${{ matrix.file }}
+              run: java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 ${{ matrix.file }}
 
     test-junit:
         needs: build

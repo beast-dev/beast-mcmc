@@ -981,7 +981,7 @@
 		<actual regex="posterior log-likelihood = (.*)\n">
 			<posterior idref="posterior"/>
 		</actual>
-		<expected checkpointFileName="tests/TestXMLwithLoadState/testCheckpointedRunHMC.chkpt"/>
+		<expected checkpointFileName="testCheckpointedRunHMC.chkpt"/>
 	</assertEqual>
 
 </beast>

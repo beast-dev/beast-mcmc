@@ -103,8 +103,9 @@ jobs:
               run: ant dist
             - name: Run test with load state for ${{ matrix.file }}
               run: |
-                  checkpoint=tests/TestXMLwithLoadState/$(basename ${{ matrix.file }} .xml).chkpt
+                  checkpoint=$(basename ${{ matrix.file }} .xml).chkpt
                   java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -save_state $checkpoint ${{ matrix.file }}
+                  ls -l | grep .chkpt
                   java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state $checkpoint -overwrite ${{ matrix.file }}
 
     test-xml-long-load-state:

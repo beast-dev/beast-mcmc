@@ -1,18 +1,14 @@
 package dr.inference.model;
 
 import dr.evolution.datatype.DataType;
-import dr.inferencexml.model.StronglyLumpableGeneratorParser;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import dr.inference.model.StateSet;
 
 public class StronglyLumpableGenerator {
-    private String xmlOutput;
+    private final String xmlOutput;
 
     public StronglyLumpableGenerator(StateSet[] stateSets, DataType dataType) {
         this.xmlOutput = generateXML(stateSets, dataType);
@@ -22,14 +18,14 @@ public class StronglyLumpableGenerator {
         StringBuilder xml = new StringBuilder();
         xml.append("<stronglyLumpableCtmcRates id=\"lumpableRates\">\n");
 
-        // Collect all unique state names
-        Set<String> uniqueStates = new HashSet<>();
-        for (StateSet stateSet : stateSets) {
-            for (int stateId : stateSet.states()) {
-                String stateName = dataType.getCode(stateId);
-                uniqueStates.add(stateName);
-            }
-        }
+//        // Collect all unique state names
+//        Set<String> uniqueStates = new HashSet<>();
+//        for (StateSet stateSet : stateSets) {
+//            for (int stateId : stateSet.states()) {
+//                String stateName = dataType.getCode(stateId);
+//                uniqueStates.add(stateName);
+//            }
+//        }
 
         // Add the generalDataType block
         String dataTypeName = dataType.getDescription();

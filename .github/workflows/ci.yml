@@ -104,10 +104,10 @@ jobs:
             - name: Run test with load state for ${{ matrix.file }}
               run: |
                   java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 ${{ matrix.file }}
-                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 ${{ matrix.file }}
+                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -overwrite ${{ matrix.file }}
 
     test-xml-long-load-state:
-        needs: build
+        needs: [build, test-xml-short-load-state]
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
@@ -126,7 +126,7 @@ jobs:
             - name: Rebuild project
               run: ant dist
             - name: Run test with load state for ${{ matrix.file }}
-              run: java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 ${{ matrix.file }}
+              run: java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -overwrite ${{ matrix.file }}
 
     test-junit:
         needs: build

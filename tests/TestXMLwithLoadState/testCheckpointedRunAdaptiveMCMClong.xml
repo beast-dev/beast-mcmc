@@ -873,7 +873,7 @@
 	</operators>
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="5000" autoOptimize="true">
+	<mcmc id="mcmc" chainLength="10000" autoOptimize="true">
 		<posterior id="posterior">
 			<prior id="prior">
 				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
@@ -925,7 +925,7 @@
 		<operators idref="operators"/>
 
 		<!-- write log to screen                                                     -->
-		<log id="screenLog" logEvery="100">
+		<log id="screenLog" logEvery="1000">
 			<column label="Posterior" dp="4" width="12">
 				<posterior idref="posterior"/>
 			</column>
@@ -941,7 +941,7 @@
 		</log>
 
 		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="100" fileName="testAdaptiveMCMC.log" overwrite="false">
+		<log id="fileLog" logEvery="1000" fileName="testAdaptiveMCMC.log" overwrite="false">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
 			<treeDataLikelihood idref="treeLikelihood"/>
@@ -973,12 +973,12 @@
 		</logTree>
 
 		<!-- write state of Markov chain to checkpoint file                          -->
-		<logCheckpoint id="checkpointFileLog" checkpointEvery="5000" checkpointFinal="5000" fileName="testCheckpointedAdaptiveMCMC.chkpt" overwrite="false"/>
+		<logCheckpoint id="checkpointFileLog" checkpointEvery="10000" checkpointFinal="10000" fileName="testCheckpointedAdaptiveMCMClong.chkpt" overwrite="false"/>
 	</mcmc>
 
 	<assertEqual tolerance="1e-6" toleranceType="absolute" verbose="true">
 		<message>
-			Check log joint density after 5000 iterations, having resumed from testCheckpointedAdaptiveMCMC.chkpt
+			Check log joint density after 10000 iterations, having resumed from testCheckpointedAdaptiveMCMC.chkpt
 		</message>
 		<actual regex="posterior log-likelihood\s*=\s*(.*)\n">
 			<posterior idref="posterior"/>

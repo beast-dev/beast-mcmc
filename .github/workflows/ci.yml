@@ -52,7 +52,7 @@ jobs:
               id: set-matrices
               run: |
                   echo "xml-matrix=$(ls tests/TestXML/*.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
-                  echo "xml-short-load-state-matrix=$(ls tests/TestXMLwithLoadState/*.xml | grep short | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+                  echo "xml-short-load-state-matrix=$(ls tests/TestXMLwithLoadState/*.xml | grep MCMC.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
                   echo "xml-long-load-state-matrix=$(ls tests/TestXMLwithLoadState/*.xml | grep long | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
         outputs:
             xml-matrix: ${{ steps.set-matrices.outputs.xml-matrix }}
@@ -103,8 +103,9 @@ jobs:
               run: ant dist
             - name: Run test with load state for ${{ matrix.file }}
               run: |
+                  checkpoint=tests/TestXMLwithLoadState/$(basename ${{ matrix.file }} .xml).chkpt
                   java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 ${{ matrix.file }}
-                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -overwrite ${{ matrix.file }}
+                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state $checkpoint -overwrite ${{ matrix.file }}
 
     test-xml-long-load-state:
         needs: [build, test-xml-short-load-state]

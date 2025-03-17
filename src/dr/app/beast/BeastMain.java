@@ -64,6 +64,8 @@ public class BeastMain {
 
     private static final String CITATION_FILE_SUFFIX = ".citations.txt";
 
+    private static final String CHKPT_OVERRULE = "checkpointOverrule";
+
     static class BeastConsoleApp extends jam.console.ConsoleApplication {
         XMLParser parser = null;
         public final static String backgroundColor =  "#35484F";
@@ -167,17 +169,17 @@ public class BeastMain {
 
             // Install the checkpointer. This creates a factory that returns
             // appropriate savers and loaders according to the user's options.
-            //new BeastCheckpointer();
+            // new BeastCheckpointer();
 
             // if any of these properties is not null, overrule XML checkpointing settings
-            if (System.getProperty("save.state.file", null) != null ||
-                    System.getProperty("save.state.at", null) != null ||
-                    System.getProperty("save.state.every", null) != null ||
-                    System.getProperty("save.state.time", null) != null) {
-                System.setProperty("checkpointOverrule","true");
+            if (System.getProperty(BeastCheckpointer.SAVE_STATE_FILE, null) != null ||
+                    System.getProperty(BeastCheckpointer.SAVE_STATE_AT, null) != null ||
+                    System.getProperty(BeastCheckpointer.SAVE_STATE_EVERY, null) != null ||
+                    System.getProperty(BeastCheckpointer.SAVE_STATE_TIME, null) != null) {
+                System.setProperty(CHKPT_OVERRULE, "true");
             }
 
-            if (Boolean.parseBoolean(System.getProperty("checkpointOverrule", "false"))) {
+            if (Boolean.parseBoolean(System.getProperty(CHKPT_OVERRULE, "false"))) {
                 BeastCheckpointer.getInstance(null, -1, -1, false);
                 Logger.getLogger("dr.apps.beast").info("Overriding checkpointing settings in the provided XML file");
             }

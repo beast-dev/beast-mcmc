@@ -110,7 +110,7 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                   name: checkpoint_short
-                  path: /*.chkpt
+                  path: ~/*.chkpt
 
     # Test checkpointing by running a longer analysis, and compare against the checkpoint file from the 2 shorter analyses
     test-xml-long-load-state:

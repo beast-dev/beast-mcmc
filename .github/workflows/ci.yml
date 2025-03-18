@@ -102,6 +102,7 @@ jobs:
             - name: Rebuild project
               run: ant dist
             - name: Run test with load state for ${{ matrix.file }}
+              id: short-checkpointing
               run: |
                   checkpoint=$(basename ${{ matrix.file }} .xml).chkpt
                   java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -save_state $checkpoint -save_at 5000 ${{ matrix.file }}
@@ -109,7 +110,7 @@ jobs:
             - name: Upload checkpoint file
               uses: actions/upload-artifact@v4
               with:
-                  name: checkpoint_short
+                  name: $(basename ${{ matrix.file }} .xml)
                   path: ./*.chkpt
 
     # Test checkpointing by running a longer analysis, and compare against the checkpoint file from the 2 shorter analyses
@@ -137,6 +138,7 @@ jobs:
               with:
                   name: checkpoint_short
             - name: Run test without load state for ${{ matrix.file }}
+              id: long-checkpointing
               run: java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -overwrite ${{ matrix.file }}
 
     test-junit:

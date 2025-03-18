@@ -81,7 +81,7 @@ jobs:
             - name: Run test for ${{ matrix.file }}
               run: java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -overwrite ${{ matrix.file }}
 
-    # Test checkpointing by running 2 shorter analyses and one longer analysis, and compare the final log joint density
+    # Test checkpointing by running 2 shorter analyses
     test-xml-short-load-state:
         needs: build
         runs-on: ubuntu-latest
@@ -105,8 +105,14 @@ jobs:
               run: |
                   checkpoint=$(basename ${{ matrix.file }} .xml).chkpt
                   java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -save_state $checkpoint -save_at 5000 ${{ matrix.file }}
-                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state $checkpoint -overwrite ${{ matrix.file }}
+                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state $checkpoint -save_state $checkpoint -save_at 10000 -overwrite ${{ matrix.file }}
+            - name: Upload checkpoint file
+              uses: actions/upload-artifact@v4
+              with:
+                  name: checkpoint_short
+                  path: $(basename ${{ matrix.file }} .xml).chkpt
 
+    # Test checkpointing by running a longer analysis, and compare against the checkpoint file from the 2 shorter analyses
     test-xml-long-load-state:
         needs: [build, test-xml-short-load-state]
         runs-on: ubuntu-latest
@@ -126,7 +132,11 @@ jobs:
                       beagle-beast
             - name: Rebuild project
               run: ant dist
-            - name: Run test with load state for ${{ matrix.file }}
+            - name: Download checkpoint file
+              uses: actions/download-artifact@v4
+              with:
+                  name: checkpoint_short
+            - name: Run test without load state for ${{ matrix.file }}
               run: java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -overwrite ${{ matrix.file }}
 
     test-junit:

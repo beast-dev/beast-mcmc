@@ -52,8 +52,8 @@ jobs:
               id: set-matrices
               run: |
                   echo "xml-matrix=$(ls tests/TestXML/*.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
-                  echo "xml-short-load-state-matrix=$(ls tests/TestXMLwithLoadState/*.xml | grep MCMC.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
-                  echo "xml-long-load-state-matrix=$(ls tests/TestXMLwithLoadState/*.xml | grep long | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+                  echo "xml-short-load-state-matrix=$(ls tests/TestXMLwithLoadState/*.xml | grep MC.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+                  echo "xml-long-load-state-matrix=$(ls tests/TestXMLwithLoadState/*.xml | grep long.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
         outputs:
             xml-matrix: ${{ steps.set-matrices.outputs.xml-matrix }}
             xml-short-load-state-matrix: ${{ steps.set-matrices.outputs.xml-short-load-state-matrix }}

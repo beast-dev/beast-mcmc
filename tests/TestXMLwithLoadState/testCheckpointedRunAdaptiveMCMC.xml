@@ -941,7 +941,7 @@
 		</log>
 
 		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="100" fileName="testAdaptiveMCMC.log" overwrite="false">
+		<log id="fileLog" logEvery="1000" fileName="testAdaptiveMCMC.log" overwrite="false">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
 			<treeDataLikelihood idref="treeLikelihood"/>

@@ -13,6 +13,8 @@ public class BastaInternalStorage {
     double[] matrices;
     double[] coalescent;
 
+    double[] storedMatrices;
+
     double[] e;
     double[] f;
     double[] g;
@@ -55,6 +57,7 @@ public class BastaInternalStorage {
 
         if (newNumCoalescentIntervals > this.currentNumCoalescentIntervals) {
             this.matrices = new double[newNumCoalescentIntervals * stateCount * stateCount]; // TODO much too small (except for strict-clock)
+            this.storedMatrices = new double[newNumCoalescentIntervals * stateCount * stateCount];
             this.coalescent = new double[newNumCoalescentIntervals];
 
             this.e = new double[newNumCoalescentIntervals * stateCount];
@@ -64,5 +67,15 @@ public class BastaInternalStorage {
 
             this.currentNumCoalescentIntervals = newNumCoalescentIntervals;
         }
+    }
+
+    public void storeState() {
+        System.arraycopy(matrices, 0, storedMatrices, 0, currentNumCoalescentIntervals * stateCount * stateCount);
+    }
+
+    public void restoreState() {
+        double[] tempMatrices = matrices.clone();
+        System.arraycopy(storedMatrices, 0, matrices, 0, currentNumCoalescentIntervals * stateCount * stateCount);
+        System.arraycopy(tempMatrices, 0, storedMatrices, 0, currentNumCoalescentIntervals * stateCount * stateCount);
     }
 }

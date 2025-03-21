@@ -752,6 +752,16 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         System.arraycopy(sizes, 0, storage.sizes, index * stateCount, stateCount);
     }
 
+    @Override
+    public void storeState() {
+        //storage.storeState();
+    }
+
+    @Override
+    public void restoreState() {
+        //storage.restoreState();
+    }
+
     private static void peelPartials(double[] partials,
                                      int resultOffset,
                                      int leftPartialOffset, int rightPartialOffset,
@@ -767,7 +777,6 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         // Handle left
         leftPartialOffset *= stateCount;
         leftMatrixOffset *= stateCount * stateCount;
-
         for (int i = 0; i < stateCount; ++i) {
             double sum = 0.0;
             for (int j = 0; j < stateCount; ++j) {

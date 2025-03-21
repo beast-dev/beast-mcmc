@@ -342,6 +342,18 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         }
     }
 
+    @Override
+    public void storeState() {
+        //populationSizesBufferHelper.storeState();
+        //eigenBufferHelper.storeState();
+    }
+
+    @Override
+    public void restoreState() {
+        //populationSizesBufferHelper.restoreState();
+       // eigenBufferHelper.restoreState();
+    }
+
     private void vectorizeTransitionMatrixOperations(List<TransitionMatrixOperation> matrixOperations,
                                                      int[] transitionMatrixIndices,
                                                      double[] branchLengths) {

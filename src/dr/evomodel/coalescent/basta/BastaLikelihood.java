@@ -207,7 +207,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
             if (COUNT_TOTAL_OPERATIONS) {
                 long endTime = System.nanoTime();
-                totalLikelihoodTime += (endTime - startTime) / 1000000;
+                totalLikelihoodTime += (endTime - startTime) / 1000;
             }
 
             likelihoodKnown = true;
@@ -265,16 +265,13 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         assert (populationSizesKnown);
         assert (treeIntervalsKnown);
         assert (transitionMatricesKnown);
-//        likelihoodDelegate.storeState();
-//        storedTreeIntervals = this.treeIntervals;
+
         storedLogLikelihood = logLikelihood;
     }
 
     @Override
     protected final void restoreState() {
-//        likelihoodDelegate.restoreState();
         logLikelihood = storedLogLikelihood;
-//        this.treeIntervals = storedTreeIntervals;
         likelihoodKnown = true;
         populationSizesKnown = false;
         treeIntervalsKnown = false;
@@ -316,7 +313,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         final NodeRef root = tree.getRoot();
         double logL = likelihoodDelegate.calculateLikelihood(branchOperations, matrixOperations,
-                intervalStarts, root.getNumber(), this);
+                intervalStarts, root.getNumber(), this, transitionMatricesKnown);
 
         // after traverse all nodes and patterns have been updated --
         //so change flags to reflect this.

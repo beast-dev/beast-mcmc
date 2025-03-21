@@ -34,6 +34,8 @@ import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.Reportable;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +58,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
     double calculateLikelihood(List<BranchIntervalOperation> branchOperations,
                                List<TransitionMatrixOperation> matrixOperations,
                                List<Integer> intervalStarts,
-                               int rootNodeNumber, BastaLikelihood likelihood);
+                               int rootNodeNumber, BastaLikelihood likelihood, boolean transitionMatricesStored);
 
     default void setPartials(int index, double[] partials) {
         throw new RuntimeException("Not yet implemented");
@@ -89,6 +91,42 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
 
     int getMaxNumberOfCoalescentIntervals();
 
+    public class Info {
+        private final boolean timingEnabled;
+
+        private final Map<String, Long> timingMap;
+        private final Map<String, Long> countMap;
+
+        public Info(boolean timingEnabled) {
+            this.timingEnabled = timingEnabled;
+            this.timingMap = new HashMap<>();
+            this.countMap = new HashMap<>();
+        }
+
+        public void recordTime(String operation, long elapsedTime) {
+            if (timingEnabled) {
+                timingMap.put(operation, timingMap.getOrDefault(operation, 0L) + elapsedTime);
+                countMap.put(operation, countMap.getOrDefault(operation, 0L) + 1);
+            }
+        }
+
+        public void printTimingTable() {
+            if (timingEnabled) {
+                System.out.println("Operation Timing Table (Average time per call):");
+                for (String operation : timingMap.keySet()) {
+                    long totalTime = timingMap.get(operation);
+                    long count = countMap.get(operation);
+                    long averageTime = (count != 0) ? totalTime / count : 0;
+                    System.out.println(String.format("%-40s : avg = %d ns over %d calls",
+                            operation, averageTime, count));
+                }
+            }
+        }
+
+        public boolean isTimingEnabled() {
+            return timingEnabled;
+        }
+    }
 
     abstract class AbstractBastaLikelihoodDelegate extends AbstractModel implements BastaLikelihoodDelegate, Citable {
 
@@ -103,6 +141,8 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         protected final Tree tree;
 
         protected final boolean transpose;
+
+        private final Info timingInfo = new Info(false);
 
         public AbstractBastaLikelihoodDelegate(String name,
                                                Tree tree,
@@ -194,29 +234,45 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
                                                                    Mode mode,
                                                                    StructuredCoalescentLikelihoodGradient.WrtParameter wrt);
 
+
         @Override
         public double calculateLikelihood(List<BranchIntervalOperation> branchOperations,
                                           List<TransitionMatrixOperation> matrixOperation,
                                           List<Integer> intervalStarts,
-                                          int rootNodeNumber, BastaLikelihood likelihood) {
+                                          int rootNodeNumber, BastaLikelihood likelihood, boolean transitionMatricesStored) {
 
             if (PRINT_COMMANDS) {
                 System.err.println("Tree = " + tree);
             }
-
             double[] logL = new double[1];
             boolean done = false;
 
             while (!done) {
+                if (timingInfo.isTimingEnabled()) {
+                    long startTP = System.nanoTime();
+                    computeTransitionProbabilityOperations(matrixOperation, Mode.LIKELIHOOD);
+                    long endTP = System.nanoTime();
+                    timingInfo.recordTime("computeTransitionProbabilityOperations", endTP - startTP);
 
-                computeTransitionProbabilityOperations(matrixOperation, Mode.LIKELIHOOD);
-                computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperation, Mode.LIKELIHOOD, likelihood);
+                    long startBI = System.nanoTime();
+                    computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperation, Mode.LIKELIHOOD, likelihood);
+                    long endBI = System.nanoTime();
+                    timingInfo.recordTime("computeBranchIntervalOperations", endBI - startBI);
 
-                computeCoalescentIntervalReduction(intervalStarts, branchOperations, logL,
-                        Mode.LIKELIHOOD, null);
-
+                    long startCIR = System.nanoTime();
+                    computeCoalescentIntervalReduction(intervalStarts, branchOperations, logL,
+                            Mode.LIKELIHOOD, null);
+                    long endCIR = System.nanoTime();
+                    timingInfo.recordTime("computeCoalescentIntervalReduction", endCIR - startCIR);
+                } else {
+                    computeTransitionProbabilityOperations(matrixOperation, Mode.LIKELIHOOD);
+                    computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperation, Mode.LIKELIHOOD, likelihood);
+                    computeCoalescentIntervalReduction(intervalStarts, branchOperations, logL,
+                            Mode.LIKELIHOOD, null);
+                }
                 done = true;
             }
+
             if (PRINT_COMMANDS) {
                 System.err.println("logL = " + logL[0] + " " + getStamp() + "\n");
                 if (printCount > 1000) {
@@ -224,6 +280,8 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
                 }
                 ++printCount;
             }
+
+            timingInfo.printTimingTable();
 
             return logL[0];
         }

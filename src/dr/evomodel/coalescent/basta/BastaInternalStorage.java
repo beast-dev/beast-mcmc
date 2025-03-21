@@ -74,8 +74,8 @@ public class BastaInternalStorage {
     }
 
     public void restoreState() {
-        double[] tempMatrices = matrices.clone();
-        System.arraycopy(storedMatrices, 0, matrices, 0, currentNumCoalescentIntervals * stateCount * stateCount);
-        System.arraycopy(tempMatrices, 0, storedMatrices, 0, currentNumCoalescentIntervals * stateCount * stateCount);
+        double[] temp = matrices;
+        matrices = storedMatrices;
+        storedMatrices = temp;
     }
 }

@@ -131,6 +131,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
     abstract class AbstractBastaLikelihoodDelegate extends AbstractModel implements BastaLikelihoodDelegate, Citable {
 
         protected static final boolean PRINT_COMMANDS = false;
+        private static final boolean TIMING_ENABLED = false;
 
         protected final int maxNumCoalescentIntervals;
 
@@ -142,7 +143,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
 
         protected final boolean transpose;
 
-        private final Info timingInfo = new Info(false);
+        private final Info timingInfo = new Info(TIMING_ENABLED);
 
         public AbstractBastaLikelihoodDelegate(String name,
                                                Tree tree,
@@ -233,7 +234,6 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
                                                                    double[] out,
                                                                    Mode mode,
                                                                    StructuredCoalescentLikelihoodGradient.WrtParameter wrt);
-
 
         @Override
         public double calculateLikelihood(List<BranchIntervalOperation> branchOperations,

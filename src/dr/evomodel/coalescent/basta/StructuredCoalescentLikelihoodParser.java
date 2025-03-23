@@ -27,12 +27,9 @@ package dr.evomodel.coalescent.basta;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
@@ -59,7 +56,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
 
     public static final Boolean USE_OLD_CODE = false;
     private static final boolean USE_DELEGATE = true;
-    private static final boolean USE_BEAGLE = false;
+    private static final boolean USE_BEAGLE = true;
     private static final boolean TRANSPOSE = true;
 
     public String getParserName() {

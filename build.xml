@@ -90,7 +90,6 @@
         </copy>
     </target>
 
-
     <!-- compile Java source code -->
     <target name="compile-all" depends="init,revision">
         <mkdir dir="${build}"/>
@@ -133,8 +132,10 @@
             <include name="dr/util/**"/>
             <include name="dr/xml/**"/>
             <include name="dr/geo/**"/>
-            <!-- complie JUnit test classes -->
+            <!-- compile JUnit test classes -->
             <include name="test/dr/**"/>
+            <!-- compile BASTA factory classes -->
+            <include name="beagle/basta/*.class"/>
         </javac>
         <echo message="Successfully compiled."/>
     </target>
@@ -151,6 +152,7 @@
                 <attribute name="Main-Class" value="${main_class_BEAST}"/>
             </manifest>
             <fileset dir="${build}">
+                <include name="beagle/basta/*.class"/>
                 <include name="dr/app/beast/**/*.class"/>
                 <!--<include name="dr/app/beastdev/**/*.class"/>-->
                 <include name="dr/app/beauti/**/*.class"/>

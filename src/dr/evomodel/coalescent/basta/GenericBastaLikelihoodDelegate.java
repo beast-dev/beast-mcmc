@@ -6,6 +6,7 @@ import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 import static beagle.basta.BeagleBasta.BASTA_OPERATION_SIZE;
 
@@ -73,6 +74,10 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         this.gradientStorage = null; //new GradientInternalStorage(maxNumCoalescentIntervals, tree.getNodeCount(), stateCount);
 
         this.temp = new double[stateCount * stateCount];
+
+        final Logger logger = Logger.getLogger("dr.evomodel");
+
+        logger.info("\nCreating GenericBastaLikelihoodDelegate");
     }
 
     public BastaInternalStorage getInternalStorage() {

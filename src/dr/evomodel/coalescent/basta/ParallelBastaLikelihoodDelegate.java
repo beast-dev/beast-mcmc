@@ -5,6 +5,7 @@ import dr.evolution.tree.Tree;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.logging.Logger;
 
 /**
  * @author Marc A. Suchard
@@ -35,6 +36,10 @@ public class ParallelBastaLikelihoodDelegate extends GenericBastaLikelihoodDeleg
 
         this.threadCount = Math.abs(threadCount);
         this.temp = new double[this.threadCount][stateCount * stateCount];
+
+        final Logger logger = Logger.getLogger("dr.evomodel");
+
+        logger.info("\nCreating ParallelBastaLikelihoodDelegate");
     }
 
     @Override

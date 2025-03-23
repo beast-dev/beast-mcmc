@@ -84,7 +84,6 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
             requirementFlags = requiredOrder.get(instanceCount % requiredOrder.size());
         }
 
-
         if (!BeagleFlag.PRECISION_SINGLE.isSet(preferenceFlags)) {
             // if single precision not explicitly set then prefer double
             preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
@@ -113,6 +112,9 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         beagle.setCategoryRates(new double[] { 1.0 });
 
         final Logger logger = Logger.getLogger("dr.evomodel");
+
+        logger.info("\nCreating BeagleBastaLikelihoodDelegate");
+
         InstanceDetails instanceDetails = beagle.getDetails();
         ResourceDetails resourceDetails = null;
 
@@ -206,6 +208,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     @Override
     String getStamp() { return "beagle"; }
 
+    public Beagle getBeagleInstance() { return beagle; }
 
     @Override
     protected void computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations,
@@ -382,7 +385,6 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
             return map[buffer];
         }
     }
-
 
     private void vectorizeBranchIntervalOperations(List<Integer> intervalStarts,
                                                    List<BranchIntervalOperation> branchIntervalOperations,

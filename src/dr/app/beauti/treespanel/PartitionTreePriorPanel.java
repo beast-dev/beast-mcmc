@@ -408,7 +408,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         subtreeTaxonSetCombo.removeAllItems();
         for (Taxa taxonSet : partitionTreePrior.getOptions().taxonSets) {
             if (taxonSet.getTaxonCount() > 1 && partitionTreePrior.getOptions().taxonSetsMono.get(taxonSet)) {
-                subtreeTaxonSetCombo.addItem(taxonSet.getId());
+                subtreeTaxonSetCombo.addItem(taxonSet);
             }
         }
         if (subtreeTaxonSetCombo.getItemCount() == 0) {

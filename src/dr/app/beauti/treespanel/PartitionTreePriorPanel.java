@@ -96,7 +96,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         this.partitionTreePrior = partitionTreePrior;
         this.treesPanel = parent;
 
-        setTreePriorChoices(false, false);
+        setTreePriorChoices(false);
         PanelUtils.setupComponent(treePriorCombo);
         treePriorCombo.setMaximumRowCount(10); // to show Calibrated Yule
         treePriorCombo.addItemListener(new ItemListener() {
@@ -178,10 +178,20 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 "The rest of the tree will be have the prior defined above.<html>");
         subtreePriorCheckBox.addItemListener(new ItemListener() {
                                                  public void itemStateChanged(ItemEvent ev) {
-                                                     subtreeTaxonSetCombo.setEnabled(subtreePriorCheckBox.isSelected());
-                                                     subtreeTaxonSetComboLabel.setEnabled(subtreePriorCheckBox.isSelected());
-                                                     subtreePriorCombo.setEnabled(subtreePriorCheckBox.isSelected());
-                                                     subtreePriorComboLabel.setEnabled(subtreePriorCheckBox.isSelected());
+                                                     boolean selected = subtreePriorCheckBox.isSelected();
+                                                     subtreeTaxonSetCombo.setEnabled(selected);
+                                                     subtreeTaxonSetComboLabel.setEnabled(selected);
+                                                     subtreePriorCombo.setEnabled(selected);
+                                                     subtreePriorComboLabel.setEnabled(selected);
+
+                                                     if (selected &&
+                                                             subtreeTaxonSetCombo.getSelectedItem() != null &&
+                                                             !subtreeTaxonSetCombo.getSelectedItem().equals("No monophyletic taxon sets defined") ) {
+                                                         PartitionTreePriorPanel.this.partitionTreePrior.setSubtreeTaxonSet((Taxa)subtreeTaxonSetCombo.getSelectedItem());
+                                                         PartitionTreePriorPanel.this.partitionTreePrior.setSubtreePrior((TreePriorType)subtreePriorCombo.getSelectedItem());
+                                                     } else {
+                                                         PartitionTreePriorPanel.this.partitionTreePrior.setSubtreeTaxonSet(null);
+                                                     }
                                                      parent.fireTreePriorsChanged();
                                                  }
                                              }
@@ -189,12 +199,24 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         subtreeTaxonSetCombo.addItem("No monophyletic taxon sets defined");
         PanelUtils.setupComponent(subtreeTaxonSetCombo);
+        ItemListener listener = ev -> {
+            if (subtreeTaxonSetCombo.getSelectedItem() != null && !subtreeTaxonSetCombo.getSelectedItem().equals("No monophyletic taxon sets defined")) {
+                PartitionTreePriorPanel.this.partitionTreePrior.setSubtreeTaxonSet((Taxa) subtreeTaxonSetCombo.getSelectedItem());
+                PartitionTreePriorPanel.this.partitionTreePrior.setSubtreePrior((TreePriorType) subtreePriorCombo.getSelectedItem());
+            } else {
+                PartitionTreePriorPanel.this.partitionTreePrior.setSubtreeTaxonSet(null);
+            }
+            parent.fireTreePriorsChanged();
+        };
+
+        subtreeTaxonSetCombo.addItemListener(listener);
         subtreeTaxonSetCombo.setEnabled(false);
         subtreeTaxonSetComboLabel.setEnabled(false);
 
         subtreePriorCombo.addItem(TreePriorType.CONSTANT);
         subtreePriorCombo.addItem(TreePriorType.EXPONENTIAL);
         PanelUtils.setupComponent(subtreePriorCombo);
+        subtreePriorCombo.addItemListener(listener);
         subtreePriorCombo.setEnabled(false);
         subtreePriorComboLabel.setEnabled(false);
 
@@ -447,7 +469,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
     }
 
-    public void setTreePriorChoices(boolean isMultiLocus, boolean isTipCalibrated) {
+    public void setTreePriorChoices(boolean isTipCalibrated) {
         TreePriorType type = (TreePriorType) treePriorCombo.getSelectedItem();
         treePriorCombo.removeAllItems();
 
@@ -459,11 +481,6 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 treePriorCombo.addItem(new JSeparator(JSeparator.HORIZONTAL));
             }
         }
-
-        // would be much better to disable these rather than removing them
-//        if (isMultiLocus) {
-//            treePriorCombo.removeItem(TreePriorType.SKYLINE);
-//        }
 
         if (isTipCalibrated) {
             // remove models that require contemporaneous tips...

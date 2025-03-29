@@ -28,6 +28,7 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.types.*;
+import dr.evolution.util.Taxa;
 import dr.evomodel.speciation.CalibrationPoints;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.speciation.BirthDeathEpidemiologyModelParser;
@@ -57,6 +58,8 @@ public class PartitionTreePrior extends PartitionOptions {
     private PopulationSizeModelType populationSizeModel = PopulationSizeModelType.CONTINUOUS_CONSTANT;
     private CalibrationPoints.CorrectionType calibCorrectionType = CalibrationPoints.CorrectionType.EXACT;
     private boolean fixedTree = false;
+    private Taxa subtreeTaxonSet = null;
+    private TreePriorType subtreePrior = null;
 
     public PartitionTreePrior(BeautiOptions options, PartitionTreeModel treeModel) {
         super(options, treeModel.getName());
@@ -570,4 +573,19 @@ public class PartitionTreePrior extends PartitionOptions {
         return options;
     }
 
+    public void setSubtreeTaxonSet(Taxa subtreeTaxonSet) {
+        this.subtreeTaxonSet = subtreeTaxonSet;
+    }
+
+    public Taxa getSubtreeTaxonSet() {
+        return subtreeTaxonSet;
+    }
+
+    public void setSubtreePrior(TreePriorType subtreePrior) {
+        this.subtreePrior = subtreePrior;
+    }
+
+    public TreePriorType getSubtreePrior() {
+        return subtreePrior;
+    }
 }

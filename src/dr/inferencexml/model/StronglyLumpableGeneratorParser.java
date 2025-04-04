@@ -13,7 +13,7 @@ import java.util.*;
 public class StronglyLumpableGeneratorParser extends AbstractXMLObjectParser {
 
     public static final String STATE_SET_PARAMETER = "stronglyLumpableGenerator";
-    public static final String STATE_SET = "stateSet";
+//    public static final String STATE_SET = "stateSet";
 //    public static final String STATE = "state";
 //    public static final String CODE = "code";
 

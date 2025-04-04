@@ -21,6 +21,8 @@ public class BastaInternalStorage {
     double[] h;
 
     final double[] sizes;
+    final double[] rates;
+
     final EigenDecomposition[] decompositions; // TODO flatten?
 
     private int currentNumCoalescentIntervals;
@@ -36,6 +38,7 @@ public class BastaInternalStorage {
         this.stateCount = stateCount;
 
         this.sizes = new double[2 * stateCount];
+        this.rates = new double[2 * stateCount];
         this.decompositions = new EigenDecomposition[1];
 
         resize(3 * treeNodeCount, maxNumCoalescentIntervals, null);

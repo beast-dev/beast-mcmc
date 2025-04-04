@@ -40,7 +40,8 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     private int currentOutputBuffer;
     private int maxOutputBuffer;
     private boolean updateStorage;
-
+    private int currentTransitionMatrixBuffer = 0;
+    private int storedTransitionMatrixBuffer = 0;
 
     public BeagleBastaLikelihoodDelegate(String name,
                                          Tree tree,
@@ -103,7 +104,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
 
         beagle = BastaFactory.loadBastaInstance(0, coalescentBufferCount, maxNumCoalescentIntervals,
                 currentPartialsCount, 0, stateCount,
-                1, 2, currentIntervalsCount, 1,
+                1, 2, 2 * currentIntervalsCount, 1,
                 1, resourceList, preferenceFlags, requirementFlags);
 
         eigenBufferHelper = new BufferIndexHelper(1, 0);
@@ -232,7 +233,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         if (PRINT_COMMANDS) {
             double[] matrix = new double[stateCount * stateCount];
             for (TransitionMatrixOperation operation : matrixOperations) {
-                getMatrix(operation.outputBuffer, matrix);
+                getTransitionMatrices(operation.outputBuffer, matrix);
                 System.err.println(operation + " " + new WrappedVector.Raw(matrix));
             }
         }
@@ -302,7 +303,8 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         beagle.getPartials(index, Beagle.NONE, partials);
     }
 
-    public void getMatrix(int index, double[] matrix) {
+    @Override
+    public void getTransitionMatrices(int index, double[] matrix) {
         assert index >= 0;
         assert matrix != null;
         assert matrix.length >= stateCount * stateCount;
@@ -349,20 +351,28 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     public void storeState() {
         //populationSizesBufferHelper.storeState();
         //eigenBufferHelper.storeState();
+        storedTransitionMatrixBuffer = currentTransitionMatrixBuffer;
     }
 
     @Override
     public void restoreState() {
         //populationSizesBufferHelper.restoreState();
        // eigenBufferHelper.restoreState();
+        currentTransitionMatrixBuffer = storedTransitionMatrixBuffer;
+    }
+
+
+    public void flipTransitionMatrixBuffer(List<TransitionMatrixOperation> matrixOperations) {
+        currentTransitionMatrixBuffer = (currentTransitionMatrixBuffer == 0 ? matrixOperations.size() : 0);
     }
 
     private void vectorizeTransitionMatrixOperations(List<TransitionMatrixOperation> matrixOperations,
                                                      int[] transitionMatrixIndices,
                                                      double[] branchLengths) {
         int k = 0;
+        int currentTMBuffer = currentTransitionMatrixBuffer;
         for (TransitionMatrixOperation op : matrixOperations) {
-            transitionMatrixIndices[k] = op.outputBuffer; // TODO double-buffer
+            transitionMatrixIndices[k] = op.outputBuffer + currentTMBuffer; // TODO double-buffer
             branchLengths[k] = op.time;
             ++k;
         }
@@ -386,7 +396,8 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         }
     }
 
-    private void vectorizeBranchIntervalOperations(List<Integer> intervalStarts,
+
+   public void vectorizeBranchIntervalOperations(List<Integer> intervalStarts,
                                                    List<BranchIntervalOperation> branchIntervalOperations,
                                                    int[] operations,
                                                    int[] intervals,
@@ -403,23 +414,24 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
 
         // TODO double-buffer
         int k = 0;
+        int currentTMBuffer = currentTransitionMatrixBuffer;
         for (BranchIntervalOperation op : branchIntervalOperations) {
 
             if (CACHE_FRIENDLY) {
                 operations[k] = map(op.outputBuffer);
                 operations[k + 1] = map(op.inputBuffer1);
-                operations[k + 2] = op.inputMatrix1;
+                operations[k + 2] = op.inputMatrix1 + currentTMBuffer;
                 operations[k + 3] = map(op.inputBuffer2);
-                operations[k + 4] = op.inputMatrix2;
+                operations[k + 4] = op.inputMatrix2 + currentTMBuffer;
                 operations[k + 5] = map(op.accBuffer1);
                 operations[k + 6] = map(op.accBuffer2);
                 operations[k + 7] = op.intervalNumber;
             } else {
                 operations[k] = op.outputBuffer;
                 operations[k + 1] = op.inputBuffer1;
-                operations[k + 2] = op.inputMatrix1;
+                operations[k + 2] = op.inputMatrix1 + currentTMBuffer;
                 operations[k + 3] = op.inputBuffer2;
-                operations[k + 4] = op.inputMatrix2;
+                operations[k + 4] = op.inputMatrix2 + currentTMBuffer;
                 operations[k + 5] = op.accBuffer1;
                 operations[k + 6] = op.accBuffer2;
                 operations[k + 7] = op.intervalNumber;

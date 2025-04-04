@@ -71,11 +71,26 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         throw new RuntimeException("Not yet implemented");
     }
 
+    default void getTransitionMatrices(int index, double[] partials) {
+        assert index >= 0;
+        assert partials != null;
+
+        throw new RuntimeException("Not yet implemented");
+    }
+
     default void updateEigenDecomposition(int index, EigenDecomposition decomposition, boolean flip) {
         throw new RuntimeException("Not yet implemented");
     }
 
     default void updatePopulationSizes(int index, double[] sizes, boolean flip) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    default void updateGrowthRates(int index, double[] rates, boolean flip) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    default void updateIsExponentialGrowth(boolean isExponentialGrowth) {
         throw new RuntimeException("Not yet implemented");
     }
 
@@ -127,6 +142,9 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
             return timingEnabled;
         }
     }
+
+    void flipTransitionMatrixBuffer(List<TransitionMatrixOperation> matrixOperations);
+
 
     abstract class AbstractBastaLikelihoodDelegate extends AbstractModel implements BastaLikelihoodDelegate, Citable {
 
@@ -249,11 +267,12 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
 
             while (!done) {
                 if (timingInfo.isTimingEnabled()) {
-                    long startTP = System.nanoTime();
-                    computeTransitionProbabilityOperations(matrixOperation, Mode.LIKELIHOOD);
-                    long endTP = System.nanoTime();
-                    timingInfo.recordTime("computeTransitionProbabilityOperations", endTP - startTP);
-
+//                    if (!transitionMatricesStored) {
+                        long startTP = System.nanoTime();
+                        computeTransitionProbabilityOperations(matrixOperation, Mode.LIKELIHOOD);
+                        long endTP = System.nanoTime();
+                        timingInfo.recordTime("computeTransitionProbabilityOperations", endTP - startTP);
+//                    }
                     long startBI = System.nanoTime();
                     computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperation, Mode.LIKELIHOOD, likelihood);
                     long endBI = System.nanoTime();

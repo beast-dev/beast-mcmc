@@ -25,7 +25,6 @@
 
 package dr.evomodel.coalescent;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
-import dr.evomodelxml.coalescent.SingleTreeGriddedNodesTimeline;
 import dr.inference.model.*;
 import dr.util.Author;
 import dr.util.Citable;

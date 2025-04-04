@@ -57,22 +57,26 @@ public class StronglyLumpableCtmcRatesParser extends AbstractXMLObjectParser {
     private static final String LUMP = "lump";
     private static final String RATES = "rates";
     private static final String PROPORTIONS = "proportions";
+    public static final String NORMALIZE = "normalize";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         List<Lump> lumps = new ArrayList<>();
 
         DataType dataType = (DataType) xo.getChild(DataType.class);
+        Boolean normalize_choice = xo.getAttribute(NORMALIZE, false);
 
         for (XMLObject cxo : xo.getAllChildren(LUMP)) {
-            lumps.add(parseLump(cxo, dataType));
+            lumps.add(parseLump(cxo, dataType, normalize_choice));
         }
 
         if (lumps.size() < 2) {
             throw new XMLParseException("Must specify at least 2 lumps");
         }
 
-        Parameter rates = (Parameter) xo.getChild(Parameter.class);
+        //Parameter rates = (Parameter) xo.getChild(Parameter.class);
+        // TODO check with Marc: XT changed
+        Parameter rates = (Parameter) xo.getElementFirstChild(RATES);
 
         String name = xo.hasId() ? xo.getId() : LUMPABLE_MODEL;
 
@@ -80,7 +84,8 @@ public class StronglyLumpableCtmcRatesParser extends AbstractXMLObjectParser {
         return new StronglyLumpableCtmcRates(name, lumps, rates, dataType);
     }
 
-    private Lump parseLump(XMLObject xo, DataType dataType) throws XMLParseException {
+    // XT added boolean
+    private Lump parseLump(XMLObject xo, DataType dataType, Boolean normalize_choice) throws XMLParseException {
 
         String id = xo.getId();
 
@@ -110,10 +115,41 @@ public class StronglyLumpableCtmcRatesParser extends AbstractXMLObjectParser {
 //                parameter.setParameterValue(i, 1.0 / (double) size); // TODO remove magic values // comments added in generator code to explain why 1/size was set as default
 //            }
 
+            // TODO NORMALIZE ATTRIBUTE;// done by XT
+
+            if (normalize_choice == true) {
+                double sum = 0;
+
+                for (int j = 0; j < parameter.getDimension(); j++)
+                    sum += parameter.getParameterValue(j);
+
+                for (int j = 0; j < parameter.getDimension(); j++) {
+                    if (sum != 0)
+                        parameter.setParameterValue(j,
+                                parameter.getParameterValue(j) / sum);
+                    else
+                        parameter.setParameterValue(j,
+                                1.0 / parameter.getDimension());
+                }
+            }
+
+//
+//            // TODO BEAST class for this
+//            if (sum != 1.0) {
+//                System.out.println("Warning: Proportion from "+string+ " to"+ set.getId()+" sum is not 1. Sum = " + sum + ". Adjusting proportions.");
+//                System.out.print("New Proportions: ");
+//                for (double val : parameter.getValues()) {
+//                    System.out.print(val + " ");
+//                }
+//                System.out.println();
+//            }
+
+
+
             proportions.add(new Proportion(source, destination, parameter));
         }
 
-        // TODO Add in destination proportions of size == 1 automatically // XT already did this in generator code
+        // TODO Add in destination proportions of size == 1 automatically // XT did this in generator code
 
 
 

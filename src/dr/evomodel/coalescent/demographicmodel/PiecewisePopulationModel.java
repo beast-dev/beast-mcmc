@@ -1,7 +1,8 @@
 /*
  * PiecewisePopulationModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent.demographicmodel;
@@ -36,9 +38,8 @@ import dr.inference.model.Statistic;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: PiecewisePopulationModel.java,v 1.13 2005/05/24 20:25:57 rambaut Exp $
  */
-public class PiecewisePopulationModel extends DemographicModel {
+public class PiecewisePopulationModel extends DemographicModel implements RescaleAwareDemographic {
 
     //
     // Public stuff
@@ -72,7 +73,7 @@ public class PiecewisePopulationModel extends DemographicModel {
         if (isLinear) {
             piecewiseFunction = new PiecewiseLinearPopulation(epochLengths, new double[N0Parameter.getDimension()], units);
         } else {
-            piecewiseFunction = new PiecewiseConstantPopulation(epochLengths, new double[N0Parameter.getDimension()], units);
+            piecewiseFunction = new PiecewiseConstantPopulation(epochLengths, N0Parameter.getParameterValues(), units);
         }
     }
 
@@ -164,6 +165,38 @@ public class PiecewisePopulationModel extends DemographicModel {
 
     protected void acceptState() {
     } // no additional state needs accepting
+
+    @Override
+    public double[] rescaleInterval(double[] intervals, double[] targetIntensityIntervalProducts) {
+
+        if (!(piecewiseFunction instanceof PiecewiseConstantPopulation)) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        PiecewiseConstantPopulation piecewiseConstantPopulation = (PiecewiseConstantPopulation) piecewiseFunction;
+
+        double[] scaledIntervals = new double[intervals.length];
+
+        int currentEpochIndex = 0;
+        for (int i = 0; i < intervals.length; i++) {
+            if (intervals[i] == 0) {
+                scaledIntervals[i] = 0;
+            } else {
+                double accumulatedProduct = 0;
+                double accumulatedIntervalLength = 0;
+                while(accumulatedProduct + piecewiseConstantPopulation.getEpochDuration(currentEpochIndex) / piecewiseConstantPopulation.getEpochDemographic(currentEpochIndex) < targetIntensityIntervalProducts[i]) {
+                    accumulatedProduct += piecewiseConstantPopulation.getEpochDuration(currentEpochIndex) / piecewiseConstantPopulation.getEpochDemographic(currentEpochIndex);
+                    accumulatedIntervalLength += piecewiseConstantPopulation.getEpochDuration(currentEpochIndex);
+                    currentEpochIndex++;
+                }
+                final double remainingProduct = targetIntensityIntervalProducts[i] - accumulatedProduct;
+                accumulatedIntervalLength += remainingProduct * piecewiseConstantPopulation.getEpochDemographic(currentEpochIndex);
+                scaledIntervals[i] = accumulatedIntervalLength;
+            }
+        }
+
+        return scaledIntervals;
+    }
 
     public class GrowthRateStatistic extends Statistic.Abstract {
 

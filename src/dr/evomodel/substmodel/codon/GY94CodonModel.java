@@ -1,7 +1,8 @@
 /*
  * GY94CodonModel.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.substmodel.codon;
@@ -45,7 +47,6 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Marc A. Suchard
- * @version $Id: YangCodonModel.java,v 1.21 2005/05/24 20:25:58 rambaut Exp $
  */
 public class GY94CodonModel extends AbstractCodonModel implements Citable,
         ParameterReplaceableSubstitutionModel, DifferentiableSubstitutionModel {
@@ -245,17 +246,27 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
     public ParameterReplaceableSubstitutionModel factory(List<Parameter> oldParameters, List<Parameter> newParameters) {
         Parameter omega = omegaParameter;
         Parameter kappa = kappaParameter;
-        FrequencyModel frequencyModel = freqModel;
+        FrequencyModel frequencies = freqModel;
         for (int i = 0; i < oldParameters.size(); i++) {
             Parameter oldParameter = oldParameters.get(i);
             Parameter newParameter = newParameters.get(i);
             if (oldParameter == omegaParameter) {
                 omega = newParameter;
-            } else {
-                throw new RuntimeException("Parameter not found in GY94Codon SubstitutionModel.");
+            }
+
+            if (oldParameter == kappaParameter) {
+                kappa = newParameter;
+            }
+
+            if (oldParameter == freqModel.getFrequencyParameter()) {
+                frequencies = new FrequencyModel(freqModel.getDataType(), newParameter);
             }
         }
-        return new GY94CodonModel(codonDataType, omega, kappa, frequencyModel);
+        if (omega == omegaParameter && kappa == kappaParameter && frequencies == freqModel) {
+            return this;
+        } else {
+            return new GY94CodonModel(codonDataType, omega, kappa, frequencies);
+        }
     }
 
 

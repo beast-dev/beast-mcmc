@@ -1,7 +1,8 @@
 /*
  * GeneralDataType.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.datatype;
@@ -34,7 +36,6 @@ import java.util.*;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: GeneralDataType.java,v 1.11 2005/05/24 20:25:56 rambaut Exp $
  */
 public class GeneralDataType extends DataType implements Identifiable {
 
@@ -42,6 +43,8 @@ public class GeneralDataType extends DataType implements Identifiable {
     public static final String DESCRIPTION = GENERAL_DATA_TYPE;
     public static final int TYPE = GENERAL;
     public static final GeneralDataType INSTANCE = new GeneralDataType();
+
+    public static final String DELIMITER = ":";
 
     // for BEAUti trait PartitionSubstitutionModel
     public GeneralDataType() {}
@@ -183,6 +186,17 @@ public class GeneralDataType extends DataType implements Identifiable {
         }
         return stateMap.get(code).number;
     }
+
+    public boolean isDelimited() {
+        for (State state : states) {
+            if (state.code.length() > 1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public String getDelimiter() { return DELIMITER; }
 
     /**
      * Override this function to cast to string codes...

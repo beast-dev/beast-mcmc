@@ -1,14 +1,51 @@
+/*
+ * MCMCTest.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package test.dr.inference.mcmc;
 
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
+import dr.evomodel.branchmodel.HomogeneousBranchModel;
+import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.WilsonBalding;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.PreOrderSettings;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.oldevomodel.sitemodel.GammaSiteModel;
-import dr.oldevomodel.substmodel.FrequencyModel;
-import dr.oldevomodel.substmodel.HKY;
 import dr.oldevomodel.treelikelihood.TreeLikelihood;
 import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
 import dr.oldevomodelxml.substmodel.HKYParser;
@@ -57,24 +94,18 @@ public class MCMCTest extends TraceCorrelationAssert {
 
 
     public void testMCMC() {
-        // Sub model
-        Parameter freqs = new Parameter.Default(alignment.getStateFrequencies());//new double[]{0.25, 0.25, 0.25, 0.25});
         Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
 
-        FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
-        HKY hky = new HKY(kappa, f);
+        dr.evomodel.substmodel.FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, new Parameter.Default(alignment.getStateFrequencies()));
+        dr.evomodel.substmodel.nucleotide.HKY hky = new HKY(kappa, f);
 
         //siteModel
-        GammaSiteModel siteModel = new GammaSiteModel(hky);
-        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        siteModel.setMutationRateParameter(mu);
+        GammaSiteRateModel siteRateModel = new GammaSiteRateModel("homogeneious");
 
         //treeLikelihood
-        SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
+        TreeDataLikelihood treeDataLikelihood = getTreeDataLikelihood(hky, siteRateModel);
 
-        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
-                false, false, true, false, false);
-        treeLikelihood.setId(TreeLikelihoodParser.TREE_LIKELIHOOD);
+        treeDataLikelihood.setId(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD);
 
         // Operators
         OperatorSchedule schedule = new SimpleOperatorSchedule();
@@ -82,9 +113,6 @@ public class MCMCTest extends TraceCorrelationAssert {
         MCMCOperator operator = new ScaleOperator(kappa, 0.5);
         operator.setWeight(1.0);
         schedule.addOperator(operator);
-
-//        Parameter rootParameter = treeModel.createNodeHeightsParameter(true, false, false);
-//        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, AdaptationMode.ADAPTATION_ON, 1.0);
 
         Parameter rootHeight = ((DefaultTreeModel)treeModel).getRootHeightParameter();
         rootHeight.setId(TREE_HEIGHT);
@@ -116,12 +144,12 @@ public class MCMCTest extends TraceCorrelationAssert {
 
         MCLogger[] loggers = new MCLogger[2];
         loggers[0] = new MCLogger(formatter, 1000, false);
-        loggers[0].add(treeLikelihood);
+        loggers[0].add(treeDataLikelihood);
         loggers[0].add(rootHeight);
         loggers[0].add(kappa);
 
         loggers[1] = new MCLogger(new TabDelimitedFormatter(System.out), 100000, false);
-        loggers[1].add(treeLikelihood);
+        loggers[1].add(treeDataLikelihood);
         loggers[1].add(rootHeight);
         loggers[1].add(kappa);
 
@@ -130,7 +158,7 @@ public class MCMCTest extends TraceCorrelationAssert {
         MCMCOptions options = new MCMCOptions(10000000);
 
         mcmc.setShowOperatorAnalysis(true);
-        mcmc.init(options, treeLikelihood, schedule, loggers);
+        mcmc.init(options, treeDataLikelihood, schedule, loggers);
         mcmc.run();
 
         // time
@@ -148,7 +176,7 @@ public class MCMCTest extends TraceCorrelationAssert {
 //		<expectation name="treeModel.rootHeight" value="6.42048E-2"/>
 //		<expectation name="hky.kappa" value="32.8941"/>
 
-        TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihoodParser.TREE_LIKELIHOOD));
+        TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD));
         assertExpectation(TreeLikelihoodParser.TREE_LIKELIHOOD, likelihoodStats, -1815.75);
 
         TraceCorrelation treeHeightStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TREE_HEIGHT));
@@ -158,6 +186,27 @@ public class MCMCTest extends TraceCorrelationAssert {
         assertExpectation(HKYParser.KAPPA, kappaStats, 32.8941);
     }
 
+    private TreeDataLikelihood getTreeDataLikelihood(SubstitutionModel substitutionModel, GammaSiteRateModel siteRateModel) {
+        SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
+
+        DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+                treeModel,
+                patterns,
+                new HomogeneousBranchModel(substitutionModel),
+                siteRateModel,
+                false,
+                false,
+                PartialsRescalingScheme.DEFAULT,
+                false,
+                new PreOrderSettings(false, false, false, true)
+        );
+
+        TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(
+                dataLikelihoodDelegate,
+                treeModel,
+                new DefaultBranchRateModel());
+        return treeDataLikelihood;
+    }
     public static Test suite() {
         return new TestSuite(MCMCTest.class);
     }

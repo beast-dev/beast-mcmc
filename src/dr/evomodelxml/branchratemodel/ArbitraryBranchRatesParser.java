@@ -1,7 +1,8 @@
 /*
  * ArbitraryBranchRatesParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.branchratemodel;
@@ -50,7 +52,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
     public static final String MULTIPLIER = "multiplier";
     public static final String CENTER_AT_ONE = "centerAtOne";
     public static final String RANDOMIZE_RATES = "randomizeRates";
-    public  static final String RANDOM_SCALE = "randomScale";
+    public static final String RANDOM_SCALE = "randomScale";
 
     public static final String INCLUDE_ROOT = "includeRoot";
     public static final String RANDOM_INDICATOR = "randomIndicator"; // keep some rates fixed but randomize others

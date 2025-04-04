@@ -1,7 +1,8 @@
 /*
  * Tree.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.tree;
@@ -30,10 +32,7 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.util.Attributable;
 import dr.util.Identifiable;
-import jebl.evolution.graphs.Node;
-import jebl.evolution.trees.SimpleRootedTree;
 
-import java.text.NumberFormat;
 import java.util.*;
 
 /**
@@ -41,7 +40,6 @@ import java.util.*;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: Tree.java,v 1.59 2006/09/08 17:34:23 rambaut Exp $
  */
 public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
@@ -117,20 +115,26 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
     /**
      * @param node the node to retrieve the rate of
      * @return the rate of node in the tree.
+     * @deprecated this method should not be used and will be removed at some point
      */
+    @Deprecated
     double getNodeRate(NodeRef node);
 
     /**
      * @param node the node whose attribute is being fetched.
      * @param name the name of the attribute of interest.
      * @return an object representing the named attributed for the given node.
+     * @deprecated this method should not be used and will be removed at some point
      */
+    @Deprecated
     Object getNodeAttribute(NodeRef node, String name);
 
     /**
      * @param node the node whose attribute is being fetched.
      * @return an interator of attribute names available for this node.
+     * @deprecated this method should not be used and will be removed at some point
      */
+    @Deprecated
     Iterator getNodeAttributeNames(NodeRef node);
 
     /**
@@ -163,7 +167,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
     /**
      * @return a clone of this tree
      */
-    public Tree getCopy();
+    Tree getCopy();
 
     static double getTreeLength(Tree tree) {
         double treeLength = 0;

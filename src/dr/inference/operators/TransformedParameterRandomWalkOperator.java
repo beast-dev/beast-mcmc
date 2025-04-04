@@ -1,7 +1,8 @@
 /*
  * TransformedParameterRandomWalkOperator.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -86,7 +88,7 @@ public class TransformedParameterRandomWalkOperator extends RandomWalkOperator {
         if (checkValid) { // GH: below is sloppy, but best I could do without refactoring how Parameter handles bounds
             if (generalBounds == null && !parameter.isWithinBounds()) {
                 return Double.NEGATIVE_INFINITY;
-            } else if (!generalBounds.isWithinBounds(parameter.getParameterValues())) {
+            } else if (generalBounds != null &&  !generalBounds.isWithinBounds(parameter.getParameterValues())) {
                 return Double.NEGATIVE_INFINITY;
             }
         }

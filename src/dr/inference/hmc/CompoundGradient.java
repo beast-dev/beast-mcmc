@@ -1,7 +1,8 @@
 /*
  * CompoundGradient.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.hmc;
@@ -48,11 +50,11 @@ public class CompoundGradient implements GradientWrtParameterProvider, Derivativ
     private final DerivativeOrder highestOrder;
     private final ParallelGradientExecutor parallelExecutor;
 
-    CompoundGradient(List<GradientWrtParameterProvider> derivativeList) {
+    public CompoundGradient(List<GradientWrtParameterProvider> derivativeList) {
         this(derivativeList, 0);
     }
 
-    CompoundGradient(List<GradientWrtParameterProvider> derivativeList, int threadCount) {
+    public CompoundGradient(List<GradientWrtParameterProvider> derivativeList, int threadCount) {
 
         this.derivativeList = derivativeList;
 

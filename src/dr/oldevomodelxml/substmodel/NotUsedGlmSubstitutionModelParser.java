@@ -1,7 +1,8 @@
 /*
- * GLMSubstitutionModelParser.java
+ * NotUsedGlmSubstitutionModelParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.oldevomodelxml.substmodel;
@@ -55,7 +57,7 @@ public class NotUsedGlmSubstitutionModelParser extends AbstractXMLObjectParser {
 
         LogLinearModel glm = (LogLinearModel) xo.getChild(GeneralizedLinearModel.class);
 
-        int length = glm.getXBeta().length;
+        int length = glm.getRates().length;
 
         if (length != rateCount) {
             throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount) + " dimensions.  However GLM dimension is " + length);

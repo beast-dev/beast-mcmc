@@ -1,7 +1,8 @@
 /*
  * InitialTreeGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
@@ -113,9 +115,6 @@ public class InitialTreeGenerator extends Generator {
                 if (!options.hasIdenticalTaxa()) {
                     taxaId = partition.getPartitionTreeModel().getPrefix() + TaxaParser.TAXA;
                 }
-                if (partition instanceof PartitionPattern && ((PartitionPattern) partition).getPatterns().hasMask()) {
-                    taxaId = partition.getPrefix() + TaxaParser.TAXA;
-                }
 
                 writer.writeComment("Generate a random starting tree under the coalescent process");
                 if (options.taxonSets != null && options.taxonSets.size() > 0) {
@@ -134,6 +133,7 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_SIMULATOR);
                 }
                 break;
+
             default:
                 throw new IllegalArgumentException("Unknown StartingTreeType");
 
@@ -144,11 +144,7 @@ public class InitialTreeGenerator extends Generator {
 
         switch (model.getStartingTreeType()) {
             case USER:
-                if (model.isNewick()) {
-                    writeNewickTree(model.getUserStartingTree(), writer);
-                } else {
-                    writeSimpleTree(model.getUserStartingTree(), writer);
-                }
+                writeNewickTree(model.getUserStartingTree(), writer);
                 break;
 
             case UPGMA:
@@ -254,7 +250,7 @@ public class InitialTreeGenerator extends Generator {
 
         for (Taxa taxa2 : options.taxonSets) {
             boolean sameTree = model.equals(options.taxonSetsTreeModel.get(taxa2));
-            boolean isMono = options.taxonSetsMono.get(taxa2);
+            boolean isMono = options.taxonSetsMono.get(taxa2) != null;
             boolean hasHeight = options.taxonSetsHeights.get(taxa2) != null;
             boolean isSubset = taxa.containsAll(taxa2);
             if (sameTree && (isMono || hasHeight) && taxa2 != taxa && isSubset) {

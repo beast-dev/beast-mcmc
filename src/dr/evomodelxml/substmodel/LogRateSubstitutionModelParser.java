@@ -1,7 +1,8 @@
 /*
- * OldGLMSubstitutionModelParser.java
+ * LogRateSubstitutionModelParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.substmodel;
@@ -32,6 +34,7 @@ import dr.evomodel.substmodel.LogAdditiveCtmcRateProvider;
 import dr.evomodel.substmodel.LogRateSubstitutionModel;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.Parameter;
+import dr.util.Transform;
 import dr.xml.*;
 
 /**
@@ -42,11 +45,19 @@ import dr.xml.*;
 public class LogRateSubstitutionModelParser extends AbstractXMLObjectParser {
 
     public static final String LOG_RATE_SUBSTITUTION_MODEL = "logRateSubstitutionModel";
+    private static final String TRANSFORMED_RATE_SUBSTITUTION_MODEL = "transformedRateSubstitutionModel";
     private static final String NORMALIZE = "normalize";
     private static final String LOG_RATES = "logRates";
+    private static final String TRANSFORMED_RATES = "transformedRates";
+    private static final String RATE_PROVIDER = "rateProvider";
+    public static final String SCALE_RATES_BY_FREQUENCIES = "scaleRatesByFrequencies";
 
     public String getParserName() {
         return LOG_RATE_SUBSTITUTION_MODEL;
+    }
+
+    public String[] getParserNames() {
+        return new String[] {LOG_RATE_SUBSTITUTION_MODEL, TRANSFORMED_RATE_SUBSTITUTION_MODEL};
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -57,16 +68,37 @@ public class LogRateSubstitutionModelParser extends AbstractXMLObjectParser {
 
         int rateCount = (dataType.getStateCount() - 1) * dataType.getStateCount(); // TODO not used anymore
 
-        Parameter logRates = (Parameter) xo.getElementFirstChild(LOG_RATES);
+        final LogAdditiveCtmcRateProvider lrm;
+        if (xo.hasChildNamed(LOG_RATES)) {
+            Parameter logRates = (Parameter) xo.getElementFirstChild(LOG_RATES);
 
-        int length = logRates.getDimension();
-        if (length != rateCount) {
-            throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount) + " dimensions. However the log rates dimension is " + length + ".");
+            int length = logRates.getDimension();
+            if (length != rateCount) {
+                throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount) + " dimensions. However the log rates dimension is " + length + ".");
+            }
+
+            lrm = new LogAdditiveCtmcRateProvider.DataAugmented.Basic(logRates.getId(), logRates);
+        } else if (xo.hasChildNamed(TRANSFORMED_RATES)){
+            XMLObject cxo = xo.getChild(TRANSFORMED_RATES);
+            Parameter transformedRates = (Parameter) cxo.getChild(Parameter.class);
+            Transform.ParsedTransform parsedTransform = (Transform.ParsedTransform) cxo.getChild(Transform.ParsedTransform.class);
+
+            int length = transformedRates.getDimension();
+            if (length != rateCount) {
+                throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount) + " dimensions. However the transformed rates dimension is " + length + ".");
+            }
+
+            lrm = new LogAdditiveCtmcRateProvider.DataAugmented.ArbitraryTransform(
+                    transformedRates.getId(), transformedRates, parsedTransform.transform);
+        } else if (xo.hasChildNamed(RATE_PROVIDER)) {
+            XMLObject cxo = xo.getChild(RATE_PROVIDER);
+            lrm = (LogAdditiveCtmcRateProvider)
+                    cxo.getChild(LogAdditiveCtmcRateProvider.class);
+        } else {
+            throw new XMLParseException("Unable to parse '" + xo.getId() + "'");
         }
 
-        LogAdditiveCtmcRateProvider lrm = new LogAdditiveCtmcRateProvider.DataAugmented.Basic(logRates.getId(), logRates);
-
-        XMLObject cxo = xo.getChild(dr.oldevomodelxml.substmodel.ComplexSubstitutionModelParser.ROOT_FREQUENCIES);
+        XMLObject cxo = xo.getChild(ComplexSubstitutionModelParser.ROOT_FREQUENCIES);
         FrequencyModel rootFreq = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
         if (dataType != rootFreq.getDataType()) {
@@ -74,9 +106,11 @@ public class LogRateSubstitutionModelParser extends AbstractXMLObjectParser {
         }
 
         boolean normalize = xo.getAttribute(NORMALIZE, true);
+        boolean scaleRatesByFrequencies = xo.getAttribute(SCALE_RATES_BY_FREQUENCIES, true);
 
         LogRateSubstitutionModel model = new LogRateSubstitutionModel(xo.getId(), dataType, rootFreq, lrm);
         model.setNormalization(normalize);
+        model.setScaleRatesByFrequencies(scaleRatesByFrequencies);
 
         return model;
     }
@@ -104,7 +138,17 @@ public class LogRateSubstitutionModelParser extends AbstractXMLObjectParser {
                     new ElementRule(DataType.class)
             ),
             new ElementRule(ComplexSubstitutionModelParser.ROOT_FREQUENCIES, FrequencyModel.class),
-            new ElementRule(LOG_RATES, Parameter.class),
+            new XORRule(
+                    new XMLSyntaxRule[]{
+                            new ElementRule(LOG_RATES, Parameter.class),
+                            new ElementRule(TRANSFORMED_RATES, new XMLSyntaxRule[] {
+                                    new ElementRule(Parameter.class),
+                                    new ElementRule(Transform.ParsedTransform.class),
+                            }),
+                            new ElementRule(RATE_PROVIDER, LogAdditiveCtmcRateProvider.class),
+                    }
+            ),
             AttributeRule.newBooleanRule(NORMALIZE, true),
+            AttributeRule.newBooleanRule(SCALE_RATES_BY_FREQUENCIES, true),
     };
 }

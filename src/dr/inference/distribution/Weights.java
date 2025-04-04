@@ -1,25 +1,55 @@
+/*
+ * Weights.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.inference.distribution;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
-
-import java.util.Arrays;
 
 public class Weights extends AbstractModel implements RandomField.WeightProvider {
 
     private final TreeModel tree;
     private BigFastTreeIntervals intervals;
+    private final boolean rescaleByRootHeight;
 
     private boolean indicesKnown;
 
     private int[] indices;
 
     public Weights(TreeModel tree) {
+        this(tree, false);
+    }
+
+    public Weights(TreeModel tree, boolean rescaleByRootHeight) {
         super("just work");
         this.tree = tree;
+        this.rescaleByRootHeight = rescaleByRootHeight;
         intervals = new BigFastTreeIntervals((TreeModel) tree);
         addModel(intervals);
 
@@ -46,9 +76,16 @@ public class Weights extends AbstractModel implements RandomField.WeightProvider
                 index1 = temp;
             }
 
-            return 2/(intervals.getInterval(index1) + intervals.getInterval(index2));
+            return 2/(intervals.getInterval(index1) + intervals.getInterval(index2)) * getFieldScalar();
         }
 
+    }
+
+    private double getFieldScalar() {
+        if (rescaleByRootHeight) {
+            return tree.getNodeHeight(tree.getRoot());
+        }
+        return 1.0;
     }
 
 
@@ -92,15 +129,6 @@ public class Weights extends AbstractModel implements RandomField.WeightProvider
 //    public void removeModelListener(ModelListener listener) {
 //
 //    }
-
-
-
-
-
-
-
-
-
 
 
     @Override

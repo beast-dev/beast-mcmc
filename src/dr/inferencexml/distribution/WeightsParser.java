@@ -1,7 +1,8 @@
 /*
- * GaussianMarkovRandomFieldParser.java
+ * WeightsParser.java
  *
- * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,36 +22,44 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.distribution;
 
+import dr.inference.distribution.RandomField;
 import dr.inference.distribution.Weights;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 import dr.evomodel.tree.TreeModel;
+
+import static dr.inferencexml.distribution.RandomFieldParser.WEIGHTS_RULE;
 
 public class WeightsParser extends AbstractXMLObjectParser {
 
     private static final String PARSER_NAME = "weightProvider";
-    private static final String TREE = "tree";
+    private static final String RESCALE_BY_ROOT_HEIGHT = "rescaleByRootHeight";
 
     public String getParserName() {
         return PARSER_NAME;
     }
 
-
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        boolean rescaleByRootHeight = xo.getAttribute(RESCALE_BY_ROOT_HEIGHT, false);
 
-        return new Weights(tree);
+        return new Weights(tree, rescaleByRootHeight);
     }
 
     @Override
-    public XMLSyntaxRule[] getSyntaxRules() {
-        return new XMLSyntaxRule[0];
-    }
+    public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+
+    private final XMLSyntaxRule[] rules = {
+            AttributeRule.newBooleanRule(RESCALE_BY_ROOT_HEIGHT, true),
+            new ElementRule(TreeModel.class)
+    };
 
     @Override
     public String getParserDescription() {

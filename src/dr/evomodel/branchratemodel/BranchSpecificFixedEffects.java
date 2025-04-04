@@ -1,3 +1,30 @@
+/*
+ * BranchSpecificFixedEffects.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.BranchRates;
@@ -18,6 +45,11 @@ import java.util.List;
  */
 public interface BranchSpecificFixedEffects {
 
+    String RATES_PRIOR = "ratesPrior";
+    String SCALE_PRIOR = "scalePrior";
+    String INTERCEPT_PRIOR = "interceptPrior";
+    String LOCATION_PRIOR = "locationPrior";
+
     double getEffect(final Tree tree, final NodeRef node);
 
     double[] getDesignVector(final Tree tree, final NodeRef node);
@@ -28,7 +60,7 @@ public interface BranchSpecificFixedEffects {
 
     int getDimension();
 
-    abstract class Base extends AbstractModel implements BranchSpecificFixedEffects {
+    abstract class Base extends AbstractModel implements BranchSpecificFixedEffects, Citable {
 
         public Base(String name) {
             super(name);
@@ -42,6 +74,40 @@ public interface BranchSpecificFixedEffects {
             }
             return result;
         }
+
+        @Override
+        public Citation.Category getCategory() {
+            return Citation.Category.MOLECULAR_CLOCK;
+        }
+
+        @Override
+        public String getDescription() {
+            return "Mixed effects clock model";
+        }
+
+        @Override
+        public List<Citation> getCitations() {
+            Citation citation = new Citation(
+                    new Author[]{
+                            new Author("M", "Bletsa"),
+                            new Author("MA", "Suchard"),
+                            new Author("X", "Ji"),
+                            new Author("S", "Gryseels"),
+                            new Author("B", "Vrancken"),
+                            new Author("G", "Baele"),
+                            new Author("M", "Worobey"),
+                            new Author("P", "Lemey")
+                    },
+                    "Divergence dating using mixed effects clock modelling: an application to HIV-1",
+                    2019,
+                    "Virus Evolution",
+                    5,
+                    "vez036",
+                    "10.1093/ve/vez036"
+            );
+            return Collections.singletonList(citation);
+        }
+
     }
 
     class None extends Base implements BranchSpecificFixedEffects {
@@ -98,6 +164,7 @@ public interface BranchSpecificFixedEffects {
         public int getDimension() {
             return 1;
         }
+
     }
 
     class Transformed extends Base implements BranchSpecificFixedEffects {

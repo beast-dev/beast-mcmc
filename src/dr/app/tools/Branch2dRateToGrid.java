@@ -1,7 +1,8 @@
 /*
  * Branch2dRateToGrid.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.tools;
@@ -901,7 +903,7 @@ public class Branch2dRateToGrid {
     }
 
     private void outputGridInfo() {
-        StringBuffer sb = new StringBuffer("# grid info\n");
+        StringBuilder sb = new StringBuilder("# grid info\n");
         sb.append("# lat min (Y)").append(sep).append(latMin);
         sb.append("\n");
         sb.append("# lat max (Y)").append(sep).append(latMax);
@@ -927,7 +929,7 @@ public class Branch2dRateToGrid {
 
     private void printGrid(double array[][]) {
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (int a = 0; a < array.length; a++) {
             for (int b = 0; b < array[0].length; b++) {
                 sb.append(array[a][b]).append(sep);
@@ -1907,7 +1909,7 @@ public class Branch2dRateToGrid {
         public String toString() {
             if (!isMultivariate)
                 return obj.toString();
-            StringBuffer sb = new StringBuffer(array[0].toString());
+            StringBuilder sb = new StringBuilder(array[0].toString());
             for (int i = 1; i < array.length; i++)
                 sb.append("\t").append(array[i]);
             return sb.toString();

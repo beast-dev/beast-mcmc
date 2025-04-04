@@ -1,7 +1,8 @@
 /*
  * Intervals.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.coalescent;
 
 import dr.evolution.util.Units;
+import dr.inference.model.Variable;
 
 import java.util.Arrays;
 
@@ -34,9 +37,8 @@ import java.util.Arrays;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: Intervals.java,v 1.19 2005/09/21 18:47:58 gerton Exp $
  */
-public class Intervals implements IntervalList {
+public class Intervals implements MutableIntervalList {
 
 
     public Intervals(int maxEventCount,boolean eventsNeedSorting) {
@@ -60,19 +62,14 @@ public class Intervals implements IntervalList {
         this(maxEventCount, true);
     }
 
-    public void copyIntervals(Intervals source) {
+    @Override
+    public void copyIntervals(MutableIntervalList intervalList) {
+        Intervals source = (Intervals)intervalList;
         intervalsKnown = source.intervalsKnown;
         eventCount = source.eventCount;
         sampleCount = source.sampleCount;
         intervalCount = source.intervalCount;
         startTime = source.startTime;
-
-        //don't copy the actual events..
-        /*
-          for (int i = 0; i < events.length; i++) {
-              events[i].time = source.events[i].time;
-              events[i].type = source.events[i].type;
-          }*/
 
         if (intervalsKnown) {
             System.arraycopy(source.intervals, 0, intervals, 0, intervals.length);

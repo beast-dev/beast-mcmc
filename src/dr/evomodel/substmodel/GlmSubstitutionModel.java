@@ -1,7 +1,8 @@
 /*
- * OldGLMSubstitutionModel.java
+ * GlmSubstitutionModel.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.substmodel;
@@ -69,12 +71,12 @@ public class GlmSubstitutionModel extends ComplexSubstitutionModel
     }
 
     protected void setupRelativeRates(double[] rates) {
-        System.arraycopy(glm.getXBeta(),0,rates,0,rates.length);
+        System.arraycopy(glm.getRates(),0,rates,0,rates.length);
     }
 
     @Override
     public Set<Likelihood> getLikelihoodSet() {
-        return new HashSet<>(Arrays.asList(this, glm));
+        return new HashSet<>(Collections.singletonList(this));
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -189,15 +191,9 @@ public class GlmSubstitutionModel extends ComplexSubstitutionModel
 
                 }
             }
-
-//            final double chainRule = getChainRule();
-////            double[][] design = glm.getX(effect);
-//
-//            for (int i = 0; i < differentialRates.length; ++i) {
-//                differentialRates[i] = covariate[i] / normalizingConstant * chainRule;
-//            }
         }
 
+        @SuppressWarnings("unused")
         double getChainRule() {
             return Math.exp(glm.getFixedEffect(fixedEffectIndex).getParameterValue(dim));
         }

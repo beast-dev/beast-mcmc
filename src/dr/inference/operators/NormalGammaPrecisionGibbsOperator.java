@@ -1,7 +1,8 @@
 /*
  * NormalGammaPrecisionGibbsOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -61,6 +63,13 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
         this.prior = prior;
         this.working = working;
+
+        if (indices == null) {
+            indices = new int[precisionParameter.getDimension()];
+            for (int i = 0; i < precisionParameter.getDimension(); ++i) {
+                indices[i] = i;
+            }
+        }
         this.indices = indices;
 
         setWeight(weight);
@@ -100,11 +109,11 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
         return sb.toString();
     }
 
-    static class GammaParametrization implements GammaStatisticsProvider {
+    public static class GammaParametrization implements GammaStatisticsProvider {
         private final double rate;
         private final double shape;
 
-        GammaParametrization(double mean, double variance) {
+        public GammaParametrization(double mean, double variance) {
             if (mean == 0) {
                 rate = 0;
                 shape = -0.5; // Uninformative prior
@@ -114,7 +123,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
             }
         }
 
-        GammaParametrization(Distribution distribution) {
+        public GammaParametrization(Distribution distribution) {
             this(distribution.mean(), distribution.variance());
         }
 

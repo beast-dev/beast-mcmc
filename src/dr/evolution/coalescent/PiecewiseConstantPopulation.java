@@ -1,7 +1,8 @@
 /*
  * PiecewiseConstantPopulation.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.coalescent;
@@ -146,8 +148,47 @@ public class PiecewiseConstantPopulation extends DemographicFunction.Abstract {
     }
 
     public double getInverseIntensity(double x) {
-        throw new RuntimeException("Not implemented!");
+// TODO write down error cases
+//        if (cif != null) {
+//            if (!intensitiesKnown) {
+//                setIntervals(intervals, thetas);
+//            }
+//
+//            int epoch = Collections.binarySearch(cif, x);
+//
+//            if (epoch < 0) {
+//                epoch = -epoch - 1;
+//
+//                if (epoch > 0) {
+//                    return endTime.get(epoch - 1) + getInverseIntensity(epoch, x - cif.get(epoch - 1));
+//                } else {
+//                    assert epoch == 0;
+//                    return getInverseIntensity(0, x);
+//                }
+//            } else {
+//                return endTime.get(epoch);
+//            }
+//        } else {
+
+            double inverseIntensity = 0.0;
+            int epoch = 0;
+            double x1 = x;
+
+            while (x1 > getIntensity(epoch)) {
+                x1 -= getIntensity(epoch);
+                epoch += 1;
+                if (epoch == intervals.length) {
+                    break;
+                }
+            }
+
+            inverseIntensity += getEpochDuration(epoch) + x1 * getEpochDemographic(epoch + 1);
+//            inverseIntensity += getInverseIntensity(epoch, x1);
+
+            return inverseIntensity;
+//        }
     }
+
 
     public double getUpperBound(int i) {
         return 1e9;

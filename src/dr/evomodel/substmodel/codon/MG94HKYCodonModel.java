@@ -1,7 +1,8 @@
 /*
  * MG94HKYCodonModel.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.substmodel.codon;
@@ -234,7 +236,7 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
         Parameter beta = betaParameter;
         Parameter kappa = kappaParameter;
 
-        FrequencyModel frequencyModel = freqModel;
+        FrequencyModel frequencies = freqModel;
 
         assert(oldParameters.size() == newParameters.size());
 
@@ -249,11 +251,16 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
                 beta = newParameter;
             } else if (oldParameter == kappaParameter) {
                 kappa = newParameter;
-            } else {
-                throw new RuntimeException("Unknown parameter");
+            } else if (oldParameter == freqModel.getFrequencyParameter()) {
+                frequencies = new FrequencyModel(freqModel.getDataType(), newParameter);
             }
         }
-        return new MG94HKYCodonModel(codonDataType, alpha, beta, kappa, frequencyModel, options);
+
+        if (alpha == alphaParameter && beta == betaParameter && kappa == kappaParameter && frequencies == freqModel) {
+            return this;
+        } else {
+            return new MG94HKYCodonModel(codonDataType, alpha, beta, kappa, frequencies, options);
+        }
     }
 
     public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {

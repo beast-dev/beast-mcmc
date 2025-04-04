@@ -1,7 +1,8 @@
 /*
- * GaussianMarkovRandomField.java
+ * AdditiveGaussianProcessDistribution.java
  *
- * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.distributions.gp;
@@ -302,13 +304,6 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
           throw new IllegalArgumentException("Unknown model");
         }
     }
-//
-//        if (model == bases){
-//            precisionAndDeterminantKnown = false;
-//        } else {
-//            throw new IllegalArgumentException("Unknown model");
-//        }
-
 
     private boolean containsKernel(Model model) {
         for (BasisDimension basis : bases) {

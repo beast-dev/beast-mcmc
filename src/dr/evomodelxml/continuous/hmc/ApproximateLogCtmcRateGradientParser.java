@@ -1,7 +1,8 @@
 /*
- * GamGpSubstitutionModelGradientParser.java
+ * ApproximateLogCtmcRateGradientParser.java
  *
- * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.continuous.hmc;
@@ -45,9 +47,14 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRA
 public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParser {
 
     private static final String PARSER_NAME = "approximateLogCtmcRateGradient";
+    private static final String TRANSFORMED_PARSER_NAME = "approximateTransformedCtmcRateGradient";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
 
     public String getParserName(){ return PARSER_NAME; }
+
+    public String[] getParserNames() {
+        return new String[] { PARSER_NAME, TRANSFORMED_PARSER_NAME };
+    }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 

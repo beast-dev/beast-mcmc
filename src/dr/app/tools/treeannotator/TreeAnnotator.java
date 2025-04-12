@@ -391,7 +391,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
         Reader reader = new BufferedReader(new FileReader(inputFileName));
 //         TreeImporter importer = new BEASTTreesImporter(reader, true);
-        TreeImporter importer = new NexusImporter(reader, true);
+        TreeImporter importer = new NexusImporter(reader, false);
 
         long startTime = System.currentTimeMillis();
 

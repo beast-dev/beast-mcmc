@@ -721,8 +721,9 @@ public class TreeAnnotator extends BaseTreeTool {
         arguments.printUsage("treeannotator", "<input-file-name> [<output-file-name>]");
         progressStream.println();
         progressStream.println("  Example: treeannotator test.trees out.tree");
-        progressStream.println("  Example: treeannotator -burnin 100 -heights mean test.trees out.tree");
-        progressStream.println("  Example: treeannotator -type hipstr -burnin 100 -heights mean test.trees out.tree");
+        progressStream.println("  Example: treeannotator --burnin 100 --heights mean test.trees out.tree");
+        progressStream.println("  Example: treeannotator --type hipstr --burnin 100 --heights mean test.trees out.tree");
+        progressStream.println("  Example: treeannotator -b 100 -tf map.tree test.trees out.tree");
         progressStream.println();
     }
 
@@ -860,20 +861,20 @@ public class TreeAnnotator extends BaseTreeTool {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption("type", new String[] {"hipstr", "mcc"}, false, "an option of 'hipstr' (default) or 'mcc'"),
-                        new Arguments.RealOption("penalty", "the hipstr clade credibility penalty (default 0.0)"),
-                        new Arguments.StringOption("heights", new String[] {"keep", "median", "mean", "ca"}, false,
+                        new Arguments.StringOption("type", "t", new String[] {"hipstr", "mcc"}, false, "an option of 'hipstr' (default) or 'mcc'"),
+                        new Arguments.StringOption("heights", "nh", new String[]{"keep", "median", "mean", "ca"}, false,
                                 "an option of 'keep', 'median' or 'mean' (default)"),
-                        new Arguments.LongOption("burnin", "the number of states to be considered as 'burn-in'"),
-                        new Arguments.IntegerOption("burninTrees", "the number of trees to be considered as 'burn-in'"),
-                        new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annotated"),
-                        new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
-                        new Arguments.StringOption("reference", "tree_file_name", "specifies a reference tree for sampled trees to be compared with"),
-                        new Arguments.IntegerOption("threads", "max number of threads (default automatic)"),
-                        new Arguments.Option("help", "option to print this message"),
-                        new Arguments.Option("forceDiscrete", "forces integer traits to be treated as discrete traits."),
-                        new Arguments.StringOption("hpd2D", "the HPD interval to be used for the bivariate traits", "specifies a (vector of comma separated) HPD proportion(s)"),
-                        new Arguments.Option("ess", "compute ess for branch parameters")
+                        //"an option of 'keep', 'median', 'mean' or 'ca' (default)"),
+                        new Arguments.LongOption("burnin", "b", "the number of states to be considered as 'burn-in'"),
+                        new Arguments.IntegerOption("burninTrees", "bt", "the number of trees to be considered as 'burn-in'"),
+                        new Arguments.RealOption("limit", "l", "the minimum posterior probability for a node to be annotated"),
+                        new Arguments.StringOption("target", "tt", "target_file_name", "specifies a user target tree to be annotated"),
+                        new Arguments.StringOption("reference", "rt", "tree_file_name", "specifies a reference tree for sampled trees to be compared with"),
+                        new Arguments.IntegerOption("threads", "nt", "max number of threads (default automatic)"),
+                        new Arguments.Option("help", "h", "option to print this message"),
+                        new Arguments.Option("forceDiscrete", null,"forces integer traits to be treated as discrete traits."),
+                        new Arguments.StringOption("hpd2D", null,"the HPD interval to be used for the bivariate traits", "specifies a (vector of comma separated) HPD proportion(s)"),
+                        new Arguments.Option("ess", null,"compute ess for branch parameters")
                 });
 
         try {

@@ -171,11 +171,11 @@ public class TreeMRCASummarizer extends BaseTreeTool {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption(PAIRS, "the number of pairs of taxa [default = 10]"),
-                        new Arguments.LongOption(SEED, "a random number seed so the pairs are the same"),
-                        new Arguments.StringOption(METRIC, new String[] {TMRCA, PATH_LENGTH}, false, "tmrca or path (path length) [default = tmrca]"),
-                        new Arguments.Option(NORMALISE, "normalise by root height or tree length [default = off]"),
-                        new Arguments.Option("help", "option to print this message"),
+                        new Arguments.IntegerOption(PAIRS,null,  "the number of pairs of taxa [default = 10]"),
+                        new Arguments.LongOption(SEED, null, "a random number seed so the pairs are the same"),
+                        new Arguments.StringOption(METRIC, null, new String[] {TMRCA, PATH_LENGTH}, false, "tmrca or path (path length) [default = tmrca]"),
+                        new Arguments.Option(NORMALISE, null, "normalise by root height or tree length [default = off]"),
+                        new Arguments.Option("help", "h", "option to print this message"),
                 });
 
 

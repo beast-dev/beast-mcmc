@@ -321,9 +321,9 @@ public class TreeDensityKML {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = 0]"),
-                        new Arguments.IntegerOption("skip", "skip over this many trees per sample [default = 1]"),
-                        new Arguments.Option("help", "option to print this message")
+                        new Arguments.IntegerOption("burnin", "b", "the number of states to be considered as 'burn-in' [default = 0]"),
+                        new Arguments.IntegerOption("skip", "s", "skip over this many trees per sample [default = 1]"),
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {

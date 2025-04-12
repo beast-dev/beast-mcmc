@@ -234,7 +234,7 @@ public class DensityPlotter {
 						new Arguments.RealOption("value_lower", null, "the lower value bound for the density map [default = min value]"),
 						new Arguments.RealOption("value2_upper", null, "the upper second value bound for the density map [default = max value]"),
 						new Arguments.RealOption("value2_lower", null, "the lower second value bound for the density map [default = min value]"),
-						new Arguments.StringOption("headers", null, "with_headers", "prints row/column labels in output [default = true"),
+						new Arguments.StringOption("headers", null, "with_headers", "prints row/column labels in output [default = true]"),
 						new Arguments.Option("tiff", null, "output in TIFF format"),
 						new Arguments.Option("help", "h", "option to print this message"),
 						new Arguments.Option("logScale", null, "transform trait to log scale")

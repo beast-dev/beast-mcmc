@@ -394,7 +394,7 @@ public class BeastMain {
                         new Arguments.Option("beagle_info", "bi", "BEAGLE: show information on available resources"),
                         new Arguments.Option("beagle_auto", "ba", "BEAGLE: automatically select fastest resource for analysis"),
                         new Arguments.StringOption("beagle_order", "bo", "order", "BEAGLE: set order of resource use"),
-                        new Arguments.IntegerOption("beagle_instances", "bi", "BEAGLE: divide site patterns amongst instances"),
+                        new Arguments.IntegerOption("beagle_instances", null, "BEAGLE: divide site patterns amongst instances"),
                         new Arguments.StringOption("beagle_multipartition", "bm", new String[]{"auto", "on", "off"},
                                 false, "BEAGLE: use multipartition extensions if available (default auto)"),
                         new Arguments.Option("beagle_CPU", "bc", "BEAGLE: use CPU instance"),

@@ -31,9 +31,12 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.Likelihood;
 import dr.stats.DiscreteStatistics;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * @author Andrew Rambaut
@@ -400,22 +403,10 @@ public final class CladeSystem {
         return count;
     }
 
-    public Map<Object, Clade> getTipClades() {
-        return tipClades;
-    }
-
-    public Map<Object, Clade> getCladeMap() {
-        return cladeMap;
-    }
-
-    public TaxonList getTaxonList() {
-        return taxonList;
-    }
-
     //
     // Private stuff
     //
-    private TaxonList taxonList = null;
+    TaxonList taxonList = null;
     private final Map<Taxon, Integer> taxonNumberMap = new HashMap<>();
 
     private final Map<Object, Clade> tipClades = new HashMap<>();

@@ -31,23 +31,24 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.Likelihood;
 import dr.stats.DiscreteStatistics;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * @author Andrew Rambaut
  * @version $
  */
-final class CladeSystem {
+public final class CladeSystem {
     private final boolean keepSubClades;
     private double treeCount = 0;
 
     /**
      * Constructor starting with an empty clade system
+     *
      * @param keepSubClades whether to keep all subtrees in each clade
      */
     public CladeSystem(boolean keepSubClades) {
@@ -61,24 +62,32 @@ final class CladeSystem {
         this.keepSubClades = false;
         add(targetTree);
     }
+
     /**
      * adds all the clades in the tree
      */
     public void add(Tree tree) {
-        if (taxonList == null) {
-            setTaxonList(tree);
+        synchronized (taxonNumberMap) {
+            if (taxonList == null) {
+                setTaxonList(tree);
+            }
         }
 
         if (treeCount == 0) {
             // these will always be the same so create them once
-            addTipClades(tree);
+            synchronized (tipClades) {
+                addTipClades(tree);
+            }
         }
 
         // Recurse over the tree and add all the clades (or increment their
         // frequency if already present). The root clade is added too (for
         // annotation purposes).
-        rootClade = addClades(tree, tree.getRoot());
-
+        Clade rootClade = addClades(tree, tree.getRoot());
+        if (this.rootClade == null) {
+            this.rootClade = rootClade;
+        }
+        assert rootClade == this.rootClade;
         assert rootClade.getSize() == tree.getExternalNodeCount();
 
         treeCount += 1;
@@ -86,7 +95,6 @@ final class CladeSystem {
 
     public void setTaxonList(TaxonList taxonList) {
         this.taxonList = taxonList;
-        taxonNumberMap = new HashMap<>();
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
             taxonNumberMap.put(taxonList.getTaxon(i), i);
         }
@@ -130,11 +138,15 @@ final class CladeSystem {
 
             Clade clade1 = addClades(tree, tree.getChild(node, 0));
             Clade clade2 = addClades(tree, tree.getChild(node, 1));
-            clade = getOrAddClade(clade1, clade2);
+            synchronized (cladeMap) {
+                clade = getOrAddClade(clade1, clade2);
+            }
         }
         assert clade != null;
 
-        clade.setCount(clade.getCount() + 1);
+        synchronized (clade) {
+            clade.setCount(clade.getCount() + 1);
+        }
 
         return clade;
     }
@@ -144,7 +156,7 @@ final class CladeSystem {
      */
     private Clade getOrAddClade(Clade child1, Clade child2) {
         Object key = BiClade.makeKey(child1.getKey(), child2.getKey());
-        BiClade clade = (BiClade)cladeMap.get(key);
+        BiClade clade = (BiClade) cladeMap.get(key);
         if (clade == null) {
             if (keepSubClades) {
                 clade = new BiClade(child1, child2);
@@ -153,10 +165,13 @@ final class CladeSystem {
             }
             cladeMap.put(clade.getKey(), clade);
         } else {
-            if (keepSubClades) {
-                clade.addSubClades(child1, child2);
+            synchronized (clade) {
+                if (keepSubClades) {
+                    clade.addSubClades(child1, child2);
+                }
             }
         }
+
         return clade;
     }
 
@@ -202,7 +217,7 @@ final class CladeSystem {
     public void calculateCladeCredibilities(int totalTreesUsed) {
         for (Clade clade : cladeMap.values()) {
             assert clade.getCount() <= totalTreesUsed : "clade.getCount=(" + clade.getCount() +
-                        ") should be <= totalTreesUsed = (" + totalTreesUsed + ")";
+                    ") should be <= totalTreesUsed = (" + totalTreesUsed + ")";
 
             clade.setCredibility(((double) clade.getCount()) / (double) totalTreesUsed);
         }
@@ -262,7 +277,7 @@ final class CladeSystem {
 
     public double getMedianCladeCredibility(Tree tree) {
         final double[] cladeCredibility = new double[tree.getInternalNodeCount()];
-        final int[] i = { 0 };
+        final int[] i = {0};
         traverseTree(tree, new CladeAction() {
             @Override
             public void actOnClade(Clade clade, Tree tree, NodeRef node) {
@@ -284,6 +299,7 @@ final class CladeSystem {
 
     /**
      * Returns the number of clades in the tree with threshold credibility or higher
+     *
      * @param tree
      * @param threshold
      * @return
@@ -308,6 +324,7 @@ final class CladeSystem {
 
     /**
      * Returns the set of clades in the tree with threshold credibility or higher
+     *
      * @param tree
      * @param threshold
      * @return
@@ -332,6 +349,7 @@ final class CladeSystem {
 
     /**
      * Returns the number of clades in the clade system with threshold credibility or higher
+     *
      * @param threshold
      * @return
      */
@@ -345,8 +363,19 @@ final class CladeSystem {
         return count;
     }
 
+    public int getCladeFrequencyCount(int cladeCount) {
+        int count = 0;
+        for (Clade clade : cladeMap.values()) {
+            if (clade.getCount() == cladeCount) {
+                count += 1;
+            }
+        }
+        return count;
+    }
+
     /**
      * Returns the set of clades in the clade system with threshold credibility or higher
+     *
      * @param threshold
      * @return
      */
@@ -367,8 +396,8 @@ final class CladeSystem {
     public int getCommonCladeCount(CladeSystem referenceCladeSystem) {
         int count = 0;
         for (Object key : cladeMap.keySet()) {
-            if (referenceCladeSystem.cladeMap.keySet().contains(key)) {
-                count ++;
+            if (referenceCladeSystem.cladeMap.containsKey(key)) {
+                count++;
             }
         }
         return count;
@@ -378,10 +407,10 @@ final class CladeSystem {
     // Private stuff
     //
     TaxonList taxonList = null;
-    Map<Taxon, Integer> taxonNumberMap = null;
+    private final Map<Taxon, Integer> taxonNumberMap = new HashMap<>();
 
     private final Map<Object, Clade> tipClades = new HashMap<>();
-   private final Map<Object, Clade> cladeMap = new HashMap<>();
+    private final Map<Object, Clade> cladeMap = new HashMap<>();
 
     Clade rootClade;
 

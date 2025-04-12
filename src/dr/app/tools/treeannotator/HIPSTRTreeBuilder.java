@@ -36,6 +36,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HIPSTRTreeBuilder {
+    static final boolean breakTies = true;
+
     private final Map<Clade, Double> credibilityCache = new HashMap<>();
 
     public MutableTree getHIPSTRTree(CladeSystem cladeSystem, TaxonList taxonList) {
@@ -58,38 +60,64 @@ public class HIPSTRTreeBuilder {
 
     private double findHIPSTRTree(BiClade clade) {
 
-        double logCredibility = Math.log(clade.getCredibility());
+        assert clade.getSize() > 1;
 
-        if (clade.getSize() > 1) {
-            // if it is not a tip
-            if (clade.getSize() > 2) {
-                // more than two tips in this clade
-                double bestLogCredibility = Double.NEGATIVE_INFINITY;
-                for (Pair<BiClade, BiClade> subClade : clade.getSubClades()) {
-                    BiClade left = subClade.first;
+        double cladeScore = Math.log(clade.getCredibility());
 
-                    double leftLogCredibility = 0;
-                    if (left.getSize() > 1) {
-                        leftLogCredibility = credibilityCache.getOrDefault(left, Double.NaN);
-                        if (Double.isNaN(leftLogCredibility)) {
-                            leftLogCredibility = findHIPSTRTree(left);
-                            credibilityCache.put(left, leftLogCredibility);
+        Map<Pair<BiClade, BiClade>, Double> ties;
+        if (breakTies) {
+            ties = new HashMap<>();
+        }
+
+        // if it is not a tip
+        if (clade.getSize() > 2) {
+            // more than two tips in this clade
+            double bestSubtreeScore = Double.NEGATIVE_INFINITY;
+
+            for (Pair<BiClade, BiClade> subClade : clade.getSubClades()) {
+                BiClade left = subClade.first;
+
+                double leftScore = Math.log(1.0);
+//                double leftScore = 0.0);
+                if (left.getSize() > 1) {
+                    leftScore = credibilityCache.getOrDefault(left, Double.NaN);
+                    if (Double.isNaN(leftScore)) {
+                        leftScore = findHIPSTRTree(left);
+                        credibilityCache.put(left, leftScore);
+                    }
+                }
+
+                BiClade right = subClade.second;
+
+                double rightScore = Math.log(1.0);
+//                double rightScore = 0.0;
+                if (right.getSize() > 1) {
+                    rightScore = credibilityCache.getOrDefault(right, Double.NaN);
+                    if (Double.isNaN(rightScore)) {
+                        rightScore = findHIPSTRTree(right);
+                        credibilityCache.put(right, rightScore);
+                    }
+                }
+
+                if (breakTies) {
+                    if (leftScore + rightScore >= bestSubtreeScore) {
+                        if (leftScore + rightScore > bestSubtreeScore) {
+                            ties.clear();
+                            bestSubtreeScore = leftScore + rightScore;
+                            if (left.getSize() < right.getSize()) {
+                                // sort by clade size because why not...
+                                clade.bestLeft = left;
+                                clade.bestRight = right;
+                            } else {
+                                clade.bestLeft = right;
+                                clade.bestRight = left;
+                            }
+                            ties.put(new Pair<>(left, right), left.getCredibility() + right.getCredibility());
                         }
                     }
-
-                    BiClade right = subClade.second;
-
-                    double rightLogCredibility = 0;
-                    if (right.getSize() > 1) {
-                        rightLogCredibility = credibilityCache.getOrDefault(right, Double.NaN);
-                        if (Double.isNaN(rightLogCredibility)) {
-                            rightLogCredibility = findHIPSTRTree(right);
-                            credibilityCache.put(right, rightLogCredibility);
-                        }
-                    }
-
-                    if (leftLogCredibility + rightLogCredibility > bestLogCredibility) {
-                        bestLogCredibility = leftLogCredibility + rightLogCredibility;
+                } else {
+                    if (leftScore + rightScore > bestSubtreeScore) {
+                        bestSubtreeScore = leftScore + rightScore;
                         if (left.getSize() < right.getSize()) {
                             // sort by clade size because why not...
                             clade.bestLeft = left;
@@ -99,27 +127,34 @@ public class HIPSTRTreeBuilder {
                             clade.bestRight = left;
                         }
                     }
-//                    else if (leftLogCredibility + rightLogCredibility == bestLogCredibility) {
-//                        if ((left.getSize() > 1 && left.getCredibility() >= 0.5) ||
-//                                (right.getSize() > 1 && right.getCredibility() >= 0.5)) {
-//                            System.err.println("eek");
-//                        }
-//                    }
                 }
-                logCredibility += bestLogCredibility;
-            } else {
-                // two tips so there will only be one pair and their sum log cred will be 0.0
-                assert clade.getSubClades().size() == 1;
-                Pair<BiClade, BiClade> subClade = clade.getSubClades().stream().findFirst().get();
-                clade.bestLeft = subClade.first;
-                clade.bestRight = subClade.second;
-                // logCredibility += 0.0;
+
+                if (breakTies && ties.size() > 1) {
+                    double best = Double.NEGATIVE_INFINITY;
+                    for (Pair<BiClade, BiClade> key : ties.keySet()) {
+                        double value = ties.get(key);
+                        if (value > best) {
+                            clade.bestLeft = key.first;
+                            clade.bestRight = key.second;
+                            best = value;
+                        }
+                    }
+                }
             }
 
-            clade.bestSubTreeCredibility = logCredibility;
+            cladeScore = cladeScore + bestSubtreeScore;
+        } else {
+            // two tips so there will only be one pair and their sum log cred will be 0.0
+            assert clade.getSubClades().size() == 1;
+            Pair<BiClade, BiClade> subClade = clade.getSubClades().stream().findFirst().get();
+            clade.bestLeft = subClade.first;
+            clade.bestRight = subClade.second;
+            cladeScore += 2 * Math.log(1.0);  // yes, I know this is zero - just spelling out why
         }
 
-        return logCredibility;
+        clade.bestSubTreeScore = cladeScore;
+
+        return cladeScore;
     }
 
     private FlexibleNode buildHIPSTRTree(Clade clade) {

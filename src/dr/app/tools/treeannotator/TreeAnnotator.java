@@ -622,7 +622,7 @@ public class TreeAnnotator extends BaseTreeTool {
     private static void reportCladeCredibilityCount(CladeSystem cladeSystem, Tree tree, double threshold, boolean extendedMetrics) {
         int treeCladeCount = cladeSystem.getTopCladeCount(tree, threshold);
         int allCladeCount = cladeSystem.getTopCladeCount(threshold);
-        progressStream.print("Number of clades with credibility > " + threshold + ": " +
+        progressStream.print("Number of clades with credibility >= " + threshold + ": " +
                 treeCladeCount);
         if (treeCladeCount < allCladeCount) {
             if (extendedMetrics) {

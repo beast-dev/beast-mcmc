@@ -43,6 +43,7 @@ import java.util.concurrent.Future;
  * but it is unclear at present if is optimising to the same end point.
  */
 public class Embiggulator {
+    private static final boolean EMBIGGEN_2 = false;
     private final CladeSystem cladeSystem;
     Map<Object, BiClade>[] cladeMapBySize = null;//    Map<Integer, Set<BiClade>>[] cladeSetByTipBySize = null;
     int binWidth;
@@ -55,7 +56,11 @@ public class Embiggulator {
         binCladesBySize();
 
         if (threadCount < 0) {
-            embiggenBiClades2(minCladeSize, minCladeCount);
+            if (EMBIGGEN_2) {
+                embiggenBiClades2(minCladeSize, minCladeCount);
+            } else {
+                embiggenBiClades(minCladeSize, minCladeCount);
+            }
             return;
         }
 

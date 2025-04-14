@@ -403,6 +403,18 @@ public final class CladeSystem {
         return count;
     }
 
+    public TaxonList getTaxonList() {
+        return taxonList;
+    }
+
+    public Map<Object, Clade> getTipClades() {
+        return tipClades;
+    }
+
+    public Map<Object, Clade> getCladeMap() {
+        return cladeMap;
+    }
+
     //
     // Private stuff
     //

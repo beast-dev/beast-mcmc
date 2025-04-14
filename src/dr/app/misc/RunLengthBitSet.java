@@ -25,7 +25,7 @@
  *
  */
 
-package dr.app.tools.treeannotator;
+package dr.app.misc;
 
 import java.util.Arrays;
 import java.util.BitSet;

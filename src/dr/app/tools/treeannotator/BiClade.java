@@ -85,6 +85,7 @@ class BiClade implements Clade {
     }
 
     public void addSubClades(Clade child1, Clade child2) {
+        assert child1 != this && child2 != this;
         // arrange with the lowest index on the left
         BiClade left = (BiClade)child1;
         BiClade right = (BiClade)child2;
@@ -165,19 +166,32 @@ class BiClade implements Clade {
     }
 
     public static Object makeKey(Object key1, Object key2) {
-        CladeKey key = new CladeKey();
+        int maxIndex;
+        if (key1 instanceof Integer) {
+            maxIndex = (Integer) key1;
+        } else {
+            assert key1 instanceof CladeKey;
+            maxIndex = ((CladeKey) key1).getMaxIndex();
+        }
+        if (key2 instanceof Integer) {
+            maxIndex = Math.max(maxIndex, (Integer) key2);
+        } else {
+            assert key2 instanceof CladeKey;
+            maxIndex = Math.max(maxIndex, ((CladeKey) key2).getMaxIndex());
+        }
+
+        CladeKey key = new CladeKey(maxIndex);
         if (key1 instanceof Integer) {
             key.set((Integer) key1);
         } else {
-            assert key1 instanceof CladeKey;
-            key.or((CladeKey) key1);
+            key.setTo((CladeKey) key1);
         }
         if (key2 instanceof Integer) {
             key.set((Integer) key2);
         } else {
-            assert key2 instanceof CladeKey;
             key.or((CladeKey) key2);
         }
+
         return key;
     }
 

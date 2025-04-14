@@ -27,15 +27,7 @@
 
 package dr.app.tools.treeannotator;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.LongBuffer;
 import java.util.Arrays;
-import java.util.BitSet;
-import java.util.function.IntConsumer;
-import java.util.stream.IntStream;
-import java.util.stream.StreamSupport;
 
 public class CladeKey {
     /*
@@ -44,11 +36,8 @@ public class CladeKey {
      * The choice of word size is determined purely by performance concerns.
      */
     private static final int ADDRESS_BITS_PER_WORD = 6;
-    private static final int BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;
-    private static final int BIT_INDEX_MASK = BITS_PER_WORD - 1;
 
-    /* Used to shift left or right for a partial word mask */
-    private static final long WORD_MASK = 0xffffffffffffffffL;
+    private final int maxIndex;
 
     /**
      * The internal field corresponding to the serialField "bits".
@@ -68,6 +57,14 @@ public class CladeKey {
     }
 
     /**
+     * Creates a new bit set to accommodate bit indices up to maxIndex. All bits are initially {@code false}.
+     */
+    public CladeKey(int maxIndex) {
+        this.maxIndex = maxIndex;
+        initWords(maxIndex);
+    }
+
+    /**
      * Sets the field wordsInUse to the logical size in words of the bit set.
      * WARNING:This method assumes that the number of words actually in use is
      * less than or equal to the current value of wordsInUse!
@@ -75,102 +72,43 @@ public class CladeKey {
     private void recalculateWordsInUse() {
         // Traverse the bitset until a used word is found
         int i;
-        for (i = wordsInUse-1; i >= 0; i--)
+        for (i = wordsInUse-1; i >= 0; i--) {
             if (words[i] != 0)
                 break;
-
+        }
         wordsInUse = i+1; // The new logical size
     }
 
-    /**
-     * Creates a new bit set. All bits are initially {@code false}.
-     */
-    public CladeKey() {
-        initWords(BITS_PER_WORD);
-    }
 
     private void initWords(int nbits) {
-        words = new long[wordIndex(nbits-1) + 1];
-    }
-
-    private void ensureCapacity(int wordsRequired) {
-        if (words.length < wordsRequired) {
-            // Allocate larger of doubled size or required size
-            int request = Math.max(2 * words.length, wordsRequired);
-            words = Arrays.copyOf(words, request);
-        }
-    }
-
-    private void expandTo(int wordIndex) {
-        int wordsRequired = wordIndex+1;
-        if (wordsInUse < wordsRequired) {
-            ensureCapacity(wordsRequired);
-            wordsInUse = wordsRequired;
-        }
+        words = new long[wordIndex(nbits) + 1];
     }
 
     public void set(int bitIndex) {
-        if (bitIndex < 0)
-            throw new IndexOutOfBoundsException("bitIndex < 0: " + bitIndex);
+        assert bitIndex >= 0 && bitIndex <= maxIndex;
 
         int wordIndex = wordIndex(bitIndex);
-        expandTo(wordIndex);
 
-        words[wordIndex] |= (1L << bitIndex); // Restores invariants
+        wordsInUse = Math.max(wordsInUse, wordIndex + 1);
+
+        words[wordIndex] |= (1L << bitIndex);
     }
 
-    public void set(CladeKey key) {
+    public void setTo(CladeKey key) {
+        assert this != key;
+
+        Arrays.fill(words, 0);
         wordsInUse = key.wordsInUse;
-        words = Arrays.copyOf(key.words, key.wordsInUse);
+        System.arraycopy(key.words, 0,
+                words, 0,
+                wordsInUse);
     }
 
     public void clear() {
-        while (wordsInUse > 0)
+        while (wordsInUse > 0) {
             words[--wordsInUse] = 0;
-    }
-
-    /**
-     * Returns the index of the first bit that is set to {@code true}
-     * that occurs on or after the specified starting index. If no such
-     * bit exists then {@code -1} is returned.
-     *
-     * <p>To iterate over the {@code true} bits in a {@code BitSet},
-     * use the following loop:
-     *
-     *  <pre> {@code
-     * for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i+1)) {
-     *     // operate on index i here
-     *     if (i == Integer.MAX_VALUE) {
-     *         break; // or (i+1) would overflow
-     *     }
-     * }}</pre>
-     *
-     * @param  fromIndex the index to start checking from (inclusive)
-     * @return the index of the next set bit, or {@code -1} if there
-     *         is no such bit
-     * @throws IndexOutOfBoundsException if the specified index is negative
-     * @since  1.4
-     */
-    /*
-    public int nextSetBit(int fromIndex) {
-        if (fromIndex < 0)
-            throw new IndexOutOfBoundsException("fromIndex < 0: " + fromIndex);
-
-        int u = wordIndex(fromIndex);
-        if (u >= wordsInUse)
-            return -1;
-
-        long word = words[u] & (WORD_MASK << fromIndex);
-
-        while (true) {
-            if (word != 0)
-                return (u * BITS_PER_WORD) + Long.numberOfTrailingZeros(word);
-            if (++u == wordsInUse)
-                return -1;
-            word = words[u];
         }
     }
-    */
 
     /**
      * Returns the number of bits set to {@code true} in this {@code BitSet}.
@@ -180,79 +118,89 @@ public class CladeKey {
      */
     public int cardinality() {
         int sum = 0;
-        for (int i = 0; i < wordsInUse; i++)
+        for (int i = 0; i < wordsInUse; i++) {
             sum += Long.bitCount(words[i]);
+        }
         return sum;
     }
 
-    public void and(CladeKey set) {
-        if (this == set)
-            return;
+    public void and(CladeKey key) {
+        assert this != key;
 
-        while (wordsInUse > set.wordsInUse)
+        while (wordsInUse > key.wordsInUse) {
             words[--wordsInUse] = 0;
+        }
 
         // Perform logical AND on words in common
-        for (int i = 0; i < wordsInUse; i++)
-            words[i] &= set.words[i];
+        for (int i = 0; i < wordsInUse; i++) {
+            words[i] &= key.words[i];
+        }
 
         recalculateWordsInUse();
     }
 
     public void and(CladeKey key1, CladeKey key2) {
+        assert this != key1 && this != key2 && key1 != key2;
+
         if (key1.wordsInUse >= key2.wordsInUse) {
             wordsInUse = key1.wordsInUse;
             words = Arrays.copyOf(key1.words, key1.wordsInUse);
-            for (int i = 0; i < key2.wordsInUse; i++)
+            for (int i = 0; i < key2.wordsInUse; i++) {
                 words[i] &= key2.words[i];
-            for (int i = key2.wordsInUse; i < wordsInUse; i++)
+            }
+            for (int i = key2.wordsInUse; i < wordsInUse; i++) {
                 words[i] = 0;
+            }
         } else {
             wordsInUse = key2.wordsInUse;
             words = Arrays.copyOf(key2.words, key2.wordsInUse);
-            for (int i = 0; i < key1.wordsInUse; i++)
+            for (int i = 0; i < key1.wordsInUse; i++) {
                 words[i] &= key1.words[i];
-            for (int i = key1.wordsInUse; i < wordsInUse; i++)
+            }
+            for (int i = key1.wordsInUse; i < wordsInUse; i++) {
                 words[i] = 0;
+            }
         }
     }
 
 
-    public void or(CladeKey set) {
-        if (this == set)
-            return;
-
-        int wordsInCommon = Math.min(wordsInUse, set.wordsInUse);
-
-        if (wordsInUse < set.wordsInUse) {
-            ensureCapacity(set.wordsInUse);
-            wordsInUse = set.wordsInUse;
-        }
+    public void or(CladeKey key) {
+        assert this != key;
+        assert getMaxIndex() >= key.getMaxIndex();
+        
+        int wordsInCommon = Math.min(wordsInUse, key.wordsInUse);
+        wordsInUse = key.wordsInUse;
 
         // Perform logical OR on words in common
-        for (int i = 0; i < wordsInCommon; i++)
-            words[i] |= set.words[i];
+        for (int i = 0; i < wordsInCommon; i++) {
+            words[i] |= key.words[i];
+        }
 
         // Copy any remaining words
-        if (wordsInCommon < set.wordsInUse)
-            System.arraycopy(set.words, wordsInCommon,
+        if (wordsInCommon < key.wordsInUse) {
+            System.arraycopy(key.words, wordsInCommon,
                     words, wordsInCommon,
                     wordsInUse - wordsInCommon);
+        }
 
         // recalculateWordsInUse() is unnecessary
     }
 
     public void or(CladeKey key1, CladeKey key2) {
+        assert this != key1 && this != key2 && key1 != key2;
+
         if (key1.wordsInUse >= key2.wordsInUse) {
             wordsInUse = key1.wordsInUse;
             words = Arrays.copyOf(key1.words, key1.wordsInUse);
-            for (int i = 0; i < key2.wordsInUse; i++)
+            for (int i = 0; i < key2.wordsInUse; i++) {
                 words[i] |= key2.words[i];
+            }
         } else {
             wordsInUse = key2.wordsInUse;
             words = Arrays.copyOf(key2.words, key2.wordsInUse);
-            for (int i = 0; i < key1.wordsInUse; i++)
+            for (int i = 0; i < key1.wordsInUse; i++) {
                 words[i] |= key1.words[i];
+            }
         }
     }
 
@@ -277,9 +225,9 @@ public class CladeKey {
      */
     public int hashCode() {
         long h = 1234;
-        for (int i = wordsInUse; --i >= 0; )
+        for (int i = wordsInUse; --i >= 0; ) {
             h ^= words[i] * (i + 1);
-
+        }
         return (int)((h >> 32) ^ h);
     }
 
@@ -297,4 +245,7 @@ public class CladeKey {
         return true;
     }
 
+    public int getMaxIndex() {
+        return maxIndex;
+    }
 }

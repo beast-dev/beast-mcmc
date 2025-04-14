@@ -134,37 +134,36 @@ public class Embiggulator {
             // clade1 must be more than just a tip...
             if (clade1.getSize() >= 2) {
                 // get the bitset for clade1 that acts as its hash key
-                final CladeKey bits1 = ((CladeKey) clade1.getKey());
+                final CladeKey key1 = ((CladeKey) clade1.getKey());
                 // get final versions of the start and end of the iteration
                 final int from = Math.max(i + 1, sizeIndices[maxSize - clade1.getSize()]);
                 final int to = n;
                 // submit the thread to the pool and store the future in the list
                 futures.add(pool.submit(() -> {
                     // create and reuse a bitset to avoid reallocating it
-                    final CladeKey bits = new CladeKey();
+                    final CladeKey key = new CladeKey(maxSize);
                     for (int j = from; j < to; j++) {
                         BiClade clade2 = clades[j];
 
                         BiClade clade = null;
 
                         // clear the bitset and make a copy of clade1's bits
-                        bits.clear();
-                        bits.or(bits1);
+                        key.setTo(key1);
 
                         // get clade2's bits and add them to the bitset
                         if (clade2.key instanceof Integer) {
-                            bits.set((Integer) clade2.key);
+                            key.set((Integer) clade2.key);
                         } else {
-                            bits.or((CladeKey) clade2.key);
+                            key.or((CladeKey) clade2.key);
                         }
 
                         // if the cardinality of the bitset is not the same as the sum
                         // of the sizes of the two clades then they must have had some
                         // tips in common.
                         int size = clade1.size + clade2.size;
-                        if (bits.cardinality() == size) {
+                        if (key.cardinality() == size) {
 //                            clade = (BiClade)cladeMap.get(bits);
-                            clade = getCladeBySize(bits, size);
+                            clade = getCladeBySize(key, size);
                             if (clade != null) {
                                 clade.addSubClades(clade1, clade2);
                                 synchronized (embiggulationCount) {
@@ -289,12 +288,12 @@ public class Embiggulator {
         long embiggulationCount = 0;
 
         // create and reuse a bitset to avoid reallocating it
-        final CladeKey bits = new CladeKey();
+        final CladeKey bits = new CladeKey(maxSize);
 
         for (int i = sizeIndices[maxSize - 1]; i < n - 1; i++) {
             BiClade clade1 = clades[i];
             if (clade1.getSize() >= 2) {
-                CladeKey bits1 = ((CladeKey) clade1.getKey());
+                CladeKey key1 = ((CladeKey) clade1.getKey());
 
                 for (int j = Math.max(i + 1, sizeIndices[maxSize - clade1.getSize()]); j < n; j++) {
                     BiClade clade2 = clades[j];
@@ -302,8 +301,7 @@ public class Embiggulator {
                         continue;
                     }
 
-                    bits.clear();
-                    bits.set(bits1);
+                    bits.setTo(key1);
 
                     if (clade2.key instanceof Integer) {
                         bits.set((Integer) clade2.key);
@@ -395,7 +393,7 @@ public class Embiggulator {
         long embiggulationCount = 0;
 
         // create and reuse a bitset to avoid reallocating it
-        final CladeKey key = new CladeKey();
+        final CladeKey key = new CladeKey(maxSize);
 
         for (int i = 0; i < Math.min(sizeIndices[3], n - 1); i++) {
 
@@ -427,7 +425,7 @@ public class Embiggulator {
                                 // assert rightClade.size <= leftClade.size;
 
                                 if (rightClade.key instanceof Integer) {
-                                    key.set((CladeKey) leftClade.key);
+                                    key.setTo((CladeKey) leftClade.key);
                                     key.set((Integer) rightClade.key);
                                 } else {
                                     key.or((CladeKey) leftClade.key, (CladeKey) rightClade.key);

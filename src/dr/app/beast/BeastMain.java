@@ -1,7 +1,7 @@
 /*
  * BeastMain.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -29,9 +29,7 @@ package dr.app.beast;
 
 import beagle.BeagleFlag;
 import beagle.BeagleInfo;
-import dr.app.beauti.BeautiMenuBarFactory;
 import dr.app.checkpoint.BeastCheckpointer;
-import dr.app.plugin.Plugin;
 import dr.app.plugin.PluginLoader;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
@@ -41,7 +39,6 @@ import dr.inference.mcmcmc.MCMCMCOptions;
 import dr.inference.operators.OperatorSchedule;
 import dr.math.MathUtils;
 import dr.util.*;
-import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
 import jam.util.IconUtils;
 
@@ -51,8 +48,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.logging.*;
 
 public class BeastMain {
@@ -63,6 +62,8 @@ public class BeastMain {
     public static final int DEFAULT_SWAP_CHAIN_EVERY = 100;
 
     private static final String CITATION_FILE_SUFFIX = ".citations.txt";
+
+    private static final String CHKPT_OVERRULE = "checkpointOverrule";
 
     static class BeastConsoleApp extends jam.console.ConsoleApplication {
         XMLParser parser = null;
@@ -167,8 +168,17 @@ public class BeastMain {
 
             // Install the checkpointer. This creates a factory that returns
             // appropriate savers and loaders according to the user's options.
-            //new BeastCheckpointer();
-            if (Boolean.parseBoolean(System.getProperty("checkpointOverrule", "true"))) {
+            // new BeastCheckpointer();
+
+            // if any of these properties is not null, overrule XML checkpointing settings
+            if (System.getProperty(BeastCheckpointer.SAVE_STATE_FILE, null) != null ||
+                    System.getProperty(BeastCheckpointer.SAVE_STATE_AT, null) != null ||
+                    System.getProperty(BeastCheckpointer.SAVE_STATE_EVERY, null) != null ||
+                    System.getProperty(BeastCheckpointer.SAVE_STATE_TIME, null) != null) {
+                System.setProperty(CHKPT_OVERRULE, "true");
+            }
+
+            if (Boolean.parseBoolean(System.getProperty(CHKPT_OVERRULE, "false"))) {
                 BeastCheckpointer.getInstance(null, -1, -1, false);
                 Logger.getLogger("dr.apps.beast").info("Overriding checkpointing settings in the provided XML file");
             }
@@ -322,7 +332,7 @@ public class BeastMain {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("BEAST X " + version.getVersionString() + ", " + version.getDateString(), 60);
+        centreLine("BEAST " + version.getVersionString() + ", " + version.getDateString(), 60);
         centreLine("Bayesian Evolutionary Analysis Sampling Trees", 60);
         for (String creditLine : version.getCredits()) {
             centreLine(creditLine, 60);
@@ -987,7 +997,7 @@ public class BeastMain {
 //            rte.printStackTrace(System.err);
             if (window) {
                 System.out.println();
-                System.out.println("BEAST has terminated with an error. Please select QUIT from the menu.");
+                System.out.println("BEAST X has terminated with an error. Please select QUIT from the menu.");
                 // logger.severe will throw a RTE but we want to keep the console visible
             } else {
                 System.out.flush();
